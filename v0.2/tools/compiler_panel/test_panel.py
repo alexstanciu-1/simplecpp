@@ -52,6 +52,13 @@ try:
                               {'name':'support','flavor':'cpp','source':'void ping() { echo "support"; }'}]}
     report = json.loads(request('/run', multi, allowed)[1])
     assert report['ok'] and report['stages'][-1]['stdout'] == 'support', report
+    symbols = next(stage['data'] for stage in report['stages'] if stage['name'] == 'Global symbol publication')
+    assert len(symbols['ping']) == 1 and symbols['ping'][0]['file'] == 'support', symbols
+    duplicate = {**multi, 'files':multi['files'] + [{'name':'duplicate','flavor':'cpp','source':'void ping() {}'}]}
+    duplicate_report = json.loads(request('/run', duplicate, allowed)[1])
+    assert not duplicate_report['ok'], duplicate_report
+    symbols = next(stage['data'] for stage in duplicate_report['stages'] if stage['name'] == 'Global symbol publication')
+    assert len(symbols['ping']) == 2 and {row['file'] for row in symbols['ping']} == {'support', 'duplicate'}, symbols
     for level in ['O0', 'O1', 'O2']:
         pch_report = json.loads(request('/run', {**multi, 'pch':True, 'optimization':level}, allowed)[1])
         assert pch_report['ok'], pch_report

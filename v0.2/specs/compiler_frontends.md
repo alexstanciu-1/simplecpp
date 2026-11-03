@@ -141,7 +141,7 @@ incremental reuse remains pending; no-argument void calls now resolve across fil
 
 ## File AST ownership
 
-The parsed result owns one `ast_file_node` containing a keyed declaration map.
+The parsed result owns one `ast_file_node` containing an ordered syntax inventory and a keyed first-reference map.
 Currently only `func:name` nodes exist. Top-level executable statements become
 one implicit file-private `func:main`, placed first; declaration-only files have
 no implicit entry. The original statement spans remain unchanged. Explicit `main`
@@ -149,8 +149,9 @@ is reserved and not yet supported as source syntax.
 
 Body-local collections and prepared facts attach to the same function-body model
 for entry and ordinary functions. Public symbol publication references declaration
-nodes directly. Duplicate keys retain the first declaration and chain subsequent
-source-local declarations; every body is parsed. Complete file roots expose a
+nodes directly. Every body is parsed. Public function duplicate chains belong to the compilation
+scope; local variable chains belong to their body scope. File indexes only reference
+nodes, and file traversal uses the syntax inventory independently of live chains. Complete file roots expose a
 simple duplicate diagnostic list. Whole-program preparation reconciles cross-file
 candidates and reports every additional declaration against the original location
 before settling facts or lowering. `parse` and `collect` CLI commands retain full

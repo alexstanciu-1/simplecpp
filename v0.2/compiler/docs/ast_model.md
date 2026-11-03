@@ -13,14 +13,14 @@ together; separate parsed/collected file wrappers do not represent distinct stat
 `parse()` and `collect()` currently return the same kind of complete root; the latter
 also accepts discovery notifications. Neither API returns a second copy of syntax.
 
-The root owns tokens/source context and one keyed declaration collection. Keys such
-as `func:ping` identify actual declaration nodes. Indexes and resolved references
-point to these nodes without creating new declaration identities. Duplicate keys
-retain the first node and link subsequent declarations through the trait’s
-`duplicate_element()` accessor. All bodies remain available to analysis tools.
-The link belongs to one source-local scope only; the global symbol index keeps
-its separate candidate arrays and must never repurpose these links. Collection
-uses temporary tail indexes for constant-time appends.
+The root owns tokens/source context and an ordered `declaration_nodes` syntax
+inventory. Its `declarations` map holds first references keyed by `func:name`.
+Indexes point to original nodes without creating declaration identities. A symbol
+entry holds one nullable head; `duplicate_element()` retains erroneous extras.
+Public function chains belong to the compilation scope, variable chains to their
+body scope. File indexes never own a second chain. Publication uses temporary tails
+for constant-time appends. File traversal always uses syntax inventory, so it stays
+local and complete even when a live chain crosses files or is rebuilt incrementally.
 
 The completed root carries a plain list of duplicate diagnostics. Compilation
 gathers local and cross-file duplicates into a minimal `diagnostic_group` before
@@ -119,7 +119,7 @@ and end-to-end behavior. Explain each class/structure's role in its doc comment 
 include a short code example when it makes that role clearer.
 
 Incremental frontend sessions may share an unchanged AST root and its tokens/source
-snapshot by reference. Each generation owns its own global candidate index. See
+snapshot by reference. Generations share the live compilation scope; file syntax inventories retain every declaration independently of its live duplicate links. See
 [incremental frontend generations](incremental_frontend.md); preparation of shared
 roots is not part of that slice. Function keys use `func:name`; `symbol_key()` derives
 them without a slot/key/status record.

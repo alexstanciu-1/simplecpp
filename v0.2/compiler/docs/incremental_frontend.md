@@ -56,8 +56,9 @@ Previous sessions share the current symbol publication; old AST syntax remains
 retained, but symbol lookup is no longer historical. Only the current session may
 be used as an incremental baseline or prepared against this live index.
 
-File-local `duplicate_element` chains remain unchanged. Global candidate indexes
-reference AST declarations without mutating those chains. See
+Successful compilation-scope publication may rebuild `duplicate_element` links on
+reused nodes after readers finish. File syntax inventories remain unchanged and
+never follow these live chains; failed collection leaves published links untouched. See
 [stable symbols and preparation caches](stable_symbols.md) for structure, status,
 transactional publication, observer ownership and signature comparison rules.
 

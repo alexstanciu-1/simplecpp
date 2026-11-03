@@ -15,12 +15,12 @@ compilation_session
 
 scope
 ├── parent: ?scope — lexical parent, null for compilation or detached file
-├── declarations: array<string,list<ast_declaration_interface>> — current candidate index
+├── declarations: array<string,ast_declaration_interface> — current head references
 └── entries: array<string,symbol_entry> — stable identities, including tombstones
 
 symbol_entry
 ├── status: change_status
-└── candidates: list<ast_declaration_interface> — references only; empty means removed
+└── head: ?ast_declaration_interface — null means removed; duplicate_element links errors
 
 ast_call_statement
 ├── name: string — authored syntax
@@ -32,10 +32,11 @@ function_dependencies
 ```
 
 No names, signatures, bodies or literal facts are copied into symbol entries.
-The canonical map key supplies identity. Candidate lists are indexes referencing
-AST declarations; they preserve ambiguity without reusing file-local
-`duplicate_element` links globally. A single candidate resolves to its AST,
-zero resolves to null, and multiple candidates are ambiguous.
+The canonical map key supplies identity. An entry holds one head reference. The
+compilation scope owns duplicate links for public functions; body scopes own local
+variable duplicate links. File indexes only reference declarations. A head without
+a successor resolves to its AST; null means missing; a successor means ambiguity.
+File syntax inventories retain every node independently of these live links.
 
 A function call caches a stable entry. `function_def()` remains the consumer API,
 but now reads the current declaration through that entry and rejects a dirty body.
@@ -51,9 +52,9 @@ unchanged. Successful publication updates the existing global index and entries,
 removes obsolete observer-body subscriptions, then sends invalidation notifications.
 No observer callback performs preparation during publication.
 
-- Same key and same declaration object: `none`.
-- Same key and replacement declaration: `changed` (even if only trivia changed).
-- Missing key: retain the entry with no candidates and status `removed`.
+- Same key and identical ordered chain of declaration objects: `none`.
+- Same key and replacement declaration or changed duplicate chain: `changed` (even if only trivia changed).
+- Missing key: retain the entry with a null head and status `removed`.
 - Reintroduced key: reactivate that exact entry and mark `added`.
 - Rename: old key removed, new key added.
 - Move between files: same key and entry, with a new declaration destination.
@@ -66,7 +67,7 @@ same unambiguous signature does not invalidate callers just because its body cha
 PHP/JS admit unsupported return-type spellings far enough to diagnose in preparation;
 C++ currently rejects non-void function syntax during parsing. This adds no types.
 
-Older sessions retain old syntax but share the live symbol index. They are not
+Older sessions retain old syntax but share the live symbol index. Their duplicate links are live publication data, not historical snapshots. They are not
 historical symbol snapshots, and their shared prepared caches can become dirty.
 `compilation_session.is_current` prevents preparing or branching from an old
 session against a newer publication. Retirement happens only after successful

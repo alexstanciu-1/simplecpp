@@ -63,9 +63,12 @@ try {
 	$symbols = $report->stage('Global symbol publication', fn() => $publisher->publish($files),
 		static function ($symbols): array {
 			$rows = [];
-			foreach ($symbols->functions as $name => $candidates) {
-				$rows[$name] = array_map(static fn($f): array => ['file' => basename($f->source()->path),
-					'token_start' => $f->start, 'return_type_name' => $f->return_type_name], $candidates);
+			foreach ($symbols->declarations as $head) {
+				// Preserve the inspection JSON format; the compiler itself stores only a head reference.
+				for ($f = $head; $f !== null; $f = $f->duplicate_element()) {
+					$rows[$head->name][] = ['file' => basename($f->source()->path),
+						'token_start' => $f->start, 'return_type_name' => $f->return_type_name];
+				}
 			}
 			return $rows;
 		});

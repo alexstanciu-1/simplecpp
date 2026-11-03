@@ -79,10 +79,10 @@ namespace {
 			$duplicate_path = $app . '/duplicate.' . $flavor;
 			file_put_contents($duplicate_path, $declaration . ' ' . $declaration);
 			$ambiguous = $compiler->frontend($app, $moved);
-			verify(count($ambiguous->scope->declarations[$key]) === 3, 'Global duplicate candidates lost');
+			verify($ambiguous->scope->declarations[$key]->duplicate_element()?->duplicate_element() === $moved_declaration, 'Global duplicate chain lost');
 			$head = $ambiguous->entry->sources[basename($duplicate_path)]->ast->declarations[$key];
-			verify($head->duplicate_element() !== null, 'File-local duplicate chain lost');
-			verify($moved_declaration->duplicate_element() === null, 'Global duplicate chain mutated old AST');
+			verify($head->duplicate_element() !== null, 'Declaring-scope duplicate chain lost');
+			verify($moved_declaration->duplicate_element() === null, 'Last declaration must terminate the published chain');
 			try {
 				$ambiguous->scope->resolve($key);
 				throw new LogicException('Ambiguous key resolved');

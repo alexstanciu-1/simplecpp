@@ -43,11 +43,13 @@ final class Parser
 			flavor::js => new Js_Grammar(),
 		};
 		$statements = [];
+		$nodes = [];
 		while (!$this->cursor->at_end())
 		{
 			if ($grammar->function_start($this)) {
 				$function = $this->function_declaration($grammar);
-				$declarations->declare($function);
+				$declarations->import($function);
+				$nodes[] = $function;
 				continue;
 			}
 			$statement = $this->statement($grammar);
@@ -59,13 +61,14 @@ final class Parser
 				'int', 0, 0, true);
 			$main->attach($this->root);
 			$main->complete_body($collector->body(0, count($this->cursor->tokens->tokens), $statements));
-			$declarations->declare($main);
+			$declarations->import($main);
+			array_unshift($nodes, $main);
 		}
-		$functions = $declarations->publish()->heads();
+		$functions = $declarations->publish_references()->heads();
 		if (isset($functions['func:main'])) {
 			$functions = ['func:main' => $functions['func:main']] + $functions;
 		}
-		$this->root->complete($functions, Declaration_Diagnostics::file($functions));
+		$this->root->complete($functions, $nodes, Declaration_Diagnostics::file($nodes));
 		return $this->root;
 	}
 

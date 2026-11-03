@@ -64,13 +64,13 @@ or source-level reuse. See the module guide for the change-detection boundary.
 
 Read [incremental frontend generations](docs/incremental_frontend.md) before changing
 frontend reuse. Unchanged AST/token objects are shared between retained sessions;
-never mutate their duplicate chains. Stable symbols are live identities keyed by canonical
+only successful declaring-scope publication may relink their duplicates, after readers finish. File traversal uses its own syntax inventory, not live duplicate chains. Stable symbols are live identities keyed by canonical
 strings; publication may invalidate observing body caches after successful collection.
 Read [stable symbols and preparation caches](docs/stable_symbols.md) before changing
 publication or preparation. Old sessions retain syntax, not historical symbol/fact snapshots.
 
 Read [common scopes](docs/scopes.md) before changing declaration collection or
-publication. Compilation, file and body scopes share `Scope_Collection`; body
+publication. Follow [singular relationships and erroneous duplicates](docs/singular_duplicates.md). Compilation, file and body scopes share `Scope_Collection`; body
 statement/reference indexes do not constitute another symbol collector. Keep
 lookup policy separate; no parent lookup or new grammar is implied by scope parents.
 

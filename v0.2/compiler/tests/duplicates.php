@@ -24,8 +24,7 @@ foreach ([
 	$functions = $file->functions();
 	verify(array_map(static fn(ast_function_declaration $f): string => $f->name, $functions) === ['f', 'other', 'f', 'f'], 'Lost source order or later declarations');
 	$head = $file->declarations['func:f'];
-	verify($head === $functions[0] && $head->duplicate_element() === $functions[2]
-		&& $functions[2]->duplicate_element() === $functions[3] && $functions[3]->duplicate_element() === null, 'Wrong function chain');
+	verify($head === $functions[0] && $head->duplicate_element() === null, 'File index must not own a function chain');
 	foreach ($functions as $function) {
 		verify($function->parent === $file && $function->body()->parent === $function, 'Duplicate syntax lost ownership');
 	}
@@ -36,7 +35,8 @@ foreach ([
 	verify(count(Syntax_Inspection::file($file)['functions']) === 4, 'Inspection omitted duplicate bodies');
 	verify(count(Compilation_Inspection::collection($file)['diagnostics']) === 4, 'Collection lost errors');
 	$symbols = $publisher->publish(['a' => $file]);
-	verify(count($symbols->declarations['func:f']) === 3, 'Discovery/publication lost candidates');
+	verify($symbols->declarations['func:f'] === $head && $head->duplicate_element() === $functions[2]
+		&& $functions[2]->duplicate_element() === $functions[3], 'Publication lost duplicate chain');
 	$b = $frontend->collect(new source_file('b', 'void f() {}', \scpp\compiler\flavor::cpp));
 	$messages = [];
 	foreach ([['a' => $file, 'b' => $b], ['b' => $b, 'a' => $file]] as $files) {
@@ -52,7 +52,8 @@ foreach ([
 		}
 	}
 	verify($messages[0] === $messages[1], 'Diagnostics depend on source arrival order');
-	verify($head->duplicate_element() === $functions[2] && $b->declarations['func:f']->duplicate_element() === null, 'Global publication changed local chains');
+	verify($head->duplicate_element() === $functions[2] && $functions[3]->duplicate_element() === $b->declarations['func:f'], 'Declaring scope did not join cross-file duplicates');
+	verify(count($file->functions()) === 4 && count($b->functions()) === 1, 'File traversal followed a foreign duplicate');
 	try { $head->return_type_def(); throw new RuntimeException('Ambiguous declaration was settled'); }
 	catch (LogicException $expected) {}
 }

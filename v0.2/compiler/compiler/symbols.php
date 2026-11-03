@@ -35,37 +35,35 @@ final class Symbol_Publication implements declaration_sink
 				$complete[spl_object_id($function)] = true;
 			}
 		}
-		foreach ($this->collection->candidates() as $candidates)
+		foreach ($this->collection->inventory() as $candidate)
 		{
-			foreach ($candidates as $candidate)
-			{
-				$id = spl_object_id($candidate);
-				if (!isset($complete[$id])) {
-					throw new \LogicException('Discovery is not part of a completed source result');
-				}
-				unset($complete[$id]);
-			}
+			$id = spl_object_id($candidate);
+			if (!isset($complete[$id])) { throw new \LogicException('Discovery is not part of a completed source result'); }
+			unset($complete[$id]);
 		}
 		if ($complete !== []) {
 			throw new \LogicException('Completed source has unreported declarations');
 		}
 		$this->published = true;
-		$pending = $this->collection->candidates();
-		$changed = [];
-		if (($previous !== null) && ($dependencies !== null)) {
-			foreach (array_unique(array_merge(array_keys($previous->declarations), array_keys($pending))) as $key) {
-				if (function_dependencies::contract_changed($previous->declarations[$key] ?? [], $pending[$key] ?? [])) {
-					$changed[] = $key;
-				}
-			}
-		}
-		// All declarations are complete before the shared scope publisher touches live entries.
+		$this->collection->order(static fn(ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ =>
+			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
+		// Capture the dependency role before publication rewrites links on reused AST declarations.
+		$old_contracts = $dependencies !== null && $previous !== null ? function_dependencies::contracts($previous) : [];
 		$scope = $this->collection->publish($previous);
 		ksort($scope->declarations, SORT_STRING);
 		foreach ($files as $file) { $file->scope->parent = $scope; }
 		if ($dependencies !== null) {
 			$dependencies->retain($files);
-			foreach ($changed as $key) { $dependencies->changed($scope->entry($key)); }
+			$contracts = function_dependencies::contracts($scope);
+			foreach (array_unique(array_merge(array_keys($old_contracts), array_keys($contracts))) as $key) {
+				$old = $old_contracts[$key] ?? null;
+				$current = $contracts[$key] ?? null;
+				$entry = $scope->entry($key);
+				if (($old !== $current) || (array_key_exists($key, $old_contracts) !== array_key_exists($key, $contracts))
+					|| (array_key_exists($key, $contracts) && $current === null && $entry->status !== change_status::none)) {
+					$dependencies->changed($entry);
+				}
+			}
 		}
 		return $scope;
 	}

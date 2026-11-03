@@ -30,7 +30,7 @@ foreach ([
 	verify($main->body()->statements[0]->source_text() === 'ping();', 'Statement source span changed');
 	$symbols = Symbol_Publication::completed(['entry' => $file]);
 	verify(array_keys($symbols->declarations) === ['func:ping', 'func:pong'], 'Private entry leaked into global scope');
-	verify($symbols->declarations['func:ping'][0] === $ast->declarations['func:ping'], 'Global index wraps/copies AST identity');
+	verify($symbols->declarations['func:ping'] === $ast->declarations['func:ping'], 'Global index wraps/copies AST identity');
 	$prepared = (new Preparation())->prepare($file, new entry_target(31));
 	verify($prepared->file === $file, 'Preparation must retain the same file root');
 	verify($main->return_type_def() === type_definition::int64, 'Entry contract lost integer return');

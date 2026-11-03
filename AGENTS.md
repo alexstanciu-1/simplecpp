@@ -95,3 +95,16 @@ See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation
 When working under `compiler/my-try/`, also read and follow
 [its local operating rules](compiler/my-try/AGENTS.md). They apply to the entire
 `compiler/my-try/` subtree.
+
+## Singular relationships and erroneous duplicates
+
+When a property or per-key slot has zero or one element in a valid program, and
+multiple elements are necessarily an error, represent it as one nullable reference.
+Retain invalid additional elements through `duplicate_element` (or the equivalent
+typed duplicate link), not a list allocated for the normal case. One declaring
+scope/owner exclusively maintains that chain; secondary indexes only reference it.
+Define publication and incremental relinking boundaries before mutating shared links.
+Do not apply this to valid multiplicity: syntax inventories, overload sets, observers,
+dependencies and diagnostics may legitimately need collections. Do not change
+serialized/public formats or historical donor subsystems without reviewing their owner.
+See [the compiler pattern and inventory](v0.2/compiler/docs/singular_duplicates.md).

@@ -94,6 +94,7 @@ interface ast_declaration_interface
 	public function symbol_key(): string;
 	public function duplicate_element(): ?ast_declaration_interface;
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void;
+	public function clear_duplicate(): void;
 }
 
 /**
@@ -109,7 +110,7 @@ interface ast_declaration_interface
 trait ast_declaration
 {
 	public readonly string $name;
-	/** Same-key declaration in this source scope; not syntax ownership or global-index membership. */
+	/** Next erroneous same-key declaration; only the declaring scope publishes this chain. */
 	protected ?ast_declaration_interface $duplicate_element = null;
 
 	public function duplicate_element(): ?ast_declaration_interface
@@ -117,7 +118,7 @@ trait ast_declaration
 		return $this->duplicate_element;
 	}
 
-	/** Collection links an unchained duplicate once; existing source chains are never repurposed globally. */
+	/** The declaring scope links unchained declarations after successful collection, with no active readers. */
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
@@ -126,6 +127,9 @@ trait ast_declaration
 		}
 		$this->duplicate_element = $duplicate_element;
 	}
+
+	/** Publication-only reset; other indexes must never mutate the declaring scope chain. */
+	public function clear_duplicate(): void { $this->duplicate_element = null; }
 
 	/** Default local key; neither a declaration category nor a namespace is included. */
 	public function declaration_key(): string

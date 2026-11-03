@@ -28,12 +28,46 @@ foreach (flavor::cases() as $flavor) {
 	$duplicate = (new Source_Frontend())->collect(new source_file('duplicates',
 		$header('f') . '{' . $local . $local . '}' . $header('f') . '{}', $flavor));
 	$head = $duplicate->scope->heads()['func:f'];
-	verify(count($duplicate->scope->declarations['func:f']) === 2 && $head->duplicate_element() !== null, 'File scope duplicates lost');
+	verify(count($duplicate->functions()) === 2 && $head->duplicate_element() === null, 'File scope duplicates lost');
 	$body = $head->body();
-	verify(count($body->scope->declarations['var:x']) === 2 && $body->locals[0]->duplicate_element() === $body->locals[1], 'Body scope duplicate chains lost');
-	$chain = $head->duplicate_element();
+	verify($body->scope->declarations['var:x'] === $body->locals[0] && $body->locals[0]->duplicate_element() === $body->locals[1], 'Body scope duplicate chains lost');
+	$chain = $duplicate->functions()[1];
 	$aggregate = Symbol_Publication::completed(['duplicate' => $duplicate]);
-	verify(count($aggregate->declarations['func:f']) === 2 && $head->duplicate_element() === $chain, 'Import relinked syntax');
+	verify($aggregate->declarations['func:f'] === $head && $head->duplicate_element() === $chain, 'Compilation scope did not own duplicate chain');
+	// Published chains span files; every file retains only its own syntax during incremental relinking.
+	$files = [];
+	foreach (['a', 'b', 'c'] as $path) {
+		$files[$path] = (new Source_Frontend())->collect(new source_file($path, $header('shared') . '{}', $flavor));
+	}
+	[$fa, $fb, $fc] = array_values($files);
+	[$na, $nb, $nc] = [$fa->functions()[0], $fb->functions()[0], $fc->functions()[0]];
+	$live = Symbol_Publication::completed(array_reverse($files));
+	$identity = $live->entry('func:shared');
+	verify($live->declarations['func:shared'] === $na && $na->duplicate_element() === $nb
+		&& $nb->duplicate_element() === $nc && $nc->duplicate_element() === null, 'Cross-file chain order');
+	verify(count($fa->functions()) === 1 && count($fb->functions()) === 1, 'File traversal escaped its syntax inventory');
+	Symbol_Publication::completed($files, $live);
+	verify($identity->status === change_status::none, 'Unchanged chain marked changed');
+	$failed = new Symbol_Publication();
+	$failed->discovered($na);
+	try {
+		$failed->publish(['b' => $fb], $live);
+		throw new RuntimeException('Incomplete publication accepted');
+	} catch (LogicException) {}
+	verify($na->duplicate_element() === $nb && $nb->duplicate_element() === $nc, 'Failure changed live links');
+	Symbol_Publication::completed(['a' => $fa, 'c' => $fc], $live);
+	verify($identity->status === change_status::changed && $na->duplicate_element() === $nc
+		&& $nb->duplicate_element() === null, 'Middle removal left a stale chain');
+	Symbol_Publication::completed(['c' => $fc], $live);
+	verify($identity->declaration() === $nc && $na->duplicate_element() === null, 'Head removal did not redirect stable entry');
+	Symbol_Publication::completed($files, $live);
+	Symbol_Publication::completed(['a' => $fa, 'b' => $fb], $live);
+	verify($na->duplicate_element() === $nb && $nb->duplicate_element() === null, 'Tail removal left a stale chain');
+	Symbol_Publication::completed([], $live);
+	verify($identity->status === change_status::removed && $identity->declaration() === null
+		&& $na->duplicate_element() === null, 'Removed scope retained links');
+	Symbol_Publication::completed(['b' => $fb], $live);
+	verify($live->entry('func:shared') === $identity && $identity->declaration() === $nb, 'Reactivation replaced stable identity');
 	// Same publisher supports body-local and function declaration references, removal, and reactivation.
 	foreach ([$first, $first->body()->locals[0]] as $node) {
 		$target = new scope();

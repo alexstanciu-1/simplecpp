@@ -6,34 +6,31 @@ namespace scpp\compiler;
 /**
  * Reports every additional declaration without discarding syntax or selecting an ambiguous name.
  * Example: void ping() {} void ping() {} yields one error referring to the first ping.
- * File chains remain source-local; global candidates use their existing separate index.
+ * File diagnostics use syntax inventory; compilation diagnostics follow the declaring scope chain.
  */
 final class Declaration_Diagnostics
 {
 	/** Completed bodies are available now; diagnostics never prevent parsing later declarations. */
-	public static function file(array $heads /** array<string,ast_function_declaration> */): array /** list<diagnostic> */
+	public static function file(array $nodes /** list<ast_function_declaration> */): array /** list<diagnostic> */
 	{
 		$errors = [];
-		foreach ($heads as $head) {
-			for ($node = $head; $node !== null; $node = $node->duplicate_element()) {
-				if ($node !== $head) { $errors[] = self::duplicate($node, $head, 'function'); }
-				array_push($errors, ...self::locals($node->body()));
-			}
+		$first = [];
+		foreach ($nodes as $node) {
+			$key = $node->symbol_key();
+			if (isset($first[$key])) { $errors[] = self::duplicate($node, $first[$key], 'function'); }
+			else { $first[$key] = $node; }
+			array_push($errors, ...self::locals($node->body()));
 		}
 		return self::ordered($errors);
 	}
 
-	/** Reconcile all sources against one deterministic original, without relinking their local chains. */
+	/** Publication orders public declarations by source path and position for deterministic originals. */
 	public static function functions(scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = [];
-		foreach ($symbols->declarations as $candidates) {
-			if (count($candidates) < 2) { continue; }
-			usort($candidates, static function (ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ {
-				return strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start);
-			});
-			foreach ($candidates as $index => $candidate) {
-				if ($index !== 0) { $errors[] = self::duplicate($candidate, $candidates[0], 'function'); }
+		foreach ($symbols->declarations as $head) {
+			for ($node = $head->duplicate_element(); $node !== null; $node = $node->duplicate_element()) {
+				$errors[] = self::duplicate($node, $head, 'function');
 			}
 		}
 		return $errors;
@@ -43,9 +40,9 @@ final class Declaration_Diagnostics
 	public static function locals(ast_function_body $body): array /** list<diagnostic> */
 	{
 		$errors = [];
-		foreach ($body->scope->declarations as $candidates) {
-			foreach ($candidates as $index => $local) {
-				if ($index !== 0) { $errors[] = self::duplicate($local, $candidates[0], 'local'); }
+		foreach ($body->scope->declarations as $head) {
+			for ($local = $head->duplicate_element(); $local !== null; $local = $local->duplicate_element()) {
+				$errors[] = self::duplicate($local, $head, 'local');
 			}
 		}
 		return self::ordered($errors);

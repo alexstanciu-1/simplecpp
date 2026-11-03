@@ -9,24 +9,23 @@ interface declaration_sink
 	public function discovered(ast_declaration_interface $declaration): void;
 }
 
-/** Stable identity within one scope; candidate references retain duplicates without copying AST data. */
+/** Stable identity within one scope; one head reference retains error-only duplicates through the declaring scope chain. */
 final class symbol_entry
 {
 	public change_status $status = change_status::removed;
-	private array $candidates /** list<ast_declaration_interface> */ = [];
+	private ?ast_declaration_interface $head = null;
 
-	public function publish(array $candidates /** list<ast_declaration_interface> */): void
+	public function publish(?ast_declaration_interface $head, bool $changed = false): void
 	{
-		$old = $this->candidates;
-		$this->status = $candidates === [] ? change_status::removed
-			: ($old === [] ? change_status::added : ($old === $candidates ? change_status::none : change_status::changed));
-		$this->candidates = $candidates;
+		$this->status = $head === null ? change_status::removed
+			: ($this->head === null ? change_status::added : (($changed || $this->head !== $head) ? change_status::changed : change_status::none));
+		$this->head = $head;
 	}
 
 	public function declaration(): ?ast_declaration_interface
 	{
-		if (count($this->candidates) > 1) { throw new \RuntimeException('Ambiguous symbol'); }
-		return $this->candidates[0] ?? null;
+		if ($this->head?->duplicate_element() !== null) { throw new \RuntimeException('Ambiguous symbol'); }
+		return $this->head;
 	}
 }
 
@@ -35,7 +34,7 @@ final class scope
 {
 	/** Native non-owning lexical parent; null for a compilation or a detached file. No implicit parent lookup yet. */
 	public ?scope $parent;
-	public array $declarations /** array<string,list<ast_declaration_interface>>; published candidate index */ = [];
+	public array $declarations /** array<string,ast_declaration_interface>; published head references */ = [];
 	private array $entries /** array<string,symbol_entry>; stable identities including tombstones */ = [];
 
 	public function __construct(?scope $parent = null) { $this->parent = $parent; }
@@ -54,10 +53,5 @@ final class scope
 		return isset($this->entries[$key]) ? $this->entries[$key]->declaration() : null;
 	}
 
-	public function heads(): array /** array<string,ast_declaration_interface>; first candidate per published key */
-	{
-		$result = [];
-		foreach ($this->declarations as $key => $candidates) { $result[$key] = $candidates[0]; }
-		return $result;
-	}
+	public function heads(): array /** array<string,ast_declaration_interface> */ { return $this->declarations; }
 }

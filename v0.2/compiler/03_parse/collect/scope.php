@@ -3,43 +3,76 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** One collection/publication mechanism for every scope; syntax owners declare, aggregate indexes import references. */
+/** Collects an inventory of declarations, then publishes one head per key; only the declaring scope links duplicates. */
 final class Scope_Collection
 {
 	private readonly scope $scope;
-	private array $pending /** array<string,list<ast_declaration_interface>> */ = [];
-	private array $tails /** array<string,ast_declaration_interface>; declaration-chain tails owned by this collection */ = [];
+	private array $pending /** array<uint64,ast_declaration_interface>; object-ID inventory, many distinct declarations are valid */ = [];
 	private bool $published = false;
 
 	public function __construct(scope $scope) { $this->scope = $scope; }
 
-	/** New syntax in its owning scope: link duplicates without searching the existing chain. */
+	/** Register syntax without changing links visible to the previous compilation generation. */
 	public function declare(ast_declaration_interface $declaration): void
 	{
 		$this->require_open();
-		$key = $declaration->symbol_key();
-		if (isset($this->tails[$key])) { $this->tails[$key]->link_duplicate($declaration); }
-		$this->tails[$key] = $declaration;
-		$this->import($declaration);
+		$id = spl_object_id($declaration);
+		if (isset($this->pending[$id])) { throw new \LogicException('Declaration registered twice'); }
+		$this->pending[$id] = $declaration;
 	}
 
-	/** Aggregation of an existing declaration never changes the source-owned duplicate chain. */
-	public function import(ast_declaration_interface $declaration): void
+	/** Non-owning indexes collect the same references; publish_references() never rewrites duplicate links. */
+	public function import(ast_declaration_interface $declaration): void { $this->declare($declaration); }
+
+	public function inventory(): array /** array<uint64,ast_declaration_interface> */ { return $this->pending; }
+
+	/** Coordinator selects deterministic publication order without grouping declarations into per-key lists. */
+	public function order(callable $compare): void
 	{
 		$this->require_open();
-		$this->pending[$declaration->symbol_key()][] = $declaration;
+		uasort($this->pending, $compare);
 	}
 
-	public function candidates(): array /** array<string,list<ast_declaration_interface>> */ { return $this->pending; }
+	/** File indexes retain their own first reference, but do not own a second duplicate chain. */
+	public function publish_references(): scope { return $this->publish_index(null, false); }
 
-	/** Caller completes its syntax/IO validation before publishing. No semantic work occurs here. */
-	public function publish(?scope $previous = null): scope
+	/** After successful collection and the reader barrier, rebuild the declaring scope's chains in place. */
+	public function publish(?scope $previous = null): scope { return $this->publish_index($previous, true); }
+
+	private function publish_index(?scope $previous, bool $owns_duplicates): scope
 	{
 		$this->require_open();
 		$target = $previous ?? $this->scope;
-		foreach ($this->pending as $key => $candidates) { $target->entry($key); }
-		foreach ($target->entries() as $key => $entry) { $entry->publish($this->pending[$key] ?? []); }
-		$target->declarations = $this->pending;
+		$heads = [];
+		$expected = $target->declarations;
+		$changed = [];
+		// Compare the old chains before rewriting any link; no candidate lists or AST copies.
+		foreach ($this->pending as $node) {
+			$key = $node->symbol_key();
+			$heads[$key] ??= $node;
+			if (($expected[$key] ?? null) !== $node) { $changed[$key] = true; }
+			$expected[$key] = ($expected[$key] ?? null)?->duplicate_element();
+		}
+		foreach ($expected as $key => $node) { if ($node !== null) { $changed[$key] = true; } }
+		if ($owns_duplicates) {
+			// Retired syntax keeps its body, but not a historical duplicate-chain snapshot.
+			foreach ($target->declarations as $head) {
+				for ($node = $head; $node !== null; $node = $next) {
+					$next = $node->duplicate_element();
+					$node->clear_duplicate();
+				}
+			}
+			foreach ($this->pending as $node) { $node->clear_duplicate(); }
+			$tails = [];
+			foreach ($this->pending as $node) {
+				$key = $node->symbol_key();
+				if (isset($tails[$key])) { $tails[$key]->link_duplicate($node); }
+				$tails[$key] = $node;
+			}
+		}
+		foreach ($heads as $key => $head) { $target->entry($key); }
+		foreach ($target->entries() as $key => $entry) { $entry->publish($heads[$key] ?? null, isset($changed[$key])); }
+		$target->declarations = $heads;
 		$this->published = true;
 		return $target;
 	}

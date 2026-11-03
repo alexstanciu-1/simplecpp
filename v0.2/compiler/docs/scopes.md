@@ -19,8 +19,9 @@ ast_function_body.scope
 All three use the same `scope`, `symbol_entry` and `Scope_Collection` types. File
 scopes index functions, including the private implicit main. Body scopes index
 local declarations using `var:name`; the compilation scope indexes exported
-functions using `func:name`. Keys belong to the declaration interface. Stable entries
-hold only references to candidate declarations and their general change status.
+functions using `func:name`. Keys belong to the declaration interface. Stable entries hold one head reference and their general change status. A successor
+in the declaring scope duplicate chain means ambiguity. File scopes are reference
+indexes, not owners of a second function duplicate chain.
 
 `scope.entry()` creates an identity only in that scope. `scope.resolve()` searches
 only that scope. The parent field records containment without introducing implicit
@@ -30,6 +31,8 @@ scopes retain identity; the stable compilation scope is updated in place.
 
 The AST still owns declarations/statements. `ast_file_node.declarations` remains a
 head-reference view, with private main first, for existing traversal/inspection.
+The ordered `ast_file_node.declaration_nodes` inventory retains all file syntax,
+including duplicates; file traversal never follows a compilation chain into another file.
 Body `locals` retains statement-position references and IDs; `references` retains
 name occurrences. These are indexes, not copies of declarations or another symbol
 namespace. Preparation's `visible_locals` is its source-order visibility index:
@@ -37,29 +40,34 @@ collecting a declaration does not make a forward variable reference legal.
 
 ## One collection and publication worker
 
-`Scope_Collection` owns pending candidates and publishes them into a scope:
+`Scope_Collection` temporarily inventories declarations by object identity. This
+inventory contains many valid distinct declarations; there is no per-name candidate list.
 
-- `declare(node)` registers newly parsed syntax and links same-key duplicates
-  belonging to that syntax scope.
-- `import(node)` registers an existing declaration reference without relinking
-  its source-owned duplicate chain.
-- `publish(previous?)` installs candidates and updates stable entries. A missing
-  key leaves a removed entry; reappearance reactivates it. Nothing becomes visible
-  in the destination until publication.
+- `declare(node)` / `import(node)` register references without mutating live links.
+- `publish_references()` installs first references for a non-owning file index.
+- `publish(previous?)` compares old chains, clears retired links, rebuilds declaring
+  scope chains, and updates stable entries. Missing keys keep removed entries;
+  reappearance reactivates them. No live link changes before publication.
 
-The parser uses this worker for file functions. `Body_Collection` records body
-statement metadata and delegates local declarations to this same worker; it no
-longer implements name grouping or duplicate-chain publication itself.
-`Symbol_Publication` remains the compilation coordinator: it checks that discoveries
-belong to completed source files, selects public functions under current language
-rules, and delegates aggregation/publication to `Scope_Collection`. It contains no
-second implementation of entry updates. The normal path still supports early
-header notifications; the incremental path imports completed/reused declarations.
+Body collection publishes local-variable chains. The parser publishes only file
+references and retains syntax order independently. File-only duplicate diagnostics
+use that inventory without claiming ownership of public function chains.
+`Symbol_Publication` checks discoveries against completed files and sorts references
+by source path/position. Only after every source and IO check succeeds does it
+publish public function chains. The private implicit main remains file-only.
 
-Declaration completion and source IO checks precede live compilation publication.
-Duplicate diagnostics retain all declarations, and imports never mutate reused
-source chains. Signature-change comparison belongs to `function_dependencies`, not
-to generic symbol entries or scope collection.
+Old sessions retain syntax and tokens, not historical duplicate-link snapshots.
+On incremental publication, reused nodes may acquire different successors. File
+traversal remains valid because it uses its own syntax inventory. A failed parse or
+completeness check cannot change published links. Native readers must finish before
+relinking; PHP remains sequential.
+
+The function dependency role takes a temporary per-key signature/ambiguity snapshot
+before relinking, then notifies affected observers afterward. Generic symbol status
+compares the whole chain identity, so changing only a duplicate tail is still a change.
+
+See [singular relationships and erroneous duplicates](singular_duplicates.md) for the
+project-wide rule and follow-up inventory.
 
 ## Compilation state stays outside scopes
 

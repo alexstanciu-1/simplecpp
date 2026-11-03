@@ -15,12 +15,14 @@ final class function_dependencies
 		$this->targets = new \SplObjectStorage();
 	}
 
-	/** This role compares function signatures, independently of generic scope publication. */
-	public static function contract_changed(array $old /** list<ast_function_declaration> */, array $current /** list<ast_function_declaration> */): bool
+	/** Ephemeral signature snapshot across chain publication; no AST copies or retained candidate lists. */
+	public static function contracts(scope $scope): array /** array<string,?string>; null means ambiguous, absent key means missing */
 	{
-		return count($old) !== count($current)
-			|| ((count($old) === 1) && ($old[0]->return_type_name !== $current[0]->return_type_name))
-			|| ((count($old) > 1) && ($old !== $current));
+		$contracts = [];
+		foreach ($scope->declarations as $key => $head) {
+			$contracts[$key] = $head->duplicate_element() === null ? $head->return_type_name : null;
+		}
+		return $contracts;
 	}
 
 	public function observe(symbol_entry $target, ast_function_body $body): void

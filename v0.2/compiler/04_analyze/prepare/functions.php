@@ -34,9 +34,8 @@ final class Function_Preparation
 	{
 		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::functions($symbols));
 		if ($errors !== []) { throw new diagnostic_group($errors); }
-		foreach ($symbols->declarations as $candidates)
+		foreach ($symbols->declarations as $declaration)
 		{
-			$declaration = $candidates[0];
 			$type = $declaration->return_type_name;
 			if ($type !== 'void') {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()), 'Only explicit void functions are supported');

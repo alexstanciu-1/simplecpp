@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /**
- * File root owns the token generation and the sole keyed declaration collection.
+ * File root owns tokens and the ordered syntax inventory; its keyed indexes only reference declarations.
  *
  * PHP-flavor file:
  * ```text
@@ -38,6 +38,7 @@ final class ast_file_node extends ast_node
 	}
 	/** All duplicate declarations found in this completed source; syntax failures still throw. */
 	public readonly array $diagnostics /** list<diagnostic> */;
+	public readonly array $declaration_nodes /** list<ast_function_declaration>; syntax inventory independent of live duplicate chains */;
 	public readonly array $declarations /** array<string,ast_function_declaration>; func:name -> node */;
 
 	public function __construct(token_list $tokens)
@@ -48,36 +49,24 @@ final class ast_file_node extends ast_node
 		$this->scope = new scope();
 	}
 
-	/** Publish completed declarations once; their root links were assigned before discovery. */
-	public function complete(array $declarations /** array<string,ast_function_declaration>; chain heads */,
-		array $diagnostics /** list<diagnostic> */ = []): void
+	/** Retain complete syntax once; file indexes never walk compilation-owned duplicate chains. */
+	public function complete(array $declarations /** array<string,ast_function_declaration>; first references */,
+		array $nodes /** list<ast_function_declaration> */, array $diagnostics /** list<diagnostic> */ = []): void
 	{
-		foreach ($declarations as $key => $head) {
-			for ($declaration = $head; $declaration !== null; $declaration = $declaration->duplicate_element()) {
-				if (($key !== 'func:' . $declaration->declaration_key()) || ($declaration->parent !== $this)) {
-					throw new \LogicException('Invalid AST declaration ownership');
-				}
-				$declaration->body();
-			}
+		foreach ($nodes as $declaration) {
+			if ($declaration->parent !== $this) { throw new \LogicException('Invalid AST declaration ownership'); }
+			$declaration->body();
 		}
 		$this->declarations = $declarations;
+		$this->declaration_nodes = $nodes;
 		$this->diagnostics = $diagnostics;
 	}
 
-	/** Transient view of public function nodes; the keyed declaration map remains their sole owner. */
+	/** Source-local public functions in syntax order, including invalid duplicates; never follows foreign chains. */
 	public function functions(): array /** list<ast_function_declaration> */
 	{
 		$functions = [];
-		$duplicates = false;
-		foreach ($this->declarations as $head) {
-			for ($node = $head; $node !== null; $node = $node->duplicate_element()) {
-				if (!$node->is_private) { $functions[] = $node; }
-				$duplicates = $duplicates || ($node !== $head);
-			}
-		}
-		if ($duplicates) {
-			usort($functions, static fn(ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ => $a->start <=> $b->start);
-		}
+		foreach ($this->declaration_nodes as $node) { if (!$node->is_private) { $functions[] = $node; } }
 		return $functions;
 	}
 
