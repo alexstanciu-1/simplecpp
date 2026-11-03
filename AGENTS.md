@@ -98,6 +98,10 @@ When working under `compiler/my-try/`, also read and follow
 
 ## Singular relationships and erroneous duplicates
 
+This rule and its similar-case review apply to active `v0.2` code only.
+Mined structures are reference material and must be discussed with the user before
+adoption into `v0.2`; mining does not authorize copying their design.
+
 When a property or per-key slot has zero or one element in a valid program, and
 multiple elements are necessarily an error, represent it as one nullable reference.
 Retain invalid additional elements through `duplicate_element` (or the equivalent

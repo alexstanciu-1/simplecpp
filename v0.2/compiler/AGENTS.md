@@ -41,6 +41,8 @@ records the current language-flavor and parser boundaries.
   analysis; this does not claim profile loading or enforcement already exists.
 - Mine `compiler/my-try/` and `compiler/my-try-cpp/` for reviewed concepts and
   useful proofs. Their implementations are evidence, not semantic authority.
+  Discuss mined structures with the user before adopting their ownership or
+  representation into `v0.2`; mining alone does not authorize adoption.
   Do not copy their historical work queues, branch instructions or infrastructure.
 - Preserve unrelated work. Keep changes within the agreed ownership area;
   discuss a newly discovered cross-owner redesign rather than silently adding

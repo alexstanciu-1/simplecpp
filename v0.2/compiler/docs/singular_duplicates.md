@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+This pattern and review apply to active `v0.2` code.
+
 If a property or per-key slot has zero or one element in valid code, and multiple
 elements are necessarily erroneous, store one nullable reference. Preserve extra
 invalid elements through a typed `duplicate_element` chain. Do not allocate a
@@ -37,24 +39,29 @@ the inspection boundary; they are not the compiler's retained representation.
 
 ## Similar-case review
 
-This is a targeted source review, not a claim to have proved every collection in
-all historical subsystems. The following are follow-up candidates, not authorized
-cross-subsystem refactors:
+This review covers active `v0.2` code only. The identified error-only candidate
+lists have been converted; no additional clear conversion was identified among
+the reviewed collections. This is a targeted review, not an exhaustive audit.
 
-| Location | Assessment |
+| Location in v0.2 | Assessment |
 | --- | --- |
-| `compiler/my-try/03_parse/scopes/structures.php`: `variables`, `types`, `constants` backed by `Key_Storage_List` | Same-name uniqueness pools are candidates. Review aliases and live/tombstone ownership before migrating. |
-| Same donor: `functions`, `methods`, `runtime_functions`, `imports` | Conditional candidates only. Overloads or multiple imports can be legitimate; establish semantic uniqueness first. |
-| `compiler/my-try/04_analyze/prepare/data/structures.php`: `preparation_lookup.candidates` | Mixed lookup roles. Unique property/type/constant resolution could use the pattern; callable overload candidate sets cannot be converted mechanically. |
-| `generators/php/src/Stan/StanDiagnosticCollector.php`: `collectDuplicateDiagnostics()` per-key buckets | A direct error-only multiplicity example. Its records/report format use arrays rather than AST identities, so an owner-level change is needed before using intrusive links. |
-| `generators/php/src/Stan/StanDependencyResolver.php`: `buildResolutionLookup()` | Review exact qualified keys separately. Short-name search buckets can legitimately contain unrelated scoped declarations and need a collection. |
-| `v0.2/tools/compiler_panel/report.php` | Updated to traverse the live chain. Lists are materialized only to preserve the inspection JSON shape. |
+| `compiler/03_parse/collect/structures.php`: `symbol_entry`, `scope.declarations` | Converted to one nullable head per entry and one head reference per key. |
+| `compiler/03_parse/collect/scope.php`: pending inventory and publication indexes | No per-name candidate lists remain. The flat inventory legitimately contains many distinct declarations. |
+| `compiler/03_parse/structures/source.php`: file declaration inventory | Retain the collection: a file can validly contain many declarations. Traversal must remain independent of live duplicate chains. |
+| `compiler/03_parse/structures/functions.php`: statements, locals, references | Retain collections: multiple statements, local declarations and reference occurrences are valid. |
+| `compiler/04_analyze/prepare/dependencies.php`: observers and targets | Retain sets: a symbol can have many observers and a body can depend on many symbols. |
+| Source/module inventories, diagnostics and backend output units | Retain collections: multiple entries are valid. |
+| `tools/compiler_panel/report.php` | Traverses the live chain; lists are materialized only to preserve inspection JSON. |
 
-Current compiler collections intentionally retained: syntax statements/declarations,
-function lists across a file, reference occurrences, diagnostic lists, source/module
-inventories, dependency/observer sets and backend output units. Multiple entries in
-these collections are valid. Existing singular fields such as a declaration's type
-or a call's symbol already use one nullable reference.
+Existing singular fields such as a declaration's type or a call's symbol already
+use one nullable reference.
+
+## Mined structures
+
+Structures mined from `my-try`, `my-try-cpp` or other implementations are reference
+material. Discuss their purpose, ownership and representation with the user before
+adopting them into `v0.2`. Mining does not authorize copying their structures or
+adding functionality. Donor subsystems are outside this review's scope.
 
 Apply the rule in reviews and future development. Do not alter copied historical
 samples/generated output to enforce it. Do not replace a general collection utility
