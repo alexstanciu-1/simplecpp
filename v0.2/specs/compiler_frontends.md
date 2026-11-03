@@ -111,8 +111,8 @@ See [retained parser ideas](../compiler/docs/parser_migration_notes.md).
 
 `03_parse/flavors/` owns flavor-specific declaration and assignment grammar.
 Shared parsing machinery owns cursors, named type syntax, integer/name values and
-complete-file publication. Each completed statement is recorded by a source-local
-`Symbol_Collector` during parsing; `Parser::parse()` publishes syntax and collection
+complete-file publication. Each completed statement is recorded by `Body_Collection` for source-order indexes;
+its declarations use the same `Scope_Collection` publisher as file and compilation scopes. `Parser::parse()` publishes syntax and collection
 together in one `ast_file_node`. Collection preserves occurrences without resolving
 names or granting forward visibility. There is no later collection traversal.
 Typed AST records retain source intent without resolved
@@ -179,7 +179,9 @@ and resolved `return_type_def`. Resolution is checked before consumers can read
 these facts. The current implementation resolves builtin int/int64 to one canonical
 int64 definition and void to its own definition; it does not add inference or types.
 
-Function calls retain direct links to settled function declarations. Local indexes
+Function calls retain stable symbol entries resolving to current function declarations.
+Function existence/signature dependencies invalidate observing body caches; see the
+[stable-symbol implementation guide](../compiler/docs/stable_symbols.md). Local indexes
 and variable bindings reference local declaration nodes directly. The declaration
 phase completes before any body uses foreign signature facts. Reset/reanalysis is
 sequential; old handles are not independent snapshots of declaration-owned facts.

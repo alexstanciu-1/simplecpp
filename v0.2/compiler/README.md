@@ -15,6 +15,10 @@ The compiler runs sequentially using ordinary `php`; NTS and ZTS builds are both
 supported, and no Parallel extension is required. See [execution guidance](docs/execution.md)
 for tool selection, the current flow and retained MT experiment evidence.
 
+See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
+See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
+in-process incremental preparation API and its lowering boundary.
+
 ## Persistent app-local frontend
 
 ```sh

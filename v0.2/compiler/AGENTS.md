@@ -64,8 +64,15 @@ or source-level reuse. See the module guide for the change-detection boundary.
 
 Read [incremental frontend generations](docs/incremental_frontend.md) before changing
 frontend reuse. Unchanged AST/token objects are shared between retained sessions;
-never mutate their duplicate chains or prepared facts during frontend/index updates.
-Symbol handles are canonical string keys resolved through the selected publication.
+never mutate their duplicate chains. Stable symbols are live identities keyed by canonical
+strings; publication may invalidate observing body caches after successful collection.
+Read [stable symbols and preparation caches](docs/stable_symbols.md) before changing
+publication or preparation. Old sessions retain syntax, not historical symbol/fact snapshots.
+
+Read [common scopes](docs/scopes.md) before changing declaration collection or
+publication. Compilation, file and body scopes share `Scope_Collection`; body
+statement/reference indexes do not constitute another symbol collector. Keep
+lookup policy separate; no parent lookup or new grammar is implied by scope parents.
 
 ## Data and processing ownership
 
@@ -111,8 +118,8 @@ rejection paths; do not invent widths or annotate ordinary locals mechanically.
   genuine absence is explicit. Non-owning intent alone does not imply nullability.
 - Prefix all AST subclasses with `ast_`. Names and optional written type names
   live directly on their owning declarations. Resolved type definitions live in
-  protected declaration fields with checked accessors. Calls link to function
-  declarations; symbol indexes do not introduce identity wrappers. Introduce a
+  protected declaration fields with checked accessors. Calls retain stable symbol entries resolving to current function
+  declarations; entries carry no copied signatures or bodies. Introduce a
   specialized preparation record only for additional semantic data, not a repeated
   identity/type. Declaration traits share data/local invariants, not analysis policy.
 - AST nodes inherit token-based `[start, end)` positions and one syntax-parent
@@ -130,6 +137,12 @@ backend change-consumption protocols are not implemented requirements of this
 slice. Introduce such mechanisms only with their owning stage and a concrete need.
 
 ## Validation and documentation
+
+For future work, record observable API retries and any request or unexplained
+between-tool interval longer than four minutes. Separate command/test/native-build
+time from model/API intervals using available timestamps. Treat network/API delay
+as a hypothesis unless telemetry confirms it; a between-tool gap is not proof of
+a slow API call. Do not claim retry or network timings that the logs do not expose.
 
 Use the focused commands in [README.md](README.md) for affected behavior. PHP
 checks do not prove native portability. Do not automatically run donor conversion,

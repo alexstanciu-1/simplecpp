@@ -22,7 +22,7 @@ final class Program_Frontend
 	/** Rebuild all source results; this establishes no incremental reuse or module visibility policy. */
 	private function run(compilation_session $session, entry_target $target, \Closure $load): prepared_program
 	{
-		if ($session->symbols !== null) {
+		if ($session->scope !== null) {
 			throw new \LogicException('Incremental frontend publications cannot be prepared in place yet');
 		}
 		$units = array_filter($session->units(), static fn(source_unit $unit): bool => $unit->module->type === 'default');

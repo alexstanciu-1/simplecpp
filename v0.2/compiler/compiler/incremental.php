@@ -12,7 +12,7 @@ final class Incremental_Frontend
 	/** A null previous generation is the normal first/full frontend build: every source is added. */
 	public function collect(compilation_session $candidate, ?compilation_session $previous = null): compilation_session
 	{
-		if (($candidate === $previous) || ($candidate->symbols !== null) || ($candidate->previous !== null)) {
+		if (($candidate === $previous) || ($candidate->scope !== null) || ($candidate->previous !== null)) {
 			throw new \LogicException('Incremental frontend requires a fresh candidate session');
 		}
 		$old = [];
@@ -25,8 +25,8 @@ final class Incremental_Frontend
 				throw new \LogicException('Candidate source units must be fresh; reuse occurs at the AST root');
 			}
 		}
-		if (($previous !== null) && ($previous->symbols === null)) {
-			throw new \LogicException('Previous frontend generation is incomplete');
+		if (($previous !== null) && (($previous->scope === null) || !$previous->is_current)) {
+			throw new \LogicException('Previous frontend generation must be complete and current');
 		}
 		$candidate->previous = $previous;
 		$candidate->removed_sources = [];
@@ -71,7 +71,9 @@ final class Incremental_Frontend
 				}
 				$files[$candidate->source_key($unit)] = $unit->ast;
 			}
-			$candidate->symbols = Symbol_Publication::completed($files);
+			if ($previous !== null) { $candidate->function_dependencies = $previous->function_dependencies; }
+			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->function_dependencies);
+			if ($previous !== null) { $previous->is_current = false; }
 			return $candidate;
 		}
 		catch (\Throwable $error)
@@ -79,7 +81,7 @@ final class Incremental_Frontend
 			foreach ($units as $unit) {
 				$unit->ast = null;
 			}
-			$candidate->symbols = null;
+			$candidate->scope = null;
 			$candidate->removed_sources = [];
 			throw $error;
 		}

@@ -26,7 +26,7 @@ final class Exit_Preparation
  */
 final class Preparation
 {
-	private array $locals /** array<string,ast_local_declaration> */ = [];
+	private array $visible_locals /** array<string,ast_local_declaration>; source-order visibility index, not a declaration collector */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -38,31 +38,32 @@ final class Preparation
 	}
 
 	/** Prepare only the selected executable body, consuming already settled callable contracts. */
-	public function entry(ast_file_node $file, entry_target $target, array $callables /** array<string,ast_function_declaration> */): void
+	public function entry(ast_file_node $file, entry_target $target, scope $symbols): void
 	{
 		$source = $file->tokens->source;
 		$main = $file->main();
 		if ($main === null) {
 			throw new diagnostic($source, strlen($source->content), 'Entry slice requires an explicit value return');
 		}
-		$this->function_body($main->body(), $callables, $target);
+		$this->function_body($main->body(), $symbols, $target);
 	}
 
-	public function function_body(ast_function_body $syntax, array $callables /** array<string,ast_function_declaration> */, ?entry_target $target = null): void
+	public function function_body(ast_function_body $syntax, scope $symbols, ?entry_target $target = null, ?function_dependencies $dependencies = null): void
 	{
+		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
 		$errors = Declaration_Diagnostics::locals($syntax);
 		if ($errors !== []) { throw new diagnostic_group($errors); }
 		$this->body($syntax->statements, $syntax->source(),
-			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target, $callables);
-		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups);
+			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target, $symbols, $syntax, $dependencies);
+		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups, $target);
 	}
 
 	/** One source-order body traversal; null exit target denotes a void function, never inferred return typing. */
 	private function body(array $syntax /** list<ast_statement> */,
-		source_file $source, int $end /** uint32 */, ?entry_target $target, array $callables /** array<string,ast_function_declaration> */): void
+		source_file $source, int $end /** uint32 */, ?entry_target $target, scope $symbols, ast_function_body $owner, ?function_dependencies $dependencies): void
 	{
-		$this->locals = [];
+		$this->visible_locals = [];
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
@@ -90,11 +91,13 @@ final class Preparation
 			elseif ($statement instanceof ast_call_statement)
 			{
 				$this->name_lookups++;
-				$function = $callables[$statement->name] ?? null;
+				$symbol = $symbols->entry($statement->symbol_key());
+				$dependencies?->observe($symbol, $owner);
+				$function = $symbol->declaration();
 				if ($function === null) {
 					throw new diagnostic($source, $statement->byte_start(), 'Unknown function: ' . $statement->name);
 				}
-				$statement->settle_function($function);
+				$statement->settle_function($symbol);
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
@@ -127,7 +130,7 @@ final class Preparation
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
 		$root = $declaration->root();
-		if (isset($this->locals[$name])) {
+		if (isset($this->visible_locals[$name])) {
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()), 'Duplicate local: ' . $name);
 		}
 		if ($declaration->type_name === null) {
@@ -140,7 +143,7 @@ final class Preparation
 		}
 		$this->value($declaration->initializer, $name);
 		$declaration->settle_type(type_definition::int64, $declaration->initializer->constant());
-		$this->locals[$name] = $declaration;
+		$this->visible_locals[$name] = $declaration;
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
@@ -159,7 +162,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Cannot read local during its initialization: ' . $name);
 			}
-			$binding = $this->locals[$name] ?? null;
+			$binding = $this->visible_locals[$name] ?? null;
 			if ($binding === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Unknown or not-yet-initialized local: ' . $name);

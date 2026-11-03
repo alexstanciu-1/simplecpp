@@ -18,7 +18,9 @@ require_once __DIR__ . '/03_parse/structures/source.php';
 require_once __DIR__ . '/03_parse/structures/common.php';
 require_once __DIR__ . '/03_parse/structures/functions.php';
 require_once __DIR__ . '/03_parse/structures/output.php';
+require_once __DIR__ . '/04_analyze/prepare/dependencies.php';
 require_once __DIR__ . '/03_parse/collect/structures.php';
+require_once __DIR__ . '/03_parse/collect/scope.php';
 require_once __DIR__ . '/03_parse/collect/collect.php';
 require_once __DIR__ . '/03_parse/collect/diagnostics.php';
 require_once __DIR__ . '/compiler/symbols.php';
@@ -48,3 +50,5 @@ require_once __DIR__ . '/05_backend/cpp/structures.php';
 require_once __DIR__ . '/05_backend/cpp/program.php';
 require_once __DIR__ . '/05_backend/cpp/bundle.php';
 require_once __DIR__ . '/compiler/project.php';
+
+require_once __DIR__ . '/04_analyze/prepare/incremental.php';

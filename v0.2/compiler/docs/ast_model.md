@@ -64,7 +64,7 @@ A local owns `type_name` and `type_def`; a function owns `return_type_name` and
 unknown after successful preparation. Current missing-type inference remains
 unsupported. Checked accessors reject premature fact reads.
 
-Calls link directly to settled function declarations; variable references link to
+Calls retain stable symbol entries resolving to current function declarations; variable references link to
 local declarations; type links identify canonical definitions. Do not introduce
 wrappers that merely repeat those identities. A compound fact record is justified
 when it holds substantial additional data owned by a node, not simply because a
@@ -104,9 +104,10 @@ lowering. Review concrete shared lowering needs individually. PHP remains sequen
 do not restore worker transports or shared-object emulation. Thread safety is a
 future native design obligation, not a property proven by this PHP implementation.
 
-Reset affected facts before reanalysis. Declaration links refer to the same objects,
-so old handles are not immutable snapshots across reset. Incremental identity,
-retokenization and concurrent reader retirement remain deferred until their slice.
+Reset affected facts before reanalysis. Stable function entries resolve current
+declarations; old sessions retain syntax, not immutable prepared-state snapshots.
+Incremental frontend reuse and function-body cache invalidation are implemented.
+Incremental lowering and concurrent reader retirement remain deferred.
 
 ## Review and evidence
 
@@ -122,3 +123,5 @@ snapshot by reference. Each generation owns its own global candidate index. See
 [incremental frontend generations](incremental_frontend.md); preparation of shared
 roots is not part of that slice. Function keys use `func:name`; `symbol_key()` derives
 them without a slot/key/status record.
+
+Function identity and incremental cache lifetimes follow [stable symbols](stable_symbols.md).

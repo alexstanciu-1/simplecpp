@@ -16,6 +16,7 @@ namespace scpp\compiler;
 final class ast_file_node extends ast_node
 {
 	public readonly token_list $tokens;
+	public readonly scope $scope;
 	/** Preparation run identity; invalidates old emission handles even if reanalysis later succeeds. */
 	private int $preparation_revision /** uint32 */ = 0;
 	private bool $prepared = false;
@@ -44,6 +45,7 @@ final class ast_file_node extends ast_node
 		parent::__construct(0, count($tokens->tokens));
 		$this->parent = null;
 		$this->tokens = $tokens;
+		$this->scope = new scope();
 	}
 
 	/** Publish completed declarations once; their root links were assigned before discovery. */

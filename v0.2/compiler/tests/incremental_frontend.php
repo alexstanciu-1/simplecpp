@@ -45,9 +45,9 @@ namespace {
 			$call = $main->main()->body()->statements[0];
 			$key = $call->symbol_key();
 			verify($key === 'func:helper', 'Call handle is not canonical');
-			$initial_helper = $first->symbols->resolve($key);
+			$initial_helper = $first->scope->resolve($key);
 			verify($initial_helper->symbol_key() === $key, 'Declaration handle mismatch');
-			verify($first->symbols->resolve('helper') === null && $first->symbols->resolve('func:main') === null, 'Index leaked local/private keys');
+			verify($first->scope->resolve('helper') === null && $first->scope->resolve('func:main') === null, 'Index leaked local/private keys');
 			try {
 				$initial_helper->return_type_def();
 				throw new RuntimeException('Frontend performed preparation');
@@ -60,30 +60,31 @@ namespace {
 			verify($second->entry->sources[$main_name]->ast === $main, 'Unchanged AST copied or reparsed');
 			verify($second->entry->sources[$main_name]->ast->tokens === $main->tokens, 'Unchanged tokens copied');
 			verify($GLOBALS['reads'][$main_path] === 1 && $GLOBALS['reads'][$helper_path] === 1, 'Unchanged source read again');
-			verify($second->symbols->resolve($key) === $initial_helper, 'Unchanged declaration copied');
+			verify($second->scope->resolve($key) === $initial_helper, 'Unchanged declaration copied');
 			verify($first->entry->sources[$main_name]->status === change_status::added, 'Previous status mutated');
 			file_put_contents($helper_path, $declaration . ' // changed');
 			$third = $compiler->frontend($app, $second);
 			verify($third->entry->sources[$helper_name]->status === change_status::changed, 'Changed status');
-			verify($third->symbols->resolve($key) !== $initial_helper, 'Changed declaration retained old destination');
+			verify($third->scope->resolve($key) !== $initial_helper, 'Changed declaration retained old destination');
 			verify($third->entry->sources[$main_name]->ast === $main && $GLOBALS['reads'][$main_path] === 1, 'Dependent caller reparsed');
-			verify($second->symbols->resolve($key) === $initial_helper, 'Previous index changed');
+			verify($second->scope === $third->scope && $second->scope->resolve($key) === $third->scope->resolve($key), 'Stable index was replaced');
 			verify($second->entry->sources[$helper_name]->ast->tokens->source->content === $declaration, 'Previous content overwritten');
 			$moved_path = $app . '/moved.' . $flavor;
 			rename($helper_path, $moved_path);
 			$moved = $compiler->frontend($app, $third);
 			verify(count($moved->removed_sources) === 1 && $moved->removed_sources[0]->status === change_status::removed, 'Removal not retained');
 			verify($moved->removed_sources[0]->ast === $third->entry->sources[$helper_name]->ast, 'Removed AST copied/lost');
-			verify($moved->symbols->resolve($key)->root() === $moved->entry->sources[basename($moved_path)]->ast, 'Move did not redirect key');
+			verify($moved->scope->resolve($key)->root() === $moved->entry->sources[basename($moved_path)]->ast, 'Move did not redirect key');
+			$moved_declaration = $moved->scope->resolve($key);
 			$duplicate_path = $app . '/duplicate.' . $flavor;
 			file_put_contents($duplicate_path, $declaration . ' ' . $declaration);
 			$ambiguous = $compiler->frontend($app, $moved);
-			verify(count($ambiguous->symbols->declarations[$key]) === 3, 'Global duplicate candidates lost');
+			verify(count($ambiguous->scope->declarations[$key]) === 3, 'Global duplicate candidates lost');
 			$head = $ambiguous->entry->sources[basename($duplicate_path)]->ast->declarations[$key];
 			verify($head->duplicate_element() !== null, 'File-local duplicate chain lost');
-			verify($moved->symbols->resolve($key)->duplicate_element() === null, 'Global duplicate chain mutated old AST');
+			verify($moved_declaration->duplicate_element() === null, 'Global duplicate chain mutated old AST');
 			try {
-				$ambiguous->symbols->resolve($key);
+				$ambiguous->scope->resolve($key);
 				throw new LogicException('Ambiguous key resolved');
 			}
 			catch (RuntimeException $expected) {
@@ -95,7 +96,7 @@ namespace {
 			unlink($duplicate_path);
 			unlink($moved_path);
 			$removed = $compiler->frontend($app, $again);
-			verify($removed->symbols->resolve($key) === null && count($removed->removed_sources) === 2, 'Removed symbol still resolves');
+			verify($removed->scope->resolve($key) === null && count($removed->removed_sources) === 2, 'Removed symbol still resolves');
 			verify($removed->entry->sources[$main_name]->ast === $main, 'Unresolved call caused frontend mutation');
 			$failure_path = $app . '/zbad.' . $flavor;
 			file_put_contents($failure_path, 'this is invalid syntax');
@@ -105,11 +106,11 @@ namespace {
 			}
 			catch (RuntimeException $expected) {
 			}
-			verify($removed->symbols->resolve($key) === null && $removed->entry->sources[$main_name]->ast === $main, 'Failed candidate damaged prior publication');
+			verify($removed->scope->resolve($key) === null && $removed->entry->sources[$main_name]->ast === $main, 'Failed candidate damaged prior publication');
 			unlink($failure_path);
 			file_put_contents($helper_path, $declaration);
 			$retry = $compiler->frontend($app, $removed);
-			verify($retry->symbols->resolve($key) !== null && $retry->entry->sources[$main_name]->ast === $main, 'Retry/reappearance failed');
+			verify($retry->scope->resolve($key) !== null && $retry->entry->sources[$main_name]->ast === $main, 'Retry/reappearance failed');
 			try {
 				(new Program_Frontend())->prepare($retry, new entry_target(31));
 				throw new RuntimeException('Shared frontend generation entered preparation');
@@ -119,7 +120,7 @@ namespace {
 			}
 			$cold = $compiler->frontend($app);
 			verify($cold->entry->sources[$main_name]->status === change_status::added && $cold->entry->sources[$main_name]->ast !== $main, 'Full frontend path did not start fresh');
-			verify(array_keys($cold->symbols->declarations) === array_keys($retry->symbols->declarations), 'Incremental symbols differ from clean collection');
+			verify(array_keys($cold->scope->declarations) === array_keys($retry->scope->declarations), 'Incremental symbols differ from clean collection');
 		}
 	}
 	finally

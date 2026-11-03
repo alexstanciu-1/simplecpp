@@ -9,7 +9,7 @@ indexing. It does not perform semantic preparation, lowering or native emission.
 $compiler = new Project_Compiler();
 $current = $compiler->frontend($application_directory);
 $current = $compiler->frontend($application_directory, $current);
-$declaration = $current->symbols->resolve('func:helper');
+$declaration = $current->scope->resolve('func:helper');
 ```
 
 An optional third argument identifies the output directory to exclude during
@@ -37,9 +37,9 @@ requests a clean/full frontend generation through the same method.
 
 `compilation_session.previous` retains the prior generation. `removed_sources`
 contains removed records without modifying previous source statuses. No tokens,
-content buffers or AST nodes are copied. `symbols` remains null until every file
+content buffers or AST nodes are copied. `scope` remains null until every file
 has completed and the final source metadata check passes. A thrown parse/IO error
-leaves the prior session/index intact; the caller retries against that publication.
+leaves the current session/index intact; the caller retries against that publication.
 Duplicate declarations are retained for analysis and do not abort frontend publication.
 
 Each published session has its own index; unchanged ASTs may be referenced by several
@@ -47,36 +47,33 @@ sessions. Session history is retained while those links remain; automatic retire
 and native lifetime/concurrency mechanisms are deferred. This is not proof of native
 thread safety or a promise of bounded retained history.
 
-## String handles and duplicates
+## Stable symbols and duplicates
 
-`global_symbols.declarations` maps canonical keys such as `func:helper` to declaration
-candidates. `resolve($key)` returns one declaration, null for absence, or throws for
-ambiguity. Currently only functions are supported; class/namespace features are not
-introduced. Function declarations and call statements provide `symbol_key()`.
-There are no numeric IDs, slot objects, stored slot keys or stored symbol statuses.
+Canonical keys such as `func:helper` now identify stable `symbol_entry` objects.
+`resolve($key)` still returns the current declaration, null for absence, or throws
+for ambiguity. Removed entries remain and are reactivated if the key reappears.
+Previous sessions share the current symbol publication; old AST syntax remains
+retained, but symbol lookup is no longer historical. Only the current session may
+be used as an incremental baseline or prepared against this live index.
 
-Clients resolve a retained string key through the current session's index. Moving
-or replacing a declaration changes that lookup's destination; deleting it makes the
-lookup unresolved; renaming creates a different key. Older session indexes remain
-historical publications. A direct declaration reference is not a stable cross-generation
-handle and must not be cached as one.
-
-The declaration trait's protected link and getter are named `duplicate_element`;
-`link_duplicate()` is used during parsing/local collection. Those chains describe
-one source scope only. Global candidate lists remain separate so publishing symbols
-never mutates duplicate chains in reused ASTs. Index rebuilding visits declarations,
-not executable statement trees.
+File-local `duplicate_element` chains remain unchanged. Global candidate indexes
+reference AST declarations without mutating those chains. See
+[stable symbols and preparation caches](stable_symbols.md) for structure, status,
+transactional publication, observer ownership and signature comparison rules.
 
 ## Preparation boundary
 
 The executable `project`/`program` paths continue using full semantic compilation.
-They do not prepare reused frontend ASTs. `Program_Frontend` rejects attempts to
-prepare a published incremental frontend session in place. Prepared call/type facts
-still use their existing representation; migrating them to key-based resolution,
-semantic invalidation and incremental lowering are later slices. The shared AST
-must remain read-only until an explicit analysis ownership policy is implemented.
-Do not bypass this boundary by invoking low-level preparation on shared roots.
+`Program_Frontend` rejects preparing a published incremental frontend session through
+that full-build path. `Incremental_Preparation::prepare()` is the explicit in-process
+coordinator for incremental body-cache reconstruction. It returns counts/diagnostics,
+not an emission handle; incremental lowering remains deferred. The frontend service
+still performs only frontend work, including invalidation if observers exist.
 
-Checks: `php v0.2/compiler/tests/incremental_frontend.php` with `XDEBUG_MODE=off`.
-Tests cover all flavors, actual source-read counts and object identity, changes,
-moves, removals/reappearance, duplicates and failed-candidate retry.
+Unchanged syntax is shared. Declaration facts and body caches are current analysis
+state, not historical snapshots; publication can mark dependent bodies dirty.
+There must be no concurrent preparation/readers across that transition in this PHP
+implementation. See the stable-symbol guide before accessing retained facts.
+
+Checks: `php v0.2/compiler/tests/incremental_frontend.php` and
+`php v0.2/compiler/tests/incremental_preparation.php`.

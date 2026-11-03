@@ -24,7 +24,7 @@ final class Declaration_Diagnostics
 	}
 
 	/** Reconcile all sources against one deterministic original, without relinking their local chains. */
-	public static function functions(global_symbols $symbols): array /** list<diagnostic> */
+	public static function functions(scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = [];
 		foreach ($symbols->declarations as $candidates) {
@@ -42,18 +42,17 @@ final class Declaration_Diagnostics
 	/** Locals are scoped to one body; repeated spellings in other bodies are independent. */
 	public static function locals(ast_function_body $body): array /** list<diagnostic> */
 	{
-		$first = [];
 		$errors = [];
-		foreach ($body->locals as $local) {
-			$key = $local->declaration_key();
-			if (isset($first[$key])) { $errors[] = self::duplicate($local, $first[$key], 'local'); }
-			else { $first[$key] = $local; }
+		foreach ($body->scope->declarations as $candidates) {
+			foreach ($candidates as $index => $local) {
+				if ($index !== 0) { $errors[] = self::duplicate($local, $candidates[0], 'local'); }
+			}
 		}
-		return $errors;
+		return self::ordered($errors);
 	}
 
 	/** Gather once per declaration, including locals in every duplicate function body. */
-	public static function program(array $files /** array<string,ast_file_node> */, global_symbols $symbols): array /** list<diagnostic> */
+	public static function program(array $files /** array<string,ast_file_node> */, scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = self::functions($symbols);
 		foreach ($files as $file) {

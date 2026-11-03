@@ -4,13 +4,16 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /**
- * Collects declaration IDs and name-reference occurrences as statements are parsed, without resolving names or types.
+ * Collects source-order body indexes; declaration registration/publication is delegated to Scope_Collection.
  */
-final class Symbol_Collector
+final class Body_Collection
 {
 	private array $locals /** array<uint32,ast_local_declaration>; keyed by statement position */ = [];
-	private array $heads /** array<string,ast_local_declaration>; scope-local name index */ = [];
-	private array $tails /** array<string,ast_local_declaration>; only duplicated names */ = [];
+	private readonly Scope_Collection $declarations;
+	public function __construct(scope $parent)
+	{
+		$this->declarations = new Scope_Collection(new scope($parent));
+	}
 	private array $references /** list<ast_name_expression> */ = [];
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
@@ -19,13 +22,7 @@ final class Symbol_Collector
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {
-			$key = $statement->declaration_key();
-			if (isset($this->heads[$key])) {
-				($this->tails[$key] ?? $this->heads[$key])->link_duplicate($statement);
-				$this->tails[$key] = $statement;
-			} else {
-				$this->heads[$key] = $statement;
-			}
+			$this->declarations->declare($statement);
 			$statement->identify(count($this->locals));
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
@@ -44,6 +41,6 @@ final class Symbol_Collector
 
 	public function body(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, array $statements /** list<ast_statement> */): ast_function_body
 	{
-		return new ast_function_body($start, $end, $statements, $this->locals, $this->references);
+		return new ast_function_body($start, $end, $statements, $this->locals, $this->references, $this->declarations->publish());
 	}
 }

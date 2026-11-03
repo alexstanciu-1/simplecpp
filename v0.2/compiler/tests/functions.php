@@ -26,7 +26,7 @@ final class Discovery_Probe implements declaration_sink
 	}
 
 	/** Discovery precedes body completion and only makes the candidate pending. */
-	public function discovered(ast_function_declaration $function): void
+	public function discovered(\scpp\compiler\ast_declaration_interface $function): void
 	{
 		try {
 			$function->body();

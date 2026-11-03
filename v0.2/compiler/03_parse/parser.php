@@ -35,26 +35,19 @@ final class Parser
 			throw new \LogicException('A parser instance processes one source once');
 		}
 		$this->started = true;
-		$collector = new Symbol_Collector();
+		$collector = new Body_Collection($this->root->scope);
+		$declarations = new Scope_Collection($this->root->scope);
 		$grammar = match ($this->cursor->tokens->source->flavor) {
 			flavor::cpp => new Cpp_Grammar(),
 			flavor::php => new Php_Grammar(),
 			flavor::js => new Js_Grammar(),
 		};
 		$statements = [];
-		$functions = [];
-		$tails = [];
 		while (!$this->cursor->at_end())
 		{
 			if ($grammar->function_start($this)) {
 				$function = $this->function_declaration($grammar);
-				$key = 'func:' . $function->declaration_key();
-				if (isset($functions[$key])) {
-					($tails[$key] ?? $functions[$key])->link_duplicate($function);
-					$tails[$key] = $function;
-				} else {
-					$functions[$key] = $function;
-				}
+				$declarations->declare($function);
 				continue;
 			}
 			$statement = $this->statement($grammar);
@@ -66,7 +59,11 @@ final class Parser
 				'int', 0, 0, true);
 			$main->attach($this->root);
 			$main->complete_body($collector->body(0, count($this->cursor->tokens->tokens), $statements));
-			$functions = ['func:main' => $main] + $functions;
+			$declarations->declare($main);
+		}
+		$functions = $declarations->publish()->heads();
+		if (isset($functions['func:main'])) {
+			$functions = ['func:main' => $functions['func:main']] + $functions;
 		}
 		$this->root->complete($functions, Declaration_Diagnostics::file($functions));
 		return $this->root;
@@ -107,7 +104,7 @@ final class Parser
 		}
 		$this->sink?->discovered($function);
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
-		$body_collector = new Symbol_Collector();
+		$body_collector = new Body_Collection($this->root->scope);
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace))
 		{

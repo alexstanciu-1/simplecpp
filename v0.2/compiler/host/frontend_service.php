@@ -108,7 +108,7 @@ final class Frontend_Service
 							} else { $counts[$unit->status->name]++; }
 						}
 						$report += ['mode' => $current === null ? 'full' : 'incremental', 'frontend_ms' => $elapsed,
-							'sources' => count($candidate->entry->sources), 'symbols' => count($candidate->symbols->declarations),
+							'sources' => count($candidate->entry->sources), 'symbols' => count($candidate->scope->declarations),
 							'counts' => $counts];
 						$report['generation'] = ++$generation;
 						// No external AST readers: after publication, this host can retire older generations.

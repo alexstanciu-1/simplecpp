@@ -10,8 +10,11 @@ final class Program_Preparation
 {
 	/** Settle every signature before preparing any body; publish the program only after all bodies succeed. */
 	public static function prepare(string $entry_path, array $files /** array<string,ast_file_node> */,
-		entry_target $target, ?global_symbols $symbols = null, ?compilation_session $session = null): prepared_program
+		entry_target $target, ?scope $symbols = null, ?compilation_session $session = null): prepared_program
 	{
+		if ($session?->scope !== null) {
+			throw new \LogicException('Live incremental symbols require Incremental_Preparation; full emission is separate');
+		}
 		foreach ($files as $file) {
 			$file->begin_preparation();
 			foreach ($file->declarations as $head) {
@@ -29,7 +32,7 @@ final class Program_Preparation
 			$path = (string) $path;
 			self::admit($file, $path === $entry_path);
 		}
-		$callables = Function_Preparation::declarations($symbols);
+		Function_Preparation::declarations($symbols);
 		foreach ($files as $file) {
 			$main = $file->main();
 			if ($main !== null) {
@@ -37,9 +40,9 @@ final class Program_Preparation
 			}
 		}
 		foreach ($files as $file) {
-			Function_Preparation::bodies($file, $callables);
+			Function_Preparation::bodies($file, $symbols);
 		}
-		(new Preparation())->entry($files[$entry_path], $target, $callables);
+		(new Preparation())->entry($files[$entry_path], $target, $symbols);
 		foreach ($files as $file) { $file->settle_preparation(); }
 		$entry = new prepared_entry($files[$entry_path], $target);
 		return new prepared_program($entry_path, $files, $entry, $session);

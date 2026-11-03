@@ -10,13 +10,13 @@ namespace scpp\compiler;
  * ```text
  * ping();
  * ```
- * function_def() becomes the exact ping declaration after its return type has settled; its body is not read.
+ * function_def() resolves the stable ping symbol to its current settled declaration; its body is not read.
  */
 final class ast_call_statement extends ast_statement
 {
 	public readonly string $name;
-	/** Prepared fact: resolved callee; null before body preparation or after reset. */
-	protected ?ast_function_declaration $function_def = null;
+	/** Prepared cache: stable symbol identity, resolved through its current declaration; null before body preparation or after reset. */
+	protected ?symbol_entry $function_symbol = null;
 
 	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, string $name)
 	{
@@ -24,27 +24,29 @@ final class ast_call_statement extends ast_statement
 		parent::__construct($start, $end);
 	}
 
-	/** Stable lookup handle; incremental indexing never caches a declaration in the call node. */
+	/** Canonical lookup key; preparation attaches its stable symbol entry. */
 	public function symbol_key(): string
 	{
 		return 'func:' . $this->name;
 	}
 
-	public function settle_function(ast_function_declaration $function): void
+	public function settle_function(symbol_entry $symbol): void
 	{
-		if ($this->function_def !== null) { throw new \LogicException('Call target is already settled'); }
+		if ($this->function_symbol !== null) { throw new \LogicException('Call target is already settled'); }
+		$function = $symbol->declaration() ?? throw new \LogicException('Cannot settle a removed function');
 		$function->return_type_def();
-		$this->function_def = $function;
+		$this->function_symbol = $symbol;
 	}
 
 	public function function_def(): ast_function_declaration
 	{
-		return $this->function_def ?? throw new \LogicException('Call target is not settled');
+		if ($this->parent instanceof ast_function_body) { $this->parent->require_prepared(); }
+		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
 	}
 
 	public function reset_preparation(): void
 	{
-		$this->function_def = null;
+		$this->function_symbol = null;
 	}
 
 }
@@ -60,36 +62,50 @@ final class ast_call_statement extends ast_statement
  */
 final class ast_function_body extends ast_node
 {
+	public readonly scope $scope;
 	public readonly array $statements /** list<ast_statement> */;
 	public readonly array $locals /** array<uint32,ast_local_declaration>; keyed by body statement position */;
 	public readonly array $references /** list<ast_name_expression> */;
 
 	/** Preparation statistics: zero until successful whole-body preparation; completion is checked separately. */
 	private bool $prepared = false;
+	private ?int $exit_digits /** uint8; cached entry-target context, null for ordinary void bodies */ = null;
 	public int $statement_visits /** uint32 */ = 0;
 	public int $expression_visits /** uint32 */ = 0;
 	public int $name_lookups /** uint32 */ = 0;
 
 	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, array $statements /** list<ast_statement> */,
-		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */)
+		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */, scope $scope)
 	{
 		parent::__construct($start, $end);
 		foreach ($statements as $statement) { $statement->attach($this); }
 		$this->statements = $statements;
 		$this->locals = $locals;
 		$this->references = $references;
+		$this->scope = $scope;
+	}
+	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
+	public function invalidate_preparation(): void
+	{
+		$this->prepared = false;
+		$this->root()->begin_preparation();
+	}
+	public function is_prepared(?entry_target $target = null): bool
+	{
+		return $this->prepared && ($this->exit_digits === $target?->digits);
 	}
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
-	public function settle_preparation(int $statements /** uint32 */, int $expressions /** uint32 */, int $lookups /** uint32 */): void
+	public function settle_preparation(int $statements /** uint32 */, int $expressions /** uint32 */, int $lookups /** uint32 */, ?entry_target $target = null): void
 	{
 		if ($this->prepared) { throw new \LogicException('Function body is already prepared'); }
 		$this->statement_visits = $statements;
 		$this->expression_visits = $expressions;
 		$this->name_lookups = $lookups;
+		$this->exit_digits = $target?->digits;
 		$this->prepared = true;
 	}
 	public function require_prepared(): void
@@ -164,6 +180,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		if ($this->return_type_def !== null) { throw new \LogicException('Function return type is already settled'); }
 		$this->return_type_def = $type;
 	}
+
+	public function return_type_ready(): bool { return $this->return_type_def !== null; }
 
 	public function return_type_def(): type_definition
 	{

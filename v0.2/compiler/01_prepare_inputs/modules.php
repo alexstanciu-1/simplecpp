@@ -21,11 +21,15 @@ final class compilation_session
 	/** Previous frontend generation owns replaced/removed roots; unchanged roots may be shared. */
 	public ?compilation_session $previous = null;
 	/** Null until the entire frontend generation has completed successfully. */
-	public ?global_symbols $symbols = null;
+	public ?scope $scope = null;
+	/** Sequential lifecycle; successful replacement retires the prior session. */
+	public bool $is_current = true;
+	public function_dependencies $function_dependencies;
 	public array $removed_sources /** list<source_unit>; removed records reference old ASTs */ = [];
 
 	public function __construct(array $modules /** array<string,module> */, module $entry)
 	{
+		$this->function_dependencies = new function_dependencies();
 		$this->modules = $modules;
 		$this->entry = $entry;
 	}

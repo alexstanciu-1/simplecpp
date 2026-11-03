@@ -91,6 +91,7 @@ abstract class ast_node
 interface ast_declaration_interface
 {
 	public function declaration_key(): string;
+	public function symbol_key(): string;
 	public function duplicate_element(): ?ast_declaration_interface;
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void;
 }

@@ -35,12 +35,11 @@ Manifest edits, test-file edits and verification assertions are outside timers.
 The explicit source map means these are not recursive directory-discovery timings.
 
 Checks cover exact AST/token identity on reuse, actual source-read counts, source
-status counts, redirected function keys after body changes/moves, old symbol
-publication retention, symbol addition/removal, and final key-set equivalence with
+status counts, redirected function keys after body changes/moves, stable symbol-entry retention, symbol addition/removal, and final key-set equivalence with
 a fresh frontend run. The edit changes an integer literal and its byte length,
 avoiding the known same-size/same-second metadata-check limitation.
 
-Preparation/lowering is not incremental yet. The timed passes stop after symbol
+This harness measures only the frontend, not the separate incremental body-cache API or lowering. The timed passes stop after symbol
 publication. No native executable was built by this benchmark. PHP GC is collected
 between sample sequences; this is neither cold-disk latency nor a long-session
 memory-retirement test.

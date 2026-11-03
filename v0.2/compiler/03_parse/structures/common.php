@@ -73,6 +73,8 @@ final class ast_name_expression extends ast_expression
  */
 final class ast_local_declaration extends ast_statement implements ast_declaration_interface
 {
+	public function symbol_key(): string { return 'var:' . $this->declaration_key(); }
+
 	use ast_declaration;
 	/** Written type name; null when omitted, independently of later resolution. */
 	public readonly ?string $type_name;

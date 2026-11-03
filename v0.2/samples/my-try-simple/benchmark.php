@@ -101,6 +101,8 @@ namespace {
                     $current_manifest['sources']['moved.phs'] = 'php';
                     $write_manifest($current_manifest);
                 }
+                $old_declaration = $previous?->scope->resolve('func:sample_unit_000');
+                $start_entry = $previous?->scope->entry('func:sample_unit_000');
                 $GLOBALS['source_reads'] = 0;
                 $start = hrtime(true);
                 $current = $compiler->frontend($root, $previous);
@@ -125,15 +127,15 @@ namespace {
                 };
                 check(array_values($counts) === $expected, 'Unexpected counts: ' . $scenario);
                 if ($scenario === 'changed' || $scenario === 'moved') {
-                    check($current->symbols->resolve('func:sample_unit_000') !== $previous->symbols->resolve('func:sample_unit_000'), 'Symbol key did not redirect');
-                    check($previous->symbols->resolve('func:sample_unit_000') !== null, 'Old publication lost');
+                    check($current->scope->resolve('func:sample_unit_000') !== $old_declaration, 'Symbol key did not redirect');
+                    check($current->scope->entry('func:sample_unit_000') === $start_entry, 'Stable entry replaced');
                 }
-                check(($current->symbols->resolve('func:added_function') !== null) === ($scenario === 'added'), 'Added/removed symbol mismatch');
+                check(($current->scope->resolve('func:added_function') !== null) === ($scenario === 'added'), 'Added/removed symbol mismatch');
                 $proofs[$scenario] = $counts;
                 $previous = $current;
             }
             $clean = $compiler->frontend($root);
-            check(array_keys($clean->symbols->declarations) === array_keys($current->symbols->declarations), 'Incremental/full index mismatch');
+            check(array_keys($clean->scope->declarations) === array_keys($current->scope->declarations), 'Incremental/full index mismatch');
             rename($root . '/moved.phs', $root . '/' . $target);
             unset($clean, $current, $previous);
             gc_collect_cycles();

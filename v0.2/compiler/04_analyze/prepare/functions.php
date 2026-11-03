@@ -30,11 +30,10 @@ final class Function_Preparation
 	}
 
 	/** Settle reset declarations before body work; callable recursion has no signature dependency cycle. */
-	public static function declarations(global_symbols $symbols): array /** array<string,ast_function_declaration>; settled public declarations */
+	public static function declarations(scope $symbols): scope
 	{
 		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::functions($symbols));
 		if ($errors !== []) { throw new diagnostic_group($errors); }
-		$callables = [];
 		foreach ($symbols->declarations as $candidates)
 		{
 			$declaration = $candidates[0];
@@ -42,19 +41,18 @@ final class Function_Preparation
 			if ($type !== 'void') {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()), 'Only explicit void functions are supported');
 			}
-			$declaration->settle_return_type(type_definition::void);
-			$callables[$declaration->name] = $declaration;
+			if (!$declaration->return_type_ready()) { $declaration->settle_return_type(type_definition::void); }
 		}
-		return $callables;
+		return $symbols;
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */
-	public static function bodies(ast_file_node $file, array $callables /** array<string,ast_function_declaration> */): void
+	public static function bodies(ast_file_node $file, scope $symbols): void
 	{
 		foreach ($file->functions() as $declaration) {
 			$node = $declaration;
 			$node->return_type_def();
-			(new Preparation())->function_body($node->body(), $callables);
+			(new Preparation())->function_body($node->body(), $symbols);
 		}
 	}
 }

@@ -53,7 +53,7 @@ or replacing the last successful publication; subsequent requests can retry.
 
 There are no external AST readers in this sequential host. After reporting a
 successful generation, it detaches the previous-session link and removed-source
-records, then collects unreachable cycles. It retains the current AST/index only.
+records, then collects unreachable cycles. It retains the current AST/index plus stable symbol tombstones.
 The general frontend API's previous-session behavior is unchanged; this host's
 retirement policy is not a native concurrent lifetime solution.
 
@@ -82,3 +82,7 @@ one-file update in 4.38 ms (256 reused), and unchanged invocation in 4.30 ms
 (257 reused). These are single test observations, not benchmark medians.
 
 No compilation-session, source-unit, token or AST structure changes were needed.
+
+Stable symbol entries now survive successful frontend updates. See
+[stable-symbol lifetimes](stable_symbols.md); this service still does not run
+incremental preparation or lowering.
