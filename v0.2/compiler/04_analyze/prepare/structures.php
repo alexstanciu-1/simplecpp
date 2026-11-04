@@ -3,6 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Transient possible block exits; e.g. if (flag) break; yields fallthrough | breaks. Native uint8 flags. */
+final class statement_completion
+{
+	public const int fallthrough /** uint8 */ = 1;
+	public const int returns /** uint8 */ = 2;
+	public const int breaks /** uint8 */ = 4;
+	public const int continues /** uint8 */ = 8;
+}
+
 /**
  * Records whether an entry return is proven to fit native int or needs a runtime range check.
  *

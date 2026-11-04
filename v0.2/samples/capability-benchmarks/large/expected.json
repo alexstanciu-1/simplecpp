@@ -1,0 +1,10 @@
+{
+  "stdout": "invoice: 1090486\n",
+  "exit": 8,
+  "edit_file": "support/labels.jss",
+  "body_from": "return value;",
+  "body_to": "return \"invoice-edited\";",
+  "signature_from": "function label(value: string = \"invoice\"): string",
+  "signature_to": "function label(value: string = \"invoice\"): int",
+  "signature_body": "return 42;"
+}

@@ -33,14 +33,32 @@ abstract class type_definition
 	}
 
 	/** Default rejection; generated definitions own supported operator and operand pairs. */
-	public function prepare_comparison(ast_binary_expression $value): void
+	public function prepare_binary(ast_binary_expression $value): void
 	{
-		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported comparison operands or operator');
+		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported binary operands or operator');
 	}
 
-	public function lower_cpp_comparison(comparison_operator $operator, string $left, string $right): string
+	public function lower_cpp_binary(binary_operator $operator, string $left, string $right): string
 	{
-		throw new \LogicException('Comparison lowering unavailable for type: ' . $this->name);
+		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
+	}
+
+	/** @return string[] Public includes needed by an approved binary operation. */
+	public function binary_headers(binary_operator $operator): array /** list<string> */
+	{
+		return [];
+	}
+
+	/** Backend property: copying a plain value cannot call user code, allocate or throw. */
+	public function cpp_trivial_value(): bool
+	{
+		return false;
+	}
+
+	/** Backend property of an approved operation, excluding its operands; conservative for unknown strategies. */
+	public function cpp_binary_reorderable(binary_operator $operator): bool
+	{
+		return false;
 	}
 
 	/** Conditions are a separate semantic boundary from typed boolean conversion. */

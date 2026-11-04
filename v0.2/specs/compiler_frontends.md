@@ -67,7 +67,13 @@ body indexes its signature-owned parameters alongside its local declarations.
 The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or string value
 as its single operand in all flavors. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
 Same-type [scalar comparisons](../compiler/docs/comparisons.md) and parentheses are implemented in all flavors.
-Relational operators bind more tightly than equality; both levels associate left.
+Int/int64 binary `+ - * / %` are implemented through the same metadata-driven path.
+Multiplicative operators bind above additive operators, then relational operators, then equality;
+all levels associate left. Unary integer operators and mixed/float arithmetic remain deferred.
+Logical `!`, `&&` and `||` reuse generated condition truthiness in all flavors.
+Prefix `!` binds above arithmetic; `&&` binds below equality and above `||`.
+Each operand independently admits bool, int64, float or string; the result is bool.
+See [logical expressions](../compiler/docs/logical.md) for short-circuit and incremental boundaries.
 There is no member access, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
 modes, C++ preprocessing, JS prototypes or JS template literals yet.
 

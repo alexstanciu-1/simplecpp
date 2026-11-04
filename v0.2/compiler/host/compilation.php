@@ -76,7 +76,10 @@ final class Compilation_Inspection
 		$statements = [];
 		foreach ($program->statements as $statement)
 		{
-			if ($statement instanceof ast_loop_statement) {
+			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'];
+			}
+			elseif ($statement instanceof ast_loop_statement) {
 				$statements[] = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 			}
@@ -125,6 +128,10 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_not_expression) {
+			$row['operator'] = 'logical_not';
+			$row['operand'] = self::value($value->operand);
+		}
 		if ($value instanceof ast_binary_expression) {
 			$row['operator'] = $value->operator->name;
 			$row['left'] = self::value($value->left);

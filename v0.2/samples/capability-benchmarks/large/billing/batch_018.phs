@@ -1,0 +1,137 @@
+namespace Bench\Batch18;
+function line_0(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 146 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_1(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 147 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_2(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 148 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_3(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 149 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_4(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 150 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_5(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 151 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_6(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 152 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}
+function line_7(int $price, int $quantity = 3): int {
+    $subtotal int = $price * 153 + $quantity;
+    $index int = 0;
+    while ($index < $quantity) {
+        $subtotal = $subtotal + $index;
+        $index = $index + 1;
+    }
+    if ($subtotal % 2 == 0) {
+        $subtotal = $subtotal / 2;
+    } else if ($subtotal > 100) {
+        $subtotal = $subtotal - 7;
+    } else {
+        $subtotal = $subtotal + 5;
+    }
+    do { $subtotal = $subtotal + 1; } while (false);
+    return $subtotal;
+}

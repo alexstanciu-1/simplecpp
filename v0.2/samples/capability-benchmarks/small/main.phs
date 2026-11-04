@@ -1,0 +1,12 @@
+namespace App;
+use function Bench\{adjust, announce, feature_score};
+use function Bench\label as heading;
+$price int = \Bench\$seed;
+adjust($price);
+$total = feature_score();
+announce(heading());
+echo ": ";
+$total = $total + \Bench\Batch0\line_0($price);
+echo $total;
+\Bench\finish();
+return 8;

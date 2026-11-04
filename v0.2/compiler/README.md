@@ -16,6 +16,10 @@ supported, and no Parallel extension is required. See [execution guidance](docs/
 for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
+See [direct scalar lowering](docs/direct_lowering.md) for conservative wrapper removal without preparation changes.
+See [int64 arithmetic](docs/arithmetic.md) for binary operations and their runtime boundary.
+See [logical expressions](docs/logical.md) for generated truthiness and native short-circuit lowering.
+See [loop transfers](docs/transfers.md) for nearest-loop break/continue and transient completion flags.
 See [scalar comparisons](docs/comparisons.md) for generated admission, sequencing and focused tests.
 See [canonical type definitions](docs/types.md) for core scalar/void identity and generated preparation/conversion/lowering.
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current

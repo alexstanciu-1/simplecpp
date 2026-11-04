@@ -165,10 +165,10 @@ try {
 // Operator capability is generated, rather than inferred from native representation or conversion support.
 $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->int64);
-requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'public function prepare_comparison'), 'Removed comparisons still generated');
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'binary_operator::equal'), 'Removed comparisons still generated');
 $without->compiler->comparisons->float64->operators = ['equal'];
 $limited = renderCompiler($without, $facts)['types/float64.php'];
-requireThat(str_contains($limited, 'comparison_operator::equal') && !str_contains($limited, 'comparison_operator::less'), 'Removed operator still generated');
+requireThat(str_contains($limited, 'binary_operator::equal') && !str_contains($limited, 'binary_operator::less'), 'Removed operator still generated');
 foreach (['type', 'operator', 'operand', 'result', 'lowering', 'ordering'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
@@ -186,4 +186,43 @@ foreach (['type', 'operator', 'operand', 'result', 'lowering', 'ordering'] as $c
         requireThat($error->getMessage() !== '', 'Missing comparison diagnostic');
     }
 }
-requireThat(str_contains($files['types/int64.php'], 'settle_comparison(type_bool::instance())'), 'Wrong generated result identity');
+requireThat(str_contains($files['types/int64.php'], 'binary_operator::equal => type_bool::instance()'), 'Wrong generated result identity');
+
+// Arithmetic capabilities disappear with their metadata rows, including required public headers.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->arithmetic->int64);
+$limited = renderCompiler($without, $facts)['types/int64.php'];
+requireThat(!str_contains($limited, 'binary_operator::add') && !str_contains($limited, 'scpp/arithmetic.hpp'), 'Removed arithmetic still generated');
+$without = unserialize(serialize($metadata));
+unset($without->compiler->arithmetic->int64->operators->divide);
+$limited = renderCompiler($without, $facts)['types/int64.php'];
+requireThat(!str_contains($limited, 'binary_operator::divide') && str_contains($limited, 'binary_operator::remainder'), 'Removed division still generated');
+foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'type' => $bad->compiler->arithmetic->float64 = clone $bad->compiler->arithmetic->int64,
+        'operator' => $bad->compiler->arithmetic->int64->operators->power = 'native',
+        'overflow' => $bad->compiler->arithmetic->int64->overflow = 'wrapping',
+        'lowering' => $bad->compiler->arithmetic->int64->operators->divide = 'native',
+        'result' => $bad->compiler->arithmetic->int64->result = 'float64',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Unsupported arithmetic metadata accepted: ' . $change);
+    } catch (\RuntimeException $error) {
+        requireThat($error->getMessage() !== '', 'Missing arithmetic diagnostic');
+    }
+}
+requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
+
+// Backend safety facts follow the admitted implementation strategy, never preparation or AST mutation.
+require $root . '/compiler/03_parse/structures/expressions.php';
+foreach (['type_int64', 'type_bool', 'type_byte', 'type_float64', 'type_null'] as $class) {
+    $class = 'scpp\\compiler\\' . $class;
+    requireThat($class::instance()->cpp_trivial_value(), 'Native scalar copying was not classified');
+}
+requireThat(!\scpp\compiler\type_string::instance()->cpp_trivial_value(), 'String copy incorrectly classified as trivial');
+$type = \scpp\compiler\type_int64::instance();
+requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add), 'Native addition not classified');
+requireThat(!$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::divide)
+    && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::remainder), 'Checked operations classified as reorderable');

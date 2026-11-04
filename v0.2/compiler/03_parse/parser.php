@@ -134,7 +134,11 @@ final class Parser
 			return $this->loop($grammar, $collector);
 		}
 		if ($this->cursor->keyword('break') || $this->cursor->keyword('continue')) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Break/continue are deferred');
+			$is_break = $this->cursor->keyword('break');
+			$start = $this->cursor->position();
+			$this->cursor->take_keyword($is_break ? 'break' : 'continue');
+			$end = $this->cursor->take(token_kind::semicolon, '; (only unlabelled break/continue are supported)') + 1;
+			return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
 		}
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
@@ -394,25 +398,32 @@ final class Parser
 		return new ast_echo_statement($start, $end, $value);
 	}
 
-	/** Parse comparisons with relational precedence above equality; grouping uses the same expression parser. */
+	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
 	public function value(int $minimum_precedence /** uint8 */ = 1): ast_expression
 	{
 		$left = $this->primary();
 		while (!$this->cursor->at_end()) {
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			$operator = match ($kind) {
-				token_kind::equal => comparison_operator::equal,
-				token_kind::not_equal => comparison_operator::not_equal,
-				token_kind::less => comparison_operator::less,
-				token_kind::less_equal => comparison_operator::less_equal,
-				token_kind::greater => comparison_operator::greater,
-				token_kind::greater_equal => comparison_operator::greater_equal,
+				token_kind::logical_and => binary_operator::logical_and,
+				token_kind::logical_or => binary_operator::logical_or,
+				token_kind::plus => binary_operator::add,
+				token_kind::minus => binary_operator::subtract,
+				token_kind::star => binary_operator::multiply,
+				token_kind::slash => binary_operator::divide,
+				token_kind::percent => binary_operator::remainder,
+				token_kind::equal => binary_operator::equal,
+				token_kind::not_equal => binary_operator::not_equal,
+				token_kind::less => binary_operator::less,
+				token_kind::less_equal => binary_operator::less_equal,
+				token_kind::greater => binary_operator::greater,
+				token_kind::greater_equal => binary_operator::greater_equal,
 				default => null,
 			};
 			if (($operator === null) || ($operator->precedence() < $minimum_precedence)) {
 				break;
 			}
-			$this->cursor->take($kind, 'comparison operator');
+			$this->cursor->take($kind, 'binary operator');
 			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + 1));
 		}
 		return $left;
@@ -421,6 +432,11 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(): ast_expression
 	{
+		if ($this->cursor->is(token_kind::bang)) {
+			$start = $this->cursor->take(token_kind::bang, '!');
+			$operand = $this->primary();
+			return new ast_not_expression($start, $this->cursor->position(), $operand);
+		}
 		if ($this->cursor->is(token_kind::lparen)) {
 			$this->cursor->take(token_kind::lparen, '(');
 			$value = $this->value();

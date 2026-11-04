@@ -1,0 +1,53 @@
+namespace Bench {
+global int seed = 9;
+int adjust(int &value, int step = 2) {
+    value = value + step;
+    return value;
+}
+void announce(string label) { echo label; }
+null pass_null(null value) { return value; }
+byte pass_byte(byte value) { return value; }
+float pass_float(float value) { return value; }
+string pass_string(string value) { return value; }
+bool pass_bool(bool value) { return value; }
+int feature_score() {
+    byte raw = 8;
+    byte copied = pass_byte(raw);
+    int number = copied;
+    bool truth = number;
+    int one = truth;
+    float ratio = number;
+    int rounded = ratio;
+    null empty = pass_null(null);
+    string text = pass_string("ok");
+    string backup = text;
+    text = "0";
+    float zero = pass_float(-0.0);
+    bool yes = pass_bool(true);
+    auto inferred = 3;
+    int score = 0;
+    if (raw == copied) { score = score + 1; }
+    if (raw != copied) { score = score + 100; }
+    if (yes == true) { score = score + 1; }
+    if (yes != false) { score = score + 1; }
+    if (ratio == 8.0) { score = score + 1; }
+    if (ratio != zero) { score = score + 1; }
+    if (zero < ratio) { score = score + 1; }
+    if (zero <= 0.0) { score = score + 1; }
+    if (ratio > zero) { score = score + 1; }
+    if (ratio >= 8.0) { score = score + 1; }
+    if (text) { score = score + 100; }
+    else if (backup) { score = score + 1; }
+    else { score = score + 100; }
+    if (number) { score = score + 1; }
+    if (ratio) { score = score + 1; }
+    if (yes) { score = score + 1; }
+    if (one <= inferred) { score = score + 1; }
+    if (rounded >= 8) { score = score + 1; }
+    if (number != 7) { score = score + 1; }
+    if (number > 1) { score = score + 1; }
+    if (inferred < 8) { score = score + 1; }
+    if (true) { int score = 99; score = 100; }
+    return score;
+}
+}

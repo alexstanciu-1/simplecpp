@@ -1,0 +1,138 @@
+namespace Bench::Batch4 {
+int line_0(int price, int quantity = 3) {
+    int subtotal = price * 34 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_1(int price, int quantity = 3) {
+    int subtotal = price * 35 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_2(int price, int quantity = 3) {
+    int subtotal = price * 36 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_3(int price, int quantity = 3) {
+    int subtotal = price * 37 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_4(int price, int quantity = 3) {
+    int subtotal = price * 38 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_5(int price, int quantity = 3) {
+    int subtotal = price * 39 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_6(int price, int quantity = 3) {
+    int subtotal = price * 40 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+int line_7(int price, int quantity = 3) {
+    int subtotal = price * 41 + quantity;
+    int index = 0;
+    while (index < quantity) {
+        subtotal = subtotal + index;
+        index = index + 1;
+    }
+    if (subtotal % 2 == 0) {
+        subtotal = subtotal / 2;
+    } else if (subtotal > 100) {
+        subtotal = subtotal - 7;
+    } else {
+        subtotal = subtotal + 5;
+    }
+    do { subtotal = subtotal + 1; } while (false);
+    return subtotal;
+}
+}

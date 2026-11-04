@@ -1,0 +1,1351 @@
+{
+  "small": {
+    "stages": [
+      {
+        "module_ms": 0.258968,
+        "read_ms": 0.10322400000000001,
+        "tokenize_ms": 0.763034,
+        "parse_collect_ms": 1.179046,
+        "symbol_index_ms": 0.032931,
+        "prepare_ms": 0.519576,
+        "lower_emit_ms": 0.32963,
+        "total_ms": 3.193539
+      },
+      {
+        "module_ms": 0.144814,
+        "read_ms": 0.178566,
+        "tokenize_ms": 0.803814,
+        "parse_collect_ms": 1.446326,
+        "symbol_index_ms": 0.061602,
+        "prepare_ms": 1.448744,
+        "lower_emit_ms": 0.373522,
+        "total_ms": 4.475288
+      },
+      {
+        "module_ms": 0.277849,
+        "read_ms": 0.246407,
+        "tokenize_ms": 1.136274,
+        "parse_collect_ms": 1.962802,
+        "symbol_index_ms": 0.047121,
+        "prepare_ms": 0.808195,
+        "lower_emit_ms": 0.454535,
+        "total_ms": 4.950543
+      },
+      {
+        "module_ms": 0.33898,
+        "read_ms": 0.198446,
+        "tokenize_ms": 1.055952,
+        "parse_collect_ms": 1.89068,
+        "symbol_index_ms": 0.047281,
+        "prepare_ms": 0.801174,
+        "lower_emit_ms": 0.443194,
+        "total_ms": 4.789448
+      },
+      {
+        "module_ms": 0.31901,
+        "read_ms": 0.14691500000000002,
+        "tokenize_ms": 0.8591850000000001,
+        "parse_collect_ms": 1.277479,
+        "symbol_index_ms": 0.034111,
+        "prepare_ms": 0.571217,
+        "lower_emit_ms": 0.312919,
+        "total_ms": 3.530418
+      }
+    ],
+    "incremental": {
+      "full": [
+        {
+          "frontend_ms": 3.009394,
+          "prepare_ms": 0.594768,
+          "total_ms": 3.6041619999999996,
+          "source_reads": 4,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 12,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 2.504116,
+          "prepare_ms": 0.625419,
+          "total_ms": 3.1295349999999997,
+          "source_reads": 4,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 12,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 3.236735,
+          "prepare_ms": 0.65322,
+          "total_ms": 3.889955,
+          "source_reads": 4,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 12,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 2.868919,
+          "prepare_ms": 0.505946,
+          "total_ms": 3.374865,
+          "source_reads": 4,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 12,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 2.759976,
+          "prepare_ms": 0.96347,
+          "total_ms": 3.723446,
+          "source_reads": 4,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 12,
+            "reused": 0
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop": [
+        {
+          "frontend_ms": 0.357962,
+          "prepare_ms": 0.047391,
+          "total_ms": 0.405353,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.31117,
+          "prepare_ms": 0.042161,
+          "total_ms": 0.353331,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.33639,
+          "prepare_ms": 0.074362,
+          "total_ms": 0.410752,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.270439,
+          "prepare_ms": 0.035741,
+          "total_ms": 0.30618,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.533297,
+          "prepare_ms": 0.087923,
+          "total_ms": 0.62122,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        }
+      ],
+      "body_edit": [
+        {
+          "frontend_ms": 0.495065,
+          "prepare_ms": 0.124814,
+          "total_ms": 0.619879,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 2,
+            "reused": 10
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.478575,
+          "prepare_ms": 0.080473,
+          "total_ms": 0.559048,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 2,
+            "reused": 10
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.862601,
+          "prepare_ms": 0.103013,
+          "total_ms": 0.965614,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 2,
+            "reused": 10
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.465065,
+          "prepare_ms": 0.086313,
+          "total_ms": 0.551378,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 2,
+            "reused": 10
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.64581,
+          "prepare_ms": 0.241697,
+          "total_ms": 0.887507,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 2,
+            "reused": 10
+          },
+          "diagnostic": null
+        }
+      ],
+      "signature_error": [
+        {
+          "frontend_ms": 0.564208,
+          "prepare_ms": 0.178446,
+          "total_ms": 0.742654,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/small/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.375102,
+          "prepare_ms": 0.133614,
+          "total_ms": 0.508716,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/small/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.584328,
+          "prepare_ms": 0.192516,
+          "total_ms": 0.776844,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/small/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.460315,
+          "prepare_ms": 0.150574,
+          "total_ms": 0.610889,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/small/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.762964,
+          "prepare_ms": 0.235147,
+          "total_ms": 0.998111,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/small/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        }
+      ],
+      "recovery": [
+        {
+          "frontend_ms": 0.576878,
+          "prepare_ms": 0.162195,
+          "total_ms": 0.739073,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 3,
+            "reused": 9
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.425583,
+          "prepare_ms": 0.139054,
+          "total_ms": 0.5646370000000001,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 3,
+            "reused": 9
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.594238,
+          "prepare_ms": 0.32595,
+          "total_ms": 0.920188,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 3,
+            "reused": 9
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.426383,
+          "prepare_ms": 0.150714,
+          "total_ms": 0.577097,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 3,
+            "reused": 9
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.781543,
+          "prepare_ms": 0.229037,
+          "total_ms": 1.01058,
+          "source_reads": 1,
+          "reused_asts": 3,
+          "bodies": {
+            "prepared": 3,
+            "reused": 9
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop_after": [
+        {
+          "frontend_ms": 0.365321,
+          "prepare_ms": 0.042112,
+          "total_ms": 0.407433,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.226517,
+          "prepare_ms": 0.035321,
+          "total_ms": 0.261838,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.605079,
+          "prepare_ms": 0.089143,
+          "total_ms": 0.694222,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.236428,
+          "prepare_ms": 0.035741,
+          "total_ms": 0.272169,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.446324,
+          "prepare_ms": 0.074182,
+          "total_ms": 0.520506,
+          "source_reads": 0,
+          "reused_asts": 4,
+          "bodies": {
+            "prepared": 0,
+            "reused": 12
+          },
+          "diagnostic": null
+        }
+      ]
+    },
+    "source_units": 4,
+    "source_bytes": 2742,
+    "tokens": 716,
+    "cpp_units": 5,
+    "cpp_files": [
+      "units/0da23510403c6008a56fe72b320fa91da238edde44f6f0a057c364cd09ad4299.cpp",
+      "units/fd0104fa1540ad4e69f852ac6ac4047e4fba42c17bf8d8c30902e4579d381ef8.cpp",
+      "units/03597d248ab51668f0982b89f8d598ee43a2ad35a2d9cd7e7e535fce1f957e59.cpp",
+      "units/e11524df8f636dc2a36a6f9ca890fccfe4470f0f0e0e342ac5de22dd6e57a0c2.cpp",
+      "entry.cpp"
+    ],
+    "peak_php_bytes": 4194304
+  },
+  "medium": {
+    "stages": [
+      {
+        "module_ms": 0.522836,
+        "read_ms": 0.743285,
+        "tokenize_ms": 7.691338999999999,
+        "parse_collect_ms": 10.032347,
+        "symbol_index_ms": 0.151695,
+        "prepare_ms": 5.296242,
+        "lower_emit_ms": 2.326453,
+        "total_ms": 26.806307
+      },
+      {
+        "module_ms": 0.303329,
+        "read_ms": 1.063362,
+        "tokenize_ms": 7.738949000000002,
+        "parse_collect_ms": 10.443223999999999,
+        "symbol_index_ms": 0.173366,
+        "prepare_ms": 6.163019,
+        "lower_emit_ms": 3.904601,
+        "total_ms": 29.840181
+      },
+      {
+        "module_ms": 0.33757,
+        "read_ms": 1.1438040000000003,
+        "tokenize_ms": 8.072797000000001,
+        "parse_collect_ms": 10.545165000000003,
+        "symbol_index_ms": 0.170925,
+        "prepare_ms": 6.80045,
+        "lower_emit_ms": 2.718103,
+        "total_ms": 29.844529
+      },
+      {
+        "module_ms": 0.426473,
+        "read_ms": 1.2074889999999998,
+        "tokenize_ms": 9.447076,
+        "parse_collect_ms": 11.605891000000002,
+        "symbol_index_ms": 0.170225,
+        "prepare_ms": 8.512074,
+        "lower_emit_ms": 4.095205,
+        "total_ms": 35.540775
+      },
+      {
+        "module_ms": 0.495135,
+        "read_ms": 1.3898840000000001,
+        "tokenize_ms": 9.316548000000001,
+        "parse_collect_ms": 11.29496,
+        "symbol_index_ms": 0.178006,
+        "prepare_ms": 5.950083,
+        "lower_emit_ms": 3.2346,
+        "total_ms": 31.982007
+      }
+    ],
+    "incremental": {
+      "full": [
+        {
+          "frontend_ms": 19.607456,
+          "prepare_ms": 4.854959,
+          "total_ms": 24.462415,
+          "source_reads": 15,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 59,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 20.127291,
+          "prepare_ms": 4.957254,
+          "total_ms": 25.084545,
+          "source_reads": 15,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 59,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 21.73333,
+          "prepare_ms": 5.212901,
+          "total_ms": 26.946230999999997,
+          "source_reads": 15,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 59,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 20.387089,
+          "prepare_ms": 4.53438,
+          "total_ms": 24.921469,
+          "source_reads": 15,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 59,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 21.18614,
+          "prepare_ms": 4.628612,
+          "total_ms": 25.814752000000002,
+          "source_reads": 15,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 59,
+            "reused": 0
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop": [
+        {
+          "frontend_ms": 0.831366,
+          "prepare_ms": 0.277019,
+          "total_ms": 1.1083850000000002,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.811185,
+          "prepare_ms": 0.293509,
+          "total_ms": 1.104694,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.96413,
+          "prepare_ms": 0.303059,
+          "total_ms": 1.2671890000000001,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.97334,
+          "prepare_ms": 0.34235,
+          "total_ms": 1.31569,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.847306,
+          "prepare_ms": 0.236527,
+          "total_ms": 1.083833,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        }
+      ],
+      "body_edit": [
+        {
+          "frontend_ms": 0.864807,
+          "prepare_ms": 0.264738,
+          "total_ms": 1.129545,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 2,
+            "reused": 57
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.871287,
+          "prepare_ms": 0.260528,
+          "total_ms": 1.131815,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 2,
+            "reused": 57
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.861107,
+          "prepare_ms": 0.300499,
+          "total_ms": 1.161606,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 2,
+            "reused": 57
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 1.012342,
+          "prepare_ms": 0.33542,
+          "total_ms": 1.3477620000000001,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 2,
+            "reused": 57
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.889848,
+          "prepare_ms": 0.289039,
+          "total_ms": 1.178887,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 2,
+            "reused": 57
+          },
+          "diagnostic": null
+        }
+      ],
+      "signature_error": [
+        {
+          "frontend_ms": 0.833305,
+          "prepare_ms": 0.432863,
+          "total_ms": 1.266168,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/medium/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.843536,
+          "prepare_ms": 0.431834,
+          "total_ms": 1.27537,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/medium/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.808474,
+          "prepare_ms": 0.396133,
+          "total_ms": 1.204607,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/medium/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.881477,
+          "prepare_ms": 0.442463,
+          "total_ms": 1.32394,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/medium/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 0.872297,
+          "prepare_ms": 0.97493,
+          "total_ms": 1.847227,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/medium/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        }
+      ],
+      "recovery": [
+        {
+          "frontend_ms": 0.808665,
+          "prepare_ms": 0.732732,
+          "total_ms": 1.541397,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 3,
+            "reused": 56
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.797814,
+          "prepare_ms": 0.756383,
+          "total_ms": 1.554197,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 3,
+            "reused": 56
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.841775,
+          "prepare_ms": 1.00573,
+          "total_ms": 1.847505,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 3,
+            "reused": 56
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 1.120314,
+          "prepare_ms": 0.996311,
+          "total_ms": 2.116625,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 3,
+            "reused": 56
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 1.266539,
+          "prepare_ms": 1.186487,
+          "total_ms": 2.4530260000000004,
+          "source_reads": 1,
+          "reused_asts": 14,
+          "bodies": {
+            "prepared": 3,
+            "reused": 56
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop_after": [
+        {
+          "frontend_ms": 0.66163,
+          "prepare_ms": 0.179116,
+          "total_ms": 0.840746,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.66162,
+          "prepare_ms": 0.191246,
+          "total_ms": 0.852866,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 1.048252,
+          "prepare_ms": 0.369351,
+          "total_ms": 1.417603,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.796664,
+          "prepare_ms": 0.226067,
+          "total_ms": 1.022731,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 0.916288,
+          "prepare_ms": 0.461525,
+          "total_ms": 1.377813,
+          "source_reads": 0,
+          "reused_asts": 15,
+          "bodies": {
+            "prepared": 0,
+            "reused": 59
+          },
+          "diagnostic": null
+        }
+      ]
+    },
+    "source_units": 15,
+    "source_bytes": 27753,
+    "tokens": 6531,
+    "cpp_units": 16,
+    "cpp_files": [
+      "units/a39935ed10f968cc15fe9b8fb2b54c5bbabc38318b12be22d5805212a37ea46b.cpp",
+      "units/3c4cc0da1b5612964bd469caa0fb49f5e933e028d9273468b241524c4ffe4b96.cpp",
+      "units/f6becfbbfef3c8b5f2e5e2605486fd72e13e40adb8d68b7df72008c42cc0b18a.cpp",
+      "units/dd243e5285a1a991980cc690de12d48e78aee494d08f265b15c48248b9d0bac5.cpp",
+      "units/075cfa8cc26af5a3883caf43a95a6bc11dc60e650119b9e0beb17e1ed73b9bbe.cpp",
+      "units/a61f86e408f20fddf16ea7c288ee61d7700cb6f2bcb4722e3e7b568a265afceb.cpp",
+      "units/bd565df712a877851493aaf36328937932649b2ace725f3a6bc7c88e2fbaef4b.cpp",
+      "units/10736a1c8b068f1f770a9ab147f60541373bb29d6dd66305a793f2269b2aba02.cpp",
+      "units/9604dfdb3bb0c582d29323681537028782f16659bc6954377b7f360b8bedbea4.cpp",
+      "units/7c6cb57c9ebf28c9380e2bc80d555cf614f00ed0ca846ccfda9c78c876101bf9.cpp",
+      "units/fd4eaa1ec6dfa0eec28edbd0be45a6d66616df9ac9e32d1f33b2085b8efda68b.cpp",
+      "units/4d13f38965fa38d1bf914bf57a29a69b6fcdf3601c29be5ee7be9415f6d8831a.cpp",
+      "units/55ed392c1f77cc70044b1bb9ad3571c530b4e2fc38ae76078acc4710850a4c42.cpp",
+      "units/57e7dd77d8dbb7c2881463594ece53e4e6b9c408b05c1995e95d46f303946527.cpp",
+      "units/020355875d00f5f2b302ff6d75983ed924cf41e6d891cccb653eb32e72715a0f.cpp",
+      "entry.cpp"
+    ],
+    "peak_php_bytes": 6291456
+  },
+  "large": {
+    "stages": [
+      {
+        "module_ms": 0.96165,
+        "read_ms": 9.736362000000002,
+        "tokenize_ms": 117.93187200000001,
+        "parse_collect_ms": 137.75373499999998,
+        "symbol_index_ms": 1.906899,
+        "prepare_ms": 105.950053,
+        "lower_emit_ms": 44.479962,
+        "total_ms": 419.613187
+      },
+      {
+        "module_ms": 0.745373,
+        "read_ms": 8.885481000000004,
+        "tokenize_ms": 113.51432499999996,
+        "parse_collect_ms": 130.91779900000003,
+        "symbol_index_ms": 2.347492,
+        "prepare_ms": 113.219732,
+        "lower_emit_ms": 50.73283,
+        "total_ms": 420.934558
+      },
+      {
+        "module_ms": 0.746364,
+        "read_ms": 7.208220999999999,
+        "tokenize_ms": 98.96555699999999,
+        "parse_collect_ms": 129.836633,
+        "symbol_index_ms": 1.778265,
+        "prepare_ms": 110.88453,
+        "lower_emit_ms": 50.553359,
+        "total_ms": 400.430285
+      },
+      {
+        "module_ms": 0.851237,
+        "read_ms": 8.108909,
+        "tokenize_ms": 121.29519799999997,
+        "parse_collect_ms": 138.06202000000002,
+        "symbol_index_ms": 2.186317,
+        "prepare_ms": 131.142424,
+        "lower_emit_ms": 51.951002,
+        "total_ms": 454.158747
+      },
+      {
+        "module_ms": 0.93815,
+        "read_ms": 7.210928000000003,
+        "tokenize_ms": 114.580252,
+        "parse_collect_ms": 138.67766400000002,
+        "symbol_index_ms": 2.739274,
+        "prepare_ms": 120.038623,
+        "lower_emit_ms": 47.415712,
+        "total_ms": 432.209901
+      }
+    ],
+    "incremental": {
+      "full": [
+        {
+          "frontend_ms": 248.69538,
+          "prepare_ms": 79.256424,
+          "total_ms": 327.951804,
+          "source_reads": 67,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 523,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 328.043408,
+          "prepare_ms": 87.676204,
+          "total_ms": 415.719612,
+          "source_reads": 67,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 523,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 283.401534,
+          "prepare_ms": 88.924001,
+          "total_ms": 372.32553500000006,
+          "source_reads": 67,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 523,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 284.055915,
+          "prepare_ms": 84.313975,
+          "total_ms": 368.36989000000005,
+          "source_reads": 67,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 523,
+            "reused": 0
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 285.710487,
+          "prepare_ms": 87.039082,
+          "total_ms": 372.749569,
+          "source_reads": 67,
+          "reused_asts": 0,
+          "bodies": {
+            "prepared": 523,
+            "reused": 0
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop": [
+        {
+          "frontend_ms": 6.44878,
+          "prepare_ms": 4.242531,
+          "total_ms": 10.691310999999999,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.982195,
+          "prepare_ms": 5.81887,
+          "total_ms": 12.801065000000001,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.825101,
+          "prepare_ms": 3.678633,
+          "total_ms": 10.503734,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.761308,
+          "prepare_ms": 3.651253,
+          "total_ms": 10.412561,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 7.935975,
+          "prepare_ms": 3.870989,
+          "total_ms": 11.806964,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        }
+      ],
+      "body_edit": [
+        {
+          "frontend_ms": 7.126704,
+          "prepare_ms": 4.615153,
+          "total_ms": 11.741857,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 2,
+            "reused": 521
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.368017,
+          "prepare_ms": 4.655313,
+          "total_ms": 11.02333,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 2,
+            "reused": 521
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 8.213593,
+          "prepare_ms": 4.276672,
+          "total_ms": 12.490264999999999,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 2,
+            "reused": 521
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.84228,
+          "prepare_ms": 4.255242,
+          "total_ms": 11.097522,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 2,
+            "reused": 521
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.581118,
+          "prepare_ms": 5.329984,
+          "total_ms": 11.911102,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 2,
+            "reused": 521
+          },
+          "diagnostic": null
+        }
+      ],
+      "signature_error": [
+        {
+          "frontend_ms": 5.673744,
+          "prepare_ms": 5.577783,
+          "total_ms": 11.251527,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/large/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 5.759048,
+          "prepare_ms": 5.685335,
+          "total_ms": 11.444383,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/large/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 5.560632,
+          "prepare_ms": 7.428279,
+          "total_ms": 12.988911,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/large/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 5.54971,
+          "prepare_ms": 6.069497,
+          "total_ms": 11.619207,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/large/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        },
+        {
+          "frontend_ms": 5.718237,
+          "prepare_ms": 5.604952,
+          "total_ms": 11.323189,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": null,
+          "diagnostic": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/capability-benchmarks-2026-11-04-direct-final/large/sources/main.phs:7:10: Unsupported explicit conversion from int64 to string"
+        }
+      ],
+      "recovery": [
+        {
+          "frontend_ms": 5.623663,
+          "prepare_ms": 9.019739,
+          "total_ms": 14.643401999999998,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 3,
+            "reused": 520
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 7.002696,
+          "prepare_ms": 9.731585,
+          "total_ms": 16.734281000000003,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 3,
+            "reused": 520
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 5.877211,
+          "prepare_ms": 11.148465,
+          "total_ms": 17.025676,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 3,
+            "reused": 520
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.547221,
+          "prepare_ms": 11.387751,
+          "total_ms": 17.934972000000002,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 3,
+            "reused": 520
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.46258,
+          "prepare_ms": 9.291987,
+          "total_ms": 15.754567000000002,
+          "source_reads": 1,
+          "reused_asts": 66,
+          "bodies": {
+            "prepared": 3,
+            "reused": 520
+          },
+          "diagnostic": null
+        }
+      ],
+      "noop_after": [
+        {
+          "frontend_ms": 5.762667,
+          "prepare_ms": 3.55585,
+          "total_ms": 9.318517,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.230411,
+          "prepare_ms": 3.897911,
+          "total_ms": 10.128322,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 5.559391,
+          "prepare_ms": 3.885791,
+          "total_ms": 9.445181999999999,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.573772,
+          "prepare_ms": 3.690184,
+          "total_ms": 10.263956,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        },
+        {
+          "frontend_ms": 6.528161,
+          "prepare_ms": 3.621822,
+          "total_ms": 10.149982999999999,
+          "source_reads": 0,
+          "reused_asts": 67,
+          "bodies": {
+            "prepared": 0,
+            "reused": 523
+          },
+          "diagnostic": null
+        }
+      ]
+    },
+    "source_units": 67,
+    "source_bytes": 274274,
+    "tokens": 63577,
+    "cpp_units": 68,
+    "cpp_files": [
+      "units/ac3759bc2702703812a83764b908588c7ddec5b5d1132c170ed11cfa6e16620a.cpp",
+      "units/44d2c280f2be63b2c32215a132baf40c60e910439cb156b7efddaa9fc03961dd.cpp",
+      "units/4a95e64e6f4f09ec720d940cef631c465f64faab475849d4f6b47f18f4820d6a.cpp",
+      "units/00841e2012d44b60d244b225d58a2f0a39577bbb27de9c2c7fa6915710cb23b6.cpp",
+      "units/f7282779e56dc26fec5f00fc56a8cbaa241296d3f902f01acbb2fc94b69c20f5.cpp",
+      "units/9cff75b21b5786473d6fcce1a36d50e5d4e515759c5104009797a33830e3d5f5.cpp",
+      "units/1b27e6c739ff8d48745566e446d498ea0da2d5610058445c6f15f43dd85aefcf.cpp",
+      "units/f99d0377f1ac8d99bd06a33eb3241a373e90ad1b6fb26a4326705bbc0e5e555e.cpp",
+      "units/eef490f1b851b8be38dc4a808fb43348c6e2c3548ecc60ccf61155b30536cdcc.cpp",
+      "units/0c78203732c457ded6c0c3ff27bb3a064fe8e2d72cda630ce8581f88a1f62515.cpp",
+      "units/be061b8505e4b271e097721a5665cfd795a7762c053fbeced8906dcfa99e003a.cpp",
+      "units/2a81274bfe31acf191f4d79482cadb6be714e8f48284151ced400a15c8fc9579.cpp",
+      "units/3369969eb7b177be59be10dd4ea7864f658d1b45e9482725ff599c930a227bca.cpp",
+      "units/d0fe43c59367f4950a33246ca3e231603862739ac32d3bcbfca2e1884104db58.cpp",
+      "units/119213910a32705b0c844b24a8b9598368566cc956a6b5ec7f4c6f507294cdb6.cpp",
+      "units/2f66bd8b8437602b60d5a0101eef7118765ed6d4d82825f9622bff70b3f10fd3.cpp",
+      "units/ab2017b1d56ac538a62bfb3d91cac4a4d1164da6019e3ba64c8af0ccdb12deb9.cpp",
+      "units/f178acc45103106220b37296cfd9270731a35ed2d7775b7a7f014d88ad87f6ce.cpp",
+      "units/278a87d8b3613da076a194ef8c8fea5d59ef49976a8ddee567e62a6e743617ec.cpp",
+      "units/e66c45b32c4257c02a7113e3e119ea3d3efd5eba8bb1fa106b7765a79d111743.cpp",
+      "units/affcd6111c8cd124201f20fb03c9715e84e16043a3f5268a3e5f35ec6766ac70.cpp",
+      "units/d632ad421cc3fc1065158bd411aaf4787880084ddfdb3b734b65fe172df53a71.cpp",
+      "units/a19664226d4ea367521a03d05a255f4d8de6b162b44394227a4424a5217de699.cpp",
+      "units/6712bce5ea678cb7a365e5238c8868acfa2bf0c706af95524ea3141aeee6a42a.cpp",
+      "units/d7f0885a372c413272117d988cff81683df065fc48b2422c3f8b24e4b2160c36.cpp",
+      "units/d4798792f81a6c8cf385099f4f51e055b696885b8b0c6090328d67ff9ad5df14.cpp",
+      "units/339b545f1fa66046673b5e6a0262c252d3a30bbf192b209fb50a03b00777c407.cpp",
+      "units/dea3850fab2ed11b6d5f54f0ceb9b61a4c7e95670e9c265634f8a2247b530576.cpp",
+      "units/c79feb423db77f333db172ba7535dedd06caf432dc7a77d9197f5959dbd53a07.cpp",
+      "units/c72b2ea86031a1254e6baf35a7900bae2a4df12b45112a7f2c067593ff67952f.cpp",
+      "units/2e4c2f71b9d8d12acf31fb07143ea752bec12bec415ad20d71cb55713ca7afd3.cpp",
+      "units/8375ade4d25e1efd149ce79cd0fe765ee7a05a6f99cad33487d3c7d541421dc9.cpp",
+      "units/548e603faf57a844b1d0405a3187a30fbafefa67caf7c9bac6598bce6ef092b8.cpp",
+      "units/da74514e8c585fdf18607d6edd60d230ae165f0be21e0c83f06570a52e8e3dea.cpp",
+      "units/51381504f408fd6c7e4e0cce43989e4414598aa10c59ea4f9ddd4c2b9c583420.cpp",
+      "units/6c75282cc8ca8f6ca52f69b9494cbda3b6caec6fa4ca93aa99adee4c78c49de6.cpp",
+      "units/239124ab691d2201f3915781c55f8bfeef13390ca09cb0eebcc7b937890c8caa.cpp",
+      "units/7674cce5ac15ed770f8cb46e24b258a9ec4a78b69d8de71597d394a065e9ef4c.cpp",
+      "units/c7727118aa49187b2879c2b0dcda8e2bf4c4d3c7a6e197939066fefd75259b2c.cpp",
+      "units/6758784fa62603cb8da93a55093e861212785a0a8a491f29e6c60ea455bd0986.cpp",
+      "units/4d66e48edc895f9b341cf2d12bc355d70c384547f881e229adbe863c6486059a.cpp",
+      "units/417886639dba70d209ec73d0171b94c01e8f29a998deb3751ede8cb3bb3608a6.cpp",
+      "units/78fef2ff2bafebc2104f773b6e8a6747b9506c5d120dbbc7b815423fb889ca44.cpp",
+      "units/68ac73c6aa5843acf35ae9c2356e1465a0cf70d5a6efcc24b3e63d09f36e93ac.cpp",
+      "units/16b1afe14c399ddb758115c6eff4a06912d231e450e0671639ccb242fcbcef9b.cpp",
+      "units/ca1c0f6fade31a1cdcdec2af9ffc878d69233d2ff13ee2c2e149803bdf38c93e.cpp",
+      "units/9ee0871217582bc9514279557e32d75080f92fd648c5696f711ef7e59836cbe4.cpp",
+      "units/2f1360455a560ac5be40f2bb7d56801c26963bb55715b1628eadc69d79074dce.cpp",
+      "units/8b704160e5a6a0638ca7ab85ce94b06cbdc42e3d11dbc6aa6af5450fc1b5d088.cpp",
+      "units/4727ccac6eb3c8c534de4455220aa9c2f8b63a15d5365777f1083dbf29b50202.cpp",
+      "units/e5a054c10098917f2b716ad7fd36c950a4472c30785443043bb1e0faad665477.cpp",
+      "units/1cce5b8536bd0b5f234b025274bf87a827c1ae7ea9d42b0f65f3c1cdb12e2d00.cpp",
+      "units/41e194012888061032f4921a6aa6d0e19bca5d70db1f9eb5308926a91295a992.cpp",
+      "units/8cea9b735a6a9b547b4fa2dfa3942caf5f3a948f9b756ca9f084bff07acbb9d4.cpp",
+      "units/236d1cba33d19b85836c01505133340c376af38ae5c3352836f8fbf2b7a09c43.cpp",
+      "units/44eba1293be21ea15daac238a9c0f20c9df04522a451009ae25c115cf254d977.cpp",
+      "units/39625a5a94a8872fafb5d871b629fb3751cf155485233e7cb463b91f3d89c1d0.cpp",
+      "units/8af3590c69f97e71e00f5fb76f0b0e786b0f253015dee68028e2294f796b0ffb.cpp",
+      "units/48c12921ddab1a7e30290c784b1c6d680af28dfaece94aa55e7cfc7605819bbe.cpp",
+      "units/ffcb0b61a6e05b788059521b293cb8da8e60d204c0e536b79b94e97437c2b06b.cpp",
+      "units/829356b1f8033121be66a8fa160e300816333efd31107231a2b17f0c2990589f.cpp",
+      "units/2436a404d7774cad2fabdb36d6b6b83bb312de47e7b466066a59c6c984af38c3.cpp",
+      "units/4d2f1c61e4fdae964b18332699adde64d33324fe3a09335ab4a8b786b10b8e0a.cpp",
+      "units/f6f95e2b80348c33bc69c6e536ab4fd009bf6703ad9661b12c1bcec6775e73a2.cpp",
+      "units/8460017265251127d5e87a143f3e6a15cb274a6c697eb2ca3e10260a385f6f8f.cpp",
+      "units/684de07f609f1f849958e990382be47106b107f304da67f7626ca73b7fe85d7e.cpp",
+      "units/6fba469ce166d73fecba1de2b7952c854bf46a76bc5e7ca4ff63193e70c00549.cpp",
+      "entry.cpp"
+    ],
+    "peak_php_bytes": 29360128
+  }
+}

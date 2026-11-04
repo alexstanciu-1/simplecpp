@@ -42,6 +42,8 @@ final class Preparation
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
+	/** Active loop bodies within this function; reset before each preparation. */
+	private int $loop_depth /** uint32 */ = 0;
 	/** Native non-owning context for this body's variable lookup and dependency registration. */
 	private scope $symbols;
 	/** Native non-owning owner of the facts being prepared. */
@@ -105,11 +107,12 @@ final class Preparation
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
-		$returned = $this->sequence($syntax, $source, $target, $function);
-		if (($target === null) && !$returned && ($function->return_type_def() !== type_void::instance())) {
+		$this->loop_depth = 0;
+		$completion = $this->sequence($syntax, $source, $target, $function);
+		if (($target === null) && ($completion !== statement_completion::returns) && ($function->return_type_def() !== type_void::instance())) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
 		}
-		if (($target !== null) && (!$returned)) {
+		if (($target !== null) && ($completion !== statement_completion::returns)) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
 		}
 	}
@@ -118,21 +121,29 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
-		?entry_target $target, ast_function_declaration $function): bool
+		?entry_target $target, ast_function_declaration $function): int /** uint8 */
 	{
-		$returned = false;
+		$completion = statement_completion::fallthrough;
 		foreach ($syntax as $statement)
 		{
 			$this->statement_visits++;
-			if ($returned) {
+			if (($completion & statement_completion::fallthrough) === 0) {
 				throw new diagnostic($statement->source(), $statement->byte_start(),
-					'Statements after return are outside the entry slice');
+					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
+					: 'Statements after unconditional control transfer are not supported');
 			}
-			if ($statement instanceof ast_loop_statement) {
-				$returned = $this->loop($statement, $source, $target, $function);
+			$next = statement_completion::fallthrough;
+			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+				if ($this->loop_depth === 0) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop');
+				}
+				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
+			}
+			elseif ($statement instanceof ast_loop_statement) {
+				$next = $this->loop($statement, $source, $target, $function);
 			}
 			elseif ($statement instanceof ast_if_statement) {
-				$returned = $this->conditional($statement, $source, $target, $function);
+				$next = $this->conditional($statement, $source, $target, $function);
 			}
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
@@ -179,13 +190,14 @@ final class Preparation
 					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(),
 							$target, $statement->value));
 				}
-				$returned = true;
+				$next = statement_completion::returns;
 			}
 			else {
 				throw new \LogicException('Unhandled statement preparation');
 			}
+			$completion = ($completion & ~statement_completion::fallthrough) | $next;
 		}
-		return $returned;
+		return $completion;
 	}
 
 	/** Resolve visible locals without copying outer indexes into child blocks. */
@@ -208,9 +220,9 @@ final class Preparation
 
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
 	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): bool
+		ast_function_declaration $function): int /** uint8 */
 	{
-		$returns = true;
+		$completion = 0;
 		$has_else = false;
 		foreach ($statement->arms as $arm) {
 			$this->forget_values();
@@ -221,12 +233,12 @@ final class Preparation
 				$has_else = true;
 			}
 			$this->local_frames[] = [];
-			$arm_returns = $this->sequence($arm->body->statements, $source, $target, $function);
+			$arm_completion = $this->sequence($arm->body->statements, $source, $target, $function);
 			array_pop($this->local_frames);
-			$returns = $returns && $arm_returns;
+			$completion |= $arm_completion;
 		}
 		$this->forget_values();
-		return $has_else && $returns;
+		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
 	/** Shared generated condition admission; preparation evaluates no runtime condition. */
@@ -238,7 +250,7 @@ final class Preparation
 
 	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
 	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): bool
+		ast_function_declaration $function): int /** uint8 */
 	{
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
@@ -247,14 +259,22 @@ final class Preparation
 			$this->forget_values();
 		}
 		$this->local_frames[] = [];
-		$returns = $this->sequence($statement->body->statements, $source, $target, $function);
-		array_pop($this->local_frames);
+		$this->loop_depth++;
+		try {
+			$completion = $this->sequence($statement->body->statements, $source, $target, $function);
+		}
+		finally {
+			$this->loop_depth--;
+			array_pop($this->local_frames);
+		}
 		$this->forget_values();
 		if ($post_test) {
 			$this->condition($statement->condition);
 			$this->forget_values();
 		}
-		return $post_test && $returns;
+		// Only a post-test body with exclusively return exits guarantees return; transfers end at this loop.
+		return ($post_test && ($completion === statement_completion::returns)) ? statement_completion::returns
+			: (($completion & statement_completion::returns) | statement_completion::fallthrough);
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
@@ -311,10 +331,23 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
+		if ($syntax instanceof ast_not_expression) {
+			$this->value($syntax->operand, $initializing);
+			$syntax->operand->type_def()->prepare_condition($syntax->operand);
+			$syntax->settle_not();
+			return;
+		}
 		if ($syntax instanceof ast_binary_expression) {
 			$this->value($syntax->left, $initializing);
+			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			$this->value($syntax->right, $initializing);
-			$syntax->left->type_def()->prepare_comparison($syntax);
+			if ($syntax->operator->lazy()) {
+				$syntax->left->type_def()->prepare_condition($syntax->left);
+				$syntax->right->type_def()->prepare_condition($syntax->right);
+				$syntax->settle_binary(type_bool::instance());
+				return;
+			}
+			$syntax->left->type_def()->prepare_binary($syntax);
 			return;
 		}
 		if ($syntax instanceof ast_call_expression) {

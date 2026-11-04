@@ -1,0 +1,10 @@
+{
+  "name": "benchmark-small",
+  "entry": "main.phs",
+  "sources": {
+    "support/core.scpp": "cpp",
+    "support/labels.jss": "js",
+    "billing/batch_000.phs": "php",
+    "main.phs": "php"
+  }
+}

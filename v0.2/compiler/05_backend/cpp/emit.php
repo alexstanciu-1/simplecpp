@@ -108,7 +108,12 @@ final class Cpp_Emitter
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
 		$type = $condition->type_def();
-		$operand = $this->value($condition, $global_references, $declarations, $headers);
+		$direct = false;
+		$operand = $this->value($condition, $global_references, $declarations, $headers, $direct);
+		if ($direct && ($condition instanceof ast_binary_expression) && ($type === type_bool::instance())) {
+			// Native binary handlers supply one outer pair; the condition statement supplies its own.
+			$operand = substr($operand, 1, -1);
+		}
 		foreach ($type->condition_headers() as $header) {
 			$headers[$header] = true;
 		}
@@ -135,7 +140,10 @@ final class Cpp_Emitter
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
-			if ($statement instanceof ast_loop_statement) {
+			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+				$lines[] = "\t" . ($statement instanceof ast_break_statement ? 'break;' : 'continue;');
+			}
+			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
 				$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
@@ -235,21 +243,45 @@ final class Cpp_Emitter
 
 	/**
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
+	 * $reorderable: output proof for this subtree, computed during lowering, never retained in preparation.
+	 * True permits unsequenced evaluation only alongside other proven subtrees; calls always remain false.
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 * @param ast_global_declaration[] $global_references
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
+		bool &$reorderable = false): string
 	{
+		$reorderable = false;
+		if ($value instanceof ast_not_expression) {
+			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
+		}
 		if ($value instanceof ast_binary_expression) {
+			if ($value->operator->lazy()) {
+				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
+				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
+				return '((' . $left . ') ' . ($value->operator === binary_operator::logical_and ? '&&' : '||')
+					. ' (' . $right . '))';
+			}
 			$type = $value->left->type_def();
-			$left = $this->value($value->left, $global_references, $declarations, $required_headers);
-			$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+			$left_safe = false;
+			$right_safe = false;
+			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
+			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
+			foreach ($type->binary_headers($value->operator) as $header) {
+				$required_headers[$header] = true;
+			}
+			// Retain snapshots for identical spellings to avoid Clang self-comparison diagnostics.
+			$reorderable = $left_safe && $right_safe && ($left !== $right)
+				&& $type->cpp_binary_reorderable($value->operator);
+			if ($reorderable) {
+				return $type->lower_cpp_binary($value->operator, $left, $right);
+			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
-			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto comparison_left = ' . $left
-				. '; const auto comparison_right = ' . $right . '; return '
-				. $type->lower_cpp_comparison($value->operator, 'comparison_left', 'comparison_right') . '; }())';
+			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left
+				. '; const auto binary_right = ' . $right . '; return '
+				. $type->lower_cpp_binary($value->operator, 'binary_left', 'binary_right') . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
 			$function = $value->function_def();
@@ -260,11 +292,17 @@ final class Cpp_Emitter
 			}
 			$steps = [];
 			$arguments = [];
+			$direct_arguments = [];
+			$direct = true;
 			foreach ($function->parameters as $index => $parameter) {
 				$argument = $value->arguments[$index] ?? $parameter->default_value;
 				$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
-				$operand = $this->value($argument, $global_references, $declarations, $required_headers);
+				$operand_safe = false;
+				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe);
+				$direct_arguments[] = $operand;
+				$direct = $direct && $operand_safe && $type->cpp_trivial_value()
+					&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
 				// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 				$temporary = 'argument_' . $value->start . '_' . $index;
 				if ($parameter->mode === passing_mode::reference) {
@@ -274,20 +312,26 @@ final class Cpp_Emitter
 				else {
 					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
 						. $type->lower_cpp_conversion($conversion, $operand) . ';';
-					$arguments[] = 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
+					$arguments[] = $type->cpp_trivial_value() ? $temporary
+						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 				}
 				foreach ($type->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
+			}
+			if ($direct) {
+				return $name . '(' . implode(', ', $direct_arguments) . ')';
 			}
 			return '([&]() -> ' . $function->return_type_def()->cpp_type() . ' { ' . implode(' ', $steps)
 				. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
+			$reorderable = $value->type_def()->cpp_trivial_value();
 			return $value->type_def()->lower_cpp_literal($value);
 		}
 		if ($value instanceof ast_name_expression) {
+			$reorderable = $value->type_def()->cpp_trivial_value();
 			$declaration = $value->declaration();
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);

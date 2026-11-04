@@ -279,6 +279,8 @@ function render(array $plan): array {
     $files['public/scpp/output.hpp'] = BANNER . template('output_declaration');
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
+    requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
+    $files['public/scpp/arithmetic.hpp'] = BANNER . template('arithmetic_declaration');
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
     ksort($files, SORT_STRING);

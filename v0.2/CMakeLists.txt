@@ -59,6 +59,7 @@ include(cmake/RuntimePublication.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
 set(runtime_outputs
+  ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/public/scpp/output.hpp
   ${runtime_generated}/public/scpp/carriers.hpp
@@ -91,7 +92,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp)
+add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/numeric/arithmetic.cpp)
 add_dependencies(scpp_runtime scpp_runtime_publication)
 # The PHP compiler consumes generated backend code, independently of runtime API demands.
 # Runtime-only source exports intentionally omit the compiler tree.
@@ -180,6 +181,19 @@ if(BUILD_TESTING)
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental.py)
   add_test(NAME compiler_duplicates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates.php)
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
+  add_test(NAME compiler_direct_lowering COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/direct_lowering.php)
+  add_test(NAME compiler_direct_lowering_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/direct_lowering_native.py)
+  set_tests_properties(compiler_direct_lowering_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_arithmetic COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/arithmetic.php)
+  add_test(NAME compiler_logical COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/logical.php)
+  add_test(NAME compiler_transfers COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/transfers.php)
+  add_test(NAME compiler_transfers_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/transfers_native.py)
+  set_tests_properties(compiler_transfers_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_logical_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/logical_native.py)
+  set_tests_properties(compiler_logical_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_arithmetic_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/arithmetic_native.py)
+  set_tests_properties(compiler_arithmetic_native PROPERTIES TIMEOUT 60)
+  add_test(NAME arithmetic_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/arithmetic_runtime.py)
   add_test(NAME compiler_comparisons COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/comparisons.php)
   add_test(NAME compiler_comparisons_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/comparisons_native.py)
   set_tests_properties(compiler_comparisons_native PROPERTIES TIMEOUT 60)

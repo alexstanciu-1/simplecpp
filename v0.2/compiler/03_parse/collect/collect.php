@@ -51,6 +51,9 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
+		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+			return;
+		}
 		if ($statement instanceof ast_local_declaration) {
 			$this->declarations->declare($statement);
 			$this->local_names[$statement->declaration_key()] ??= $statement;
@@ -95,6 +98,9 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_not_expression) {
+			$this->expression($value->operand);
+		}
 		if ($value instanceof ast_binary_expression) {
 			$this->expression($value->left);
 			$this->expression($value->right);

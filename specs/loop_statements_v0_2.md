@@ -14,8 +14,15 @@ do { statements } while (condition);
 
 Bodies require braces. The do-while trailing semicolon is required. Loops may nest
 and may contain supported conditional statements. `do` and `while` are reserved
-keywords in every flavor. Break/continue, numbered transfers, for/foreach, unbraced
+keywords in every flavor. Numbered/labelled transfers, for/foreach, unbraced
 bodies, empty-semicolon bodies and alternative syntax remain deferred in this slice.
+
+Bare `break;` exits the nearest enclosing loop. Bare `continue;` skips the rest of
+that loop's body and reaches its next condition evaluation. In a do-while this is
+the trailing condition, not an unconditional jump to the body. Break skips that
+condition. Both transfers may occur inside nested conditional arms. They require
+an enclosing loop within the same function; even unreachable outside-loop uses
+diagnose. This slice introduces no switch, labelled or numbered transfer semantics.
 
 A while condition executes once before each attempted iteration, including the final
 false test. Its body may execute zero times. A do-while executes its body first and
@@ -43,6 +50,11 @@ return means it cannot execute. There is no constant reachability/termination pr
 While does not establish guaranteed return because it may execute zero times.
 Do-while establishes guaranteed return only when its body guarantees return on every
 path. Ordinary function and executable-entry return requirements otherwise remain.
+Break and continue do not count as returns. Nested loops consume their own transfers;
+a possible break/continue path in a do-while prevents it from proving guaranteed
+return. The compiler continues rejecting statements after unconditional return,
+and also rejects statements after unconditional break/continue or an exhaustive
+conditional whose every arm transfers control. No constant-condition pruning is added.
 
 ## Preparation boundary
 

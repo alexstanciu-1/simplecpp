@@ -1,0 +1,21 @@
+{
+  "name": "benchmark-medium",
+  "entry": "main.phs",
+  "sources": {
+    "support/core.scpp": "cpp",
+    "support/labels.jss": "js",
+    "billing/batch_000.phs": "php",
+    "billing/batch_001.scpp": "cpp",
+    "billing/batch_002.jss": "js",
+    "billing/batch_003.phs": "php",
+    "billing/batch_004.scpp": "cpp",
+    "billing/batch_005.jss": "js",
+    "billing/batch_006.phs": "php",
+    "billing/batch_007.scpp": "cpp",
+    "billing/batch_008.jss": "js",
+    "billing/batch_009.phs": "php",
+    "billing/batch_010.scpp": "cpp",
+    "billing/batch_011.jss": "js",
+    "main.phs": "php"
+  }
+}

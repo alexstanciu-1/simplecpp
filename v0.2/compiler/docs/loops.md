@@ -2,7 +2,8 @@
 
 Doc Status: supporting
 
-The [loop contract](../../../specs/loop_statements_v0_2.md) owns semantics. Break/continue,
+The [loop contract](../../../specs/loop_statements_v0_2.md) owns semantics.
+Bare [break/continue](transfers.md) target the nearest loop. Numbered/labelled transfers,
 for/foreach, unbraced loops, constant-condition pruning and precise loop value analysis
 remain deferred. No additional truthiness types or runtime APIs are introduced.
 
@@ -30,7 +31,7 @@ initializer constants. They preserve types, bindings and earlier occurrence snap
 Assignments/declarations can establish fresh facts within each region. No source-unit or
 global-symbol scan, environment-map copy, dataflow merge or preparation fixed point occurs.
 
-The existing transient return boolean suffices while break/continue remain deferred.
+Transient completion flags now distinguish fallthrough, return, break and continue.
 While may fall through. Do-while guarantees return only if its body guarantees return;
 its test is still semantically checked. Functions remain the sole watcher/completion
 owners. Callee signature edits invalidate loop consumers; body-only edits retain them.

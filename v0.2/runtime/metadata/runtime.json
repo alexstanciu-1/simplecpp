@@ -848,6 +848,20 @@
       "underflow": "gradual_signed_zero",
       "rounding": "nearest_ties_even"
     },
+    "arithmetic": {
+      "int64": {
+        "operand": "same_type",
+        "result": "int64",
+        "overflow": "native",
+        "operators": {
+          "add": "native",
+          "subtract": "native",
+          "multiply": "native",
+          "divide": "zero_checked_divide",
+          "remainder": "zero_checked_remainder"
+        }
+      }
+    },
     "comparisons": {
       "int64": {
         "operand": "same_type",

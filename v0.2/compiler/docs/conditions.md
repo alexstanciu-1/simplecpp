@@ -4,8 +4,9 @@ Doc Status: supporting
 
 The [conditional contract](../../../specs/conditional_statements_v0_2.md) owns semantics.
 All flavors admit braced if/elseif/else-if/else, nested arms, and branch-local declarations.
-Unbraced arms, standalone blocks, logical operators, ternary, null/byte conditions,
+Unbraced arms, standalone blocks, ternary, null/byte conditions,
 constant-condition reachability and precise value merging remain deferred.
+Logical `!`, `&&` and `||` now reuse this generated truthiness; see [logical expressions](logical.md).
 
 ## Type boundary
 
@@ -36,7 +37,7 @@ writes, not the whole symbol table; entries discarded were created by prior prep
 work. There is no fixed point, branch-result comparison or per-branch watcher. Types,
 bindings and earlier value snapshots survive. Reference-parameter reads remain unknown.
 
-The statement traversal returns a transient guaranteed-return boolean. A chain returns
+The statement traversal returns transient completion flags for fallthrough, return, break and continue. A chain returns
 only with a final else and returns from every arm. The enclosing function supplies the
 return contract directly, so nested blocks have no extra function backlink or copied
 signature. Reset, duplicate diagnostics, inspection and lowering traverse owned blocks.

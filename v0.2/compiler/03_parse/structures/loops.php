@@ -31,3 +31,13 @@ final class ast_while_statement extends ast_loop_statement
 final class ast_do_while_statement extends ast_loop_statement
 {
 }
+
+/** Bare break; exits the nearest enclosing loop. No separate target fact is needed for current loop-only syntax. */
+final class ast_break_statement extends ast_statement
+{
+}
+
+/** Bare continue; reaches the nearest loop's next test, including a do-while trailing condition. */
+final class ast_continue_statement extends ast_statement
+{
+}

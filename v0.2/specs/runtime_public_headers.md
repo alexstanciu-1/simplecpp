@@ -60,3 +60,13 @@ All includes emitted by the compiler must name existing `scpp/` public headers.
 The native output integration test checks that rule for every emitted source unit
 across all three flavors; private runtime paths and direct standard-library includes
 are rejected. Native test harnesses may still include standard headers for testing.
+
+## Native integer arithmetic boundary
+
+`scpp/arithmetic.hpp` is a generated core compiler-facing ABI exposing
+`int64_divide(int64_t, int64_t)` and `int64_remainder(int64_t, int64_t)`. It includes
+only `<stdint.h>`. Compiled `runtime/src/numeric/arithmetic.cpp` delegates to the
+existing private scalar semantics for zero-divisor checks and native arithmetic.
+It does not add signed-overflow checks. Compiler lowering emits ordered snapshots
+before invoking these functions; plain addition/subtraction/multiplication need no
+runtime include. The isolated-header proof is `tests/arithmetic_runtime.py`.

@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-04, after same-type scalar comparisons.
+Updated: 2026-11-04, after bare loop transfers.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -22,8 +22,8 @@ not a mandatory dependency order.
 | # | Area / donor reference | Active v0.2 position | Main remaining work |
 | --- | --- | --- | --- |
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment | Named constants, chained assignment; expression-dependent examples |
-| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping and metadata-driven same-type scalar comparisons | Arithmetic/unary operators, mixed/string/null comparisons, logical short circuit, casts, compound writes, increments, string operations |
-| 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while, lexical body scopes and structural return completion | Unbraced bodies, break/continue, for/foreach, logical/conditional expressions, null/byte conditions and precise flow facts |
+| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons/int64 arithmetic and generated-truthiness `!`/`&&`/`||` | Unary and non-int64 arithmetic operators, mixed/string/null comparisons, eager xor, casts, compound writes, increments, string operations |
+| 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, for/foreach, ternary expressions, null/byte conditions and precise flow facts |
 | 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions | Nullable/Result, mixed/dynamic, explicit casts, probes/coalescing and text conversions |
 | 06 | [Containers](../../../compiler/my-try/docs/catalog/06_containers.md) | Pending in compiler | vector/hash registration and construction, reads/writes, append, key rules, iteration; mutation policy before mutation during iteration |
@@ -51,15 +51,14 @@ not prove those original examples. See [types](../../compiler/docs/types.md),
 - [x] Reject forward local reads and cpp/js writes before declaration; preserve source-order value facts (`VAR-ORDER-001`, bounded local isolation from `NOTE-033`).
 - [x] **01-A: Inferred local declarations.** PHP first-write declaration, cpp `auto`, js `let`; reject null inference, preserve byte reference types, no widening. [Rules and proofs](../../compiler/docs/inference.md).
 - [ ] **01-B: Named constants.** Review the current spec/metadata source of constants; do not assume donor `PHP_INT_MAX` spelling is the required cross-flavor API (`LIT-CONST-001`).
-- [ ] **01-C: Grouping and int64 addition.** Small first expression slice with approved overflow/evaluation rules; then derived initialization and self-updates (`VAR-CHAIN-004`, `VAR-REASSIGN-002/003`, chapter 02).
+- [x] **01-C: Grouping and int64 arithmetic.** Binary `+ - * / %`, derived initialization and plain self-updates; see [arithmetic](../../compiler/docs/arithmetic.md). Logical `!`/`&&`/`||` now reuse generated truthiness; see [logical expressions](../../compiler/docs/logical.md).
 - [ ] **01-D: Chained assignment.** Discuss result type, conversion boundaries and single evaluation before enabling assignment expressions (`VAR-CHAIN-001`).
 - [ ] **01-E: Identifier/context checks.** Audit flavor-specific identifier examples; parameter-dependent examples await chapter 04 (`IDENT-VAR-001`, `NOTE-021`).
 - [ ] Reconcile remaining chapter-01 notes and explicitly defer legacy annotation spelling (`TYPE-VAR-005`); do not silently adopt it.
 
 Typed function delivery: [model, contract and proofs](../../compiler/docs/functions_slice.md).
 
-Recommended next discussion: **01-B, named constants**, or 01-C if expression work
-has higher priority. These remain proposals. Chained assignment can stay separate;
+Recommended next discussion: **01-B, named constants**, or a bounded `for` loop slice. These remain proposals. Chained assignment can stay separate;
 do not require all chapter-01 carryovers before starting bounded expressions.
 
 ## Working rhythm

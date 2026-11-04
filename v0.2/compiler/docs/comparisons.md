@@ -18,7 +18,7 @@ inequality true. This slice does not introduce NaN literal syntax.
 
 ## Ownership and work
 
-`ast_binary_expression` owns left/right expressions and a `comparison_operator`
+`ast_binary_expression` owns left/right expressions and a `binary_operator`
 value. The common expression's type fact records successful preparation. There is
 no separate prepared expression, copied operands, conversion list or allocated
 operation record. For this slice, the syntax operator plus the prepared operand
@@ -28,21 +28,21 @@ The parser supports parentheses and relational precedence above equality, with
 left association within each level. Grouping changes tree shape without adding a
 wrapper node; leaves retain their original token spans. `1 < 2 < 3` fails because
 its second comparison would mix bool and int, rather than behaving as a chained
-range test. No arithmetic or logical operator admission is added.
+range test. Integer arithmetic uses the same path; see [arithmetic](arithmetic.md). Logical operators remain deferred.
 
 `compiler.comparisons` in runtime metadata declares same-type admission, operator
 names, bool result and native lowering strategy. The generator validates this
 bounded vocabulary and emits direct preparation/lowering methods on canonical
 type definitions. Removing a row/operator removes its generated admission.
-Unsupported definitions inherit rejection. Inventory version is 8.
+Unsupported definitions inherit rejection. Inventory version is 10.
 
 Preparation visits left then right exactly once and invokes the left definition's
 generated admission handler. It performs no constant folding, callee-body scan,
 second traversal or fixed point. Existing call/global watches remain owned by the
 enclosing body. Reset, collection and panel inspection recurse over both children.
 
-Lowering consumes the prepared tree and uses an immediately invoked lambda with
-two ordered by-value snapshots. RHS calls cannot retroactively change the left
+Lowering consumes the prepared tree. [Direct scalar lowering](direct_lowering.md) emits safe
+expressions directly; other expressions retain a lambda with two ordered by-value snapshots. RHS calls cannot retroactively change the left
 value through references. The generated type handler emits the comparison on those
 snapshots. No new runtime helper or public include is needed.
 

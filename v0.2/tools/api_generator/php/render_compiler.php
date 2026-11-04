@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -134,7 +134,16 @@ function renderCompiler(mixed $metadata, array $facts): array {
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerComparisons($compiler, $definitions, $identity);
+        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity);
+        if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
+            $methods .= "
+\t/** Native scalar storage has no observable copy operation. */
+\tpublic function cpp_trivial_value(): bool
+\t{
+\t\treturn true;
+\t}
+";
+        }
         if ($identity === 'int64') {
             $files['types/int64.php'] = str_replace('@conversion_methods@', $methods, $files['types/int64.php']);
             continue;
@@ -168,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 8,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 10,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -338,7 +347,7 @@ function compilerConditions(mixed $compiler, string $identity): string {
     }
     if (!isset($conditions[$identity])) return '';
     $expression = match ($conditions[$identity]) {
-        'identity' => "'(' . \$value . ')'",
+        'identity' => '$value',
         'nonzero_integer' => "'(' . \$value . ' != 0)'",
         'nonzero_float' => "'(' . \$value . ' != 0.0)'",
         'nonempty_except_zero' => var_export("([](const scpp::string& condition_value) -> bool { return condition_value.size() != 0 && (condition_value.size() != 1 || condition_value.data()[0] != '0'); })(", true) . " . \$value . ')'",
@@ -366,8 +375,8 @@ function compilerConditions(mixed $compiler, string $identity): string {
 ";
 }
 
-/** Generate direct same-type admission and approved native comparisons; no per-expression metadata interpretation. */
-function compilerComparisons(mixed $compiler, array $definitions, string $identity): string {
+/** Generate direct same-type arithmetic/comparison admission and lowering; no per-expression metadata interpretation. */
+function compilerBinary(mixed $compiler, array $definitions, string $identity): string {
     $rows = object(at($compiler, 'comparisons'));
     $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
     foreach ($rows as $name => $row) {
@@ -380,32 +389,85 @@ function compilerComparisons(mixed $compiler, array $definitions, string $identi
             requireThat(!in_array($name, ['bool_t', 'byte'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/byte');
         }
     }
-    if (!isset($rows[$identity])) return '';
-    $operators = names(at($rows[$identity], 'operators'), 'Duplicate comparison operator');
-    if ($operators === []) return '';
-    $accept = implode(' || ', array_map(static fn(string $op): string => '($value->operator === comparison_operator::' . $op . ')', $operators));
-    $cases = '';
-    foreach ($operators as $op) {
-        $cases .= "\t\t\tcomparison_operator::$op => '(' . \$left . ' " . $spelling[$op] . " ' . \$right . ')',\n";
+    $operations = [];
+    if (isset($rows[$identity])) {
+        foreach (names(at($rows[$identity], 'operators'), 'Duplicate comparison operator') as $op) {
+            $operations[$op] = ['result' => 'bool_t', 'lowering' => 'native', 'spelling' => $spelling[$op]];
+        }
     }
-    $result = 'type_' . $definitions[textValue(at($rows[$identity], 'result'))]['class'];
-    return "
-\t/** Generated same-type admission; no numeric or truthiness coercion. */
-\tpublic function prepare_comparison(ast_binary_expression \$value): void
-\t{
-\t\tif ((\$value->left->type_def() !== \$this) || (\$value->right->type_def() !== \$this)
-\t\t\t|| !($accept)) {
-\t\t\tparent::prepare_comparison(\$value);
-\t\t}
-\t\t\$value->settle_comparison($result::instance());
-\t}
-
-\t/** Lower an approved operator on already sequenced operand snapshots. */
-\tpublic function lower_cpp_comparison(comparison_operator \$operator, string \$left, string \$right): string
+    $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
+    foreach (object(at($compiler, 'arithmetic')) as $name => $row) {
+        requireThat($name === 'int64' && isset($definitions[$name]), 'Unsupported compiler arithmetic type');
+        fields($row, ['operand', 'result', 'overflow', 'operators']);
+        literals($row, ['operand' => 'same_type', 'result' => 'int64', 'overflow' => 'native']);
+        foreach (object(at($row, 'operators')) as $op => $lowering) {
+            requireThat(isset($arithmeticSpelling[$op]), 'Unsupported arithmetic operator');
+            $expected = match ($op) { 'divide' => 'zero_checked_divide', 'remainder' => 'zero_checked_remainder', default => 'native' };
+            requireThat($lowering === $expected, 'Unsupported arithmetic lowering policy');
+            if ($identity === $name) $operations[$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op]];
+        }
+    }
+    if ($operations === []) return '';
+    $results = '';
+    $cases = '';
+    $headers = [];
+    $reorderable = [];
+    foreach ($operations as $op => $operation) {
+        $result = 'type_' . $definitions[$operation['result']]['class'];
+        $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
+        if ($operation['lowering'] === 'native') {
+            $reorderable[] = "binary_operator::$op";
+            $cases .= "\t\t\tbinary_operator::$op => '(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')',\n";
+        } else {
+            $cases .= "\t\t\tbinary_operator::$op => 'scpp::int64_$op(' . \$left . ', ' . \$right . ')',\n";
+            $headers[] = "binary_operator::$op";
+        }
+    }
+    $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
+    $headerMethods = '';
+    if ($headers !== []) {
+        $headerCases = implode(', ', $headers);
+        $headerMethods = "
+\t/** @return string[] */
+\tpublic function binary_headers(binary_operator \$operator): array /** list<string> */
 \t{
 \t\treturn match (\$operator) {
-$cases\t\t\tdefault => throw new \\LogicException('Comparison was not approved'),
+\t\t\t$headerCases => ['scpp/arithmetic.hpp'],
+\t\t\tdefault => [],
 \t\t};
 \t}
 ";
+    }
+    return "
+\t/** Generated same-type admission; result identity follows the selected metadata operation. */
+\tpublic function prepare_binary(ast_binary_expression \$value): void
+\t{
+\t\tif ((\$value->left->type_def() !== \$this) || (\$value->right->type_def() !== \$this)) {
+\t\t\tparent::prepare_binary(\$value);
+\t\t}
+\t\t\$result = match (\$value->operator) {
+$results\t\t\tdefault => null,
+\t\t};
+\t\tif (\$result === null) {
+\t\t\tparent::prepare_binary(\$value);
+\t\t}
+\t\t\$value->settle_binary(\$result);
+\t}
+
+\t/** Lower an approved operator on already sequenced operand snapshots. */
+\tpublic function lower_cpp_binary(binary_operator \$operator, string \$left, string \$right): string
+\t{
+\t\treturn match (\$operator) {
+$cases\t\t\tdefault => throw new \\LogicException('Binary operation was not approved'),
+\t\t};
+\t}
+
+\t/** Only admitted primitive native operations permit reordering of independently safe operands. */
+\tpublic function cpp_binary_reorderable(binary_operator \$operator): bool
+\t{
+\t\treturn match (\$operator) {
+$safeCases\t\t\tdefault => false,
+\t\t};
+\t}
+$headerMethods";
 }

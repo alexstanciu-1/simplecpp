@@ -53,6 +53,12 @@ records the current language-flavor and parser boundaries.
   Preparation owns semantic decisions; lowering consumes settled facts. Do not
   rebuild handwritten scalar matrices or restore wrappers for native int64 storage.
 
+- Further expression evaluation-order enforcement is [deferred debt](../specs/planning/evaluation_order_debt.md).
+  Keep current lowering behavior; do not expand sequencing machinery or implement
+  statement-based expression splitting as an implicit prerequisite for new features.
+  Record ordering gaps explicitly. Changing the language guarantee requires a
+  separate decision; the current normative specification has not been amended.
+
 For namespace syntax, declaration identity and exact lookup, read
 [the first namespace slice](docs/namespaces.md). AST separators are always backslashes;
 flavor syntax normalization does not add fallback lookup or namespace-wide watches.

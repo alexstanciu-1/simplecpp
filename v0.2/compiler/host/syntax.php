@@ -77,6 +77,10 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_not_expression) {
+			return ['kind' => 'logical_not', 'operand' => self::expression($expression->operand),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_binary_expression) {
 			return ['kind' => 'binary', 'operator' => $expression->operator->name,
 				'left' => self::expression($expression->left), 'right' => self::expression($expression->right),
@@ -119,6 +123,9 @@ final class Syntax_Inspection
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
+		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
+		}
 		if ($statement instanceof ast_loop_statement) {
 			return ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
