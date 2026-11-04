@@ -122,6 +122,21 @@ final class Cpp_Emitter
 					$required_headers[$header] = true;
 				}
 			}
+			elseif ($statement instanceof ast_assignment_statement) {
+				// Identity writes to the same local are no-ops for the supported built-in value types.
+				if (($statement->conversion() === value_conversion::identity)
+					&& ($statement->value instanceof ast_name_expression)
+					&& ($statement->value->declaration() === $statement->local_def())) {
+					$lines[] = "\t(void)" . $this->name($statement->local_def()) . ';';
+					continue;
+				}
+				$type = $statement->local_def()->type_def();
+				$lines[] = "\t" . $this->name($statement->local_def()) . ' = '
+					. $type->lower_cpp_conversion($statement->conversion(), $this->value($statement->value, $global_references)) . ';';
+				foreach ($type->conversion_headers($statement->conversion()) as $header) {
+					$required_headers[$header] = true;
+				}
+			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value, $global_references))
 					. ';';

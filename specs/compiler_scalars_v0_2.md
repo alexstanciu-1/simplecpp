@@ -33,7 +33,7 @@ expression is required for initialization:
 | `null empty = null;` | `$empty null = null;` | `let empty: null = null;` |
 
 This decision applies to the implemented typed local/global declarations. It does
-not introduce implicit arithmetic promotion, truthiness, assignments, argument or
+not introduce implicit arithmetic promotion, truthiness, argument or
 return conversion rules. Future boundaries must request the appropriate conversion
 context deliberately. A typed declaration is not represented as an authored cast AST.
 
@@ -121,3 +121,22 @@ implicit or typed-destination text conversions are admitted in this slice. Strin
 globals, inference, uninitialized locals, operators, indexing, methods, interpolation
 and string function results remain deferred. Runtime capabilities alone do not
 activate these compiler features.
+
+## Local assignment extension
+
+Plain `=` to an already initialized local is supported in all flavors, in entry and
+void-function bodies. The RHS is evaluated before the destination changes. Its
+prepared type must satisfy the destination's generated implicit conversion rules;
+current metadata admits same-type identity only, including int/int64 and
+float/float64 aliases. An earlier written declaration type does not authorize
+explicit conversions on later writes. Thus `byte b = 8;` is valid but `b = 9;`
+requires a future explicit conversion facility or an already-byte source.
+
+Strings use owning value-copy assignment and preserve embedded NUL. Self-assignment
+is valid and has no observable effect for the supported built-in value types.
+Reads use source-order value facts; a write does not change earlier read facts or
+the declaration's initializer facts. Unknown values retain required runtime checks.
+
+No implicit declaration, global write, compound assignment, assignment expression,
+member/index write or new conversion rule is introduced. PHP's retained
+DeclareOrAssign syntax intent does not yet permit creating a local through a bare write.

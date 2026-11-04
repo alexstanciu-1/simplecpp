@@ -63,6 +63,8 @@ php v0.2/compiler/tests/scalars.php
 php v0.2/compiler/tests/floating.php
 python3 -B v0.2/compiler/tests/floating_native.py
 php v0.2/compiler/tests/strings.php
+php v0.2/compiler/tests/assignments.php
+python3 -B v0.2/compiler/tests/assignments_native.py
 python3 -B v0.2/compiler/tests/strings_native.py
 python3 -B v0.2/compiler/tests/scalars_native.py
 python3 -B v0.2/compiler/tests/entry_native.py
@@ -123,8 +125,8 @@ Arithmetic, grouping, blocks, generic types and other expressions are later slic
 There is one PHP syntax flavor. Composed profiles selected in PRJ configurations
 will control compiler policy; common analysis will enforce them across all flavors.
 The bounded semantic/backend slice does not introduce profile loading/enforcement
-or incremental reuse. Inferred declarations and assignments still parse but are
-not yet prepared. Successful parsing alone is not semantic validity. See [the flavor contract](../specs/compiler_frontends.md).
+or incremental reuse. Inferred declarations still parse but are not yet prepared.
+Plain existing-local writes are supported; see [assignment preparation](docs/assignments.md). Successful parsing alone is not semantic validity. See [the flavor contract](../specs/compiler_frontends.md).
 
 ## Migration boundary
 

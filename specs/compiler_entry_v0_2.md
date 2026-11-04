@@ -29,8 +29,8 @@ Known integer values propagate through local initialization and name reads so
 statically failing exit conversions are diagnosed before emission.
 
 The executable slice requires an explicit value return and supports no following
-statements. Inferred declarations and assignments may still be parsed, but their
-preparation is outside this slice. The function extension below admits bare return
+statements. Inferred declarations may still be parsed, but their preparation is outside this slice.
+Plain assignment to existing locals is covered by the [assignment extension](compiler_scalars_v0_2.md#local-assignment-extension). The function extension below admits bare return
 inside explicit void functions, but not in the executable entry. Arithmetic, unary
 signs, nested blocks, runtime input expressions and incremental compilation remain
 outside this implementation. These limits do not prohibit those features in the

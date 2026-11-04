@@ -31,6 +31,8 @@ final class Preparation
 	 * @var ast_local_declaration[]
 	 */
 	private array $visible_locals /** array<string,ast_local_declaration> */ = [];
+	/** @var ast_assignment_statement[] Latest completed writes; transient non-owning body-local index. */
+	private array $latest_writes /** array<uint32,ast_assignment_statement> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -88,6 +90,7 @@ final class Preparation
 		?Dependency_Watches $dependencies): void
 	{
 		$this->visible_locals = [];
+		$this->latest_writes = [];
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
@@ -102,6 +105,9 @@ final class Preparation
 			}
 			if ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
+			}
+			elseif ($statement instanceof ast_assignment_statement) {
+				$this->assignment($statement);
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -149,8 +155,7 @@ final class Preparation
 				$returned = true;
 			}
 			else {
-				throw new diagnostic($source, $statement->byte_start(),
-					'Assignments are outside the entry slice');
+				throw new \LogicException('Unhandled statement preparation');
 			}
 		}
 		if (($target !== null) && (!$returned)) {
@@ -184,6 +189,21 @@ final class Preparation
 		$this->visible_locals[$name] = $declaration;
 	}
 
+	/** Prepare the RHS before publishing the write, preserving old-value reads such as x = x. */
+	private function assignment(ast_assignment_statement $statement): void
+	{
+		$this->name_lookups++;
+		$local = $this->visible_locals[$statement->name] ?? null;
+		if ($local === null) {
+			throw new diagnostic($statement->source(), $statement->byte_start(),
+				'Assignment requires an existing local; inference and global writes are deferred: ' . $statement->name);
+		}
+		$this->value($statement->value);
+		$conversion = $local->type_def()->prepare_conversion($statement->value, false);
+		$statement->settle_assignment($local, $conversion);
+		$this->latest_writes[$local->id] = $statement;
+	}
+
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
@@ -203,7 +223,7 @@ final class Preparation
 			}
 			$binding = $this->visible_locals[$name] ?? null;
 			if ($binding !== null) {
-				$syntax->settle_local($binding);
+				$syntax->settle_local($binding, $this->latest_writes[$binding->id] ?? null);
 				return;
 			}
 			$separator = strpos($name, '\\');

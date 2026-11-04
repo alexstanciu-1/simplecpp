@@ -21,7 +21,7 @@ final class Function_Preparation
 		foreach ($body->statements as $statement)
 		{
 			if (($statement instanceof ast_local_declaration) || ($statement instanceof ast_call_statement)
-				|| ($statement instanceof ast_return_statement)) {
+				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)) {
 				$statement->reset_preparation();
 			}
 			if ($statement instanceof ast_local_declaration) {

@@ -80,6 +80,10 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'local', 'id' => $statement->id,
 					'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
 			}
+			elseif ($statement instanceof ast_assignment_statement) {
+				$statements[] = ['kind' => 'assignment', 'id' => $statement->local_def()->id,
+					'conversion' => $statement->conversion()->name, 'value' => self::value($statement->value)];
+			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$statements[] = ['kind' => 'return', 'conversion' => $statement->conversion()->name,
 					'value' => self::value($statement->value)];

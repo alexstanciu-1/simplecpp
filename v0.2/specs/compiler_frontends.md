@@ -39,12 +39,12 @@ remain semantic responsibilities. Successful parsing does not mean a valid progr
 
 The shared AST distinguishes an explicit/inferred Local from an Assignment.
 C++/JS assignments carry ExistingBinding intent. PHP bare assignments carry
-DeclareOrAssign intent; analysis decides introduction versus update. Parsing does not resolve names or directly mutate a global symbol index.
+DeclareOrAssign intent; current preparation requires an existing local, leaving introduction deferred. Parsing does not resolve names or directly mutate a global symbol index.
 Local collection records occurrences; function discovery notifies the coordinator. All locals in this first subset are mutable; immutable
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
 Implemented now: initialized local declarations and simple-name assignments;
-type annotations are single names; values are decimal integers/floats, `true`/`false`/`null`, or flavor-correct
+type annotations are single names; values are decimal integers/floats, `true`/`false`/`null`, quoted strings, or flavor-correct
 name references. A sign immediately before a floating token is part of the bounded
 literal grammar; this does not introduce general unary expressions. Generated metadata registers the supported core scalar literals/types.
 The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion

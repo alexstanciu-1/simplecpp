@@ -100,9 +100,14 @@ final class ast_name_expression extends ast_expression
 	}
 
 	/** METHODS */
-	public function settle_local(ast_local_declaration $local): void
+	/** Snapshot this read occurrence from the latest completed write, or the original initializer. */
+	public function settle_local(ast_local_declaration $local, ?ast_assignment_statement $write = null): void
 	{
-		$this->settle_value($local->type_def(), $local->constant(), $local->constant_known());
+		if (($write !== null) && ($write->local_def() !== $local)) {
+			throw new \LogicException('Read and latest write must refer to the same local');
+		}
+		$current = $write ?? $local;
+		$this->settle_value($local->type_def(), $current->constant(), $current->constant_known());
 		$this->binding = $local;
 	}
 
@@ -275,21 +280,29 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 }
 
 /**
- * An authored write to a named binding, retaining flavor intent; assignment preparation is outside the current executable slice.
+ * An authored write to an existing local; preparation attaches its binding and approved conversion.
  *
  * PHP-flavor write syntax:
  * ```text
  * $value = 3;
  * ```
- * Parsing records declare-or-assign intent; this does not enable assignment or inference in preparation.
+ * Parsing retains flavor intent; preparation requires an existing local and does not infer declarations.
  */
 final class ast_assignment_statement extends ast_statement
 {
+	/** PROPERTIES */
 	public readonly string $name;
 	/** Native owning; assignment expression child. */
 	public readonly ast_expression $value;
 	public readonly assignment_intent $intent;
 
+	/** PREP FACTS */
+	/** Prepared fact: native non-owning local binding; null before settlement or after reset. */
+	protected ?ast_local_declaration $binding = null;
+	/** Prepared fact: approved implicit conversion; null before settlement or after reset. */
+	protected ?value_conversion $conversion = null;
+
+	/** CONSTRUCTOR */
 	/**
 	 * $start: token position.
 	 * $end: exclusive token position.
@@ -304,5 +317,43 @@ final class ast_assignment_statement extends ast_statement
 		$value->attach($this);
 
 		parent::__construct($start, $end);
+	}
+
+	/** METHODS */
+	public function settle_assignment(ast_local_declaration $local, value_conversion $conversion): void
+	{
+		if ($this->binding !== null) {
+			throw new \LogicException('Assignment is already prepared');
+		}
+		$this->binding = $local;
+		$this->conversion = $conversion;
+	}
+
+	public function local_def(): ast_local_declaration
+	{
+		return $this->binding ?? throw new \LogicException('Assignment binding is not settled');
+	}
+
+	public function conversion(): value_conversion
+	{
+		return $this->conversion ?? throw new \LogicException('Assignment conversion is not settled');
+	}
+
+	/** Derive the converted scalar payload from the prepared operand without retaining another copy. */
+	public function constant(): int|float|bool|null /** int64|float64|bool|null */
+	{
+		return $this->local_def()->type_def()->convert_constant($this->conversion(), $this->value->constant());
+	}
+
+	public function constant_known(): bool
+	{
+		$this->local_def();
+		return $this->value->constant_known();
+	}
+
+	public function reset_preparation(): void
+	{
+		$this->binding = null;
+		$this->conversion = null;
 	}
 }

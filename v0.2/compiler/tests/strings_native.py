@@ -23,10 +23,10 @@ def success(result):
     return result
 
 
-def prove(work):
+def prove(work, fixture_script="strings.php", check_copy=True):
     work.mkdir(parents=True, exist_ok=True)
     start = time.perf_counter()
-    success(run(['php', ROOT / 'compiler/tests/strings.php', work / 'fixtures.json']))
+    success(run(['php', ROOT / 'compiler/tests' / fixture_script, work / 'fixtures.json']))
     results = {'php_fixture_generation_ms': (time.perf_counter() - start) * 1000,
                'configuration': 'O2/g0, libc++, mold, Ninja -j8, no PCH/LTO; prebuilt runtime; fresh instrumented app objects',
                'builds': {}}
@@ -39,7 +39,7 @@ def prove(work):
         checks = ('\tlocal_0.clear();\n'
                   '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
                   '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
-        cpp.write_text(fixture['cpp'].replace('\treturn ', checks + '\treturn '))
+        cpp.write_text(fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp'])
         command = write_build(directory, [cpp])
         command[2] = '8'
         graph = directory / 'build.ninja'
@@ -64,7 +64,7 @@ def prove(work):
         results['builds'][flavor] = {'native_ms': elapsed, 'frontend_ms': totals['Frontend'],
             'llvm_backend_ms': totals['Backend'], 'optimizer_ms': totals.get('Optimizer', 0),
             'codegen_ms': totals.get('CodeGenPasses', 0), 'link_command_ms': int(link[1]) - int(link[0]),
-            'stdout_hex': result.stdout.encode().hex(), 'exit': result.returncode, 'copy_independence': True}
+            'stdout_hex': result.stdout.encode().hex(), 'exit': result.returncode, 'copy_independence': check_copy}
     (work / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
     print(json.dumps(results, indent=2))
 
