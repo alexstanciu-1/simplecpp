@@ -27,7 +27,7 @@ final class Cpp_Grammar implements statement_grammar
 		$name = $parser->cursor->name(token_kind::identifier);
 		$parser->empty_parameters();
 		return new ast_function_declaration($name, $type,
-			$start, $parser->cursor->position());
+			$start, $parser->cursor->position(), false, $parser->source_namespace());
 	}
 
 	/** A leading type or auto declares a local; a simple-name write requires an existing binding. */

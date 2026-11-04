@@ -115,9 +115,10 @@ abstract class ast_node
  * Supplies a declaration's local lookup key; index owners add category prefixes.
  *
  * Example: function ping(): void {} supplies ping, while its file index uses func:ping.
- * Namespace qualification is deliberately outside this contract for now.
+ * Qualified symbol keys are separate from the short scope-local declaration key.
  */
 interface ast_declaration_interface {
+	public function name(): string;
 	public function declaration_key(): string;
 	public function symbol_key(): string;
 	public function duplicate_element(): ?ast_declaration_interface;
@@ -133,11 +134,13 @@ interface ast_declaration_interface {
  * $value int = 3;
  * function ping(): void {}
  * ```
- * The trait supplies their name field and default name-based key; local type and function return facts have different owners.
+ * The trait supplies short/namespace identity and a derived name; local type and function return facts have different owners.
  */
 trait ast_declaration
 {
-	public readonly string $name;
+	public readonly string $short_name;
+	/** Canonical namespace path without leading/trailing separator; null denotes the source root. */
+	public readonly ?string $namespace;
 	/**
 	 * Next erroneous same-key declaration; only the declaring scope publishes this chain.
 	 * Native non-owning; declaring scope maintains the link.
@@ -153,7 +156,7 @@ trait ast_declaration
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
-			|| (get_class($duplicate_element) !== get_class($this)) || ($duplicate_element->declaration_key() !== $this->declaration_key())) {
+			|| (get_class($duplicate_element) !== get_class($this)) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
 		$this->duplicate_element = $duplicate_element;
@@ -165,10 +168,16 @@ trait ast_declaration
 		$this->duplicate_element = null;
 	}
 
+	/** Qualified identity without a root marker; local variables keep a null namespace. */
+	public function name(): string
+	{
+		return $this->namespace === null ? $this->short_name : $this->namespace . '\\' . $this->short_name;
+	}
+
 	/** Default local key; neither a declaration category nor a namespace is included. */
 	public function declaration_key(): string
 	{
-		return $this->name;
+		return $this->short_name;
 	}
 }
 
@@ -223,6 +232,13 @@ abstract class ast_expression extends ast_node
 enum assignment_intent: int /** uint8 */ {
 	case existing_binding = 1;
 	case declare_or_assign = 2;
+}
+
+/** Written import filter; plain imports admit supported symbol kinds independently. Backing: IDs 1..3. */
+enum import_kind: int /** uint8 */ {
+	case symbol = 1;
+	case function_only = 2;
+	case constant_only = 3;
 }
 
 /**

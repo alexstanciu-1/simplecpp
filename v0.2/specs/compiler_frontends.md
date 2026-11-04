@@ -186,3 +186,32 @@ Function existence/signature dependencies invalidate observing body caches; see 
 and variable bindings reference local declaration nodes directly. The declaration
 phase completes before any body uses foreign signature facts. Reset/reanalysis is
 sequential; old handles are not independent snapshots of declaration-owned facts.
+
+## First namespace slice
+
+Implemented namespace/path syntax and exact function lookup for all flavors follow
+[the normative namespace contract](../../specs/namespaces_v0_2.md). See
+[the compiler slice](../compiler/docs/namespaces.md) for structure, limitations,
+incremental dependency handling and proofs. AST namespace separators are always
+backslashes. JS uses TypeScript-style namespace braces/dotted paths and a Simple
+C++ leading-backslash root qualifier. Export/API visibility remains deferred;
+namespace declarations are currently visible without an export keyword.
+
+Body-local `use`/`use function` imports now resolve existing functions, including
+symbol renaming and homogeneous groups. Imports have absolute targets, apply
+throughout only their source namespace body and do not publish new identities.
+Preparation validates unused imports on full and incremental passes. All flavors
+use `use` with their own path separators; type/constant imports remain deferred.
+Ordinary top-level variables stay local to implicit main; configurable same-file
+visibility and variable shadowing are [debt](planning/variable_visibility_debt.md).
+
+## Explicit global variables
+
+The [integer-global slice](../compiler/docs/globals.md) adds file/namespace-level
+`global` declarations to the same AST inventory and symbol publication path as functions.
+They admit inferred or explicit int64 storage with signed decimal literal initialization
+before entry execution. Namespace-qualified reads work across files and functions;
+visible locals take precedence over unqualified globals. Ordinary top-level locals
+remain private to implicit main. Writes, other types and variable imports are deferred.
+Reads retain stable symbol entries with unknown constant values; initializer-only
+changes need not invalidate reader bodies, while removal/type changes do.

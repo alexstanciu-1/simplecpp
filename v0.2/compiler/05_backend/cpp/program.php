@@ -14,7 +14,7 @@ final class Cpp_Program
 		foreach ($program->files as $path => $file) {
 			$bodies[$path] = (string) $path === $program->entry_path
 				? (new Cpp_Emitter())->entry_body($program->entry)
-				: (new Cpp_Emitter())->functions($file->functions());
+				: (new Cpp_Emitter())->source_definitions($file);
 		}
 		$output = self::assemble($program->entry_path, $bodies);
 		$native = [];

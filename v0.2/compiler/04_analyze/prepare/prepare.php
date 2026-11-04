@@ -34,6 +34,12 @@ final class Preparation
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
+	/** Native non-owning context for this body's variable lookup and dependency registration. */
+	private scope $symbols;
+	/** Native non-owning owner of the facts being prepared. */
+	private ast_function_body $owner;
+	/** Native non-owning; null for full, nonincremental preparation. */
+	private ?Dependency_Watches $dependencies = null;
 
 	/** Standalone clients use the same declaration-before-body orchestration as multifile programs. */
 	public function prepare(ast_file_node $file, entry_target $target): prepared_entry
@@ -56,6 +62,9 @@ final class Preparation
 	/** Reset one body, reject duplicate locals, and settle its facts and traversal statistics. */
 	public function function_body(ast_function_body $syntax, scope $symbols, ?entry_target $target = null, ?Dependency_Watches $dependencies = null): void
 	{
+		$this->symbols = $symbols;
+		$this->owner = $syntax;
+		$this->dependencies = $dependencies;
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
 		$errors = Declaration_Diagnostics::locals($syntax);
@@ -83,6 +92,7 @@ final class Preparation
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
 		$returned = false;
+		$file = $owner->root();
 		foreach ($syntax as $statement)
 		{
 			$this->statement_visits++;
@@ -105,8 +115,14 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_call_statement)
 			{
+				// JS dotted spelling may name a value; it must not silently bypass local visibility.
+				$separator = strpos($statement->name, '\\');
+				if (($statement->member_syntax) && ($separator !== false) && ($separator > 0)
+					&& isset($this->visible_locals[substr($statement->name, 0, $separator)])) {
+					throw new diagnostic($source, $statement->byte_start(), 'Member calls are not supported in this slice');
+				}
 				$this->name_lookups++;
-				$symbol = $symbols->entry($statement->symbol_key());
+				$symbol = $symbols->entry($file->function_key($statement->name));
 				$dependencies?->watch($symbol, $owner);
 				$function = $symbol->declaration();
 				if ($function === null) {
@@ -172,7 +188,7 @@ final class Preparation
 	{
 		$this->expression_visits++;
 		if ($syntax instanceof ast_integer_expression) {
-			$syntax->settle_integer($this->integer($syntax));
+			$syntax->settle_integer(Integer_Preparation::value($syntax));
 			return;
 		}
 		if ($syntax instanceof ast_name_expression)
@@ -184,30 +200,26 @@ final class Preparation
 					'Cannot read local during its initialization: ' . $name);
 			}
 			$binding = $this->visible_locals[$name] ?? null;
-			if ($binding === null) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(),
-					'Unknown or not-yet-initialized local: ' . $name);
+			if ($binding !== null) {
+				$syntax->settle_local($binding);
+				return;
 			}
-			$syntax->settle_local($binding);
+			$separator = strpos($name, '\\');
+			if ($syntax->member_syntax && ($separator !== false)
+				&& isset($this->visible_locals[substr($name, 0, $separator)])) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
+			}
+			$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
+			$symbol = $this->symbols->entry($key);
+			$this->dependencies?->watch($symbol, $this->owner);
+			if ($symbol->declaration() === null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(),
+					'Unknown or not-yet-initialized local/global: ' . $name);
+			}
+			$syntax->settle_global($symbol);
 			return;
 		}
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
-	/**
-	 * Compare decimal magnitude before host conversion; leading zeros must not become C++ octal.
-	 *
-	 * Return: nonnegative in this syntax slice.
-	 */
-	private function integer(ast_integer_expression $syntax): int /** int64 */
-	{
-		$decimal = ltrim($syntax->source_text(), '0');
-		$limit = '9223372036854775807';
-		if ((strlen($decimal) > strlen($limit))
-			|| ((strlen($decimal) === strlen($limit)) && (strcmp($decimal, $limit) > 0))) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(),
-				'Integer literal is outside int64 range');
-		}
-		return $decimal === '' ? 0 : (int) $decimal;
-	}
 }

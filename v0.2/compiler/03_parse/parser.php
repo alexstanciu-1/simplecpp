@@ -18,6 +18,8 @@ final class Parser
 	/** PROPERTIES */
 	/** Native owning; parser-local cursor. */
 	public readonly Syntax_Cursor $cursor;
+	/** Native owning; flavor-specific syntax adapter shares the parser cursor. */
+	private readonly Namespace_Syntax $names;
 	private bool $started = false;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
@@ -28,7 +30,7 @@ final class Parser
 	public function __construct(token_list $tokens, ?declaration_sink $sink = null)
 	{
 		$this->cursor = new Syntax_Cursor($tokens);
-		$this->root = new ast_file_node($tokens);
+		$this->names = new Namespace_Syntax($this->cursor);
 		$this->sink = $sink;
 	}
 
@@ -40,6 +42,19 @@ final class Parser
 			throw new \LogicException('A parser instance processes one source once');
 		}
 		$this->started = true;
+		$namespace = null;
+		$braced = false;
+		if ($this->cursor->keyword('namespace')) {
+			$namespace = $this->names->declaration();
+			$braced = $this->cursor->is(token_kind::lbrace);
+			$delimiter = $braced ? token_kind::lbrace : token_kind::semicolon;
+			if ((!$braced) && ($this->cursor->tokens->source->flavor !== flavor::php)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected { after namespace');
+			}
+			$this->cursor->take($delimiter, $braced ? '{' : ';');
+		}
+		$this->root = new ast_file_node($this->cursor->tokens, $namespace);
+		$body_start = $this->cursor->position();
 		$collector = new Body_Collection($this->root->scope);
 		$declarations = new Scope_Collection($this->root->scope);
 		$grammar = match ($this->cursor->tokens->source->flavor) {
@@ -49,8 +64,25 @@ final class Parser
 		};
 		$statements = [];
 		$nodes = [];
-		while (!$this->cursor->at_end())
+		$imports = [];
+		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
+			if ($this->cursor->keyword('global'))
+			{
+				$global = Global_Syntax::read($this);
+				$global->attach($this->root);
+				$this->sink?->discovered($global);
+				$declarations->import($global);
+				$nodes[] = $global;
+				continue;
+			}
+			if ($this->cursor->keyword('use')) {
+				foreach (Import_Syntax::read($this->cursor, $this->names) as $import) {
+					$import->attach($this->root);
+					$imports[] = $import;
+				}
+				continue;
+			}
 			if ($grammar->function_start($this)) {
 				$function = $this->function_declaration($grammar);
 				$declarations->import($function);
@@ -61,27 +93,43 @@ final class Parser
 			$collector->statement($statement, count($statements));
 			$statements[] = $statement;
 		}
+		$body_end = $this->cursor->position();
+		if ($braced) {
+			$this->cursor->take(token_kind::rbrace, '}');
+			if (!$this->cursor->at_end()) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+					'Only one namespace body per file is supported');
+			}
+		}
 		if ($statements !== [])
 		{
 			$main = new ast_function_declaration('main',
-				'int', 0, 0, true);
+				'int', $body_start, $body_start, true, $namespace);
 			$main->attach($this->root);
-			$main->complete_body($collector->body(0, count($this->cursor->tokens->tokens), $statements));
+			$main->complete_body($collector->body($body_start, $body_end, $statements));
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
-		/** @var ast_function_declaration[] $functions */
-		$functions = $declarations->publish_references()->heads();
-		if (isset($functions['func:main'])) {
-			$functions = ['func:main' => $functions['func:main']] + $functions;
+		/** @var (ast_function_declaration|ast_global_declaration)[] $heads */
+		$heads = $declarations->publish_references()->heads();
+		if (isset($heads['func:main'])) {
+			$heads = ['func:main' => $heads['func:main']] + $heads;
 		}
-		$this->root->complete($functions, $nodes, Declaration_Diagnostics::file($nodes));
+		$this->root->complete($heads, $nodes, Declaration_Diagnostics::file($nodes), $imports);
 		return $this->root;
 	}
 
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar): ast_statement
 	{
+		if ($this->cursor->keyword('global')) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+				'Global declarations are only allowed at file/namespace level');
+		}
+		if ($this->cursor->keyword('namespace') || $this->cursor->keyword('export') || $this->cursor->keyword('use')) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+				'Nested/additional namespaces, body-local use and export are not supported in this slice');
+		}
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
 		}
@@ -92,14 +140,16 @@ final class Parser
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
 		}
-		if ($this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::lparen))
+		if ($this->names->call_start())
 		{
 			$start = $this->cursor->position();
-			$name = $this->cursor->name(token_kind::identifier);
+			$name = $this->names->path(true);
 			$this->cursor->take(token_kind::lparen, '(');
 			$this->cursor->take(token_kind::rparen, ') (calls take no arguments in this slice)');
 			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-			return new ast_call_statement($start, $end, $name);
+			$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
+				&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
+			return new ast_call_statement($start, $end, $name, $member_syntax);
 		}
 		return $grammar->statement($this);
 	}
@@ -110,7 +160,7 @@ final class Parser
 		$function = $grammar->function_header($this);
 		$function->attach($this->root);
 		$source = $this->cursor->tokens->source;
-		if ($function->name === 'main') {
+		if ($function->short_name === 'main') {
 			throw new diagnostic($source, $this->root->byte_at($function->name_position()),
 				'Explicit main is not supported yet');
 		}
@@ -142,7 +192,12 @@ final class Parser
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
 		$type = $this->return_type();
 		return new ast_function_declaration($name, $type,
-			$start, $this->cursor->position());
+			$start, $this->cursor->position(), false, $this->root->scope->namespace);
+	}
+
+	public function source_namespace(): ?string
+	{
+		return $this->root->scope->namespace;
 	}
 
 	public function empty_parameters(): void
@@ -199,12 +254,11 @@ final class Parser
 			$position = $this->cursor->take(token_kind::integer, 'integer');
 			return new ast_integer_expression($position, $position + 1);
 		}
-		$kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		if ($this->cursor->is($kind)) {
-			$start = $this->cursor->position();
-			return new ast_name_expression($this->cursor->name($kind), $start, $this->cursor->position());
-		}
-		throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected integer or name');
+		$start = $this->cursor->position();
+		$name = $this->names->variable_path();
+		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
+			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
+		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax);
 	}
 
 	/** $start: token position. */

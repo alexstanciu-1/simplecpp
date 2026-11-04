@@ -19,16 +19,16 @@ final class Symbol_Publication implements declaration_sink
 
 	/** METHODS */
 	/** Read only the initialized header; discovery must never inspect the still-unfinished body. */
-	public function discovered(ast_declaration_interface $function): void
+	public function discovered(ast_declaration_interface $declaration): void
 	{
 		if ($this->published) {
 			throw new \LogicException('Cannot notify a completed symbol publication');
 		}
-		if (!($function instanceof ast_function_declaration)) {
-			throw new \LogicException('Only public functions are exported by the current file grammar');
+		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_global_declaration)) {
+			throw new \LogicException('Only functions and explicit globals are published by the current file grammar');
 		}
-		if (!$function->is_private) {
-			$this->collection->import($function);
+		if (!($declaration instanceof ast_function_declaration) || (!$declaration->is_private)) {
+			$this->collection->import($declaration);
 		}
 	}
 
@@ -44,9 +44,8 @@ final class Symbol_Publication implements declaration_sink
 		}
 		$complete = [];
 		foreach ($files as $file) {
-			foreach ($file->functions() as $function) {
-				$function->body();
-				$complete[spl_object_id($function)] = true;
+			foreach ($file->published_declarations() as $declaration) {
+				$complete[spl_object_id($declaration)] = true;
 			}
 		}
 		foreach ($this->collection->inventory() as $candidate) {
@@ -60,10 +59,10 @@ final class Symbol_Publication implements declaration_sink
 			throw new \LogicException('Completed source has unreported declarations');
 		}
 		$this->published = true;
-		$this->collection->order(static fn(ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ =>
+		$this->collection->order(static fn(ast_node $a, ast_node $b): int /** int32 */ =>
 			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
 		// Capture the dependency role before publication rewrites links on reused AST declarations.
-		$old_contracts = ($dependencies !== null) && ($previous !== null) ? self::function_contracts($previous) : [];
+		$old_contracts = ($dependencies !== null) && ($previous !== null) ? self::declaration_contracts($previous) : [];
 		$scope = $this->collection->publish($previous);
 		ksort($scope->declarations, \SORT_STRING);
 		foreach ($files as $file) {
@@ -72,7 +71,7 @@ final class Symbol_Publication implements declaration_sink
 		if ($dependencies !== null)
 		{
 			$dependencies->retain(self::watchers($files));
-			$contracts = self::function_contracts($scope);
+			$contracts = self::declaration_contracts($scope);
 			foreach (array_unique(array_merge(array_keys($old_contracts), array_keys($contracts))) as $key)
 			{
 				$old = $old_contracts[$key] ?? null;
@@ -99,8 +98,8 @@ final class Symbol_Publication implements declaration_sink
 	{
 		$publication = new self();
 		foreach ($files as $file) {
-			foreach ($file->functions() as $function) {
-				$publication->discovered($function);
+			foreach ($file->published_declarations() as $declaration) {
+				$publication->discovered($declaration);
 			}
 		}
 		return $publication->publish($files, $previous, $dependencies);
@@ -114,12 +113,20 @@ final class Symbol_Publication implements declaration_sink
 	 *
 	 * @return (string|null)[]
 	 */
-	private static function function_contracts(scope $scope): array /** array<string,?string> */
+	private static function declaration_contracts(scope $scope): array /** array<string,?string> */
 	{
 		$contracts = [];
 		foreach ($scope->declarations as $key => $head) {
-			/** @var ast_function_declaration $head */
-			$contracts[$key] = $head->duplicate_element() === null ? $head->return_type_name : null;
+			if ($head->duplicate_element() !== null) {
+				$contracts[$key] = null;
+			}
+			elseif ($head instanceof ast_global_declaration) {
+				$contracts[$key] = 'global:' . ($head->type_name ?? 'int64');
+			}
+			else {
+				/** @var ast_function_declaration $head */
+				$contracts[$key] = $head->return_type_name;
+			}
 		}
 		return $contracts;
 	}
@@ -134,7 +141,9 @@ final class Symbol_Publication implements declaration_sink
 		$watchers = [];
 		foreach ($files as $file) {
 			foreach ($file->declaration_nodes as $function) {
-				$watchers[] = $function->body();
+				if ($function instanceof ast_function_declaration) {
+					$watchers[] = $function->body();
+				}
 			}
 		}
 		return $watchers;

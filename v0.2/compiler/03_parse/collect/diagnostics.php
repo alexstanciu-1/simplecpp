@@ -13,24 +13,26 @@ final class Declaration_Diagnostics
 	/**
 	 * Completed bodies are available now; diagnostics never prevent parsing later declarations.
 	 *
-	 * @param ast_function_declaration[] $nodes
+	 * @param (ast_function_declaration|ast_global_declaration)[] $nodes
 	 * @return diagnostic[]
 	 */
-	public static function file(array $nodes /** list<ast_function_declaration> */): array /** list<diagnostic> */
+	public static function file(array $nodes /** list<ast_function_declaration|ast_global_declaration> */): array /** list<diagnostic> */
 	{
 		$errors = [];
-		/** @var ast_function_declaration[] $first */
+		/** @var (ast_function_declaration|ast_global_declaration)[] $first */
 		$first = [];
 		foreach ($nodes as $node)
 		{
 			$key = $node->symbol_key();
 			if (isset($first[$key])) {
-				$errors[] = self::duplicate($node, $first[$key], 'function');
+				$errors[] = self::duplicate($node, $first[$key], $node instanceof ast_global_declaration ? 'global' : 'function');
 			}
 			else {
 				$first[$key] = $node;
 			}
-			array_push($errors, ...self::locals($node->body()));
+			if ($node instanceof ast_function_declaration) {
+				array_push($errors, ...self::locals($node->body()));
+			}
 		}
 		return self::ordered($errors);
 	}
@@ -40,14 +42,14 @@ final class Declaration_Diagnostics
 	 *
 	 * @return diagnostic[]
 	 */
-	public static function functions(scope $symbols): array /** list<diagnostic> */
+	public static function published(scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = [];
 		foreach ($symbols->declarations as $head) {
-			/** @var ast_function_declaration $head */
+			/** @var ast_function_declaration|ast_global_declaration $head */
 			for ($node = $head->duplicate_element(); $node !== null; $node = $node->duplicate_element()) {
-				/** @var ast_function_declaration $node */
-				$errors[] = self::duplicate($node, $head, 'function');
+				/** @var ast_function_declaration|ast_global_declaration $node */
+				$errors[] = self::duplicate($node, $head, $node instanceof ast_global_declaration ? 'global' : 'function');
 			}
 		}
 		return $errors;
@@ -79,7 +81,7 @@ final class Declaration_Diagnostics
 	 */
 	public static function program(array $files /** array<string,ast_file_node> */, scope $symbols): array /** list<diagnostic> */
 	{
-		$errors = self::functions($symbols);
+		$errors = self::published($symbols);
 		foreach ($files as $file)
 		{
 			foreach ($file->functions() as $function) {
@@ -93,13 +95,13 @@ final class Declaration_Diagnostics
 		return self::ordered($errors);
 	}
 
-	private static function duplicate(ast_local_declaration|ast_function_declaration $node,
-		ast_local_declaration|ast_function_declaration $first, string $kind): diagnostic
+	private static function duplicate(ast_local_declaration|ast_function_declaration|ast_global_declaration $node,
+		ast_local_declaration|ast_function_declaration|ast_global_declaration $first, string $kind): diagnostic
 	{
 		$source = $first->source();
 		$location = $source->location($first->root()->byte_at($first->name_position()));
 		return new diagnostic($node->source(), $node->root()->byte_at($node->name_position()),
-			'Duplicate ' . $kind . ': ' . $node->name . '; first declaration at '
+			'Duplicate ' . $kind . ': ' . $node->name() . '; first declaration at '
 			. $source->path . ':' . $location['line'] . ':' . $location['column']);
 	}
 

@@ -28,7 +28,7 @@ foreach ([
 	$publisher = new Symbol_Publication();
 	$file = $frontend->collect(new source_file('a', $text, $flavor), $publisher);
 	$functions = $file->functions();
-	verify(array_map(static fn(ast_function_declaration $f): string => $f->name, $functions) === ['f', 'other', 'f',
+	verify(array_map(static fn(ast_function_declaration $f): string => $f->name(), $functions) === ['f', 'other', 'f',
 			'f'], 'Lost source order or later declarations');
 	$head = $file->declarations['func:f'];
 	verify(($head === $functions[0]) && ($head->duplicate_element() === null),

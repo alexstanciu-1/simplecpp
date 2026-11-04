@@ -23,7 +23,7 @@ foreach ([['int count = 3; count = next;', flavor::cpp],
 	check(count($file->main()->body()->statements) === 2, 'Two shared statements');
 	$local = $file->main()->body()->statements[0];
 	check($local instanceof ast_local_declaration, 'Shared local declaration');
-	check(($local->name === 'count') && ($local->type_name === 'int'), 'Names and type syntax');
+	check(($local->short_name === 'count') && ($local->type_name === 'int'), 'Names and type syntax');
 	check(($local->initializer instanceof ast_integer_expression) && ($local->initializer->source_text() === '3'),
 		'Raw integer');
 	check(($local->byte_start() === 0) && str_ends_with($local->source_text(), ';'), 'Statement includes semicolon');

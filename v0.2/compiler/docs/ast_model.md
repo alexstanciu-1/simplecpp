@@ -14,10 +14,10 @@ together; separate parsed/collected file wrappers do not represent distinct stat
 also accepts discovery notifications. Neither API returns a second copy of syntax.
 
 The root owns tokens/source context and an ordered `declaration_nodes` syntax
-inventory. Its `declarations` map holds first references keyed by `func:name`.
+inventory. Its `declarations` map holds first references keyed by `func:name` or `var:name`.
 Indexes point to original nodes without creating declaration identities. A symbol
 entry holds one nullable head; `duplicate_element()` retains erroneous extras.
-Public function chains belong to the compilation scope, variable chains to their
+Public function/global chains belong to the compilation scope, local-variable chains to their
 body scope. File indexes never own a second chain. Publication uses temporary tails
 for constant-time appends. File traversal always uses syntax inventory, so it stays
 local and complete even when a live chain crosses files or is rebuilt incrementally.
@@ -29,12 +29,19 @@ location; global ordering uses source path and token position. An ambiguous key
 must not resolve to its first candidate. General syntax recovery is deferred.
 
 Declarations implement `ast_declaration_interface::declaration_key()`. The shared
-`ast_declaration` trait defaults that local key to the name. Index owners add
+`ast_declaration` trait owns `short_name` and nullable `namespace`; `name()` derives
+the qualified identity and `declaration_key()` returns only `short_name`. Index owners add
 category prefixes such as `func:`; these prefixes are not language namespaces.
-Namespace qualification and caller-context lookup remain deferred, with no
-namespace argument on the declaration interface. Implicit private `main` is first when present
+Function `symbol_key()` uses the qualified identity. Calls resolve exact canonical
+paths using their body scope context; see [the namespace slice](namespaces.md). Implicit private `main` is first when present
 and excluded from global publication. Explicit main and other declaration kinds
 remain outside the current source-language slice.
+
+File-local imports are `ast_import` syntax children in `ast_file_node.imports`, not
+declarations. A first-reference index selects unqualified function bindings;
+preparation validates all occurrences. Calls retain the target's existing stable
+entry, with no copied declaration or exported alias identity. See
+[namespace/import ownership](namespaces.md).
 
 All AST subclasses use `ast_`. A node owns token positions `[start, end)` and a
 single-assignment syntax parent. Only the file root has a null parent. Source bytes
@@ -64,8 +71,9 @@ A local owns `type_name` and `type_def`; a function owns `return_type_name` and
 unknown after successful preparation. Current missing-type inference remains
 unsupported. Checked accessors reject premature fact reads.
 
-Calls retain stable symbol entries resolving to current function declarations; variable references link to
-local declarations; type links identify canonical definitions. Do not introduce
+Calls retain stable symbol entries resolving to current function declarations;
+variable references retain either a local declaration or a stable global entry.
+Type links identify canonical definitions. Do not introduce
 wrappers that merely repeat those identities. A compound fact record is justified
 when it holds substantial additional data owned by a node, not simply because a
 preparation pass produced it. It must not recreate a competing statement tree.

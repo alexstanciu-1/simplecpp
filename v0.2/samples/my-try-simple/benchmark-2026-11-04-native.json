@@ -1,0 +1,2012 @@
+{
+  "versions": {
+    "php": "PHP 8.5.7 (cli) (built: Jun  6 2026 05:36:56) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.7, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.7, Copyright (c), by Zend Technologies\n",
+    "clang++": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "ninja": "1.11.1\n",
+    "ld.mold": "mold 2.40.4 (083901f42dea2491be8bc7cf6e3b1e2b9a3c850d; compatible with GNU ld)\n"
+  },
+  "configs": {
+    "O0-no-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O0-no-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 89.75867299977836,
+          "native_wall_ms": 2751.8769220005197,
+          "end_to_end_ms": 2841.635595000298,
+          "php_stages": {
+            "module_ms": 3.350163,
+            "frontend_prepare_ms": 22.741799,
+            "emit_ms": 0.997171,
+            "write_ms": 17.985014
+          },
+          "compile_window_ms": 2668,
+          "compile_sum_ms": 10589,
+          "link_driver_ms": 77,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 89.62102599980426,
+          "native_wall_ms": 2786.1721070003114,
+          "end_to_end_ms": 2875.7931330001156,
+          "php_stages": {
+            "module_ms": 3.320995,
+            "frontend_prepare_ms": 22.6131,
+            "emit_ms": 0.917559,
+            "write_ms": 17.48462
+          },
+          "compile_window_ms": 2703,
+          "compile_sum_ms": 10707,
+          "link_driver_ms": 76,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 91.8638369994369,
+          "native_wall_ms": 2823.927516999902,
+          "end_to_end_ms": 2915.7913539993388,
+          "php_stages": {
+            "module_ms": 3.344933,
+            "frontend_prepare_ms": 23.153954,
+            "emit_ms": 0.902858,
+            "write_ms": 17.443098
+          },
+          "compile_window_ms": 2745,
+          "compile_sum_ms": 10912,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 92.85743199961871,
+          "native_wall_ms": 2819.848133999585,
+          "end_to_end_ms": 2912.705565999204,
+          "php_stages": {
+            "module_ms": 3.726846,
+            "frontend_prepare_ms": 22.650412,
+            "emit_ms": 1.047162,
+            "write_ms": 18.547772
+          },
+          "compile_window_ms": 2741,
+          "compile_sum_ms": 10907,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 90.70806199997605,
+          "native_wall_ms": 2799.3799360001503,
+          "end_to_end_ms": 2890.0879980001264,
+          "php_stages": {
+            "module_ms": 3.547099,
+            "frontend_prepare_ms": 22.205838,
+            "emit_ms": 1.077603,
+            "write_ms": 18.0128
+          },
+          "compile_window_ms": 2723,
+          "compile_sum_ms": 10847,
+          "link_driver_ms": 70,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 1652.2240000000015,
+        "Backend": 643.0679999999998,
+        "CodeGenPasses": 387.7980000000003,
+        "OptModule": 380.6380000000001,
+        "Frontend": 452.3650000000001,
+        "OptFunction": 305.96200000000005,
+        "RunPass": 303.4290000000001,
+        "ParseDeclarationOrFunctionDefinition": 192.5030000000001,
+        "ParseFunctionDefinition": 125.85900000000008,
+        "CodeGen Function": 103.44099999999989,
+        "Optimizer": 15.908000000000007,
+        "EvaluateAsRValue": 5.356999999999993,
+        "ModuleToFunctionPassAdaptor": 5.738999999999993,
+        "AlwaysInlinerPass": 3.2339999999999924,
+        "AnnotationRemarksPass": 3.3779999999999917,
+        "CoroConditionalWrapper": 2.105999999999995,
+        "PerformPendingInstantiations": 1.6259999999999943,
+        "TargetLibraryAnalysis": 0.8730000000000007,
+        "ProfileSummaryAnalysis": 0.2720000000000002,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.031000000000000003,
+        "Source": 5.364,
+        "ParseClass": 0.291,
+        "isPotentialConstantExpr": 0.05,
+        "EvaluateAsBooleanCondition": 0.014,
+        "EvaluateForOverflow": 0.006,
+        "EvaluateAsInt": 0.0
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 90.70806199997605,
+          "min": 89.62102599980426,
+          "max": 92.85743199961871
+        },
+        "native_wall_ms": {
+          "median": 2799.3799360001503,
+          "min": 2751.8769220005197,
+          "max": 2823.927516999902
+        },
+        "end_to_end_ms": {
+          "median": 2890.0879980001264,
+          "min": 2841.635595000298,
+          "max": 2915.7913539993388
+        },
+        "compile_window_ms": {
+          "median": 2723,
+          "min": 2668,
+          "max": 2745
+        },
+        "compile_sum_ms": {
+          "median": 10847,
+          "min": 10589,
+          "max": 10912
+        },
+        "link_driver_ms": {
+          "median": 72,
+          "min": 70,
+          "max": 77
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 41.0,
+        "system": 153.0,
+        "wall": 24.0
+      }
+    },
+    "O0-fresh-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O0-fresh-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 91.27837000050931,
+          "native_wall_ms": 2883.821413000078,
+          "end_to_end_ms": 2975.099783000587,
+          "php_stages": {
+            "module_ms": 3.380984,
+            "frontend_prepare_ms": 22.857254,
+            "emit_ms": 0.902408,
+            "write_ms": 18.071955
+          },
+          "compile_window_ms": 2806,
+          "compile_sum_ms": 10983,
+          "link_driver_ms": 71,
+          "pch_ms": 47,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 89.76838500075246,
+          "native_wall_ms": 2900.5044340001405,
+          "end_to_end_ms": 2990.272819000893,
+          "php_stages": {
+            "module_ms": 3.365284,
+            "frontend_prepare_ms": 22.68507,
+            "emit_ms": 0.896307,
+            "write_ms": 18.321314
+          },
+          "compile_window_ms": 2824,
+          "compile_sum_ms": 11021,
+          "link_driver_ms": 69,
+          "pch_ms": 48,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 92.0475519997126,
+          "native_wall_ms": 2918.833837999955,
+          "end_to_end_ms": 3010.8813899996676,
+          "php_stages": {
+            "module_ms": 3.341963,
+            "frontend_prepare_ms": 22.813731,
+            "emit_ms": 0.992251,
+            "write_ms": 19.617154
+          },
+          "compile_window_ms": 2839,
+          "compile_sum_ms": 11119,
+          "link_driver_ms": 72,
+          "pch_ms": 47,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 93.01311900071596,
+          "native_wall_ms": 2939.2544479997014,
+          "end_to_end_ms": 3032.2675670004173,
+          "php_stages": {
+            "module_ms": 3.366013,
+            "frontend_prepare_ms": 23.27103,
+            "emit_ms": 0.913338,
+            "write_ms": 18.888166
+          },
+          "compile_window_ms": 2855,
+          "compile_sum_ms": 11196,
+          "link_driver_ms": 75,
+          "pch_ms": 48,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 89.44049399997311,
+          "native_wall_ms": 3037.360130999332,
+          "end_to_end_ms": 3126.800624999305,
+          "php_stages": {
+            "module_ms": 3.443995,
+            "frontend_prepare_ms": 22.235749,
+            "emit_ms": 0.921948,
+            "write_ms": 17.366252
+          },
+          "compile_window_ms": 2957,
+          "compile_sum_ms": 11549,
+          "link_driver_ms": 73,
+          "pch_ms": 48,
+          "binary_bytes": 74296
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2048.1639999999998,
+        "Backend": 648.5359999999998,
+        "Frontend": 402.69300000000015,
+        "CodeGenPasses": 391.7380000000001,
+        "OptModule": 384.89700000000005,
+        "ParseDeclarationOrFunctionDefinition": 241.638,
+        "OptFunction": 308.9330000000002,
+        "RunPass": 306.78200000000004,
+        "ParseFunctionDefinition": 174.2750000000001,
+        "ReadAST": 195.51299999999995,
+        "CodeGen Function": 92.49199999999999,
+        "Read Loaded AST": 32.45999999999999,
+        "Optimizer": 16.769000000000002,
+        "ModuleToFunctionPassAdaptor": 6.666999999999999,
+        "AnnotationRemarksPass": 4.476999999999993,
+        "EvaluateAsRValue": 5.645999999999997,
+        "AlwaysInlinerPass": 3.33799999999999,
+        "CoroConditionalWrapper": 2.058999999999994,
+        "PerformPendingInstantiations": 1.5129999999999961,
+        "TargetLibraryAnalysis": 0.8470000000000006,
+        "ProfileSummaryAnalysis": 0.3490000000000002,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.002,
+        "EvaluateAsBooleanCondition": 0.013
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 91.27837000050931,
+          "min": 89.44049399997311,
+          "max": 93.01311900071596
+        },
+        "native_wall_ms": {
+          "median": 2918.833837999955,
+          "min": 2883.821413000078,
+          "max": 3037.360130999332
+        },
+        "end_to_end_ms": {
+          "median": 3010.8813899996676,
+          "min": 2975.099783000587,
+          "max": 3126.800624999305
+        },
+        "compile_window_ms": {
+          "median": 2839,
+          "min": 2806,
+          "max": 2957
+        },
+        "compile_sum_ms": {
+          "median": 11119,
+          "min": 10983,
+          "max": 11549
+        },
+        "link_driver_ms": {
+          "median": 72,
+          "min": 69,
+          "max": 75
+        },
+        "pch_ms": {
+          "median": 48,
+          "min": 47,
+          "max": 48
+        }
+      },
+      "mold_trace_ms": {
+        "user": 28.0,
+        "system": 152.0,
+        "wall": 24.0
+      }
+    },
+    "O0-reused-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O0-reused-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 91.65732199926424,
+          "native_wall_ms": 2862.6382239999657,
+          "end_to_end_ms": 2954.29554599923,
+          "php_stages": {
+            "module_ms": 3.399795,
+            "frontend_prepare_ms": 22.178112,
+            "emit_ms": 1.014801,
+            "write_ms": 17.478509
+          },
+          "compile_window_ms": 2786,
+          "compile_sum_ms": 11042,
+          "link_driver_ms": 70,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 90.30115299992758,
+          "native_wall_ms": 2837.7564450001955,
+          "end_to_end_ms": 2928.057598000123,
+          "php_stages": {
+            "module_ms": 3.91091,
+            "frontend_prepare_ms": 22.130472,
+            "emit_ms": 0.992821,
+            "write_ms": 17.939263
+          },
+          "compile_window_ms": 2759,
+          "compile_sum_ms": 10978,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 91.03819699976157,
+          "native_wall_ms": 2849.2162350003127,
+          "end_to_end_ms": 2940.2544320000743,
+          "php_stages": {
+            "module_ms": 3.370083,
+            "frontend_prepare_ms": 23.555774,
+            "emit_ms": 0.897497,
+            "write_ms": 17.87792
+          },
+          "compile_window_ms": 2771,
+          "compile_sum_ms": 10977,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 93.88480500001606,
+          "native_wall_ms": 2920.2378820000376,
+          "end_to_end_ms": 3014.1226870000537,
+          "php_stages": {
+            "module_ms": 3.498379,
+            "frontend_prepare_ms": 24.300116,
+            "emit_ms": 0.950529,
+            "write_ms": 19.510295
+          },
+          "compile_window_ms": 2838,
+          "compile_sum_ms": 11275,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        },
+        {
+          "php_process_ms": 94.94379100033257,
+          "native_wall_ms": 2928.138880000006,
+          "end_to_end_ms": 3023.0826710003385,
+          "php_stages": {
+            "module_ms": 3.309671,
+            "frontend_prepare_ms": 22.624982,
+            "emit_ms": 1.004221,
+            "write_ms": 23.120165
+          },
+          "compile_window_ms": 2848,
+          "compile_sum_ms": 11346,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 74296
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2002.9529999999997,
+        "Backend": 640.6400000000004,
+        "CodeGenPasses": 387.0459999999997,
+        "OptModule": 380.49899999999997,
+        "Frontend": 390.6560000000001,
+        "OptFunction": 304.78100000000006,
+        "RunPass": 302.353,
+        "ParseDeclarationOrFunctionDefinition": 234.52900000000005,
+        "ReadAST": 191.74199999999996,
+        "ParseFunctionDefinition": 167.81199999999998,
+        "CodeGen Function": 90.65599999999998,
+        "Read Loaded AST": 32.581999999999994,
+        "Optimizer": 16.785000000000007,
+        "EvaluateAsRValue": 5.483999999999994,
+        "ModuleToFunctionPassAdaptor": 6.64699999999999,
+        "AnnotationRemarksPass": 4.473999999999993,
+        "AlwaysInlinerPass": 3.2859999999999916,
+        "PerformPendingInstantiations": 1.589999999999996,
+        "CoroConditionalWrapper": 2.172999999999995,
+        "TargetLibraryAnalysis": 0.8040000000000006,
+        "ProfileSummaryAnalysis": 0.2900000000000002,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.003,
+        "EvaluateAsBooleanCondition": 0.012
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 91.65732199926424,
+          "min": 90.30115299992758,
+          "max": 94.94379100033257
+        },
+        "native_wall_ms": {
+          "median": 2862.6382239999657,
+          "min": 2837.7564450001955,
+          "max": 2928.138880000006
+        },
+        "end_to_end_ms": {
+          "median": 2954.29554599923,
+          "min": 2928.057598000123,
+          "max": 3023.0826710003385
+        },
+        "compile_window_ms": {
+          "median": 2786,
+          "min": 2759,
+          "max": 2848
+        },
+        "compile_sum_ms": {
+          "median": 11042,
+          "min": 10977,
+          "max": 11346
+        },
+        "link_driver_ms": {
+          "median": 71,
+          "min": 70,
+          "max": 72
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 34.0,
+        "system": 189.0,
+        "wall": 29.0
+      }
+    },
+    "O1-no-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O1-no-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 90.2209040004891,
+          "native_wall_ms": 2905.6315420002647,
+          "end_to_end_ms": 2995.852446000754,
+          "php_stages": {
+            "module_ms": 3.306522,
+            "frontend_prepare_ms": 23.464552,
+            "emit_ms": 1.200066,
+            "write_ms": 17.245081
+          },
+          "compile_window_ms": 2823,
+          "compile_sum_ms": 11219,
+          "link_driver_ms": 76,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 91.94929000022967,
+          "native_wall_ms": 2901.8453389999195,
+          "end_to_end_ms": 2993.794629000149,
+          "php_stages": {
+            "module_ms": 3.482971,
+            "frontend_prepare_ms": 22.514455,
+            "emit_ms": 0.92515,
+            "write_ms": 19.984434
+          },
+          "compile_window_ms": 2826,
+          "compile_sum_ms": 11225,
+          "link_driver_ms": 69,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 92.3569979995591,
+          "native_wall_ms": 3089.1596130004473,
+          "end_to_end_ms": 3181.5166110000064,
+          "php_stages": {
+            "module_ms": 3.379834,
+            "frontend_prepare_ms": 22.548983,
+            "emit_ms": 0.933308,
+            "write_ms": 17.933151
+          },
+          "compile_window_ms": 3010,
+          "compile_sum_ms": 11936,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 96.84847900007298,
+          "native_wall_ms": 3042.0210990005216,
+          "end_to_end_ms": 3138.8695780005946,
+          "php_stages": {
+            "module_ms": 3.398144,
+            "frontend_prepare_ms": 24.70144,
+            "emit_ms": 0.887688,
+            "write_ms": 21.873892
+          },
+          "compile_window_ms": 2962,
+          "compile_sum_ms": 11714,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 93.89533200010192,
+          "native_wall_ms": 3004.2582570004015,
+          "end_to_end_ms": 3098.1535890005034,
+          "php_stages": {
+            "module_ms": 3.547259,
+            "frontend_prepare_ms": 22.523251,
+            "emit_ms": 0.888737,
+            "write_ms": 18.095136
+          },
+          "compile_window_ms": 2924,
+          "compile_sum_ms": 11591,
+          "link_driver_ms": 74,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2277.6119999999974,
+        "Backend": 1254.6639999999995,
+        "Frontend": 463.7270000000002,
+        "Optimizer": 419.2849999999996,
+        "CodeGenPasses": 409.11000000000007,
+        "PassManager<Function>": 309.6479999999999,
+        "OptModule": 400.3239999999997,
+        "ModuleToFunctionPassAdaptor": 277.3649999999999,
+        "OptFunction": 320.40199999999993,
+        "RunPass": 315.1379999999999,
+        "SimplifyCFGPass": 196.74299999999988,
+        "TargetIRAnalysis": 186.471,
+        "ParseDeclarationOrFunctionDefinition": 187.798,
+        "ParseFunctionDefinition": 123.23400000000001,
+        "CodeGen Function": 119.97699999999995,
+        "ModuleInlinerWrapperPass": 78.87399999999998,
+        "ModuleToPostOrderCGSCCPassAdaptor": 66.97900000000001,
+        "DevirtSCCRepeatedPass": 51.92200000000002,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 51.27299999999998,
+        "CGSCCToFunctionPassAdaptor": 39.518,
+        "InferFunctionAttrsPass": 20.294999999999987,
+        "SROAPass": 27.632999999999992,
+        "EarlyCSEPass": 14.898999999999994,
+        "InstCombinePass": 16.57099999999999,
+        "IPSCCPPass": 9.940999999999995,
+        "FunctionToLoopPassAdaptor": 9.442999999999996,
+        "PostOrderFunctionAttrsPass": 8.417,
+        "LoopDistributePass": 7.304999999999999,
+        "ScalarEvolutionAnalysis": 6.539999999999999,
+        "OpenMPOptPass": 4.381999999999993,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 6.0309999999999935,
+        "LoopSimplifyPass": 6.923999999999995,
+        "GlobalsAA": 5.216999999999995,
+        "DominatorTreeAnalysis": 5.592999999999991,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 5.934999999999992,
+        "EvaluateAsRValue": 5.209999999999988,
+        "LoopAnalysis": 6.175999999999993,
+        "LazyCallGraphAnalysis": 5.565999999999997,
+        "AAManager": 4.3669999999999956,
+        "MemorySSAAnalysis": 5.250999999999997,
+        "CGProfilePass": 4.835999999999996,
+        "ReassociatePass": 4.768999999999989,
+        "GlobalOptPass": 2.7089999999999907,
+        "CoroEarlyPass": 3.3809999999999922,
+        "TargetLibraryAnalysis": 1.738999999999995,
+        "MemCpyOptPass": 2.544999999999994,
+        "BDCEPass": 2.551999999999992,
+        "ADCEPass": 1.9589999999999936,
+        "CallGraphAnalysis": 1.5939999999999956,
+        "TailCallElimPass": 1.706999999999995,
+        "PerformPendingInstantiations": 1.5209999999999972,
+        "PostDominatorTreeAnalysis": 1.9869999999999945,
+        "VectorCombinePass": 2.004999999999994,
+        "BasicAA": 1.568999999999996,
+        "GlobalDCEPass": 1.3359999999999976,
+        "DemandedBitsAnalysis": 1.7319999999999942,
+        "AssignmentTrackingPass": 0.8110000000000006,
+        "FunctionAnalysisManagerCGSCCProxy": 0.7430000000000005,
+        "AssumptionAnalysis": 0.23400000000000018,
+        "DeadArgumentEliminationPass": 0.6850000000000005,
+        "InlinerPass": 0.8790000000000004,
+        "RecomputeGlobalsAAPass": 0.7250000000000005,
+        "AlwaysInlinerPass": 0.9610000000000007,
+        "CalledValuePropagationPass": 0.8550000000000006,
+        "Float2IntPass": 0.6900000000000005,
+        "Annotation2MetadataPass": 0.44300000000000034,
+        "CoroElidePass": 0.19800000000000015,
+        "RelLookupTableConverterPass": 0.44100000000000034,
+        "SCCPPass": 0.4240000000000003,
+        "LowerConstantIntrinsicsPass": 0.2830000000000002,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.2890000000000002,
+        "InstSimplifyPass": 0.2100000000000001,
+        "LowerExpectIntrinsicPass": 0.2640000000000002,
+        "OptimizationRemarkEmitterAnalysis": 0.16500000000000012,
+        "LoopLoadEliminationPass": 0.03400000000000001,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.2670000000000002,
+        "InferAlignmentPass": 0.22900000000000018,
+        "CoroSplitPass": 0.1450000000000001,
+        "DivRemPairsPass": 0.20000000000000015,
+        "CoroCleanupPass": 0.1450000000000001,
+        "LoopSinkPass": 0.1850000000000001,
+        "LCSSAPass": 0.10600000000000008,
+        "ProfileSummaryAnalysis": 0.2430000000000002,
+        "PromotePass": 0.04400000000000003,
+        "LibCallsShrinkWrapPass": 0.07600000000000005,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.07000000000000005,
+        "EliminateAvailableExternallyPass": 0.017000000000000005,
+        "InjectTLIMappings": 0.10100000000000006,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.027000000000000017,
+        "ConstantMergePass": 0.05500000000000004,
+        "ForceFunctionAttrsPass": 0.2660000000000001,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.152,
+        "AlignmentFromAssumptionsPass": 0.023000000000000013,
+        "LoopUnrollPass": 0.027000000000000017,
+        "AnnotationRemarksPass": 0.19100000000000011,
+        "LoopVectorizePass": 0.14400000000000007,
+        "WarnMissedTransformationsPass": 0.037000000000000026,
+        "LoopAccessAnalysis": 0.015,
+        "TypeBasedAA": 0.0,
+        "ScopedNoAliasAA": 0.006,
+        "ReversePostOrderFunctionAttrsPass": 0.005,
+        "ShouldNotRunFunctionPassesAnalysis": 0.018,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.0,
+        "InlineAdvisorAnalysis": 0.0,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.0,
+        "Source": 7.497,
+        "ParseClass": 0.396,
+        "isPotentialConstantExpr": 0.062,
+        "EvaluateAsBooleanCondition": 0.021,
+        "EvaluateForOverflow": 0.007,
+        "EvaluateAsInt": 0.0
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 92.3569979995591,
+          "min": 90.2209040004891,
+          "max": 96.84847900007298
+        },
+        "native_wall_ms": {
+          "median": 3004.2582570004015,
+          "min": 2901.8453389999195,
+          "max": 3089.1596130004473
+        },
+        "end_to_end_ms": {
+          "median": 3098.1535890005034,
+          "min": 2993.794629000149,
+          "max": 3181.5166110000064
+        },
+        "compile_window_ms": {
+          "median": 2924,
+          "min": 2823,
+          "max": 3010
+        },
+        "compile_sum_ms": {
+          "median": 11591,
+          "min": 11219,
+          "max": 11936
+        },
+        "link_driver_ms": {
+          "median": 72,
+          "min": 69,
+          "max": 76
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 41.0,
+        "system": 169.0,
+        "wall": 26.0
+      }
+    },
+    "O1-fresh-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O1-fresh-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 103.27203099950566,
+          "native_wall_ms": 3619.5632570006637,
+          "end_to_end_ms": 3722.8352880001694,
+          "php_stages": {
+            "module_ms": 3.666583,
+            "frontend_prepare_ms": 24.274037,
+            "emit_ms": 0.912949,
+            "write_ms": 27.180744
+          },
+          "compile_window_ms": 3524,
+          "compile_sum_ms": 13831,
+          "link_driver_ms": 88,
+          "pch_ms": 53,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 90.33524499955092,
+          "native_wall_ms": 3036.0224710002512,
+          "end_to_end_ms": 3126.357715999802,
+          "php_stages": {
+            "module_ms": 3.330042,
+            "frontend_prepare_ms": 22.403801,
+            "emit_ms": 0.933439,
+            "write_ms": 18.851512
+          },
+          "compile_window_ms": 2957,
+          "compile_sum_ms": 11557,
+          "link_driver_ms": 72,
+          "pch_ms": 49,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 95.12813399942388,
+          "native_wall_ms": 3072.687287000008,
+          "end_to_end_ms": 3167.815420999432,
+          "php_stages": {
+            "module_ms": 3.319881,
+            "frontend_prepare_ms": 23.032238,
+            "emit_ms": 0.996401,
+            "write_ms": 20.643394
+          },
+          "compile_window_ms": 2994,
+          "compile_sum_ms": 11719,
+          "link_driver_ms": 71,
+          "pch_ms": 47,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 96.40507500080275,
+          "native_wall_ms": 3096.2555139994947,
+          "end_to_end_ms": 3192.6605890002975,
+          "php_stages": {
+            "module_ms": 3.449867,
+            "frontend_prepare_ms": 23.340958,
+            "emit_ms": 0.946719,
+            "write_ms": 19.279162
+          },
+          "compile_window_ms": 3015,
+          "compile_sum_ms": 11833,
+          "link_driver_ms": 71,
+          "pch_ms": 48,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 91.40346100048191,
+          "native_wall_ms": 3058.0395429997225,
+          "end_to_end_ms": 3149.4430040002044,
+          "php_stages": {
+            "module_ms": 3.527973,
+            "frontend_prepare_ms": 22.877823,
+            "emit_ms": 0.884876,
+            "write_ms": 18.516557
+          },
+          "compile_window_ms": 2979,
+          "compile_sum_ms": 11702,
+          "link_driver_ms": 72,
+          "pch_ms": 48,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2846.8950000000004,
+        "Backend": 1327.6220000000005,
+        "Frontend": 436.3049999999998,
+        "CodeGenPasses": 433.173,
+        "OptModule": 424.13800000000015,
+        "Optimizer": 442.04200000000003,
+        "OptFunction": 337.95600000000013,
+        "RunPass": 331.811,
+        "ParseDeclarationOrFunctionDefinition": 246.65600000000012,
+        "PassManager<Function>": 325.9590000000002,
+        "ReadAST": 208.99199999999985,
+        "ModuleToFunctionPassAdaptor": 293.66200000000003,
+        "ParseFunctionDefinition": 178.57700000000003,
+        "SimplifyCFGPass": 207.305,
+        "TargetIRAnalysis": 195.79199999999983,
+        "CodeGen Function": 120.7539999999999,
+        "ModuleInlinerWrapperPass": 81.76900000000003,
+        "ModuleToPostOrderCGSCCPassAdaptor": 69.24999999999994,
+        "DevirtSCCRepeatedPass": 55.13000000000003,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 54.50400000000004,
+        "Read Loaded AST": 34.86099999999998,
+        "CGSCCToFunctionPassAdaptor": 39.65599999999999,
+        "SROAPass": 28.334000000000003,
+        "InferFunctionAttrsPass": 21.825000000000006,
+        "InstCombinePass": 18.138999999999985,
+        "EarlyCSEPass": 15.366999999999996,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 6.473999999999992,
+        "LazyCallGraphAnalysis": 6.103999999999996,
+        "IPSCCPPass": 10.851999999999986,
+        "FunctionToLoopPassAdaptor": 9.897999999999993,
+        "PostOrderFunctionAttrsPass": 9.75199999999999,
+        "LoopDistributePass": 8.815999999999992,
+        "ScalarEvolutionAnalysis": 7.954999999999995,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 6.308999999999994,
+        "EvaluateAsRValue": 6.232999999999993,
+        "OpenMPOptPass": 4.792999999999994,
+        "DominatorTreeAnalysis": 6.754999999999998,
+        "AAManager": 5.238999999999997,
+        "GlobalsAA": 5.422999999999994,
+        "LoopSimplifyPass": 7.037999999999993,
+        "LoopAnalysis": 6.240999999999995,
+        "MemorySSAAnalysis": 5.16599999999999,
+        "CGProfilePass": 5.243999999999992,
+        "CoroEarlyPass": 3.6549999999999927,
+        "GlobalOptPass": 3.0989999999999926,
+        "ReassociatePass": 3.399999999999993,
+        "MemCpyOptPass": 2.726999999999996,
+        "BDCEPass": 2.6639999999999957,
+        "BasicAA": 2.274999999999991,
+        "TargetLibraryAnalysis": 2.021999999999994,
+        "PostDominatorTreeAnalysis": 2.118999999999993,
+        "TailCallElimPass": 1.8689999999999942,
+        "PerformPendingInstantiations": 1.6029999999999966,
+        "VectorCombinePass": 2.2869999999999933,
+        "CallGraphAnalysis": 1.752999999999995,
+        "GlobalDCEPass": 1.398999999999997,
+        "DemandedBitsAnalysis": 1.7999999999999945,
+        "ADCEPass": 1.208999999999998,
+        "AlwaysInlinerPass": 1.0050000000000006,
+        "RecomputeGlobalsAAPass": 0.8240000000000006,
+        "AssignmentTrackingPass": 0.9340000000000006,
+        "CalledValuePropagationPass": 0.8470000000000006,
+        "InlinerPass": 0.8830000000000006,
+        "DeadArgumentEliminationPass": 0.7780000000000006,
+        "SCCPPass": 0.5910000000000004,
+        "RelLookupTableConverterPass": 0.4960000000000004,
+        "Annotation2MetadataPass": 0.4840000000000004,
+        "Float2IntPass": 0.7390000000000005,
+        "FunctionAnalysisManagerCGSCCProxy": 0.32400000000000023,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.2730000000000002,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.2790000000000002,
+        "ForceFunctionAttrsPass": 0.21500000000000014,
+        "LowerConstantIntrinsicsPass": 0.3130000000000002,
+        "LCSSAPass": 0.1900000000000001,
+        "InferAlignmentPass": 0.22400000000000017,
+        "ProfileSummaryAnalysis": 0.22600000000000017,
+        "LowerExpectIntrinsicPass": 0.3010000000000002,
+        "CoroCleanupPass": 0.17600000000000013,
+        "AnnotationRemarksPass": 0.22700000000000015,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.10400000000000008,
+        "InstSimplifyPass": 0.22200000000000014,
+        "CoroElidePass": 0.20900000000000016,
+        "AssumptionAnalysis": 0.23400000000000018,
+        "OptimizationRemarkEmitterAnalysis": 0.21300000000000016,
+        "InjectTLIMappings": 0.1310000000000001,
+        "PromotePass": 0.05400000000000004,
+        "DivRemPairsPass": 0.20100000000000015,
+        "LoopSinkPass": 0.18000000000000013,
+        "CoroSplitPass": 0.1530000000000001,
+        "LibCallsShrinkWrapPass": 0.21900000000000008,
+        "LoopVectorizePass": 0.22000000000000006,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.016000000000000007,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.03300000000000002,
+        "ConstantMergePass": 0.07800000000000006,
+        "WarnMissedTransformationsPass": 0.06000000000000004,
+        "LoopLoadEliminationPass": 0.044000000000000025,
+        "LoopUnrollPass": 0.024000000000000014,
+        "AlignmentFromAssumptionsPass": 0.03900000000000003,
+        "LoopAccessAnalysis": 0.037000000000000005,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.0,
+        "ShouldNotRunFunctionPassesAnalysis": 0.0,
+        "ScopedNoAliasAA": 0.006,
+        "EliminateAvailableExternallyPass": 0.02100000000000001,
+        "ReversePostOrderFunctionAttrsPass": 0.003,
+        "InlineAdvisorAnalysis": 0.0,
+        "TypeBasedAA": 0.0,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.0,
+        "EvaluateAsBooleanCondition": 0.012
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 95.12813399942388,
+          "min": 90.33524499955092,
+          "max": 103.27203099950566
+        },
+        "native_wall_ms": {
+          "median": 3072.687287000008,
+          "min": 3036.0224710002512,
+          "max": 3619.5632570006637
+        },
+        "end_to_end_ms": {
+          "median": 3167.815420999432,
+          "min": 3126.357715999802,
+          "max": 3722.8352880001694
+        },
+        "compile_window_ms": {
+          "median": 2994,
+          "min": 2957,
+          "max": 3524
+        },
+        "compile_sum_ms": {
+          "median": 11719,
+          "min": 11557,
+          "max": 13831
+        },
+        "link_driver_ms": {
+          "median": 72,
+          "min": 71,
+          "max": 88
+        },
+        "pch_ms": {
+          "median": 48,
+          "min": 47,
+          "max": 53
+        }
+      },
+      "mold_trace_ms": {
+        "user": 60.0,
+        "system": 117.0,
+        "wall": 27.0
+      }
+    },
+    "O1-reused-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O1-reused-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 92.54415200030053,
+          "native_wall_ms": 3071.7334900000424,
+          "end_to_end_ms": 3164.277642000343,
+          "php_stages": {
+            "module_ms": 3.223311,
+            "frontend_prepare_ms": 22.780204,
+            "emit_ms": 0.971624,
+            "write_ms": 18.66266
+          },
+          "compile_window_ms": 2994,
+          "compile_sum_ms": 11918,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 89.37729399985983,
+          "native_wall_ms": 3103.262057000393,
+          "end_to_end_ms": 3192.6393510002526,
+          "php_stages": {
+            "module_ms": 3.700493,
+            "frontend_prepare_ms": 22.475635,
+            "emit_ms": 0.892119,
+            "write_ms": 17.236852
+          },
+          "compile_window_ms": 3027,
+          "compile_sum_ms": 11991,
+          "link_driver_ms": 69,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 89.55767099996592,
+          "native_wall_ms": 2969.513508000091,
+          "end_to_end_ms": 3059.071179000057,
+          "php_stages": {
+            "module_ms": 3.27459,
+            "frontend_prepare_ms": 22.582334,
+            "emit_ms": 0.946409,
+            "write_ms": 17.092622
+          },
+          "compile_window_ms": 2890,
+          "compile_sum_ms": 11486,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 90.76728299987735,
+          "native_wall_ms": 3080.5016710000928,
+          "end_to_end_ms": 3171.26895399997,
+          "php_stages": {
+            "module_ms": 3.43206,
+            "frontend_prepare_ms": 22.607989,
+            "emit_ms": 0.961901,
+            "write_ms": 17.820875
+          },
+          "compile_window_ms": 2999,
+          "compile_sum_ms": 11941,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 91.52550399994652,
+          "native_wall_ms": 3137.679164000474,
+          "end_to_end_ms": 3229.2046680004205,
+          "php_stages": {
+            "module_ms": 3.326497,
+            "frontend_prepare_ms": 22.385489,
+            "emit_ms": 0.957738,
+            "write_ms": 18.559678
+          },
+          "compile_window_ms": 3058,
+          "compile_sum_ms": 12136,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2658.6759999999986,
+        "Backend": 1243.9439999999997,
+        "Optimizer": 423.73699999999997,
+        "CodeGenPasses": 398.68900000000014,
+        "OptModule": 390.4940000000001,
+        "Frontend": 409.2109999999997,
+        "PassManager<Function>": 311.94600000000014,
+        "OptFunction": 310.35399999999976,
+        "RunPass": 304.7239999999999,
+        "ModuleToFunctionPassAdaptor": 280.64899999999994,
+        "ParseDeclarationOrFunctionDefinition": 234.30100000000002,
+        "SimplifyCFGPass": 199.32099999999983,
+        "ReadAST": 194.42299999999986,
+        "TargetIRAnalysis": 188.10900000000007,
+        "ParseFunctionDefinition": 168.88699999999994,
+        "CodeGen Function": 109.64700000000008,
+        "ModuleInlinerWrapperPass": 78.19100000000005,
+        "ModuleToPostOrderCGSCCPassAdaptor": 65.645,
+        "DevirtSCCRepeatedPass": 52.38200000000002,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 51.65700000000001,
+        "CGSCCToFunctionPassAdaptor": 38.21999999999999,
+        "SROAPass": 26.654000000000003,
+        "Read Loaded AST": 32.15699999999999,
+        "InstCombinePass": 16.764000000000003,
+        "InferFunctionAttrsPass": 20.959000000000007,
+        "EarlyCSEPass": 16.24,
+        "FunctionToLoopPassAdaptor": 9.246,
+        "IPSCCPPass": 10.669999999999993,
+        "LoopDistributePass": 7.91999999999999,
+        "PostOrderFunctionAttrsPass": 8.58,
+        "ScalarEvolutionAnalysis": 7.091999999999992,
+        "LoopSimplifyPass": 6.766999999999994,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 5.847999999999993,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 6.441999999999991,
+        "LoopAnalysis": 5.954999999999992,
+        "EvaluateAsRValue": 5.520999999999991,
+        "DominatorTreeAnalysis": 6.0909999999999895,
+        "LazyCallGraphAnalysis": 5.393999999999995,
+        "GlobalsAA": 5.606999999999988,
+        "MemorySSAAnalysis": 5.7529999999999895,
+        "AAManager": 4.664999999999995,
+        "OpenMPOptPass": 5.3609999999999935,
+        "CGProfilePass": 4.6299999999999955,
+        "ReassociatePass": 3.3159999999999927,
+        "CoroEarlyPass": 3.3749999999999942,
+        "GlobalOptPass": 3.0899999999999945,
+        "MemCpyOptPass": 2.361999999999993,
+        "TailCallElimPass": 1.6629999999999951,
+        "CallGraphAnalysis": 1.873999999999995,
+        "BDCEPass": 2.4919999999999924,
+        "PostDominatorTreeAnalysis": 1.791999999999995,
+        "BasicAA": 1.770999999999996,
+        "TargetLibraryAnalysis": 1.7069999999999947,
+        "VectorCombinePass": 2.060999999999996,
+        "GlobalDCEPass": 1.3529999999999969,
+        "AlwaysInlinerPass": 0.9680000000000007,
+        "DemandedBitsAnalysis": 1.6439999999999952,
+        "CalledValuePropagationPass": 0.8160000000000006,
+        "ADCEPass": 1.0909999999999997,
+        "Float2IntPass": 0.6650000000000005,
+        "InferAlignmentPass": 0.23600000000000018,
+        "PerformPendingInstantiations": 1.4889999999999965,
+        "DeadArgumentEliminationPass": 0.7420000000000005,
+        "RecomputeGlobalsAAPass": 0.7350000000000005,
+        "RelLookupTableConverterPass": 0.5330000000000004,
+        "InlinerPass": 0.6500000000000005,
+        "AssignmentTrackingPass": 0.7390000000000005,
+        "SCCPPass": 0.46700000000000036,
+        "OptimizationRemarkEmitterAnalysis": 0.21500000000000016,
+        "FunctionAnalysisManagerCGSCCProxy": 0.32100000000000023,
+        "ProfileSummaryAnalysis": 0.25400000000000017,
+        "CoroElidePass": 0.17400000000000013,
+        "AnnotationRemarksPass": 0.18600000000000014,
+        "LowerConstantIntrinsicsPass": 0.3170000000000002,
+        "Annotation2MetadataPass": 0.43100000000000027,
+        "InstSimplifyPass": 0.30100000000000016,
+        "CoroSplitPass": 0.18500000000000008,
+        "LCSSAPass": 0.11200000000000009,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.2740000000000002,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.32300000000000023,
+        "EliminateAvailableExternallyPass": 0.02100000000000001,
+        "DivRemPairsPass": 0.20700000000000016,
+        "CoroCleanupPass": 0.16900000000000012,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.01900000000000001,
+        "PromotePass": 0.04900000000000004,
+        "LoopSinkPass": 0.22200000000000011,
+        "LoopVectorizePass": 0.08800000000000005,
+        "ForceFunctionAttrsPass": 0.22700000000000015,
+        "LowerExpectIntrinsicPass": 0.2630000000000002,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.07900000000000006,
+        "InjectTLIMappings": 0.14800000000000008,
+        "AlignmentFromAssumptionsPass": 0.15400000000000003,
+        "LoopUnrollPass": 0.017000000000000008,
+        "WarnMissedTransformationsPass": 0.04000000000000003,
+        "LibCallsShrinkWrapPass": 0.07900000000000006,
+        "AssumptionAnalysis": 0.21600000000000016,
+        "ConstantMergePass": 0.06500000000000004,
+        "LoopAccessAnalysis": 0.018000000000000006,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.005,
+        "LoopLoadEliminationPass": 0.025000000000000005,
+        "ScopedNoAliasAA": 0.007,
+        "ReversePostOrderFunctionAttrsPass": 0.004,
+        "TypeBasedAA": 0.0,
+        "InlineAdvisorAnalysis": 0.0,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.0,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.001,
+        "ShouldNotRunFunctionPassesAnalysis": 0.0,
+        "EvaluateAsBooleanCondition": 0.011
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 90.76728299987735,
+          "min": 89.37729399985983,
+          "max": 92.54415200030053
+        },
+        "native_wall_ms": {
+          "median": 3080.5016710000928,
+          "min": 2969.513508000091,
+          "max": 3137.679164000474
+        },
+        "end_to_end_ms": {
+          "median": 3171.26895399997,
+          "min": 3059.071179000057,
+          "max": 3229.2046680004205
+        },
+        "compile_window_ms": {
+          "median": 2999,
+          "min": 2890,
+          "max": 3058
+        },
+        "compile_sum_ms": {
+          "median": 11941,
+          "min": 11486,
+          "max": 12136
+        },
+        "link_driver_ms": {
+          "median": 71,
+          "min": 69,
+          "max": 72
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 38.0,
+        "system": 152.0,
+        "wall": 24.0
+      }
+    },
+    "O2-no-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O2-no-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 90.54951100006292,
+          "native_wall_ms": 2905.862440000419,
+          "end_to_end_ms": 2996.411951000482,
+          "php_stages": {
+            "module_ms": 3.257839,
+            "frontend_prepare_ms": 23.385771,
+            "emit_ms": 0.926849,
+            "write_ms": 17.524839
+          },
+          "compile_window_ms": 2829,
+          "compile_sum_ms": 11203,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 89.97261400054413,
+          "native_wall_ms": 2942.507136000131,
+          "end_to_end_ms": 3032.4797500006753,
+          "php_stages": {
+            "module_ms": 3.531809,
+            "frontend_prepare_ms": 22.497134,
+            "emit_ms": 0.909368,
+            "write_ms": 18.151469
+          },
+          "compile_window_ms": 2866,
+          "compile_sum_ms": 11378,
+          "link_driver_ms": 70,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 89.38900599969202,
+          "native_wall_ms": 2916.7512249996435,
+          "end_to_end_ms": 3006.1402309993355,
+          "php_stages": {
+            "module_ms": 3.312331,
+            "frontend_prepare_ms": 22.196776,
+            "emit_ms": 0.97924,
+            "write_ms": 18.283678
+          },
+          "compile_window_ms": 2839,
+          "compile_sum_ms": 11262,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 98.38331300034042,
+          "native_wall_ms": 3004.175934000159,
+          "end_to_end_ms": 3102.5592470004995,
+          "php_stages": {
+            "module_ms": 3.326473,
+            "frontend_prepare_ms": 22.752123,
+            "emit_ms": 0.932829,
+            "write_ms": 18.946268
+          },
+          "compile_window_ms": 2923,
+          "compile_sum_ms": 11626,
+          "link_driver_ms": 72,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 91.960681999808,
+          "native_wall_ms": 2960.9043720001864,
+          "end_to_end_ms": 3052.8650539999944,
+          "php_stages": {
+            "module_ms": 3.296763,
+            "frontend_prepare_ms": 22.590048,
+            "emit_ms": 0.933809,
+            "write_ms": 17.529071
+          },
+          "compile_window_ms": 2882,
+          "compile_sum_ms": 11406,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2302.6189999999983,
+        "Backend": 1274.3849999999995,
+        "Frontend": 466.18299999999994,
+        "Optimizer": 447.4790000000003,
+        "CodeGenPasses": 399.62900000000036,
+        "OptModule": 391.1069999999999,
+        "PassManager<Function>": 333.7610000000001,
+        "OptFunction": 311.20000000000033,
+        "RunPass": 305.6129999999998,
+        "ModuleToFunctionPassAdaptor": 270.8370000000001,
+        "ParseDeclarationOrFunctionDefinition": 188.70700000000008,
+        "SimplifyCFGPass": 196.7759999999999,
+        "TargetIRAnalysis": 186.182,
+        "ParseFunctionDefinition": 123.79800000000007,
+        "CodeGen Function": 120.42300000000009,
+        "ModuleInlinerWrapperPass": 112.27099999999994,
+        "ModuleToPostOrderCGSCCPassAdaptor": 100.28599999999999,
+        "DevirtSCCRepeatedPass": 84.90099999999998,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 84.06399999999998,
+        "CGSCCToFunctionPassAdaptor": 69.41399999999999,
+        "InferFunctionAttrsPass": 19.85000000000002,
+        "SROAPass": 26.059999999999995,
+        "InstCombinePass": 16.385,
+        "ConstraintEliminationPass": 13.108,
+        "EarlyCSEPass": 14.086999999999996,
+        "IPSCCPPass": 10.073999999999996,
+        "ScalarEvolutionAnalysis": 8.117999999999993,
+        "PostOrderFunctionAttrsPass": 8.461999999999998,
+        "EvaluateAsRValue": 5.309999999999992,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 6.621999999999991,
+        "LoopAnalysis": 6.4249999999999945,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 5.652999999999995,
+        "GlobalsAA": 5.712999999999996,
+        "LazyCallGraphAnalysis": 5.2529999999999895,
+        "DominatorTreeAnalysis": 4.779999999999998,
+        "MemorySSAAnalysis": 5.2479999999999905,
+        "CGProfilePass": 4.704999999999996,
+        "DSEPass": 3.9349999999999903,
+        "OpenMPOptPass": 4.4149999999999885,
+        "CorrelatedValuePropagationPass": 4.025999999999991,
+        "BDCEPass": 2.374999999999992,
+        "ADCEPass": 3.274999999999994,
+        "SLPVectorizerPass": 3.378999999999988,
+        "FunctionToLoopPassAdaptor": 4.170999999999989,
+        "AAManager": 3.618999999999994,
+        "TargetLibraryAnalysis": 1.7649999999999948,
+        "ReassociatePass": 3.3279999999999914,
+        "VectorCombinePass": 2.285999999999993,
+        "GlobalOptPass": 2.951999999999994,
+        "CoroEarlyPass": 3.510999999999992,
+        "PerformPendingInstantiations": 1.7959999999999965,
+        "PostDominatorTreeAnalysis": 1.8739999999999934,
+        "LoopDistributePass": 2.626999999999998,
+        "JumpThreadingPass": 2.1309999999999945,
+        "TailCallElimPass": 2.341999999999992,
+        "CallGraphAnalysis": 2.4339999999999944,
+        "DemandedBitsAnalysis": 1.6679999999999953,
+        "GlobalDCEPass": 1.3549999999999978,
+        "GVNPass": 2.1659999999999937,
+        "SCCPPass": 1.6999999999999966,
+        "RecomputeGlobalsAAPass": 1.3899999999999981,
+        "OpenMPOptCGSCCPass": 1.9439999999999942,
+        "RelLookupTableConverterPass": 0.46400000000000036,
+        "MemCpyOptPass": 0.9730000000000008,
+        "AssignmentTrackingPass": 0.8820000000000007,
+        "AlwaysInlinerPass": 0.9350000000000007,
+        "LibCallsShrinkWrapPass": 0.20600000000000013,
+        "MergedLoadStoreMotionPass": 0.1460000000000001,
+        "LoopSimplifyPass": 1.154999999999997,
+        "DeadArgumentEliminationPass": 0.7070000000000005,
+        "CalledValuePropagationPass": 0.8700000000000007,
+        "BasicAA": 0.7440000000000005,
+        "Float2IntPass": 0.7330000000000004,
+        "InlinerPass": 0.6490000000000005,
+        "Annotation2MetadataPass": 0.45600000000000035,
+        "LowerConstantIntrinsicsPass": 0.39000000000000024,
+        "FunctionAnalysisManagerCGSCCProxy": 0.38700000000000023,
+        "AggressiveInstCombinePass": 0.7700000000000006,
+        "ForceFunctionAttrsPass": 0.17200000000000013,
+        "CoroSplitPass": 0.09200000000000007,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.2980000000000002,
+        "InferAlignmentPass": 0.22700000000000015,
+        "ProfileSummaryAnalysis": 0.21400000000000016,
+        "LCSSAPass": 0.2640000000000002,
+        "SpeculativeExecutionPass": 0.18600000000000014,
+        "DivRemPairsPass": 0.19600000000000015,
+        "CoroCleanupPass": 0.1770000000000001,
+        "LazyValueAnalysis": 0.21500000000000016,
+        "InstSimplifyPass": 0.11500000000000009,
+        "WarnMissedTransformationsPass": 0.06500000000000003,
+        "InjectTLIMappings": 0.10300000000000008,
+        "InlineAdvisorAnalysis": 0.001,
+        "LoopUnrollPass": 0.015000000000000006,
+        "OptimizationRemarkEmitterAnalysis": 0.18000000000000013,
+        "MemoryDependenceAnalysis": 0.2700000000000002,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.08000000000000006,
+        "LoopLoadEliminationPass": 0.04600000000000002,
+        "LoopSinkPass": 0.1590000000000001,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.06400000000000003,
+        "AssumptionAnalysis": 0.21100000000000016,
+        "MoveAutoInitPass": 0.05600000000000004,
+        "LowerExpectIntrinsicPass": 0.2630000000000002,
+        "LoopVectorizePass": 0.14600000000000007,
+        "EliminateAvailableExternallyPass": 0.07300000000000001,
+        "LoopAccessAnalysis": 0.036000000000000004,
+        "CoroElidePass": 0.1690000000000001,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.004,
+        "ScopedNoAliasAA": 0.003,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.01800000000000001,
+        "AnnotationRemarksPass": 0.22900000000000018,
+        "AlignmentFromAssumptionsPass": 0.010000000000000002,
+        "ConstantMergePass": 0.11700000000000005,
+        "ReversePostOrderFunctionAttrsPass": 0.004,
+        "PromotePass": 0.05000000000000004,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.088,
+        "TypeBasedAA": 0.0,
+        "ShouldNotRunFunctionPassesAnalysis": 0.001,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.0,
+        "Source": 5.933,
+        "ParseClass": 0.323,
+        "isPotentialConstantExpr": 0.048,
+        "EvaluateAsBooleanCondition": 0.015,
+        "EvaluateForOverflow": 0.005,
+        "EvaluateAsInt": 0.0
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 90.54951100006292,
+          "min": 89.38900599969202,
+          "max": 98.38331300034042
+        },
+        "native_wall_ms": {
+          "median": 2942.507136000131,
+          "min": 2905.862440000419,
+          "max": 3004.175934000159
+        },
+        "end_to_end_ms": {
+          "median": 3032.4797500006753,
+          "min": 2996.411951000482,
+          "max": 3102.5592470004995
+        },
+        "compile_window_ms": {
+          "median": 2866,
+          "min": 2829,
+          "max": 2923
+        },
+        "compile_sum_ms": {
+          "median": 11378,
+          "min": 11203,
+          "max": 11626
+        },
+        "link_driver_ms": {
+          "median": 71,
+          "min": 70,
+          "max": 72
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 66.0,
+        "system": 132.0,
+        "wall": 27.0
+      }
+    },
+    "O2-fresh-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O2-fresh-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 93.54828899995482,
+          "native_wall_ms": 3244.9327469994387,
+          "end_to_end_ms": 3338.4810359993935,
+          "php_stages": {
+            "module_ms": 3.264361,
+            "frontend_prepare_ms": 25.092512,
+            "emit_ms": 0.96902,
+            "write_ms": 18.116878
+          },
+          "compile_window_ms": 3156,
+          "compile_sum_ms": 12371,
+          "link_driver_ms": 81,
+          "pch_ms": 51,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 90.32480599944392,
+          "native_wall_ms": 3097.604018000311,
+          "end_to_end_ms": 3187.928823999755,
+          "php_stages": {
+            "module_ms": 3.303462,
+            "frontend_prepare_ms": 22.756711,
+            "emit_ms": 0.901468,
+            "write_ms": 18.997207
+          },
+          "compile_window_ms": 3019,
+          "compile_sum_ms": 11789,
+          "link_driver_ms": 71,
+          "pch_ms": 48,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 94.70626799975435,
+          "native_wall_ms": 3300.984284000151,
+          "end_to_end_ms": 3395.6905519999054,
+          "php_stages": {
+            "module_ms": 3.988111,
+            "frontend_prepare_ms": 23.204078,
+            "emit_ms": 0.933709,
+            "write_ms": 19.813684
+          },
+          "compile_window_ms": 3216,
+          "compile_sum_ms": 12626,
+          "link_driver_ms": 77,
+          "pch_ms": 48,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 95.02324900040549,
+          "native_wall_ms": 3105.3269040003215,
+          "end_to_end_ms": 3200.350153000727,
+          "php_stages": {
+            "module_ms": 3.485778,
+            "frontend_prepare_ms": 23.484439,
+            "emit_ms": 1.183817,
+            "write_ms": 18.091261
+          },
+          "compile_window_ms": 3023,
+          "compile_sum_ms": 11837,
+          "link_driver_ms": 72,
+          "pch_ms": 49,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 90.77920100025949,
+          "native_wall_ms": 3096.678819000772,
+          "end_to_end_ms": 3187.4580200010314,
+          "php_stages": {
+            "module_ms": 3.466987,
+            "frontend_prepare_ms": 22.438988,
+            "emit_ms": 0.96684,
+            "write_ms": 18.728839
+          },
+          "compile_window_ms": 3013,
+          "compile_sum_ms": 11802,
+          "link_driver_ms": 76,
+          "pch_ms": 51,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2674.2029999999986,
+        "Backend": 1277.7530000000004,
+        "Optimizer": 453.774,
+        "PassManager<Function>": 340.00399999999996,
+        "Frontend": 407.8090000000001,
+        "CodeGenPasses": 398.04600000000005,
+        "OptModule": 390.1559999999999,
+        "ModuleToFunctionPassAdaptor": 275.8849999999999,
+        "OptFunction": 310.292,
+        "RunPass": 304.7830000000002,
+        "SimplifyCFGPass": 200.20200000000006,
+        "TargetIRAnalysis": 189.45399999999992,
+        "ReadAST": 194.0310000000001,
+        "ParseDeclarationOrFunctionDefinition": 233.53399999999993,
+        "ParseFunctionDefinition": 166.21699999999996,
+        "CodeGen Function": 110.46999999999994,
+        "ModuleInlinerWrapperPass": 114.05900000000004,
+        "ModuleToPostOrderCGSCCPassAdaptor": 102.77300000000001,
+        "DevirtSCCRepeatedPass": 86.87499999999996,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 86.01199999999994,
+        "CGSCCToFunctionPassAdaptor": 71.242,
+        "Read Loaded AST": 32.16100000000003,
+        "SROAPass": 26.63500000000002,
+        "EarlyCSEPass": 14.202000000000005,
+        "InferFunctionAttrsPass": 19.932000000000013,
+        "InstCombinePass": 16.541999999999987,
+        "ConstraintEliminationPass": 13.227,
+        "IPSCCPPass": 9.544999999999996,
+        "ScalarEvolutionAnalysis": 8.294999999999991,
+        "OpenMPOptPass": 4.799999999999991,
+        "PostOrderFunctionAttrsPass": 8.291999999999996,
+        "DominatorTreeAnalysis": 4.991999999999997,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 5.878999999999996,
+        "LazyCallGraphAnalysis": 5.521999999999993,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 6.0959999999999965,
+        "EvaluateAsRValue": 5.512999999999994,
+        "MemorySSAAnalysis": 5.523999999999995,
+        "GlobalsAA": 5.2249999999999925,
+        "LoopAnalysis": 6.136999999999994,
+        "CGProfilePass": 4.809999999999994,
+        "CorrelatedValuePropagationPass": 4.173999999999988,
+        "FunctionToLoopPassAdaptor": 3.803999999999991,
+        "ADCEPass": 3.414999999999995,
+        "CoroEarlyPass": 3.464999999999992,
+        "AAManager": 3.9849999999999945,
+        "DSEPass": 4.028999999999993,
+        "LoopDistributePass": 3.810999999999999,
+        "VectorCombinePass": 2.1719999999999926,
+        "GlobalOptPass": 2.9809999999999905,
+        "SLPVectorizerPass": 3.496999999999991,
+        "BDCEPass": 2.4659999999999926,
+        "ReassociatePass": 3.2579999999999925,
+        "PostDominatorTreeAnalysis": 1.8989999999999951,
+        "PerformPendingInstantiations": 1.4569999999999965,
+        "JumpThreadingPass": 2.131999999999994,
+        "TargetLibraryAnalysis": 1.6999999999999955,
+        "CallGraphAnalysis": 2.069999999999993,
+        "GVNPass": 2.2889999999999953,
+        "TailCallElimPass": 1.6869999999999947,
+        "CalledValuePropagationPass": 0.8150000000000006,
+        "InlinerPass": 0.8470000000000005,
+        "RecomputeGlobalsAAPass": 1.3839999999999981,
+        "SCCPPass": 1.4759999999999973,
+        "DemandedBitsAnalysis": 1.7379999999999947,
+        "GlobalDCEPass": 1.3339999999999979,
+        "LibCallsShrinkWrapPass": 0.8860000000000007,
+        "OpenMPOptCGSCCPass": 2.088999999999994,
+        "ForceFunctionAttrsPass": 0.1550000000000001,
+        "MemCpyOptPass": 1.119999999999999,
+        "AlwaysInlinerPass": 0.9180000000000007,
+        "LoopSimplifyPass": 0.8590000000000007,
+        "BasicAA": 0.8390000000000006,
+        "AggressiveInstCombinePass": 0.7130000000000005,
+        "Float2IntPass": 0.6380000000000005,
+        "DeadArgumentEliminationPass": 0.6530000000000005,
+        "AssignmentTrackingPass": 0.8090000000000006,
+        "RelLookupTableConverterPass": 0.44800000000000034,
+        "Annotation2MetadataPass": 0.5460000000000003,
+        "FunctionAnalysisManagerCGSCCProxy": 0.4330000000000003,
+        "AssumptionAnalysis": 0.31900000000000023,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.3350000000000002,
+        "LowerExpectIntrinsicPass": 0.2670000000000002,
+        "LowerConstantIntrinsicsPass": 0.3030000000000002,
+        "CoroElidePass": 0.1330000000000001,
+        "OptimizationRemarkEmitterAnalysis": 0.2580000000000002,
+        "LCSSAPass": 0.2620000000000002,
+        "InferAlignmentPass": 0.21900000000000017,
+        "MemoryDependenceAnalysis": 0.2860000000000002,
+        "SpeculativeExecutionPass": 0.22500000000000014,
+        "InstSimplifyPass": 0.1330000000000001,
+        "CoroCleanupPass": 0.1490000000000001,
+        "ProfileSummaryAnalysis": 0.21200000000000016,
+        "DivRemPairsPass": 0.22300000000000017,
+        "LazyValueAnalysis": 0.19800000000000015,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.08500000000000006,
+        "InjectTLIMappings": 0.11000000000000008,
+        "AnnotationRemarksPass": 0.2620000000000002,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.04300000000000003,
+        "LoopSinkPass": 0.14100000000000007,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.001,
+        "MergedLoadStoreMotionPass": 0.1360000000000001,
+        "CoroSplitPass": 0.09300000000000007,
+        "LoopVectorizePass": 0.14100000000000007,
+        "ConstantMergePass": 0.07000000000000005,
+        "MoveAutoInitPass": 0.06100000000000005,
+        "LoopUnrollPass": 0.03900000000000002,
+        "EliminateAvailableExternallyPass": 0.02900000000000002,
+        "WarnMissedTransformationsPass": 0.04400000000000003,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.033000000000000015,
+        "LoopLoadEliminationPass": 0.03500000000000002,
+        "PromotePass": 0.04700000000000003,
+        "LoopAccessAnalysis": 0.05800000000000001,
+        "AlignmentFromAssumptionsPass": 0.04800000000000001,
+        "ScopedNoAliasAA": 0.004,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.134,
+        "TypeBasedAA": 0.0,
+        "ReversePostOrderFunctionAttrsPass": 0.0,
+        "InlineAdvisorAnalysis": 0.002,
+        "ShouldNotRunFunctionPassesAnalysis": 0.0,
+        "EvaluateAsBooleanCondition": 0.011
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 93.54828899995482,
+          "min": 90.32480599944392,
+          "max": 95.02324900040549
+        },
+        "native_wall_ms": {
+          "median": 3105.3269040003215,
+          "min": 3096.678819000772,
+          "max": 3300.984284000151
+        },
+        "end_to_end_ms": {
+          "median": 3200.350153000727,
+          "min": 3187.4580200010314,
+          "max": 3395.6905519999054
+        },
+        "compile_window_ms": {
+          "median": 3023,
+          "min": 3013,
+          "max": 3216
+        },
+        "compile_sum_ms": {
+          "median": 11837,
+          "min": 11789,
+          "max": 12626
+        },
+        "link_driver_ms": {
+          "median": 76,
+          "min": 71,
+          "max": 81
+        },
+        "pch_ms": {
+          "median": 49,
+          "min": 48,
+          "max": 51
+        }
+      },
+      "mold_trace_ms": {
+        "user": 54.0,
+        "system": 156.0,
+        "wall": 27.0
+      }
+    },
+    "O2-reused-pch": {
+      "directory": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/my-try-simple-native-2026-11-04-verified/O2-reused-pch",
+      "command": [
+        "/usr/bin/ninja",
+        "-j",
+        "4",
+        "-v",
+        "-f",
+        "build.ninja"
+      ],
+      "samples": [
+        {
+          "php_process_ms": 97.94617399984418,
+          "native_wall_ms": 3066.4560270006405,
+          "end_to_end_ms": 3164.4022010004846,
+          "php_stages": {
+            "module_ms": 3.409029,
+            "frontend_prepare_ms": 22.978624,
+            "emit_ms": 0.916609,
+            "write_ms": 18.142448
+          },
+          "compile_window_ms": 2988,
+          "compile_sum_ms": 11914,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 92.02390199970978,
+          "native_wall_ms": 3032.4381760001415,
+          "end_to_end_ms": 3124.4620779998513,
+          "php_stages": {
+            "module_ms": 3.324185,
+            "frontend_prepare_ms": 21.93029,
+            "emit_ms": 1.067513,
+            "write_ms": 17.761268
+          },
+          "compile_window_ms": 2944,
+          "compile_sum_ms": 11632,
+          "link_driver_ms": 79,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 94.70505300032528,
+          "native_wall_ms": 3325.687969999308,
+          "end_to_end_ms": 3420.393022999633,
+          "php_stages": {
+            "module_ms": 3.273798,
+            "frontend_prepare_ms": 24.360334,
+            "emit_ms": 1.500775,
+            "write_ms": 17.798657
+          },
+          "compile_window_ms": 3244,
+          "compile_sum_ms": 12879,
+          "link_driver_ms": 75,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 90.29098300015903,
+          "native_wall_ms": 3161.875783999676,
+          "end_to_end_ms": 3252.166766999835,
+          "php_stages": {
+            "module_ms": 3.280542,
+            "frontend_prepare_ms": 22.396406,
+            "emit_ms": 1.069943,
+            "write_ms": 18.122582
+          },
+          "compile_window_ms": 3081,
+          "compile_sum_ms": 12277,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        },
+        {
+          "php_process_ms": 96.1938430000373,
+          "native_wall_ms": 3043.8571490003596,
+          "end_to_end_ms": 3140.050992000397,
+          "php_stages": {
+            "module_ms": 3.400234,
+            "frontend_prepare_ms": 23.160172,
+            "emit_ms": 0.928178,
+            "write_ms": 20.983965
+          },
+          "compile_window_ms": 2965,
+          "compile_sum_ms": 11792,
+          "link_driver_ms": 71,
+          "pch_ms": 0,
+          "binary_bytes": 68120
+        }
+      ],
+      "trace_sum_ms": {
+        "ExecuteCompiler": 2662.6359999999977,
+        "Backend": 1266.0610000000006,
+        "Optimizer": 443.0280000000001,
+        "CodeGenPasses": 397.3310000000002,
+        "OptModule": 389.28100000000023,
+        "OptFunction": 310.3379999999999,
+        "RunPass": 304.46799999999973,
+        "PassManager<Function>": 331.99899999999997,
+        "Frontend": 405.52899999999954,
+        "ModuleToFunctionPassAdaptor": 269.06899999999973,
+        "SimplifyCFGPass": 194.3699999999999,
+        "ParseDeclarationOrFunctionDefinition": 232.51200000000003,
+        "TargetIRAnalysis": 184.31000000000003,
+        "ReadAST": 193.7380000000001,
+        "ParseFunctionDefinition": 167.20400000000004,
+        "ModuleInlinerWrapperPass": 110.151,
+        "ModuleToPostOrderCGSCCPassAdaptor": 99.21799999999988,
+        "CodeGen Function": 109.23199999999997,
+        "DevirtSCCRepeatedPass": 84.18600000000005,
+        "PassManager<LazyCallGraph::SCC, CGSCCAnalysisManager, LazyCallGraph &, CGSCCUpdateResult &>": 83.37200000000006,
+        "CGSCCToFunctionPassAdaptor": 69.61299999999999,
+        "Read Loaded AST": 32.12399999999999,
+        "SROAPass": 27.040000000000006,
+        "InstCombinePass": 16.564999999999987,
+        "InferFunctionAttrsPass": 19.701000000000004,
+        "EarlyCSEPass": 14.343999999999998,
+        "ConstraintEliminationPass": 13.04399999999999,
+        "IPSCCPPass": 9.082999999999995,
+        "PostOrderFunctionAttrsPass": 7.771999999999991,
+        "ScalarEvolutionAnalysis": 8.502999999999991,
+        "LoopAnalysis": 5.815999999999992,
+        "MemorySSAAnalysis": 5.443999999999991,
+        "CGProfilePass": 4.785999999999996,
+        "RequireAnalysisPass<llvm::GlobalsAA, llvm::Module, llvm::AnalysisManager<Module>>": 5.8099999999999925,
+        "DSEPass": 4.03999999999999,
+        "DominatorTreeAnalysis": 5.040999999999996,
+        "InnerAnalysisManagerProxy<CGSCCAnalysisManager, Module>": 5.523999999999992,
+        "LazyCallGraphAnalysis": 5.11499999999999,
+        "ADCEPass": 3.6749999999999927,
+        "GlobalsAA": 5.020999999999989,
+        "CorrelatedValuePropagationPass": 3.9219999999999913,
+        "EvaluateAsRValue": 5.6899999999999915,
+        "OpenMPOptPass": 4.822999999999996,
+        "SLPVectorizerPass": 3.45199999999999,
+        "FunctionToLoopPassAdaptor": 3.940999999999989,
+        "CoroEarlyPass": 3.4079999999999915,
+        "AAManager": 3.575999999999991,
+        "LoopDistributePass": 3.708999999999994,
+        "ReassociatePass": 3.2149999999999928,
+        "GlobalOptPass": 2.7669999999999937,
+        "PostDominatorTreeAnalysis": 1.8989999999999956,
+        "GVNPass": 2.215999999999993,
+        "JumpThreadingPass": 2.1049999999999938,
+        "CallGraphAnalysis": 2.002999999999995,
+        "VectorCombinePass": 2.1719999999999953,
+        "BDCEPass": 2.5069999999999917,
+        "DemandedBitsAnalysis": 1.7169999999999943,
+        "TargetLibraryAnalysis": 1.6579999999999966,
+        "TailCallElimPass": 1.704999999999996,
+        "OpenMPOptCGSCCPass": 1.9489999999999943,
+        "MemCpyOptPass": 1.0549999999999995,
+        "RecomputeGlobalsAAPass": 1.3519999999999983,
+        "SCCPPass": 1.4639999999999977,
+        "GlobalDCEPass": 1.3159999999999983,
+        "PerformPendingInstantiations": 1.477999999999997,
+        "AlwaysInlinerPass": 0.8900000000000007,
+        "LibCallsShrinkWrapPass": 0.7560000000000006,
+        "CalledValuePropagationPass": 0.8410000000000006,
+        "LoopSimplifyPass": 0.8560000000000006,
+        "AssignmentTrackingPass": 0.7790000000000006,
+        "AggressiveInstCombinePass": 0.7330000000000005,
+        "BasicAA": 0.7100000000000005,
+        "Float2IntPass": 0.6480000000000005,
+        "DeadArgumentEliminationPass": 0.6640000000000005,
+        "Annotation2MetadataPass": 0.4060000000000003,
+        "RelLookupTableConverterPass": 0.5100000000000003,
+        "InlinerPass": 0.6550000000000005,
+        "LowerConstantIntrinsicsPass": 0.3100000000000002,
+        "MemoryDependenceAnalysis": 0.2710000000000002,
+        "SpeculativeExecutionPass": 0.16000000000000011,
+        "FunctionAnalysisManagerCGSCCProxy": 0.2970000000000002,
+        "CoroElidePass": 0.11300000000000009,
+        "LazyValueAnalysis": 0.21700000000000016,
+        "ProfileSummaryAnalysis": 0.19100000000000014,
+        "LowerExpectIntrinsicPass": 0.2600000000000002,
+        "AnnotationRemarksPass": 0.21700000000000016,
+        "DivRemPairsPass": 0.19400000000000014,
+        "OptimizationRemarkEmitterAnalysis": 0.23600000000000015,
+        "LCSSAPass": 0.2590000000000002,
+        "RequireAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis, llvm::Function, llvm::AnalysisManager<Function>>": 0.2660000000000002,
+        "AssumptionAnalysis": 0.32400000000000023,
+        "InferAlignmentPass": 0.21000000000000016,
+        "MoveAutoInitPass": 0.04300000000000003,
+        "MergedLoadStoreMotionPass": 0.1580000000000001,
+        "CoroCleanupPass": 0.1560000000000001,
+        "CoroSplitPass": 0.09200000000000007,
+        "LoopUnrollPass": 0.04900000000000001,
+        "LoopLoadEliminationPass": 0.03600000000000002,
+        "InvalidateAnalysisPass<llvm::ShouldNotRunFunctionPassesAnalysis>": 0.04200000000000003,
+        "InvalidateAnalysisPass<llvm::AAManager>": 0.06500000000000004,
+        "ForceFunctionAttrsPass": 0.23000000000000015,
+        "InstSimplifyPass": 0.11900000000000009,
+        "ConstantMergePass": 0.05400000000000004,
+        "WarnMissedTransformationsPass": 0.03900000000000003,
+        "PromotePass": 0.04100000000000003,
+        "InjectTLIMappings": 0.09800000000000007,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.023000000000000013,
+        "EliminateAvailableExternallyPass": 0.026000000000000016,
+        "LoopVectorizePass": 0.12500000000000008,
+        "LoopSinkPass": 0.1590000000000001,
+        "InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0,
+        "LoopAccessAnalysis": 0.037000000000000005,
+        "AlignmentFromAssumptionsPass": 0.009000000000000001,
+        "InlineAdvisorAnalysis": 0.0,
+        "ReversePostOrderFunctionAttrsPass": 0.026000000000000002,
+        "ScopedNoAliasAA": 0.005,
+        "OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC, LazyCallGraph &>": 0.0,
+        "TypeBasedAA": 0.0,
+        "RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module, llvm::AnalysisManager<Module>>": 0.0,
+        "ShouldNotRunFunctionPassesAnalysis": 0.0,
+        "EvaluateAsBooleanCondition": 0.011
+      },
+      "summary_ms": {
+        "php_process_ms": {
+          "median": 94.70505300032528,
+          "min": 90.29098300015903,
+          "max": 97.94617399984418
+        },
+        "native_wall_ms": {
+          "median": 3066.4560270006405,
+          "min": 3032.4381760001415,
+          "max": 3325.687969999308
+        },
+        "end_to_end_ms": {
+          "median": 3164.4022010004846,
+          "min": 3124.4620779998513,
+          "max": 3420.393022999633
+        },
+        "compile_window_ms": {
+          "median": 2988,
+          "min": 2944,
+          "max": 3244
+        },
+        "compile_sum_ms": {
+          "median": 11914,
+          "min": 11632,
+          "max": 12879
+        },
+        "link_driver_ms": {
+          "median": 71,
+          "min": 71,
+          "max": 79
+        },
+        "pch_ms": {
+          "median": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "mold_trace_ms": {
+        "user": 87.0,
+        "system": 100.0,
+        "wall": 24.0
+      }
+    }
+  },
+  "samples": 5,
+  "translation_units": 258,
+  "runtime_archive": "/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/build/clang/libscpp_runtime.a",
+  "notes": "Ninja -j4, mold, -g0, libc++, no LTO/ccache. Existing runtime archive excluded from rebuild. Warm filesystem caches; fresh application objects each run. PCH validation enabled. Independent trace runs; trace sums are cumulative elapsed compiler phases, not CPU or parallel wall time. Link timings include the Clang driver. Ninja edge timestamps have millisecond resolution. End-to-end is measured PHP process plus native build, including module loading and emitted-file writes."
+}

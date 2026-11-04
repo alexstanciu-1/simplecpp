@@ -37,13 +37,15 @@ final class Function_Preparation
 	/** Settle reset declarations before body work; callable recursion has no signature dependency cycle. */
 	public static function declarations(scope $symbols): scope
 	{
-		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::functions($symbols));
+		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::published($symbols));
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
 		foreach ($symbols->declarations as $declaration)
 		{
-			/** @var ast_function_declaration $declaration */
+			if (!($declaration instanceof ast_function_declaration)) {
+				continue;
+			}
 			$type = $declaration->return_type_name;
 			if ($type !== 'void') {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),

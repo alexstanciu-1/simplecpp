@@ -2,8 +2,8 @@
 
 Doc Status: supporting
 
-This is a structural refactor. Supported syntax, lookup order, output and diagnostics
-remain unchanged. Nested functions, classes, constants, captures, namespace lookup
+The shared scope model serves collection/publication and the bounded
+[namespace slice](namespaces.md). Nested functions, classes, constants, captures
 and parent-scope fallback are not enabled.
 
 ## Model
@@ -17,15 +17,17 @@ ast_function_body.scope
 ```
 
 All three use the same `scope`, `symbol_entry` and `Scope_Collection` types. File
-scopes index functions, including the private implicit main. Body scopes index
+scopes index functions and explicit globals, including the private implicit main. Body scopes index
 local declarations using `var:name`; the compilation scope indexes exported
-functions using `func:name`. Keys belong to the declaration interface. Stable entries hold one head reference and their general change status. A successor
+functions using `func:qualified_name` and globals using `var:qualified_name`.
+Keys belong to the declaration interface. Stable entries hold one head reference and their general change status. A successor
 in the declaring scope duplicate chain means ambiguity. File scopes are reference
 indexes, not owners of a second function duplicate chain.
 
 `scope.entry()` creates an identity only in that scope. `scope.resolve()` searches
 only that scope. The parent field records containment without introducing implicit
-lookup, shadowing, capture or visibility behavior. Files parsed independently are
+parent lookup, capture or visibility behavior. The readonly `namespace` field
+records source context, inherited when lexical children are constructed. Files parsed independently are
 detached roots until compilation publication assigns their parent. Reused file/body
 scopes retain identity; the stable compilation scope is updated in place.
 
@@ -54,7 +56,7 @@ references and retains syntax order independently. File-only duplicate diagnosti
 use that inventory without claiming ownership of public function chains.
 `Symbol_Publication` checks discoveries against completed files and sorts references
 by source path/position. Only after every source and IO check succeeds does it
-publish public function chains. The private implicit main remains file-only.
+publish function and global-variable chains. The private implicit main remains file-only.
 
 Old sessions retain syntax and tokens, not historical duplicate-link snapshots.
 On incremental publication, reused nodes may acquire different successors. File

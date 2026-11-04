@@ -33,7 +33,7 @@ $ast = $file;
 $ping = $ast->declarations['func:ping'];
 $main = $ast->main();
 [$first, $second, $call, $return] = $main->body()->statements;
-verify(($first->name === 'first') && ($first->type_name === 'int'), 'Declaration lost written names');
+verify(($first->short_name === 'first') && ($first->type_name === 'int'), 'Declaration lost written names');
 verify($ping->return_type_name === 'void', 'Function lost written return type');
 unresolved(fn() => $first->type_def());
 unresolved(fn() => $ping->return_type_def());

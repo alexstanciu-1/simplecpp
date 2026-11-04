@@ -24,12 +24,21 @@ final class Syntax_Inspection
 				continue;
 			}
 			$body = array_map(self::statement(...), $function->body()->statements);
-			$functions[] = ['name' => self::name($function, $function->name, $function->name_position()),
+			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
 				'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
+				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
 		}
-		$result = ['flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
+		$result = ['namespace' => $file->scope->namespace, 'flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
+		$result['imports'] = array_map(static fn(ast_import $import): array => [
+			'kind' => $import->kind->name, 'target' => $import->target,
+			'local_name' => $import->local_name, 'span' => self::span($import),
+		], $file->imports);
+		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
+			'name' => $global->short_name, 'qualified_name' => $global->name(), 'type' => $global->type_name,
+			'initializer' => self::expression($global->initializer), 'span' => self::span($global),
+		], $file->globals());
 		if ($file->diagnostics !== []) {
 			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),
 				$file->diagnostics);
@@ -48,10 +57,11 @@ final class Syntax_Inspection
 	 *
 	 * @return mixed[]
 	 */
-	private static function name(ast_node $owner, string $name, int $position /** uint32 */): array /** array{text:string,span:array{start:uint32,end:uint32}} */
+	private static function name(ast_node $owner, string $name, int $position /** uint32 */, ?int $end /** uint32 */ = null): array /** array{text:string,span:array{start:uint32,end:uint32}} */
 	{
 		$token = $owner->root()->tokens->tokens[$position];
-		return ['text' => $name, 'span' => ['start' => $token->offset, 'end' => $token->offset + $token->length]];
+		$last = $owner->root()->tokens->tokens[($end ?? ($position + 1)) - 1];
+		return ['text' => $name, 'span' => ['start' => $token->offset, 'end' => $last->offset + $last->length]];
 	}
 
 	/**
@@ -70,7 +80,7 @@ final class Syntax_Inspection
 			return ['kind' => 'integer', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_name_expression) {
-			return ['kind' => 'name', 'name' => self::name($expression, $expression->name, $expression->start),
+			return ['kind' => 'name', 'name' => self::name($expression, $expression->name, $expression->start, $expression->end),
 				'span' => self::span($expression)];
 		}
 		throw new \LogicException('Unhandled expression inspection');
@@ -93,11 +103,11 @@ final class Syntax_Inspection
 				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_call_statement) {
-			return ['kind' => 'call', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
+			return ['kind' => 'call', 'name' => self::name($statement, $statement->name, $statement->start, $statement->end - 3),
 				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_local_declaration) {
-			return ['kind' => 'local', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
+			return ['kind' => 'local', 'name' => self::name($statement, $statement->short_name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
 				'type' => $statement->type_name === null ? null : self::name($statement, $statement->type_name,
 					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];

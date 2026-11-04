@@ -1,8 +1,8 @@
-# Stable function symbols and preparation caches
+# Stable symbols and preparation caches
 
 Doc Status: supporting
 
-This slice adds function identity and one dependency role through a general watch coordinator. It does not implement
+Function and explicit-global identities use the same general watch coordinator. This does not implement
 incremental lowering, executable emission or native concurrent publication.
 
 ## Structure and ownership
@@ -37,7 +37,7 @@ ast_function_body implements dependency_watcher
 
 No names, signatures, bodies or literal facts are copied into symbol entries.
 The canonical map key supplies identity. An entry holds one head reference. The
-compilation scope owns duplicate links for public functions; body scopes own local
+compilation scope owns duplicate links for public functions and globals; body scopes own local
 variable duplicate links. File indexes only reference declarations. A head without
 a successor resolves to its AST; null means missing; a successor means ambiguity.
 File syntax inventories retain every node independently of these live links.
@@ -56,9 +56,14 @@ Preparation calls `watch($symbol, $watcher)` when it consumes a symbol. The
 coordinator deduplicates identity pairs and owns reverse subscriptions and pending
 notifications. A symbol is currently a stable `symbol_entry`, including tombstones.
 
-`Symbol_Publication` owns function-contract snapshots/comparison and supplies the
+`Symbol_Publication` owns declaration-contract snapshots/comparison and supplies the
 complete live watcher inventory. The dependency coordinator has no function-name,
 signature, source traversal or body-preparation knowledge.
+
+Global reads use the same body watchers, observing existence/ambiguity and storage
+type. Their initializer values are not constant facts in readers, so initializer-only
+edits can reuse readers while stable entries select replacement declarations. See
+[global preparation and lowering](globals.md).
 
 - `watch(symbol, watcher)` registers a relation; repeated registration is harmless.
 - `changed(symbol)` queues its observers without invoking them.
@@ -80,10 +85,12 @@ relations still needed by other members. No grouping heuristic or per-node obser
 graph is introduced. Specialized methods such as `watch_function()` may later
 optimize the same coordinator; do not restore a class per symbol kind.
 
-Namespaces are the next lookup slice, not part of this refactor. Qualified symbols
-and relative lookup dependencies must be considered together: adding a nearer
-candidate can change a lookup without changing the former selected symbol. Avoid
-broad subscriptions to all namespace changes until lookup semantics justify them.
+The [namespace/import slice](namespaces.md) resolves each call to one exact qualified
+key, with file-local imports and no global/parent fallback. Watching that stable entry,
+including a missing entry, is sufficient for callable facts. Import validation also
+runs on every preparation pass to catch unused target removal and new conflicts.
+No namespace-wide observers are needed. Future lookup alternatives must account for
+changes that can redirect a lookup without changing its former selected symbol.
 
 Every derived fact needs a dependency explanation, not necessarily a separately
 allocated edge. Body-owned facts are invalidated together; only dependencies crossing

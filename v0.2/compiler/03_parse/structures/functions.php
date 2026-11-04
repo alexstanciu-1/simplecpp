@@ -15,7 +15,10 @@ namespace scpp\compiler;
 final class ast_call_statement extends ast_statement
 {
 	/** PROPERTIES */
+	/** Canonical reference spelling; a leading backslash marks an explicitly rooted path. */
 	public readonly string $name;
+	/** Dotted value-or-namespace syntax; preparation must respect visible local bindings. */
+	public readonly bool $member_syntax;
 
 	/** PREP FACTS */
 	/**
@@ -31,9 +34,10 @@ final class ast_call_statement extends ast_statement
 	 * $end: exclusive token position.
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
-		string $name)
+		string $name, bool $member_syntax = false)
 	{
 		$this->name = $name;
+		$this->member_syntax = $member_syntax;
 		parent::__construct($start, $end);
 	}
 
@@ -41,7 +45,7 @@ final class ast_call_statement extends ast_statement
 	/** Canonical lookup key; preparation attaches its stable symbol entry. */
 	public function symbol_key(): string
 	{
-		return 'func:' . $this->name;
+		return $this->root()->function_key($this->name);
 	}
 
 	/** Attach the stable symbol only after its current function contract is available. */
@@ -179,7 +183,7 @@ final class ast_function_body extends ast_node implements dependency_watcher
  * ```text
  * function ping(): void { return; }
  * ```
- * name is ping, return_type_name is void, and return_type_def() is unavailable until declaration preparation.
+ * short_name is ping, return_type_name is void, and return_type_def() is unavailable until declaration preparation.
  */
 final class ast_function_declaration extends ast_node implements ast_declaration_interface
 {
@@ -208,9 +212,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 */
 	public function __construct(string $name, ?string $return_type_name, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false)
+		bool $is_implicit_entry = false, ?string $namespace = null)
 	{
-		$this->name = $name;
+		$this->short_name = $name;
+		$this->namespace = $namespace;
 		$this->is_private = $is_implicit_entry;
 		$this->is_implicit_entry = $is_implicit_entry;
 		$this->return_type_name = $return_type_name;
@@ -222,7 +227,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{
-		return 'func:' . $this->declaration_key();
+		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
 	}
 
 	/** Attach the completed body once and settle the function token boundary. */

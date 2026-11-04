@@ -39,7 +39,7 @@ status counts, redirected function keys after body changes/moves, stable symbol-
 a fresh frontend run. The edit changes an integer literal and its byte length,
 avoiding the known same-size/same-second metadata-check limitation.
 
-This harness measures only the frontend, not the separate incremental body-cache API or lowering. The timed passes stop after symbol
+By default, this harness measures only the frontend, not the separate incremental body-cache API or lowering. The timed passes stop after symbol
 publication. No native executable was built by this benchmark. PHP GC is collected
 between sample sequences; this is neither cold-disk latency nor a long-session
 memory-retirement test.
@@ -93,3 +93,28 @@ are retained in [benchmark-utf8-results.json](benchmark-utf8-results.json).
 | added | 4.861 | 4.210 | 4.008–4.958 |
 | removed | 5.143 | 4.919 | 4.613–5.311 |
 | moved | 5.447 | 5.165 | 5.017–5.283 |
+
+## Current preparation and watch-coordinator baseline (2026-11-04)
+
+See [the current report](benchmark-2026-11-04.md) for stage timings, incremental
+preparation reuse, raw samples and measurement boundaries. Add `--prepare` to the
+existing command to time full preparation/C++ text emission and run incremental
+preparation after each frontend scenario. The default frontend-only mode is retained.
+Neither mode invokes Clang; original sample sources and previous results are preserved.
+
+## Complete build including Clang
+
+The [native benchmark report](benchmark-2026-11-04-native.md) extends the compiler
+stage measurements through Clang and mold. It compares O0/O1/O2 with no runtime
+PCH, freshly built PCH and reused PCH, using Ninja -j4 and no debug symbols.
+It retains Clang frontend/LLVM phase traces, linker timings, total build wall time,
+and executable correctness checks. Use `native-benchmark.py --output <new-directory>`
+to reproduce; the existing runtime archive is reused. Compiler-only timings above
+are not complete executable build times.
+
+## Grouping experiment (benchmark only)
+
+[1 / 4 / 8 / 258 translation units with Ninja -j8](benchmark-2026-11-04-grouping.md)
+compares full O2 builds, including frontend/LLVM/linker profiles and a same-run
+258-unit -j4 control. `grouping-benchmark.py` concatenates emitted C++ only in its
+own artifact directory; it does not change compiler emission or shared build defaults.

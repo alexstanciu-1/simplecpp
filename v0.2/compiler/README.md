@@ -259,3 +259,21 @@ Dependency registration/dispatch uses the session-owned `Dependency_Watches` and
 `dependency_watcher` interface. See [stable symbols and watches](docs/stable_symbols.md).
 Run `php -n v0.2/compiler/tests/dependency_watches.php` from the repository root
 for the generic batch/retirement contract.
+
+## Namespaces
+
+The [first namespace slice](docs/namespaces.md) supports one optional namespace
+body per file, exact qualified function calls, and file-local `use`/`use function`
+imports for cpp/php/js. Symbol renaming and homogeneous groups are supported;
+namespace aliases and type/constant imports are not. Run
+`php -n v0.2/compiler/tests/namespaces.php` and
+`python3 -B v0.2/compiler/tests/namespaces_native.py` from the repository root.
+The native proof retains Clang frontend/LLVM/linker traces and checks output/exit status.
+For imports, run `php -n v0.2/compiler/tests/imports.php` and
+`python3 -B v0.2/compiler/tests/namespaces_native.py --imports`.
+
+Explicit [integer globals](docs/globals.md) now support literal initialization and
+namespace-qualified reads across files and functions. Ordinary top-level locals
+remain private to implicit main. Writes and configurable shadowing are deferred.
+Run `php -n v0.2/compiler/tests/globals.php` and
+`python3 -B v0.2/compiler/tests/namespaces_native.py --globals` for the proof.

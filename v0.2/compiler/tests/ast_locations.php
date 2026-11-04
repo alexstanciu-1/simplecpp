@@ -62,7 +62,7 @@ foreach ([
 	verify($function->source_text() === $definition, 'Function range does not include the complete body');
 	$call = $root->main()->body()->statements[0];
 	verify($call->source_text() === 'ping /* interior */ ();', 'Interior trivia lost');
-	verify(($root->main()->is_implicit_entry) && ($root->main()->name === 'main'), 'Implicit entry identity');
+	verify(($root->main()->is_implicit_entry) && ($root->main()->short_name === 'main'), 'Implicit entry identity');
 	verify($root->main()->return_type_name === 'int', 'Implicit entry type spelling');
 	$view = Syntax_Inspection::file($file);
 	verify($view['statements'][0]['span']['start'] === strpos($text, 'ping /*'), 'CLI byte location changed');

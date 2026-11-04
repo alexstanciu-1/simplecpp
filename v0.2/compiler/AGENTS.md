@@ -53,6 +53,15 @@ records the current language-flavor and parser boundaries.
   Preparation owns semantic decisions; lowering consumes settled facts. Do not
   rebuild handwritten scalar matrices or restore wrappers for native int64 storage.
 
+For namespace syntax, declaration identity and exact lookup, read
+[the first namespace slice](docs/namespaces.md). AST separators are always backslashes;
+flavor syntax normalization does not add fallback lookup or namespace-wide watches.
+Imports are file-local bindings to existing symbols, not namespace aliases or exports.
+For explicit global storage, read [the integer-global slice](docs/globals.md).
+Global reads use stable symbol entries and do not copy initializer constants into callers.
+Keep ordinary top-level variables local to implicit main for now; configurable
+same-file visibility and shadowing are [deferred policy](../specs/planning/variable_visibility_debt.md).
+
 For module loading, read [the operational manifest contract](docs/modules.md).
 For module/incremental work, read the [common module plan](../specs/planning/common_modules_and_incremental.md).
 Application and runtime modules share dependency ownership and orchestration.
@@ -156,6 +165,12 @@ Formatting-only work preserves behavior, APIs, ownership, literal contents and
 statement order. Keep current guidance and unresolved debt with their owners;
 do not append contradictory status sections or present historical proof counts
 as current requirements. Performance claims require relevant measurements.
+End-to-end benchmarks must include the native Clang build and executable checks.
+Report Clang frontend, LLVM optimization/code generation, and linker work, alongside
+native and overall wall time. Record optimization, debug symbols, jobs, linker,
+PCH/cache state and runtime-archive reuse. Distinguish nested/cumulative trace
+timings from parallel wall time; frontend-only timings are partial measurements,
+not complete compilation time.
 
 These rules consolidate the applicable parts of the donor
 [PHP operating rules](../../compiler/my-try/AGENTS.md) and

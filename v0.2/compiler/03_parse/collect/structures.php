@@ -40,15 +40,18 @@ final class scope
 	/** PROPERTIES */
 	/** Native non-owning lexical parent; null for a compilation or a detached file. No implicit parent lookup yet. */
 	public ?scope $parent;
+	/** Source namespace context; lexical children inherit it, without parent-namespace fallback. */
+	public readonly ?string $namespace;
 	/** @var ast_declaration_interface[] Published head references; native non-owning AST references. */
 	public array $declarations /** array<string,ast_declaration_interface> */ = [];
 	/** @var symbol_entry[] Stable identities including tombstones; native owning stable entries. */
 	private array $entries /** array<string,symbol_entry> */ = [];
 
 	/** CONSTRUCTOR */
-	public function __construct(?scope $parent = null)
+	public function __construct(?scope $parent = null, ?string $namespace = null)
 	{
 		$this->parent = $parent;
+		$this->namespace = $namespace ?? $parent?->namespace;
 	}
 
 	/** METHODS */

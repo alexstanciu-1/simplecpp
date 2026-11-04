@@ -38,22 +38,25 @@ final class ast_name_expression extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly string $name;
+	/** JS dotted value/member ambiguity; rooted paths bypass local values. */
+	public readonly bool $member_syntax;
 
 	/** PREP FACTS */
 	/**
-	 * Prepared fact: exact local identity; null before preparation or after reset.
-	 * Native non-owning; resolved declaration belongs to body syntax.
+	 * Prepared fact: local AST identity or stable global symbol; null before preparation or after reset.
+	 * Native non-owning; locals belong to body syntax, stable entries to the compilation scope.
 	 */
-	protected ?ast_local_declaration $local_def = null;
+	protected ast_local_declaration|symbol_entry|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
 	 * $start: token position.
 	 * $end: exclusive.
 	 */
-	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */)
+	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */, bool $member_syntax = false)
 	{
 		$this->name = $name;
+		$this->member_syntax = $member_syntax;
 		parent::__construct($start, $end);
 	}
 
@@ -61,18 +64,43 @@ final class ast_name_expression extends ast_expression
 	public function settle_local(ast_local_declaration $local): void
 	{
 		$this->settle_value($local->type_def(), $local->constant());
-		$this->local_def = $local;
+		$this->binding = $local;
+	}
+
+	/** Global storage is mutable in intent; its initializer is not a constant fact at a read occurrence. */
+	public function settle_global(symbol_entry $symbol): void
+	{
+		$global = $symbol->declaration();
+		if (!($global instanceof ast_global_declaration)) {
+			throw new \LogicException('Expected a global variable symbol');
+		}
+		$this->settle_value($global->type_def(), null);
+		$this->binding = $symbol;
+	}
+
+	/** Resolve a global through its live identity; direct local links stay within the owning body. */
+	public function declaration(): ast_local_declaration|ast_global_declaration
+	{
+		if ($this->binding instanceof ast_local_declaration) {
+			return $this->binding;
+		}
+		$declaration = $this->binding?->declaration();
+		if (!($declaration instanceof ast_global_declaration)) {
+			throw new \LogicException('Variable reference is not settled or was removed');
+		}
+		return $declaration;
 	}
 
 	public function local_def(): ast_local_declaration
 	{
-		return $this->local_def ?? throw new \LogicException('Local reference is not settled');
+		return $this->binding instanceof ast_local_declaration
+			? $this->binding : throw new \LogicException('Local reference is not settled');
 	}
 
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
-		$this->local_def = null;
+		$this->binding = null;
 	}
 }
 
@@ -83,7 +111,7 @@ final class ast_name_expression extends ast_expression
  * ```text
  * $value int = 3;
  * ```
- * name is value, type_name is int, and the initializer is an integer expression.
+ * short_name is value, type_name is int, and the initializer is an integer expression.
  */
 final class ast_local_declaration extends ast_statement implements ast_declaration_interface
 {
@@ -116,7 +144,8 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 		string $name,
 		?string $type_name, ast_expression $initializer)
 	{
-		$this->name = $name;
+		$this->short_name = $name;
+		$this->namespace = null;
 		$this->type_name = $type_name;
 		$this->initializer = $initializer;
 		$initializer->attach($this);

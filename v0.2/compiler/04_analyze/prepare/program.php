@@ -22,7 +22,12 @@ final class Program_Preparation
 		foreach ($files as $file) {
 			$file->begin_preparation();
 			foreach ($file->declaration_nodes as $node) {
-				Function_Preparation::reset($node);
+				if ($node instanceof ast_function_declaration) {
+					Function_Preparation::reset($node);
+				}
+				else {
+					$node->reset_preparation();
+				}
 			}
 		}
 		if (!isset($files[$entry_path])) {
@@ -38,6 +43,8 @@ final class Program_Preparation
 			self::admit($file, $path === $entry_path);
 		}
 		Function_Preparation::declarations($symbols);
+		Global_Preparation::declarations($symbols);
+		Import_Preparation::files($files, $symbols);
 		foreach ($files as $file) {
 			$main = $file->main();
 			if ($main !== null) {

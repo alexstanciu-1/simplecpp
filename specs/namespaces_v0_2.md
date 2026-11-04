@@ -6,6 +6,40 @@ implementation availability. The my-try Chapter 08 catalog tracks delivery.
 It supersedes incidental cross-file visibility from v0.1 C++ import emission and
 obsolete catalog restrictions rejecting type imports, aliases or grouped imports.
 
+## Flavor notation and initial visibility (2026-11-04)
+
+Source notation is flavor-specific; AST paths use `\` in every flavor. A leading
+canonical `\` on a reference means rooted lookup; declaration identities contain
+no leading/trailing separator. A null namespace denotes the source root.
+
+| Intent | PHP flavor | C++ flavor | JS flavor |
+| --- | --- | --- | --- |
+| Namespace declaration | `namespace App\Tools;` or `namespace App\Tools { ... }` | `namespace App::Tools { ... }` | `namespace App.Tools { ... }` |
+| Qualified reference | `Lib\ping()` | `Lib::ping()` | `Lib.ping()` |
+| Root-qualified reference | `\Lib\ping()` | `::Lib::ping()` | `\Lib.ping()` |
+
+For JS syntax selection, prefer ES6 constructs where they express the concept,
+then TypeScript where ES6 has no equivalent. Namespace declarations follow
+TypeScript's braced notation. The leading backslash is an explicit Simple C++
+extension, not ES6/TypeScript syntax. Flavor syntax does not import C++/PHP/JS
+fallback lookup rules; the common exact lookup rules below govern all flavors.
+Dotted JS syntax can also denote member access: a visible local value must not be
+silently bypassed to interpret that value's name as a namespace. General member
+calls remain outside the first executable slice.
+
+Namespace declarations are all externally visible for this initial slice.
+TypeScript-style `export`/API visibility is deferred; unsupported `export` syntax
+must be diagnosed rather than accepted and ignored. The existing private implicit
+entry function remains private and is not a namespace export. This visibility
+boundary does not define future export defaults or access-control semantics.
+
+The active PHP bootstrap initially admits one optional leading namespace body per
+file (or the implicit global body). PHP also admits `namespace { ... }` for an
+explicit global body. Multiple/reopened bodies in one file, nested declarations,
+and anonymous C++ namespaces are not yet implemented. Separate files can
+contribute supported functions to the same namespace. These are delivery limits;
+the full namespace-body and import semantics below remain the intended contract.
+
 ## Namespace identity and source bodies
 
 A namespace has a shared qualified identity across source files. Each namespace
@@ -73,6 +107,73 @@ Missing targets, wrong symbol kinds and conflicting bindings are preparation-tim
 errors under the v0.2 diagnostic policy, not deferred C++ name-resolution behavior.
 Imports do not load files or alter project discovery/execution order.
 
+### Active bootstrap import slice (2026-11-04)
+
+The active compiler implements plain `use` and `use function` for its supported
+no-argument void functions, including `as` symbol bindings and homogeneous groups.
+This is not namespace aliasing. All three flavors use `use`, `function` and `as`
+for this slice, with their existing path separators (`\`, `::`, `.`). For example,
+`use function Lib::ping;` and `use function Lib.ping;` correspond to PHP-flavor
+`use function Lib\ping;`. This shared `use` notation is a Simple C++ extension in
+the C++/JS flavors; it does not implement C++ using-directives or ES6 module loading.
+Groups use the same separator before `{`, for example `use Lib::{ping, pong};`.
+
+Imports are accepted at namespace-body level, including after executable syntax,
+and apply throughout that body. They are not accepted inside functions. Type and
+constant imports remain deferred with their declaration support; `use const` is
+recognized but rejected during preparation. Import bindings affect unqualified
+names only; rooted and qualified paths retain exact lookup. No filesystem discovery
+or runtime API catalog changes are implied.
+
+## Top-level variable visibility (2026-11-04)
+
+Ordinary top-level variables are not published across source units. For the initial
+policy they remain locals of the implicit entry function, with no capture by other
+functions in that file. Their placement in a named namespace does not change this.
+Same-file function visibility and variable shadowing will become configurable through
+project profiles; those settings are deferred, not accepted configuration today.
+
+Explicit `global` declarations publish namespace-qualified variable identities across
+source units. Ordinary top-level declarations do not gain publication incidentally.
+
+### Explicit globals — initial integer slice
+
+Globals are admitted at file/namespace level, including in non-entry files. They
+declare storage, not executable statements in implicit main. The initial syntax is:
+
+| Intent | PHP flavor | C++ flavor | JS flavor |
+| --- | --- | --- | --- |
+| Explicit type | `global $value int = 10;` | `global int value = 10;` | `global let value: int = 10;` |
+| Inferred integer type | `global $value = 10;` | `global auto value = 10;` | `global let value = 10;` |
+| Qualified read | `test\$value` | `test::value` | `test.value` |
+| Root-qualified read | `\test\$value` | `::test::value` | `\test.value` |
+
+`global` is a Simple C++ storage declaration, not PHP's function-local global binding
+statement. Explicit `int` and `int64`, or an omitted/inferred type, all select the
+canonical signed int64 type. Initializers must be decimal integer literals, optionally
+preceded by `+` or `-`; range checking includes the exact int64 minimum and maximum.
+All declarations are checked, including unused globals. Other types, expression
+initializers, multiple declarators and function-local global declarations are deferred.
+
+Each valid qualified global has one storage definition, initialized before entry
+execution. Initializers cannot read globals or call functions, so source discovery
+order does not impose an initialization-order dependency. Globals are visible before
+their textual declaration and in functions and other source units. Duplicate qualified
+global names are errors; function and variable names occupy separate symbol kinds.
+
+Unqualified reads use an already-visible local first, then a global in the current
+namespace. Qualified and rooted reads use exact namespace lookup with no fallback to
+parent or root globals. PHP qualification places `$` on the final name only; AST
+paths contain no `$`. JS dotted paths must not bypass a visible local in the first
+component: such member reads are currently unsupported; root qualification removes
+that ambiguity. A local remains unavailable in its own initializer.
+
+Globals have mutable-storage intent, but writes are not supported by this slice.
+Their initializers are not constant facts at read sites: lowering reads storage and
+entry returns retain checked native-int conversion. Variable imports are deferred;
+`use` continues to import the supported function kind only. Configurable visibility
+and shadowing remain deferred; current local precedence is the initial fixed policy.
+
 ## Source constants — bounded v0.2 slice
 
 Global and named namespace bodies admit `const NAME = initializer;` declarations.
@@ -107,7 +208,7 @@ namespace body and keep their source order; executable bodies are not concatenat
 across namespace boundaries. Declaration-only bodies may coexist with that entry.
 
 Namespace support does not itself enable later class/static-member features,
-namespace variables with persistent storage, or additional nested source forms.
+storage beyond the explicit integer-global slice above, or additional nested source forms.
 Qualified lookup initially applies to supported declaration/expression families;
 individual implementation slices must state their admission boundary.
 

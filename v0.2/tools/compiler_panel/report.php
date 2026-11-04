@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../compiler/host/syntax.php';
 require_once __DIR__ . '/../../compiler/host/compilation.php';
 
 use scpp\compiler\{Program_Loader, flavor, Tokenizer, Parser, Symbol_Publication, Syntax_Inspection,
-	Compilation_Inspection, Program_Preparation, Native_Target, Cpp_Program, diagnostic_group};
+	Compilation_Inspection, Program_Preparation, Native_Target, Cpp_Program, diagnostic_group, ast_global_declaration};
 
 /** Records stage work separately from inspection serialization; failed stages retain prior reports. */
 final class Panel_Report
@@ -66,8 +66,13 @@ try {
 			foreach ($symbols->declarations as $head) {
 				// Preserve the inspection JSON format; the compiler itself stores only a head reference.
 				for ($f = $head; $f !== null; $f = $f->duplicate_element()) {
-					$rows[$head->name][] = ['file' => basename($f->source()->path),
-						'token_start' => $f->start, 'return_type_name' => $f->return_type_name];
+					$row = ['file' => basename($f->source()->path), 'token_start' => $f->start];
+					if ($f instanceof ast_global_declaration) {
+						$row += ['kind' => 'global', 'type_name' => $f->type_name];
+					} else {
+						$row += ['kind' => 'function', 'return_type_name' => $f->return_type_name];
+					}
+					$rows[$head->name()][] = $row;
 				}
 			}
 			return $rows;
@@ -77,12 +82,16 @@ try {
 	$program = $report->stage('Preparation · declarations then bodies',
 		fn() => Program_Preparation::prepare($session->entry_key(), $files, $target, $symbols, $session),
 		static function ($p): array {
-			$result = ['entry' => Compilation_Inspection::program($p->entry), 'functions_by_file' => []];
+			$result = ['entry' => Compilation_Inspection::program($p->entry), 'functions_by_file' => [], 'globals_by_file' => []];
 			foreach ($p->files as $path => $file) {
 				foreach ($file->functions() as $function) {
-					$result['functions_by_file'][$path][] = ['name' => $function->name,
+					$result['functions_by_file'][$path][] = ['name' => $function->name(),
 						'return_type' => $function->return_type_def()->name,
 						'body' => Compilation_Inspection::body($function->body())];
+				}
+				foreach ($file->globals() as $global) {
+					$result['globals_by_file'][$path][] = ['name' => $global->name(),
+						'type' => $global->type_def()->name, 'initializer' => (string)$global->initializer->integer()];
 				}
 			}
 			return $result;

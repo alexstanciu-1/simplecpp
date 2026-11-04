@@ -14,7 +14,8 @@ namespace scpp\compiler {
 namespace {
     require_once __DIR__ . '/../../compiler/boot.php';
     use scpp\compiler\{Module_Loader, Project_Compiler, Program_Loader, Tokenizer, Parser,
-        Symbol_Publication, change_status, Program_Frontend, entry_target};
+        Symbol_Publication, change_status, Program_Frontend, entry_target,
+        Program_Preparation, Incremental_Preparation, Cpp_Program};
 
     function check(bool $condition, string $message): void
     {
@@ -27,6 +28,8 @@ namespace {
         return ['median_ms' => $values[intdiv(count($values), 2)], 'min_ms' => min($values), 'max_ms' => max($values)];
     }
 
+    $with_preparation = in_array('--prepare', $argv, true);
+    $preparation_proofs = [];
     $GLOBALS['source_reads'] = 0;
     check(!function_exists('xdebug_info') || xdebug_info('mode') === [], 'Disable Xdebug with XDEBUG_MODE=off');
     $manifest = json_decode(file_get_contents(__DIR__ . '/module.json'), true, flags: JSON_THROW_ON_ERROR);
@@ -76,6 +79,19 @@ namespace {
             $symbols = Symbol_Publication::completed($files);
             $totals['symbol_index'] = (hrtime(true) - $start) / 1e6;
             check(count($symbols->declarations) === 256, 'Expected 256 public functions');
+            if ($with_preparation) {
+                $start = hrtime(true);
+                $prepared = Program_Preparation::prepare('main.phs', $files, new entry_target(31), $symbols);
+                $totals['prepare'] = (hrtime(true) - $start) / 1e6;
+                $start = hrtime(true);
+                $output = Cpp_Program::emit($prepared);
+                $totals['cpp_text'] = (hrtime(true) - $start) / 1e6;
+                check(count($output->source_units) === 257, 'Missing emitted source units');
+                check(count($output->files) === 258, 'Missing source text or entry adapter');
+                $emitted_bytes = array_sum(array_map('strlen', $output->files));
+                $times['staged_total'][] = array_sum($totals);
+                unset($prepared, $output);
+            }
             foreach ($totals as $stage => $ms) { $times[$stage][] = $ms; }
             unset($files, $symbols, $session, $source, $tokens);
             gc_collect_cycles();
@@ -132,6 +148,21 @@ namespace {
                 }
                 check(($current->scope->resolve('func:added_function') !== null) === ($scenario === 'added'), 'Added/removed symbol mismatch');
                 $proofs[$scenario] = $counts;
+                if ($with_preparation) {
+                    $start = hrtime(true);
+                    $prepared_counts = Incremental_Preparation::prepare($current, new entry_target(31));
+                    $elapsed = (hrtime(true) - $start) / 1e6;
+                    $times[$scenario . '_prepare'][] = $elapsed;
+                    $times[$scenario . '_combined'][] = $times[$scenario][$sample] + $elapsed;
+                    $expected_preparation = match ($scenario) {
+                        'full' => ['prepared' => 257, 'reused' => 0],
+                        'unchanged', 'removed' => ['prepared' => 0, 'reused' => 257],
+                        'changed', 'moved' => ['prepared' => 1, 'reused' => 256],
+                        'added' => ['prepared' => 1, 'reused' => 257],
+                    };
+                    check($prepared_counts === $expected_preparation, 'Preparation reuse mismatch: ' . $scenario);
+                    $preparation_proofs[$scenario] = $prepared_counts;
+                }
                 $previous = $current;
             }
             $clean = $compiler->frontend($root);
@@ -140,10 +171,15 @@ namespace {
             unset($clean, $current, $previous);
             gc_collect_cycles();
         }
-        $result = ['php' => PHP_VERSION, 'samples' => 7, 'files' => count($paths),
+        $result = ['php' => PHP_VERSION, 'mode' => $with_preparation ? 'frontend-and-preparation' : 'frontend',
+            'xdebug_loaded' => extension_loaded('xdebug'), 'opcache_cli' => ini_get('opcache.enable_cli'), 'samples' => 7, 'files' => count($paths),
             'bytes' => array_sum(array_map(static fn(string $p): int => filesize(__DIR__ . '/' . $p), $paths)),
             'tokens' => $token_count, 'raw_ms' => $times, 'timings' => array_map('summary', $times), 'proofs' => $proofs,
             'peak_php_allocated_bytes' => memory_get_peak_usage(true)];
+        if ($with_preparation) {
+            $result['preparation_proofs'] = $preparation_proofs;
+            $result['emitted_bytes'] = $emitted_bytes;
+        }
         echo json_encode($result, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
     } finally {
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
