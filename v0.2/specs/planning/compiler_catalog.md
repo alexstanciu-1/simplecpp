@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-04, after typed value parameters, arguments and returns.
+Updated: 2026-11-04, after trailing literal defaults and explicit mutable reference parameters.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -24,10 +24,10 @@ not a mandatory dependency order.
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment | Named constants, chained assignment; expression-dependent examples |
 | 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals | Grouping, unary/binary operators, comparisons, logical short circuit, casts, compound writes, increments, string operations |
 | 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Pending | Blocks/scopes, if/else, loops, break/continue, switch/match, conditional expressions; merge/invalidate value facts |
-| 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, references, named arguments and signature inference; overloads remain unimplemented |
+| 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions | Nullable/Result, mixed/dynamic, explicit casts, probes/coalescing and text conversions |
 | 06 | [Containers](../../../compiler/my-try/docs/catalog/06_containers.md) | Pending in compiler | vector/hash registration and construction, reads/writes, append, key rules, iteration; mutation policy before mutation during iteration |
-| 07 | [References and lifetime](../../../compiler/my-try/docs/catalog/07_references_lifetime.md) | Pending source ownership/reference features; string value copies already work | Aliases/borrows, reference parameters/returns, lifetime rules, shared/unique/weak, transfers and cleanup |
+| 07 | [References and lifetime](../../../compiler/my-try/docs/catalog/07_references_lifetime.md) | Partial: mutable whole-storage reference parameters and forwarding; string value copies | Local aliases, read-only references, reference defaults/returns, lifetime rules, shared/unique/weak, transfers and cleanup |
 | 08 | [Projects and symbols](../../../compiler/my-try/docs/catalog/08_project_symbols.md) | Partial: modules/loading, multifile entry, namespaces/use, explicit scalar globals, stable symbols, frontend reuse and preparation watches | Broader namespace/import cases, constants, global writes/string globals, dependency artifact/version validation and broader incremental behavior |
 | 09 | [Value types and enums](../../../compiler/my-try/docs/catalog/09_value_types.md) | Pending source-defined types | Enums, value semantics and enum operations; record storage with 10 |
 | 10 | [Objects](../../../compiler/my-try/docs/catalog/10_objects.md) | Pending | Classes/structs, fields, construction, methods, static members, access and destruction |

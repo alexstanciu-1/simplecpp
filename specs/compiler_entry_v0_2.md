@@ -187,7 +187,7 @@ this signature contract. Each function owns its ordered parameter declarations;
 its body scope indexes them before collecting local statements. Parameters and
 locals cannot duplicate names. PHP bare writes to parameters are assignments,
 not inferred declarations. Parameters are initialized on entry, with unknown
-caller values during body preparation, and are mutable local value storage.
+caller values during body preparation, and are mutable local storage. Value parameters own copies; explicit references bind caller storage.
 
 Calls accept positional arguments, omitting only a trailing suffix with declared
 literal defaults. Each supplied argument
@@ -219,7 +219,7 @@ parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Named arguments, variadics, references, overloads, signature inference,
+Named arguments, variadics, read-only references, reference returns, overloads, signature inference,
 first-class callables, methods and trailing parameter/argument commas are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
@@ -251,3 +251,39 @@ suppress their corresponding defaults. Missing required or excess arguments reje
 Default edits/removal invalidate observing callers. The initial implementation may
 conservatively invalidate callers supplying all arguments or after spelling-only
 changes. It does not require per-omission dependency watches.
+
+### Explicit mutable reference parameters
+
+Fixed parameters may explicitly borrow whole, stable storage:
+
+```text
+PHP: function replace(int &$value): void { $value = 12; }
+C++: void replace(int &value) { value = 12; }
+JS:  function replace(&value: int): void { value = 12; }
+```
+
+The JS spelling is a Simple C++ flavor extension, not JavaScript/TypeScript reference
+semantics. Calls use ordinary variable arguments, without call-site `&`.
+
+Supported targets are initialized locals, value/reference parameters and currently
+supported explicit globals. All current value types may be borrowed. The canonical
+storage type must match exactly (`int` and `int64` denote the same type); no conversion,
+copy-in/copy-out or temporary binding is allowed. Literals and ordinary call results
+are rejected. Whole string objects are eligible; interior storage is not admitted.
+
+Assignments through the parameter modify its target using ordinary assignment
+conversion rules. Forwarding preserves the same storage. Multiple parameters may
+alias one target, and aliases remain live during later argument evaluation and the
+call. Value arguments retain their left-to-right snapshots. Return types still denote
+values; returning a referenced string produces an owning value, not an escaping borrow.
+
+Preparation invalidates known local values after reference calls. Reference parameter
+reads are conservatively unknown even after assignment, since other references or
+globals may alias them. Earlier value snapshots remain valid. No callee-body analysis,
+exclusive borrowing claim or general alias graph is required by this bounded slice.
+
+Passing mode participates in signature-change invalidation. Read-only references,
+reference parameter defaults, reference returns, local aliases, interior references,
+variadics and escaping captures remain deferred. Value-parameter defaults continue
+to work after required reference parameters. Global assignment syntax remains deferred,
+but mutation through an explicitly bound reference parameter is supported.

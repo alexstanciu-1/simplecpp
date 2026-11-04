@@ -3,13 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** A function-owned typed value parameter, indexed as body storage: function f(int $value = 8): int. */
+/** A function-owned typed parameter, indexed as body storage: function f(int &$value): void. */
 final class ast_parameter_declaration extends ast_node implements ast_local_binding
 {
 	use ast_declaration;
 
 	/** PROPERTIES */
 	public readonly string $type_name;
+	public readonly passing_mode $mode;
 	public readonly int $id /** uint32 */;
 	/** Owned literal syntax; null means a required parameter. */
 	public readonly ?ast_expression $default_value;
@@ -23,11 +24,13 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions; $id: body storage ordinal. */
 	public function __construct(string $name, string $type_name, int $id /** uint32 */,
-		int $start /** uint32 */, int $end /** uint32 */, ?ast_expression $default_value = null)
+		int $start /** uint32 */, int $end /** uint32 */, ?ast_expression $default_value = null,
+		passing_mode $mode = passing_mode::value)
 	{
 		$this->short_name = $name;
 		$this->namespace = null;
 		$this->type_name = $type_name;
+		$this->mode = $mode;
 		$this->id = $id;
 		parent::__construct($start, $end);
 		$this->default_value = $default_value;
@@ -94,6 +97,7 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	/** Return: token position of the parameter name. */
 	public function name_position(): int /** uint32 */
 	{
-		return $this->start + ($this->source()->flavor === flavor::js ? 0 : 1);
+		return $this->start + ($this->source()->flavor === flavor::js ? 0 : 1)
+			+ ($this->mode === passing_mode::reference ? 1 : 0);
 	}
 }

@@ -195,7 +195,7 @@ final class Parser
 	}
 
 	/**
-	 * Parse explicit positional value parameters and optional literal-default syntax.
+	 * Parse explicit positional passing modes and optional literal-default syntax.
 	 * @return ast_parameter_declaration[]
 	 */
 	public function parameters(): array /** list<ast_parameter_declaration> */
@@ -205,12 +205,14 @@ final class Parser
 		while (!$this->cursor->is(token_kind::rparen)) {
 			$start = $this->cursor->position();
 			if ($this->cursor->tokens->source->flavor === flavor::js) {
+				$mode = $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
 				$type = $this->return_type();
 			}
 			else {
 				$type = $this->return_type();
+				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
 			}
@@ -219,7 +221,7 @@ final class Parser
 				$this->cursor->take(token_kind::assign, '=');
 				$default = $this->value();
 			}
-			$parameters[] = new ast_parameter_declaration($name, $type, count($parameters), $start, $this->cursor->position(), $default);
+			$parameters[] = new ast_parameter_declaration($name, $type, count($parameters), $start, $this->cursor->position(), $default, $mode);
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
 			}
@@ -228,8 +230,18 @@ final class Parser
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Trailing parameter comma is deferred');
 			}
 		}
-		$this->cursor->take(token_kind::rparen, ') (typed value parameters only)');
+		$this->cursor->take(token_kind::rparen, ') (typed parameters)');
 		return $parameters;
+	}
+
+	/** The reference marker precedes the parameter name in each flavor. */
+	private function parameter_mode(): passing_mode
+	{
+		if ($this->cursor->is(token_kind::ampersand)) {
+			$this->cursor->take(token_kind::ampersand, '&');
+			return passing_mode::reference;
+		}
+		return passing_mode::value;
 	}
 
 	/** Calls own ordinary value arguments; nested calls use the same parser and AST node. */

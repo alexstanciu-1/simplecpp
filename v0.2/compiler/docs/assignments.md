@@ -25,7 +25,8 @@ clears both. Its operand already owns value facts. The assignment derives its sc
 result from the prepared operand/conversion instead of storing another payload copy.
 
 `Preparation::$latest_writes` is a transient non-owning index from local ID to its
-latest completed assignment. Absence means the declaration initializer still applies.
+latest completed assignment. Null means unknown after a reference call; absence means
+the declaration initializer still applies.
 The RHS is prepared first, then the write is published to this private index.
 `ast_name_expression::settle_local()` snapshots the scalar value at this occurrence
 from that write or the initializer. Its declaration binding remains unchanged.
@@ -33,9 +34,10 @@ Later writes therefore cannot alter earlier reads, and no recursive chain of rea
 is needed to obtain the current scalar value. String bytes are never copied into
 scalar facts. Local declaration facts continue to describe initialization only.
 
-The index is reset for each body. Calls cannot currently mutate caller locals: there
-are only value parameters, with no references or captures. Before adding such capabilities, review
-invalidation rather than carrying these facts across possibly mutating calls.
+The index is reset for each body. Mutable reference calls invalidate only passed local
+storage after argument evaluation. A later assignment restores facts for ordinary
+locals/value parameters. Reference parameters always read as unknown, since they may
+alias one another or globals. This retains earlier snapshots without an alias graph.
 Before adding branches/loops, design joins for value facts; this source-order index
 is deliberately limited to the current straight-line bodies.
 
@@ -47,7 +49,7 @@ String copy assignment and destruction remain owned by the existing public runti
 CLI/panel preparation inspection now includes assignment destination IDs and conversions.
 
 Initializer-based local inference is now supported; see [inference](inference.md).
-Global writes, compound assignments, member/index writes and assignment expressions remain deferred. There is no new watcher graph or cross-file ownership.
+Direct global writes, compound assignments, member/index writes and assignment expressions remain deferred. There is no new watcher graph or cross-file ownership.
 
 ## Verification
 

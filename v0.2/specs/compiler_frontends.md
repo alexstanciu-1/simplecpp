@@ -221,3 +221,9 @@ visible locals take precedence over unqualified globals. Ordinary top-level loca
 remain private to implicit main. Writes, other types and variable imports are deferred.
 Reads retain stable symbol entries with unknown constant values; initializer-only
 changes need not invalidate reader bodies, while removal/type changes do.
+
+Mutable reference parameters use `T &$name` (PHP), `T &name` (C++), and `&name: T`
+(JS Simple C++ extension). Calls use ordinary variable expressions. Exact canonical
+storage identity, mutation, forwarding and argument ordering follow the shared
+[function contract](../../specs/compiler_entry_v0_2.md#explicit-mutable-reference-parameters).
+Read-only references and reference defaults are deferred.

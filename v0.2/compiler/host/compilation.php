@@ -57,7 +57,7 @@ final class Compilation_Inspection
 			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
-					'default_conversion' => $parameter->default_value === null ? null : $parameter->default_conversion()->name,
+					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : $parameter->default_conversion()->name,
 				], $function->parameters), 'body' => self::body($function->body())];
 		}
 		return $result;

@@ -134,8 +134,7 @@ $units = array_values($bundle->files);
 $fixtures['multifile'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('cross')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
-foreach (['function f($x int): void {}', 'function f(int &$x): void {}',
-	'function f(int ...$x): void {}',
+foreach (['function f($x int): void {}', 'function f(int ...$x): void {}',
 	'function f(int $x, int $x): void {}'] as $invalid) {
 	rejects(fn() => $php($invalid . 'return 8;'), str_contains($invalid, 'int $x,') ? 'Duplicate local' : 'Expected');
 }

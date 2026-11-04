@@ -3,6 +3,13 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Parameter transport intent; native uint8. Reference binds exact stable storage without conversion. */
+enum passing_mode: int
+{
+	case value = 0;
+	case reference = 1;
+}
+
 /**
  * Syntax ownership only; semantic references never become parent links.
  *

@@ -214,11 +214,17 @@ final class Cpp_Emitter
 				$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				$operand = $this->value($argument, $global_references, $declarations, $required_headers);
-				$converted = $type->lower_cpp_conversion($conversion, $operand);
 				// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 				$temporary = 'argument_' . $value->start . '_' . $index;
-				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $converted . ';';
-				$arguments[] = 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
+				if ($parameter->mode === passing_mode::reference) {
+					$steps[] = $type->cpp_type() . ' &' . $temporary . ' = ' . $operand . ';';
+					$arguments[] = $temporary;
+				}
+				else {
+					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
+						. $type->lower_cpp_conversion($conversion, $operand) . ';';
+					$arguments[] = 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
+				}
 				foreach ($type->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
@@ -254,7 +260,8 @@ final class Cpp_Emitter
 		}
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			$parameters[] = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . $type->cpp_type() . ' '
+				. ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}

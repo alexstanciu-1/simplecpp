@@ -136,7 +136,7 @@ is valid and has no observable effect for the supported built-in value types.
 Reads use source-order value facts; a write does not change earlier read facts or
 the declaration's initializer facts. Unknown values retain required runtime checks.
 
-Global writes, compound assignment, assignment expressions and member/index writes
+Direct global writes, compound assignment, assignment expressions and member/index writes
 remain deferred. PHP first-write declarations follow the local inference rules below.
 
 ## Initializer-based local inference

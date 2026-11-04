@@ -27,7 +27,7 @@ final class Syntax_Inspection
 			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_name,
-					'default' => $parameter->default_value?->source_text(),
+					'default' => $parameter->default_value?->source_text(), 'passing' => $parameter->mode->name,
 				], $function->parameters),
 				'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,

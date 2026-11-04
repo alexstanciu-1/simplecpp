@@ -27,7 +27,7 @@ separate native exit-status conversion.
 - `ast_local_binding` is the common storage interface implemented by parameters
   and local declarations. Reads, writes and latest-write tracking share that path.
   Parameter values start unknown during body preparation; calls cannot change a
-  caller local because only value passing is supported.
+  caller local when passed by value; explicit references bind caller storage.
 - `Body_Collection` seeds parameter names before local statements. Storage IDs put
   parameters first, followed by locals. PHP bare writes to parameters assign them.
   Parameters and locals share the declaring scope's duplicate chain; the duplicate
@@ -79,7 +79,7 @@ prepared-call/signature objects and reference/variadic transport were not import
 Current Simple C++ contracts and the agreed PHP type-before-name spelling take
 precedence over historical shorthand examples.
 
-Named arguments, references, overloads, variadics, signature inference,
+Named arguments, read-only references, reference returns/defaults, overloads, variadics, signature inference,
 first-class callables, methods and trailing commas remain deferred. Recursive
 signatures can resolve, but terminating recursive execution is not claimed without
 control-flow support. No arithmetic or branch syntax was added.
@@ -158,3 +158,58 @@ correctness builds, not performance averages; trace stages are nested/cumulative
 | php | 151.005 | 17.716 | 27.379 | 13.013 | 12.780 | 62 |
 | js | 153.423 | 18.446 | 27.938 | 12.313 | 14.220 | 59 |
 | multifile | 134.232 | 21.901 | 25.562 | 8.190 | 10.112 | 68 |
+
+## Mutable reference parameters
+
+`passing_mode` is an int-backed enum with native uint8 intent: value/reference.
+`ast_parameter_declaration.mode` owns source intent. The same mode participates in
+publication's signature contract and syntax/preparation inspection; no separate
+prepared parameter or reference-call object is introduced.
+
+Call preparation resolves arguments once, checks stable variable syntax and canonical
+type identity for references, and records identity in the existing positional boundary
+array. Generated conversions remain for value arguments and assignments. Only calls
+with references perform a second linear argument pass, after argument preparation,
+to mark borrowed locals unknown in the existing `latest_writes` index. No per-call
+alias collection, global local scan, callee-body walk or dependency graph is built.
+Null in that transient index means unknown; absence still selects the initializer.
+A subsequent ordinary-local assignment restores its facts. Reference parameter reads
+always suppress constants to cover aliasing with other parameters and globals.
+Earlier occurrence snapshots are immutable. Both paths remain linear in arguments,
+with constant-time lookup/invalidation per local.
+
+Lowering binds typed `T&` argument temporaries in source order and passes those as
+lvalues. Value arguments retain owning temporaries and moves. Signatures emit `T&`
+for references; ordinary returns remain values. No runtime wrappers or metadata
+conversion changes are needed. The JS spelling `&name: T` is an explicit Simple C++
+flavor extension. Reference defaults and const references diagnose as unsupported.
+
+`tests/reference_parameters.php` covers all current types/flavors, exact bindings,
+forwarding, value parameter isolation, globals, duplicate aliases, live reference vs
+value-snapshot argument order, owning string returns, invalid temporaries/types,
+deferred reference defaults/const, preparation reset, lowering purity, and incremental
+mode changes/body-only/no-op reuse. Native fixtures execute these paths, including
+range-check failures after reference writes and aliased-parameter writes. Test-only
+C++ exception observation does not enable source exception handling.
+
+Native reference proof (2026-11-04): all 13 executables passed. `-O2 -g0`, libc++,
+mold, Ninja `-j8`, no PCH/LTO, prebuilt runtime archive, fresh instrumented app objects.
+PHP fixture generation (including incremental checks) took 90.189 ms. These are
+single correctness builds, not repeated-run benchmarks. Frontend/backend totals
+are nested/cumulative and do not add to parallel build wall time.
+
+| Program | Native wall ms | Frontend ms | LLVM backend ms | Optimizer ms | Codegen ms | Link ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| cpp | 143.158 | 15.454 | 18.690 | 8.115 | 8.981 | 64.000 |
+| cpp_types | 132.834 | 12.302 | 11.580 | 5.471 | 4.816 | 65.000 |
+| cpp_stale_local | 158.463 | 18.463 | 9.723 | 3.275 | 4.931 | 81.000 |
+| cpp_aliased_parameters | 173.376 | 26.769 | 12.849 | 4.596 | 5.539 | 68.000 |
+| php | 144.669 | 19.546 | 18.901 | 8.511 | 8.856 | 61.000 |
+| php_types | 148.107 | 15.558 | 16.108 | 6.147 | 8.072 | 71.000 |
+| php_stale_local | 124.289 | 13.124 | 8.730 | 3.564 | 3.815 | 60.000 |
+| php_aliased_parameters | 138.588 | 15.803 | 10.165 | 3.890 | 4.648 | 69.000 |
+| js | 145.280 | 16.903 | 20.389 | 8.730 | 9.816 | 62.000 |
+| js_types | 125.319 | 11.643 | 10.680 | 4.925 | 4.237 | 59.000 |
+| js_stale_local | 136.783 | 14.073 | 9.408 | 3.651 | 4.240 | 65.000 |
+| js_aliased_parameters | 130.783 | 16.253 | 8.274 | 3.274 | 3.522 | 60.000 |
+| multifile | 130.002 | 26.602 | 25.914 | 9.246 | 8.991 | 63.000 |

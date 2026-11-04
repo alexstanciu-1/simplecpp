@@ -31,8 +31,12 @@ final class Preparation
 	 * @var ast_local_binding[]
 	 */
 	private array $visible_locals /** array<string,ast_local_binding> */ = [];
-	/** @var ast_assignment_statement[] Latest completed writes; transient non-owning body-local index. */
-	private array $latest_writes /** array<uint32,ast_assignment_statement> */ = [];
+	/**
+	 * Latest completed writes; null means unknown after a mutable borrow, absent means original initializer.
+	 * Transient non-owning body-local index; no alias graph or callee effects are retained.
+	 * @var (ast_assignment_statement|null)[]
+	 */
+	private array $latest_writes /** array<uint32,?ast_assignment_statement> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -238,7 +242,11 @@ final class Preparation
 			}
 			$binding = $this->visible_locals[$name] ?? null;
 			if ($binding !== null) {
-				$syntax->settle_local($binding, $this->latest_writes[$binding->storage_id()] ?? null);
+				$id = $binding->storage_id();
+				// Reference parameters can alias each other or globals; never propagate their write constants.
+				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
+					|| (array_key_exists($id, $this->latest_writes) && ($this->latest_writes[$id] === null));
+				$syntax->settle_local($binding, $this->latest_writes[$id] ?? null, $unknown);
 				return;
 			}
 			$separator = strpos($name, '\\');
@@ -280,9 +288,35 @@ final class Preparation
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		$conversions = [];
+		$references = false;
 		foreach ($call->arguments as $index => $argument) {
 			$this->value($argument);
-			$conversions[] = $function->parameters[$index]->type_def()->prepare_conversion($argument, true);
+			$parameter = $function->parameters[$index];
+			if ($parameter->mode === passing_mode::reference) {
+				if (!($argument instanceof ast_name_expression)) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
+				}
+				if ($argument->type_def() !== $parameter->type_def()) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
+				}
+				$conversions[] = value_conversion::identity;
+				$references = true;
+			}
+			else {
+				$conversions[] = $parameter->type_def()->prepare_conversion($argument, true);
+			}
+		}
+		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.
+		if ($references) {
+			foreach ($call->arguments as $index => $argument) {
+				if ($function->parameters[$index]->mode === passing_mode::reference) {
+					/** @var ast_name_expression $argument */
+					$binding = $argument->declaration();
+					if ($binding instanceof ast_local_binding) {
+						$this->latest_writes[$binding->storage_id()] = null;
+					}
+				}
+			}
 		}
 		$call->settle_function($symbol, $conversions);
 	}

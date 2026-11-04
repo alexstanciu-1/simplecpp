@@ -8,7 +8,7 @@ PHP `global $value = 10;`, C++ `global auto value = 10;` and JS
 Explicit `int`/`int64`, `bool`, `null`, `byte` and `float`/`float64` destinations are supported.
 Initializers admit signed decimal integer/floating, boolean and null literals; omitted types infer
 the literal type. Written types authorize metadata-driven checked conversion.
-See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Writes remain deferred.
+See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Direct writes remain deferred; exact-type reference parameters may mutate global storage.
 
 ## Ownership and preparation
 

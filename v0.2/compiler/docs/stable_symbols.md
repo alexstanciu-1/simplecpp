@@ -192,3 +192,8 @@ beside each ordered parameter type. Adding, editing or removing a default invali
 observing bodies, including callers supplying every argument. Default expressions
 and prepared conversions stay on parameter AST nodes; stable entries retain no copy.
 Spelling-only differences may conservatively invalidate callers in this first slice.
+
+Parameter passing mode (value/reference) is also part of the ordered callable
+contract. Mode edits invalidate callers even when the canonical types are unchanged;
+reference-body-only edits do not, since callers already discard borrowed local value
+facts conservatively. Failed bindings recover through the existing watcher/reset path.

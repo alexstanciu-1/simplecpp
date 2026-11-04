@@ -78,6 +78,9 @@ final class Function_Preparation
 				$parameter->settle_type($parameter_type);
 				$default = $parameter->default_value;
 				if ($default !== null) {
+					if ($parameter->mode === passing_mode::reference) {
+						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
+					}
 					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
 						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
 						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
