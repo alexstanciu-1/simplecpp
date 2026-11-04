@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Reads native layout facts and supplies the target integer range used to validate executable exit values.
- */
+/** Reads native layout facts and supplies the target integer range used to validate executable exit values. */
 final class Native_Target
 {
 	/** Adapt the existing C++ layout probe's facts to the semantic entry-exit boundary. */

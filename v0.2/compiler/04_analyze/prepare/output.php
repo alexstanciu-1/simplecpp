@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Decodes the supported quoted-literal subset into exact bytes during preparation and diagnoses unsupported forms.
- */
+/** Decodes the supported quoted-literal subset into exact bytes during preparation and diagnoses unsupported forms. */
 final class Output_Literals
 {
 	/** Decode a bounded literal subset; never use host interpolation or permissive C/PHP unescaping. */

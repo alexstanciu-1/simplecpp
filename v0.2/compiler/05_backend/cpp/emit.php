@@ -5,9 +5,7 @@ namespace scpp\compiler;
 
 require_once __DIR__ . '/../../generated/cpp/native_values.php';
 
-/**
- * Spells the already-selected entry exit conversion through the public runtime boundary.
- */
+/** Spells the already-selected entry exit conversion through the public runtime boundary. */
 final class Cpp_Exit
 {
 	/** Rendering follows the settled conversion; it never infers or validates source semantics. */
@@ -27,9 +25,7 @@ final class Cpp_Emitter
 {
 	use cpp_native_values;
 
-	/**
-	 * Only a completed semantic program is accepted; output is assembled privately before publication.
-	 */
+	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
 	public function emit(prepared_entry $program): string
 	{
 		return $this->render($program, 'main');
@@ -42,6 +38,8 @@ final class Cpp_Emitter
 
 	/**
 	 * Each source emits its own definitions; foreign information is limited to settled call contracts.
+	 *
+	 * @param ast_function_declaration[] $functions
 	 */
 	public function functions(array $functions /** list<ast_function_declaration> */): string
 	{
@@ -58,8 +56,9 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Assemble local definitions and deterministic forward declarations without a shared naming
-	 * registry.
+	 * Assemble local definitions and deterministic forward declarations without a shared naming registry.
+	 *
+	 * @param ast_function_declaration[] $functions
 	 */
 	private function unit(?prepared_entry $entry, array $functions /** list<ast_function_declaration> */, string $entry_name): string
 	{
@@ -91,7 +90,12 @@ final class Cpp_Emitter
 		return $header . implode("\n", $definitions);
 	}
 
-	/** Lower already resolved statements and retain only contract-derived external declarations. */
+	/**
+	 * Lower already resolved statements and retain only contract-derived external declarations.
+	 *
+	 * @param bool[] $declarations
+	 * @return string[]
+	 */
 	private function statements(ast_function_body $body, array &$declarations /** array<string,bool> */,
 		bool &$uses_output): array /** list<string> */
 	{
@@ -139,9 +143,7 @@ final class Cpp_Emitter
 		return 'local_' . $binding->id;
 	}
 
-	/**
-	 * Typed values carry normalized constants or direct bindings; no source-name lookup occurs here.
-	 */
+	/** Typed values carry normalized constants or direct bindings; no source-name lookup occurs here. */
 	private function value(ast_expression $value): string
 	{
 		if ($value instanceof ast_integer_expression) {

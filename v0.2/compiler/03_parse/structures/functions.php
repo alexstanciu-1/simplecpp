@@ -16,6 +16,8 @@ final class ast_call_statement extends ast_statement
 {
 	/** PROPERTIES */
 	public readonly string $name;
+
+	/** PREP FACTS */
 	/**
 	 * Prepared cache: stable symbol identity, resolved through its current declaration; null before
 	 * body preparation or after reset.
@@ -48,6 +50,7 @@ final class ast_call_statement extends ast_statement
 		if ($this->function_symbol !== null) {
 			throw new \LogicException('Call target is already settled');
 		}
+		/** @var ast_function_declaration $function */
 		$function = $symbol->declaration() ?? throw new \LogicException('Cannot settle a removed function');
 		$function->return_type_def();
 		$this->function_symbol = $symbol;
@@ -77,26 +80,28 @@ final class ast_call_statement extends ast_statement
  * ```
  * The body owns the echo and return statements, local collection and completed body facts.
  */
-final class ast_function_body extends ast_node
+final class ast_function_body extends ast_node implements dependency_watcher
 {
 	/** PROPERTIES */
 	/** Native owning; body declaration scope. */
 	public readonly scope $scope;
-	/** Native owning syntax children. */
+	/** @var ast_statement[] Native owning syntax children. */
 	public readonly array $statements /** list<ast_statement> */;
-	/** Keyed by body statement position; native non-owning statement index. */
+	/** @var ast_local_declaration[] Keyed by body statement position; native non-owning statement index. */
 	public readonly array $locals /** array<uint32,ast_local_declaration> */;
-	/** Native non-owning occurrence index. */
+	/** @var ast_name_expression[] Native non-owning occurrence index. */
 	public readonly array $references /** list<ast_name_expression> */;
-	/**
-	 * Preparation statistics: zero until successful whole-body preparation; completion is checked
-	 * separately.
-	 */
+
+	/** PREP FACTS */
+	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
-	/** Cached entry-target context, null for ordinary void bodies. */
+	/** Prepared cache: entry-target context; null for ordinary void bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
+	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
 	public int $statement_visits /** uint32 */ = 0;
+	/** Preparation statistics: expressions visited by the last successful body preparation; zero before completion. */
 	public int $expression_visits /** uint32 */ = 0;
+	/** Preparation statistics: name lookups performed by the last successful body preparation; zero before completion. */
 	public int $name_lookups /** uint32 */ = 0;
 
 	/** CONSTRUCTOR */
@@ -105,6 +110,10 @@ final class ast_function_body extends ast_node
 	 *
 	 * $start: token position.
 	 * $end: exclusive token position.
+	 *
+	 * @param ast_statement[] $statements
+	 * @param ast_local_declaration[] $locals
+	 * @param ast_name_expression[] $references
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		array $statements /** list<ast_statement> */,
@@ -123,7 +132,7 @@ final class ast_function_body extends ast_node
 
 	/** METHODS */
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
-	public function invalidate_preparation(): void
+	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
 		$this->root()->begin_preparation();
@@ -185,6 +194,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public readonly int $header_end /** uint32 */;
 	/** Native owning; function syntax child. */
 	private ?ast_function_body $body = null;
+
+	/** PREP FACTS */
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
 
@@ -282,10 +293,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 final class ast_return_statement extends ast_statement
 {
 	/** PROPERTIES */
-	/** Prepared fact: entry conversion; null before preparation or for a void return. */
-	protected ?exit_conversion $conversion = null;
 	/** Native owning; optional return expression child. */
 	public readonly ?ast_expression $value;
+
+	/** PREP FACTS */
+	/** Prepared fact: entry conversion; null before preparation or for a void return. */
+	protected ?exit_conversion $conversion = null;
 
 	/** CONSTRUCTOR */
 	/**

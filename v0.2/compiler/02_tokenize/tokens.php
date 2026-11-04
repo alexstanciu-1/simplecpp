@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * UTF-8 bulk lexer for the PHP bootstrap; preserves byte spans and flavor-specific lexical rules.
- */
+/** UTF-8 bulk lexer for the PHP bootstrap; preserves byte spans and flavor-specific lexical rules. */
 final class Tokenizer
 {
 	/** CONSTANTS */
@@ -71,8 +69,11 @@ final class Tokenizer
 	/**
 	 * Built once per process; no source state is retained in these lookup tables.
 	 * Maps each flavor to its PCRE pattern.
+	 *
+	 * @var string[]
 	 */
 	private static array $patterns /** array<string,string> */ = [];
+	/** @var token_kind[] */
 	private static array $punctuation /** array<string,token_kind> */ = [];
 
 	/** PROPERTIES */
@@ -186,10 +187,7 @@ final class Tokenizer
 		return ($byte === '_') || (($byte >= 'a') && ($byte <= 'z')) || (($byte >= 'A') && ($byte <= 'Z'));
 	}
 
-	/**
-	 * Match complete lexemes, trivia and error openers; the final alternative consumes unsupported
-	 * code points.
-	 */
+	/** Match complete lexemes, trivia and error openers; the final alternative consumes unsupported code points. */
 	private static function pattern(flavor $flavor): string
 	{
 		if (isset(self::$patterns[$flavor->value])) {

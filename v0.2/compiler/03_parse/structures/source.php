@@ -20,18 +20,27 @@ final class ast_file_node extends ast_node
 	public readonly token_list $tokens;
 	/** Native owning; file reference scope. */
 	public readonly scope $scope;
-	/** Preparation run identity; invalidates old emission handles even if reanalysis later succeeds. */
-	private int $preparation_revision /** uint32 */ = 0;
-	private bool $prepared = false;
 	/**
 	 * All duplicate declarations found in this completed source; syntax failures still throw.
 	 * Native owning diagnostics.
+	 *
+	 * @var diagnostic[]
 	 */
 	public readonly array $diagnostics /** list<diagnostic> */;
-	/** Syntax inventory independent of live duplicate chains; native owning syntax inventory. */
+	/**
+	 * Syntax inventory independent of live duplicate chains; native owning syntax inventory.
+	 *
+	 * @var ast_function_declaration[]
+	 */
 	public readonly array $declaration_nodes /** list<ast_function_declaration> */;
-	/** Func:name -> node; native non-owning first-reference index. */
+	/** @var ast_function_declaration[] Func:name -> node; native non-owning first-reference index. */
 	public readonly array $declarations /** array<string,ast_function_declaration> */;
+
+	/** PREP FACTS */
+	/** Preparation state: run identity invalidates old emission handles even if reanalysis later succeeds. */
+	private int $preparation_revision /** uint32 */ = 0;
+	/** Preparation state: whole-file facts are ready only after successful settlement. */
+	private bool $prepared = false;
 
 	/** CONSTRUCTOR */
 	public function __construct(token_list $tokens)
@@ -70,6 +79,10 @@ final class ast_file_node extends ast_node
 	 * Retain complete syntax once; file indexes never walk compilation-owned duplicate chains.
 	 *
 	 * $declarations: first references.
+	 *
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_function_declaration[] $nodes
+	 * @param diagnostic[] $diagnostics
 	 */
 	public function complete(array $declarations /** array<string,ast_function_declaration> */,
 		array $nodes /** list<ast_function_declaration> */, array $diagnostics /** list<diagnostic> */ = []): void
@@ -86,8 +99,9 @@ final class ast_file_node extends ast_node
 	}
 
 	/**
-	 * Source-local public functions in syntax order, including invalid duplicates; never follows
-	 * foreign chains.
+	 * Source-local public functions in syntax order, including invalid duplicates; never follows foreign chains.
+	 *
+	 * @return ast_function_declaration[]
 	 */
 	public function functions(): array /** list<ast_function_declaration> */
 	{

@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * A source-language failure carrying the original source snapshot and byte offset, formatted as path:line:column.
- */
+/** A source-language failure carrying the original source snapshot and byte offset, formatted as path:line:column. */
 final class diagnostic extends \RuntimeException
 {
 	/** Native shared-owning; diagnostic retains source bytes. */
@@ -31,10 +29,14 @@ final class diagnostic extends \RuntimeException
  */
 final class diagnostic_group extends \RuntimeException
 {
-	/** Native owning diagnostic values. */
+	/** @var diagnostic[] Native owning diagnostic values. */
 	public readonly array $diagnostics /** non-empty-list<diagnostic> */;
 
-	/** Retain all diagnostics and expose their messages through one exception boundary. */
+	/**
+	 * Retain all diagnostics and expose their messages through one exception boundary.
+	 *
+	 * @param diagnostic[] $diagnostics
+	 */
 	public function __construct(array $diagnostics /** non-empty-list<diagnostic> */)
 	{
 		if ($diagnostics === []) {

@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Validates root-relative project inventory and entry selection before individual source files are read.
- */
+/** Validates root-relative project inventory and entry selection before individual source files are read. */
 final class Program_Loader
 {
 	/** Reject ambiguous logical spellings rather than guessing identity through path normalization. */
@@ -22,7 +20,11 @@ final class Program_Loader
 		}
 	}
 
-	/** Existing CLI inventory is a single application module. */
+	/**
+	 * Existing CLI inventory is a single application module.
+	 *
+	 * @param flavor[] $requests
+	 */
 	public static function inventory(string $root, string $entry,
 		array $requests /** array<string,flavor> */): compilation_session
 	{
@@ -31,8 +33,9 @@ final class Program_Loader
 	}
 
 	/**
-	 * Same membership/graph path for caller-supplied snapshots; no disk reads or retained duplicate
-	 * snapshots.
+	 * Same membership/graph path for caller-supplied snapshots; no disk reads or retained duplicate snapshots.
+	 *
+	 * @param source_file[] $sources
 	 */
 	public static function memory(string $entry, array $sources /** array<string,source_file> */): compilation_session
 	{
@@ -50,11 +53,14 @@ final class Program_Loader
 	 * The caller selects disk validation; both paths create identical ownership records.
 	 *
 	 * $selected: additional activation roots.
+	 *
+	 * @param string[] $selected
 	 */
 	public static function modules(array $definitions /** array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> */,
 		string $entry, bool $disk = true,
 		array $selected /** list<string> */ = []): compilation_session
 	{
+		/** @var module[] $modules */
 		$modules = [];
 		$active = [];
 		$physical = [];

@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Settles function return types before body analysis and resets source-owned facts for sequential reanalysis.
- */
+/** Settles function return types before body analysis and resets source-owned facts for sequential reanalysis. */
 final class Function_Preparation
 {
 	/** Reset source-owned facts before a new sequential run; no foreign bodies are traversed. */
@@ -36,10 +34,7 @@ final class Function_Preparation
 		}
 	}
 
-	/**
-	 * Settle reset declarations before body work; callable recursion has no signature dependency
-	 * cycle.
-	 */
+	/** Settle reset declarations before body work; callable recursion has no signature dependency cycle. */
 	public static function declarations(scope $symbols): scope
 	{
 		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::functions($symbols));
@@ -48,6 +43,7 @@ final class Function_Preparation
 		}
 		foreach ($symbols->declarations as $declaration)
 		{
+			/** @var ast_function_declaration $declaration */
 			$type = $declaration->return_type_name;
 			if ($type !== 'void') {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
@@ -60,10 +56,7 @@ final class Function_Preparation
 		return $symbols;
 	}
 
-	/**
-	 * Prepare only this source's bodies, reading foreign signatures but never foreign executable
-	 * syntax.
-	 */
+	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */
 	public static function bodies(ast_file_node $file, scope $symbols): void
 	{
 		foreach ($file->functions() as $declaration) {

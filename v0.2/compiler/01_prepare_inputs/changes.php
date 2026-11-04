@@ -3,15 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Filesystem metadata of a complete project invocation; no per-file reuse or dependency watches.
- */
+/** Filesystem metadata of a complete project invocation; no per-file reuse or dependency watches. */
 final class Project_Changes
 {
 	/**
 	 * Capture one module/source representation and a separate map for remaining inputs.
 	 *
 	 * Return: versioned saved input state.
+	 *
+	 * @return mixed[]
 	 */
 	public static function capture(compilation_session $session, string $facts, string $output): array /** array<string,mixed> */
 	{
@@ -67,6 +67,9 @@ final class Project_Changes
 	 *
 	 * $state: saved input state.
 	 * Return: absolute path -> source identity and stat.
+	 *
+	 * @param mixed[]|null $state
+	 * @return mixed[]
 	 */
 	private static function sources(?array $state /** array<string,mixed> */): array /** array<string,mixed> */
 	{
@@ -86,6 +89,10 @@ final class Project_Changes
 	 * $current: captured state.
 	 * $previous: previous successful state.
 	 * Return: removed units.
+	 *
+	 * @param mixed[] $current
+	 * @param mixed[]|null $previous
+	 * @return source_unit[]
 	 */
 	public static function mark(compilation_session $session, array $current /** array<string,mixed> */,
 		?array $previous /** array<string,mixed> */): array /** list<source_unit> */
@@ -160,6 +167,10 @@ final class Project_Changes
 	 * Scan application/compiler inputs only; declared dependency trees are excluded.
 	 *
 	 * $visited: scan policy + canonical directory.
+	 *
+	 * @param mixed[][] $files
+	 * @param bool[] $visited
+	 * @param bool[] $dependency_roots
 	 */
 	private static function scan(string $directory, array &$files /** array<string,array{mtime:int64,size:uint64}> */,
 		string|false $excluded, array &$visited /** array<string,bool> */,
@@ -198,7 +209,11 @@ final class Project_Changes
 		}
 	}
 
-	/** Capture one required input stamp, rejecting missing or unreadable files. */
+	/**
+	 * Capture one required input stamp, rejecting missing or unreadable files.
+	 *
+	 * @param mixed[][] $files
+	 */
 	private static function file(string $path, array &$files /** array<string,array{mtime:int64,size:uint64}> */): void
 	{
 		if (isset($files[$path])) {

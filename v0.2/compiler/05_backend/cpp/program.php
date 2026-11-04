@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Renders source-owned units and assembles their deterministic paths plus the native entry adapter.
- */
+/** Renders source-owned units and assembles their deterministic paths plus the native entry adapter. */
 final class Cpp_Program
 {
 	/** Canonical output ordering never changes the retained source or syntax order. */
@@ -41,7 +39,11 @@ final class Cpp_Program
 		return "// Generated empty secondary source unit; no executable statements.\n";
 	}
 
-	/** Assemble source-unit text into a deterministically ordered program bundle. */
+	/**
+	 * Assemble source-unit text into a deterministically ordered program bundle.
+	 *
+	 * @param string[] $bodies
+	 */
 	public static function assemble(string $entry_path, array $bodies /** array<string,string> */): cpp_program_output
 	{
 		$units = [];

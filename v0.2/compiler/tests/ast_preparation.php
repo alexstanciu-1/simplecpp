@@ -28,6 +28,11 @@ $file = $frontend->parse(new source_file('entry',
 		'void ping() { echo ""; return; } int value=8; echo value; ping(); return value;', flavor::cpp));
 $body = $file->main()->body();
 [$local, $echo, $call, $return] = $body->statements;
+/** @var \scpp\compiler\ast_local_declaration $local */
+/** @var \scpp\compiler\ast_echo_statement $echo */
+/** @var \scpp\compiler\ast_call_statement $call */
+/** @var \scpp\compiler\ast_return_statement $return */
+/** @var \scpp\compiler\ast_string_expression $string */
 $string = $file->functions()[0]->body()->statements[0]->value;
 unavailable(fn() => $local->initializer->integer());
 unavailable(fn() => $echo->value->local_def());

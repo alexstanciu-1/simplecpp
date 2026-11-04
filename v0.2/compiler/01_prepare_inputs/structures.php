@@ -8,7 +8,7 @@ final readonly class source_file
 {
 	/** PROPERTIES */
 	/**
-	 * @var list<int>
+	 * @var int[]
 	 * Element offsets, count can reach 0x100000000.
 	 */
 	private array $line_starts /** list<uint32> */;
@@ -42,6 +42,8 @@ final readonly class source_file
 	 *
 	 * $offset: byte position including EOF.
 	 * Return: each in 1..0x100000000.
+	 *
+	 * @return mixed[]
 	 */
 	public function location(int $offset /** uint32 */): array /** array{line:uint64,column:uint64} */
 	{

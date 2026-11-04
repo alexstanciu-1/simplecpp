@@ -187,6 +187,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_project COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/project_compiler.php)
   add_test(NAME compiler_incremental_frontend COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental_frontend.php)
   add_test(NAME compiler_incremental_preparation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental_preparation.php)
+  add_test(NAME compiler_dependency_watches COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dependency_watches.php)
   add_test(NAME compiler_frontend_service COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend_service.py)
   set_tests_properties(compiler_frontend_service PROPERTIES TIMEOUT 60)

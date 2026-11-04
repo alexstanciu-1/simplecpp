@@ -9,8 +9,9 @@ namespace scpp\compiler;
 final class Program_Preparation
 {
 	/**
-	 * Settle every signature before preparing any body; publish the program only after all bodies
-	 * succeed.
+	 * Settle every signature before preparing any body; publish the program only after all bodies succeed.
+	 *
+	 * @param ast_file_node[] $files
 	 */
 	public static function prepare(string $entry_path, array $files /** array<string,ast_file_node> */,
 		entry_target $target, ?scope $symbols = null, ?compilation_session $session = null): prepared_program

@@ -15,6 +15,8 @@ final class Scope_Collection
 	/**
 	 * Object-ID inventory, many distinct declarations are valid; native non-owning references; source
 	 * inventory retains nodes.
+	 *
+	 * @var ast_declaration_interface[]
 	 */
 	private array $pending /** array<uint64,ast_declaration_interface> */ = [];
 	private bool $published = false;
@@ -37,24 +39,19 @@ final class Scope_Collection
 		$this->pending[$id] = $declaration;
 	}
 
-	/**
-	 * Non-owning indexes collect the same references; publish_references() never rewrites duplicate
-	 * links.
-	 */
+	/** Non-owning indexes collect the same references; publish_references() never rewrites duplicate links. */
 	public function import(ast_declaration_interface $declaration): void
 	{
 		$this->declare($declaration);
 	}
 
+	/** @return ast_declaration_interface[] */
 	public function inventory(): array /** array<uint64,ast_declaration_interface> */
 	{
 		return $this->pending;
 	}
 
-	/**
-	 * Coordinator selects deterministic publication order without grouping declarations into per-key
-	 * lists.
-	 */
+	/** Coordinator selects deterministic publication order without grouping declarations into per-key lists. */
 	public function order(callable $compare): void
 	{
 		$this->require_open();
@@ -67,23 +64,18 @@ final class Scope_Collection
 		return $this->publish_index(null, false);
 	}
 
-	/**
-	 * After successful collection and the reader barrier, rebuild the declaring scope's chains in
-	 * place.
-	 */
+	/** After successful collection and the reader barrier, rebuild the declaring scope's chains in place. */
 	public function publish(?scope $previous = null): scope
 	{
 		return $this->publish_index($previous, true);
 	}
 
-	/**
-	 * Compare prior identities, rebuild owned duplicate links, and publish the completed reference
-	 * index.
-	 */
+	/** Compare prior identities, rebuild owned duplicate links, and publish the completed reference index. */
 	private function publish_index(?scope $previous, bool $owns_duplicates): scope
 	{
 		$this->require_open();
 		$target = $previous ?? $this->scope;
+		/** @var ast_declaration_interface[] $heads */
 		$heads = [];
 		$expected = $target->declarations;
 		$changed = [];
@@ -114,6 +106,7 @@ final class Scope_Collection
 			foreach ($this->pending as $node) {
 				$node->clear_duplicate();
 			}
+			/** @var ast_declaration_interface[] $tails */
 			$tails = [];
 			foreach ($this->pending as $node) {
 				$key = $node->symbol_key();

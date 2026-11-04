@@ -37,12 +37,14 @@ final class ast_integer_expression extends ast_expression
 final class ast_name_expression extends ast_expression
 {
 	/** PROPERTIES */
+	public readonly string $name;
+
+	/** PREP FACTS */
 	/**
 	 * Prepared fact: exact local identity; null before preparation or after reset.
 	 * Native non-owning; resolved declaration belongs to body syntax.
 	 */
 	protected ?ast_local_declaration $local_def = null;
-	public readonly string $name;
 
 	/** CONSTRUCTOR */
 	/**
@@ -90,21 +92,20 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	/** PROPERTIES */
 	/** Written type name; null when omitted, independently of later resolution. */
 	public readonly ?string $type_name;
-	/**
-	 * Prepared fact: canonical local type; null until successful declaration preparation or after
-	 * reset.
-	 */
-	protected ?type_definition $type_def = null;
 	/** Body-local declaration ordinal, assigned by collection. */
 	public readonly int $id /** uint32 */;
+	/** Native owning; initializer syntax child. */
+	public readonly ast_expression $initializer;
+
+	/** PREP FACTS */
+	/** Prepared fact: canonical local type; null until successful declaration preparation or after reset. */
+	protected ?type_definition $type_def = null;
 	/**
 	 * Prepared fact: initializer constant; null means unknown after type settlement, or unprepared
 	 * before it.
 	 * When known.
 	 */
 	protected ?int $constant /** int64 */ = null;
-	/** Native owning; initializer syntax child. */
-	public readonly ast_expression $initializer;
 
 	/** CONSTRUCTOR */
 	/**

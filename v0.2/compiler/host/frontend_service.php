@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * App-local, sequential host service; owns one frontend publication, never prepares or emits code.
- */
+/** App-local, sequential host service; owns one frontend publication, never prepares or emits code. */
 final class Frontend_Service
 {
 	private const SOCKET = '.scpp/compiler.sock';
@@ -17,6 +15,8 @@ final class Frontend_Service
 	 * CLI client; only a frontend request starts a missing service.
 	 *
 	 * Return: JSON response.
+	 *
+	 * @return mixed[]
 	 */
 	public static function request(string $application, string $command = 'frontend'): array /** array<string,mixed> */
 	{
@@ -231,7 +231,11 @@ final class Frontend_Service
 		}
 	}
 
-	/** Return: Unix client stream. */
+	/**
+	 * Return: Unix client stream.
+	 *
+	 * @return resource|false
+	 */
 	private static function connect(): mixed /** resource|false */
 	{
 		return @stream_socket_client('unix://' . self::SOCKET, $errno, $error, 0.2);
@@ -242,6 +246,9 @@ final class Frontend_Service
 	 *
 	 * $stream: stream resource.
 	 * $message: JSON object.
+	 *
+	 * @param resource $stream
+	 * @param mixed[] $message
 	 */
 	private static function write(mixed $stream /** resource */, array $message /** array<string,mixed> */): void
 	{

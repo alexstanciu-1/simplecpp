@@ -44,9 +44,11 @@ namespace
 			verify(($first->previous === null) && ($first->entry->sources[$main_name]->status === change_status::added),
 				'Cold path');
 			$main = $first->entry->sources[$main_name]->ast;
+			/** @var \scpp\compiler\ast_call_statement $call */
 			$call = $main->main()->body()->statements[0];
 			$key = $call->symbol_key();
 			verify($key === 'func:helper', 'Call handle is not canonical');
+			/** @var \scpp\compiler\ast_function_declaration $initial_helper */
 			$initial_helper = $first->scope->resolve($key);
 			verify($initial_helper->symbol_key() === $key, 'Declaration handle mismatch');
 			verify(($first->scope->resolve('helper') === null) && ($first->scope->resolve('func:main') === null),
@@ -90,6 +92,7 @@ namespace
 				'Removed AST copied/lost');
 			verify($moved->scope->resolve($key)->root() === $moved->entry->sources[basename($moved_path)]->ast,
 				'Move did not redirect key');
+			/** @var \scpp\compiler\ast_function_declaration $moved_declaration */
 			$moved_declaration = $moved->scope->resolve($key);
 			$duplicate_path = $app . '/duplicate.' . $flavor;
 			file_put_contents($duplicate_path, $declaration . ' ' . $declaration);

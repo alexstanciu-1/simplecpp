@@ -149,10 +149,7 @@ trait ast_declaration
 		return $this->duplicate_element;
 	}
 
-	/**
-	 * The declaring scope links unchained declarations after successful collection, with no active
-	 * readers.
-	 */
+	/** The declaring scope links unchained declarations after successful collection, with no active readers. */
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)

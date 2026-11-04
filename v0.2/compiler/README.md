@@ -254,3 +254,8 @@ guide for the application-only incremental boundary and manually built dependenc
 and symbol indexing only, reusing unchanged AST/token objects in memory. See
 [incremental frontend generations](docs/incremental_frontend.md). Executable
 compilation still runs full preparation/emission; incremental facts are deferred.
+
+Dependency registration/dispatch uses the session-owned `Dependency_Watches` and
+`dependency_watcher` interface. See [stable symbols and watches](docs/stable_symbols.md).
+Run `php -n v0.2/compiler/tests/dependency_watches.php` from the repository root
+for the generic batch/retirement contract.

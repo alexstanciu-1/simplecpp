@@ -70,6 +70,7 @@ final class Parser
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
+		/** @var ast_function_declaration[] $functions */
 		$functions = $declarations->publish_references()->heads();
 		if (isset($functions['func:main'])) {
 			$functions = ['func:main' => $functions['func:main']] + $functions;
@@ -78,9 +79,7 @@ final class Parser
 		return $this->root;
 	}
 
-	/**
-	 * Share body grammar while keeping function definitions out of executable statement inventories.
-	 */
+	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar): ast_statement
 	{
 		if ($this->cursor->keyword('echo')) {
@@ -105,10 +104,7 @@ final class Parser
 		return $grammar->statement($this);
 	}
 
-	/**
-	 * Discover the stable header before parsing its body; local collection never enters the global
-	 * index.
-	 */
+	/** Discover the stable header before parsing its body; local collection never enters the global index. */
 	private function function_declaration(statement_grammar $grammar): ast_function_declaration
 	{
 		$function = $grammar->function_header($this);

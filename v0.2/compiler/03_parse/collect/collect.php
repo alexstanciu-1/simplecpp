@@ -3,17 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Collects source-order body indexes; declaration registration/publication is delegated to Scope_Collection.
- */
+/** Collects source-order body indexes; declaration registration/publication is delegated to Scope_Collection. */
 final class Body_Collection
 {
 	/** PROPERTIES */
-	/** Keyed by statement position; native non-owning references to body syntax. */
+	/** @var ast_local_declaration[] Keyed by statement position; native non-owning references to body syntax. */
 	private array $locals /** array<uint32,ast_local_declaration> */ = [];
 	/** Native owning; body-local collection worker. */
 	private readonly Scope_Collection $declarations;
-	/** Native non-owning expression references. */
+	/** @var ast_name_expression[] Native non-owning expression references. */
 	private array $references /** list<ast_name_expression> */ = [];
 
 	/** CONSTRUCTOR */
@@ -23,10 +21,7 @@ final class Body_Collection
 	}
 
 	/** METHODS */
-	/**
-	 * Record one completed statement during parsing, without lookup, typing or publication outside its
-	 * source.
-	 */
+	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
 		if ($statement instanceof ast_call_statement) {
@@ -53,6 +48,8 @@ final class Body_Collection
 	/**
 	 * $start: token position.
 	 * $end: exclusive token position.
+	 *
+	 * @param ast_statement[] $statements
 	 */
 	public function body(int $start /** uint32 */, int $end /** uint32 */,
 		array $statements /** list<ast_statement> */): ast_function_body

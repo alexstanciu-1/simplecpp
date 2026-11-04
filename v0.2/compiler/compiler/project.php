@@ -25,6 +25,8 @@ final class Project_Compiler
 	 * only.
 	 *
 	 * Return: compilation report.
+	 *
+	 * @return mixed[]
 	 */
 	public function run(string $path, string $facts, string $directory, bool $force = false): array /** array<string,mixed> */
 	{
@@ -54,6 +56,11 @@ final class Project_Compiler
 	 * $changes: source path -> change status.
 	 * $previous: validated previous bundle manifest.
 	 * Return: compilation report; counts and source changes.
+	 *
+	 * @param mixed[]|null $state
+	 * @param string[] $changes
+	 * @param mixed[]|null $previous
+	 * @return mixed[]
 	 */
 	public function compile(compilation_session $session, string $facts, string $directory, ?array $state /** array<string,mixed> */ = null,
 		array $changes /** array<string,string> */ = [],

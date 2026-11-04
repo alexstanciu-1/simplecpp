@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Loads one source file into an immutable snapshot with the explicitly selected syntax flavor.
- */
+/** Loads one source file into an immutable snapshot with the explicitly selected syntax flavor. */
 final class File_Loader
 {
 	/** Read a complete source snapshot and report IO failures at the compiler boundary. */

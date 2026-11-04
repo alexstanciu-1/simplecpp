@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Dispatches compiler commands and presents results or diagnostics at the host command-line boundary.
- */
+/** Dispatches compiler commands and presents results or diagnostics at the host command-line boundary. */
 final class Compiler_Cli
 {
 	/**
@@ -13,6 +11,8 @@ final class Compiler_Cli
 	 * syntax failures produce no partial stdout.
 	 *
 	 * Return: process exit status 0..2.
+	 *
+	 * @param string[] $arguments
 	 */
 	public static function run(array $arguments /** list<string> */): int /** int32 */
 	{
@@ -110,6 +110,8 @@ final class Compiler_Cli
 	 * Keep stage inspection separate from the final, complete C++ file publication.
 	 *
 	 * Return: exit status.
+	 *
+	 * @param string[] $arguments
 	 */
 	private static function compile(array $arguments /** list<string> */, flavor $flavor): int /** int32 */
 	{

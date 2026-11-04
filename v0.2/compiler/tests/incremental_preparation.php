@@ -35,9 +35,10 @@ try
 		$symbols = $session->scope;
 		$slot = $symbols->entry('func:second');
 		$first_body = $symbols->resolve('func:first')->body();
+		/** @var \scpp\compiler\ast_call_statement $call */
 		$call = $first_body->statements[0];
 		$old_second = $call->function_def();
-		verify($session->function_dependencies->observer_count($slot) === 1, 'Missing signature subscription');
+		verify($session->dependency_watches->observer_count($slot) === 1, 'Missing signature subscription');
 		$old_session = $session;
 		$session = $compiler->frontend($app, $session);
 		try {
@@ -86,7 +87,7 @@ try
 			verify(str_contains($error->getMessage(), 'Unknown function: second'),
 				'Missing callee diagnostic');
 		}
-		verify($session->function_dependencies->observer_count($slot) === 1, 'Removed symbol lost observer');
+		verify($session->dependency_watches->observer_count($slot) === 1, 'Removed symbol lost observer');
 		file_put_contents($second, $head('second') . '{ return; }');
 		$session = $compiler->frontend($app, $session);
 		verify(($symbols->entry('func:second') === $slot) && ($slot->status === change_status::added),
@@ -108,6 +109,7 @@ try
 			$session = $compiler->frontend($app, $session);
 			verify($prepare($session) === ['prepared' => 2, 'reused' => 1], 'Signature repair');
 		}
+		/** @var \scpp\compiler\ast_function_declaration $current_declaration */
 		$current_declaration = $slot->declaration();
 		file_put_contents($second, $head('second') . '{');
 		try {
@@ -125,10 +127,10 @@ try
 			'Rename is not remove/add');
 		file_put_contents($first, $head('first') . '{ other(); }');
 		$session = $compiler->frontend($app, $session);
-		verify(($session->function_dependencies->observer_count($slot) === 0) && (!$first_body->is_prepared()),
+		verify(($session->dependency_watches->observer_count($slot) === 0) && (!$first_body->is_prepared()),
 			'Replaced body retained subscription/cache readiness');
 		verify($prepare($session) === ['prepared' => 2, 'reused' => 1], 'Rename/observer replacement');
-		verify($session->function_dependencies->observer_count($other) === 1,
+		verify($session->dependency_watches->observer_count($other) === 1,
 			'Replacement body failed to subscribe');
 		$duplicate = $app . '/duplicate.' . $flavor;
 		file_put_contents($duplicate, $head('other') . '{}');
@@ -156,14 +158,14 @@ try
 		catch (diagnostic_group) {
 		}
 		$absent = $symbols->entry('func:absent');
-		verify($session->function_dependencies->observer_count($absent) === 1, 'Unresolved lookup not watched');
+		verify($session->dependency_watches->observer_count($absent) === 1, 'Unresolved lookup not watched');
 		file_put_contents($second, $head('absent') . '{}');
 		$session = $compiler->frontend($app, $session);
 		verify($symbols->entry('func:absent') === $absent, 'First declaration replaced unresolved identity');
 		verify($prepare($session) === ['prepared' => 2, 'reused' => 1], 'Unknown-name repair');
 		unlink($first);
 		$session = $compiler->frontend($app, $session);
-		verify($session->function_dependencies->observer_count($absent) === 0,
+		verify($session->dependency_watches->observer_count($absent) === 0,
 			'Removed observer retained subscription');
 	}
 }

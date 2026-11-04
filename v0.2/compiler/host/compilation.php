@@ -3,12 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Transient JSON views expose stage contracts without putting serialization on retained records.
- */
+/** Transient JSON views expose stage contracts without putting serialization on retained records. */
 final class Compilation_Inspection
 {
-	/** Collected references deliberately have no resolved binding or type. */
+	/**
+	 * Collected references deliberately have no resolved binding or type.
+	 *
+	 * @return mixed[]
+	 */
 	public static function collection(ast_file_node $file): array /** array<string,mixed> */
 	{
 		$locals = [];
@@ -33,7 +35,11 @@ final class Compilation_Inspection
 		return $result;
 	}
 
-	/** Report settled identities, value facts, explicit exit conversions and actual work counts. */
+	/**
+	 * Report settled identities, value facts, explicit exit conversions and actual work counts.
+	 *
+	 * @return mixed[]
+	 */
 	public static function program(prepared_entry $program): array /** array<string,mixed> */
 	{
 		$result = self::body($program->body());
@@ -46,7 +52,11 @@ final class Compilation_Inspection
 		return $result;
 	}
 
-	/** Body views report resolved callable contracts without traversing another function's body. */
+	/**
+	 * Body views report resolved callable contracts without traversing another function's body.
+	 *
+	 * @return mixed[]
+	 */
 	public static function body(ast_function_body $program): array /** array<string,mixed> */
 	{
 		$program->require_prepared();
@@ -79,7 +89,11 @@ final class Compilation_Inspection
 				'name_lookups' => $program->name_lookups]];
 	}
 
-	/** Constants use decimal JSON strings so inspection does not lose int64 precision in consumers. */
+	/**
+	 * Constants use decimal JSON strings so inspection does not lose int64 precision in consumers.
+	 *
+	 * @return mixed[]
+	 */
 	private static function value(ast_expression $value): array /** array<string,mixed> */
 	{
 		$row = ['type' => $value->type_def()->name,

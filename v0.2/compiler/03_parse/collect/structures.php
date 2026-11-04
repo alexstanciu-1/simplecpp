@@ -34,21 +34,15 @@ final class symbol_entry
 	}
 }
 
-/**
- * Declaration namespace shared by compilation, file and body scopes; e.g. var:x belongs to one
- * body scope.
- */
+/** Declaration namespace shared by compilation, file and body scopes; e.g. var:x belongs to one body scope. */
 final class scope
 {
 	/** PROPERTIES */
-	/**
-	 * Native non-owning lexical parent; null for a compilation or a detached file. No implicit parent
-	 * lookup yet.
-	 */
+	/** Native non-owning lexical parent; null for a compilation or a detached file. No implicit parent lookup yet. */
 	public ?scope $parent;
-	/** Published head references; native non-owning AST references. */
+	/** @var ast_declaration_interface[] Published head references; native non-owning AST references. */
 	public array $declarations /** array<string,ast_declaration_interface> */ = [];
-	/** Stable identities including tombstones; native owning stable entries. */
+	/** @var symbol_entry[] Stable identities including tombstones; native owning stable entries. */
 	private array $entries /** array<string,symbol_entry> */ = [];
 
 	/** CONSTRUCTOR */
@@ -64,6 +58,7 @@ final class scope
 		return $this->entries[$key] ??= new symbol_entry();
 	}
 
+	/** @return symbol_entry[] */
 	public function entries(): array /** array<string,symbol_entry> */
 	{
 		return $this->entries;
@@ -75,6 +70,7 @@ final class scope
 		return isset($this->entries[$key]) ? $this->entries[$key]->declaration() : null;
 	}
 
+	/** @return ast_declaration_interface[] */
 	public function heads(): array /** array<string,ast_declaration_interface> */
 	{
 		return $this->declarations;

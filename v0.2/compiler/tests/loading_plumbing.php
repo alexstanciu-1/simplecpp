@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace scpp\compiler
 {
-	/** Count directory reads at the PHP filesystem boundary, without production instrumentation. */
+	/**
+	 * Count directory reads at the PHP filesystem boundary, without production instrumentation.
+	 *
+	 * @return string[]|false
+	 */
 	function scandir(string $directory): array|false /** list<string> */
 	{
 		$GLOBALS['directory_reads'][$directory] = ($GLOBALS['directory_reads'][$directory] ?? 0) + 1;

@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Chooses the entry return conversion from known value facts and the native target range.
- */
+/** Chooses the entry return conversion from known value facts and the native target range. */
 final class Exit_Preparation
 {
 	/** Decide the native exit boundary once; unknown values retain a required runtime check. */
@@ -27,7 +25,11 @@ final class Exit_Preparation
  */
 final class Preparation
 {
-	/** Source-order visibility index, not a declaration collector; native non-owning declaration references. */
+	/**
+	 * Source-order visibility index, not a declaration collector; native non-owning declaration references.
+	 *
+	 * @var ast_local_declaration[]
+	 */
 	private array $visible_locals /** array<string,ast_local_declaration> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
@@ -52,7 +54,7 @@ final class Preparation
 	}
 
 	/** Reset one body, reject duplicate locals, and settle its facts and traversal statistics. */
-	public function function_body(ast_function_body $syntax, scope $symbols, ?entry_target $target = null, ?function_dependencies $dependencies = null): void
+	public function function_body(ast_function_body $syntax, scope $symbols, ?entry_target $target = null, ?Dependency_Watches $dependencies = null): void
 	{
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
@@ -68,12 +70,13 @@ final class Preparation
 	}
 
 	/**
-	 * One source-order body traversal; null exit target denotes a void function, never inferred return
-	 * typing.
+	 * One source-order body traversal; null exit target denotes a void function, never inferred return typing.
+	 *
+	 * @param ast_statement[] $syntax
 	 */
 	private function body(array $syntax /** list<ast_statement> */,
 		source_file $source, int $end /** uint32 */, ?entry_target $target, scope $symbols, ast_function_body $owner,
-		?function_dependencies $dependencies): void
+		?Dependency_Watches $dependencies): void
 	{
 		$this->visible_locals = [];
 		$this->statement_visits = 0;
@@ -104,7 +107,7 @@ final class Preparation
 			{
 				$this->name_lookups++;
 				$symbol = $symbols->entry($statement->symbol_key());
-				$dependencies?->observe($symbol, $owner);
+				$dependencies?->watch($symbol, $owner);
 				$function = $symbol->declaration();
 				if ($function === null) {
 					throw new diagnostic($source, $statement->byte_start(), 'Unknown function: ' . $statement->name);
@@ -141,10 +144,7 @@ final class Preparation
 		}
 	}
 
-	/**
-	 * Establish a binding only after its initializer succeeds; collection grants no forward
-	 * visibility.
-	 */
+	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
 	private function declaration(ast_local_declaration $declaration): void
 	{
 		$name = $declaration->declaration_key();

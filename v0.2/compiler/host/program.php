@@ -3,15 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Adapts the program CLI arguments into source inventory, preparation, C++ generation and bundle publication.
- */
+/** Adapts the program CLI arguments into source inventory, preparation, C++ generation and bundle publication. */
 final class Program_Command
 {
 	/**
 	 * Load an on-disk module graph and emit compiler units plus external native inputs.
 	 *
 	 * Return: process exit status.
+	 *
+	 * @param string[] $arguments
 	 */
 	public static function project(array $arguments /** list<string> */): int /** int32 */
 	{
@@ -27,6 +27,8 @@ final class Program_Command
 	 * Explicit CLI inventory is a bounded input adapter, not a project-config or discovery system.
 	 *
 	 * Return: process exit status.
+	 *
+	 * @param string[] $arguments
 	 */
 	public static function run(array $arguments /** list<string> */): int /** int32 */
 	{
@@ -59,6 +61,8 @@ final class Program_Command
 	 *
 	 * $result: compilation report.
 	 * Return: process exit status.
+	 *
+	 * @param mixed[] $result
 	 */
 	private static function report(array $result /** array<string,mixed> */): int /** int32 */
 	{

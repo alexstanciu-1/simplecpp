@@ -6,7 +6,11 @@ namespace scpp\compiler;
 /** CLI inspection owns presentation; syntax records do not depend on host serialization. */
 final class Syntax_Inspection
 {
-	/** Inspect executable statements separately from source-owned function definitions. */
+	/**
+	 * Inspect executable statements separately from source-owned function definitions.
+	 *
+	 * @return mixed[]
+	 */
 	public static function file(ast_file_node $file): array /** array<string,mixed> */
 	{
 		$rows = [];
@@ -33,12 +37,17 @@ final class Syntax_Inspection
 		return $result;
 	}
 
+	/** @return mixed[] */
 	private static function span(ast_node $span): array /** array{start:uint32,end:uint32} */
 	{
 		return ['start' => $span->byte_start(), 'end' => $span->byte_end()];
 	}
 
-	/** $position: token position. */
+	/**
+	 * $position: token position.
+	 *
+	 * @return mixed[]
+	 */
 	private static function name(ast_node $owner, string $name, int $position /** uint32 */): array /** array{text:string,span:array{start:uint32,end:uint32}} */
 	{
 		$token = $owner->root()->tokens->tokens[$position];
@@ -49,6 +58,8 @@ final class Syntax_Inspection
 	 * Serialize the supported expression shape without consuming prepared facts.
 	 *
 	 * Return: tagged expression JSON fields.
+	 *
+	 * @return mixed[]
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
@@ -69,6 +80,8 @@ final class Syntax_Inspection
 	 * Serialize each supported statement and its syntax children for inspection.
 	 *
 	 * Return: tagged statement JSON fields.
+	 *
+	 * @return mixed[]
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{

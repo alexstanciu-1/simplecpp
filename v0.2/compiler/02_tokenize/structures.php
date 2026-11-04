@@ -184,10 +184,10 @@ final readonly class token_list
 {
 	/** Native shared-owning; token generation retains its source snapshot. */
 	public source_file $source;
-	/** Native owning token values. */
+	/** @var token[] Native owning token values. */
 	public array $tokens /** list<token> */;
 
-	/** @param list<token> $tokens */
+	/** @param token[] $tokens */
 	public function __construct(source_file $source, array $tokens /** list<token> */)
 	{
 		$this->source = $source;

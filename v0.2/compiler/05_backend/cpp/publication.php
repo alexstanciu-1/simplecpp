@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Publishes one complete generated text artifact through a staged file and atomic rename.
- */
+/** Publishes one complete generated text artifact through a staged file and atomic rename. */
 final class Cpp_Publication
 {
 	/** Replace one complete artifact atomically; a failed write leaves the previous artifact intact. */

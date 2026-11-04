@@ -19,7 +19,7 @@ final class Discovery_Probe implements declaration_sink
 {
 	/** Native owning; test coordinator. */
 	public Symbol_Publication $publication;
-	/** Native non-owning discovered declarations. */
+	/** @var ast_function_declaration[] Native non-owning discovered declarations. */
 	public array $seen /** list<ast_function_declaration> */ = [];
 
 	public function __construct()

@@ -24,9 +24,7 @@ function rejects(Closure $action, string $message): void
 	throw new LogicException('Expected rejection: ' . $message);
 }
 
-/**
- * Fixture manifests remain readable on failure; all generated state lives in the temporary tree.
- */
+/** Fixture manifests remain readable on failure; all generated state lives in the temporary tree. */
 function manifest(string $root, string $path, string $json): void
 {
 	file_put_contents($root . '/' . $path . '/module.json', $json);

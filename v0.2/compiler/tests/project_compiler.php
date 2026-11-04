@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 namespace scpp\compiler {
-	/** Observe directory access to prove dependencies are never scanned. */
+	/**
+	 * Observe directory access to prove dependencies are never scanned.
+	 *
+	 * @return string[]|false
+	 */
 	function scandir(string $path): array|false /** list<string> */
 	{
 		$GLOBALS['scanned'][$path] = true;

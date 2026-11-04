@@ -72,7 +72,7 @@ project-wide rule and follow-up inventory.
 ## Compilation state stays outside scopes
 
 `compilation_session.scope` replaces `symbols`. The session also owns
-`function_dependencies` and `is_current`. Success shares the stable scope and
+`dependency_watches` and `is_current`. Success shares the stable scope and
 dependency table with the next generation and retires the previous session; failure
 leaves it current. The former scope-to-session backlink is removed.
 

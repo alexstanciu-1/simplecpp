@@ -15,7 +15,7 @@ enum change_status: int {
 final class compilation_session
 {
 	/** PROPERTIES */
-	/** Native owning index. */
+	/** @var module[] Native owning index. */
 	public readonly array $modules /** array<string,module> */;
 	/** Native non-owning reference into modules. */
 	public readonly module $entry;
@@ -32,14 +32,15 @@ final class compilation_session
 	/** Sequential lifecycle; successful replacement retires the prior session. */
 	public bool $is_current = true;
 	/** Native shared-owning; shared by current and retained sessions. */
-	public function_dependencies $function_dependencies;
-	/** Removed records reference old ASTs; native owning records with shared-owning retained ASTs. */
+	public Dependency_Watches $dependency_watches;
+	/** @var source_unit[] Removed records reference old ASTs; native owning records with shared-owning retained ASTs. */
 	public array $removed_sources /** list<source_unit> */ = [];
 
 	/** CONSTRUCTOR */
+	/** @param module[] $modules */
 	public function __construct(array $modules /** array<string,module> */, module $entry)
 	{
-		$this->function_dependencies = new function_dependencies();
+		$this->dependency_watches = new Dependency_Watches();
 		$this->modules = $modules;
 		$this->entry = $entry;
 	}
@@ -56,7 +57,11 @@ final class compilation_session
 		return $this->source_key($this->entry->entry ?? throw new \LogicException('Session requires an entry source'));
 	}
 
-	/** References only: module membership remains the source-unit owner. */
+	/**
+	 * References only: module membership remains the source-unit owner.
+	 *
+	 * @return source_unit[]
+	 */
 	public function units(): array /** array<string,source_unit> */
 	{
 		$result = [];
@@ -72,6 +77,8 @@ final class compilation_session
 	 * A complete frontend inventory is required before global publication.
 	 *
 	 * Return: non-owning references.
+	 *
+	 * @return ast_file_node[]
 	 */
 	public function files(): array /** array<string,ast_file_node> */
 	{
@@ -91,19 +98,20 @@ final class module
 {
 	public readonly string $name;
 	public readonly string $root;
-	/** Manually built link inputs, unchecked. */
+	/** @var string[] Manually built link inputs, unchecked. */
 	public readonly array $artifacts /** list<string> */;
 	/** Canonical configuration input; null for explicit in-memory inventories. */
 	public readonly ?string $manifest;
 	/** default: compiler source; c++: native translation units. */
 	public readonly string $type;
-	/** Native non-owning references. */
+	/** @var module[] Native non-owning references. */
 	public array $dependencies /** array<string,module> */ = [];
-	/** Native owning index. */
+	/** @var source_unit[] Native owning index. */
 	public array $sources /** array<string,source_unit> */ = [];
 	/** Native non-owning reference; null for library modules. */
 	public ?source_unit $entry = null;
 
+	/** @param string[] $artifacts */
 	public function __construct(string $name, string $root, string $type = 'default', ?string $manifest = null,
 		array $artifacts /** list<string> */ = [])
 	{
@@ -115,9 +123,7 @@ final class module
 	}
 }
 
-/**
- * Stable module-relative identity, e.g. app/main.cpp; the AST owns its tokens and source snapshot.
- */
+/** Stable module-relative identity, e.g. app/main.cpp; the AST owns its tokens and source snapshot. */
 final class source_unit
 {
 	/** Native non-owning owner backlink. */

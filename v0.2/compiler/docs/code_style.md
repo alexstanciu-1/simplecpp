@@ -39,6 +39,50 @@ host/test harnesses retain Python syntax and four-space indentation.
   types. Use explicit object receivers and owning-class qualification for static
   members. Do not introduce ambiguous implicit state access.
 
+## PHPDoc for IDE type identity
+
+- Support both PhpStorm and Apache NetBeans with standard PHPDoc attached before
+  the declaration: `@var Type` for properties, `@param Type $name` for parameters,
+  and `@return Type` for results. Trailing untagged comments are native-intent
+  documentation, not a replacement for IDE-facing PHPDoc.
+- Add tags where they supply information missing from the PHP signature, especially
+  collection element types and resources. Do not repeat an already explicit object
+  or scalar type unless its tag also explains the parameter/result contract.
+- Use `Type[]` as the shared collection baseline. Preserve null/false alternatives.
+  Keep key types, list/nonempty constraints, record shapes and native widths in
+  the existing inline annotations. Keep both descriptions consistent. Existing
+  advanced PHPDoc may remain; do not depend on NetBeans understanding generics or
+  array shapes without verifying the installed IDE version.
+- Keep ownership, meaning and type tags together in one attached docblock. A short
+  single-tag comment may include its description on the same line. Multiple tags,
+  examples and separate paragraphs remain structured, as in the comment rules below.
+- Prefer typing the producing property or method so all consumers benefit. Where
+  the IDE still cannot infer a local type, use `/** @var Type $variable */` before
+  its assignment/use, or inside a `foreach` body before using the iteration value.
+  Typical cases are nested generic storage and a scope's general declaration
+  interface consumed under a known function/local publication contract. Document
+  only guaranteed types; annotations do not replace validation or `instanceof`.
+  Do not mechanically annotate locals already inferred from constructors, explicit
+  signatures, typed collections or narrowing checks.
+- Keep `uint32`, `int64` and other native-width names in inline intent comments;
+  PHPDoc uses `int`. Those width names are not PHP classes or standard PHPDoc types.
+
+```php
+/** @var ast_statement[] Native owning syntax children. */
+public readonly array $statements /** list<ast_statement> */;
+
+/** @param ast_statement[] $statements Syntax children to attach. */
+public function attach_statements(array $statements /** list<ast_statement> */): void
+{
+}
+
+/** @var ast_function_declaration $function */
+$function = $symbol->declaration();
+```
+
+The local example assumes the caller's publication contract guarantees a present
+function declaration. Do not apply that assertion to an arbitrary symbol lookup.
+
 ## Native size and collection intent
 
 Keep native representation intent visible beside class properties and function/
@@ -114,7 +158,8 @@ public function offset(): int /** uint32 */
   for IDEs; keep the descriptions consistent. Do not duplicate known class types
   or guess the byte size of strings, objects, references or containers.
 - Leave ordinary locals alone unless a particular range distinction needs
-  explanation. Do not impose the donor converter's annotation grammar or tools.
+  explanation or IDE inference needs the PHPDoc clarification described above.
+  Do not impose the donor converter's annotation grammar or tools.
 
 These comments document valid-value/native-port intent, not PHP allocation sizes,
 runtime coercions or proof of native portability. Current validation remains the
@@ -186,19 +231,24 @@ references, and this convention does not introduce PHP `WeakReference` objects.
   Short methods need comments when intent is unclear.
 - Explain non-obvious purpose, contracts, invariants, ownership or control flow
   above the relevant declaration/group. Do not narrate obvious statements.
+- Keep prose comments on one line when the complete comment, including delimiters
+  and excluding indentation, is fewer than 120 characters. Do not wrap short prose
+  at a smaller width. Preserve meaningful structure in examples, parameter/tag
+  documentation, lists and separate paragraphs.
 - Multiline block comments/docblocks put `/*` or `/**` on its own line, text on
   subsequent lines prefixed with aligned ` *`, and ` */` on its own line.
-  Single-line comments and type annotations may remain on one line.
+  Type-only inline annotations remain beside their declarations.
 - Inside each class, place member groups in this order. The corresponding markers
   are used only when the size thresholds below are both met:
 
   1. Constants: `/** CONSTANTS */`
   2. Static properties: `/** STATIC PROPERTIES */`
   3. Instance properties: `/** PROPERTIES */`
-  4. Constructor: `/** CONSTRUCTOR */`
-  5. Destructor: `/** DESTRUCTOR */`
-  6. Instance methods: `/** METHODS */`
-  7. Static methods: `/** STATIC METHODS */`
+  4. Prepared facts: `/** PREP FACTS */`
+  5. Constructor: `/** CONSTRUCTOR */`
+  6. Destructor: `/** DESTRUCTOR */`
+  7. Instance methods: `/** METHODS */`
+  8. Static methods: `/** STATIC METHODS */`
 
   Always separate nonempty groups with one blank line. Add group markers **only
   when the class has more than two nonempty groups and more than five declared
@@ -211,6 +261,18 @@ references, and this convention does not introduce PHP `WeakReference` objects.
   group markers while keeping the same ordering and blank-line separation. Empty
   groups are always omitted. Group markers do not replace purpose, type or
   ownership documentation.
+- Local compiler rule: group AST-owned semantic facts and caches under `PREP FACTS`,
+  after ordinary properties and before the constructor. Include preparation
+  readiness, revision/context fields and retained preparation statistics with the
+  facts they describe. Authored syntax, collection indexes and worker scratch stay
+  in ordinary properties. This is presentation only; it does not change ownership
+  or introduce another facts object.
+- Identify these properties in their own documentation with `Prepared fact:`,
+  `Prepared cache:`, `Preparation state:` or `Preparation statistics:` as appropriate.
+  The style checker uses these descriptions to classify the group even when the
+  class is too small for group markers. `PREP FACTS` counts as one nonempty group
+  under the same more-than-two-groups AND more-than-five-members rule.
+
 - Within each method group, order by useful call flow: entry points, then supporting
   helpers. Do not move methods between owners or invent wrappers for presentation
   alone.
@@ -252,7 +314,9 @@ build, storage and lifecycle requirements are not imported by these style rules.
 Run `python3 -B v0.2/compiler/tools/check_style.py` from the repository root.
 The local PHP-token-based check covers tabs, multiline blocks, named-function brace
 placement, long-function purpose comments, type role comments and type-only inline
-annotations, class group ordering/separation and the conditional marker thresholds.
+annotations, collection/resource PHPDoc tags, class group ordering/separation and
+the conditional marker thresholds. Local inference gaps and annotation truthfulness
+remain manual review responsibilities; the checker does not run an IDE.
 It is registered as `compiler_style` in CTest. Strings and embedded
 source samples are excluded from layout checks.
 

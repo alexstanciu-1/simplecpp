@@ -21,7 +21,9 @@ foreach (flavor::cases() as $flavor)
 			. $header('first') . '{' . $local . 'second();}' . $header('second') . '{' . $local . '}',
 			$flavor));
 	$root = Symbol_Publication::completed(['source' => $file]);
+	/** @var \scpp\compiler\ast_function_declaration $first */
 	$first = $root->resolve('func:first');
+	/** @var \scpp\compiler\ast_function_declaration $second */
 	$second = $root->resolve('func:second');
 	$a = $first->body()->scope;
 	$b = $second->body()->scope;

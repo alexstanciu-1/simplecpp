@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Canonical builtin definitions for the current subset; enum cases are shared object identities.
- */
+/** Canonical builtin definitions for the current subset; enum cases are shared object identities. */
 enum type_definition: int /** uint8 */ {
 	case int64 = 1;
 	case void = 2;
@@ -112,15 +110,19 @@ final readonly class prepared_program
 	 */
 	public ?compilation_session $session;
 	public string $entry_path;
-	/** Native shared-owning source retention. */
+	/** @var ast_file_node[] Native shared-owning source retention. */
 	public array $files /** array<string,ast_file_node> */;
 	/** Native owning; prepared entry handle. */
 	public prepared_entry $entry;
-	/** Completion identities, not semantic facts. */
+	/** @var int[] Completion identities, not semantic facts. */
 	private array $revisions /** array<string,uint32> */;
 
 	/** CONSTRUCTOR */
-	/** Retain the prepared inputs and capture their completion revisions for later validation. */
+	/**
+	 * Retain the prepared inputs and capture their completion revisions for later validation.
+	 *
+	 * @param ast_file_node[] $files
+	 */
 	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry,
 		?compilation_session $session = null)
 	{

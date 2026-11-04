@@ -3,13 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Rebuild dirty body caches after frontend publication; does not create an emission handle or
- * lower code.
- */
+/** Rebuild dirty body caches after frontend publication; does not create an emission handle or lower code. */
 final class Incremental_Preparation
 {
-	/** Validate the published generation, then rebuild dirty body caches and report reuse. */
+	/**
+	 * Validate the published generation, then rebuild dirty body caches and report reuse.
+	 *
+	 * @return mixed[]
+	 */
 	public static function prepare(compilation_session $session, entry_target $target): array /** array{prepared:uint32,reused:uint32} */
 	{
 		$symbols = $session->scope ?? throw new \LogicException('Frontend publication is required');
@@ -50,7 +51,7 @@ final class Incremental_Preparation
 					continue;
 				}
 				try {
-					(new Preparation())->function_body($body, $symbols, $exit, $session->function_dependencies);
+					(new Preparation())->function_body($body, $symbols, $exit, $session->dependency_watches);
 					$report['prepared']++;
 				}
 				catch (diagnostic $error) {

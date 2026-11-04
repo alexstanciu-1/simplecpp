@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-This slice adds function identity and one dependency role. It does not implement
+This slice adds function identity and one dependency role through a general watch coordinator. It does not implement
 incremental lowering, executable emission or native concurrent publication.
 
 ## Structure and ownership
@@ -10,7 +10,7 @@ incremental lowering, executable emission or native concurrent publication.
 ```text
 compilation_session
 ├── scope: ?scope — current compilation declaration scope
-├── function_dependencies: function_dependencies — shared across frontend generations
+├── dependency_watches: Dependency_Watches — shared across frontend generations
 └── is_current: bool — prior session retires after successful publication
 
 scope
@@ -26,9 +26,13 @@ ast_call_statement
 ├── name: string — authored syntax
 └── function_symbol: ?symbol_entry — prepared cache reference
 
-function_dependencies
-├── observers: symbol_entry → set<ast_function_body>
-└── targets: ast_function_body → set<symbol_entry> — reverse index for cleanup
+Dependency_Watches
+├── observers: symbol_entry → set<dependency_watcher>
+├── targets: dependency_watcher → set<symbol_entry> — reverse index for cleanup
+└── pending: set<dependency_watcher> — one notification per publication batch
+
+ast_function_body implements dependency_watcher
+└── invalidate_dependencies(): void — mark owned preparation cache dirty
 ```
 
 No names, signatures, bodies or literal facts are copied into symbol entries.
@@ -44,12 +48,55 @@ Normal full compilation uses the same entries and the same preparation worker.
 The previous separate bare-name callable map is gone. Collection and publication
 now use the [common scope mechanism](scopes.md).
 
+## Watch registration and dispatch
+
+The session lineage owns `Dependency_Watches` in `compiler/dependencies.php`.
+It replaces the function-specific dependency class; it does not wrap one.
+Preparation calls `watch($symbol, $watcher)` when it consumes a symbol. The
+coordinator deduplicates identity pairs and owns reverse subscriptions and pending
+notifications. A symbol is currently a stable `symbol_entry`, including tombstones.
+
+`Symbol_Publication` owns function-contract snapshots/comparison and supplies the
+complete live watcher inventory. The dependency coordinator has no function-name,
+signature, source traversal or body-preparation knowledge.
+
+- `watch(symbol, watcher)` registers a relation; repeated registration is harmless.
+- `changed(symbol)` queues its observers without invoking them.
+- `dispatch()` ends the batch and calls `invalidate_dependencies()` once per queued
+  watcher, even if several watched symbols changed. An empty dispatch does nothing.
+- `forget(watcher)` removes both directions and cancels its pending notification.
+- `retain(watchers)` removes subscriptions for absent watchers and queues their
+  final invalidation; callers must keep retired targets alive through dispatch.
+
+Publication retains current watchers, queues semantic changes, then dispatches
+before returning. Watcher callbacks only invalidate owned caches: they must not
+throw, prepare code or mutate subscriptions. This remains sequential PHP work;
+native publication will require the existing reader/worker barrier.
+
+The interface does not prescribe watcher granularity. Bodies implement it now;
+groups of bodies or whole source units may implement it later. Subscription cleanup
+must use that same ownership granularity: rebuilding one member must not forget
+relations still needed by other members. No grouping heuristic or per-node observer
+graph is introduced. Specialized methods such as `watch_function()` may later
+optimize the same coordinator; do not restore a class per symbol kind.
+
+Namespaces are the next lookup slice, not part of this refactor. Qualified symbols
+and relative lookup dependencies must be considered together: adding a nearer
+candidate can change a lookup without changing the former selected symbol. Avoid
+broad subscriptions to all namespace changes until lookup semantics justify them.
+
+Every derived fact needs a dependency explanation, not necessarily a separately
+allocated edge. Body-owned facts are invalidated together; only dependencies crossing
+that cache boundary currently need explicit watches. The historical 90%+ preparation
+measurement belongs to `my-try`, not this compiler. Future grouping/performance
+choices need current measurements.
+
 ## Publication and changes
 
 The frontend collects candidate ASTs and completes source checks before touching
 live entries. A parse/read failure leaves current entries, statuses and body caches
 unchanged. Successful publication updates the existing global index and entries,
-removes obsolete observer-body subscriptions, then sends invalidation notifications.
+removes obsolete observer-body subscriptions, then dispatches batched invalidation notifications.
 No observer callback performs preparation during publication.
 
 - Same key and identical ordered chain of declaration objects: `none`.
@@ -127,3 +174,7 @@ unresolved-name repair, ambiguity/recovery, replaced/removed subscriptions,
 entry-target changes, stale-session rejection and failed-parse preservation.
 All three flavors are exercised within their currently supported grammar.
 Existing frontend/service/native-function tests cover the surrounding paths.
+
+`php v0.2/compiler/tests/dependency_watches.php` checks generic non-AST watchers,
+registration and dispatch deduplication, retirement, pending cancellation, repeated
+forget, re-registration and independent-coordinator isolation.

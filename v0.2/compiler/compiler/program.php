@@ -11,7 +11,11 @@ final class Program_Frontend
 		return $this->run($session, $target, static fn(source_unit $unit): source_file => Program_Loader::load($unit));
 	}
 
-	/** In-memory callers use the same unit ownership and compilation path without reading disk. */
+	/**
+	 * In-memory callers use the same unit ownership and compilation path without reading disk.
+	 *
+	 * @param source_file[] $sources
+	 */
 	public function prepare_sources(string $entry, array $sources /** array<string,source_file> */,
 		entry_target $target): prepared_program
 	{
@@ -19,9 +23,7 @@ final class Program_Frontend
 		return $this->run($session, $target, static fn(source_unit $unit): source_file => $sources[$unit->path]);
 	}
 
-	/**
-	 * Rebuild all source results; this establishes no incremental reuse or module visibility policy.
-	 */
+	/** Rebuild all source results; this establishes no incremental reuse or module visibility policy. */
 	private function run(compilation_session $session, entry_target $target, \Closure $load): prepared_program
 	{
 		if ($session->scope !== null) {

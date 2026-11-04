@@ -3,20 +3,19 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Loads module.json graphs, e.g. dependencies.runtime.modules=["json"], before any source frontend
- * runs.
- */
+/** Loads module.json graphs, e.g. dependencies.runtime.modules=["json"], before any source frontend runs. */
 final class Module_Loader
 {
 	/** PROPERTIES */
-	/** Canonical manifest path -> validated document; native owning parsed documents. */
+	/** @var \stdClass[] Canonical manifest path -> validated document; native owning parsed documents. */
 	private array $documents /** array<string,\stdClass> */ = [];
-	/** Unique module name -> canonical manifest. */
+	/** @var string[] Unique module name -> canonical manifest. */
 	private array $paths /** array<string,string> */ = [];
+	/** @var mixed[][] */
 	private array $definitions /** array<string,array{root:string,type:string,sources:array<string,flavor>,dependencies:list<string>,manifest:string,artifacts:list<string>,entry?:string}> */ = [];
 	private string $runtime;
 	private string $entry_manifest;
+	/** @var bool[] */
 	private array $dependency_roots /** array<string,bool> */ = [];
 	private string|false $output_directory = false;
 
@@ -27,10 +26,7 @@ final class Module_Loader
 	}
 
 	/** METHODS */
-	/**
-	 * Each invocation reloads configuration and discovery; generated inventories are never input
-	 * caches.
-	 */
+	/** Each invocation reloads configuration and discovery; generated inventories are never input caches. */
 	public function load(string $path, ?string $output_directory = null): compilation_session
 	{
 		$this->output_directory = $output_directory === null ? false : realpath($output_directory);
@@ -83,8 +79,9 @@ final class Module_Loader
 	}
 
 	/**
-	 * Validate object boundaries strictly so misspelled configuration never silently changes
-	 * discovery.
+	 * Validate object boundaries strictly so misspelled configuration never silently changes discovery.
+	 *
+	 * @param string[] $allowed
 	 */
 	private function fields(mixed $value, array $allowed /** list<string> */, string $where): \stdClass
 	{
@@ -99,7 +96,11 @@ final class Module_Loader
 		return $value;
 	}
 
-	/** Lists contain only nonempty names or paths; options/config are deliberately unsupported. */
+	/**
+	 * Lists contain only nonempty names or paths; options/config are deliberately unsupported.
+	 *
+	 * @return string[]
+	 */
 	private function strings(mixed $value, string $where): array /** list<string> */
 	{
 		if ((!is_array($value)) || (!array_is_list($value))) {
@@ -175,10 +176,7 @@ final class Module_Loader
 		return $name;
 	}
 
-	/**
-	 * Expand activation independently of dependency edges; the common graph loader checks actual
-	 * cycles.
-	 */
+	/** Expand activation independently of dependency edges; the common graph loader checks actual cycles. */
 	private function activate(string $entry, string $runtime): void
 	{
 		$queue = [[$entry, []], [$runtime, []]];
@@ -237,8 +235,9 @@ final class Module_Loader
 	}
 
 	/**
-	 * Explicit lists replace discovery; explicit flavor maps remain available for nonstandard
-	 * extensions.
+	 * Explicit lists replace discovery; explicit flavor maps remain available for nonstandard extensions.
+	 *
+	 * @return flavor[]
 	 */
 	private function sources(string $root, string $type, \stdClass $document): array /** array<string,flavor> */
 	{
@@ -278,8 +277,9 @@ final class Module_Loader
 	}
 
 	/**
-	 * Stable recursive discovery skips nested modules, symlinks, hidden directories and
-	 * generated/build trees.
+	 * Stable recursive discovery skips nested modules, symlinks, hidden directories and generated/build trees.
+	 *
+	 * @return string[]
 	 */
 	private function discover(string $root, string $type, string $relative = ''): array /** list<string> */
 	{

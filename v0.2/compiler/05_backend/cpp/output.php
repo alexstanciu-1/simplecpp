@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Spells exact output literal bytes; the compiled runtime owns formatting and IO.
- */
+/** Spells exact output literal bytes; the compiled runtime owns formatting and IO. */
 final class Cpp_Output
 {
 	/** Fixed-width octal spelling preserves arbitrary bytes without C++ escape-boundary ambiguity. */

@@ -72,9 +72,9 @@ final class Incremental_Frontend
 				$files[$candidate->source_key($unit)] = $unit->ast;
 			}
 			if ($previous !== null) {
-				$candidate->function_dependencies = $previous->function_dependencies;
+				$candidate->dependency_watches = $previous->dependency_watches;
 			}
-			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->function_dependencies);
+			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->dependency_watches);
 			if ($previous !== null) {
 				$previous->is_current = false;
 			}
@@ -91,6 +91,7 @@ final class Incremental_Frontend
 		}
 	}
 
+	/** @return mixed[] */
 	private static function stat(string $path): array /** array{mtime:int64,size:uint64} */
 	{
 		$stat = @stat($path);

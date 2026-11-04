@@ -49,7 +49,7 @@ the reviewed collections. This is a targeted review, not an exhaustive audit.
 | `compiler/03_parse/collect/scope.php`: pending inventory and publication indexes | No per-name candidate lists remain. The flat inventory legitimately contains many distinct declarations. |
 | `compiler/03_parse/structures/source.php`: file declaration inventory | Retain the collection: a file can validly contain many declarations. Traversal must remain independent of live duplicate chains. |
 | `compiler/03_parse/structures/functions.php`: statements, locals, references | Retain collections: multiple statements, local declarations and reference occurrences are valid. |
-| `compiler/04_analyze/prepare/dependencies.php`: observers and targets | Retain sets: a symbol can have many observers and a body can depend on many symbols. |
+| `compiler/compiler/dependencies.php`: observers and targets | Retain sets: a symbol can have many observers and a watcher can depend on many symbols. |
 | Source/module inventories, diagnostics and backend output units | Retain collections: multiple entries are valid. |
 | `tools/compiler_panel/report.php` | Traverses the live chain; lists are materialized only to preserve inspection JSON. |
 

@@ -3,9 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Publishes a generated program and its manifest, retiring only obsolete artifacts owned by the previous manifest.
- */
+/** Publishes a generated program and its manifest, retiring only obsolete artifacts owned by the previous manifest. */
 final class Cpp_Bundle
 {
 	private const FORMAT = 'scpp-cpp-program-v1';
@@ -22,6 +20,8 @@ final class Cpp_Bundle
 	 * Old inventory supplies cleanup ownership; a corrupt inventory never authorizes deletion.
 	 *
 	 * Return: validated manifest; empty when absent.
+	 *
+	 * @return mixed[]
 	 */
 	public static function read(string $directory): array /** array<string,mixed> */
 	{
@@ -56,6 +56,9 @@ final class Cpp_Bundle
 	 *
 	 * $previous: validated manifest.
 	 * Return: captured state.
+	 *
+	 * @param mixed[] $previous
+	 * @return mixed[]|null
 	 */
 	public static function baseline(array $previous /** array<string,mixed> */): ?array /** array<string,mixed> */
 	{
@@ -69,6 +72,10 @@ final class Cpp_Bundle
 	 * $state: Project_Changes captured state.
 	 * $previous: validated manifest.
 	 * Return: manifest object shape.
+	 *
+	 * @param mixed[] $state
+	 * @param mixed[] $previous
+	 * @return mixed[]|null
 	 */
 	public static function reuse(string $directory, array $state /** array<string,mixed> */,
 		array $previous /** array<string,mixed> */): ?array /** array<string,mixed> */
@@ -112,6 +119,10 @@ final class Cpp_Bundle
 	 * $inputs: protected source and target-facts paths.
 	 * $state: Project_Changes captured state.
 	 * $previous: validated manifest; null loads it for standalone publication.
+	 *
+	 * @param string[] $inputs
+	 * @param mixed[]|null $state
+	 * @param mixed[]|null $previous
 	 */
 	public static function write(string $directory, cpp_program_output $output,
 		array $inputs /** list<string> */, ?array $state /** array<string,mixed> */ = null,

@@ -33,10 +33,11 @@ final class Symbol_Publication implements declaration_sink
 	}
 
 	/**
-	 * The coordinator supplies the complete successful inventory; failed parses cannot publish
-	 * candidates.
+	 * The coordinator supplies the complete successful inventory; failed parses cannot publish candidates.
+	 *
+	 * @param ast_file_node[] $files
 	 */
-	public function publish(array $files /** array<string,ast_file_node> */, ?scope $previous = null, ?function_dependencies $dependencies = null): scope
+	public function publish(array $files /** array<string,ast_file_node> */, ?scope $previous = null, ?Dependency_Watches $dependencies = null): scope
 	{
 		if ($this->published) {
 			throw new \LogicException('Symbols already published');
@@ -62,7 +63,7 @@ final class Symbol_Publication implements declaration_sink
 		$this->collection->order(static fn(ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ =>
 			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
 		// Capture the dependency role before publication rewrites links on reused AST declarations.
-		$old_contracts = ($dependencies !== null) && ($previous !== null) ? function_dependencies::contracts($previous) : [];
+		$old_contracts = ($dependencies !== null) && ($previous !== null) ? self::function_contracts($previous) : [];
 		$scope = $this->collection->publish($previous);
 		ksort($scope->declarations, \SORT_STRING);
 		foreach ($files as $file) {
@@ -70,8 +71,8 @@ final class Symbol_Publication implements declaration_sink
 		}
 		if ($dependencies !== null)
 		{
-			$dependencies->retain($files);
-			$contracts = function_dependencies::contracts($scope);
+			$dependencies->retain(self::watchers($files));
+			$contracts = self::function_contracts($scope);
 			foreach (array_unique(array_merge(array_keys($old_contracts), array_keys($contracts))) as $key)
 			{
 				$old = $old_contracts[$key] ?? null;
@@ -83,13 +84,18 @@ final class Symbol_Publication implements declaration_sink
 					$dependencies->changed($entry);
 				}
 			}
+			$dependencies->dispatch();
 		}
 		return $scope;
 	}
 
 	/** STATIC METHODS */
-	/** In-memory analysis clients publish their already complete collections through the same owner. */
-	public static function completed(array $files /** array<string,ast_file_node> */, ?scope $previous = null, ?function_dependencies $dependencies = null): scope
+	/**
+	 * In-memory analysis clients publish their already complete collections through the same owner.
+	 *
+	 * @param ast_file_node[] $files
+	 */
+	public static function completed(array $files /** array<string,ast_file_node> */, ?scope $previous = null, ?Dependency_Watches $dependencies = null): scope
 	{
 		$publication = new self();
 		foreach ($files as $file) {
@@ -98,5 +104,39 @@ final class Symbol_Publication implements declaration_sink
 			}
 		}
 		return $publication->publish($files, $previous, $dependencies);
+	}
+
+	/**
+	 * Ephemeral signature snapshot across chain publication; no AST copies or retained candidate
+	 * lists.
+	 *
+	 * Return: null means ambiguous, absent key means missing.
+	 *
+	 * @return (string|null)[]
+	 */
+	private static function function_contracts(scope $scope): array /** array<string,?string> */
+	{
+		$contracts = [];
+		foreach ($scope->declarations as $key => $head) {
+			/** @var ast_function_declaration $head */
+			$contracts[$key] = $head->duplicate_element() === null ? $head->return_type_name : null;
+		}
+		return $contracts;
+	}
+
+	/**
+	 * Supply current invalidation targets; the watch coordinator does not inspect source or body syntax.
+	 * @param ast_file_node[] $files
+	 * @return dependency_watcher[]
+	 */
+	private static function watchers(array $files /** array<string,ast_file_node> */): array /** list<dependency_watcher> */
+	{
+		$watchers = [];
+		foreach ($files as $file) {
+			foreach ($file->declaration_nodes as $function) {
+				$watchers[] = $function->body();
+			}
+		}
+		return $watchers;
 	}
 }
