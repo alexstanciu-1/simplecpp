@@ -15,7 +15,7 @@ final class Cpp_Exit
 	{
 		return match ($conversion) {
 			exit_conversion::proven => 'static_cast<int>(' . $value . ')',
-			exit_conversion::checked => 'scpp::entry_exit_checked(' . $value . ')',
+				exit_conversion::checked => 'scpp::entry_exit_checked(' . $value . ')',
 		};
 	}
 }
@@ -27,7 +27,9 @@ final class Cpp_Emitter
 {
 	use cpp_native_values;
 
-	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
+	/**
+	 * Only a completed semantic program is accepted; output is assembled privately before publication.
+	 */
 	public function emit(prepared_entry $program): string
 	{
 		return $this->render($program, 'main');
@@ -38,7 +40,9 @@ final class Cpp_Emitter
 		return $this->render($program, 'scpp_entry_body');
 	}
 
-	/** Each source emits its own definitions; foreign information is limited to settled call contracts. */
+	/**
+	 * Each source emits its own definitions; foreign information is limited to settled call contracts.
+	 */
 	public function functions(array $functions /** list<ast_function_declaration> */): string
 	{
 		if ($functions === []) {
@@ -53,7 +57,10 @@ final class Cpp_Emitter
 		return $this->unit($program, $program->file->functions(), $function);
 	}
 
-	/** Assemble local definitions and deterministic forward declarations without a shared naming registry. */
+	/**
+	 * Assemble local definitions and deterministic forward declarations without a shared naming
+	 * registry.
+	 */
 	private function unit(?prepared_entry $entry, array $functions /** list<ast_function_declaration> */, string $entry_name): string
 	{
 		$declarations = [];
@@ -77,7 +84,7 @@ final class Cpp_Emitter
 		if ($uses_output) {
 			$header .= "#include <scpp/output.hpp>\n";
 		}
-		ksort($declarations, SORT_STRING);
+		ksort($declarations, \SORT_STRING);
 		foreach ($declarations as $name => $unused) {
 			$header .= 'void ' . $name . "();\n";
 		}
@@ -97,14 +104,16 @@ final class Cpp_Emitter
 					. ' = ' . $this->value($statement->initializer) . ';';
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value)) . ';';
+				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value))
+					. ';';
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
 				$uses_output = true;
 				$value = $statement->value;
 				if ($value instanceof ast_string_expression) {
-					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', ' . strlen($value->bytes()) . ');';
+					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', '
+						. strlen($value->bytes()) . ');';
 				}
 				else {
 					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value) . ');';
@@ -125,17 +134,14 @@ final class Cpp_Emitter
 		return $lines;
 	}
 
-	public static function function_name(ast_function_declaration $declaration): string
-	{
-		return 'scpp_function_' . bin2hex($declaration->name);
-	}
-
 	private function name(ast_local_declaration $binding): string
 	{
 		return 'local_' . $binding->id;
 	}
 
-	/** Typed values carry normalized constants or direct bindings; no source-name lookup occurs here. */
+	/**
+	 * Typed values carry normalized constants or direct bindings; no source-name lookup occurs here.
+	 */
 	private function value(ast_expression $value): string
 	{
 		if ($value instanceof ast_integer_expression) {
@@ -145,5 +151,10 @@ final class Cpp_Emitter
 			return $this->name($value->local_def());
 		}
 		throw new \LogicException('Unhandled prepared value');
+	}
+
+	public static function function_name(ast_function_declaration $declaration): string
+	{
+		return 'scpp_function_' . bin2hex($declaration->name);
 	}
 }

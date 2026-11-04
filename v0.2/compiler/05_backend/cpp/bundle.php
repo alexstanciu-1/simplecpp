@@ -18,8 +18,12 @@ final class Cpp_Bundle
 		}
 	}
 
-	/** Old inventory supplies cleanup ownership; a corrupt inventory never authorizes deletion. */
-	public static function read(string $directory): array /** validated manifest; empty when absent */
+	/**
+	 * Old inventory supplies cleanup ownership; a corrupt inventory never authorizes deletion.
+	 *
+	 * Return: validated manifest; empty when absent.
+	 */
+	public static function read(string $directory): array /** array<string,mixed> */
 	{
 		$manifest = $directory . '/manifest.json';
 		if (is_link($directory) || is_link($manifest) || is_link($directory . '/units')) {
@@ -29,13 +33,13 @@ final class Cpp_Bundle
 			return [];
 		}
 		try {
-			$data = json_decode((string) file_get_contents($manifest), true, 512, JSON_THROW_ON_ERROR);
+			$data = json_decode((string) file_get_contents($manifest), true, 512, \JSON_THROW_ON_ERROR);
 		}
 		catch (\JsonException $error) {
 			throw new \RuntimeException('Invalid program manifest: ' . $error->getMessage());
 		}
-		if (!is_array($data) || (($data['format'] ?? null) !== self::FORMAT)
-			|| !is_array($data['translation_units'] ?? null) || !array_is_list($data['translation_units'])) {
+		if ((!is_array($data)) || (($data['format'] ?? null) !== self::FORMAT)
+			|| (!is_array($data['translation_units'] ?? null)) || (!array_is_list($data['translation_units']))) {
 			throw new \RuntimeException('Unsupported program manifest');
 		}
 		foreach ($data['translation_units'] as $path) {
@@ -47,25 +51,36 @@ final class Cpp_Bundle
 		return $data;
 	}
 
-	/** Extract a validated baseline from the already loaded manifest. */
-	public static function baseline(array $previous /** validated manifest */): ?array /** captured state */
+	/**
+	 * Extract a validated baseline from the already loaded manifest.
+	 *
+	 * $previous: validated manifest.
+	 * Return: captured state.
+	 */
+	public static function baseline(array $previous /** array<string,mixed> */): ?array /** array<string,mixed> */
 	{
 		$state = $previous['build']['inputs'] ?? null;
 		return Project_Changes::valid($state) ? $state : null;
 	}
 
-	/** Reuse only a successful matching build whose complete generated artifacts are still intact. */
-	public static function reuse(string $directory, array $state /** Project_Changes captured state */,
-		array $previous /** validated manifest */): ?array /** manifest object shape */
+	/**
+	 * Reuse only a successful matching build whose complete generated artifacts are still intact.
+	 *
+	 * $state: Project_Changes captured state.
+	 * $previous: validated manifest.
+	 * Return: manifest object shape.
+	 */
+	public static function reuse(string $directory, array $state /** array<string,mixed> */,
+		array $previous /** array<string,mixed> */): ?array /** array<string,mixed> */
 	{
 		$path = $directory . '/manifest.json';
-		if (is_link($directory) || is_link($path) || is_link($directory . '/units') || !is_file($path)) {
+		if (is_link($directory) || is_link($path) || is_link($directory . '/units') || (!is_file($path))) {
 			return null;
 		}
 		$data = $previous;
 		if (($data === []) || (($data['build']['inputs'] ?? null) !== $state)
-			|| !is_array($data['build']['artifacts'] ?? null)
-			|| !is_array($data['sources'] ?? null)) {
+			|| (!is_array($data['build']['artifacts'] ?? null))
+			|| (!is_array($data['sources'] ?? null))) {
 			return null;
 		}
 		$expected_metadata = $data['build']['metadata'] ?? null;
@@ -78,10 +93,11 @@ final class Cpp_Bundle
 		if (($units === []) || (array_keys($data['build']['artifacts']) !== $units)) {
 			return null;
 		}
-		foreach ($data['build']['artifacts'] as $unit => $expected) {
+		foreach ($data['build']['artifacts'] as $unit => $expected)
+		{
 			clearstatcache(true, $directory . '/' . $unit);
 			$stat = @stat($directory . '/' . $unit);
-			if (is_link($directory . '/' . $unit) || !is_file($directory . '/' . $unit)
+			if (is_link($directory . '/' . $unit) || (!is_file($directory . '/' . $unit))
 				|| ($stat === false) || (['mtime' => $stat['mtime'], 'size' => $stat['size']] !== $expected)) {
 				return null;
 			}
@@ -89,10 +105,17 @@ final class Cpp_Bundle
 		return $data;
 	}
 
-	/** Publish a complete candidate and retire only previously inventoried units; manifest is written last. */
+	/**
+	 * Publish a complete candidate and retire only previously inventoried units; manifest is written
+	 * last.
+	 *
+	 * $inputs: protected source and target-facts paths.
+	 * $state: Project_Changes captured state.
+	 * $previous: validated manifest; null loads it for standalone publication.
+	 */
 	public static function write(string $directory, cpp_program_output $output,
-		array $inputs /** list<string>; protected source and target-facts paths */, ?array $state /** Project_Changes captured state */ = null,
-		?array $previous /** validated manifest; null loads it for standalone publication */ = null): void
+		array $inputs /** list<string> */, ?array $state /** array<string,mixed> */ = null,
+		?array $previous /** array<string,mixed> */ = null): void
 	{
 		$directory = rtrim($directory, '/');
 		if (($directory === '') || is_link($directory) || is_link($directory . '/units')
@@ -103,7 +126,8 @@ final class Cpp_Bundle
 		$previous ??= self::read($directory);
 		$old = $previous['translation_units'] ?? [];
 		$owned = array_fill_keys($old, true);
-		$protected = array_fill_keys(array_filter(array_map('realpath', array_merge($inputs, $output->native_sources))), true);
+		$protected = array_fill_keys(array_filter(array_map('realpath', array_merge($inputs, $output->native_sources))),
+			true);
 		$paths = array_unique(array_merge($old, array_keys($output->files)));
 		foreach (array_merge(['manifest.json'], $paths) as $path)
 		{
@@ -114,7 +138,7 @@ final class Cpp_Bundle
 			if (is_link($target) || isset($protected[realpath($target)])) {
 				throw new \RuntimeException('Output collides with an input or symlink: ' . $target);
 			}
-			if (($path !== 'manifest.json') && file_exists($target) && !isset($owned[$path])) {
+			if (($path !== 'manifest.json') && file_exists($target) && (!isset($owned[$path]))) {
 				throw new \RuntimeException('Unowned program output collision: ' . $target);
 			}
 		}
@@ -126,22 +150,23 @@ final class Cpp_Bundle
 		if ($output->native_sources !== []) {
 			$data['native_sources'] = $output->native_sources;
 		}
-		if (file_exists($manifest) && !unlink($manifest)) {
+		if (file_exists($manifest) && (!unlink($manifest))) {
 			throw new \RuntimeException('Cannot invalidate program manifest');
 		}
 		foreach ($output->files as $path => $contents) {
 			Cpp_Publication::write($directory . '/' . $path, $contents);
 		}
 		foreach ($old as $path) {
-			if (!isset($output->files[$path]) && file_exists($directory . '/' . $path)
-				&& !unlink($directory . '/' . $path)) {
+			if ((!isset($output->files[$path])) && file_exists($directory . '/' . $path)
+				&& (!unlink($directory . '/' . $path))) {
 				throw new \RuntimeException('Cannot retire obsolete program unit: ' . $path);
 			}
 		}
 		if ($state !== null)
 		{
 			$artifacts = [];
-			foreach ($output->files as $path => $_) {
+			foreach ($output->files as $path => $_)
+			{
 				clearstatcache(true, $directory . '/' . $path);
 				$stat = stat($directory . '/' . $path);
 				if ($stat === false) {
@@ -151,7 +176,7 @@ final class Cpp_Bundle
 			}
 			$data['build'] = ['inputs' => $state, 'metadata' => $data, 'artifacts' => $artifacts];
 		}
-		$text = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n";
+		$text = json_encode($data, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n";
 		Cpp_Publication::write($manifest, $text);
 	}
 }

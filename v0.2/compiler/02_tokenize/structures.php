@@ -3,8 +3,12 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Closed lexical vocabulary with explicit IDs in 1..127; zero is reserved. */
-enum token_kind: int /** uint8; IDs 1..127, zero reserved */
+/**
+ * Closed lexical vocabulary with explicit IDs in 1..127; zero is reserved.
+ *
+ * Backing: IDs 1..127, zero reserved.
+ */
+enum token_kind: int /** uint8 */
 {
 	case identifier = 1;
 	case variable = 2;
@@ -73,69 +77,70 @@ enum token_kind: int /** uint8; IDs 1..127, zero reserved */
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
 	{
-		return match ($this) {
+		return match ($this)
+		{
 			self::identifier => 'identifier',
-			self::variable => 'variable',
-			self::integer => 'integer',
-			self::floating => 'floating',
-			self::single_string => 'single_string',
-			self::double_string => 'double_string',
-			self::ellipsis => '...',
-			self::power_assign => '**=',
-			self::left_assign => '<<=',
-			self::right_assign => '>>=',
-			self::identical => '===',
-			self::not_identical => '!==',
-			self::spaceship => '<=>',
-			self::attribute => '#[',
-			self::equal => '==',
-			self::not_equal => '!=',
-			self::less_equal => '<=',
-			self::greater_equal => '>=',
-			self::arrow => '=>',
-			self::member => '->',
-			self::scope => '::',
-			self::coalesce => '??',
-			self::logical_and => '&&',
-			self::logical_or => '||',
-			self::increment => '++',
-			self::decrement => '--',
-			self::power => '**',
-			self::plus_assign => '+=',
-			self::minus_assign => '-=',
-			self::star_assign => '*=',
-			self::slash_assign => '/=',
-			self::percent_assign => '%=',
-			self::concat_assign => '.=',
-			self::and_assign => '&=',
-			self::or_assign => '|=',
-			self::xor_assign => '^=',
-			self::semicolon => ';',
-			self::lparen => '(',
-			self::rparen => ')',
-			self::lbrace => '{',
-			self::rbrace => '}',
-			self::question => '?',
-			self::colon => ':',
-			self::comma => ',',
-			self::ampersand => '&',
-			self::lbracket => '[',
-			self::rbracket => ']',
-			self::less => '<',
-			self::greater => '>',
-			self::plus => '+',
-			self::minus => '-',
-			self::star => '*',
-			self::slash => '/',
-			self::percent => '%',
-			self::dot => '.',
-			self::bang => '!',
-			self::tilde => '~',
-			self::pipe => '|',
-			self::caret => '^',
-			self::backslash => '\\',
-			self::assign => '=',
-			self::keyword => 'keyword',
+				self::variable => 'variable',
+				self::integer => 'integer',
+				self::floating => 'floating',
+				self::single_string => 'single_string',
+				self::double_string => 'double_string',
+				self::ellipsis => '...',
+				self::power_assign => '**=',
+				self::left_assign => '<<=',
+				self::right_assign => '>>=',
+				self::identical => '===',
+				self::not_identical => '!==',
+				self::spaceship => '<=>',
+				self::attribute => '#[',
+				self::equal => '==',
+				self::not_equal => '!=',
+				self::less_equal => '<=',
+				self::greater_equal => '>=',
+				self::arrow => '=>',
+				self::member => '->',
+				self::scope => '::',
+				self::coalesce => '??',
+				self::logical_and => '&&',
+				self::logical_or => '||',
+				self::increment => '++',
+				self::decrement => '--',
+				self::power => '**',
+				self::plus_assign => '+=',
+				self::minus_assign => '-=',
+				self::star_assign => '*=',
+				self::slash_assign => '/=',
+				self::percent_assign => '%=',
+				self::concat_assign => '.=',
+				self::and_assign => '&=',
+				self::or_assign => '|=',
+				self::xor_assign => '^=',
+				self::semicolon => ';',
+				self::lparen => '(',
+				self::rparen => ')',
+				self::lbrace => '{',
+				self::rbrace => '}',
+				self::question => '?',
+				self::colon => ':',
+				self::comma => ',',
+				self::ampersand => '&',
+				self::lbracket => '[',
+				self::rbracket => ']',
+				self::less => '<',
+				self::greater => '>',
+				self::plus => '+',
+				self::minus => '-',
+				self::star => '*',
+				self::slash => '/',
+				self::percent => '%',
+				self::dot => '.',
+				self::bang => '!',
+				self::tilde => '~',
+				self::pipe => '|',
+				self::caret => '^',
+				self::backslash => '\\',
+				self::assign => '=',
+				self::keyword => 'keyword',
 		};
 	}
 
@@ -152,10 +157,17 @@ enum token_kind: int /** uint8; IDs 1..127, zero reserved */
 final readonly class token
 {
 	public int $offset /** uint32 */;
-	public int $length /** uint32; range 1..0xFFFFFF */;
+	/** Range 1..0xFFFFFF. */
+	public int $length /** uint32 */;
 	public token_kind $kind;
 
-	public function __construct(int $offset /** uint32 */, int $length /** uint32; range 1..0xFFFFFF */, token_kind $kind)
+	/**
+	 * Validate the token span before retaining its source offset, length and kind.
+	 *
+	 * $length: range 1..0xFFFFFF.
+	 */
+	public function __construct(int $offset /** uint32 */, int $length /** uint32 */,
+		token_kind $kind)
 	{
 		$this->offset = $offset;
 		$this->length = $length;
@@ -170,7 +182,9 @@ final readonly class token
 /** Published tokens retain their source and its flavor; scanning state stays in the worker. */
 final readonly class token_list
 {
+	/** Native shared-owning; token generation retains its source snapshot. */
 	public source_file $source;
+	/** Native owning token values. */
 	public array $tokens /** list<token> */;
 
 	/** @param list<token> $tokens */
@@ -184,21 +198,26 @@ final readonly class token_list
 		}
 		$end = 0;
 		foreach ($tokens as $token) {
-			if (!($token instanceof token) || ($token->offset < $end) || (($token->offset + $token->length) > strlen($source->content))) {
+			if ((!($token instanceof token)) || ($token->offset < $end) || (($token->offset + $token->length) > strlen($source->content))) {
 				throw new \InvalidArgumentException('Tokens must be ordered, nonoverlapping and contained');
 			}
 			$end = $token->offset + $token->length;
 		}
 	}
 
-	public function text_at(int $index /** uint32; index < token count */): string
+	/** $index: index < token count. */
+	public function text_at(int $index /** uint32 */): string
 	{
 		$token = $this->tokens[$index] ?? throw new \OutOfRangeException('Token index outside list');
 		return substr($this->source->content, $token->offset, $token->length);
 	}
 
-	/** Adjacent angles can spell shifts without losing individual generic delimiters. */
-	public function operator_text_at(int $index /** uint32; index < token count */): string
+	/**
+	 * Adjacent angles can spell shifts without losing individual generic delimiters.
+	 *
+	 * $index: index < token count.
+	 */
+	public function operator_text_at(int $index /** uint32 */): string
 	{
 		$text = $this->text_at($index);
 		$first = $this->tokens[$index];

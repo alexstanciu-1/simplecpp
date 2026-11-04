@@ -14,20 +14,34 @@ namespace scpp\compiler;
  */
 abstract class ast_node
 {
-	public readonly int $start /** uint32; inclusive token position */;
-	public readonly int $end /** uint32; exclusive token position; functions settle at body completion */;
-	public readonly ?ast_node $parent /** native non-owning; null only on file root */;
+	/** PROPERTIES */
+	/** Inclusive token position. */
+	public readonly int $start /** uint32 */;
+	/** Exclusive token position; functions settle at body completion. */
+	public readonly int $end /** uint32 */;
+	/** Native non-owning; null only on file root. */
+	public readonly ?ast_node $parent;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */,
+	/** CONSTRUCTOR */
+	/**
+	 * Validate token boundaries while allowing a function end to settle after its body.
+	 *
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		bool $defer_end = false)
 	{
 		if (($start < 0) || ($end < $start)) {
 			throw new \InvalidArgumentException('Invalid AST token range');
 		}
 		$this->start = $start;
-		if (!$defer_end) { $this->end = $end; }
+		if (!$defer_end) {
+			$this->end = $end;
+		}
 	}
 
+	/** METHODS */
 	/** Attach exactly once; permit bottom-up construction but reject ownership cycles. */
 	public function attach(ast_node $parent): void
 	{
@@ -35,9 +49,14 @@ abstract class ast_node
 			throw new \LogicException('AST parent is already settled');
 		}
 		$ancestor = $parent;
-		while (true) {
-			if ($ancestor === $this) { throw new \LogicException('AST ownership cycle'); }
-			if (!isset($ancestor->parent)) { break; }
+		while (true)
+		{
+			if ($ancestor === $this) {
+				throw new \LogicException('AST ownership cycle');
+			}
+			if (!isset($ancestor->parent)) {
+				break;
+			}
 			$ancestor = $ancestor->parent;
 		}
 		$this->parent = $parent;
@@ -58,15 +77,23 @@ abstract class ast_node
 		return $this->root()->tokens->source;
 	}
 
-	public function byte_start(): int /** uint32; source byte offset */
+	/** Return: source byte offset. */
+	public function byte_start(): int /** uint32 */
 	{
 		return $this->root()->byte_at($this->start);
 	}
 
-	public function byte_end(): int /** uint32; exclusive source byte offset */
+	/**
+	 * Recover the exclusive source-byte end from the final token or an empty-span anchor.
+	 *
+	 * Return: exclusive source byte offset.
+	 */
+	public function byte_end(): int /** uint32 */
 	{
 		$root = $this->root();
-		if ($this->start === $this->end) { return $root->byte_at($this->start); }
+		if ($this->start === $this->end) {
+			return $root->byte_at($this->start);
+		}
 		$token = $root->tokens->tokens[$this->end - 1];
 		return $token->offset + $token->length;
 	}
@@ -76,7 +103,9 @@ abstract class ast_node
 	{
 		$root = $this->root();
 		$start = $root->byte_at($this->start);
-		if ($this->start === $this->end) { return ''; }
+		if ($this->start === $this->end) {
+			return '';
+		}
 		$last = $root->tokens->tokens[$this->end - 1];
 		return substr($root->tokens->source->content, $start, $last->offset + $last->length - $start);
 	}
@@ -88,8 +117,7 @@ abstract class ast_node
  * Example: function ping(): void {} supplies ping, while its file index uses func:ping.
  * Namespace qualification is deliberately outside this contract for now.
  */
-interface ast_declaration_interface
-{
+interface ast_declaration_interface {
 	public function declaration_key(): string;
 	public function symbol_key(): string;
 	public function duplicate_element(): ?ast_declaration_interface;
@@ -110,7 +138,10 @@ interface ast_declaration_interface
 trait ast_declaration
 {
 	public readonly string $name;
-	/** Next erroneous same-key declaration; only the declaring scope publishes this chain. */
+	/**
+	 * Next erroneous same-key declaration; only the declaring scope publishes this chain.
+	 * Native non-owning; declaring scope maintains the link.
+	 */
 	protected ?ast_declaration_interface $duplicate_element = null;
 
 	public function duplicate_element(): ?ast_declaration_interface
@@ -118,7 +149,10 @@ trait ast_declaration
 		return $this->duplicate_element;
 	}
 
-	/** The declaring scope links unchained declarations after successful collection, with no active readers. */
+	/**
+	 * The declaring scope links unchained declarations after successful collection, with no active
+	 * readers.
+	 */
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
@@ -129,7 +163,10 @@ trait ast_declaration
 	}
 
 	/** Publication-only reset; other indexes must never mutate the declaring scope chain. */
-	public function clear_duplicate(): void { $this->duplicate_element = null; }
+	public function clear_duplicate(): void
+	{
+		$this->duplicate_element = null;
+	}
 
 	/** Default local key; neither a declaration category nor a namespace is included. */
 	public function declaration_key(): string
@@ -158,17 +195,22 @@ abstract class ast_expression extends ast_node
 	{
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
 	}
+
 	public function constant(): ?int /** int64 */
 	{
 		$this->type_def();
 		return $this->constant;
 	}
+
 	protected function settle_value(type_definition $type, ?int $constant /** int64 */): void
 	{
-		if ($this->type_def !== null) { throw new \LogicException('Expression is already prepared'); }
+		if ($this->type_def !== null) {
+			throw new \LogicException('Expression is already prepared');
+		}
 		$this->type_def = $type;
 		$this->constant = $constant;
 	}
+
 	public function reset_preparation(): void
 	{
 		$this->type_def = null;
@@ -178,9 +220,10 @@ abstract class ast_expression extends ast_node
 
 /**
  * Retains whether the flavor requires an existing binding or permits declaration-or-assignment syntax; it does not resolve that choice.
+ *
+ * Backing: IDs 1..2.
  */
-enum assignment_intent: int /** uint8; IDs 1..2 */
-{
+enum assignment_intent: int /** uint8 */ {
 	case existing_binding = 1;
 	case declare_or_assign = 2;
 }
@@ -195,6 +238,5 @@ enum assignment_intent: int /** uint8; IDs 1..2 */
  * ```
  * These are two ordered statements in the implicit entry function body.
  */
-abstract class ast_statement extends ast_node
-{
+abstract class ast_statement extends ast_node {
 }

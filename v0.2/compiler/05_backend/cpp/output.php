@@ -13,7 +13,7 @@ final class Cpp_Output
 	{
 		$literal = '"';
 		for ($index = 0; $index < strlen($bytes); ++$index) {
-			$literal .= '\\' . str_pad(decoct(ord($bytes[$index])), 3, '0', STR_PAD_LEFT);
+			$literal .= '\\' . str_pad(decoct(ord($bytes[$index])), 3, '0', \STR_PAD_LEFT);
 		}
 		return $literal . '"';
 	}

@@ -8,21 +8,31 @@ namespace scpp\compiler;
  */
 final class Program_Command
 {
-	/** Load an on-disk module graph and emit compiler units plus external native inputs. */
-	public static function project(array $arguments /** list<string> */): int /** int32; process exit status */
+	/**
+	 * Load an on-disk module graph and emit compiler units plus external native inputs.
+	 *
+	 * Return: process exit status.
+	 */
+	public static function project(array $arguments /** list<string> */): int /** int32 */
 	{
-		if ((count($arguments) !== 5) && !((count($arguments) === 6) && ($arguments[5] === '--force'))) {
-			fwrite(STDERR, "Usage: php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n");
+		if ((count($arguments) !== 5) && (!((count($arguments) === 6) && ($arguments[5] === '--force')))) {
+			fwrite(\STDERR,
+				"Usage: php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n");
 			return 2;
 		}
 		return self::report((new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4], count($arguments) === 6));
 	}
 
-	/** Explicit CLI inventory is a bounded input adapter, not a project-config or discovery system. */
-	public static function run(array $arguments /** list<string> */): int /** int32; process exit status */
+	/**
+	 * Explicit CLI inventory is a bounded input adapter, not a project-config or discovery system.
+	 *
+	 * Return: process exit status.
+	 */
+	public static function run(array $arguments /** list<string> */): int /** int32 */
 	{
 		if ((count($arguments) < 8) || (((count($arguments) - 6) % 2) !== 0)) {
-			fwrite(STDERR, "Usage: php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n");
+			fwrite(\STDERR,
+				"Usage: php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n");
 			return 2;
 		}
 		$requests = [];
@@ -43,13 +53,19 @@ final class Program_Command
 		return self::report((new Project_Compiler())->compile($session, $arguments[4], $arguments[5]));
 	}
 
-	/** Host presentation is separate from compilation and remains compatible with existing CLI consumers. */
-	private static function report(array $result /** compilation report */): int /** int32; process exit status */
+	/**
+	 * Host presentation is separate from compilation and remains compatible with existing CLI
+	 * consumers.
+	 *
+	 * $result: compilation report.
+	 * Return: process exit status.
+	 */
+	private static function report(array $result /** array<string,mixed> */): int /** int32 */
 	{
 		if (isset($result['changes'])) {
 			$result['changes'] = (object) $result['changes'];
 		}
-		fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+		fwrite(\STDOUT, json_encode($result, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n");
 		return 0;
 	}
 }

@@ -92,7 +92,8 @@ For all PHP compiler work, maintain the adjacent native-intent comments specifie
 in [coding style](docs/code_style.md#native-size-and-collection-intent): integer
 properties, parameters and returns need reviewed widths/ranges; arrays need
 element/key or shape descriptions; integer enums declare backing intent once.
-Annotate constants where representation matters. These are documentation, not
+Annotate constants where representation matters. Keep only the type/shape inline; put explanations above the declaration or statement,
+using the writing guide's method-doc/local-comment rules. These are documentation, not
 converter directives or PHP storage claims. Preserve runtime checks and signed
 rejection paths; do not invent widths or annotate ordinary locals mechanically.
 
@@ -148,8 +149,8 @@ a slow API call. Do not claim retry or network timings that the logs do not expo
 
 Use the focused commands in [README.md](README.md) for affected behavior. PHP
 checks do not prove native portability. Do not automatically run donor conversion,
-native validation, legacy STAN, LLVM work or the donor's test pool. No local style
-checker has been imported; review presentation rules directly.
+native validation, legacy STAN, LLVM work or the donor's test pool. Run `python3 -B v0.2/compiler/tools/check_style.py` for mechanical PHP style checks;
+review ownership meaning and the remaining presentation rules directly.
 
 Formatting-only work preserves behavior, APIs, ownership, literal contents and
 statement order. Keep current guidance and unresolved debt with their owners;

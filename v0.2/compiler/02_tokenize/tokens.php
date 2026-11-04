@@ -3,9 +3,12 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** UTF-8 bulk lexer for the PHP bootstrap; preserves byte spans and flavor-specific lexical rules. */
+/**
+ * UTF-8 bulk lexer for the PHP bootstrap; preserves byte spans and flavor-specific lexical rules.
+ */
 final class Tokenizer
 {
+	/** CONSTANTS */
 	private const PUNCTUATION /** list<token_kind> */ = [
 		token_kind::ellipsis,
 		token_kind::power_assign,
@@ -64,25 +67,35 @@ final class Tokenizer
 		token_kind::assign,
 	];
 
-	private readonly source_file $source;
-	/** Built once per process; no source state is retained in these lookup tables. */
-	private static array $patterns /** array<string,string>; flavor -> PCRE pattern */ = [];
+	/** STATIC PROPERTIES */
+	/**
+	 * Built once per process; no source state is retained in these lookup tables.
+	 * Maps each flavor to its PCRE pattern.
+	 */
+	private static array $patterns /** array<string,string> */ = [];
 	private static array $punctuation /** array<string,token_kind> */ = [];
 
+	/** PROPERTIES */
+	/** Native non-owning; source retained by the caller during tokenization. */
+	private readonly source_file $source;
+
+	/** CONSTRUCTOR */
 	public function __construct(source_file $source)
 	{
 		$this->source = $source;
 	}
 
+	/** METHODS */
 	/** Publish only a complete generation; UTF-8 or lexical failures expose no partial tokens. */
 	public function tokenize(): token_list
 	{
 		$source = $this->source;
 		$pattern = self::pattern($source->flavor);
-		$result = preg_match_all($pattern, $source->content, $matches, PREG_OFFSET_CAPTURE);
+		$result = preg_match_all($pattern, $source->content, $matches, \PREG_OFFSET_CAPTURE);
 		if ($result === false) {
-			if (preg_last_error() === PREG_BAD_UTF8_ERROR) {
-				throw new diagnostic($source, self::invalid_utf8_offset($source->content), 'Invalid UTF-8 source');
+			if (preg_last_error() === \PREG_BAD_UTF8_ERROR) {
+				throw new diagnostic($source, self::invalid_utf8_offset($source->content),
+					'Invalid UTF-8 source');
 			}
 			throw new diagnostic($source, 0, 'Tokenizer regular expression failed: ' . preg_last_error_msg());
 		}
@@ -97,22 +110,31 @@ final class Tokenizer
 			$end = $start + $length;
 			$first = $word[0];
 			if (str_contains(" \t\r\n", $first) || str_starts_with($word, '//')
-				|| (($source->flavor === flavor::php) && ($first === '#') && !str_starts_with($word, '#['))) {
+				|| (($source->flavor === flavor::php) && ($first === '#') && (!str_starts_with($word,
+							'#[')))) {
 				continue;
 			}
 			if (str_starts_with($word, '/*')) {
-				if (($length < 4) || !str_ends_with($word, '*/')) { throw new diagnostic($source, $start, 'Unterminated block comment'); }
+				if (($length < 4) || (!str_ends_with($word, '*/'))) {
+					throw new diagnostic($source, $start, 'Unterminated block comment');
+				}
 				continue;
 			}
 			if (($first === '"') || ($first === "'")) {
-				if (!self::closed_quote($word)) { throw new diagnostic($source, $start, 'Unterminated quoted string'); }
+				if (!self::closed_quote($word)) {
+					throw new diagnostic($source, $start, 'Unterminated quoted string');
+				}
 				$kind = $first === '"' ? token_kind::double_string : token_kind::single_string;
 			}
 			elseif (($first === '$') && ($source->flavor === flavor::php)) {
-				if ($length === 1) { throw new diagnostic($source, $start, 'Expected variable name'); }
+				if ($length === 1) {
+					throw new diagnostic($source, $start, 'Expected variable name');
+				}
 				$kind = token_kind::variable;
 			}
-			elseif ((($first >= '0') && ($first <= '9')) || (($first === '.') && ($length > 1) && ($word[1] >= '0') && ($word[1] <= '9'))) {
+			elseif ((($first >= '0') && ($first <= '9')) || (($first === '.') && ($length > 1) && ($word[1] >= '0')
+					&& ($word[1] <= '9')))
+			{
 				// The regex retains incomplete exponents so errors stay anchored at the number's start.
 				$last = $word[$length - 1];
 				if (str_contains('eE+-', $last)) {
@@ -144,13 +166,18 @@ final class Tokenizer
 		return new token_list($source, $tokens);
 	}
 
+	/** STATIC METHODS */
 	/** A failed quote match consumes the remaining source once, avoiding repeated suffix scans. */
 	private static function closed_quote(string $word): bool
 	{
 		$last = strlen($word) - 1;
-		if (($last === 0) || ($word[$last] !== $word[0])) { return false; }
+		if (($last === 0) || ($word[$last] !== $word[0])) {
+			return false;
+		}
 		$index = $last - 1;
-		while (($index > 0) && ($word[$index] === '\\')) { $index--; }
+		while (($index > 0) && ($word[$index] === '\\')) {
+			$index--;
+		}
 		return (($last - 1 - $index) % 2) === 0;
 	}
 
@@ -159,10 +186,15 @@ final class Tokenizer
 		return ($byte === '_') || (($byte >= 'a') && ($byte <= 'z')) || (($byte >= 'A') && ($byte <= 'Z'));
 	}
 
-	/** Match complete lexemes, trivia and error openers; the final alternative consumes unsupported code points. */
+	/**
+	 * Match complete lexemes, trivia and error openers; the final alternative consumes unsupported
+	 * code points.
+	 */
 	private static function pattern(flavor $flavor): string
 	{
-		if (isset(self::$patterns[$flavor->value])) { return self::$patterns[$flavor->value]; }
+		if (isset(self::$patterns[$flavor->value])) {
+			return self::$patterns[$flavor->value];
+		}
 		$parts = [];
 		foreach (self::PUNCTUATION as $kind) {
 			$spelling = $kind->label();
@@ -172,38 +204,52 @@ final class Tokenizer
 			}
 		}
 		$trivia = '[ \t\r\n]++|//[^\r\n]*+|/\*[^*]*+(?:\*(?!/)[^*]*+)*+\*/|/\*[\s\S]*+\z';
-		if ($flavor === flavor::php) { $trivia .= '|\#(?!\[)[^\r\n]*+'; }
+		if ($flavor === flavor::php) {
+			$trivia .= '|\#(?!\[)[^\r\n]*+';
+		}
 		$strings = <<<'REGEX'
 "[^"\\]*+(?:\\[\s\S][^"\\]*+)*+"|'[^'\\]*+(?:\\[\s\S][^'\\]*+)*+'
 REGEX;
 		$names = match ($flavor) {
 			flavor::php => '\$[A-Za-z_][A-Za-z_0-9]*+|[A-Za-z_][A-Za-z_0-9]*+',
-			flavor::cpp => '[A-Za-z_][A-Za-z_0-9]*+',
-			flavor::js => '[A-Za-z_$][A-Za-z_$0-9]*+',
+				flavor::cpp => '[A-Za-z_][A-Za-z_0-9]*+',
+				flavor::js => '[A-Za-z_$][A-Za-z_$0-9]*+',
 		};
 		$numbers = '(?:[0-9]++(?:\.[0-9]*+)?|\.[0-9]++)(?:[eE][+-]?[0-9]*+)?';
 		return self::$patterns[$flavor->value] = '~(?:' . $trivia . '|' . $strings . '|' . $names . '|'
 			. $numbers . '|' . implode('|', $parts) . '|["\'][\s\S]*+\z|[\s\S])~u';
 	}
 
-	/** Slow failure-only locator: report the start of the first invalid UTF-8 sequence, not a PCRE offset guess. */
-	private static function invalid_utf8_offset(string $text): int /** uint32; byte offset */
+	/**
+	 * Slow failure-only locator: report the start of the first invalid UTF-8 sequence, not a PCRE
+	 * offset guess.
+	 *
+	 * Return: byte offset.
+	 */
+	private static function invalid_utf8_offset(string $text): int /** uint32 */
 	{
 		$size = strlen($text);
 		for ($offset = 0; $offset < $size;)
 		{
 			$lead = ord($text[$offset]);
-			if ($lead < 0x80) { $offset++; continue; }
+			if ($lead < 0x80) {
+				$offset++;
+				continue;
+			}
 			$length = match (true) {
-				$lead >= 0xC2 && $lead <= 0xDF => 2,
-				$lead >= 0xE0 && $lead <= 0xEF => 3,
-				$lead >= 0xF0 && $lead <= 0xF4 => 4,
-				default => 0,
+				($lead >= 0xC2) && ($lead <= 0xDF) => 2,
+					($lead >= 0xE0) && ($lead <= 0xEF) => 3,
+					($lead >= 0xF0) && ($lead <= 0xF4) => 4,
+					default => 0,
 			};
-			if (($length === 0) || ($offset + $length > $size)) { return $offset; }
+			if (($length === 0) || ($offset + $length > $size)) {
+				return $offset;
+			}
 			for ($index = 1; $index < $length; $index++) {
 				$byte = ord($text[$offset + $index]);
-				if (($byte < 0x80) || ($byte > 0xBF)) { return $offset; }
+				if (($byte < 0x80) || ($byte > 0xBF)) {
+					return $offset;
+				}
 			}
 			$second = ord($text[$offset + 1]);
 			if ((($lead === 0xE0) && ($second < 0xA0)) || (($lead === 0xED) && ($second > 0x9F))

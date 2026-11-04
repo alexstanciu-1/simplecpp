@@ -31,8 +31,9 @@ final class Cpp_Program
 				$links = array_merge($links, $module->artifacts);
 			}
 		}
-		sort($native, SORT_STRING);
-		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native, array_values(array_unique($links)));
+		sort($native, \SORT_STRING);
+		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native,
+			array_values(array_unique($links)));
 	}
 
 	public static function empty_unit(): string
@@ -46,9 +47,8 @@ final class Cpp_Program
 		$units = [];
 		$files = [];
 		$paths = array_map('strval', array_keys($bodies));
-		sort($paths, SORT_STRING);
-		foreach ($paths as $path)
-		{
+		sort($paths, \SORT_STRING);
+		foreach ($paths as $path) {
 			$unit = 'units/' . hash('sha256', $path) . '.cpp';
 			$units[$path] = $unit;
 			$files[$unit] = $bodies[$path];

@@ -16,15 +16,20 @@ final class ast_string_expression extends ast_expression
 {
 	/** Prepared fact: output-only decoded bytes; null means unprepared, empty string is valid. */
 	protected ?string $decoded_bytes = null;
+
 	public function settle_bytes(string $bytes): void
 	{
-		if ($this->decoded_bytes !== null) { throw new \LogicException('String is already decoded'); }
+		if ($this->decoded_bytes !== null) {
+			throw new \LogicException('String is already decoded');
+		}
 		$this->decoded_bytes = $bytes;
 	}
+
 	public function bytes(): string
 	{
 		return $this->decoded_bytes ?? throw new \LogicException('String is not decoded');
 	}
+
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
@@ -44,9 +49,15 @@ final class ast_string_expression extends ast_expression
  */
 final class ast_echo_statement extends ast_statement
 {
+	/** Native owning; echo operand syntax child. */
 	public readonly ast_expression $value;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, ast_expression $value)
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
+		ast_expression $value)
 	{
 		$this->value = $value;
 		parent::__construct($start, $end);

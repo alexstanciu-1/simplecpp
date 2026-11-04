@@ -8,11 +8,16 @@ namespace scpp\compiler;
  */
 final class Compiler_Cli
 {
-	/** Inspect complete token or syntax generations; duplicate errors retain complete syntax JSON; syntax failures produce no partial stdout. */
-	public static function run(array $arguments /** list<string> */): int /** int32; process exit status 0..2 */
+	/**
+	 * Inspect complete token or syntax generations; duplicate errors retain complete syntax JSON;
+	 * syntax failures produce no partial stdout.
+	 *
+	 * Return: process exit status 0..2.
+	 */
+	public static function run(array $arguments /** list<string> */): int /** int32 */
 	{
 		if ((count($arguments) <= 1) || (($arguments[1] ?? null) === '--help')) {
-			fwrite(STDOUT, self::usage());
+			fwrite(\STDOUT, self::usage());
 			return 0;
 		}
 		$command = $arguments[1];
@@ -22,47 +27,54 @@ final class Compiler_Cli
 				return $command === 'project' ? Program_Command::project($arguments) : Program_Command::run($arguments);
 			}
 			catch (\RuntimeException $error) {
-				fwrite(STDERR, $error->getMessage() . "\n");
+				fwrite(\STDERR, $error->getMessage() . "\n");
 				return 1;
 			}
 		}
-		if ($command === 'frontend') {
-			if (count($arguments) < 3 || count($arguments) > 4) {
-				fwrite(STDERR, self::usage());
+		if ($command === 'frontend')
+		{
+			if ((count($arguments) < 3) || (count($arguments) > 4)) {
+				fwrite(\STDERR, self::usage());
 				return 2;
 			}
 			try {
 				$result = Frontend_Service::request($arguments[2], $arguments[3] ?? 'frontend');
-				fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+				fwrite(\STDOUT, json_encode($result, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n");
 				return 0;
-			} catch (\RuntimeException $error) {
-				fwrite(STDERR, $error->getMessage() . "\n");
+			}
+			catch (\RuntimeException $error) {
+				fwrite(\STDERR, $error->getMessage() . "\n");
 				return 1;
 			}
 		}
 		$required = match ($command) {
 			'tokens', 'parse', 'collect' => 4,
-			'prepare' => 5,
-			'cpp' => 6,
-			default => 0,
+				'prepare' => 5,
+				'cpp' => 6,
+				default => 0,
 		};
 		if (count($arguments) !== $required) {
-			fwrite(STDERR, self::usage());
+			fwrite(\STDERR, self::usage());
 			return 2;
 		}
 		$flavor = flavor::tryFrom($arguments[2]);
 		if ($flavor === null) {
-			fwrite(STDERR, "Flavor must be cpp, php or js\n");
+			fwrite(\STDERR, "Flavor must be cpp, php or js\n");
 			return 2;
 		}
-		try {
+		try
+		{
 			if (in_array($command, ['collect', 'prepare', 'cpp'], true)) {
 				return self::compile($arguments, $flavor);
 			}
-			if ($arguments[1] === 'parse') {
+			if ($arguments[1] === 'parse')
+			{
 				$file = (new Source_Frontend())->parse_file($arguments[3], $flavor);
-				fwrite(STDOUT, json_encode(Syntax_Inspection::file($file), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
-				if ($file->diagnostics !== []) { throw new diagnostic_group($file->diagnostics); }
+				fwrite(\STDOUT, json_encode(Syntax_Inspection::file($file), \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT)
+					. "\n");
+				if ($file->diagnostics !== []) {
+					throw new diagnostic_group($file->diagnostics);
+				}
 				return 0;
 			}
 			$list = (new Source_Frontend())->scan_file($arguments[3], $flavor);
@@ -72,14 +84,18 @@ final class Compiler_Cli
 				$rows[] = ['kind' => $token->kind->label(), 'offset' => $token->offset, 'length' => $token->length,
 					'text_hex' => bin2hex($list->text_at($index))];
 			}
-			fwrite(STDOUT, json_encode(['flavor' => $flavor->value, 'tokens' => $rows], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+			fwrite(\STDOUT, json_encode(['flavor' => $flavor->value, 'tokens' => $rows],
+					\JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT)
+				. "\n");
 			return 0;
 		}
 		catch (\RuntimeException $error) {
-			fwrite(STDERR, $error->getMessage() . "\n");
+			fwrite(\STDERR, $error->getMessage() . "\n");
 			return 1;
 		}
 	}
+
+	/** Provide the command synopsis used by help and usage-error responses. */
 	private static function usage(): string
 	{
 		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
@@ -90,8 +106,12 @@ final class Compiler_Cli
 			. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
 	}
 
-	/** Keep stage inspection separate from the final, complete C++ file publication. */
-	private static function compile(array $arguments /** list<string> */, flavor $flavor): int /** int32; exit status */
+	/**
+	 * Keep stage inspection separate from the final, complete C++ file publication.
+	 *
+	 * Return: exit status.
+	 */
+	private static function compile(array $arguments /** list<string> */, flavor $flavor): int /** int32 */
 	{
 		$source = File_Loader::load($arguments[3], $flavor);
 		$collection = (new Source_Frontend())->collect($source);
@@ -117,8 +137,10 @@ final class Compiler_Cli
 				$data = ['output' => $output];
 			}
 		}
-		fwrite(STDOUT, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
-		if ($collection->diagnostics !== []) { throw new diagnostic_group($collection->diagnostics); }
+		fwrite(\STDOUT, json_encode($data, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n");
+		if ($collection->diagnostics !== []) {
+			throw new diagnostic_group($collection->diagnostics);
+		}
 		return 0;
 	}
 

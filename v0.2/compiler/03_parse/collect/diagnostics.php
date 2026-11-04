@@ -15,16 +15,23 @@ final class Declaration_Diagnostics
 	{
 		$errors = [];
 		$first = [];
-		foreach ($nodes as $node) {
+		foreach ($nodes as $node)
+		{
 			$key = $node->symbol_key();
-			if (isset($first[$key])) { $errors[] = self::duplicate($node, $first[$key], 'function'); }
-			else { $first[$key] = $node; }
+			if (isset($first[$key])) {
+				$errors[] = self::duplicate($node, $first[$key], 'function');
+			}
+			else {
+				$first[$key] = $node;
+			}
 			array_push($errors, ...self::locals($node->body()));
 		}
 		return self::ordered($errors);
 	}
 
-	/** Publication orders public declarations by source path and position for deterministic originals. */
+	/**
+	 * Publication orders public declarations by source path and position for deterministic originals.
+	 */
 	public static function functions(scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = [];
@@ -52,10 +59,15 @@ final class Declaration_Diagnostics
 	public static function program(array $files /** array<string,ast_file_node> */, scope $symbols): array /** list<diagnostic> */
 	{
 		$errors = self::functions($symbols);
-		foreach ($files as $file) {
-			foreach ($file->functions() as $function) { array_push($errors, ...self::locals($function->body())); }
+		foreach ($files as $file)
+		{
+			foreach ($file->functions() as $function) {
+				array_push($errors, ...self::locals($function->body()));
+			}
 			$main = $file->main();
-			if ($main !== null) { array_push($errors, ...self::locals($main->body())); }
+			if ($main !== null) {
+				array_push($errors, ...self::locals($main->body()));
+			}
 		}
 		return self::ordered($errors);
 	}

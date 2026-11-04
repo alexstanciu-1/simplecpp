@@ -6,13 +6,18 @@ namespace scpp\compiler;
 /** Immutable input snapshot; every downstream span refers to these exact bytes. */
 final readonly class source_file
 {
-	/** @var list<int> */
-	private array $line_starts /** list<uint32>; element offsets, count can reach 0x100000000 */;
-
+	/** PROPERTIES */
+	/**
+	 * @var list<int>
+	 * Element offsets, count can reach 0x100000000.
+	 */
+	private array $line_starts /** list<uint32> */;
 	public string $path;
 	public string $content;
 	public flavor $flavor;
 
+	/** CONSTRUCTOR */
+	/** Retain immutable source bytes and build the line-start index for diagnostics. */
 	public function __construct(string $path, string $content, flavor $flavor)
 	{
 		$this->path = $path;
@@ -31,19 +36,27 @@ final readonly class source_file
 		$this->line_starts = $starts;
 	}
 
-	/** Return one-based line and byte column, including the EOF position. */
-	public function location(int $offset /** uint32; byte position including EOF */): array /** array{line:uint64,column:uint64}; each in 1..0x100000000 */
+	/** METHODS */
+	/**
+	 * Return one-based line and byte column, including the EOF position.
+	 *
+	 * $offset: byte position including EOF.
+	 * Return: each in 1..0x100000000.
+	 */
+	public function location(int $offset /** uint32 */): array /** array{line:uint64,column:uint64} */
 	{
 		if (($offset < 0) || ($offset > strlen($this->content))) {
 			throw new \OutOfRangeException('Source offset is outside its snapshot');
 		}
 		$low = 0;
 		$high = count($this->line_starts);
-		while (($low + 1) < $high) {
+		while (($low + 1) < $high)
+		{
 			$middle = intdiv($low + $high, 2);
 			if ($this->line_starts[$middle] <= $offset) {
 				$low = $middle;
-			} else {
+			}
+			else {
 				$high = $middle;
 			}
 		}

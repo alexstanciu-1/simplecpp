@@ -9,7 +9,8 @@ namespace scpp\compiler {
 		return \file_get_contents($path);
 	}
 }
-namespace {
+namespace
+{
 	require_once __DIR__ . '/../boot.php';
 	use scpp\compiler\{Project_Compiler, Program_Frontend, entry_target, change_status};
 
@@ -40,14 +41,16 @@ namespace {
 			file_put_contents($main_path, 'helper(); return 8;');
 			file_put_contents($helper_path, $declaration);
 			$first = $compiler->frontend($app);
-			verify($first->previous === null && $first->entry->sources[$main_name]->status === change_status::added, 'Cold path');
+			verify(($first->previous === null) && ($first->entry->sources[$main_name]->status === change_status::added),
+				'Cold path');
 			$main = $first->entry->sources[$main_name]->ast;
 			$call = $main->main()->body()->statements[0];
 			$key = $call->symbol_key();
 			verify($key === 'func:helper', 'Call handle is not canonical');
 			$initial_helper = $first->scope->resolve($key);
 			verify($initial_helper->symbol_key() === $key, 'Declaration handle mismatch');
-			verify($first->scope->resolve('helper') === null && $first->scope->resolve('func:main') === null, 'Index leaked local/private keys');
+			verify(($first->scope->resolve('helper') === null) && ($first->scope->resolve('func:main') === null),
+				'Index leaked local/private keys');
 			try {
 				$initial_helper->return_type_def();
 				throw new RuntimeException('Frontend performed preparation');
@@ -56,48 +59,66 @@ namespace {
 			}
 			$second = $compiler->frontend($app, $first);
 			verify($second->previous === $first, 'Previous generation not retained');
-			verify($second->entry->sources[$main_name] !== $first->entry->sources[$main_name], 'Source records shared across generations');
+			verify($second->entry->sources[$main_name] !== $first->entry->sources[$main_name],
+				'Source records shared across generations');
 			verify($second->entry->sources[$main_name]->ast === $main, 'Unchanged AST copied or reparsed');
-			verify($second->entry->sources[$main_name]->ast->tokens === $main->tokens, 'Unchanged tokens copied');
-			verify($GLOBALS['reads'][$main_path] === 1 && $GLOBALS['reads'][$helper_path] === 1, 'Unchanged source read again');
+			verify($second->entry->sources[$main_name]->ast->tokens === $main->tokens,
+				'Unchanged tokens copied');
+			verify(($GLOBALS['reads'][$main_path] === 1) && ($GLOBALS['reads'][$helper_path] === 1),
+				'Unchanged source read again');
 			verify($second->scope->resolve($key) === $initial_helper, 'Unchanged declaration copied');
-			verify($first->entry->sources[$main_name]->status === change_status::added, 'Previous status mutated');
+			verify($first->entry->sources[$main_name]->status === change_status::added,
+				'Previous status mutated');
 			file_put_contents($helper_path, $declaration . ' // changed');
 			$third = $compiler->frontend($app, $second);
-			verify($third->entry->sources[$helper_name]->status === change_status::changed, 'Changed status');
-			verify($third->scope->resolve($key) !== $initial_helper, 'Changed declaration retained old destination');
-			verify($third->entry->sources[$main_name]->ast === $main && $GLOBALS['reads'][$main_path] === 1, 'Dependent caller reparsed');
-			verify($second->scope === $third->scope && $second->scope->resolve($key) === $third->scope->resolve($key), 'Stable index was replaced');
-			verify($second->entry->sources[$helper_name]->ast->tokens->source->content === $declaration, 'Previous content overwritten');
+			verify($third->entry->sources[$helper_name]->status === change_status::changed,
+				'Changed status');
+			verify($third->scope->resolve($key) !== $initial_helper,
+				'Changed declaration retained old destination');
+			verify(($third->entry->sources[$main_name]->ast === $main) && ($GLOBALS['reads'][$main_path] === 1),
+				'Dependent caller reparsed');
+			verify(($second->scope === $third->scope) && ($second->scope->resolve($key) === $third->scope->resolve($key)),
+				'Stable index was replaced');
+			verify($second->entry->sources[$helper_name]->ast->tokens->source->content === $declaration,
+				'Previous content overwritten');
 			$moved_path = $app . '/moved.' . $flavor;
 			rename($helper_path, $moved_path);
 			$moved = $compiler->frontend($app, $third);
-			verify(count($moved->removed_sources) === 1 && $moved->removed_sources[0]->status === change_status::removed, 'Removal not retained');
-			verify($moved->removed_sources[0]->ast === $third->entry->sources[$helper_name]->ast, 'Removed AST copied/lost');
-			verify($moved->scope->resolve($key)->root() === $moved->entry->sources[basename($moved_path)]->ast, 'Move did not redirect key');
+			verify((count($moved->removed_sources) === 1) && ($moved->removed_sources[0]->status === change_status::removed),
+				'Removal not retained');
+			verify($moved->removed_sources[0]->ast === $third->entry->sources[$helper_name]->ast,
+				'Removed AST copied/lost');
+			verify($moved->scope->resolve($key)->root() === $moved->entry->sources[basename($moved_path)]->ast,
+				'Move did not redirect key');
 			$moved_declaration = $moved->scope->resolve($key);
 			$duplicate_path = $app . '/duplicate.' . $flavor;
 			file_put_contents($duplicate_path, $declaration . ' ' . $declaration);
 			$ambiguous = $compiler->frontend($app, $moved);
-			verify($ambiguous->scope->declarations[$key]->duplicate_element()?->duplicate_element() === $moved_declaration, 'Global duplicate chain lost');
+			verify($ambiguous->scope->declarations[$key]->duplicate_element()?->duplicate_element() === $moved_declaration,
+				'Global duplicate chain lost');
 			$head = $ambiguous->entry->sources[basename($duplicate_path)]->ast->declarations[$key];
 			verify($head->duplicate_element() !== null, 'Declaring-scope duplicate chain lost');
-			verify($moved_declaration->duplicate_element() === null, 'Last declaration must terminate the published chain');
+			verify($moved_declaration->duplicate_element() === null,
+				'Last declaration must terminate the published chain');
 			try {
 				$ambiguous->scope->resolve($key);
 				throw new LogicException('Ambiguous key resolved');
 			}
 			catch (RuntimeException $expected) {
-				verify(str_contains($expected->getMessage(), 'Ambiguous symbol'), 'Unexpected ambiguity error');
+				verify(str_contains($expected->getMessage(), 'Ambiguous symbol'),
+					'Unexpected ambiguity error');
 			}
 			$again = $compiler->frontend($app, $ambiguous);
-			verify($again->entry->sources[basename($duplicate_path)]->ast === $head->root(), 'Duplicate AST not reused');
+			verify($again->entry->sources[basename($duplicate_path)]->ast === $head->root(),
+				'Duplicate AST not reused');
 			verify(count($head->root()->diagnostics) === 1, 'Duplicate diagnostic lost');
 			unlink($duplicate_path);
 			unlink($moved_path);
 			$removed = $compiler->frontend($app, $again);
-			verify($removed->scope->resolve($key) === null && count($removed->removed_sources) === 2, 'Removed symbol still resolves');
-			verify($removed->entry->sources[$main_name]->ast === $main, 'Unresolved call caused frontend mutation');
+			verify(($removed->scope->resolve($key) === null) && (count($removed->removed_sources) === 2),
+				'Removed symbol still resolves');
+			verify($removed->entry->sources[$main_name]->ast === $main,
+				'Unresolved call caused frontend mutation');
 			$failure_path = $app . '/zbad.' . $flavor;
 			file_put_contents($failure_path, 'this is invalid syntax');
 			try {
@@ -106,27 +127,34 @@ namespace {
 			}
 			catch (RuntimeException $expected) {
 			}
-			verify($removed->scope->resolve($key) === null && $removed->entry->sources[$main_name]->ast === $main, 'Failed candidate damaged prior publication');
+			verify(($removed->scope->resolve($key) === null) && ($removed->entry->sources[$main_name]->ast === $main),
+				'Failed candidate damaged prior publication');
 			unlink($failure_path);
 			file_put_contents($helper_path, $declaration);
 			$retry = $compiler->frontend($app, $removed);
-			verify($retry->scope->resolve($key) !== null && $retry->entry->sources[$main_name]->ast === $main, 'Retry/reappearance failed');
+			verify(($retry->scope->resolve($key) !== null) && ($retry->entry->sources[$main_name]->ast === $main),
+				'Retry/reappearance failed');
 			try {
 				(new Program_Frontend())->prepare($retry, new entry_target(31));
 				throw new RuntimeException('Shared frontend generation entered preparation');
 			}
 			catch (LogicException $expected) {
-				verify(str_contains($expected->getMessage(), 'cannot be prepared'), 'Wrong phase-boundary rejection');
+				verify(str_contains($expected->getMessage(), 'cannot be prepared'),
+					'Wrong phase-boundary rejection');
 			}
 			$cold = $compiler->frontend($app);
-			verify($cold->entry->sources[$main_name]->status === change_status::added && $cold->entry->sources[$main_name]->ast !== $main, 'Full frontend path did not start fresh');
-			verify(array_keys($cold->scope->declarations) === array_keys($retry->scope->declarations), 'Incremental symbols differ from clean collection');
+			verify(($cold->entry->sources[$main_name]->status === change_status::added) && ($cold->entry->sources[$main_name]->ast !== $main),
+				'Full frontend path did not start fresh');
+			verify(array_keys($cold->scope->declarations) === array_keys($retry->scope->declarations),
+				'Incremental symbols differ from clean collection');
 		}
 	}
 	finally
 	{
-		$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
-		foreach ($iterator as $file) {
+		$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST);
+		foreach ($iterator as $file)
+		{
 			if ($file->isDir()) {
 				rmdir($file->getPathname());
 			}

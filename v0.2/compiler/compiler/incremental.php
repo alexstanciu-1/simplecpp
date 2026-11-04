@@ -25,7 +25,7 @@ final class Incremental_Frontend
 				throw new \LogicException('Candidate source units must be fresh; reuse occurs at the AST root');
 			}
 		}
-		if (($previous !== null) && (($previous->scope === null) || !$previous->is_current)) {
+		if (($previous !== null) && (($previous->scope === null) || (!$previous->is_current))) {
 			throw new \LogicException('Previous frontend generation must be complete and current');
 		}
 		$candidate->previous = $previous;
@@ -71,9 +71,13 @@ final class Incremental_Frontend
 				}
 				$files[$candidate->source_key($unit)] = $unit->ast;
 			}
-			if ($previous !== null) { $candidate->function_dependencies = $previous->function_dependencies; }
+			if ($previous !== null) {
+				$candidate->function_dependencies = $previous->function_dependencies;
+			}
 			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->function_dependencies);
-			if ($previous !== null) { $previous->is_current = false; }
+			if ($previous !== null) {
+				$previous->is_current = false;
+			}
 			return $candidate;
 		}
 		catch (\Throwable $error)

@@ -12,7 +12,7 @@ final class Cpp_Publication
 	public static function write(string $path, string $text): void
 	{
 		$directory = dirname($path);
-		if (!is_dir($directory) && !@mkdir($directory, 0777, true)) {
+		if ((!is_dir($directory)) && (!@mkdir($directory, 0777, true))) {
 			throw new \RuntimeException('Cannot create output directory: ' . $directory);
 		}
 		$temporary = tempnam($directory, '.scpp-entry-');

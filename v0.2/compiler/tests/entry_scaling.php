@@ -6,7 +6,11 @@ require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Cpp_Publication, Parser, Preparation, Tokenizer, entry_target, flavor, source_file};
 
-function milliseconds(int $start /** int64; monotonic nanoseconds */): float /** float64; elapsed milliseconds */
+/**
+ * $start: monotonic nanoseconds.
+ * Return: elapsed milliseconds.
+ */
+function milliseconds(int $start /** int64 */): float /** float64 */
 {
 	return (hrtime(true) - $start) / 1_000_000;
 }
@@ -52,7 +56,8 @@ try
 				|| ($program->body()->name_lookups !== $count) || (count($collection->main()->body()->references) !== $count)) {
 				throw new RuntimeException('Entry work is not one visit per statement/expression and one lookup per reference');
 			}
-			$runs[] = compact('input_ms', 'tokenize_ms', 'parse_collect_ms', 'prepare_ms', 'render_ms', 'publish_ms');
+			$runs[] = compact('input_ms', 'tokenize_ms', 'parse_collect_ms', 'prepare_ms', 'render_ms',
+				'publish_ms');
 			unset($program, $collection, $tokens, $source, $output);
 		}
 		$median = [];
@@ -68,4 +73,4 @@ try
 finally {
 	unlink($publication);
 }
-echo json_encode($report, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
+echo json_encode($report, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR) . "\n";

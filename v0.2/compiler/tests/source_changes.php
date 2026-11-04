@@ -32,8 +32,9 @@ try
 	$current = Project_Changes::capture($session, $root . '/facts.json', $root . '/out');
 	$removed = Project_Changes::mark($session, $current, $baseline);
 	verify($session->entry->entry->status === change_status::changed, 'Changed status');
-	verify(count($removed) === 1 && $removed[0]->status === change_status::removed, 'Removed unit retained');
-	verify($removed[0]->path === 'other.cpp' && $removed[0]->module === $session->entry, 'Removed source identity');
+	verify((count($removed) === 1) && ($removed[0]->status === change_status::removed), 'Removed unit retained');
+	verify(($removed[0]->path === 'other.cpp') && ($removed[0]->module === $session->entry),
+		'Removed source identity');
 	verify(count($session->units()) === 1, 'Removed source entered active compilation');
 	verify(count(Project_Changes::mark($session, $current, $baseline)) === 1, 'Failure retry lost removal');
 	verify(Project_Changes::mark($session, $current, $current) === [], 'Accepted baseline retained removal');

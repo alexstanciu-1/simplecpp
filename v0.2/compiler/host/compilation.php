@@ -3,7 +3,9 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Transient JSON views expose stage contracts without putting serialization on retained records. */
+/**
+ * Transient JSON views expose stage contracts without putting serialization on retained records.
+ */
 final class Compilation_Inspection
 {
 	/** Collected references deliberately have no resolved binding or type. */
@@ -25,7 +27,8 @@ final class Compilation_Inspection
 		}
 		$result = ['locals' => $locals, 'references' => $references, 'functions' => $functions];
 		if ($file->diagnostics !== []) {
-			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(), $file->diagnostics);
+			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),
+				$file->diagnostics);
 		}
 		return $result;
 	}

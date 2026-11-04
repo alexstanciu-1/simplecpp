@@ -3,7 +3,9 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Canonical builtin definitions for the current subset; enum cases are shared object identities. */
+/**
+ * Canonical builtin definitions for the current subset; enum cases are shared object identities.
+ */
 enum type_definition: int /** uint8 */ {
 	case int64 = 1;
 	case void = 2;
@@ -34,18 +36,23 @@ enum exit_conversion: int /** uint8 */ {
  */
 final readonly class entry_target
 {
-	public int $digits /** uint8; signed value bits, 15..63 */;
+	/** Signed value bits, 15..63. */
+	public int $digits /** uint8 */;
 	public int $minimum /** int64 */;
 	public int $maximum /** int64 */;
 
-	/** Bound the target to integer widths representable by this compiler's int64 model. */
-	public function __construct(int $digits /** uint8; 15..63 */)
+	/**
+	 * Bound the target to integer widths representable by this compiler's int64 model.
+	 *
+	 * $digits: 15..63.
+	 */
+	public function __construct(int $digits /** uint8 */)
 	{
 		if (($digits < 15) || ($digits > 63)) {
 			throw new \InvalidArgumentException('Unsupported native int width');
 		}
 		$this->digits = $digits;
-		$this->maximum = $digits === 63 ? PHP_INT_MAX : (1 << $digits) - 1;
+		$this->maximum = $digits === 63 ? \PHP_INT_MAX : (1 << $digits) - 1;
 		$this->minimum = -$this->maximum - 1;
 	}
 
@@ -62,19 +69,29 @@ final readonly class entry_target
  */
 final readonly class prepared_entry
 {
+	/** PROPERTIES */
+	/** Native shared-owning; retain source syntax for emission. */
 	public ast_file_node $file;
+	/** Native shared-owning; immutable target facts. */
 	public entry_target $target;
 	private int $revision /** uint32 */;
+
+	/** CONSTRUCTOR */
 	public function __construct(ast_file_node $file, entry_target $target)
 	{
 		$this->revision = $file->prepared_revision();
 		$this->file = $file;
 		$this->target = $target;
 	}
+
+	/** METHODS */
 	public function require_prepared(): void
 	{
-		if ($this->revision !== $this->file->prepared_revision()) { throw new \LogicException('Stale entry preparation'); }
+		if ($this->revision !== $this->file->prepared_revision()) {
+			throw new \LogicException('Stale entry preparation');
+		}
 	}
+
 	public function body(): ast_function_body
 	{
 		$this->require_prepared();
@@ -88,29 +105,47 @@ final readonly class prepared_entry
  */
 final readonly class prepared_program
 {
-	/** Retains the graph lifetime for module compilations; null for standalone AST preparation. */
+	/** PROPERTIES */
+	/**
+	 * Retains the graph lifetime for module compilations; null for standalone AST preparation.
+	 * Native shared-owning; retain module/source generation when present.
+	 */
 	public ?compilation_session $session;
 	public string $entry_path;
+	/** Native shared-owning source retention. */
 	public array $files /** array<string,ast_file_node> */;
+	/** Native owning; prepared entry handle. */
 	public prepared_entry $entry;
-	private array $revisions /** array<string,uint32>; completion identities, not semantic facts */;
-	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry, ?compilation_session $session = null)
+	/** Completion identities, not semantic facts. */
+	private array $revisions /** array<string,uint32> */;
+
+	/** CONSTRUCTOR */
+	/** Retain the prepared inputs and capture their completion revisions for later validation. */
+	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry,
+		?compilation_session $session = null)
 	{
 		$this->session = $session;
 		$this->entry_path = $entry_path;
 		$this->files = $files;
 		$this->entry = $entry;
 		$revisions = [];
-		foreach ($files as $path => $file) { $revisions[$path] = $file->prepared_revision(); }
+		foreach ($files as $path => $file) {
+			$revisions[$path] = $file->prepared_revision();
+		}
 		$this->revisions = $revisions;
 	}
+
+	/** METHODS */
+	/** Reject emission through a handle whose source facts were reset or replaced. */
 	public function require_prepared(): void
 	{
-		if ($this->session !== null && $this->session->files() !== $this->files) {
+		if (($this->session !== null) && ($this->session->files() !== $this->files)) {
 			throw new \LogicException('Stale module compilation');
 		}
 		foreach ($this->files as $path => $file) {
-			if ($file->prepared_revision() !== $this->revisions[$path]) { throw new \LogicException('Stale program preparation'); }
+			if ($file->prepared_revision() !== $this->revisions[$path]) {
+				throw new \LogicException('Stale program preparation');
+			}
 		}
 		$this->entry->require_prepared();
 	}

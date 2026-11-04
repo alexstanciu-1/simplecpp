@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-namespace scpp\compiler {
+namespace scpp\compiler
+{
 	/** Count directory reads at the PHP filesystem boundary, without production instrumentation. */
 	function scandir(string $directory): array|false /** list<string> */
 	{
@@ -18,7 +19,8 @@ namespace scpp\compiler {
 	}
 }
 
-namespace {
+namespace
+{
 	require_once __DIR__ . '/../boot.php';
 	use scpp\compiler\{Program_Loader, Project_Changes, Cpp_Bundle, cpp_program_output, flavor};
 
@@ -38,16 +40,19 @@ namespace {
 		file_put_contents($root . '/shared.hpp', '// header');
 		file_put_contents($root . '/facts.json', '{}');
 		$session = Program_Loader::modules([
-			'app' => ['root' => $root, 'entry' => 'main.cpp', 'sources' => ['main.cpp' => flavor::cpp, 'helper.cpp' => flavor::cpp], 'dependencies' => ['lib']],
-			'lib' => ['root' => $root, 'sources' => [], 'dependencies' => []],
-		], 'app');
+				'app' => ['root' => $root, 'entry' => 'main.cpp', 'sources' => ['main.cpp' => flavor::cpp,
+						'helper.cpp' => flavor::cpp], 'dependencies' => ['lib']],
+				'lib' => ['root' => $root, 'sources' => [], 'dependencies' => []],
+			], 'app');
 		$state = Project_Changes::capture($session, $root . '/facts.json', $root . '/out');
 		verify($GLOBALS['directory_reads'][$root] === 1, 'Shared root scanned more than once');
-		verify(!isset($state['other_inputs'][$root . '/main.cpp'])
-			&& !isset($state['other_inputs'][$root . '/helper.cpp']), 'Source metadata duplicated in other inputs');
+		verify((!isset($state['other_inputs'][$root . '/main.cpp']))
+			&& (!isset($state['other_inputs'][$root . '/helper.cpp'])),
+			'Source metadata duplicated in other inputs');
 		verify(isset($state['other_inputs'][$root . '/shared.hpp']), 'Shared header tracking lost');
 		verify($state['modules']['app']['sources']['main.cpp']['size'] === 9, 'Source record incomplete');
-		verify(Project_Changes::valid(json_decode(json_encode($state), true)), 'Saved state does not round trip');
+		verify(Project_Changes::valid(json_decode(json_encode($state), true)),
+			'Saved state does not round trip');
 		verify(!Project_Changes::valid(['version' => 2]), 'Old schema accepted');
 		$output = new cpp_program_output('app/main.cpp', ['app/main.cpp' => 'entry.cpp'], ['entry.cpp' => '// generated']);
 		Cpp_Bundle::write($root . '/out', $output, [], $state);
@@ -57,10 +62,12 @@ namespace {
 		verify(Cpp_Bundle::reuse($root . '/out', $state, $previous) !== null, 'Unchanged bundle not reusable');
 		Cpp_Bundle::write($root . '/out', $output, [], $state, $previous);
 		verify($GLOBALS['file_reads'][$manifest] === 1, 'Manifest reread during reuse or publication');
-		verify(Project_Changes::capture($session, $root . '/facts.json', $root . '/out') === $state, 'Output affected inputs');
+		verify(Project_Changes::capture($session, $root . '/facts.json', $root . '/out') === $state,
+			'Output affected inputs');
 		verify($GLOBALS['directory_reads'][$root] === 2, 'Final capture reused stale scan state');
 		file_put_contents($root . '/shared.hpp', '// changed header');
-		verify(Project_Changes::capture($session, $root . '/facts.json', $root . '/out') !== $state, 'Shared header change missed');
+		verify(Project_Changes::capture($session, $root . '/facts.json', $root . '/out') !== $state,
+			'Shared header change missed');
 	}
 	finally
 	{

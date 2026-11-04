@@ -5,8 +5,9 @@ Doc Status: supporting
 Applies to handwritten compiler implementation, helpers, tests and tools under
 `v0.2/compiler/`. Generated output and historical evidence are excluded. This is
 implementation discipline, not a restriction on the language being compiled.
-Existing files are not claimed to comply fully; apply these rules to new and
-touched code without turning a bounded task into a whole-tree formatting pass.
+Apply these rules to all handwritten code in this compiler tree and preserve them
+in subsequent changes. PHP-specific layout and type rules apply to PHP; Python
+host/test harnesses retain Python syntax and four-space indentation.
 
 ## PHP types and declarations
 
@@ -45,7 +46,8 @@ method parameters and returns. Use adjacent comments, for example:
 
 ```php
 public int $offset /** uint32 */;
-public int $length /** uint32; range 1..0xFFFFFF */;
+/** Range 1..0xFFFFFF. */
+public int $length /** uint32 */;
 public array $tokens /** list<token> */;
 
 public function offset(): int /** uint32 */
@@ -57,8 +59,48 @@ public function offset(): int /** uint32 */
 - Annotate integer declarations with a reviewed `int8/16/32/64` or
   `uint8/16/32/64` intent. Put parameter annotations after the parameter name,
   before any default value; put return annotations after the PHP return type.
-- Storage width and permitted range are separate. Use `uint32` plus the 24-bit
-  token-length range, not an invented `uint24` storage type. Document narrower
+- All inline type annotations contain only the native type or collection shape.
+  This applies to properties, constants, enum backing types, parameters, returns
+  and any annotated locals. Move explanations, ranges, units, invariants and
+  ownership intent above the owning declaration or statement. For properties,
+  use a doc comment above the property; do not append prose after it. For example:
+
+  ```php
+  /** Keyed by body statement position; native non-owning statement index. */
+  public readonly array $locals /** array<uint32,ast_local_declaration> */;
+  ```
+
+- Put parameter and return explanations in the function/method's doc comment,
+  naming each parameter or the return value so the association remains clear.
+  The same rule applies to constructors and closures:
+
+  ```php
+  /**
+   * $start: token position.
+   * $end: exclusive token position.
+   */
+  public function __construct(int $start /** uint32 */, int $end /** uint32 */)
+  {
+  }
+  ```
+
+- Put a one-line local explanation in a `//` comment immediately above its
+  statement. For multiline explanations, use a `/** ... */` doc comment with the
+  normal multiline layout. Keep only the type beside the variable:
+
+  ```php
+  // Token position.
+  $value /** uint32 */ = $this->value();
+
+  /**
+   * Token position in the retained generation.
+   * Includes the EOF boundary.
+   */
+  $value /** uint32 */ = $this->value();
+  ```
+
+- Storage width and permitted range are separate. Use inline `uint32` plus the 24-bit
+  token-length range in the preceding doc comment, not an invented `uint24` storage type. Document narrower
   ranges and sentinel values when they matter.
 - Put numeric enum backing intent once beside its declaration; do not repeat it
   at every typed use. String-backed `flavor` retains its PHP labels: no native
@@ -99,6 +141,19 @@ validates their source-language type. Do not annotate those spellings as host in
 If a bound is unknown, record that uncertainty and its owner rather than selecting
 a width by analogy. Revisit annotations when the owning contract changes.
 
+## Native reference ownership
+
+Document retained object references and object collections as owning, shared-owning,
+or non-owning in a doc comment above the property. Name the lifetime owner when it
+is not clear. For collections, describe element/reference ownership separately from
+the container. Enum-valued properties are values and do not need reference ownership.
+
+For example, a function body owns its scope and statement nodes; scope parents,
+declaration indexes and resolved declaration links are non-owning. Retained source
+generations may be shared. `readonly` prevents reassignment and does not define
+ownership. These comments describe native intent; PHP still uses ordinary object
+references, and this convention does not introduce PHP `WeakReference` objects.
+
 ## Layout
 
 - Use tabs for block indentation, displayed at four columns. Indent continuation
@@ -134,9 +189,31 @@ a width by analogy. Revisit annotations when the owning contract changes.
 - Multiline block comments/docblocks put `/*` or `/**` on its own line, text on
   subsequent lines prefixed with aligned ` *`, and ` */` on its own line.
   Single-line comments and type annotations may remain on one line.
-- Order methods by useful call flow: construction/initialization, entry points,
-  supporting helpers. Preserve an already clear order. Do not move methods between
-  owners or invent wrappers for presentation alone.
+- Inside each class, place member groups in this order. The corresponding markers
+  are used only when the size thresholds below are both met:
+
+  1. Constants: `/** CONSTANTS */`
+  2. Static properties: `/** STATIC PROPERTIES */`
+  3. Instance properties: `/** PROPERTIES */`
+  4. Constructor: `/** CONSTRUCTOR */`
+  5. Destructor: `/** DESTRUCTOR */`
+  6. Instance methods: `/** METHODS */`
+  7. Static methods: `/** STATIC METHODS */`
+
+  Always separate nonempty groups with one blank line. Add group markers **only
+  when the class has more than two nonempty groups and more than five declared
+  members** (both conditions must hold). Count each constant, property, constructor,
+  destructor and method as one member; inherited members and trait-use directives
+  do not count. Static and instance members belong to their respective groups.
+
+  For qualifying classes, mark every nonempty group, placing the marker before
+  any documentation attached to its first member. For smaller classes, omit all
+  group markers while keeping the same ordering and blank-line separation. Empty
+  groups are always omitted. Group markers do not replace purpose, type or
+  ownership documentation.
+- Within each method group, order by useful call flow: entry points, then supporting
+  helpers. Do not move methods between owners or invent wrappers for presentation
+  alone.
 
 ## Representation and processing
 
@@ -172,7 +249,14 @@ and [C++ style](../../../compiler/my-try-cpp/docs/code_style.md), with the expli
 property rule and current PHP-first direction taking precedence. Their converter,
 build, storage and lifecycle requirements are not imported by these style rules.
 
-Review grouping, purpose comments, ownership and method order manually. A generic
-formatter does not enforce all these conventions. There is no imported local style
-checker; use focused behavioral tests when changing executable code, as described
-in the [compiler README](../README.md).
+Run `python3 -B v0.2/compiler/tools/check_style.py` from the repository root.
+The local PHP-token-based check covers tabs, multiline blocks, named-function brace
+placement, long-function purpose comments, type role comments and type-only inline
+annotations, class group ordering/separation and the conditional marker thresholds.
+It is registered as `compiler_style` in CTest. Strings and embedded
+source samples are excluded from layout checks.
+
+Review grouping, purpose-comment quality, ownership meaning, native widths, method
+order and line wrapping manually; the mechanical check does not prove these.
+For a formatting pass, compare executable tokens and literal contents, then run
+focused behavioral tests as described in the [compiler README](../README.md).

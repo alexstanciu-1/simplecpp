@@ -19,7 +19,9 @@ final class Program_Frontend
 		return $this->run($session, $target, static fn(source_unit $unit): source_file => $sources[$unit->path]);
 	}
 
-	/** Rebuild all source results; this establishes no incremental reuse or module visibility policy. */
+	/**
+	 * Rebuild all source results; this establishes no incremental reuse or module visibility policy.
+	 */
 	private function run(compilation_session $session, entry_target $target, \Closure $load): prepared_program
 	{
 		if ($session->scope !== null) {
@@ -31,7 +33,8 @@ final class Program_Frontend
 		}
 		$frontend = new Source_Frontend();
 		$publication = new Symbol_Publication();
-		try {
+		try
+		{
 			foreach ($units as $unit) {
 				$unit->ast = $frontend->collect($load($unit), $publication);
 			}

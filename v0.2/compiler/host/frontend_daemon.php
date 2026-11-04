@@ -5,7 +5,8 @@ require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/frontend_service.php';
 try {
 	\scpp\compiler\Frontend_Service::serve($argv[1] ?? '');
-} catch (Throwable $error) {
-	fwrite(STDERR, $error->getMessage() . "\n");
+}
+catch (Throwable $error) {
+	fwrite(\STDERR, $error->getMessage() . "\n");
 	exit(1);
 }

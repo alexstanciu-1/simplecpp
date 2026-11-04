@@ -15,32 +15,25 @@ namespace scpp\compiler;
  */
 final class ast_file_node extends ast_node
 {
+	/** PROPERTIES */
+	/** Native shared-owning; retained token generation. */
 	public readonly token_list $tokens;
+	/** Native owning; file reference scope. */
 	public readonly scope $scope;
 	/** Preparation run identity; invalidates old emission handles even if reanalysis later succeeds. */
 	private int $preparation_revision /** uint32 */ = 0;
 	private bool $prepared = false;
-	public function begin_preparation(): void
-	{
-		++$this->preparation_revision;
-		$this->prepared = false;
-	}
-	public function settle_preparation(): void
-	{
-		foreach ($this->functions() as $function) { $function->body()->require_prepared(); }
-		$this->main()?->body()->require_prepared();
-		$this->prepared = true;
-	}
-	public function prepared_revision(): int /** uint32 */
-	{
-		if (!$this->prepared) { throw new \LogicException('Source preparation is not complete'); }
-		return $this->preparation_revision;
-	}
-	/** All duplicate declarations found in this completed source; syntax failures still throw. */
+	/**
+	 * All duplicate declarations found in this completed source; syntax failures still throw.
+	 * Native owning diagnostics.
+	 */
 	public readonly array $diagnostics /** list<diagnostic> */;
-	public readonly array $declaration_nodes /** list<ast_function_declaration>; syntax inventory independent of live duplicate chains */;
-	public readonly array $declarations /** array<string,ast_function_declaration>; func:name -> node */;
+	/** Syntax inventory independent of live duplicate chains; native owning syntax inventory. */
+	public readonly array $declaration_nodes /** list<ast_function_declaration> */;
+	/** Func:name -> node; native non-owning first-reference index. */
+	public readonly array $declarations /** array<string,ast_function_declaration> */;
 
+	/** CONSTRUCTOR */
 	public function __construct(token_list $tokens)
 	{
 		parent::__construct(0, count($tokens->tokens));
@@ -49,12 +42,42 @@ final class ast_file_node extends ast_node
 		$this->scope = new scope();
 	}
 
-	/** Retain complete syntax once; file indexes never walk compilation-owned duplicate chains. */
-	public function complete(array $declarations /** array<string,ast_function_declaration>; first references */,
+	/** METHODS */
+	public function begin_preparation(): void
+	{
+		++$this->preparation_revision;
+		$this->prepared = false;
+	}
+
+	public function settle_preparation(): void
+	{
+		foreach ($this->functions() as $function) {
+			$function->body()->require_prepared();
+		}
+		$this->main()?->body()->require_prepared();
+		$this->prepared = true;
+	}
+
+	public function prepared_revision(): int /** uint32 */
+	{
+		if (!$this->prepared) {
+			throw new \LogicException('Source preparation is not complete');
+		}
+		return $this->preparation_revision;
+	}
+
+	/**
+	 * Retain complete syntax once; file indexes never walk compilation-owned duplicate chains.
+	 *
+	 * $declarations: first references.
+	 */
+	public function complete(array $declarations /** array<string,ast_function_declaration> */,
 		array $nodes /** list<ast_function_declaration> */, array $diagnostics /** list<diagnostic> */ = []): void
 	{
 		foreach ($nodes as $declaration) {
-			if ($declaration->parent !== $this) { throw new \LogicException('Invalid AST declaration ownership'); }
+			if ($declaration->parent !== $this) {
+				throw new \LogicException('Invalid AST declaration ownership');
+			}
 			$declaration->body();
 		}
 		$this->declarations = $declarations;
@@ -62,11 +85,18 @@ final class ast_file_node extends ast_node
 		$this->diagnostics = $diagnostics;
 	}
 
-	/** Source-local public functions in syntax order, including invalid duplicates; never follows foreign chains. */
+	/**
+	 * Source-local public functions in syntax order, including invalid duplicates; never follows
+	 * foreign chains.
+	 */
 	public function functions(): array /** list<ast_function_declaration> */
 	{
 		$functions = [];
-		foreach ($this->declaration_nodes as $node) { if (!$node->is_private) { $functions[] = $node; } }
+		foreach ($this->declaration_nodes as $node) {
+			if (!$node->is_private) {
+				$functions[] = $node;
+			}
+		}
 		return $functions;
 	}
 
@@ -75,8 +105,13 @@ final class ast_file_node extends ast_node
 		return $this->declarations['func:main'] ?? null;
 	}
 
-	/** Empty ranges anchor at the next token, or at source EOF after the final token. */
-	public function byte_at(int $position /** uint32; token boundary */): int /** uint32; byte offset */
+	/**
+	 * Empty ranges anchor at the next token, or at source EOF after the final token.
+	 *
+	 * $position: token boundary.
+	 * Return: byte offset.
+	 */
+	public function byte_at(int $position /** uint32 */): int /** uint32 */
 	{
 		if (($position < 0) || ($position > $this->end)) {
 			throw new \OutOfBoundsException('Token position is outside this source generation');

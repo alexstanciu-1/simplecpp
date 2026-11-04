@@ -4,8 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Cpp_Program, Function_Preparation, Preparation, Program_Frontend,
-	Source_Frontend, Symbol_Publication, ast_function_declaration, declaration_sink, diagnostic,
-	entry_target, flavor, ast_call_statement, ast_return_statement, source_file};
+		Source_Frontend, Symbol_Publication, ast_function_declaration, declaration_sink, diagnostic,
+		entry_target, flavor, ast_call_statement, ast_return_statement, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -17,7 +17,9 @@ function verify(bool $condition, string $message): void
 /** Observe the real discovery boundary without reading mutable body fields. */
 final class Discovery_Probe implements declaration_sink
 {
+	/** Native owning; test coordinator. */
 	public Symbol_Publication $publication;
+	/** Native non-owning discovered declarations. */
 	public array $seen /** list<ast_function_declaration> */ = [];
 
 	public function __construct()
@@ -43,10 +45,13 @@ $frontend = new Source_Frontend();
 $target = new entry_target(31);
 $outputs = [];
 foreach ([
-	[flavor::cpp, 'ping(); int ret=8; return ret; void ping() { int local=9; pong(); return; } void pong() {}'],
-	[flavor::php, 'ping(); $ret int=8; return $ret; function ping(): void { $local int=9; pong(); return; } function pong(): void {}'],
-	[flavor::js, 'ping(); let ret: int=8; return ret; function ping(): void { let local: int=9; pong(); return; } function pong(): void {}'],
-] as [$flavor, $text])
+		[flavor::cpp,
+			'ping(); int ret=8; return ret; void ping() { int local=9; pong(); return; } void pong() {}'],
+		[flavor::php,
+			'ping(); $ret int=8; return $ret; function ping(): void { $local int=9; pong(); return; } function pong(): void {}'],
+		[flavor::js,
+			'ping(); let ret: int=8; return ret; function ping(): void { let local: int=9; pong(); return; } function pong(): void {}'],
+	] as [$flavor, $text])
 {
 	$probe = new Discovery_Probe();
 	$file = $frontend->collect(new source_file('source', $text, $flavor), $probe);
@@ -58,7 +63,8 @@ foreach ([
 	$entry = $program->entry;
 	[$ping, $pong] = $entry->file->functions();
 	verify($entry->body()->statements[0] instanceof ast_call_statement, 'Missing prepared entry call');
-	verify($entry->body()->statements[0]->function_def() === $ping, 'Entry call did not bind exact callable contract');
+	verify($entry->body()->statements[0]->function_def() === $ping,
+		'Entry call did not bind exact callable contract');
 	verify($ping->body()->statements[1]->function_def() === $pong, 'Forward function call binding differs');
 	verify($ping->body()->statements[2] instanceof ast_return_statement, 'Bare return has wrong facts');
 	verify($pong->body()->statements === [], 'Empty void body requires invented statements');
@@ -78,10 +84,11 @@ verify(count(array_unique($outputs)) === 1, 'Function output differs by source f
 
 // A caller only needs the signature, even when its callee body has not been prepared.
 $file = $frontend->collect(new source_file('contracts',
-	'function first(): void { return 9; } function second(): void { first(); } return 8;', flavor::php));
+		'function first(): void { return 9; } function second(): void { first(); } return 8;', flavor::php));
 $callables = Function_Preparation::declarations(Symbol_Publication::completed(['contracts' => $file]));
 (new Preparation())->function_body($file->functions()[1]->body(), $callables);
-verify($file->functions()[1]->body()->statements[0]->function_def() === $file->functions()[0], 'Call required callee body');
+verify($file->functions()[1]->body()->statements[0]->function_def() === $file->functions()[0],
+	'Call required callee body');
 try {
 	$file->functions()[0]->body()->require_prepared();
 	throw new RuntimeException('Call lookup prepared a foreign body');
@@ -90,27 +97,29 @@ catch (LogicException $expected) {
 }
 
 $recursive = $frontend->prepare(new source_file('recursive',
-	'function a(): void { b(); } function b(): void { a(); } return 8;', flavor::php), $target);
-verify($recursive->file->functions()[0]->body()->statements[0]->function_def() === $recursive->file->functions()[1], 'Mutual recursion failed');
+		'function a(): void { b(); } function b(): void { a(); } return 8;', flavor::php), $target);
+verify($recursive->file->functions()[0]->body()->statements[0]->function_def() === $recursive->file->functions()[1],
+	'Mutual recursion failed');
 $self = $frontend->prepare(new source_file('self', 'void a() { a(); } return 8;', flavor::cpp), $target);
-verify($self->file->functions()[0]->body()->statements[0]->function_def() === $self->file->functions()[0], 'Self recursion failed');
+verify($self->file->functions()[0]->body()->statements[0]->function_def() === $self->file->functions()[0],
+	'Self recursion failed');
 
 foreach ([
-	['function f(): void { return 8; } return 8;', 'cannot return a value'],
-	['function f(): int {} return 8;', 'explicit void'],
-	['function f() {} return 8;', 'explicit return type'],
-	['function f($x int): void {} return 8;', 'no parameters'],
-	['function f(): void {} f(8); return 8;', 'no arguments'],
-	['function f(): void { function g(): void {} } return 8;', 'Nested functions'],
-	['function f(): void {} function f(): void {} return 8;', 'Duplicate function'],
-	['missing(); return 8;', 'Unknown function'],
-	['function f(): void { missing(); } return 8;', 'Unknown function'],
-	['$x int=8; function f(): void { $y int=$x; } return 8;', 'not-yet-initialized'],
-	['function f(): void { $x int=8; } function g(): void { $y int=$x; } return 8;', 'not-yet-initialized'],
-	['function f(): void { return; f(); } return 8;', 'after return'],
-	['return;', 'Entry requires a value'],
-	['function f(): void {}', 'explicit value return'],
-] as [$text, $message])
+		['function f(): void { return 8; } return 8;', 'cannot return a value'],
+		['function f(): int {} return 8;', 'explicit void'],
+		['function f() {} return 8;', 'explicit return type'],
+		['function f($x int): void {} return 8;', 'no parameters'],
+		['function f(): void {} f(8); return 8;', 'no arguments'],
+		['function f(): void { function g(): void {} } return 8;', 'Nested functions'],
+		['function f(): void {} function f(): void {} return 8;', 'Duplicate function'],
+		['missing(); return 8;', 'Unknown function'],
+		['function f(): void { missing(); } return 8;', 'Unknown function'],
+		['$x int=8; function f(): void { $y int=$x; } return 8;', 'not-yet-initialized'],
+		['function f(): void { $x int=8; } function g(): void { $y int=$x; } return 8;', 'not-yet-initialized'],
+		['function f(): void { return; f(); } return 8;', 'after return'],
+		['return;', 'Entry requires a value'],
+		['function f(): void {}', 'explicit value return'],
+	] as [$text, $message])
 {
 	try {
 		$frontend->prepare(new source_file('bad', $text, flavor::php), $target);
@@ -141,7 +150,8 @@ $sources = [
 	'end' => new source_file('end', 'function finish(): void { return; }', flavor::js),
 ];
 $program = (new Program_Frontend())->prepare_sources('main', $sources, $target);
-verify($program->entry->body()->statements[0]->function_def() === $program->files['mid']->functions()[0], 'Cross-source identity lost');
+verify($program->entry->body()->statements[0]->function_def() === $program->files['mid']->functions()[0],
+	'Cross-source identity lost');
 $facts_before = serialize($program);
 $output = Cpp_Program::emit($program);
 verify(serialize($program) === $facts_before, 'Lowering mutated semantic facts');
@@ -160,5 +170,6 @@ foreach ([$duplicates, array_reverse($duplicates, true)] as $inventory)
 		$messages[] = $error->getMessage();
 	}
 }
-verify(($messages[0] === $messages[1]) && str_contains($messages[0], 'Duplicate function'), 'Duplicate diagnostics depend on arrival order');
+verify(($messages[0] === $messages[1]) && str_contains($messages[0], 'Duplicate function'),
+	'Duplicate diagnostics depend on arrival order');
 echo "Function discovery, signature/body ownership, calls, recursion and multifile semantics passed\n";

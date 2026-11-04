@@ -4,8 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Exit_Preparation, Preparation, Source_Frontend,
-	diagnostic, entry_target, exit_conversion, flavor, ast_local_declaration, ast_name_expression,
-	ast_return_statement, type_definition, source_file};
+		diagnostic, entry_target, exit_conversion, flavor, ast_local_declaration, ast_name_expression,
+		ast_return_statement, type_definition, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -20,21 +20,26 @@ $emitter = new Cpp_Emitter();
 $target = new entry_target(31);
 $outputs = [];
 foreach ([['$ret int = 8; return $ret;', flavor::php], ['int ret = 8; return ret;', flavor::cpp],
-	['let ret: int = 8; return ret;', flavor::js]] as [$text, $flavor])
+		['let ret: int = 8; return ret;', flavor::js]] as [$text, $flavor])
 {
 	$collected = $frontend->collect(new source_file('entry', $text, $flavor));
 	$parsed = $collected;
 	verify($parsed->main()->body()->statements[1] instanceof ast_return_statement, 'Common return syntax');
-	verify(str_starts_with($parsed->main()->body()->statements[1]->source_text(), 'return'), 'Return retains keyword span');
-	verify($collected->main()->body()->locals[0] === $parsed->main()->body()->statements[0], 'Collection retains declaration identity');
-	verify($collected->main()->body()->references[0] === $parsed->main()->body()->statements[1]->value, 'Collection retains unresolved reference');
+	verify(str_starts_with($parsed->main()->body()->statements[1]->source_text(), 'return'),
+		'Return retains keyword span');
+	verify($collected->main()->body()->locals[0] === $parsed->main()->body()->statements[0],
+		'Collection retains declaration identity');
+	verify($collected->main()->body()->references[0] === $parsed->main()->body()->statements[1]->value,
+		'Collection retains unresolved reference');
 	$program = $preparation->prepare($collected, $target);
 	[$local, $return] = $program->body()->statements;
 	verify(($local instanceof ast_local_declaration) && ($return instanceof ast_return_statement), 'Typed facts');
-	verify(($return->value instanceof ast_name_expression) && ($return->value->local_def() === $local), 'Exact binding');
+	verify(($return->value instanceof ast_name_expression) && ($return->value->local_def() === $local),
+		'Exact binding');
 	verify($local === $collected->main()->body()->locals[0], 'Semantic binding uses collected identity');
 	verify($local->type_def() === type_definition::int64, 'Canonical default int identity');
-	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven), 'Known exit proof');
+	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven),
+		'Known exit proof');
 	verify(($program->body()->statement_visits === 2) && ($program->body()->expression_visits === 2)
 		&& ($program->body()->name_lookups === 1), 'Single-pass work counts');
 	$outputs[] = $emitter->emit($program);
@@ -49,24 +54,29 @@ verify(count(array_unique($outputs)) === 1, 'Flavor-independent emitted C++');
 $stable = $outputs[0];
 
 foreach ([['int ret=ret; return ret;', 'during its initialization'],
-	['int ret=next; int next=8; return ret;', 'not-yet-initialized'],
-	['return missing;', 'not-yet-initialized'], ['Unknown ret=8; return ret;', 'unsupported type'],
-	['int ret=8; int ret=9; return ret;', 'Duplicate local'],
-	['int ret=9223372036854775808; return ret;', 'outside int64'],
-	['int ret=2147483648; return ret;', 'outside native int'],
-	['return 2147483648;', 'outside native int'],
-	['int ret=8;', 'explicit value return'], ['int ret=8; ret=9; return ret;', 'Assignments'],
-	['auto ret=8; return ret;', 'Inferred declarations'], ['return 8; int ret=1;', 'after return']] as [$text, $message])
+		['int ret=next; int next=8; return ret;', 'not-yet-initialized'],
+		['return missing;', 'not-yet-initialized'], ['Unknown ret=8; return ret;', 'unsupported type'],
+		['int ret=8; int ret=9; return ret;', 'Duplicate local'],
+		['int ret=9223372036854775808; return ret;', 'outside int64'],
+		['int ret=2147483648; return ret;', 'outside native int'],
+		['return 2147483648;', 'outside native int'],
+		['int ret=8;', 'explicit value return'], ['int ret=8; ret=9; return ret;', 'Assignments'],
+		['auto ret=8; return ret;', 'Inferred declarations'], ['return 8; int ret=1;', 'after return']] as [$text,
+		$message])
 {
 	$file = $frontend->collect(new source_file('bad', $text, flavor::cpp));
 	try {
 		$preparation->prepare($file, $target);
 		throw new RuntimeException('Expected diagnostic: ' . $text);
 	}
-	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {
-		if ($error instanceof \scpp\compiler\diagnostic_group) { $error = $error->diagnostics[0]; }
+	catch (diagnostic|\scpp\compiler\diagnostic_group $error)
+	{
+		if ($error instanceof \scpp\compiler\diagnostic_group) {
+			$error = $error->diagnostics[0];
+		}
 		verify(str_contains($error->getMessage(), $message), $error->getMessage());
-		verify(($error->source === $file->tokens->source) && ($error->offset <= strlen($text)), 'Diagnostic location');
+		verify(($error->source === $file->tokens->source) && ($error->offset <= strlen($text)),
+			'Diagnostic location');
 	}
 }
 $good = new source_file('good', 'int ret=8; return ret;', flavor::cpp);
@@ -75,13 +85,16 @@ verify($emitter->emit($preparation->prepare($frontend->collect($good), $target))
 $leading = $frontend->prepare(new source_file('decimal', 'int ret=0008; return ret;', flavor::cpp), $target);
 verify(str_contains($emitter->emit($leading), '= 8LL;'), 'Leading zeros emit decimal, never octal');
 $maximum = $frontend->prepare(new source_file('max', 'int unused=9223372036854775807; return 8;', flavor::cpp), $target);
-verify($maximum->body()->statements[0]->initializer->constant() === PHP_INT_MAX, 'Exact int64 maximum');
+verify($maximum->body()->statements[0]->initializer->constant() === \PHP_INT_MAX, 'Exact int64 maximum');
 $span = $parsed->main()->body()->statements[1];
-verify(Exit_Preparation::decide(null, $target, $span) === exit_conversion::checked, 'Unknown exit requires runtime check');
+verify(Exit_Preparation::decide(null, $target, $span) === exit_conversion::checked,
+	'Unknown exit requires runtime check');
 foreach ([$target->minimum, $target->maximum] as $boundary) {
-	verify(Exit_Preparation::decide($boundary, $target, $span) === exit_conversion::proven, 'Inclusive exit boundary');
+	verify(Exit_Preparation::decide($boundary, $target, $span) === exit_conversion::proven,
+		'Inclusive exit boundary');
 }
-foreach ([$target->minimum - 1, $target->maximum + 1] as $outside) {
+foreach ([$target->minimum - 1, $target->maximum + 1] as $outside)
+{
 	try {
 		Exit_Preparation::decide($outside, $target, $span);
 		throw new RuntimeException('Expected exit range rejection');
@@ -95,5 +108,5 @@ try {
 }
 catch (diagnostic $expected) {
 }
-verify((new entry_target(63))->minimum === PHP_INT_MIN, '64-bit target boundary computation');
+verify((new entry_target(63))->minimum === \PHP_INT_MIN, '64-bit target boundary computation');
 echo "Entry preparation checks passed\n";

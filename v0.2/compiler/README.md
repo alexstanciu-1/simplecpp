@@ -51,6 +51,7 @@ php v0.2/compiler/main.php tokens php path/to/source
 php v0.2/compiler/main.php tokens cpp path/to/source
 php v0.2/compiler/main.php tokens js path/to/source
 php v0.2/compiler/main.php parse php path/to/source
+python3 -B v0.2/compiler/tools/check_style.py
 php v0.2/compiler/tests/tokenizer.php
 php v0.2/compiler/tests/parser.php
 php v0.2/compiler/tests/frontend.php

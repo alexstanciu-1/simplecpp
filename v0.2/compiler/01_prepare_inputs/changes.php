@@ -3,11 +3,17 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Filesystem metadata of a complete project invocation; no per-file reuse or dependency watches. */
+/**
+ * Filesystem metadata of a complete project invocation; no per-file reuse or dependency watches.
+ */
 final class Project_Changes
 {
-	/** Capture one module/source representation and a separate map for remaining inputs. */
-	public static function capture(compilation_session $session, string $facts, string $output): array /** versioned saved input state */
+	/**
+	 * Capture one module/source representation and a separate map for remaining inputs.
+	 *
+	 * Return: versioned saved input state.
+	 */
+	public static function capture(compilation_session $session, string $facts, string $output): array /** array<string,mixed> */
 	{
 		clearstatcache();
 		$files = [];
@@ -37,10 +43,11 @@ final class Project_Changes
 				$source_paths[$path] = true;
 			}
 			$dependencies = array_keys($module->dependencies);
-			sort($dependencies, SORT_STRING);
-			ksort($sources, SORT_STRING);
+			sort($dependencies, \SORT_STRING);
+			ksort($sources, \SORT_STRING);
 			$modules[$name] = ['root' => $module->root, 'type' => $module->type,
-				'manifest' => $module->manifest, 'artifacts' => $module->artifacts, 'dependencies' => $dependencies, 'sources' => $sources];
+				'manifest' => $module->manifest, 'artifacts' => $module->artifacts, 'dependencies' => $dependencies,
+				'sources' => $sources];
 			if (($module === $session->entry) && ($module->manifest !== null)) {
 				self::file($module->manifest, $files);
 			}
@@ -48,14 +55,20 @@ final class Project_Changes
 		self::file($facts, $files);
 		self::scan(dirname(__DIR__), $files, false, $visited, true, $dependency_roots);
 		$other_inputs = array_diff_key($files, $source_paths);
-		ksort($other_inputs, SORT_STRING);
-		ksort($modules, SORT_STRING);
-		return ['version' => 4, 'php' => PHP_VERSION, 'entry' => $session->entry_key(),
+		ksort($other_inputs, \SORT_STRING);
+		ksort($modules, \SORT_STRING);
+		return ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
 			'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 
-	/** Derive a temporary path index for comparisons; source identity is serialized only under its module. */
-	private static function sources(?array $state /** saved input state */): array /** absolute path -> source identity and stat */
+	/**
+	 * Derive a temporary path index for comparisons; source identity is serialized only under its
+	 * module.
+	 *
+	 * $state: saved input state.
+	 * Return: absolute path -> source identity and stat.
+	 */
+	private static function sources(?array $state /** array<string,mixed> */): array /** array<string,mixed> */
 	{
 		$result = [];
 		foreach ($state['modules'] ?? [] as $name => $module) {
@@ -67,9 +80,15 @@ final class Project_Changes
 		return $result;
 	}
 
-	/** Mark active units and retain removed units until the caller completes the rebuild. */
-	public static function mark(compilation_session $session, array $current /** captured state */,
-		?array $previous /** previous successful state */): array /** list<source_unit>; removed units */
+	/**
+	 * Mark active units and retain removed units until the caller completes the rebuild.
+	 *
+	 * $current: captured state.
+	 * $previous: previous successful state.
+	 * Return: removed units.
+	 */
+	public static function mark(compilation_session $session, array $current /** array<string,mixed> */,
+		?array $previous /** array<string,mixed> */): array /** list<source_unit> */
 	{
 		$current_sources = self::sources($current);
 		$previous_sources = self::sources($previous);
@@ -104,26 +123,26 @@ final class Project_Changes
 	/** Reject old/corrupt saved layouts before reconstructing removed source units. */
 	public static function valid(mixed $state): bool
 	{
-		if (!is_array($state) || (($state['version'] ?? null) !== 4)
-			|| !is_string($state['php'] ?? null) || !is_string($state['entry'] ?? null)
-			|| !is_array($state['modules'] ?? null) || !is_array($state['other_inputs'] ?? null)) {
+		if ((!is_array($state)) || (($state['version'] ?? null) !== 4)
+			|| (!is_string($state['php'] ?? null)) || (!is_string($state['entry'] ?? null))
+			|| (!is_array($state['modules'] ?? null)) || (!is_array($state['other_inputs'] ?? null))) {
 			return false;
 		}
 		foreach ($state['other_inputs'] as $path => $stat) {
-			if (!is_string($path) || !self::valid_stat($stat)) {
+			if ((!is_string($path)) || (!self::valid_stat($stat))) {
 				return false;
 			}
 		}
 		foreach ($state['modules'] as $name => $module)
 		{
-			if (!is_string($name) || !is_array($module) || !is_string($module['root'] ?? null)
-				|| !in_array($module['type'] ?? null, ['default', 'c++'], true)
-				|| !is_array($module['dependencies'] ?? null) || !is_array($module['sources'] ?? null)) {
+			if ((!is_string($name)) || (!is_array($module)) || (!is_string($module['root'] ?? null))
+				|| (!in_array($module['type'] ?? null, ['default', 'c++'], true))
+				|| (!is_array($module['dependencies'] ?? null)) || (!is_array($module['sources'] ?? null))) {
 				return false;
 			}
 			foreach ($module['sources'] as $path => $source) {
-				if ((!is_string($path) && !is_int($path)) || !self::valid_stat($source)
-					|| !is_string($source['flavor'] ?? null) || (flavor::tryFrom($source['flavor']) === null)) {
+				if (((!is_string($path)) && (!is_int($path))) || (!self::valid_stat($source))
+					|| (!is_string($source['flavor'] ?? null)) || (flavor::tryFrom($source['flavor']) === null)) {
 					return false;
 				}
 			}
@@ -137,9 +156,13 @@ final class Project_Changes
 			&& is_int($stat['size'] ?? null) && ($stat['size'] >= 0);
 	}
 
-	/** Scan application/compiler inputs only; declared dependency trees are excluded. */
+	/**
+	 * Scan application/compiler inputs only; declared dependency trees are excluded.
+	 *
+	 * $visited: scan policy + canonical directory.
+	 */
 	private static function scan(string $directory, array &$files /** array<string,array{mtime:int64,size:uint64}> */,
-		string|false $excluded, array &$visited /** array<string,bool>; scan policy + canonical directory */,
+		string|false $excluded, array &$visited /** array<string,bool> */,
 		bool $compiler = false, array $dependency_roots /** array<string,bool> */ = []): void
 	{
 		$key = ($compiler ? 'compiler:' : 'module:') . (realpath($directory) ?: $directory);
@@ -161,7 +184,7 @@ final class Project_Changes
 			if (is_dir($path))
 			{
 				if (isset($dependency_roots[realpath($path)]) || (realpath($path) === $excluded) || (strtolower($entry) === 'build')
-					|| ($compiler && ($entry === 'tests'))) {
+					|| (($compiler) && ($entry === 'tests'))) {
 					continue;
 				}
 				if (is_link($path)) {
@@ -169,12 +192,13 @@ final class Project_Changes
 				}
 				self::scan($path, $files, $excluded, $visited, $compiler, $dependency_roots);
 			}
-			elseif (is_file($path) && (!$compiler || (pathinfo($path, PATHINFO_EXTENSION) === 'php'))) {
+			elseif (is_file($path) && ((!$compiler) || (pathinfo($path, \PATHINFO_EXTENSION) === 'php'))) {
 				self::file($path, $files);
 			}
 		}
 	}
 
+	/** Capture one required input stamp, rejecting missing or unreadable files. */
 	private static function file(string $path, array &$files /** array<string,array{mtime:int64,size:uint64}> */): void
 	{
 		if (isset($files[$path])) {

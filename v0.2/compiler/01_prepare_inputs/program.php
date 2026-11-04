@@ -27,10 +27,13 @@ final class Program_Loader
 		array $requests /** array<string,flavor> */): compilation_session
 	{
 		return self::modules(['app' => ['root' => $root, 'sources' => $requests,
-			'dependencies' => [], 'entry' => $entry]], 'app');
+					'dependencies' => [], 'entry' => $entry]], 'app');
 	}
 
-	/** Same membership/graph path for caller-supplied snapshots; no disk reads or retained duplicate snapshots. */
+	/**
+	 * Same membership/graph path for caller-supplied snapshots; no disk reads or retained duplicate
+	 * snapshots.
+	 */
 	public static function memory(string $entry, array $sources /** array<string,source_file> */): compilation_session
 	{
 		$requests = [];
@@ -38,30 +41,38 @@ final class Program_Loader
 			$requests[$path] = $source->flavor;
 		}
 		return self::modules(['app' => ['root' => '', 'sources' => $requests,
-			'dependencies' => [], 'entry' => $entry]], 'app', false);
+					'dependencies' => [], 'entry' => $entry]], 'app', false);
 	}
 
-	/** Resolve a selected dependency closure privately before publishing the session.
+	/**
+	 * Resolve a selected dependency closure privately before publishing the session.
 	 * @param array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> $definitions
 	 * The caller selects disk validation; both paths create identical ownership records.
+	 *
+	 * $selected: additional activation roots.
 	 */
-	public static function modules(array $definitions, string $entry, bool $disk = true,
-		array $selected /** list<string>; additional activation roots */ = []): compilation_session
+	public static function modules(array $definitions /** array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> */,
+		string $entry, bool $disk = true,
+		array $selected /** list<string> */ = []): compilation_session
 	{
 		$modules = [];
 		$active = [];
 		$physical = [];
 		$visit = function (string $name) use (&$visit, &$modules, &$active, &$physical, $definitions, $disk): module
 		{
-			if (isset($active[$name])) { throw new \RuntimeException('Module dependency cycle: ' . $name); }
-			if (isset($modules[$name])) { return $modules[$name]; }
-			if (preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1 || !isset($definitions[$name])) {
+			if (isset($active[$name])) {
+				throw new \RuntimeException('Module dependency cycle: ' . $name);
+			}
+			if (isset($modules[$name])) {
+				return $modules[$name];
+			}
+			if ((preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1) || (!isset($definitions[$name]))) {
 				throw new \RuntimeException('Unknown or invalid module: ' . $name);
 			}
 			$active[$name] = true;
 			$input = $definitions[$name];
 			$root = $disk ? realpath($input['root']) : $input['root'];
-			if ($root === false || ($disk && !is_dir($root))) {
+			if (($root === false) || (($disk) && (!is_dir($root)))) {
 				throw new \RuntimeException('Source root is not a directory: ' . $input['root']);
 			}
 			$type = $input['type'] ?? 'default';
@@ -75,13 +86,16 @@ final class Program_Loader
 				}
 				$module->dependencies[$dependency] = $visit($dependency);
 			}
-			foreach ($input['sources'] as $path => $flavor) {
+			foreach ($input['sources'] as $path => $flavor)
+			{
 				$path = (string) $path;
 				self::require_relative($path);
 				$unit = new source_unit($module, $path, $flavor);
 				if ($disk) {
 					$resolved = self::disk_path($unit);
-					if (isset($physical[$resolved])) { throw new \RuntimeException('Duplicate physical source: ' . $path); }
+					if (isset($physical[$resolved])) {
+						throw new \RuntimeException('Duplicate physical source: ' . $path);
+					}
 					$physical[$resolved] = true;
 				}
 				$module->sources[$path] = $unit;
@@ -89,7 +103,8 @@ final class Program_Loader
 			if (isset($input['entry'])) {
 				self::require_relative($input['entry']);
 				$module->entry = $module->sources[$input['entry']]
-					?? throw new \RuntimeException('Selected entry is not in the source inventory: ' . $input['entry']);
+					?? throw new \RuntimeException('Selected entry is not in the source inventory: '
+					. $input['entry']);
 			}
 			unset($active[$name]);
 			$modules[$name] = $module;
@@ -102,7 +117,9 @@ final class Program_Loader
 		if ($main->type !== 'default') {
 			throw new \RuntimeException('Executable entry must be a default module');
 		}
-		if ($main->entry === null) { throw new \RuntimeException('Entry module requires an entry source: ' . $entry); }
+		if ($main->entry === null) {
+			throw new \RuntimeException('Entry module requires an entry source: ' . $entry);
+		}
 		return new compilation_session($modules, $main);
 	}
 
@@ -110,8 +127,8 @@ final class Program_Loader
 	private static function disk_path(source_unit $unit): string
 	{
 		$resolved = realpath($unit->module->root . '/' . $unit->path);
-		if ($resolved === false || !is_file($resolved)
-			|| !str_starts_with($resolved, rtrim($unit->module->root, '/') . '/')) {
+		if (($resolved === false) || (!is_file($resolved))
+			|| (!str_starts_with($resolved, rtrim($unit->module->root, '/') . '/'))) {
 			throw new \RuntimeException('Source must exist within its root: ' . $unit->path);
 		}
 		return $resolved;

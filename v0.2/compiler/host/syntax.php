@@ -14,16 +14,21 @@ final class Syntax_Inspection
 			$rows[] = self::statement($statement);
 		}
 		$functions = [];
-		foreach ($file->functions() as $function) {
-			if ($function->is_private) { continue; }
+		foreach ($file->functions() as $function)
+		{
+			if ($function->is_private) {
+				continue;
+			}
 			$body = array_map(self::statement(...), $function->body()->statements);
-			$functions[] = ['name' => self::name($function, $function->name, $function->name_position()), 'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
+			$functions[] = ['name' => self::name($function, $function->name, $function->name_position()),
+				'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
 		}
 		$result = ['flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
 		if ($file->diagnostics !== []) {
-			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(), $file->diagnostics);
+			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),
+				$file->diagnostics);
 		}
 		return $result;
 	}
@@ -33,13 +38,19 @@ final class Syntax_Inspection
 		return ['start' => $span->byte_start(), 'end' => $span->byte_end()];
 	}
 
-	private static function name(ast_node $owner, string $name, int $position /** uint32; token position */): array /** array{text:string,span:array{start:uint32,end:uint32}} */
+	/** $position: token position. */
+	private static function name(ast_node $owner, string $name, int $position /** uint32 */): array /** array{text:string,span:array{start:uint32,end:uint32}} */
 	{
 		$token = $owner->root()->tokens->tokens[$position];
 		return ['text' => $name, 'span' => ['start' => $token->offset, 'end' => $token->offset + $token->length]];
 	}
 
-	private static function expression(ast_expression $expression): array /** array<string,mixed>; tagged expression JSON fields */
+	/**
+	 * Serialize the supported expression shape without consuming prepared facts.
+	 *
+	 * Return: tagged expression JSON fields.
+	 */
+	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
 		if ($expression instanceof ast_string_expression) {
 			return ['kind' => 'string', 'spelling_hex' => bin2hex($expression->source_text()), 'span' => self::span($expression)];
@@ -48,12 +59,18 @@ final class Syntax_Inspection
 			return ['kind' => 'integer', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_name_expression) {
-			return ['kind' => 'name', 'name' => self::name($expression, $expression->name, $expression->start), 'span' => self::span($expression)];
+			return ['kind' => 'name', 'name' => self::name($expression, $expression->name, $expression->start),
+				'span' => self::span($expression)];
 		}
 		throw new \LogicException('Unhandled expression inspection');
 	}
 
-	private static function statement(ast_statement $statement): array /** array<string,mixed>; tagged statement JSON fields */
+	/**
+	 * Serialize each supported statement and its syntax children for inspection.
+	 *
+	 * Return: tagged statement JSON fields.
+	 */
+	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
 		if ($statement instanceof ast_echo_statement) {
 			return ['kind' => 'echo', 'value' => self::expression($statement->value), 'span' => self::span($statement)];
@@ -63,11 +80,13 @@ final class Syntax_Inspection
 				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_call_statement) {
-			return ['kind' => 'call', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start), 'span' => self::span($statement)];
+			return ['kind' => 'call', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
+				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
-				'type' => $statement->type_name === null ? null : self::name($statement, $statement->type_name, $statement->type_position()),
+				'type' => $statement->type_name === null ? null : self::name($statement, $statement->type_name,
+					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_assignment_statement) {

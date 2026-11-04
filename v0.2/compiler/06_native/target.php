@@ -16,15 +16,15 @@ final class Native_Target
 			throw new \RuntimeException('Cannot read native target facts: ' . $path);
 		}
 		try {
-			$facts = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+			$facts = json_decode($text, true, 512, \JSON_THROW_ON_ERROR);
 		}
 		catch (\JsonException $error) {
 			throw new \RuntimeException('Invalid native target facts: ' . $error->getMessage());
 		}
 		$integers = is_array($facts) ? ($facts['native_integers'] ?? null) : null;
 		$integer = is_array($integers) ? ($integers['int'] ?? null) : null;
-		if (!is_array($integer) || (($facts['schema'] ?? null) !== 1)
-			|| (($integer['signed'] ?? null) !== true) || !is_int($integer['digits'] ?? null)) {
+		if ((!is_array($integer)) || (($facts['schema'] ?? null) !== 1)
+			|| (($integer['signed'] ?? null) !== true) || (!is_int($integer['digits'] ?? null))) {
 			throw new \RuntimeException('Target facts require a signed native int');
 		}
 		if (($integer['digits'] < 15) || ($integer['digits'] > 63)) {

@@ -15,7 +15,8 @@ final class Exit_Preparation
 			return exit_conversion::checked;
 		}
 		if (!$target->contains($constant)) {
-			throw new diagnostic($span->source(), $span->byte_start(), 'Entry return is outside native int range');
+			throw new diagnostic($span->source(), $span->byte_start(),
+				'Entry return is outside native int range');
 		}
 		return exit_conversion::proven;
 	}
@@ -26,7 +27,8 @@ final class Exit_Preparation
  */
 final class Preparation
 {
-	private array $visible_locals /** array<string,ast_local_declaration>; source-order visibility index, not a declaration collector */ = [];
+	/** Source-order visibility index, not a declaration collector; native non-owning declaration references. */
+	private array $visible_locals /** array<string,ast_local_declaration> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -43,25 +45,35 @@ final class Preparation
 		$source = $file->tokens->source;
 		$main = $file->main();
 		if ($main === null) {
-			throw new diagnostic($source, strlen($source->content), 'Entry slice requires an explicit value return');
+			throw new diagnostic($source, strlen($source->content),
+				'Entry slice requires an explicit value return');
 		}
 		$this->function_body($main->body(), $symbols, $target);
 	}
 
+	/** Reset one body, reject duplicate locals, and settle its facts and traversal statistics. */
 	public function function_body(ast_function_body $syntax, scope $symbols, ?entry_target $target = null, ?function_dependencies $dependencies = null): void
 	{
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
 		$errors = Declaration_Diagnostics::locals($syntax);
-		if ($errors !== []) { throw new diagnostic_group($errors); }
+		if ($errors !== []) {
+			throw new diagnostic_group($errors);
+		}
 		$this->body($syntax->statements, $syntax->source(),
-			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target, $symbols, $syntax, $dependencies);
-		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups, $target);
+			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
+			$symbols, $syntax, $dependencies);
+		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups,
+			$target);
 	}
 
-	/** One source-order body traversal; null exit target denotes a void function, never inferred return typing. */
+	/**
+	 * One source-order body traversal; null exit target denotes a void function, never inferred return
+	 * typing.
+	 */
 	private function body(array $syntax /** list<ast_statement> */,
-		source_file $source, int $end /** uint32 */, ?entry_target $target, scope $symbols, ast_function_body $owner, ?function_dependencies $dependencies): void
+		source_file $source, int $end /** uint32 */, ?entry_target $target, scope $symbols, ast_function_body $owner,
+		?function_dependencies $dependencies): void
 	{
 		$this->visible_locals = [];
 		$this->statement_visits = 0;
@@ -103,35 +115,44 @@ final class Preparation
 			{
 				if ($target === null) {
 					if ($statement->value !== null) {
-						throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
+						throw new diagnostic($source, $statement->byte_start(),
+							'Void function cannot return a value');
 					}
 				}
-				else {
+				else
+				{
 					if ($statement->value === null) {
-						throw new diagnostic($source, $statement->byte_start(), 'Entry requires a value return');
+						throw new diagnostic($source, $statement->byte_start(),
+							'Entry requires a value return');
 					}
 					$this->value($statement->value);
-					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(), $target, $statement->value));
+					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(),
+							$target, $statement->value));
 				}
 				$returned = true;
 			}
 			else {
-				throw new diagnostic($source, $statement->byte_start(), 'Assignments are outside the entry slice');
+				throw new diagnostic($source, $statement->byte_start(),
+					'Assignments are outside the entry slice');
 			}
 		}
-		if (($target !== null) && !$returned) {
+		if (($target !== null) && (!$returned)) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
 		}
 	}
 
-	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
+	/**
+	 * Establish a binding only after its initializer succeeds; collection grants no forward
+	 * visibility.
+	 */
 	private function declaration(ast_local_declaration $declaration): void
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
 		$root = $declaration->root();
 		if (isset($this->visible_locals[$name])) {
-			throw new diagnostic($source, $root->byte_at($declaration->name_position()), 'Duplicate local: ' . $name);
+			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
+				'Duplicate local: ' . $name);
 		}
 		if ($declaration->type_name === null) {
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
@@ -173,14 +194,19 @@ final class Preparation
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
-	/** Compare decimal magnitude before host conversion; leading zeros must not become C++ octal. */
-	private function integer(ast_integer_expression $syntax): int /** int64; nonnegative in this syntax slice */
+	/**
+	 * Compare decimal magnitude before host conversion; leading zeros must not become C++ octal.
+	 *
+	 * Return: nonnegative in this syntax slice.
+	 */
+	private function integer(ast_integer_expression $syntax): int /** int64 */
 	{
 		$decimal = ltrim($syntax->source_text(), '0');
 		$limit = '9223372036854775807';
 		if ((strlen($decimal) > strlen($limit))
 			|| ((strlen($decimal) === strlen($limit)) && (strcmp($decimal, $limit) > 0))) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Integer literal is outside int64 range');
+			throw new diagnostic($syntax->source(), $syntax->byte_start(),
+				'Integer literal is outside int64 range');
 		}
 		return $decimal === '' ? 0 : (int) $decimal;
 	}

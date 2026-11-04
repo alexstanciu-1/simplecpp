@@ -8,14 +8,25 @@ namespace scpp\compiler;
  */
 final class Body_Collection
 {
-	private array $locals /** array<uint32,ast_local_declaration>; keyed by statement position */ = [];
+	/** PROPERTIES */
+	/** Keyed by statement position; native non-owning references to body syntax. */
+	private array $locals /** array<uint32,ast_local_declaration> */ = [];
+	/** Native owning; body-local collection worker. */
 	private readonly Scope_Collection $declarations;
+	/** Native non-owning expression references. */
+	private array $references /** list<ast_name_expression> */ = [];
+
+	/** CONSTRUCTOR */
 	public function __construct(scope $parent)
 	{
 		$this->declarations = new Scope_Collection(new scope($parent));
 	}
-	private array $references /** list<ast_name_expression> */ = [];
-	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
+
+	/** METHODS */
+	/**
+	 * Record one completed statement during parsing, without lookup, typing or publication outside its
+	 * source.
+	 */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
 		if ($statement instanceof ast_call_statement) {
@@ -39,7 +50,12 @@ final class Body_Collection
 		}
 	}
 
-	public function body(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, array $statements /** list<ast_statement> */): ast_function_body
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function body(int $start /** uint32 */, int $end /** uint32 */,
+		array $statements /** list<ast_statement> */): ast_function_body
 	{
 		return new ast_function_body($start, $end, $statements, $this->locals, $this->references, $this->declarations->publish());
 	}

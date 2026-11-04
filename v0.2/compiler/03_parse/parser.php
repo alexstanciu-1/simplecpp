@@ -6,8 +6,7 @@ namespace scpp\compiler;
 /**
  * Parser extension point for flavor-specific statements and function headers; all flavors produce the same AST families.
  */
-interface statement_grammar
-{
+interface statement_grammar {
 	public function statement(Parser $parser): ast_statement;
 	public function function_start(Parser $parser): bool;
 	public function function_header(Parser $parser): ast_function_declaration;
@@ -16,11 +15,16 @@ interface statement_grammar
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
 final class Parser
 {
+	/** PROPERTIES */
+	/** Native owning; parser-local cursor. */
 	public readonly Syntax_Cursor $cursor;
 	private bool $started = false;
+	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
+	/** Native non-owning; coordinator outlives parsing. */
 	private ?declaration_sink $sink;
 
+	/** CONSTRUCTOR */
 	public function __construct(token_list $tokens, ?declaration_sink $sink = null)
 	{
 		$this->cursor = new Syntax_Cursor($tokens);
@@ -28,6 +32,7 @@ final class Parser
 		$this->sink = $sink;
 	}
 
+	/** METHODS */
 	/** Own one source parse and its local collection; failure exposes neither partial result. */
 	public function parse(): ast_file_node
 	{
@@ -39,8 +44,8 @@ final class Parser
 		$declarations = new Scope_Collection($this->root->scope);
 		$grammar = match ($this->cursor->tokens->source->flavor) {
 			flavor::cpp => new Cpp_Grammar(),
-			flavor::php => new Php_Grammar(),
-			flavor::js => new Js_Grammar(),
+				flavor::php => new Php_Grammar(),
+				flavor::js => new Js_Grammar(),
 		};
 		$statements = [];
 		$nodes = [];
@@ -56,7 +61,8 @@ final class Parser
 			$collector->statement($statement, count($statements));
 			$statements[] = $statement;
 		}
-		if ($statements !== []) {
+		if ($statements !== [])
+		{
 			$main = new ast_function_declaration('main',
 				'int', 0, 0, true);
 			$main->attach($this->root);
@@ -72,14 +78,17 @@ final class Parser
 		return $this->root;
 	}
 
-	/** Share body grammar while keeping function definitions out of executable statement inventories. */
+	/**
+	 * Share body grammar while keeping function definitions out of executable statement inventories.
+	 */
 	private function statement(statement_grammar $grammar): ast_statement
 	{
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
 		}
 		if ($grammar->function_start($this)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Nested functions are not supported');
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+				'Nested functions are not supported');
 		}
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
@@ -96,14 +105,18 @@ final class Parser
 		return $grammar->statement($this);
 	}
 
-	/** Discover the stable header before parsing its body; local collection never enters the global index. */
+	/**
+	 * Discover the stable header before parsing its body; local collection never enters the global
+	 * index.
+	 */
 	private function function_declaration(statement_grammar $grammar): ast_function_declaration
 	{
 		$function = $grammar->function_header($this);
 		$function->attach($this->root);
 		$source = $this->cursor->tokens->source;
 		if ($function->name === 'main') {
-			throw new diagnostic($source, $this->root->byte_at($function->name_position()), 'Explicit main is not supported yet');
+			throw new diagnostic($source, $this->root->byte_at($function->name_position()),
+				'Explicit main is not supported yet');
 		}
 		$this->sink?->discovered($function);
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
@@ -198,7 +211,8 @@ final class Parser
 		throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected integer or name');
 	}
 
-	public function declaration(int $start /** uint32; token position */, string $name, ?string $type_name): ast_local_declaration
+	/** $start: token position. */
+	public function declaration(int $start /** uint32 */, string $name, ?string $type_name): ast_local_declaration
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->value();
@@ -206,7 +220,8 @@ final class Parser
 		return new ast_local_declaration($start, $end, $name, $type_name, $value);
 	}
 
-	public function assignment(int $start /** uint32; token position */, string $name, assignment_intent $intent): ast_assignment_statement
+	/** $start: token position. */
+	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent): ast_assignment_statement
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->value();

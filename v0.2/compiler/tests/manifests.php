@@ -11,6 +11,7 @@ function verify(bool $ok, string $message): void
 	}
 }
 
+/** Check that invalid manifest input fails with the expected diagnostic. */
 function rejects(Closure $action, string $message): void
 {
 	try {
@@ -23,7 +24,9 @@ function rejects(Closure $action, string $message): void
 	throw new LogicException('Expected rejection: ' . $message);
 }
 
-/** Fixture manifests remain readable on failure; all generated state lives in the temporary tree. */
+/**
+ * Fixture manifests remain readable on failure; all generated state lives in the temporary tree.
+ */
 function manifest(string $root, string $path, string $json): void
 {
 	file_put_contents($root . '/' . $path . '/module.json', $json);
@@ -38,8 +41,10 @@ try
 	}
 	manifest($root, 'app', '{"dependencies":{"lib":{"path":"../lib"},"runtime":{"modules":["json","json"]}}}');
 	manifest($root, 'lib', '{"dependencies":{"runtime":{"modules":["json"]}}}');
-	manifest($root, 'runtime', '{"type":"c++","sources":[],"modules":{"core":"core","json":"json"},"defaults":["core"]}');
-	manifest($root, 'runtime/core', '{"name":"core","type":"c++","artifacts":["missing.a"],"dependencies":{"runtime":{}}}');
+	manifest($root, 'runtime',
+		'{"type":"c++","sources":[],"modules":{"core":"core","json":"json"},"defaults":["core"]}');
+	manifest($root, 'runtime/core',
+		'{"name":"core","type":"c++","artifacts":["missing.a"],"dependencies":{"runtime":{}}}');
 	manifest($root, 'runtime/json', '{"name":"json","type":"c++","dependencies":{"runtime":{}}}');
 	manifest($root, 'app/nested', '{}');
 	file_put_contents($root . '/app/main.cpp', 'echo "module"; return 8;');
@@ -54,25 +59,28 @@ try
 	verify(count($session->modules) === 5, 'Defaults and repeated activation');
 	verify(count($session->entry->sources) === 1, 'Discovery exclusions');
 	verify($session->entry->entry->path === 'main.cpp', 'Default entry');
-	verify($session->entry->dependencies['runtime'] === $session->modules['lib']->dependencies['runtime'], 'Shared dependency identity');
+	verify($session->entry->dependencies['runtime'] === $session->modules['lib']->dependencies['runtime'],
+		'Shared dependency identity');
 	verify(isset($session->modules['json']), 'Explicit activation');
 	$program = (new Program_Frontend())->prepare($session, new entry_target(31));
 	verify(count($program->files) === 1, 'Dependency files entered parser');
-	verify($session->modules['core']->sources === [] && $session->modules['lib']->sources === [], 'Dependency source inventory loaded');
+	verify(($session->modules['core']->sources === []) && ($session->modules['lib']->sources === []),
+		'Dependency source inventory loaded');
 	$output = Cpp_Program::emit($program);
-	verify($output->native_sources === [] && count($output->link_inputs) === 1, 'Prebuilt artifact inventory');
+	verify(($output->native_sources === []) && (count($output->link_inputs) === 1), 'Prebuilt artifact inventory');
 	Cpp_Bundle::write($root . '/bundle', $output, []);
-	$bundle = json_decode(file_get_contents($root . '/bundle/manifest.json'), true, flags: JSON_THROW_ON_ERROR);
+	$bundle = json_decode(file_get_contents($root . '/bundle/manifest.json'), true, flags: \JSON_THROW_ON_ERROR);
 	verify($bundle['link_inputs'] === $output->link_inputs, 'Link inputs missing from bundle');
 	$inventory = $root . '/app/module.sources.json';
-	$data = json_decode(file_get_contents($inventory), true, flags: JSON_THROW_ON_ERROR);
+	$data = json_decode(file_get_contents($inventory), true, flags: \JSON_THROW_ON_ERROR);
 	verify($data['modules']['app'] === ['main.cpp' => 'cpp'], 'Generated inventory');
 	file_put_contents($inventory, 'not a cache');
 	verify(count($loader->load($root . '/app')->entry->sources) === 1, 'Inventory was read as input');
 	// Multiple defaults may independently depend on their catalog parent, without sibling cycles.
 	manifest($root, 'app', '{}');
 	verify(!isset($loader->load($root . '/app')->modules['json']), 'Nondefault module activated implicitly');
-	manifest($root, 'runtime', '{"type":"c++","sources":[],"modules":{"core":"core","json":"json"},"defaults":["core","json"]}');
+	manifest($root, 'runtime',
+		'{"type":"c++","sources":[],"modules":{"core":"core","json":"json"},"defaults":["core","json"]}');
 	verify(count($loader->load($root . '/app')->modules) === 4, 'Sibling defaults created a false dependency cycle');
 	// Explicit selection replaces discovery, and arbitrary extensions can carry explicit compiler flavors.
 	file_put_contents($root . '/app/entry.scpp', 'return 8;');
@@ -115,9 +123,10 @@ try
 finally
 {
 	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root,
-		FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
-	foreach ($iterator as $file) {
-		if ($file->isDir() && !$file->isLink()) {
+			FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+	foreach ($iterator as $file)
+	{
+		if ($file->isDir() && (!$file->isLink())) {
 			rmdir($file->getPathname());
 		}
 		else {

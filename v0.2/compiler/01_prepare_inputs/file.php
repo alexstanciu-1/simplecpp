@@ -8,6 +8,7 @@ namespace scpp\compiler;
  */
 final class File_Loader
 {
+	/** Read a complete source snapshot and report IO failures at the compiler boundary. */
 	public static function load(string $path, flavor $flavor): source_file
 	{
 		if (!is_file($path)) {

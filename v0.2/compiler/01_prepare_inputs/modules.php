@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** General change state shared by compiler models; native uint8 intent. */
-enum change_status: int
-{
+enum change_status: int {
 	case none = 0;
 	case added = 1;
 	case removed = 2;
@@ -15,18 +14,29 @@ enum change_status: int
 /** Owns the selected graph; entry references a module owned by modules. */
 final class compilation_session
 {
-	public readonly array $modules /** array<string,module>; native owning index */;
-	public readonly module $entry; /** Native non-owning reference into modules. */
-
-	/** Previous frontend generation owns replaced/removed roots; unchanged roots may be shared. */
+	/** PROPERTIES */
+	/** Native owning index. */
+	public readonly array $modules /** array<string,module> */;
+	/** Native non-owning reference into modules. */
+	public readonly module $entry;
+	/**
+	 * Previous frontend generation owns replaced/removed roots; unchanged roots may be shared.
+	 * Native shared-owning; retains prior syntax generations.
+	 */
 	public ?compilation_session $previous = null;
-	/** Null until the entire frontend generation has completed successfully. */
+	/**
+	 * Null until the entire frontend generation has completed successfully.
+	 * Native shared-owning; live across frontend generations.
+	 */
 	public ?scope $scope = null;
 	/** Sequential lifecycle; successful replacement retires the prior session. */
 	public bool $is_current = true;
+	/** Native shared-owning; shared by current and retained sessions. */
 	public function_dependencies $function_dependencies;
-	public array $removed_sources /** list<source_unit>; removed records reference old ASTs */ = [];
+	/** Removed records reference old ASTs; native owning records with shared-owning retained ASTs. */
+	public array $removed_sources /** list<source_unit> */ = [];
 
+	/** CONSTRUCTOR */
 	public function __construct(array $modules /** array<string,module> */, module $entry)
 	{
 		$this->function_dependencies = new function_dependencies();
@@ -34,6 +44,7 @@ final class compilation_session
 		$this->entry = $entry;
 	}
 
+	/** METHODS */
 	/** Source keys retain the existing single-module bundle spelling. */
 	public function source_key(source_unit $source): string
 	{
@@ -57,8 +68,12 @@ final class compilation_session
 		return $result;
 	}
 
-	/** A complete frontend inventory is required before global publication. */
-	public function files(): array /** array<string,ast_file_node>; non-owning references */
+	/**
+	 * A complete frontend inventory is required before global publication.
+	 *
+	 * Return: non-owning references.
+	 */
+	public function files(): array /** array<string,ast_file_node> */
 	{
 		$result = [];
 		foreach ($this->units() as $key => $source) {
@@ -76,12 +91,18 @@ final class module
 {
 	public readonly string $name;
 	public readonly string $root;
-	public readonly array $artifacts /** list<string>; manually built link inputs, unchecked */;
-	public readonly ?string $manifest; /** Canonical configuration input; null for explicit in-memory inventories. */
-	public readonly string $type; /** default: compiler source; c++: native translation units. */
-	public array $dependencies /** array<string,module>; native non-owning references */ = [];
-	public array $sources /** array<string,source_unit>; native owning index */ = [];
-	public ?source_unit $entry = null; /** Native non-owning reference; null for library modules. */
+	/** Manually built link inputs, unchecked. */
+	public readonly array $artifacts /** list<string> */;
+	/** Canonical configuration input; null for explicit in-memory inventories. */
+	public readonly ?string $manifest;
+	/** default: compiler source; c++: native translation units. */
+	public readonly string $type;
+	/** Native non-owning references. */
+	public array $dependencies /** array<string,module> */ = [];
+	/** Native owning index. */
+	public array $sources /** array<string,source_unit> */ = [];
+	/** Native non-owning reference; null for library modules. */
+	public ?source_unit $entry = null;
 
 	public function __construct(string $name, string $root, string $type = 'default', ?string $manifest = null,
 		array $artifacts /** list<string> */ = [])
@@ -94,16 +115,25 @@ final class module
 	}
 }
 
-/** Stable module-relative identity, e.g. app/main.cpp; the AST owns its tokens and source snapshot. */
+/**
+ * Stable module-relative identity, e.g. app/main.cpp; the AST owns its tokens and source snapshot.
+ */
 final class source_unit
 {
-	public readonly module $module; /** Native non-owning owner backlink. */
+	/** Native non-owning owner backlink. */
+	public readonly module $module;
 	public readonly string $path;
 	public readonly flavor $flavor;
 	public change_status $status = change_status::none;
-	public int $mtime /** int64; filesystem timestamp in seconds */ = 0;
-	public int $size /** uint64; file size in bytes */ = 0;
-	/** Retained frontend root; unchanged generations share this reference. Null before collection/native inputs. */
+	/** Filesystem timestamp in seconds. */
+	public int $mtime /** int64 */ = 0;
+	/** File size in bytes. */
+	public int $size /** uint64 */ = 0;
+	/**
+	 * Retained frontend root; unchanged generations share this reference. Null before
+	 * collection/native inputs.
+	 * Native shared-owning; unchanged roots survive across generations.
+	 */
 	public ?ast_file_node $ast = null;
 
 	public function __construct(module $module, string $path, flavor $flavor)

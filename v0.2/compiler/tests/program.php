@@ -66,7 +66,8 @@ foreach ([10, 100, 1000] as $count)
 	$start = hrtime(true);
 	$prepared = $frontend->prepare_sources('main.scpp', $many, $target);
 	$elapsed = (hrtime(true) - $start) / 1_000_000;
-	verify((count($prepared->files) === ($count + 1)) && ($prepared->entry->body()->expression_visits === 2), 'Program work shape');
+	verify((count($prepared->files) === ($count + 1)) && ($prepared->entry->body()->expression_visits === 2),
+		'Program work shape');
 	$measurements[] = ['secondary_files' => $count, 'prepare_pipeline_ms' => round($elapsed, 3)];
 }
-echo json_encode($measurements, JSON_THROW_ON_ERROR) . "\nProgram preparation checks passed\n";
+echo json_encode($measurements, \JSON_THROW_ON_ERROR) . "\nProgram preparation checks passed\n";

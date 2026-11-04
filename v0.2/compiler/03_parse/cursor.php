@@ -6,26 +6,32 @@ namespace scpp\compiler;
 /** A parser-local cursor; reading never mutates the published token generation. */
 final class Syntax_Cursor
 {
-	private int $index /** uint32; token position including EOF */ = 0;
-
+	/** PROPERTIES */
+	/** Token position including EOF. */
+	private int $index /** uint32 */ = 0;
+	/** Native non-owning; parser input remains alive through parsing. */
 	public readonly token_list $tokens;
 
+	/** CONSTRUCTOR */
 	public function __construct(token_list $tokens)
 	{
 		$this->tokens = $tokens;
 	}
 
+	/** METHODS */
 	public function at_end(): bool
 	{
 		return $this->index === count($this->tokens->tokens);
 	}
 
-	public function position(): int /** uint32; token position including EOF */
+	/** Return: token position including EOF. */
+	public function position(): int /** uint32 */
 	{
 		return $this->index;
 	}
 
-	public function offset(): int /** uint32; byte position including EOF */
+	/** Return: byte position including EOF. */
+	public function offset(): int /** uint32 */
 	{
 		return $this->tokens->tokens[$this->index]->offset ?? strlen($this->tokens->source->content);
 	}
@@ -45,7 +51,8 @@ final class Syntax_Cursor
 		return $this->is(token_kind::keyword) && ($this->tokens->text_at($this->index) === $word);
 	}
 
-	public function take(token_kind $kind, string $expected): int /** uint32; consumed token position */
+	/** Return: consumed token position. */
+	public function take(token_kind $kind, string $expected): int /** uint32 */
 	{
 		if (!$this->is($kind)) {
 			throw new diagnostic($this->tokens->source, $this->offset(), 'Expected ' . $expected);

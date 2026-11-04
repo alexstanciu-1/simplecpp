@@ -3,23 +3,34 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Loads module.json graphs, e.g. dependencies.runtime.modules=["json"], before any source frontend runs. */
+/**
+ * Loads module.json graphs, e.g. dependencies.runtime.modules=["json"], before any source frontend
+ * runs.
+ */
 final class Module_Loader
 {
-	private array $documents /** array<string,\stdClass>; canonical manifest path -> validated document */ = [];
-	private array $paths /** array<string,string>; unique module name -> canonical manifest */ = [];
+	/** PROPERTIES */
+	/** Canonical manifest path -> validated document; native owning parsed documents. */
+	private array $documents /** array<string,\stdClass> */ = [];
+	/** Unique module name -> canonical manifest. */
+	private array $paths /** array<string,string> */ = [];
 	private array $definitions /** array<string,array{root:string,type:string,sources:array<string,flavor>,dependencies:list<string>,manifest:string,artifacts:list<string>,entry?:string}> */ = [];
 	private string $runtime;
 	private string $entry_manifest;
 	private array $dependency_roots /** array<string,bool> */ = [];
 	private string|false $output_directory = false;
 
+	/** CONSTRUCTOR */
 	public function __construct(?string $runtime = null)
 	{
 		$this->runtime = $runtime ?? dirname(__DIR__, 2) . '/runtime';
 	}
 
-	/** Each invocation reloads configuration and discovery; generated inventories are never input caches. */
+	/** METHODS */
+	/**
+	 * Each invocation reloads configuration and discovery; generated inventories are never input
+	 * caches.
+	 */
 	public function load(string $path, ?string $output_directory = null): compilation_session
 	{
 		$this->output_directory = $output_directory === null ? false : realpath($output_directory);
@@ -47,7 +58,7 @@ final class Module_Loader
 		{
 			$matches = array_filter(array_keys($definition['sources']),
 				static fn(string $source): bool => (dirname($source) === '.') &&
-					(pathinfo($source, PATHINFO_FILENAME) === 'main'));
+				(pathinfo($source, \PATHINFO_FILENAME) === 'main'));
 			if (count($matches) !== 1) {
 				throw new \RuntimeException('Entry requires exactly one root-level main source: ' . $entry);
 			}
@@ -65,13 +76,16 @@ final class Module_Loader
 			$path = rtrim($path, '/') . '/module.json';
 		}
 		$resolved = realpath($path);
-		if (($resolved === false) || !is_file($resolved)) {
+		if (($resolved === false) || (!is_file($resolved))) {
 			throw new \RuntimeException('Missing module manifest: ' . $path);
 		}
 		return $resolved;
 	}
 
-	/** Validate object boundaries strictly so misspelled configuration never silently changes discovery. */
+	/**
+	 * Validate object boundaries strictly so misspelled configuration never silently changes
+	 * discovery.
+	 */
 	private function fields(mixed $value, array $allowed /** list<string> */, string $where): \stdClass
 	{
 		if (!$value instanceof \stdClass) {
@@ -88,11 +102,11 @@ final class Module_Loader
 	/** Lists contain only nonempty names or paths; options/config are deliberately unsupported. */
 	private function strings(mixed $value, string $where): array /** list<string> */
 	{
-		if (!is_array($value) || !array_is_list($value)) {
+		if ((!is_array($value)) || (!array_is_list($value))) {
 			throw new \RuntimeException('Expected a string list: ' . $where);
 		}
 		foreach ($value as $item) {
-			if (!is_string($item) || ($item === '')) {
+			if ((!is_string($item)) || ($item === '')) {
 				throw new \RuntimeException('Expected nonempty string: ' . $where);
 			}
 		}
@@ -110,7 +124,7 @@ final class Module_Loader
 			throw new \RuntimeException('Cannot read manifest: ' . $path);
 		}
 		try {
-			$document = json_decode($text, false, 512, JSON_THROW_ON_ERROR);
+			$document = json_decode($text, false, 512, \JSON_THROW_ON_ERROR);
 		}
 		catch (\JsonException $error) {
 			throw new \RuntimeException('Invalid module JSON: ' . $path . ': ' . $error->getMessage());
@@ -120,7 +134,7 @@ final class Module_Loader
 		$root = dirname($path);
 		$name = property_exists($document, 'name') ? $document->name : basename($root);
 		$type = property_exists($document, 'type') ? $document->type : 'default';
-		if (!is_string($name) || (preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1)) {
+		if ((!is_string($name)) || (preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1)) {
 			throw new \RuntimeException('Invalid module name: ' . $path);
 		}
 		if (isset($this->paths[$name]) && ($this->paths[$name] !== $path)) {
@@ -135,19 +149,20 @@ final class Module_Loader
 				$document->$field = $field === 'defaults' ? [] : new \stdClass();
 			}
 		}
-		if (!$document->dependencies instanceof \stdClass || !$document->modules instanceof \stdClass) {
+		if ((!$document->dependencies instanceof \stdClass) || (!$document->modules instanceof \stdClass)) {
 			throw new \RuntimeException('dependencies and modules must be objects: ' . $path);
 		}
 		$this->strings($document->defaults, 'defaults');
 		foreach ($document->modules as $alias => $location) {
-			if (!is_string($location) || ($location === '')) {
+			if ((!is_string($location)) || ($location === '')) {
 				throw new \RuntimeException('Invalid submodule path: ' . $alias);
 			}
 		}
 		$sources = [];
 		$artifacts = array_map(fn(string $artifact): string => $this->relative($root, $artifact),
 			$this->strings($document->artifacts ?? [], 'artifacts'));
-		$definition = ['manifest' => $path, 'root' => $root, 'type' => $type, 'sources' => $sources, 'dependencies' => [], 'artifacts' => $artifacts];
+		$definition = ['manifest' => $path, 'root' => $root, 'type' => $type, 'sources' => $sources,
+			'dependencies' => [], 'artifacts' => $artifacts];
 		if (($path === $this->entry_manifest) && property_exists($document, 'entry')) {
 			if (!is_string($document->entry)) {
 				throw new \RuntimeException('entry must be a relative source path');
@@ -160,7 +175,10 @@ final class Module_Loader
 		return $name;
 	}
 
-	/** Expand activation independently of dependency edges; the common graph loader checks actual cycles. */
+	/**
+	 * Expand activation independently of dependency edges; the common graph loader checks actual
+	 * cycles.
+	 */
 	private function activate(string $entry, string $runtime): void
 	{
 		$queue = [[$entry, []], [$runtime, []]];
@@ -178,9 +196,8 @@ final class Module_Loader
 				foreach ($document->dependencies as $dependency => $options)
 				{
 					$options = $this->fields($options, ['path', 'modules'], 'dependency ' . $dependency);
-					if (property_exists($options, 'path'))
-					{
-						if (!is_string($options->path) || ($options->path === '')) {
+					if (property_exists($options, 'path')) {
+						if ((!is_string($options->path)) || ($options->path === '')) {
 							throw new \RuntimeException('Invalid dependency path: ' . $dependency);
 						}
 						$location = $this->relative(dirname($path), $options->path);
@@ -191,7 +208,8 @@ final class Module_Loader
 					}
 					$target = $this->manifest_path($location);
 					if ($this->read($target) !== $dependency) {
-						throw new \RuntimeException('Dependency name does not match manifest: ' . $dependency);
+						throw new \RuntimeException('Dependency name does not match manifest: '
+							. $dependency);
 					}
 					$this->definitions[$name]['dependencies'][] = $dependency;
 					$modules = property_exists($options, 'modules') ? $options->modules : [];
@@ -206,7 +224,8 @@ final class Module_Loader
 				$key = $path . '::' . $alias;
 				if (!isset($activated[$key])) {
 					$activated[$key] = true;
-					$queue[] = [$this->manifest_path($this->relative(dirname($path), $document->modules->$alias)), []];
+					$queue[] = [$this->manifest_path($this->relative(dirname($path), $document->modules->$alias)),
+						[]];
 				}
 			}
 		}
@@ -217,7 +236,10 @@ final class Module_Loader
 		return str_starts_with($path, '/') ? $path : $root . '/' . $path;
 	}
 
-	/** Explicit lists replace discovery; explicit flavor maps remain available for nonstandard extensions. */
+	/**
+	 * Explicit lists replace discovery; explicit flavor maps remain available for nonstandard
+	 * extensions.
+	 */
 	private function sources(string $root, string $type, \stdClass $document): array /** array<string,flavor> */
 	{
 		$selection = property_exists($document, 'sources') ? $document->sources : $this->discover($root, $type);
@@ -225,7 +247,7 @@ final class Module_Loader
 		if ($selection instanceof \stdClass)
 		{
 			foreach ($selection as $path => $label) {
-				if (!is_string($label) || (($flavor = flavor::tryFrom($label)) === null)
+				if ((!is_string($label)) || (($flavor = flavor::tryFrom($label)) === null)
 					|| (($type === 'c++') && ($flavor !== flavor::cpp))) {
 					throw new \RuntimeException('Invalid source flavor: ' . $path);
 				}
@@ -242,18 +264,23 @@ final class Module_Loader
 					?? throw new \RuntimeException('Unsupported source extension: ' . $path);
 			}
 		}
-		ksort($result, SORT_STRING);
+		ksort($result, \SORT_STRING);
 		return $result;
 	}
 
 	private function source_flavor(string $path, string $type): ?flavor
 	{
-		$extension = pathinfo($path, PATHINFO_EXTENSION);
+		$extension = pathinfo($path, \PATHINFO_EXTENSION);
 		return $type === 'c++' ? (in_array($extension, ['cpp', 'cc', 'cxx'], true) ? flavor::cpp : null)
-			: match ($extension) { 'cpp' => flavor::cpp, 'php' => flavor::php, 'js' => flavor::js, default => null };
+			: match ($extension) {
+			'cpp' => flavor::cpp, 'php' => flavor::php, 'js' => flavor::js, default => null
+		};
 	}
 
-	/** Stable recursive discovery skips nested modules, symlinks, hidden directories and generated/build trees. */
+	/**
+	 * Stable recursive discovery skips nested modules, symlinks, hidden directories and
+	 * generated/build trees.
+	 */
 	private function discover(string $root, string $type, string $relative = ''): array /** list<string> */
 	{
 		$entries = scandir($root . '/' . $relative);
@@ -271,12 +298,14 @@ final class Module_Loader
 			if (is_link($absolute)) {
 				continue;
 			}
-			if (is_dir($absolute)) {
+			if (is_dir($absolute))
+			{
 				if ((realpath($absolute) === $this->output_directory) || isset($this->dependency_roots[realpath($absolute)])) {
 					continue;
 				}
-				if (!in_array(strtolower($entry), ['build', 'generated', 'vendor', 'node_modules'], true)
-					&& !is_file($absolute . '/module.json')) {
+				if ((!in_array(strtolower($entry), ['build', 'generated', 'vendor', 'node_modules'],
+							true))
+					&& (!is_file($absolute . '/module.json'))) {
 					$result = array_merge($result, $this->discover($root, $type, $path));
 				}
 			}
@@ -300,14 +329,15 @@ final class Module_Loader
 		}
 		$modules = [$module->name => (object) $sources];
 		$path = $root . '/module.sources.json';
-		if (!is_link($path) && isset($protected[realpath($path)])) {
+		if ((!is_link($path)) && isset($protected[realpath($path)])) {
 			throw new \RuntimeException('Inventory collides with an input: ' . $path);
 		}
 		if (is_link($path)) {
 			throw new \RuntimeException('Inventory must not be a symlink: ' . $path);
 		}
-		ksort($modules, SORT_STRING);
-		$text = json_encode(['generated' => true, 'modules' => $modules], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
+		ksort($modules, \SORT_STRING);
+		$text = json_encode(['generated' => true, 'modules' => $modules], \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR)
+			. "\n";
 		if (is_file($path) && (file_get_contents($path) === $text)) {
 			return;
 		}
@@ -316,7 +346,7 @@ final class Module_Loader
 			throw new \RuntimeException('Cannot create inventory: ' . $path);
 		}
 		try {
-			if ((file_put_contents($temp, $text) !== strlen($text)) || !rename($temp, $path)) {
+			if ((file_put_contents($temp, $text) !== strlen($text)) || (!rename($temp, $path))) {
 				throw new \RuntimeException('Cannot publish inventory: ' . $path);
 			}
 		}

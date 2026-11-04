@@ -18,7 +18,7 @@ final class Output_Literals
 		for ($index = 1; $index < $end; ++$index)
 		{
 			$byte = $text[$index];
-			if (!$single && ($byte === '$')) {
+			if ((!$single) && ($byte === '$')) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start() + $index,
 					'Echo interpolation is not supported yet; escape the dollar or use single quotes');
 			}
@@ -28,7 +28,8 @@ final class Output_Literals
 			}
 			$escape = $index++;
 			if ($index >= $end) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start() + $escape, 'Incomplete string escape');
+				throw new diagnostic($syntax->source(), $syntax->byte_start() + $escape,
+					'Incomplete string escape');
 			}
 			$next = $text[$index];
 			if ($single) {
@@ -37,8 +38,8 @@ final class Output_Literals
 			}
 			$decoded = match ($next) {
 				'\\' => '\\', '"' => '"', '$' => '$',
-				'n' => "\n", 'r' => "\r", 't' => "\t", '0' => "\0",
-				default => null,
+					'n' => "\n", 'r' => "\r", 't' => "\t", '0' => "\0",
+					default => null,
 			};
 			$following = $text[$index + 1] ?? '';
 			if (($decoded === null) || (($next === '0') && ($following >= '0') && ($following <= '7'))) {

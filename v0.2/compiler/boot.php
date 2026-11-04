@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-if ((PHP_VERSION_ID < 80500) || (PHP_INT_SIZE !== 8)) {
+if ((\PHP_VERSION_ID < 80500) || (\PHP_INT_SIZE !== 8)) {
 	throw new RuntimeException('The compiler requires 64-bit PHP 8.5+');
 }
 

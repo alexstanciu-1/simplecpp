@@ -14,25 +14,40 @@ namespace scpp\compiler;
  */
 final class ast_call_statement extends ast_statement
 {
+	/** PROPERTIES */
 	public readonly string $name;
-	/** Prepared cache: stable symbol identity, resolved through its current declaration; null before body preparation or after reset. */
+	/**
+	 * Prepared cache: stable symbol identity, resolved through its current declaration; null before
+	 * body preparation or after reset.
+	 * Native non-owning; identity retained by compilation scope.
+	 */
 	protected ?symbol_entry $function_symbol = null;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, string $name)
+	/** CONSTRUCTOR */
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
+		string $name)
 	{
 		$this->name = $name;
 		parent::__construct($start, $end);
 	}
 
+	/** METHODS */
 	/** Canonical lookup key; preparation attaches its stable symbol entry. */
 	public function symbol_key(): string
 	{
 		return 'func:' . $this->name;
 	}
 
+	/** Attach the stable symbol only after its current function contract is available. */
 	public function settle_function(symbol_entry $symbol): void
 	{
-		if ($this->function_symbol !== null) { throw new \LogicException('Call target is already settled'); }
+		if ($this->function_symbol !== null) {
+			throw new \LogicException('Call target is already settled');
+		}
 		$function = $symbol->declaration() ?? throw new \LogicException('Cannot settle a removed function');
 		$function->return_type_def();
 		$this->function_symbol = $symbol;
@@ -40,7 +55,9 @@ final class ast_call_statement extends ast_statement
 
 	public function function_def(): ast_function_declaration
 	{
-		if ($this->parent instanceof ast_function_body) { $this->parent->require_prepared(); }
+		if ($this->parent instanceof ast_function_body) {
+			$this->parent->require_prepared();
+		}
 		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
 	}
 
@@ -62,55 +79,86 @@ final class ast_call_statement extends ast_statement
  */
 final class ast_function_body extends ast_node
 {
+	/** PROPERTIES */
+	/** Native owning; body declaration scope. */
 	public readonly scope $scope;
+	/** Native owning syntax children. */
 	public readonly array $statements /** list<ast_statement> */;
-	public readonly array $locals /** array<uint32,ast_local_declaration>; keyed by body statement position */;
+	/** Keyed by body statement position; native non-owning statement index. */
+	public readonly array $locals /** array<uint32,ast_local_declaration> */;
+	/** Native non-owning occurrence index. */
 	public readonly array $references /** list<ast_name_expression> */;
-
-	/** Preparation statistics: zero until successful whole-body preparation; completion is checked separately. */
+	/**
+	 * Preparation statistics: zero until successful whole-body preparation; completion is checked
+	 * separately.
+	 */
 	private bool $prepared = false;
-	private ?int $exit_digits /** uint8; cached entry-target context, null for ordinary void bodies */ = null;
+	/** Cached entry-target context, null for ordinary void bodies. */
+	private ?int $exit_digits /** uint8 */ = null;
 	public int $statement_visits /** uint32 */ = 0;
 	public int $expression_visits /** uint32 */ = 0;
 	public int $name_lookups /** uint32 */ = 0;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, array $statements /** list<ast_statement> */,
-		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */, scope $scope)
+	/** CONSTRUCTOR */
+	/**
+	 * Initialize syntax identity and attach supplied children to their owning node.
+	 *
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
+		array $statements /** list<ast_statement> */,
+		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */,
+		scope $scope)
 	{
 		parent::__construct($start, $end);
-		foreach ($statements as $statement) { $statement->attach($this); }
+		foreach ($statements as $statement) {
+			$statement->attach($this);
+		}
 		$this->statements = $statements;
 		$this->locals = $locals;
 		$this->references = $references;
 		$this->scope = $scope;
 	}
+
+	/** METHODS */
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
 	public function invalidate_preparation(): void
 	{
 		$this->prepared = false;
 		$this->root()->begin_preparation();
 	}
+
 	public function is_prepared(?entry_target $target = null): bool
 	{
-		return $this->prepared && ($this->exit_digits === $target?->digits);
+		return ($this->prepared) && ($this->exit_digits === $target?->digits);
 	}
+
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
-	public function settle_preparation(int $statements /** uint32 */, int $expressions /** uint32 */, int $lookups /** uint32 */, ?entry_target $target = null): void
+
+	/** Publish body completion and the target context only after all statement facts settle. */
+	public function settle_preparation(int $statements /** uint32 */, int $expressions /** uint32 */, int $lookups /** uint32 */,
+		?entry_target $target = null): void
 	{
-		if ($this->prepared) { throw new \LogicException('Function body is already prepared'); }
+		if ($this->prepared) {
+			throw new \LogicException('Function body is already prepared');
+		}
 		$this->statement_visits = $statements;
 		$this->expression_visits = $expressions;
 		$this->name_lookups = $lookups;
 		$this->exit_digits = $target?->digits;
 		$this->prepared = true;
 	}
+
 	public function require_prepared(): void
 	{
-		if (!$this->prepared) { throw new \LogicException('Function preparation is not complete'); }
+		if (!$this->prepared) {
+			throw new \LogicException('Function preparation is not complete');
+		}
 	}
 
 }
@@ -127,16 +175,28 @@ final class ast_function_body extends ast_node
 final class ast_function_declaration extends ast_node implements ast_declaration_interface
 {
 	use ast_declaration;
+
+	/** PROPERTIES */
 	public readonly bool $is_private;
 	public readonly bool $is_implicit_entry;
 	/** Written return type name; absence is distinct from an unresolved return type. */
 	public readonly ?string $return_type_name;
-	public readonly int $header_end /** uint32; exclusive header token boundary */;
+	/** Exclusive header token boundary. */
+	public readonly int $header_end /** uint32 */;
+	/** Native owning; function syntax child. */
 	private ?ast_function_body $body = null;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
 
-	public function __construct(string $name, ?string $return_type_name, int $start /** uint32; token position */, int $header_end /** uint32; exclusive token position */,
+	/** CONSTRUCTOR */
+	/**
+	 * Initialize syntax identity and attach supplied children to their owning node.
+	 *
+	 * $start: token position.
+	 * $header_end: exclusive token position.
+	 */
+	public function __construct(string $name, ?string $return_type_name, int $start /** uint32 */,
+		int $header_end /** uint32 */,
 		bool $is_implicit_entry = false)
 	{
 		$this->name = $name;
@@ -147,12 +207,14 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		parent::__construct($start, $header_end, true);
 	}
 
+	/** METHODS */
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{
 		return 'func:' . $this->declaration_key();
 	}
 
+	/** Attach the completed body once and settle the function token boundary. */
 	public function complete_body(ast_function_body $body): void
 	{
 		if (($this->body !== null) || ($body->start < $this->start)) {
@@ -177,25 +239,32 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 
 	public function settle_return_type(type_definition $type): void
 	{
-		if ($this->return_type_def !== null) { throw new \LogicException('Function return type is already settled'); }
+		if ($this->return_type_def !== null) {
+			throw new \LogicException('Function return type is already settled');
+		}
 		$this->return_type_def = $type;
 	}
 
-	public function return_type_ready(): bool { return $this->return_type_def !== null; }
+	public function return_type_ready(): bool
+	{
+		return $this->return_type_def !== null;
+	}
 
 	public function return_type_def(): type_definition
 	{
 		return $this->return_type_def ?? throw new \LogicException('Function return type is not settled');
 	}
 
-	public function name_position(): int /** uint32; token position */
+	/** Return: token position. */
+	public function name_position(): int /** uint32 */
 	{
 		return $this->is_implicit_entry ? $this->start : $this->start + 1;
 	}
 
-	public function return_type_position(): int /** uint32; token position */
+	/** Return: token position. */
+	public function return_type_position(): int /** uint32 */
 	{
-		return ($this->is_implicit_entry || ($this->source()->flavor === flavor::cpp))
+		return (($this->is_implicit_entry) || ($this->source()->flavor === flavor::cpp))
 			? $this->start : $this->header_end - 1;
 	}
 }
@@ -212,26 +281,41 @@ final class ast_function_declaration extends ast_node implements ast_declaration
  */
 final class ast_return_statement extends ast_statement
 {
+	/** PROPERTIES */
 	/** Prepared fact: entry conversion; null before preparation or for a void return. */
 	protected ?exit_conversion $conversion = null;
-	public function settle_conversion(exit_conversion $conversion): void
-	{
-		if ($this->conversion !== null) { throw new \LogicException('Return conversion already settled'); }
-		$this->conversion = $conversion;
-	}
-	public function conversion(): exit_conversion
-	{
-		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
-	}
-	public function reset_preparation(): void { $this->conversion = null; }
-
+	/** Native owning; optional return expression child. */
 	public readonly ?ast_expression $value;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */,
+	/** CONSTRUCTOR */
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		?ast_expression $value)
 	{
 		$this->value = $value;
 		$value?->attach($this);
 		parent::__construct($start, $end);
+	}
+
+	/** METHODS */
+	public function settle_conversion(exit_conversion $conversion): void
+	{
+		if ($this->conversion !== null) {
+			throw new \LogicException('Return conversion already settled');
+		}
+		$this->conversion = $conversion;
+	}
+
+	public function conversion(): exit_conversion
+	{
+		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
+	}
+
+	public function reset_preparation(): void
+	{
+		$this->conversion = null;
 	}
 }

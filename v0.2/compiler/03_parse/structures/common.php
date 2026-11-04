@@ -18,6 +18,7 @@ final class ast_integer_expression extends ast_expression
 	{
 		$this->settle_value(type_definition::int64, $value);
 	}
+
 	public function integer(): int /** int64 */
 	{
 		return $this->constant() ?? throw new \LogicException('Integer value is not prepared');
@@ -35,30 +36,41 @@ final class ast_integer_expression extends ast_expression
  */
 final class ast_name_expression extends ast_expression
 {
-	/** Prepared fact: exact local identity; null before preparation or after reset. */
+	/** PROPERTIES */
+	/**
+	 * Prepared fact: exact local identity; null before preparation or after reset.
+	 * Native non-owning; resolved declaration belongs to body syntax.
+	 */
 	protected ?ast_local_declaration $local_def = null;
+	public readonly string $name;
 
+	/** CONSTRUCTOR */
+	/**
+	 * $start: token position.
+	 * $end: exclusive.
+	 */
+	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */)
+	{
+		$this->name = $name;
+		parent::__construct($start, $end);
+	}
+
+	/** METHODS */
 	public function settle_local(ast_local_declaration $local): void
 	{
 		$this->settle_value($local->type_def(), $local->constant());
 		$this->local_def = $local;
 	}
+
 	public function local_def(): ast_local_declaration
 	{
 		return $this->local_def ?? throw new \LogicException('Local reference is not settled');
 	}
+
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
 		$this->local_def = null;
-	}
-
-	public readonly string $name;
-
-	public function __construct(string $name, int $start /** uint32; token position */, int $end /** uint32; exclusive */)
-	{
-		$this->name = $name;
-		parent::__construct($start, $end);
 	}
 }
 
@@ -73,19 +85,33 @@ final class ast_name_expression extends ast_expression
  */
 final class ast_local_declaration extends ast_statement implements ast_declaration_interface
 {
-	public function symbol_key(): string { return 'var:' . $this->declaration_key(); }
-
 	use ast_declaration;
+
+	/** PROPERTIES */
 	/** Written type name; null when omitted, independently of later resolution. */
 	public readonly ?string $type_name;
-	/** Prepared fact: canonical local type; null until successful declaration preparation or after reset. */
+	/**
+	 * Prepared fact: canonical local type; null until successful declaration preparation or after
+	 * reset.
+	 */
 	protected ?type_definition $type_def = null;
-	public readonly int $id /** uint32; body-local declaration ordinal, assigned by collection */;
-	/** Prepared fact: initializer constant; null means unknown after type settlement, or unprepared before it. */
-	protected ?int $constant /** int64 when known */ = null;
+	/** Body-local declaration ordinal, assigned by collection. */
+	public readonly int $id /** uint32 */;
+	/**
+	 * Prepared fact: initializer constant; null means unknown after type settlement, or unprepared
+	 * before it.
+	 * When known.
+	 */
+	protected ?int $constant /** int64 */ = null;
+	/** Native owning; initializer syntax child. */
 	public readonly ast_expression $initializer;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */,
+	/** CONSTRUCTOR */
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		string $name,
 		?string $type_name, ast_expression $initializer)
 	{
@@ -96,6 +122,13 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 
 		parent::__construct($start, $end);
 	}
+
+	/** METHODS */
+	public function symbol_key(): string
+	{
+		return 'var:' . $this->declaration_key();
+	}
+
 	public function identify(int $id /** uint32 */): void
 	{
 		$this->id = $id;
@@ -109,7 +142,9 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 
 	public function settle_type(type_definition $type, ?int $constant /** int64 */): void
 	{
-		if ($this->type_def !== null) { throw new \LogicException('Local type is already settled'); }
+		if ($this->type_def !== null) {
+			throw new \LogicException('Local type is already settled');
+		}
 		$this->type_def = $type;
 		$this->constant = $constant;
 	}
@@ -119,21 +154,33 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 		return $this->type_def ?? throw new \LogicException('Local type is not settled');
 	}
 
-	public function constant(): ?int /** int64 when known */
+	/** Return: when known. */
+	public function constant(): ?int /** int64 */
 	{
 		$this->type_def();
 		return $this->constant;
 	}
 
-	/** Recover the name position from the existing flavor grammar, without a retained wrapper/index. */
-	public function name_position(): int /** uint32; token position */
+	/**
+	 * Recover the name position from the existing flavor grammar, without a retained wrapper/index.
+	 *
+	 * Return: token position.
+	 */
+	public function name_position(): int /** uint32 */
 	{
 		return $this->start + ($this->source()->flavor === flavor::php ? 0 : 1);
 	}
 
-	public function type_position(): int /** uint32; token position; requires a written type */
+	/**
+	 * Locate the authored type nominator for diagnostics without storing another span.
+	 *
+	 * Return: token position; requires a written type.
+	 */
+	public function type_position(): int /** uint32 */
 	{
-		if ($this->type_name === null) { throw new \LogicException('No written local type'); }
+		if ($this->type_name === null) {
+			throw new \LogicException('No written local type');
+		}
 		return $this->start + match ($this->source()->flavor) {
 			flavor::cpp => 0, flavor::php => 1, flavor::js => 3,
 		};
@@ -153,10 +200,15 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 final class ast_assignment_statement extends ast_statement
 {
 	public readonly string $name;
+	/** Native owning; assignment expression child. */
 	public readonly ast_expression $value;
 	public readonly assignment_intent $intent;
 
-	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */,
+	/**
+	 * $start: token position.
+	 * $end: exclusive token position.
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		string $name,
 		ast_expression $value, assignment_intent $intent)
 	{

@@ -8,7 +8,10 @@ namespace scpp\compiler;
  */
 final class Program_Preparation
 {
-	/** Settle every signature before preparing any body; publish the program only after all bodies succeed. */
+	/**
+	 * Settle every signature before preparing any body; publish the program only after all bodies
+	 * succeed.
+	 */
 	public static function prepare(string $entry_path, array $files /** array<string,ast_file_node> */,
 		entry_target $target, ?scope $symbols = null, ?compilation_session $session = null): prepared_program
 	{
@@ -26,9 +29,10 @@ final class Program_Preparation
 		}
 		$symbols ??= Symbol_Publication::completed($files);
 		$errors = Declaration_Diagnostics::program($files, $symbols);
-		if ($errors !== []) { throw new diagnostic_group($errors); }
-		foreach ($files as $path => $file)
-		{
+		if ($errors !== []) {
+			throw new diagnostic_group($errors);
+		}
+		foreach ($files as $path => $file) {
 			$path = (string) $path;
 			self::admit($file, $path === $entry_path);
 		}
@@ -43,7 +47,9 @@ final class Program_Preparation
 			Function_Preparation::bodies($file, $symbols);
 		}
 		(new Preparation())->entry($files[$entry_path], $target, $symbols);
-		foreach ($files as $file) { $file->settle_preparation(); }
+		foreach ($files as $file) {
+			$file->settle_preparation();
+		}
 		$entry = new prepared_entry($files[$entry_path], $target);
 		return new prepared_program($entry_path, $files, $entry, $session);
 	}
@@ -52,7 +58,7 @@ final class Program_Preparation
 	public static function admit(ast_file_node $file, bool $is_entry): void
 	{
 		$main = $file->main();
-		if (!$is_entry && ($main !== null)) {
+		if ((!$is_entry) && ($main !== null)) {
 			$span = $main->body()->statements[0];
 			throw new diagnostic($span->source(), $span->byte_start(),
 				'Top-level executable statements are only allowed in the selected entry');
