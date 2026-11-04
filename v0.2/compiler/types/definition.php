@@ -32,6 +32,23 @@ abstract class type_definition
 		throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported literal for type: ' . $this->name);
 	}
 
+	/** Conditions are a separate semantic boundary from typed boolean conversion. */
+	public function prepare_condition(ast_expression $value): void
+	{
+		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported condition type: ' . $this->name);
+	}
+
+	public function lower_cpp_condition(string $value): string
+	{
+		throw new \LogicException('Condition lowering is unavailable for type: ' . $this->name);
+	}
+
+	/** @return string[] Public includes needed by this type's condition operation. */
+	public function condition_headers(): array /** list<string> */
+	{
+		return [];
+	}
+
 	/** Native representation of an already resolved language type. */
 	abstract public function cpp_type(): string;
 

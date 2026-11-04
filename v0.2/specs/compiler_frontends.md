@@ -227,3 +227,9 @@ Mutable reference parameters use `T &$name` (PHP), `T &name` (C++), and `&name: 
 storage identity, mutation, forwarding and argument ordering follow the shared
 [function contract](../../specs/compiler_entry_v0_2.md#explicit-mutable-reference-parameters).
 Read-only references and reference defaults are deferred.
+
+Braced `if`/`elseif`/`else if`/`else` now share one AST and preparation path across
+flavors. `elseif` is reserved in all three. Each branch body has a lexical scope;
+standalone blocks and unbraced arms remain deferred. Generated type handlers admit
+bool/int64/float64/string conditions and reject null/byte/void. See the
+[conditional contract](../../specs/conditional_statements_v0_2.md).

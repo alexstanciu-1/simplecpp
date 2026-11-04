@@ -81,8 +81,7 @@ precedence over historical shorthand examples.
 
 Named arguments, read-only references, reference returns/defaults, overloads, variadics, signature inference,
 first-class callables, methods and trailing commas remain deferred. Recursive
-signatures can resolve, but terminating recursive execution is not claimed without
-control-flow support. No arithmetic or branch syntax was added.
+signatures can resolve, but terminating recursive execution is not claimed by these function proofs. The later [conditional slice](conditions.md) adds braced branches separately.
 
 ## Verification
 

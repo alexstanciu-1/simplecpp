@@ -60,7 +60,7 @@ final class Declaration_Diagnostics
 	 *
 	 * @return diagnostic[]
 	 */
-	public static function locals(ast_function_body $body): array /** list<diagnostic> */
+	public static function locals(ast_statement_block $body): array /** list<diagnostic> */
 	{
 		$errors = [];
 		foreach ($body->scope->declarations as $head) {
@@ -68,6 +68,13 @@ final class Declaration_Diagnostics
 			for ($local = $head->duplicate_element(); $local !== null; $local = $local->duplicate_element()) {
 				/** @var ast_local_declaration $local */
 				$errors[] = self::duplicate($local, $head, 'local');
+			}
+		}
+		foreach ($body->statements as $statement) {
+			if ($statement instanceof ast_if_statement) {
+				foreach ($statement->arms as $arm) {
+					array_push($errors, ...self::locals($arm->body));
+				}
 			}
 		}
 		return self::ordered($errors);

@@ -68,13 +68,20 @@ final class Compilation_Inspection
 	 *
 	 * @return mixed[]
 	 */
-	public static function body(ast_function_body $program): array /** array<string,mixed> */
+	public static function body(ast_statement_block $program): array /** array<string,mixed> */
 	{
-		$program->require_prepared();
+		if ($program instanceof ast_function_body) {
+			$program->require_prepared();
+		}
 		$statements = [];
 		foreach ($program->statements as $statement)
 		{
-			if ($statement instanceof ast_echo_statement) {
+			if ($statement instanceof ast_if_statement) {
+				$statements[] = ['kind' => 'if', 'arms' => array_map(static fn(ast_if_arm $arm): array => [
+					'condition' => $arm->condition === null ? null : self::value($arm->condition),
+					'body' => self::body($arm->body)], $statement->arms)];
+			}
+			elseif ($statement instanceof ast_echo_statement) {
 				$statements[] = ['kind' => 'echo', 'value' => $statement->value instanceof ast_string_expression
 					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes())]
 					: self::value($statement->value)];
@@ -101,8 +108,8 @@ final class Compilation_Inspection
 			}
 		}
 		return ['statements' => $statements,
-			'work' => ['statements' => $program->statement_visits, 'expressions' => $program->expression_visits,
-				'name_lookups' => $program->name_lookups]];
+			'work' => $program instanceof ast_function_body ? ['statements' => $program->statement_visits, 'expressions' => $program->expression_visits,
+				'name_lookups' => $program->name_lookups] : null];
 	}
 
 	/**

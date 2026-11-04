@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -134,7 +134,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity);
+        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity);
         if ($identity === 'int64') {
             $files['types/int64.php'] = str_replace('@conversion_methods@', $methods, $files['types/int64.php']);
             continue;
@@ -168,7 +168,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 6,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 7,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -327,4 +327,41 @@ $constants
 	}
 $headers
 PHP_CODE;
+}
+
+/** Generate one direct condition operation per admitted type; absent metadata retains base rejection. */
+function compilerConditions(mixed $compiler, string $identity): string {
+    $conditions = object(at($compiler, 'conditions'));
+    foreach ($conditions as $name => $rule) {
+        requireThat(in_array($name, ['int64', 'bool_t', 'float64', 'string'], true), 'Unsupported compiler condition type');
+        requireThat($rule === ['int64' => 'nonzero_integer', 'bool_t' => 'identity', 'float64' => 'nonzero_float', 'string' => 'nonempty_except_zero'][$name], 'Unsupported compiler condition policy');
+    }
+    if (!isset($conditions[$identity])) return '';
+    $expression = match ($conditions[$identity]) {
+        'identity' => "'(' . \$value . ')'",
+        'nonzero_integer' => "'(' . \$value . ' != 0)'",
+        'nonzero_float' => "'(' . \$value . ' != 0.0)'",
+        'nonempty_except_zero' => var_export("([](const scpp::string& condition_value) -> bool { return condition_value.size() != 0 && (condition_value.size() != 1 || condition_value.data()[0] != '0'); })(", true) . " . \$value . ')'",
+    };
+    $headers = $identity === 'string' ? "['scpp/string.hpp']" : '[]';
+    return "
+\t/** Generated condition admission; never an explicit bool conversion. */
+\tpublic function prepare_condition(ast_expression \$value): void
+\t{
+\t\tif (\$value->type_def() !== \$this) {
+\t\t\tthrow new \\LogicException('Condition type does not match its prepared operand');
+\t\t}
+\t}
+
+\tpublic function lower_cpp_condition(string \$value): string
+\t{
+\t\treturn $expression;
+\t}
+
+\t/** @return string[] */
+\tpublic function condition_headers(): array /** list<string> */
+\t{
+\t\treturn $headers;
+\t}
+";
 }

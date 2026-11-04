@@ -28,15 +28,17 @@ final class Preparation
 	/**
 	 * Source-order visibility index, not a declaration collector; native non-owning declaration references.
 	 *
-	 * @var ast_local_binding[]
+	 * @var array<string,ast_local_binding>[]
 	 */
-	private array $visible_locals /** array<string,ast_local_binding> */ = [];
+	private array $local_frames /** list<array<string,ast_local_binding>> */ = [];
+	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
+	private bool $unknown_initializers = false;
 	/**
 	 * Latest completed writes; null means unknown after a mutable borrow, absent means original initializer.
 	 * Transient non-owning body-local index; no alias graph or callee effects are retained.
-	 * @var (ast_assignment_statement|null)[]
+	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
-	private array $latest_writes /** array<uint32,?ast_assignment_statement> */ = [];
+	private array $latest_writes /** array<uint32,ast_assignment_statement|ast_local_declaration|null> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -85,23 +87,39 @@ final class Preparation
 	}
 
 	/**
-	 * One source-order body traversal; null exit target denotes a void function, never inferred return typing.
+	 * Initialize one function traversal; a null exit target denotes an ordinary function with an explicit return type.
 	 *
 	 * @param ast_statement[] $syntax
 	 */
 	private function body(array $syntax /** list<ast_statement> */,
 		source_file $source, int $end /** uint32 */, ?entry_target $target, ast_function_body $owner): void
 	{
-		$this->visible_locals = [];
+		$this->local_frames = [[]];
+		$this->unknown_initializers = false;
 		$this->latest_writes = [];
 		/** @var ast_function_declaration $function */
 		$function = $owner->parent;
 		foreach ($function->parameters as $parameter) {
-			$this->visible_locals[$parameter->declaration_key()] = $parameter;
+			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
+		$returned = $this->sequence($syntax, $source, $target, $function);
+		if (($target === null) && !$returned && ($function->return_type_def() !== type_void::instance())) {
+			throw new diagnostic($source, $end, 'Non-void function requires a value return');
+		}
+		if (($target !== null) && (!$returned)) {
+			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
+		}
+	}
+
+	/** One traversal per block; completion is transient and never a copied prepared statement tree.
+	 * @param ast_statement[] $syntax
+	 */
+	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
+		?entry_target $target, ast_function_declaration $function): bool
+	{
 		$returned = false;
 		foreach ($syntax as $statement)
 		{
@@ -110,7 +128,10 @@ final class Preparation
 				throw new diagnostic($statement->source(), $statement->byte_start(),
 					'Statements after return are outside the entry slice');
 			}
-			if ($statement instanceof ast_local_declaration) {
+			if ($statement instanceof ast_if_statement) {
+				$returned = $this->conditional($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 			}
 			elseif ($statement instanceof ast_assignment_statement) {
@@ -161,12 +182,49 @@ final class Preparation
 				throw new \LogicException('Unhandled statement preparation');
 			}
 		}
-		if (($target === null) && !$returned && ($function->return_type_def() !== type_void::instance())) {
-			throw new diagnostic($source, $end, 'Non-void function requires a value return');
+		return $returned;
+	}
+
+	/** Resolve visible locals without copying outer indexes into child blocks. */
+	private function find_local(string $name): ?ast_local_binding
+	{
+		for ($index = count($this->local_frames) - 1; $index >= 0; --$index) {
+			if (isset($this->local_frames[$index][$name])) {
+				return $this->local_frames[$index][$name];
+			}
 		}
-		if (($target !== null) && (!$returned)) {
-			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
+		return null;
+	}
+
+	/** Discard only value knowledge; types, bindings and previous occurrence snapshots remain intact. */
+	private function forget_values(): void
+	{
+		$this->latest_writes = [];
+		$this->unknown_initializers = true;
+	}
+
+	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
+	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): bool
+	{
+		$returns = true;
+		$has_else = false;
+		foreach ($statement->arms as $arm) {
+			$this->forget_values();
+			if ($arm->condition !== null) {
+				$this->value($arm->condition);
+				$arm->condition->type_def()->prepare_condition($arm->condition);
+			}
+			else {
+				$has_else = true;
+			}
+			$this->local_frames[] = [];
+			$arm_returns = $this->sequence($arm->body->statements, $source, $target, $function);
+			array_pop($this->local_frames);
+			$returns = $returns && $arm_returns;
 		}
+		$this->forget_values();
+		return $has_else && $returns;
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
@@ -175,7 +233,7 @@ final class Preparation
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
 		$root = $declaration->root();
-		if (isset($this->visible_locals[$name])) {
+		if (isset($this->local_frames[count($this->local_frames) - 1][$name])) {
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
 				'Duplicate local: ' . $name);
 		}
@@ -198,14 +256,17 @@ final class Preparation
 		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);
 		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
 			$declaration->initializer->constant_known(), $conversion);
-		$this->visible_locals[$name] = $declaration;
+		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
+		if ($this->unknown_initializers) {
+			$this->latest_writes[$declaration->storage_id()] = $declaration;
+		}
 	}
 
 	/** Prepare the RHS before publishing the write, preserving old-value reads such as x = x. */
 	private function assignment(ast_assignment_statement $statement): void
 	{
 		$this->name_lookups++;
-		$local = $this->visible_locals[$statement->name] ?? null;
+		$local = $this->find_local($statement->name);
 		if ($local === null) {
 			throw new diagnostic($statement->source(), $statement->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
@@ -240,18 +301,19 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Cannot read local during its initialization: ' . $name);
 			}
-			$binding = $this->visible_locals[$name] ?? null;
+			$binding = $this->find_local($name);
 			if ($binding !== null) {
 				$id = $binding->storage_id();
 				// Reference parameters can alias each other or globals; never propagate their write constants.
 				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
-					|| (array_key_exists($id, $this->latest_writes) && ($this->latest_writes[$id] === null));
-				$syntax->settle_local($binding, $this->latest_writes[$id] ?? null, $unknown);
+					|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
+				$write = $this->latest_writes[$id] ?? null;
+				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown);
 				return;
 			}
 			$separator = strpos($name, '\\');
 			if ($syntax->member_syntax && ($separator !== false)
-				&& isset($this->visible_locals[substr($name, 0, $separator)])) {
+				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
 			$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
@@ -271,7 +333,7 @@ final class Preparation
 	private function call(ast_call_expression $call): void
 	{
 		$separator = strpos($call->name, '\\');
-		if ($call->member_syntax && ($separator !== false) && isset($this->visible_locals[substr($call->name, 0, $separator)])) {
+		if ($call->member_syntax && ($separator !== false) && ($this->find_local(substr($call->name, 0, $separator)) !== null)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Member calls are not supported in this slice');
 		}
 		$this->name_lookups++;

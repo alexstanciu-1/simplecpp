@@ -142,3 +142,22 @@ try {
     rmdir($work);
 }
 echo "Generated native lowering, metadata admission, freshness and cleanup passed\n";
+
+// Condition admission follows metadata independently of value conversions.
+foreach (['int64', 'float64', 'bool', 'string'] as $type) {
+    requireThat(str_contains($files['types/' . $type . '.php'], 'public function prepare_condition'), 'Missing generated condition handler');
+}
+foreach (['null', 'byte'] as $type) {
+    requireThat(!str_contains($files['types/' . $type . '.php'], 'public function prepare_condition'), 'Deferred condition was generated');
+}
+$without = unserialize(serialize($metadata));
+unset($without->compiler->conditions->string);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'public function prepare_condition'), 'Removed condition admission still generated');
+$bad = unserialize(serialize($metadata));
+$bad->compiler->conditions->string = 'native_bool_cast';
+try {
+    renderCompiler($bad, $facts);
+    throw new \LogicException('Unspecified string truthiness accepted');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'condition policy'), 'Unexpected condition diagnostic');
+}

@@ -22,11 +22,14 @@ final class ast_call_statement extends ast_statement
 		return $this->value->symbol_key();
 	}
 
+	/** Inspection requires completion of the enclosing function, including calls inside nested arms. */
 	public function function_def(): ast_function_declaration
 	{
-		if ($this->parent instanceof ast_function_body) {
-			$this->parent->require_prepared();
+		$owner = $this->parent;
+		while (!($owner instanceof ast_function_body)) {
+			$owner = $owner->parent;
 		}
+		$owner->require_prepared();
 		return $this->value->function_def();
 	}
 }
@@ -109,19 +112,8 @@ final class ast_call_expression extends ast_expression
  * ```
  * The body owns the echo and return statements, local collection and completed body facts.
  */
-final class ast_function_body extends ast_node implements dependency_watcher
+final class ast_function_body extends ast_statement_block implements dependency_watcher
 {
-	/** PROPERTIES */
-	/** Native owning; body declaration scope. */
-	public readonly scope $scope;
-	/** @var ast_statement[] Native owning syntax children. */
-	public readonly array $statements /** list<ast_statement> */;
-	/** @var ast_local_declaration[] Keyed by body statement position; native non-owning statement index. */
-	public readonly array $locals /** array<uint32,ast_local_declaration> */;
-	/** @var ast_name_expression[] Native non-owning occurrence index. */
-	public readonly array $references /** list<ast_name_expression> */;
-
-	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
@@ -133,33 +125,6 @@ final class ast_function_body extends ast_node implements dependency_watcher
 	/** Preparation statistics: name lookups performed by the last successful body preparation; zero before completion. */
 	public int $name_lookups /** uint32 */ = 0;
 
-	/** CONSTRUCTOR */
-	/**
-	 * Initialize syntax identity and attach supplied children to their owning node.
-	 *
-	 * $start: token position.
-	 * $end: exclusive token position.
-	 *
-	 * @param ast_statement[] $statements
-	 * @param ast_local_declaration[] $locals
-	 * @param ast_name_expression[] $references
-	 */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
-		array $statements /** list<ast_statement> */,
-		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */,
-		scope $scope)
-	{
-		parent::__construct($start, $end);
-		foreach ($statements as $statement) {
-			$statement->attach($this);
-		}
-		$this->statements = $statements;
-		$this->locals = $locals;
-		$this->references = $references;
-		$this->scope = $scope;
-	}
-
-	/** METHODS */
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
 	public function invalidate_dependencies(): void
 	{

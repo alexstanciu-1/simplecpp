@@ -33,7 +33,8 @@ expression is required for initialization:
 | `null empty = null;` | `$empty null = null;` | `let empty: null = null;` |
 
 This decision applies to the implemented typed local/global declarations. It does
-not introduce implicit arithmetic promotion, truthiness or implicit promotion. Typed function parameters and returns request
+not introduce implicit arithmetic promotion. Condition admission is separately
+defined by `conditional_statements_v0_2.md`. Typed function parameters and returns request
 explicit conversion intent under the [function contract](compiler_entry_v0_2.md#typed-value-parameters-and-returns). A typed declaration is not represented as an authored cast AST.
 
 | Source → destination | Rule |

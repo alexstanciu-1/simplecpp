@@ -114,6 +114,12 @@ final class Syntax_Inspection
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
+		if ($statement instanceof ast_if_statement) {
+			return ['kind' => 'if', 'span' => self::span($statement), 'arms' => array_map(
+				static fn(ast_if_arm $arm): array => ['condition' => $arm->condition === null ? null : self::expression($arm->condition),
+					'body' => array_map(self::statement(...), $arm->body->statements)], $statement->arms)];
+		}
+
 		if ($statement instanceof ast_echo_statement) {
 			return ['kind' => 'echo', 'value' => self::expression($statement->value), 'span' => self::span($statement)];
 		}

@@ -130,6 +130,9 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->keyword('if')) {
+			return $this->conditional($grammar, $collector);
+		}
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
 		}
@@ -146,6 +149,54 @@ final class Parser
 			return new ast_call_statement($value->start, $end, $value);
 		}
 		return $grammar->statement($this, $collector);
+	}
+
+	/** Parse only braced alternatives; each body gets its own lexical collector and shared storage IDs. */
+	private function conditional(statement_grammar $grammar, Body_Collection $collector): ast_if_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('if');
+		$arms = [];
+		$conditional = true;
+		do {
+			$arm_start = $this->cursor->position();
+			$condition = null;
+			if ($conditional) {
+				$this->cursor->take(token_kind::lparen, '(');
+				$condition = $this->value();
+				$this->cursor->take(token_kind::rparen, ')');
+			}
+			$body_start = $this->cursor->take(token_kind::lbrace, '{ (braced conditional body)');
+			$child = $collector->child();
+			$statements = [];
+			while (!$this->cursor->is(token_kind::rbrace)) {
+				if ($this->cursor->at_end()) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected }');
+				}
+				$statement = $this->statement($grammar, $child);
+				$child->statement($statement, count($statements));
+				$statements[] = $statement;
+			}
+			$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+			$arms[] = new ast_if_arm($arm_start, $end, $condition, $child->block($body_start, $end, $statements));
+			if (!$conditional) {
+				break;
+			}
+			if ($this->cursor->keyword('elseif')) {
+				$this->cursor->take_keyword('elseif');
+			}
+			elseif ($this->cursor->keyword('else')) {
+				$this->cursor->take_keyword('else');
+				$conditional = $this->cursor->keyword('if');
+				if ($conditional) {
+					$this->cursor->take_keyword('if');
+				}
+			}
+			else {
+				break;
+			}
+		} while (true);
+		return new ast_if_statement($start, $this->cursor->position(), $arms);
 	}
 
 	/** Discover the stable header before parsing its body; local collection never enters the global index. */

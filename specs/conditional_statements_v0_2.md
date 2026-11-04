@@ -47,3 +47,29 @@ numbered break/continue, or otherwise unsupported statement/declaration forms.
 A conditional may contain an already-supported braced loop or another supported
 compound statement as its one statement. Runtime and builtin availability are
 independent of conditional syntax admission.
+
+## PHP-first compiler delivery — 2026-11-04
+
+The active `v0.2/compiler/` implements braced `if`, `elseif`, `else if`, and `else`
+in all three flavors, including nested conditionals. Both conditional-chain spellings
+normalize to the same AST; `elseif` is reserved in each flavor. Unbraced arms remain
+an implementation debt against the broader contract above. Standalone blocks,
+loops, logical operators and ternary expressions are not added by this slice.
+
+Conditions admit bool, int/int64, float/float64 and string. Bool uses its value;
+numeric zero (including negative floating zero) is false; strings are false only
+when empty or exactly `"0"`. Other strings, including `"false"`, are true. This is
+condition truthiness, not a grant of string-to-bool conversion. Direct null and
+new distinct-byte conditions remain deferred, as do wrapper/handle conditions.
+
+All arms are prepared once even when statically unreachable. Each arm owns a lexical
+scope. Explicit declarations may shadow outer bindings; PHP bare writes select an
+already-visible local or introduce an arm-local declaration. Inner names cannot
+escape or merge between arms. Function storage IDs remain unique across blocks.
+
+Completion is structural: a conditional guarantees return only if it has an else
+and every arm guarantees return. A function with a value return type rejects normal
+fallthrough; void functions permit it. Constant-condition reachability is not used
+to bypass these checks. Value facts are conservatively discarded at alternative and
+join boundaries. Types, bindings and prior occurrence snapshots remain intact; no
+branch value merge or repeated preparation fixed point is performed.

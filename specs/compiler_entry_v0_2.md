@@ -287,3 +287,12 @@ reference parameter defaults, reference returns, local aliases, interior referen
 variadics and escaping captures remain deferred. Value-parameter defaults continue
 to work after required reference parameters. Global assignment syntax remains deferred,
 but mutation through an explicitly bound reference parameter is supported.
+
+### Braced conditional bodies
+
+The active compiler now accepts nested braced `if`/`elseif`/`else if`/`else` in
+entry and ordinary functions. See [conditional statements](conditional_statements_v0_2.md#php-first-compiler-delivery--2026-11-04)
+for truthiness, lexical scopes and completion. Value-returning functions may return
+through an exhaustive chain rather than a direct final return. Statements after a
+structurally guaranteed return remain rejected. Value facts no longer cross branch
+boundaries, while existing reference-call invalidation remains in effect.

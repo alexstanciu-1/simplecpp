@@ -38,8 +38,9 @@ The index is reset for each body. Mutable reference calls invalidate only passed
 storage after argument evaluation. A later assignment restores facts for ordinary
 locals/value parameters. Reference parameters always read as unknown, since they may
 alias one another or globals. This retains earlier snapshots without an alias graph.
-Before adding branches/loops, design joins for value facts; this source-order index
-is deliberately limited to the current straight-line bodies.
+Braced conditionals clear value knowledge at alternatives and joins. After a barrier,
+new declarations and assignments establish fresh facts; outer initializers cannot
+be reused accidentally. Loops and more precise branch merging remain deferred.
 
 Lowering emits the approved write and any conversion headers without preparing data.
 Identity self-writes to the same local emit `(void)local_n;`, a no-op for currently

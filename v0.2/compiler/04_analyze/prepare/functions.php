@@ -18,8 +18,23 @@ final class Function_Preparation
 	{
 		$body->root()->begin_preparation();
 		$body->reset_preparation();
+		self::reset_block($body);
+	}
+
+	/** Reset nested source syntax once; the function remains the only dependency/completion owner. */
+	private static function reset_block(ast_statement_block $body): void
+	{
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_if_statement) {
+				foreach ($statement->arms as $arm) {
+					if ($arm->condition !== null) {
+						self::expression($arm->condition);
+					}
+					self::reset_block($arm->body);
+				}
+				continue;
+			}
 			if (($statement instanceof ast_local_declaration)
 				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)) {
 				$statement->reset_preparation();

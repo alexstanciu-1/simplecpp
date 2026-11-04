@@ -106,15 +106,37 @@ final class Cpp_Emitter
 	 * @param bool[] $required_headers
 	 * @return string[]
 	 */
-	private function statements(ast_function_body $body, array &$declarations /** array<string,ast_function_declaration> */,
+	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		bool &$uses_output, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$required_headers /** array<string,bool> */): array /** list<string> */
+		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null): array /** list<string> */
 	{
-		$body->require_prepared();
+		if ($body instanceof ast_function_body) {
+			$body->require_prepared();
+			/** @var ast_function_declaration $function */
+			$function = $body->parent;
+		}
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
-			if ($statement instanceof ast_local_declaration) {
+			if ($statement instanceof ast_if_statement) {
+				foreach ($statement->arms as $index => $arm) {
+					$head = $index === 0 ? 'if' : 'else';
+					if ($arm->condition !== null) {
+						$type = $arm->condition->type_def();
+						$operand = $this->value($arm->condition, $global_references, $declarations, $required_headers);
+						$head = ($index === 0 ? 'if' : 'else if') . ' (' . $type->lower_cpp_condition($operand) . ')';
+						foreach ($type->condition_headers() as $header) {
+							$required_headers[$header] = true;
+						}
+					}
+					$lines[] = "\t" . $head . ' {';
+					foreach ($this->statements($arm->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {
+						$lines[] = "\t" . $line;
+					}
+					$lines[] = "\t}";
+				}
+			}
+			elseif ($statement instanceof ast_local_declaration) {
 				$lines[] = "\t[[maybe_unused]] " . $statement->type_def()->cpp_type() . ' ' . $this->name($statement)
 					. ' = ' . $statement->type_def()->lower_cpp_conversion($statement->initialization(),
 						$this->value($statement->initializer, $global_references, $declarations, $required_headers)) . ';';
@@ -145,8 +167,6 @@ final class Cpp_Emitter
 					$value = Cpp_Exit::expression($conversion, $value);
 				}
 				else {
-					/** @var ast_function_declaration $function */
-					$function = $body->parent;
 					$type = $function->return_type_def();
 					$value = $type->lower_cpp_conversion($conversion, $value);
 					foreach ($type->conversion_headers($conversion) as $header) {

@@ -13,7 +13,13 @@ final class Body_Collection
 	private array $local_names /** array<string,ast_local_binding> */ = [];
 	/** Native owning; body-local collection worker. */
 	private readonly Scope_Collection $declarations;
-	private int $parameter_count /** uint32 */;
+	/** Native non-owning parse-time lexical parent; null on function/entry body. */
+	private readonly ?Body_Collection $parent;
+	/** Native non-owning ID allocator shared by one function's blocks. */
+	private readonly Body_Collection $storage_owner;
+	private int $next_id /** uint32 */;
+	/** Native owning scope until attached to the completed block. */
+	private readonly scope $scope;
 	/** @var ast_name_expression[] Native non-owning expression references. */
 	private array $references /** list<ast_name_expression> */ = [];
 
@@ -22,10 +28,13 @@ final class Body_Collection
 	 * Seed body scope with signature-owned parameters before local statements.
 	 * @param ast_parameter_declaration[] $parameters
 	 */
-	public function __construct(scope $parent, array $parameters /** list<ast_parameter_declaration> */ = [])
+	public function __construct(scope $parent, array $parameters /** list<ast_parameter_declaration> */ = [], ?Body_Collection $parent_collector = null)
 	{
-		$this->declarations = new Scope_Collection(new scope($parent));
-		$this->parameter_count = count($parameters);
+		$this->scope = new scope($parent);
+		$this->declarations = new Scope_Collection($this->scope);
+		$this->parent = $parent_collector;
+		$this->storage_owner = $parent_collector?->storage_owner ?? $this;
+		$this->next_id = count($parameters);
 		foreach ($parameters as $parameter) {
 			$this->declarations->declare($parameter);
 			$this->local_names[$parameter->declaration_key()] ??= $parameter;
@@ -36,7 +45,7 @@ final class Body_Collection
 	/** Classify a PHP bare write using only declarations already collected in this body. */
 	public function has_local(string $name): bool
 	{
-		return isset($this->local_names[$name]);
+		return isset($this->local_names[$name]) || ($this->parent?->has_local($name) ?? false);
 	}
 
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
@@ -45,7 +54,7 @@ final class Body_Collection
 		if ($statement instanceof ast_local_declaration) {
 			$this->declarations->declare($statement);
 			$this->local_names[$statement->declaration_key()] ??= $statement;
-			$statement->identify(count($this->locals) + $this->parameter_count);
+			$statement->identify($this->storage_owner->next_id++);
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
@@ -53,12 +62,31 @@ final class Body_Collection
 			|| ($statement instanceof ast_echo_statement) || ($statement instanceof ast_call_statement)) {
 			$value = $statement->value;
 		}
+		elseif ($statement instanceof ast_if_statement) {
+			foreach ($statement->arms as $arm) {
+				if ($arm->condition !== null) {
+					$this->expression($arm->condition);
+				}
+			}
+			return;
+		}
 		else {
 			throw new \LogicException('Unhandled statement collection');
 		}
 		if ($value !== null) {
 			$this->expression($value);
 		}
+	}
+
+	public function child(): Body_Collection
+	{
+		return new Body_Collection($this->scope, [], $this);
+	}
+
+	/** $start/$end: token positions. @param ast_statement[] $statements */
+	public function block(int $start /** uint32 */, int $end /** uint32 */, array $statements /** list<ast_statement> */): ast_block
+	{
+		return new ast_block($start, $end, $statements, $this->locals, $this->references, $this->declarations->publish());
 	}
 
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */

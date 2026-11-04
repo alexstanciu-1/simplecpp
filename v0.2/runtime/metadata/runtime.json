@@ -847,6 +847,12 @@
       "overflow": "reject",
       "underflow": "gradual_signed_zero",
       "rounding": "nearest_ties_even"
+    },
+    "conditions": {
+      "bool_t": "identity",
+      "int64": "nonzero_integer",
+      "float64": "nonzero_float",
+      "string": "nonempty_except_zero"
     }
   },
   "byte": {
