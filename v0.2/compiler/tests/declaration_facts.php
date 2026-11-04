@@ -62,13 +62,10 @@ foreach ([['auto x = 3; return 8;', flavor::cpp], ['let x = 3; return 8;', flavo
 	$missing = $frontend->collect(new source_file('missing', $text, $flavor));
 	$local = $missing->main()->body()->locals[0];
 	verify($local->type_name === null, 'Missing written type was fabricated');
-	try {
-		(new Preparation())->prepare($missing, new entry_target(31));
-		throw new RuntimeException('This structural slice accidentally enabled inference');
-	}
-	catch (diagnostic $expected) {
-	}
 	unresolved(fn() => $local->type_def());
+	(new Preparation())->prepare($missing, new entry_target(31));
+	verify($local->type_def() === type_int64::instance(), 'Initializer type was not inferred');
+	verify($local->type_name === null, 'Inference changed written syntax');
 }
 foreach (get_declared_classes() as $class) {
 	if (is_subclass_of($class, ast_node::class)) {

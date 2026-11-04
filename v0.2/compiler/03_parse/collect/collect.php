@@ -9,6 +9,8 @@ final class Body_Collection
 	/** PROPERTIES */
 	/** @var ast_local_declaration[] Keyed by statement position; native non-owning references to body syntax. */
 	private array $locals /** array<uint32,ast_local_declaration> */ = [];
+	/** @var ast_local_declaration[] Prior local heads; native non-owning name index, not another duplicate owner. */
+	private array $local_names /** array<string,ast_local_declaration> */ = [];
 	/** Native owning; body-local collection worker. */
 	private readonly Scope_Collection $declarations;
 	/** @var ast_name_expression[] Native non-owning expression references. */
@@ -21,6 +23,12 @@ final class Body_Collection
 	}
 
 	/** METHODS */
+	/** Classify a PHP bare write using only declarations already collected in this body. */
+	public function has_local(string $name): bool
+	{
+		return isset($this->local_names[$name]);
+	}
+
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
@@ -29,6 +37,7 @@ final class Body_Collection
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$this->declarations->declare($statement);
+			$this->local_names[$statement->declaration_key()] ??= $statement;
 			$statement->identify(count($this->locals));
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;

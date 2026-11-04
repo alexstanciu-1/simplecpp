@@ -173,17 +173,23 @@ final class Preparation
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
 				'Duplicate local: ' . $name);
 		}
-		if ($declaration->type_name === null) {
-			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
-				'Inferred declarations are outside the entry slice');
-		}
-		$type = type_registry::resolve($declaration->type_name);
-		if ($type === null) {
-			throw new diagnostic($source, $root->byte_at($declaration->type_position()),
-				'Unknown or unsupported type: ' . $declaration->type_name);
+		$type = null;
+		if ($declaration->type_name !== null) {
+			$type = type_registry::resolve($declaration->type_name);
+			if ($type === null) {
+				throw new diagnostic($source, $root->byte_at($declaration->type_position()),
+					'Unknown or unsupported type: ' . $declaration->type_name);
+			}
 		}
 		$this->value($declaration->initializer, $name);
-		$conversion = $type->prepare_conversion($declaration->initializer, true);
+		if ($type === null) {
+			$type = $declaration->initializer->type_def();
+			if ($type === type_null::instance()) {
+				throw new diagnostic($source, $declaration->initializer->byte_start(),
+					'Cannot infer a local type from null; write an explicit type');
+			}
+		}
+		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);
 		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
 			$declaration->initializer->constant_known(), $conversion);
 		$this->visible_locals[$name] = $declaration;
@@ -196,7 +202,7 @@ final class Preparation
 		$local = $this->visible_locals[$statement->name] ?? null;
 		if ($local === null) {
 			throw new diagnostic($statement->source(), $statement->byte_start(),
-				'Assignment requires an existing local; inference and global writes are deferred: ' . $statement->name);
+				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
 		}
 		$this->value($statement->value);
 		$conversion = $local->type_def()->prepare_conversion($statement->value, false);

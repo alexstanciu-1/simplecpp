@@ -25,7 +25,7 @@ final class Js_Grammar implements statement_grammar
 	}
 
 	/** Let introduces a local with an optional type; bare writes require an existing binding. */
-	public function statement(Parser $parser): ast_statement
+	public function statement(Parser $parser, Body_Collection $collector): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();

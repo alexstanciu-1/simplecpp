@@ -31,7 +31,7 @@ final class Cpp_Grammar implements statement_grammar
 	}
 
 	/** A leading type or auto declares a local; a simple-name write requires an existing binding. */
-	public function statement(Parser $parser): ast_statement
+	public function statement(Parser $parser, Body_Collection $collector): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();

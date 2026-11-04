@@ -20,6 +20,9 @@ See [canonical type definitions](docs/types.md) for core scalar/void identity an
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
 in-process incremental preparation API and its lowering boundary.
 
+See the [compact development catalog](../specs/planning/compiler_catalog.md) for the
+feature checklist mined from my-try, current bounded support and proposed next slices.
+
 ## Persistent app-local frontend
 
 ```sh
@@ -125,7 +128,7 @@ Arithmetic, grouping, blocks, generic types and other expressions are later slic
 There is one PHP syntax flavor. Composed profiles selected in PRJ configurations
 will control compiler policy; common analysis will enforce them across all flavors.
 The bounded semantic/backend slice does not introduce profile loading/enforcement
-or incremental reuse. Inferred declarations still parse but are not yet prepared.
+or incremental reuse. Initializer-based inferred locals are supported; see [inference](docs/inference.md).
 Plain existing-local writes are supported; see [assignment preparation](docs/assignments.md). Successful parsing alone is not semantic validity. See [the flavor contract](../specs/compiler_frontends.md).
 
 ## Migration boundary
@@ -220,12 +223,12 @@ positions recover precise name/type diagnostic locations without stored token fi
   `function_def()`, following the current declaration. No prepared-call/signature
   wrapper is needed. Bodies consume settled return facts without visiting callees.
 
-The current builtin type definitions are shared `type_int64` and `type_void` objects
-under the common `type_definition` contract, not per-use wrappers.
+The current builtin type definitions are shared canonical objects under the common
+`type_definition` contract, not per-use wrappers; see [types](docs/types.md).
 `int` and `int64` resolve to the same identity.
 This representation covers the existing builtin subset; user-defined types remain
-future work. Missing written types remain parseable where previously allowed but
-local inference is still rejected during preparation; explicit globals admit integer-literal inference.
+future work. Omitted local types infer from the initializer, except null. Written type names
+remain absent in the AST; only prepared type facts are settled.
 
 Collection indexes and prepared local references point directly to local AST
 declarations; global reads retain stable symbol entries. Specialized facts remain for results such as decoded strings,

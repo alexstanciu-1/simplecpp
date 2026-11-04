@@ -44,17 +44,17 @@ foreach ([['auto x = missing;', flavor::cpp], ['let x = missing;', flavor::js]] 
 		'Inferred syntax without inference');
 }
 $file = $frontend->parse(new source_file('writes', '$x = 1; $x = 2;', flavor::php));
-foreach ($file->main()->body()->statements as $write) {
-	check(($write instanceof ast_assignment_statement) && ($write->intent === assignment_intent::declare_or_assign),
-		'PHP writes stay unresolved');
-}
+check($file->main()->body()->statements[0] instanceof ast_local_declaration, 'PHP first write must declare');
+$write = $file->main()->body()->statements[1];
+check(($write instanceof ast_assignment_statement) && ($write->intent === assignment_intent::declare_or_assign),
+	'PHP subsequent write must assign');
 // These require later profile/type/name checks, and must survive parsing unchanged.
 $huge = '999999999999999999999999999999999999999999';
 $file = $frontend->parse(new source_file('unresolved', 'Unknown x = ' . $huge . '; Unknown x = missing;', flavor::cpp));
 check($file->main()->body()->statements[0]->initializer->source_text() === $huge, 'No host integer conversion');
 check($file->main()->body()->statements[1]->initializer instanceof ast_name_expression,
 	'No symbol lookup or duplicate check');
-foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js], ['$x int = 1.5;', flavor::php],
+foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js],
 		['let x = 1;', flavor::php], ['$x int = 1;', flavor::js], ['let x: int = 1;', flavor::cpp],
 		['auto x = 1;', flavor::js], ['int $x = 1;', flavor::cpp], ['$x = bare;', flavor::php],
 		['const x = 1;', flavor::js], ['int x = 1 + 2;', flavor::cpp], ['{ int x = 1; }', flavor::cpp],

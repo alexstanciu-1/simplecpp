@@ -236,7 +236,7 @@ abstract class ast_expression extends ast_node
 }
 
 /**
- * Retains whether the flavor requires an existing binding or permits declaration-or-assignment syntax; it does not resolve that choice.
+ * Retains original flavor spelling intent; PHP first writes are collected as declarations before this node is built.
  *
  * Backing: IDs 1..2.
  */

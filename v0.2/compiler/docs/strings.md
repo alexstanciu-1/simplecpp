@@ -57,7 +57,7 @@ expression twice. Review evaluation ownership when admitting richer operands.
 
 String globals remain rejected until initialization order and lifetime are designed;
 current scalar globals use `constinit`. Text conversions, concatenation/operators,
-indexing, methods, interpolation, string function results, inference and uninitialized
+indexing, methods, interpolation, string function results and uninitialized
 locals remain deferred. Native runtime support does not imply compiler admission.
 The broader echo formatting/error contract remains tracked in the existing echo debt.
 

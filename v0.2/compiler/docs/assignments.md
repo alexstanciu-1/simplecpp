@@ -46,8 +46,8 @@ Review this rule before adding observable user-defined assignment behavior.
 String copy assignment and destruction remain owned by the existing public runtime.
 CLI/panel preparation inspection now includes assignment destination IDs and conversions.
 
-Inference, global writes, compound assignments, member/index writes and assignment
-expressions remain deferred. There is no new watcher graph or cross-file ownership.
+Initializer-based local inference is now supported; see [inference](inference.md).
+Global writes, compound assignments, member/index writes and assignment expressions remain deferred. There is no new watcher graph or cross-file ownership.
 
 ## Verification
 

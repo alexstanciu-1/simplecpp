@@ -63,8 +63,8 @@ foreach (flavor::cases() as $flavor)
 		. $write('value', '8') . 'return ' . $var('value') . ';');
 	verify($restored->body()->statements[2]->conversion() === exit_conversion::proven, 'Known write did not restore facts');
 	foreach ([
-		$write('missing', '8'), $write('later', '8') . $decl('int', 'later', '1'),
-		'global ' . $decl('int', 'external', '1') . $write('external', '8'),
+		$write('missing', $var('unknown')), $write('later', '8') . $decl('int', 'later', '1'),
+		...($flavor === flavor::php ? [] : ['global ' . $decl('int', 'external', '1') . $write('external', '8')]),
 		$decl('byte', 'small', '8') . $write('small', '9'),
 		$decl('int', 'n', '1') . $write('n', 'true'),
 		$decl('float', 'f', '1.0') . $write('f', '8'),

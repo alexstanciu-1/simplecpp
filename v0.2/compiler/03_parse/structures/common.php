@@ -286,7 +286,7 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
  * ```text
  * $value = 3;
  * ```
- * Parsing retains flavor intent; preparation requires an existing local and does not infer declarations.
+ * PHP first writes become declarations during parsing; this node represents a write to an existing local.
  */
 final class ast_assignment_statement extends ast_statement
 {

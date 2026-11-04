@@ -61,7 +61,7 @@ foreach ([['int ret=ret; return ret;', 'during its initialization'],
 		['int ret=2147483648; return ret;', 'outside native int'],
 		['return 2147483648;', 'outside native int'],
 		['int ret=8;', 'explicit value return'], ['ret=9; return ret;', 'existing local'],
-		['auto ret=8; return ret;', 'Inferred declarations'], ['return 8; int ret=1;', 'after return']] as [$text,
+		['auto ret=null; return 8;', 'Cannot infer'], ['return 8; int ret=1;', 'after return']] as [$text,
 		$message])
 {
 	$file = $frontend->collect(new source_file('bad', $text, flavor::cpp));

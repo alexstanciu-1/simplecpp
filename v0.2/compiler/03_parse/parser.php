@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Parser extension point for flavor-specific statements and function headers; all flavors produce the same AST families.
  */
 interface statement_grammar {
-	public function statement(Parser $parser): ast_statement;
+	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
 	public function function_start(Parser $parser): bool;
 	public function function_header(Parser $parser): ast_function_declaration;
 }
@@ -89,7 +89,7 @@ final class Parser
 				$nodes[] = $function;
 				continue;
 			}
-			$statement = $this->statement($grammar);
+			$statement = $this->statement($grammar, $collector);
 			$collector->statement($statement, count($statements));
 			$statements[] = $statement;
 		}
@@ -120,7 +120,7 @@ final class Parser
 	}
 
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
-	private function statement(statement_grammar $grammar): ast_statement
+	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
 		if ($this->cursor->keyword('global')) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
@@ -151,7 +151,7 @@ final class Parser
 				&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
 			return new ast_call_statement($start, $end, $name, $member_syntax);
 		}
-		return $grammar->statement($this);
+		return $grammar->statement($this, $collector);
 	}
 
 	/** Discover the stable header before parsing its body; local collection never enters the global index. */
@@ -173,7 +173,7 @@ final class Parser
 			if ($this->cursor->at_end()) {
 				throw new diagnostic($source, $this->cursor->offset(), 'Expected }');
 			}
-			$statement = $this->statement($grammar);
+			$statement = $this->statement($grammar, $body_collector);
 			$body_collector->statement($statement, count($statements));
 			$statements[] = $statement;
 		}

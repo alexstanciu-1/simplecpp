@@ -149,7 +149,12 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $parser->parse(new source_file('bad', function_text($flavor, 'bad', global_text($flavor, 'value', '1')), $flavor)), 'file/namespace');
 	$case = $sources;
 	$case['main'] = new source_file('main', global_text($flavor, 'value', '1') . $v . ' = 2; return 8;', $flavor);
-	rejects(fn() => $prepare($case), 'global writes are deferred');
+	if ($flavor === flavor::php) {
+		$prepare($case); // Bare PHP writes declare local storage, leaving the global unchanged.
+	}
+	else {
+		rejects(fn() => $prepare($case), 'global writes are deferred');
+	}
 	$duplicate_file = $parser->collect(new source_file('dup', global_text($flavor, 'value', '1')
 		. global_text($flavor, 'value', '2') . function_text($flavor, 'value'), $flavor));
 	verify(count($duplicate_file->diagnostics) === 1, 'Duplicate globals were not collected');

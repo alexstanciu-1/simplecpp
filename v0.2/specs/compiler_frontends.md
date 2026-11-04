@@ -39,7 +39,8 @@ remain semantic responsibilities. Successful parsing does not mean a valid progr
 
 The shared AST distinguishes an explicit/inferred Local from an Assignment.
 C++/JS assignments carry ExistingBinding intent. PHP bare assignments carry
-DeclareOrAssign intent; current preparation requires an existing local, leaving introduction deferred. Parsing does not resolve names or directly mutate a global symbol index.
+DeclareOrAssign spelling intent; first writes become inferred local declarations
+using prior body-local collection, while subsequent writes remain assignments. Parsing does not resolve names or directly mutate a global symbol index.
 Local collection records occurrences; function discovery notifies the coordinator. All locals in this first subset are mutable; immutable
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
@@ -48,7 +49,7 @@ type annotations are single names; values are decimal integers/floats, `true`/`f
 name references. A sign immediately before a floating token is part of the bounded
 literal grammar; this does not introduce general unary expressions. Generated metadata registers the supported core scalar literals/types.
 The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion
-at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP bare
+at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP subsequent bare
 writes retain DeclareOrAssign intent. Empty input is valid. Statements require
 semicolons; a failed parse publishes no partial file. Unknown types, unknown names,
 duplicate declarations and large integer spellings remain analysis concerns.
@@ -180,8 +181,9 @@ AST classes consistently use the `ast_` prefix. Names and written type names are
 fields on their owners, not child syntax nodes. Local declarations retain optional
 `type_name` and resolved `type_def`; functions retain optional `return_type_name`
 and resolved `return_type_def`. Resolution is checked before consumers can read
-these facts. The current implementation resolves builtin int/int64 to one canonical
-int64 definition and void to its own definition; it does not add inference or types.
+these facts. Builtins resolve to canonical generated definitions; int/int64 share one identity.
+Inferred locals retain no written type and take their prepared type from the
+initializer, rejecting null without an explicit type. Void remains its own definition.
 
 Function calls retain stable symbol entries resolving to current function declarations.
 Function existence/signature dependencies invalidate observing body caches; see the

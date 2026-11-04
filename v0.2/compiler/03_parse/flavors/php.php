@@ -24,13 +24,16 @@ final class Php_Grammar implements statement_grammar
 		return $parser->named_function_header();
 	}
 
-	/** Bare writes preserve unresolved binding intent; only an authored type makes a declaration. */
-	public function statement(Parser $parser): ast_statement
+	/** First bare writes declare locals; prior body-local declarations make subsequent writes assignments. */
+	public function statement(Parser $parser, Body_Collection $collector): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
 		$name = $cursor->name(token_kind::variable);
 		if ($cursor->is(token_kind::assign)) {
+			if (!$collector->has_local($name)) {
+				return $parser->declaration($start, $name, null);
+			}
 			return $parser->assignment($start, $name, assignment_intent::declare_or_assign);
 		}
 		return $parser->declaration($start, $name, $parser->named_type());

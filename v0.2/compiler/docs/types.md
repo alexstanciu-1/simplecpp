@@ -51,7 +51,8 @@ handler branches. There is no prepared-value hierarchy or allocated conversion o
 
 A written declaration type supplies explicit intent, so `$v byte = 8;` is legal.
 This is a declaration-bound conversion, not a synthetic cast node. Global inference
-preserves the literal's source type. No explicit source cast grammar is implemented.
+preserves the literal's source type. Local [inference](inference.md) preserves the
+initializer's type except null; it does not authorize explicit conversion. No explicit source cast grammar is implemented.
 
 ## AST-owned facts
 

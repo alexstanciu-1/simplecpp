@@ -24,7 +24,8 @@ as syntax. Do not resolve types, names or project policy during parsing.
 | Assignment | `count = 4;` | `$count = 4;` | `count = 4;` |
 
 C++/JS assignment requires an existing binding. PHP bare assignment retains
-DeclareOrAssign intent until analysis can decide introduction versus update.
+DeclareOrAssign spelling intent; current body collection classifies first writes as
+inferred local declarations before constructing the AST node. Later writes remain assignments.
 Normalize the leading PHP `$` out of the logical name, while retaining its full
 source span. Integer expressions retain spelling; default integer type and overflow
 belong to analysis. Unknown names/types and duplicate bindings are not parse errors.

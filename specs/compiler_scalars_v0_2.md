@@ -54,8 +54,8 @@ context deliberately. A typed declaration is not represented as an authored cast
 
 The cross-type rules require explicit intent. A written destination type supplies
 that intent. Untyped inference preserves the initializer type and does not request
-cross-type conversion. Local inference remains unsupported; existing global literal
-inference now recognizes integer, floating, boolean and null literals.
+cross-type conversion. Local inference uses the initializer type except null, as specified below. Existing global literal
+inference recognizes integer, floating, boolean and null literals; this local slice does not change it.
 
 Preparation rejects a known out-of-range byte conversion. Unknown integer values
 retain a runtime check; failure throws `std::out_of_range` with
@@ -118,7 +118,7 @@ Direct literal echo may avoid materializing owning storage.
 
 Existing quoted escape rules and UTF-8 source validation remain unchanged. No
 implicit or typed-destination text conversions are admitted in this slice. String
-globals, inference, uninitialized locals, operators, indexing, methods, interpolation
+globals, uninitialized locals, operators, indexing, methods, interpolation
 and string function results remain deferred. Runtime capabilities alone do not
 activate these compiler features.
 
@@ -137,6 +137,31 @@ is valid and has no observable effect for the supported built-in value types.
 Reads use source-order value facts; a write does not change earlier read facts or
 the declaration's initializer facts. Unknown values retain required runtime checks.
 
-No implicit declaration, global write, compound assignment, assignment expression,
-member/index write or new conversion rule is introduced. PHP's retained
-DeclareOrAssign syntax intent does not yet permit creating a local through a bare write.
+Global writes, compound assignment, assignment expressions and member/index writes
+remain deferred. PHP first-write declarations follow the local inference rules below.
+
+## Initializer-based local inference
+
+PHP `$value = initializer;` declares a local on its first write in the current body.
+Subsequent bare writes are assignments. C++ uses `auto value = initializer;` and JS
+uses `let value = initializer;`; their bare writes still require an existing local.
+Explicit declarations still diagnose duplicates, including after an inferred declaration.
+
+Preparation infers the exact resolved type of the initializer once. Integer literals
+infer int64, floating literals float64, boolean literals bool, and quoted literals
+string. References preserve their source type, including byte. A small integer
+literal does not infer byte. Later writes cannot widen or replace the local's type;
+ordinary generated implicit conversion rules apply. A written type still requests
+the existing explicit-intent initialization conversion.
+
+An inferred initializer whose type is null rejects, including a null-typed reference.
+An explicit `null` type remains valid. No later assignment is consulted to infer a
+nullable type. Reading the local during its own initializer rejects, and ordinary
+forward references to later locals remain unavailable.
+
+PHP classification depends only on prior declarations in this body. A first bare
+write introduces a local even if a same-named global exists; it does not write that
+global. Its own initializer cannot use the same unqualified name as a backdoor to
+the global. Before that local declaration, an ordinary read may still resolve an
+available global under existing lookup rules. Function and implicit-main bodies
+have independent local collections. No source profile/configuration is introduced.
