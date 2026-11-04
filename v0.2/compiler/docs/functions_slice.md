@@ -22,7 +22,7 @@ separate native exit-status conversion.
 ## Structure and phase ownership
 
 - `ast_parameter_declaration` is function-owned signature syntax with its own
-  canonical prepared type. It has no fabricated initializer. The function owns an
+  canonical prepared type. It may own a literal `default_value`; null means required, with no separate optional flag. The function owns an
   ordered `parameters` array; body scope references these same nodes.
 - `ast_local_binding` is the common storage interface implemented by parameters
   and local declarations. Reads, writes and latest-write tracking share that path.
@@ -41,7 +41,7 @@ separate native exit-status conversion.
 - Signature preparation settles parameter and return types before any executable
   body. Body preparation reads foreign signatures only. Reset and collection walk
   nested argument syntax, never the target function's body.
-- Incremental declaration contracts include ordered parameter types/count and return
+- Incremental declaration contracts include ordered parameter types/count, default source spelling and return
   type. Parameter renames do not affect positional callers. Changed signatures
   invalidate observing bodies; unchanged caller ASTs and body-only reuse survive.
 - Syntax/preparation inspection includes parameters and nested call arguments.
@@ -58,7 +58,7 @@ evaluated and converted into a typed temporary in source order, followed by the
 invocation using those completed values. Transfers into by-value parameters use
 native moves; moving a scalar is just a value transfer. The temporaries ensure a
 failure prevents subsequent argument evaluation and callee entry. This is a local
-lowering choice, not a new source closure feature. No-argument calls remain direct.
+lowering choice, not a new source closure feature. Calls to parameterless functions remain direct.
 
 String echo binds its operand once to a local const reference, keeping returned
 storage alive across data/size queries without evaluating a call twice. Discarded
@@ -79,7 +79,7 @@ prepared-call/signature objects and reference/variadic transport were not import
 Current Simple C++ contracts and the agreed PHP type-before-name spelling take
 precedence over historical shorthand examples.
 
-Defaults, named arguments, references, overloads, variadics, signature inference,
+Named arguments, references, overloads, variadics, signature inference,
 first-class callables, methods and trailing commas remain deferred. Recursive
 signatures can resolve, but terminating recursive execution is not claimed without
 control-flow support. No arithmetic or branch syntax was added.
@@ -115,3 +115,46 @@ and are not additive wall time; the multi-file build has four translation units.
 
 PHP fixture generation/assertions took 80.238 ms. Raw commands, build logs, traces
 and results remain in untracked `v0.2/build/typed-functions-proof-2026-11-04/`.
+
+## Trailing literal defaults
+
+`ast_parameter_declaration` owns optional `default_value` syntax and a private
+`default_conversion` prepared fact. The literal owns its existing decoded/checked
+value facts. Signature preparation validates the optional suffix and prepares each
+default once, using generated literal and conversion handlers. Unchanged settled
+signatures skip this work. Parameter reads in the body remain unknown values.
+
+Call preparation checks excess arguments and the first omitted parameter in constant
+time; a settled optional suffix makes a required-count cache or repeated scan
+unnecessary. Only supplied arguments are visited and converted. No omitted argument
+ASTs, per-call default conversion arrays or prepared signature copies are allocated.
+
+C++ lowering traverses the signature's parameters, using supplied arguments where
+present and the parameter's prepared literal/conversion otherwise. All use the
+existing sequenced argument temporaries; generated C++ signatures contain no defaults.
+Foreign defaults are read-only declaration syntax, never foreign executable bodies.
+Strings construct fresh value storage per call. Signature reset clears default facts.
+Inspection shows default source spelling and its prepared conversion.
+
+Publication includes default source spelling in the existing ephemeral signature
+snapshot. This conservatively invalidates spelling-only changes; semantic default
+hashing and omission-specific watches are not needed for this slice. Incremental
+preparation still stops at body facts; this does not add incremental emission.
+
+`tests/parameter_defaults.php` proves all three flavors, default ownership, unknown
+body values, generated conversions, declaration rejection even when uncalled or
+explicitly supplied, arity, reset, lowering purity, and incremental edit/removal/repair,
+no-op and body-only reuse. `tests/parameter_defaults_native.py` executes all flavors
+and a mixed-flavor multi-file call, checking exact bytes, repeat string defaults,
+argument order and process exit status.
+
+Native proof (2026-11-04): `-O2 -g0`, libc++, mold, Ninja `-j8`, no PCH/LTO,
+prebuilt runtime archive and fresh instrumented app objects. These are single
+correctness builds, not performance averages; trace stages are nested/cumulative.
+
+| Program | Native wall ms | Frontend ms | LLVM backend ms | Optimizer ms | Codegen ms | Link ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| cpp | 195.773 | 23.865 | 32.503 | 15.304 | 14.819 | 73 |
+| php | 151.005 | 17.716 | 27.379 | 13.013 | 12.780 | 62 |
+| js | 153.423 | 18.446 | 27.938 | 12.313 | 14.220 | 59 |
+| multifile | 134.232 | 21.901 | 25.562 | 8.190 | 10.112 | 68 |

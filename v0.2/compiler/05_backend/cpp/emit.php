@@ -204,20 +204,22 @@ final class Cpp_Emitter
 			$function = $value->function_def();
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			if ($value->arguments === []) {
+			if ($function->parameters === []) {
 				return $name . '()';
 			}
 			$steps = [];
 			$arguments = [];
-			foreach ($value->arguments as $index => $argument) {
-				$type = $function->parameters[$index]->type_def();
+			foreach ($function->parameters as $index => $parameter) {
+				$argument = $value->arguments[$index] ?? $parameter->default_value;
+				$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
+				$type = $parameter->type_def();
 				$operand = $this->value($argument, $global_references, $declarations, $required_headers);
-				$converted = $type->lower_cpp_conversion($value->conversion($index), $operand);
+				$converted = $type->lower_cpp_conversion($conversion, $operand);
 				// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 				$temporary = 'argument_' . $value->start . '_' . $index;
 				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $converted . ';';
 				$arguments[] = 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-				foreach ($type->conversion_headers($value->conversion($index)) as $header) {
+				foreach ($type->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
 			}

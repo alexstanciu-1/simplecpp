@@ -189,7 +189,8 @@ locals cannot duplicate names. PHP bare writes to parameters are assignments,
 not inferred declarations. Parameters are initialized on entry, with unknown
 caller values during body preparation, and are mutable local value storage.
 
-Calls require exactly the declared number of positional arguments. Each argument
+Calls accept positional arguments, omitting only a trailing suffix with declared
+literal defaults. Each supplied argument
 is evaluated once, left to right, and its destination conversion completes before
 the next argument starts. Converted values are preserved for invocation. A failure
 stops later argument evaluation and callee entry; earlier effects remain. Strings
@@ -213,11 +214,40 @@ its separate int64-to-native-process-exit contract.
 Every signature settles before any body is prepared; callers consume signatures
 without reading foreign bodies. Forward and recursive signature binding work, but
 terminating recursive execution awaits control-flow support and its own proof.
-Incremental caller contracts include ordered parameter types/count and return type;
+Incremental caller contracts include ordered parameter types/count, default presence/value and return type;
 parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Defaults, named arguments, variadics, references, overloads, signature inference,
+Named arguments, variadics, references, overloads, signature inference,
 first-class callables, methods and trailing parameter/argument commas are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
+
+### Trailing literal parameter defaults
+
+A typed value parameter may declare `= literal` in all three flavors:
+
+```text
+PHP: function result(int $value = 8): int { return $value; }
+C++: int result(int value = 8) { return value; }
+JS:  function result(value: int = 8): int { return value; }
+```
+
+Optional parameters must form a trailing suffix. Defaults admit the existing integer,
+float, bool, string and null literal syntax, without widening literal spelling rules.
+The written parameter type authorizes the same generated checked conversion as a
+supplied argument; for example, `byte value = 255` is valid and `= 256` rejects.
+Null defaults are admitted only where the existing conversion contract permits null;
+they do not make a nonnullable type nullable. Variables, calls, named constants and
+general expressions as defaults remain deferred. Types remain explicit.
+
+Declaration preparation checks every default, including uncalled functions and
+parameters always supplied by callers. Defaults never make body parameter reads
+constant: explicit arguments may replace them. Calls evaluate and convert supplied
+arguments left to right, then materialize omitted defaults in parameter order, once
+per invocation. Each string default has independent value storage. Supplied arguments
+suppress their corresponding defaults. Missing required or excess arguments reject.
+
+Default edits/removal invalidate observing callers. The initial implementation may
+conservatively invalidate callers supplying all arguments or after spelling-only
+changes. It does not require per-omission dependency watches.

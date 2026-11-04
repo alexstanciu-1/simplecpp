@@ -273,7 +273,10 @@ final class Preparation
 		if (!($function instanceof ast_function_declaration)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
 		}
-		if (count($call->arguments) !== count($function->parameters)) {
+		$supplied = count($call->arguments);
+		// Settled signatures have a trailing optional suffix: checking its first omitted slot is sufficient.
+		if (($supplied > count($function->parameters))
+			|| (isset($function->parameters[$supplied]) && ($function->parameters[$supplied]->default_value === null))) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		$conversions = [];

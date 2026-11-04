@@ -186,3 +186,9 @@ Existing frontend/service/native-function tests cover the surrounding paths.
 `php v0.2/compiler/tests/dependency_watches.php` checks generic non-AST watchers,
 registration and dispatch deduplication, retirement, pending cancellation, repeated
 forget, re-registration and independent-coordinator isolation.
+
+Parameter defaults participate in the callable contract as optional source spelling
+beside each ordered parameter type. Adding, editing or removing a default invalidates
+observing bodies, including callers supplying every argument. Default expressions
+and prepared conversions stay on parameter AST nodes; stable entries retain no copy.
+Spelling-only differences may conservatively invalidate callers in this first slice.

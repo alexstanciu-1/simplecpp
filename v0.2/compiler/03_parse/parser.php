@@ -195,7 +195,7 @@ final class Parser
 	}
 
 	/**
-	 * Parse explicit positional value parameters; defaults, references and variadics remain unsupported.
+	 * Parse explicit positional value parameters and optional literal-default syntax.
 	 * @return ast_parameter_declaration[]
 	 */
 	public function parameters(): array /** list<ast_parameter_declaration> */
@@ -214,7 +214,12 @@ final class Parser
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
 			}
-			$parameters[] = new ast_parameter_declaration($name, $type, count($parameters), $start, $this->cursor->position());
+			$default = null;
+			if ($this->cursor->is(token_kind::assign)) {
+				$this->cursor->take(token_kind::assign, '=');
+				$default = $this->value();
+			}
+			$parameters[] = new ast_parameter_declaration($name, $type, count($parameters), $start, $this->cursor->position(), $default);
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
 			}

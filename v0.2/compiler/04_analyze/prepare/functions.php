@@ -68,6 +68,7 @@ final class Function_Preparation
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
 					'Unknown or unsupported return type: ' . $declaration->return_type_name);
 			}
+			$optional = false;
 			foreach ($declaration->parameters as $parameter) {
 				$parameter->reset_preparation();
 				$parameter_type = type_registry::resolve($parameter->type_name);
@@ -75,6 +76,19 @@ final class Function_Preparation
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_name);
 				}
 				$parameter->settle_type($parameter_type);
+				$default = $parameter->default_value;
+				if ($default !== null) {
+					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
+						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
+						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+					}
+					type_registry::prepare_literal($default);
+					$parameter->settle_default($parameter_type->prepare_conversion($default, true));
+					$optional = true;
+				}
+				elseif ($optional) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
+				}
 			}
 			$declaration->settle_return_type($type);
 		}
