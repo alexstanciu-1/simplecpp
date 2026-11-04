@@ -22,7 +22,8 @@ symbol_entry
 ├── status: change_status
 └── head: ?ast_declaration_interface — null means removed; duplicate_element links errors
 
-ast_call_statement
+ast_call_statement → value: ast_call_expression
+ast_call_expression
 ├── name: string — authored syntax
 └── function_symbol: ?symbol_entry — prepared cache reference
 
@@ -114,12 +115,12 @@ No observer callback performs preparation during publication.
 - Move between files: same key and entry, with a new declaration destination.
 - Initially unresolved calls can subscribe to a removed entry before it ever exists.
 
-A symbol change does not necessarily invalidate its observers. For the first role,
-compare candidate availability/ambiguity and the written return-type field. The
-current language slice has no parameters or overloads. A new AST object with the
-same unambiguous signature does not invalidate callers just because its body changed.
-PHP/JS admit unsupported return-type spellings far enough to diagnose in preparation;
-C++ currently rejects non-void function syntax during parsing. This adds no types.
+A symbol change does not necessarily invalidate its observers. Compare candidate
+availability/ambiguity and the signature contract: ordered written parameter types
+(including count) and written return type. Parameter names do not affect positional
+callers. A new AST object with the same unambiguous signature does not invalidate
+callers just because its body changed. This transient signature snapshot copies
+no AST nodes and does not introduce a retained prepared-signature object.
 
 Older sessions retain old syntax but share the live symbol index. Their duplicate links are live publication data, not historical snapshots. They are not
 historical symbol snapshots, and their shared prepared caches can become dirty.

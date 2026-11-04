@@ -39,8 +39,18 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         checks = ('\tlocal_0.clear();\n'
                   '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
                   '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
-        cpp.write_text(fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp'])
-        command = write_build(directory, [cpp])
+        source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
+        if fixture.get('catch_out_of_range'):
+            # Test-only exception observation; this does not enable source try/catch syntax.
+            source = '#include <stdexcept>\n' + source.replace('int main()', 'int tested_entry()')
+            source += '\nint main() { try { tested_entry(); } catch (const std::out_of_range&) { return 8; } return 90; }\n'
+        cpp.write_text(source)
+        units = [cpp]
+        for index, extra in enumerate(fixture.get('extra_cpp', [])):
+            unit = directory / f'extra-{index}.cpp'
+            unit.write_text(extra)
+            units.append(unit)
+        command = write_build(directory, units)
         command[2] = '8'
         graph = directory / 'build.ninja'
         graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))

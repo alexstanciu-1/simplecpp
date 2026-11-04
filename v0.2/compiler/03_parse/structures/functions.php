@@ -3,61 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * A no-argument invocation in statement position; preparation selects the callable identity.
- *
- * Call syntax:
- * ```text
- * ping();
- * ```
- * function_def() resolves the stable ping symbol to its current settled declaration; its body is not read.
- */
+/** Statement-position invocation owns the same call expression used in value positions: ping(); */
 final class ast_call_statement extends ast_statement
 {
-	/** PROPERTIES */
-	/** Canonical reference spelling; a leading backslash marks an explicitly rooted path. */
-	public readonly string $name;
-	/** Dotted value-or-namespace syntax; preparation must respect visible local bindings. */
-	public readonly bool $member_syntax;
+	/** Native owning call expression. */
+	public readonly ast_call_expression $value;
 
-	/** PREP FACTS */
-	/**
-	 * Prepared cache: stable symbol identity, resolved through its current declaration; null before
-	 * body preparation or after reset.
-	 * Native non-owning; identity retained by compilation scope.
-	 */
-	protected ?symbol_entry $function_symbol = null;
-
-	/** CONSTRUCTOR */
-	/**
-	 * $start: token position.
-	 * $end: exclusive token position.
-	 */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
-		string $name, bool $member_syntax = false)
+	/** $start/$end: statement token positions including its semicolon. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_call_expression $value)
 	{
-		$this->name = $name;
-		$this->member_syntax = $member_syntax;
 		parent::__construct($start, $end);
+		$this->value = $value;
+		$value->attach($this);
 	}
 
-	/** METHODS */
-	/** Canonical lookup key; preparation attaches its stable symbol entry. */
 	public function symbol_key(): string
 	{
-		return $this->root()->function_key($this->name);
-	}
-
-	/** Attach the stable symbol only after its current function contract is available. */
-	public function settle_function(symbol_entry $symbol): void
-	{
-		if ($this->function_symbol !== null) {
-			throw new \LogicException('Call target is already settled');
-		}
-		/** @var ast_function_declaration $function */
-		$function = $symbol->declaration() ?? throw new \LogicException('Cannot settle a removed function');
-		$function->return_type_def();
-		$this->function_symbol = $symbol;
+		return $this->value->symbol_key();
 	}
 
 	public function function_def(): ast_function_declaration
@@ -65,14 +27,77 @@ final class ast_call_statement extends ast_statement
 		if ($this->parent instanceof ast_function_body) {
 			$this->parent->require_prepared();
 		}
+		return $this->value->function_def();
+	}
+}
+
+/** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
+final class ast_call_expression extends ast_expression
+{
+	/** PROPERTIES */
+	public readonly string $name;
+	public readonly bool $member_syntax;
+	/** @var ast_expression[] Native owning arguments in source order. */
+	public readonly array $arguments /** list<ast_expression> */;
+
+	/** PREP FACTS */
+	/** Prepared fact: native non-owning stable symbol; null before preparation or after reset. */
+	private ?symbol_entry $function_symbol = null;
+	/** @var value_conversion[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
+	private array $conversions /** list<value_conversion> */ = [];
+
+	/** CONSTRUCTOR */
+	/**
+	 * $start/$end: token positions.
+	 * @param ast_expression[] $arguments
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
+		bool $member_syntax, array $arguments /** list<ast_expression> */)
+	{
+		parent::__construct($start, $end);
+		$this->name = $name;
+		$this->member_syntax = $member_syntax;
+		$this->arguments = $arguments;
+		foreach ($arguments as $argument) {
+			$argument->attach($this);
+		}
+	}
+
+	/** METHODS */
+	public function symbol_key(): string
+	{
+		return $this->root()->function_key($this->name);
+	}
+
+	/** @param value_conversion[] $conversions */
+	public function settle_function(symbol_entry $symbol, array $conversions /** list<value_conversion> */): void
+	{
+		$function = $symbol->declaration();
+		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
+			throw new \LogicException('Invalid settled call');
+		}
+		$this->settle_value($function->return_type_def(), null);
+		$this->function_symbol = $symbol;
+		$this->conversions = $conversions;
+	}
+
+	public function function_def(): ast_function_declaration
+	{
 		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
+	}
+
+	/** $index: argument ordinal. */
+	public function conversion(int $index /** uint32 */): value_conversion
+	{
+		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
 	}
 
 	public function reset_preparation(): void
 	{
+		parent::reset_preparation();
 		$this->function_symbol = null;
+		$this->conversions = [];
 	}
-
 }
 
 /**
@@ -99,7 +124,7 @@ final class ast_function_body extends ast_node implements dependency_watcher
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
-	/** Prepared cache: entry-target context; null for ordinary void bodies. */
+	/** Prepared cache: entry-target context; null for ordinary function bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
 	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
 	public int $statement_visits /** uint32 */ = 0;
@@ -194,6 +219,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public readonly bool $is_implicit_entry;
 	/** Written return type name; absence is distinct from an unresolved return type. */
 	public readonly ?string $return_type_name;
+	/** @var ast_parameter_declaration[] Native owning signature syntax in positional order. */
+	public readonly array $parameters /** list<ast_parameter_declaration> */;
 	/** Exclusive header token boundary. */
 	public readonly int $header_end /** uint32 */;
 	/** Native owning; function syntax child. */
@@ -209,10 +236,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 *
 	 * $start: token position.
 	 * $header_end: exclusive token position.
+	 * @param ast_parameter_declaration[] $parameters
 	 */
 	public function __construct(string $name, ?string $return_type_name, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false, ?string $namespace = null)
+		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [])
 	{
 		$this->short_name = $name;
 		$this->namespace = $namespace;
@@ -220,6 +248,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->is_implicit_entry = $is_implicit_entry;
 		$this->return_type_name = $return_type_name;
 		$this->header_end = $header_end;
+		$this->parameters = $parameters;
+		foreach ($parameters as $parameter) {
+			$parameter->attach($this);
+		}
 		parent::__construct($start, $header_end, true);
 	}
 
@@ -250,6 +282,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function reset_preparation(): void
 	{
 		$this->return_type_def = null;
+		foreach ($this->parameters as $parameter) {
+			$parameter->reset_preparation();
+		}
 		$this->body()->reset_preparation();
 	}
 
@@ -293,7 +328,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
  * return 8;
  * return;
  * ```
- * Preparation admits the value form for the entry and the bare form for void functions.
+ * Preparation checks the owning function return type; the entry retains its separate process-exit conversion.
  */
 final class ast_return_statement extends ast_statement
 {
@@ -302,8 +337,8 @@ final class ast_return_statement extends ast_statement
 	public readonly ?ast_expression $value;
 
 	/** PREP FACTS */
-	/** Prepared fact: entry conversion; null before preparation or for a void return. */
-	protected ?exit_conversion $conversion = null;
+	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
+	protected exit_conversion|value_conversion|null $conversion = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -319,7 +354,7 @@ final class ast_return_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_conversion(exit_conversion $conversion): void
+	public function settle_conversion(exit_conversion|value_conversion $conversion): void
 	{
 		if ($this->conversion !== null) {
 			throw new \LogicException('Return conversion already settled');
@@ -327,7 +362,7 @@ final class ast_return_statement extends ast_statement
 		$this->conversion = $conversion;
 	}
 
-	public function conversion(): exit_conversion
+	public function conversion(): exit_conversion|value_conversion
 	{
 		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
 	}

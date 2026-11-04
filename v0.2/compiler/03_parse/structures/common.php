@@ -83,9 +83,9 @@ final class ast_name_expression extends ast_expression
 	/** PREP FACTS */
 	/**
 	 * Prepared fact: local AST identity or stable global symbol; null before preparation or after reset.
-	 * Native non-owning; locals belong to body syntax, stable entries to the compilation scope.
+	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_declaration|symbol_entry|null $binding = null;
+	protected ast_local_binding|symbol_entry|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -101,7 +101,7 @@ final class ast_name_expression extends ast_expression
 
 	/** METHODS */
 	/** Snapshot this read occurrence from the latest completed write, or the original initializer. */
-	public function settle_local(ast_local_declaration $local, ?ast_assignment_statement $write = null): void
+	public function settle_local(ast_local_binding $local, ?ast_assignment_statement $write = null): void
 	{
 		if (($write !== null) && ($write->local_def() !== $local)) {
 			throw new \LogicException('Read and latest write must refer to the same local');
@@ -123,9 +123,9 @@ final class ast_name_expression extends ast_expression
 	}
 
 	/** Resolve a global through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_declaration|ast_global_declaration
+	public function declaration(): ast_local_binding|ast_global_declaration
 	{
-		if ($this->binding instanceof ast_local_declaration) {
+		if ($this->binding instanceof ast_local_binding) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();
@@ -135,9 +135,9 @@ final class ast_name_expression extends ast_expression
 		return $declaration;
 	}
 
-	public function local_def(): ast_local_declaration
+	public function local_def(): ast_local_binding
 	{
-		return $this->binding instanceof ast_local_declaration
+		return $this->binding instanceof ast_local_binding
 			? $this->binding : throw new \LogicException('Local reference is not settled');
 	}
 
@@ -157,7 +157,7 @@ final class ast_name_expression extends ast_expression
  * ```
  * short_name is value, type_name is int, and the initializer is an integer expression.
  */
-final class ast_local_declaration extends ast_statement implements ast_declaration_interface
+final class ast_local_declaration extends ast_statement implements ast_local_binding
 {
 	use ast_declaration;
 
@@ -201,6 +201,11 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();
+	}
+
+	public function storage_id(): int /** uint32 */
+	{
+		return $this->id;
 	}
 
 	public function identify(int $id /** uint32 */): void
@@ -298,7 +303,7 @@ final class ast_assignment_statement extends ast_statement
 
 	/** PREP FACTS */
 	/** Prepared fact: native non-owning local binding; null before settlement or after reset. */
-	protected ?ast_local_declaration $binding = null;
+	protected ?ast_local_binding $binding = null;
 	/** Prepared fact: approved implicit conversion; null before settlement or after reset. */
 	protected ?value_conversion $conversion = null;
 
@@ -320,7 +325,7 @@ final class ast_assignment_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_assignment(ast_local_declaration $local, value_conversion $conversion): void
+	public function settle_assignment(ast_local_binding $local, value_conversion $conversion): void
 	{
 		if ($this->binding !== null) {
 			throw new \LogicException('Assignment is already prepared');
@@ -329,7 +334,7 @@ final class ast_assignment_statement extends ast_statement
 		$this->conversion = $conversion;
 	}
 
-	public function local_def(): ast_local_declaration
+	public function local_def(): ast_local_binding
 	{
 		return $this->binding ?? throw new \LogicException('Assignment binding is not settled');
 	}

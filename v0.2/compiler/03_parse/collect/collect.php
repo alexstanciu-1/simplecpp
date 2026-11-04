@@ -9,17 +9,27 @@ final class Body_Collection
 	/** PROPERTIES */
 	/** @var ast_local_declaration[] Keyed by statement position; native non-owning references to body syntax. */
 	private array $locals /** array<uint32,ast_local_declaration> */ = [];
-	/** @var ast_local_declaration[] Prior local heads; native non-owning name index, not another duplicate owner. */
-	private array $local_names /** array<string,ast_local_declaration> */ = [];
+	/** @var ast_local_binding[] Prior local heads; native non-owning name index, not another duplicate owner. */
+	private array $local_names /** array<string,ast_local_binding> */ = [];
 	/** Native owning; body-local collection worker. */
 	private readonly Scope_Collection $declarations;
+	private int $parameter_count /** uint32 */;
 	/** @var ast_name_expression[] Native non-owning expression references. */
 	private array $references /** list<ast_name_expression> */ = [];
 
 	/** CONSTRUCTOR */
-	public function __construct(scope $parent)
+	/**
+	 * Seed body scope with signature-owned parameters before local statements.
+	 * @param ast_parameter_declaration[] $parameters
+	 */
+	public function __construct(scope $parent, array $parameters /** list<ast_parameter_declaration> */ = [])
 	{
 		$this->declarations = new Scope_Collection(new scope($parent));
+		$this->parameter_count = count($parameters);
+		foreach ($parameters as $parameter) {
+			$this->declarations->declare($parameter);
+			$this->local_names[$parameter->declaration_key()] ??= $parameter;
+		}
 	}
 
 	/** METHODS */
@@ -32,22 +42,32 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
-		if ($statement instanceof ast_call_statement) {
-			return;
-		}
 		if ($statement instanceof ast_local_declaration) {
 			$this->declarations->declare($statement);
 			$this->local_names[$statement->declaration_key()] ??= $statement;
-			$statement->identify(count($this->locals));
+			$statement->identify(count($this->locals) + $this->parameter_count);
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
-			|| ($statement instanceof ast_echo_statement)) {
+			|| ($statement instanceof ast_echo_statement) || ($statement instanceof ast_call_statement)) {
 			$value = $statement->value;
 		}
 		else {
 			throw new \LogicException('Unhandled statement collection');
+		}
+		if ($value !== null) {
+			$this->expression($value);
+		}
+	}
+
+	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
+	private function expression(ast_expression $value): void
+	{
+		if ($value instanceof ast_call_expression) {
+			foreach ($value->arguments as $argument) {
+				$this->expression($argument);
+			}
 		}
 		if ($value instanceof ast_name_expression) {
 			$this->references[] = $value;

@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-04, after initializer-based local inference.
+Updated: 2026-11-04, after typed value parameters, arguments and returns.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -24,7 +24,7 @@ not a mandatory dependency order.
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment | Named constants, chained assignment; expression-dependent examples |
 | 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals | Grouping, unary/binary operators, comparisons, logical short circuit, casts, compound writes, increments, string operations |
 | 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Pending | Blocks/scopes, if/else, loops, break/continue, switch/match, conditional expressions; merge/invalidate value facts |
-| 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: no-argument void functions and calls, including cross-file calls and calls inside functions | Typed parameters, value returns, calls as expressions, defaults, recursion proofs, overloads, variadics; reference boundaries with 07 |
+| 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures and ordered argument conversion | Defaults, terminating recursion proofs, variadics, references, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions | Nullable/Result, mixed/dynamic, explicit casts, probes/coalescing and text conversions |
 | 06 | [Containers](../../../compiler/my-try/docs/catalog/06_containers.md) | Pending in compiler | vector/hash registration and construction, reads/writes, append, key rules, iteration; mutation policy before mutation during iteration |
 | 07 | [References and lifetime](../../../compiler/my-try/docs/catalog/07_references_lifetime.md) | Pending source ownership/reference features; string value copies already work | Aliases/borrows, reference parameters/returns, lifetime rules, shared/unique/weak, transfers and cleanup |
@@ -55,6 +55,8 @@ not prove those original examples. See [types](../../compiler/docs/types.md),
 - [ ] **01-D: Chained assignment.** Discuss result type, conversion boundaries and single evaluation before enabling assignment expressions (`VAR-CHAIN-001`).
 - [ ] **01-E: Identifier/context checks.** Audit flavor-specific identifier examples; parameter-dependent examples await chapter 04 (`IDENT-VAR-001`, `NOTE-021`).
 - [ ] Reconcile remaining chapter-01 notes and explicitly defer legacy annotation spelling (`TYPE-VAR-005`); do not silently adopt it.
+
+Typed function delivery: [model, contract and proofs](../../compiler/docs/functions_slice.md).
 
 Recommended next discussion: **01-B, named constants**, or 01-C if expression work
 has higher priority. These remain proposals. Chained assignment can stay separate;

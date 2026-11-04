@@ -62,8 +62,8 @@ foreach (flavor::cases() as $flavor)
 	$program = (new Program_Frontend())->prepare_sources('main', $sources, new entry_target(31));
 	$entry = $program->entry->body();
 	verify($entry->scope->namespace === 'App', 'Entry lost namespace context');
-	verify($entry->statements[1]->name === 'Sub\ping', 'Relative AST path not normalized');
-	verify($entry->statements[2]->name === '\Lib\ping', 'Root marker not preserved');
+	verify($entry->statements[1]->value->name === 'Sub\ping', 'Relative AST path not normalized');
+	verify($entry->statements[2]->value->name === '\Lib\ping', 'Root marker not preserved');
 	verify($entry->statements[1]->function_def()->name() === 'App\Sub\ping', 'Relative qualified lookup failed');
 	verify($entry->statements[2]->function_def()->namespace === 'Lib', 'Root lookup failed');
 	verify($entry->statements[2]->function_def()->short_name === 'ping', 'Short identity lost');

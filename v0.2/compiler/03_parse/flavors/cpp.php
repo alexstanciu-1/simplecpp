@@ -16,7 +16,10 @@ final class Cpp_Grammar implements statement_grammar
 {
 	public function function_start(Parser $parser): bool
 	{
-		return $parser->cursor->keyword('void');
+		return ($parser->cursor->is(token_kind::identifier) || $parser->cursor->keyword('void')
+			|| ($parser->cursor->is(token_kind::keyword) && type_registry::resolve($parser->cursor->tokens->text_at($parser->cursor->position())) !== null))
+			&& ($parser->cursor->tokens->tokens[$parser->cursor->position() + 2]->kind ?? null) === token_kind::lparen
+			&& ($parser->cursor->next_is(token_kind::identifier));
 	}
 
 	/** C++ flavor places the explicit return type before the function name. */
@@ -25,9 +28,9 @@ final class Cpp_Grammar implements statement_grammar
 		$start = $parser->cursor->position();
 		$type = $parser->return_type();
 		$name = $parser->cursor->name(token_kind::identifier);
-		$parser->empty_parameters();
+		$parameters = $parser->parameters();
 		return new ast_function_declaration($name, $type,
-			$start, $parser->cursor->position(), false, $parser->source_namespace());
+			$start, $parser->cursor->position(), false, $parser->source_namespace(), $parameters);
 	}
 
 	/** A leading type or auto declares a local; a simple-name write requires an existing binding. */

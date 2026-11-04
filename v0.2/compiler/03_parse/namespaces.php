@@ -36,11 +36,25 @@ final class Namespace_Syntax
 		return $this->path(false);
 	}
 
+	/** Look through a name path without consuming it; qualified variable reads are not calls. */
 	public function call_start(): bool
 	{
-		return $this->cursor->is($this->root_marker)
-			|| ($this->cursor->is(token_kind::identifier)
-				&& ($this->cursor->next_is(token_kind::lparen) || $this->cursor->next_is($this->separator)));
+		$index = $this->cursor->position();
+		$tokens = $this->cursor->tokens->tokens;
+		if (($tokens[$index]->kind ?? null) === $this->root_marker) {
+			$index++;
+		}
+		while (($tokens[$index]->kind ?? null) === token_kind::identifier) {
+			$index++;
+			if (($tokens[$index]->kind ?? null) === token_kind::lparen) {
+				return true;
+			}
+			if (($tokens[$index]->kind ?? null) !== $this->separator) {
+				return false;
+			}
+			$index++;
+		}
+		return false;
 	}
 
 	/** PHP qualifies the final variable token (test\$value); other flavors qualify ordinary identifiers. */

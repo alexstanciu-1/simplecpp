@@ -25,6 +25,9 @@ final class Syntax_Inspection
 			}
 			$body = array_map(self::statement(...), $function->body()->statements);
 			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
+				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
+					'name' => $parameter->short_name, 'type' => $parameter->type_name,
+				], $function->parameters),
 				'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
@@ -73,6 +76,15 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_call_expression) {
+			$name_end = $expression->start;
+			while ($expression->root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
+				$name_end++;
+			}
+			return ['kind' => 'call', 'name' => self::name($expression, $expression->name, $expression->start,
+				$name_end), 'arguments' => array_map(self::expression(...), $expression->arguments),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_string_expression) {
 			return ['kind' => 'string', 'spelling_hex' => bin2hex($expression->source_text()), 'span' => self::span($expression)];
 		}
@@ -109,8 +121,7 @@ final class Syntax_Inspection
 				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_call_statement) {
-			return ['kind' => 'call', 'name' => self::name($statement, $statement->name, $statement->start, $statement->end - 3),
-				'span' => self::span($statement)];
+			return self::expression($statement->value) + ['statement_span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'name' => self::name($statement, $statement->short_name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),

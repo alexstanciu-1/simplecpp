@@ -59,10 +59,11 @@ semicolon insertion. Expressions: decimal integer tokens, names, parentheses, un
 plus/minus, multiplication/division/remainder, addition/subtraction and shifts.
 Precedence descends in that order; binary operators associate left. Assignments are
 statements, not expressions in this slice. The executable subset additionally admits `return` with an integer/name value.
-The [void-function slice](../../specs/compiler_entry_v0_2.md#no-argument-void-function-extension)
-adds no-parameter definitions (`void f() {}` in C++, `function f(): void {}` in PHP/JS),
-no-argument statement calls, and bare returns inside void functions. Function bodies
-have private local scopes; named signatures settle before body preparation.
+The [typed-function slice](../../specs/compiler_entry_v0_2.md#typed-value-parameters-and-returns)
+adds explicit value parameters/returns, positional and nested calls, and calls in value
+positions. PHP uses `function f(int $value): int`, C++ `int f(int value)`, and JS
+`function f(value: int): int`. Signature types settle before body preparation; each
+body indexes its signature-owned parameters alongside its local declarations.
 The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or string value
 as its single operand in all flavors. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
 There is no member access, comparisons, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
@@ -136,12 +137,12 @@ and CLI publication. Arithmetic, generic types and nesting proofs remain future 
 
 The `program` command accepts an explicit mixed-flavor inventory and a selected
 root-relative entry. Shared program preparation rejects executable statements in
-secondary sources; they admit comments/whitespace and void function definitions. Each
+secondary sources; they admit comments/whitespace and typed function definitions. Each
 source produces a translation unit and one adapter supplies `main`. See the
 [multifile guide](../compiler/docs/multifile_slice.md) for invocation, verification
 and deferred work. The command runs sequentially; see the
 [execution guide](../compiler/docs/execution.md). PRJ discovery,
-incremental reuse remains pending; no-argument void calls now resolve across files.
+incremental reuse remains pending; typed calls now resolve across files.
 
 ## File AST ownership
 

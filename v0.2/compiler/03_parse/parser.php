@@ -140,16 +140,10 @@ final class Parser
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
 		}
-		if ($this->names->call_start())
-		{
-			$start = $this->cursor->position();
-			$name = $this->names->path(true);
-			$this->cursor->take(token_kind::lparen, '(');
-			$this->cursor->take(token_kind::rparen, ') (calls take no arguments in this slice)');
+		if ($this->names->call_start()) {
+			$value = $this->call();
 			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-			$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
-				&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
-			return new ast_call_statement($start, $end, $name, $member_syntax);
+			return new ast_call_statement($value->start, $end, $value);
 		}
 		return $grammar->statement($this, $collector);
 	}
@@ -166,7 +160,7 @@ final class Parser
 		}
 		$this->sink?->discovered($function);
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
-		$body_collector = new Body_Collection($this->root->scope);
+		$body_collector = new Body_Collection($this->root->scope, $function->parameters);
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace))
 		{
@@ -188,11 +182,11 @@ final class Parser
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('function');
 		$name = $this->cursor->name(token_kind::identifier);
-		$this->empty_parameters();
+		$parameters = $this->parameters();
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
 		$type = $this->return_type();
 		return new ast_function_declaration($name, $type,
-			$start, $this->cursor->position(), false, $this->root->scope->namespace);
+			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters);
 	}
 
 	public function source_namespace(): ?string
@@ -200,10 +194,60 @@ final class Parser
 		return $this->root->scope->namespace;
 	}
 
-	public function empty_parameters(): void
+	/**
+	 * Parse explicit positional value parameters; defaults, references and variadics remain unsupported.
+	 * @return ast_parameter_declaration[]
+	 */
+	public function parameters(): array /** list<ast_parameter_declaration> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
-		$this->cursor->take(token_kind::rparen, ') (functions take no parameters in this slice)');
+		$parameters = [];
+		while (!$this->cursor->is(token_kind::rparen)) {
+			$start = $this->cursor->position();
+			if ($this->cursor->tokens->source->flavor === flavor::js) {
+				$name = $this->cursor->name(token_kind::identifier);
+				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
+				$type = $this->return_type();
+			}
+			else {
+				$type = $this->return_type();
+				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
+					? token_kind::variable : token_kind::identifier);
+			}
+			$parameters[] = new ast_parameter_declaration($name, $type, count($parameters), $start, $this->cursor->position());
+			if (!$this->cursor->is(token_kind::comma)) {
+				break;
+			}
+			$this->cursor->take(token_kind::comma, ',');
+			if ($this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Trailing parameter comma is deferred');
+			}
+		}
+		$this->cursor->take(token_kind::rparen, ') (typed value parameters only)');
+		return $parameters;
+	}
+
+	/** Calls own ordinary value arguments; nested calls use the same parser and AST node. */
+	private function call(): ast_call_expression
+	{
+		$start = $this->cursor->position();
+		$name = $this->names->path(true);
+		$this->cursor->take(token_kind::lparen, '(');
+		$arguments = [];
+		while (!$this->cursor->is(token_kind::rparen)) {
+			$arguments[] = $this->value();
+			if (!$this->cursor->is(token_kind::comma)) {
+				break;
+			}
+			$this->cursor->take(token_kind::comma, ',');
+			if ($this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Trailing argument comma is deferred');
+			}
+		}
+		$this->cursor->take(token_kind::rparen, ')');
+		$member = $this->cursor->tokens->source->flavor === flavor::js
+			&& !str_starts_with($name, '\\') && str_contains($name, '\\');
+		return new ast_call_expression($start, $this->cursor->position(), $name, $member, $arguments);
 	}
 
 	public function return_type(): string
@@ -251,6 +295,9 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	public function value(): ast_expression
 	{
+		if ($this->names->call_start()) {
+			return $this->call();
+		}
 		$start = $this->cursor->position();
 		if ($this->cursor->is(token_kind::single_string) || $this->cursor->is(token_kind::double_string)) {
 			$kind = $this->cursor->is(token_kind::single_string) ? token_kind::single_string : token_kind::double_string;

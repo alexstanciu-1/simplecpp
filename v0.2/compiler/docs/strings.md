@@ -16,7 +16,7 @@ return 8;
 ```
 
 The equivalent cpp and js declarations use `string message = ...;` and
-`let message: string = ...;`. This works inside entry and void-function bodies.
+`let message: string = ...;`. This works inside entry and typed-function bodies.
 A written string destination accepts only string values; text conversions are not
 activated even though the native runtime already implements some of them.
 
@@ -49,15 +49,14 @@ NUL is preserved through construction and output. The emitter only includes publ
 runtime headers. Standard string storage remains private to the runtime.
 
 Direct literal echo remains allocation-free and requires only the output API.
-String-variable echo reads `data()` and `size()` from settled local storage. The
-current operand is a local reference, so this does not evaluate an effectful
-expression twice. Review evaluation ownership when admitting richer operands.
+String-value echo binds the value once before reading `data()` and `size()`. A
+returned string remains alive across both queries; calls execute exactly once.
 
 ## Explicit debt
 
 String globals remain rejected until initialization order and lifetime are designed;
 current scalar globals use `constinit`. Text conversions, concatenation/operators,
-indexing, methods, interpolation, string function results and uninitialized
+indexing, methods, interpolation and uninitialized
 locals remain deferred. Native runtime support does not imply compiler admission.
 The broader echo formatting/error contract remains tracked in the existing echo debt.
 

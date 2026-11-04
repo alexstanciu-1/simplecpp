@@ -109,16 +109,16 @@ C++ publication/build commands and the agreed verification checklist.
 
 The [multifile slice](docs/multifile_slice.md) adds an explicit source inventory,
 one selected entry and an exact native link manifest. Secondary files currently
-may contain comments/whitespace and no-argument void function definitions. Source execution is sequential; basic
+may contain comments/whitespace and typed function definitions. Source execution is sequential; basic
 incremental reuse and declaration dependency scheduling remain future work.
 
-The [void-function slice](docs/functions_slice.md) adds global discovery, settled
+The [typed-function slice](docs/functions_slice.md) adds global discovery, settled
 signatures, body-owned preparation and cross-file calls.
 
 Future slices will add richer scopes, richer types/conversions/operators and other working
 functionality as needed. There is no empty scaffolding for future stages.
 
-The parser supports no-argument void functions and calls, initialized local declarations,
+The parser supports typed value parameters, returns and call expressions, initialized local declarations,
 simple-name assignments and value/bare returns,
 named type annotations, and integer/name values. `parse` outputs inspectable JSON
 with normalized names, original spans, declaration annotations and assignment intent.
@@ -219,7 +219,7 @@ positions recover precise name/type diagnostic locations without stored token fi
   `$type_def`, checked `type_def()`, body-local ID and known initializer constant.
 - `ast_function_declaration`: optional written `$return_type_name`, protected
   resolved `$return_type_def`, checked `return_type_def()` and its body.
-- `ast_call_statement`: protected stable `$function_symbol` and checked
+- `ast_call_expression`: private stable `$function_symbol` and checked
   `function_def()`, following the current declaration. No prepared-call/signature
   wrapper is needed. Bodies consume settled return facts without visiting callees.
 

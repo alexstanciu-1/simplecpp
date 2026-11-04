@@ -55,7 +55,9 @@ final class Compilation_Inspection
 		], $program->file->globals());
 		foreach ($program->file->functions() as $function) {
 			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
-				'body' => self::body($function->body())];
+				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
+					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
+				], $function->parameters), 'body' => self::body($function->body())];
 		}
 		return $result;
 	}
@@ -81,7 +83,7 @@ final class Compilation_Inspection
 					'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
 			}
 			elseif ($statement instanceof ast_assignment_statement) {
-				$statements[] = ['kind' => 'assignment', 'id' => $statement->local_def()->id,
+				$statements[] = ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
 					'conversion' => $statement->conversion()->name, 'value' => self::value($statement->value)];
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
@@ -93,7 +95,8 @@ final class Compilation_Inspection
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$statements[] = ['kind' => 'call', 'target' => $statement->function_def()->name(),
-					'return_type' => $statement->function_def()->return_type_def()->name];
+					'return_type' => $statement->function_def()->return_type_def()->name,
+					'arguments' => array_map(self::value(...), $statement->value->arguments)];
 			}
 		}
 		return ['statements' => $statements,
@@ -110,13 +113,17 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_call_expression) {
+			$row['target'] = $value->function_def()->name();
+			$row['arguments'] = array_map(self::value(...), $value->arguments);
+		}
 		if ($value instanceof ast_string_expression) {
 			$row['bytes_hex'] = bin2hex($value->bytes());
 		}
 		if ($value instanceof ast_name_expression) {
 			$declaration = $value->declaration();
-			$row['binding'] = $declaration instanceof ast_local_declaration
-				? $declaration->id : $declaration->symbol_key();
+			$row['binding'] = $declaration instanceof ast_local_binding
+				? $declaration->storage_id() : $declaration->symbol_key();
 		}
 		return $row;
 	}

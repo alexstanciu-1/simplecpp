@@ -126,6 +126,14 @@ interface ast_declaration_interface {
 	public function clear_duplicate(): void;
 }
 
+/** Shared mutable body storage contract for local declarations and by-value parameters. */
+interface ast_local_binding extends ast_declaration_interface {
+	public function storage_id(): int /** uint32 */;
+	public function type_def(): type_definition;
+	public function constant(): int|float|bool|null /** int64|float64|bool|null */;
+	public function constant_known(): bool;
+}
+
 /**
  * Shared declaration identity; visibility and type facts stay with their specific owners.
  *
@@ -156,7 +164,8 @@ trait ast_declaration
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
-			|| (get_class($duplicate_element) !== get_class($this)) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
+			|| (get_class($duplicate_element) !== get_class($this)
+				&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
 		$this->duplicate_element = $duplicate_element;

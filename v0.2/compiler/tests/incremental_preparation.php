@@ -102,8 +102,8 @@ try
 				$prepare($session);
 				throw new RuntimeException('Unsupported signature accepted');
 			}
-			catch (scpp\compiler\diagnostic $error) {
-				verify(str_contains($error->getMessage(), 'Only explicit void'), 'Signature diagnostic');
+			catch (scpp\compiler\diagnostic|scpp\compiler\diagnostic_group $error) {
+				verify(str_contains($error->getMessage(), 'requires a value return'), 'Signature diagnostic');
 			}
 			file_put_contents($second, $head('second') . '{}');
 			$session = $compiler->frontend($app, $session);

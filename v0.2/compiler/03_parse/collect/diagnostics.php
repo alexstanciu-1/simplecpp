@@ -95,8 +95,8 @@ final class Declaration_Diagnostics
 		return self::ordered($errors);
 	}
 
-	private static function duplicate(ast_local_declaration|ast_function_declaration|ast_global_declaration $node,
-		ast_local_declaration|ast_function_declaration|ast_global_declaration $first, string $kind): diagnostic
+	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration $node,
+		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration $first, string $kind): diagnostic
 	{
 		$source = $first->source();
 		$location = $source->location($first->root()->byte_at($first->name_position()));

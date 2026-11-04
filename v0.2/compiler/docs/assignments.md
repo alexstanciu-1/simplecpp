@@ -34,7 +34,7 @@ is needed to obtain the current scalar value. String bytes are never copied into
 scalar facts. Local declaration facts continue to describe initialization only.
 
 The index is reset for each body. Calls cannot currently mutate caller locals: there
-are no references, captures or parameters. Before adding such capabilities, review
+are only value parameters, with no references or captures. Before adding such capabilities, review
 invalidation rather than carrying these facts across possibly mutating calls.
 Before adding branches/loops, design joins for value facts; this source-order index
 is deliberately limited to the current straight-line bodies.

@@ -106,10 +106,10 @@ verify($self->file->functions()[0]->body()->statements[0]->function_def() === $s
 
 foreach ([
 		['function f(): void { return 8; } return 8;', 'cannot return a value'],
-		['function f(): int {} return 8;', 'explicit void'],
+		['function f(): int {} return 8;', 'requires a value return'],
 		['function f() {} return 8;', 'explicit return type'],
-		['function f($x int): void {} return 8;', 'no parameters'],
-		['function f(): void {} f(8); return 8;', 'no arguments'],
+		['function f($x int): void {} return 8;', 'Expected identifier'],
+		['function f(): void {} f(8); return 8;', 'Argument count mismatch'],
 		['function f(): void { function g(): void {} } return 8;', 'Nested functions'],
 		['function f(): void {} function f(): void {} return 8;', 'Duplicate function'],
 		['missing(); return 8;', 'Unknown function'],

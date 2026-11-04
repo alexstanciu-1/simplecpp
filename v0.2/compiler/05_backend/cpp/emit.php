@@ -66,13 +66,18 @@ final class Cpp_Emitter
 		}
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
-			$declarations[$name] = true;
-			$definitions[] = 'void ' . $name . "()\n{\n"
+			$declarations[$name] = $function;
+			$definitions[] = $this->signature($function, $required_headers) . "\n{\n"
 				. implode("\n", $this->statements($function->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$definitions[] = 'int ' . $entry_name . "()\n{\n"
 				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
+		}
+		$prototypes = '';
+		ksort($declarations, \SORT_STRING);
+		foreach ($declarations as $function) {
+			$prototypes .= $this->signature($function, $required_headers) . ";\n";
 		}
 		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
@@ -90,22 +95,18 @@ final class Cpp_Emitter
 		foreach ($global_references as $name => $global) {
 			$header .= 'extern ' . $global->type_def()->cpp_type() . ' ' . $name . ";\n";
 		}
-		ksort($declarations, \SORT_STRING);
-		foreach ($declarations as $name => $unused) {
-			$header .= 'void ' . $name . "();\n";
-		}
-		return $header . implode("\n", $definitions);
+		return $header . $prototypes . implode("\n", $definitions);
 	}
 
 	/**
 	 * Lower already resolved statements and retain only contract-derived external declarations.
 	 *
-	 * @param bool[] $declarations
+	 * @param ast_function_declaration[] $declarations
 	 * @param ast_global_declaration[] $global_references
 	 * @param bool[] $required_headers
 	 * @return string[]
 	 */
-	private function statements(ast_function_body $body, array &$declarations /** array<string,bool> */,
+	private function statements(ast_function_body $body, array &$declarations /** array<string,ast_function_declaration> */,
 		bool &$uses_output, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$required_headers /** array<string,bool> */): array /** list<string> */
 	{
@@ -116,7 +117,7 @@ final class Cpp_Emitter
 			if ($statement instanceof ast_local_declaration) {
 				$lines[] = "\t[[maybe_unused]] " . $statement->type_def()->cpp_type() . ' ' . $this->name($statement)
 					. ' = ' . $statement->type_def()->lower_cpp_conversion($statement->initialization(),
-						$this->value($statement->initializer, $global_references)) . ';';
+						$this->value($statement->initializer, $global_references, $declarations, $required_headers)) . ';';
 				foreach (array_merge($statement->type_def()->cpp_headers(),
 					$statement->type_def()->conversion_headers($statement->initialization())) as $header) {
 					$required_headers[$header] = true;
@@ -132,14 +133,27 @@ final class Cpp_Emitter
 				}
 				$type = $statement->local_def()->type_def();
 				$lines[] = "\t" . $this->name($statement->local_def()) . ' = '
-					. $type->lower_cpp_conversion($statement->conversion(), $this->value($statement->value, $global_references)) . ';';
+					. $type->lower_cpp_conversion($statement->conversion(), $this->value($statement->value, $global_references, $declarations, $required_headers)) . ';';
 				foreach ($type->conversion_headers($statement->conversion()) as $header) {
 					$required_headers[$header] = true;
 				}
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value, $global_references))
-					. ';';
+				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
+				$conversion = $statement->conversion();
+				if ($conversion instanceof exit_conversion) {
+					$value = Cpp_Exit::expression($conversion, $value);
+				}
+				else {
+					/** @var ast_function_declaration $function */
+					$function = $body->parent;
+					$type = $function->return_type_def();
+					$value = $type->lower_cpp_conversion($conversion, $value);
+					foreach ($type->conversion_headers($conversion) as $header) {
+						$required_headers[$header] = true;
+					}
+				}
+				$lines[] = "\treturn " . $value . ';';
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -150,20 +164,20 @@ final class Cpp_Emitter
 						. strlen($value->bytes()) . ');';
 				}
 				elseif ($value->type_def() === type_string::instance()) {
-					$operand = $this->value($value, $global_references);
-					$lines[] = "\t" . 'scpp::echo_bytes((' . $operand . ').data(), (' . $operand . ').size());';
+					$operand = $this->value($value, $global_references, $declarations, $required_headers);
+					// A call result must live through both byte-span queries and execute exactly once.
+					$lines[] = "\t{ const auto& output_value = " . $operand
+						. '; scpp::echo_bytes(output_value.data(), output_value.size()); }';
 				}
 				else {
-					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value, $global_references) . ');';
+					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value, $global_references, $declarations, $required_headers) . ');';
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
 				$lines[] = "\treturn;";
 			}
 			elseif ($statement instanceof ast_call_statement) {
-				$name = self::function_name($statement->function_def());
-				$declarations[$name] = true;
-				$lines[] = "\t" . $name . '();';
+				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
 			}
 			else {
 				throw new \LogicException('Unhandled prepared statement');
@@ -172,17 +186,44 @@ final class Cpp_Emitter
 		return $lines;
 	}
 
-	private function name(ast_local_declaration $binding): string
+	private function name(ast_local_binding $binding): string
 	{
-		return 'local_' . $binding->id;
+		return 'local_' . $binding->storage_id();
 	}
 
 	/**
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $required_headers
 	 * @param ast_global_declaration[] $global_references
 	 */
-	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */): string
+	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
 	{
+		if ($value instanceof ast_call_expression) {
+			$function = $value->function_def();
+			$name = self::function_name($function);
+			$declarations[$name] = $function;
+			if ($value->arguments === []) {
+				return $name . '()';
+			}
+			$steps = [];
+			$arguments = [];
+			foreach ($value->arguments as $index => $argument) {
+				$type = $function->parameters[$index]->type_def();
+				$operand = $this->value($argument, $global_references, $declarations, $required_headers);
+				$converted = $type->lower_cpp_conversion($value->conversion($index), $operand);
+				// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
+				$temporary = 'argument_' . $value->start . '_' . $index;
+				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $converted . ';';
+				$arguments[] = 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
+				foreach ($type->conversion_headers($value->conversion($index)) as $header) {
+					$required_headers[$header] = true;
+				}
+			}
+			return '([&]() -> ' . $function->return_type_def()->cpp_type() . ' { ' . implode(' ', $steps)
+				. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
+		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
 			return $value->type_def()->lower_cpp_literal($value);
@@ -197,6 +238,27 @@ final class Cpp_Emitter
 			return $this->name($declaration);
 		}
 		throw new \LogicException('Unhandled prepared value');
+	}
+
+	/**
+	 * Emit declarations from settled signatures, without looking inside foreign bodies.
+	 * @param bool[] $headers
+	 */
+	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */): string
+	{
+		$parameters = [];
+		foreach ($function->return_type_def()->cpp_headers() as $header) {
+			$headers[$header] = true;
+		}
+		foreach ($function->parameters as $parameter) {
+			$type = $parameter->type_def();
+			$parameters[] = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($parameter);
+			foreach ($type->cpp_headers() as $header) {
+				$headers[$header] = true;
+			}
+		}
+		return $function->return_type_def()->cpp_type() . ' ' . self::function_name($function)
+			. '(' . implode(', ', $parameters) . ')';
 	}
 
 	public static function global_name(ast_global_declaration $declaration): string

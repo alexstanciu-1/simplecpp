@@ -99,8 +99,8 @@ concurrent writers are outside this slice. Callers must honor command failure.
 
 ## No-argument void function extension
 
-The bounded compiler supports namespace-free function definitions with no parameters
-and an explicit `void` return type. Equivalent forms are:
+The initial function slice supported no parameters and an explicit `void` return
+type. It remains a subset of the typed-function extension below. Equivalent forms are:
 
 ```text
 PHP: function ping(): void { return; }
@@ -129,10 +129,10 @@ settles before any executable body is prepared. Duplicate function names are inv
 this extension does not introduce overloads. Unknown functions receive source-located
 preparation diagnostics. Invalid bodies are rejected even if never called.
 
-Parameters, call arguments, non-void/inferred return types, prototypes without bodies,
-methods, namespaces, function values, callable expressions in value position and
-incremental reuse are outside this extension. Unsupported forms diagnose in the
-frontend or preparation; generated C++ is not their semantic validator.
+Typed parameters, arguments, non-void returns and call expressions are specified
+below; namespaces and incremental preparation have their own extensions. Inferred
+signatures, prototypes without bodies, methods and function values remain deferred.
+Unsupported forms diagnose before C++ emission.
 
 The coordinator builds a pending symbol index from parser discovery notifications.
 It publishes only after every source parses successfully. Declaration identity,
@@ -169,3 +169,55 @@ collection. It is excluded from global function lookup. `main` is reserved for
 this entry role; explicit source declarations of it remain unsupported. This does
 not change the existing selected-entry or exit-status rules and does not admit
 new function forms.
+
+## Typed value parameters and returns
+
+Function signatures require explicit parameter and return types. All currently
+registered source value types are admitted: int/int64, bool, byte, float/float64,
+string and null. Void is return-only. Canonical flavor spellings are:
+
+```text
+PHP: function identity(string $value): string { return $value; }
+C++: string identity(string value) { return value; }
+JS:  function identity(value: string): string { return value; }
+```
+
+PHP parameters use type-before-name. Local declaration shorthand does not change
+this signature contract. Each function owns its ordered parameter declarations;
+its body scope indexes them before collecting local statements. Parameters and
+locals cannot duplicate names. PHP bare writes to parameters are assignments,
+not inferred declarations. Parameters are initialized on entry, with unknown
+caller values during body preparation, and are mutable local value storage.
+
+Calls require exactly the declared number of positional arguments. Each argument
+is evaluated once, left to right, and its destination conversion completes before
+the next argument starts. Converted values are preserved for invocation. A failure
+stops later argument evaluation and callee entry; earlier effects remain. Strings
+have owning value semantics: parameter reassignment cannot mutate caller storage,
+and returned strings remain valid after the callee exits.
+
+Written parameter and return types authorize the existing metadata-defined typed
+destination conversions. This uses the same rules as explicitly typed initialization,
+including checked narrowing; it does not add conversions, string/text coercions or
+implicit promotion. Unknown-value checks remain at execution time. Returned call
+values are not constant-folded by inspecting callee bodies.
+
+Calls can appear in existing value positions, including arguments to nested calls,
+initializers, assignments, echo and returns. A non-void result may be discarded in
+statement position. Void calls are permitted only as statements. Non-void functions
+must return a value; fallthrough and bare returns reject. Void functions may fall
+through or return without a value. Following executable statements after a return
+remain outside the current straight-line body slice. The executable entry retains
+its separate int64-to-native-process-exit contract.
+
+Every signature settles before any body is prepared; callers consume signatures
+without reading foreign bodies. Forward and recursive signature binding work, but
+terminating recursive execution awaits control-flow support and its own proof.
+Incremental caller contracts include ordered parameter types/count and return type;
+parameter names do not affect positional callers. Signature changes invalidate
+observers, while body-only changes retain them. New signatures never require
+copying a foreign AST or creating a second prepared signature model.
+
+Defaults, named arguments, variadics, references, overloads, signature inference,
+first-class callables, methods and trailing parameter/argument commas are deferred.
+Duplicate same-name functions remain errors, even if their parameter types differ.

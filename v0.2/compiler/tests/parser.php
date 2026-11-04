@@ -58,7 +58,7 @@ foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js],
 		['let x = 1;', flavor::php], ['$x int = 1;', flavor::js], ['let x: int = 1;', flavor::cpp],
 		['auto x = 1;', flavor::js], ['int $x = 1;', flavor::cpp], ['$x = bare;', flavor::php],
 		['const x = 1;', flavor::js], ['int x = 1 + 2;', flavor::cpp], ['{ int x = 1; }', flavor::cpp],
-		['vector<int> x = y;', flavor::cpp], ['int x = f();', flavor::cpp], ['let x = 1 = 2;', flavor::js]] as [$text,
+		['vector<int> x = y;', flavor::cpp], ['let x = 1 = 2;', flavor::js]] as [$text,
 		$flavor])
 {
 	try {

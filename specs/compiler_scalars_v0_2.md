@@ -33,9 +33,8 @@ expression is required for initialization:
 | `null empty = null;` | `$empty null = null;` | `let empty: null = null;` |
 
 This decision applies to the implemented typed local/global declarations. It does
-not introduce implicit arithmetic promotion, truthiness, argument or
-return conversion rules. Future boundaries must request the appropriate conversion
-context deliberately. A typed declaration is not represented as an authored cast AST.
+not introduce implicit arithmetic promotion, truthiness or implicit promotion. Typed function parameters and returns request
+explicit conversion intent under the [function contract](compiler_entry_v0_2.md#typed-value-parameters-and-returns). A typed declaration is not represented as an authored cast AST.
 
 | Source → destination | Rule |
 | --- | --- |
@@ -118,8 +117,8 @@ Direct literal echo may avoid materializing owning storage.
 
 Existing quoted escape rules and UTF-8 source validation remain unchanged. No
 implicit or typed-destination text conversions are admitted in this slice. String
-globals, uninitialized locals, operators, indexing, methods, interpolation
-and string function results remain deferred. Runtime capabilities alone do not
+globals, uninitialized locals, operators, indexing, methods and interpolation remain deferred. String value parameters and
+returns follow the typed-function contract. Runtime capabilities alone do not
 activate these compiler features.
 
 ## Local assignment extension

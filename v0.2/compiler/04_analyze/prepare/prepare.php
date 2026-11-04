@@ -28,9 +28,9 @@ final class Preparation
 	/**
 	 * Source-order visibility index, not a declaration collector; native non-owning declaration references.
 	 *
-	 * @var ast_local_declaration[]
+	 * @var ast_local_binding[]
 	 */
-	private array $visible_locals /** array<string,ast_local_declaration> */ = [];
+	private array $visible_locals /** array<string,ast_local_binding> */ = [];
 	/** @var ast_assignment_statement[] Latest completed writes; transient non-owning body-local index. */
 	private array $latest_writes /** array<uint32,ast_assignment_statement> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
@@ -75,7 +75,7 @@ final class Preparation
 		}
 		$this->body($syntax->statements, $syntax->source(),
 			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
-			$symbols, $syntax, $dependencies);
+			$syntax);
 		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups,
 			$target);
 	}
@@ -86,16 +86,19 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function body(array $syntax /** list<ast_statement> */,
-		source_file $source, int $end /** uint32 */, ?entry_target $target, scope $symbols, ast_function_body $owner,
-		?Dependency_Watches $dependencies): void
+		source_file $source, int $end /** uint32 */, ?entry_target $target, ast_function_body $owner): void
 	{
 		$this->visible_locals = [];
 		$this->latest_writes = [];
+		/** @var ast_function_declaration $function */
+		$function = $owner->parent;
+		foreach ($function->parameters as $parameter) {
+			$this->visible_locals[$parameter->declaration_key()] = $parameter;
+		}
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
 		$returned = false;
-		$file = $owner->root();
 		foreach ($syntax as $statement)
 		{
 			$this->statement_visits++;
@@ -116,29 +119,25 @@ final class Preparation
 					$this->require_integer($statement->value, 'Echo currently supports only int64 and string values');
 				}
 			}
-			elseif ($statement instanceof ast_call_statement)
-			{
-				// JS dotted spelling may name a value; it must not silently bypass local visibility.
-				$separator = strpos($statement->name, '\\');
-				if (($statement->member_syntax) && ($separator !== false) && ($separator > 0)
-					&& isset($this->visible_locals[substr($statement->name, 0, $separator)])) {
-					throw new diagnostic($source, $statement->byte_start(), 'Member calls are not supported in this slice');
-				}
-				$this->name_lookups++;
-				$symbol = $symbols->entry($file->function_key($statement->name));
-				$dependencies?->watch($symbol, $owner);
-				$function = $symbol->declaration();
-				if ($function === null) {
-					throw new diagnostic($source, $statement->byte_start(), 'Unknown function: ' . $statement->name);
-				}
-				$statement->settle_function($symbol);
+			elseif ($statement instanceof ast_call_statement) {
+				$this->expression_visits++;
+				$this->call($statement->value);
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
 				if ($target === null) {
-					if ($statement->value !== null) {
-						throw new diagnostic($source, $statement->byte_start(),
-							'Void function cannot return a value');
+					$return_type = $function->return_type_def();
+					if ($return_type === type_void::instance()) {
+						if ($statement->value !== null) {
+							throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
+						}
+					}
+					else {
+						if ($statement->value === null) {
+							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
+						}
+						$this->value($statement->value);
+						$statement->settle_conversion($return_type->prepare_conversion($statement->value, true));
 					}
 				}
 				else
@@ -157,6 +156,9 @@ final class Preparation
 			else {
 				throw new \LogicException('Unhandled statement preparation');
 			}
+		}
+		if (($target === null) && !$returned && ($function->return_type_def() !== type_void::instance())) {
+			throw new diagnostic($source, $end, 'Non-void function requires a value return');
 		}
 		if (($target !== null) && (!$returned)) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
@@ -207,13 +209,20 @@ final class Preparation
 		$this->value($statement->value);
 		$conversion = $local->type_def()->prepare_conversion($statement->value, false);
 		$statement->settle_assignment($local, $conversion);
-		$this->latest_writes[$local->id] = $statement;
+		$this->latest_writes[$local->storage_id()] = $statement;
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
+		if ($syntax instanceof ast_call_expression) {
+			$this->call($syntax);
+			if ($syntax->type_def() === type_void::instance()) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
+			}
+			return;
+		}
 		if (($syntax instanceof ast_integer_expression) || ($syntax instanceof ast_float_expression)
 			|| ($syntax instanceof ast_keyword_expression) || ($syntax instanceof ast_string_expression)) {
 			type_registry::prepare_literal($syntax);
@@ -229,7 +238,7 @@ final class Preparation
 			}
 			$binding = $this->visible_locals[$name] ?? null;
 			if ($binding !== null) {
-				$syntax->settle_local($binding, $this->latest_writes[$binding->id] ?? null);
+				$syntax->settle_local($binding, $this->latest_writes[$binding->storage_id()] ?? null);
 				return;
 			}
 			$separator = strpos($name, '\\');
@@ -248,6 +257,31 @@ final class Preparation
 			return;
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Resolve only the published signature, then validate and convert arguments in source order. */
+	private function call(ast_call_expression $call): void
+	{
+		$separator = strpos($call->name, '\\');
+		if ($call->member_syntax && ($separator !== false) && isset($this->visible_locals[substr($call->name, 0, $separator)])) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Member calls are not supported in this slice');
+		}
+		$this->name_lookups++;
+		$symbol = $this->symbols->entry($call->symbol_key());
+		$this->dependencies?->watch($symbol, $this->owner);
+		$function = $symbol->declaration();
+		if (!($function instanceof ast_function_declaration)) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
+		}
+		if (count($call->arguments) !== count($function->parameters)) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+		}
+		$conversions = [];
+		foreach ($call->arguments as $index => $argument) {
+			$this->value($argument);
+			$conversions[] = $function->parameters[$index]->type_def()->prepare_conversion($argument, true);
+		}
+		$call->settle_function($symbol, $conversions);
 	}
 
 	/** Prevent C++ implicit scalar conversions from widening the supported echo/entry contracts. */

@@ -20,16 +20,29 @@ final class Function_Preparation
 		$body->reset_preparation();
 		foreach ($body->statements as $statement)
 		{
-			if (($statement instanceof ast_local_declaration) || ($statement instanceof ast_call_statement)
+			if (($statement instanceof ast_local_declaration)
 				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)) {
 				$statement->reset_preparation();
 			}
 			if ($statement instanceof ast_local_declaration) {
-				$statement->initializer->reset_preparation();
+				self::expression($statement->initializer);
 			}
 			elseif (($statement instanceof ast_echo_statement) || ($statement instanceof ast_return_statement)
-				|| ($statement instanceof ast_assignment_statement)) {
-				$statement->value?->reset_preparation();
+				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement)) {
+				if ($statement->value !== null) {
+					self::expression($statement->value);
+				}
+			}
+		}
+	}
+
+	/** Reset expression occurrences recursively; invocation targets remain foreign read-only contracts. */
+	private static function expression(ast_expression $value): void
+	{
+		$value->reset_preparation();
+		if ($value instanceof ast_call_expression) {
+			foreach ($value->arguments as $argument) {
+				self::expression($argument);
 			}
 		}
 	}
@@ -46,14 +59,24 @@ final class Function_Preparation
 			if (!($declaration instanceof ast_function_declaration)) {
 				continue;
 			}
-			$type = $declaration->return_type_name;
-			if ($type !== 'void') {
+			if ($declaration->return_type_ready()) {
+				continue;
+			}
+			$type = $declaration->return_type_name === 'void' ? type_void::instance()
+				: type_registry::resolve($declaration->return_type_name ?? '');
+			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
-					'Only explicit void functions are supported');
+					'Unknown or unsupported return type: ' . $declaration->return_type_name);
 			}
-			if (!$declaration->return_type_ready()) {
-				$declaration->settle_return_type(type_void::instance());
+			foreach ($declaration->parameters as $parameter) {
+				$parameter->reset_preparation();
+				$parameter_type = type_registry::resolve($parameter->type_name);
+				if ($parameter_type === null) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_name);
+				}
+				$parameter->settle_type($parameter_type);
 			}
+			$declaration->settle_return_type($type);
 		}
 		return $symbols;
 	}
