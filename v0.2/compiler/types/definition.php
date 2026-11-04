@@ -32,6 +32,17 @@ abstract class type_definition
 		throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported literal for type: ' . $this->name);
 	}
 
+	/** Default rejection; generated definitions own supported operator and operand pairs. */
+	public function prepare_comparison(ast_binary_expression $value): void
+	{
+		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported comparison operands or operator');
+	}
+
+	public function lower_cpp_comparison(comparison_operator $operator, string $left, string $right): string
+	{
+		throw new \LogicException('Comparison lowering unavailable for type: ' . $this->name);
+	}
+
 	/** Conditions are a separate semantic boundary from typed boolean conversion. */
 	public function prepare_condition(ast_expression $value): void
 	{

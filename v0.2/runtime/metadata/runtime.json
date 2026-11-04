@@ -848,6 +848,52 @@
       "underflow": "gradual_signed_zero",
       "rounding": "nearest_ties_even"
     },
+    "comparisons": {
+      "int64": {
+        "operand": "same_type",
+        "result": "bool_t",
+        "lowering": "native",
+        "operators": [
+          "equal",
+          "not_equal",
+          "less",
+          "less_equal",
+          "greater",
+          "greater_equal"
+        ]
+      },
+      "float64": {
+        "operand": "same_type",
+        "result": "bool_t",
+        "lowering": "native",
+        "operators": [
+          "equal",
+          "not_equal",
+          "less",
+          "less_equal",
+          "greater",
+          "greater_equal"
+        ]
+      },
+      "bool_t": {
+        "operand": "same_type",
+        "result": "bool_t",
+        "lowering": "native",
+        "operators": [
+          "equal",
+          "not_equal"
+        ]
+      },
+      "byte": {
+        "operand": "same_type",
+        "result": "bool_t",
+        "lowering": "native",
+        "operators": [
+          "equal",
+          "not_equal"
+        ]
+      }
+    },
     "conditions": {
       "bool_t": "identity",
       "int64": "nonzero_integer",

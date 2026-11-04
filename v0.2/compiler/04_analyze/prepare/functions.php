@@ -60,6 +60,10 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
+		if ($value instanceof ast_binary_expression) {
+			self::expression($value->left);
+			self::expression($value->right);
+		}
 		if ($value instanceof ast_call_expression) {
 			foreach ($value->arguments as $argument) {
 				self::expression($argument);

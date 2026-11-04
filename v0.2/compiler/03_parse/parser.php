@@ -394,9 +394,39 @@ final class Parser
 		return new ast_echo_statement($start, $end, $value);
 	}
 
-	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
-	public function value(): ast_expression
+	/** Parse comparisons with relational precedence above equality; grouping uses the same expression parser. */
+	public function value(int $minimum_precedence /** uint8 */ = 1): ast_expression
 	{
+		$left = $this->primary();
+		while (!$this->cursor->at_end()) {
+			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
+			$operator = match ($kind) {
+				token_kind::equal => comparison_operator::equal,
+				token_kind::not_equal => comparison_operator::not_equal,
+				token_kind::less => comparison_operator::less,
+				token_kind::less_equal => comparison_operator::less_equal,
+				token_kind::greater => comparison_operator::greater,
+				token_kind::greater_equal => comparison_operator::greater_equal,
+				default => null,
+			};
+			if (($operator === null) || ($operator->precedence() < $minimum_precedence)) {
+				break;
+			}
+			$this->cursor->take($kind, 'comparison operator');
+			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + 1));
+		}
+		return $left;
+	}
+
+	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
+	private function primary(): ast_expression
+	{
+		if ($this->cursor->is(token_kind::lparen)) {
+			$this->cursor->take(token_kind::lparen, '(');
+			$value = $this->value();
+			$this->cursor->take(token_kind::rparen, ')');
+			return $value;
+		}
 		if ($this->names->call_start()) {
 			return $this->call();
 		}

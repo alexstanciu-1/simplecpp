@@ -56,8 +56,8 @@ operators are rejected. Explicit integer conversion is required for arithmetic.
 
 The API generator owns admission in scalar preparation and reuses the checked
 integer conversion/bit-operation helpers for storage mechanics. Reusing unsigned
-storage does not make byte semantically interchangeable with uint8. Source compiler integration now supports typed-destination byte/integer conversion.
-Byte operators, source cast syntax, string helpers and direct boxed-byte conversions
+storage does not make byte semantically interchangeable with uint8. Source compiler integration supports typed-destination byte/integer conversion
+and same-type byte equality/inequality. Bitwise/shift operators, source cast syntax, string helpers and direct boxed-byte conversions
 remain future compiler work.
 
 ## Publication cleanup

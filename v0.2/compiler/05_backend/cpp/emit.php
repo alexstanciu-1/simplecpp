@@ -242,6 +242,15 @@ final class Cpp_Emitter
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
 	{
+		if ($value instanceof ast_binary_expression) {
+			$type = $value->left->type_def();
+			$left = $this->value($value->left, $global_references, $declarations, $required_headers);
+			$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
+			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto comparison_left = ' . $left
+				. '; const auto comparison_right = ' . $right . '; return '
+				. $type->lower_cpp_comparison($value->operator, 'comparison_left', 'comparison_right') . '; }())';
+		}
 		if ($value instanceof ast_call_expression) {
 			$function = $value->function_def();
 			$name = self::function_name($function);

@@ -19,6 +19,7 @@ require_once __DIR__ . '/03_parse/structures/abstract.php';
 require_once __DIR__ . '/03_parse/structures/imports.php';
 require_once __DIR__ . '/03_parse/structures/source.php';
 require_once __DIR__ . '/03_parse/structures/common.php';
+require_once __DIR__ . '/03_parse/structures/expressions.php';
 require_once __DIR__ . '/03_parse/structures/blocks.php';
 require_once __DIR__ . '/03_parse/structures/loops.php';
 require_once __DIR__ . '/03_parse/structures/functions.php';

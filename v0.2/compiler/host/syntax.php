@@ -77,6 +77,11 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_binary_expression) {
+			return ['kind' => 'binary', 'operator' => $expression->operator->name,
+				'left' => self::expression($expression->left), 'right' => self::expression($expression->right),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_call_expression) {
 			$name_end = $expression->start;
 			while ($expression->root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {

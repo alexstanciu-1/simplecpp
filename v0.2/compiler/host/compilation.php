@@ -125,6 +125,11 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_binary_expression) {
+			$row['operator'] = $value->operator->name;
+			$row['left'] = self::value($value->left);
+			$row['right'] = self::value($value->right);
+		}
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->function_def()->name();
 			$row['arguments'] = array_map(self::value(...), $value->arguments);

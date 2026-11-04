@@ -16,6 +16,7 @@ supported, and no Parallel extension is required. See [execution guidance](docs/
 for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
+See [scalar comparisons](docs/comparisons.md) for generated admission, sequencing and focused tests.
 See [canonical type definitions](docs/types.md) for core scalar/void identity and generated preparation/conversion/lowering.
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
 in-process incremental preparation API and its lowering boundary.

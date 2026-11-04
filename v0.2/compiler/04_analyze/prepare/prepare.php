@@ -311,6 +311,12 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
+		if ($syntax instanceof ast_binary_expression) {
+			$this->value($syntax->left, $initializing);
+			$this->value($syntax->right, $initializing);
+			$syntax->left->type_def()->prepare_comparison($syntax);
+			return;
+		}
 		if ($syntax instanceof ast_call_expression) {
 			$this->call($syntax);
 			if ($syntax->type_def() === type_void::instance()) {

@@ -95,6 +95,10 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_binary_expression) {
+			$this->expression($value->left);
+			$this->expression($value->right);
+		}
 		if ($value instanceof ast_call_expression) {
 			foreach ($value->arguments as $argument) {
 				$this->expression($argument);

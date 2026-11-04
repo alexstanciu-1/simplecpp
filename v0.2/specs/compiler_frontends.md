@@ -46,7 +46,7 @@ binding syntax is deferred rather than silently mapped to mutable let/auto.
 
 Implemented now: initialized local declarations and simple-name assignments;
 type annotations are single names; values are decimal integers/floats, `true`/`false`/`null`, quoted strings, or flavor-correct
-name references. A sign immediately before a floating token is part of the bounded
+name references, calls and the scalar comparisons documented below. A sign immediately before a floating token is part of the bounded
 literal grammar; this does not introduce general unary expressions. Generated metadata registers the supported core scalar literals/types.
 The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion
 at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP subsequent bare
@@ -66,7 +66,9 @@ positions. PHP uses `function f(int $value): int`, C++ `int f(int value)`, and J
 body indexes its signature-owned parameters alongside its local declarations.
 The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or string value
 as its single operand in all flavors. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
-There is no member access, comparisons, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
+Same-type [scalar comparisons](../compiler/docs/comparisons.md) and parentheses are implemented in all flavors.
+Relational operators bind more tightly than equality; both levels associate left.
+There is no member access, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
 modes, C++ preprocessing, JS prototypes or JS template literals yet.
 
 Planned type syntax will preserve nested type arguments, including vector<vector<int>>.

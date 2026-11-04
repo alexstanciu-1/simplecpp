@@ -161,3 +161,29 @@ try {
 } catch (\RuntimeException $error) {
     requireThat(str_contains($error->getMessage(), 'condition policy'), 'Unexpected condition diagnostic');
 }
+
+// Operator capability is generated, rather than inferred from native representation or conversion support.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->comparisons->int64);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'public function prepare_comparison'), 'Removed comparisons still generated');
+$without->compiler->comparisons->float64->operators = ['equal'];
+$limited = renderCompiler($without, $facts)['types/float64.php'];
+requireThat(str_contains($limited, 'comparison_operator::equal') && !str_contains($limited, 'comparison_operator::less'), 'Removed operator still generated');
+foreach (['type', 'operator', 'operand', 'result', 'lowering', 'ordering'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'type' => $bad->compiler->comparisons->string = clone $bad->compiler->comparisons->int64,
+        'operator' => $bad->compiler->comparisons->int64->operators[] = 'spaceship',
+        'operand' => $bad->compiler->comparisons->int64->operand = 'numeric',
+        'result' => $bad->compiler->comparisons->int64->result = 'int64',
+        'lowering' => $bad->compiler->comparisons->int64->lowering = 'coerce',
+        'ordering' => $bad->compiler->comparisons->byte->operators[] = 'less',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Unsupported comparison metadata accepted: ' . $change);
+    } catch (\RuntimeException $error) {
+        requireThat($error->getMessage() !== '', 'Missing comparison diagnostic');
+    }
+}
+requireThat(str_contains($files['types/int64.php'], 'settle_comparison(type_bool::instance())'), 'Wrong generated result identity');

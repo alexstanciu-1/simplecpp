@@ -19,6 +19,8 @@ small handwritten non-value definition.
 - `values`: runtime bool/null representation contracts.
 - `source_types` and `compiler.value_types`: source names, generated type classes,
   compiler representations and boolean/null literal spellings and values.
+- `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
+  See [comparisons](comparisons.md) for ownership and sequencing.
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
@@ -31,13 +33,14 @@ Generated methods contain direct branches; compilation does not interpret metada
 or build a conversion matrix. Unsupported policies fail before publication.
 
 The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` and
-inventory version 6. Generated PHP is not tracked. CMake lists the byproducts and
+inventory version 8. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
 ## Shared type contract
 
 - `accepts_name()` and `type_registry::resolve()` provide canonical registration.
 - `type_registry::literal()` supplies generated literal spelling lookup to the parser.
+- `prepare_comparison()` validates operands and attaches the result type; `lower_cpp_comparison()` emits the approved operator.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
 - `prepare_conversion(value, explicit)` selects a `value_conversion` enum at a destination boundary.
 - `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
