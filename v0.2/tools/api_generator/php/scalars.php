@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'byte'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];
@@ -34,9 +34,15 @@ function registry(mixed $metadata, array $facts): array {
         $types[$name] = ['name' => $name, 'representation' => '__' . ($signed ? 'INT':'UINT') . $bits . '_TYPE__', 'signed' => $signed, 'bits' => $bits];
     }
     requireThat($types !== [], 'Expected integer type definitions');
-    $native = $facts['fixed_integers']['uint8'];
-    requireThat(!$native['signed'] && $native['digits'] === 8, 'Byte requires unsigned eight-bit storage');
-    $types['byte'] = ['name' => 'byte', 'representation' => '__UINT8_TYPE__', 'signed' => false, 'bits' => 8];
+    $byte = at($metadata, 'byte');
+    fields($byte, ['storage', 'signed', 'bits']);
+    $storage = textValue(at($byte, 'storage'));
+    $signed = boolean(at($byte, 'signed'));
+    $bits = unsigned(at($byte, 'bits'));
+    requireThat(!$signed && $bits === 8 && isset($types[$storage])
+        && $types[$storage]['signed'] === $signed && $types[$storage]['bits'] === $bits,
+        'Byte requires unsigned eight-bit storage');
+    $types['byte'] = ['name' => 'byte', 'representation' => $types[$storage]['representation'], 'signed' => $signed, 'bits' => $bits];
     return $types;
 }
 

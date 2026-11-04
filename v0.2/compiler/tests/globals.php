@@ -144,7 +144,7 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare($case), 'Duplicate global: Lib\value');
 	$parser = new Source_Frontend();
 	foreach (['"text"', variable($flavor, 'value'), '1 + 2'] as $initializer) {
-		rejects(fn() => $parser->parse(new source_file('bad', global_text($flavor, 'bad', $initializer), $flavor)), 'integer literal');
+		rejects(fn() => $parser->parse(new source_file('bad', global_text($flavor, 'bad', $initializer), $flavor)), 'scalar literal');
 	}
 	rejects(fn() => $parser->parse(new source_file('bad', function_text($flavor, 'bad', global_text($flavor, 'value', '1')), $flavor)), 'file/namespace');
 	$case = $sources;

@@ -13,19 +13,21 @@ final class ast_global_declaration extends ast_node implements ast_declaration_i
 	use ast_declaration;
 
 	/** PROPERTIES */
-	/** Written type; null requests integer-literal inference in this slice. */
+	/** Written type; null requests scalar-literal inference in this slice. */
 	public readonly ?string $type_name;
 	/** Native owning initializer syntax. */
-	public readonly ast_integer_expression $initializer;
+	public readonly ast_expression $initializer;
 
 	/** PREP FACTS */
 	/** Prepared fact: canonical storage type; null before preparation or after reset. */
 	protected ?type_definition $type_def = null;
+	/** Prepared fact: approved destination conversion; null before settlement or after reset. */
+	protected ?value_conversion $initialization = null;
 
 	/** CONSTRUCTOR */
 	/** $start and $end are token boundaries, with exclusive end. */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?string $namespace, ?string $type_name, ast_integer_expression $initializer)
+		?string $namespace, ?string $type_name, ast_expression $initializer)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -44,6 +46,7 @@ final class ast_global_declaration extends ast_node implements ast_declaration_i
 	public function reset_preparation(): void
 	{
 		$this->type_def = null;
+		$this->initialization = null;
 		$this->initializer->reset_preparation();
 	}
 
@@ -52,13 +55,20 @@ final class ast_global_declaration extends ast_node implements ast_declaration_i
 		return $this->type_def !== null;
 	}
 
-	public function settle_type(type_definition $type): void
+	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
+	public function settle_type(type_definition $type, value_conversion $conversion = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Global type is already settled');
 		}
-		$this->initializer->integer();
+		$this->initializer->type_def();
 		$this->type_def = $type;
+		$this->initialization = $conversion;
+	}
+
+	public function initialization(): value_conversion
+	{
+		return $this->initialization ?? throw new \LogicException('Global initialization is not prepared');
 	}
 
 	public function type_def(): type_definition

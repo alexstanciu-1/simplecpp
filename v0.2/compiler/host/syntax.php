@@ -76,6 +76,9 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_string_expression) {
 			return ['kind' => 'string', 'spelling_hex' => bin2hex($expression->source_text()), 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_keyword_expression) {
+			return ['kind' => 'keyword_literal', 'spelling' => $expression->word, 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_integer_expression) {
 			return ['kind' => 'integer', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
 		}

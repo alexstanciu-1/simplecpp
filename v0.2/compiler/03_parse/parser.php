@@ -225,8 +225,16 @@ final class Parser
 		return new ast_return_statement($start, $end, $value);
 	}
 
+	/** Type keywords and identifiers share generated registration; unknown identifiers remain diagnosable later. */
 	public function named_type(): string
 	{
+		if ($this->cursor->is(token_kind::keyword)) {
+			$word = $this->cursor->tokens->text_at($this->cursor->position());
+			if (type_registry::resolve($word) !== null) {
+				$this->cursor->take_keyword($word);
+				return $word;
+			}
+		}
 		return $this->cursor->name(token_kind::identifier);
 	}
 
@@ -247,7 +255,7 @@ final class Parser
 		return new ast_echo_statement($start, $end, $value);
 	}
 
-	/** This first expression slice admits only integer literals and flavor-correct names. */
+	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	public function value(): ast_expression
 	{
 		if ($this->cursor->is(token_kind::integer)) {
@@ -255,6 +263,12 @@ final class Parser
 			return new ast_integer_expression($position, $position + 1);
 		}
 		$start = $this->cursor->position();
+		$word = $this->cursor->at_end() ? '' : $this->cursor->tokens->text_at($start);
+		if (type_registry::literal($word) !== null) {
+			$kind = $this->cursor->tokens->tokens[$start]->kind;
+			$this->cursor->take($kind, 'scalar literal');
+			return new ast_keyword_expression($word, $start, $start + 1);
+		}
 		$name = $this->names->variable_path();
 		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
 			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');

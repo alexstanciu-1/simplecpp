@@ -16,7 +16,7 @@ supported, and no Parallel extension is required. See [execution guidance](docs/
 for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
-See [canonical type definitions](docs/types.md) for int64/void identity and type-owned preparation/lowering.
+See [canonical type definitions](docs/types.md) for core scalar/void identity and generated preparation/conversion/lowering.
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
 in-process incremental preparation API and its lowering boundary.
 
@@ -59,6 +59,8 @@ php v0.2/compiler/tests/frontend.php
 php v0.2/compiler/tests/functions.php
 python3 -B v0.2/compiler/tests/cli.py
 php v0.2/compiler/tests/entry.php
+php v0.2/compiler/tests/scalars.php
+python3 -B v0.2/compiler/tests/scalars_native.py
 python3 -B v0.2/compiler/tests/entry_native.py
 python3 -B v0.2/compiler/tests/functions_native.py
 ```

@@ -111,6 +111,7 @@ final class Preparation
 				}
 				else {
 					$this->value($statement->value);
+					$this->require_integer($statement->value, 'Echo currently supports only int64 and string literals');
 				}
 			}
 			elseif ($statement instanceof ast_call_statement)
@@ -145,6 +146,7 @@ final class Preparation
 							'Entry requires a value return');
 					}
 					$this->value($statement->value);
+					$this->require_integer($statement->value, 'Entry return requires int64');
 					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(),
 							$target, $statement->value));
 				}
@@ -180,7 +182,9 @@ final class Preparation
 				'Unknown or unsupported type: ' . $declaration->type_name);
 		}
 		$this->value($declaration->initializer, $name);
-		$declaration->settle_type($type, $declaration->initializer->constant());
+		$conversion = $type->prepare_conversion($declaration->initializer, true);
+		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
+			$declaration->initializer->constant_known(), $conversion);
 		$this->visible_locals[$name] = $declaration;
 	}
 
@@ -188,8 +192,8 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
-		if ($syntax instanceof ast_integer_expression) {
-			type_registry::integer()->prepare_literal($syntax);
+		if (($syntax instanceof ast_integer_expression) || ($syntax instanceof ast_keyword_expression)) {
+			type_registry::prepare_literal($syntax);
 			return;
 		}
 		if ($syntax instanceof ast_name_expression)
@@ -221,6 +225,14 @@ final class Preparation
 			return;
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Prevent C++ implicit scalar conversions from widening the supported echo/entry contracts. */
+	private function require_integer(ast_expression $value, string $message): void
+	{
+		if ($value->type_def() !== type_registry::integer()) {
+			throw new diagnostic($value->source(), $value->byte_start(), $message);
+		}
 	}
 
 }

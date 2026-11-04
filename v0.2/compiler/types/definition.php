@@ -40,4 +40,34 @@ abstract class type_definition
 	{
 		throw new \LogicException('Literal lowering is unavailable for type: ' . $this->name);
 	}
+
+	/** Same-type initialization needs no work; other rules are generated on the destination definition. */
+	public function prepare_conversion(ast_expression $value, bool $explicit): value_conversion
+	{
+		if ($value->type_def() === $this) {
+			return value_conversion::identity;
+		}
+		throw new diagnostic($value->source(), $value->byte_start(),
+			'Unsupported ' . ($explicit ? 'explicit' : 'implicit') . ' conversion from '
+			. $value->type_def()->name . ' to ' . $this->name);
+	}
+
+	public function lower_cpp_conversion(value_conversion $conversion, string $value): string
+	{
+		return $conversion === value_conversion::identity ? $value
+			: throw new \LogicException('Conversion does not belong to this destination type');
+	}
+
+	/** Convert only an already-checked constant; null also carries an unknown payload beside its known flag. */
+	public function convert_constant(value_conversion $conversion, int|bool|null $value /** int64|bool|null */): int|bool|null /** int64|bool|null */
+	{
+		return $conversion === value_conversion::identity ? $value
+			: throw new \LogicException('Constant conversion does not belong to this destination type');
+	}
+
+	/** @return string[] Public runtime includes required by the selected conversion only. */
+	public function conversion_headers(value_conversion $conversion): array /** list<string> */
+	{
+		return [];
+	}
 }

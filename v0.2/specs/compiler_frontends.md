@@ -44,8 +44,10 @@ Local collection records occurrences; function discovery notifies the coordinato
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
 Implemented now: initialized local declarations and simple-name assignments;
-type annotations are single names; values are decimal integers or flavor-correct
-name references. Explicit and inferred declarations retain syntax, and PHP bare
+type annotations are single names; values are decimal integers, `true`/`false`/`null`, or flavor-correct
+name references. Generated metadata registers the supported core scalar literals/types.
+The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion
+at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP bare
 writes retain DeclareOrAssign intent. Empty input is valid. Statements require
 semicolons; a failed parse publishes no partial file. Unknown types, unknown names,
 duplicate declarations and large integer spellings remain analysis concerns.

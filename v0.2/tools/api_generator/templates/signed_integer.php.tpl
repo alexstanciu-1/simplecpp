@@ -76,6 +76,7 @@ final class type_@name@ extends type_definition
 		return $value . @cpp_suffix@;
 	}
 
+@conversion_methods@
 	/** STATIC METHODS */
 	public static function instance(): self
 	{

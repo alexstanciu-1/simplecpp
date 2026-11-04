@@ -194,33 +194,44 @@ abstract class ast_expression extends ast_node
 {
 	/** Prepared fact: canonical scalar type; null until scalar preparation succeeds. */
 	protected ?type_definition $type_def = null;
-	/** Prepared fact: value at this occurrence; null means unknown once type_def is settled. */
-	protected ?int $constant /** int64 */ = null;
+	/** Prepared fact: scalar payload; constant_known distinguishes a known null from an unknown value. */
+	protected int|bool|null $constant /** int64|bool|null */ = null;
+	/** Prepared fact: payload is known; false before preparation, after reset, or for unknown values. */
+	protected bool $constant_known = false;
 
 	public function type_def(): type_definition
 	{
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
 	}
 
-	public function constant(): ?int /** int64 */
+	public function constant(): int|bool|null /** int64|bool|null */
 	{
 		$this->type_def();
 		return $this->constant;
 	}
 
-	protected function settle_value(type_definition $type, ?int $constant /** int64 */): void
+	public function constant_known(): bool
+	{
+		$this->type_def();
+		return $this->constant_known;
+	}
+
+	/** Set occurrence facts once; $known preserves null as a value independently of readiness. */
+	protected function settle_value(type_definition $type, int|bool|null $constant /** int64|bool|null */, bool $known = false): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Expression is already prepared');
 		}
 		$this->type_def = $type;
 		$this->constant = $constant;
+		$this->constant_known = $known || ($constant !== null);
 	}
 
 	public function reset_preparation(): void
 	{
 		$this->type_def = null;
 		$this->constant = null;
+		$this->constant_known = false;
 	}
 }
 

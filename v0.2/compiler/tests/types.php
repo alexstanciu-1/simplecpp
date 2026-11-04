@@ -17,7 +17,7 @@ $integer = type_int64::instance();
 verify(($integer instanceof type_definition) && ($integer === type_int64::instance()), 'Noncanonical int64');
 verify($integer->accepts_name('int') && $integer->accepts_name('int64') && !$integer->accepts_name('byte'), 'Alias admission');
 verify(type_registry::resolve('int') === $integer && type_registry::resolve('int64') === $integer, 'Registry lost identity');
-verify(type_registry::resolve('bool') === null, 'Registry enabled another type');
+verify(type_registry::resolve('float') === null, 'Registry enabled an unsupported type');
 verify($integer::MINIMUM === PHP_INT_MIN && $integer::MAXIMUM === PHP_INT_MAX, 'Generated limits');
 verify(type_void::instance() === type_void::instance(), 'Noncanonical void');
 verify(type_void::instance()->name === 'void', 'Void identity changed');

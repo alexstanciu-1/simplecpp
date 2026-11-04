@@ -39,7 +39,7 @@ final class Cpp_Grammar implements statement_grammar
 			$cursor->take_keyword('auto');
 			return $parser->declaration($start, $cursor->name(token_kind::identifier), null);
 		}
-		$first = $cursor->name(token_kind::identifier);
+		$first = $parser->named_type();
 		if ($cursor->is(token_kind::assign)) {
 			return $parser->assignment($start, $first, assignment_intent::existing_binding);
 		}

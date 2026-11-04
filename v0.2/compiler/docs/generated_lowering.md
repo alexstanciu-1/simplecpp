@@ -32,7 +32,7 @@ may already disappear. Measure build time and runtime behavior where relevant.
 
 `emit-compiler` reuses the API generator's scalar registry and validated target
 facts. It emits `compiler/generated/types/int64.php`, the complete
-canonical `type_int64` definition, plus its direct source-name registry. `Cpp_Emitter` dispatches through resolved type
+canonical `type_int64` definition, plus null/bool/byte definitions and their direct source-name registry. `Cpp_Emitter` dispatches through resolved type
 objects; see [type ownership](types.md). Its int64 storage spelling is `__INT64_TYPE__`, the same target-native
 representation used by the runtime generator, without a wrapper or header include.
 For example:
@@ -50,7 +50,10 @@ positive literal. References retain their existing local binding identities.
 Echo and checked process-exit conversion still use the minimal runtime public APIs.
 Proven exit conversions remain native casts. Runtime wrapper APIs remain available
 for existing native consumers; this slice does not remove them or add arithmetic,
-new source casts, additional compiler types, profiles or incremental compilation.
+new source cast syntax, operators, profiles or additional incremental machinery.
+The [core scalar extension](types.md) adds metadata-driven declaration conversions,
+using native storage and reusing the public byte constructor only for unknown-value
+range checking.
 
 ## Generation and verification
 

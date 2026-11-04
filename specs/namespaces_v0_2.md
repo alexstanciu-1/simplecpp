@@ -136,7 +136,7 @@ project profiles; those settings are deferred, not accepted configuration today.
 Explicit `global` declarations publish namespace-qualified variable identities across
 source units. Ordinary top-level declarations do not gain publication incidentally.
 
-### Explicit globals — initial integer slice
+### Explicit globals — scalar slice
 
 Globals are admitted at file/namespace level, including in non-entry files. They
 declare storage, not executable statements in implicit main. The initial syntax is:
@@ -149,9 +149,12 @@ declare storage, not executable statements in implicit main. The initial syntax 
 | Root-qualified read | `\test\$value` | `::test::value` | `\test.value` |
 
 `global` is a Simple C++ storage declaration, not PHP's function-local global binding
-statement. Explicit `int` and `int64`, or an omitted/inferred type, all select the
-canonical signed int64 type. Initializers must be decimal integer literals, optionally
-preceded by `+` or `-`; range checking includes the exact int64 minimum and maximum.
+statement. Explicit `int` and `int64` select the canonical signed int64 type.
+The [core scalar extension](compiler_scalars_v0_2.md) also supports bool, null and byte
+destinations and authorizes checked conversion at written type boundaries. Omitted
+types infer the literal type. Initializers are boolean/null literals or decimal
+integer literals, optionally preceded by `+` or `-`; integer range checking includes
+the exact int64 minimum and maximum.
 All declarations are checked, including unused globals. Other types, expression
 initializers, multiple declarators and function-local global declarations are deferred.
 
@@ -208,7 +211,7 @@ namespace body and keep their source order; executable bodies are not concatenat
 across namespace boundaries. Declaration-only bodies may coexist with that entry.
 
 Namespace support does not itself enable later class/static-member features,
-storage beyond the explicit integer-global slice above, or additional nested source forms.
+storage beyond the explicit scalar-global slice above, or additional nested source forms.
 Qualified lookup initially applies to supported declaration/expression families;
 individual implementation slices must state their admission boundary.
 

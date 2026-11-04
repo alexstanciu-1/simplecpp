@@ -1,17 +1,19 @@
-# Explicit integer globals
+# Explicit scalar globals
 
 Doc Status: supporting
 
 The [namespace specification](../../../specs/namespaces_v0_2.md) owns semantics.
 PHP `global $value = 10;`, C++ `global auto value = 10;` and JS
 `global let value = 10;` create the same namespace-qualified int64 storage.
-Explicit `int`/`int64` are also supported. Initializers admit signed decimal literals
-only; writes and other types remain deferred.
+Explicit `int`/`int64`, `bool`, `null` and `byte` destinations are supported.
+Initializers admit signed decimal, boolean and null literals; omitted types infer
+the literal type. Written types authorize metadata-driven checked conversion.
+See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Writes remain deferred.
 
 ## Ownership and preparation
 
-- `ast_global_declaration` owns its name/namespace, optional written type and integer
-  initializer child. The prepared type is on the declaration; the checked literal
+- `ast_global_declaration` owns its name/namespace, optional written type and scalar
+  initializer child. The prepared type and initialization conversion are on the declaration; the checked literal
   value is on its initializer. There is no duplicate prepared-global record.
 - `ast_file_node.declaration_nodes` and `declarations` now contain functions and
   globals. Private implicit main remains first when present. `globals()` and

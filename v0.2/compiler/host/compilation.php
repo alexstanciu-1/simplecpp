@@ -50,7 +50,8 @@ final class Compilation_Inspection
 		$result['functions'] = [];
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
 			'name' => $global->name(), 'type' => $global->type_def()->name,
-			'initializer' => (string) $global->initializer->integer(),
+			'initializer' => self::scalar($global->type_def()->convert_constant(
+				$global->initialization(), $global->initializer->constant())),
 		], $program->file->globals());
 		foreach ($program->file->functions() as $function) {
 			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
@@ -104,7 +105,7 @@ final class Compilation_Inspection
 	private static function value(ast_expression $value): array /** array<string,mixed> */
 	{
 		$row = ['type' => $value->type_def()->name,
-			'constant' => $value->constant() === null ? null : (string) $value->constant()];
+			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
 		if ($value instanceof ast_name_expression) {
 			$declaration = $value->declaration();
 			$row['binding'] = $declaration instanceof ast_local_declaration
@@ -112,4 +113,10 @@ final class Compilation_Inspection
 		}
 		return $row;
 	}
+	/** Preserve boolean/null identity and int64 precision in the JSON inspection view. */
+	private static function scalar(int|bool|null $value /** int64|bool|null */): string|bool|null
+	{
+		return is_int($value) ? (string) $value : $value;
+	}
+
 }

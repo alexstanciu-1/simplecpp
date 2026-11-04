@@ -36,7 +36,9 @@ It represents a raw byte, not a Unicode character, code point or encoding promis
 There is no char8 public type in this slice.
 
 Conversions to/from published integer types and the configured native integer
-inputs are explicit and range-checked where needed. Failure leaves an existing
+inputs are explicit and range-checked where needed. In the PHP compiler, a written
+destination type supplies explicit intent: `byte value = 8;` requests a checked
+conversion without separate cast syntax. See [the scalar contract](../../specs/compiler_scalars_v0_2.md). Failure leaves an existing
 destination unchanged. There is no implicit arithmetic promotion, and no direct
 float, boolean, string, mixed or dynamic conversion for byte in this slice.
 A consumer must explicitly obtain an integer before converting such values to byte.
@@ -54,8 +56,9 @@ operators are rejected. Explicit integer conversion is required for arithmetic.
 
 The API generator owns admission in scalar preparation and reuses the checked
 integer conversion/bit-operation helpers for storage mechanics. Reusing unsigned
-storage does not make byte semantically interchangeable with uint8. Source compiler
-integration, byte string helpers and direct boxed-byte conversions are future work.
+storage does not make byte semantically interchangeable with uint8. Source compiler integration now supports typed-destination byte/integer conversion.
+Byte operators, source cast syntax, string helpers and direct boxed-byte conversions
+remain future compiler work.
 
 ## Publication cleanup
 

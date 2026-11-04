@@ -26,6 +26,27 @@ final class ast_integer_expression extends ast_expression
 }
 
 /**
+ * A core keyword literal, such as true, false or null; metadata supplies its semantic identity and value.
+ * Example: $ready bool = false; stores false as syntax, then prepares a known boolean payload.
+ */
+final class ast_keyword_expression extends ast_expression
+{
+	public readonly string $word;
+
+	/** $start and $end are token boundaries, with exclusive end. */
+	public function __construct(string $word, int $start /** uint32 */, int $end /** uint32 */)
+	{
+		parent::__construct($start, $end);
+		$this->word = $word;
+	}
+
+	public function settle_scalar(type_definition $type, bool|null $value): void
+	{
+		$this->settle_value($type, $value, true);
+	}
+}
+
+/**
  * A variable-name read, storing its normalized name directly; preparation resolves the declaration in the enclosing body.
  *
  * PHP-flavor reference:
@@ -63,7 +84,7 @@ final class ast_name_expression extends ast_expression
 	/** METHODS */
 	public function settle_local(ast_local_declaration $local): void
 	{
-		$this->settle_value($local->type_def(), $local->constant());
+		$this->settle_value($local->type_def(), $local->constant(), $local->constant_known());
 		$this->binding = $local;
 	}
 
@@ -128,12 +149,12 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	/** PREP FACTS */
 	/** Prepared fact: canonical local type; null until successful declaration preparation or after reset. */
 	protected ?type_definition $type_def = null;
-	/**
-	 * Prepared fact: initializer constant; null means unknown after type settlement, or unprepared
-	 * before it.
-	 * When known.
-	 */
-	protected ?int $constant /** int64 */ = null;
+	/** Prepared fact: initializer payload; known null is distinguished by constant_known. */
+	protected int|bool|null $constant /** int64|bool|null */ = null;
+	/** Prepared fact: whether the initializer payload is known; false before settlement or after reset. */
+	protected bool $constant_known = false;
+	/** Prepared fact: destination-bound conversion; null until initialization is approved. */
+	protected ?value_conversion $initialization = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -168,15 +189,21 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	{
 		$this->type_def = null;
 		$this->constant = null;
+		$this->constant_known = false;
+		$this->initialization = null;
 	}
 
-	public function settle_type(type_definition $type, ?int $constant /** int64 */): void
+	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
+	public function settle_type(type_definition $type, int|bool|null $constant /** int64|bool|null */,
+		bool $known = false, value_conversion $conversion = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Local type is already settled');
 		}
 		$this->type_def = $type;
 		$this->constant = $constant;
+		$this->constant_known = $known || ($constant !== null);
+		$this->initialization = $conversion;
 	}
 
 	public function type_def(): type_definition
@@ -185,10 +212,21 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	}
 
 	/** Return: when known. */
-	public function constant(): ?int /** int64 */
+	public function constant(): int|bool|null /** int64|bool|null */
 	{
 		$this->type_def();
 		return $this->constant;
+	}
+
+	public function constant_known(): bool
+	{
+		$this->type_def();
+		return $this->constant_known;
+	}
+
+	public function initialization(): value_conversion
+	{
+		return $this->initialization ?? throw new \LogicException('Initialization is not prepared');
 	}
 
 	/**

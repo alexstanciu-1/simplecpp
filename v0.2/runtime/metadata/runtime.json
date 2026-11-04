@@ -734,7 +734,10 @@
       "default-runtime": {
         "always_available": true,
         "types": [
-          "int64"
+          "int64",
+          "null_t",
+          "bool_t",
+          "byte"
         ]
       }
     },
@@ -742,6 +745,66 @@
       "radix": 10,
       "overflow": "reject",
       "cpp_suffix": "LL"
-    }
+    },
+    "value_types": {
+      "null_t": {
+        "class": "null",
+        "source_names": [
+          "null"
+        ],
+        "cpp_type": "decltype(nullptr)",
+        "literals": {
+          "null": null
+        }
+      },
+      "bool_t": {
+        "class": "bool",
+        "source_names": [
+          "bool"
+        ],
+        "cpp_type": "bool",
+        "literals": {
+          "true": true,
+          "false": false
+        }
+      },
+      "byte": {
+        "class": "byte",
+        "source_names": [
+          "byte"
+        ]
+      }
+    },
+    "conversions": [
+      {
+        "from": "bool_t",
+        "to": "int64",
+        "explicit": true,
+        "operation": "boolean_integer"
+      },
+      {
+        "from": "int64",
+        "to": "bool_t",
+        "explicit": true,
+        "operation": "integer_boolean"
+      },
+      {
+        "from": "int64",
+        "to": "byte",
+        "explicit": true,
+        "operation": "checked_integer"
+      },
+      {
+        "from": "byte",
+        "to": "int64",
+        "explicit": true,
+        "operation": "integer_widen"
+      }
+    ]
+  },
+  "byte": {
+    "storage": "uint8",
+    "signed": false,
+    "bits": 8
   }
 }
