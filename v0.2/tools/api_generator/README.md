@@ -152,17 +152,19 @@ Explicit native constructors are available independently. See the
 
 ## Compiler backend publication
 
-`emit-compiler` generates PHP int64/null/bool/byte definitions and source-name/literal
+`emit-compiler` generates PHP int64/null/bool/byte/float64/string definitions and source-name/literal
 registration from runtime metadata and validated native facts. `compiler.modules`
 declares always-available default-runtime membership; `compiler.integer_literals`
 records decimal/reject/signed-carrier policy. `compiler.value_types` describes core
 literal/representation mappings; `compiler.conversions` supplies generated conversion
 branches. Byte width/storage metadata is shared with runtime generation. Typed
 destinations authorize checked conversion; explicit source cast syntax, operators,
-overloads and further types remain deferred. See [the type contract](../../compiler/docs/types.md).
+overloads and further types remain deferred. `compiler.floating_literals` owns
+rounding/overflow/underflow admission; normalized target facts retain validated
+binary64 precision/exponent information for generated float preparation/lowering. See [the type contract](../../compiler/docs/types.md).
 
 Output lives in `compiler/generated/`, independently of runtime API demands; compiler
-inventory version 4 lists the new definitions. Cleanup remains limited to `.php` and
+inventory version 6 lists the new definitions. Cleanup remains limited to `.php` and
 `.json`. CMake checks and repairs publication while preserving unchanged timestamps.
 Runtime publication bytes and cleanup are unchanged. The parity baseline update for
 this slice changes input hashes only; all artifact hashes, prepared models, rejection

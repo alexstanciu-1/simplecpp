@@ -12,6 +12,16 @@ $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $files = renderCompiler($metadata, $facts);
 requireThat(!isset($files['cpp/native_values.php']), 'Retired emitter trait still generated');
+requireThat(str_contains($files['types/string.php'], 'String_Literals::decode'), 'Missing generated string preparation');
+requireThat(str_contains($files['types/string.php'], 'scpp/string.hpp'), 'Missing generated string storage header');
+$badString = unserialize(serialize($metadata));
+$badString->string->count_type = 'int32';
+try {
+    renderCompiler($badString, $facts);
+    throw new \LogicException('Unsupported string count accepted');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'count_type'), 'Unexpected string rejection');
+}
 requireThat(str_contains($files['types/int64.php'], "return '__INT64_TYPE__'"), 'Missing metadata-derived representation');
 $bad = clone $metadata;
 $bad->types = clone $metadata->types;
@@ -53,13 +63,30 @@ foreach (['byte_width', 'byte_implicit', 'conversion_kind', 'duplicate_conversio
         'conversion_kind' => $bad->compiler->conversions[0]->operation = 'truncate',
         'duplicate_conversion' => $bad->compiler->conversions[] = clone $bad->compiler->conversions[0],
         'literal' => $bad->compiler->value_types->bool_t->literals->true = 1,
-        'inactive_target' => $bad->compiler->conversions[0]->to = 'float64',
+        'inactive_target' => $bad->compiler->conversions[0]->to = 'vector',
     };
     try {
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid scalar metadata accepted: ' . $change);
     } catch (\RuntimeException $expected) {
     }
+}
+foreach (['overflow' => 'allow', 'underflow' => 'reject', 'rounding' => 'toward_zero', 'radix' => 16] as $field => $value) {
+    $bad = unserialize(serialize($metadata));
+    $bad->compiler->floating_literals->$field = $value;
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid float policy accepted: ' . $field);
+    } catch (\RuntimeException $expected) {
+    }
+}
+$bad = unserialize(serialize($metadata));
+$bad->scalar_casts = array_values(array_diff($bad->scalar_casts, ['floating_to_integer_truncate_checked']));
+try {
+    renderCompiler($bad, $facts);
+    throw new \LogicException('Compiler float conversion ignored missing runtime policy');
+} catch (\RuntimeException $expected) {
+    requireThat(str_contains($expected->getMessage(), 'runtime scalar policy'), $expected->getMessage());
 }
 $without = unserialize(serialize($metadata));
 $without->compiler->conversions = [];
@@ -90,12 +117,14 @@ try {
     require $work . '/types/null.php';
     require $work . '/types/bool.php';
     require $work . '/types/byte.php';
+    require $work . '/types/float64.php';
+    require $work . '/types/string.php';
     require $work . '/types/registry.php';
     require $root . '/compiler/03_parse/structures/abstract.php';
     require $root . '/compiler/03_parse/structures/common.php';
     $type = \scpp\compiler\type_int64::instance();
     requireThat(\scpp\compiler\type_registry::resolve('int') === $type && \scpp\compiler\type_registry::resolve('int64') === $type, 'Registration identity differs');
-    requireThat(\scpp\compiler\type_registry::resolve('float') === null, 'Out-of-scope type registered');
+    requireThat(\scpp\compiler\type_registry::resolve('vector') === null, 'Out-of-scope type registered');
     requireThat($type::MINIMUM === PHP_INT_MIN && $type::MAXIMUM === PHP_INT_MAX, 'Generated bounds differ');
     requireThat($type->cpp_type() === '__INT64_TYPE__', 'Wrong native type');
     requireThat($type->accepts_name('int') && $type->accepts_name('int64'), 'Missing canonical source aliases');
@@ -106,7 +135,7 @@ try {
         requireThat($type->lower_cpp_literal($literal) === $expected, 'Incorrect literal lowering');
     }
 } finally {
-    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/byte.php', 'types/registry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
+    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/byte.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
         if (file_exists($work . '/' . $path)) unlink($work . '/' . $path);
     }
     rmdir($work . '/types');

@@ -55,24 +55,24 @@ final class Cpp_Emitter
 		$definitions = [];
 		$uses_output = false;
 		$global_references = [];
-		$conversion_headers = [];
+		$required_headers = [];
 		foreach ($file->globals() as $global) {
 			$definitions[] = 'constinit ' . $global->type_def()->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $global->type_def()->lower_cpp_conversion($global->initialization(),
 					$global->initializer->type_def()->lower_cpp_literal($global->initializer)) . ";\n";
 			foreach ($global->type_def()->conversion_headers($global->initialization()) as $header) {
-				$conversion_headers[$header] = true;
+				$required_headers[$header] = true;
 			}
 		}
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
 			$declarations[$name] = true;
 			$definitions[] = 'void ' . $name . "()\n{\n"
-				. implode("\n", $this->statements($function->body(), $declarations, $uses_output, $global_references, $conversion_headers)) . "\n}\n";
+				. implode("\n", $this->statements($function->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$definitions[] = 'int ' . $entry_name . "()\n{\n"
-				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output, $global_references, $conversion_headers)) . "\n}\n";
+				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
 		}
 		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
@@ -82,8 +82,8 @@ final class Cpp_Emitter
 		if ($uses_output) {
 			$header .= "#include <scpp/output.hpp>\n";
 		}
-		ksort($conversion_headers, \SORT_STRING);
-		foreach ($conversion_headers as $include => $unused) {
+		ksort($required_headers, \SORT_STRING);
+		foreach ($required_headers as $include => $unused) {
 			$header .= '#include <' . $include . ">\n";
 		}
 		ksort($global_references, \SORT_STRING);
@@ -102,12 +102,12 @@ final class Cpp_Emitter
 	 *
 	 * @param bool[] $declarations
 	 * @param ast_global_declaration[] $global_references
-	 * @param bool[] $conversion_headers
+	 * @param bool[] $required_headers
 	 * @return string[]
 	 */
 	private function statements(ast_function_body $body, array &$declarations /** array<string,bool> */,
 		bool &$uses_output, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$conversion_headers /** array<string,bool> */): array /** list<string> */
+		array &$required_headers /** array<string,bool> */): array /** list<string> */
 	{
 		$body->require_prepared();
 		$lines = [];
@@ -117,8 +117,9 @@ final class Cpp_Emitter
 				$lines[] = "\t[[maybe_unused]] " . $statement->type_def()->cpp_type() . ' ' . $this->name($statement)
 					. ' = ' . $statement->type_def()->lower_cpp_conversion($statement->initialization(),
 						$this->value($statement->initializer, $global_references)) . ';';
-				foreach ($statement->type_def()->conversion_headers($statement->initialization()) as $header) {
-					$conversion_headers[$header] = true;
+				foreach (array_merge($statement->type_def()->cpp_headers(),
+					$statement->type_def()->conversion_headers($statement->initialization())) as $header) {
+					$required_headers[$header] = true;
 				}
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
@@ -130,8 +131,12 @@ final class Cpp_Emitter
 				$uses_output = true;
 				$value = $statement->value;
 				if ($value instanceof ast_string_expression) {
-					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', '
+					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_String_Literals::bytes($value->bytes()) . ', '
 						. strlen($value->bytes()) . ');';
+				}
+				elseif ($value->type_def() === type_string::instance()) {
+					$operand = $this->value($value, $global_references);
+					$lines[] = "\t" . 'scpp::echo_bytes((' . $operand . ').data(), (' . $operand . ').size());';
 				}
 				else {
 					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value, $global_references) . ');';
@@ -163,7 +168,8 @@ final class Cpp_Emitter
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */): string
 	{
-		if (($value instanceof ast_integer_expression) || ($value instanceof ast_keyword_expression)) {
+		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
+			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
 			return $value->type_def()->lower_cpp_literal($value);
 		}
 		if ($value instanceof ast_name_expression) {

@@ -12,4 +12,8 @@ enum value_conversion: int /** uint8 */
 	case integer_widen = 4;
 	case integer_proven = 5;
 	case integer_checked = 6;
+	case numeric_floating = 7;
+	case floating_boolean = 8;
+	case floating_integer_proven = 9;
+	case floating_integer_checked = 10;
 }

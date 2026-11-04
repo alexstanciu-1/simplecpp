@@ -60,6 +60,10 @@ php v0.2/compiler/tests/functions.php
 python3 -B v0.2/compiler/tests/cli.py
 php v0.2/compiler/tests/entry.php
 php v0.2/compiler/tests/scalars.php
+php v0.2/compiler/tests/floating.php
+python3 -B v0.2/compiler/tests/floating_native.py
+php v0.2/compiler/tests/strings.php
+python3 -B v0.2/compiler/tests/strings_native.py
 python3 -B v0.2/compiler/tests/scalars_native.py
 python3 -B v0.2/compiler/tests/entry_native.py
 python3 -B v0.2/compiler/tests/functions_native.py

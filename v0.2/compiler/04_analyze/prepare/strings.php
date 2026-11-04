@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Decodes the supported quoted-literal subset into exact bytes during preparation and diagnoses unsupported forms. */
-final class Output_Literals
+final class String_Literals
 {
 	/** Decode a bounded literal subset; never use host interpolation or permissive C/PHP unescaping. */
 	public static function decode(ast_string_expression $syntax): string
@@ -18,7 +18,7 @@ final class Output_Literals
 			$byte = $text[$index];
 			if ((!$single) && ($byte === '$')) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start() + $index,
-					'Echo interpolation is not supported yet; escape the dollar or use single quotes');
+					'String interpolation is not supported yet; escape the dollar or use single quotes');
 			}
 			if ($byte !== '\\') {
 				$bytes .= $byte;
@@ -42,7 +42,7 @@ final class Output_Literals
 			$following = $text[$index + 1] ?? '';
 			if (($decoded === null) || (($next === '0') && ($following >= '0') && ($following <= '7'))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start() + $escape,
-					'Unsupported echo string escape');
+					'Unsupported string escape');
 			}
 			$bytes .= $decoded;
 		}

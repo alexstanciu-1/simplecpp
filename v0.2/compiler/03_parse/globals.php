@@ -41,7 +41,7 @@ final class Global_Syntax
 		}
 		$cursor->take(token_kind::assign, '=');
 		$literal_start = $cursor->position();
-		if ($cursor->is(token_kind::minus) || $cursor->is(token_kind::plus)) {
+		if (($cursor->is(token_kind::minus) || $cursor->is(token_kind::plus)) && !$cursor->next_is(token_kind::floating)) {
 			$cursor->take($cursor->is(token_kind::minus) ? token_kind::minus : token_kind::plus, 'sign');
 			$cursor->take(token_kind::integer, 'integer literal for global initializer');
 			$initializer = new ast_integer_expression($literal_start, $cursor->position());
@@ -49,12 +49,15 @@ final class Global_Syntax
 		else
 		{
 			$word = $cursor->at_end() ? '' : $cursor->tokens->text_at($cursor->position());
-			if (!$cursor->is(token_kind::integer) && (type_registry::literal($word) === null)) {
+			if (!$cursor->is(token_kind::integer) && !$cursor->is(token_kind::floating)
+				&& !(($cursor->is(token_kind::minus) || $cursor->is(token_kind::plus)) && $cursor->next_is(token_kind::floating))
+				&& (type_registry::literal($word) === null)) {
 				throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Expected scalar literal for global initializer');
 			}
 			$initializer = $parser->value();
 		}
-		if (!($initializer instanceof ast_integer_expression) && !($initializer instanceof ast_keyword_expression)) {
+		if (!($initializer instanceof ast_integer_expression) && !($initializer instanceof ast_float_expression)
+			&& !($initializer instanceof ast_keyword_expression)) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Expected scalar literal for global initializer');
 		}
 		$end = $cursor->take(token_kind::semicolon, '; (global initializer must be a scalar literal)') + 1;

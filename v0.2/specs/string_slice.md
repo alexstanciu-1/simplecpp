@@ -5,6 +5,9 @@ Doc Status: supporting
 Status: string metadata, preparation, generated lifecycle/operators and explicit
 text casts are implemented. Generated vector support is described in vector_slice.md.
 
+For the PHP compiler source slice, see [string locals](../compiler/docs/strings.md).
+Runtime text conversions described below are not enabled in that compiler slice.
+
 ## Reviewed reuse
 
 Reviewed `runtime/include/scpp/string_t.hpp` and

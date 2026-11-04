@@ -22,6 +22,9 @@ final class Global_Preparation
 				throw new diagnostic($declaration->source(), $declaration->byte_start(),
 					'Unknown or unsupported global type: ' . $declaration->type_name);
 			}
+			if ($type === type_string::instance()) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
+			}
 			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);
 			$declaration->settle_type($type, $conversion);
 		}

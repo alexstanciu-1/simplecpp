@@ -13,7 +13,7 @@ final class type_@class@ extends type_definition
 	/** CONSTRUCTOR */
 	private function __construct()
 	{
-		parent::__construct('@name@');
+@constructor_checks@		parent::__construct('@name@');
 	}
 
 	/** METHODS */

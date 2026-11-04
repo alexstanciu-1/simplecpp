@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-`echo` currently accepts one integer literal/local or one quoted string literal,
+`echo` currently accepts one integer or string value,
 with identical behavior in cpp/php/js flavors. It works in the entry body and
 void function bodies, including calls across files. Output has no automatic
 separator or newline.
@@ -20,10 +20,9 @@ Use existing flavor-specific variable/function declaration syntax for cpp/js.
 
 Single quotes decode only escaped quote/backslash. Double quotes accept `\\`,
 `\"`, `\$`, `\n`, `\r`, `\t` and isolated `\0`. Interpolation, other escapes,
-multiple operands and unsupported value types diagnose. String literals are
-output-only. Source spelling must be valid UTF-8 (including quoted text); NUL is
+multiple operands and unsupported value types diagnose. String literals and typed string locals are supported. Source spelling must be valid UTF-8 (including quoted text); NUL is
 allowed inside literals. The runtime byte-output API does not impose that encoding
-restriction on its input buffers. This slice does not introduce general string locals or expressions.
+restriction on its input buffers. String operators, interpolation and text conversions remain deferred.
 
 ## Ownership
 

@@ -105,13 +105,9 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
-				if ($statement->value instanceof ast_string_expression) {
-					++$this->expression_visits;
-					$statement->value->settle_bytes(Output_Literals::decode($statement->value));
-				}
-				else {
-					$this->value($statement->value);
-					$this->require_integer($statement->value, 'Echo currently supports only int64 and string literals');
+				$this->value($statement->value);
+				if ($statement->value->type_def() !== type_string::instance()) {
+					$this->require_integer($statement->value, 'Echo currently supports only int64 and string values');
 				}
 			}
 			elseif ($statement instanceof ast_call_statement)
@@ -192,7 +188,8 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
-		if (($syntax instanceof ast_integer_expression) || ($syntax instanceof ast_keyword_expression)) {
+		if (($syntax instanceof ast_integer_expression) || ($syntax instanceof ast_float_expression)
+			|| ($syntax instanceof ast_keyword_expression) || ($syntax instanceof ast_string_expression)) {
 			type_registry::prepare_literal($syntax);
 			return;
 		}

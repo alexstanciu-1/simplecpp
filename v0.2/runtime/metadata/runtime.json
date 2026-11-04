@@ -737,7 +737,9 @@
           "int64",
           "null_t",
           "bool_t",
-          "byte"
+          "byte",
+          "float64",
+          "string"
         ]
       }
     },
@@ -773,6 +775,21 @@
         "source_names": [
           "byte"
         ]
+      },
+      "float64": {
+        "class": "float64",
+        "source_names": [
+          "float",
+          "float64"
+        ],
+        "cpp_type": "double"
+      },
+      "string": {
+        "class": "string",
+        "source_names": [
+          "string"
+        ],
+        "cpp_type": "scpp::string"
       }
     },
     "conversions": [
@@ -799,8 +816,38 @@
         "to": "int64",
         "explicit": true,
         "operation": "integer_widen"
+      },
+      {
+        "from": "int64",
+        "to": "float64",
+        "explicit": true,
+        "operation": "numeric_floating"
+      },
+      {
+        "from": "bool_t",
+        "to": "float64",
+        "explicit": true,
+        "operation": "numeric_floating"
+      },
+      {
+        "from": "float64",
+        "to": "int64",
+        "explicit": true,
+        "operation": "floating_integer"
+      },
+      {
+        "from": "float64",
+        "to": "bool_t",
+        "explicit": true,
+        "operation": "floating_boolean"
       }
-    ]
+    ],
+    "floating_literals": {
+      "radix": 10,
+      "overflow": "reject",
+      "underflow": "gradual_signed_zero",
+      "rounding": "nearest_ties_even"
+    }
   },
   "byte": {
     "storage": "uint8",

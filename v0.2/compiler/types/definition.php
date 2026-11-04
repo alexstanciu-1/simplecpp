@@ -59,10 +59,16 @@ abstract class type_definition
 	}
 
 	/** Convert only an already-checked constant; null also carries an unknown payload beside its known flag. */
-	public function convert_constant(value_conversion $conversion, int|bool|null $value /** int64|bool|null */): int|bool|null /** int64|bool|null */
+	public function convert_constant(value_conversion $conversion, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Constant conversion does not belong to this destination type');
+	}
+
+	/** @return string[] Public runtime includes required by storage of this type. */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return [];
 	}
 
 	/** @return string[] Public runtime includes required by the selected conversion only. */

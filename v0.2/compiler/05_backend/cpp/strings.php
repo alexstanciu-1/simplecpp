@@ -3,8 +3,8 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Spells exact output literal bytes; the compiled runtime owns formatting and IO. */
-final class Cpp_Output
+/** Spells exact C++ literal bytes for string construction and direct output. */
+final class Cpp_String_Literals
 {
 	/** Fixed-width octal spelling preserves arbitrary bytes without C++ escape-boundary ambiguity. */
 	public static function bytes(string $bytes): string

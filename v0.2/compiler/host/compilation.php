@@ -98,7 +98,7 @@ final class Compilation_Inspection
 	}
 
 	/**
-	 * Constants use decimal JSON strings so inspection does not lose int64 precision in consumers.
+	 * Integers use decimal strings and floats use exact hexadecimal literals, preserving precision and signed zero.
 	 *
 	 * @return mixed[]
 	 */
@@ -106,6 +106,9 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_string_expression) {
+			$row['bytes_hex'] = bin2hex($value->bytes());
+		}
 		if ($value instanceof ast_name_expression) {
 			$declaration = $value->declaration();
 			$row['binding'] = $declaration instanceof ast_local_declaration
@@ -113,9 +116,12 @@ final class Compilation_Inspection
 		}
 		return $row;
 	}
-	/** Preserve boolean/null identity and int64 precision in the JSON inspection view. */
-	private static function scalar(int|bool|null $value /** int64|bool|null */): string|bool|null
+	/** Preserve scalar identities and exact numeric values in the JSON inspection view. */
+	private static function scalar(int|float|bool|null $value /** int64|float64|bool|null */): string|bool|null
 	{
+		if (is_float($value)) {
+			return type_float64::instance()->cpp_constant($value);
+		}
 		return is_int($value) ? (string) $value : $value;
 	}
 

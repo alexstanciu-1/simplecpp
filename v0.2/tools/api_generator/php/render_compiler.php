@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -44,7 +44,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
             $active = array_merge($active, $members);
         }
     }
-    requireThat($active === ['bool_t', 'byte', 'int64', 'null_t'] && isset($types['int64']), 'Compiler lowering requires int64 metadata in the default runtime');
+    requireThat($active === ['bool_t', 'byte', 'float64', 'int64', 'null_t', 'string'] && isset($types['int64']), 'Compiler lowering requires int64 metadata in the default runtime');
     $name = 'int64';
     $type = $types[$name];
     requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
@@ -77,12 +77,33 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $definitions = ['int64' => ['class' => 'int64', 'aliases' => $aliases, 'cpp' => $type['representation']]];
     foreach (object(at($compiler, 'value_types')) as $identity => $row) {
         fields($row, ['class', 'source_names', 'cpp_type', 'literals']);
-        requireThat(in_array($identity, ['null_t', 'bool_t', 'byte'], true), 'Unsupported compiler value type');
+        requireThat(in_array($identity, ['null_t', 'bool_t', 'byte', 'float64', 'string'], true), 'Unsupported compiler value type');
         $class = textValue(at($row, 'class'));
-        requireThat($class === ['null_t' => 'null', 'bool_t' => 'bool', 'byte' => 'byte'][$identity], 'Invalid generated type class');
+        requireThat($class === ['null_t' => 'null', 'bool_t' => 'bool', 'byte' => 'byte', 'float64' => 'float64', 'string' => 'string'][$identity], 'Invalid generated type class');
         $aliases = names(at($row, 'source_names'), 'Duplicate source type name');
-        requireThat($aliases === [$class], 'Unsupported core source aliases');
-        if ($identity !== 'byte') {
+        requireThat($aliases === ($identity === 'float64' ? ['float', 'float64'] : [$class]), 'Unsupported core source aliases');
+        if ($identity === 'float64') {
+            fields($row, ['class', 'source_names', 'cpp_type']);
+            requireThat(($sources['float'] ?? null) === $identity, 'Source float identity mismatch');
+            $floating = at($metadata, 'floating');
+            literals($floating, ['type' => 'float64', 'representation' => 'ieee_binary64']);
+            $literalPolicy = at($compiler, 'floating_literals');
+            fields($literalPolicy, ['radix', 'overflow', 'underflow', 'rounding']);
+            requireThat(unsigned(at($literalPolicy, 'radix')) === 10, 'Unsupported floating radix');
+            literals($literalPolicy, ['overflow' => 'reject', 'underflow' => 'gradual_signed_zero', 'rounding' => 'nearest_ties_even']);
+            $cpp = textValue(at($row, 'cpp_type'));
+            requireThat($cpp === 'double', 'Unsupported floating representation');
+            requireThat($facts['double']['digits'] === 53 && $facts['double']['max_exponent'] === 1024
+                && $facts['double']['iec559'] && $facts['double']['radix'] === 2, 'Compiler requires IEEE binary64');
+            $literals = [];
+        } elseif ($identity === 'string') {
+            fields($row, ['class', 'source_names', 'cpp_type']);
+            literals(at($metadata, 'string'), ['type' => 'string', 'source_type' => 'string',
+                'storage' => 'private_std_string', 'count_type' => 'int64', 'construction' => 'explicit']);
+            $cpp = textValue(at($row, 'cpp_type'));
+            requireThat($cpp === 'scpp::string', 'Unsupported string representation');
+            $literals = [];
+        } elseif ($identity !== 'byte') {
             requireThat(($sources[$class] ?? null) === $identity, 'Source type identity mismatch');
             $value = at(at($metadata, 'values'), $identity);
             requireThat(at($value, 'representation') === ($identity === 'bool_t' ? 'native_bool' : 'empty'), 'Unsupported scalar representation');
@@ -96,6 +117,19 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
         $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals];
     }
+    $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
+    foreach (listValue(at($compiler, 'conversions')) as $conversion) {
+        $operation = textValue(at($conversion, 'operation'));
+        $required = match ($operation) {
+            'boolean_integer' => 'boolean_to_numeric_01',
+            'integer_boolean', 'floating_boolean' => 'numeric_to_boolean_nonzero',
+            'floating_integer' => 'floating_to_integer_truncate_checked',
+            'numeric_floating' => at($conversion, 'from') === 'bool_t'
+                ? 'boolean_to_numeric_01' : 'integer_to_floating_rounding',
+            default => null,
+        };
+        requireThat($required === null || in_array($required, $scalarPolicies, true), 'Compiler conversion lacks runtime scalar policy');
+    }
     $identities = array_keys($definitions);
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
@@ -107,11 +141,19 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
         $limits = $identity === 'byte' ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
-        $literalMethods = compilerLiteralMethods($definition);
+        $literalMethods = $identity === 'float64'
+            ? strtr(readFile(__DIR__ . '/../templates/floating_literal_methods.php.tpl'), [
+                '@minimum_exponent@' => (string)(2 - $facts['double']['max_exponent']),
+                '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
+            ]) : compilerLiteralMethods($definition);
+        if ($identity === 'string') $literalMethods = readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl');
+        $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
+            . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
+            . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';
         $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalar_type.php.tpl'), [
             '@name@' => $identity, '@class@' => $definition['class'], '@limits@' => $limits,
             '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
-            '@literal_methods@' => $literalMethods, '@conversion_methods@' => $methods,
+            '@constructor_checks@' => $hostChecks, '@literal_methods@' => $literalMethods, '@conversion_methods@' => $methods,
         ]);
     }
     $cases = [];
@@ -126,7 +168,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 4,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 6,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -182,7 +224,9 @@ function compilerConversions(mixed $compiler, array $definitions, string $target
         requireThat(!isset($seen[$key]), 'Duplicate compiler conversion');
         $seen[$key] = true;
         $allowed = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boolean',
-            'int64:byte' => 'checked_integer', 'byte:int64' => 'integer_widen'];
+            'int64:byte' => 'checked_integer', 'byte:int64' => 'integer_widen',
+            'int64:float64' => 'numeric_floating', 'bool_t:float64' => 'numeric_floating',
+            'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer'];
         requireThat(($allowed[$key] ?? null) === $operation, 'Unsupported compiler conversion operation');
         // Byte's distinct contract must not be weakened by a publication descriptor.
         requireThat(($from !== 'byte' && $to !== 'byte') || $explicit, 'Byte conversions must be explicit');
@@ -192,12 +236,32 @@ function compilerConversions(mixed $compiler, array $definitions, string $target
         $prepare[] = "\t\tif ($condition) {";
         $constantOperation = match ($operation) {
             'boolean_integer' => '$value === null ? null : (int) $value', 'integer_boolean' => '$value === null ? null : $value !== 0',
+            'numeric_floating' => '$value === null ? null : (float) $value',
+            'floating_boolean' => '$value === null ? null : $value != 0.0',
+            'floating_integer' => '$value === null ? null : (int) $value',
             default => '$value',
         };
-        $constantCases = $operation === 'checked_integer'
-            ? 'value_conversion::integer_proven, value_conversion::integer_checked' : 'value_conversion::' . $operation;
+        $constantCases = match ($operation) {
+            'checked_integer' => 'value_conversion::integer_proven, value_conversion::integer_checked',
+            'floating_integer' => 'value_conversion::floating_integer_proven, value_conversion::floating_integer_checked',
+            default => 'value_conversion::' . $operation,
+        };
         $constants[] = "\t\t\t" . $constantCases . ' => ' . $constantOperation . ',';
-        if ($operation === 'checked_integer') {
+        if ($operation === 'floating_integer') {
+            $prepare[] = <<<'CODE'
+			if ($value->constant_known()) {
+				$constant = $value->constant();
+				$truncated = $constant < 0.0 ? ceil($constant) : floor($constant);
+				if (!is_finite($constant) || ($truncated < (float) self::MINIMUM) || ($truncated >= -(float) self::MINIMUM)) {
+					throw new diagnostic($value->source(), $value->byte_start(), 'Floating conversion is outside int64 range');
+				}
+				return value_conversion::floating_integer_proven;
+			}
+			return value_conversion::floating_integer_checked;
+CODE;
+            $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
+            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '(scpp::int64{scpp::float64{' . \$value . '}}).native_value()',";
+        } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
 				$constant = $value->constant();
@@ -212,15 +276,15 @@ CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_checked => '(scpp::byte{' . \$value . '}).native_value()',";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
-            $expression = $operation === 'integer_boolean' ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
+            $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
             $lower[] = "\t\t\tvalue_conversion::$operation => $expression,";
         }
         $prepare[] = "\t\t}";
     }
     if ($prepare === []) return '';
     $prepare = implode("\n", $prepare);
-    $lower = implode("\n", $lower);
-    $constants = implode("\n", $constants);
+    $lower = implode("\n", array_unique($lower));
+    $constants = implode("\n", array_unique($constants));
     $headers = $target === 'byte' ? <<<'CODE'
 
 	/** @return string[] Public runtime includes required by the selected conversion only. */
@@ -228,7 +292,14 @@ CODE;
 	{
 		return $conversion === value_conversion::integer_checked ? ['scpp/integers.hpp'] : [];
 	}
-CODE : '';
+CODE : ($target === 'int64' ? <<<'CODE'
+
+	/** @return string[] Public wrappers provide the existing checked floating-to-integer boundary. */
+	public function conversion_headers(value_conversion $conversion): array /** list<string> */
+	{
+		return $conversion === value_conversion::floating_integer_checked ? ['scpp/integers.hpp', 'scpp/values.hpp'] : [];
+	}
+CODE : '');
     return <<<PHP_CODE
 	/** Select the conversion once; the caller marks written destinations or explicit cast boundaries. */
 	public function prepare_conversion(ast_expression \$value, bool \$explicit): value_conversion
@@ -247,7 +318,7 @@ $lower
 	}
 
 	/** Preserve unknown values; convert known payloads using the selected operation only. */
-	public function convert_constant(value_conversion \$conversion, int|bool|null \$value /** int64|bool|null */): int|bool|null /** int64|bool|null */
+	public function convert_constant(value_conversion \$conversion, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
 	{
 		return match (\$conversion) {
 $constants

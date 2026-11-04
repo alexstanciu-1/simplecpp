@@ -67,6 +67,7 @@ function targetFacts(mixed $facts, mixed $context): array {
     $double = at($facts, 'double');
     fields($double, ['iec559', 'radix', 'digits', 'max_exponent', 'size', 'alignment']);
     requireThat(boolean(at($double, 'iec559')) && unsigned(at($double, 'radix')) === 2 && unsigned(at($double, 'digits')) === 53 && unsigned(at($double, 'max_exponent')) === 1024 && layout($double)['size'] === 8, 'float64 requires IEEE binary64 double');
+    $out['double'] = object($double);
     $owners = at($facts, 'ownership');
     fields($owners, ['shared', 'weak', 'unique']);
     foreach (['shared', 'weak', 'unique'] as $family) {

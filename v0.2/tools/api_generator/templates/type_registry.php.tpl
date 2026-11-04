@@ -27,12 +27,28 @@ final class type_registry
 	/** Dispatch the bounded literal family; traversal and declaration resolution remain outside definitions. */
 	public static function prepare_literal(ast_expression $value): void
 	{
-		$type = $value instanceof ast_integer_expression ? self::integer()
-			: ($value instanceof ast_keyword_expression ? self::literal($value->word) : null);
+		$type = self::literal_type($value);
 		if ($type === null) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported scalar literal');
 		}
 		$type->prepare_literal($value);
+	}
+
+	/** Identify literal families without preparing values; publication uses this for inferred global contracts. */
+	public static function literal_type(ast_expression $value): ?type_definition
+	{
+		return match (true) {
+			$value instanceof ast_integer_expression => self::integer(),
+			$value instanceof ast_float_expression => self::floating(),
+			$value instanceof ast_string_expression => type_string::instance(),
+			$value instanceof ast_keyword_expression => self::literal($value->word),
+			default => null,
+		};
+	}
+
+	public static function floating(): type_float64
+	{
+		return type_float64::instance();
 	}
 
 	/** Canonical source integer identity for literals and the existing entry contract. */

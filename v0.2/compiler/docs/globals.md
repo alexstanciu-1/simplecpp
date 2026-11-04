@@ -5,8 +5,8 @@ Doc Status: supporting
 The [namespace specification](../../../specs/namespaces_v0_2.md) owns semantics.
 PHP `global $value = 10;`, C++ `global auto value = 10;` and JS
 `global let value = 10;` create the same namespace-qualified int64 storage.
-Explicit `int`/`int64`, `bool`, `null` and `byte` destinations are supported.
-Initializers admit signed decimal, boolean and null literals; omitted types infer
+Explicit `int`/`int64`, `bool`, `null`, `byte` and `float`/`float64` destinations are supported.
+Initializers admit signed decimal integer/floating, boolean and null literals; omitted types infer
 the literal type. Written types authorize metadata-driven checked conversion.
 See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Writes remain deferred.
 

@@ -150,10 +150,10 @@ declare storage, not executable statements in implicit main. The initial syntax 
 
 `global` is a Simple C++ storage declaration, not PHP's function-local global binding
 statement. Explicit `int` and `int64` select the canonical signed int64 type.
-The [core scalar extension](compiler_scalars_v0_2.md) also supports bool, null and byte
+The [core scalar extension](compiler_scalars_v0_2.md) also supports bool, null, byte and float64
 destinations and authorizes checked conversion at written type boundaries. Omitted
 types infer the literal type. Initializers are boolean/null literals or decimal
-integer literals, optionally preceded by `+` or `-`; integer range checking includes
+integer/floating literals, optionally preceded by `+` or `-`; integer range checking includes
 the exact int64 minimum and maximum.
 All declarations are checked, including unused globals. Other types, expression
 initializers, multiple declarators and function-local global declarations are deferred.

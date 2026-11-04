@@ -238,19 +238,12 @@ final class Parser
 		return $this->cursor->name(token_kind::identifier);
 	}
 
-	/** Keep string admission bounded to echo while preserving the ordinary integer/name value path. */
+	/** Parse one ordinary value operand for echo. */
 	private function echo_statement(): ast_echo_statement
 	{
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('echo');
-		if ($this->cursor->is(token_kind::single_string) || $this->cursor->is(token_kind::double_string)) {
-			$kind = $this->cursor->is(token_kind::single_string) ? token_kind::single_string : token_kind::double_string;
-			$position = $this->cursor->take($kind, 'string literal');
-			$value = new ast_string_expression($position, $position + 1);
-		}
-		else {
-			$value = $this->value();
-		}
+		$value = $this->value();
 		$end = $this->cursor->take(token_kind::semicolon, '; (echo currently accepts one operand)') + 1;
 		return new ast_echo_statement($start, $end, $value);
 	}
@@ -258,6 +251,20 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	public function value(): ast_expression
 	{
+		$start = $this->cursor->position();
+		if ($this->cursor->is(token_kind::single_string) || $this->cursor->is(token_kind::double_string)) {
+			$kind = $this->cursor->is(token_kind::single_string) ? token_kind::single_string : token_kind::double_string;
+			$this->cursor->take($kind, 'string literal');
+			return new ast_string_expression($start, $start + 1);
+		}
+		if (($this->cursor->is(token_kind::minus) || $this->cursor->is(token_kind::plus))
+			&& $this->cursor->next_is(token_kind::floating)) {
+			$this->cursor->take($this->cursor->is(token_kind::minus) ? token_kind::minus : token_kind::plus, 'sign');
+		}
+		if ($this->cursor->is(token_kind::floating)) {
+			$this->cursor->take(token_kind::floating, 'floating literal');
+			return new ast_float_expression($start, $this->cursor->position());
+		}
 		if ($this->cursor->is(token_kind::integer)) {
 			$position = $this->cursor->take(token_kind::integer, 'integer');
 			return new ast_integer_expression($position, $position + 1);

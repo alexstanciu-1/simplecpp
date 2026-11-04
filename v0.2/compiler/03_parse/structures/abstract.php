@@ -192,11 +192,11 @@ trait ast_declaration
  */
 abstract class ast_expression extends ast_node
 {
-	/** Prepared fact: canonical scalar type; null until scalar preparation succeeds. */
+	/** Prepared fact: canonical value type; null until preparation succeeds. */
 	protected ?type_definition $type_def = null;
 	/** Prepared fact: scalar payload; constant_known distinguishes a known null from an unknown value. */
-	protected int|bool|null $constant /** int64|bool|null */ = null;
-	/** Prepared fact: payload is known; false before preparation, after reset, or for unknown values. */
+	protected int|float|bool|null $constant /** int64|float64|bool|null */ = null;
+	/** Prepared fact: scalar payload is known; false for strings, unknown values, and before preparation or after reset. */
 	protected bool $constant_known = false;
 
 	public function type_def(): type_definition
@@ -204,7 +204,7 @@ abstract class ast_expression extends ast_node
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
 	}
 
-	public function constant(): int|bool|null /** int64|bool|null */
+	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
 		$this->type_def();
 		return $this->constant;
@@ -217,7 +217,7 @@ abstract class ast_expression extends ast_node
 	}
 
 	/** Set occurrence facts once; $known preserves null as a value independently of readiness. */
-	protected function settle_value(type_definition $type, int|bool|null $constant /** int64|bool|null */, bool $known = false): void
+	protected function settle_value(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */, bool $known = false): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Expression is already prepared');

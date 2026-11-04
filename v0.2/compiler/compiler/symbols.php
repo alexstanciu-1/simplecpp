@@ -121,8 +121,7 @@ final class Symbol_Publication implements declaration_sink
 				$contracts[$key] = null;
 			}
 			elseif ($head instanceof ast_global_declaration) {
-				$contracts[$key] = 'global:' . ($head->type_name ?? ($head->initializer instanceof ast_keyword_expression
-					? type_registry::literal($head->initializer->word)->name : 'int64'));
+				$contracts[$key] = 'global:' . ($head->type_name ?? type_registry::literal_type($head->initializer)->name);
 			}
 			else {
 				/** @var ast_function_declaration $head */

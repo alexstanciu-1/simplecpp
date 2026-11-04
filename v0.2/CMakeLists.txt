@@ -103,7 +103,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/byte.php ${compiler_generated}/types/registry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/byte.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -180,6 +180,8 @@ if(BUILD_TESTING)
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental.py)
   add_test(NAME compiler_duplicates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates.php)
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
+  add_test(NAME compiler_strings_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py)
+  add_test(NAME compiler_strings COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings.php)
   add_test(NAME compiler_output COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/output.php)
   add_test(NAME compiler_modules COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/modules.php)
   add_test(NAME compiler_source_changes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/source_changes.php)
@@ -192,6 +194,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_imports COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/imports.php)
   add_test(NAME compiler_globals COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/globals.php)
   add_test(NAME compiler_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scalars_native.py)
+  add_test(NAME compiler_floating_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/floating_native.py)
+  add_test(NAME compiler_floating COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/floating.php)
   add_test(NAME compiler_scalars COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scalars.php)
   add_test(NAME compiler_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/types.php)
   add_test(NAME compiler_frontend_service COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}

@@ -137,7 +137,7 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare($case), 'outside int64');
 	}
 	$case = $sources;
-	$case['root'] = new source_file('root', $root_code . global_text($flavor, 'bad', '1', 'float'), $flavor);
+	$case['root'] = new source_file('root', $root_code . global_text($flavor, 'bad', '1', 'vector'), $flavor);
 	rejects(fn() => $prepare($case), 'unsupported global type');
 	$case = $sources;
 	$case['duplicate'] = new source_file('duplicate', wrap($flavor, 'Lib', global_text($flavor, 'value', '99')), $flavor);
@@ -189,7 +189,7 @@ foreach (flavor::cases() as $flavor)
 		$session = $compiler->frontend($directory, $session);
 		verify($session->scope->entry('var:Lib\value') === $slot, 'Global identity not reactivated');
 		verify(Incremental_Preparation::prepare($session, $target) === ['prepared' => 1, 'reused' => 0], 'Reader not repaired');
-		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '1', 'float')));
+		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '1', 'vector')));
 		touch($lib_path, time() + 2);
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'unsupported global type');

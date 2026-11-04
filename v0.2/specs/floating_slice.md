@@ -3,7 +3,10 @@
 Doc Status: normative
 
 Scope: runtime and physical API preparation inside v0.2. Source eligibility,
-sequencing and contextual decisions remain compiler-owned.
+sequencing and contextual decisions remain compiler-owned. The active PHP compiler
+now implements [literal and typed-destination rules](../../specs/compiler_scalars_v0_2.md#floating-literal-policy):
+reject rounded literal overflow, accept gradual underflow and signed zero. Runtime
+arithmetic rules below are unchanged.
 
 ## Representation, names and ownership
 

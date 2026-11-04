@@ -44,8 +44,9 @@ Local collection records occurrences; function discovery notifies the coordinato
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
 Implemented now: initialized local declarations and simple-name assignments;
-type annotations are single names; values are decimal integers, `true`/`false`/`null`, or flavor-correct
-name references. Generated metadata registers the supported core scalar literals/types.
+type annotations are single names; values are decimal integers/floats, `true`/`false`/`null`, or flavor-correct
+name references. A sign immediately before a floating token is part of the bounded
+literal grammar; this does not introduce general unary expressions. Generated metadata registers the supported core scalar literals/types.
 The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion
 at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP bare
 writes retain DeclareOrAssign intent. Empty input is valid. Statements require
@@ -61,9 +62,9 @@ The [void-function slice](../../specs/compiler_entry_v0_2.md#no-argument-void-fu
 adds no-parameter definitions (`void f() {}` in C++, `function f(): void {}` in PHP/JS),
 no-argument statement calls, and bare returns inside void functions. Function bodies
 have private local scopes; named signatures settle before body preparation.
-The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or quoted literal
-as its single operand in all flavors. String literals are currently output-only.
-There is no member access, comparisons, general string/float expressions, const declarations, PHP tags/HTML
+The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or string value
+as its single operand in all flavors. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
+There is no member access, comparisons, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
 modes, C++ preprocessing, JS prototypes or JS template literals yet.
 
 Planned type syntax will preserve nested type arguments, including vector<vector<int>>.

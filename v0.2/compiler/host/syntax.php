@@ -79,6 +79,9 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_keyword_expression) {
 			return ['kind' => 'keyword_literal', 'spelling' => $expression->word, 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_float_expression) {
+			return ['kind' => 'floating', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_integer_expression) {
 			return ['kind' => 'integer', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
 		}

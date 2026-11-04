@@ -26,6 +26,24 @@ final class ast_integer_expression extends ast_expression
 }
 
 /**
+ * Decimal floating syntax retains its exact source tokens; preparation owns the rounded binary64 payload.
+ * Example: $amount float = -1.25e-3; spans the sign and literal, without an independent unary operator node.
+ */
+final class ast_float_expression extends ast_expression
+{
+	public function settle_floating(float $value /** float64 */): void
+	{
+		$this->settle_value(type_registry::floating(), $value);
+	}
+
+	public function floating(): float /** float64 */
+	{
+		$value = $this->constant();
+		return is_float($value) ? $value : throw new \LogicException('Floating value is not prepared');
+	}
+}
+
+/**
  * A core keyword literal, such as true, false or null; metadata supplies its semantic identity and value.
  * Example: $ready bool = false; stores false as syntax, then prepares a known boolean payload.
  */
@@ -150,7 +168,7 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	/** Prepared fact: canonical local type; null until successful declaration preparation or after reset. */
 	protected ?type_definition $type_def = null;
 	/** Prepared fact: initializer payload; known null is distinguished by constant_known. */
-	protected int|bool|null $constant /** int64|bool|null */ = null;
+	protected int|float|bool|null $constant /** int64|float64|bool|null */ = null;
 	/** Prepared fact: whether the initializer payload is known; false before settlement or after reset. */
 	protected bool $constant_known = false;
 	/** Prepared fact: destination-bound conversion; null until initialization is approved. */
@@ -194,7 +212,7 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	}
 
 	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
-	public function settle_type(type_definition $type, int|bool|null $constant /** int64|bool|null */,
+	public function settle_type(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */,
 		bool $known = false, value_conversion $conversion = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
@@ -212,7 +230,7 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	}
 
 	/** Return: when known. */
-	public function constant(): int|bool|null /** int64|bool|null */
+	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
 		$this->type_def();
 		return $this->constant;

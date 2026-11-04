@@ -1,0 +1,80 @@
+"""Native string byte preservation and copy ownership proofs, with Clang stage timings."""
+import argparse
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/compiler_panel'))
+from native_build import write_build
+
+
+def run(args, cwd=None):
+    return subprocess.run(list(map(str, args)), cwd=cwd, capture_output=True, text=True,
+                          env={**os.environ, 'XDEBUG_MODE': 'off'})
+
+
+def success(result):
+    assert result.returncode == 0, result.stdout + result.stderr
+    return result
+
+
+def prove(work):
+    work.mkdir(parents=True, exist_ok=True)
+    start = time.perf_counter()
+    success(run(['php', ROOT / 'compiler/tests/strings.php', work / 'fixtures.json']))
+    results = {'php_fixture_generation_ms': (time.perf_counter() - start) * 1000,
+               'configuration': 'O2/g0, libc++, mold, Ninja -j8, no PCH/LTO; prebuilt runtime; fresh instrumented app objects',
+               'builds': {}}
+    fixtures = json.loads((work / 'fixtures.json').read_text())
+    for flavor, fixture in fixtures.items():
+        directory = work / flavor
+        directory.mkdir(exist_ok=True)
+        cpp = directory / 'program.cpp'
+        # Only the proof artifact exercises mutation: source-level methods remain deferred.
+        checks = ('\tlocal_0.clear();\n'
+                  '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
+                  '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
+        cpp.write_text(fixture['cpp'].replace('\treturn ', checks + '\treturn '))
+        command = write_build(directory, [cpp])
+        command[2] = '8'
+        graph = directory / 'build.ninja'
+        graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))
+        success(run(['ninja', '-f', 'build.ninja', '-t', 'clean'], directory))
+        start = time.perf_counter()
+        build = success(run(command, directory))
+        elapsed = (time.perf_counter() - start) * 1000
+        (directory / 'build.log').write_text(build.stdout + build.stderr)
+        result = run([directory / 'program'])
+        assert result.returncode == 8 and result.stdout.encode().hex() == fixture['stdout_hex'], result
+        totals = {}
+        for path in directory.glob('unit-*.json'):
+            for event in json.loads(path.read_text())['traceEvents']:
+                if event['name'].startswith('Total '):
+                    key = event['name'][6:]
+                    totals[key] = totals.get(key, 0) + event['dur'] / 1000
+        links = [line.split('\t') for line in (directory / '.ninja_log').read_text().splitlines()[1:]
+                 if line.split('\t')[3] == 'program']
+        link = links[-1]
+        assert '.debug_' not in success(run(['readelf', '-S', directory / 'program'])).stdout
+        results['builds'][flavor] = {'native_ms': elapsed, 'frontend_ms': totals['Frontend'],
+            'llvm_backend_ms': totals['Backend'], 'optimizer_ms': totals.get('Optimizer', 0),
+            'codegen_ms': totals.get('CodeGenPasses', 0), 'link_command_ms': int(link[1]) - int(link[0]),
+            'stdout_hex': result.stdout.encode().hex(), 'exit': result.returncode, 'copy_independence': True}
+    (work / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+    print(json.dumps(results, indent=2))
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args()
+    if args.output:
+        prove(args.output.resolve())
+    else:
+        with tempfile.TemporaryDirectory(prefix='scpp-strings-native-') as directory:
+            prove(Path(directory))
