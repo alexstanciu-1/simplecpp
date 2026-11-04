@@ -233,3 +233,9 @@ flavors. `elseif` is reserved in all three. Each branch body has a lexical scope
 standalone blocks and unbraced arms remain deferred. Generated type handlers admit
 bool/int64/float64/string conditions and reject null/byte/void. See the
 [conditional contract](../../specs/conditional_statements_v0_2.md).
+
+All flavors now admit braced `while (condition) { ... }` and
+`do { ... } while (condition);`, including nesting. Both reuse generated condition
+admission and lexical body scopes; the trailing do-while semicolon is mandatory.
+Break/continue and unbraced loops remain deferred. See the
+[loop contract](../../specs/loop_statements_v0_2.md).

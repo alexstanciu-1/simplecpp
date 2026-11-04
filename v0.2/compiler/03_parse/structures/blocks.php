@@ -42,7 +42,7 @@ abstract class ast_statement_block extends ast_node
 
 }
 
-/** A branch-local braced body: if (flag) { int value = 8; }. */
+/** A nested braced lexical body: if (flag) { int value = 8; }. */
 final class ast_block extends ast_statement_block
 {
 }

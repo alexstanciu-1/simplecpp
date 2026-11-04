@@ -4,7 +4,7 @@ Doc Status: supporting
 
 The [conditional contract](../../../specs/conditional_statements_v0_2.md) owns semantics.
 All flavors admit braced if/elseif/else-if/else, nested arms, and branch-local declarations.
-Unbraced arms, standalone blocks, loops, logical operators, ternary, null/byte conditions,
+Unbraced arms, standalone blocks, logical operators, ternary, null/byte conditions,
 constant-condition reachability and precise value merging remain deferred.
 
 ## Type boundary
@@ -75,3 +75,6 @@ not repeated-run benchmarks. Frontend/backend traces overlap and are not additiv
 | js_sibling | 131.605 | 13.830 | 7.344 | 2.767 | 3.192 | 63.000 |
 | js_join | 126.908 | 13.481 | 7.539 | 2.776 | 3.011 | 62.000 |
 | multifile | 131.509 | 23.630 | 27.037 | 9.517 | 10.284 | 63.000 |
+
+Braced while/do-while now reuse these block and condition owners; see [loops](loops.md).
+The backend condition helper and shared braced-block parser serve both branches and loops.

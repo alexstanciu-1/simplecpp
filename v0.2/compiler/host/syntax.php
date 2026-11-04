@@ -114,6 +114,11 @@ final class Syntax_Inspection
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
+		if ($statement instanceof ast_loop_statement) {
+			return ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
+				'body' => array_map(self::statement(...), $statement->body->statements)];
+		}
 		if ($statement instanceof ast_if_statement) {
 			return ['kind' => 'if', 'span' => self::span($statement), 'arms' => array_map(
 				static fn(ast_if_arm $arm): array => ['condition' => $arm->condition === null ? null : self::expression($arm->condition),

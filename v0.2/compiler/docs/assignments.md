@@ -40,7 +40,8 @@ locals/value parameters. Reference parameters always read as unknown, since they
 alias one another or globals. This retains earlier snapshots without an alias graph.
 Braced conditionals clear value knowledge at alternatives and joins. After a barrier,
 new declarations and assignments establish fresh facts; outer initializers cannot
-be reused accidentally. Loops and more precise branch merging remain deferred.
+be reused accidentally. Loops apply the same conservative barriers around repeating regions and on exit;
+more precise value merging remains deferred.
 
 Lowering emits the approved write and any conversion headers without preparing data.
 Identity self-writes to the same local emit `(void)local_n;`, a no-op for currently

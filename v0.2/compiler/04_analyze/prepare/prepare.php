@@ -128,7 +128,10 @@ final class Preparation
 				throw new diagnostic($statement->source(), $statement->byte_start(),
 					'Statements after return are outside the entry slice');
 			}
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_loop_statement) {
+				$returned = $this->loop($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_if_statement) {
 				$returned = $this->conditional($statement, $source, $target, $function);
 			}
 			elseif ($statement instanceof ast_local_declaration) {
@@ -212,8 +215,7 @@ final class Preparation
 		foreach ($statement->arms as $arm) {
 			$this->forget_values();
 			if ($arm->condition !== null) {
-				$this->value($arm->condition);
-				$arm->condition->type_def()->prepare_condition($arm->condition);
+				$this->condition($arm->condition);
 			}
 			else {
 				$has_else = true;
@@ -225,6 +227,34 @@ final class Preparation
 		}
 		$this->forget_values();
 		return $has_else && $returns;
+	}
+
+	/** Shared generated condition admission; preparation evaluates no runtime condition. */
+	private function condition(ast_expression $condition): void
+	{
+		$this->value($condition);
+		$condition->type_def()->prepare_condition($condition);
+	}
+
+	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
+	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): bool
+	{
+		$post_test = $statement instanceof ast_do_while_statement;
+		$this->forget_values();
+		if (!$post_test) {
+			$this->condition($statement->condition);
+			$this->forget_values();
+		}
+		$this->local_frames[] = [];
+		$returns = $this->sequence($statement->body->statements, $source, $target, $function);
+		array_pop($this->local_frames);
+		$this->forget_values();
+		if ($post_test) {
+			$this->condition($statement->condition);
+			$this->forget_values();
+		}
+		return $post_test && $returns;
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */

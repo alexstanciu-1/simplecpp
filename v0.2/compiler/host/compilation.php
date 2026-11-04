@@ -76,7 +76,11 @@ final class Compilation_Inspection
 		$statements = [];
 		foreach ($program->statements as $statement)
 		{
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_loop_statement) {
+				$statements[] = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
+			}
+			elseif ($statement instanceof ast_if_statement) {
 				$statements[] = ['kind' => 'if', 'arms' => array_map(static fn(ast_if_arm $arm): array => [
 					'condition' => $arm->condition === null ? null : self::value($arm->condition),
 					'body' => self::body($arm->body)], $statement->arms)];

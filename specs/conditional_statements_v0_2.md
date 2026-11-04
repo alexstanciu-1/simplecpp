@@ -53,8 +53,8 @@ independent of conditional syntax admission.
 The active `v0.2/compiler/` implements braced `if`, `elseif`, `else if`, and `else`
 in all three flavors, including nested conditionals. Both conditional-chain spellings
 normalize to the same AST; `elseif` is reserved in each flavor. Unbraced arms remain
-an implementation debt against the broader contract above. Standalone blocks,
-loops, logical operators and ternary expressions are not added by this slice.
+an implementation debt against the broader contract above. Standalone blocks, logical operators and ternary expressions are not added by this
+slice. Braced while/do-while are now covered by [the loop contract](loop_statements_v0_2.md).
 
 Conditions admit bool, int/int64, float/float64 and string. Bool uses its value;
 numeric zero (including negative floating zero) is false; strings are false only

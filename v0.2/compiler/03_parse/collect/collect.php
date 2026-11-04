@@ -62,6 +62,9 @@ final class Body_Collection
 			|| ($statement instanceof ast_echo_statement) || ($statement instanceof ast_call_statement)) {
 			$value = $statement->value;
 		}
+		elseif ($statement instanceof ast_loop_statement) {
+			$value = $statement->condition;
+		}
 		elseif ($statement instanceof ast_if_statement) {
 			foreach ($statement->arms as $arm) {
 				if ($arm->condition !== null) {

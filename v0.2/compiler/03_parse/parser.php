@@ -130,6 +130,12 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->keyword('while') || $this->cursor->keyword('do')) {
+			return $this->loop($grammar, $collector);
+		}
+		if ($this->cursor->keyword('break') || $this->cursor->keyword('continue')) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Break/continue are deferred');
+		}
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
 		}
@@ -166,19 +172,8 @@ final class Parser
 				$condition = $this->value();
 				$this->cursor->take(token_kind::rparen, ')');
 			}
-			$body_start = $this->cursor->take(token_kind::lbrace, '{ (braced conditional body)');
-			$child = $collector->child();
-			$statements = [];
-			while (!$this->cursor->is(token_kind::rbrace)) {
-				if ($this->cursor->at_end()) {
-					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected }');
-				}
-				$statement = $this->statement($grammar, $child);
-				$child->statement($statement, count($statements));
-				$statements[] = $statement;
-			}
-			$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
-			$arms[] = new ast_if_arm($arm_start, $end, $condition, $child->block($body_start, $end, $statements));
+			$body = $this->braced_block($grammar, $collector, '{ (braced conditional body)');
+			$arms[] = new ast_if_arm($arm_start, $body->end, $condition, $body);
 			if (!$conditional) {
 				break;
 			}
@@ -197,6 +192,45 @@ final class Parser
 			}
 		} while (true);
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
+	}
+
+	/** Parse a lexical block once for conditional and loop bodies. */
+	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected): ast_block
+	{
+		$start = $this->cursor->take(token_kind::lbrace, $expected);
+		$child = $collector->child();
+		$statements = [];
+		while (!$this->cursor->is(token_kind::rbrace)) {
+			if ($this->cursor->at_end()) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected }');
+			}
+			$statement = $this->statement($grammar, $child);
+			$child->statement($statement, count($statements));
+			$statements[] = $statement;
+		}
+		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		return $child->block($start, $end, $statements);
+	}
+
+	/** Parse pre-test/post-test loops with a required braced body and explicit do-while terminator. */
+	private function loop(statement_grammar $grammar, Body_Collection $collector): ast_loop_statement
+	{
+		$start = $this->cursor->position();
+		$post_test = $this->cursor->keyword('do');
+		$this->cursor->take_keyword($post_test ? 'do' : 'while');
+		if ($post_test) {
+			$body = $this->braced_block($grammar, $collector, '{ (braced loop body)');
+			$this->cursor->take_keyword('while');
+		}
+		$this->cursor->take(token_kind::lparen, '(');
+		$condition = $this->value();
+		$this->cursor->take(token_kind::rparen, ')');
+		if ($post_test) {
+			$end = $this->cursor->take(token_kind::semicolon, '; (do-while terminator)') + 1;
+			return new ast_do_while_statement($start, $end, $condition, $body);
+		}
+		$body = $this->braced_block($grammar, $collector, '{ (braced loop body)');
+		return new ast_while_statement($start, $body->end, $condition, $body);
 	}
 
 	/** Discover the stable header before parsing its body; local collection never enters the global index. */

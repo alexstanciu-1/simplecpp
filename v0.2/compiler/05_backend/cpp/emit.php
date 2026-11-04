@@ -99,6 +99,23 @@ final class Cpp_Emitter
 	}
 
 	/**
+	 * Render the admitted test through its generated type handler; no backend type admission.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function condition(ast_expression $condition, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$type = $condition->type_def();
+		$operand = $this->value($condition, $global_references, $declarations, $headers);
+		foreach ($type->condition_headers() as $header) {
+			$headers[$header] = true;
+		}
+		return $type->lower_cpp_condition($operand);
+	}
+
+	/**
 	 * Lower already resolved statements and retain only contract-derived external declarations.
 	 *
 	 * @param ast_function_declaration[] $declarations
@@ -118,16 +135,21 @@ final class Cpp_Emitter
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_loop_statement) {
+				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
+				$post_test = $statement instanceof ast_do_while_statement;
+				$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
+				foreach ($this->statements($statement->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {
+					$lines[] = "\t" . $line;
+				}
+				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
+			}
+			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
 					$head = $index === 0 ? 'if' : 'else';
 					if ($arm->condition !== null) {
-						$type = $arm->condition->type_def();
-						$operand = $this->value($arm->condition, $global_references, $declarations, $required_headers);
-						$head = ($index === 0 ? 'if' : 'else if') . ' (' . $type->lower_cpp_condition($operand) . ')';
-						foreach ($type->condition_headers() as $header) {
-							$required_headers[$header] = true;
-						}
+						$head = ($index === 0 ? 'if' : 'else if') . ' ('
+							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
 					}
 					$lines[] = "\t" . $head . ' {';
 					foreach ($this->statements($arm->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {

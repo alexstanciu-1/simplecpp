@@ -84,6 +84,7 @@ The authority stack for the current project is:
    - `specs/output_v0_2.md` (ordered echo statements and bounded output admission)
    - `specs/expression_evaluation.md` (v0.2 ordered eager binary values and conversions)
    - `specs/conditional_statements_v0_2.md` (conditional bodies, nearest-if binding and branch scopes)
+   - `specs/loop_statements_v0_2.md` (braced while/do-while, lexical scope, evaluation and completion)
    - `specs/runtime_module_metadata.md` (runtime-owned module catalogs and compiler ingestion boundaries)
    - `specs/builtins/datetime/microtime.md` (free/qualified wall-clock compatibility calls)
    - `specs/builtins/filesystem/fs_is_windows.md` (target-native filesystem separator fact)

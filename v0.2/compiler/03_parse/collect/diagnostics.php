@@ -71,7 +71,10 @@ final class Declaration_Diagnostics
 			}
 		}
 		foreach ($body->statements as $statement) {
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_loop_statement) {
+				array_push($errors, ...self::locals($statement->body));
+			}
+			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) {
 					array_push($errors, ...self::locals($arm->body));
 				}

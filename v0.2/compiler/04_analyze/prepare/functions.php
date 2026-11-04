@@ -26,6 +26,11 @@ final class Function_Preparation
 	{
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_loop_statement) {
+				self::expression($statement->condition);
+				self::reset_block($statement->body);
+				continue;
+			}
 			if ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) {
 					if ($arm->condition !== null) {
