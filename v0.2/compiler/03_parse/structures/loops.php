@@ -32,6 +32,29 @@ final class ast_do_while_statement extends ast_loop_statement
 {
 }
 
+/** Bounded for (int i = 0; i < 10; i = i + 1) { ... }; header scope owns the initializer binding. */
+final class ast_for_statement extends ast_loop_statement
+{
+	/** Native owning initializer; executes once, before the first test. */
+	public readonly ast_local_declaration|ast_assignment_statement $initializer;
+	/** Native owning update; executes after normal body completion or continue. */
+	public readonly ast_assignment_statement $update;
+	/** Native owning header scope; the body scope is its child. */
+	public readonly scope $scope;
+
+	/** $start: for token position; the body supplies the exclusive end. */
+	public function __construct(int $start /** uint32 */, ast_local_declaration|ast_assignment_statement $initializer,
+		ast_expression $condition, ast_assignment_statement $update, ast_block $body, scope $scope)
+	{
+		parent::__construct($start, $body->end, $condition, $body);
+		$this->initializer = $initializer;
+		$this->update = $update;
+		$this->scope = $scope;
+		$initializer->attach($this);
+		$update->attach($this);
+	}
+}
+
 /** Bare break; exits the nearest enclosing loop. No separate target fact is needed for current loop-only syntax. */
 final class ast_break_statement extends ast_statement
 {

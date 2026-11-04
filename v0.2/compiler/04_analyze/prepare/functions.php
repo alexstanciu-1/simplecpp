@@ -27,6 +27,13 @@ final class Function_Preparation
 		foreach ($body->statements as $statement)
 		{
 			if ($statement instanceof ast_loop_statement) {
+				if ($statement instanceof ast_for_statement) {
+					$statement->initializer->reset_preparation();
+					self::expression($statement->initializer instanceof ast_local_declaration
+						? $statement->initializer->initializer : $statement->initializer->value);
+					$statement->update->reset_preparation();
+					self::expression($statement->update->value);
+				}
 				self::expression($statement->condition);
 				self::reset_block($statement->body);
 				continue;

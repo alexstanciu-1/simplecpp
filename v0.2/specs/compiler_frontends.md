@@ -247,3 +247,10 @@ All flavors now admit braced `while (condition) { ... }` and
 admission and lexical body scopes; the trailing do-while semicolon is mandatory.
 Break/continue and unbraced loops remain deferred. See the
 [loop contract](../../specs/loop_statements_v0_2.md).
+
+## Bounded for header
+
+All flavors support [one initializer, condition and assignment update](../compiler/docs/for.md)
+with a braced body. Header-local declarations do not escape the loop; continue
+runs the update before the next test. Omitted/comma clauses and increments remain
+deferred. Header parsing reuses existing declaration/write and expression grammar.

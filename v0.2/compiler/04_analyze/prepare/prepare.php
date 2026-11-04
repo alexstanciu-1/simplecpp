@@ -139,6 +139,9 @@ final class Preparation
 				}
 				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
 			}
+			elseif ($statement instanceof ast_for_statement) {
+				$next = $this->for_loop($statement, $source, $target, $function);
+			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$next = $this->loop($statement, $source, $target, $function);
 			}
@@ -248,6 +251,26 @@ final class Preparation
 		$condition->type_def()->prepare_condition($condition);
 	}
 
+	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
+	private function for_loop(ast_for_statement $statement, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): int /** uint8 */
+	{
+		$this->local_frames[] = [];
+		try {
+			$this->statement_visits++;
+			if ($statement->initializer instanceof ast_local_declaration) {
+				$this->declaration($statement->initializer);
+			}
+			else {
+				$this->assignment($statement->initializer);
+			}
+			return $this->loop($statement, $source, $target, $function);
+		}
+		finally {
+			array_pop($this->local_frames);
+		}
+	}
+
 	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
 	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
 		ast_function_declaration $function): int /** uint8 */
@@ -270,6 +293,11 @@ final class Preparation
 		$this->forget_values();
 		if ($post_test) {
 			$this->condition($statement->condition);
+			$this->forget_values();
+		}
+		if ($statement instanceof ast_for_statement) {
+			$this->statement_visits++;
+			$this->assignment($statement->update);
 			$this->forget_values();
 		}
 		// Only a post-test body with exclusively return exits guarantees return; transfers end at this loop.

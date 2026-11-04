@@ -80,8 +80,14 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'];
 			}
 			elseif ($statement instanceof ast_loop_statement) {
-				$statements[] = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+				$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
+				if ($statement instanceof ast_for_statement) {
+					$row['kind'] = 'for';
+					$row['initializer'] = self::binding($statement->initializer);
+					$row['update'] = self::binding($statement->update);
+				}
+				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				$statements[] = ['kind' => 'if', 'arms' => array_map(static fn(ast_if_arm $arm): array => [
@@ -93,13 +99,8 @@ final class Compilation_Inspection
 					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes())]
 					: self::value($statement->value)];
 			}
-			elseif ($statement instanceof ast_local_declaration) {
-				$statements[] = ['kind' => 'local', 'id' => $statement->id,
-					'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
-			}
-			elseif ($statement instanceof ast_assignment_statement) {
-				$statements[] = ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
-					'conversion' => $statement->conversion()->name, 'value' => self::value($statement->value)];
+			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_assignment_statement)) {
+				$statements[] = self::binding($statement);
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$statements[] = ['kind' => 'return', 'conversion' => $statement->conversion()->name,
@@ -117,6 +118,17 @@ final class Compilation_Inspection
 		return ['statements' => $statements,
 			'work' => $program instanceof ast_function_body ? ['statements' => $program->statement_visits, 'expressions' => $program->expression_visits,
 				'name_lookups' => $program->name_lookups] : null];
+	}
+
+	/** @return mixed[] Declaration/write facts shared by body inspection and for headers. */
+	private static function binding(ast_local_declaration|ast_assignment_statement $statement): array /** array<string,mixed> */
+	{
+		if ($statement instanceof ast_local_declaration) {
+			return ['kind' => 'local', 'id' => $statement->id,
+				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
+		}
+		return ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
+			'conversion' => $statement->conversion()->name, 'value' => self::value($statement->value)];
 	}
 
 	/**

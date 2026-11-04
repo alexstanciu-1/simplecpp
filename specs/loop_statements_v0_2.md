@@ -1,4 +1,4 @@
-# Braced while and do-while in v0.2
+# Braced loops in v0.2
 
 Doc Status: normative
 Date: 2026-11-04
@@ -14,7 +14,7 @@ do { statements } while (condition);
 
 Bodies require braces. The do-while trailing semicolon is required. Loops may nest
 and may contain supported conditional statements. `do` and `while` are reserved
-keywords in every flavor. Numbered/labelled transfers, for/foreach, unbraced
+keywords in every flavor. Numbered/labelled transfers, foreach, unbraced
 bodies, empty-semicolon bodies and alternative syntax remain deferred in this slice.
 
 Bare `break;` exits the nearest enclosing loop. Bare `continue;` skips the rest of
@@ -64,3 +64,43 @@ left before preparing its test. Keep types, declaration bindings and already-pre
 occurrence snapshots. This conservative policy prevents the first iteration's values
 from incorrectly proving conversions safe on subsequent iterations. No fixed point,
 alias graph, loop unrolling or repeated preparation pass is required.
+
+## Bounded for slice — 2026-11-04
+
+All flavors admit `for (initializer; condition; update) { statements }` with exactly
+one required declaration or assignment initializer, one required condition expression,
+and one required assignment update. The initializer uses ordinary flavor syntax:
+
+```text
+cpp: for (int i = 0; i < 10; i = i + 1) { echo i; }
+php: for ($i int = 0; $i < 10; $i = $i + 1) { echo $i; }
+js:  for (let i: int = 0; i < 10; i = i + 1) { echo i; }
+```
+
+Existing inferred declarations (`auto`, PHP first write, JS `let`) and writes to
+existing locals are permitted in the initializer. An explicit declaration shadows
+outer storage. A bare PHP initializer write selects existing visible storage first;
+otherwise it declares a loop-local binding. Updates require existing local storage
+and cannot introduce declarations. All clauses use existing type/conversion rules;
+the loop is not restricted to integer storage. Conditions use generated truthiness.
+
+Initialization runs once. The condition runs before every attempted iteration. On
+normal body completion or `continue`, the update runs once before the next test.
+Break, return or failure skip the update. A false first condition skips both body
+and update. Each reached clause retains its existing expression evaluation contract.
+
+The header owns a lexical scope visible to the condition, update and body. A braced
+body owns a child scope and may shadow header locals; its locals are not visible in
+the header or after the loop. Header declarations do not escape the loop. Writes
+to pre-existing outer locals remain visible after it.
+
+Prepare initializer, condition, body and update once, in that order. Clear value
+knowledge before repeating regions and on exit, retaining types and bindings.
+Check the update even when a constant condition or body transfer prevents its
+execution. Completion conservatively permits zero iterations and does not prove
+a value function returns merely because the for body returns.
+
+Omitted clauses, comma-separated clauses, increment/decrement, compound updates,
+standalone call clauses and unbraced bodies remain deferred. Calls inside otherwise
+supported expressions are allowed. This slice adds no assignment expressions or
+general expression statements.

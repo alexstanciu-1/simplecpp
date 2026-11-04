@@ -66,6 +66,13 @@ final class Body_Collection
 			$value = $statement->value;
 		}
 		elseif ($statement instanceof ast_loop_statement) {
+			if ($statement instanceof ast_for_statement) {
+				$this->expression($statement->initializer instanceof ast_local_declaration
+					? $statement->initializer->initializer : $statement->initializer->value);
+				$this->expression($statement->condition);
+				$this->expression($statement->update->value);
+				return;
+			}
 			$value = $statement->condition;
 		}
 		elseif ($statement instanceof ast_if_statement) {
@@ -87,6 +94,12 @@ final class Body_Collection
 	public function child(): Body_Collection
 	{
 		return new Body_Collection($this->scope, [], $this);
+	}
+
+	/** Publish a header scope whose syntax is owned by a for node rather than a statement block. */
+	public function publish_scope(): scope
+	{
+		return $this->declarations->publish();
 	}
 
 	/** $start/$end: token positions. @param ast_statement[] $statements */

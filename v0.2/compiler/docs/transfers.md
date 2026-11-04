@@ -5,8 +5,9 @@ Doc Status: supporting
 The [loop contract](../../../specs/loop_statements_v0_2.md) defines bare `break;` and
 `continue;` for all three flavors. Both target the nearest loop in the current
 function. Break exits without another test; continue reaches the next test,
-including do-while's trailing test. Numbered/labelled exits, switch, for/foreach
+including do-while's trailing test. Numbered/labelled exits, switch, foreach
 and unbraced loops remain deferred.
+For the bounded `for` loop, continue reaches the update before the next test; see [for loops](for.md).
 
 ## Owners and preparation
 

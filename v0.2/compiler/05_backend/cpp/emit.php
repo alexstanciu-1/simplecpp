@@ -146,7 +146,14 @@ final class Cpp_Emitter
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
-				$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
+				if ($statement instanceof ast_for_statement) {
+					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers);
+					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers);
+					$lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
+				}
+				else {
+					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
+				}
 				foreach ($this->statements($statement->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {
 					$lines[] = "\t" . $line;
 				}
@@ -166,29 +173,8 @@ final class Cpp_Emitter
 					$lines[] = "\t}";
 				}
 			}
-			elseif ($statement instanceof ast_local_declaration) {
-				$lines[] = "\t[[maybe_unused]] " . $statement->type_def()->cpp_type() . ' ' . $this->name($statement)
-					. ' = ' . $statement->type_def()->lower_cpp_conversion($statement->initialization(),
-						$this->value($statement->initializer, $global_references, $declarations, $required_headers)) . ';';
-				foreach (array_merge($statement->type_def()->cpp_headers(),
-					$statement->type_def()->conversion_headers($statement->initialization())) as $header) {
-					$required_headers[$header] = true;
-				}
-			}
-			elseif ($statement instanceof ast_assignment_statement) {
-				// Identity writes to the same local are no-ops for the supported built-in value types.
-				if (($statement->conversion() === value_conversion::identity)
-					&& ($statement->value instanceof ast_name_expression)
-					&& ($statement->value->declaration() === $statement->local_def())) {
-					$lines[] = "\t(void)" . $this->name($statement->local_def()) . ';';
-					continue;
-				}
-				$type = $statement->local_def()->type_def();
-				$lines[] = "\t" . $this->name($statement->local_def()) . ' = '
-					. $type->lower_cpp_conversion($statement->conversion(), $this->value($statement->value, $global_references, $declarations, $required_headers)) . ';';
-				foreach ($type->conversion_headers($statement->conversion()) as $header) {
-					$required_headers[$header] = true;
-				}
+			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_assignment_statement)) {
+				$lines[] = "\t" . $this->binding($statement, $global_references, $declarations, $required_headers) . ';';
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
@@ -239,6 +225,42 @@ final class Cpp_Emitter
 	private function name(ast_local_binding $binding): string
 	{
 		return 'local_' . $binding->storage_id();
+	}
+
+	/**
+	 * Render a declaration/write without its delimiter, shared by body statements and for headers.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function binding(ast_local_declaration|ast_assignment_statement $statement,
+		array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		if ($statement instanceof ast_local_declaration) {
+			$type = $statement->type_def();
+			$conversion = $statement->initialization();
+			$value = $statement->initializer;
+			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
+			foreach ($type->cpp_headers() as $header) {
+				$headers[$header] = true;
+			}
+		}
+		else {
+			$type = $statement->local_def()->type_def();
+			$conversion = $statement->conversion();
+			$value = $statement->value;
+			$prefix = $this->name($statement->local_def());
+			if (($conversion === value_conversion::identity) && ($value instanceof ast_name_expression)
+				&& ($value->declaration() === $statement->local_def())) {
+				return '(void)' . $prefix;
+			}
+		}
+		$operand = $this->value($value, $global_references, $declarations, $headers);
+		foreach ($type->conversion_headers($conversion) as $header) {
+			$headers[$header] = true;
+		}
+		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand);
 	}
 
 	/**

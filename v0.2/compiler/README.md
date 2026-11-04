@@ -20,6 +20,7 @@ See [direct scalar lowering](docs/direct_lowering.md) for conservative wrapper r
 See [int64 arithmetic](docs/arithmetic.md) for binary operations and their runtime boundary.
 See [logical expressions](docs/logical.md) for generated truthiness and native short-circuit lowering.
 See [loop transfers](docs/transfers.md) for nearest-loop break/continue and transient completion flags.
+See [bounded for loops](docs/for.md) for header ownership, scope and update sequencing.
 See [scalar comparisons](docs/comparisons.md) for generated admission, sequencing and focused tests.
 See [canonical type definitions](docs/types.md) for core scalar/void identity and generated preparation/conversion/lowering.
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current

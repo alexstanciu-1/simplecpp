@@ -127,9 +127,15 @@ final class Syntax_Inspection
 			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_loop_statement) {
-			return ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+			$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
 				'body' => array_map(self::statement(...), $statement->body->statements)];
+			if ($statement instanceof ast_for_statement) {
+				$row['kind'] = 'for';
+				$row['initializer'] = self::statement($statement->initializer);
+				$row['update'] = self::statement($statement->update);
+			}
+			return $row;
 		}
 		if ($statement instanceof ast_if_statement) {
 			return ['kind' => 'if', 'span' => self::span($statement), 'arms' => array_map(

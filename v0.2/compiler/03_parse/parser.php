@@ -130,6 +130,9 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->keyword('for')) {
+			return $this->for_loop($grammar, $collector);
+		}
 		if ($this->cursor->keyword('while') || $this->cursor->keyword('do')) {
 			return $this->loop($grammar, $collector);
 		}
@@ -214,6 +217,28 @@ final class Parser
 		}
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
 		return $child->block($start, $end, $statements);
+	}
+
+	/** Parse one initializer, condition and assignment update in a header-local scope. */
+	private function for_loop(statement_grammar $grammar, Body_Collection $collector): ast_for_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('for');
+		$this->cursor->take(token_kind::lparen, '(');
+		$header = $collector->child();
+		$initializer = $grammar->statement($this, $header);
+		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_assignment_statement)) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
+		}
+		$header->statement($initializer, 0);
+		$condition = $this->value();
+		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
+		$update_start = $this->cursor->position();
+		$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
+			? token_kind::variable : token_kind::identifier);
+		$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
+		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
+		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
 	}
 
 	/** Parse pre-test/post-test loops with a required braced body and explicit do-while terminator. */
@@ -487,11 +512,12 @@ final class Parser
 	}
 
 	/** $start: token position. */
-	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent): ast_assignment_statement
+	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent,
+		token_kind $terminator = token_kind::semicolon): ast_assignment_statement
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->value();
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
 		return new ast_assignment_statement($start, $end, $name, $value, $intent);
 	}
 }
