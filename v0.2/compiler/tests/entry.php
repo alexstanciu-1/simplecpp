@@ -5,7 +5,7 @@ require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Exit_Preparation, Preparation, Source_Frontend,
 		diagnostic, entry_target, exit_conversion, flavor, ast_local_declaration, ast_name_expression,
-		ast_return_statement, type_definition, source_file};
+		ast_return_statement, type_int64, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -37,7 +37,7 @@ foreach ([['$ret int = 8; return $ret;', flavor::php], ['int ret = 8; return ret
 	verify(($return->value instanceof ast_name_expression) && ($return->value->local_def() === $local),
 		'Exact binding');
 	verify($local === $collected->main()->body()->locals[0], 'Semantic binding uses collected identity');
-	verify($local->type_def() === type_definition::int64, 'Canonical default int identity');
+	verify($local->type_def() === type_int64::instance(), 'Canonical default int identity');
 	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven),
 		'Known exit proof');
 	verify(($program->body()->statement_visits === 2) && ($program->body()->expression_visits === 2)

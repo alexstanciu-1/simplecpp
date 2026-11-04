@@ -16,7 +16,7 @@ final class ast_integer_expression extends ast_expression
 {
 	public function settle_integer(int $value /** int64 */): void
 	{
-		$this->settle_value(type_definition::int64, $value);
+		$this->settle_value(type_registry::integer(), $value);
 	}
 
 	public function integer(): int /** int64 */

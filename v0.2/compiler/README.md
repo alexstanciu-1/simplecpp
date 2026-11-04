@@ -16,6 +16,7 @@ supported, and no Parallel extension is required. See [execution guidance](docs/
 for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
+See [canonical type definitions](docs/types.md) for int64/void identity and type-owned preparation/lowering.
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
 in-process incremental preparation API and its lowering boundary.
 
@@ -207,18 +208,19 @@ positions recover precise name/type diagnostic locations without stored token fi
   `$type_def`, checked `type_def()`, body-local ID and known initializer constant.
 - `ast_function_declaration`: optional written `$return_type_name`, protected
   resolved `$return_type_def`, checked `return_type_def()` and its body.
-- `ast_call_statement`: protected resolved `$function_def` and checked
-  `function_def()`, linking directly to the declaration. No prepared-call/signature
+- `ast_call_statement`: protected stable `$function_symbol` and checked
+  `function_def()`, following the current declaration. No prepared-call/signature
   wrapper is needed. Bodies consume settled return facts without visiting callees.
 
-The current builtin type definitions are canonical enum objects (`type_definition`:
-int64 and void), not per-use wrappers. `int` and `int64` resolve to the same identity.
+The current builtin type definitions are shared `type_int64` and `type_void` objects
+under the common `type_definition` contract, not per-use wrappers.
+`int` and `int64` resolve to the same identity.
 This representation covers the existing builtin subset; user-defined types remain
 future work. Missing written types remain parseable where previously allowed but
-inference is still rejected during preparation.
+local inference is still rejected during preparation; explicit globals admit integer-literal inference.
 
-Collection indexes and prepared variable references now point directly to local AST
-declarations. Specialized facts remain for additional results such as decoded strings,
+Collection indexes and prepared local references point directly to local AST
+declarations; global reads retain stable symbol entries. Specialized facts remain for results such as decoded strings,
 constant values, exit conversions and completed body output. Sequential reanalysis
 resets owned facts; older handles must not be treated as immutable declaration
 snapshots across reset. Incremental/concurrent reader lifetimes remain deferred.

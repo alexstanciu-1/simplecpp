@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
-use scpp\compiler\{Source_Frontend, Symbol_Publication, Preparation, type_definition, diagnostic,
+use scpp\compiler\{Source_Frontend, Symbol_Publication, Preparation, type_int64, diagnostic,
 		entry_target, flavor, source_file};
 
 function verify(bool $condition, string $message): void
@@ -37,7 +37,7 @@ foreach ([
 		'Global index wraps/copies AST identity');
 	$prepared = (new Preparation())->prepare($file, new entry_target(31));
 	verify($prepared->file === $file, 'Preparation must retain the same file root');
-	verify($main->return_type_def() === type_definition::int64, 'Entry contract lost integer return');
+	verify($main->return_type_def() === type_int64::instance(), 'Entry contract lost integer return');
 	$main->body()->require_prepared();
 	verify($main->body() === $prepared->body(), 'Entry does not use the original AST body');
 	$again = (new Preparation())->prepare($file, new entry_target(31));

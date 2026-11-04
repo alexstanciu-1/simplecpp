@@ -39,7 +39,10 @@ require_once __DIR__ . '/compiler/frontend.php';
 
 require_once __DIR__ . '/04_analyze/prepare/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/output.php';
-require_once __DIR__ . '/04_analyze/prepare/integers.php';
+require_once __DIR__ . '/types/definition.php';
+require_once __DIR__ . '/generated/types/int64.php';
+require_once __DIR__ . '/generated/types/registry.php';
+require_once __DIR__ . '/types/void.php';
 require_once __DIR__ . '/04_analyze/prepare/globals.php';
 require_once __DIR__ . '/04_analyze/prepare/prepare.php';
 require_once __DIR__ . '/04_analyze/prepare/functions.php';

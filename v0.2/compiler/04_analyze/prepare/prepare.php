@@ -174,12 +174,13 @@ final class Preparation
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
 				'Inferred declarations are outside the entry slice');
 		}
-		if (!in_array($declaration->type_name, ['int', 'int64'], true)) {
+		$type = type_registry::resolve($declaration->type_name);
+		if ($type === null) {
 			throw new diagnostic($source, $root->byte_at($declaration->type_position()),
 				'Unknown or unsupported type: ' . $declaration->type_name);
 		}
 		$this->value($declaration->initializer, $name);
-		$declaration->settle_type(type_definition::int64, $declaration->initializer->constant());
+		$declaration->settle_type($type, $declaration->initializer->constant());
 		$this->visible_locals[$name] = $declaration;
 	}
 
@@ -188,7 +189,7 @@ final class Preparation
 	{
 		$this->expression_visits++;
 		if ($syntax instanceof ast_integer_expression) {
-			$syntax->settle_integer(Integer_Preparation::value($syntax));
+			type_registry::integer()->prepare_literal($syntax);
 			return;
 		}
 		if ($syntax instanceof ast_name_expression)

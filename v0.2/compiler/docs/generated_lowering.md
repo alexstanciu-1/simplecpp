@@ -31,8 +31,9 @@ may already disappear. Measure build time and runtime behavior where relevant.
 ## Implemented first slice
 
 `emit-compiler` reuses the API generator's scalar registry and validated target
-facts. It emits `compiler/generated/cpp/native_values.php`, a PHP trait used by
-`Cpp_Emitter`. Its int64 storage spelling is `__INT64_TYPE__`, the same target-native
+facts. It emits `compiler/generated/types/int64.php`, the complete
+canonical `type_int64` definition, plus its direct source-name registry. `Cpp_Emitter` dispatches through resolved type
+objects; see [type ownership](types.md). Its int64 storage spelling is `__INT64_TYPE__`, the same target-native
 representation used by the runtime generator, without a wrapper or header include.
 For example:
 
@@ -42,7 +43,7 @@ scpp::echo_int(local_0);
 return static_cast<int>(local_0);
 ```
 
-The trait accepts checked int64 facts, never source literal text. It preserves
+Generated lowering accepts settled literal AST facts, never unchecked source literal text. It preserves
 normalized decimal spelling and handles the signed minimum without an overflowing
 positive literal. References retain their existing local binding identities.
 

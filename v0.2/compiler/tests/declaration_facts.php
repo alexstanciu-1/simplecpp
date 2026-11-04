@@ -6,7 +6,7 @@ require_once __DIR__ . '/../boot.php';
 use scpp\compiler\{Source_Frontend, Symbol_Publication, Function_Preparation, Preparation,
 		Program_Preparation, Cpp_Emitter, ast_node, ast_call_statement, diagnostic, entry_target, flavor,
 		source_file,
-		type_definition};
+		type_int64, type_void};
 
 function verify(bool $condition, string $message): void
 {
@@ -39,12 +39,12 @@ unresolved(fn() => $first->type_def());
 unresolved(fn() => $ping->return_type_def());
 unresolved(fn() => $call->function_def());
 $callables = Function_Preparation::declarations(Symbol_Publication::completed(['facts' => $file]));
-verify(($callables->resolve('func:ping') === $ping) && ($ping->return_type_def() === type_definition::void),
+verify(($callables->resolve('func:ping') === $ping) && ($ping->return_type_def() === type_void::instance()),
 	'Declaration phase lost AST identity');
 unresolved(fn() => $ping->body()->require_prepared());
 unresolved(fn() => $ping->body()->locals[0]->type_def());
 (new Preparation())->function_body($main->body(), $callables, new entry_target(31));
-verify(($first->type_def() === $second->type_def()) && ($first->type_def() === type_definition::int64),
+verify(($first->type_def() === $second->type_def()) && ($first->type_def() === type_int64::instance()),
 	'Type aliases did not resolve to one identity');
 verify($main->body()->statements[1]->initializer->local_def() === $first, 'Reference does not link to its declaration');
 verify(($main->body()->statements[2] === $call) && ($call instanceof ast_call_statement) && ($call->function_def() === $ping),

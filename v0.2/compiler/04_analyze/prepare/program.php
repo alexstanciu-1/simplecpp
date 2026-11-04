@@ -48,7 +48,7 @@ final class Program_Preparation
 		foreach ($files as $file) {
 			$main = $file->main();
 			if ($main !== null) {
-				$main->settle_return_type(type_definition::int64);
+				$main->settle_return_type(type_registry::integer());
 			}
 		}
 		foreach ($files as $file) {

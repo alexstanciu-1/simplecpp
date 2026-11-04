@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Source_Frontend, Preparation, Function_Preparation, Cpp_Emitter,
-		Cpp_Program, Program_Preparation, entry_target, flavor, source_file, diagnostic, type_definition};
+		Cpp_Program, Program_Preparation, entry_target, flavor, source_file, diagnostic, type_int64};
 
 function verify(bool $condition, string $message): void
 {
@@ -50,7 +50,7 @@ Cpp_Program::emit($program);
 verify(serialize($file) === $before, 'Lowering mutated facts');
 // An occurrence retains its value fact, rather than rereading the declaration's later value.
 $local->reset_preparation();
-$local->settle_type(type_definition::int64, 9);
+$local->settle_type(type_int64::instance(), 9);
 verify($echo->value->constant() === 8, 'Reference value was not occurrence-specific');
 Function_Preparation::reset($file->main());
 unavailable(fn() => $local->initializer->integer());

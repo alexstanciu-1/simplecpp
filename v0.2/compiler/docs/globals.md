@@ -23,7 +23,7 @@ only; writes and other types remain deferred.
   `Namespace_Syntax.variable_path()` normalizes qualified reads, including PHP's
   final `$variable` token. Qualifying a read does not create a new declaration.
 - `Global_Preparation` validates and settles all globals before bodies. The common
-  `Integer_Preparation` checks magnitude before host conversion, including int64 minimum.
+  `type_int64` checks magnitude before host conversion, including int64 minimum.
 - `ast_name_expression.binding` is one nullable reference: a local AST declaration
   or a stable global `symbol_entry`. `declaration()` follows the current global target;
   `local_def()` remains the checked local-only view for local consumers.

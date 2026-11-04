@@ -14,12 +14,13 @@ final class Global_Preparation
 			if (!($declaration instanceof ast_global_declaration) || $declaration->type_ready()) {
 				continue;
 			}
-			if (!in_array($declaration->type_name, [null, 'int', 'int64'], true)) {
+			$type = $declaration->type_name === null ? type_registry::integer() : type_registry::resolve($declaration->type_name);
+			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(),
 					'Unknown or unsupported global type: ' . $declaration->type_name);
 			}
-			$declaration->initializer->settle_integer(Integer_Preparation::value($declaration->initializer));
-			$declaration->settle_type(type_definition::int64);
+			$type->prepare_literal($declaration->initializer);
+			$declaration->settle_type($type);
 		}
 	}
 }

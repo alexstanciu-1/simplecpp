@@ -152,9 +152,12 @@ Explicit native constructors are available independently. See the
 
 ## Compiler backend publication
 
-`emit-compiler` generates executable PHP lowering traits from the shared scalar
-registry and validated native facts. Its first supported compiler type is native
-int64. Output lives in `compiler/generated/`, independently of runtime API demands;
+`emit-compiler` generates the complete PHP int64 definition and source-name registry
+from runtime metadata and validated native facts. `compiler.modules` declares runtime
+module participation; only the always-available default-runtime int64 contribution is
+implemented. `compiler.integer_literals` records decimal/reject/signed-carrier policy.
+The generator derives exact bounds and safe literal spelling from width/signedness;
+operators, overloads, casts and additional types remain out of scope. Output lives in `compiler/generated/`, independently of runtime API demands;
 its dedicated cleanup extensions are `.php` and `.json`. CMake checks and repairs
 this publication while preserving unchanged timestamps. The runtime publication
 and its cleanup extensions are unchanged. See the [direction and current scope](../../compiler/docs/generated_lowering.md).

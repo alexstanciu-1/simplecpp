@@ -3,12 +3,6 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Canonical builtin definitions for the current subset; enum cases are shared object identities. */
-enum type_definition: int /** uint8 */ {
-	case int64 = 1;
-	case void = 2;
-}
-
 /**
  * Records whether an entry return is proven to fit native int or needs a runtime range check.
  *

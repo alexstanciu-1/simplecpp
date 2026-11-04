@@ -103,7 +103,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/cpp/native_values.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/registry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -191,6 +191,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_namespaces COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/namespaces.php)
   add_test(NAME compiler_imports COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/imports.php)
   add_test(NAME compiler_globals COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/globals.php)
+  add_test(NAME compiler_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/types.php)
   add_test(NAME compiler_frontend_service COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend_service.py)
   set_tests_properties(compiler_frontend_service PROPERTIES TIMEOUT 60)

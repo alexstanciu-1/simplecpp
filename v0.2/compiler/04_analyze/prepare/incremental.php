@@ -36,7 +36,7 @@ final class Incremental_Preparation
 			if ($file->main() !== null) {
 				$main = $file->main();
 				if (!$main->return_type_ready()) {
-					$main->settle_return_type(type_definition::int64);
+					$main->settle_return_type(type_registry::integer());
 				}
 				$functions[] = $main;
 			}

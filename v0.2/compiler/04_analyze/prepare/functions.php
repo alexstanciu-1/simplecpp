@@ -52,7 +52,7 @@ final class Function_Preparation
 					'Only explicit void functions are supported');
 			}
 			if (!$declaration->return_type_ready()) {
-				$declaration->settle_return_type(type_definition::void);
+				$declaration->settle_return_type(type_void::instance());
 			}
 		}
 		return $symbols;

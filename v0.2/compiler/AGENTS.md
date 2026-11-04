@@ -59,6 +59,8 @@ flavor syntax normalization does not add fallback lookup or namespace-wide watch
 Imports are file-local bindings to existing symbols, not namespace aliases or exports.
 For explicit global storage, read [the integer-global slice](docs/globals.md).
 Global reads use stable symbol entries and do not copy initializer constants into callers.
+For canonical type identity, literal preparation and generated lowering, read
+[the type-definition model](docs/types.md). Reuse shared definitions; keep occurrence facts on AST nodes.
 Keep ordinary top-level variables local to implicit main for now; configurable
 same-file visibility and shadowing are [deferred policy](../specs/planning/variable_visibility_debt.md).
 

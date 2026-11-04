@@ -3,8 +3,6 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-require_once __DIR__ . '/../../generated/cpp/native_values.php';
-
 /** Spells the already-selected entry exit conversion through the public runtime boundary. */
 final class Cpp_Exit
 {
@@ -23,8 +21,6 @@ final class Cpp_Exit
  */
 final class Cpp_Emitter
 {
-	use cpp_native_values;
-
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
 	public function emit(prepared_entry $program): string
 	{
@@ -60,8 +56,8 @@ final class Cpp_Emitter
 		$uses_output = false;
 		$global_references = [];
 		foreach ($file->globals() as $global) {
-			$definitions[] = 'constinit ' . $this->native_type($global->type_def()) . ' ' . self::global_name($global)
-				. ' = ' . $this->native_integer($global->initializer->integer()) . ";\n";
+			$definitions[] = 'constinit ' . $global->type_def()->cpp_type() . ' ' . self::global_name($global)
+				. ' = ' . $global->type_def()->lower_cpp_literal($global->initializer) . ";\n";
 		}
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
@@ -83,7 +79,7 @@ final class Cpp_Emitter
 		}
 		ksort($global_references, \SORT_STRING);
 		foreach ($global_references as $name => $global) {
-			$header .= 'extern ' . $this->native_type($global->type_def()) . ' ' . $name . ";\n";
+			$header .= 'extern ' . $global->type_def()->cpp_type() . ' ' . $name . ";\n";
 		}
 		ksort($declarations, \SORT_STRING);
 		foreach ($declarations as $name => $unused) {
@@ -107,7 +103,7 @@ final class Cpp_Emitter
 		foreach ($body->statements as $statement)
 		{
 			if ($statement instanceof ast_local_declaration) {
-				$lines[] = "\t[[maybe_unused]] " . $this->native_type($statement->type_def()) . ' ' . $this->name($statement)
+				$lines[] = "\t[[maybe_unused]] " . $statement->type_def()->cpp_type() . ' ' . $this->name($statement)
 					. ' = ' . $this->value($statement->initializer, $global_references) . ';';
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
@@ -153,7 +149,7 @@ final class Cpp_Emitter
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */): string
 	{
 		if ($value instanceof ast_integer_expression) {
-			return $this->native_integer($value->integer());
+			return $value->type_def()->lower_cpp_literal($value);
 		}
 		if ($value instanceof ast_name_expression) {
 			$declaration = $value->declaration();

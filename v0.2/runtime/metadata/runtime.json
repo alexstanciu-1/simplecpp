@@ -728,5 +728,20 @@
       "encode_nullable_bool_t",
       "encode_nullable_string"
     ]
+  },
+  "compiler": {
+    "modules": {
+      "default-runtime": {
+        "always_available": true,
+        "types": [
+          "int64"
+        ]
+      }
+    },
+    "integer_literals": {
+      "radix": 10,
+      "overflow": "reject",
+      "cpp_suffix": "LL"
+    }
   }
 }
