@@ -7,6 +7,30 @@ required reading, read [README.md](README.md), [code_style.md](docs/code_style.m
 the [AST ownership decisions](docs/ast_model.md), and the contract owning the change. The [frontend contract](../specs/compiler_frontends.md)
 records the current language-flavor and parser boundaries.
 
+## Always preserve: incremental and native multithreading
+
+- Design new features for incremental reuse: unchanged tokens/ASTs remain shared;
+  prepare affected bodies, lower/emit affected source units, rebuild affected native objects.
+  Keep stable symbol entries (including tombstones) and record dependencies for cached facts.
+- Preserve necessary watches and pending work through failures. Only successful stages
+  acknowledge their work. Keep generation retirement in `Generation_Cleanup`, after readers
+  finish; do not scatter cleanup through AST traversal or erase valid caches.
+- For each language slice, test an affecting edit, deletion/error and recovery, and compare
+  recovery with a fresh compilation in all supported flavors. Reuse the
+  [incremental equivalence tools](docs/incremental_equivalence.md) and
+  [failure cleanup contract](docs/failure_cleanup.md).
+- PHP stays sequential, but preserve the native workflow: source-local frontend → join →
+  symbol publication → declaration contracts → join → body preparation → join → private
+  lowering → join → output publication. Relationship resolution precedes dependent contracts.
+- Keep one writing job per source context; foreign reads consume settled immutable contracts,
+  never foreign executable bodies. Keep potentially synchronized access behind reusable owner
+  methods (symbols, watches, queues, publication). Early discoveries are pending notifications,
+  not permission to consume unfinished declarations. Finish readers before incremental replacement.
+- Do not add locks, schedulers or PHP worker transports speculatively. Before changing these
+  boundaries, read the [native ownership plan](../specs/planning/two_traversal_preparation.md).
+  Current sequential tests do not prove native thread safety; native synchronization choices
+  await implementation and measurement.
+
 ## Current direction
 
 - Work in small end-to-end slices. Agree each slice's scope and verification
@@ -21,19 +45,6 @@ records the current language-flavor and parser boundaries.
   private lowering; concrete shared lowering needs are reviewed individually.
   Do not restore PHP worker runtimes, transport adapters,
   phase-receipt serialization or fact export/import solely for interpreter isolation.
-- Keep stage ownership and sequencing explicit. Source syntax and semantic facts
-  remain ordinary in-process objects. The coordinator completes collection before
-  preparation and completes preparation before lowering/publication. Sequential
-  execution does not prove native thread safety.
-- Before changing frontend, preparation, lowering or orchestration, read the
-  [thread-safety plan through lowering](../specs/planning/two_traversal_preparation.md).
-  It records exclusive source/body ownership, early declaration notifications into
-  a coordinator-owned pending index (direct calls in PHP, synchronized delivery in
-  native execution), publication only after frontend completion,
-  relationship resolution before contract preparation, owner-private reference
-  indexes, immutable external reads, phase joins and incremental reader lifetimes.
-  It is an agreed design, not proof of current implementation safety or authorization
-  to implement a scheduler, AST-fact refactor or native synchronization machinery.
 - Author the compiler in PHP 8.5. The later Simple C++ port will be manual or
   assisted; do not impose the donor's PHP-to-PHP++ converter restrictions here.
 - Simple C++ is one language with cpp/php/js syntax flavors. There is one PHP
@@ -74,12 +85,12 @@ For module loading, read [the operational manifest contract](docs/modules.md).
 For module/incremental work, read the [common module plan](../specs/planning/common_modules_and_incremental.md).
 Application and runtime modules share dependency ownership and orchestration.
 Sessions own modules; modules own source units; units own AST roots. Dependency,
-entry and owner-backlink fields have non-owning native intent. The initial rule is
-full rebuild on detected application changes; dependencies are manually built.
+entry and owner-backlink fields have non-owning native intent. Dependencies are manually built.
 Do not scan dependency source trees or validate runtime/module artifacts or versions.
 Read [the deferred dependency work](../specs/planning/dependency_artifacts_debt.md). The project command compares
-mtime and size and reuses only an unchanged, intact emitted bundle; there is no partial AST
-or source-level reuse. See the module guide for the change-detection boundary.
+mtime and size and reuses an unchanged, intact emitted bundle. Distinguish that full-build
+host path from `Incremental_Project`, which retains source-level AST/fact reuse and selective
+emission. See [incremental executable orchestration](docs/incremental_executable.md).
 
 Read [incremental frontend generations](docs/incremental_frontend.md) before changing
 frontend reuse. Unchanged AST/token objects are shared between retained sessions;
