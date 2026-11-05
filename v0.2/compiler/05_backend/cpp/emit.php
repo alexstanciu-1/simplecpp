@@ -276,6 +276,18 @@ final class Cpp_Emitter
 		bool &$reorderable = false): string
 	{
 		$reorderable = false;
+		if ($value instanceof ast_cast_expression) {
+			$type = $value->type_def();
+			$conversion = $value->conversion();
+			$operand_safe = false;
+			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers, $operand_safe);
+			foreach (array_merge($type->cpp_headers(), $value->operand->type_def()->cpp_headers(),
+				$type->conversion_headers($conversion)) as $header) {
+				$required_headers[$header] = true;
+			}
+			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
+			return '(' . $type->lower_cpp_conversion($conversion, $operand) . ')';
+		}
 		if ($value instanceof ast_not_expression) {
 			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
 		}

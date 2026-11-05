@@ -81,6 +81,10 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_cast_expression) {
+			return ['kind' => 'cast', 'type_name' => $expression->type_name,
+				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_not_expression) {
 			return ['kind' => 'logical_not', 'operand' => self::expression($expression->operand),
 				'span' => self::span($expression)];

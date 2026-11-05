@@ -111,7 +111,7 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
-		if ($value instanceof ast_not_expression) {
+		if (($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)) {
 			$this->expression($value->operand);
 		}
 		if ($value instanceof ast_binary_expression) {

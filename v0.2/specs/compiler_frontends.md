@@ -49,7 +49,7 @@ type annotations are single names; values are decimal integers/floats, `true`/`f
 name references, calls and the scalar comparisons documented below. A sign immediately before a floating token is part of the bounded
 literal grammar; this does not introduce general unary expressions. Generated metadata registers the supported core scalar literals/types.
 The [scalar contract](../../specs/compiler_scalars_v0_2.md) defines checked conversion
-at written type destinations; source cast-expression syntax remains deferred. Explicit and inferred declarations retain syntax, and PHP subsequent bare
+at written type destinations and `(Type) operand` explicit scalar casts in all three flavors. Explicit and inferred declarations retain syntax, and PHP subsequent bare
 writes retain DeclareOrAssign intent. Empty input is valid. Statements require
 semicolons; a failed parse publishes no partial file. Unknown types, unknown names,
 duplicate declarations and large integer spellings remain analysis concerns.

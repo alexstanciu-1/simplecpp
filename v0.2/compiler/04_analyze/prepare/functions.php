@@ -67,7 +67,7 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
-		if ($value instanceof ast_not_expression) {
+		if (($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)) {
 			self::expression($value->operand);
 		}
 		if ($value instanceof ast_binary_expression) {

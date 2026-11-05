@@ -1,7 +1,7 @@
 # Default-runtime compiler scalars
 
 Doc Status: normative
-Date: 2026-11-04
+Date: 2026-11-05
 Scope: the active v0.2 PHP compiler; int/int64, null, bool, byte and float/float64.
 
 ## Availability and source values
@@ -75,8 +75,8 @@ Entry exit status requires int64. The current echo slice accepts int64 or its
 string literals and typed string locals; it does not acquire boolean/null/byte formatting.
 Void functions, calls, symbols, ownership and source lookup retain their existing rules.
 
-Explicit cast-expression syntax is deferred in every flavor. The generated type
-API accepts an explicit-intent argument now, independently of future cast syntax.
+Explicit cast expressions use the same generated explicit-intent conversion API;
+the bounded syntax and value semantics are defined below.
 No operators, overloads, nullable types, general string operations or container
 behavior are introduced by this slice.
 
@@ -165,3 +165,33 @@ global. Its own initializer cannot use the same unqualified name as a backdoor t
 the global. Before that local declaration, an ordinary read may still resolve an
 available global under existing lookup rules. Function and implicit-main bodies
 have independent local collections. No source profile/configuration is introduced.
+
+
+## Explicit scalar cast expressions — 2026-11-05
+
+All three active flavors admit `(Type) operand`, e.g. `echo (int) 8.75;` or
+`echo (int) (byte) value;` (PHP writes `$value`). This common Simple C++ spelling
+is a runtime value conversion, not a JavaScript/TypeScript type assertion.
+The target is one registered default-runtime source type name: int/int64, bool,
+byte, float/float64, null or string. Void casts, user-defined/qualified targets,
+nullable types, templates and alternative cast spellings are outside this slice.
+
+Casts bind at unary precedence, above all binary operators, and nest right to left.
+`(int) 8.75 + 1` means `((int) 8.75) + 1`; casting a whole binary expression requires
+parentheses around that expression. Grouping remains grouping when no cast operand
+follows, including `(null)`. Existing signed floating literals are operands;
+general unary numeric operators remain deferred.
+
+A source cast requests explicit conversion intent under the conversion table above.
+It introduces no new source/destination pair and does not compose conversions
+implicitly. Same-type casts are permitted, including string and null identity.
+String/numeric/text conversions remain deferred; explicit bool conversion does not
+inherit the separate string truthiness rule.
+
+The operand is evaluated once. Known range failures diagnose during preparation;
+unknown values retain the generated checked runtime conversion. The result is a
+value of the destination type; it does not provide stable mutable-reference storage,
+even for an identity cast. Typed initialization, assignment, argument and return
+boundaries keep their own existing checks. Casting to null does not enable null
+inference. Cast expressions do not broaden the literal-only initializer contract
+for globals, constants or parameter defaults.

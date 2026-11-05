@@ -125,3 +125,5 @@ All generated programs printed `0125581` and exited 8. LLVM includes optimizatio
 code generation; trace totals exclude driver/startup work and are not an additive
 breakdown of wall time. Raw JSON retains optimizer/codegen detail. PHP fixture generation
 and its semantic/incremental assertions took 61.36 ms in that run.
+
+Explicit source casts use these same handlers without new generated definitions or conversion tables. See [cast ownership and proofs](casts.md).

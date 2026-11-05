@@ -454,6 +454,27 @@ final class Parser
 		return $left;
 	}
 
+	/** Bounded scalar cast lookahead; preserve grouping when no unary operand follows, e.g. (null). */
+	private function cast_ahead(): bool
+	{
+		$tokens = $this->cursor->tokens;
+		$start = $this->cursor->position();
+		if (!$this->cursor->is(token_kind::lparen)
+			|| (($tokens->tokens[$start + 2]->kind ?? null) !== token_kind::rparen)) {
+			return false;
+		}
+		$type = $tokens->text_at($start + 1);
+		if ((type_registry::resolve($type) === null) && ($type !== 'void')) {
+			return false;
+		}
+		$kind = $tokens->tokens[$start + 3]->kind ?? null;
+		return in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
+			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string,
+			token_kind::lparen, token_kind::bang, token_kind::backslash, token_kind::scope], true)
+			|| ((($kind === token_kind::minus) || ($kind === token_kind::plus))
+				&& (($tokens->tokens[$start + 4]->kind ?? null) === token_kind::floating));
+	}
+
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(): ast_expression
 	{
@@ -461,6 +482,14 @@ final class Parser
 			$start = $this->cursor->take(token_kind::bang, '!');
 			$operand = $this->primary();
 			return new ast_not_expression($start, $this->cursor->position(), $operand);
+		}
+		if ($this->cast_ahead()) {
+			$start = $this->cursor->take(token_kind::lparen, '(');
+			$type = $this->cursor->tokens->text_at($this->cursor->position());
+			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'cast type');
+			$this->cursor->take(token_kind::rparen, ')');
+			$operand = $this->primary();
+			return new ast_cast_expression($start, $this->cursor->position(), $type, $operand);
 		}
 		if ($this->cursor->is(token_kind::lparen)) {
 			$this->cursor->take(token_kind::lparen, '(');

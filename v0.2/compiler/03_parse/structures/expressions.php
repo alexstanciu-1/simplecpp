@@ -85,3 +85,47 @@ final class ast_not_expression extends ast_expression
 		$this->settle_value(type_bool::instance(), null);
 	}
 }
+
+/** Explicit value conversion, e.g. (byte) count; owns syntax and caches only the approved conversion. */
+final class ast_cast_expression extends ast_expression
+{
+	/** PROPERTIES */
+	public readonly string $type_name;
+	/** Native owning operand; a cast produces a value, never mutable-reference storage. */
+	public readonly ast_expression $operand;
+
+	/** PREP FACTS */
+	/** Prepared fact: generated conversion decision; null before preparation or after reset. */
+	protected ?value_conversion $conversion = null;
+
+	/** CONSTRUCTOR */
+	/** $start/$end: token positions spanning the written target and operand, including operand grouping. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $type_name,
+		ast_expression $operand)
+	{
+		parent::__construct($start, $end);
+		$this->type_name = $type_name;
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	/** METHODS */
+	/** Keep converted scalar facts on this occurrence; the generated destination owns conversion behavior. */
+	public function settle_cast(type_definition $type, value_conversion $conversion): void
+	{
+		$this->settle_value($type, $type->convert_constant($conversion, $this->operand->constant()),
+			$this->operand->constant_known());
+		$this->conversion = $conversion;
+	}
+
+	public function conversion(): value_conversion
+	{
+		return $this->conversion ?? throw new \LogicException('Cast conversion is not settled');
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->conversion = null;
+	}
+}

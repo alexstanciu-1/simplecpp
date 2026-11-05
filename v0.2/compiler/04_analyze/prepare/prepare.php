@@ -363,6 +363,15 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
+		if ($syntax instanceof ast_cast_expression) {
+			$this->value($syntax->operand, $initializing);
+			$type = type_registry::resolve($syntax->type_name);
+			if ($type === null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_name);
+			}
+			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, true));
+			return;
+		}
 		if ($syntax instanceof ast_not_expression) {
 			$this->value($syntax->operand, $initializing);
 			$syntax->operand->type_def()->prepare_condition($syntax->operand);
