@@ -76,7 +76,9 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family']);
+        $family = at($row, 'literal_family');
+        requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
         foreach (['inferred_local', 'global_storage'] as $capability) {
             $declarations[$capability] = boolean(at(at($row, 'declarations'), $capability));
@@ -126,7 +128,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             if (in_array($identity, $aliases, true)) {
                 $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
             }
-            $definitions[$identity] = ['declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
+            $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
                 'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
             continue;
         }
@@ -162,7 +164,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
+        $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
     return $definitions;
 }
@@ -174,6 +176,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
+    $families = compilerLiteralFamilies($definitions);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     foreach ($definitions as $identity => $definition) {
@@ -199,12 +202,12 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
         $limits = $identity === 'byte' ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
-        $literalMethods = $identity === 'float64'
+        $literalMethods = $definition['literal_family'] === 'floating'
             ? strtr(readFile(__DIR__ . '/../templates/floating_literal_methods.php.tpl'), [
                 '@minimum_exponent@' => (string)(2 - $facts['double']['max_exponent']),
                 '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
             ]) : compilerLiteralMethods($definition);
-        if ($identity === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
+        if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';
@@ -224,7 +227,8 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
-        '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => textValue(at(at($metadata, 'source_types'), 'int')),
+        '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
+        '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 16,
         'files' => array_keys($files)]) . "\n";
@@ -263,6 +267,44 @@ $cases
 		return $lower;
 	}
 PHP_CODE;
+}
+
+/** Resolve structural-family ownership and keyword spellings before emitting direct registry dispatch. */
+function compilerLiteralFamilies(array $definitions): array {
+    $owners = [];
+    $words = [];
+    foreach ($definitions as $identity => $definition) {
+        $family = $definition['literal_family'];
+        if ($family === 'keyword') {
+            requireThat(in_array($definition['strategy'], ['boolean', 'null'], true), 'Incompatible keyword literal strategy');
+            requireThat($definition['literals'] !== [], 'Keyword family needs literal spellings');
+            foreach ($definition['literals'] as $word => $_) {
+                requireThat(!isset($words[$word]), 'Duplicate literal spelling: ' . $word);
+                $words[$word] = $identity;
+            }
+        } elseif ($family !== null) {
+            requireThat(!isset($owners[$family]), 'Duplicate literal family owner: ' . $family);
+            requireThat($definition['strategy'] === $family, 'Incompatible literal preparation strategy');
+            $owners[$family] = $definition['class'];
+        } else {
+            requireThat($definition['literals'] === [], 'Literal spellings require keyword family');
+        }
+    }
+    $cases = [];
+    $accessors = [];
+    // AST vocabulary is compiler-owned; metadata chooses each family's canonical type.
+    foreach (['integer' => 'ast_integer_expression', 'floating' => 'ast_float_expression', 'string' => 'ast_string_expression'] as $family => $node) {
+        requireThat(isset($owners[$family]), 'Missing literal family owner: ' . $family);
+        $class = $owners[$family];
+        $cases[] = "\t\t\t\$value instanceof $node => self::$family(),";
+        $accessors[] = "\t/** Canonical $family literal identity selected by metadata. */
+\tpublic static function $family(): type_$class
+\t{
+\t\treturn type_$class::instance();
+\t}";
+    }
+    if ($words !== []) $cases[] = "\t\t\t" . '$value instanceof ast_keyword_expression => self::literal($value->word),';
+    return ['cases' => implode("\n", $cases), 'accessors' => implode("\n\n", $accessors)];
 }
 
 /** Emit declaration-policy queries, separate from representation and conversion permissions. */

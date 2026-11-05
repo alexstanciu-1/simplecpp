@@ -252,6 +252,37 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Family registration owns direct AST dispatch and canonical accessors; keyword owners share one AST family.
+$literalDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
+$familyPlan = compilerLiteralFamilies($literalDefinitions);
+requireThat(str_contains($familyPlan['cases'], 'ast_string_expression => self::string()'), 'String family dispatch missing');
+$renamedDefinitions = $literalDefinitions;
+$renamedDefinitions['float64']['class'] = 'test_floating';
+requireThat(str_contains(compilerLiteralFamilies($renamedDefinitions)['accessors'], 'floating(): type_test_floating'), 'Family accessor ignored registered class');
+foreach (['missing', 'unknown', 'incompatible', 'unregistered_keywords', 'duplicate_family', 'duplicate_word'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    try {
+        switch ($change) {
+            case 'missing': $bad->compiler->value_types->int64->literal_family = null; break;
+            case 'unknown': $bad->compiler->value_types->byte->literal_family = 'hex'; break;
+            case 'incompatible': $bad->compiler->value_types->byte->literal_family = 'keyword'; break;
+            case 'unregistered_keywords': $bad->compiler->value_types->bool_t->literal_family = null; break;
+            case 'duplicate_family':
+                $duplicate = $literalDefinitions;
+                $duplicate['extra'] = $duplicate['int64'];
+                compilerLiteralFamilies($duplicate);
+                throw new \LogicException('Duplicate family accepted');
+            case 'duplicate_word':
+                $duplicate = $literalDefinitions;
+                $duplicate['bool_t']['literals']['null'] = null;
+                compilerLiteralFamilies($duplicate);
+                throw new \LogicException('Duplicate keyword spelling accepted');
+        }
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid literal family accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Declaration flags drive queries; omission and nonboolean policy cannot silently enable a declaration.
 $policy = unserialize(serialize($metadata));
 $policy->compiler->value_types->int64->declarations->inferred_local = false;

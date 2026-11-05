@@ -193,3 +193,43 @@ instrumented application objects. Cumulative stage traces are not additive wall 
 | php_global | 153.12 | 11.99 | 12.71 | 75.00 |
 | js_local | 142.30 | 11.73 | 13.29 | 68.00 |
 | js_global | 134.51 | 10.62 | 10.13 | 72.00 |
+
+## Literal-family registration
+
+`compiler.value_types.*.literal_family` selects `integer`, `floating`, `string`,
+`keyword` or explicit null. Byte has no literal family: a written byte destination
+converts an integer value. Bool/null own distinct keyword spellings in the same family.
+The generation-time `compilerLiteralFamilies()` plan validates exactly one owner for
+each required structural family, compatible preparation strategies and unique keyword
+spellings. Missing/unknown families and conflicting registrations reject before publication.
+
+The registry template no longer names concrete literal type classes. Generation emits
+AST-family dispatch and canonical `integer()`, `floating()` and `string()` accessors
+from registrations. AST class vocabulary remains compiler-owned. String fact settlement
+now uses `type_registry::string()`, matching integer/floating settlement. Floating and
+string literal-method templates are selected through their registered families.
+
+Token recognition, grammar, string decoding, numeric validation, diagnostics and source
+positions remain handwritten and unchanged. No AST properties, prepared facts, symbol
+entries or runtime structures were added. The normalized type record gains only the
+family field, and the generated registry gains the string accessor. There is no metadata
+lookup or new per-expression allocation during compilation.
+
+Twelve focused CTests pass, including generator mutations and the new
+`tests/literal_families.php` identity/recovery checks. All flavors exercise integer,
+floating, bool, null and string literals, overflow/escape failures, retry without edits,
+family changes and recovery against fresh emitted output. No-op runs prepare no bodies.
+Fifteen native recovery programs pass. Existing native string byte/copy proofs also pass.
+Raw recovery traces/results: `v0.2/build/literal-family-proof/`; string proofs:
+`v0.2/build/literal-family-proof-strings/`.
+
+Single-run ranges across successful literal-family recovery states, O2/g0, libc++,
+Ninja8, mold, no PCH/LTO, prebuilt runtime, fresh instrumented application objects.
+These are correctness runs, not comparative benchmarks. Trace stage sums are not
+additive wall-time components.
+
+| Flavor | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 135.20–151.23 | 10.08–16.99 | 11.99–14.30 | 64.00–81.00 |
+| php | 122.94–135.67 | 9.16–14.05 | 9.54–12.19 | 62.00–78.00 |
+| js | 127.21–138.92 | 8.22–14.80 | 9.58–13.39 | 65.00–73.00 |

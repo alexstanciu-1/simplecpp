@@ -38,22 +38,10 @@ final class type_registry
 	public static function literal_type(ast_expression $value): ?type_definition
 	{
 		return match (true) {
-			$value instanceof ast_integer_expression => self::integer(),
-			$value instanceof ast_float_expression => self::floating(),
-			$value instanceof ast_string_expression => type_string::instance(),
-			$value instanceof ast_keyword_expression => self::literal($value->word),
+@family_cases@
 			default => null,
 		};
 	}
 
-	public static function floating(): type_float64
-	{
-		return type_float64::instance();
-	}
-
-	/** Canonical source integer identity for literals and the existing entry contract. */
-	public static function integer(): type_@name@
-	{
-		return type_@name@::instance();
-	}
+@family_accessors@
 }

@@ -751,12 +751,14 @@
     "value_types": {
       "int64": {
         "class": "int64",
+        "literal_family": "integer",
         "declarations": { "inferred_local": true, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": ["int64"]
       },
       "null_t": {
         "class": "null",
+        "literal_family": "keyword",
         "declarations": { "inferred_local": false, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": [],
@@ -767,6 +769,7 @@
       },
       "bool_t": {
         "class": "bool",
+        "literal_family": "keyword",
         "declarations": { "inferred_local": true, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": [],
@@ -778,6 +781,7 @@
       },
       "byte": {
         "class": "byte",
+        "literal_family": null,
         "declarations": { "inferred_local": true, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": [
@@ -786,6 +790,7 @@
       },
       "float64": {
         "class": "float64",
+        "literal_family": "floating",
         "declarations": { "inferred_local": true, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": ["float64"],
@@ -793,6 +798,7 @@
       },
       "string": {
         "class": "string",
+        "literal_family": "string",
         "declarations": { "inferred_local": true, "global_storage": false },
         "copy_semantics": "nontrivial",
         "source_names": [

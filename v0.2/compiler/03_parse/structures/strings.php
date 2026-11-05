@@ -22,7 +22,7 @@ final class ast_string_expression extends ast_expression
 		if ($this->decoded_bytes !== null) {
 			throw new \LogicException('String is already decoded');
 		}
-		$this->settle_value(type_string::instance(), null);
+		$this->settle_value(type_registry::string(), null);
 		$this->decoded_bytes = $bytes;
 	}
 
