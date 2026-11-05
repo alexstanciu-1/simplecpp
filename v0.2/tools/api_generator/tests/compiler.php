@@ -237,7 +237,11 @@ foreach (['remainder', 'unchecked_division', 'compound_policy'] as $change) {
     }
 }
 requireThat(\scpp\compiler\type_int64::instance()->supports_compound(), 'Integer compounds lost');
-requireThat(!\scpp\compiler\type_float64::instance()->supports_compound(), 'Float compounds enabled');
+requireThat(\scpp\compiler\type_float64::instance()->supports_compound(), 'Float compounds unavailable');
+$without = unserialize(serialize($metadata));
+$without->compiler->arithmetic->float64->compound = false;
+$limited = renderCompiler($without, $facts)['types/float64.php'];
+requireThat(str_contains($limited, "public function supports_compound(): bool\n\t{\n\t\treturn false;"), 'Disabled compound capability ignored');
 
 // Backend safety facts follow the admitted implementation strategy, never preparation or AST mutation.
 require $root . '/compiler/03_parse/structures/expressions.php';

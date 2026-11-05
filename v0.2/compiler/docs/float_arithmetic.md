@@ -4,8 +4,7 @@ Doc Status: supporting
 
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#float64-arithmetic--2026-11-05)
 owns the semantics. All flavors support same-type `float`/`float64` binary
-`+ - * /` and unary signs. Mixed numeric arithmetic, float remainder, compounds
-and updates remain deferred; float echo is not added.
+`+ - * /` and unary signs. Mixed numeric arithmetic, float remainder and updates remain deferred; float echo is not added.
 
 ## Ownership and preparation
 
@@ -25,8 +24,8 @@ Incremental reset, grouped queues, selective emission and cleanup remain unchang
 
 One admission boundary is now explicit: metadata's `compound` boolean generates
 `supports_compound()`. Assignment preparation requires this capability as well as the
-existing binary result/write-back identity check. Int64 remains enabled; float64 stays
-disabled. This prevents adding ordinary arithmetic from accidentally widening writes.
+existing binary result/write-back identity check. Int64 remains enabled; float64 was initially disabled and is now enabled by
+the [float compound slice](float_compounds.md). This prevents adding ordinary arithmetic from accidentally widening writes.
 
 ## Native boundary
 

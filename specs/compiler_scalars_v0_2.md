@@ -296,7 +296,22 @@ exception/environment controls or fast-math behavior is introduced.
 Literal preparation still rejects overflow and accepts underflow; arithmetic
 results are not subjected to the finite-literal restriction. NaN and Infinity
 literal spellings remain unavailable. Preparation does not constant-fold these
-operations. Mixed int64/float64 arithmetic, floating remainder, compound writes
-and updates remain deferred. Explicit conversions may establish float64 operands.
+operations. Mixed int64/float64 arithmetic, floating remainder and updates remain deferred.
+Same-type compound statements are specified below. Explicit conversions may establish float64 operands.
 Runtime metadata controls admission and lowering; checked division remains behind
 the public runtime API. This does not expand the separately deferred execution-order work.
+
+## Float64 compound statements — 2026-11-05
+
+All flavors admit `+=`, `-=`, `*=`, `/=` on existing float/float64 locals and
+value/mutable-reference parameters, including the supported `for` header clauses.
+The RHS must have the same canonical float64 type; explicit casts may establish it.
+Mixed numeric compounds, `%=` and expression-result assignments remain deferred.
+Globals, constants, fields and indexed destinations are not admitted by this slice.
+
+The existing compound protocol applies: resolve storage once, preserve its old
+value before evaluating the RHS once, compute via the approved float operation,
+then store. On failure, do not perform the final store; prior RHS effects remain.
+Division by either zero sign throws `division_by_zero`; other arithmetic retains
+the float64 infinity/NaN/underflow/signed-zero contract. A completed compound write
+invalidates the previous constant fact; its result is not folded during preparation.

@@ -899,7 +899,7 @@
           "multiply": "native",
           "divide": "zero_checked_divide"
         },
-        "compound": false
+        "compound": true
       }
     },
     "comparisons": {
