@@ -83,7 +83,7 @@ final class Project_Compiler
 		}
 		Cpp_Bundle::write($directory, $output, $inputs, $state, $previous);
 		return ['manifest' => $directory . '/manifest.json',
-			'sources' => count($program->files), 'translation_units' => count($output->files), 'rebuilt' => true,
+			'sources' => count($program->files), 'translation_units' => count($output->translation_units()), 'rebuilt' => true,
 			'changes' => $changes];
 	}
 }

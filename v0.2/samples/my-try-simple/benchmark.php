@@ -87,7 +87,7 @@ namespace {
                 $output = Cpp_Program::emit($prepared);
                 $totals['cpp_text'] = (hrtime(true) - $start) / 1e6;
                 check(count($output->source_units) === 257, 'Missing emitted source units');
-                check(count($output->files) === 258, 'Missing source text or entry adapter');
+                check(count($output->translation_units()) === 258, 'Missing source text or entry adapter');
                 $emitted_bytes = array_sum(array_map('strlen', $output->files));
                 $times['staged_total'][] = array_sum($totals);
                 unset($prepared, $output);

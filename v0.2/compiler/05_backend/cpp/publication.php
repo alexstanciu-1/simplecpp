@@ -6,9 +6,12 @@ namespace scpp\compiler;
 /** Publishes one complete generated text artifact through a staged file and atomic rename. */
 final class Cpp_Publication
 {
-	/** Replace one complete artifact atomically; a failed write leaves the previous artifact intact. */
-	public static function write(string $path, string $text): void
+	/** Preserve identical text; commit-marker writes can skip the extra content read. */
+	public static function write(string $path, string $text, bool $compare_existing = true): void
 	{
+		if ($compare_existing && is_file($path) && !is_link($path) && (file_get_contents($path) === $text)) {
+			return;
+		}
 		$directory = dirname($path);
 		if ((!is_dir($directory)) && (!@mkdir($directory, 0777, true))) {
 			throw new \RuntimeException('Cannot create output directory: ' . $directory);

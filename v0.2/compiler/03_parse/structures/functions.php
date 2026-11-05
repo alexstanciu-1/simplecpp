@@ -117,8 +117,8 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PROPERTIES */
 	/** Native non-owning queue reference; null outside incremental ownership or after retirement. */
 	private ?preparation_work $preparation_work = null;
-	/** Stable session source key while attached; empty after retirement, never a source-unit object identity. */
-	private string $preparation_source_key = '';
+	/** Stable logical source key bound before watches; cleared on retirement, never a source-unit object identity. */
+	private string $source_key = '';
 
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
@@ -140,20 +140,35 @@ final class ast_function_body extends ast_statement_block implements dependency_
 			throw new \LogicException('Preparation work requires a source key');
 		}
 		$source_key = $work === null ? '' : $source_key;
-		if (($this->preparation_work === $work) && ($this->preparation_source_key === $source_key)) {
+		if (($this->preparation_work === $work) && ($this->source_key === $source_key)) {
 			return;
 		}
-		$this->preparation_work?->retire($this->preparation_source_key, $this);
+		$this->preparation_work?->retire($this->source_key, $this);
 		$this->preparation_work = $work;
-		$this->preparation_source_key = $source_key;
+		$this->source_key = $source_key;
 		$work?->register($source_key, $this);
+	}
+
+	/** Full-program preparation binds its logical source identity before registering any watches. */
+	public function bind_source_key(string $source_key): void
+	{
+		if ($this->preparation_work !== null) {
+			throw new \LogicException('Attached source identity belongs to the incremental coordinator');
+		}
+		$this->source_key = $source_key;
+	}
+
+	/** Bound logical source key; standalone analysis uses its source path as the unit identity. */
+	public function dependency_source_key(): string
+	{
+		return $this->source_key !== '' ? $this->source_key : $this->root()->source()->path;
 	}
 
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->preparation_source_key, $this);
+		$this->preparation_work?->enqueue($this->source_key, $this);
 		$this->root()->begin_preparation();
 	}
 
@@ -165,7 +180,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->preparation_source_key, $this);
+		$this->preparation_work?->enqueue($this->source_key, $this);
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -181,7 +196,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->name_lookups = $lookups;
 		$this->exit_digits = $target?->digits;
 		$this->prepared = true;
-		$this->preparation_work?->complete($this->preparation_source_key, $this);
+		$this->preparation_work?->complete($this->source_key, $this);
 	}
 
 	public function require_prepared(): void

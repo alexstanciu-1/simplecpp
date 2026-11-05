@@ -125,8 +125,8 @@ foreach (flavor::cases() as $flavor)
 	$program = (new Program_Frontend())->prepare_sources('main', [
 		'main' => new source_file('main', $main, $flavor), 'lib' => new source_file('lib', $library, $flavor),
 	], new entry_target(31));
-	$units = array_values(Cpp_Program::emit($program)->files);
-	$fixtures[$flavor->name . '_imports'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('ok8')];
+	$native_files = Cpp_Program::emit($program)->files;
+	$fixtures[$flavor->name . '_imports'] = ['files' => $native_files, 'stdout_hex' => bin2hex('ok8')];
 	$plain = str_replace('use const ', 'use ', $main);
 	$plain_program = (new Program_Frontend())->prepare_sources('main', [
 		'main' => new source_file('main', $plain, $flavor), 'lib' => new source_file('lib', $library, $flavor),
@@ -199,8 +199,8 @@ $program = (new Program_Frontend())->prepare_sources('main', [
 	'int' => new source_file('int', 'namespace Lib { const int VALUE=8; }', flavor::cpp),
 	'text' => new source_file('text', 'namespace Lib { const TEXT: string="mixed"; }', flavor::js),
 ], new entry_target(31));
-$units = array_values(Cpp_Program::emit($program)->files);
-$fixtures['mixed'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('mixed')];
+$native_files = Cpp_Program::emit($program)->files;
+$fixtures['mixed'] = ['files' => $native_files, 'stdout_hex' => bin2hex('mixed')];
 
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");

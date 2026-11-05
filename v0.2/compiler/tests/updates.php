@@ -161,8 +161,8 @@ foreach (flavor::cases() as $flavor)
 			$sources[$path] = $file->source();
 		}
 		$program = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
-		$units = array_values(Cpp_Program::emit($program)->files);
-		$fixtures[$flavor->name . '_recovery'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('11')];
+		$native_files = Cpp_Program::emit($program)->files;
+		$fixtures[$flavor->name . '_recovery'] = ['files' => $native_files, 'stdout_hex' => bin2hex('11')];
 		file_put_contents($lib, $fn('source', '', 'int64', 'return 100;'));
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body-only edit invalidated caller');

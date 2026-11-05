@@ -5,6 +5,9 @@ namespace scpp\compiler;
 
 /** Invalidation target, currently a body; grouped bodies or source units may implement the same contract later. */
 interface dependency_watcher {
+	/** Stable source identity for the lifetime of registered subscriptions; forget before changing ownership. */
+	public function dependency_source_key(): string;
+
 	/** Invalidate owned caches and enqueue work; do not prepare, throw or mutate subscriptions during dispatch. */
 	public function invalidate_dependencies(): void;
 }
@@ -17,10 +20,10 @@ final class Dependency_Watches
 {
 	/** PROPERTIES */
 	/**
-	 * Native non-owning symbol keys and watcher references; scopes and cache owners retain their lifetimes.
-	 * @var \SplObjectStorage<symbol_entry,\SplObjectStorage<dependency_watcher,null>>
+	 * Native non-owning symbols/watchers, grouped by stable source key. Owning buckets never escape this coordinator.
+	 * @var \SplObjectStorage<symbol_entry,\ArrayObject<string,\SplObjectStorage<dependency_watcher,null>>>
 	 */
-	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,SplObjectStorage<dependency_watcher,null>> */;
+	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,null>>> */;
 	/**
 	 * Native non-owning reverse index for watcher retirement and subscription replacement.
 	 * @var \SplObjectStorage<dependency_watcher,\SplObjectStorage<symbol_entry,null>>
@@ -44,13 +47,21 @@ final class Dependency_Watches
 	/** Register one identity pair; repeated reads of the same symbol do not allocate additional relations. */
 	public function watch(symbol_entry $symbol, dependency_watcher $watcher): void
 	{
+		$source_key = $watcher->dependency_source_key();
+		if ($source_key === '') {
+			throw new \LogicException('A dependency watcher requires a source key');
+		}
 		if (!$this->observers->offsetExists($symbol)) {
-			$this->observers[$symbol] = new \SplObjectStorage();
+			$this->observers[$symbol] = new \ArrayObject();
+		}
+		$groups = $this->observers[$symbol];
+		if (!isset($groups[$source_key])) {
+			$groups[$source_key] = new \SplObjectStorage();
 		}
 		if (!$this->targets->offsetExists($watcher)) {
 			$this->targets[$watcher] = new \SplObjectStorage();
 		}
-		$this->observers[$symbol][$watcher] = null;
+		$groups[$source_key][$watcher] = null;
 		$this->targets[$watcher][$symbol] = null;
 	}
 
@@ -61,10 +72,15 @@ final class Dependency_Watches
 		if (!$this->targets->offsetExists($watcher)) {
 			return;
 		}
+		$source_key = $watcher->dependency_source_key();
 		foreach ($this->targets[$watcher] as $symbol) {
 			/** @var symbol_entry $symbol */
-			$this->observers[$symbol]->offsetUnset($watcher);
-			if (count($this->observers[$symbol]) === 0) {
+			$groups = $this->observers[$symbol];
+			$groups[$source_key]->offsetUnset($watcher);
+			if (count($groups[$source_key]) === 0) {
+				unset($groups[$source_key]);
+			}
+			if (count($groups) === 0) {
 				$this->observers->offsetUnset($symbol);
 			}
 		}
@@ -77,9 +93,11 @@ final class Dependency_Watches
 		if (!$this->observers->offsetExists($symbol)) {
 			return;
 		}
-		foreach ($this->observers[$symbol] as $watcher) {
-			/** @var dependency_watcher $watcher */
-			$this->pending[$watcher] = null;
+		foreach ($this->observers[$symbol] as $watchers) {
+			foreach ($watchers as $watcher) {
+				/** @var dependency_watcher $watcher */
+				$this->pending[$watcher] = null;
+			}
 		}
 	}
 
@@ -92,6 +110,13 @@ final class Dependency_Watches
 			/** @var dependency_watcher $watcher */
 			$watcher->invalidate_dependencies();
 		}
+	}
+
+	/** Retire a known replaced/removed observer without scanning the live watcher inventory. */
+	public function retire(dependency_watcher $watcher): void
+	{
+		$this->forget($watcher);
+		$this->pending[$watcher] = null;
 	}
 
 	/**
@@ -113,13 +138,38 @@ final class Dependency_Watches
 			}
 		}
 		foreach ($removed as $watcher) {
-			$this->forget($watcher);
-			$this->pending[$watcher] = null;
+			$this->retire($watcher);
 		}
 	}
 
-	public function observer_count(symbol_entry $symbol): int /** uint32 */
+	/** Query counts without exposing mutable buckets; null counts observers across all sources. */
+	public function observer_count(symbol_entry $symbol, ?string $source_key = null): int /** uint32 */
 	{
-		return $this->observers->offsetExists($symbol) ? count($this->observers[$symbol]) : 0;
+		if (!$this->observers->offsetExists($symbol)) {
+			return 0;
+		}
+		$groups = $this->observers[$symbol];
+		if ($source_key !== null) {
+			return isset($groups[$source_key]) ? count($groups[$source_key]) : 0;
+		}
+		$count = 0;
+		foreach ($groups as $watchers) {
+			$count += count($watchers);
+		}
+		return $count;
+	}
+
+	/** Use after successful preparation; absent watches before preparation do not prove absence of external use. */
+	public function has_external_observers(symbol_entry $symbol, string $declaring_source_key): bool
+	{
+		if (!$this->observers->offsetExists($symbol)) {
+			return false;
+		}
+		foreach ($this->observers[$symbol] as $source_key => $_) {
+			if ((string) $source_key !== $declaring_source_key) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

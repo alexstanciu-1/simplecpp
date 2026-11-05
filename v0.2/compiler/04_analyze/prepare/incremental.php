@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Rebuild dirty body caches after frontend publication; does not create an emission handle or lower code. */
+/** Rebuild dirty body caches after frontend publication; settles file completion for the existing emitter without lowering code. */
 final class Incremental_Preparation
 {
 	/**
@@ -66,6 +66,11 @@ final class Incremental_Preparation
 		$report['reused'] = $work->body_count() - $report['prepared'];
 		if ($errors !== []) {
 			throw new diagnostic_group(Declaration_Diagnostics::ordered($errors));
+		}
+		foreach ($work->emission_sources() as $key => $_) {
+			if (isset($files[$key])) {
+				$files[$key]->settle_preparation();
+			}
 		}
 		return $report;
 	}

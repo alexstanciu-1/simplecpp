@@ -34,6 +34,8 @@ final class Incremental_Frontend
 		$frontend = new Source_Frontend();
 		/** @var ast_file_node[] $retired */
 		$retired = [];
+		/** @var ast_file_node[] $changed */
+		$changed = [];
 		try
 		{
 			foreach ($units as $unit)
@@ -53,6 +55,7 @@ final class Incremental_Frontend
 				}
 				else {
 					$unit->ast = $frontend->collect(Program_Loader::load($unit));
+					$changed[$candidate->source_key($unit)] = $unit->ast;
 					if ($prior?->ast !== null) {
 						$retired[] = $prior->ast;
 					}
@@ -71,21 +74,22 @@ final class Incremental_Frontend
 				}
 			}
 			clearstatcache();
-			$files = [];
 			foreach ($units as $unit) {
 				$stat = self::stat($unit->module->root . '/' . $unit->path);
 				if (($stat['mtime'] !== $unit->mtime) || ($stat['size'] !== $unit->size)) {
 					throw new \RuntimeException('Source changed during frontend collection: ' . $unit->path);
 				}
-				$files[$candidate->source_key($unit)] = $unit->ast;
 			}
 			if ($previous !== null) {
 				$candidate->dependency_watches = $previous->dependency_watches;
 			}
-			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->dependency_watches);
+			$candidate->scope = Symbol_Publication::changes($changed, $retired, $previous?->scope ?? new scope(), $candidate->dependency_watches);
 			// Publication has succeeded; only now adopt the live queue and replace source-owned membership.
 			if ($previous !== null) {
 				$candidate->preparation_work = $previous->preparation_work;
+			}
+			foreach ($changed as $key => $file) {
+				$candidate->preparation_work->change_source($key);
 			}
 			foreach ($retired as $file) {
 				foreach ($file->declaration_nodes as $node) {

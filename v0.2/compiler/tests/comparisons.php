@@ -139,8 +139,8 @@ $multi = (new Program_Frontend())->prepare_sources('main', [
 	'main' => new source_file('main', 'if (value() == 8) { echo "cross"; } return 8;', flavor::php),
 	'cpp' => new source_file('cpp', 'int64 value() { return 8; }', flavor::cpp),
 ], new entry_target(31));
-$units = array_values(Cpp_Program::emit($multi)->files);
-$fixtures['multifile'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('cross')];
+$native_files = Cpp_Program::emit($multi)->files;
+$fixtures['multifile'] = ['files' => $native_files, 'stdout_hex' => bin2hex('cross')];
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 }

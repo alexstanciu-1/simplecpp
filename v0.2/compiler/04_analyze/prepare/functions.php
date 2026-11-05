@@ -138,12 +138,12 @@ final class Function_Preparation
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */
-	public static function bodies(ast_file_node $file, scope $symbols): void
+	public static function bodies(ast_file_node $file, scope $symbols, ?Dependency_Watches $dependencies = null): void
 	{
 		foreach ($file->functions() as $declaration) {
 			$node = $declaration;
 			$node->return_type_def();
-			(new Preparation())->function_body($node->body(), $symbols);
+			(new Preparation())->function_body($node->body(), $symbols, null, $dependencies);
 		}
 	}
 }

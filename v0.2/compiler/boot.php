@@ -61,6 +61,7 @@ require_once __DIR__ . '/04_analyze/prepare/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/prepare.php';
 require_once __DIR__ . '/04_analyze/prepare/functions.php';
 require_once __DIR__ . '/04_analyze/prepare/imports.php';
+require_once __DIR__ . '/05_backend/cpp/headers.php';
 require_once __DIR__ . '/05_backend/cpp/emit.php';
 require_once __DIR__ . '/05_backend/cpp/strings.php';
 require_once __DIR__ . '/05_backend/cpp/publication.php';
@@ -78,3 +79,6 @@ require_once __DIR__ . '/05_backend/cpp/bundle.php';
 require_once __DIR__ . '/compiler/project.php';
 
 require_once __DIR__ . '/04_analyze/prepare/incremental.php';
+
+require_once __DIR__ . '/compiler/generation_cleanup.php';
+require_once __DIR__ . '/compiler/incremental_project.php';

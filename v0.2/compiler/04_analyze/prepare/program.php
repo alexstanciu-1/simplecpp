@@ -17,7 +17,7 @@ final class Program_Preparation
 		entry_target $target, ?scope $symbols = null, ?compilation_session $session = null): prepared_program
 	{
 		if ($session?->scope !== null) {
-			throw new \LogicException('Live incremental symbols require Incremental_Preparation; full emission is separate');
+			throw new \LogicException('Live incremental symbols require Incremental_Preparation');
 		}
 		foreach ($files as $file) {
 			$file->begin_preparation();
@@ -51,15 +51,24 @@ final class Program_Preparation
 				$main->settle_return_type(type_registry::integer());
 			}
 		}
-		foreach ($files as $file) {
-			Function_Preparation::bodies($file, $symbols);
+		$dependencies = new Dependency_Watches();
+		if ($session !== null) {
+			$session->dependency_watches = $dependencies;
 		}
-		(new Preparation())->entry($files[$entry_path], $target, $symbols);
+		foreach ($files as $key => $file) {
+			foreach ($file->declaration_nodes as $node) {
+				if ($node instanceof ast_function_declaration) {
+					$node->body()->bind_source_key((string) $key);
+				}
+			}
+			Function_Preparation::bodies($file, $symbols, $dependencies);
+		}
+		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}
 		$entry = new prepared_entry($files[$entry_path], $target);
-		return new prepared_program($entry_path, $files, $entry, $session);
+		return new prepared_program($entry_path, $files, $entry, $session, $dependencies);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

@@ -6,15 +6,31 @@ namespace scpp\compiler;
 /** Renders source-owned units and assembles their deterministic paths plus the native entry adapter. */
 final class Cpp_Program
 {
-	/** Canonical output ordering never changes the retained source or syntax order. */
-	public static function emit(prepared_program $program): cpp_program_output
+	/**
+	 * Reuse text outside the supplied changed-source set; null requests full emission.
+	 * @param bool[]|null $changed
+	 */
+	public static function emit(prepared_program $program, ?cpp_program_output $previous = null,
+		?array $changed /** array<string,bool>|null */ = null): cpp_program_output
 	{
 		$program->require_prepared();
 		$bodies = [];
+		$headers = new Cpp_Headers($program);
+		$header_files = $headers->files();
+		$emitted = [];
 		foreach ($program->files as $path => $file) {
+			$prior_path = $previous?->source_units[$path] ?? null;
+			$header_path = 'units/' . hash('sha256', (string) $path) . '.hpp';
+			$header_changed = ($header_files[$header_path] ?? null) !== ($previous?->files[$header_path] ?? null);
+			if (!$header_changed && ($changed !== null) && !isset($changed[$path]) && ($prior_path !== null)
+				&& (($path !== $program->entry_path) === ($path !== $previous->entry_path))) {
+				$bodies[$path] = $previous->files[$prior_path];
+				continue;
+			}
+			$emitted[] = (string) $path;
 			$bodies[$path] = (string) $path === $program->entry_path
-				? (new Cpp_Emitter())->entry_body($program->entry)
-				: (new Cpp_Emitter())->source_definitions($file);
+				? (new Cpp_Emitter($headers))->entry_body($program->entry)
+				: (new Cpp_Emitter($headers))->source_definitions($file);
 		}
 		$output = self::assemble($program->entry_path, $bodies);
 		$native = [];
@@ -30,8 +46,8 @@ final class Cpp_Program
 			}
 		}
 		sort($native, \SORT_STRING);
-		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native,
-			array_values(array_unique($links)));
+		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files), $native,
+			array_values(array_unique($links)), $emitted);
 	}
 
 	public static function empty_unit(): string

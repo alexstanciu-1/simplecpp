@@ -117,6 +117,8 @@ final readonly class prepared_program
 	public array $files /** array<string,ast_file_node> */;
 	/** Native owning; prepared entry handle. */
 	public prepared_entry $entry;
+	/** Native shared-owning; complete usage relations used to plan cross-unit declarations. */
+	public Dependency_Watches $dependencies;
 	/** @var int[] Completion identities, not semantic facts. */
 	private array $revisions /** array<string,uint32> */;
 
@@ -127,9 +129,10 @@ final readonly class prepared_program
 	 * @param ast_file_node[] $files
 	 */
 	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry,
-		?compilation_session $session = null)
+		?compilation_session $session = null, ?Dependency_Watches $dependencies = null)
 	{
 		$this->session = $session;
+		$this->dependencies = $dependencies ?? $session?->dependency_watches ?? new Dependency_Watches();
 		$this->entry_path = $entry_path;
 		$this->files = $files;
 		$this->entry = $entry;
@@ -144,7 +147,8 @@ final readonly class prepared_program
 	/** Reject emission through a handle whose source facts were reset or replaced. */
 	public function require_prepared(): void
 	{
-		if (($this->session !== null) && ($this->session->files() !== $this->files)) {
+		if (($this->session !== null) && ((!$this->session->is_current)
+			|| ($this->session->files() !== $this->files) || ($this->session->preparation_work->pending_count() !== 0))) {
 			throw new \LogicException('Stale module compilation');
 		}
 		foreach ($this->files as $path => $file) {
@@ -169,6 +173,26 @@ final class preparation_work
 	private array $bodies /** array<string,SplObjectStorage<ast_function_body,null>> */ = [];
 	/** Number of attached live bodies; supports reuse reporting without scanning unchanged ASTs. */
 	private int $total /** uint32 */ = 0;
+	/** @var bool[] Source keys awaiting successful downstream publication; survives body completion and retries. */
+	private array $changed_sources /** array<string,bool> */ = [];
+
+	/** Includes declaration-only changes that do not enqueue a body. */
+	public function change_source(string $source_key): void
+	{
+		$this->changed_sources[$source_key] = true;
+	}
+
+	/** @return bool[] */
+	public function emission_sources(): array /** array<string,bool> */
+	{
+		return $this->changed_sources;
+	}
+
+	/** Only the successful output publisher acknowledges downstream work. */
+	public function complete_emission(): void
+	{
+		$this->changed_sources = [];
+	}
 
 	/** Called once when a new body attaches; attachment identity is guarded by the body. */
 	public function register(string $source_key, ast_function_body $body): void
@@ -186,6 +210,7 @@ final class preparation_work
 
 	public function enqueue(string $source_key, ast_function_body $body): void
 	{
+		$this->change_source($source_key);
 		$this->bodies[$source_key] ??= new \SplObjectStorage();
 		$this->bodies[$source_key][$body] = null;
 	}

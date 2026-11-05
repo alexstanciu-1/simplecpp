@@ -46,6 +46,8 @@ final class scope
 	public array $declarations /** array<string,ast_declaration_interface> */ = [];
 	/** @var symbol_entry[] Stable identities including tombstones; native owning stable entries. */
 	private array $entries /** array<string,symbol_entry> */ = [];
+	/** @var symbol_entry[] Native non-owning index of live entries whose per-pass status needs resetting. */
+	private array $recent_entries /** array<string,symbol_entry> */ = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(?scope $parent = null, ?string $namespace = null)
@@ -55,6 +57,25 @@ final class scope
 	}
 
 	/** METHODS */
+	/** Reset only last pass's added/changed live entries; tombstones keep their removed state. */
+	public function begin_publication(): void
+	{
+		foreach ($this->recent_entries as $entry) {
+			$entry->status = change_status::none;
+		}
+		$this->recent_entries = [];
+	}
+
+	/** Publish one stable slot and retain only transient live-status bookkeeping. */
+	public function publish_entry(string $key, ?ast_declaration_interface $head, bool $changed): void
+	{
+		$entry = $this->entry($key);
+		$entry->publish($head, $changed);
+		if (($entry->status === change_status::added) || ($entry->status === change_status::changed)) {
+			$this->recent_entries[$key] = $entry;
+		}
+	}
+
 	/** Find/create only in this scope; creation never writes to a parent. */
 	public function entry(string $key): symbol_entry
 	{

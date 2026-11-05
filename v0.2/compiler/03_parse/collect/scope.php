@@ -70,14 +70,48 @@ final class Scope_Collection
 		return $this->publish_index($previous, true);
 	}
 
-	/** Compare prior identities, rebuild owned duplicate links, and publish the completed reference index. */
-	private function publish_index(?scope $previous, bool $owns_duplicates): scope
+	/**
+	 * Replace only affected chains, preserving declarations from unchanged source roots in those chains.
+	 * @param bool[] $removed Retired declaration object identities.
+	 * @param bool[] $keys Affected symbol keys from retired and incoming declarations.
+	 */
+	public function publish_changes(array $removed /** array<uint64,bool> */, array $keys /** array<string,bool> */,
+		callable $compare): scope
+	{
+		$this->require_open();
+		foreach ($keys as $key => $_) {
+			for ($node = $this->scope->declarations[$key] ?? null; $node !== null; $node = $node->duplicate_element()) {
+				if (!isset($removed[spl_object_id($node)])) {
+					$this->import($node);
+				}
+			}
+		}
+		$this->order($compare);
+		return $this->publish_index($this->scope, true, $keys);
+	}
+
+	/**
+	 * Compare prior identities and rebuild only selected chains, or the complete index when keys are null.
+	 * @param bool[]|null $keys
+	 */
+	private function publish_index(?scope $previous, bool $owns_duplicates, ?array $keys /** array<string,bool>|null */ = null): scope
 	{
 		$this->require_open();
 		$target = $previous ?? $this->scope;
 		/** @var ast_declaration_interface[] $heads */
 		$heads = [];
-		$expected = $target->declarations;
+		$old_heads = [];
+		if ($keys === null) {
+			$old_heads = $target->declarations;
+		}
+		else {
+			foreach ($keys as $key => $_) {
+				if (isset($target->declarations[$key])) {
+					$old_heads[$key] = $target->declarations[$key];
+				}
+			}
+		}
+		$expected = $old_heads;
 		$changed = [];
 		// Compare the old chains before rewriting any link; no candidate lists or AST copies.
 		foreach ($this->pending as $node)
@@ -97,7 +131,7 @@ final class Scope_Collection
 		if ($owns_duplicates)
 		{
 			// Retired syntax keeps its body, but not a historical duplicate-chain snapshot.
-			foreach ($target->declarations as $head) {
+			foreach ($old_heads as $head) {
 				for ($node = $head; $node !== null; $node = $next) {
 					$next = $node->duplicate_element();
 					$node->clear_duplicate();
@@ -116,13 +150,28 @@ final class Scope_Collection
 				$tails[$key] = $node;
 			}
 		}
-		foreach ($heads as $key => $head) {
-			$target->entry($key);
+		$target->begin_publication();
+		if ($keys === null) {
+			foreach ($heads as $key => $head) {
+				$target->entry($key);
+			}
+			foreach ($target->entries() as $key => $entry) {
+				$target->publish_entry($key, $heads[$key] ?? null, isset($changed[$key]));
+			}
+			$target->declarations = $heads;
 		}
-		foreach ($target->entries() as $key => $entry) {
-			$entry->publish($heads[$key] ?? null, isset($changed[$key]));
+		else {
+			foreach ($keys as $key => $_) {
+				$head = $heads[$key] ?? null;
+				$target->publish_entry($key, $head, isset($changed[$key]));
+				if ($head === null) {
+					unset($target->declarations[$key]);
+				}
+				else {
+					$target->declarations[$key] = $head;
+				}
+			}
 		}
-		$target->declarations = $heads;
 		$this->published = true;
 		return $target;
 	}

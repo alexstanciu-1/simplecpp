@@ -42,7 +42,7 @@ has completed and the final source metadata check passes. A thrown parse/IO erro
 leaves the current session/index intact; the caller retries against that publication.
 Duplicate declarations are retained for analysis and do not abort frontend publication.
 
-Each published session has its own index; unchanged ASTs may be referenced by several
+Sessions in a lineage share one live symbol index; unchanged ASTs may be referenced by several
 sessions. Session history is retained while those links remain; automatic retirement
 and native lifetime/concurrency mechanisms are deferred. This is not proof of native
 thread safety or a promise of bounded retained history.
@@ -56,6 +56,7 @@ Previous sessions share the current symbol publication; old AST syntax remains
 retained, but symbol lookup is no longer historical. Only the current session may
 be used as an incremental baseline or prepared against this live index.
 
+Publication consumes only changed and retired roots; see [changed-source publication](incremental_publication.md).
 Successful compilation-scope publication may rebuild `duplicate_element` links on
 reused nodes after readers finish. File syntax inventories remain unchanged and
 never follow these live chains; failed collection leaves published links untouched. See
@@ -68,7 +69,7 @@ The executable `project`/`program` paths continue using full semantic compilatio
 `Program_Frontend` rejects preparing a published incremental frontend session through
 that full-build path. `Incremental_Preparation::prepare()` is the explicit in-process
 coordinator for incremental body-cache reconstruction. It returns counts/diagnostics,
-not an emission handle; incremental lowering remains deferred. The frontend service
+not an emission handle. The [retained executable path](incremental_executable.md) turns successful completion into the existing emission handle and publishes affected source units. The frontend service
 still performs only frontend work, including invalidation if observers exist.
 
 Unchanged syntax is shared. Declaration facts and body caches are current analysis

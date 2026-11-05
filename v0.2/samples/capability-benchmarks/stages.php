@@ -44,9 +44,9 @@ namespace {
         $row['total_ms'] = ms($total);
         if ($sample >= 0) { $results['stages'][] = $row; }
         $results['source_units'] = count($files); $results['source_bytes'] = $bytes; $results['tokens'] = $tokens_count;
-        $results['cpp_units'] = count($emitted->files);
+        $results['cpp_units'] = count($emitted->translation_units());
         if ($sample === $samples - 1) {
-            $results['cpp_files'] = array_keys($emitted->files);
+            $results['cpp_files'] = $emitted->translation_units();
             foreach ($emitted->files as $path => $code) {
                 $dest = $output . '/' . $path;
                 if (!is_dir(dirname($dest))) { mkdir(dirname($dest), 0777, true); }

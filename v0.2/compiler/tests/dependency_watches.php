@@ -8,6 +8,17 @@ use scpp\compiler\{Dependency_Watches, dependency_watcher, symbol_entry};
 final class Test_Watcher implements dependency_watcher
 {
 	public int $notifications /** uint32 */ = 0;
+	private readonly string $source_key;
+
+	public function __construct(string $source_key = 'app/a')
+	{
+		$this->source_key = $source_key;
+	}
+
+	public function dependency_source_key(): string
+	{
+		return $this->source_key;
+	}
 
 	public function invalidate_dependencies(): void
 	{
@@ -26,7 +37,7 @@ $watches = new Dependency_Watches();
 $a = new symbol_entry();
 $b = new symbol_entry();
 $watcher = new Test_Watcher();
-$other = new Test_Watcher();
+$other = new Test_Watcher('app/b');
 $watches->watch($a, $watcher);
 $watches->watch($a, $watcher);
 $watches->watch($b, $watcher);
@@ -71,3 +82,27 @@ $watches->forget($watcher);
 $watches->forget(new Test_Watcher());
 verify($watches->observer_count($a) === 0, 'Repeated forget was not harmless');
 echo "Generic watcher registration, batching, retirement, cancellation and isolation passed\n";
+
+// Group queries reveal membership, never the storage representation or mutable buckets.
+$local = new Test_Watcher('app/a');
+$local_peer = new Test_Watcher('app/a');
+$foreign = new Test_Watcher('app/b');
+$watches->watch($a, $local);
+$watches->watch($a, $local_peer);
+$watches->watch($a, $foreign);
+$watches->watch($b, $foreign);
+verify($watches->observer_count($a, 'app/a') === 2, 'Same-source watchers did not group');
+verify($watches->observer_count($a, 'app/b') === 1, 'Foreign source count');
+verify($watches->observer_count($a, 'missing') === 0, 'Missing bucket query');
+verify($watches->has_external_observers($a, 'app/a'), 'External use missing');
+$watches->forget($foreign);
+verify(!$watches->has_external_observers($a, 'app/a'), 'Empty foreign bucket retained');
+verify(!$watches->has_external_observers($b, 'app/a'), 'Empty symbol retained');
+$watches->forget($local);
+verify($watches->observer_count($a, 'app/a') === 1, 'Peer removed with its source bucket');
+$watches->changed($a);
+$watches->dispatch();
+verify($local_peer->notifications === 1 && $local->notifications === 0, 'Grouped dispatch');
+$watches->forget($local_peer);
+verify($watches->observer_count($a) === 0, 'Final bucket retained');
+echo "Grouped source membership, external-use queries and bucket removal passed\n";

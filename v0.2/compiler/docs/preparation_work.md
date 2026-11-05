@@ -2,10 +2,11 @@
 
 Doc Status: supporting
 
-This slice makes body preparation consume explicit work. Declaration publication,
-contract comparison, watch dispatch, diagnostics and import validation keep their
-existing algorithms. No new syntax, native scheduler, cleanup protocol or
-incremental emission path is introduced.
+Body preparation consumes explicit work. Publication now uses
+[changed source units](incremental_publication.md); diagnostics and import validation
+retain their existing scans. No new syntax, native scheduler or cleanup protocol is introduced here.
+The subsequent [retained executable path](incremental_executable.md) consumes a separate
+source-key set that survives body-queue completion.
 
 ## Structures and ownership
 
@@ -97,7 +98,8 @@ boundary; this slice does not claim no-op preparation is constant-time.
 49 selected compiler/generator CTest checks passed, including existing function,
 constant, global, import, duplicate, signature and incremental recovery proofs.
 Six native unary/multifile recovery executables passed, using fresh full preparation
-for native emission; incremental emission is still deferred.
+for native emission in that earlier slice. Incremental emission is now covered by the
+[retained executable proof](incremental_executable.md).
 
 Native proof configuration: O2/g0, libc++, Ninja -j8, mold, no PCH/LTO, prebuilt
 runtime. These are single instrumented correctness runs, not a comparative

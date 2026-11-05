@@ -71,3 +71,11 @@ foreach ([10, 100, 1000] as $count)
 	$measurements[] = ['secondary_files' => $count, 'prepare_pipeline_ms' => round($elapsed, 3)];
 }
 echo json_encode($measurements, \JSON_THROW_ON_ERROR) . "\nProgram preparation checks passed\n";
+
+// Logical units remain distinct even when in-memory source labels happen to match.
+$virtual = $frontend->prepare_sources('entry', [
+	'entry' => new source_file('virtual', 'foreign(); return 8;', flavor::cpp),
+	'library' => new source_file('virtual', 'void foreign() {}', flavor::cpp),
+], $target);
+$virtual_output = Cpp_Program::emit($virtual);
+verify(count($virtual_output->headers()) === 1, 'Source labels collapsed distinct unit watch identities');

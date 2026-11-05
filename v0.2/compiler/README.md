@@ -278,7 +278,9 @@ guide for the application-only incremental boundary and manually built dependenc
 `Project_Compiler::frontend($path, $previous)` performs tokenize/parse/collection
 and symbol indexing only, reusing unchanged AST/token objects in memory. See
 [incremental frontend generations](docs/incremental_frontend.md). Executable
-compilation still runs full preparation/emission; incremental facts are deferred.
+compilation through the CLI/panel still runs full preparation/emission. The retained
+in-process [executable coordinator](docs/incremental_executable.md) now reuses prepared
+facts and emits only affected source units.
 
 Dependency registration/dispatch uses the session-owned `Dependency_Watches` and
 `dependency_watcher` interface. See [stable symbols and watches](docs/stable_symbols.md).
@@ -305,3 +307,11 @@ Run `php -n v0.2/compiler/tests/globals.php` and
 
 See [incremental preparation work](docs/preparation_work.md) for the deduplicated
 body queue, changed-source attachment, retry and retirement boundaries.
+
+Incremental symbol updates consume [changed source units](docs/incremental_publication.md) only.
+
+The [retained executable path](docs/incremental_executable.md) connects incremental preparation
+to source-unit emission and Ninja object reuse; CLI/service integration remains separate.
+
+[Generated unit headers](docs/unit_headers.md) expose only externally watched native declarations;
+local-only declarations stay in their `.cpp`, and Ninja tracks header consumers through depfiles.

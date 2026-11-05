@@ -34,27 +34,36 @@ def prove(work, fixture_script="strings.php", check_copy=True):
     for flavor, fixture in fixtures.items():
         directory = work / flavor
         directory.mkdir(exist_ok=True)
-        cpp = directory / 'program.cpp'
-        # Only the proof artifact exercises mutation: source-level methods remain deferred.
-        checks = ('\tlocal_0.clear();\n'
-                  '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
-                  '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
-        source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
-        if fixture.get('catch_out_of_range'):
-            # Test-only exception observation; this does not enable source try/catch syntax.
-            source = '#include <stdexcept>\n' + source.replace('int main()', 'int tested_entry()')
-            source += '\nint main() { try { tested_entry(); } catch (const std::out_of_range&) { return 8; } return 90; }\n'
-        if fixture.get('catch_domain_error'):
-            source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
-            message = json.dumps(fixture['catch_domain_error'])
-            source += ('\nint main() { try { tested_entry(); } catch (const std::domain_error& e) { '
-                       'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
-        cpp.write_text(source)
-        units = [cpp]
-        for index, extra in enumerate(fixture.get('extra_cpp', [])):
-            unit = directory / f'extra-{index}.cpp'
-            unit.write_text(extra)
-            units.append(unit)
+        if 'files' in fixture:
+            units = []
+            for path, text in fixture['files'].items():
+                artifact = directory / path
+                artifact.parent.mkdir(parents=True, exist_ok=True)
+                artifact.write_text(text)
+                if artifact.suffix == '.cpp':
+                    units.append(artifact)
+        else:
+            cpp = directory / 'program.cpp'
+            # Only the proof artifact exercises mutation: source-level methods remain deferred.
+            checks = ('\tlocal_0.clear();\n'
+                      '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
+                      '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
+            source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
+            if fixture.get('catch_out_of_range'):
+                # Test-only exception observation; this does not enable source try/catch syntax.
+                source = '#include <stdexcept>\n' + source.replace('int main()', 'int tested_entry()')
+                source += '\nint main() { try { tested_entry(); } catch (const std::out_of_range&) { return 8; } return 90; }\n'
+            if fixture.get('catch_domain_error'):
+                source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
+                message = json.dumps(fixture['catch_domain_error'])
+                source += ('\nint main() { try { tested_entry(); } catch (const std::domain_error& e) { '
+                           'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
+            cpp.write_text(source)
+            units = [cpp]
+            for index, extra in enumerate(fixture.get('extra_cpp', [])):
+                unit = directory / f'extra-{index}.cpp'
+                unit.write_text(extra)
+                units.append(unit)
         command = write_build(directory, units)
         command[2] = '8'
         graph = directory / 'build.ninja'

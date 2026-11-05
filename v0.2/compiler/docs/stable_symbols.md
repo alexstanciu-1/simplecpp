@@ -2,8 +2,9 @@
 
 Doc Status: supporting
 
-Function and explicit-global identities use the same general watch coordinator. This does not implement
-incremental lowering, executable emission or native concurrent publication.
+Functions, constants and explicit globals use the same general watch coordinator.
+[Incremental executable emission](incremental_executable.md) consumes its invalidations;
+native concurrent publication remains deferred.
 
 ## Structure and ownership
 
@@ -28,11 +29,12 @@ ast_call_expression
 └── function_symbol: ?symbol_entry — prepared cache reference
 
 Dependency_Watches
-├── observers: symbol_entry → set<dependency_watcher>
+├── observers: symbol_entry → source_key → set<dependency_watcher>
 ├── targets: dependency_watcher → set<symbol_entry> — reverse index for cleanup
 └── pending: set<dependency_watcher> — one notification per publication batch
 
 ast_function_body implements dependency_watcher
+├── dependency_source_key(): string — stable while subscriptions are registered
 └── invalidate_dependencies(): void — mark owned preparation cache dirty
 ```
 
@@ -49,6 +51,44 @@ Normal full compilation uses the same entries and the same preparation worker.
 The previous separate bare-name callable map is gone. Collection and publication
 now use the [common scope mechanism](scopes.md).
 
+## Grouped observer access
+
+The observer index groups each symbol's live watchers by source key. It retains all
+active relations across runs; changed-work queues remain separate. The reverse
+watcher-to-symbol index and pending-notification set are unchanged.
+
+All storage stays private to `Dependency_Watches`. Consumers use:
+
+- `observer_count($symbol)` for total watcher count.
+- `observer_count($symbol, $source_key)` for one source's count.
+- `has_external_observers($symbol, $declaring_source_key)` for cross-unit usage.
+
+These queries expose values, never mutable buckets or their storage types. Registration,
+removal and dispatch continue through `watch`, `forget`/`retire`, `changed` and `dispatch`.
+No consumer needs to know the grouping representation.
+
+A watcher supplies `dependency_source_key()`; the coordinator does not inspect its AST.
+Full and incremental program preparation bind logical source keys before registering
+watches. Direct standalone body analysis without a binding falls back to its source path. The key must remain stable until subscriptions are forgotten. Normal
+source moves replace the AST and retire old subscriptions before detaching the old body.
+Callers querying external use supply the declaring source key in that same context.
+
+PHP uses an `ArrayObject` for each symbol's source map and `SplObjectStorage` per
+source bucket. The object map avoids copying a PHP array out of the outer
+`SplObjectStorage` on each registration. Buckets are created on demand and removed
+when empty; no source counters or parallel source-membership index are retained.
+Total-count queries sum bucket sizes; external-use queries inspect source keys,
+without traversing bodies. No measured memory reduction is claimed.
+
+External-use results are meaningful after successful preparation. Empty or incomplete
+subscriptions during preparation are not evidence that a symbol is unused. The [source-unit header planner](unit_headers.md) now consumes this query to place native
+declarations. Internal linkage and broader session cleanup remain separate work.
+
+`tests/grouped_observers.php` verifies all flavors: same-source grouping, no-op reuse,
+source moves, last external-reader removal, failed parse isolation, stable tombstones,
+repeated preparation failures and recovery. Generic coordinator tests cover deduplication,
+private query behavior and removal of empty buckets.
+
 ## Watch registration and dispatch
 
 The session lineage owns `Dependency_Watches` in `compiler/dependencies.php`.
@@ -58,7 +98,7 @@ coordinator deduplicates identity pairs and owns reverse subscriptions and pendi
 notifications. A symbol is currently a stable `symbol_entry`, including tombstones.
 
 `Symbol_Publication` owns declaration-contract snapshots/comparison and supplies the
-complete live watcher inventory. The dependency coordinator has no function-name,
+retired-root watcher inventory on the incremental path (the full API supplies all live watchers). The dependency coordinator has no function-name,
 signature, source traversal or body-preparation knowledge.
 
 Global reads use the same body watchers, observing existence/ambiguity and storage
@@ -71,10 +111,11 @@ edits can reuse readers while stable entries select replacement declarations. Se
 - `dispatch()` ends the batch and calls `invalidate_dependencies()` once per queued
   watcher, even if several watched symbols changed. An empty dispatch does nothing.
 - `forget(watcher)` removes both directions and cancels its pending notification.
+- `retire(watcher)` removes subscriptions and queues one final invalidation.
 - `retain(watchers)` removes subscriptions for absent watchers and queues their
   final invalidation; callers must keep retired targets alive through dispatch.
 
-Publication retains current watchers, queues semantic changes, then dispatches
+Incremental publication retires replaced/removed bodies directly, queues semantic changes, then dispatches
 before returning. Watcher callbacks invalidate owned caches and enqueue preparation work: they must not
 throw, prepare code or mutate subscriptions. This remains sequential PHP work;
 native publication will require the existing reader/worker barrier.
@@ -100,6 +141,8 @@ measurement belongs to `my-try`, not this compiler. Future grouping/performance
 choices need current measurements.
 
 ## Publication and changes
+
+See [changed-source publication](incremental_publication.md) for selective chain and contract updates.
 
 The frontend collects candidate ASTs and completes source checks before touching
 live entries. A parse/read failure leaves current entries, statuses and body caches
@@ -168,11 +211,10 @@ $session = $compiler->frontend($app, $session);
 $report = Incremental_Preparation::prepare($session, new entry_target(31));
 ```
 
-This API intentionally returns no emission handle and does not mark a whole
-incremental file/program ready for lowering. The app-local `frontend` service stays
-scoped to tokenization, parsing and symbol publication. Incremental preparation is
-an in-process API in this slice. The normal executable build still prepares and
-emits its whole program.
+This API returns counts and settles touched files after successful preparation. The
+[retained executable coordinator](incremental_executable.md) creates the existing emission
+handle from that completion state. The app-local `frontend` service stays scoped to
+tokenization, parsing and symbol publication; the CLI/panel full-build paths are unchanged.
 
 ## Verification
 
@@ -203,3 +245,8 @@ facts conservatively. Failed bindings recover through the existing watcher/reset
 Incremental bodies now enqueue themselves when invalidated rather than relying on
 an application-wide readiness scan. See [preparation work ownership and retry](preparation_work.md).
 The dependency coordinator and declaration publication algorithm are unchanged.
+
+Grouped-observer validation (2026-11-05): 51 selected compiler tests and 48 retained-session
+executable checks passed across cpp/php/js, including parse/preparation/publication/native
+failure recovery. Native timing details are retained in
+`v0.2/build/grouped-observers-native-proof/report.md`.

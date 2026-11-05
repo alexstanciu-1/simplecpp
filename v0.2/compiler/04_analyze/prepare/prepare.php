@@ -48,7 +48,7 @@ final class Preparation
 	private scope $symbols;
 	/** Native non-owning owner of the facts being prepared. */
 	private ast_function_body $owner;
-	/** Native non-owning; null for full, nonincremental preparation. */
+	/** Native non-owning; null when the caller does not collect usage relations. */
 	private ?Dependency_Watches $dependencies = null;
 
 	/** Standalone clients use the same declaration-before-body orchestration as multifile programs. */
@@ -58,7 +58,7 @@ final class Preparation
 	}
 
 	/** Prepare only the selected executable body, consuming already settled callable contracts. */
-	public function entry(ast_file_node $file, entry_target $target, scope $symbols): void
+	public function entry(ast_file_node $file, entry_target $target, scope $symbols, ?Dependency_Watches $dependencies = null): void
 	{
 		$source = $file->tokens->source;
 		$main = $file->main();
@@ -66,7 +66,7 @@ final class Preparation
 			throw new diagnostic($source, strlen($source->content),
 				'Entry slice requires an explicit value return');
 		}
-		$this->function_body($main->body(), $symbols, $target);
+		$this->function_body($main->body(), $symbols, $target, $dependencies);
 	}
 
 	/** Reset one body, reject duplicate locals, and settle its facts and traversal statistics. */

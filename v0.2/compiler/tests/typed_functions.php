@@ -130,8 +130,7 @@ $multi = (new Program_Frontend())->prepare_sources('main', [
 	'js' => new source_file('js', 'function relay(text: string): string { return text; } function number(n: byte): byte { return n; }', flavor::js),
 ], new entry_target(31));
 $bundle = Cpp_Program::emit($multi);
-$units = array_values($bundle->files);
-$fixtures['multifile'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => bin2hex('cross')];
+$fixtures['multifile'] = ['files' => $bundle->files, 'stdout_hex' => bin2hex('cross')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
 foreach (['function f($x int): void {}', 'function f(int ...$x): void {}',

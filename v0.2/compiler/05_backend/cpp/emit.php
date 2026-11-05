@@ -21,6 +21,30 @@ final class Cpp_Exit
  */
 final class Cpp_Emitter
 {
+	/** PROPERTIES */
+	/** Native non-owning; null keeps standalone single-file emission self-contained. */
+	private readonly ?Cpp_Headers $headers;
+
+	/** CONSTRUCTOR */
+	public function __construct(?Cpp_Headers $headers = null)
+	{
+		$this->headers = $headers;
+	}
+
+	/** METHODS */
+	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
+	public function declaration(ast_function_declaration|ast_global_declaration $node,
+		array &$includes /** array<string,bool> */): string
+	{
+		if ($node instanceof ast_function_declaration) {
+			return $this->signature($node, $includes) . ';';
+		}
+		foreach ($node->type_def()->cpp_headers() as $header) {
+			$includes[$header] = true;
+		}
+		return 'extern ' . $node->type_def()->cpp_type() . ' ' . self::global_name($node) . ';';
+	}
+
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
 	public function emit(prepared_entry $program): string
 	{
@@ -75,9 +99,16 @@ final class Cpp_Emitter
 				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
 		}
 		$prototypes = '';
+		$unit_headers = [];
 		ksort($declarations, \SORT_STRING);
 		foreach ($declarations as $function) {
-			$prototypes .= $this->signature($function, $required_headers) . ";\n";
+			$include = $this->headers?->declaration_header($function);
+			if ($include !== null) {
+				$unit_headers[$include] = true;
+			}
+			else {
+				$prototypes .= $this->declaration($function, $required_headers) . "\n";
+			}
 		}
 		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
@@ -93,7 +124,23 @@ final class Cpp_Emitter
 		}
 		ksort($global_references, \SORT_STRING);
 		foreach ($global_references as $name => $global) {
-			$header .= 'extern ' . $global->type_def()->cpp_type() . ' ' . $name . ";\n";
+			$include = $this->headers?->declaration_header($global);
+			if ($include !== null) {
+				$unit_headers[$include] = true;
+			}
+			else {
+				$header .= $this->declaration($global, $required_headers) . "\n";
+			}
+		}
+		foreach ($file->globals() as $global) {
+			$include = $this->headers?->declaration_header($global);
+			if ($include !== null) {
+				$unit_headers[$include] = true;
+			}
+		}
+		ksort($unit_headers, \SORT_STRING);
+		foreach ($unit_headers as $include => $_) {
+			$header .= '#include "' . $include . "\"\n";
 		}
 		return $header . $prototypes . implode("\n", $definitions);
 	}
@@ -464,6 +511,7 @@ final class Cpp_Emitter
 			. '(' . implode(', ', $parameters) . ')';
 	}
 
+	/** STATIC METHODS */
 	public static function global_name(ast_global_declaration $declaration): string
 	{
 		return 'scpp_global_' . bin2hex($declaration->name());

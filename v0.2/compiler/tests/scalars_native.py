@@ -47,7 +47,7 @@ def prove(work):
         (directory / 'build.log').write_text(build.stdout + build.stderr)
         result = run([directory / 'program'])
         assert result.returncode == 8 and result.stdout == '0125581', result
-        traces = json.loads((directory / 'unit-0.json').read_text())['traceEvents']
+        traces = json.loads(next(directory.glob('unit-*.json')).read_text())['traceEvents']
         totals = {e['name'][6:]: e['dur'] / 1000 for e in traces if e['name'].startswith('Total ')}
         log = (directory / '.ninja_log').read_text().splitlines()[1:]
         link = [line.split('\t') for line in log if line.split('\t')[3] == 'program'][-1]

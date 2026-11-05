@@ -71,19 +71,7 @@ final class Symbol_Publication implements declaration_sink
 		if ($dependencies !== null)
 		{
 			$dependencies->retain(self::watchers($files));
-			$contracts = self::declaration_contracts($scope);
-			foreach (array_unique(array_merge(array_keys($old_contracts), array_keys($contracts))) as $key)
-			{
-				$old = $old_contracts[$key] ?? null;
-				$current = $contracts[$key] ?? null;
-				$entry = $scope->entry($key);
-				if (($old !== $current) || (array_key_exists($key, $old_contracts) !== array_key_exists($key,
-							$contracts))
-					|| (array_key_exists($key, $contracts) && ($current === null) && ($entry->status !== change_status::none))) {
-					$dependencies->changed($entry);
-				}
-			}
-			$dependencies->dispatch();
+			self::notify($scope, $dependencies, $old_contracts, self::declaration_contracts($scope));
 		}
 		return $scope;
 	}
@@ -106,17 +94,81 @@ final class Symbol_Publication implements declaration_sink
 	}
 
 	/**
+	 * Publish completed added/changed roots and withdraw replaced/removed roots; unchanged units are not inputs.
+	 * @param ast_file_node[] $files
+	 * @param ast_file_node[] $retired
+	 */
+	public static function changes(array $files /** array<string,ast_file_node> */, array $retired /** list<ast_file_node> */,
+		scope $scope, Dependency_Watches $dependencies): scope
+	{
+		$collection = new Scope_Collection($scope);
+		$keys = [];
+		$removed = [];
+		foreach ($retired as $file) {
+			foreach ($file->published_declarations() as $node) {
+				$removed[spl_object_id($node)] = true;
+				$keys[$node->symbol_key()] = true;
+			}
+		}
+		foreach ($files as $file) {
+			foreach ($file->published_declarations() as $node) {
+				$collection->import($node);
+				$keys[$node->symbol_key()] = true;
+			}
+		}
+		$old = self::declaration_contracts($scope, $keys);
+		$collection->publish_changes($removed, $keys, static fn(ast_node $a, ast_node $b): int /** int32 */ =>
+			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
+		foreach ($files as $file) {
+			$file->scope->parent = $scope;
+		}
+		foreach ($retired as $file) {
+			foreach ($file->declaration_nodes as $node) {
+				if ($node instanceof ast_function_declaration) {
+					$dependencies->retire($node->body());
+				}
+			}
+		}
+		self::notify($scope, $dependencies, $old, self::declaration_contracts($scope, $keys));
+		return $scope;
+	}
+
+	/**
+	 * Compare only supplied contracts and end the existing notification batch.
+	 * @param (string|null)[] $old
+	 * @param (string|null)[] $current
+	 */
+	private static function notify(scope $scope, Dependency_Watches $dependencies,
+		array $old /** array<string,?string> */, array $current /** array<string,?string> */): void
+	{
+		foreach (array_unique(array_merge(array_keys($old), array_keys($current))) as $key) {
+			$entry = $scope->entry($key);
+			if ((($old[$key] ?? null) !== ($current[$key] ?? null))
+				|| (array_key_exists($key, $old) !== array_key_exists($key, $current))
+				|| (array_key_exists($key, $current) && ($current[$key] === null) && ($entry->status !== change_status::none))) {
+				$dependencies->changed($entry);
+			}
+		}
+		$dependencies->dispatch();
+	}
+
+	/**
 	 * Ephemeral signature snapshot across chain publication; no AST copies or retained candidate
 	 * lists.
 	 *
 	 * Return: null means ambiguous, absent key means missing.
 	 *
+	 * @param bool[]|null $keys Null requests the complete inventory for full publication.
 	 * @return (string|null)[]
 	 */
-	private static function declaration_contracts(scope $scope): array /** array<string,?string> */
+	private static function declaration_contracts(scope $scope, ?array $keys /** array<string,bool>|null */ = null): array /** array<string,?string> */
 	{
 		$contracts = [];
-		foreach ($scope->declarations as $key => $head) {
+		foreach ($keys ?? $scope->declarations as $key => $_) {
+			$head = $scope->declarations[$key] ?? null;
+			if ($head === null) {
+				continue;
+			}
 			if ($head->duplicate_element() !== null) {
 				$contracts[$key] = null;
 			}

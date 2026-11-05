@@ -32,7 +32,7 @@ foreach ($output->files as $path => $text) {
 }
 echo json_encode(['module_ms'=>($loaded-$start)/1e6, 'frontend_prepare_ms'=>($settled-$loaded)/1e6,
     'emit_ms'=>($emitted-$settled)/1e6, 'write_ms'=>(hrtime(true)-$emitted)/1e6,
-    'units'=>array_keys($output->files)], JSON_THROW_ON_ERROR);
+    'units'=>$output->translation_units()], JSON_THROW_ON_ERROR);
 '''
 
 

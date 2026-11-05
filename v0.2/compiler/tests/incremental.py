@@ -56,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     assert run.report['changes'][str(source)] == 'changed'
     assert changed['build']['inputs'] != first['build']['inputs']
     run(False)
-    # Every compiler unit is republished, not just a changed unit.
+    # Full semantic compilation still runs, but identical generated text keeps its timestamp.
     extra = app/'other.php'
     extra.write_text('function helper(): void {}')
     added = run(True)
@@ -66,7 +66,20 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     os.utime(unit, ns=(1, 1))
     extra.write_text('function helper(): void { echo "changed"; }')
     run(True)
-    assert unit.stat().st_mtime_ns != 1
+    assert unit.stat().st_mtime_ns == 1
+    # Header artifacts participate in cache validation and last-use cleanup too.
+    source.write_text('helper(); return 9;')
+    public = run(True)
+    assert len(public['headers']) == 1
+    header = output/public['headers'][0]
+    run(False)
+    header.unlink()
+    run(True)
+    assert header.is_file()
+    run(False)
+    source.write_text('return 9;')
+    private = run(True)
+    assert private['headers'] == [] and not header.exists()
     extra.unlink()
     removed = run(True)
     assert run.report['changes'][str(extra)] == 'removed'

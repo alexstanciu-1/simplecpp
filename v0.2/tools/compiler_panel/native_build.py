@@ -1,5 +1,6 @@
 """Shared Ninja build graph for the local panel and native-build experiments."""
 from pathlib import Path
+import hashlib
 import shlex
 import shutil
 
@@ -40,8 +41,8 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
             header.write_text(text)
         lines.append('build runtime.pch: pch runtime_pch.hpp')
     objects = []
-    for i, unit in enumerate(units):
-        obj = f'unit-{i}.o'
+    for unit in units:
+        obj = 'unit-' + hashlib.sha256(str(Path(unit).resolve()).encode()).hexdigest() + '.o'
         objects.append(obj)
         # The tiny entry adapter uses no runtime headers and does not benefit from this PCH.
         use_pch = pch and Path(unit).name != 'entry.cpp'
@@ -49,5 +50,8 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
         lines.append(f'build {obj}: compile {ninja_path(Path(unit).resolve())}' + (' | ' + ninja_path(pch_path) if use_pch else ''))
         lines.append('  pchflag = ' + ('-include-pch ' + shell(pch_path) + (' -Xclang -fno-validate-pch' if not validate_pch else '') if use_pch else ''))
     lines.extend([f'build program: link {" ".join(objects)} {ninja_path(library)}', 'default program'])
-    (work / 'build.ninja').write_text('\n'.join(lines) + '\n')
+    graph = work / 'build.ninja'
+    text = '\n'.join(lines) + '\n'
+    if not graph.exists() or graph.read_text() != text:
+        graph.write_text(text)
     return [ninja, '-j', '4', '-v', '-f', 'build.ninja']

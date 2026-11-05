@@ -6,12 +6,12 @@ namespace scpp\compiler;
 /** Publishes a generated program and its manifest, retiring only obsolete artifacts owned by the previous manifest. */
 final class Cpp_Bundle
 {
-	private const FORMAT = 'scpp-cpp-program-v1';
+	private const FORMAT = 'scpp-cpp-program-v2';
 
 	/** Accept only the artifact paths owned by this bounded publication layout. */
 	private static function require_path(string $path): void
 	{
-		if (preg_match('~\A(?:entry\.cpp|units/[a-f0-9]{64}\.cpp)\z~', $path) !== 1) {
+		if (preg_match('~\A(?:entry\.cpp|units/[a-f0-9]{64}\.(?:cpp|hpp))\z~', $path) !== 1) {
 			throw new \RuntimeException('Invalid program artifact path: ' . $path);
 		}
 	}
@@ -38,15 +38,20 @@ final class Cpp_Bundle
 		catch (\JsonException $error) {
 			throw new \RuntimeException('Invalid program manifest: ' . $error->getMessage());
 		}
-		if ((!is_array($data)) || (($data['format'] ?? null) !== self::FORMAT)
+		if ((!is_array($data)) || !in_array($data['format'] ?? null, [self::FORMAT, 'scpp-cpp-program-v1'], true)
 			|| (!is_array($data['translation_units'] ?? null)) || (!array_is_list($data['translation_units']))) {
 			throw new \RuntimeException('Unsupported program manifest');
 		}
-		foreach ($data['translation_units'] as $path) {
-			if (!is_string($path)) {
-				throw new \RuntimeException('Invalid program manifest path');
+		if (!is_array($data['headers'] ?? []) || !array_is_list($data['headers'] ?? [])) {
+			throw new \RuntimeException('Invalid header inventory');
+		}
+		foreach (['cpp' => $data['translation_units'], 'hpp' => $data['headers'] ?? []] as $extension => $paths) {
+			foreach ($paths as $path) {
+				if (!is_string($path) || !str_ends_with($path, '.' . $extension)) {
+					throw new \RuntimeException('Invalid program manifest path');
+				}
+				self::require_path($path);
 			}
-			self::require_path($path);
 		}
 		return $data;
 	}
@@ -85,7 +90,7 @@ final class Cpp_Bundle
 			return null;
 		}
 		$data = $previous;
-		if (($data === []) || (($data['build']['inputs'] ?? null) !== $state)
+		if (($data === []) || (($data['format'] ?? null) !== self::FORMAT) || (($data['build']['inputs'] ?? null) !== $state)
 			|| (!is_array($data['build']['artifacts'] ?? null))
 			|| (!is_array($data['sources'] ?? null))) {
 			return null;
@@ -96,7 +101,7 @@ final class Cpp_Bundle
 		if ($metadata !== $expected_metadata) {
 			return null;
 		}
-		$units = $data['translation_units'];
+		$units = array_merge($data['translation_units'], $data['headers'] ?? []);
 		if (($units === []) || (array_keys($data['build']['artifacts']) !== $units)) {
 			return null;
 		}
@@ -135,7 +140,7 @@ final class Cpp_Bundle
 		}
 		$manifest = $directory . '/manifest.json';
 		$previous ??= self::read($directory);
-		$old = $previous['translation_units'] ?? [];
+		$old = array_merge($previous['translation_units'] ?? [], $previous['headers'] ?? []);
 		$owned = array_fill_keys($old, true);
 		$protected = array_fill_keys(array_filter(array_map('realpath', array_merge($inputs, $output->native_sources))),
 			true);
@@ -154,40 +159,51 @@ final class Cpp_Bundle
 			}
 		}
 		$data = ['format' => self::FORMAT, 'entry' => $output->entry_path,
-			'sources' => (object) $output->source_units, 'translation_units' => array_keys($output->files)];
+			'sources' => (object) $output->source_units, 'translation_units' => $output->translation_units(), 'headers' => $output->headers()];
 		if ($output->link_inputs !== []) {
 			$data['link_inputs'] = $output->link_inputs;
 		}
 		if ($output->native_sources !== []) {
 			$data['native_sources'] = $output->native_sources;
 		}
-		if (file_exists($manifest) && (!unlink($manifest))) {
-			throw new \RuntimeException('Cannot invalidate program manifest');
-		}
-		foreach ($output->files as $path => $contents) {
-			Cpp_Publication::write($directory . '/' . $path, $contents);
-		}
-		foreach ($old as $path) {
-			if ((!isset($output->files[$path])) && file_exists($directory . '/' . $path)
-				&& (!unlink($directory . '/' . $path))) {
-				throw new \RuntimeException('Cannot retire obsolete program unit: ' . $path);
-			}
-		}
-		if ($state !== null)
-		{
-			$artifacts = [];
-			foreach ($output->files as $path => $_)
-			{
-				clearstatcache(true, $directory . '/' . $path);
-				$stat = stat($directory . '/' . $path);
-				if ($stat === false) {
-					throw new \RuntimeException('Cannot stat published artifact: ' . $path);
+		$created = [];
+		try {
+			// Keep the last ownership inventory until commit so interrupted writes remain retryable.
+			foreach ($output->files as $path => $contents) {
+				Cpp_Publication::write($directory . '/' . $path, $contents);
+				if (!isset($owned[$path])) {
+					$created[] = $directory . '/' . $path;
 				}
-				$artifacts[$path] = ['mtime' => $stat['mtime'], 'size' => $stat['size']];
 			}
-			$data['build'] = ['inputs' => $state, 'metadata' => $data, 'artifacts' => $artifacts];
+			foreach ($old as $path) {
+				if ((!isset($output->files[$path])) && file_exists($directory . '/' . $path)
+					&& (!unlink($directory . '/' . $path))) {
+					throw new \RuntimeException('Cannot retire obsolete program unit: ' . $path);
+				}
+			}
+			if ($state !== null)
+			{
+				$artifacts = [];
+				foreach ($output->files as $path => $_)
+				{
+					clearstatcache(true, $directory . '/' . $path);
+					$stat = stat($directory . '/' . $path);
+					if ($stat === false) {
+						throw new \RuntimeException('Cannot stat published artifact: ' . $path);
+					}
+					$artifacts[$path] = ['mtime' => $stat['mtime'], 'size' => $stat['size']];
+				}
+				$data['build'] = ['inputs' => $state, 'metadata' => $data, 'artifacts' => $artifacts];
+			}
+			$text = json_encode($data, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n";
+			Cpp_Publication::write($manifest, $text, false);
 		}
-		$text = json_encode($data, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n";
-		Cpp_Publication::write($manifest, $text);
+		catch (\Throwable $error) {
+			// New files have no committed owner yet; remove only artifacts created by this attempt.
+			foreach ($created as $path) {
+				@unlink($path);
+			}
+			throw $error;
+		}
 	}
 }
