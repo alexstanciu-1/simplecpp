@@ -117,24 +117,12 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
         $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals];
     }
-    $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
-    foreach (listValue(at($compiler, 'conversions')) as $conversion) {
-        $operation = textValue(at($conversion, 'operation'));
-        $required = match ($operation) {
-            'boolean_integer' => 'boolean_to_numeric_01',
-            'integer_boolean', 'floating_boolean' => 'numeric_to_boolean_nonzero',
-            'floating_integer' => 'floating_to_integer_truncate_checked',
-            'numeric_floating' => at($conversion, 'from') === 'bool_t'
-                ? 'boolean_to_numeric_01' : 'integer_to_floating_rounding',
-            default => null,
-        };
-        requireThat($required === null || in_array($required, $scalarPolicies, true), 'Compiler conversion lacks runtime scalar policy');
-    }
+    $conversions = compilerConversionPlan($metadata, $definitions, $types);
     $identities = array_keys($definitions);
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity) . compilerPromotions($compiler, $definitions, $identity);
+        $methods = compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity) . compilerPromotions($compiler, $conversions, $definitions, $identity);
         if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -216,30 +204,71 @@ $cases
 PHP_CODE;
 }
 
-/** Emit direct conversion branches; no conversion matrix is interpreted by the running compiler. */
-function compilerConversions(mixed $compiler, array $definitions, string $target): string {
-    $prepare = [];
-    $lower = [];
-    $constants = [];
-    $seen = [];
-    foreach (listValue(at($compiler, 'conversions')) as $row) {
-        fields($row, ['from', 'to', 'contexts', 'operation']);
+/** Runtime type categories validate strategy mechanics; they do not grant any source conversion. */
+function compilerConversionKind(mixed $metadata, string $identity): string {
+    if (isset($metadata->types->$identity)) return 'integer';
+    if ($identity === 'byte') return 'byte';
+    if ($identity === at(at($metadata, 'floating'), 'type')) return 'floating';
+    return isset($metadata->values->$identity) ? textValue(at($metadata->values->$identity, 'kind')) : 'other';
+}
+
+/** Validate and index declared conversion rows once, shared by boundary and promotion generation. */
+function compilerConversionPlan(mixed $metadata, array $definitions, array $types): array {
+    $plan = [];
+    $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
+    foreach (listValue(at(at($metadata, 'compiler'), 'conversions')) as $row) {
+        fields($row, ['from', 'to', 'contexts', 'operation', 'promotion_operators']);
         $from = textValue(at($row, 'from'));
         $to = textValue(at($row, 'to'));
+        requireThat(isset($definitions[$from], $definitions[$to]), 'Conversion references inactive type');
+        $key = $from . ':' . $to;
+        requireThat(!isset($plan[$key]), 'Duplicate compiler conversion');
         $contexts = names(at($row, 'contexts'), 'Duplicate conversion context');
         foreach ($contexts as $context) requireThat(in_array($context, ['explicit_cast', 'typed_destination', 'assignment', 'inference'], true), 'Unsupported conversion context');
         $operation = textValue(at($row, 'operation'));
-        requireThat(isset($definitions[$from], $definitions[$to]), 'Conversion references inactive type');
-        $key = $from . ':' . $to;
-        requireThat(!isset($seen[$key]), 'Duplicate compiler conversion');
-        $seen[$key] = true;
-        $allowed = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boolean',
-            'int64:byte' => 'checked_integer', 'byte:int64' => 'integer_widen',
-            'int64:float64' => 'numeric_floating', 'bool_t:float64' => 'numeric_floating',
-            'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer'];
-        requireThat(($allowed[$key] ?? null) === $operation, 'Unsupported compiler conversion operation');
-        // Byte's distinct contract must not be weakened by a publication descriptor.
-        requireThat(($from !== 'byte' && $to !== 'byte') || array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Byte conversions must be explicit');
+        $sourceKind = compilerConversionKind($metadata, $from);
+        $targetKind = compilerConversionKind($metadata, $to);
+        // These guards describe the implemented algorithms, not an independent list of admitted type pairs.
+        $valid = match ($operation) {
+            'boolean_integer' => $sourceKind === 'boolean' && $targetKind === 'integer',
+            'integer_boolean' => $sourceKind === 'integer' && $targetKind === 'boolean',
+            'checked_integer' => $sourceKind === 'integer' && $targetKind === 'byte',
+            'integer_widen' => $sourceKind === 'byte' && $targetKind === 'integer'
+                && fits($types[$to], $types[$from]['signed'], digits($types[$from])),
+            'numeric_floating' => in_array($sourceKind, ['integer', 'boolean'], true) && $targetKind === 'floating',
+            'floating_boolean' => $sourceKind === 'floating' && $targetKind === 'boolean',
+            'floating_integer' => $sourceKind === 'floating' && $targetKind === 'integer' && $types[$to]['signed'],
+            default => false,
+        };
+        requireThat($valid, 'Unsupported compiler conversion operation');
+        requireThat(($sourceKind !== 'byte' && $targetKind !== 'byte') || array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Byte conversions must be explicit');
+        $required = match ($operation) {
+            'boolean_integer' => 'boolean_to_numeric_01',
+            'integer_boolean', 'floating_boolean' => 'numeric_to_boolean_nonzero',
+            'floating_integer' => 'floating_to_integer_truncate_checked',
+            'numeric_floating' => $sourceKind === 'boolean' ? 'boolean_to_numeric_01' : 'integer_to_floating_rounding',
+            default => null,
+        };
+        requireThat($required === null || in_array($required, $scalarPolicies, true), 'Compiler conversion lacks runtime scalar policy');
+        $promotion = names(at($row, 'promotion_operators'), 'Duplicate conversion promotion operator');
+        // Only the currently implemented unchecked rounding conversion can be settled without value checks.
+        requireThat($promotion === [] || ($operation === 'numeric_floating' && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
+        foreach ($promotion as $operator) requireThat(in_array($operator, ['less', 'less_equal', 'greater', 'greater_equal'], true), 'Unsupported promotion operator');
+        $plan[$key] = ['from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion];
+    }
+    return $plan;
+}
+
+/** Emit direct conversion branches; no conversion matrix is interpreted by the running compiler. */
+function compilerConversions(array $conversions, array $definitions, string $target): string {
+    $prepare = [];
+    $lower = [];
+    $constants = [];
+    foreach ($conversions as $row) {
+        $from = $row['from'];
+        $to = $row['to'];
+        $contexts = $row['contexts'];
+        $operation = $row['operation'];
         if ($to !== $target) continue;
         $condition = '$value->type_def() === type_' . $definitions[$from]['class'] . '::instance()';
         $permission = array_map(static fn(string $context): string => '$context === conversion_context::' . $context, $contexts);
@@ -575,39 +604,52 @@ $lowering\t\t\tdefault => throw new \\LogicException('Unary operation was not ap
 }
 
 /** Generate bounded mixed ordering from explicit promotion rows; reuse conversion lowering, never compound admission. */
-function compilerPromotions(mixed $compiler, array $definitions, string $identity): string {
+function compilerPromotions(mixed $compiler, array $conversions, array $definitions, string $identity): string {
     $cases = '';
     $seen = [];
     foreach (listValue(at($compiler, 'promotions')) as $row) {
         fields($row, ['left', 'right', 'operators', 'execution_type', 'result']);
         $left = textValue(at($row, 'left'));
         $right = textValue(at($row, 'right'));
-        requireThat(in_array($left . ':' . $right, ['int64:float64', 'float64:int64'], true), 'Unsupported promotion pair');
-        literals($row, ['execution_type' => 'float64', 'result' => 'bool_t']);
-        foreach ([$left, $right, 'bool_t'] as $name) requireThat(isset($definitions[$name]), 'Promotion references inactive type');
-        $conversion = null;
-        foreach (listValue(at($compiler, 'conversions')) as $candidate) {
-            if (at($candidate, 'from') === 'int64' && at($candidate, 'to') === 'float64') $conversion = textValue(at($candidate, 'operation'));
-        }
-        requireThat($conversion === 'numeric_floating', 'Promotion requires the defined rounding conversion');
+        $execution = textValue(at($row, 'execution_type'));
+        $result = textValue(at($row, 'result'));
+        foreach ([$left, $right, $execution, $result] as $name) requireThat(isset($definitions[$name]), 'Promotion references inactive type');
+        requireThat($left !== $right, 'Promotion requires different operand types');
+        $lc = compilerPromotionConversion($conversions, $left, $execution);
+        $rc = compilerPromotionConversion($conversions, $right, $execution);
         $operators = names(at($row, 'operators'), 'Duplicate promotion operator');
+        $comparison = object(at($compiler, 'comparisons'))[$execution] ?? null;
+        requireThat($comparison !== null && at($comparison, 'result') === $result, 'Promotion execution/result mismatch');
         foreach ($operators as $operator) {
-            requireThat(in_array($operator, ['less', 'less_equal', 'greater', 'greater_equal'], true), 'Unsupported promotion operator');
-            requireThat(in_array($operator, names(at(at(at($compiler, 'comparisons'), 'float64'), 'operators')), true), 'Promotion execution operation unavailable');
+            foreach ([$lc, $rc] as $conversion) {
+                requireThat($conversion === null || in_array($operator, $conversion['promotion_operators'], true), 'Unsupported promotion operator');
+            }
+            requireThat(in_array($operator, names(at($comparison, 'operators')), true), 'Promotion execution operation unavailable');
             $key = $left . ':' . $right . ':' . $operator;
             requireThat(!isset($seen[$key]), 'Duplicate promotion');
             $seen[$key] = true;
         }
         if ($left !== $identity || $operators === []) continue;
         $rightClass = 'type_' . $definitions[$right]['class'];
+        $executionClass = 'type_' . $definitions[$execution]['class'];
+        $resultClass = 'type_' . $definitions[$result]['class'];
         $operatorCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $operators));
-        $lc = $left === 'int64' ? $conversion : 'identity';
-        $rc = $right === 'int64' ? $conversion : 'identity';
+        $lc = $lc['operation'] ?? 'identity';
+        $rc = $rc['operation'] ?? 'identity';
         $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
             . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
-            . "\t\t\t\$value->settle_binary(type_bool::instance(), type_float64::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
+            . "\t\t\t\$value->settle_binary($resultClass::instance(), $executionClass::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
     }
     if ($cases === '') return '';
     return "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
         . "\tpublic function prepare_binary(ast_binary_expression \$value): void\n\t{\n$cases\t\tparent::prepare_binary(\$value);\n\t}\n";
+}
+
+/** Resolve a direct operand-to-execution conversion; checked promotion preparation remains unsupported. */
+function compilerPromotionConversion(array $conversions, string $source, string $execution): ?array {
+    if ($source === $execution) return null;
+    $conversion = $conversions[$source . ':' . $execution] ?? null;
+    requireThat($conversion !== null, 'Promotion requires a defined conversion');
+    requireThat($conversion['promotion_operators'] !== [], 'Conversion does not authorize promotion');
+    return $conversion;
 }

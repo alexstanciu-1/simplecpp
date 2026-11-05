@@ -797,49 +797,57 @@
         "from": "bool_t",
         "to": "int64",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "boolean_integer"
+        "operation": "boolean_integer",
+        "promotion_operators": []
       },
       {
         "from": "int64",
         "to": "bool_t",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "integer_boolean"
+        "operation": "integer_boolean",
+        "promotion_operators": []
       },
       {
         "from": "int64",
         "to": "byte",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "checked_integer"
+        "operation": "checked_integer",
+        "promotion_operators": []
       },
       {
         "from": "byte",
         "to": "int64",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "integer_widen"
+        "operation": "integer_widen",
+        "promotion_operators": []
       },
       {
         "from": "int64",
         "to": "float64",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "numeric_floating"
+        "operation": "numeric_floating",
+        "promotion_operators": ["less", "less_equal", "greater", "greater_equal"]
       },
       {
         "from": "bool_t",
         "to": "float64",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "numeric_floating"
+        "operation": "numeric_floating",
+        "promotion_operators": []
       },
       {
         "from": "float64",
         "to": "int64",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "floating_integer"
+        "operation": "floating_integer",
+        "promotion_operators": []
       },
       {
         "from": "float64",
         "to": "bool_t",
         "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "floating_boolean"
+        "operation": "floating_boolean",
+        "promotion_operators": []
       }
     ],
     "floating_literals": {

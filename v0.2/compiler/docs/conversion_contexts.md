@@ -93,3 +93,42 @@ Operator edit: native wall 128.95–133.82 ms, frontend 13.00–15.67 ms, LLVM 1
 Native nonfinite observers: native wall 162.36–190.11 ms, frontend 27.01–38.04 ms, LLVM 15.50–25.43 ms, link 71.00–75.00 ms.
 
 Raw artifacts: `v0.2/build/mixed-ordering-proof-2026-11-05-final/`.
+
+## Generator matrix consolidation — 2026-11-05
+
+The generator now builds one validated conversion plan, indexed by source/destination,
+from the declared conversion rows. Boundary-handler rendering and promotion rendering
+share that plan. The handwritten exact type-pair whitelist has been removed.
+Strategy implementations retain category/representation guards: these validate whether
+an algorithm can handle a row, and do not create conversions absent from metadata.
+Categories come from runtime type declarations; byte remains a distinct category.
+The widening strategy additionally verifies that the destination represents the source domain.
+
+Each conversion row now has `promotion_operators`. Only the int64 → float64 row
+lists `< <= > >=`; other rows have empty lists. Context permission and promotion
+permission are independent. Checked promotions remain rejected because the current
+promotion path cannot perform their required value-dependent preparation.
+
+Promotion generation resolves left → execution and right → execution through the
+shared plan (identity needs no row). It derives result/execution class references
+from the promotion row and checks the execution comparison's result and operator
+availability. It no longer contains a fixed operand-pair whitelist, int64-specific
+conversion search, fixed bool/float class emission or int64-specific side selection.
+
+All eight generated compiler artifacts, including inventory version 16, are byte-for-byte
+identical to their pre-refactor versions. Consequently application compiler structures,
+source admission/diagnostics, preparation/lowering code and generated native behavior
+are unchanged. No inventory bump is needed for identical output. SHA-256 evidence is
+retained at `v0.2/build/conversion-matrix-refactor/generated-parity.json`.
+
+Generator tests check all 252 combinations of seven strategies and six source/destination
+types against an independent test oracle: exactly the existing eight conversions pass.
+They also check permission removal/subsets and rejection of checked promotions.
+Malformed metadata has explicit generator diagnostics; the new permission field adds
+new validation without changing source-program diagnostics. Generated code is unchanged,
+so this slice makes no application-compilation speedup claim. Validation/indexing now
+runs once per generator invocation rather than once per generated destination type.
+
+Validation after consolidation: nine focused semantic/generator/freshness CTests and
+two native cast/mixed-ordering CTests passed, including all three flavors and
+incremental recovery. The generated artifacts remain byte-identical after validation.

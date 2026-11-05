@@ -352,3 +352,56 @@ $limited = unserialize(serialize($metadata));
 $limited->compiler->conversions[4]->contexts = ['explicit_cast'];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, '($context === conversion_context::explicit_cast) && ($value->type_def() === type_int64::instance())'), 'Context subset ignored');
+
+// Independent test oracle: strategy guards must preserve the eight existing cross-type admissions.
+$expected = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boolean',
+    'int64:byte' => 'checked_integer', 'byte:int64' => 'integer_widen',
+    'int64:float64' => 'numeric_floating', 'bool_t:float64' => 'numeric_floating',
+    'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer'];
+$identities = ['int64', 'float64', 'bool_t', 'byte', 'null_t', 'string'];
+$definitions = array_fill_keys($identities, []);
+$types = registry($metadata, $facts);
+foreach (array_unique(array_values($expected)) as $operation) {
+    foreach ($identities as $from) {
+        foreach ($identities as $to) {
+            $candidate = unserialize(serialize($metadata));
+            $candidate->compiler->conversions = [(object)['from' => $from, 'to' => $to,
+                'contexts' => ['explicit_cast', 'typed_destination'], 'operation' => $operation, 'promotion_operators' => []]];
+            $accepted = true;
+            try {
+                compilerConversionPlan($candidate, $definitions, $types);
+            } catch (\RuntimeException $error) {
+                $accepted = false;
+                requireThat($error->getMessage() === 'Unsupported compiler conversion operation', 'Strategy diagnostic changed');
+            }
+            requireThat($accepted === (($expected[$from . ':' . $to] ?? null) === $operation), 'Strategy changed conversion admission');
+        }
+    }
+}
+
+// Removing the conversion's promotion permission cannot affect explicit casts or silently keep a promotion alive.
+$limited = unserialize(serialize($metadata));
+$limited->compiler->conversions[4]->promotion_operators = [];
+try {
+    renderCompiler($limited, $facts);
+    throw new \LogicException('Promotion ignored removed conversion permission');
+} catch (\RuntimeException $error) {
+    requireThat($error->getMessage() === 'Conversion does not authorize promotion', 'Wrong promotion permission diagnostic');
+}
+$limited->compiler->promotions = [];
+$code = renderCompiler($limited, $facts)['types/float64.php'];
+requireThat(str_contains($code, 'value_conversion::numeric_floating'), 'Removing promotion removed boundary conversion');
+$limited = unserialize(serialize($metadata));
+$limited->compiler->conversions[4]->promotion_operators = ['less'];
+foreach ($limited->compiler->promotions as $promotion) $promotion->operators = ['less'];
+$code = renderCompiler($limited, $facts)['types/int64.php'];
+$promotionMethod = substr($code, strpos($code, 'public function prepare_binary'));
+requireThat(str_contains($promotionMethod, 'binary_operator::less => true') && !str_contains($promotionMethod, 'binary_operator::greater'), 'Promotion subset ignored');
+$bad = unserialize(serialize($metadata));
+$bad->compiler->conversions[6]->promotion_operators = ['less'];
+try {
+    renderCompiler($bad, $facts);
+    throw new \LogicException('Checked promotion accepted without preparation support');
+} catch (\RuntimeException $error) {
+    requireThat($error->getMessage() === 'Conversion strategy does not support promotion', 'Wrong checked promotion diagnostic');
+}
