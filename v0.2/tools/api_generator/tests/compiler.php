@@ -252,6 +252,33 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Safety metadata drives generated queries without changing admissions or lowering algorithms.
+$conservative = unserialize(serialize($metadata));
+$conservative->compiler->lowering_strategies->native->reorderable = false;
+$conservative->compiler->value_types->int64->copy_semantics = 'nontrivial';
+$code = renderCompiler($conservative, $facts)['types/int64.php'];
+requireThat(!str_contains($code, 'function cpp_trivial_value'), 'Copy metadata ignored');
+foreach (['cpp_binary_reorderable', 'cpp_unary_reorderable'] as $method) {
+    $start = strpos($code, 'function ' . $method);
+    $end = strpos($code, "\n\t}", $start);
+    requireThat(!str_contains(substr($code, $start, $end - $start), '=> true'), 'Conservative strategy ignored');
+}
+foreach (['copy_missing', 'copy_invalid', 'strategy_missing', 'strategy_invalid', 'boolean_invalid', 'checked_safe'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    switch ($change) {
+        case 'copy_missing': unset($bad->compiler->value_types->byte->copy_semantics); break;
+        case 'copy_invalid': $bad->compiler->value_types->byte->copy_semantics = 'unknown'; break;
+        case 'strategy_missing': unset($bad->compiler->lowering_strategies->native); break;
+        case 'strategy_invalid': $bad->compiler->lowering_strategies->unknown = (object)['reorderable' => false]; break;
+        case 'boolean_invalid': $bad->compiler->lowering_strategies->native->reorderable = 'yes'; break;
+        case 'checked_safe': $bad->compiler->lowering_strategies->zero_checked_divide->reorderable = true; break;
+    }
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid safety metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Type bindings affect only storage and checked branches; proven conversions remain native casts.
 $bound = unserialize(serialize($metadata));
 $bound->compiler->runtime_bindings->boxed_byte->symbol = 'scpp::test_byte';

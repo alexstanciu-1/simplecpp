@@ -154,3 +154,5 @@ Explicit source casts use these same handlers without new generated definitions 
 permission from operator-specific execution rules; generated conversion lowering is shared.
 
 Arithmetic helpers, checked-conversion wrappers and string storage use [named runtime bindings](runtime_bindings.md).
+
+Copy semantics and operation-local lowering safety are declared in compiler metadata; see [safety ownership and verification](runtime_bindings.md#copy-semantics-and-lowering-safety).

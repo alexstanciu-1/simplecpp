@@ -76,7 +76,9 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics']);
+        $copy = textValue(at($row, 'copy_semantics'));
+        requireThat(in_array($copy, ['trivial', 'nontrivial'], true), 'Unsupported copy semantics');
         $class = textValue(at($row, 'class'));
         requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $class) === 1 && !isset($classes[$class]), 'Invalid or duplicate generated type class');
         $classes[$class] = true;
@@ -120,7 +122,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             if (in_array($identity, $aliases, true)) {
                 $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
             }
-            $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
+            $definitions[$identity] = ['copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
                 'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
             continue;
         }
@@ -156,7 +158,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
+        $definitions[$identity] = ['copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
     return $definitions;
 }
@@ -165,13 +167,14 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies']);
+    $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity) . compilerPromotions($compiler, $conversions, $definitions, $identity);
-        if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
+        $methods = compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
+        if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
 \tpublic function cpp_trivial_value(): bool
@@ -492,8 +495,27 @@ function compilerArithmeticBinding(mixed $compiler, string $name, string $operan
     return ['symbol' => $symbol, 'header' => $header];
 }
 
+/** Validate reviewed operation-local safety; operand effects remain the emitter's responsibility. */
+function compilerLoweringSafety(mixed $compiler): array {
+    $safety = [];
+    foreach (object(at($compiler, 'lowering_strategies')) as $strategy => $row) {
+        requireThat(in_array($strategy, ['native', 'zero_checked_divide', 'zero_checked_remainder'], true), 'Unsupported lowering safety strategy');
+        fields($row, ['reorderable']);
+        $safe = boolean(at($row, 'reorderable'));
+        requireThat(!$safe || $strategy === 'native', 'Checked lowering cannot be reorderable');
+        $safety[$strategy] = $safe;
+    }
+    return $safety;
+}
+
+/** Every admitted strategy needs an explicit safety declaration, including conservative ones. */
+function compilerStrategyReorderable(array $safety, string $strategy): bool {
+    requireThat(array_key_exists($strategy, $safety), 'Missing lowering safety strategy: ' . $strategy);
+    return $safety[$strategy];
+}
+
 /** Generate direct same-type arithmetic/comparison admission and lowering; no per-expression metadata interpretation. */
-function compilerBinary(mixed $compiler, array $definitions, string $identity): string {
+function compilerBinary(mixed $compiler, array $definitions, string $identity, array $safety): string {
     $rows = object(at($compiler, 'comparisons'));
     $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
     foreach ($rows as $name => $row) {
@@ -537,8 +559,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
     foreach ($operations as $op => $operation) {
         $result = 'type_' . $definitions[$operation['result']]['class'];
         $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
+        if (compilerStrategyReorderable($safety, $operation['lowering'])) $reorderable[] = "binary_operator::$op";
         if ($operation['lowering'] === 'native') {
-            $reorderable[] = "binary_operator::$op";
             $cases .= "\t\t\tbinary_operator::$op => '(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')',\n";
         } else {
             $symbol = $operation['binding']['symbol'];
@@ -643,7 +665,7 @@ $lowering\t\t\tdefault => throw new \\LogicException('Update operation was not a
 }
 
 /** Emit bounded numeric prefix admission and direct lowering from metadata, without per-expression lookup tables. */
-function compilerUnary(mixed $compiler, string $identity): string {
+function compilerUnary(mixed $compiler, string $identity, array $safety): string {
     $selected = [];
     foreach (object(at($compiler, 'unary')) as $name => $row) {
         requireThat(in_array($name, ['int64', 'float64'], true), 'Unsupported compiler unary type');
@@ -664,6 +686,7 @@ function compilerUnary(mixed $compiler, string $identity): string {
         $lowering .= "\t\t\tunary_operator::$operator => '($sign(' . \$operand . '))',\n";
     }
     $cases = implode(', ', $admission);
+    $safeCases = compilerStrategyReorderable($safety, 'native') ? "\t\t\t$cases => true,\n" : '';
     return "
 \t/** Generated prefix admission; operand preparation is owned by the single source traversal. */
 \tpublic function prepare_unary(ast_unary_expression \$value): void
@@ -689,8 +712,7 @@ $lowering\t\t\tdefault => throw new \\LogicException('Unary operation was not ap
 \tpublic function cpp_unary_reorderable(unary_operator \$operator): bool
 \t{
 \t\treturn match (\$operator) {
-\t\t\t$cases => true,
-\t\t\tdefault => false,
+$safeCases\t\t\tdefault => false,
 \t\t};
 \t}
 ";

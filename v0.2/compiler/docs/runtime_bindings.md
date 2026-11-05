@@ -22,8 +22,7 @@ per-expression lookup, AST property, prepared fact or runtime object. Default ge
 PHP remains byte-for-byte identical, so the inventory version is unchanged.
 
 Division checks, signed overflow behavior, compound orchestration and operand safety
-remain unchanged. Native operators still use native syntax. Copy semantics, operation
-safety metadata and echo are separate future work.
+remain unchanged. Native operators still use native syntax. Echo remains separate future work; copy and operation safety declarations are described below.
 
 ## Verification
 
@@ -93,3 +92,47 @@ Single-run recovery timings (same O2/g0, Ninja8/mold configuration above):
 | js_byte | 142.31 | 14.02 | 19.04 | 69.00 |
 | js_int | 146.73 | 18.59 | 23.01 | 72.00 |
 | js_string | 145.38 | 22.71 | 19.75 | 73.00 |
+
+## Copy semantics and lowering safety
+
+`compiler.value_types.*.copy_semantics` now declares `trivial` or `nontrivial` for
+that compiler representation. Current native scalars are trivial; string is nontrivial.
+The normalized type plan drives `cpp_trivial_value()`, replacing the fixed identity list.
+These are reviewed representation facts, not source conversion permissions.
+
+`compiler.lowering_strategies.*.reorderable` supplies the operation-local safety of
+existing lowering strategies. Native comparisons, arithmetic and numeric unary operators
+retain true; zero-checked division/remainder retain false. The generator resolves the
+strategy declarations once and emits the existing direct queries. Missing declarations,
+unknown strategy/copy vocabulary and non-boolean safety values are errors. Checked
+strategies cannot be marked reorderable: their runtime failures remain observable.
+Native operations may be conservatively marked false without altering admission.
+
+The emitter remains responsible for operand effects, conversion boundaries, short-circuit
+semantics, snapshot lifetimes and identical-spelling checks. No call/operand analysis,
+conversion reordering, runtime structures or preparation facts changed. Nontrivial and
+unsupported operations retain conservative base-class defaults. Echo remains deferred.
+
+All eight generated files are byte-identical with the current metadata; inventory version
+is unchanged. Generator mutation tests prove metadata consumption and rejection paths.
+Focused tests cover arithmetic, unary operations, direct lowering, casts, strings and
+incremental recovery. Native arithmetic tests cover effectful operands and checked
+failures; string tests cover independent copies in all three flavors. Nine recovery
+executables cover edits, declaration deletion, repeated failures and re-addition against
+fresh output, retaining unchanged caller ASTs. Raw results are in
+`v0.2/build/safety-metadata-proof/`.
+
+Single-run recovery timings, O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime
+and fresh instrumented application objects (not a comparative speed benchmark):
+
+| Flavor / destination | Native wall ms | Frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp_byte | 185.56 | 18.18 | 23.69 | 87.00 |
+| cpp_int | 180.55 | 26.10 | 26.07 | 88.00 |
+| cpp_string | 166.33 | 29.57 | 22.24 | 82.00 |
+| php_byte | 181.48 | 18.59 | 23.57 | 89.00 |
+| php_int | 175.14 | 19.20 | 21.70 | 83.00 |
+| php_string | 173.57 | 34.21 | 25.83 | 79.00 |
+| js_byte | 135.82 | 16.18 | 19.23 | 68.00 |
+| js_int | 148.80 | 15.78 | 16.89 | 82.00 |
+| js_string | 152.22 | 23.32 | 22.51 | 77.00 |
