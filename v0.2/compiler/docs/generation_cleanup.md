@@ -70,3 +70,6 @@ unchanged. Detailed native phase timings and raw results are in
 
 [Slice 3: symbol and watcher retirement](symbol_retirement.md) verifies deletion,
 duplicates, replacement and re-addition without adding a second cleanup mechanism.
+
+[Slice 5: long-lived versus fresh compilation](incremental_equivalence.md) verifies
+100 incremental invocations per flavor, checkpoint equivalence and retained-state bounds.

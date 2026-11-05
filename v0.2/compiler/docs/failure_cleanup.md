@@ -96,3 +96,6 @@ cost. Success-close timing remains separately recorded in `success-close-timing.
 Lowering uses the same catch boundary, but this fixture does not inject an artificial
 lowering defect. Crash-safe output transactions, native synchronization, symbol-slot
 reclamation and frontend-service integration remain outside this slice.
+
+[The long-session equivalence proof](incremental_equivalence.md) compares repeated
+failures/recoveries against fresh compiler processes without changing cleanup policy.
