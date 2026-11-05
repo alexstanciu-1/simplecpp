@@ -368,7 +368,7 @@ final class Preparation
 		}
 		else {
 			$result = $type->binary_result($statement->operator, $statement->value->type_def());
-			if ($result !== $type) {
+			if (!$type->supports_compound() || ($result !== $type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Unsupported compound operands or write-back type');
 			}
 			$conversion = value_conversion::identity;

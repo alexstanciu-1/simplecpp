@@ -32,7 +32,7 @@ abstract class type_definition
 		throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported literal for type: ' . $this->name);
 	}
 
-	/** Attach ordinary binary facts through the same generated admission used by compound writes. */
+	/** Attach ordinary binary facts through generated type admission. */
 	public function prepare_binary(ast_binary_expression $value): void
 	{
 		$result = $this->binary_result($value->operator, $value->right->type_def());
@@ -46,6 +46,12 @@ abstract class type_definition
 	public function binary_result(binary_operator $operator, type_definition $right): ?type_definition
 	{
 		return null;
+	}
+
+	/** Compound writes may remain unavailable even when ordinary arithmetic is supported. */
+	public function supports_compound(): bool
+	{
+		return false;
 	}
 
 	public function lower_cpp_binary(binary_operator $operator, string $left, string $right): string

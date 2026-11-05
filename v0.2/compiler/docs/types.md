@@ -42,6 +42,7 @@ checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
 - `accepts_name()` and `type_registry::resolve()` provide canonical registration.
 - `type_registry::literal()` supplies generated literal spelling lookup to the parser.
+- Generated `supports_compound()` separates compound syntax availability from arithmetic admission.
 - Generated `binary_result(operator, right_type)` supplies shared operator admission without requiring syntax.
 - `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
 - `lower_cpp_binary()` emits the approved operation.

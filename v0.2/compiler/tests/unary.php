@@ -101,14 +101,14 @@ foreach (flavor::cases() as $flavor)
 	Syntax_Inspection::file($entry->file);
 	Compilation_Inspection::body($entry->body());
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . '-8|C-9|9|-7Y')];
-	foreach (['-true', '+false', '-null', '-"8"', '-(1.5)', '+(byte)8'] as $invalid) {
+	foreach (['-true', '+false', '-null', '-"8"', '+(byte)8'] as $invalid) {
 		rejects(fn() => $prepare('echo ' . $invalid . '; return 8;'), 'Unsupported unary');
 	}
 	rejects(fn() => $prepare('echo -9223372036854775808; return 8;'), 'outside int64 range');
 	rejects(fn() => $prepare($decl('self', 'int', '-' . $var('self')) . 'return 8;'), 'during its initialization');
 	rejects(fn() => $prepare($fn('nothing', '', 'void', 'return;') . 'echo -nothing(); return 8;'), 'Void call');
 	rejects(fn() => $prepare($fn('change', $ref, 'int', 'return 1;') . $decl('x', 'int', '8') . 'change(+' . $var('x') . '); return 8;'), 'Reference argument');
-	// Signed floating literals retain their existing path; unary float expressions remain deferred.
+	// Signed floating literals retain their existing path.
 	$prepare($decl('f', 'float', '-0.0') . 'return 8;');
 	$directory = sys_get_temp_dir() . '/scpp-unary-' . bin2hex(random_bytes(8));
 	mkdir($directory);

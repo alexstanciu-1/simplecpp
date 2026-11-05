@@ -22,7 +22,7 @@ not a mandatory dependency order.
 | # | Area / donor reference | Active v0.2 position | Main remaining work |
 | --- | --- | --- | --- |
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain/compound int64 reassignment | Broader constant initializers, chained assignment; expression-dependent examples |
-| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons/int64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64 compounds, discarded-value updates and unary signs | Bitwise and non-int64 arithmetic operators, mixed/string/null comparisons, eager xor, broader casts/compound writes, value-producing increments, string operations |
+| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons/int64 and float64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64 compounds, discarded-value int64 updates and int64/float64 unary signs | Bitwise and mixed numeric arithmetic operators, mixed/string/null comparisons, eager xor, broader casts/compound writes, value-producing increments, string operations |
 | 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while/for with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, omitted/comma for clauses and foreach, ternary expressions, null/byte conditions and precise flow facts |
 | 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions and explicit casts | Nullable/Result, mixed/dynamic, broader casts, probes/coalescing and text conversions |
@@ -82,3 +82,7 @@ report Clang frontend, LLVM and linker work with build/cache settings. Chapter 1
 is continuous, not postponed to the end; safety prerequisites from 07 apply when
 needed. LLVM, old STAN and transplanting the donor's architecture are not authorized
 by this catalog.
+
+Float64 arithmetic slice: same-type `+ - * /` and unary signs are covered by
+[the implementation and proof](../../compiler/docs/float_arithmetic.md). Mixed arithmetic,
+float compounds/updates and remainder remain deferred.

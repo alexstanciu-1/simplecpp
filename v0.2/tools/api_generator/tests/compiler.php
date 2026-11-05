@@ -215,6 +215,30 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Float arithmetic shares generated dispatch, but does not implicitly enable compounds or mixed operands.
+foreach (['arithmetic', 'unary'] as $section) {
+    $without = unserialize(serialize($metadata));
+    unset($without->compiler->$section->float64);
+    $limited = renderCompiler($without, $facts)['types/float64.php'];
+    requireThat(!str_contains($limited, $section === 'arithmetic' ? 'scpp::float64_divide' : 'public function prepare_unary'), 'Removed float capability still generated');
+}
+foreach (['remainder', 'unchecked_division', 'compound_policy'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'remainder' => $bad->compiler->arithmetic->float64->operators->remainder = 'zero_checked_remainder',
+        'unchecked_division' => $bad->compiler->arithmetic->float64->operators->divide = 'native',
+        'compound_policy' => $bad->compiler->arithmetic->float64->compound = 'yes',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid float arithmetic policy accepted');
+    } catch (\RuntimeException $error) {
+        requireThat($error->getMessage() !== '', 'Missing float policy diagnostic');
+    }
+}
+requireThat(\scpp\compiler\type_int64::instance()->supports_compound(), 'Integer compounds lost');
+requireThat(!\scpp\compiler\type_float64::instance()->supports_compound(), 'Float compounds enabled');
+
 // Backend safety facts follow the admitted implementation strategy, never preparation or AST mutation.
 require $root . '/compiler/03_parse/structures/expressions.php';
 foreach (['type_int64', 'type_bool', 'type_byte', 'type_float64', 'type_null'] as $class) {

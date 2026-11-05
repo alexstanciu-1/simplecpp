@@ -853,7 +853,19 @@
         "result": "int64",
         "overflow": "native",
         "lowering": "native",
-        "operators": ["positive", "negative"]
+        "operators": [
+          "positive",
+          "negative"
+        ]
+      },
+      "float64": {
+        "result": "float64",
+        "overflow": "native",
+        "lowering": "native",
+        "operators": [
+          "positive",
+          "negative"
+        ]
       }
     },
     "updates": {
@@ -874,7 +886,20 @@
           "multiply": "native",
           "divide": "zero_checked_divide",
           "remainder": "zero_checked_remainder"
-        }
+        },
+        "compound": true
+      },
+      "float64": {
+        "operand": "same_type",
+        "result": "float64",
+        "overflow": "native",
+        "operators": {
+          "add": "native",
+          "subtract": "native",
+          "multiply": "native",
+          "divide": "zero_checked_divide"
+        },
+        "compound": false
       }
     },
     "comparisons": {

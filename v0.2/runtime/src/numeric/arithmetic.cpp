@@ -11,4 +11,8 @@ namespace scpp {
 {
     return detail::integer_remainder(left, right);
 }
+double float64_divide(double left, double right)
+{
+    return detail::floating_divide(left, right);
+}
 }

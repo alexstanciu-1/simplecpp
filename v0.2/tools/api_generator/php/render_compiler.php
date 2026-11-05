@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 13,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 14,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -397,11 +397,12 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
     }
     $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
     foreach (object(at($compiler, 'arithmetic')) as $name => $row) {
-        requireThat($name === 'int64' && isset($definitions[$name]), 'Unsupported compiler arithmetic type');
-        fields($row, ['operand', 'result', 'overflow', 'operators']);
-        literals($row, ['operand' => 'same_type', 'result' => 'int64', 'overflow' => 'native']);
+        requireThat(in_array($name, ['int64', 'float64'], true) && isset($definitions[$name]), 'Unsupported compiler arithmetic type');
+        fields($row, ['operand', 'result', 'overflow', 'compound', 'operators']);
+        literals($row, ['operand' => 'same_type', 'result' => $name, 'overflow' => 'native']);
+        requireThat(is_bool(at($row, 'compound')), 'Compound policy must be boolean');
         foreach (object(at($row, 'operators')) as $op => $lowering) {
-            requireThat(isset($arithmeticSpelling[$op]), 'Unsupported arithmetic operator');
+            requireThat(isset($arithmeticSpelling[$op]) && ($name !== 'float64' || $op !== 'remainder'), 'Unsupported arithmetic operator');
             $expected = match ($op) { 'divide' => 'zero_checked_divide', 'remainder' => 'zero_checked_remainder', default => 'native' };
             requireThat($lowering === $expected, 'Unsupported arithmetic lowering policy');
             if ($identity === $name) $operations[$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op]];
@@ -419,10 +420,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
             $reorderable[] = "binary_operator::$op";
             $cases .= "\t\t\tbinary_operator::$op => '(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')',\n";
         } else {
-            $cases .= "\t\t\tbinary_operator::$op => 'scpp::int64_$op(' . \$left . ', ' . \$right . ')',\n";
+            $cases .= "\t\t\tbinary_operator::$op => 'scpp::{$identity}_$op(' . \$left . ', ' . \$right . ')',\n";
             $headers[] = "binary_operator::$op";
         }
     }
+    $compound = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound ? 'true' : 'false';
     $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
     $headerMethods = '';
     if ($headers !== []) {
@@ -439,6 +441,12 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
 ";
     }
     return "
+\t/** Compound syntax admission is separate from ordinary arithmetic capability. */
+\tpublic function supports_compound(): bool
+\t{
+\t\treturn $compound;
+\t}
+
 \t/** Generated same-type admission; result identity follows the selected metadata operation. */
 \tpublic function binary_result(binary_operator \$operator, type_definition \$right): ?type_definition
 \t{
@@ -514,9 +522,9 @@ $lowering\t\t\tdefault => throw new \\LogicException('Update operation was not a
 function compilerUnary(mixed $compiler, string $identity): string {
     $selected = [];
     foreach (object(at($compiler, 'unary')) as $name => $row) {
-        requireThat($name === 'int64', 'Unsupported compiler unary type');
+        requireThat(in_array($name, ['int64', 'float64'], true), 'Unsupported compiler unary type');
         fields($row, ['result', 'overflow', 'lowering', 'operators']);
-        literals($row, ['result' => 'int64', 'overflow' => 'native', 'lowering' => 'native']);
+        literals($row, ['result' => $name, 'overflow' => 'native', 'lowering' => 'native']);
         $operators = names(at($row, 'operators'), 'Duplicate unary operator');
         foreach ($operators as $operator) {
             requireThat(in_array($operator, ['positive', 'negative'], true), 'Unsupported unary operator');

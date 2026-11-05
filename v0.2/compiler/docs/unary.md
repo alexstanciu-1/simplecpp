@@ -25,7 +25,8 @@ keeps its existing generated-truthiness path.
 `compiler.unary.int64` metadata declares operators, int64 result, native overflow
 and native lowering. The generator validates this bounded contract and emits
 `prepare_unary()`, `lower_cpp_unary()` and `cpp_unary_reorderable()` on type_int64.
-Unsupported types use the rejecting base methods. Generation inventory is 13;
+Unsupported types use the rejecting base methods. Float64 signs now use the same generator and AST path; see [float arithmetic](float_arithmetic.md).
+Generation inventory is 14;
 removed capabilities disappear on regeneration. No metadata lookup occurs during
 source preparation or lowering.
 

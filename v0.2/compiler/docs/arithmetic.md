@@ -14,8 +14,8 @@ unrepresentable `INT64_MIN / -1` division and corresponding native remainder cas
 There is no new checked-overflow, wrapping or saturation guarantee. Tests exercise
 the defined domain and do not assign expected results to undefined native overflow.
 
-Unary signs on general expressions, power, bitwise/shifts,
-float arithmetic, mixed numeric arithmetic and other operand types remain deferred.
+Power, bitwise/shifts, mixed numeric arithmetic and other operand types remain deferred.
+Same-type [float64 arithmetic](float_arithmetic.md) now reuses this binary path.
 Int64 unary signs now have a separate [bounded slice](unary.md); integer literal
 magnitudes retain their existing bound. Floating signed-literal syntax is unchanged.
 
@@ -37,7 +37,8 @@ comparison metadata remains separate, but both feed one generated binary handler
 on each canonical type definition. Unsupported policies fail generation.
 
 `binary_result()` supplies generated admission/result identity shared by ordinary
-expressions and [compound writes](compounds.md). `prepare_binary()` attaches
+expressions and [compound writes](compounds.md); generated `supports_compound()`
+separately controls whether a type admits compound syntax. `prepare_binary()` attaches
 ordinary expression facts through that query.
 `lower_cpp_binary()` consumes the approved operator. `binary_headers()` reports
 only required public headers. These replace the comparison-specific methods;

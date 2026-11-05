@@ -4,8 +4,8 @@ Doc Status: supporting
 
 The [source contract](../../../specs/compiler_scalars_v0_2.md#floating-literal-policy)
 owns admission. `float` and `float64` share one generated canonical definition,
-activated by default-runtime membership. No float32, operators, explicit cast syntax
-or floating output formatting is introduced.
+activated by default-runtime membership. Float32 and floating output formatting remain deferred. Explicit casts use the
+shared conversion path; [float arithmetic](float_arithmetic.md) extends this definition.
 
 ## Literal preparation
 

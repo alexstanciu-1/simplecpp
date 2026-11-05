@@ -65,8 +65,7 @@ evaluated exactly once. Same-type copies and widening conversions need no range 
 Global initialization remains literal-only, including true, false and null and
 signed decimal integer/floating literals. A written global type may convert that literal.
 Local initialization admits the supported literals and local/global references;
-signs directly on floating literals and int64 unary signs are admitted (see below).
-General floating unary expressions remain deferred. Global reads do not reuse initializer
+int64 and float64 arithmetic/unary expressions are admitted as specified below. Global reads do not reuse initializer
 constants: an unknown global payload must not be folded into a reader's cache.
 
 ## Boundaries unchanged
@@ -180,7 +179,7 @@ Casts bind at unary precedence, above all binary operators, and nest right to le
 `(int) 8.75 + 1` means `((int) 8.75) + 1`; casting a whole binary expression requires
 parentheses around that expression. Grouping remains grouping when no cast operand
 follows, including `(null)`. Existing signed floating literals are operands;
-int64 unary signs are supported below; other unary numeric operators remain deferred.
+int64 and float64 unary signs are supported below.
 
 A source cast requests explicit conversion intent under the conversion table above.
 It introduces no new source/destination pair and does not compose conversions
@@ -262,7 +261,7 @@ no mutation occurred or introduce arithmetic folding in this slice.
 All three flavors admit unary `+` and `-` on int/int64 expressions, producing an
 int64 value. The operand is evaluated once; the result is not writable storage or
 an admissible mutable-reference argument. No implicit numeric admission is added
-for bool, byte, float, string or null. Explicit casts can establish int64 first.
+for bool, byte, string or null. Float64 signs have their own same-type contract below.
 
 Signs bind above binary operators and nest right-to-left. `- -8` is nested
 negation; `--8` retains its distinct update token and is not two unary signs.
@@ -279,3 +278,25 @@ limitations; no checked, wrapping or saturating semantics are introduced.
 
 Runtime metadata owns admission, result identity and direct C++ lowering. No new
 constant folding or expression-evaluation-order policy is introduced by this slice.
+
+## Float64 arithmetic — 2026-11-05
+
+All three flavors admit same-type `float`/`float64` binary `+ - * /` and unary
+`+ -` on general expressions. Both names identify binary64; results have that same
+identity. Precedence, associativity and operand evaluation follow the existing
+expression contract. Unary results are values, not reference storage.
+
+Division by either `+0.0` or `-0.0` throws the existing `division_by_zero` domain
+error, including zero, infinite and NaN numerators. Other arithmetic follows the
+native binary64 contract: overflow may produce infinity; NaNs propagate; underflow
+may produce subnormals or signed zero. Unary plus preserves the value and unary
+minus changes its sign, including zero. No NaN payload guarantee, floating
+exception/environment controls or fast-math behavior is introduced.
+
+Literal preparation still rejects overflow and accepts underflow; arithmetic
+results are not subjected to the finite-literal restriction. NaN and Infinity
+literal spellings remain unavailable. Preparation does not constant-fold these
+operations. Mixed int64/float64 arithmetic, floating remainder, compound writes
+and updates remain deferred. Explicit conversions may establish float64 operands.
+Runtime metadata controls admission and lowering; checked division remains behind
+the public runtime API. This does not expand the separately deferred execution-order work.
