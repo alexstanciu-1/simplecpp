@@ -30,6 +30,20 @@ function decimalPredecessor(string $value): string {
     throw new \LogicException('Expected positive decimal magnitude');
 }
 
+/** Resolve a public storage/wrapper type; executable construction remains a lowering strategy. */
+function compilerTypeBinding(mixed $compiler, string $name, string $identity, bool $extract): array {
+    $row = at(at($compiler, 'runtime_bindings'), $name);
+    fields($row, ['kind', 'identity', 'symbol', 'header', 'extract']);
+    literals($row, ['kind' => 'type', 'identity' => $identity]);
+    $symbol = textValue(at($row, 'symbol'));
+    $header = textValue(at($row, 'header'));
+    requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid type binding symbol');
+    requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid public type binding header');
+    $member = $extract ? textValue(at($row, 'extract')) : null;
+    requireThat($member === null || preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $member) === 1, 'Invalid type binding extraction member');
+    return ['symbol' => $symbol, 'header' => $header, 'extract' => $member];
+}
+
 /** Resolve active membership, aliases and representations once for class and registry generation. */
 function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $compiler = at($metadata, 'compiler');
@@ -62,7 +76,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding']);
         $class = textValue(at($row, 'class'));
         requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $class) === 1 && !isset($classes[$class]), 'Invalid or duplicate generated type class');
         $classes[$class] = true;
@@ -76,6 +90,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             requireThat(!isset($owners[$alias]) || $owners[$alias] === $identity, 'Source type name collision: ' . $alias);
             $owners[$alias] = $identity;
         }
+        $storage = null;
         $literals = [];
         $kind = compilerConversionKind($metadata, $identity);
         if ($identity === at(at($metadata, 'string'), 'type')) $kind = 'string';
@@ -125,8 +140,8 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
         } elseif ($kind === 'string') {
             literals(at($metadata, 'string'), ['type' => 'string', 'source_type' => 'string',
                 'storage' => 'private_std_string', 'count_type' => 'int64', 'construction' => 'explicit']);
-            $cpp = textValue(at($row, 'cpp_type'));
-            requireThat($cpp === 'scpp::string', 'Unsupported string representation');
+            $storage = compilerTypeBinding($compiler, textValue(at($row, 'storage_binding')), $identity, false);
+            $cpp = $storage['symbol'];
             $literals = [];
         } elseif (in_array($kind, ['boolean', 'null'], true)) {
             requireThat(($sources[$class] ?? null) === $identity, 'Source type identity mismatch');
@@ -141,7 +156,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind];
+        $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
     return $definitions;
 }
@@ -182,7 +197,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
                 '@minimum_exponent@' => (string)(2 - $facts['double']['max_exponent']),
                 '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
             ]) : compilerLiteralMethods($definition);
-        if ($identity === 'string') $literalMethods = readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl');
+        if ($identity === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';
@@ -256,7 +271,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
     $plan = [];
     $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
     foreach (listValue(at(at($metadata, 'compiler'), 'conversions')) as $row) {
-        fields($row, ['from', 'to', 'contexts', 'operation', 'promotion_operators']);
+        fields($row, ['from', 'to', 'contexts', 'operation', 'promotion_operators', 'source_binding', 'target_binding']);
         $from = textValue(at($row, 'from'));
         $to = textValue(at($row, 'to'));
         requireThat(isset($definitions[$from], $definitions[$to]), 'Conversion references inactive type');
@@ -293,7 +308,17 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         // Only the currently implemented unchecked rounding conversion can be settled without value checks.
         requireThat($promotion === [] || ($operation === 'numeric_floating' && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
         foreach ($promotion as $operator) requireThat(in_array($operator, ['less', 'less_equal', 'greater', 'greater_equal'], true), 'Unsupported promotion operator');
-        $plan[$key] = ['from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion];
+        $sourceBinding = null;
+        $targetBinding = null;
+        if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {
+            $targetBinding = compilerTypeBinding(at($metadata, 'compiler'), textValue(at($row, 'target_binding')), $to, true);
+            if ($operation === 'floating_integer') {
+                $sourceBinding = compilerTypeBinding(at($metadata, 'compiler'), textValue(at($row, 'source_binding')), $from, false);
+            }
+        }
+        requireThat(!isset($row->source_binding) || $sourceBinding !== null, 'Unused source conversion binding');
+        requireThat(!isset($row->target_binding) || $targetBinding !== null, 'Unused target conversion binding');
+        $plan[$key] = ['source_binding' => $sourceBinding, 'target_binding' => $targetBinding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion];
     }
     return $plan;
 }
@@ -303,12 +328,21 @@ function compilerConversions(array $conversions, array $definitions, string $tar
     $prepare = [];
     $lower = [];
     $constants = [];
+    $headerCases = [];
     foreach ($conversions as $row) {
         $from = $row['from'];
         $to = $row['to'];
         $contexts = $row['contexts'];
         $operation = $row['operation'];
         if ($to !== $target) continue;
+        if ($row['target_binding'] !== null) {
+            $wrapper = $row['target_binding']['symbol'];
+            $extract = $row['target_binding']['extract'];
+            $headers = [$row['target_binding']['header']];
+            if ($row['source_binding'] !== null) $headers[] = $row['source_binding']['header'];
+            $checked = $operation === 'floating_integer' ? 'floating_integer_checked' : 'integer_checked';
+            $headerCases[] = "\t\t\tvalue_conversion::$checked => [" . implode(', ', array_map(static fn(string $header): string => var_export($header, true), array_unique($headers))) . '],';
+        }
         $condition = '$value->type_def() === type_' . $definitions[$from]['class'] . '::instance()';
         $permission = array_map(static fn(string $context): string => '$context === conversion_context::' . $context, $contexts);
         $condition = '(' . ($permission === [] ? 'false' : implode(' || ', $permission)) . ') && (' . $condition . ')';
@@ -339,7 +373,8 @@ function compilerConversions(array $conversions, array $definitions, string $tar
 			return value_conversion::floating_integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '(scpp::int64{scpp::float64{' . \$value . '}}).native_value()',";
+            $sourceWrapper = $row['source_binding']['symbol'];
+            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '({$wrapper}{{$sourceWrapper}{' . \$value . '}}).{$extract}()',";
         } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
@@ -352,7 +387,7 @@ CODE;
 			return value_conversion::integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::integer_checked => '(scpp::byte{' . \$value . '}).native_value()',";
+            $lower[] = "\t\t\tvalue_conversion::integer_checked => '({$wrapper}{' . \$value . '}).{$extract}()',";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
             $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
@@ -364,21 +399,21 @@ CODE;
     $prepare = implode("\n", $prepare);
     $lower = implode("\n", array_unique($lower));
     $constants = implode("\n", array_unique($constants));
-    $headers = $target === 'byte' ? <<<'CODE'
+    $headers = '';
+    if ($headerCases !== []) {
+        $cases = implode("\n", array_unique($headerCases));
+        $headers = <<<PHP_CODE
 
 	/** @return string[] Public runtime includes required by the selected conversion only. */
-	public function conversion_headers(value_conversion $conversion): array /** list<string> */
+	public function conversion_headers(value_conversion \$conversion): array /** list<string> */
 	{
-		return $conversion === value_conversion::integer_checked ? ['scpp/integers.hpp'] : [];
+		return match (\$conversion) {
+$cases
+			default => [],
+		};
 	}
-CODE : ($target === 'int64' ? <<<'CODE'
-
-	/** @return string[] Public wrappers provide the existing checked floating-to-integer boundary. */
-	public function conversion_headers(value_conversion $conversion): array /** list<string> */
-	{
-		return $conversion === value_conversion::floating_integer_checked ? ['scpp/integers.hpp', 'scpp/values.hpp'] : [];
-	}
-CODE : '');
+PHP_CODE;
+    }
     return <<<PHP_CODE
 	/** Select the conversion once; the caller marks written destinations or explicit cast boundaries. */
 	public function prepare_conversion(ast_expression \$value, conversion_context \$context): value_conversion

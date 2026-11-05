@@ -252,6 +252,35 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Type bindings affect only storage and checked branches; proven conversions remain native casts.
+$bound = unserialize(serialize($metadata));
+$bound->compiler->runtime_bindings->boxed_byte->symbol = 'scpp::test_byte';
+$bound->compiler->runtime_bindings->boxed_byte->extract = 'get_value';
+$bound->compiler->runtime_bindings->boxed_byte->header = 'scpp/test_byte.hpp';
+$bound->compiler->runtime_bindings->boxed_float64->symbol = 'scpp::test_float';
+$bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_string';
+$bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_string.hpp';
+$boundFiles = renderCompiler($bound, $facts);
+requireThat(str_contains($boundFiles['types/byte.php'], 'scpp::test_byte{') && str_contains($boundFiles['types/byte.php'], '.get_value()'), 'Checked wrapper binding ignored');
+requireThat(str_contains($boundFiles['types/byte.php'], 'scpp/test_byte.hpp'), 'Checked header binding ignored');
+requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_float{'), 'Source wrapper binding ignored');
+requireThat(str_contains($boundFiles['types/string.php'], 'scpp::test_string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
+foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'missing' => $bad->compiler->value_types->string->storage_binding = 'missing',
+        'identity' => $bad->compiler->runtime_bindings->boxed_byte->identity = 'int64',
+        'kind' => $bad->compiler->runtime_bindings->string_storage->kind = 'function',
+        'extract' => $bad->compiler->runtime_bindings->boxed_int64->extract = 'value()',
+        'symbol' => $bad->compiler->runtime_bindings->boxed_float64->symbol = 'scpp::type{}',
+        'header' => $bad->compiler->runtime_bindings->string_storage->header = '../private.hpp',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid type binding accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Named runtime bindings select helper spelling/header; strategies still own checking and safety.
 $renamed = unserialize(serialize($metadata));
 $renamed->compiler->runtime_bindings->int64_divide->symbol = 'scpp::test_divide';
@@ -426,6 +455,14 @@ foreach (array_unique(array_values($expected)) as $operation) {
             $candidate = unserialize(serialize($metadata));
             $candidate->compiler->conversions = [(object)['from' => $from, 'to' => $to,
                 'contexts' => ['explicit_cast', 'typed_destination'], 'operation' => $operation, 'promotion_operators' => []]];
+            foreach ($metadata->compiler->conversions as $original) {
+                if ($original->operation === $operation) {
+                    foreach (['source_binding', 'target_binding'] as $field) {
+                        if (isset($original->$field)) $candidate->compiler->conversions[0]->$field = $original->$field;
+                    }
+                    break;
+                }
+            }
             $accepted = true;
             try {
                 compilerConversionPlan($candidate, $definitions, $types);

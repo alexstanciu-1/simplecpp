@@ -23,7 +23,7 @@ PHP remains byte-for-byte identical, so the inventory version is unchanged.
 
 Division checks, signed overflow behavior, compound orchestration and operand safety
 remain unchanged. Native operators still use native syntax. Copy semantics, operation
-safety metadata, conversion bindings, string storage and echo are separate future work.
+safety metadata and echo are separate future work.
 
 ## Verification
 
@@ -50,3 +50,46 @@ not a comparative performance benchmark. Floating recovery builds:
 Frontend/backend sums are cumulative trace durations and are not additive wall-time
 components. Full results, including integer builds and the heavier IEEE/exception
 observer fixtures, are retained under `v0.2/build/arithmetic-bindings-proof/`.
+
+## Checked conversions and string storage
+
+The same `compiler.runtime_bindings` catalog now includes named `kind: type` records
+for boxed int64, byte, float64 and string storage. Each declares its semantic identity,
+public C++ symbol and header. Wrappers used to extract a native result also declare
+an `extract` member. No arbitrary executable expressions are accepted.
+
+Checked conversion rows reference `target_binding` and, for floating-to-integer,
+`source_binding`. String's value-type row references `storage_binding`, replacing its
+separate `cpp_type` spelling. `compilerTypeBinding()` validates and resolves these
+records during generation. The normalized conversion plan retains resolved bindings;
+there is no application-compilation metadata lookup or new AST/preparation structure.
+
+Strategies still own wrapper construction, range checks, truncation, constant conversion
+and diagnostics. Proven-safe branches remain native casts and require no wrapper
+headers. String decoding, byte escaping and length computation remain handwritten.
+Symbols and extraction calls in generated lowering are unchanged; only the generated
+conversion-header methods change from target-specific ternaries to binding-derived
+matches. String's generated class remains byte-identical. Safety and echo are unchanged.
+
+Generator tests verify binding substitution and reject missing bindings, wrong identities,
+wrong kinds, invalid symbols/headers and extraction members. Eight focused CTests pass.
+The existing cast and string native suites pass, including checked exceptions and copy
+behavior. `tests/type_bindings.php` additionally checks all three flavors for byte/int
+checked conversion and string storage: edits, provider declaration removal, repeated
+failure without edits, re-addition, unchanged caller AST reuse and no-op reuse. Successful
+incremental output is compared with fresh compilation. All nine recovery executables
+pass. Raw traces and results are in `v0.2/build/type-bindings-proof/`.
+
+Single-run recovery timings (same O2/g0, Ninja8/mold configuration above):
+
+| Flavor / destination | Native wall ms | Frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp_byte | 149.94 | 16.12 | 22.03 | 73.00 |
+| cpp_int | 150.03 | 18.61 | 18.25 | 71.00 |
+| cpp_string | 143.78 | 23.17 | 21.59 | 71.00 |
+| php_byte | 147.90 | 17.02 | 21.45 | 76.00 |
+| php_int | 164.84 | 26.23 | 26.31 | 74.00 |
+| php_string | 140.59 | 25.17 | 20.42 | 64.00 |
+| js_byte | 142.31 | 14.02 | 19.04 | 69.00 |
+| js_int | 146.73 | 18.59 | 23.01 | 72.00 |
+| js_string | 145.38 | 22.71 | 19.75 | 73.00 |

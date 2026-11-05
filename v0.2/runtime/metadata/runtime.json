@@ -786,7 +786,7 @@
         "source_names": [
           "string"
         ],
-        "cpp_type": "scpp::string"
+        "storage_binding": "string_storage"
       }
     },
     "conversions": [
@@ -809,7 +809,8 @@
         "to": "byte",
         "contexts": ["explicit_cast", "typed_destination"],
         "operation": "checked_integer",
-        "promotion_operators": []
+        "promotion_operators": [],
+        "target_binding": "boxed_byte"
       },
       {
         "from": "byte",
@@ -837,7 +838,9 @@
         "to": "int64",
         "contexts": ["explicit_cast", "typed_destination"],
         "operation": "floating_integer",
-        "promotion_operators": []
+        "promotion_operators": [],
+        "source_binding": "boxed_float64",
+        "target_binding": "boxed_int64"
       },
       {
         "from": "float64",
@@ -906,6 +909,33 @@
         "strategy": "zero_checked_divide",
         "symbol": "scpp::float64_divide",
         "header": "scpp/arithmetic.hpp"
+      },
+      "boxed_int64": {
+        "kind": "type",
+        "identity": "int64",
+        "symbol": "scpp::int64",
+        "header": "scpp/integers.hpp",
+        "extract": "native_value"
+      },
+      "boxed_byte": {
+        "kind": "type",
+        "identity": "byte",
+        "symbol": "scpp::byte",
+        "header": "scpp/integers.hpp",
+        "extract": "native_value"
+      },
+      "boxed_float64": {
+        "kind": "type",
+        "identity": "float64",
+        "symbol": "scpp::float64",
+        "header": "scpp/values.hpp",
+        "extract": "native_value"
+      },
+      "string_storage": {
+        "kind": "type",
+        "identity": "string",
+        "symbol": "scpp::string",
+        "header": "scpp/string.hpp"
       }
     },
     "arithmetic": {

@@ -20,5 +20,5 @@
 	/** @return string[] */
 	public function cpp_headers(): array /** list<string> */
 	{
-		return ['scpp/string.hpp'];
+		return [@storage_header@];
 	}

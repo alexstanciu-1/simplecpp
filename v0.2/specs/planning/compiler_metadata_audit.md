@@ -4,7 +4,7 @@ Doc Status: planning
 
 Saved from the original audit supplied by the user. Code line references describe the audit-time snapshot.
 Findings 1–3 are implemented (registration retains supported ABI/strategy guards).
-Finding 4: arithmetic runtime bindings are the current slice; safety properties and other bindings remain deferred.
+Finding 4: arithmetic, checked-conversion and string-storage bindings are implemented; safety properties remain deferred.
 Findings 5–8 remain open.
 
 **The main redundancy is in the handwritten API generator, more than in the compiler’s preparation code.** We generate direct handlers successfully, but several generator sections still contain a second, fixed description of which types and operations are supported.
