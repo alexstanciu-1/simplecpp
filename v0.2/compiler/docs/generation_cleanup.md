@@ -67,3 +67,6 @@ native failure recovery. Its output, exact object counts and stale-handle checks
 unchanged. Detailed native phase timings and raw results are in
 `v0.2/build/retention-slice2/native/results.json`; cleanup timings are in
 `v0.2/build/retention-slice2/close-timing.json`.
+
+[Slice 3: symbol and watcher retirement](symbol_retirement.md) verifies deletion,
+duplicates, replacement and re-addition without adding a second cleanup mechanism.

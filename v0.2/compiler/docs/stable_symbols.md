@@ -250,3 +250,7 @@ Grouped-observer validation (2026-11-05): 51 selected compiler tests and 48 reta
 executable checks passed across cpp/php/js, including parse/preparation/publication/native
 failure recovery. Native timing details are retained in
 `v0.2/build/grouped-observers-native-proof/report.md`.
+
+The [retirement verification matrix](symbol_retirement.md) checks functions, globals
+and constants across all flavors, including duplicate chains, missing-symbol watches,
+consumer retirement, recovery and collectible retired syntax after generation close.

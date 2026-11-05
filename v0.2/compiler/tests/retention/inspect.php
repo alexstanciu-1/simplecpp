@@ -78,7 +78,11 @@ final class Retention_Inspection
 		$classes = $this->graph($project);
 		$session = $project->session() ?? throw new \LogicException('Run the project before inspecting');
 		$live_bodies = new \SplObjectStorage();
+		$live_declarations = new \SplObjectStorage();
 		foreach ($session->files() as $file) {
+			foreach ($file->published_declarations() as $declaration) {
+				$live_declarations->attach($declaration);
+			}
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
 					$live_bodies->attach($node->body());
@@ -93,9 +97,33 @@ final class Retention_Inspection
 		}
 		$entries = $session->scope->entries();
 		$tombstones = 0;
+		$ambiguous = 0;
 		foreach ($entries as $entry) {
-			if ($entry->declaration() === null) {
+			if ($entry->status === change_status::removed) {
 				$tombstones++;
+				if ($entry->declaration() !== null) {
+					throw new \LogicException('Tombstone retains a declaration');
+				}
+			}
+		}
+		$chained = new \SplObjectStorage();
+		foreach ($session->scope->heads() as $key => $head) {
+			$ambiguous += $head->duplicate_element() !== null ? 1 : 0;
+			for ($node = $head; $node !== null; $node = $node->duplicate_element()) {
+				if ($chained->contains($node) || !$live_declarations->contains($node) || ($node->symbol_key() !== $key)) {
+					throw new \LogicException('Duplicate chain cycles or references retired/wrong-key syntax');
+				}
+				$chained->attach($node);
+			}
+		}
+		if (count($chained) !== count($live_declarations)) {
+			throw new \LogicException('Live declaration missing from publication');
+		}
+		foreach ($session->preparation_work->pending() as $bucket) {
+			foreach ($bucket as $body) {
+				if (!$live_bodies->contains($body)) {
+					throw new \LogicException('Retired body remains in preparation queue');
+				}
 			}
 		}
 		/** @var \SplObjectStorage $targets */
@@ -103,6 +131,9 @@ final class Retention_Inspection
 		$relations = 0;
 		$stale = 0;
 		foreach ($targets as $watcher) {
+			if (count($targets[$watcher]) === 0) {
+				throw new \LogicException('Empty watcher reverse bucket');
+			}
 			$relations += count($targets[$watcher]);
 			$stale += $live_bodies->contains($watcher) ? 0 : 1;
 		}
@@ -111,7 +142,13 @@ final class Retention_Inspection
 		$forward = 0;
 		$groups = 0;
 		foreach ($observers as $symbol) {
+			if (count($observers[$symbol]) === 0) {
+				throw new \LogicException('Empty observer symbol bucket');
+			}
 			foreach ($observers[$symbol] as $bucket) {
+				if (count($bucket) === 0) {
+					throw new \LogicException('Empty observer source bucket');
+				}
 				$groups++;
 				$forward += count($bucket);
 				foreach ($bucket as $watcher) {
@@ -129,7 +166,7 @@ final class Retention_Inspection
 			'retained_token_lists' => $classes[token_list::class] ?? 0,
 			'retired_ast_roots' => ($classes[ast_file_node::class] ?? 0) - count($session->files()),
 			'removed_source_records_in_history' => $removed,
-			'symbol_entries' => count($entries), 'tombstones' => $tombstones,
+			'symbol_entries' => count($entries), 'tombstones' => $tombstones, 'ambiguous_symbols' => $ambiguous,
 			'watchers' => count($targets), 'watch_relations' => $relations, 'watch_source_groups' => $groups,
 			'stale_watchers' => $stale, 'pending_notifications' => count(self::field($session->dependency_watches, 'pending')),
 			'pending_bodies' => $session->preparation_work->pending_count(),

@@ -137,6 +137,21 @@ def prove(work):
             assert 'error' in request(), 'Retry lost failed work'
             write('provider', provider())
             step('recovery', '888', 2, 2, 2)
+            # All three published symbol kinds become ambiguous together; failure must preserve output.
+            before = {str(p): p.read_bytes() for p in output.rglob('*') if p.is_file()}
+            write('duplicate', provider())
+            assert 'Duplicate' in request().get('error', ''), 'Duplicate publication was accepted'
+            assert 'Duplicate' in request().get('error', ''), 'Duplicate retry lost diagnostics'
+            assert before == {str(p): p.read_bytes() for p in output.rglob('*') if p.is_file()}
+            (app / ('duplicate.' + flavor)).unlink()
+            step('duplicate_recovery', '888', 1, 1, 0)
+            # Missing declarations retain recovery watches; re-addition reuses stable slots.
+            (app / ('provider.' + flavor)).unlink()
+            assert 'Unknown' in request().get('error', ''), 'Deleted provider was accepted'
+            assert 'Unknown' in request().get('error', ''), 'Missing-symbol retry lost diagnostics'
+            assert before == {str(p): p.read_bytes() for p in output.rglob('*') if p.is_file()}
+            write('provider', provider())
+            step('provider_readdition', '888', 2, 2, 0)
             write('added', fn('extra', 'void') + '{ return; }')
             step('added', '888', 1, 1, 1)
             (app / ('added.' + flavor)).unlink()
