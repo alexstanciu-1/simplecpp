@@ -43,6 +43,10 @@ final class Syntax_Inspection
 			'name' => $global->short_name, 'qualified_name' => $global->name(), 'type' => $global->type_name,
 			'initializer' => self::expression($global->initializer), 'span' => self::span($global),
 		], $file->globals());
+		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
+			'name' => $constant->short_name, 'qualified_name' => $constant->name(), 'type' => $constant->type_name,
+			'initializer' => self::expression($constant->initializer), 'span' => self::span($constant),
+		], $file->constants());
 		if ($file->diagnostics !== []) {
 			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),
 				$file->diagnostics);

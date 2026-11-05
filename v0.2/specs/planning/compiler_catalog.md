@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-04, after bounded for loops.
+Updated: 2026-11-04, after typed literal constants.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -21,14 +21,14 @@ not a mandatory dependency order.
 
 | # | Area / donor reference | Active v0.2 position | Main remaining work |
 | --- | --- | --- | --- |
-| 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment | Named constants, chained assignment; expression-dependent examples |
+| 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment | Broader constant initializers, chained assignment; expression-dependent examples |
 | 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons/int64 arithmetic and generated-truthiness `!`/`&&`/`||` | Unary and non-int64 arithmetic operators, mixed/string/null comparisons, eager xor, casts, compound writes, increments, string operations |
 | 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while/for with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, broader for clauses and foreach, ternary expressions, null/byte conditions and precise flow facts |
 | 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions | Nullable/Result, mixed/dynamic, explicit casts, probes/coalescing and text conversions |
 | 06 | [Containers](../../../compiler/my-try/docs/catalog/06_containers.md) | Pending in compiler | vector/hash registration and construction, reads/writes, append, key rules, iteration; mutation policy before mutation during iteration |
 | 07 | [References and lifetime](../../../compiler/my-try/docs/catalog/07_references_lifetime.md) | Partial: mutable whole-storage reference parameters and forwarding; string value copies | Local aliases, read-only references, reference defaults/returns, lifetime rules, shared/unique/weak, transfers and cleanup |
-| 08 | [Projects and symbols](../../../compiler/my-try/docs/catalog/08_project_symbols.md) | Partial: modules/loading, multifile entry, namespaces/use, explicit scalar globals, stable symbols, frontend reuse and preparation watches | Broader namespace/import cases, constants, global writes/string globals, dependency artifact/version validation and broader incremental behavior |
+| 08 | [Projects and symbols](../../../compiler/my-try/docs/catalog/08_project_symbols.md) | Partial: modules/loading, multifile entry, namespaces/use, explicit scalar globals, stable symbols, frontend reuse and preparation watches | Broader namespace/import cases, constant expressions, global writes/string globals, dependency artifact/version validation and broader incremental behavior |
 | 09 | [Value types and enums](../../../compiler/my-try/docs/catalog/09_value_types.md) | Pending source-defined types | Enums, value semantics and enum operations; record storage with 10 |
 | 10 | [Objects](../../../compiler/my-try/docs/catalog/10_objects.md) | Pending | Classes/structs, fields, construction, methods, static members, access and destruction |
 | 11 | [Inheritance](../../../compiler/my-try/docs/catalog/11_inheritance.md) | Pending | Base/interface/trait relationships, member indexes, overrides, dispatch and access; apply the agreed declaration preparation plan |
@@ -50,7 +50,7 @@ not prove those original examples. See [types](../../compiler/docs/types.md),
 - [x] Reads, copies, sequential copy chains and reassignment of existing locals (`VAR-ASSIGN-001`, `VAR-REASSIGN-001`, typed forms of `VAR-CHAIN-002/003`).
 - [x] Reject forward local reads and cpp/js writes before declaration; preserve source-order value facts (`VAR-ORDER-001`, bounded local isolation from `NOTE-033`).
 - [x] **01-A: Inferred local declarations.** PHP first-write declaration, cpp `auto`, js `let`; reject null inference, preserve byte reference types, no widening. [Rules and proofs](../../compiler/docs/inference.md).
-- [ ] **01-B: Named constants.** Review the current spec/metadata source of constants; do not assume donor `PHP_INT_MAX` spelling is the required cross-flavor API (`LIT-CONST-001`).
+- [x] **01-B: Named constants.** Typed literal-only declarations, exact cross-file lookup/imports and value-sensitive invalidation; see [the bounded slice](../../compiler/docs/constants.md). Runtime named constants and general constant expressions remain deferred.
 - [x] **01-C: Grouping and int64 arithmetic.** Binary `+ - * / %`, derived initialization and plain self-updates; see [arithmetic](../../compiler/docs/arithmetic.md). Logical `!`/`&&`/`||` now reuse generated truthiness; see [logical expressions](../../compiler/docs/logical.md).
 - [ ] **01-D: Chained assignment.** Discuss result type, conversion boundaries and single evaluation before enabling assignment expressions (`VAR-CHAIN-001`).
 - [ ] **01-E: Identifier/context checks.** Audit flavor-specific identifier examples; parameter-dependent examples await chapter 04 (`IDENT-VAR-001`, `NOTE-021`).
@@ -58,7 +58,7 @@ not prove those original examples. See [types](../../compiler/docs/types.md),
 
 Typed function delivery: [model, contract and proofs](../../compiler/docs/functions_slice.md).
 
-Recommended next discussion: **01-B, named constants**, or completing another bounded operator slice. These remain proposals. Chained assignment can stay separate;
+Recommended next discussion: another bounded operator slice or explicit casts. These remain proposals. Chained assignment can stay separate;
 do not require all chapter-01 carryovers before starting bounded expressions.
 
 ## Working rhythm

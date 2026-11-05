@@ -26,7 +26,7 @@ final class Incremental_Preparation
 			Program_Preparation::admit($file, $path === $session->entry_key());
 		}
 		Function_Preparation::declarations($symbols);
-		Global_Preparation::declarations($symbols);
+		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
 		$report = ['prepared' => 0, 'reused' => 0];
 		$errors = [];

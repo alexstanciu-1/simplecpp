@@ -43,7 +43,7 @@ final class Program_Preparation
 			self::admit($file, $path === $entry_path);
 		}
 		Function_Preparation::declarations($symbols);
-		Global_Preparation::declarations($symbols);
+		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
 		foreach ($files as $file) {
 			$main = $file->main();

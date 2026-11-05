@@ -89,7 +89,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$invalid = [
 		['use function Missing' . $separator . 'ping; return 8;', 'Unknown function import'],
-		['use const ' . $target . '; return 8;', 'Constant imports'],
+		['use const ' . $target . '; return 8;', 'Unknown constant import'],
 		['use ' . $target . ' as run; use Lib' . $separator . 'pong as run; return 8;', 'Conflicting function import'],
 		['use ' . $target . '; ' . definition($flavor, 'ping') . 'return 8;', 'conflicts with namespace declaration'],
 		['use Lib as Short; return 8;', 'Unknown function import'],

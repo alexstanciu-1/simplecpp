@@ -24,8 +24,8 @@ final class Symbol_Publication implements declaration_sink
 		if ($this->published) {
 			throw new \LogicException('Cannot notify a completed symbol publication');
 		}
-		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_global_declaration)) {
-			throw new \LogicException('Only functions and explicit globals are published by the current file grammar');
+		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_literal_declaration)) {
+			throw new \LogicException('Only functions, constants and explicit globals are published by the current file grammar');
 		}
 		if (!($declaration instanceof ast_function_declaration) || (!$declaration->is_private)) {
 			$this->collection->import($declaration);
@@ -119,6 +119,9 @@ final class Symbol_Publication implements declaration_sink
 		foreach ($scope->declarations as $key => $head) {
 			if ($head->duplicate_element() !== null) {
 				$contracts[$key] = null;
+			}
+			elseif ($head instanceof ast_constant_declaration) {
+				$contracts[$key] = json_encode([$head->type_name, $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
 			elseif ($head instanceof ast_global_declaration) {
 				$contracts[$key] = 'global:' . ($head->type_name ?? type_registry::literal_type($head->initializer)->name);

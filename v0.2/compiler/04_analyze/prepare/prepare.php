@@ -346,6 +346,10 @@ final class Preparation
 		$this->name_lookups++;
 		$local = $this->find_local($statement->name);
 		if ($local === null) {
+			if (($statement->source()->flavor !== flavor::php)
+				&& ($this->symbols->resolve($statement->root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Cannot assign to a constant');
+			}
 			throw new diagnostic($statement->source(), $statement->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
 		}
@@ -394,11 +398,11 @@ final class Preparation
 		{
 			$this->name_lookups++;
 			$name = $syntax->name;
-			if ($name === $initializing) {
+			if (!$syntax->constant_only && ($name === $initializing)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Cannot read local during its initialization: ' . $name);
 			}
-			$binding = $this->find_local($name);
+			$binding = $syntax->constant_only ? null : $this->find_local($name);
 			if ($binding !== null) {
 				$id = $binding->storage_id();
 				// Reference parameters can alias each other or globals; never propagate their write constants.
@@ -413,15 +417,25 @@ final class Preparation
 				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
-			$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
-			$symbol = $this->symbols->entry($key);
-			$this->dependencies?->watch($symbol, $this->owner);
-			if ($symbol->declaration() === null) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(),
-					'Unknown or not-yet-initialized local/global: ' . $name);
+			if (!$syntax->constant_only) {
+				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
+				$symbol = $this->symbols->entry($key);
+				$this->dependencies?->watch($symbol, $this->owner);
+				if ($symbol->declaration() !== null) {
+					$syntax->settle_global($symbol);
+					return;
+				}
 			}
-			$syntax->settle_global($symbol);
-			return;
+			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
+				$symbol = $this->symbols->entry($syntax->root()->constant_key($name));
+				$this->dependencies?->watch($symbol, $this->owner);
+				if ($symbol->declaration() !== null) {
+					$syntax->settle_constant($symbol);
+					return;
+				}
+			}
+			throw new diagnostic($syntax->source(), $syntax->byte_start(),
+				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
 	}
@@ -454,6 +468,9 @@ final class Preparation
 			if ($parameter->mode === passing_mode::reference) {
 				if (!($argument instanceof ast_name_expression)) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
+				}
+				if ($argument->declaration() instanceof ast_constant_declaration) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
 				}
 				if ($argument->type_def() !== $parameter->type_def()) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');

@@ -24,7 +24,7 @@ See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Direct write
 - `Global_Syntax` owns the small flavor-specific declaration syntax.
   `Namespace_Syntax.variable_path()` normalizes qualified reads, including PHP's
   final `$variable` token. Qualifying a read does not create a new declaration.
-- `Global_Preparation` validates and settles all globals before bodies. The common
+- `Literal_Declaration_Preparation` validates and settles globals and typed constants before bodies. The common
   `type_int64` checks magnitude before host conversion, including int64 minimum.
 - `ast_name_expression.binding` is one nullable reference: a local AST declaration
   or a stable global `symbol_entry`. `declaration()` follows the current global target;

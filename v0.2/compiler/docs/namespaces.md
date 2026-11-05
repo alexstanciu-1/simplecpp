@@ -68,7 +68,7 @@ qualified call spans cover the entire authored path, including its root marker.
 
 ## Imports
 
-Plain `use` and `use function` import existing functions. `as` renames a local symbol
+Plain `use` imports supported symbol kinds independently; `use function` selects functions and `use const` selects constants. `as` renames a local symbol
 binding, not a namespace; homogeneous groups create individual bindings. Every flavor
 uses these keywords with its existing path separator. These are Simple C++ extensions
 in C++/JS, not C++ using-directives or ES6 module loading. For example:
@@ -79,19 +79,18 @@ use function Lib\{ping as run, pong};
 run(); pong(); return 8;
 ```
 
-`ast_file_node.imports` owns the syntax occurrences. Its private `function_imports`
-map indexes first references by local name. Repeated imports are retained because
+`ast_file_node.imports` owns the syntax occurrences. Its private `function_imports` and `constant_imports`
+maps index first references by local name. Repeated imports are retained because
 the same binding is valid and idempotent; this inventory is not an error-only
 candidate list. No aliases are added to the published compilation scope.
-`function_key()` selects the imported target for an unqualified name; other paths
+`function_key()` and `constant_key()` select imported targets for unqualified names; other paths
 retain exact namespace lookup. Parsing the entire file makes imports independent
 of textual order, including imports after calls or after an entry return.
 
 `Import_Preparation` validates every occurrence after function declaration settlement
 and before bodies, including unused imports and files with no functions. It checks
 absolute targets, repeated binding conflicts and namespace declaration conflicts
-across files. Constants/types are outside the implemented declaration slice;
-`use const` is recognized but diagnosed during preparation.
+across files. [Typed literal constants](constants.md) participate in the same import mechanism; type imports remain deferred.
 
 The incremental coordinator rechecks imports on every preparation pass. This small
 linear check catches removed unused targets and newly introduced conflicts even
@@ -112,7 +111,7 @@ between namespace identity, source occurrence and path interpretation. Did not c
 its synchronized registry, retained-body reconciliation or candidate collections.
 
 Deferred: multiple/reopened bodies within one file, nested namespace forms,
-type/constant imports, export visibility/API rules, additional declaration
+type imports, export visibility/API rules, additional declaration
 kinds, namespace-aware builtin catalogs and general JS member resolution. Namespace
 support does not change project module loading or add dependencies automatically.
 

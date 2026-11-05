@@ -119,9 +119,9 @@ the C++/JS flavors; it does not implement C++ using-directives or ES6 module loa
 Groups use the same separator before `{`, for example `use Lib::{ping, pong};`.
 
 Imports are accepted at namespace-body level, including after executable syntax,
-and apply throughout that body. They are not accepted inside functions. Type and
-constant imports remain deferred with their declaration support; `use const` is
-recognized but rejected during preparation. Import bindings affect unqualified
+and apply throughout that body. They are not accepted inside functions. Type
+imports remain deferred. The typed-literal constant slice below adds `use const`
+and constant participation in plain `use`. Import bindings affect unqualified
 names only; rooted and qualified paths retain exact lookup. No filesystem discovery
 or runtime API catalog changes are implied.
 
@@ -203,6 +203,51 @@ declarations, local constant declarations or class constants. These are delivery
 boundaries, not a commitment to forbid later extensions. Existing parameter-default
 admission is unchanged. Source constants do not expand general scalar-operator
 availability; compile-time numeric signs are evaluated by constant preparation.
+
+## PHP-first typed literal constants — 2026-11-04
+
+The active `v0.2/compiler/` starts with required explicit types and literal-only
+initializers. This is an amendment to the earlier inferred-constant delivery
+boundary above, not a claim that the donor implements these new forms:
+
+```text
+cpp: const int LIMIT = 8;
+php: const int LIMIT = 8;
+js:  const LIMIT: int = 8;
+```
+
+Declarations are allowed at file/namespace level. Supported default-runtime types
+are int/int64, bool, byte, null, float/float64 and string, subject to generated type
+registration and destination conversions. A written type authorizes the existing
+checked conversion rules. Literals include signed numeric spelling and decoded
+string bytes; initializers cannot refer to another constant or execute an operation
+or call. Parentheses around a literal do not introduce expression evaluation.
+All declarations are checked, including unused ones. Null and byte retain their
+existing distinct type contracts; constants add no new operator participation.
+
+Constant identity is `const:` plus the canonical qualified name, separate from
+functions and global variables. Names are case-sensitive. PHP bare names select
+constants and dollar-prefixed names select variables. In cpp/js value expressions,
+visible local storage wins, then exact namespace global storage, then the constant
+lookup. JS dotted paths with a local first component retain the existing rejection
+of unsupported member access; rooting disambiguates namespace lookup.
+
+Forward/cross-file reads and namespace/root qualification are allowed. `use const`
+imports constants only; plain `use` exposes each supported target kind independently.
+Both reuse existing aliases, homogeneous groups, exact qualification and conflict
+checks. Import aliases do not create declarations or mutable storage.
+
+Constants cannot be assigned or passed to mutable reference parameters. Their
+values may be emitted directly at read sites; no storage/address identity is
+promised. Strings retain their ordinary value-copy semantics. A value/type change,
+removal, reintroduction or duplicate ambiguity invalidates dependent body facts
+through the same stable symbol entry. Unrelated constant changes need not invalidate
+readers. Initializer spelling may conservatively trigger invalidation even when its
+normalized value is unchanged.
+
+Inferred constants, constant-expression evaluation, initializer references/cycles,
+local/class constants and named-constant parameter defaults remain deferred in this
+PHP-first slice. Existing function defaults remain literal-only.
 
 ## Execution and scope of delivery
 

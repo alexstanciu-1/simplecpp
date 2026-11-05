@@ -58,7 +58,7 @@ final class Namespace_Syntax
 	}
 
 	/** PHP qualifies the final variable token (test\$value); other flavors qualify ordinary identifiers. */
-	public function variable_path(): string
+	public function variable_path(bool &$constant_only = false): string
 	{
 		if ($this->cursor->tokens->source->flavor !== flavor::php) {
 			return $this->path(true);
@@ -69,8 +69,13 @@ final class Namespace_Syntax
 			$name = '\\';
 		}
 		while ($this->cursor->is(token_kind::identifier)) {
-			$name .= $this->cursor->name(token_kind::identifier) . '\\';
-			$this->cursor->take($this->separator, 'namespace separator before variable');
+			$name .= $this->cursor->name(token_kind::identifier);
+			if (!$this->cursor->is($this->separator)) {
+				$constant_only = true;
+				return $name;
+			}
+			$name .= '\\';
+			$this->cursor->take($this->separator, 'namespace separator');
 		}
 		return $name . $this->cursor->name(token_kind::variable);
 	}

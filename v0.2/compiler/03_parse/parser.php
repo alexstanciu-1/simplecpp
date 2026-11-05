@@ -67,9 +67,9 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('global'))
+			if ($this->cursor->keyword('global') || $this->cursor->keyword('const'))
 			{
-				$global = Global_Syntax::read($this);
+				$global = $this->cursor->keyword('const') ? Constant_Syntax::read($this) : Global_Syntax::read($this);
 				$global->attach($this->root);
 				$this->sink?->discovered($global);
 				$declarations->import($global);
@@ -110,7 +110,7 @@ final class Parser
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
-		/** @var (ast_function_declaration|ast_global_declaration)[] $heads */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $heads */
 		$heads = $declarations->publish_references()->heads();
 		if (isset($heads['func:main'])) {
 			$heads = ['func:main' => $heads['func:main']] + $heads;
@@ -122,9 +122,9 @@ final class Parser
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
-		if ($this->cursor->keyword('global')) {
+		if ($this->cursor->keyword('global') || $this->cursor->keyword('const')) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
-				'Global declarations are only allowed at file/namespace level');
+				($this->cursor->keyword('const') ? 'Constant' : 'Global') . ' declarations are only allowed at file/namespace level');
 		}
 		if ($this->cursor->keyword('namespace') || $this->cursor->keyword('export') || $this->cursor->keyword('use')) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
@@ -496,10 +496,11 @@ final class Parser
 			$this->cursor->take($kind, 'scalar literal');
 			return new ast_keyword_expression($word, $start, $start + 1);
 		}
-		$name = $this->names->variable_path();
+		$constant_only = false;
+		$name = $this->names->variable_path($constant_only);
 		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
 			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
-		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax);
+		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax, $constant_only);
 	}
 
 	/** $start: token position. */

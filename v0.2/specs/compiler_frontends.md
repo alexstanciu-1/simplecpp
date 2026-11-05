@@ -215,7 +215,7 @@ Body-local `use`/`use function` imports now resolve existing functions, includin
 symbol renaming and homogeneous groups. Imports have absolute targets, apply
 throughout only their source namespace body and do not publish new identities.
 Preparation validates unused imports on full and incremental passes. All flavors
-use `use` with their own path separators; type/constant imports remain deferred.
+use `use` with their own path separators; constant imports now participate; type imports remain deferred.
 Ordinary top-level variables stay local to implicit main; configurable same-file
 visibility and variable shadowing are [debt](planning/variable_visibility_debt.md).
 
@@ -254,3 +254,11 @@ All flavors support [one initializer, condition and assignment update](../compil
 with a braced body. Header-local declarations do not escape the loop; continue
 runs the update before the next test. Omitted/comma clauses and increments remain
 deferred. Header parsing reuses existing declaration/write and expression grammar.
+
+## Typed literal constants
+
+The [constant slice](../compiler/docs/constants.md) adds typed file/namespace constants,
+forward/cross-file reads and constant imports. cpp/php use `const int LIMIT = 8;`;
+js uses `const LIMIT: int = 8;`. Only literal initializers are supported. Type behavior
+and conversions reuse generated definitions; initializer expressions and class/local
+constants remain deferred.

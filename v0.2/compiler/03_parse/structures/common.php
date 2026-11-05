@@ -65,7 +65,7 @@ final class ast_keyword_expression extends ast_expression
 }
 
 /**
- * A variable-name read, storing its normalized name directly; preparation resolves the declaration in the enclosing body.
+ * A value-name read; preparation selects local/global storage or an immutable constant through its normalized name.
  *
  * PHP-flavor reference:
  * ```text
@@ -79,10 +79,12 @@ final class ast_name_expression extends ast_expression
 	public readonly string $name;
 	/** JS dotted value/member ambiguity; rooted paths bypass local values. */
 	public readonly bool $member_syntax;
+	/** PHP bare names select constants; dollar-prefixed syntax selects variable storage. */
+	public readonly bool $constant_only;
 
 	/** PREP FACTS */
 	/**
-	 * Prepared fact: local AST identity or stable global symbol; null before preparation or after reset.
+	 * Prepared fact: local AST identity or stable global/constant symbol; null before preparation or after reset.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
 	protected ast_local_binding|symbol_entry|null $binding = null;
@@ -92,10 +94,11 @@ final class ast_name_expression extends ast_expression
 	 * $start: token position.
 	 * $end: exclusive.
 	 */
-	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */, bool $member_syntax = false)
+	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */, bool $member_syntax = false, bool $constant_only = false)
 	{
 		$this->name = $name;
 		$this->member_syntax = $member_syntax;
+		$this->constant_only = $constant_only;
 		parent::__construct($start, $end);
 	}
 
@@ -122,15 +125,26 @@ final class ast_name_expression extends ast_expression
 		$this->binding = $symbol;
 	}
 
-	/** Resolve a global through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_binding|ast_global_declaration
+	/** Constant reads retain their live symbol and occurrence value fact; strings stay on the initializer AST. */
+	public function settle_constant(symbol_entry $symbol): void
+	{
+		$constant = $symbol->declaration();
+		if (!($constant instanceof ast_constant_declaration)) {
+			throw new \LogicException('Expected a constant symbol');
+		}
+		$this->settle_value($constant->type_def(), $constant->constant(), $constant->constant_known());
+		$this->binding = $symbol;
+	}
+
+	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
+	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration
 	{
 		if ($this->binding instanceof ast_local_binding) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();
-		if (!($declaration instanceof ast_global_declaration)) {
-			throw new \LogicException('Variable reference is not settled or was removed');
+		if (!($declaration instanceof ast_literal_declaration)) {
+			throw new \LogicException('Name reference is not settled or was removed');
 		}
 		return $declaration;
 	}

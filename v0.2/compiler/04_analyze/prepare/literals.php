@@ -3,15 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Settle global storage contracts and literal initialization before any executable body reads them. */
-final class Global_Preparation
+/** Settle namespace literal declarations and global storage initialization before any executable body reads them. */
+final class Literal_Declaration_Preparation
 {
-	/** All globals are validated, including unused declarations; unchanged settled AST facts can be reused. */
+	/** All literal declarations are validated, including unused declarations; unchanged settled AST facts can be reused. */
 	public static function declarations(scope $symbols): void
 	{
 		foreach ($symbols->declarations as $declaration)
 		{
-			if (!($declaration instanceof ast_global_declaration) || $declaration->type_ready()) {
+			if (!($declaration instanceof ast_literal_declaration) || $declaration->type_ready()) {
 				continue;
 			}
 			$declaration->reset_preparation();
@@ -20,9 +20,10 @@ final class Global_Preparation
 				: type_registry::resolve($declaration->type_name);
 			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(),
-					'Unknown or unsupported global type: ' . $declaration->type_name);
+					'Unknown or unsupported ' . ($declaration instanceof ast_global_declaration ? 'global' : 'constant')
+					. ' type: ' . $declaration->type_name);
 			}
-			if ($type === type_string::instance()) {
+			if (($declaration instanceof ast_global_declaration) && ($type === type_string::instance())) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 			}
 			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);

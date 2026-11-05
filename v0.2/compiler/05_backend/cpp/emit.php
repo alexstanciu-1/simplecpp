@@ -355,6 +355,17 @@ final class Cpp_Emitter
 		if ($value instanceof ast_name_expression) {
 			$reorderable = $value->type_def()->cpp_trivial_value();
 			$declaration = $value->declaration();
+			if ($declaration instanceof ast_constant_declaration) {
+				$type = $declaration->type_def();
+				$conversion = $declaration->initialization();
+				$reorderable = $reorderable && ($conversion === value_conversion::identity);
+				$literal = $this->value($declaration->initializer, $global_references, $declarations, $required_headers);
+				foreach (array_merge($type->cpp_headers(), $declaration->initializer->type_def()->cpp_headers(),
+					$type->conversion_headers($conversion)) as $header) {
+					$required_headers[$header] = true;
+				}
+				return $type->lower_cpp_conversion($conversion, $literal);
+			}
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);
 				$global_references[$name] = $declaration;

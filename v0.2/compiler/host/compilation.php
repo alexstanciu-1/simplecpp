@@ -31,6 +31,9 @@ final class Compilation_Inspection
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
 			'name' => $global->name(), 'symbol' => $global->symbol_key(), 'type' => $global->type_name,
 		], $file->globals());
+		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
+			'name' => $constant->name(), 'symbol' => $constant->symbol_key(), 'type' => $constant->type_name,
+		], $file->constants());
 		if ($file->diagnostics !== []) {
 			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),
 				$file->diagnostics);
@@ -53,6 +56,10 @@ final class Compilation_Inspection
 			'initializer' => self::scalar($global->type_def()->convert_constant(
 				$global->initialization(), $global->initializer->constant())),
 		], $program->file->globals());
+		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
+			'name' => $constant->name(), 'type' => $constant->type_def()->name,
+			'conversion' => $constant->initialization()->name, 'initializer' => self::value($constant->initializer),
+		], $program->file->constants());
 		foreach ($program->file->functions() as $function) {
 			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
