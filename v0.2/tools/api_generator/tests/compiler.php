@@ -171,10 +171,11 @@ try {
         requireThat($type->lower_cpp_literal($literal) === $expected, 'Incorrect literal lowering');
     }
 } finally {
-    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/byte.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
+    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/byte.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'bindings/entry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
         if (file_exists($work . '/' . $path)) unlink($work . '/' . $path);
     }
     rmdir($work . '/types');
+    rmdir($work . '/bindings');
     rmdir($work);
 }
 echo "Generated native lowering, metadata admission, freshness and cleanup passed\n";
@@ -252,6 +253,27 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Entry binding owns only the ABI symbol/header, with a bounded native result contract.
+$boundEntry = unserialize(serialize($metadata));
+$boundEntry->compiler->runtime_bindings->entry_exit_checked->symbol = 'scpp::test_entry';
+$boundEntry->compiler->runtime_bindings->entry_exit_checked->header = 'scpp/test_entry.hpp';
+$entryCode = renderCompiler($boundEntry, $facts)['bindings/entry.php'];
+requireThat(str_contains($entryCode, 'scpp::test_entry') && str_contains($entryCode, 'scpp/test_entry.hpp'), 'Entry binding ignored');
+foreach (['missing', 'operand', 'result', 'symbol', 'header'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'missing' => $bad->compiler->entry->checked_binding = 'missing',
+        'operand' => $bad->compiler->runtime_bindings->entry_exit_checked->operand = 'float64',
+        'result' => $bad->compiler->runtime_bindings->entry_exit_checked->result = 'int64',
+        'symbol' => $bad->compiler->runtime_bindings->entry_exit_checked->symbol = 'bad()',
+        'header' => $bad->compiler->runtime_bindings->entry_exit_checked->header = '../private.hpp',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid entry binding accepted');
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Family registration owns direct AST dispatch and canonical accessors; keyword owners share one AST family.
 $literalDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
 $familyPlan = compilerLiteralFamilies($literalDefinitions);

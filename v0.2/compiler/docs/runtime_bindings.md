@@ -136,3 +136,42 @@ and fresh instrumented application objects (not a comparative speed benchmark):
 | js_byte | 135.82 | 16.18 | 19.23 | 68.00 |
 | js_int | 148.80 | 15.78 | 16.89 | 82.00 |
 | js_string | 152.22 | 23.32 | 22.51 | 77.00 |
+
+## Entry ABI binding
+
+`compiler.entry.checked_binding` selects a named runtime binding with operand `int64`
+and ABI result `native_int`. This does not register another source type. The generated
+`bindings/entry.php` defines `Cpp_Entry_Binding::checked()` and `header()`; the generator
+validates the bounded signature and public symbol/header syntax before publication.
+
+`Cpp_Exit` still selects the already-prepared conversion: proven values use the same
+native cast, checked values call the generated spelling helper. The emitter gets the
+entry header from that helper even for proven returns, because it provides the existing
+`SCPP_REQUIRE_ENTRY_TARGET` assertion. Target assertion emission, `Exit_Preparation`,
+`entry_target`, diagnostics and the runtime range-checking implementation are unchanged.
+Default emitted helper calls and include spelling are identical.
+
+Structure changes are limited to the compiler entry metadata record, its named binding,
+and one generated static helper artifact (registered in boot/CMake). Inventory version
+17 includes this ninth artifact. No AST, prepared-fact, session or runtime structures
+changed, and no per-expression metadata lookup was introduced.
+
+Six focused CTests pass. Generator tests cover symbol/header substitution, invalid
+references/signatures/spellings and publication cleanup/freshness including the new file.
+`entry_binding.php` checks proven/checked spelling and all-flavor incremental failures,
+retry without edits, provider deletion/re-addition, fresh-output equivalence and unchanged
+caller AST reuse. Fifteen native proof programs cover proven success, checked success,
+both runtime out-of-range directions and incremental recovery. Existing `entry_native.py`
+also passes boundary-value checks, diagnostic locations, publication preservation and
+mismatched-target rejection. Negative unary values retain the current fact-analysis
+behavior; this slice does not expand constant propagation.
+
+Raw proof artifacts: `v0.2/build/entry-binding-proof/`. Recovery timings below are single
+correctness samples: O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime, fresh
+instrumented application objects. Stage trace sums are not additive wall-time components.
+
+| Flavor | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 116.75 | 9.74 | 14.25 | 60.00 |
+| php | 151.33 | 11.11 | 18.40 | 80.00 |
+| js | 116.47 | 8.61 | 15.18 | 60.00 |

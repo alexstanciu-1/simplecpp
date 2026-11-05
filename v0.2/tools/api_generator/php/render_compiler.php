@@ -173,7 +173,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $families = compilerLiteralFamilies($definitions);
@@ -230,9 +230,26 @@ function renderCompiler(mixed $metadata, array $facts): array {
         '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 16,
+    $files['bindings/entry.php'] = compilerEntryBinding($compiler);
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 17,
         'files' => array_keys($files)]) . "\n";
     return $files;
+}
+
+/** Resolve the native entry ABI without treating native int as a source-language type. */
+function compilerEntryBinding(mixed $compiler): string {
+    $entry = at($compiler, 'entry');
+    fields($entry, ['checked_binding']);
+    $binding = at(at($compiler, 'runtime_bindings'), textValue(at($entry, 'checked_binding')));
+    fields($binding, ['operand', 'result', 'symbol', 'header']);
+    literals($binding, ['operand' => 'int64', 'result' => 'native_int']);
+    $symbol = textValue(at($binding, 'symbol'));
+    $header = textValue(at($binding, 'header'));
+    requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid entry binding symbol');
+    requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid entry binding header');
+    return strtr(readFile(__DIR__ . '/../templates/entry_binding.php.tpl'), [
+        '@symbol@' => var_export($symbol, true), '@header@' => var_export($header, true),
+    ]);
 }
 
 /** Generate literal handling from a closed, validated scalar vocabulary. */

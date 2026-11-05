@@ -5,7 +5,7 @@ Doc Status: planning
 Saved from the original audit supplied by the user. Code line references describe the audit-time snapshot.
 Findings 1–3 are implemented (registration retains supported ABI/strategy guards).
 Finding 4 is implemented: named arithmetic/conversion/storage bindings and copy/lowering safety declarations. Operand analysis remains in the emitter.
-Finding 5 is implemented, including ordered comma-separated operands. Finding 6 is implemented: declaration support is compiler metadata; original diagnostics and restrictions remain. Finding 7 is implemented: literal families own generated dispatch/accessors; parsing and decoding remain handwritten. Finding 8 remains open.
+Finding 5 is implemented, including ordered comma-separated operands. Finding 6 is implemented: declaration support is compiler metadata; original diagnostics and restrictions remain. Finding 7 is implemented: literal families own generated dispatch/accessors; parsing and decoding remain handwritten. Finding 8 is implemented: the entry ABI symbol/header is generated while target-aware preparation remains handwritten. All eight agreed audit slices are implemented.
 
 **The main redundancy is in the handwritten API generator, more than in the compiler’s preparation code.** We generate direct handlers successfully, but several generator sections still contain a second, fixed description of which types and operations are supported.
 

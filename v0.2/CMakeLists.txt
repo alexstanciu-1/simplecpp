@@ -104,7 +104,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/byte.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/byte.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -166,6 +166,9 @@ if(BUILD_TESTING)
   add_test(NAME byte_consumer COMMAND byte_consumer_test)
   add_test(NAME entry_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/entry_runtime.py)
   add_test(NAME output_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/output_runtime.py)
+  add_test(NAME compiler_entry_binding COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry_binding.php)
+  add_test(NAME compiler_entry_binding_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry_binding_native.py)
+  set_tests_properties(compiler_entry_binding_native PROPERTIES TIMEOUT 60)
   add_test(NAME compiler_entry COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry.php)
   add_test(NAME compiler_frontend COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend.php)
   add_test(NAME compiler_style COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}

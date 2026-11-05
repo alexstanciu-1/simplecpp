@@ -34,8 +34,8 @@ Byte's width/storage facts are no longer hard-coded in the runtime scalar regist
 Generated methods contain direct branches; compilation does not interpret metadata
 or build a conversion matrix. Unsupported policies fail before publication.
 
-The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` and
-inventory version 16. Generated PHP is not tracked. CMake lists the byproducts and
+The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` plus
+`compiler/generated/bindings/entry.php` and inventory version 17. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
 Registration is normalized once by `compilerTypePlan()` in the API generator. The

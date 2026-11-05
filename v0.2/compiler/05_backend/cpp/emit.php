@@ -11,7 +11,7 @@ final class Cpp_Exit
 	{
 		return match ($conversion) {
 			exit_conversion::proven => 'static_cast<int>(' . $value . ')',
-				exit_conversion::checked => 'scpp::entry_exit_checked(' . $value . ')',
+				exit_conversion::checked => Cpp_Entry_Binding::checked($value),
 		};
 	}
 }
@@ -111,7 +111,7 @@ final class Cpp_Emitter
 		}
 		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
-			$header .= "#include <scpp/entry.hpp>\n";
+			$header .= '#include <' . Cpp_Entry_Binding::header() . ">\n";
 			$header .= 'SCPP_REQUIRE_ENTRY_TARGET(' . $entry->target->digits . ");\n\n";
 		}
 		ksort($required_headers, \SORT_STRING);

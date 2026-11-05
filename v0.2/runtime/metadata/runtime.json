@@ -915,7 +915,9 @@
       "int64": { "strategy": "integer", "binding": "echo_int" },
       "string": { "strategy": "bytes", "binding": "echo_bytes" }
     },
+    "entry": { "checked_binding": "entry_exit_checked" },
     "runtime_bindings": {
+      "entry_exit_checked": { "operand": "int64", "result": "native_int", "symbol": "scpp::entry_exit_checked", "header": "scpp/entry.hpp" },
       "echo_int": { "operand": "int64", "strategy": "integer", "symbol": "scpp::echo_int", "header": "scpp/output.hpp" },
       "echo_bytes": { "operand": "string", "strategy": "bytes", "symbol": "scpp::echo_bytes", "header": "scpp/output.hpp" },
       "int64_divide": {
