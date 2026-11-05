@@ -302,3 +302,6 @@ namespace-qualified reads across files and functions. Ordinary top-level locals
 remain private to implicit main. Writes and configurable shadowing are deferred.
 Run `php -n v0.2/compiler/tests/globals.php` and
 `python3 -B v0.2/compiler/tests/namespaces_native.py --globals` for the proof.
+
+See [incremental preparation work](docs/preparation_work.md) for the deduplicated
+body queue, changed-source attachment, retry and retirement boundaries.

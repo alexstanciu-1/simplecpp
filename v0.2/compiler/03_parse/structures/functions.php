@@ -114,6 +114,11 @@ final class ast_call_expression extends ast_expression
  */
 final class ast_function_body extends ast_statement_block implements dependency_watcher
 {
+	/** PROPERTIES */
+	/** Native non-owning queue reference; null outside incremental ownership or after retirement. */
+	private ?preparation_work $preparation_work = null;
+
+	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
@@ -125,10 +130,23 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** Preparation statistics: name lookups performed by the last successful body preparation; zero before completion. */
 	public int $name_lookups /** uint32 */ = 0;
 
+	/** METHODS */
+	/** Attach only after successful frontend publication; null retires replaced or removed syntax. */
+	public function attach_preparation_work(?preparation_work $work): void
+	{
+		if ($this->preparation_work === $work) {
+			return;
+		}
+		$this->preparation_work?->retire($this);
+		$this->preparation_work = $work;
+		$work?->register($this);
+	}
+
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
+		$this->preparation_work?->enqueue($this);
 		$this->root()->begin_preparation();
 	}
 
@@ -140,6 +158,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
+		$this->preparation_work?->enqueue($this);
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -155,6 +174,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->name_lookups = $lookups;
 		$this->exit_digits = $target?->digits;
 		$this->prepared = true;
+		$this->preparation_work?->complete($this);
 	}
 
 	public function require_prepared(): void

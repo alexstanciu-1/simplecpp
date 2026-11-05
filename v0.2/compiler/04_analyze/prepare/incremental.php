@@ -28,39 +28,39 @@ final class Incremental_Preparation
 		Function_Preparation::declarations($symbols);
 		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
+		$work = $session->preparation_work;
+		$entry = $files[$session->entry_key()];
+		$main = $entry->main();
 		$report = ['prepared' => 0, 'reused' => 0];
 		$errors = [];
-		foreach ($files as $path => $file)
-		{
-			$functions = $file->functions();
-			if ($file->main() !== null) {
-				$main = $file->main();
-				if (!$main->return_type_ready()) {
-					$main->settle_return_type(type_registry::integer());
-				}
-				$functions[] = $main;
+		if ($main === null) {
+			$errors[] = new diagnostic($entry->source(), strlen($entry->source()->content),
+				'Entry slice requires an explicit value return');
+		}
+		else {
+			if (!$main->return_type_ready()) {
+				$main->settle_return_type(type_registry::integer());
 			}
-			elseif ($path === $session->entry_key()) {
-				$errors[] = new diagnostic($file->source(), strlen($file->source()->content),
-					'Entry slice requires an explicit value return');
-			}
-			foreach ($functions as $function)
-			{
-				$body = $function->body();
-				$exit = $function->is_implicit_entry ? $target : null;
-				if ($body->is_prepared($exit)) {
-					$report['reused']++;
-					continue;
-				}
-				try {
-					(new Preparation())->function_body($body, $symbols, $exit, $session->dependency_watches);
-					$report['prepared']++;
-				}
-				catch (diagnostic $error) {
-					$errors[] = $error;
-				}
+			// The entry target is an external cache input, not a watched source symbol.
+			if (!$main->body()->is_prepared($target)) {
+				$work->enqueue($main->body());
 			}
 		}
+		foreach ($work->pending() as $body)
+		{
+			/** @var ast_function_body $body */
+			/** @var ast_function_declaration $function */
+			$function = $body->parent;
+			$exit = $function->is_implicit_entry ? $target : null;
+			try {
+				(new Preparation())->function_body($body, $symbols, $exit, $session->dependency_watches);
+				$report['prepared']++;
+			}
+			catch (diagnostic $error) {
+				$errors[] = $error;
+			}
+		}
+		$report['reused'] = $work->body_count() - $report['prepared'];
 		if ($errors !== []) {
 			throw new diagnostic_group(Declaration_Diagnostics::ordered($errors));
 		}

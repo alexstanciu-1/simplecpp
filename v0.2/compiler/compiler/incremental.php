@@ -32,6 +32,8 @@ final class Incremental_Frontend
 		$candidate->removed_sources = [];
 		clearstatcache();
 		$frontend = new Source_Frontend();
+		/** @var ast_file_node[] $retired */
+		$retired = [];
 		try
 		{
 			foreach ($units as $unit)
@@ -51,6 +53,9 @@ final class Incremental_Frontend
 				}
 				else {
 					$unit->ast = $frontend->collect(Program_Loader::load($unit));
+					if ($prior?->ast !== null) {
+						$retired[] = $prior->ast;
+					}
 				}
 			}
 			foreach ($old as $prior)
@@ -61,6 +66,9 @@ final class Incremental_Frontend
 				$removed->size = $prior->size;
 				$removed->ast = $prior->ast;
 				$candidate->removed_sources[] = $removed;
+				if ($prior->ast !== null) {
+					$retired[] = $prior->ast;
+				}
 			}
 			clearstatcache();
 			$files = [];
@@ -75,6 +83,27 @@ final class Incremental_Frontend
 				$candidate->dependency_watches = $previous->dependency_watches;
 			}
 			$candidate->scope = Symbol_Publication::completed($files, $previous?->scope, $candidate->dependency_watches);
+			// Publication has succeeded; only now adopt the live queue and replace source-owned membership.
+			if ($previous !== null) {
+				$candidate->preparation_work = $previous->preparation_work;
+			}
+			foreach ($retired as $file) {
+				foreach ($file->declaration_nodes as $node) {
+					if ($node instanceof ast_function_declaration) {
+						$node->body()->attach_preparation_work(null);
+					}
+				}
+			}
+			foreach ($units as $unit) {
+				if ($unit->status === change_status::none) {
+					continue;
+				}
+				foreach ($unit->ast->declaration_nodes as $node) {
+					if ($node instanceof ast_function_declaration) {
+						$node->body()->attach_preparation_work($candidate->preparation_work);
+					}
+				}
+			}
 			if ($previous !== null) {
 				$previous->is_current = false;
 			}

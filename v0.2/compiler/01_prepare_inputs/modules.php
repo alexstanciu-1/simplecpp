@@ -33,6 +33,8 @@ final class compilation_session
 	public bool $is_current = true;
 	/** Native shared-owning; shared by current and retained sessions. */
 	public Dependency_Watches $dependency_watches;
+	/** Native shared-owning; one pending-body set follows the current session lineage. */
+	public preparation_work $preparation_work;
 	/** @var source_unit[] Removed records reference old ASTs; native owning records with shared-owning retained ASTs. */
 	public array $removed_sources /** list<source_unit> */ = [];
 
@@ -41,6 +43,7 @@ final class compilation_session
 	public function __construct(array $modules /** array<string,module> */, module $entry)
 	{
 		$this->dependency_watches = new Dependency_Watches();
+		$this->preparation_work = new preparation_work();
 		$this->modules = $modules;
 		$this->entry = $entry;
 	}

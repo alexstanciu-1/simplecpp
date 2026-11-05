@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 /** Invalidation target, currently a body; grouped bodies or source units may implement the same contract later. */
 interface dependency_watcher {
-	/** Mark owned caches dirty only; do not prepare, throw or mutate subscriptions during dispatch. */
+	/** Invalidate owned caches and enqueue work; do not prepare, throw or mutate subscriptions during dispatch. */
 	public function invalidate_dependencies(): void;
 }
 

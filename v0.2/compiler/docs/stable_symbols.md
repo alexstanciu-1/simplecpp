@@ -75,7 +75,7 @@ edits can reuse readers while stable entries select replacement declarations. Se
   final invalidation; callers must keep retired targets alive through dispatch.
 
 Publication retains current watchers, queues semantic changes, then dispatches
-before returning. Watcher callbacks only invalidate owned caches: they must not
+before returning. Watcher callbacks invalidate owned caches and enqueue preparation work: they must not
 throw, prepare code or mutate subscriptions. This remains sequential PHP work;
 native publication will require the existing reader/worker barrier.
 
@@ -197,3 +197,9 @@ Parameter passing mode (value/reference) is also part of the ordered callable
 contract. Mode edits invalidate callers even when the canonical types are unchanged;
 reference-body-only edits do not, since callers already discard borrowed local value
 facts conservatively. Failed bindings recover through the existing watcher/reset path.
+
+## Explicit preparation work
+
+Incremental bodies now enqueue themselves when invalidated rather than relying on
+an application-wide readiness scan. See [preparation work ownership and retry](preparation_work.md).
+The dependency coordinator and declaration publication algorithm are unchanged.

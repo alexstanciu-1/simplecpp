@@ -155,3 +155,64 @@ final readonly class prepared_program
 		$this->entry->require_prepared();
 	}
 }
+
+/**
+ * Session-lineage preparation work, deduplicated by body identity; contains no AST copies or semantic facts.
+ * Example: two changed symbols enqueue their shared consumer once; failed preparation leaves it pending.
+ */
+final class preparation_work
+{
+	/** PROPERTIES */
+	/** @var \SplObjectStorage<ast_function_body,null> Native non-owning pending body references. */
+	private \SplObjectStorage $bodies /** SplObjectStorage<ast_function_body,null> */;
+	/** Number of attached live bodies; supports reuse reporting without scanning unchanged ASTs. */
+	private int $total /** uint32 */ = 0;
+
+	/** CONSTRUCTOR */
+	public function __construct()
+	{
+		$this->bodies = new \SplObjectStorage();
+	}
+
+	/** METHODS */
+	/** Called once when a new body attaches; attachment identity is guarded by the body. */
+	public function register(ast_function_body $body): void
+	{
+		$this->total++;
+		$this->enqueue($body);
+	}
+
+	/** Called once when a replaced/removed body detaches, including bodies that never registered a watch. */
+	public function retire(ast_function_body $body): void
+	{
+		$this->complete($body);
+		$this->total--;
+	}
+
+	public function enqueue(ast_function_body $body): void
+	{
+		$this->bodies[$body] = null;
+	}
+
+	/** Remove only successfully completed or retired work; failures retain their pending membership. */
+	public function complete(ast_function_body $body): void
+	{
+		$this->bodies->offsetUnset($body);
+	}
+
+	/** @return \SplObjectStorage<ast_function_body,null> Snapshot permits completion to remove pending entries during iteration. */
+	public function pending(): \SplObjectStorage
+	{
+		return clone $this->bodies;
+	}
+
+	public function pending_count(): int /** uint32 */
+	{
+		return count($this->bodies);
+	}
+
+	public function body_count(): int /** uint32 */
+	{
+		return $this->total;
+	}
+}
