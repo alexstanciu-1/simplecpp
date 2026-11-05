@@ -270,5 +270,5 @@ All flavors accept existing-local int64 `+=`, `-=`, `*=`, `/=`, `%=` through one
 assignment parser and shared underlying-operator map. PHP compound writes never
 declare locals. Types and write-back admission belong to generated operator rules
 and preparation. The [scalar contract](../../specs/compiler_scalars_v0_2.md#int64-compound-assignment-statements--2026-11-05)
-defines ordering and limits; compounds in `for` headers and expression positions
-remain deferred.
+defines ordering and limits. The same assignments are supported in `for` initializer
+and update clauses; compound expression values remain deferred.

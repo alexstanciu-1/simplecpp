@@ -219,6 +219,6 @@ limitations, truncation toward zero for division, and checked zero divisors for
 division/remainder. No wrapping, saturation or checked-overflow policy is added.
 
 This slice admits statements only, not compound expressions yielding a value.
-Compound `for` clauses, increments, other operators/types, fields/indexes and
-implicit result-to-destination conversions remain deferred. Body statements in
-loops and conditions use the ordinary shared assignment path.
+Increments, other operators/types, fields/indexes and
+implicit result-to-destination conversions remain deferred. Body statements and [for header clauses](loop_statements_v0_2.md#compound-for-headers--2026-11-05)
+use the ordinary shared assignment path.

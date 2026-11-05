@@ -146,6 +146,14 @@ final class Cpp_Emitter
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
+				$compound_header = ($statement instanceof ast_for_statement)
+					&& (($statement->update->operator !== null)
+						|| (($statement->initializer instanceof ast_assignment_statement) && ($statement->initializer->operator !== null)));
+				if ($compound_header) {
+					/** @var ast_assignment_statement $binding */
+					$binding = $statement->update->operator !== null ? $statement->update : $statement->initializer;
+					$lines[] = "\t{ " . $binding->local_def()->type_def()->cpp_type() . ' compound_previous;';
+				}
 				if ($statement instanceof ast_for_statement) {
 					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers);
 					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers);
@@ -158,6 +166,9 @@ final class Cpp_Emitter
 					$lines[] = "\t" . $line;
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
+				if ($compound_header) {
+					$lines[] = "\t}";
+				}
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
@@ -174,7 +185,9 @@ final class Cpp_Emitter
 				}
 			}
 			elseif (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
-				$lines[] = "\t" . $this->compound($statement, $global_references, $declarations, $required_headers);
+				$snapshot = '';
+				$write = $this->compound($statement, $global_references, $declarations, $required_headers, $snapshot);
+				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_assignment_statement)) {
 				$lines[] = "\t" . $this->binding($statement, $global_references, $declarations, $required_headers) . ';';
@@ -231,14 +244,15 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Snapshot the old destination before RHS effects, compute, then commit once; no expression lambda is needed.
+	 * Produce a snapshot assignment and final write expression; enclosing syntax owns storage and sequencing.
+	 * $snapshot: output assignment to the context-owned compound_previous temporary.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
 	private function compound(ast_assignment_statement $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, string &$snapshot): string
 	{
 		$type = $statement->local_def()->type_def();
 		$name = $this->name($statement->local_def());
@@ -246,12 +260,13 @@ final class Cpp_Emitter
 		foreach ($type->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}
-		return '{ const auto compound_previous = ' . $name . '; ' . $name . ' = '
-			. $type->lower_cpp_binary($statement->operator, 'compound_previous', $right) . '; }';
+		$snapshot = 'compound_previous = ' . $name;
+		return $name . ' = ' . $type->lower_cpp_binary($statement->operator, 'compound_previous', $right);
 	}
 
 	/**
 	 * Render a declaration/write without its delimiter, shared by body statements and for headers.
+	 * A compound header requires compound_previous storage supplied by the enclosing loop.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
@@ -260,6 +275,11 @@ final class Cpp_Emitter
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
+		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
+			$snapshot = '';
+			$write = $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
+			return '(' . $snapshot . ', ' . $write . ')';
+		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
 			$conversion = $statement->initialization();

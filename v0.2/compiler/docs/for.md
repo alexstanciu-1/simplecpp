@@ -6,7 +6,8 @@ The [loop contract](../../../specs/loop_statements_v0_2.md#bounded-for-slice--20
 defines one required initializer (declaration/assignment), condition and assignment
 update, with a braced body. Existing typed/inferred declarations and generated
 conversions/truthiness apply in all three flavors. Omitted/comma clauses,
-increments, compound updates, standalone call clauses and foreach remain deferred.
+increments, standalone call clauses and foreach remain deferred. Int64 compound
+assignments are supported in both initializer and update positions.
 
 ## Structure and ownership
 
@@ -77,3 +78,64 @@ wall-time components.
 
 Raw results, generated sources and logs are retained locally in
 `v0.2/build/for-proof-2026-11-04/` (ignored build artifacts).
+
+
+## Compound header extension — 2026-11-05
+
+No AST or preparation structure changes are needed. Both header positions already
+own ordinary assignment statements, whose optional operator identifies compounds.
+The parser no longer rejects them. All ordinary admission, binding, latest-write
+invalidation and per-clause preparation paths remain unchanged.
+
+The shared `Cpp_Emitter::compound()` produces a snapshot assignment and final write
+expression. Standalone statements wrap these in a block with a const temporary.
+Header rendering sequences them using the built-in comma operator. The enclosing
+loop supplies one scoped int64 temporary, shared by its initializer/update because
+both currently have the same int64 storage contract and never overlap. Nested loops
+own separate scopes; no source binding or prepared fact is added for this temporary.
+
+```cpp
+{ int64_t compound_previous;
+  for (int64_t i = 0; i < 10;
+       (compound_previous = i, i = compound_previous + step(i))) {
+      // Native continue reaches the update; break/return do not.
+  }
+}
+```
+
+The snapshot is assigned before every use; false conditions and skipped updates do
+not read uninitialized storage. Native for emission preserves continue-to-update
+without copying updates into bodies or rewriting transfer statements. There is no
+new lambda or GNU statement expression. Compiler-generated comma sequencing does
+not enable comma-separated clauses in source syntax.
+
+Tests extend the existing for suite: all five operators in both positions, first
+condition false, RHS reference mutation, continue/break/return, nested loops,
+header/body shadowing, unknown/out-of-scope storage, unsupported RHS types, one-pass
+statistics, reset/purity, incremental signature recovery and multifile native output.
+Test-only C++ catches verify initializer/update failures preserve RHS mutations and
+prevent the compound store. Existing standalone compound native proofs are rerun
+against the shared emission refactor.
+
+
+### Recorded header proof
+
+All 46 selected compiler CTest checks passed (`^compiler_`, excluding native suites
+and the persistent-service harness). Expanded for checks and writing checks passed.
+All 18 for native programs and 21 standalone compound native regressions passed.
+Proof artifacts are retained locally under
+`v0.2/build/for-compounds-proof-2026-11-05/` (ignored build output).
+
+Compound-header fixture timings below are single instrumented fresh builds, not
+medians: O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime. Trace times are
+not additive wall time; optimizer/codegen are parts of LLVM work. Link measures
+command duration.
+
+| Flavor | Native wall ms | Frontend ms | LLVM backend ms | Optimizer ms | Codegen ms | Link ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| cpp | 165.99 | 17.24 | 17.17 | 9.35 | 5.73 | 67.00 |
+| php | 132.48 | 11.32 | 10.49 | 5.21 | 3.80 | 64.00 |
+| js | 158.34 | 14.15 | 13.98 | 7.39 | 4.91 | 71.00 |
+
+PHP fixture generation and assertions took 176.94 ms across the complete for suite,
+including incremental cases; this is not an isolated preparation-stage timing.

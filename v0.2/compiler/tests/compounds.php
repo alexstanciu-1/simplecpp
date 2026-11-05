@@ -112,8 +112,6 @@ foreach (flavor::cases() as $flavor)
 		flavor::js => 'global let x: int = 1;',
 	};
 	rejects(fn() => $prepare($global . $x . '+=1; return 8;'), 'global writes are deferred');
-	rejects(fn() => $prepare($decl('x', 'int', '0') . 'for (' . $x . '=0;' . $x . '<2;' . $x . '+=1) {} return 8;'), 'Compound for clauses');
-	rejects(fn() => $prepare($decl('x', 'int', '0') . 'for (' . $x . '+=1;' . $x . '<2;' . $x . '=2) {} return 8;'), 'Compound for clauses');
 	// A successful compound destroys the old literal fact; the later byte conversion must check at runtime.
 	$stale = $decl('x', 'int', '1') . $x . '+=300;' . $decl('b', 'byte', $x) . 'return 8;';
 	$fixtures[$flavor->name . '_facts'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($stale)),

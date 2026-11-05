@@ -111,12 +111,67 @@ foreach (flavor::cases() as $flavor)
 		. $var('i') . '=checked(' . $var('x') . ')) {' . $var('x') . '=300; continue; } return 8;';
 	$fixtures[$flavor->name . '_update_range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
 		'stdout_hex' => '', 'catch_out_of_range' => true];
+	// Every enabled operator uses the same header path, in both initialization and update.
+	$x = $var('compound');
+	$flag = $var('once');
+	$extra = $decl('compound', 'int', '10') . $decl('once', 'bool', 'true');
+	foreach (['+=', '-=', '*=', '/=', '%='] as $operator) {
+		$extra .= $x . '=10;' . $flag . '=true; for (' . $x . $operator . '2;' . $flag . ';' . $x . $operator . '2) {'
+			. $flag . '=false; echo ' . $x . '; echo ",";} echo ' . $x . '; echo ";";';
+	}
+	$ref = match ($flavor) {
+		flavor::php => 'int &$v',
+		flavor::cpp => 'int &v',
+		flavor::js => '&v: int',
+	};
+	$extra .= $fn('mutate', $ref, 'int', $var('v') . '=100; echo "R"; return 1;')
+		. $x . '=10; for (' . $x . '+=mutate(' . $x . ');false;' . $x . '+=mutate(' . $x . ')) {} echo ' . $x . ';'
+		. 'for (' . $x . '=0;' . $x . '<2;' . $x . '+=mutate(' . $x . ')) { continue; } echo ' . $x . ';'
+		. 'for (' . $x . '=0;true;' . $x . '/=0) { break; }'
+		. $fn('exit_loop', '', 'int', 'for (' . $decl('i', 'int', '0') . 'true;' . $var('i') . '/=0) { return 8; } return 9;')
+		. 'echo exit_loop();'
+		. 'for (' . $decl('outer', 'int', '0') . $var('outer') . '<2;' . $var('outer') . '+=1) {'
+		. 'for (' . $decl('inner', 'int', '0') . $var('inner') . '<2;' . $var('inner') . '+=1) { continue; }'
+		. 'echo ' . $var('outer') . ';}'
+		. 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=1) {'
+		. $decl('i', 'int', '50') . $var('i') . '+=1; echo ' . $var('i') . ';} return 8;';
+	$compound_entry = $prepare($extra);
+	$before = serialize($compound_entry);
+	$compound_cpp = (new Cpp_Emitter())->emit($compound_entry);
+	verify(serialize($compound_entry) === $before, 'Header compound lowering mutated facts');
+	$fixtures[$flavor->name . '_compound'] = ['cpp' => $compound_cpp,
+		'stdout_hex' => bin2hex('12,14;8,6;20,40;5,2;0,0;R11RR28015151')];
+	Function_Preparation::reset_body($compound_entry->body());
+	$again = (new Preparation())->prepare($compound_entry->file, new entry_target(31));
+	verify((new Cpp_Emitter())->emit($again) === $compound_cpp, 'Compound header reset/reprepare differs');
+	$simple = $prepare('for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=1) {} return 8;');
+	verify($simple->body()->statement_visits === 4 && $simple->body()->expression_visits === 6, 'Compound header visited more than once');
+	verify(!str_contains((new Cpp_Emitter())->emit($simple), '([&]'), 'Compound header introduced a lambda');
+	rejects(fn() => $prepare('for (' . $x . '+=1;false;' . $x . '+=1) {} return 8;'), 'existing local');
+	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'false;' . $var('i') . '+=1.0) {} return 8;'), 'Unsupported compound');
+	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'false;' . $var('inside') . '+=1) {'
+		. $decl('inside', 'int', '1') . '} return 8;'), 'existing local');
+	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'false;' . $var('i') . '+=1) {} echo ' . $var('i') . '; return 8;'), 'Unknown');
+	// Test-only exception observers verify no header write-back after failure; prior RHS effects remain.
+	foreach ([true, false] as $in_initializer) {
+		$v = $var('v');
+		$failure = $v . '/=zero(' . $v . ')';
+		$source = $fn('zero', $ref, 'int', $v . '=100; echo "R"; return 0;')
+			. $fn('update', $ref, 'void', 'for (' . ($in_initializer ? $failure : $v . '+=0') . ';true;'
+				. ($in_initializer ? $v . '+=1' : $failure) . ') { continue; } return;') . 'return 8;';
+		$prepared = $prepare($source);
+		$name = Cpp_Emitter::function_name($prepared->file->declarations['func:update']);
+		$cpp = "#include <stdexcept>\n" . str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($prepared));
+		$cpp .= "\nint main() { " . scpp\compiler\type_int64::instance()->cpp_type() . ' value=10; try { ' . $name . '(value); }'
+			. ' catch (const std::domain_error&) { return value == 100 ? 8 : 91; } return 90; }';
+		$fixtures[$flavor->name . ($in_initializer ? '_init_failure' : '_update_failure')] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R')];
+	}
 	$directory = sys_get_temp_dir() . '/scpp-for-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
-		file_put_contents($main, 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '=step(' . $var('i') . ')) { continue; } return 8;');
+		file_put_contents($main, 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=step(' . $var('i') . ')) { continue; } return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
 		$write = static function (string $type, string $value) use ($lib, $fn, $parameter): void {
 			file_put_contents($lib, $fn('step', $parameter, $type, 'return ' . $value . ';'));
@@ -130,11 +185,18 @@ foreach (flavor::cases() as $flavor)
 		$tokens = $caller->tokens;
 		$write('string', '"bad"');
 		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'conversion');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported compound');
 		$write('int64', $var('v') . '+1');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'For update recovery failed');
 		verify(($session->entry->entry->ast === $caller) && ($caller->tokens === $tokens), 'Caller syntax replaced');
+		$sources = [];
+		foreach ($session->files() as $path => $file) {
+			$sources[$path] = $file->source();
+		}
+		$program = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
+		$units = array_values(Cpp_Program::emit($program)->files);
+		$fixtures[$flavor->name . '_recovery'] = ['cpp' => array_pop($units), 'extra_cpp' => $units, 'stdout_hex' => ''];
 		$write('int64', $var('v') . '+100');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body edit invalidated caller');

@@ -230,9 +230,6 @@ final class Parser
 		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_assignment_statement)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
 		}
-		if (($initializer instanceof ast_assignment_statement) && ($initializer->operator !== null)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Compound for clauses are deferred');
-		}
 		$header->statement($initializer, 0);
 		$condition = $this->value();
 		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
@@ -240,9 +237,6 @@ final class Parser
 		$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 			? token_kind::variable : token_kind::identifier);
 		$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
-		if ($update->operator !== null) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Compound for clauses are deferred');
-		}
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
 		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
 	}

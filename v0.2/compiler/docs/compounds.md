@@ -6,7 +6,8 @@ The [scalar contract](../../../specs/compiler_scalars_v0_2.md#int64-compound-ass
 admits `+=`, `-=`, `*=`, `/=`, `%=` on existing int64 locals/parameters, including
 mutable reference parameters. All flavors use one mechanism. RHS values must be
 int64; casts can supply that type. Globals, constants, fields/indexes, other types,
-compound expression results and `for` clauses remain outside this slice.
+and compound expression results remain outside this slice. [For header clauses](for.md)
+reuse the same assignment mechanism.
 
 ## One syntax and preparation owner
 
@@ -51,8 +52,10 @@ remainder require the existing public arithmetic header/helpers.
 A failed RHS or operation prevents the compound store. Prior RHS writes remain;
 there is no rollback. Native signed-overflow limitations and zero-divisor errors
 are unchanged. General lvalue address/owner retention is deferred with complex
-destinations. For clauses are rejected until their update/continue lowering is
-handled explicitly.
+destinations. The shared lowerer supplies a snapshot assignment and final write
+expression. Statement contexts supply a scoped const temporary; for-header contexts
+supply scoped temporary storage and sequence those expressions with a comma.
+Operator/type admission and write-back generation are identical.
 
 ## Mining and proof
 
@@ -64,7 +67,7 @@ or generalized conversion protocols.
 
 `tests/compounds.php` checks all flavors and operators, alias spellings, locals,
 value/reference parameters, self reads, explicit casts, scope and loop bodies,
-unsupported destinations/types, deferred for clauses, one RHS visit, inspection,
+unsupported destinations/types, one RHS visit, inspection,
 reset and emission purity. Incremental tests cover signature failure/recovery,
 operator edits, unchanged caller AST/tokens, body-only edits and no-op reuse.
 

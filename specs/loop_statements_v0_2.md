@@ -100,7 +100,35 @@ Check the update even when a constant condition or body transfer prevents its
 execution. Completion conservatively permits zero iterations and does not prove
 a value function returns merely because the for body returns.
 
-Omitted clauses, comma-separated clauses, increment/decrement, compound updates,
+Omitted clauses, comma-separated clauses, increment/decrement,
 standalone call clauses and unbraced bodies remain deferred. Calls inside otherwise
 supported expressions are allowed. This slice adds no assignment expressions or
 general expression statements.
+
+
+## Compound for headers — 2026-11-05
+
+Initializer and update assignments may use the same `+=`, `-=`, `*=`, `/=`, `%=`
+int64 mechanism as standalone compound statements. For example:
+
+```text
+cpp: for (int i = 0; i < 10; i += 1) { echo i; }
+php: for ($i int = 0; $i < 10; $i += 1) { echo $i; }
+js:  for (let i: int = 0; i < 10; i += 1) { echo i; }
+```
+
+A compound initializer requires existing visible storage; it never declares a
+loop-local binding, including in PHP. It executes once before the first condition.
+Both clauses preserve the destination's old value before evaluating their RHS
+once and commit only after successful computation. Earlier RHS effects remain
+on failure. The ordinary compound type, overflow and error contracts are unchanged.
+
+A compound update runs after each normal body completion or nearest-loop continue,
+including when its RHS mutates the same destination through a reference parameter.
+Break, return, body failure and a false initial condition suppress the update.
+Nested loops retain their own transfer targets and header scopes. Body-local
+shadowing cannot change the header's resolved destination.
+
+No source-level comma clauses, increments, omitted clauses, assignment-expression
+values or new types are introduced. Preparation still visits each clause once;
+this is a reuse of assignment semantics, not a separate preparation operation.
