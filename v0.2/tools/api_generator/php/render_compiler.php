@@ -30,60 +30,86 @@ function decimalPredecessor(string $value): string {
     throw new \LogicException('Expected positive decimal magnitude');
 }
 
-/** Generate the supported core scalar definitions; module membership determines availability. */
-function renderCompiler(mixed $metadata, array $facts): array {
-    $types = registry($metadata, $facts);
+/** Resolve active membership, aliases and representations once for class and registry generation. */
+function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions']);
+    $sources = fields(at($metadata, 'source_types'), ['int', 'bool', 'null', 'float']);
+    requireThat(($sources['int'] ?? null) === 'int64' && isset($types[$sources['int']]), 'Compiler int requires int64 metadata');
     $active = [];
+    $membership = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
         $members = names(at($row, 'types'), 'Duplicate compiler module type');
+        foreach ($members as $identity) {
+            requireThat(!isset($membership[$identity]), 'Duplicate compiler module ownership: ' . $identity);
+            $membership[$identity] = $module;
+        }
         if (boolean(at($row, 'always_available'))) {
             requireThat($module === 'default-runtime', 'Only the default runtime is supported in this compiler slice');
-            $active = array_merge($active, $members);
+            foreach ($members as $identity) $active[$identity] = true;
         }
     }
-    requireThat($active === ['bool_t', 'byte', 'float64', 'int64', 'null_t', 'string'] && isset($types['int64']), 'Compiler lowering requires int64 metadata in the default runtime');
-    $name = 'int64';
-    $type = $types[$name];
-    requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
-    $sources = fields(at($metadata, 'source_types'), ['int', 'bool', 'null', 'float']);
-    requireThat(($sources['int'] ?? null) === $name, 'Compiler int requires int64 metadata');
-    $aliases = [$name];
-    foreach ($sources as $alias => $identity) {
-        if ($identity === $name) $aliases[] = $alias;
+    // Required roles are consumed by existing AST/literal handlers and boot-time generated class references.
+    foreach (array_merge(array_values($sources), ['byte', textValue(at(at($metadata, 'string'), 'type'))]) as $required) {
+        requireThat(isset($active[$required]), 'Required compiler type missing from default runtime: ' . $required);
     }
-    $aliases = array_values(array_unique($aliases));
-    requireThat($aliases === ['int64', 'int'], 'Compiler slice registers only int/int64 aliases');
-    $policy = at($compiler, 'integer_literals');
-    fields($policy, ['radix', 'overflow', 'cpp_suffix']);
-    requireThat(unsigned(at($policy, 'radix')) === 10, 'Unsupported compiler integer radix');
-    requireThat(textValue(at($policy, 'overflow')) === 'reject', 'Unsupported compiler integer overflow policy');
-    $suffix = textValue(at($policy, 'cpp_suffix'));
-    requireThat($suffix === 'LL', 'Unsupported signed integer literal suffix');
-    requireThat($facts['native_integers']['long long']['signed'] && $facts['native_integers']['long long']['digits'] >= $type['bits'] - 1,
-        'Native literal carrier cannot represent compiler integer');
-    $magnitude = decimalPowerOfTwo($type['bits'] - 1);
-    $maximum = decimalPredecessor($magnitude);
-    $minimumCpp = '(-' . $maximum . $suffix . ' - 1' . $suffix . ')';
-    $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $aliases));
-    $source = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
-        '@name@' => $name, '@maximum@' => $maximum, '@magnitude@' => $magnitude,
-        '@accept_names@' => $accept, '@representation@' => var_export($type['representation'], true),
-        '@cpp_minimum@' => var_export($minimumCpp, true), '@cpp_suffix@' => var_export($suffix, true),
-    ]);
-    $files = ['types/' . $name . '.php' => $source];
-    $definitions = ['int64' => ['class' => 'int64', 'aliases' => $aliases, 'cpp' => $type['representation']]];
-    foreach (object(at($compiler, 'value_types')) as $identity => $row) {
+    $rows = object(at($compiler, 'value_types'));
+    foreach ($active as $identity => $_) requireThat(isset($rows[$identity]), 'Missing active compiler type definition: ' . $identity);
+    foreach ($rows as $identity => $_) requireThat(isset($active[$identity]), 'Inactive compiler type definition: ' . $identity);
+    // Integer-first output order preserves the existing generated files and registry spelling.
+    $rows = [$sources['int'] => $rows[$sources['int']]] + $rows;
+    $definitions = [];
+    $owners = [];
+    $classes = [];
+    foreach ($rows as $identity => $row) {
         fields($row, ['class', 'source_names', 'cpp_type', 'literals']);
-        requireThat(in_array($identity, ['null_t', 'bool_t', 'byte', 'float64', 'string'], true), 'Unsupported compiler value type');
         $class = textValue(at($row, 'class'));
-        requireThat($class === ['null_t' => 'null', 'bool_t' => 'bool', 'byte' => 'byte', 'float64' => 'float64', 'string' => 'string'][$identity], 'Invalid generated type class');
+        requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $class) === 1 && !isset($classes[$class]), 'Invalid or duplicate generated type class');
+        $classes[$class] = true;
         $aliases = names(at($row, 'source_names'), 'Duplicate source type name');
-        requireThat($aliases === ($identity === 'float64' ? ['float', 'float64'] : [$class]), 'Unsupported core source aliases');
-        if ($identity === 'float64') {
-            fields($row, ['class', 'source_names', 'cpp_type']);
+        foreach ($sources as $alias => $target) if ($target === $identity) $aliases[] = $alias;
+        $aliases = array_values(array_unique($aliases));
+        sort($aliases, SORT_STRING);
+        requireThat($aliases !== [], 'Compiler type has no source name');
+        foreach ($aliases as $alias) {
+            requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $alias) === 1, 'Invalid source type name');
+            requireThat(!isset($owners[$alias]) || $owners[$alias] === $identity, 'Source type name collision: ' . $alias);
+            $owners[$alias] = $identity;
+        }
+        $literals = [];
+        $kind = compilerConversionKind($metadata, $identity);
+        if ($identity === at(at($metadata, 'string'), 'type')) $kind = 'string';
+        // These are implementation ABI/strategy guards, not a second registration table.
+        $expectedClass = match ($kind) {
+            'integer', 'byte', 'floating', 'string' => $identity,
+            'boolean' => 'bool', 'null' => 'null',
+            default => throw new \RuntimeException('Unsupported compiler type strategy'),
+        };
+        requireThat($class === $expectedClass, 'Unsupported generated class ABI');
+        if ($kind === 'integer') {
+            requireThat($identity === $sources['int'], 'Unsupported compiler integer strategy');
+            $type = $types[$identity];
+            requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
+            $policy = at($compiler, 'integer_literals');
+            fields($policy, ['radix', 'overflow', 'cpp_suffix']);
+            requireThat(unsigned(at($policy, 'radix')) === 10, 'Unsupported compiler integer radix');
+            requireThat(textValue(at($policy, 'overflow')) === 'reject', 'Unsupported compiler integer overflow policy');
+            $suffix = textValue(at($policy, 'cpp_suffix'));
+            requireThat($suffix === 'LL', 'Unsupported signed integer literal suffix');
+            requireThat($facts['native_integers']['long long']['signed'] && $facts['native_integers']['long long']['digits'] >= $type['bits'] - 1,
+                'Native literal carrier cannot represent compiler integer');
+            $magnitude = decimalPowerOfTwo($type['bits'] - 1);
+            $maximum = decimalPredecessor($magnitude);
+            $minimumCpp = '(-' . $maximum . $suffix . ' - 1' . $suffix . ')';
+            $cpp = $type['representation'];
+            if (in_array($identity, $aliases, true)) {
+                $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
+            }
+            $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
+                'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
+            continue;
+        }
+        if ($kind === 'floating') {
             requireThat(($sources['float'] ?? null) === $identity, 'Source float identity mismatch');
             $floating = at($metadata, 'floating');
             literals($floating, ['type' => 'float64', 'representation' => 'ieee_binary64']);
@@ -96,31 +122,38 @@ function renderCompiler(mixed $metadata, array $facts): array {
             requireThat($facts['double']['digits'] === 53 && $facts['double']['max_exponent'] === 1024
                 && $facts['double']['iec559'] && $facts['double']['radix'] === 2, 'Compiler requires IEEE binary64');
             $literals = [];
-        } elseif ($identity === 'string') {
-            fields($row, ['class', 'source_names', 'cpp_type']);
+        } elseif ($kind === 'string') {
             literals(at($metadata, 'string'), ['type' => 'string', 'source_type' => 'string',
                 'storage' => 'private_std_string', 'count_type' => 'int64', 'construction' => 'explicit']);
             $cpp = textValue(at($row, 'cpp_type'));
             requireThat($cpp === 'scpp::string', 'Unsupported string representation');
             $literals = [];
-        } elseif ($identity !== 'byte') {
+        } elseif (in_array($kind, ['boolean', 'null'], true)) {
             requireThat(($sources[$class] ?? null) === $identity, 'Source type identity mismatch');
             $value = at(at($metadata, 'values'), $identity);
-            requireThat(at($value, 'representation') === ($identity === 'bool_t' ? 'native_bool' : 'empty'), 'Unsupported scalar representation');
+            requireThat(at($value, 'representation') === ($kind === 'boolean' ? 'native_bool' : 'empty'), 'Unsupported scalar representation');
             $cpp = textValue(at($row, 'cpp_type'));
-            requireThat($cpp === ($identity === 'bool_t' ? 'bool' : 'decltype(nullptr)'), 'Unsupported compiler scalar representation');
+            requireThat($cpp === ($kind === 'boolean' ? 'bool' : 'decltype(nullptr)'), 'Unsupported compiler scalar representation');
             $literals = object(at($row, 'literals'));
-            requireThat($literals === ($identity === 'bool_t' ? ['false' => false, 'true' => true] : ['null' => null]), 'Unsupported scalar literal policy');
+            requireThat($literals === ($kind === 'boolean' ? ['false' => false, 'true' => true] : ['null' => null]), 'Unsupported scalar literal policy');
         } else {
             $cpp = $types[$identity]['representation'];
             $literals = [];
         }
-        $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals];
+
+        $definitions[$identity] = ['class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind];
     }
+    return $definitions;
+}
+
+/** Generate the supported core scalar definitions; module membership determines availability. */
+function renderCompiler(mixed $metadata, array $facts): array {
+    $types = registry($metadata, $facts);
+    $compiler = at($metadata, 'compiler');
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions']);
+    $definitions = compilerTypePlan($metadata, $facts, $types);
+    $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
-    $identities = array_keys($definitions);
-    sort($identities, SORT_STRING);
-    requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
         $methods = compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity) . compilerPromotions($compiler, $conversions, $definitions, $identity);
         if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
@@ -132,8 +165,14 @@ function renderCompiler(mixed $metadata, array $facts): array {
 \t}
 ";
         }
-        if ($identity === 'int64') {
-            $files['types/int64.php'] = str_replace('@conversion_methods@', $methods, $files['types/int64.php']);
+        if ($definition['strategy'] === 'integer') {
+            $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
+            $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
+                '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
+                '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
+                '@cpp_minimum@' => var_export($definition['minimum_cpp'], true), '@cpp_suffix@' => var_export($definition['suffix'], true),
+                '@conversion_methods@' => $methods,
+            ]);
             continue;
         }
         $limits = $identity === 'byte' ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
@@ -163,7 +202,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
         }
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
-        '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
+        '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => textValue(at(at($metadata, 'source_types'), 'int')),
     ]);
     $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 16,
         'files' => array_keys($files)]) . "\n";

@@ -36,7 +36,7 @@ requireThat(decimalPowerOfTwo(7) === '128' && decimalPredecessor('128') === '127
 requireThat(decimalPowerOfTwo(63) === '9223372036854775808', 'Exact signed-width magnitude');
 foreach ([
     ['inactive', 'default runtime'], ['overflow', 'overflow policy'], ['radix', 'radix'],
-    ['suffix', 'suffix'], ['source', 'int64 metadata'], ['alias', 'only int/int64'],
+    ['suffix', 'suffix'], ['source', 'int64 metadata'], ['alias', 'no source name'],
 ] as [$change, $message]) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
@@ -52,6 +52,41 @@ foreach ([
         throw new \LogicException('Unsupported compiler metadata accepted');
     } catch (\RuntimeException $error) {
         requireThat(str_contains($error->getMessage(), $message), $error->getMessage());
+    }
+}
+// Registration uses shared source spellings plus compiler-only aliases, without an independent whitelist.
+$reordered = unserialize(serialize($metadata));
+$reordered->compiler->modules->{'default-runtime'}->types = array_reverse($reordered->compiler->modules->{'default-runtime'}->types);
+requireThat(renderCompiler($reordered, $facts) === $files, 'Module order changed generated output');
+$aliasMetadata = unserialize(serialize($metadata));
+$aliasMetadata->compiler->value_types->float64->source_names = ['real'];
+$aliasMetadata->compiler->value_types->int64->source_names = [];
+$aliasPlan = compilerTypePlan($aliasMetadata, $facts, registry($aliasMetadata, $facts));
+requireThat($aliasPlan['float64']['aliases'] === ['float', 'real'], 'Shared/extra floating aliases ignored');
+requireThat($aliasPlan['int64']['aliases'] === ['int'], 'Removed compiler-only integer alias retained');
+$aliasFiles = renderCompiler($aliasMetadata, $facts);
+requireThat(str_contains($aliasFiles['types/float64.php'], "(\$name === 'real')"), 'Class ignored added alias');
+requireThat(str_contains($aliasFiles['types/registry.php'], "'real'"), 'Registry ignored added alias');
+foreach (['collision', 'duplicate_member', 'duplicate_owner', 'missing_definition', 'missing_member', 'inactive_definition', 'strategy'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    switch ($change) {
+        case 'collision': $bad->compiler->value_types->float64->source_names[] = 'int'; break;
+        case 'duplicate_member': $bad->compiler->modules->{'default-runtime'}->types[] = 'int64'; break;
+        case 'duplicate_owner': $bad->compiler->modules->optional = (object)['always_available' => false, 'types' => ['int64']]; break;
+        case 'missing_definition': unset($bad->compiler->value_types->byte); break;
+        case 'missing_member':
+            $bad->compiler->modules->{'default-runtime'}->types = array_values(array_diff($bad->compiler->modules->{'default-runtime'}->types, ['byte']));
+            break;
+        case 'inactive_definition': $bad->compiler->value_types->extra = clone $bad->compiler->value_types->byte; break;
+        case 'strategy':
+            $bad->compiler->modules->{'default-runtime'}->types[] = 'extra';
+            $bad->compiler->value_types->extra = (object)['class' => 'extra', 'source_names' => ['extra']];
+            break;
+    }
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid registration accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
     }
 }
 // Unsupported metadata is rejected before publication; conversion emission follows the metadata rows.

@@ -35,8 +35,25 @@ Generated methods contain direct branches; compilation does not interpret metada
 or build a conversion matrix. Unsupported policies fail before publication.
 
 The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` and
-inventory version 12. Generated PHP is not tracked. CMake lists the byproducts and
+inventory version 16. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
+
+Registration is normalized once by `compilerTypePlan()` in the API generator. The
+active module members select definitions, including int64 through the same
+`compiler.value_types` inventory as the other types. The plan supplies both the
+individual classes and the registry; there is no second exact membership list.
+Shared `source_types` spellings are merged with supplementary `source_names` from
+the compiler rows. For example, `int` comes from `source_types`, while `int64` is
+an extra compiler spelling. Removing or adding an extra spelling changes both
+`accepts_name()` and registry lookup. Cross-type spelling collisions and duplicate
+module ownership are errors.
+
+This remains a default-runtime-only slice. Existing parser/literal roles must be
+present; unsupported type strategies, class ABI names and representations fail at
+generation time. The normalized plan is generation-time data, not a new compiler
+runtime structure. Optional module activation and arbitrary generated class renaming
+are not implemented. The registration refactor preserves all eight generated files
+byte-for-byte with the default metadata, including the inventory version.
 
 ## Shared type contract
 

@@ -749,11 +749,13 @@
       "cpp_suffix": "LL"
     },
     "value_types": {
+      "int64": {
+        "class": "int64",
+        "source_names": ["int64"]
+      },
       "null_t": {
         "class": "null",
-        "source_names": [
-          "null"
-        ],
+        "source_names": [],
         "cpp_type": "decltype(nullptr)",
         "literals": {
           "null": null
@@ -761,9 +763,7 @@
       },
       "bool_t": {
         "class": "bool",
-        "source_names": [
-          "bool"
-        ],
+        "source_names": [],
         "cpp_type": "bool",
         "literals": {
           "true": true,
@@ -778,10 +778,7 @@
       },
       "float64": {
         "class": "float64",
-        "source_names": [
-          "float",
-          "float64"
-        ],
+        "source_names": ["float64"],
         "cpp_type": "double"
       },
       "string": {
