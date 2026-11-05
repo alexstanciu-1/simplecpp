@@ -76,7 +76,11 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations']);
+        $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
+        foreach (['inferred_local', 'global_storage'] as $capability) {
+            $declarations[$capability] = boolean(at(at($row, 'declarations'), $capability));
+        }
         $copy = textValue(at($row, 'copy_semantics'));
         requireThat(in_array($copy, ['trivial', 'nontrivial'], true), 'Unsupported copy semantics');
         $class = textValue(at($row, 'class'));
@@ -122,7 +126,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             if (in_array($identity, $aliases, true)) {
                 $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
             }
-            $definitions[$identity] = ['copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
+            $definitions[$identity] = ['declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
                 'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
             continue;
         }
@@ -158,7 +162,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
+        $definitions[$identity] = ['declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
     return $definitions;
 }
@@ -173,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -259,6 +263,22 @@ $cases
 		return $lower;
 	}
 PHP_CODE;
+}
+
+/** Emit declaration-policy queries, separate from representation and conversion permissions. */
+function compilerDeclarations(array $declarations): string {
+    $methods = '';
+    foreach ($declarations as $capability => $supported) {
+        $result = $supported ? 'true' : 'false';
+        $methods .= "
+\t/** Current compiler declaration capability; does not grant conversions. */
+\tpublic function supports_$capability(): bool
+\t{
+\t\treturn $result;
+\t}
+";
+    }
+    return $methods;
 }
 
 /** Generate type-owned output admission and dispatch; formatting/lifetime algorithms stay in the backend. */

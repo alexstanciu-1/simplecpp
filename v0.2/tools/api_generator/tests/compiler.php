@@ -252,6 +252,24 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Declaration flags drive queries; omission and nonboolean policy cannot silently enable a declaration.
+$policy = unserialize(serialize($metadata));
+$policy->compiler->value_types->int64->declarations->inferred_local = false;
+$policy->compiler->value_types->int64->declarations->global_storage = false;
+$policyCode = renderCompiler($policy, $facts)['types/int64.php'];
+foreach (['inferred_local', 'global_storage'] as $capability) {
+    requireThat(str_contains($policyCode, "function supports_$capability(): bool\n\t{\n\t\treturn false;"), 'Declaration metadata ignored');
+    foreach (['missing', 'invalid'] as $change) {
+        $bad = unserialize(serialize($metadata));
+        if ($change === 'missing') unset($bad->compiler->value_types->int64->declarations->$capability);
+        else $bad->compiler->value_types->int64->declarations->$capability = 'yes';
+        try {
+            renderCompiler($bad, $facts);
+            throw new \LogicException('Invalid declaration policy accepted');
+        } catch (\RuntimeException $expected) {
+        }
+    }
+}
 // Output admission and bindings are generated; no implicit to-string conversion is granted.
 $noOutput = unserialize(serialize($metadata));
 $noOutput->compiler->output = (object)[];

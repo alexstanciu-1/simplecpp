@@ -46,8 +46,8 @@ foreach (flavor::cases() as $flavor)
 	$entry = $prepare($source);
 	$statements = $entry->body()->statements;
 	verify($statements[0]->constant() === 3, 'Write mutated initializer facts');
-	verify($statements[1]->value->constant() === 3, 'Write changed an earlier read');
-	verify($statements[4]->value->constant() === 8, 'Later read retained stale initializer');
+	verify($statements[1]->values[0]->constant() === 3, 'Write changed an earlier read');
+	verify($statements[4]->values[0]->constant() === 8, 'Later read retained stale initializer');
 	verify($statements[3]->value->constant() === 8, 'Self assignment missed preceding write');
 	verify($statements[2]->local_def() === $statements[0], 'Write binding missing');
 	verify(Compilation_Inspection::program($entry)['statements'][2]['kind'] === 'assignment', 'Inspection skipped write');
@@ -109,7 +109,7 @@ try
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['prepared'] === 1, 'Wrong incremental scope');
 	verify($session->entry->entry->ast === $caller, 'Caller reparsed');
 	$changed = $session->scope->resolve('func:show')->body();
-	verify($changed !== $body && $changed->statements[2]->value->constant() === 19, 'Stale assignment cache');
+	verify($changed !== $body && $changed->statements[2]->values[0]->constant() === 19, 'Stale assignment cache');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

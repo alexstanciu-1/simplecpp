@@ -68,7 +68,7 @@ foreach (flavor::cases() as $flavor)
 		. 'echo MIN; echo label(); echo NARROW; return LIMIT;';
 	$entry = $prepare($code);
 	verify(count($entry->file->constants()) === 8, 'Constant inventory');
-	verify($entry->body()->statements[0]->value->constant() === 8, 'Constant occurrence fact');
+	verify($entry->body()->statements[0]->values[0]->constant() === 8, 'Constant occurrence fact');
 	$first = $entry->file->constants()[0];
 	verify(($first->parent === $entry->file) && ($first->initializer->parent === $first), 'Constant ownership');
 	verify($first->symbol_key() === 'const:LIMIT', 'Constant identity');
@@ -142,8 +142,8 @@ foreach (flavor::cases() as $flavor)
 		'lib' => new source_file('lib', 'namespace Lib {' . $const('VALUE', 'int', '8') . $fn('VALUE', '', 'int', 'return 9;') . '}', $flavor),
 	];
 	$both = (new Program_Frontend())->prepare_sources('main', $both_sources, new entry_target(31));
-	verify($both->entry->body()->statements[0]->value->constant() === 8, 'Plain import lost constant kind');
-	verify($both->entry->body()->statements[1]->value->function_def()->short_name === 'VALUE', 'Plain import lost function kind');
+	verify($both->entry->body()->statements[0]->values[0]->constant() === 8, 'Plain import lost constant kind');
+	verify($both->entry->body()->statements[1]->values[0]->function_def()->short_name === 'VALUE', 'Plain import lost function kind');
 	$conflict = 'use const Lib' . $sep . '{VALUE as SAME,TEXT as SAME}; return 8;';
 	rejects(fn() => (new Program_Frontend())->prepare_sources('main', [
 		'main' => new source_file('main', $conflict, $flavor), 'lib' => new source_file('lib', $library, $flavor),
@@ -165,7 +165,7 @@ foreach (flavor::cases() as $flavor)
 		file_put_contents($lib, $const('VALUE', 'int', '888'));
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Value change did not invalidate reader');
-		verify($caller->main()->body()->statements[0]->value->constant() === 888, 'Stale constant value');
+		verify($caller->main()->body()->statements[0]->values[0]->constant() === 888, 'Stale constant value');
 		file_put_contents($lib, $const('VALUE', 'bool', 'false'));
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Echo currently supports');

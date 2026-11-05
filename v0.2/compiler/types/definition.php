@@ -21,6 +21,18 @@ abstract class type_definition
 	{
 	}
 
+	/** Current support for using this type as an inferred local declaration type. */
+	public function supports_inferred_local(): bool
+	{
+		return false;
+	}
+
+	/** Current support for global storage; independent of local/constant declarations. */
+	public function supports_global_storage(): bool
+	{
+		return false;
+	}
+
 	/** Output admission is separate from string conversion. */
 	public function supports_output(): bool
 	{

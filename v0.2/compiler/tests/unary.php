@@ -52,7 +52,7 @@ foreach (flavor::cases() as $flavor)
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('unary', $source, $flavor), new entry_target(31));
 	$entry = $prepare('echo - +8 * 2; return 8;');
 	verify($entry->body()->expression_visits === 6, 'Each unary operand must be prepared once');
-	$expression = $entry->body()->statements[0]->value;
+	$expression = $entry->body()->statements[0]->values[0];
 	verify($expression instanceof scpp\compiler\ast_binary_expression, 'Unary precedence');
 	$unary = $expression->left;
 	verify($unary instanceof scpp\compiler\ast_unary_expression, 'Unary syntax');

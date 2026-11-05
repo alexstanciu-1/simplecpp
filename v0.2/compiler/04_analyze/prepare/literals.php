@@ -23,7 +23,7 @@ final class Literal_Declaration_Preparation
 					'Unknown or unsupported ' . ($declaration instanceof ast_global_declaration ? 'global' : 'constant')
 					. ' type: ' . $declaration->type_name);
 			}
-			if (($declaration instanceof ast_global_declaration) && ($type === type_string::instance())) {
+			if (($declaration instanceof ast_global_declaration) && !$type->supports_global_storage()) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 			}
 			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null ? conversion_context::typed_destination : conversion_context::inference);

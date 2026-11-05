@@ -89,17 +89,17 @@ foreach (flavor::cases() as $flavor)
 	$program = $prepare($sources);
 	$file = $program->entry->file;
 	$body = $file->main()->body();
-	verify($body->statements[1]->value->declaration() instanceof ast_local_declaration, 'Local did not shadow global');
-	verify($body->statements[3]->value->declaration() === $program->files['lib']->globals()[0], 'Cross-source global link');
-	verify($file->functions()[0]->body()->statements[0]->value->declaration() === $file->globals()[0], 'Function captured main local');
-	verify($body->statements[3]->value->constant() === null, 'Global initializer folded into a mutable read');
+	verify($body->statements[1]->values[0]->declaration() instanceof ast_local_declaration, 'Local did not shadow global');
+	verify($body->statements[3]->values[0]->declaration() === $program->files['lib']->globals()[0], 'Cross-source global link');
+	verify($file->functions()[0]->body()->statements[0]->values[0]->declaration() === $file->globals()[0], 'Function captured main local');
+	verify($body->statements[3]->values[0]->constant() === null, 'Global initializer folded into a mutable read');
 	verify($body->statements[9]->conversion() === exit_conversion::checked, 'Global exit lacks runtime check');
 	verify($program->files['root']->main() === null, 'Globals invented executable statements');
 	verify($program->files['root']->globals()[2]->initializer->integer() === PHP_INT_MIN, 'Minimum int64 lost');
 	verify($program->files['root']->globals()[3]->initializer->integer() === PHP_INT_MAX, 'Maximum int64 lost');
 	verify(array_key_first($file->declarations) === 'func:main', 'Main must stay first');
 	verify(Syntax_Inspection::file($file)['globals'][0]['qualified_name'] === 'App\value', 'Global inspection');
-	verify(Compilation_Inspection::program($program->entry)['statements'][3]['value']['binding'] === 'var:Lib\value', 'Prepared inspection');
+	verify(Compilation_Inspection::program($program->entry)['statements'][3]['values'][0]['binding'] === 'var:Lib\value', 'Prepared inspection');
 	$before = serialize($program);
 	$output = Cpp_Program::emit($program);
 	verify(serialize($program) === $before, 'Lowering mutated facts');
@@ -127,9 +127,9 @@ foreach (flavor::cases() as $flavor)
 		. variable($flavor, '\\App\\value') . '; return 8;' . global_text($flavor, 'value', '20')
 		. function_text($flavor, 'local_reader', $local . 'echo ' . $v . ';')), $flavor);
 	$shadowed = $prepare($relative);
-	verify($shadowed->entry->body()->statements[1]->value->declaration() instanceof ast_global_declaration,
+	verify($shadowed->entry->body()->statements[1]->values[0]->declaration() instanceof ast_global_declaration,
 		'Root-qualified read did not bypass local');
-	verify($shadowed->entry->file->functions()[0]->body()->statements[1]->value->declaration() instanceof ast_local_declaration,
+	verify($shadowed->entry->file->functions()[0]->body()->statements[1]->values[0]->declaration() instanceof ast_local_declaration,
 		'Function-local variable did not shadow global');
 	foreach (['9223372036854775808', '-9223372036854775809'] as $literal) {
 		$case = $sources;
@@ -177,7 +177,7 @@ foreach (flavor::cases() as $flavor)
 		$target = new entry_target(31);
 		verify(Incremental_Preparation::prepare($session, $target) === ['prepared' => 1, 'reused' => 0], 'Cold globals');
 		$caller = $session->entry->entry->ast;
-		$read = $caller->main()->body()->statements[0]->value;
+		$read = $caller->main()->body()->statements[0]->values[0];
 		$slot = $session->scope->entry('var:Lib\value');
 		$old = $read->declaration();
 		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '100')));

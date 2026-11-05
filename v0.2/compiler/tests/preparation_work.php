@@ -76,7 +76,7 @@ try {
 		$callee->invalidate_dependencies();
 		verify($work->pending_count() === 2, 'Detached body rejoined queue');
 		verify(Incremental_Preparation::prepare($session, $target) === ['prepared' => 2, 'reused' => 0], 'Constant change preparation');
-		verify($caller->statements[1]->value->constant() === 80, 'Constant fact not refreshed');
+		verify($caller->statements[1]->values[0]->constant() === 80, 'Constant fact not refreshed');
 		file_put_contents($library, $constant('80') . $fn('value', 'return 123;'));
 		$session = $compiler->frontend($app, $session);
 		verify(($work->pending_count() === 1) && !($work->pending()[$main_key] ?? null)?->offsetExists($caller), 'Body-only change queued consumer');

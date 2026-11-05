@@ -328,7 +328,7 @@ final class Preparation
 		$this->value($declaration->initializer, $name);
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
-			if ($type === type_null::instance()) {
+			if (!$type->supports_inferred_local()) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
 			}

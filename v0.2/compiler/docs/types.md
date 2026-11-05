@@ -156,3 +156,40 @@ permission from operator-specific execution rules; generated conversion lowering
 Arithmetic helpers, checked-conversion wrappers and string storage use [named runtime bindings](runtime_bindings.md).
 
 Copy semantics and operation-local lowering safety are declared in compiler metadata; see [safety ownership and verification](runtime_bindings.md#copy-semantics-and-lowering-safety).
+
+## Declaration support policy
+
+Each `compiler.value_types` record explicitly declares `declarations.inferred_local`
+and `declarations.global_storage`. These are current compiler capabilities, separate
+from runtime representation and conversion permissions. Missing/nonboolean fields fail
+generation. Generated `supports_inferred_local()` and `supports_global_storage()` queries
+return constants; unknown/non-value types inherit conservative false defaults.
+
+Current policy: int64, bool, byte and float64 support both; null permits global storage
+but not local inference; string permits local inference but not global storage. Typed
+null locals and string constants remain supported. String globals and nullable inference
+are still deferred. The parser's existing global-initializer syntax restriction is also
+unchanged: quoted string globals can fail before declaration preparation.
+
+Preparation selects the type, asks the capability, and retains the original diagnostic
+text and location. Declaration traversal, conversions, cached AST facts and incremental
+watching remain unchanged. No AST/session/runtime structures were added; only the
+normalized generation-time type record gains declaration-policy fields.
+
+`tests/declaration_policy.php` checks typed locals, inferred locals and global policy in
+cpp/php/js, including exact existing diagnostic text. Repeated failures (including retry
+without edits) and recovery compare emitted output with fresh compilation, and no-op runs
+prepare no bodies. Six native recovery programs print `ok` and exit 8. Raw results and
+Clang traces: `v0.2/build/declaration-policy-proof/`.
+
+Single-run timings: O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime and fresh
+instrumented application objects. Cumulative stage traces are not additive wall time.
+
+| Fixture | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp_local | 143.45 | 9.80 | 13.81 | 72.00 |
+| cpp_global | 149.18 | 15.93 | 14.14 | 77.00 |
+| php_local | 137.29 | 13.15 | 12.49 | 70.00 |
+| php_global | 153.12 | 11.99 | 12.71 | 75.00 |
+| js_local | 142.30 | 11.73 | 13.29 | 68.00 |
+| js_global | 134.51 | 10.62 | 10.13 | 72.00 |

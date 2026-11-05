@@ -86,7 +86,7 @@ foreach (flavor::cases() as $flavor)
 	verify($first->parameters[0]->parent === $first, 'Parameter not signature-owned');
 	verify($first->body()->scope->resolve('var:p0') === $first->parameters[0], 'Parameter not published into body scope');
 	verify($first->body()->statements[0]->value->local_def() === $first->parameters[0], 'Read does not bind parameter');
-	verify($entry->body()->statements[0]->value instanceof ast_call_expression, 'Call is not a shared value expression');
+	verify($entry->body()->statements[0]->values[0] instanceof ast_call_expression, 'Call is not a shared value expression');
 	verify(count(Syntax_Inspection::file($entry->file)['functions'][0]['parameters']) === 1, 'Missing parameter inspection');
 	Compilation_Inspection::program($entry);
 	$before = serialize($entry);
