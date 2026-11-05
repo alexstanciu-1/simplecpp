@@ -14,9 +14,9 @@ publication gate. Native execution must join readers before calling close. Expli
 retained external sessions/handles keep their objects alive; close does not mutate their
 history. Tombstones and current symbol identities remain. Repeated close is harmless.
 
-Parse/preparation/emission/publication failures do not reach close. Failed preparation
-can retain history until a later successful run. This is intentional for this slice;
-bounded failed-generation retirement remains future work. A native build failure occurs
+Failures do not reach the successful `close()` gate. [Slice 4](failure_cleanup.md)
+adds a separate `failed()` gate after frontend publication, releasing obsolete history
+without acknowledging pending work or removing recovery watches. A native build failure occurs
 after successful C++ publication, so it does not require keeping prior AST generations.
 The frontend-only service/API retains its existing history policy: this slice integrates
 only the successful executable coordinator gate.

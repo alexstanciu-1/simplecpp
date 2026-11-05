@@ -27,7 +27,8 @@ algorithm was needed. Cleanup remains separated from publication and watch owner
   ambiguity must never silently select one candidate.
 - `Generation_Cleanup::close()` runs only after successful output publication. It releases
   generation references; it does not remove symbols or subscriptions. Failed-generation
-  history may remain until recovery, as agreed for the later failure-cleanup slice.
+  history is now released separately by [failure cleanup](failure_cleanup.md), without
+  acknowledging unfinished work.
 
 ## Repeatable verification
 
@@ -56,8 +57,8 @@ wrong-key links, retired members or missing live declarations.
 After each successful recovery, history is closed and retired syntax becomes collectible.
 Weak observations do not keep old objects alive. Current source-owned ASTs and valid
 caches remain, and releasing a whole project leaves zero tracked lifetime survivors.
-During failed runs, retained history is observed rather than incorrectly required to
-be empty. Test reflection is read-only and localized to `inspect.php`.
+The slice 3 tool tolerates failure history; the slice 4 tool additionally proves its
+retirement after failed invocations. Test reflection is read-only and localized to `inspect.php`.
 
 The native suite now additionally introduces duplicate functions/globals/constants,
 retries the failed generation, removes duplicates, deletes the provider, retries missing

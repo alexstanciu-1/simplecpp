@@ -48,7 +48,8 @@ try
 	}
 	catch (diagnostic_group) {
 	}
-	gate_check($project->session()->previous === $before, 'Failure prematurely closed history');
+	gate_check($project->session()->previous === null, 'Failure kept obsolete history');
+	gate_check(!$before->is_current, 'Failure did not retain current published state');
 	try {
 		Generation_Cleanup::close($project->session());
 		throw new \RuntimeException('Pending work was accepted');
@@ -60,7 +61,7 @@ try
 	gate_check($project->session()->previous === null, 'Recovery did not close history');
 	gate_check($project->session()->removed_sources === [], 'Retirement records survived');
 	Generation_Cleanup::close($project->session());
-	echo "Close gates: external ownership, stale rejection, failure retention, recovery and idempotence passed\n";
+	echo "Close gates: external ownership, stale rejection, pending-work preservation, recovery and idempotence passed\n";
 }
 finally {
 	$files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),

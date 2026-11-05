@@ -38,6 +38,18 @@ final class Incremental_Project
 	{
 		$this->session = $this->compiler->frontend($this->application, $this->session, $this->directory);
 		$session = $this->session;
+		try {
+			return $this->compile($session);
+		}
+		catch (\Throwable $error) {
+			Generation_Cleanup::failed($session);
+			throw $error;
+		}
+	}
+
+	/** Continue a published frontend generation; only successful output acknowledges downstream work. @return mixed[] */
+	private function compile(compilation_session $session): array /** array<string,mixed> */
+	{
 		$report = Incremental_Preparation::prepare($session, $this->target);
 		$files = $session->files();
 		$entry = $session->entry_key();

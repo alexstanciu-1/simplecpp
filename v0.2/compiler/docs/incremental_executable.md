@@ -76,7 +76,7 @@ failed publication with a newly added source, and recovery without lost emission
 
 No-op still performs input metadata checks and existing declaration/import validation.
 Emitted-text comparison may read generated files; source input change detection remains
-mtime+size. Failure-history cleanup, function-level emission, output
+mtime+size. Function-level emission, output
 transactions across process crashes and service/CLI integration remain separate work.
 
 ## Recorded proof
@@ -95,3 +95,6 @@ production cleanup behavior and distinguishes intentional caches from retired sy
 
 Successful output publication now calls [generation cleanup](generation_cleanup.md).
 It releases previous-session and removed-source roots without changing valid caches.
+
+[Failure cleanup](failure_cleanup.md) releases obsolete history after published-generation
+failures while preserving current symbols, watches and pending retry work.
