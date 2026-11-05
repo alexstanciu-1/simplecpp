@@ -76,3 +76,5 @@ PHP fixture generation plus semantic/incremental checks: 138.27 ms.
 Recovery: native wall 132.58–145.66 ms, frontend 13.78–16.78 ms, LLVM 17.76–20.14 ms, link 64.00–73.00 ms.
 Operator edit: native wall 126.15–145.11 ms, frontend 13.10–13.45 ms, LLVM 16.96–18.34 ms, link 61.00–77.00 ms.
 Test-only IEEE/exception observers: native wall 658.37–690.15 ms, frontend 476.43–519.26 ms, LLVM 39.86–42.24 ms, link 70.00–79.00 ms.
+
+[Discarded-value float updates](float_updates.md) now extend the same storage-write ownership.

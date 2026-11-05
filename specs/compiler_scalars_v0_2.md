@@ -296,7 +296,8 @@ exception/environment controls or fast-math behavior is introduced.
 Literal preparation still rejects overflow and accepts underflow; arithmetic
 results are not subjected to the finite-literal restriction. NaN and Infinity
 literal spellings remain unavailable. Preparation does not constant-fold these
-operations. Mixed int64/float64 arithmetic, floating remainder and updates remain deferred.
+operations. Mixed int64/float64 arithmetic and floating remainder remain deferred.
+Discarded-value float updates are specified below.
 Same-type compound statements are specified below. Explicit conversions may establish float64 operands.
 Runtime metadata controls admission and lowering; checked division remains behind
 the public runtime API. This does not expand the separately deferred execution-order work.
@@ -315,3 +316,19 @@ then store. On failure, do not perform the final store; prior RHS effects remain
 Division by either zero sign throws `division_by_zero`; other arithmetic retains
 the float64 infinity/NaN/underflow/signed-zero contract. A completed compound write
 invalidates the previous constant fact; its result is not folded during preparation.
+
+## Discarded-value float64 updates — 2026-11-05
+
+All flavors admit prefix/postfix `++` and `--` on established float/float64 locals
+and value/mutable-reference parameters, as standalone statements and supported
+`for` initializer/update clauses. Resolve storage once and update it once by adding
+or subtracting binary64 `1.0`, using the existing native floating contract.
+The four spellings do not expose expression results in this slice. Assignment from
+an update, argument/return updates, globals, constants and complex targets remain
+deferred or rejected by their existing boundaries.
+
+Native rounding is observable: sufficiently large finite values may remain unchanged.
+Infinities remain infinite and NaNs remain NaN; no checked-overflow, saturation,
+NaN payload guarantee or floating-environment controls are introduced. Updates
+invalidate prior constant knowledge even where native rounding leaves a value
+unchanged. Preparation does not fold updates or synthesize a literal/RHS expression.

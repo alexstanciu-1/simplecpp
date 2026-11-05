@@ -1,4 +1,4 @@
-# Discarded-value int64 updates
+# Discarded-value numeric updates
 
 Doc Status: supporting
 
@@ -6,7 +6,8 @@ The [scalar contract](../../../specs/compiler_scalars_v0_2.md#discarded-value-in
 admits all four prefix/postfix increment/decrement spellings on established int64
 locals and parameters, including reference parameters. Standalone statements and
 both for header write positions are supported in all flavors. Expression results,
-other types, constants/direct globals and complex targets remain deferred.
+constants/direct globals and complex targets remain deferred.
+[Float64 updates](float_updates.md) now reuse this same path.
 
 ## Owners and preparation
 
@@ -33,8 +34,8 @@ is no additional traversal or expression visit for an update without an RHS.
 
 `compiler.updates.int64` explicitly lists increment/decrement with native lowering
 and overflow policy. The API generator emits `supports_update()` and
-`lower_cpp_update()` on the canonical int64 definition; other definitions inherit
-rejection. Removing metadata capability removes generated admission. Invalid type,
+`lower_cpp_update()` on the canonical int64 definition; `compiler.updates.float64` now generates the
+same handlers for float64. Other definitions inherit rejection. Removing metadata capability removes generated admission. Invalid type,
 operator and policy rows reject during generation. Compiler inventory version is 12.
 
 Lowering uses the resolved storage once, emitting native `++local_N`, `local_N++`,

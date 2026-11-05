@@ -873,6 +873,11 @@
         "operators": ["increment", "decrement"],
         "overflow": "native",
         "lowering": "native"
+      },
+      "float64": {
+        "operators": ["increment", "decrement"],
+        "overflow": "native",
+        "lowering": "native"
       }
     },
     "arithmetic": {

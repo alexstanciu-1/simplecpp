@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 14,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 15,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -480,7 +480,7 @@ $headerMethods";
 function compilerUpdates(mixed $compiler, string $identity): string {
     $selected = [];
     foreach (object(at($compiler, 'updates')) as $name => $row) {
-        requireThat($name === 'int64', 'Unsupported compiler update type');
+        requireThat(in_array($name, ['int64', 'float64'], true), 'Unsupported compiler update type');
         fields($row, ['operators', 'overflow', 'lowering']);
         requireThat(at($row, 'overflow') === 'native' && at($row, 'lowering') === 'native', 'Unsupported compiler update policy');
         $operators = names(at($row, 'operators'), 'Duplicate compiler update operator');

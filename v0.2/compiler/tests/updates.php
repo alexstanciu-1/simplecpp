@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Update reset/reprepare differs');
-	foreach (['bool' => 'true', 'byte' => '1', 'float' => '1.0', 'string' => '"a"', 'null' => 'null'] as $type => $value) {
+	foreach (['bool' => 'true', 'byte' => '1', 'string' => '"a"', 'null' => 'null'] as $type => $value) {
 		foreach ($forms as $form) {
 			rejects(fn() => $prepare($decl('x', $type, $value) . $form . '; return 8;'), 'Unsupported update type');
 		}
@@ -149,7 +149,7 @@ foreach (flavor::cases() as $flavor)
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
 		$tokens = $caller->tokens;
-		file_put_contents($lib, $fn('source', '', 'float', 'return 1.0;'));
+		file_put_contents($lib, $fn('source', '', 'bool', 'return true;'));
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported update type');
 		file_put_contents($lib, $fn('source', '', 'int64', 'return 10;'));

@@ -292,7 +292,15 @@ foreach (['type', 'operator', 'overflow', 'lowering'] as $change) {
 }
 requireThat($type->supports_update(\scpp\compiler\update_operator::increment)
     && $type->supports_update(\scpp\compiler\update_operator::decrement), 'Missing generated update admission');
-requireThat(!\scpp\compiler\type_float64::instance()->supports_update(\scpp\compiler\update_operator::increment), 'Deferred float update admitted');
+requireThat(\scpp\compiler\type_float64::instance()->supports_update(\scpp\compiler\update_operator::increment)
+    && \scpp\compiler\type_float64::instance()->supports_update(\scpp\compiler\update_operator::decrement), 'Missing float updates');
+$without = unserialize(serialize($metadata));
+unset($without->compiler->updates->float64);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'public function supports_update'), 'Removed float updates still generated');
+$limited = unserialize(serialize($metadata));
+$limited->compiler->updates->float64->operators = ['decrement'];
+$code = renderCompiler($limited, $facts)['types/float64.php'];
+requireThat(!str_contains($code, 'update_operator::increment') && str_contains($code, 'update_operator::decrement'), 'Float operator removal ignored');
 
 // Unary admission and lowering both disappear when their metadata capability is removed.
 $without = unserialize(serialize($metadata));

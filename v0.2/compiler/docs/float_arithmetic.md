@@ -4,7 +4,7 @@ Doc Status: supporting
 
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#float64-arithmetic--2026-11-05)
 owns the semantics. All flavors support same-type `float`/`float64` binary
-`+ - * /` and unary signs. Mixed numeric arithmetic, float remainder and updates remain deferred; float echo is not added.
+`+ - * /` and unary signs. Mixed numeric arithmetic and float remainder remain deferred; float echo is not added. [Discarded-value updates](float_updates.md) now reuse the existing update path.
 
 ## Ownership and preparation
 
