@@ -24,7 +24,10 @@ def success(result):
 def build(units, binary, expected):
     for unit in units:
         text = Path(unit).read_text()
-        for header in re.findall(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', text, re.MULTILINE):
+        for delimiter, header in re.findall(r'^\s*#\s*include\s*([<"])([^>"]+)[>"]', text, re.MULTILINE):
+            if delimiter == '"' and re.fullmatch(r'[0-9a-f]{64}\.hpp', header):
+                assert (Path(unit).parent / header).is_file(), header
+                continue
             assert header.startswith('scpp/') and '..' not in Path(header).parts, header
             assert (root / 'runtime/generated/public' / header).is_file(), header
         assert 'std::numeric_limits' not in text and 'std::out_of_range' not in text
@@ -53,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-output-') as temporary:
             args = [php, main, stage, flavor, source] + ([facts] if stage == 'prepare' else [])
             json.loads(success(run(*args)).stdout)
         before = cpp.read_bytes()
-        for bad in [b'echo "\xff";', b'echo 1, 2;', b'echo;', b'echo unknown;', b'echo 1.5;', b'echo true;',
+        for bad in [b'echo "\xff";', b'echo 1,;', b'echo;', b'echo unknown;', b'echo 1.5;', b'echo true;',
                     b'echo "\\x41";', b'echo "\\012";', b'echo "$name";', b'echo "\\q";',
                     b'echo 9223372036854775808;']:
             source.write_bytes(bad + b' return 8;')

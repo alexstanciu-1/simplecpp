@@ -61,8 +61,14 @@ final class Body_Collection
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
+		elseif ($statement instanceof ast_echo_statement) {
+			foreach ($statement->values as $value) {
+				$this->expression($value);
+			}
+			return;
+		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
-			|| ($statement instanceof ast_echo_statement) || ($statement instanceof ast_call_statement)) {
+			|| ($statement instanceof ast_call_statement)) {
 			$value = $statement->value;
 		}
 		elseif ($statement instanceof ast_loop_statement) {

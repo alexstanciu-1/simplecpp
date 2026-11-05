@@ -58,7 +58,12 @@ final class Function_Preparation
 			if ($statement instanceof ast_local_declaration) {
 				self::expression($statement->initializer);
 			}
-			elseif (($statement instanceof ast_echo_statement) || ($statement instanceof ast_return_statement)
+			elseif ($statement instanceof ast_echo_statement) {
+				foreach ($statement->values as $value) {
+					self::expression($value);
+				}
+			}
+			elseif (($statement instanceof ast_return_statement)
 				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement)) {
 				if ($statement->value !== null) {
 					self::expression($statement->value);

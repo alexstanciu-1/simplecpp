@@ -252,6 +252,33 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Output admission and bindings are generated; no implicit to-string conversion is granted.
+$noOutput = unserialize(serialize($metadata));
+$noOutput->compiler->output = (object)[];
+$noOutputFiles = renderCompiler($noOutput, $facts);
+requireThat(!str_contains($noOutputFiles['types/int64.php'], 'function supports_output'), 'Removed output admission retained');
+$boundOutput = unserialize(serialize($metadata));
+$boundOutput->compiler->runtime_bindings->echo_int->symbol = 'scpp::test_echo';
+$boundOutput->compiler->runtime_bindings->echo_bytes->header = 'scpp/test_output.hpp';
+$boundOutputFiles = renderCompiler($boundOutput, $facts);
+requireThat(str_contains($boundOutputFiles['types/int64.php'], 'scpp::test_echo'), 'Output symbol ignored');
+requireThat(str_contains($boundOutputFiles['types/string.php'], 'scpp/test_output.hpp'), 'Output header ignored');
+foreach (['missing', 'operand', 'strategy', 'unsupported', 'symbol', 'header'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'missing' => $bad->compiler->output->int64->binding = 'missing',
+        'operand' => $bad->compiler->runtime_bindings->echo_int->operand = 'string',
+        'strategy' => $bad->compiler->runtime_bindings->echo_bytes->strategy = 'integer',
+        'unsupported' => $bad->compiler->output->bool_t = (object)['strategy' => 'integer', 'binding' => 'echo_int'],
+        'symbol' => $bad->compiler->runtime_bindings->echo_int->symbol = 'bad()',
+        'header' => $bad->compiler->runtime_bindings->echo_bytes->header = '../private.hpp',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid output metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Safety metadata drives generated queries without changing admissions or lowering algorithms.
 $conservative = unserialize(serialize($metadata));
 $conservative->compiler->lowering_strategies->native->reorderable = false;

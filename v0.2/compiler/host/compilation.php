@@ -102,9 +102,8 @@ final class Compilation_Inspection
 					'body' => self::body($arm->body)], $statement->arms)];
 			}
 			elseif ($statement instanceof ast_echo_statement) {
-				$statements[] = ['kind' => 'echo', 'value' => $statement->value instanceof ast_string_expression
-					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes())]
-					: self::value($statement->value)];
+				$statements[] = ['kind' => 'echo', 'values' => array_map(static fn(ast_expression $value): array => $value instanceof ast_string_expression
+					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($value->bytes())] : self::value($value), $statement->values)];
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$statements[] = self::binding($statement);

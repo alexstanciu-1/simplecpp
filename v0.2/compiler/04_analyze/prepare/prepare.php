@@ -156,9 +156,11 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
-				$this->value($statement->value);
-				if ($statement->value->type_def() !== type_string::instance()) {
-					$this->require_integer($statement->value, 'Echo currently supports only int64 and string values');
+				foreach ($statement->values as $value) {
+					$this->value($value);
+					if (!$value->type_def()->supports_output()) {
+						throw new diagnostic($value->source(), $value->byte_start(), 'Echo currently supports only int64 and string values');
+					}
 				}
 			}
 			elseif ($statement instanceof ast_call_statement) {

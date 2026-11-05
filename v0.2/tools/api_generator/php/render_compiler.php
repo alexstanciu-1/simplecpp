@@ -167,13 +167,13 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
+        $methods = compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -259,6 +259,49 @@ $cases
 		return $lower;
 	}
 PHP_CODE;
+}
+
+/** Generate type-owned output admission and dispatch; formatting/lifetime algorithms stay in the backend. */
+function compilerOutput(mixed $compiler, array $definitions, string $identity): string {
+    $selected = null;
+    foreach (object(at($compiler, 'output')) as $name => $row) {
+        requireThat(isset($definitions[$name]), 'Output references inactive type');
+        fields($row, ['strategy', 'binding']);
+        $strategy = textValue(at($row, 'strategy'));
+        requireThat(($strategy === 'integer' && $name === 'int64') || ($strategy === 'bytes' && $name === 'string'), 'Unsupported output strategy/type');
+        $binding = at(at($compiler, 'runtime_bindings'), textValue(at($row, 'binding')));
+        fields($binding, ['operand', 'strategy', 'symbol', 'header']);
+        literals($binding, ['operand' => $name, 'strategy' => $strategy]);
+        $symbol = textValue(at($binding, 'symbol'));
+        $header = textValue(at($binding, 'header'));
+        requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid output binding symbol');
+        requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid output binding header');
+        if ($name === $identity) $selected = ['strategy' => $strategy, 'symbol' => $symbol, 'header' => $header];
+    }
+    if ($selected === null) return '';
+    $header = var_export($selected['header'], true);
+    $symbol = var_export($selected['symbol'], true);
+    $expression = $selected['strategy'] === 'bytes' ? 'Cpp_Output::bytes($value, $operand, ' . $symbol . ')'
+        : $symbol . " . '(' . \$operand . ');'";
+    return "
+\t/** Generated output admission; does not authorize string conversion. */
+\tpublic function supports_output(): bool
+\t{
+\t\treturn true;
+\t}
+
+\t/** @return string[] */
+\tpublic function output_headers(): array /** list<string> */
+\t{
+\t\treturn [$header];
+\t}
+
+\t/** Consume an approved output operand using the selected binding. */
+\tpublic function lower_cpp_output(ast_expression \$value, ?string \$operand): string
+\t{
+\t\treturn $expression;
+\t}
+";
 }
 
 /** Runtime type categories validate strategy mechanics; they do not grant any source conversion. */

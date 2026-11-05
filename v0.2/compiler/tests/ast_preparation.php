@@ -33,16 +33,16 @@ $body = $file->main()->body();
 /** @var \scpp\compiler\ast_call_statement $call */
 /** @var \scpp\compiler\ast_return_statement $return */
 /** @var \scpp\compiler\ast_string_expression $string */
-$string = $file->functions()[0]->body()->statements[0]->value;
+$string = $file->functions()[0]->body()->statements[0]->values[0];
 unavailable(fn() => $local->initializer->integer());
-unavailable(fn() => $echo->value->local_def());
-unavailable(fn() => $echo->value->constant());
+unavailable(fn() => $echo->values[0]->local_def());
+unavailable(fn() => $echo->values[0]->constant());
 unavailable(fn() => $string->bytes());
 unavailable(fn() => $return->conversion());
 $program = Program_Preparation::prepare('entry', ['entry' => $file], new entry_target(31));
 verify(($program->entry->body() === $body) && ($body->statements[0] === $local), 'Preparation replaced AST identity');
 verify(($local->initializer->integer() === 8) && ($string->bytes() === ''), 'Literal facts were lost');
-verify(($echo->value->local_def() === $local) && ($return->value->local_def() === $local),
+verify(($echo->values[0]->local_def() === $local) && ($return->value->local_def() === $local),
 	'References lost their declaration');
 $before = serialize($file);
 $expected = (new Cpp_Emitter())->emit($program->entry);
@@ -51,10 +51,10 @@ verify(serialize($file) === $before, 'Lowering mutated facts');
 // An occurrence retains its value fact, rather than rereading the declaration's later value.
 $local->reset_preparation();
 $local->settle_type(type_int64::instance(), 9);
-verify($echo->value->constant() === 8, 'Reference value was not occurrence-specific');
+verify($echo->values[0]->constant() === 8, 'Reference value was not occurrence-specific');
 Function_Preparation::reset($file->main());
 unavailable(fn() => $local->initializer->integer());
-unavailable(fn() => $echo->value->local_def());
+unavailable(fn() => $echo->values[0]->local_def());
 unavailable(fn() => $return->conversion());
 unavailable(fn() => $call->function_def());
 unavailable(fn() => (new Cpp_Emitter())->emit($program->entry));

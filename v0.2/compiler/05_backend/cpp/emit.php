@@ -77,7 +77,6 @@ final class Cpp_Emitter
 	{
 		$declarations = [];
 		$definitions = [];
-		$uses_output = false;
 		$global_references = [];
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
@@ -92,11 +91,11 @@ final class Cpp_Emitter
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$definitions[] = $this->signature($function, $required_headers) . "\n{\n"
-				. implode("\n", $this->statements($function->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
+				. implode("\n", $this->statements($function->body(), $declarations, $global_references, $required_headers)) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$definitions[] = 'int ' . $entry_name . "()\n{\n"
-				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output, $global_references, $required_headers)) . "\n}\n";
+				. implode("\n", $this->statements($entry->body(), $declarations, $global_references, $required_headers)) . "\n}\n";
 		}
 		$prototypes = '';
 		$unit_headers = [];
@@ -114,9 +113,6 @@ final class Cpp_Emitter
 		if ($entry !== null) {
 			$header .= "#include <scpp/entry.hpp>\n";
 			$header .= 'SCPP_REQUIRE_ENTRY_TARGET(' . $entry->target->digits . ");\n\n";
-		}
-		if ($uses_output) {
-			$header .= "#include <scpp/output.hpp>\n";
 		}
 		ksort($required_headers, \SORT_STRING);
 		foreach ($required_headers as $include => $unused) {
@@ -176,7 +172,7 @@ final class Cpp_Emitter
 	 * @return string[]
 	 */
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
-		bool &$uses_output, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
@@ -209,7 +205,7 @@ final class Cpp_Emitter
 				else {
 					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
-				foreach ($this->statements($statement->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function) as $line) {
 					$lines[] = "\t" . $line;
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
@@ -225,7 +221,7 @@ final class Cpp_Emitter
 							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
 					}
 					$lines[] = "\t" . $head . ' {';
-					foreach ($this->statements($arm->body, $declarations, $uses_output, $global_references, $required_headers, $function) as $line) {
+					foreach ($this->statements($arm->body, $declarations, $global_references, $required_headers, $function) as $line) {
 						$lines[] = "\t" . $line;
 					}
 					$lines[] = "\t}";
@@ -256,20 +252,14 @@ final class Cpp_Emitter
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
-				$uses_output = true;
-				$value = $statement->value;
-				if ($value instanceof ast_string_expression) {
-					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_String_Literals::bytes($value->bytes()) . ', '
-						. strlen($value->bytes()) . ');';
-				}
-				elseif ($value->type_def() === type_string::instance()) {
-					$operand = $this->value($value, $global_references, $declarations, $required_headers);
-					// A call result must live through both byte-span queries and execute exactly once.
-					$lines[] = "\t{ const auto& output_value = " . $operand
-						. '; scpp::echo_bytes(output_value.data(), output_value.size()); }';
-				}
-				else {
-					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value, $global_references, $declarations, $required_headers) . ');';
+				foreach ($statement->values as $value) {
+					$type = $value->type_def();
+					foreach ($type->output_headers() as $header) {
+						$required_headers[$header] = true;
+					}
+					$operand = $value instanceof ast_string_expression ? null
+						: $this->value($value, $global_references, $declarations, $required_headers);
+					$lines[] = "\t" . $type->lower_cpp_output($value, $operand);
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {

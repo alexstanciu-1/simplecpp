@@ -4,29 +4,32 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /**
- * Bounded one-operand output of an integer or string value.
+ * Ordered output of an integer or string value.
  *
  * Output syntax:
  * ```text
  * echo 8;
- * echo "hello";
+ * echo "hello", 8;
  * ```
- * Each statement owns one operand; neither inserts a separator or newline automatically.
+ * Each statement owns its operands; echo never inserts a separator or newline automatically.
  */
 final class ast_echo_statement extends ast_statement
 {
-	/** Native owning; echo operand syntax child. */
-	public readonly ast_expression $value;
+	/** Native owning syntax children, in output order. @var ast_expression[] */
+	public readonly array $values /** list<ast_expression> */;
 
 	/**
+	 * @param ast_expression[] $values
 	 * $start: token position.
 	 * $end: exclusive token position.
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
-		ast_expression $value)
+		array $values /** list<ast_expression> */)
 	{
-		$this->value = $value;
+		$this->values = $values;
 		parent::__construct($start, $end);
-		$value->attach($this);
+		foreach ($values as $value) {
+			$value->attach($this);
+		}
 	}
 }

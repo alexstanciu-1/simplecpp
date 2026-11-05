@@ -21,6 +21,24 @@ abstract class type_definition
 	{
 	}
 
+	/** Output admission is separate from string conversion. */
+	public function supports_output(): bool
+	{
+		return false;
+	}
+
+	/** @return string[] Public headers for the approved output strategy. */
+	public function output_headers(): array /** list<string> */
+	{
+		return [];
+	}
+
+	/** Consume an approved operand; null spelling denotes a string literal handled without storage. */
+	public function lower_cpp_output(ast_expression $value, ?string $operand): string
+	{
+		throw new \LogicException('Output was not approved');
+	}
+
 	public function accepts_name(string $name): bool
 	{
 		return $name === $this->name;

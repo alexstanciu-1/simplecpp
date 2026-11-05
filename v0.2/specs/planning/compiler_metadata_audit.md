@@ -5,7 +5,7 @@ Doc Status: planning
 Saved from the original audit supplied by the user. Code line references describe the audit-time snapshot.
 Findings 1–3 are implemented (registration retains supported ABI/strategy guards).
 Finding 4 is implemented: named arithmetic/conversion/storage bindings and copy/lowering safety declarations. Operand analysis remains in the emitter.
-Findings 5–8 remain open.
+Finding 5 is implemented, including ordered comma-separated operands. Findings 6–8 remain open.
 
 **The main redundancy is in the handwritten API generator, more than in the compiler’s preparation code.** We generate direct handlers successfully, but several generator sections still contain a second, fixed description of which types and operations are supported.
 

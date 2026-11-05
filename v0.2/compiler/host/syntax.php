@@ -156,7 +156,7 @@ final class Syntax_Inspection
 		}
 
 		if ($statement instanceof ast_echo_statement) {
-			return ['kind' => 'echo', 'value' => self::expression($statement->value), 'span' => self::span($statement)];
+			return ['kind' => 'echo', 'values' => array_map(self::expression(...), $statement->values), 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_return_statement) {
 			return ['kind' => 'return', 'value' => $statement->value === null ? null : self::expression($statement->value),

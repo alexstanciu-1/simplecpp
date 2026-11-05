@@ -64,6 +64,7 @@ require_once __DIR__ . '/04_analyze/prepare/imports.php';
 require_once __DIR__ . '/05_backend/cpp/headers.php';
 require_once __DIR__ . '/05_backend/cpp/emit.php';
 require_once __DIR__ . '/05_backend/cpp/strings.php';
+require_once __DIR__ . '/05_backend/cpp/output.php';
 require_once __DIR__ . '/05_backend/cpp/publication.php';
 require_once __DIR__ . '/06_native/target.php';
 

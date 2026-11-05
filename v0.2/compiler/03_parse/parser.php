@@ -418,14 +418,18 @@ final class Parser
 		return $this->cursor->name(token_kind::identifier);
 	}
 
-	/** Parse one ordinary value operand for echo. */
+	/** Parse ordered comma-separated echo operands. */
 	private function echo_statement(): ast_echo_statement
 	{
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('echo');
-		$value = $this->value();
-		$end = $this->cursor->take(token_kind::semicolon, '; (echo currently accepts one operand)') + 1;
-		return new ast_echo_statement($start, $end, $value);
+		$values = [$this->value()];
+		while ($this->cursor->is(token_kind::comma)) {
+			$this->cursor->take(token_kind::comma, ',');
+			$values[] = $this->value();
+		}
+		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		return new ast_echo_statement($start, $end, $values);
 	}
 
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */

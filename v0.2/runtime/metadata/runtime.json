@@ -899,7 +899,13 @@
       "zero_checked_divide": { "reorderable": false },
       "zero_checked_remainder": { "reorderable": false }
     },
+    "output": {
+      "int64": { "strategy": "integer", "binding": "echo_int" },
+      "string": { "strategy": "bytes", "binding": "echo_bytes" }
+    },
     "runtime_bindings": {
+      "echo_int": { "operand": "int64", "strategy": "integer", "symbol": "scpp::echo_int", "header": "scpp/output.hpp" },
+      "echo_bytes": { "operand": "string", "strategy": "bytes", "symbol": "scpp::echo_bytes", "header": "scpp/output.hpp" },
       "int64_divide": {
         "operand": "int64",
         "result": "int64",
