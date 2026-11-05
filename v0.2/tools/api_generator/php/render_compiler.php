@@ -150,7 +150,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings']);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
@@ -445,6 +445,18 @@ function compilerConditions(mixed $compiler, string $identity): string {
 ";
 }
 
+/** Resolve a named binary helper; metadata owns its public symbol/header and declared signature. */
+function compilerArithmeticBinding(mixed $compiler, string $name, string $operand, string $result, string $strategy): array {
+    $binding = at(at($compiler, 'runtime_bindings'), $name);
+    fields($binding, ['operand', 'result', 'strategy', 'symbol', 'header']);
+    literals($binding, ['operand' => $operand, 'result' => $result, 'strategy' => $strategy]);
+    $symbol = textValue(at($binding, 'symbol'));
+    $header = textValue(at($binding, 'header'));
+    requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid arithmetic binding symbol');
+    requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid public arithmetic binding header');
+    return ['symbol' => $symbol, 'header' => $header];
+}
+
 /** Generate direct same-type arithmetic/comparison admission and lowering; no per-expression metadata interpretation. */
 function compilerBinary(mixed $compiler, array $definitions, string $identity): string {
     $rows = object(at($compiler, 'comparisons'));
@@ -468,14 +480,18 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
     $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
     foreach (object(at($compiler, 'arithmetic')) as $name => $row) {
         requireThat(in_array($name, ['int64', 'float64'], true) && isset($definitions[$name]), 'Unsupported compiler arithmetic type');
-        fields($row, ['operand', 'result', 'overflow', 'compound', 'operators']);
+        fields($row, ['operand', 'result', 'overflow', 'compound', 'operators', 'bindings']);
         literals($row, ['operand' => 'same_type', 'result' => $name, 'overflow' => 'native']);
         requireThat(is_bool(at($row, 'compound')), 'Compound policy must be boolean');
         foreach (object(at($row, 'operators')) as $op => $lowering) {
             requireThat(isset($arithmeticSpelling[$op]) && ($name !== 'float64' || $op !== 'remainder'), 'Unsupported arithmetic operator');
             $expected = match ($op) { 'divide' => 'zero_checked_divide', 'remainder' => 'zero_checked_remainder', default => 'native' };
             requireThat($lowering === $expected, 'Unsupported arithmetic lowering policy');
-            if ($identity === $name) $operations[$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op]];
+            $binding = null;
+            if ($lowering !== 'native') {
+                $binding = compilerArithmeticBinding($compiler, textValue(at(at($row, 'bindings'), $op)), $name, textValue(at($row, 'result')), $lowering);
+            }
+            if ($identity === $name) $operations[$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op], 'binding' => $binding];
         }
     }
     if ($operations === []) return '';
@@ -490,22 +506,25 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
             $reorderable[] = "binary_operator::$op";
             $cases .= "\t\t\tbinary_operator::$op => '(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')',\n";
         } else {
-            $cases .= "\t\t\tbinary_operator::$op => 'scpp::{$identity}_$op(' . \$left . ', ' . \$right . ')',\n";
-            $headers[] = "binary_operator::$op";
+            $symbol = $operation['binding']['symbol'];
+            $cases .= "\t\t\tbinary_operator::$op => '{$symbol}(' . \$left . ', ' . \$right . ')',\n";
+            $headers[$operation['binding']['header']][] = "binary_operator::$op";
         }
     }
     $compound = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound ? 'true' : 'false';
     $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
     $headerMethods = '';
     if ($headers !== []) {
-        $headerCases = implode(', ', $headers);
+        $headerCases = '';
+        foreach ($headers as $header => $operators) {
+            $headerCases .= "\t\t\t" . implode(', ', $operators) . ' => [' . var_export($header, true) . "],\n";
+        }
         $headerMethods = "
 \t/** @return string[] */
 \tpublic function binary_headers(binary_operator \$operator): array /** list<string> */
 \t{
 \t\treturn match (\$operator) {
-\t\t\t$headerCases => ['scpp/arithmetic.hpp'],
-\t\t\tdefault => [],
+$headerCases\t\t\tdefault => [],
 \t\t};
 \t}
 ";

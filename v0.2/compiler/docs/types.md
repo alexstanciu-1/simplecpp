@@ -152,3 +152,5 @@ Explicit source casts use these same handlers without new generated definitions 
 
 [Conversion contexts and operator promotion](conversion_contexts.md) separate boundary
 permission from operator-specific execution rules; generated conversion lowering is shared.
+
+Arithmetic helper symbols and public headers use [named runtime bindings](runtime_bindings.md).

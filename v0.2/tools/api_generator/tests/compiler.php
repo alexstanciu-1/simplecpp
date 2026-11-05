@@ -252,6 +252,30 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 }
 requireThat(str_contains($files['types/int64.php'], 'binary_operator::add => type_int64::instance()'), 'Arithmetic result identity');
 
+// Named runtime bindings select helper spelling/header; strategies still own checking and safety.
+$renamed = unserialize(serialize($metadata));
+$renamed->compiler->runtime_bindings->int64_divide->symbol = 'scpp::test_divide';
+$renamed->compiler->runtime_bindings->int64_divide->header = 'scpp/test_arithmetic.hpp';
+$renamedFiles = renderCompiler($renamed, $facts);
+requireThat(str_contains($renamedFiles['types/int64.php'], 'scpp::test_divide('), 'Binding symbol ignored');
+requireThat(str_contains($renamedFiles['types/int64.php'], "['scpp/test_arithmetic.hpp']"), 'Binding header ignored');
+requireThat(str_contains($renamedFiles['types/int64.php'], 'scpp::int64_remainder('), 'Unrelated helper changed');
+foreach (['missing', 'operand', 'result', 'strategy', 'symbol', 'header'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'missing' => $bad->compiler->arithmetic->int64->bindings->divide = 'missing',
+        'operand' => $bad->compiler->runtime_bindings->int64_divide->operand = 'float64',
+        'result' => $bad->compiler->runtime_bindings->int64_divide->result = 'bool_t',
+        'strategy' => $bad->compiler->runtime_bindings->int64_divide->strategy = 'native',
+        'symbol' => $bad->compiler->runtime_bindings->int64_divide->symbol = 'scpp::divide();',
+        'header' => $bad->compiler->runtime_bindings->int64_divide->header = 'scpp/../private.hpp',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid arithmetic binding accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Float arithmetic shares generated dispatch, but does not implicitly enable compounds or mixed operands.
 foreach (['arithmetic', 'unary'] as $section) {
     $without = unserialize(serialize($metadata));

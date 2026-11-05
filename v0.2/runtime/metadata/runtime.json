@@ -885,6 +885,29 @@
         "lowering": "native"
       }
     },
+    "runtime_bindings": {
+      "int64_divide": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int64_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_remainder": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::int64_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "float64_divide": {
+        "operand": "float64",
+        "result": "float64",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::float64_divide",
+        "header": "scpp/arithmetic.hpp"
+      }
+    },
     "arithmetic": {
       "int64": {
         "operand": "same_type",
@@ -897,7 +920,11 @@
           "divide": "zero_checked_divide",
           "remainder": "zero_checked_remainder"
         },
-        "compound": true
+        "compound": true,
+        "bindings": {
+          "divide": "int64_divide",
+          "remainder": "int64_remainder"
+        }
       },
       "float64": {
         "operand": "same_type",
@@ -909,7 +936,10 @@
           "multiply": "native",
           "divide": "zero_checked_divide"
         },
-        "compound": true
+        "compound": true,
+        "bindings": {
+          "divide": "float64_divide"
+        }
       }
     },
     "promotions": [
