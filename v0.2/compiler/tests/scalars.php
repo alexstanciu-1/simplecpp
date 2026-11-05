@@ -97,9 +97,9 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare('echo false; return 8;'), 'Echo currently');
 	rejects(fn() => $prepare($decl('byte', 'bad', '1') . 'echo ' . $var('bad') . '; return 8;'), 'Echo currently');
 	$integer = $locals[3]->initializer;
-	rejects(fn() => type_bool::instance()->prepare_conversion($integer, false), 'implicit conversion');
-	rejects(fn() => type_byte::instance()->prepare_conversion($integer, false), 'implicit conversion');
-	$implicit = type_int64::instance()->prepare_conversion($integer, false);
+	rejects(fn() => type_bool::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
+	rejects(fn() => type_byte::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
+	$implicit = type_int64::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment);
 	verify($implicit === value_conversion::identity, 'Implicit identity rejected');
 	$null = $locals[1]->initializer;
 	$null->reset_preparation();

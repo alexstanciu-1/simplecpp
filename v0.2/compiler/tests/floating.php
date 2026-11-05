@@ -113,7 +113,7 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare('return 8.0;'), 'requires int64');
 	rejects(fn() => $prepare('echo 8.0; return 8;'), 'Echo currently');
 	$literal = $values[0]->initializer;
-	rejects(fn() => type_float64::instance()->prepare_conversion($literal, false), 'implicit conversion');
+	rejects(fn() => type_float64::instance()->prepare_conversion($literal, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
 	$float_literal = $values[3]->initializer;
 	$float_literal->reset_preparation();
 	type_registry::prepare_literal($float_literal);

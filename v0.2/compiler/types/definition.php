@@ -132,13 +132,13 @@ abstract class type_definition
 	}
 
 	/** Same-type initialization needs no work; other rules are generated on the destination definition. */
-	public function prepare_conversion(ast_expression $value, bool $explicit): value_conversion
+	public function prepare_conversion(ast_expression $value, conversion_context $context): value_conversion
 	{
 		if ($value->type_def() === $this) {
 			return value_conversion::identity;
 		}
 		throw new diagnostic($value->source(), $value->byte_start(),
-			'Unsupported ' . ($explicit ? 'explicit' : 'implicit') . ' conversion from '
+			'Unsupported ' . (in_array($context, [conversion_context::explicit_cast, conversion_context::typed_destination], true) ? 'explicit' : 'implicit') . ' conversion from '
 			. $value->type_def()->name . ' to ' . $this->name);
 	}
 

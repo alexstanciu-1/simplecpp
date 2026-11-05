@@ -20,13 +20,13 @@ small handwritten non-value definition.
 - `source_types` and `compiler.value_types`: source names, generated type classes,
   compiler representations and boolean/null literal spellings and values.
 - `compiler.arithmetic`: same-type int64 operators, result, native overflow and lowering policies; see [arithmetic](arithmetic.md).
-- `compiler.updates`: explicit int64 increment/decrement capability and native lowering/overflow policy.
+- `compiler.updates`: explicit int64/float64 increment/decrement capability and native lowering/overflow policy.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
-- `compiler.conversions`: source/destination, explicit-intent requirement and implementation strategy.
+- `compiler.conversions`: source/destination, allowed context list and implementation strategy.
   Scalar cross-family rules must also be admitted by runtime `scalar_casts`.
 
 Generation validates the bounded policies, native facts and supported strategies.
@@ -47,7 +47,7 @@ checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 - `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
 - `lower_cpp_binary()` emits the approved operation.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
-- `prepare_conversion(value, explicit)` selects a `value_conversion` enum at a destination boundary.
+- `prepare_conversion(value, context)` selects a `value_conversion` enum at a destination boundary.
 - `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
 - `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
 - `cpp_type()` and `lower_cpp_literal()` consume settled source facts.
@@ -62,7 +62,7 @@ handler branches. There is no prepared-value hierarchy or allocated conversion o
 A written declaration type supplies explicit intent, so `$v byte = 8;` is legal.
 This is a declaration-bound conversion, not a synthetic cast node. Global inference
 preserves the literal's source type. Local [inference](inference.md) preserves the
-initializer's type except null; it does not authorize explicit conversion. No explicit source cast grammar is implemented.
+initializer's type except null; it does not authorize explicit conversion. Written casts use the same conversion path.
 
 ## AST-owned facts
 
@@ -132,3 +132,6 @@ breakdown of wall time. Raw JSON retains optimizer/codegen detail. PHP fixture g
 and its semantic/incremental assertions took 61.36 ms in that run.
 
 Explicit source casts use these same handlers without new generated definitions or conversion tables. See [cast ownership and proofs](casts.md).
+
+[Conversion contexts and operator promotion](conversion_contexts.md) separate boundary
+permission from operator-specific execution rules; generated conversion lowering is shared.

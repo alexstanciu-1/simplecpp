@@ -23,7 +23,7 @@ unary operators remain outside this slice. No speculative declaration collection
 or parser rollback is needed.
 
 Preparation visits the operand once, resolves the destination through the generated
-registry, and calls `prepare_conversion(operand, true)`. It then attaches the approved
+registry, and calls `prepare_conversion(operand, conversion_context::explicit_cast)`. It then attaches the approved
 decision and converted constant facts. No extra traversal, conversion matrix,
 watcher category, interpreter or work queue is introduced. Existing collection and
 reset traversals follow the operand; inspection reports syntax and conversion facts.

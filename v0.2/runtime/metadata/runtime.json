@@ -796,49 +796,49 @@
       {
         "from": "bool_t",
         "to": "int64",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "boolean_integer"
       },
       {
         "from": "int64",
         "to": "bool_t",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "integer_boolean"
       },
       {
         "from": "int64",
         "to": "byte",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "checked_integer"
       },
       {
         "from": "byte",
         "to": "int64",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "integer_widen"
       },
       {
         "from": "int64",
         "to": "float64",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "numeric_floating"
       },
       {
         "from": "bool_t",
         "to": "float64",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "numeric_floating"
       },
       {
         "from": "float64",
         "to": "int64",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "floating_integer"
       },
       {
         "from": "float64",
         "to": "bool_t",
-        "explicit": true,
+        "contexts": ["explicit_cast", "typed_destination"],
         "operation": "floating_boolean"
       }
     ],
@@ -907,6 +907,32 @@
         "compound": true
       }
     },
+    "promotions": [
+      {
+        "left": "int64",
+        "right": "float64",
+        "operators": [
+          "less",
+          "less_equal",
+          "greater",
+          "greater_equal"
+        ],
+        "execution_type": "float64",
+        "result": "bool_t"
+      },
+      {
+        "left": "float64",
+        "right": "int64",
+        "operators": [
+          "less",
+          "less_equal",
+          "greater",
+          "greater_equal"
+        ],
+        "execution_type": "float64",
+        "result": "bool_t"
+      }
+    ],
     "comparisons": {
       "int64": {
         "operand": "same_type",

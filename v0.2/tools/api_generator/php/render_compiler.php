@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -134,7 +134,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity);
+        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity) . compilerPromotions($compiler, $definitions, $identity);
         if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 15,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 16,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -223,10 +223,11 @@ function compilerConversions(mixed $compiler, array $definitions, string $target
     $constants = [];
     $seen = [];
     foreach (listValue(at($compiler, 'conversions')) as $row) {
-        fields($row, ['from', 'to', 'explicit', 'operation']);
+        fields($row, ['from', 'to', 'contexts', 'operation']);
         $from = textValue(at($row, 'from'));
         $to = textValue(at($row, 'to'));
-        $explicit = boolean(at($row, 'explicit'));
+        $contexts = names(at($row, 'contexts'), 'Duplicate conversion context');
+        foreach ($contexts as $context) requireThat(in_array($context, ['explicit_cast', 'typed_destination', 'assignment', 'inference'], true), 'Unsupported conversion context');
         $operation = textValue(at($row, 'operation'));
         requireThat(isset($definitions[$from], $definitions[$to]), 'Conversion references inactive type');
         $key = $from . ':' . $to;
@@ -238,10 +239,11 @@ function compilerConversions(mixed $compiler, array $definitions, string $target
             'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer'];
         requireThat(($allowed[$key] ?? null) === $operation, 'Unsupported compiler conversion operation');
         // Byte's distinct contract must not be weakened by a publication descriptor.
-        requireThat(($from !== 'byte' && $to !== 'byte') || $explicit, 'Byte conversions must be explicit');
+        requireThat(($from !== 'byte' && $to !== 'byte') || array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Byte conversions must be explicit');
         if ($to !== $target) continue;
         $condition = '$value->type_def() === type_' . $definitions[$from]['class'] . '::instance()';
-        if ($explicit) $condition = '($explicit) && (' . $condition . ')';
+        $permission = array_map(static fn(string $context): string => '$context === conversion_context::' . $context, $contexts);
+        $condition = '(' . ($permission === [] ? 'false' : implode(' || ', $permission)) . ') && (' . $condition . ')';
         $prepare[] = "\t\tif ($condition) {";
         $constantOperation = match ($operation) {
             'boolean_integer' => '$value === null ? null : (int) $value', 'integer_boolean' => '$value === null ? null : $value !== 0',
@@ -311,10 +313,10 @@ CODE : ($target === 'int64' ? <<<'CODE'
 CODE : '');
     return <<<PHP_CODE
 	/** Select the conversion once; the caller marks written destinations or explicit cast boundaries. */
-	public function prepare_conversion(ast_expression \$value, bool \$explicit): value_conversion
+	public function prepare_conversion(ast_expression \$value, conversion_context \$context): value_conversion
 	{
 $prepare
-		return parent::prepare_conversion(\$value, \$explicit);
+		return parent::prepare_conversion(\$value, \$context);
 	}
 
 	/** Render an approved boundary without repeating source-type resolution or changing facts. */
@@ -570,4 +572,42 @@ $lowering\t\t\tdefault => throw new \\LogicException('Unary operation was not ap
 \t\t};
 \t}
 ";
+}
+
+/** Generate bounded mixed ordering from explicit promotion rows; reuse conversion lowering, never compound admission. */
+function compilerPromotions(mixed $compiler, array $definitions, string $identity): string {
+    $cases = '';
+    $seen = [];
+    foreach (listValue(at($compiler, 'promotions')) as $row) {
+        fields($row, ['left', 'right', 'operators', 'execution_type', 'result']);
+        $left = textValue(at($row, 'left'));
+        $right = textValue(at($row, 'right'));
+        requireThat(in_array($left . ':' . $right, ['int64:float64', 'float64:int64'], true), 'Unsupported promotion pair');
+        literals($row, ['execution_type' => 'float64', 'result' => 'bool_t']);
+        foreach ([$left, $right, 'bool_t'] as $name) requireThat(isset($definitions[$name]), 'Promotion references inactive type');
+        $conversion = null;
+        foreach (listValue(at($compiler, 'conversions')) as $candidate) {
+            if (at($candidate, 'from') === 'int64' && at($candidate, 'to') === 'float64') $conversion = textValue(at($candidate, 'operation'));
+        }
+        requireThat($conversion === 'numeric_floating', 'Promotion requires the defined rounding conversion');
+        $operators = names(at($row, 'operators'), 'Duplicate promotion operator');
+        foreach ($operators as $operator) {
+            requireThat(in_array($operator, ['less', 'less_equal', 'greater', 'greater_equal'], true), 'Unsupported promotion operator');
+            requireThat(in_array($operator, names(at(at(at($compiler, 'comparisons'), 'float64'), 'operators')), true), 'Promotion execution operation unavailable');
+            $key = $left . ':' . $right . ':' . $operator;
+            requireThat(!isset($seen[$key]), 'Duplicate promotion');
+            $seen[$key] = true;
+        }
+        if ($left !== $identity || $operators === []) continue;
+        $rightClass = 'type_' . $definitions[$right]['class'];
+        $operatorCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $operators));
+        $lc = $left === 'int64' ? $conversion : 'identity';
+        $rc = $right === 'int64' ? $conversion : 'identity';
+        $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
+            . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
+            . "\t\t\t\$value->settle_binary(type_bool::instance(), type_float64::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
+    }
+    if ($cases === '') return '';
+    return "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
+        . "\tpublic function prepare_binary(ast_binary_expression \$value): void\n\t{\n$cases\t\tparent::prepare_binary(\$value);\n\t}\n";
 }

@@ -55,11 +55,22 @@ enum binary_operator: int
 /** Owns operands of e.g. value < limit or ready && valid; inherited type readiness records successful admission. */
 final class ast_binary_expression extends ast_expression
 {
+	/** PROPERTIES */
 	/** Native owning left operand; lazy operators test its truthiness before deciding whether to evaluate the RHS. */
 	public readonly ast_expression $left;
 	/** Native owning right operand. */
 	public readonly ast_expression $right;
 	public readonly binary_operator $operator;
+
+	/** PREP FACTS */
+	/** Prepared fact: native non-owning execution type; null before settlement or after reset. */
+	protected ?type_definition $execution_type = null;
+	/** Prepared fact: approved left conversion; identity before settlement or after reset. */
+	public value_conversion $left_conversion = value_conversion::identity;
+	/** Prepared fact: approved right conversion; identity before settlement or after reset. */
+	public value_conversion $right_conversion = value_conversion::identity;
+
+	/** CONSTRUCTOR */
 
 	/** Attach both source operands once; semantic links remain on their original occurrences. */
 	public function __construct(ast_expression $left, binary_operator $operator, ast_expression $right)
@@ -72,10 +83,27 @@ final class ast_binary_expression extends ast_expression
 		$right->attach($this);
 	}
 
+	/** METHODS */
 	/** Settles the approved result identity; no constant folding or duplicate prepared tree. */
-	public function settle_binary(type_definition $result): void
+	public function settle_binary(type_definition $result, ?type_definition $execution = null,
+		value_conversion $left = value_conversion::identity, value_conversion $right = value_conversion::identity): void
 	{
 		$this->settle_value($result, null);
+		$this->execution_type = $execution ?? $this->left->type_def();
+		$this->left_conversion = $left;
+		$this->right_conversion = $right;
+	}
+	public function execution_type(): type_definition
+	{
+		return $this->execution_type ?? throw new \LogicException('Binary operation is not prepared');
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->execution_type = null;
+		$this->left_conversion = value_conversion::identity;
+		$this->right_conversion = value_conversion::identity;
 	}
 }
 

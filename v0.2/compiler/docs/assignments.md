@@ -5,7 +5,7 @@ Doc Status: supporting
 The [source contract](../../../specs/compiler_scalars_v0_2.md#local-assignment-extension)
 defines plain `=` for existing locals in all flavors. No new grammar or type matrix
 was needed. Preparation uses each destination's generated
-`prepare_conversion(value, false)`; lowering consumes that decision through the
+`prepare_conversion(value, conversion_context::assignment)`; lowering consumes that decision through the
 existing generated conversion methods. Current metadata admits identity only for
 implicit conversions. Typed declaration initialization still requests explicit intent.
 

@@ -399,11 +399,23 @@ final class Cpp_Emitter
 				return '((' . $left . ') ' . ($value->operator === binary_operator::logical_and ? '&&' : '||')
 					. ' (' . $right . '))';
 			}
-			$type = $value->left->type_def();
+			$type = $value->execution_type();
 			$left_safe = false;
 			$right_safe = false;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
+			if ($value->left_conversion !== value_conversion::identity) {
+				$left = $type->lower_cpp_conversion($value->left_conversion, $left);
+				foreach ($type->conversion_headers($value->left_conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+			}
+			if ($value->right_conversion !== value_conversion::identity) {
+				$right = $type->lower_cpp_conversion($value->right_conversion, $right);
+				foreach ($type->conversion_headers($value->right_conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+			}
 			foreach ($type->binary_headers($value->operator) as $header) {
 				$required_headers[$header] = true;
 			}

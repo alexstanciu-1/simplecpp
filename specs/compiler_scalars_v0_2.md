@@ -332,3 +332,26 @@ Infinities remain infinite and NaNs remain NaN; no checked-overflow, saturation,
 NaN payload guarantee or floating-environment controls are introduced. Updates
 invalidate prior constant knowledge even where native rounding leaves a value
 unchanged. Preparation does not fold updates or synthesize a literal/RHS expression.
+
+## Conversion contexts and mixed ordering — 2026-11-05
+
+Conversion permission is described by a metadata context list, independently of
+conversion behavior. `explicit_cast` authorizes written casts; `typed_destination`
+authorizes typed initialization, value arguments, parameter defaults and returns.
+`assignment` describes ordinary reassignment; `inference` preserves initializer
+identity. Current cross-type conversion rows allow only the first two contexts.
+Identity remains allowed in every context. Reference binding requires its existing
+exact storage identity; truthiness remains a separate generated condition policy.
+
+Explicit directional promotion rows now admit int64/float64 `< <= > >=` in both
+orders, with float64 execution and bool result. These rows authorize operand
+conversion only for their listed operations, reusing the defined int64-to-float64
+rounding conversion. They do not grant assignment or compound conversion rights.
+Missing conversion definitions or execution operations are generator errors.
+
+The mixed-ordering contract in `expression_evaluation.md` applies: integer rounding
+is observable, NaN makes all four comparisons false, and signed-zero/infinity
+ordering follows binary64. The bounded compiler slice supports plain scalar values;
+carriers, mixed equality/arithmetic and mixed compound writes remain deferred.
+Each operand is prepared once. Promotion settles conversion/execution facts on the
+existing binary node, without synthetic cast nodes or arithmetic constant folding.

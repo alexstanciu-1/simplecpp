@@ -93,7 +93,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['1 == 1.0', '1 < 1.0', 'true == 1', 'true < false', 'null == null', '"a" == "a"', '1 < 2 < 3'] as $invalid) {
+	foreach (['1 == 1.0', 'true == 1', 'true < false', 'null == null', '"a" == "a"', '1 < 2 < 3'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'if (' . $var('b') . ' < ' . $var('b') . ') {} return 8;'), 'Unsupported binary');
@@ -114,7 +114,7 @@ foreach (flavor::cases() as $flavor)
 		$target = new entry_target(31);
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
-		$write('float', '8.0');
+		$write('bool', 'true');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported binary');
 		verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature change');

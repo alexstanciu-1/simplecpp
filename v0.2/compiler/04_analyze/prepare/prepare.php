@@ -179,7 +179,7 @@ final class Preparation
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
 						$this->value($statement->value);
-						$statement->settle_conversion($return_type->prepare_conversion($statement->value, true));
+						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
 					}
 				}
 				else
@@ -331,7 +331,7 @@ final class Preparation
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);
+		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
 			$declaration->initializer->constant_known(), $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
@@ -364,7 +364,7 @@ final class Preparation
 		}
 		$this->value($statement->value);
 		if ($statement->operator === null) {
-			$conversion = $type->prepare_conversion($statement->value, false);
+			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 		}
 		else {
 			$result = $type->binary_result($statement->operator, $statement->value->type_def());
@@ -387,7 +387,7 @@ final class Preparation
 			if ($type === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_name);
 			}
-			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, true));
+			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;
 		}
 		if ($syntax instanceof ast_unary_expression) {
@@ -511,7 +511,7 @@ final class Preparation
 				$references = true;
 			}
 			else {
-				$conversions[] = $parameter->type_def()->prepare_conversion($argument, true);
+				$conversions[] = $parameter->type_def()->prepare_conversion($argument, conversion_context::typed_destination);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.

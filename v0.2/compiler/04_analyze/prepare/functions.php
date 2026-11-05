@@ -125,7 +125,7 @@ final class Function_Preparation
 						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
 					}
 					type_registry::prepare_literal($default);
-					$parameter->settle_default($parameter_type->prepare_conversion($default, true));
+					$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
 					$optional = true;
 				}
 				elseif ($optional) {

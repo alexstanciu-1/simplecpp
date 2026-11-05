@@ -3,6 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Source boundary authorizing a conversion; operator promotion is authorized separately by its metadata row. Native uint8. */
+enum conversion_context: int
+{
+	case explicit_cast = 1;
+	case typed_destination = 2;
+	case assignment = 3;
+	case inference = 4;
+}
+
 /** Prepared boundary operation, not a value/type copy; generated destination handlers select and lower it. */
 enum value_conversion: int /** uint8 */
 {

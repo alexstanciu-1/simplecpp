@@ -26,7 +26,7 @@ final class Literal_Declaration_Preparation
 			if (($declaration instanceof ast_global_declaration) && ($type === type_string::instance())) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 			}
-			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null);
+			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null ? conversion_context::typed_destination : conversion_context::inference);
 			$declaration->settle_type($type, $conversion);
 		}
 	}

@@ -165,6 +165,11 @@ final class Compilation_Inspection
 			$row['operand'] = self::value($value->operand);
 		}
 		if ($value instanceof ast_binary_expression) {
+			if (!$value->operator->lazy()) {
+				$row['execution_type'] = $value->execution_type()->name;
+				$row['left_conversion'] = $value->left_conversion->name;
+				$row['right_conversion'] = $value->right_conversion->name;
+			}
 			$row['operator'] = $value->operator->name;
 			$row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
