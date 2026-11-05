@@ -34,7 +34,7 @@ final class Preparation
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
 	/**
-	 * Latest completed writes; null means unknown after a mutable borrow, absent means original initializer.
+	 * Latest completed writes; null means unknown after a mutable borrow or update, absent means original initializer.
 	 * Transient non-owning body-local index; no alias graph or callee effects are retained.
 	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
@@ -151,8 +151,8 @@ final class Preparation
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 			}
-			elseif ($statement instanceof ast_assignment_statement) {
-				$this->assignment($statement);
+			elseif ($statement instanceof ast_storage_write) {
+				$this->write($statement);
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -262,7 +262,7 @@ final class Preparation
 				$this->declaration($statement->initializer);
 			}
 			else {
-				$this->assignment($statement->initializer);
+				$this->write($statement->initializer);
 			}
 			return $this->loop($statement, $source, $target, $function);
 		}
@@ -297,7 +297,7 @@ final class Preparation
 		}
 		if ($statement instanceof ast_for_statement) {
 			$this->statement_visits++;
-			$this->assignment($statement->update);
+			$this->write($statement->update);
 			$this->forget_values();
 		}
 		// Only a post-test body with exclusively return exits guarantees return; transfers end at this loop.
@@ -340,8 +340,8 @@ final class Preparation
 		}
 	}
 
-	/** Prepare the RHS before publishing the write, preserving old-value reads such as x = x. */
-	private function assignment(ast_assignment_statement $statement): void
+	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
+	private function write(ast_storage_write $statement): void
 	{
 		$this->name_lookups++;
 		$local = $this->find_local($statement->name);
@@ -353,8 +353,16 @@ final class Preparation
 			throw new diagnostic($statement->source(), $statement->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
 		}
-		$this->value($statement->value);
 		$type = $local->type_def();
+		if ($statement instanceof ast_update_statement) {
+			if (!$type->supports_update($statement->operator)) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Unsupported update type: ' . $type->name);
+			}
+			$statement->settle_update($local);
+			$this->latest_writes[$local->storage_id()] = null;
+			return;
+		}
+		$this->value($statement->value);
 		if ($statement->operator === null) {
 			$conversion = $type->prepare_conversion($statement->value, false);
 		}

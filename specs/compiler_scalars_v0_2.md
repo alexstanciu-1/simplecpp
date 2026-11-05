@@ -219,6 +219,40 @@ limitations, truncation toward zero for division, and checked zero divisors for
 division/remainder. No wrapping, saturation or checked-overflow policy is added.
 
 This slice admits statements only, not compound expressions yielding a value.
-Increments, other operators/types, fields/indexes and
+Other compound operators/types, fields/indexes and
 implicit result-to-destination conversions remain deferred. Body statements and [for header clauses](loop_statements_v0_2.md#compound-for-headers--2026-11-05)
 use the ordinary shared assignment path.
+
+
+## Discarded-value int64 updates — 2026-11-05
+
+All flavors admit prefix/postfix `++` and `--` on existing initialized int/int64
+locals and parameters, including mutable reference parameters. Supported positions
+are standalone statements and both initializer/update clauses of bounded for loops:
+
+```text
+cpp: ++value; value--; for (int i = 0; i < 10; i++) {}
+php: ++$value; $value--; for ($i int = 0; $i < 10; $i++) {}
+js:  ++value; value--; for (let i: int = 0; i < 10; i++) {}
+```
+
+The destination is resolved once and updated once. No implicit local declaration
+is allowed, including in PHP. Value parameters change only their local storage;
+reference parameters change the caller's storage. Supported type/operator pairs
+are explicit runtime metadata capabilities, independent of arithmetic admission.
+Native signed-overflow behavior is unchanged; no checked, wrapping or saturating
+policy is added. Runtime execution tests stay within representable int64 bounds.
+
+This slice discards results. Consuming prefix/postfix values in initialization,
+assignment, calls, returns, conditions or larger expressions remains deferred.
+It does not change the eventual value-snapshot contract: prefix yields the new
+value, postfix the old value, neither addressable. Repeated updates such as `++x++`
+and non-simple targets (calls, casts, literals, fields, indexes) are rejected.
+Constants, direct global writes, other types and parenthesized-target spelling
+remain outside this slice.
+
+For header initialization runs once; updates run after normal body completion or
+continue. Break, return and false initial conditions suppress the update. Existing
+scope, shadowing and loop preparation rules apply. Updating storage invalidates its
+cached scalar payload; the compiler does not retain the initializer value as if
+no mutation occurred or introduce arithmetic folding in this slice.

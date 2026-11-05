@@ -106,7 +106,7 @@ final class Compilation_Inspection
 					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes())]
 					: self::value($statement->value)];
 			}
-			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_assignment_statement)) {
+			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$statements[] = self::binding($statement);
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
@@ -128,11 +128,15 @@ final class Compilation_Inspection
 	}
 
 	/** @return mixed[] Declaration/write facts shared by body inspection and for headers. */
-	private static function binding(ast_local_declaration|ast_assignment_statement $statement): array /** array<string,mixed> */
+	private static function binding(ast_local_declaration|ast_storage_write $statement): array /** array<string,mixed> */
 	{
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'id' => $statement->id,
 				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
+		}
+		if ($statement instanceof ast_update_statement) {
+			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
+				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
 		return ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
 			'conversion' => $statement->conversion()->name, 'operator' => $statement->operator?->name,

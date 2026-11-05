@@ -238,3 +238,30 @@ requireThat($type->binary_result(\scpp\compiler\binary_operator::equal, $type)
     === \scpp\compiler\type_bool::instance(), 'Comparison result changed');
 requireThat(\scpp\compiler\type_null::instance()->binary_result(\scpp\compiler\binary_operator::add,
     \scpp\compiler\type_null::instance()) === null, 'Default operation admission changed');
+
+// Discarded-value updates are explicit metadata capabilities, not inferred from arithmetic availability.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->updates->int64);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'public function supports_update'), 'Removed updates still generated');
+$limited = unserialize(serialize($metadata));
+$limited->compiler->updates->int64->operators = ['decrement'];
+$code = renderCompiler($limited, $facts)['types/int64.php'];
+requireThat(!str_contains($code, 'update_operator::increment') && str_contains($code, 'update_operator::decrement'), 'Update operator removal ignored');
+foreach (['type', 'operator', 'overflow', 'lowering'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'type' => $bad->compiler->updates->byte = clone $bad->compiler->updates->int64,
+        'operator' => $bad->compiler->updates->int64->operators[] = 'double',
+        'overflow' => $bad->compiler->updates->int64->overflow = 'wrap',
+        'lowering' => $bad->compiler->updates->int64->lowering = 'helper',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid update policy accepted');
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains($error->getMessage(), 'update'), 'Wrong update validation failure');
+    }
+}
+requireThat($type->supports_update(\scpp\compiler\update_operator::increment)
+    && $type->supports_update(\scpp\compiler\update_operator::decrement), 'Missing generated update admission');
+requireThat(!\scpp\compiler\type_float64::instance()->supports_update(\scpp\compiler\update_operator::increment), 'Deferred float update admitted');

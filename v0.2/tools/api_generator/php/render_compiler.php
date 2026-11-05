@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -134,7 +134,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity);
+        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity);
         if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 11,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 12,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -466,4 +466,46 @@ $safeCases\t\t\tdefault => false,
 \t\t};
 \t}
 $headerMethods";
+}
+
+/** Generate only explicitly admitted scalar updates; no expression result or implicit arithmetic-based admission. */
+function compilerUpdates(mixed $compiler, string $identity): string {
+    $selected = [];
+    foreach (object(at($compiler, 'updates')) as $name => $row) {
+        requireThat($name === 'int64', 'Unsupported compiler update type');
+        fields($row, ['operators', 'overflow', 'lowering']);
+        requireThat(at($row, 'overflow') === 'native' && at($row, 'lowering') === 'native', 'Unsupported compiler update policy');
+        $operators = names(at($row, 'operators'), 'Duplicate compiler update operator');
+        foreach ($operators as $operator) {
+            requireThat(in_array($operator, ['increment', 'decrement'], true), 'Unsupported compiler update operator');
+        }
+        if ($name === $identity) $selected = $operators;
+    }
+    if ($selected === []) return '';
+    $admission = [];
+    $lowering = '';
+    foreach ($selected as $operator) {
+        $admission[] = 'update_operator::' . $operator;
+        $spelling = $operator === 'increment' ? '++' : '--';
+        $lowering .= "\t\t\tupdate_operator::$operator => '$spelling',\n";
+    }
+    $cases = implode(', ', $admission);
+    return "
+\t/** Metadata-admitted discarded-value updates; no source result is exposed by this slice. */
+\tpublic function supports_update(update_operator \$operator): bool
+\t{
+\t\treturn match (\$operator) {
+\t\t\t$cases => true,
+\t\t\tdefault => false,
+\t\t};
+\t}
+
+\tpublic function lower_cpp_update(update_operator \$operator, string \$target, bool \$postfix): string
+\t{
+\t\t\$spelling = match (\$operator) {
+$lowering\t\t\tdefault => throw new \\LogicException('Update operation was not approved'),
+\t\t};
+\t\treturn \$postfix ? \$target . \$spelling : \$spelling . \$target;
+\t}
+";
 }

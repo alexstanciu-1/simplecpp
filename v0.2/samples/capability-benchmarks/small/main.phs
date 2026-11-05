@@ -1,9 +1,12 @@
 namespace App;
 use function Bench\{adjust, announce, feature_score};
 use function Bench\label as heading;
+use const Bench\{BONUS as extra, EMPTY};
 $price int = \Bench\$seed;
 adjust($price);
 $total = feature_score();
+$total += extra;
+echo EMPTY;
 announce(heading());
 echo ": ";
 $total = $total + \Bench\Batch0\line_0($price);

@@ -20,6 +20,7 @@ small handwritten non-value definition.
 - `source_types` and `compiler.value_types`: source names, generated type classes,
   compiler representations and boolean/null literal spellings and values.
 - `compiler.arithmetic`: same-type int64 operators, result, native overflow and lowering policies; see [arithmetic](arithmetic.md).
+- `compiler.updates`: explicit int64 increment/decrement capability and native lowering/overflow policy.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
@@ -34,7 +35,7 @@ Generated methods contain direct branches; compilation does not interpret metada
 or build a conversion matrix. Unsupported policies fail before publication.
 
 The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` and
-inventory version 11. Generated PHP is not tracked. CMake lists the byproducts and
+inventory version 12. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
 ## Shared type contract
@@ -47,6 +48,7 @@ checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
 - `prepare_conversion(value, explicit)` selects a `value_conversion` enum at a destination boundary.
 - `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
+- `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
 - `cpp_type()` and `lower_cpp_literal()` consume settled source facts.
 - `lower_cpp_conversion(conversion, expression)` emits the approved operation, without resolving types again.
 - `cpp_trivial_value()` and `cpp_binary_reorderable()` are generated backend-only safety queries; see [direct lowering](direct_lowering.md).

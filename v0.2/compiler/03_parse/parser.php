@@ -161,7 +161,7 @@ final class Parser
 			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
 			return new ast_call_statement($value->start, $end, $value);
 		}
-		return $grammar->statement($this, $collector);
+		return $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $collector);
 	}
 
 	/** Parse only braced alternatives; each body gets its own lexical collector and shared storage IDs. */
@@ -226,17 +226,22 @@ final class Parser
 		$this->cursor->take_keyword('for');
 		$this->cursor->take(token_kind::lparen, '(');
 		$header = $collector->child();
-		$initializer = $grammar->statement($this, $header);
-		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_assignment_statement)) {
+		$initializer = $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $header);
+		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_storage_write)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
 		}
 		$header->statement($initializer, 0);
 		$condition = $this->value();
 		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
-		$update_start = $this->cursor->position();
-		$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
-			? token_kind::variable : token_kind::identifier);
-		$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
+		if ($this->update_start()) {
+			$update = $this->update_statement(token_kind::rparen);
+		}
+		else {
+			$update_start = $this->cursor->position();
+			$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
+				? token_kind::variable : token_kind::identifier);
+			$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
+		}
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
 		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
 	}
@@ -539,6 +544,32 @@ final class Parser
 		$value = $this->value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
 		return new ast_local_declaration($start, $end, $name, $type_name, $value);
+	}
+
+	/** Recognize discarded-value update syntax only at statement and header boundaries. */
+	private function update_start(): bool
+	{
+		return $this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)
+			|| $this->cursor->next_is(token_kind::increment) || $this->cursor->next_is(token_kind::decrement);
+	}
+
+	/** Parse one established simple-name update; expression-result use is deliberately not part of primary(). */
+	private function update_statement(token_kind $terminator): ast_update_statement
+	{
+		$cursor = $this->cursor;
+		$start = $cursor->position();
+		$postfix = !$cursor->is(token_kind::increment) && !$cursor->is(token_kind::decrement);
+		$kind = $cursor->tokens->tokens[$start + ($postfix ? 1 : 0)]->kind;
+		if (!$postfix) {
+			$cursor->take($kind, 'update operator');
+		}
+		$name = $cursor->name($cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+		if ($postfix) {
+			$cursor->take($kind, 'update operator');
+		}
+		$end = $cursor->take($terminator, $terminator->label()) + 1;
+		return new ast_update_statement($start, $end, $name,
+			$kind === token_kind::increment ? update_operator::increment : update_operator::decrement, $postfix);
 	}
 
 	/** Inspect only assignment spelling; the shared map does not authorize operand types. */

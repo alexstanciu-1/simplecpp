@@ -25,7 +25,7 @@ The base `prepare_binary()` attaches ordinary binary-expression facts through th
 query. Compound preparation uses the same query after resolving its destination
 once and preparing its RHS once. It requires result identity to match destination
 identity, then retains identity write-back. General result conversion remains deferred.
-Compiler generated inventory version is 11; runtime output and metadata rules do
+Compiler generated inventory version is 12; runtime output and metadata rules do
 not change.
 
 A compound result remains unknown: arithmetic constant folding is not introduced.
@@ -100,3 +100,5 @@ these samples do not establish its cause or a flavor-specific regression.
 
 PHP fixture generation and all associated assertions took 98.83 ms. This includes
 multiple compilations and incremental scenarios, not just one preparation pass.
+
+Assignments now inherit their name and prepared storage binding from `ast_storage_write`, shared with [discarded-value updates](updates.md). Compound RHS/conversion ownership is unchanged.

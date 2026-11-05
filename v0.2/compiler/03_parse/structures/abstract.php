@@ -280,3 +280,49 @@ enum import_kind: int /** uint8 */ {
  */
 abstract class ast_statement extends ast_node {
 }
+
+/** Shared established-storage write owner; e.g. x = 1, x += 2 or x++; syntax children remain on concrete nodes. */
+abstract class ast_storage_write extends ast_statement
+{
+	/** PROPERTIES */
+	public readonly string $name;
+
+	/** PREP FACTS */
+	/** Prepared fact: native non-owning local/parameter binding; null before settlement or after reset. */
+	protected ?ast_local_binding $binding = null;
+
+	/** CONSTRUCTOR */
+	/** $start/$end: token positions for the complete write statement or header clause. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name)
+	{
+		parent::__construct($start, $end);
+		$this->name = $name;
+	}
+
+	/** METHODS */
+	public function local_def(): ast_local_binding
+	{
+		return $this->binding ?? throw new \LogicException('Write binding is not settled');
+	}
+
+	/** Publish the resolved storage only after semantic admission succeeds. */
+	protected function settle_binding(ast_local_binding $local): void
+	{
+		if ($this->binding !== null) {
+			throw new \LogicException('Write is already prepared');
+		}
+		$this->binding = $local;
+	}
+
+	public function reset_preparation(): void
+	{
+		$this->binding = null;
+	}
+}
+
+/** Update direction is independent of prefix/postfix spelling; native uint8. */
+enum update_operator: int
+{
+	case increment = 1;
+	case decrement = 2;
+}

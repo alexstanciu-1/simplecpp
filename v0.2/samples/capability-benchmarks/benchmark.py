@@ -30,7 +30,7 @@ def run(command, cwd=None, expected=0):
 
 
 def summary(values):
-    return {'median': statistics.median(values), 'min': min(values), 'max': max(values)}
+    return {'average': statistics.mean(values), 'median': statistics.median(values), 'min': min(values), 'max': max(values)}
 
 
 def summarize_rows(rows, fields):
@@ -94,24 +94,33 @@ def benchmark(name, work, php_samples, native_samples):
                              'executable_bytes': (native / 'program').stat().st_size})
     _, sections, _ = run(['readelf', '-S', native / 'program'])
     assert b'.debug_' not in sections
-    print(f'{name}: separate instrumented build', flush=True)
-    clean(native)
     graph = native / 'build.ninja'
     original = graph.read_text()
     graph.write_text(original.replace(' -MD ', ' -ftime-trace -MD '))
-    trace_wall, stdout, stderr = run(command, native)
-    (native / 'trace-build.log').write_bytes(stdout + stderr)
-    _, stdout, _ = run([native / 'program'], expected=expected['exit'])
-    assert stdout == expected['stdout'].encode()
-    totals = {}
-    traces = list(native.glob('unit-*.json'))
-    assert len(traces) == len(units)
-    for path in traces:
-        for event in json.loads(path.read_text())['traceEvents']:
-            if event['name'].startswith('Total '):
-                key = event['name'][6:]
-                totals[key] = totals.get(key, 0) + event['dur'] / 1000
+    trace_measurements = []
+    for index in range(native_samples):
+        print(f'{name}: instrumented build {index + 1}/{native_samples}', flush=True)
+        clean(native)
+        trace_wall, stdout, stderr = run(command, native)
+        trace_dir = native / f'trace-{index}'
+        trace_dir.mkdir()
+        (trace_dir / 'build.log').write_bytes(stdout + stderr)
+        _, stdout, _ = run([native / 'program'], expected=expected['exit'])
+        assert stdout == expected['stdout'].encode()
+        totals = {}
+        traces = list(native.glob('unit-*.json'))
+        assert len(traces) == len(units)
+        for path in traces:
+            for event in json.loads(path.read_text())['traceEvents']:
+                if event['name'].startswith('Total '):
+                    key = event['name'][6:]
+                    totals[key] = totals.get(key, 0) + event['dur'] / 1000
+            shutil.move(path, trace_dir / path.name)
+        trace_measurements.append({'wall_ms': trace_wall, 'frontend_ms': totals['Frontend'],
+            'llvm_backend_ms': totals['Backend'], 'optimizer_ms': totals.get('Optimizer', 0),
+            'codegen_ms': totals.get('CodeGenPasses', 0), 'link_ms': link_ms(native)})
     graph.write_text(original)
+    trace_summary = summarize_rows(trace_measurements, trace_measurements[0].keys())
     native_summary = summarize_rows(measurements, ['native_ms', 'link_ms', 'execution_ms', 'executable_bytes'])
     stages = summarize_rows(php['stages'], php['stages'][0].keys())
     incremental = {key: {'times': summarize_rows(rows, ['frontend_ms', 'prepare_ms', 'total_ms']),
@@ -121,42 +130,46 @@ def benchmark(name, work, php_samples, native_samples):
     report = {'source_units': php['source_units'], 'source_bytes': php['source_bytes'], 'tokens': php['tokens'],
               'cpp_units': php['cpp_units'], 'generated': generated, 'peak_php_bytes': php['peak_php_bytes'], 'php_process_ms': php_ms,
               'stages': stages, 'incremental': incremental, 'native_samples': measurements, 'native': native_summary,
-              'trace': {'wall_ms': trace_wall, 'frontend_ms': totals['Frontend'], 'llvm_backend_ms': totals['Backend'],
-                        'optimizer_ms': totals.get('Optimizer', 0), 'codegen_ms': totals.get('CodeGenPasses', 0),
-                        'link_ms': link_ms(native)}, 'expected': expected,
+              'trace_samples': trace_measurements, 'trace_summary': trace_summary,
+              'trace': {k: v['average'] for k, v in trace_summary.items()}, 'expected': expected,
               'compile_plus_native_medians_ms': stages['total_ms']['median'] + native_summary['native_ms']['median']}
     (work / 'results.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 
 
 def markdown(report):
-    lines = ['# Capability benchmark results', '', 'Doc Status: supporting', '',
-             'All times are milliseconds. PHP: five warmed in-process samples; native: three fresh application builds after a warm-up.',
-             'O2/g0, libc++, mold, Ninja -j8, no PCH/LTO/ccache; prebuilt runtime. Each emitted source stays a separate translation unit.', '',
-             '| Sample | Sources / C++ TUs | Source KiB | Read | Tokenize | Parse/collect | Symbols | Prepare | Lower/emit | PHP total | Native median [min–max] | Link median |',
-             '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |']
-    for name, row in report['samples'].items():
-        stages = row['stages']; native = row['native']['native_ms']
-        values = [stages[k]['median'] for k in ['read_ms', 'tokenize_ms', 'parse_collect_ms', 'symbol_index_ms', 'prepare_ms', 'lower_emit_ms', 'total_ms']]
-        lines.append(f'| {name} | {row["source_units"]} / {row["cpp_units"]} | {row["source_bytes"]/1024:.1f} | ' + ' | '.join(f'{v:.3f}' for v in values)
-                     + f' | {native["median"]:.3f} [{native["min"]:.3f}–{native["max"]:.3f}] | {row["native"]["link_ms"]["median"]:.3f} |')
-    lines += ['', 'PHP total includes module loading and measured orchestration, excludes writing C++ files and process startup. Raw stage ranges are in results.json.', '',
-              '| Sample | Clang frontend | LLVM backend | Optimizer | Code generation | Trace build wall |',
-              '| --- | ---: | ---: | ---: | ---: | ---: |']
-    for name, row in report['samples'].items():
-        lines.append('| ' + name + ' | ' + ' | '.join(f'{row["trace"][k]:.3f}' for k in ['frontend_ms','llvm_backend_ms','optimizer_ms','codegen_ms','wall_ms']) + ' |')
-    lines += ['', 'Clang traces are a separate instrumented build. Categories overlap and accumulate across parallel translation units; they cannot be added to obtain wall time.', '',
-              '| Sample / edit | Frontend median | Preparation median | Total median | Source reads | Reused ASTs | Bodies prepared / reused |',
-              '| --- | ---: | ---: | ---: | ---: | ---: | --- |']
-    for name, row in report['samples'].items():
-        for scenario, case in row['incremental'].items():
-            bodies = case['bodies']; label = f'{bodies["prepared"]} / {bodies["reused"]}' if bodies else 'expected diagnostic'
-            lines.append(f'| {name} / {scenario} | '+ ' | '.join(f'{case["times"][k]["median"]:.3f}' for k in ['frontend_ms','prepare_ms','total_ms'])
-                         +f' | {case["source_reads"]} | {case["reused_asts"]} | {label} |')
-    lines += ['', 'Edits occur only in disposable copies. Body edits preserve signatures; signature edits change an imported string-returning function to int and must reject its string consumer. Recovery restores the function. No-op passes read zero sources; unchanged AST/token objects retain identity.', '',
-              'Incremental timings cover loading/tokenize/parse/index and preparation only. Native emission/build remains full-build; no incremental native-build speedup is claimed.', '',
-              'All measured and traced executables matched expected stdout and exit code 8. Overflow/zero-error cases remain in focused tests; these samples stay in the defined arithmetic domain.', '',
-              'These are supported-subset synthetic workloads, not full production applications. The large workload repeats generated invoice functions. No LTO is used; cross-TU calls prevent whole-program constant folding, but ordinary local optimization still applies.', '']
+    def pair(value):
+        return f'{value["average"]:.3f} / {value["min"]:.3f}'
+    lines = ['# Refreshed capability benchmarks — 2026-11-05', '', 'Doc Status: supporting', '',
+        'Times in milliseconds, **average / minimum** of five samples per workload.',
+        'Five warmed PHP compilations, five fresh application native builds, and five separate instrumented builds.',
+        'O2/g0, libc++, Ninja -j8, mold; no PCH/LTO/ccache; prebuilt runtime. One C++ TU per source, plus the entry adapter.', '',
+        '| Sample | Source KiB / C++ TUs | Generated C++ KiB | PHP total | Native wall | Linker |',
+        '| --- | ---: | ---: | ---: | ---: | ---: |']
+    for name, r in report['samples'].items():
+        lines.append(f'| {name} | {r["source_bytes"]/1024:.1f} / {r["cpp_units"]} | {r["generated"]["cpp_bytes"]/1024:.1f} | {pair(r["stages"]["total_ms"])} | {pair(r["native"]["native_ms"])} | {pair(r["native"]["link_ms"])} |')
+    lines += ['', '| Sample | Module | Read | Tokenize | Parse/collect | Symbols | Prepare | Lower/emit |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |']
+    for name, r in report['samples'].items():
+        lines.append('| ' + name + ' | ' + ' | '.join(pair(r['stages'][k]) for k in ['module_ms','read_ms','tokenize_ms','parse_collect_ms','symbol_index_ms','prepare_ms','lower_emit_ms']) + ' |')
+    lines += ['', 'PHP total includes measured orchestration, excludes process startup and writing emitted C++ files.', '',
+        '| Sample | Clang frontend | LLVM backend | LLVM optimizer | Code generation | Instrumented wall |',
+        '| --- | ---: | ---: | ---: | ---: | ---: |']
+    for name, r in report['samples'].items():
+        lines.append('| ' + name + ' | ' + ' | '.join(pair(r['trace_summary'][k]) for k in ['frontend_ms','llvm_backend_ms','optimizer_ms','codegen_ms','wall_ms']) + ' |')
+    lines += ['', 'Trace categories accumulate across parallel TUs and overlap (optimizer/code generation are within backend). Do not sum them or compare their sum to build wall time. Native wall above excludes tracing overhead.', '',
+        '| Sample / edit | Frontend | Prepare | Total | Source reads | ASTs reused | Bodies prepared / reused |',
+        '| --- | ---: | ---: | ---: | ---: | ---: | --- |']
+    for name, r in report['samples'].items():
+        for scenario, case in r['incremental'].items():
+            bodies = case['bodies']
+            label = f'{bodies["prepared"]} / {bodies["reused"]}' if bodies else 'expected diagnostic'
+            lines.append(f'| {name} / {scenario} | ' + ' | '.join(pair(case['times'][k]) for k in ['frontend_ms','prepare_ms','total_ms']) + f' | {case["source_reads"]} | {case["reused_asts"]} | {label} |')
+    lines += ['', 'Five retained-session edit sequences per workload: full, no-op, body edit, incompatible signature, recovery, final no-op. Assertions verify source reads, AST/token identity, body reuse and caller invalidation. Edits use disposable copies.',
+        'Incremental timings stop after preparation; no incremental native-build speedup is claimed.', '',
+        'All 30 measured/traced executables matched expected stdout and exit code 8; measured executables contain no debug sections. Runtime includes use the public API.',
+        'The mixed-flavor workloads exercise current feature families, not every syntax permutation or rejection path. Focused tests retain those checks. The large workload repeats invoice functions; this is synthetic data.',
+        'This is a new workload baseline, not a like-for-like speed comparison against the older samples.',
+        'Raw samples, ranges, versions, source hashes, compiler hashes, logs, generated C++, and per-run Clang traces are retained in the benchmark output directory.', '']
     return '\n'.join(lines)
 
 
@@ -174,15 +187,17 @@ def main():
     source_hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                      for p in sorted(HERE.rglob('*')) if p.is_file() and p.suffix in ('.phs','.scpp','.jss','.php','.py','.json') and '__pycache__' not in p.parts and not p.name.startswith('benchmark-')}
     compiler_hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                       for p in sorted((ROOT/'compiler').rglob('*.php')) if 'generated' not in p.parts}
+                       for p in sorted((ROOT/'compiler').rglob('*.php'))}
     report = {'platform': platform.platform(), 'versions': versions, 'git_head': head.decode().strip(),
-              'note': 'Includes uncommitted arithmetic implementation; exact compiler/sample hashes recorded.',
+              'note': 'Current capability workload including increment/decrement; exact compiler/sample hashes recorded.',
               'sample_hashes': source_hashes, 'compiler_hashes': compiler_hashes,
               'runtime_archive_sha256': hashlib.sha256((ROOT/'build/clang/libscpp_runtime.a').read_bytes()).hexdigest(),
               'metadata_sha256': hashlib.sha256((ROOT/'runtime/metadata/runtime.json').read_bytes()).hexdigest(), 'samples': {}}
     for name in ['small','medium','large']:
-        report['samples'][name] = benchmark(name, output/name, 5, 3)
+        report['samples'][name] = benchmark(name, output/name, 5, 5)
         (output/'results.json').write_text(json.dumps(report,indent=2)+'\n')
+    for relative, digest in compiler_hashes.items():
+        assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() == digest, f'Compiler changed during benchmark: {relative}'
     (output/'report.md').write_text(markdown(report))
     print(output/'report.md')
 

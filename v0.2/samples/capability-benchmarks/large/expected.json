@@ -1,10 +1,13 @@
 {
-  "stdout": "invoice: 1090486\n",
+  "stdout": "invoice: 1091009\n",
   "exit": 8,
   "edit_file": "support/labels.jss",
   "body_from": "return value;",
   "body_to": "return \"invoice-edited\";",
   "signature_from": "function label(value: string = \"invoice\"): string",
   "signature_to": "function label(value: string = \"invoice\"): int",
-  "signature_body": "return 42;"
+  "signature_body": "return 42;",
+  "constant_file": "support/core.scpp",
+  "constant_from": "const int BONUS = 5;",
+  "constant_to": "const int BONUS = 50;"
 }

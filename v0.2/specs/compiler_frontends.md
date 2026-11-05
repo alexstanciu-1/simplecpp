@@ -272,3 +272,12 @@ declare locals. Types and write-back admission belong to generated operator rule
 and preparation. The [scalar contract](../../specs/compiler_scalars_v0_2.md#int64-compound-assignment-statements--2026-11-05)
 defines ordering and limits. The same assignments are supported in `for` initializer
 and update clauses; compound expression values remain deferred.
+
+
+## Discarded-value increment/decrement
+
+Prefix/postfix `++`/`--` on simple local names is supported at standalone statement
+and for initializer/update boundaries, with generated int64-only admission. PHP
+names retain `$`. These tokens do not enter value-expression parsing; consuming an
+update result, chained updates and complex targets remain deferred. One common
+parser handles every flavor and both header positions.

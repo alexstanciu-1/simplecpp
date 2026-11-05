@@ -86,7 +86,7 @@ foreach (flavor::cases() as $flavor)
 		throw new RuntimeException('Reset retained assignment binding');
 	}
 	catch (LogicException $error) {
-		verify($error->getMessage() === 'Assignment binding is not settled', 'Unexpected reset failure');
+		verify($error->getMessage() === 'Write binding is not settled', 'Unexpected reset failure');
 	}
 	$reprepared = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($reprepared) === $cpp, 'Repreparation changed assignment emission');

@@ -88,6 +88,17 @@ abstract class type_definition
 		return [];
 	}
 
+	/** Generated capability for discarded-value updates; unsupported types reject by default. */
+	public function supports_update(update_operator $operator): bool
+	{
+		return false;
+	}
+
+	public function lower_cpp_update(update_operator $operator, string $target, bool $postfix): string
+	{
+		throw new \LogicException('Update lowering unavailable for type: ' . $this->name);
+	}
+
 	/** Native representation of an already resolved language type. */
 	abstract public function cpp_type(): string;
 

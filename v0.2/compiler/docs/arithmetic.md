@@ -14,7 +14,7 @@ unrepresentable `INT64_MIN / -1` division and corresponding native remainder cas
 There is no new checked-overflow, wrapping or saturation guarantee. Tests exercise
 the defined domain and do not assign expected results to undefined native overflow.
 
-Unary signs on general expressions, increments, power, bitwise/shifts,
+Unary signs on general expressions, power, bitwise/shifts,
 float arithmetic, mixed numeric arithmetic and other operand types remain deferred.
 Negative integer test operands use subtraction or parameters; this slice does not
 expand signed integer literal syntax. Floating signed-literal syntax is unchanged.
@@ -42,7 +42,7 @@ ordinary expression facts through that query.
 `lower_cpp_binary()` consumes the approved operator. `binary_headers()` reports
 only required public headers. These replace the comparison-specific methods;
 `settle_binary()` replaces the comparison-specific AST setter. Inventory version
-is 11. The compiler does not interpret metadata while preparing source expressions.
+is 12. The compiler does not interpret metadata while preparing source expressions.
 
 Preparation visits both children once, in source order, then makes one generated
 handler call. There is no constant folding, fixed point, callee-body scan, extra

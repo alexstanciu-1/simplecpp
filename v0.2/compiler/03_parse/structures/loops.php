@@ -36,15 +36,15 @@ final class ast_do_while_statement extends ast_loop_statement
 final class ast_for_statement extends ast_loop_statement
 {
 	/** Native owning initializer; executes once, before the first test. */
-	public readonly ast_local_declaration|ast_assignment_statement $initializer;
+	public readonly ast_local_declaration|ast_storage_write $initializer;
 	/** Native owning update; executes after normal body completion or continue. */
-	public readonly ast_assignment_statement $update;
+	public readonly ast_storage_write $update;
 	/** Native owning header scope; the body scope is its child. */
 	public readonly scope $scope;
 
 	/** $start: for token position; the body supplies the exclusive end. */
-	public function __construct(int $start /** uint32 */, ast_local_declaration|ast_assignment_statement $initializer,
-		ast_expression $condition, ast_assignment_statement $update, ast_block $body, scope $scope)
+	public function __construct(int $start /** uint32 */, ast_local_declaration|ast_storage_write $initializer,
+		ast_expression $condition, ast_storage_write $update, ast_block $body, scope $scope)
 	{
 		parent::__construct($start, $body->end, $condition, $body);
 		$this->initializer = $initializer;

@@ -34,7 +34,7 @@ range test. Integer arithmetic uses the same path; see [arithmetic](arithmetic.m
 names, bool result and native lowering strategy. The generator validates this
 bounded vocabulary and emits direct preparation/lowering methods on canonical
 type definitions. Removing a row/operator removes its generated admission.
-Unsupported definitions inherit rejection. Inventory version is 11.
+Unsupported definitions inherit rejection. Inventory version is 12.
 
 Preparation visits left then right exactly once and invokes the left definition's
 generated admission handler. It performs no constant folding, callee-body scan,

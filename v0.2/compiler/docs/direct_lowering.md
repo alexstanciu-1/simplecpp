@@ -30,7 +30,7 @@ supported language and defined native arithmetic domain.
 
 Generated properties derive from already-validated storage and lowering strategies;
 there is no runtime metadata interpretation or handwritten source-type admission
-matrix in the backend. Inventory version is 11. No algebraic reassociation, constant
+matrix in the backend. Inventory version is 12. No algebraic reassociation, constant
 folding, unsigned wrapping or new signed-overflow behavior is introduced. Native
 floating comparisons retain their contract; this does not introduce floating
 exception-environment controls.

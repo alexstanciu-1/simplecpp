@@ -1,4 +1,5 @@
 namespace Bench\Batch39;
+const int EXTRA = 1;
 function line_0(int $price, int $quantity = 3): int {
     $subtotal int = $price * 314 + $quantity;
     $index int = 0;
@@ -14,6 +15,20 @@ function line_0(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_1(int $price, int $quantity = 3): int {
@@ -31,6 +46,20 @@ function line_1(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_2(int $price, int $quantity = 3): int {
@@ -48,6 +77,20 @@ function line_2(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_3(int $price, int $quantity = 3): int {
@@ -65,6 +108,20 @@ function line_3(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_4(int $price, int $quantity = 3): int {
@@ -82,6 +139,20 @@ function line_4(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_5(int $price, int $quantity = 3): int {
@@ -99,6 +170,20 @@ function line_5(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_6(int $price, int $quantity = 3): int {
@@ -116,6 +201,20 @@ function line_6(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }
 function line_7(int $price, int $quantity = 3): int {
@@ -133,5 +232,19 @@ function line_7(int $price, int $quantity = 3): int {
         $subtotal = $subtotal + 5;
     }
     do { $subtotal = $subtotal + 1; } while (false);
+    $ticks int = 0;
+    for ($loop int = 0; $loop < $quantity; $loop++) {
+        if ($loop == 1) { continue; }
+        if ($loop > 2) { break; }
+        ++$ticks;
+    }
+    if (!($ticks == 2) || !($quantity > 0 && $price > 0)) { return 0; }
+    $subtotal += (int) (byte) 2;
+    $subtotal -= 1;
+    $subtotal *= 2;
+    $subtotal /= 2;
+    $subtotal %= 1000000;
+    --$subtotal;
+    for ($index = 0; $index < 1; $index += 1) { $subtotal += EXTRA; }
     return $subtotal;
 }

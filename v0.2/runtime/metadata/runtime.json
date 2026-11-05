@@ -848,6 +848,13 @@
       "underflow": "gradual_signed_zero",
       "rounding": "nearest_ties_even"
     },
+    "updates": {
+      "int64": {
+        "operators": ["increment", "decrement"],
+        "overflow": "native",
+        "lowering": "native"
+      }
+    },
     "arithmetic": {
       "int64": {
         "operand": "same_type",

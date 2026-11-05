@@ -101,7 +101,6 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare($fn('bad', '', 'int', $loop('return 8;')) . 'return 8;'), 'Non-void function requires');
 	foreach (['for (;;) {}', 'for (' . $decl('i', 'int', '0') . ';' . $var('i') . '=1) {}',
 		'for (' . $decl('i', 'int', '0') . 'true;) {}',
-		'for (' . $decl('i', 'int', '0') . 'true;' . $var('i') . '++) {}',
 		'for (' . $decl('i', 'int', '0') . 'true;' . $var('i') . '=1,' . $var('i') . '=2) {}'] as $invalid) {
 		rejects(fn() => $prepare($invalid . 'return 8;'), 'Expected');
 	}

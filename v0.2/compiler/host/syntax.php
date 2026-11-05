@@ -167,6 +167,11 @@ final class Syntax_Inspection
 					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];
 		}
+		if ($statement instanceof ast_update_statement) {
+			return ['kind' => 'update', 'name' => self::name($statement, $statement->name,
+				$statement->start + ($statement->postfix ? 0 : 1)), 'operator' => $statement->operator->name,
+				'postfix' => $statement->postfix, 'span' => self::span($statement)];
+		}
 		if ($statement instanceof ast_assignment_statement) {
 			return ['kind' => 'assignment', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
 				'intent' => $statement->intent->name, 'operator' => $statement->operator?->name, 'value' => self::expression($statement->value),

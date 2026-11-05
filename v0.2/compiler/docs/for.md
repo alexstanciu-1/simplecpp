@@ -3,16 +3,16 @@
 Doc Status: supporting
 
 The [loop contract](../../../specs/loop_statements_v0_2.md#bounded-for-slice--2026-11-04)
-defines one required initializer (declaration/assignment), condition and assignment
+defines one required initializer (declaration/assignment/update), condition and storage-write
 update, with a braced body. Existing typed/inferred declarations and generated
 conversions/truthiness apply in all three flavors. Omitted/comma clauses,
-increments, standalone call clauses and foreach remain deferred. Int64 compound
+standalone call clauses and foreach remain deferred. Int64 compound
 assignments are supported in both initializer and update positions.
 
 ## Structure and ownership
 
 `ast_for_statement` extends the existing loop node. It directly owns the initializer,
-assignment update and header scope, alongside inherited condition/body ownership.
+storage-write update and header scope, alongside inherited condition/body ownership.
 The body scope is a child of the header scope, which is a child of the enclosing
 block scope. Header declarations have function-unique storage IDs and stay out of
 the enclosing block's local index. One initializer cannot contain duplicate header
@@ -139,3 +139,14 @@ command duration.
 
 PHP fixture generation and assertions took 176.94 ms across the complete for suite,
 including incremental cases; this is not an isolated preparation-stage timing.
+
+
+## Discarded-value updates
+
+Header write slots now accept the `ast_storage_write` base shared by assignments
+and `ast_update_statement`. Prefix/postfix increment/decrement therefore reuse the
+existing header storage scope and preparation order. They have no RHS expression
+to collect or reset. Native header emission calls the generated update handler
+directly; it creates no temporary or lambda. Compound snapshot storage is allocated
+only when an actual compound assignment is present in either clause. Mixed
+assignment/compound/update headers and shadowing are covered by update native tests.

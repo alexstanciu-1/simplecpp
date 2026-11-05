@@ -8,9 +8,9 @@ unchanged. These samples supplement their historical timing baselines.
 
 | App | Source files | Source size | Purpose |
 | --- | ---: | ---: | --- |
-| small | 4 | 2,742 bytes | Readable feature tour with one invoice calculation. |
-| medium | 15 | 27,753 bytes | Invoice-like multifile calculation with 48 separately callable line-pricing functions. |
-| large | 67 | 274,274 bytes | The same supported workload scaled to 512 line-pricing functions. |
+| small | 4 | 4,000 bytes | Readable feature tour with one invoice calculation. |
+| medium | 15 | 49,790 bytes | Invoice-like multifile calculation with 48 separately callable line-pricing functions. |
+| large | 67 | 500,428 bytes | The same supported workload scaled to 512 line-pricing functions. |
 
 Each project mixes PHP, C++ and JS syntax flavors, uses a real `module.json`, and
 selects `main.phs` as its entry. `expected.json` specifies exact stdout, exit code 8,
@@ -18,7 +18,9 @@ and the controlled incremental mutations. The C++-flavor `.scpp` files are Simpl
 C++ source, not generated C++ or native runtime sources.
 
 Original baseline: [2026-11-04 report](benchmark-2026-11-04.md).
-Latest comparison: [direct lowering and PCH](benchmark-2026-11-04-direct.md).
+Historical comparison: [direct lowering and PCH](benchmark-2026-11-04-direct.md).
+Current expanded workload: [five-run report](benchmark-2026-11-05.md). This is a new
+workload baseline; source sizes and operation counts increased intentionally.
 
 ## Capability coverage
 
@@ -32,6 +34,11 @@ Latest comparison: [direct lowering and PCH](benchmark-2026-11-04-direct.md).
 - All six int/float comparisons, bool/byte equality, int arithmetic `+ - * / %`,
   grouping and operator precedence.
 - Bool/int/float/string conditions, braced if/else-if/else, while and do-while.
+- Typed literal constants, local and imported constant reads, grouped/renamed constant imports.
+- Explicit scalar casts; generated truthiness for `!`, `&&`, `||`, including short-circuit
+  calls whose skipped reference mutation is checked.
+- Braced `for`, bare break/continue, all five int64 compound assignments, prefix/postfix
+  increment/decrement, and compound/update loop headers.
 - Integer/string output and the checked integer executable-entry boundary.
 
 This is capability coverage, not every syntax permutation or error path. Dedicated
@@ -72,12 +79,13 @@ when comparing revisions; intentional workload changes require a new baseline.
 - Five PHP stage samples after one warm-up: module load, source read/snapshot,
   tokenize, parse/local collect, symbol publication, prepare and C++ text emission.
   Total includes orchestration; excludes writing C++ and PHP process startup.
-- Three native samples after a warm-up: every application object and executable
+- Five native samples after a warm-up: every application object and executable
   is rebuilt. O2/g0, libc++, mold, Ninja -j8, no PCH/LTO/ccache, prebuilt runtime.
   Native wall and linker command ranges are reported separately.
-- One separate instrumented build records Clang frontend, LLVM backend, optimizer
-  and code-generation times. Categories overlap and sum across parallel TUs;
-  their sum is not elapsed build time. Instrumentation is outside native medians.
+- Five separate instrumented builds record Clang frontend, LLVM backend, optimizer
+  and code-generation times; per-run traces are retained. Categories overlap and sum across parallel TUs;
+  their sum is not elapsed build time. Instrumentation is outside normal native timings. Reports include averages and minima,
+  while raw JSON retains medians, maxima and individual measurements.
 - Every measured/traced executable checks exact stdout and exit status; debug
   sections are rejected. Generated includes must use existing runtime public APIs.
 - OS/tool versions, CPU topology, exact source/compiler hashes, runtime archive

@@ -308,10 +308,9 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
  * ```
  * PHP first writes become declarations during parsing; this node represents a write to an existing local.
  */
-final class ast_assignment_statement extends ast_statement
+final class ast_assignment_statement extends ast_storage_write
 {
 	/** PROPERTIES */
-	public readonly string $name;
 	/** Native owning; assignment expression child. */
 	public readonly ast_expression $value;
 	public readonly assignment_intent $intent;
@@ -319,8 +318,6 @@ final class ast_assignment_statement extends ast_statement
 	public readonly ?binary_operator $operator;
 
 	/** PREP FACTS */
-	/** Prepared fact: native non-owning local binding; null before settlement or after reset. */
-	protected ?ast_local_binding $binding = null;
 	/** Prepared fact: approved implicit conversion; null before settlement or after reset. */
 	protected ?value_conversion $conversion = null;
 
@@ -333,28 +330,19 @@ final class ast_assignment_statement extends ast_statement
 		string $name,
 		ast_expression $value, assignment_intent $intent, ?binary_operator $operator = null)
 	{
-		$this->name = $name;
 		$this->value = $value;
 		$this->intent = $intent;
 		$this->operator = $operator;
 		$value->attach($this);
 
-		parent::__construct($start, $end);
+		parent::__construct($start, $end, $name);
 	}
 
 	/** METHODS */
 	public function settle_assignment(ast_local_binding $local, value_conversion $conversion): void
 	{
-		if ($this->binding !== null) {
-			throw new \LogicException('Assignment is already prepared');
-		}
-		$this->binding = $local;
+		$this->settle_binding($local);
 		$this->conversion = $conversion;
-	}
-
-	public function local_def(): ast_local_binding
-	{
-		return $this->binding ?? throw new \LogicException('Assignment binding is not settled');
 	}
 
 	public function conversion(): value_conversion
@@ -377,7 +365,28 @@ final class ast_assignment_statement extends ast_statement
 
 	public function reset_preparation(): void
 	{
-		$this->binding = null;
+		parent::reset_preparation();
 		$this->conversion = null;
+	}
+}
+
+/** Discarded-value update, e.g. ++i or i--; no operand copy or synthetic literal is retained. */
+final class ast_update_statement extends ast_storage_write
+{
+	public readonly update_operator $operator;
+	public readonly bool $postfix;
+
+	/** $start/$end: token positions, including the statement delimiter where present. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
+		update_operator $operator, bool $postfix)
+	{
+		parent::__construct($start, $end, $name);
+		$this->operator = $operator;
+		$this->postfix = $postfix;
+	}
+
+	public function settle_update(ast_local_binding $local): void
+	{
+		$this->settle_binding($local);
 	}
 }

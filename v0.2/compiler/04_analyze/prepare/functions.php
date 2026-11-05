@@ -29,10 +29,14 @@ final class Function_Preparation
 			if ($statement instanceof ast_loop_statement) {
 				if ($statement instanceof ast_for_statement) {
 					$statement->initializer->reset_preparation();
-					self::expression($statement->initializer instanceof ast_local_declaration
-						? $statement->initializer->initializer : $statement->initializer->value);
+					if (!($statement->initializer instanceof ast_update_statement)) {
+						self::expression($statement->initializer instanceof ast_local_declaration
+							? $statement->initializer->initializer : $statement->initializer->value);
+					}
 					$statement->update->reset_preparation();
-					self::expression($statement->update->value);
+					if ($statement->update instanceof ast_assignment_statement) {
+						self::expression($statement->update->value);
+					}
 				}
 				self::expression($statement->condition);
 				self::reset_block($statement->body);
@@ -48,7 +52,7 @@ final class Function_Preparation
 				continue;
 			}
 			if (($statement instanceof ast_local_declaration)
-				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)) {
+				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_storage_write)) {
 				$statement->reset_preparation();
 			}
 			if ($statement instanceof ast_local_declaration) {

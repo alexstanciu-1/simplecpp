@@ -1,5 +1,7 @@
 namespace Bench {
 global int seed = 9;
+const int BONUS = 5;
+const string EMPTY = "";
 int adjust(int &value, int step = 2) {
     value = value + step;
     return value;
@@ -48,6 +50,20 @@ int feature_score() {
     if (number > 1) { score = score + 1; }
     if (inferred < 8) { score = score + 1; }
     if (true) { int score = 99; score = 100; }
+    int mutation = 0;
+    ++mutation; mutation++; --mutation; mutation--;
+    if (mutation == 0) { score += 1; }
+    if (true || adjust(mutation)) { score += 1; }
+    if (false && adjust(mutation)) { score += 100; }
+    if (mutation == 0) { score += 1; }
+    for (int i = 0; i < 4; i += 1) {
+        if (i == 1) { continue; }
+        if (i == 3) { break; }
+        ++score;
+    }
+    score -= 1; score *= 2; score /= 2;
+    int remainder = 9; remainder %= 4; score += remainder;
+    score += (int) (float) true;
     return score;
 }
 }

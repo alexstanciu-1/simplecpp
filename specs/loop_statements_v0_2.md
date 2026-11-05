@@ -68,8 +68,8 @@ alias graph, loop unrolling or repeated preparation pass is required.
 ## Bounded for slice — 2026-11-04
 
 All flavors admit `for (initializer; condition; update) { statements }` with exactly
-one required declaration or assignment initializer, one required condition expression,
-and one required assignment update. The initializer uses ordinary flavor syntax:
+one required declaration, assignment or discarded-value update initializer, one required condition expression,
+and one required assignment or discarded-value update clause. The initializer uses ordinary flavor syntax:
 
 ```text
 cpp: for (int i = 0; i < 10; i = i + 1) { echo i; }
@@ -100,7 +100,7 @@ Check the update even when a constant condition or body transfer prevents its
 execution. Completion conservatively permits zero iterations and does not prove
 a value function returns merely because the for body returns.
 
-Omitted clauses, comma-separated clauses, increment/decrement,
+Omitted clauses, comma-separated clauses,
 standalone call clauses and unbraced bodies remain deferred. Calls inside otherwise
 supported expressions are allowed. This slice adds no assignment expressions or
 general expression statements.
@@ -129,6 +129,12 @@ Break, return, body failure and a false initial condition suppress the update.
 Nested loops retain their own transfer targets and header scopes. Body-local
 shadowing cannot change the header's resolved destination.
 
-No source-level comma clauses, increments, omitted clauses, assignment-expression
+No source-level comma clauses, omitted clauses, assignment-expression
 values or new types are introduced. Preparation still visits each clause once;
 this is a reuse of assignment semantics, not a separate preparation operation.
+
+
+Prefix/postfix int64 increment/decrement is also admitted in both header positions
+under the [discarded-value update contract](compiler_scalars_v0_2.md#discarded-value-int64-updates--2026-11-05).
+It requires existing storage and shares ordinary loop sequencing; neither position
+exposes an expression result. Increment/decrement in the condition remains deferred.
