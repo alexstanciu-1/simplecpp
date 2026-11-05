@@ -34,7 +34,7 @@ function decimalPredecessor(string $value): string {
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary']);
     $active = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
@@ -134,7 +134,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     sort($identities, SORT_STRING);
     requireThat($identities === $active, 'Missing default runtime type definition');
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity);
+        $methods = compilerConversions($compiler, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity);
         if (in_array($identity, ['int64', 'float64', 'bool_t', 'byte', 'null_t'], true)) {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 12,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 13,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -506,6 +506,60 @@ function compilerUpdates(mixed $compiler, string $identity): string {
 $lowering\t\t\tdefault => throw new \\LogicException('Update operation was not approved'),
 \t\t};
 \t\treturn \$postfix ? \$target . \$spelling : \$spelling . \$target;
+\t}
+";
+}
+
+/** Emit bounded numeric prefix admission and direct lowering from metadata, without per-expression lookup tables. */
+function compilerUnary(mixed $compiler, string $identity): string {
+    $selected = [];
+    foreach (object(at($compiler, 'unary')) as $name => $row) {
+        requireThat($name === 'int64', 'Unsupported compiler unary type');
+        fields($row, ['result', 'overflow', 'lowering', 'operators']);
+        literals($row, ['result' => 'int64', 'overflow' => 'native', 'lowering' => 'native']);
+        $operators = names(at($row, 'operators'), 'Duplicate unary operator');
+        foreach ($operators as $operator) {
+            requireThat(in_array($operator, ['positive', 'negative'], true), 'Unsupported unary operator');
+        }
+        if ($identity === $name) $selected = $operators;
+    }
+    if ($selected === []) return '';
+    $admission = [];
+    $lowering = '';
+    foreach ($selected as $operator) {
+        $admission[] = 'unary_operator::' . $operator;
+        $sign = $operator === 'positive' ? '+' : '-';
+        $lowering .= "\t\t\tunary_operator::$operator => '($sign(' . \$operand . '))',\n";
+    }
+    $cases = implode(', ', $admission);
+    return "
+\t/** Generated prefix admission; operand preparation is owned by the single source traversal. */
+\tpublic function prepare_unary(ast_unary_expression \$value): void
+\t{
+\t\tif ((\$value->operand->type_def() !== \$this) || !match (\$value->operator) {
+\t\t\t$cases => true,
+\t\t\tdefault => false,
+\t\t}) {
+\t\t\tparent::prepare_unary(\$value);
+\t\t\treturn;
+\t\t}
+\t\t\$value->settle_unary(\$this);
+\t}
+
+\tpublic function lower_cpp_unary(unary_operator \$operator, string \$operand): string
+\t{
+\t\treturn match (\$operator) {
+$lowering\t\t\tdefault => throw new \\LogicException('Unary operation was not approved'),
+\t\t};
+\t}
+
+\t/** Admitted native prefix operations add no effects; operand safety remains separate. */
+\tpublic function cpp_unary_reorderable(unary_operator \$operator): bool
+\t{
+\t\treturn match (\$operator) {
+\t\t\t$cases => true,
+\t\t\tdefault => false,
+\t\t};
 \t}
 ";
 }

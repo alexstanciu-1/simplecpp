@@ -335,6 +335,13 @@ final class Cpp_Emitter
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
 			return '(' . $type->lower_cpp_conversion($conversion, $operand) . ')';
 		}
+		if ($value instanceof ast_unary_expression) {
+			$operand_safe = false;
+			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers, $operand_safe);
+			$type = $value->operand->type_def();
+			$reorderable = $operand_safe && $type->cpp_unary_reorderable($value->operator);
+			return $type->lower_cpp_unary($value->operator, $operand);
+		}
 		if ($value instanceof ast_not_expression) {
 			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
 		}

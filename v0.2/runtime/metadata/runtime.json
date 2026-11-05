@@ -848,6 +848,14 @@
       "underflow": "gradual_signed_zero",
       "rounding": "nearest_ties_even"
     },
+    "unary": {
+      "int64": {
+        "result": "int64",
+        "overflow": "native",
+        "lowering": "native",
+        "operators": ["positive", "negative"]
+      }
+    },
     "updates": {
       "int64": {
         "operators": ["increment", "decrement"],

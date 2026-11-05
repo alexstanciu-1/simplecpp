@@ -65,8 +65,8 @@ evaluated exactly once. Same-type copies and widening conversions need no range 
 Global initialization remains literal-only, including true, false and null and
 signed decimal integer/floating literals. A written global type may convert that literal.
 Local initialization admits the supported literals and local/global references;
-signs directly on floating literals are admitted, while general unary expressions
-are still deferred. Global reads do not reuse initializer
+signs directly on floating literals and int64 unary signs are admitted (see below).
+General floating unary expressions remain deferred. Global reads do not reuse initializer
 constants: an unknown global payload must not be folded into a reader's cache.
 
 ## Boundaries unchanged
@@ -180,7 +180,7 @@ Casts bind at unary precedence, above all binary operators, and nest right to le
 `(int) 8.75 + 1` means `((int) 8.75) + 1`; casting a whole binary expression requires
 parentheses around that expression. Grouping remains grouping when no cast operand
 follows, including `(null)`. Existing signed floating literals are operands;
-general unary numeric operators remain deferred.
+int64 unary signs are supported below; other unary numeric operators remain deferred.
 
 A source cast requests explicit conversion intent under the conversion table above.
 It introduces no new source/destination pair and does not compose conversions
@@ -256,3 +256,26 @@ continue. Break, return and false initial conditions suppress the update. Existi
 scope, shadowing and loop preparation rules apply. Updating storage invalidates its
 cached scalar payload; the compiler does not retain the initializer value as if
 no mutation occurred or introduce arithmetic folding in this slice.
+
+## Int64 unary signs — 2026-11-05
+
+All three flavors admit unary `+` and `-` on int/int64 expressions, producing an
+int64 value. The operand is evaluated once; the result is not writable storage or
+an admissible mutable-reference argument. No implicit numeric admission is added
+for bool, byte, float, string or null. Explicit casts can establish int64 first.
+
+Signs bind above binary operators and nest right-to-left. `- -8` is nested
+negation; `--8` retains its distinct update token and is not two unary signs.
+Casts of signed integer expressions use grouping, e.g. `(int)(-8)`; `-(int)3.5`
+is also supported. Existing cast/grouping lookahead is unchanged. The existing
+signed floating-literal path, including signed zero, is unchanged.
+
+Unary expressions prepare their positive integer literal child under the existing
+int64 bound. Thus `-9223372036854775808` in an execution expression is rejected;
+`-9223372036854775807 - 1` constructs the minimum without an oversized literal.
+Existing signed-literal handling at literal-only declaration boundaries is unchanged.
+Negating an already minimum-valued integer preserves native signed-overflow
+limitations; no checked, wrapping or saturating semantics are introduced.
+
+Runtime metadata owns admission, result identity and direct C++ lowering. No new
+constant folding or expression-evaluation-order policy is introduced by this slice.

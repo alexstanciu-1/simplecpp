@@ -21,6 +21,8 @@ See [int64 arithmetic](docs/arithmetic.md) for binary operations and their runti
 See [logical expressions](docs/logical.md) for generated truthiness and native short-circuit lowering.
 See [loop transfers](docs/transfers.md) for nearest-loop break/continue and transient completion flags.
 See [bounded for loops](docs/for.md) for header ownership, scope and update sequencing.
+See [int64 unary signs](docs/unary.md) for metadata-driven prefix arithmetic and one-visit preparation.
+
 See [discarded-value int64 updates](docs/updates.md) for shared storage ownership and generated update handlers.
 See [int64 compound assignments](docs/compounds.md) for shared operator admission and ordered write-back.
 See [explicit scalar casts](docs/casts.md) for generated conversion reuse and AST-owned decisions.

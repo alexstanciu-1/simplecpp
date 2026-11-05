@@ -85,6 +85,10 @@ final class Syntax_Inspection
 			return ['kind' => 'cast', 'type_name' => $expression->type_name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_unary_expression) {
+			return ['kind' => 'unary', 'operator' => $expression->operator->name,
+				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_not_expression) {
 			return ['kind' => 'logical_not', 'operand' => self::expression($expression->operand),
 				'span' => self::span($expression)];

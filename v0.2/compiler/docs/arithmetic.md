@@ -16,8 +16,8 @@ the defined domain and do not assign expected results to undefined native overfl
 
 Unary signs on general expressions, power, bitwise/shifts,
 float arithmetic, mixed numeric arithmetic and other operand types remain deferred.
-Negative integer test operands use subtraction or parameters; this slice does not
-expand signed integer literal syntax. Floating signed-literal syntax is unchanged.
+Int64 unary signs now have a separate [bounded slice](unary.md); integer literal
+magnitudes retain their existing bound. Floating signed-literal syntax is unchanged.
 
 ## One binary path
 

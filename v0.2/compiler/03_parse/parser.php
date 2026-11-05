@@ -483,6 +483,14 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(): ast_expression
 	{
+		if (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
+			&& !$this->cursor->next_is(token_kind::floating)) {
+			$kind = $this->cursor->is(token_kind::plus) ? token_kind::plus : token_kind::minus;
+			$start = $this->cursor->take($kind, 'unary sign');
+			$operator = $kind === token_kind::plus ? unary_operator::positive : unary_operator::negative;
+			$operand = $this->primary();
+			return new ast_unary_expression($start, $this->cursor->position(), $operator, $operand);
+		}
 		if ($this->cursor->is(token_kind::bang)) {
 			$start = $this->cursor->take(token_kind::bang, '!');
 			$operand = $this->primary();

@@ -156,6 +156,10 @@ final class Compilation_Inspection
 			$row['conversion'] = $value->conversion()->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_unary_expression) {
+			$row['operator'] = $value->operator->name;
+			$row['operand'] = self::value($value->operand);
+		}
 		if ($value instanceof ast_not_expression) {
 			$row['operator'] = 'logical_not';
 			$row['operand'] = self::value($value->operand);

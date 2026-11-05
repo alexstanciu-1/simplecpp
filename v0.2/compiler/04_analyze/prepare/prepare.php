@@ -390,6 +390,11 @@ final class Preparation
 			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, true));
 			return;
 		}
+		if ($syntax instanceof ast_unary_expression) {
+			$this->value($syntax->operand, $initializing);
+			$syntax->operand->type_def()->prepare_unary($syntax);
+			return;
+		}
 		if ($syntax instanceof ast_not_expression) {
 			$this->value($syntax->operand, $initializing);
 			$syntax->operand->type_def()->prepare_condition($syntax->operand);

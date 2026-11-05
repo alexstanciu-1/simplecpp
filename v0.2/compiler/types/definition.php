@@ -71,6 +71,23 @@ abstract class type_definition
 		return false;
 	}
 
+	/** Generated numeric prefix admission attaches only the result identity to the original AST. */
+	public function prepare_unary(ast_unary_expression $value): void
+	{
+		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported unary operand or operator');
+	}
+
+	public function lower_cpp_unary(unary_operator $operator, string $operand): string
+	{
+		throw new \LogicException('Unary lowering unavailable for type: ' . $this->name);
+	}
+
+	/** Conservative for unknown lowering strategies; operand safety is checked separately by the backend. */
+	public function cpp_unary_reorderable(unary_operator $operator): bool
+	{
+		return false;
+	}
+
 	/** Conditions are a separate semantic boundary from typed boolean conversion. */
 	public function prepare_condition(ast_expression $value): void
 	{

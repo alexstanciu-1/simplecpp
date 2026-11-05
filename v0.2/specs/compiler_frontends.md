@@ -281,3 +281,12 @@ and for initializer/update boundaries, with generated int64-only admission. PHP
 names retain `$`. These tokens do not enter value-expression parsing; consuming an
 update result, chained updates and complex targets remain deferred. One common
 parser handles every flavor and both header positions.
+
+### Int64 unary signs
+
+All flavors parse prefix `+`/`-` on expressions into `ast_unary_expression` with
+one operand and `unary_operator`. Signs nest right-to-left above binary operators;
+longest-match `++`/`--` retain update syntax. Existing signed floating literals
+and cast lookahead are preserved. Generated type handlers admit only int/int64
+for general unary signs. See [the scalar contract](../../specs/compiler_scalars_v0_2.md)
+and [implementation/proofs](../compiler/docs/unary.md).

@@ -79,6 +79,37 @@ final class ast_binary_expression extends ast_expression
 	}
 }
 
+/** Numeric prefix syntax identities, independent of token IDs; native uint8. */
+enum unary_operator: int
+{
+	case positive = 1;
+	case negative = 2;
+}
+
+/** Owns the operand of e.g. -count(); inherited readiness stores only the approved result type. */
+final class ast_unary_expression extends ast_expression
+{
+	public readonly unary_operator $operator;
+	/** Native owning operand; the result is a value, never assignable storage. */
+	public readonly ast_expression $operand;
+
+	/** $start/$end: token positions spanning the sign and operand, including operand grouping. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, unary_operator $operator,
+		ast_expression $operand)
+	{
+		parent::__construct($start, $end);
+		$this->operator = $operator;
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	/** No constant folding or duplicate prepared operand. */
+	public function settle_unary(type_definition $type): void
+	{
+		$this->settle_value($type, null);
+	}
+}
+
 /** Logical negation, e.g. !ready(); owns one operand and retains only the inherited bool result fact. */
 final class ast_not_expression extends ast_expression
 {

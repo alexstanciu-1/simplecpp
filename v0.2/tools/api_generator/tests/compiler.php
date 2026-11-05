@@ -265,3 +265,27 @@ foreach (['type', 'operator', 'overflow', 'lowering'] as $change) {
 requireThat($type->supports_update(\scpp\compiler\update_operator::increment)
     && $type->supports_update(\scpp\compiler\update_operator::decrement), 'Missing generated update admission');
 requireThat(!\scpp\compiler\type_float64::instance()->supports_update(\scpp\compiler\update_operator::increment), 'Deferred float update admitted');
+
+// Unary admission and lowering both disappear when their metadata capability is removed.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->unary->int64);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'public function prepare_unary'), 'Removed unary capability still generated');
+$limited = unserialize(serialize($metadata));
+$limited->compiler->unary->int64->operators = ['negative'];
+$limitedSource = renderCompiler($limited, $facts)['types/int64.php'];
+requireThat(str_contains($limitedSource, 'unary_operator::negative') && !str_contains($limitedSource, 'unary_operator::positive'), 'Unary operator subset ignored');
+foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'type' => $bad->compiler->unary->byte = clone $bad->compiler->unary->int64,
+        'operator' => $bad->compiler->unary->int64->operators[] = 'invert',
+        'overflow' => $bad->compiler->unary->int64->overflow = 'wrap',
+        'lowering' => $bad->compiler->unary->int64->lowering = 'helper',
+        'result' => $bad->compiler->unary->int64->result = 'float64',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid unary metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
