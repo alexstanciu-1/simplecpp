@@ -14,17 +14,20 @@ compilation_session
 └── preparation_work: preparation_work — shared across its sequential lineage
 
 preparation_work
-├── bodies: set<ast_function_body> — deduplicated pending references
+├── bodies: array<string,set<ast_function_body>> — source key → deduplicated pending bodies
 └── total: uint32 — number of attached live bodies, for existing reuse statistics
 
 ast_function_body
-└── preparation_work: ?preparation_work — native non-owning lifecycle backlink
+├── preparation_work: ?preparation_work — native non-owning lifecycle backlink
+└── preparation_source_key: string — stable attachment key; empty when detached
 ```
 
 The work record lives in `04_analyze/prepare/structures.php`. The AST still owns
 syntax and facts; the queue owns neither in the native model. PHP object references
-keep pending bodies alive. There is one persistent pending set, not an additional
-live-body inventory. The total is maintained at attachment/retirement, avoiding a
+keep pending bodies alive. There is one grouped pending index, not an additional flat set or live-body
+inventory. Buckets are created on demand and removed when their last body completes
+or retires. Keys come from `compilation_session::source_key()`, never source-unit
+object identity; unchanged ASTs retain their attachment as unit records are replaced. The total is maintained at attachment/retirement, avoiding a
 scan of every body just to compute the existing prepared/reused report.
 
 A body outside incremental ownership has no queue link. Invalidation/reset marks
@@ -57,9 +60,11 @@ session history remains separate work.
 ## Consumer and failure behavior
 
 `Incremental_Preparation` still runs declaration/import validation first. It then
-iterates a snapshot of pending references, not all functions looking for dirty
-flags. The transient snapshot allows successful completion to remove entries
-without skipping adjacent entries during PHP SplObjectStorage iteration.
+iterates pending source buckets, then the bodies within each bucket, not all
+functions looking for dirty flags. The transient snapshot clones each inner
+SplObjectStorage; copying only the outer PHP array would share mutable buckets.
+Completion can therefore remove live entries and empty buckets without skipping
+adjacent snapshot entries. The AST bodies themselves are never cloned.
 
 The selected entry body has one explicit readiness check for target changes:
 entry-target context is not a watched source symbol. Failure before body processing
@@ -85,6 +90,9 @@ boundary; this slice does not claim no-op preparation is constant-time.
 - Replaced/removed unprepared bodies retire even without dependency subscriptions.
 - Detached bodies cannot requeue themselves; explicit reset enqueues live bodies.
 - Entry-target changes enqueue only the entry body.
+- Source keys group pending work; multiple bodies share a bucket and remain individually deduplicated.
+- Successful peers leave a failing body pending; completing live work preserves snapshot membership.
+- Moving a failed source removes its old bucket and uses its new source key; recovery empties the bucket.
 
 49 selected compiler/generator CTest checks passed, including existing function,
 constant, global, import, duplicate, signature and incremental recovery proofs.
@@ -92,15 +100,15 @@ Six native unary/multifile recovery executables passed, using fresh full prepara
 for native emission; incremental emission is still deferred.
 
 Native proof configuration: O2/g0, libc++, Ninja -j8, mold, no PCH/LTO, prebuilt
-runtime. These single instrumented correctness runs overlapped the regression suite;
-they are not a comparative performance benchmark.
+runtime. These are single instrumented correctness runs, not a comparative
+performance benchmark. The grouped-queue validation reran all 49 checks and six executables.
 
 | Fixture | Native wall ms | Frontend ms | LLVM backend ms | Optimizer ms | Code generation ms | Link ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| cpp | 245.643 | 43.643 | 65.526 | 30.872 | 25.804 | 86 |
-| php | 153.314 | 10.313 | 14.607 | 5.048 | 7.050 | 75 |
-| js | 235.816 | 23.881 | 26.553 | 12.007 | 10.157 | 101 |
+| cpp | 218.884 | 22.070 | 23.778 | 11.788 | 8.356 | 67 |
+| php | 119.749 | 8.751 | 9.251 | 3.761 | 3.920 | 56 |
+| js | 122.260 | 8.296 | 9.817 | 3.843 | 4.509 | 60 |
 
 Trace categories overlap and accumulate across translation units, not elapsed wall
-time. PHP fixture generation plus semantic/incremental test assertions: 88.981 ms.
-Raw fixtures, C++, logs, traces and results: `v0.2/build/preparation-work-proof-2026-11-05/`.
+time. PHP fixture generation plus semantic/incremental test assertions: 76.174 ms.
+Raw fixtures, C++, logs, traces and results: `v0.2/build/grouped-preparation-work-proof-2026-11-05/`.

@@ -100,7 +100,7 @@ final class Incremental_Frontend
 				}
 				foreach ($unit->ast->declaration_nodes as $node) {
 					if ($node instanceof ast_function_declaration) {
-						$node->body()->attach_preparation_work($candidate->preparation_work);
+						$node->body()->attach_preparation_work($candidate->preparation_work, $candidate->source_key($unit));
 					}
 				}
 			}

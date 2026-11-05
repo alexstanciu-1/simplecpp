@@ -43,21 +43,24 @@ final class Incremental_Preparation
 			}
 			// The entry target is an external cache input, not a watched source symbol.
 			if (!$main->body()->is_prepared($target)) {
-				$work->enqueue($main->body());
+				$work->enqueue($session->entry_key(), $main->body());
 			}
 		}
-		foreach ($work->pending() as $body)
+		foreach ($work->pending() as $bodies)
 		{
-			/** @var ast_function_body $body */
-			/** @var ast_function_declaration $function */
-			$function = $body->parent;
-			$exit = $function->is_implicit_entry ? $target : null;
-			try {
-				(new Preparation())->function_body($body, $symbols, $exit, $session->dependency_watches);
-				$report['prepared']++;
-			}
-			catch (diagnostic $error) {
-				$errors[] = $error;
+			foreach ($bodies as $body)
+			{
+				/** @var ast_function_body $body */
+				/** @var ast_function_declaration $function */
+				$function = $body->parent;
+				$exit = $function->is_implicit_entry ? $target : null;
+				try {
+					(new Preparation())->function_body($body, $symbols, $exit, $session->dependency_watches);
+					$report['prepared']++;
+				}
+				catch (diagnostic $error) {
+					$errors[] = $error;
+				}
 			}
 		}
 		$report['reused'] = $work->body_count() - $report['prepared'];

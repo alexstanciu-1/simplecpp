@@ -157,58 +157,72 @@ final readonly class prepared_program
 }
 
 /**
- * Session-lineage preparation work, deduplicated by body identity; contains no AST copies or semantic facts.
+ * Session-lineage preparation work grouped by source key and deduplicated by body identity; no AST copies or facts.
  * Example: two changed symbols enqueue their shared consumer once; failed preparation leaves it pending.
  */
 final class preparation_work
 {
-	/** PROPERTIES */
-	/** @var \SplObjectStorage<ast_function_body,null> Native non-owning pending body references. */
-	private \SplObjectStorage $bodies /** SplObjectStorage<ast_function_body,null> */;
+	/**
+	 * Native non-owning pending bodies grouped by session source key.
+	 * @var \SplObjectStorage<ast_function_body,null>[]
+	 */
+	private array $bodies /** array<string,SplObjectStorage<ast_function_body,null>> */ = [];
 	/** Number of attached live bodies; supports reuse reporting without scanning unchanged ASTs. */
 	private int $total /** uint32 */ = 0;
 
-	/** CONSTRUCTOR */
-	public function __construct()
-	{
-		$this->bodies = new \SplObjectStorage();
-	}
-
-	/** METHODS */
 	/** Called once when a new body attaches; attachment identity is guarded by the body. */
-	public function register(ast_function_body $body): void
+	public function register(string $source_key, ast_function_body $body): void
 	{
 		$this->total++;
-		$this->enqueue($body);
+		$this->enqueue($source_key, $body);
 	}
 
 	/** Called once when a replaced/removed body detaches, including bodies that never registered a watch. */
-	public function retire(ast_function_body $body): void
+	public function retire(string $source_key, ast_function_body $body): void
 	{
-		$this->complete($body);
+		$this->complete($source_key, $body);
 		$this->total--;
 	}
 
-	public function enqueue(ast_function_body $body): void
+	public function enqueue(string $source_key, ast_function_body $body): void
 	{
-		$this->bodies[$body] = null;
+		$this->bodies[$source_key] ??= new \SplObjectStorage();
+		$this->bodies[$source_key][$body] = null;
 	}
 
-	/** Remove only successfully completed or retired work; failures retain their pending membership. */
-	public function complete(ast_function_body $body): void
+	/** Remove completed/retired work and empty buckets; failures retain their pending membership. */
+	public function complete(string $source_key, ast_function_body $body): void
 	{
-		$this->bodies->offsetUnset($body);
+		$bucket = $this->bodies[$source_key] ?? null;
+		if ($bucket === null) {
+			return;
+		}
+		$bucket->offsetUnset($body);
+		if (count($bucket) === 0) {
+			unset($this->bodies[$source_key]);
+		}
 	}
 
-	/** @return \SplObjectStorage<ast_function_body,null> Snapshot permits completion to remove pending entries during iteration. */
-	public function pending(): \SplObjectStorage
+	/**
+	 * Clone each bucket so completion cannot alter snapshot iteration.
+	 * @return \SplObjectStorage<ast_function_body,null>[]
+	 */
+	public function pending(): array /** array<string,SplObjectStorage<ast_function_body,null>> */
 	{
-		return clone $this->bodies;
+		$snapshot = [];
+		foreach ($this->bodies as $source_key => $bucket) {
+			$snapshot[$source_key] = clone $bucket;
+		}
+		return $snapshot;
 	}
 
 	public function pending_count(): int /** uint32 */
 	{
-		return count($this->bodies);
+		$count = 0;
+		foreach ($this->bodies as $bucket) {
+			$count += count($bucket);
+		}
+		return $count;
 	}
 
 	public function body_count(): int /** uint32 */
