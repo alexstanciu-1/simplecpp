@@ -354,7 +354,17 @@ final class Preparation
 				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
 		}
 		$this->value($statement->value);
-		$conversion = $local->type_def()->prepare_conversion($statement->value, false);
+		$type = $local->type_def();
+		if ($statement->operator === null) {
+			$conversion = $type->prepare_conversion($statement->value, false);
+		}
+		else {
+			$result = $type->binary_result($statement->operator, $statement->value->type_def());
+			if ($result !== $type) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Unsupported compound operands or write-back type');
+			}
+			$conversion = value_conversion::identity;
+		}
 		$statement->settle_assignment($local, $conversion);
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}

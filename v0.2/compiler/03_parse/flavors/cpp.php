@@ -43,7 +43,7 @@ final class Cpp_Grammar implements statement_grammar
 			return $parser->declaration($start, $cursor->name(token_kind::identifier), null);
 		}
 		$first = $parser->named_type();
-		if ($cursor->is(token_kind::assign)) {
+		if ($cursor->is(token_kind::assign) || ($parser->compound_operator() !== null)) {
 			return $parser->assignment($start, $first, assignment_intent::existing_binding);
 		}
 		return $parser->declaration($start, $cursor->name(token_kind::identifier), $first);

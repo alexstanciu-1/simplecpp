@@ -177,7 +177,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases), '@name@' => 'int64',
     ]);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 10,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 11,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -440,18 +440,14 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity): 
     }
     return "
 \t/** Generated same-type admission; result identity follows the selected metadata operation. */
-\tpublic function prepare_binary(ast_binary_expression \$value): void
+\tpublic function binary_result(binary_operator \$operator, type_definition \$right): ?type_definition
 \t{
-\t\tif ((\$value->left->type_def() !== \$this) || (\$value->right->type_def() !== \$this)) {
-\t\t\tparent::prepare_binary(\$value);
+\t\tif (\$right !== \$this) {
+\t\t\treturn null;
 \t\t}
-\t\t\$result = match (\$value->operator) {
+\t\treturn match (\$operator) {
 $results\t\t\tdefault => null,
 \t\t};
-\t\tif (\$result === null) {
-\t\t\tparent::prepare_binary(\$value);
-\t\t}
-\t\t\$value->settle_binary(\$result);
 \t}
 
 \t/** Lower an approved operator on already sequenced operand snapshots. */

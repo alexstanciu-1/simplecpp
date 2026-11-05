@@ -304,6 +304,7 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
  * PHP-flavor write syntax:
  * ```text
  * $value = 3;
+ * $value += 2;
  * ```
  * PHP first writes become declarations during parsing; this node represents a write to an existing local.
  */
@@ -314,6 +315,8 @@ final class ast_assignment_statement extends ast_statement
 	/** Native owning; assignment expression child. */
 	public readonly ast_expression $value;
 	public readonly assignment_intent $intent;
+	/** Null is plain assignment; otherwise retain the underlying operation without a synthetic binary tree. */
+	public readonly ?binary_operator $operator;
 
 	/** PREP FACTS */
 	/** Prepared fact: native non-owning local binding; null before settlement or after reset. */
@@ -328,11 +331,12 @@ final class ast_assignment_statement extends ast_statement
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		string $name,
-		ast_expression $value, assignment_intent $intent)
+		ast_expression $value, assignment_intent $intent, ?binary_operator $operator = null)
 	{
 		$this->name = $name;
 		$this->value = $value;
 		$this->intent = $intent;
+		$this->operator = $operator;
 		$value->attach($this);
 
 		parent::__construct($start, $end);
@@ -358,16 +362,17 @@ final class ast_assignment_statement extends ast_statement
 		return $this->conversion ?? throw new \LogicException('Assignment conversion is not settled');
 	}
 
-	/** Derive the converted scalar payload from the prepared operand without retaining another copy. */
+	/** Plain writes derive the converted payload; compound results remain unknown without arithmetic folding. */
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
-		return $this->local_def()->type_def()->convert_constant($this->conversion(), $this->value->constant());
+		$type = $this->local_def()->type_def();
+		return $this->operator === null ? $type->convert_constant($this->conversion(), $this->value->constant()) : null;
 	}
 
 	public function constant_known(): bool
 	{
 		$this->local_def();
-		return $this->value->constant_known();
+		return ($this->operator === null) && $this->value->constant_known();
 	}
 
 	public function reset_preparation(): void

@@ -30,6 +30,9 @@ final class Php_Grammar implements statement_grammar
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
 		$name = $cursor->name(token_kind::variable);
+		if ($parser->compound_operator() !== null) {
+			return $parser->assignment($start, $name, assignment_intent::existing_binding);
+		}
 		if ($cursor->is(token_kind::assign)) {
 			if (!$collector->has_local($name)) {
 				return $parser->declaration($start, $name, null);

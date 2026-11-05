@@ -230,6 +230,9 @@ final class Parser
 		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_assignment_statement)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
 		}
+		if (($initializer instanceof ast_assignment_statement) && ($initializer->operator !== null)) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Compound for clauses are deferred');
+		}
 		$header->statement($initializer, 0);
 		$condition = $this->value();
 		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
@@ -237,6 +240,9 @@ final class Parser
 		$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 			? token_kind::variable : token_kind::identifier);
 		$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
+		if ($update->operator !== null) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Compound for clauses are deferred');
+		}
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
 		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
 	}
@@ -541,13 +547,22 @@ final class Parser
 		return new ast_local_declaration($start, $end, $name, $type_name, $value);
 	}
 
+	/** Inspect only assignment spelling; the shared map does not authorize operand types. */
+	public function compound_operator(): ?binary_operator
+	{
+		$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind ?? null;
+		return $kind === null ? null : binary_operator::compound($kind);
+	}
+
 	/** $start: token position. */
 	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent,
 		token_kind $terminator = token_kind::semicolon): ast_assignment_statement
 	{
-		$this->cursor->take(token_kind::assign, '=');
+		$operator = $this->compound_operator();
+		$kind = $operator === null ? token_kind::assign : $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
+		$this->cursor->take($kind, 'assignment operator');
 		$value = $this->value();
 		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
-		return new ast_assignment_statement($start, $end, $name, $value, $intent);
+		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
 	}
 }

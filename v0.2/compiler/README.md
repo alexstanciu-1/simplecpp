@@ -21,6 +21,7 @@ See [int64 arithmetic](docs/arithmetic.md) for binary operations and their runti
 See [logical expressions](docs/logical.md) for generated truthiness and native short-circuit lowering.
 See [loop transfers](docs/transfers.md) for nearest-loop break/continue and transient completion flags.
 See [bounded for loops](docs/for.md) for header ownership, scope and update sequencing.
+See [int64 compound assignments](docs/compounds.md) for shared operator admission and ordered write-back.
 See [explicit scalar casts](docs/casts.md) for generated conversion reuse and AST-owned decisions.
 See [typed literal constants](docs/constants.md) for publication, imports and value-sensitive invalidation.
 See [scalar comparisons](docs/comparisons.md) for generated admission, sequencing and focused tests.

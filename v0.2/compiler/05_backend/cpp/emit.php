@@ -173,6 +173,9 @@ final class Cpp_Emitter
 					$lines[] = "\t}";
 				}
 			}
+			elseif (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
+				$lines[] = "\t" . $this->compound($statement, $global_references, $declarations, $required_headers);
+			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_assignment_statement)) {
 				$lines[] = "\t" . $this->binding($statement, $global_references, $declarations, $required_headers) . ';';
 			}
@@ -225,6 +228,26 @@ final class Cpp_Emitter
 	private function name(ast_local_binding $binding): string
 	{
 		return 'local_' . $binding->storage_id();
+	}
+
+	/**
+	 * Snapshot the old destination before RHS effects, compute, then commit once; no expression lambda is needed.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function compound(ast_assignment_statement $statement,
+		array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$type = $statement->local_def()->type_def();
+		$name = $this->name($statement->local_def());
+		$right = $this->value($statement->value, $global_references, $declarations, $headers);
+		foreach ($type->binary_headers($statement->operator) as $header) {
+			$headers[$header] = true;
+		}
+		return '{ const auto compound_previous = ' . $name . '; ' . $name . ' = '
+			. $type->lower_cpp_binary($statement->operator, 'compound_previous', $right) . '; }';
 	}
 
 	/**

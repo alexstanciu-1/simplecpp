@@ -169,7 +169,7 @@ final class Syntax_Inspection
 		}
 		if ($statement instanceof ast_assignment_statement) {
 			return ['kind' => 'assignment', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
-				'intent' => $statement->intent->name, 'value' => self::expression($statement->value),
+				'intent' => $statement->intent->name, 'operator' => $statement->operator?->name, 'value' => self::expression($statement->value),
 				'span' => self::span($statement)];
 		}
 		throw new \LogicException('Unhandled statement inspection');

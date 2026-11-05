@@ -32,10 +32,20 @@ abstract class type_definition
 		throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported literal for type: ' . $this->name);
 	}
 
-	/** Default rejection; generated definitions own supported operator and operand pairs. */
+	/** Attach ordinary binary facts through the same generated admission used by compound writes. */
 	public function prepare_binary(ast_binary_expression $value): void
 	{
-		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported binary operands or operator');
+		$result = $this->binary_result($value->operator, $value->right->type_def());
+		if (($value->left->type_def() !== $this) || ($result === null)) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported binary operands or operator');
+		}
+		$value->settle_binary($result);
+	}
+
+	/** Generated operator admission without requiring synthetic syntax; null means the pair is unsupported. */
+	public function binary_result(binary_operator $operator, type_definition $right): ?type_definition
+	{
+		return null;
 	}
 
 	public function lower_cpp_binary(binary_operator $operator, string $left, string $right): string

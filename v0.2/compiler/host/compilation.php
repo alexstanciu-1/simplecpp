@@ -135,7 +135,8 @@ final class Compilation_Inspection
 				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
 		}
 		return ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
-			'conversion' => $statement->conversion()->name, 'value' => self::value($statement->value)];
+			'conversion' => $statement->conversion()->name, 'operator' => $statement->operator?->name,
+			'value' => self::value($statement->value)];
 	}
 
 	/**

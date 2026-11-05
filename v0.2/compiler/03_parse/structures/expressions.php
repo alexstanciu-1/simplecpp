@@ -20,6 +20,19 @@ enum binary_operator: int
 	case logical_and = 12;
 	case logical_or = 13;
 
+	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
+	public static function compound(token_kind $token): ?self
+	{
+		return match ($token) {
+			token_kind::plus_assign => self::add,
+			token_kind::minus_assign => self::subtract,
+			token_kind::star_assign => self::multiply,
+			token_kind::slash_assign => self::divide,
+			token_kind::percent_assign => self::remainder,
+			default => null,
+		};
+	}
+
 	public function lazy(): bool
 	{
 		return ($this === self::logical_and) || ($this === self::logical_or);

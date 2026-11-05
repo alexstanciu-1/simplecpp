@@ -28,13 +28,13 @@ The parser supports parentheses and relational precedence above equality, with
 left association within each level. Grouping changes tree shape without adding a
 wrapper node; leaves retain their original token spans. `1 < 2 < 3` fails because
 its second comparison would mix bool and int, rather than behaving as a chained
-range test. Integer arithmetic uses the same path; see [arithmetic](arithmetic.md). Logical operators remain deferred.
+range test. Integer arithmetic uses the same path; see [arithmetic](arithmetic.md). Logical operators reuse generated truthiness; see [logical expressions](logical.md).
 
 `compiler.comparisons` in runtime metadata declares same-type admission, operator
 names, bool result and native lowering strategy. The generator validates this
 bounded vocabulary and emits direct preparation/lowering methods on canonical
 type definitions. Removing a row/operator removes its generated admission.
-Unsupported definitions inherit rejection. Inventory version is 10.
+Unsupported definitions inherit rejection. Inventory version is 11.
 
 Preparation visits left then right exactly once and invokes the left definition's
 generated admission handler. It performs no constant folding, callee-body scan,

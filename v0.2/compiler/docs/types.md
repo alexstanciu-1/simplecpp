@@ -34,14 +34,16 @@ Generated methods contain direct branches; compilation does not interpret metada
 or build a conversion matrix. Unsupported policies fail before publication.
 
 The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` and
-inventory version 10. Generated PHP is not tracked. CMake lists the byproducts and
+inventory version 11. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
 ## Shared type contract
 
 - `accepts_name()` and `type_registry::resolve()` provide canonical registration.
 - `type_registry::literal()` supplies generated literal spelling lookup to the parser.
-- `prepare_binary()` validates operands and attaches the result type; `lower_cpp_binary()` emits the approved operator.
+- Generated `binary_result(operator, right_type)` supplies shared operator admission without requiring syntax.
+- `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
+- `lower_cpp_binary()` emits the approved operation.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
 - `prepare_conversion(value, explicit)` selects a `value_conversion` enum at a destination boundary.
 - `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.

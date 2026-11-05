@@ -130,15 +130,15 @@ prepared type must satisfy the destination's generated implicit conversion rules
 current metadata admits same-type identity only, including int/int64 and
 float/float64 aliases. An earlier written declaration type does not authorize
 explicit conversions on later writes. Thus `byte b = 8;` is valid but `b = 9;`
-requires a future explicit conversion facility or an already-byte source.
+requires an explicit `(byte)` conversion or an already-byte source.
 
 Strings use owning value-copy assignment and preserve embedded NUL. Self-assignment
 is valid and has no observable effect for the supported built-in value types.
 Reads use source-order value facts; a write does not change earlier read facts or
 the declaration's initializer facts. Unknown values retain required runtime checks.
 
-Direct global writes, compound assignment, assignment expressions and member/index writes
-remain deferred. PHP first-write declarations follow the local inference rules below.
+Direct global writes, assignment expressions and member/index writes remain deferred.
+The bounded compound-statement extension is defined below. PHP first-write declarations follow the local inference rules below.
 
 ## Initializer-based local inference
 
@@ -195,3 +195,30 @@ even for an identity cast. Typed initialization, assignment, argument and return
 boundaries keep their own existing checks. Casting to null does not enable null
 inference. Cast expressions do not broaden the literal-only initializer contract
 for globals, constants or parameter defaults.
+
+
+## Int64 compound assignment statements — 2026-11-05
+
+All three flavors admit `+=`, `-=`, `*=`, `/=` and `%=` on existing initialized
+int/int64 local storage and parameters (including mutable reference parameters).
+The RHS must produce the same canonical int64 type; there is no implicit numeric
+promotion or narrowing. An explicit cast may supply an int64 RHS.
+PHP compound writes cannot introduce a local. Constants and direct globals are not
+writable destinations in this slice.
+
+These spellings select ordinary binary operations through one compound-assignment
+mechanism. The destination is resolved once, its old value is preserved before the
+RHS evaluates once, and the computed int64 value is then stored once. The
+[compound-update ordering contract](expression_evaluation.md#compound-updates--2026-10-10)
+applies. On failure, no compound write-back occurs; earlier RHS effects remain.
+In particular, starting at 10, `value += change(value)` stores 13 if `change`
+sets the same storage to 100 and returns 3.
+
+The existing int64 arithmetic contract is unchanged: native signed-overflow
+limitations, truncation toward zero for division, and checked zero divisors for
+division/remainder. No wrapping, saturation or checked-overflow policy is added.
+
+This slice admits statements only, not compound expressions yielding a value.
+Compound `for` clauses, increments, other operators/types, fields/indexes and
+implicit result-to-destination conversions remain deferred. Body statements in
+loops and conditions use the ordinary shared assignment path.

@@ -226,3 +226,15 @@ $type = \scpp\compiler\type_int64::instance();
 requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add), 'Native addition not classified');
 requireThat(!$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::divide)
     && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::remainder), 'Checked operations classified as reorderable');
+
+// Expression and compound admission query the same generated decision without constructing syntax.
+foreach ([\scpp\compiler\binary_operator::add, \scpp\compiler\binary_operator::subtract,
+    \scpp\compiler\binary_operator::multiply, \scpp\compiler\binary_operator::divide,
+    \scpp\compiler\binary_operator::remainder] as $operator) {
+    requireThat($type->binary_result($operator, $type) === $type, 'Missing shared arithmetic admission');
+    requireThat($type->binary_result($operator, \scpp\compiler\type_bool::instance()) === null, 'Mixed arithmetic admitted');
+}
+requireThat($type->binary_result(\scpp\compiler\binary_operator::equal, $type)
+    === \scpp\compiler\type_bool::instance(), 'Comparison result changed');
+requireThat(\scpp\compiler\type_null::instance()->binary_result(\scpp\compiler\binary_operator::add,
+    \scpp\compiler\type_null::instance()) === null, 'Default operation admission changed');
