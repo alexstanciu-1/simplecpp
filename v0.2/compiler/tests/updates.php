@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Update reset/reprepare differs');
-	foreach (['bool' => 'true', 'byte' => '1', 'string' => '"a"', 'null' => 'null'] as $type => $value) {
+	foreach (['bool' => 'true', 'string' => '"a"', 'null' => 'null'] as $type => $value) {
 		foreach ($forms as $form) {
 			rejects(fn() => $prepare($decl('x', $type, $value) . $form . '; return 8;'), 'Unsupported update type');
 		}

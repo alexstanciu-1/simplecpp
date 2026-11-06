@@ -4,14 +4,15 @@ Doc Status: supporting
 
 The [conditional contract](../../../specs/conditional_statements_v0_2.md) owns semantics.
 All flavors admit braced if/elseif/else-if/else, nested arms, and branch-local declarations.
-Unbraced arms, standalone blocks, ternary, null/byte conditions,
+Unbraced arms, standalone blocks, ternary, null conditions,
 constant-condition reachability and precise value merging remain deferred.
 Logical `!`, `&&` and `||` now reuse this generated truthiness; see [logical expressions](logical.md).
 
 ## Type boundary
 
-Runtime metadata `compiler.conditions` admits bool identity, integer/float nonzero,
-and string nonempty-except-exactly-zero. The API generator emits `prepare_condition`,
+Runtime metadata `compiler.conditions` admits bool identity and float nonzero,
+and string nonempty-except-exactly-zero. `compiler.integer_operators.condition` supplies
+int64 and uint8/byte zero/nonzero truthiness through family expansion. The API generator emits `prepare_condition`,
 `lower_cpp_condition` and `condition_headers` on each admitted canonical type class.
 Missing admission retains the rejecting base implementation. No metadata is interpreted
 while preparing a source. Conditions do not call generated value-conversion handlers.

@@ -2,6 +2,10 @@
 
 Doc Status: supporting
 
+The subsequent [integer-family slice](integer_unary_updates.md) adds byte/uint8 and
+moves integer capability ownership into family metadata. This page records the
+original int64 slice and its verification.
+
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#int64-unary-signs--2026-11-05)
 owns admission and semantics. All three flavors support int/int64 unary `+`/`-`:
 

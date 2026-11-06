@@ -39,14 +39,13 @@ Power remains right-associative, without reversing operand evaluation order.
 
 In the active PHP-first v0.2 compiler, `!`, `&&` and `||` interpret each operand
 independently through the existing condition-truthiness contract. Bool, int/int64,
-float/float64 and string may be combined freely. The result is always bool, not
+uint8/byte, float/float64 and string may be combined freely. The result is always bool, not
 one of the operand values. This supersedes narrower bool/bool or numeric/numeric
 logical admission for this slice, including earlier exclusions of string operands
 and bool/numeric mixing. It does not broaden eager logical xor or value conversions.
 
 Bool uses its value; numeric zero, including signed floating zero, is false.
-Strings are false only when empty or exactly `"0"`. Direct null and distinct-byte
-operands remain deferred. A condition conversion is not a typed bool conversion.
+Strings are false only when empty or exactly `"0"`. Direct null operands remain deferred. Byte/uint8 uses integer zero/nonzero truthiness. A condition conversion is not a typed bool conversion.
 
 Negation evaluates one operand once and inverts its truthiness. AND evaluates the
 RHS only when the LHS is true; OR evaluates it only when the LHS is false. Reached

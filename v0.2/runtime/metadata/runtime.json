@@ -869,15 +869,6 @@
       "rounding": "nearest_ties_even"
     },
     "unary": {
-      "int64": {
-        "result": "int64",
-        "overflow": "native",
-        "lowering": "native",
-        "operators": [
-          "positive",
-          "negative"
-        ]
-      },
       "float64": {
         "result": "float64",
         "overflow": "native",
@@ -889,13 +880,11 @@
       }
     },
     "updates": {
-      "int64": {
-        "operators": ["increment", "decrement"],
-        "overflow": "native",
-        "lowering": "native"
-      },
       "float64": {
-        "operators": ["increment", "decrement"],
+        "operators": [
+          "increment",
+          "decrement"
+        ],
         "overflow": "native",
         "lowering": "native"
       }
@@ -1018,7 +1007,10 @@
         "greater_equal"
       ],
       "compounds": {
-        "types": ["int64", "uint8"],
+        "types": [
+          "int64",
+          "uint8"
+        ],
         "write_back": "checked"
       },
       "bindings": {
@@ -1030,7 +1022,16 @@
           "divide": "uint8_divide",
           "remainder": "uint8_remainder"
         }
-      }
+      },
+      "unary": [
+        "positive",
+        "negative"
+      ],
+      "updates": [
+        "increment",
+        "decrement"
+      ],
+      "condition": "nonzero_integer"
     },
     "arithmetic": {
       "float64": {
@@ -1108,7 +1109,6 @@
     },
     "conditions": {
       "bool_t": "identity",
-      "int64": "nonzero_integer",
       "float64": "nonzero_float",
       "string": "nonempty_except_zero"
     }

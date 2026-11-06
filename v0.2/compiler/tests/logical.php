@@ -118,8 +118,6 @@ foreach (flavor::cases() as $flavor)
 	foreach (['!null', 'true || null', 'false && null'] as $invalid) {
 		rejects(fn() => $prepare($decl('result', 'bool', $invalid) . 'return 8;'), 'Unsupported condition type');
 	}
-	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'if (!' . $var('b') . ') {} return 8;'), 'Unsupported condition type');
-	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'if (true || ' . $var('b') . ') {} return 8;'), 'Unsupported condition type');
 	rejects(fn() => $prepare('if (true || absent()) {} return 8;'), 'Unknown function');
 	rejects(fn() => $prepare($fn('nothing', '', 'void', 'return;') . 'if (false && nothing()) {} return 8;'), 'Void call');
 	rejects(fn() => $prepare($decl('self', 'bool', '!' . $var('self')) . 'return 8;'), 'during its initialization');
@@ -145,7 +143,7 @@ foreach (flavor::cases() as $flavor)
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
 		$tokens = $caller->tokens;
-		$write('byte', '0');
+		$write('null', 'null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
 		verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature change');

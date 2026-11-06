@@ -113,6 +113,31 @@ foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conver
     } catch (\RuntimeException $expected) {
     }
 }
+// Integer single-operand capabilities share one family owner and remain independently removable.
+$subset = unserialize(serialize($rawMetadata));
+$subset->compiler->integer_operators->unary = [];
+$subset->compiler->integer_operators->updates = [];
+$generated = renderCompiler($subset, $facts);
+foreach (['int64', 'uint8'] as $name) {
+    requireThat(!str_contains($generated['types/' . $name . '.php'], 'public function prepare_unary')
+        && !str_contains($generated['types/' . $name . '.php'], 'public function supports_update')
+        && str_contains($generated['types/' . $name . '.php'], 'public function prepare_condition'), 'Integer capability removal ignored');
+}
+foreach (['unary', 'updates', 'condition', 'duplicate', 'runtime'] as $change) {
+    $bad = unserialize(serialize($rawMetadata));
+    match ($change) {
+        'unary' => $bad->compiler->integer_operators->unary[] = 'invert',
+        'updates' => $bad->compiler->integer_operators->updates[] = 'double',
+        'condition' => $bad->compiler->integer_operators->condition = 'identity',
+        'duplicate' => $bad->compiler->conditions->uint8 = 'nonzero_integer',
+        'runtime' => $bad->operations->negate->promotion = 'integer_domain_maximum',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid integer single-operand family admitted');
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
 $registry = registry($metadata, $facts);
 $normalized = compilerIntegerOperations($metadata, compilerTypePlan($metadata, $facts, $registry), $registry);
@@ -291,10 +316,10 @@ try {
 echo "Generated native lowering, metadata admission, freshness and cleanup passed\n";
 
 // Condition admission follows metadata independently of value conversions.
-foreach (['int64', 'float64', 'bool', 'string'] as $type) {
+foreach (['int64', 'uint8', 'float64', 'bool', 'string'] as $type) {
     requireThat(str_contains($files['types/' . $type . '.php'], 'public function prepare_condition'), 'Missing generated condition handler');
 }
-foreach (['null', 'uint8'] as $type) {
+foreach (['null'] as $type) {
     requireThat(!str_contains($files['types/' . $type . '.php'], 'public function prepare_condition'), 'Deferred condition was generated');
 }
 $without = unserialize(serialize($metadata));
@@ -655,7 +680,7 @@ requireThat(!str_contains($code, 'update_operator::increment') && str_contains($
 foreach (['type', 'operator', 'overflow', 'lowering'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
-        'type' => $bad->compiler->updates->uint8 = clone $bad->compiler->updates->int64,
+        'type' => $bad->compiler->updates->bool_t = clone $bad->compiler->updates->int64,
         'operator' => $bad->compiler->updates->int64->operators[] = 'double',
         'overflow' => $bad->compiler->updates->int64->overflow = 'wrap',
         'lowering' => $bad->compiler->updates->int64->lowering = 'helper',
@@ -690,7 +715,7 @@ requireThat(str_contains($limitedSource, 'unary_operator::negative') && !str_con
 foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
-        'type' => $bad->compiler->unary->uint8 = clone $bad->compiler->unary->int64,
+        'type' => $bad->compiler->unary->bool_t = clone $bad->compiler->unary->int64,
         'operator' => $bad->compiler->unary->int64->operators[] = 'invert',
         'overflow' => $bad->compiler->unary->int64->overflow = 'wrap',
         'lowering' => $bad->compiler->unary->int64->lowering = 'helper',

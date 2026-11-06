@@ -101,7 +101,7 @@ foreach (flavor::cases() as $flavor)
 	Syntax_Inspection::file($entry->file);
 	Compilation_Inspection::body($entry->body());
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . '-8|C-9|9|-7Y')];
-	foreach (['-true', '+false', '-null', '-"8"', '+(byte)8'] as $invalid) {
+	foreach (['-true', '+false', '-null', '-"8"'] as $invalid) {
 		rejects(fn() => $prepare('echo ' . $invalid . '; return 8;'), 'Unsupported unary');
 	}
 	rejects(fn() => $prepare('echo -9223372036854775808; return 8;'), 'outside int64 range');

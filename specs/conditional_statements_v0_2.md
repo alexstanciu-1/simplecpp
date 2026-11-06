@@ -56,11 +56,11 @@ normalize to the same AST; `elseif` is reserved in each flavor. Unbraced arms re
 an implementation debt against the broader contract above. Standalone blocks, logical operators and ternary expressions are not added by this
 slice. Braced while/do-while are now covered by [the loop contract](loop_statements_v0_2.md).
 
-Conditions admit bool, int/int64, float/float64 and string. Bool uses its value;
+Conditions admit bool, int/int64, uint8/byte, float/float64 and string. Bool uses its value;
 numeric zero (including negative floating zero) is false; strings are false only
 when empty or exactly `"0"`. Other strings, including `"false"`, are true. This is
-condition truthiness, not a grant of string-to-bool conversion. Direct null and
-new distinct-byte conditions remain deferred, as do wrapper/handle conditions.
+condition truthiness, not a grant of string-to-bool conversion. Direct null conditions remain deferred, as do wrapper/handle conditions. The integer-family
+slice admits byte/uint8 using the same zero/nonzero rule.
 
 All arms are prepared once even when statically unreachable. Each arm owns a lexical
 scope. Explicit declarations may shadow outer bindings; PHP bare writes select an

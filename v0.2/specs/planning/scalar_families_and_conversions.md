@@ -3,7 +3,7 @@
 Doc Status: planning
 Date: 2026-11-06
 Scope: v0.2 scalar metadata, generated compiler types and their runtime bindings.
-Status: identity, active numeric family conversions, integer arithmetic/comparisons, checked integer compounds and mixed numeric operator families implemented. Collections are separate.
+Status: identity, active numeric family conversions, integer arithmetic/comparisons, checked integer compounds and mixed numeric operators and integer signs/updates/truthiness implemented. Collections are separate.
 
 The [normative scalar amendment](../../../specs/compiler_scalars_v0_2.md#agreed-family-and-representation-model--2026-11-06)
 records the decision. This document organizes implementation, not proof of support.
@@ -83,7 +83,8 @@ consume these policies; user-defined overloads and conversion ranking are deferr
 
 ## Implementation slices
 
-Slices 1–2, active integer arithmetic/comparison/compound groups and [mixed numeric families](../../compiler/docs/mixed_numeric_families.md) are implemented. Remaining groups require agreement.
+Slices 1–2, active integer arithmetic/comparison/compound groups and [mixed numeric families](../../compiler/docs/mixed_numeric_families.md) are implemented. Integer signs, discarded-value updates and truthiness are also implemented; bitwise/shift
+and string/null groups and optional representations still require agreement.
 
 1. **Family/representation foundation and byte migration.** Give canonical definitions
    truthful family/representation ownership; derive byte/uint8 identity from runtime

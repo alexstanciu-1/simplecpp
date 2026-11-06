@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-06, after mixed numeric operator families.
+Updated: 2026-11-06, after integer-family signs, updates and truthiness.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -17,6 +17,7 @@ Next scalar work follows the [agreed family/representation and conversion plan](
 with grouped implementation slices rather than individual operators. Byte/uint8 identity, integer arithmetic/comparisons/checked compounds and
 [active numeric family conversions](../../compiler/docs/family_conversions.md) are implemented.
 [Mixed numeric operators](../../compiler/docs/mixed_numeric_families.md) also include byte/float arithmetic, comparisons and floating-destination compounds.
+[Integer signs, discarded-value updates and truthiness](../../compiler/docs/integer_unary_updates.md) now include byte.
 Optional numeric representations and remaining operator groups are pending.
 
 ## Compact inventory

@@ -88,7 +88,6 @@ foreach (flavor::cases() as $flavor)
 	verify((new Cpp_Emitter())->emit($again) === $cpp && $again->body()->statement_visits === $visits, 'Reset/reprepare differs');
 	foreach ([
 		['if (null) {} return 8;', 'Unsupported condition type'],
-		[$decl('b', 'byte', '8') . 'if (' . $var('b') . ') {} return 8;', 'Unsupported condition type'],
 		[$fn('nothing', '', 'void', '') . 'if (nothing()) {} return 8;', 'Void call'],
 		['if (false) { missing(); } return 8;', 'Unknown function'],
 		['if (true) { return 8; }', 'Entry slice requires'],
@@ -132,7 +131,7 @@ foreach (flavor::cases() as $flavor)
 		$write('string', '"false"');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body-only edit invalidated caller');
-		$write('byte', '8');
+		$write('null', 'null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
 		$write('bool', 'false');

@@ -118,7 +118,6 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('float', '1.0') . $x . '=(byte)1; return 8;'), 'implicit conversion');
-	rejects(fn() => $prepare('if ((byte)1) {} return 8;'), 'condition');
 	$directory = sys_get_temp_dir() . '/scpp-mixed-numeric-families-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {

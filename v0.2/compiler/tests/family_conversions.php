@@ -106,7 +106,6 @@ foreach (flavor::cases() as $flavor)
 	foreach (['(byte)1 + true'] as $expression) {
 		rejects(fn() => $prepare('if (' . $expression . ') {} return 8;'), 'Unsupported binary');
 	}
-	rejects(fn() => $prepare($decl('byte', '8') . 'if (' . $x . ') {} return 8;'), 'Unsupported condition');
 	foreach (['null', '"1"'] as $expression) rejects(fn() => $prepare($decl('byte', $expression) . 'return 8;'), 'conversion');
 	$source = $fn('float_to_byte', $param('float', 'v'), 'byte', 'return ' . $v . ';')
 		. $fn('byte_to_float', $param('byte', 'v'), 'float', 'return ' . $v . ';')

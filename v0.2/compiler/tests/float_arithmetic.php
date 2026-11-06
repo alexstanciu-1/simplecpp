@@ -94,7 +94,7 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare($decl($invalid) . 'return 8;'), 'Unsupported binary');
 	}
 	foreach (['+=', '-=', '*=', '/='] as $op) {
-		rejects(fn() => $prepare($decl('1.0') . $var('x') . $op . '2; return 8;'), 'Unsupported compound');
+		rejects(fn() => $prepare($decl('1.0') . $var('x') . $op . 'true; return 8;'), 'Unsupported compound');
 	}
 	rejects(fn() => $prepare($decl('1e309') . 'return 8;'), 'finite');
 	$directory = sys_get_temp_dir() . '/scpp-float-arithmetic-' . bin2hex(random_bytes(8));

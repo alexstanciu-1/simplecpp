@@ -246,7 +246,7 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     $compiler = compilerConversionFamilies($metadata, $definitions, $types);
     if (!isset($compiler->integer_operators)) return $compiler;
     $group = $compiler->integer_operators;
-    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings']);
+    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings', 'unary', 'updates', 'condition']);
     literals($group, ['promotion' => 'integer_domain_maximum']);
     $policy = integerPromotionPolicy($metadata, $types);
     $arithmetic = names(at($group, 'arithmetic'));
@@ -257,10 +257,25 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     $compound = names(at($compoundPolicy, 'types'));
     $bindings = object(at($group, 'bindings'));
     $runtime = object(at($metadata, 'operations'));
+    $unary = names(at($group, 'unary'));
+    $updates = names(at($group, 'updates'));
+    requireThat(array_diff($unary, ['positive', 'negative']) === [], 'Unsupported integer unary operator');
+    requireThat(array_diff($updates, ['increment', 'decrement']) === [], 'Unsupported integer update operator');
+    requireThat(at($group, 'condition') === 'nonzero_integer', 'Unsupported integer condition policy');
+    foreach ($unary as $operator) {
+        requireThat(at($runtime[$operator === 'negative' ? 'negate' : 'positive'] ?? null, 'promotion') === 'preserve_operand', 'Integer unary must preserve operand');
+    }
+    foreach ($updates as $operator) foreach (['prefix', 'postfix'] as $form) {
+        requireThat(at($runtime[$form . '_' . $operator] ?? null, 'promotion') === 'preserve_operand', 'Integer update must preserve operand');
+    }
     $integers = array_intersect_key($types, $definitions);
     foreach ($compound as $identity) requireThat(isset($integers[$identity]), 'Inactive integer compound identity');
     foreach ($integers as $identity => $type) {
         requireThat(!isset($compiler->arithmetic->$identity) && !isset($compiler->comparisons->$identity), 'Duplicate integer operation owner');
+        requireThat(!isset($compiler->unary->$identity) && !isset($compiler->updates->$identity) && !isset($compiler->conditions->$identity), 'Duplicate integer unary/update/condition owner');
+        $compiler->unary->$identity = (object)['operators' => $unary, 'result' => $identity, 'overflow' => 'native', 'lowering' => 'native'];
+        $compiler->updates->$identity = (object)['operators' => $updates, 'overflow' => 'native', 'lowering' => 'native'];
+        $compiler->conditions->$identity = $group->condition;
         $operators = [];
         foreach ($arithmetic as $op) {
             requireThat(isset($runtime[$op]) && in_array($op, ['add', 'subtract', 'multiply', 'divide', 'remainder'], true), 'Unsupported integer arithmetic group');
@@ -317,7 +332,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity, $binary);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($compiler, $identity, $definitions) . compilerUnary($compiler, $identity, $safety, $definitions, $types) . compilerPromotions($compiler, $conversions, $definitions, $identity, $binary);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -934,10 +949,10 @@ $headerMethods";
 }
 
 /** Generate only explicitly admitted scalar updates; no expression result or implicit arithmetic-based admission. */
-function compilerUpdates(mixed $compiler, string $identity): string {
+function compilerUpdates(mixed $compiler, string $identity, array $definitions): string {
     $selected = [];
     foreach (object(at($compiler, 'updates')) as $name => $row) {
-        requireThat(in_array($name, ['int64', 'float64'], true), 'Unsupported compiler update type');
+        requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating'], true), 'Unsupported compiler update type');
         fields($row, ['operators', 'overflow', 'lowering']);
         requireThat(at($row, 'overflow') === 'native' && at($row, 'lowering') === 'native', 'Unsupported compiler update policy');
         $operators = names(at($row, 'operators'), 'Duplicate compiler update operator');
@@ -976,10 +991,10 @@ $lowering\t\t\tdefault => throw new \\LogicException('Update operation was not a
 }
 
 /** Emit bounded numeric prefix admission and direct lowering from metadata, without per-expression lookup tables. */
-function compilerUnary(mixed $compiler, string $identity, array $safety): string {
+function compilerUnary(mixed $compiler, string $identity, array $safety, array $definitions, array $types): string {
     $selected = [];
     foreach (object(at($compiler, 'unary')) as $name => $row) {
-        requireThat(in_array($name, ['int64', 'float64'], true), 'Unsupported compiler unary type');
+        requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating'], true), 'Unsupported compiler unary type');
         fields($row, ['result', 'overflow', 'lowering', 'operators']);
         literals($row, ['result' => $name, 'overflow' => 'native', 'lowering' => 'native']);
         $operators = names(at($row, 'operators'), 'Duplicate unary operator');
@@ -994,7 +1009,10 @@ function compilerUnary(mixed $compiler, string $identity, array $safety): string
     foreach ($selected as $operator) {
         $admission[] = 'unary_operator::' . $operator;
         $sign = $operator === 'positive' ? '+' : '-';
-        $lowering .= "\t\t\tunary_operator::$operator => '($sign(' . \$operand . '))',\n";
+        // C++ promotes narrow operands; restore their identity before any enclosing expression uses the result.
+        $restore = isset($types[$identity]) && $types[$identity]['bits'] < 64;
+        $expression = $restore ? 'static_cast<' . $definitions[$identity]['cpp'] . '>(' . $sign . '(' : '(' . $sign . '(';
+        $lowering .= "\t\t\tunary_operator::$operator => '$expression' . \$operand . '))',\n";
     }
     $cases = implode(', ', $admission);
     $safeCases = compilerStrategyReorderable($safety, 'native') ? "\t\t\t$cases => true,\n" : '';

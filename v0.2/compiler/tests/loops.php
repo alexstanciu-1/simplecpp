@@ -90,7 +90,6 @@ foreach (flavor::cases() as $flavor)
 
 	foreach ([
 		['while (null) {} return 8;', 'Unsupported condition type'],
-		[$decl('b', 'byte', '1') . 'do {} while (' . $var('b') . '); return 8;', 'Unsupported condition type'],
 		['do { return 8; } while (null);', 'Unsupported condition type'],
 		['while (false) { missing(); } return 8;', 'Unknown function'],
 		['while (true) { return 8; }', 'Entry slice requires'],
@@ -147,7 +146,7 @@ foreach (flavor::cases() as $flavor)
 		$write('string', '"00"');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body-only edit invalidated caller');
-		$write('byte', '8');
+		$write('null', 'null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
 		$write('bool', 'false');

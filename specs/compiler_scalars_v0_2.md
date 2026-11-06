@@ -508,3 +508,25 @@ existing destination snapshot, single RHS evaluation and failed-store rules.
 Integer-destination floating compounds and floating remainder remain deferred.
 This does not authorize bool numeric operators, byte truthiness, new unary/update
 behavior, optional representations or cross-type ordinary assignment.
+
+## Integer-family signs, updates and truthiness — 2026-11-06
+
+Active int64/int and uint8/byte support unary `+` and `-`, preserving the operand's
+canonical identity. Unary plus preserves its value. Unsigned negation reduces modulo
+2^width: `-(byte)1` is uint8 255, and `-(byte)0` is uint8 zero. Restore this representation
+before an enclosing expression consumes it; `(-(byte)1) + 1` is int64 256.
+Operands are evaluated once. Unary results remain non-addressable values. Existing
+signed-overflow and signed-literal magnitude limitations are unchanged.
+
+Prefix/postfix `++` and `--` are admitted at the existing discarded-value statement
+and for-header positions for both active integer identities. They preserve storage
+identity; unsigned updates wrap: byte 255 increments to zero and zero decrements to
+255. No checked narrowing is inserted. This deliberately differs from `byte += 1`,
+whose int64 RHS selects int64 calculation followed by checked byte write-back.
+Locals, value parameters and mutable reference parameters retain existing write rules;
+value-producing updates and additional writable locations remain deferred.
+
+Integer truthiness is zero=false, nonzero=true, including uint8/byte. The same rule
+applies to supported conditions and `!`, `&&`, `||`, preserving short-circuit behavior.
+This supersedes earlier byte-condition exclusions. Null conditions remain deferred.
+No new bool arithmetic, implicit assignment conversions or optional widths are added.
