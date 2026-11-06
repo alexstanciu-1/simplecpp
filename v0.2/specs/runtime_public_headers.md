@@ -45,10 +45,11 @@ semantics remain [output_v0_2](../../specs/output_v0_2.md).
 
 ## Metadata-owned string/output providers
 
-`runtime.json` owns `submodules` (module, header and direct `requires` dependencies).
+`runtime.json` owns `submodules` (module, header, direct `requires` providers and
+`requires_exports` semantic type dependencies).
 The runtime string and output records select their provider. Compiler bindings
-reference the runtime `declaration_group`, so runtime publication does not depend
-on compiler lowering strategies or maintain a second header spelling.
+reference `type_export` for types and `declaration_group` for output helpers.
+Runtime publication does not depend on compiler lowering strategies.
 
 The API generator validates this graph and each declaration group's intrinsic
 provider requirements before publication. Requirements may be satisfied through
@@ -57,7 +58,9 @@ bindings and literal-header fallbacks for migrated bindings. The prepared plan
 separates provider `nodes` from declaration `groups`. The assembler places string
 and output declaration groups into their selected headers. Both may share a
 provider. Existing scalar headers are registered dependency providers whose
-contents and publication-selected paths remain owned by their existing renderers.
+contents remain owned by their existing renderers. Metadata owns provider paths;
+legacy scalar publication header fields must match them or generation fails before
+publication.
 Only core submodules and complete-header dependencies are supported in this slice.
 Other families, scalar representations and general forward-declaration synthesis
 are unchanged.
@@ -101,3 +104,24 @@ existing private scalar semantics for zero-divisor checks and native arithmetic.
 It does not add signed-overflow checks. Compiler lowering emits ordered snapshots
 before invoking these functions; plain addition/subtraction/multiplication need no
 runtime include. The isolated-header proof is `tests/arithmetic_runtime.py`.
+
+## Representation-independent type exports
+
+`type_exports` is a list of existing canonical identities, public `name` spellings
+and placement references. Scalar rows select a `provider`; movable type rows select
+their owning `declaration_group`, which supplies the provider. The planner resolves
+`scpp::` names and dependency providers once. Names must already be declared for the
+identity (including existing integer aliases such as `byte`); exports do not invent
+new declarations or admit new source types.
+
+The bounded scalar adapter validates that an export's provider is the registered
+renderer that actually declares it. Moving those declarations requires changing
+their renderer owner, not merely relabeling an export. String placement can already
+move between assembled providers. Its invariant contract requires `bool_t`; string
+preparation adds dependencies for the casts actually selected by the publication.
+Enabled but unpublished text-conversion capabilities add no intrinsic requirements.
+The count representation is native and adds no public type dependency.
+
+The include planner knows nothing about classes versus native aliases, constructors,
+extraction members or conversion admission. Existing lowering strategies retain
+those responsibilities. The native-alias migration is a separate workstream.

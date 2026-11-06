@@ -216,7 +216,8 @@ the wrapped count signature is no longer emitted. See [string boundaries](../../
 
 The core string/output providers and their direct public dependencies live in
 `runtime/metadata/runtime.json`. Compiler bindings refer to runtime declaration
-groups; public paths are resolved once during compiler generation. Runtime
+groups for helpers and semantic `type_export` identities for types; names and
+public paths are resolved once during compiler generation. Runtime
 publication version 3 also records `private/output_provider.hpp` for the compiled
 output implementation. Default APIs and scalar storage remain unchanged.
 
@@ -238,3 +239,16 @@ dependency reachability, and compiler resolution rejects wrong owners or migrate
 literal-header fallbacks. The provider proof also regenerates handlers and restarts
 the real project compiler against an existing application/native build. Restart
 retained PHP compiler processes after regeneration; hot replacement is not supported.
+
+
+The export plan resolves `requires_exports` into ordinary provider edges before
+cycle and reachability checks. Runtime export names reuse canonical declarations
+and existing aliases; the scalar adapter checks real renderer placement. Include
+selection never inspects representation or conversion strategy. Tests cover a
+`uint8` export spelled `byte`, string type relocation, invalid export identities and
+placement, all-flavor recovery, and restarted cached application/native rebuilds.
+
+Scalar publication paths must agree with metadata provider paths; the adapter rejects
+conflicts before publishing. String cast dependencies come from the actual publication,
+not the enabled conversion-policy catalog. The provider proof covers both rules and
+an independent spelling-only cached rebuild using an executed checked byte conversion.

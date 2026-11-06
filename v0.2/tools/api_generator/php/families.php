@@ -86,6 +86,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $plan['conversions'][] = conversion($target, 'string', false, false, $target === 'bool_t' ? 'parse_boolean_text':'parse_decimal', true);
         $plan['conversions'][] = conversion('string', $target, false, $target !== 'float64', $target === 'bool_t' ? 'format_boolean_text':'format_decimal', true);
     }
+    requireExportDependencies($plan['submodules'], $provider, array_merge(['bool_t'], names(at($p, 'casts'))));
     $methods = [];
     $countRepresentation = $registry[$count]['representation'];
     foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {

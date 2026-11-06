@@ -9,8 +9,8 @@ namespace Scpp\Api;
  */
 function declarationGroups(mixed $metadata): array {
     $contracts = [
-        'string' => ['requires' => ['types', 'values'], 'exports' => [['kind' => 'type', 'identity' => 'string']]],
-        'output' => ['requires' => [], 'exports' => [
+        'string' => ['requires' => ['bool_t'], 'types' => ['string'], 'bindings' => []],
+        'output' => ['requires' => [], 'types' => [], 'bindings' => [
             ['operand' => 'int64', 'strategy' => 'integer'], ['operand' => 'string', 'strategy' => 'bytes']]],
     ];
     $groups = [];
@@ -23,14 +23,62 @@ function declarationGroups(mixed $metadata): array {
     return $groups;
 }
 
-/** Resolve public providers once; existing scalar renderers retain their publication-owned paths. */
+/** Resolve canonical runtime identities and existing public spellings, without inspecting representations.
+ * The legacy renderer adapter checks placement; it does not choose construction or extraction.
+ */
+function typeExports(mixed $metadata, array $nodes, array $groups, array $existing): array {
+    $owners = [];
+    foreach (object(at($metadata, 'types')) as $identity => $_) $owners[$identity] = $existing['types'] ?? null;
+    foreach (object(at($metadata, 'values')) as $identity => $_) $owners[$identity] = $existing['values'] ?? null;
+    $owners[textValue(at($metadata->floating, 'type'))] = $existing['values'] ?? null;
+    $typeGroups = [];
+    foreach ($groups as $group => $contract) {
+        foreach ($contract['types'] as $identity) {
+            requireThat(!array_key_exists($identity, $owners), 'Ambiguous type declaration owner');
+            $owners[$identity] = $contract['provider'];
+            $typeGroups[$identity] = $group;
+        }
+    }
+    $aliases = object(at($metadata, 'integer_aliases'));
+    $exports = [];
+    foreach (listValue(at($metadata, 'type_exports')) as $row) {
+        fields($row, ['identity', 'name', 'provider', 'declaration_group']);
+        $identity = textValue(at($row, 'identity'));
+        requireThat(array_key_exists($identity, $owners), 'Unknown type export: ' . $identity);
+        requireThat(!isset($exports[$identity]), 'Duplicate type export: ' . $identity);
+        $name = textValue(at($row, 'name'));
+        requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $name) === 1, 'Invalid public type name');
+        requireThat(($aliases[$name] ?? $name) === $identity, 'Public type name is not declared for export: ' . $identity);
+        if (isset($row->declaration_group)) {
+            $group = textValue($row->declaration_group);
+            requireThat(!isset($row->provider) && ($typeGroups[$identity] ?? null) === $group, 'Incompatible type export declaration group');
+            $provider = $groups[$group]['provider'];
+        } else {
+            requireThat(!isset($typeGroups[$identity]), 'Type export requires its declaration group');
+            $provider = textValue(at($row, 'provider'));
+        }
+        requireThat(isset($nodes[$provider]), 'Unknown type export provider: ' . $provider);
+        requireThat($owners[$identity] === $provider, 'Type export disagrees with declaration placement: ' . $identity);
+        $exports[$identity] = ['symbol' => 'scpp::' . $name, 'provider' => $provider];
+    }
+    ksort($exports, SORT_STRING);
+    return $exports;
+}
+
+/** A semantic export requirement resolves to the same provider used by compiler name queries. */
+function typeExport(array $plan, string $identity): array {
+    requireThat(isset($plan['type_exports'][$identity]), 'Missing type export: ' . $identity);
+    return $plan['type_exports'][$identity];
+}
+
+/** Resolve public providers once; metadata owns paths; legacy publication fields must agree. */
 function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
     $nodes = [];
     $paths = [];
     $existing = [];
     foreach (object(at($metadata, 'submodules')) as $id => $row) {
         requireThat(preg_match('/^[a-z][a-z0-9_.]*$/D', $id) === 1, 'Invalid submodule identity');
-        fields($row, ['module', 'header', 'requires', 'existing']);
+        fields($row, ['module', 'header', 'requires', 'requires_exports', 'existing']);
         // Only core providers are integrated in this slice; header reachability grants no language admission.
         requireThat(textValue(at($row, 'module')) === 'core', 'Unavailable submodule module');
         $header = textValue(at($row, 'header'));
@@ -39,13 +87,25 @@ function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
             requireThat(in_array($slot, ['types', 'values'], true), 'Unknown existing submodule renderer');
             requireThat(!isset($existing[$slot]), 'Duplicate existing submodule renderer');
             $existing[$slot] = $id;
-            requireThat(names(at($row, 'requires')) === [], 'Existing renderer dependencies are not configurable');
-            $header = $existingHeaders[$slot] ?? $header;
+            requireThat(names(at($row, 'requires')) === [] && names($row->requires_exports ?? []) === [], 'Existing renderer dependencies are not configurable');
+            requireThat(!isset($existingHeaders[$slot]) || $existingHeaders[$slot] === $header,
+                'Scalar publication header conflicts with provider: ' . $id);
         }
         requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid submodule header');
         requireThat(!isset($paths[$header]), 'Conflicting submodule headers');
         $paths[$header] = true;
         $nodes[$id] = ['header' => $header, 'requires' => names(at($row, 'requires')), 'existing' => isset($row->existing)];
+    }
+    $groups = declarationGroups($metadata);
+    $exports = typeExports($metadata, $nodes, $groups, $existing);
+    $plan = ['nodes' => $nodes, 'groups' => $groups, 'type_exports' => $exports];
+    foreach (object(at($metadata, 'submodules')) as $id => $row) {
+        foreach (names($row->requires_exports ?? [], 'Duplicate export dependency') as $identity) {
+            $provider = typeExport($plan, $identity)['provider'];
+            if ($provider !== $id) $nodes[$id]['requires'][] = $provider;
+        }
+        $nodes[$id]['requires'] = array_values(array_unique($nodes[$id]['requires']));
+        sort($nodes[$id]['requires'], SORT_STRING);
     }
     $states = [];
     $closures = [];
@@ -64,18 +124,28 @@ function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
     };
     foreach (array_keys($nodes) as $id) $visit($id);
     ksort($nodes, SORT_STRING);
+    foreach ($closures as &$closure) ksort($closure, SORT_STRING);
+    unset($closure);
+    ksort($closures, SORT_STRING);
     fields(at($metadata, 'output'), ['provider']);
-    $plan = ['nodes' => $nodes, 'groups' => declarationGroups($metadata)];
+    $plan['nodes'] = $nodes;
+    $plan['closures'] = $closures;
     foreach ($plan['groups'] as $name => $group) {
         $id = $group['provider'];
         providerHeader($plan, $id);
         requireThat(!$nodes[$id]['existing'], 'Declaration group cannot replace an existing renderer');
-        foreach ($group['requires'] as $slot) {
-            requireThat(isset($existing[$slot]) && isset($closures[$id][$existing[$slot]]),
-                "Declaration group $name requires existing provider $slot");
-        }
+        requireExportDependencies($plan, $id, $group['requires']);
     }
     return $plan;
+}
+
+/** Validate intrinsic declaration requirements against the resolved metadata dependency graph. */
+function requireExportDependencies(array $plan, string $provider, array $identities): void {
+    foreach ($identities as $identity) {
+        $dependency = typeExport($plan, $identity)['provider'];
+        requireThat($dependency === $provider || isset($plan['closures'][$provider][$dependency]),
+            "Provider $provider requires type export $identity");
+    }
 }
 
 /** Resolve a provider without teaching consumers about header paths. */
@@ -91,9 +161,23 @@ function compilerProviderMetadata(mixed $metadata): object {
     $copy->compiler = clone $metadata->compiler;
     $copy->compiler->runtime_bindings = clone $metadata->compiler->runtime_bindings;
     foreach (object($copy->compiler->runtime_bindings) as $name => $binding) {
+        if (($binding->kind ?? null) === 'type' || isset($binding->type_export)) {
+            requireThat(($binding->kind ?? null) === 'type', 'Type export binding must have type kind');
+            requireThat(!isset($binding->symbol) && !isset($binding->header) && !isset($binding->declaration_group),
+                'Type binding has competing export ownership');
+            $identity = textValue(at($binding, 'type_export'));
+            requireThat(textValue(at($binding, 'identity')) === $identity, 'Incompatible type binding export');
+            $export = typeExport($plan, $identity);
+            $resolved = clone $binding;
+            $resolved->symbol = $export['symbol'];
+            $resolved->header = providerHeader($plan, $export['provider']);
+            unset($resolved->type_export);
+            $copy->compiler->runtime_bindings->{$name} = $resolved;
+            continue;
+        }
         $owner = null;
         foreach ($plan['groups'] as $group => $contract) {
-            foreach ($contract['exports'] as $export) {
+            foreach ($contract['bindings'] as $export) {
                 $matches = true;
                 foreach ($export as $field => $value) {
                     if (($binding->{$field} ?? null) !== $value) $matches = false;

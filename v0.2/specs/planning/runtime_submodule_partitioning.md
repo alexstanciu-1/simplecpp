@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Date: 2026-11-06
-Status: first string/output engine slice implemented; remaining partition map is planning.
+Status: string/output engine and representation-independent export/dependency slices implemented; verification recorded below.
 
 ## Agreed direction
 
@@ -18,7 +18,7 @@ measurements justify it. Other runtime modules initially retain one public heade
 each. No separate ABI framework or ABI consolidation work is requested.
 
 The broader partition map remains a proposal, not current semantics or a claim
-of implemented support beyond the first slice recorded below.
+of implemented support beyond the bounded slices recorded below.
 The [public-header contract](../runtime_public_headers.md) remains current
 authority. The earlier [ABI consolidation debt](runtime_abi_consolidation_debt.md)
 is historical design context, not a prerequisite for this work.
@@ -204,8 +204,9 @@ the existing publication and build dependency owners.
 ## Open decisions for remaining partitions
 
 - Final module/submodule names and paths, including whether to rename numeric.
-- Exact scpp scalar representations and adaptation of current native-expression
-  lowering, literal construction, checks and output/entry calls.
+- Integration with the native-alias migration owned by
+  `/home/alexv/__AI/simple_cpp/simple_cpp_02`, once its commit is published.
+  Representation and conversion implementation decisions belong to that work.
 - Placement of cross-group constructors and declaration-only references.
 - Final carrier placement and validation of the complete public dependency graph.
 - How remaining family renderers expose movable declaration groups without
@@ -272,8 +273,9 @@ implement all its capabilities in this first slice.
 - Independently splitting runtime libraries or introducing an ABI framework.
 
 String already uses a runtime scpp type and is the first consumer of this engine.
-The agreed scpp scalar naming direction remains a following migration. Completion
-of this slice must not be described as completion of that representation change.
+The native-alias migration is owned by `simple_cpp_02`, separately from the next
+local export/dependency slice. Completion of this slice must not be described as
+completion of that representation change.
 
 ### Verification checklist
 
@@ -320,9 +322,9 @@ switches exist. Both header-path changes and declaration-group relocation must
 have executable proofs. Outstanding checks or ownership blockers are reported
 explicitly rather than hidden by a partial green result.
 
-The following proposed slice migrates the core scalar surface and establishes
-the coarse scalars partition using this engine. Its representation, conversion
-and declaration-dependency decisions require separate scoping before implementation.
+The next local slice introduces representation-independent type exports and
+dependency resolution, as scoped below. It does not migrate scalar representations
+or establish the proposed scalar partition by changing their implementation.
 
 ## First-slice implementation and verification record
 
@@ -336,7 +338,9 @@ bindings without making runtime publication depend on compiler strategies.
 The initial catalog keeps the existing public paths (`scpp/string.hpp` and
 `scpp/output.hpp`) and existing scalar providers (`integers.hpp`, `values.hpp`).
 Their proposed coarse replacements above are not implemented. Existing scalar
-renderers retain their publication-selected paths and fixed dependency behavior.
+renderers retained their publication-selected paths in that first slice. The export
+review below makes metadata authoritative and rejects conflicting publication paths;
+fixed scalar-renderer dependency behavior remains unchanged.
 Only core module records are supported; arbitrary module loading and general
 forward-declaration dependencies remain deferred. A legacy string publication
 header is accepted only when it agrees with the metadata provider.
@@ -445,6 +449,224 @@ positive transitive-dependency case and cached-application checks in all three
 flavors. Snapshot review for these corrections found only `prepared.json` changes: generated public headers, native implementation bodies and compiler PHP
 remain byte-identical to the first-slice outputs. Existing representation and
 partition deferrals remain unchanged.
+
+## Representation-independent type exports and dependencies
+
+Status: implementation authorized in the subsequent user request; local slice implemented.
+
+### Workstream boundary
+
+The native-alias migration is being implemented separately in
+`/home/alexv/__AI/simple_cpp/simple_cpp_02`. The user will publish its commit when
+ready. Do not duplicate that work, modify that checkout, or assume its pending
+implementation details here. Integrate and verify the published changes in a
+separately authorized step.
+
+This checkout owns the export/provider/dependency engine. Its interface must remain
+usable when a runtime type changes between a class and a native alias. The broader
+partition map above remains proposed organization, not a reason to implement the
+scalar migration locally.
+
+### Contract and ownership
+
+Keep four concepts separate:
+
+| Concept | Owner and purpose |
+| --- | --- |
+| Semantic identity | Language metadata and prepared facts identify the source type, independently of native representation. |
+| Public C++ spelling | Runtime type-export metadata supplies the name used by consumers, such as `scpp::string` or a published scalar name. |
+| Provider | Metadata assigns the export to a submodule, which owns its public header and include dependencies. |
+| Implementation | Runtime generation and the relevant lowering strategy own alias/class representation, construction, extraction, conversions and operations. |
+
+The include engine consumes export identity, provider and dependency information.
+It must not inspect class versus alias representation, assume `.native_value()`,
+choose constructors, or determine conversion admission. Compiler preparation keeps
+its semantic responsibilities; representation-sensitive lowering stays with its
+existing owner until the external migration is integrated.
+
+### Agreed changes
+
+1. Extend the existing metadata model with public type exports and their provider
+   references. Reuse canonical identities and existing spelling records rather
+   than creating another independent type catalog. The implemented schema follows
+   current declaration owners; integration with the external work remains separate.
+2. Change intrinsic declaration-group requirements from renderer slots such as
+   `types` and `values` to the semantic exports needed by their declarations.
+   The declaration owner specifies those requirements; the common planner resolves
+   each export to its provider and validates the required dependency closure.
+3. Generate public type-name queries and include requirements from the shared
+   export plan for the scoped consumers. Keep native storage/operation strategy
+   facts distinct from public names; changing a name must not silently select a
+   different representation or conversion implementation.
+4. Reuse the existing `nodes`/`groups` plan, publication assembly and per-file
+   compiler requirement collection. Preserve intrinsic requirement validation,
+   binding ownership checks, failure-before-publication and deterministic output.
+
+For example, string declarations should express the relevant scalar export needs
+instead of depending on the historical integer/value renderer split. When an
+export later moves to `core.scalars`, updating its provider mapping should update
+the resolved includes without editing string's semantic requirements or the
+compiler's include collector. Identify the exact export requirements from the
+published declarations during implementation; this note does not invent that list.
+
+A coherent publication must place the declaration and advertise its export in the
+same provider. Provider remapping must not merely rewrite a header query while
+leaving the actual declaration elsewhere. Existing unconverted renderers may need
+a bounded adapter; do not silently expand this into their representation migration.
+
+### Implemented schema and boundaries
+
+- `type_exports` is a list of canonical runtime `identity`, public `name`, and either
+  scalar `provider` or movable `declaration_group`. The shared plan resolves public
+  `scpp::` names and providers; type bindings select `type_export` rather than owning
+  a second symbol/header. Declaration groups separately identify type exports and
+  helper binding roles.
+- Canonical identities come from existing integer/value/floating metadata and group
+  contracts. Names reuse existing declarations or integer aliases. This slice does
+  not support arbitrary renaming of runtime declarations. The spelling proof selects
+  the already published `scpp::byte` name for the unchanged `uint8` identity.
+- `requires_exports` supplies semantic type dependencies on submodules. Resolution
+  combines them with direct `requires` provider edges, deduplicates them, rejects
+  cycles and checks intrinsic requirements through the transitive closure. A
+  dependency within the same provider does not create a self-include.
+- String's invariant group contract needs `bool_t`. String preparation validates
+  the dependencies of the actual published casts, including optional numeric widths.
+  Enabled but unpublished text-conversion policies add no intrinsic dependencies.
+  The native count representation adds no public export. The common graph planner
+  no longer infers requirements from conversion capability policies.
+- The legacy scalar adapter checks that exports point to their actual renderer.
+  The renderer registration can be renamed to `core.scalars` with metadata changes,
+  without changing string's semantic requirements. Moving the actual scalar
+  declarations between renderers remains deferred. Metadata owns scalar provider
+  paths. Legacy scalar publication header fields
+  must agree with those paths; conflicts are rejected before output changes. Custom
+  paths remain supported when both inputs agree.
+- Export metadata describes available declarations; the publication request still
+  selects the APIs actually emitted. Existing publication checks retain ownership
+  of required cast types. Export availability grants no source-language admission.
+- Native scalar storage spellings, checked construction, extraction and operation
+  strategies remain unchanged. String storage and existing checked scalar bindings
+  consume the shared export name/header plan; the application include collector
+  needs no new cases or metadata interpretation.
+
+### Scope and deferred work
+
+The local slice is metadata ownership, export resolution and generated name/include
+queries. It does not replace wrapper classes with aliases, rewrite checked
+conversions, change numeric promotions, add widths or source-language admissions,
+decide null representation, or adapt collection/boxed/JSON/datetime internals to
+native aliases. Those changes remain with their owning workstream or later slices.
+
+Do not introduce alias-specific branches, parallel scalar implementations or a
+temporary ABI layer to anticipate the unpublished commit. If export resolution
+cannot be separated honestly from a wider runtime or lowering redesign, report
+that concrete boundary and agree the scope before proceeding.
+
+### Verification checklist
+
+- [x] Validate unknown/duplicate exports, missing providers, incompatible binding
+  owners, omitted intrinsic export requirements and dependency cycles before any
+  publication changes. Failed generation preserves the previous artifacts.
+- [x] Prove metadata-controlled public spelling and provider resolution using
+  coherent isolated publications. Move a supported export between providers while
+  preserving semantic identity; verify declaration placement and compiler includes
+  agree, without editing the consumer's requirement logic.
+- [x] Verify that consumers specify semantic export requirements rather than
+  renderer slots, filenames or alias/class checks. Review construction, extraction
+  and conversion paths to ensure include planning has not acquired their policy.
+- [x] Compile affected public headers independently and run focused native
+  consumers. Preserve current behavior and admission under this checkout's current
+  representation. This is not proof of the pending native-alias implementation.
+- [x] Preserve per-header/per-source isolation, obsolete-include removal, source
+  edit/error/recovery equivalence and no-op reuse across cpp/php/js.
+- [x] Regenerate exports/providers, restart the compiler, and rebuild an existing
+  cached application in the same output/native directories. Verify updated
+  includes, execution and subsequent no-op behavior without application edits.
+- [x] Check publication freshness, deterministic generation, retired paths and
+  timestamp preservation. Review snapshot changes and run affected generator,
+  compiler and style checks; measure costs only where the changes warrant it.
+
+### Local verification evidence
+
+- `tools/api_generator/tests/submodules.py --output build/export-review-fixes-verified`
+  exercises default, renamed, output-relocated and string-type-relocated
+  publications. The post-review run is recorded below.
+  The renamed variants move the integer renderer registration to `core.scalars`
+  without changing string requirements, and select `byte` for the `uint8` export.
+  Emitted checked conversions use that spelling and execute successfully in all
+  three flavors. Independent header compilation checks actual declaration placement.
+- The same proof covers invalid export identities, duplicate exports, missing or
+  conflicting owners/providers, undeclared names, export-induced cycles, omitted
+  requirements and incompatible compiler bindings. Failure preserves prior outputs.
+  Repeated publication, freshness checks, retired files and unchanged timestamps
+  are checked, along with per-unit include isolation and edit/failure/recovery.
+- The real project compiler is restarted after metadata regeneration. Existing
+  applications and native output directories are reused for renamed providers,
+  output relocation and string-type relocation in cpp/php/js. Execution, compiler
+  cache reuse and subsequent Ninja no-ops are checked without application edits.
+- Generator tests check metadata purity, export/dependency order independence and
+  preservation of native/proven-safe conversion paths. Existing constructor and
+  extraction strategies retain ownership; no representation tests enter the graph
+  resolver or application include collector.
+- Frozen contract captures retain 130 accepted / 247 rejected runtime cases,
+  19 accepted / 537 rejected scalar cases (2,692 maximum operations), and
+  17 accepted / 37 rejected generator cases. Reviewed differences are prepared
+  export/dependency plans and input fingerprints. Generated public/private artifacts
+  are byte-identical to the previous baselines.
+- The original 23 focused CTests passed; the post-review rerun is recorded below.
+  The selection covers these three corpora plus generator input,
+  numeric, compiler lowering/type bindings, string/output, global/unit headers,
+  project/incremental publication, runtime freshness/boundary, cleanup and native
+  string/vector/carrier consumers. The separate provider proof retains stage
+  timings and include closures in `build/export-review-fixes-verified/results.json`.
+  Compiler style checks cover 154 files; `git diff --check` is clean. Timings are
+  verification samples under concurrent test load, not a compile-speed claim.
+
+### Review fixes and verification
+
+The pre-commit review found split scalar path ownership, capability-based string
+requirements that rejected valid reduced publications, and a cached rebuild proof
+that coupled spelling changes to provider changes. All three are addressed locally:
+
+- The scalar adapter rejects disagreement between metadata provider paths and
+  legacy publication header fields. Proofs change each side independently, check
+  failure preserves output, and then match both scalar paths. Compiler queries,
+  isolated headers and generated runtime source compilation agree on the custom paths.
+- The common planner no longer reads text-conversion policies. String preparation
+  checks its actual cast list. Reduced publications with no casts or only `bool_t`
+  casts compile with only the values dependency while capability metadata stays
+  unchanged. Adding an `int64` cast without its dependency fails without modifying
+  output; adding the dependency restores successful publication and compilation.
+- The cached application now includes a checked byte conversion through a function
+  call. A separate `spelling_only` step changes `uint8`'s public name to `byte` while
+  keeping provider metadata and all application sources unchanged. It asserts that
+  runtime C++ artifacts are unchanged and emitted application differences are exactly
+  the checked-construction spelling. Restart, execution and subsequent compiler/Ninja
+  no-ops are checked for cpp/php/js, followed by the existing relocation steps.
+
+Post-review verification:
+
+- [x] Conflicting scalar paths fail before publication; matching paths compile.
+- [x] Reduced string publications compile; missing actual cast dependencies fail
+  without changing output and recover when restored.
+- [x] Spelling-only cached rebuild, execution and subsequent no-ops pass for cpp/php/js.
+- [x] Expanded provider proof passes; evidence is in
+  `build/export-review-fixes-verified/results.json`.
+- [x] Twenty focused CTests and the runtime-family/generator-parity CTests pass.
+  Runtime cases remain 130 accepted / 247 rejected; generator cases remain
+  17 accepted / 37 rejected. Emitted public/private artifact hashes are unchanged.
+- [x] Frozen scalar-contract rerun passes (116.84 seconds), with 19 accepted /
+  537 rejected and 2,692 maximum operations; only prepared plans changed.
+  Together with the two preceding CTest selections, all 23 focused CTests pass.
+- [x] Compiler style checks pass for 154 files; `git diff --check` is clean.
+
+Native-alias migration remains out of scope; no representation or conversion-strategy
+changes were made.
+
+Completion means the scoped consumers resolve public type names and dependencies
+through semantic exports without knowing their implementation representation.
+After the external alias commit is published, a separate integration verification
+must exercise the actual aliases; this slice alone cannot certify that migration.
 
 ## Verification for subsequent partitions
 

@@ -41,7 +41,9 @@ def proof(work):
         run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
         run(['php', generator, 'emit-compiler', metadata, facts, context, compiler])
 
-    for variant in ('default', 'renamed', 'relocated'):
+    review_contract_proof(work / 'review-contracts', original, publication, facts, context)
+
+    for variant in ('default', 'renamed', 'relocated', 'type_relocated'):
         directory = work / variant
         directory.mkdir(exist_ok=True)
         metadata = json.loads(json.dumps(original))
@@ -50,6 +52,16 @@ def proof(work):
             metadata['submodules']['core.output']['header'] = 'scpp/proof/write.hpp'
         if variant == 'relocated':
             metadata['output']['provider'] = 'core.string'
+        if variant == 'type_relocated':
+            metadata['string']['provider'] = 'core.output'
+            metadata['submodules']['core.output']['requires_exports'] = metadata['submodules']['core.string'].pop('requires_exports')
+        if variant != 'default':
+            # Move the legacy renderer registration coherently; consumers still name exports.
+            metadata['submodules']['core.scalars'] = metadata['submodules'].pop('core.integers')
+            for row in metadata['type_exports']:
+                if row.get('provider') == 'core.integers':
+                    row['provider'] = 'core.scalars'
+            next(row for row in metadata['type_exports'] if row['identity'] == 'uint8')['name'] = 'byte'
         path = directory / 'metadata.json'
         path.write_text(json.dumps(metadata))
         runtime, compiler = directory / 'runtime', directory / 'compiler'
@@ -68,7 +80,7 @@ def proof(work):
              '-DFACTS=' + str(facts), '-DCONTEXT=' + str(context), '-DOUTPUT=' + str(compiler),
              '-P', ROOT / 'cmake/PublishCompiler.cmake'])
         assert all(Path(p).stat().st_mtime_ns == stamp for p, stamp in stamps.items()), 'No-op publication touched artifacts'
-        string_header = metadata['submodules']['core.string']['header']
+        string_header = metadata['submodules'][metadata['string']['provider']]['header']
         output_header = metadata['submodules'][metadata['output']['provider']]['header']
         assert 'scpp/output.hpp' not in (runtime / 'private/output_provider.hpp').read_text() or variant == 'default'
         if variant == 'relocated':
@@ -83,6 +95,14 @@ def proof(work):
             isolated.write_text(f'#include <{header}>\n')
             run([*flags, '-fsyntax-only', isolated])
             closure[header] = run([*flags, '-MM', isolated]).stdout
+        if variant != 'default':
+            assert 'scpp::byte{' in (compiler / 'types/uint8.php').read_text()
+            alias_probe = directory / 'alias.cpp'
+            alias_probe.write_text('#include <scpp/integers.hpp>\nstatic_assert(__is_same(scpp::byte, scpp::uint8));\n')
+            run([*flags, '-fsyntax-only', alias_probe])
+        if variant == 'type_relocated':
+            assert not (runtime / 'public/scpp/proof/text.hpp').exists()
+            assert 'class string final' in (runtime / 'public' / string_header).read_text()
         runtime_objects = []
         start = time.perf_counter()
         for index, source in enumerate([runtime / 'src/runtime.cpp', ROOT / 'runtime/src/output/output.cpp',
@@ -114,7 +134,7 @@ def proof(work):
                 target.write_text(text)
                 stamp += 1
                 os.utime(target, (stamp, stamp))
-            write('main', 'visible(); body(); scalar(); return 8;')
+            write('main', 'visible(); body(); scalar(); return (int) (byte) (scalar() + 1);')
             write('visible', fn('visible', 'string', 'return "V";'))
             write('body', fn('body', 'int', 'return 1;'))
             write('scalar', fn('scalar', 'int', 'return 7;'))
@@ -146,6 +166,8 @@ def proof(work):
                 assert len(changed['emitted_sources']) == 1, changed
                 fresh()
                 texts = artifacts(out)
+                if variant != 'default':
+                    assert any('scpp::byte{' in text for text in texts.values()), 'Export spelling not used by checked conversion'
                 headers = [text for p, text in texts.items() if p.endswith('.hpp')]
                 assert any(f'#include <{string_header}>' in text for text in headers)
                 if output_header != string_header:
@@ -194,6 +216,7 @@ def proof(work):
 
     # Required providers may be reached transitively; do not require a fixed direct-edge list.
     transitive = json.loads(json.dumps(original))
+    transitive['submodules']['core.string']['requires_exports'] = []
     transitive['submodules']['core.string']['requires'] = ['core.output']
     transitive['submodules']['core.output']['requires'] = ['core.integers', 'core.values']
     path = work / 'transitive.json'
@@ -213,12 +236,23 @@ def proof(work):
     compiler_before = snapshot(directory / 'compiler')
     mutations = {
         'unknown_provider': lambda m: m['string'].update(provider='missing'),
-        'omitted_requirements': lambda m: m['submodules']['core.string'].update(requires=[]),
-        'omitted_values': lambda m: m['submodules']['core.string'].update(requires=['core.integers']),
+        'omitted_requirements': lambda m: m['submodules']['core.string'].update(requires=[], requires_exports=[]),
+        'omitted_values': lambda m: m['submodules']['core.string'].update(requires=['core.integers'], requires_exports=[]),
         'missing_dependency': lambda m: m['submodules']['core.string'].update(requires=['missing']),
         'cycle': lambda m: (m['submodules']['core.string'].update(requires=['core.output']), m['submodules']['core.output'].update(requires=['core.string'])),
         'invalid_header': lambda m: m['submodules']['core.string'].update(header='../private.hpp'),
         'conflict': lambda m: m['submodules']['core.string'].update(header='scpp/values.hpp'),
+        'unknown_export': lambda m: m['type_exports'].append({'identity': 'imaginary', 'name': 'imaginary', 'provider': 'core.values'}),
+        'duplicate_export': lambda m: m['type_exports'].append(m['type_exports'][0].copy()),
+        'missing_export': lambda m: m.update(type_exports=[r for r in m['type_exports'] if r['identity'] != 'bool_t']),
+        'unknown_export_provider': lambda m: m['type_exports'][0].update(provider='missing'),
+        'false_placement': lambda m: m['type_exports'][0].update(provider='core.output'),
+        'undeclared_name': lambda m: m['type_exports'][0].update(name='imaginary'),
+        'missing_export_provider': lambda m: m['type_exports'][0].pop('provider'),
+        'wrong_export_group': lambda m: m['type_exports'][-1].update(declaration_group='output'),
+        'competing_export_owner': lambda m: m['type_exports'][-1].update(provider='core.string'),
+        'export_cycle': lambda m: m['submodules']['core.output'].update(requires_exports=['string']) or m['submodules']['core.string'].update(requires=['core.output']),
+        'unknown_export_dependency': lambda m: m['submodules']['core.string'].update(requires_exports=['imaginary']),
         'unavailable_module': lambda m: m['submodules']['core.string'].update(module='missing'),
     }
     for name, mutate in mutations.items():
@@ -235,7 +269,7 @@ def proof(work):
         'wrong_storage_group': lambda m: m['compiler']['runtime_bindings']['string_storage'].update(declaration_group='output'),
         'wrong_output_group': lambda m: m['compiler']['runtime_bindings']['echo_int'].update(declaration_group='string'),
         'unknown_group': lambda m: m['compiler']['runtime_bindings']['echo_int'].update(declaration_group='missing'),
-        'storage_header_fallback': lambda m: (m['compiler']['runtime_bindings']['string_storage'].pop('declaration_group'),
+        'storage_header_fallback': lambda m: (m['compiler']['runtime_bindings']['string_storage'].pop('type_export'),
                                             m['compiler']['runtime_bindings']['string_storage'].update(header='scpp/string.hpp')),
         'output_header_fallback': lambda m: (m['compiler']['runtime_bindings']['echo_bytes'].pop('declaration_group'),
                                            m['compiler']['runtime_bindings']['echo_bytes'].update(header='scpp/output.hpp')),
@@ -281,6 +315,70 @@ def proof(work):
 
 
 
+def review_contract_proof(work, original, publication_path, facts, context):
+    """Check shared scalar paths and dependencies of reduced, actually published strings."""
+    work.mkdir(exist_ok=True)
+    generator = ROOT / 'tools/api_generator/generate.php'
+    publication = json.loads(publication_path.read_text())
+    metadata_path, request = work / 'metadata.json', work / 'publication.json'
+    runtime, compiler = work / 'runtime', work / 'compiler'
+    def emit(metadata, publication, expected=0):
+        metadata_path.write_text(json.dumps(metadata))
+        request.write_text(json.dumps(publication))
+        result = run(['php', generator, 'emit-runtime', metadata_path, request, facts, context, runtime], expected)
+        return result
+    emit(original, publication)
+    baseline = snapshot(runtime)
+    for provider, slot in [('core.integers', 'types'), ('core.values', 'values')]:
+        renamed = json.loads(json.dumps(original))
+        renamed['submodules'][provider]['header'] = f'scpp/review/{slot}.hpp'
+        assert 'conflicts with provider' in emit(renamed, publication, 1).stderr
+        assert snapshot(runtime) == baseline, 'Conflicting metadata path changed publication'
+        changed = json.loads(json.dumps(publication))
+        changed['headers'][slot] = f'scpp/review/{slot}.hpp'
+        assert 'conflicts with provider' in emit(original, changed, 1).stderr
+        assert snapshot(runtime) == baseline, 'Conflicting publication path changed publication'
+    matched = json.loads(json.dumps(original))
+    matched_request = json.loads(json.dumps(publication))
+    for provider, slot in [('core.integers', 'types'), ('core.values', 'values')]:
+        header = f'scpp/review/{slot}.hpp'
+        matched['submodules'][provider]['header'] = header
+        matched_request['headers'][slot] = header
+    emit(matched, matched_request)
+    run(['php', generator, 'emit-compiler', metadata_path, facts, context, compiler])
+    flags = ['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', runtime / 'public']
+    for slot, identity in [('types', 'uint8'), ('values', 'float64')]:
+        header = matched_request['headers'][slot]
+        consumer = 'uint8' if slot == 'types' else 'int64'
+        assert header in (compiler / f'types/{consumer}.php').read_text()
+        source = work / f'{slot}.cpp'
+        source.write_text(f'#include <{header}>\nscpp::{identity} value;\n')
+        run([*flags, source])
+    run([*flags, '-I', runtime / 'private', '-I', ROOT / 'runtime/src/numeric',
+         '-I', ROOT / 'runtime/src/sequence', runtime / 'src/runtime.cpp'])
+    # The full capability catalog remains unchanged; only emitted casts and graph edges shrink.
+    reduced = json.loads(json.dumps(original))
+    reduced['submodules']['core.string']['requires_exports'] = ['bool_t']
+    reduced_request = {k: v for k, v in publication.items() if k in
+                       ('version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases')}
+    reduced_request.update(operators=[], values=['bool_t'], short_aliases=[], string={'operations': [], 'casts': []})
+    for casts in ([], ['bool_t']):
+        reduced_request['string']['casts'] = casts
+        emit(reduced, reduced_request)
+        header = (runtime / 'public/scpp/string.hpp').read_text()
+        assert 'scpp/values.hpp' in header and 'scpp/integers.hpp' not in header
+        source = work / 'string.cpp'
+        source.write_text('#include <scpp/string.hpp>\nscpp::string value;\n')
+        run([*flags, source])
+    before = snapshot(runtime)
+    reduced_request['string']['casts'] = ['int64']
+    assert 'requires type export int64' in emit(reduced, reduced_request, 1).stderr
+    assert snapshot(runtime) == before, 'Omitted actual cast dependency changed publication'
+    reduced['submodules']['core.string']['requires_exports'].append('int64')
+    emit(reduced, reduced_request)
+    run([*flags, source])
+
+
 def cached_application_proof(work, original, facts, context, publication):
     """Restart the actual project compiler after regeneration and reuse application/native outputs."""
     work.mkdir(exist_ok=True)
@@ -315,13 +413,17 @@ def cached_application_proof(work, original, facts, context, publication):
         local = {'cpp': 'string text = "cached";', 'php': '$text string = "cached";',
                  'js': 'let text: string = "cached";'}[flavor]
         source = app / ('main.' + flavor)
-        source.write_text(local + ('echo $text;' if flavor == 'php' else 'echo text;') + 'return 8;')
+        source.write_text(local + ('echo $text;' if flavor == 'php' else 'echo text;') + 'return (int) (byte) value();')
+        provider_source = app / ('value.' + flavor)
+        provider_source.write_text(('int value()' if flavor == 'cpp' else 'function value(): int') + '{return 8;}')
+        provider_before = provider_source.stat().st_mtime_ns, provider_source.read_bytes()
         source_before = source.stat().st_mtime_ns, source.read_bytes()
         def compile_project():
             return json.loads(run(['php', runner, app, facts, out]).stdout)
         # Reset the publication for this flavor before its initial build.
         generate(original)
         assert compile_project()['rebuilt']
+        assert 'scpp::uint8{' in '\n'.join(artifacts(out).values())
         assert not compile_project()['rebuilt'], 'Initial application cache not reusable'
         units = sorted(out.rglob('*.cpp'))
         flags = ['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-I', str(runtime / 'public'),
@@ -344,21 +446,37 @@ def cached_application_proof(work, original, facts, context, publication):
         run(['ninja', '-j', '4'], cwd=native)
         assert [obj.stat().st_mtime_ns for obj in objects] == before
         changes = []
-        for label in ('renamed', 'relocated'):
+        for label in ('spelling_only', 'renamed', 'relocated', 'type_relocated'):
             value = json.loads(json.dumps(original))
-            value['submodules']['core.string']['header'] = 'scpp/cache/text.hpp'
-            value['submodules']['core.output']['header'] = 'scpp/cache/write.hpp'
+            if label != 'spelling_only':
+                value['submodules']['core.string']['header'] = 'scpp/cache/text.hpp'
+                value['submodules']['core.output']['header'] = 'scpp/cache/write.hpp'
             if label == 'relocated':
                 value['output']['provider'] = 'core.string'
+            if label == 'type_relocated':
+                value['string']['provider'] = 'core.output'
+                value['submodules']['core.output']['requires_exports'] = value['submodules']['core.string'].pop('requires_exports')
+            next(row for row in value['type_exports'] if row['identity'] == 'uint8')['name'] = 'byte'
+            if label == 'spelling_only':
+                assert value['submodules'] == original['submodules']
+                runtime_before = artifacts(runtime)
+                application_before = artifacts(out)
             generate(value)
+            if label == 'spelling_only':
+                assert artifacts(runtime) == runtime_before, 'Spelling-only change altered runtime declarations'
             # New process: PHP classes loaded before regeneration cannot be hot-replaced.
             response = compile_project()
             assert response['rebuilt'], 'Regenerated compiler did not invalidate application cache'
             texts = artifacts(out)
             joined = '\n'.join(texts.values())
-            assert '<scpp/string.hpp>' not in joined and '<scpp/output.hpp>' not in joined
-            assert '<scpp/cache/text.hpp>' in joined
-            assert ('<scpp/cache/write.hpp>' in joined) == (label == 'renamed')
+            assert 'scpp::byte{' in joined and 'scpp::uint8{' not in joined
+            if label == 'spelling_only':
+                assert texts == {path: text.replace('scpp::uint8{', 'scpp::byte{')
+                                 for path, text in application_before.items()}, 'Spelling-only change affected other emission'
+            else:
+                assert '<scpp/string.hpp>' not in joined and '<scpp/output.hpp>' not in joined
+                assert ('<scpp/cache/text.hpp>' in joined) == (label != 'type_relocated')
+                assert ('<scpp/cache/write.hpp>' in joined) == (label != 'relocated')
             run(['ninja', '-j', '4'], cwd=native)
             after = [obj.stat().st_mtime_ns for obj in objects]
             assert after != before, 'Existing application objects were not rebuilt'
@@ -367,6 +485,7 @@ def cached_application_proof(work, original, facts, context, publication):
             run(['ninja', '-j', '4'], cwd=native)
             assert [obj.stat().st_mtime_ns for obj in objects] == after, 'No-op native rebuild'
             assert (source.stat().st_mtime_ns, source.read_bytes()) == source_before, 'Source changed during metadata proof'
+            assert (provider_source.stat().st_mtime_ns, provider_source.read_bytes()) == provider_before
             before = after
             changes.append(label)
         reports[flavor] = {'rebuilt_and_executed': changes, 'compiler_restart_required': True}

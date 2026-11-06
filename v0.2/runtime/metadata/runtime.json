@@ -969,36 +969,31 @@
       "boxed_int64": {
         "kind": "type",
         "identity": "int64",
-        "symbol": "scpp::int64",
-        "header": "scpp/integers.hpp",
-        "extract": "native_value"
+        "extract": "native_value",
+        "type_export": "int64"
       },
       "boxed_uint8": {
         "kind": "type",
         "identity": "uint8",
-        "symbol": "scpp::uint8",
-        "header": "scpp/integers.hpp",
-        "extract": "native_value"
+        "extract": "native_value",
+        "type_export": "uint8"
       },
       "boxed_float64": {
         "kind": "type",
         "identity": "float64",
-        "symbol": "scpp::float64",
-        "header": "scpp/values.hpp",
-        "extract": "native_value"
+        "extract": "native_value",
+        "type_export": "float64"
       },
       "boxed_bool": {
         "kind": "type",
         "identity": "bool_t",
-        "symbol": "scpp::bool_t",
-        "header": "scpp/values.hpp",
-        "extract": "native_value"
+        "extract": "native_value",
+        "type_export": "bool_t"
       },
       "string_storage": {
         "kind": "type",
         "identity": "string",
-        "symbol": "scpp::string",
-        "declaration_group": "string"
+        "type_export": "string"
       },
       "uint8_divide": {
         "operand": "uint8",
@@ -1252,15 +1247,27 @@
     "core.string": {
       "module": "core",
       "header": "scpp/string.hpp",
-      "requires": [
-        "core.integers",
-        "core.values"
-      ]
+      "requires": [],
+      "requires_exports": ["int64", "float64", "bool_t"]
     },
     "core.output": {
       "module": "core",
       "header": "scpp/output.hpp",
       "requires": []
     }
-  }
+  },
+  "type_exports": [
+    {"identity": "int8", "name": "int8", "provider": "core.integers"},
+    {"identity": "int16", "name": "int16", "provider": "core.integers"},
+    {"identity": "int32", "name": "int32", "provider": "core.integers"},
+    {"identity": "int64", "name": "int64", "provider": "core.integers"},
+    {"identity": "uint8", "name": "uint8", "provider": "core.integers"},
+    {"identity": "uint16", "name": "uint16", "provider": "core.integers"},
+    {"identity": "uint32", "name": "uint32", "provider": "core.integers"},
+    {"identity": "uint64", "name": "uint64", "provider": "core.integers"},
+    {"identity": "null_t", "name": "null_t", "provider": "core.values"},
+    {"identity": "bool_t", "name": "bool_t", "provider": "core.values"},
+    {"identity": "float64", "name": "float64", "provider": "core.values"},
+    {"identity": "string", "name": "string", "declaration_group": "string"}
+  ]
 }
