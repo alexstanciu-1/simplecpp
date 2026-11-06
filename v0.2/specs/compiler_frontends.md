@@ -70,7 +70,8 @@ Same-type [scalar comparisons](../compiler/docs/comparisons.md) and parentheses 
 Int/int64 binary `+ - * / %` are implemented through the same metadata-driven path.
 Multiplicative operators bind above additive operators, then relational operators, then equality;
 all levels associate left. Integer/float unary signs, same-type float arithmetic and
-mixed int64/float64 `+ - * /` use generated type handlers. Mixed compounds remain deferred.
+mixed int64/float64 `+ - * /` use generated type handlers. Float destinations also
+admit int64 RHS for `+= -= *= /=`; the reverse direction remains rejected.
 Logical `!`, `&&` and `||` reuse generated condition truthiness in all flavors.
 Prefix `!` binds above arithmetic; `&&` binds below equality and above `||`.
 Each operand independently admits bool, int64, float or string; the result is bool.

@@ -369,11 +369,7 @@ final class Preparation
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 		}
 		else {
-			$result = $type->binary_result($statement->operator, $statement->value->type_def());
-			if (!$type->supports_compound() || ($result !== $type)) {
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'Unsupported compound operands or write-back type');
-			}
-			$conversion = value_conversion::identity;
+			$conversion = $type->prepare_compound($statement);
 		}
 		$statement->settle_assignment($local, $conversion);
 		$this->latest_writes[$local->storage_id()] = $statement;

@@ -875,12 +875,13 @@ $safeCases\t\t\tdefault => false,
 ";
 }
 
-/** Generate bounded mixed operations from explicit promotion rows; reuse conversion lowering, never compound admission. */
+/** Generate bounded mixed operations from explicit promotion rows; reuse conversion lowering with explicit compound permission. */
 function compilerPromotions(mixed $compiler, array $conversions, array $definitions, string $identity, array $binary): string {
     $cases = '';
+    $compounds = '';
     $seen = [];
     foreach (listValue(at($compiler, 'promotions')) as $row) {
-        fields($row, ['left', 'right', 'operators', 'execution_type', 'result']);
+        fields($row, ['left', 'right', 'operators', 'execution_type', 'result', 'compound_operators']);
         $left = textValue(at($row, 'left'));
         $right = textValue(at($row, 'right'));
         $execution = textValue(at($row, 'execution_type'));
@@ -901,6 +902,12 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
             requireThat(!isset($seen[$key]), 'Duplicate promotion');
             $seen[$key] = true;
         }
+        $compoundOperators = names($row->compound_operators ?? [], 'Duplicate compound promotion operator');
+        foreach ($compoundOperators as $operator) {
+            requireThat(in_array($operator, $operators, true), 'Compound requires an admitted promotion operator');
+            requireThat($left === $execution && $result === $left, 'Compound promotion must preserve destination type');
+            requireThat(isset($compiler->arithmetic->$left->operators->$operator), 'Compound requires arithmetic execution');
+        }
         if ($left !== $identity || $operators === []) continue;
         $rightClass = 'type_' . $definitions[$right]['class'];
         $executionClass = 'type_' . $definitions[$execution]['class'];
@@ -908,12 +915,19 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
         $operatorCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $operators));
         $lc = $lc['operation'] ?? 'identity';
         $rc = $rc['operation'] ?? 'identity';
+        if ($compoundOperators !== []) {
+            $compoundCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $compoundOperators));
+            $compounds .= "\t\tif (\$this->supports_compound() && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
+                . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\treturn value_conversion::$rc;\n\t\t}\n";
+        }
         $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
             . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
             . "\t\t\t\$value->settle_binary($resultClass::instance(), $executionClass::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
     }
-    if ($cases === '') return '';
-    return "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
+    $compoundMethod = $compounds === '' ? '' : "\n\t/** Return the approved RHS conversion; destination and execution identities stay equal. */\n"
+        . "\tpublic function prepare_compound(ast_assignment_statement \$value): value_conversion\n\t{\n$compounds\t\treturn parent::prepare_compound(\$value);\n\t}\n";
+    if ($cases === '') return $compoundMethod;
+    return $compoundMethod . "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
         . "\tpublic function prepare_binary(ast_binary_expression \$value): void\n\t{\n$cases\t\tparent::prepare_binary(\$value);\n\t}\n";
 }
 

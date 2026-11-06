@@ -118,7 +118,7 @@ foreach (flavor::cases() as $flavor)
 	foreach (['1 % 1.0', '1.0 % 1', 'true + 1.0', '(byte)1 * 1.0'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
-	rejects(fn() => $prepare($decl('1.0') . $x . '+=1; return 8;'), 'Unsupported compound');
+	rejects(fn() => $prepare($decl('1.0') . $x . '+=(byte)1; return 8;'), 'Unsupported compound');
 	rejects(fn() => $prepare($decl('1.0') . $x . '=1; return 8;'), 'implicit conversion');
 	$literal = $prepare('return 1;')->body()->statements[0]->value;
 	foreach (\scpp\compiler\conversion_context::cases() as $context) {

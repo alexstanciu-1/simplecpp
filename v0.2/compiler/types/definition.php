@@ -78,6 +78,15 @@ abstract class type_definition
 		return null;
 	}
 
+	/** Decide compound admission and RHS conversion without creating synthetic binary syntax. */
+	public function prepare_compound(ast_assignment_statement $value): value_conversion
+	{
+		if (!$this->supports_compound() || ($this->binary_result($value->operator, $value->value->type_def()) !== $this)) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported compound operands or write-back type');
+		}
+		return value_conversion::identity;
+	}
+
 	/** Compound writes may remain unavailable even when ordinary arithmetic is supported. */
 	public function supports_compound(): bool
 	{

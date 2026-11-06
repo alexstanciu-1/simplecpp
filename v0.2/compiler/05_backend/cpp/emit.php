@@ -294,6 +294,13 @@ final class Cpp_Emitter
 		$type = $statement->local_def()->type_def();
 		$name = $this->name($statement->local_def());
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
+		$conversion = $statement->conversion();
+		if ($conversion !== value_conversion::identity) {
+			$right = $type->lower_cpp_conversion($conversion, $right);
+			foreach ($type->conversion_headers($conversion) as $header) {
+				$headers[$header] = true;
+			}
+		}
 		foreach ($type->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}

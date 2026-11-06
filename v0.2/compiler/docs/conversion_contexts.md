@@ -6,7 +6,8 @@ The [scalar contract](../../../specs/compiler_scalars_v0_2.md#conversion-context
 and [mixed-ordering semantics](../../../specs/expression_evaluation.md#mixed-canonical-numeric-ordering--2026-10-19)
 own this slice. It adds plain int64/float64 `< <= > >=` in both operand orders.
 Mixed arithmetic is also admitted as described in [mixed arithmetic](mixed_arithmetic.md).
-Mixed equality, compounds, carriers and conversion-chain search remain deferred.
+Float-destination compounds are explicitly admitted by [compound promotion](mixed_compounds.md).
+Mixed equality, carriers and conversion-chain search remain deferred.
 
 ## Metadata and generated interfaces
 
@@ -31,8 +32,8 @@ the existing execution-type `lower_cpp_conversion()` before `lower_cpp_binary()`
 Future checked promotions require their own reviewed admission; they are not enabled
 by this slice. Generated inventory version is 16.
 
-Same-type `binary_result()` is unchanged. Compound preparation still uses that query
-and `supports_compound()`, so mixed ordering cannot silently enable compound writes.
+Same-type `binary_result()` is unchanged. Compound preparation uses `prepare_compound()` and `supports_compound()`.
+Only explicit `compound_operators` permissions enable mixed writes.
 Changing contexts to admit assignment would be a separate metadata/policy decision.
 
 ## Structure changes and performance

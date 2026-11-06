@@ -1015,6 +1015,7 @@
         "left": "float64",
         "right": "int64",
         "operators": ["add", "subtract", "multiply", "divide"],
+        "compound_operators": ["add", "subtract", "multiply", "divide"],
         "execution_type": "float64",
         "result": "float64"
       },

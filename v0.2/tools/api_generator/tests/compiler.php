@@ -692,3 +692,21 @@ try {
 $without->compiler->promotions = array_values(array_filter($without->compiler->promotions,
     static fn($row) => $row->result === 'bool_t'));
 requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'scpp::float64_divide('), 'Missing division still lowered');
+
+// Compound permission is explicit, directional and independently removable.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->promotions[1]->compound_operators);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'public function prepare_compound'), 'Removed compound permission still generated');
+foreach (['direction', 'operator', 'duplicate'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'direction' => $bad->compiler->promotions[0]->compound_operators = ['add'],
+        'operator' => $bad->compiler->promotions[1]->compound_operators = ['remainder'],
+        'duplicate' => $bad->compiler->promotions[1]->compound_operators = ['add', 'add'],
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid mixed compound metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}

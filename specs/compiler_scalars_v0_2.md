@@ -306,8 +306,8 @@ the public runtime API. This does not expand the separately deferred execution-o
 
 All flavors admit `+=`, `-=`, `*=`, `/=` on existing float/float64 locals and
 value/mutable-reference parameters, including the supported `for` header clauses.
-The RHS must have the same canonical float64 type; explicit casts may establish it.
-Mixed numeric compounds, `%=` and expression-result assignments remain deferred.
+The RHS may have canonical float64 type or the int64 type admitted below.
+Int-destination/float-RHS compounds, `%=` and expression-result assignments remain deferred.
 Globals, constants, fields and indexed destinations are not admitted by this slice.
 
 The existing compound protocol applies: resolve storage once, preserve its old
@@ -352,7 +352,8 @@ Missing conversion definitions or execution operations are generator errors.
 The mixed-ordering contract in `expression_evaluation.md` applies: integer rounding
 is observable, NaN makes all four comparisons false, and signed-zero/infinity
 ordering follows binary64. The bounded compiler slice supports plain scalar values;
-carriers, mixed equality and mixed compound writes remain deferred; mixed arithmetic is specified below.
+carriers and mixed equality remain deferred; mixed arithmetic and float-destination
+compound writes are specified below.
 Each operand is prepared once. Promotion settles conversion/execution facts on the
 existing binary node, without synthetic cast nodes or arithmetic constant folding.
 
@@ -372,7 +373,24 @@ the float64 arithmetic contract above, including overflow, NaN, underflow and si
 zero. Literal overflow rejection remains separate from arithmetic results.
 
 Metadata authorizes these operator-local conversions; ordinary assignment,
-reference binding and compound admissions are unchanged. Mixed equality, mixed
-compound writes, floating remainder and bool/byte arithmetic remain deferred.
+reference binding and compound admissions are unchanged. Mixed equality, floating remainder and bool/byte arithmetic remain deferred.
+Float-destination/int64-RHS compounds are admitted below.
 Prepare each operand once and retain existing execution/conversion facts; no
 arithmetic constant folding or expanded evaluation-order machinery is introduced.
+
+## Float-destination/int64-RHS compounds — 2026-11-06
+
+All flavors admit `+= -= *= /=` with an existing float64 local, value parameter
+or mutable-reference parameter destination and an int64 RHS, including supported
+`for` header clauses. The float-destination mixed-compound contract in
+`expression_evaluation.md` applies: snapshot the old destination before evaluating
+the RHS, convert int64 to float64, compute, then store once. Conversion rounding
+above 2^53 is observable. Integer zero division throws `division_by_zero`, including
+NaN/infinite numerators. Failure suppresses the final store but preserves earlier
+RHS effects. Other results follow the existing floating arithmetic contract.
+
+Permission is explicit in metadata and distinct from ordinary binary promotion and
+boundary conversions. Int64 destinations with float64 RHS remain rejected. Globals,
+indexed/field destinations, carriers and value-producing compound expressions remain
+outside this compiler slice. Preparation visits the RHS once, retains its conversion
+on the assignment node and invalidates old constant knowledge; no folding is added.

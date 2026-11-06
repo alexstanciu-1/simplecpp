@@ -8,7 +8,8 @@ int64 to float64 before execution and producing float64. Above 2^53 the conversi
 can round: `9007199254740993 - 9007199254740992.0` produces 0.0. Division rejects
 integer zero and both floating zero signs; other floating results retain the existing
 NaN/infinity/underflow/signed-zero contract. Integer-only division is unchanged.
-Mixed compounds, equality, remainder and bool/byte arithmetic remain deferred.
+Float-destination mixed compounds are now covered by [their own permission](mixed_compounds.md).
+Mixed equality, remainder and bool/byte arithmetic remain deferred.
 
 ## Ownership and structure
 

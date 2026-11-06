@@ -5,7 +5,8 @@ Doc Status: supporting
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#float64-compound-statements--2026-11-05)
 owns this slice. All flavors now support `+= -= *= /=` on float/float64 locals,
 value parameters and mutable-reference parameters, including supported `for`
-initializer/update clauses. Mixed operands, remainder, global writes, complex
+initializer/update clauses. [Mixed int64 RHS](mixed_compounds.md) now uses the same path.
+Remainder, global writes, complex
 lvalues and assignment expression results remain deferred.
 
 ## Implementation and structures

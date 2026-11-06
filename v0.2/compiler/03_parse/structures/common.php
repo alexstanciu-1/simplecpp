@@ -318,7 +318,7 @@ final class ast_assignment_statement extends ast_storage_write
 	public readonly ?binary_operator $operator;
 
 	/** PREP FACTS */
-	/** Prepared fact: approved implicit conversion; null before settlement or after reset. */
+	/** Prepared fact: approved RHS conversion for assignment or compound; null before settlement or after reset. */
 	protected ?value_conversion $conversion = null;
 
 	/** CONSTRUCTOR */
