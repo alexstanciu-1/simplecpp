@@ -312,7 +312,7 @@ final class Cpp_Emitter
 				$headers[$header] = true;
 			}
 		}
-		$result = $execution->lower_cpp_binary($statement->operator, $left, $right);
+		$result = $execution->lower_cpp_binary($statement->operator, $left, $right, $execution);
 		if ($statement->write_back() !== value_conversion::identity) {
 			$result = $type->lower_cpp_conversion($statement->write_back(), $result);
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
@@ -405,9 +405,13 @@ final class Cpp_Emitter
 			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
 		}
 		if ($value instanceof ast_binary_expression) {
-			if ($value->operator->lazy()) {
+			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
+				if (!$value->operator->lazy()) {
+					return '([&]() -> bool { const bool logical_left = ' . $left
+						. '; const bool logical_right = ' . $right . '; return logical_left != logical_right; }())';
+				}
 				return '((' . $left . ') ' . ($value->operator === binary_operator::logical_and ? '&&' : '||')
 					. ' (' . $right . '))';
 			}
@@ -435,12 +439,12 @@ final class Cpp_Emitter
 			$reorderable = $left_safe && $right_safe && ($left !== $right)
 				&& $type->cpp_binary_reorderable($value->operator);
 			if ($reorderable) {
-				return $type->lower_cpp_binary($value->operator, $left, $right);
+				return $type->lower_cpp_binary($value->operator, $left, $right, $value->right->type_def());
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
 			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left
 				. '; const auto binary_right = ' . $right . '; return '
-				. $type->lower_cpp_binary($value->operator, 'binary_left', 'binary_right') . '; }())';
+				. $type->lower_cpp_binary($value->operator, 'binary_left', 'binary_right', $value->right->type_def()) . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
 			$function = $value->function_def();

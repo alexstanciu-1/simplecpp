@@ -409,9 +409,11 @@ existing binary facts and lowering. No constant folding, new runtime helper or
 expanded sequencing mechanism is introduced. Strict identity, carriers,
 bool/byte mixed numeric equality remain deferred; string equality is admitted below.
 
-## String equality — 2026-11-06
+## String comparison — 2026-11-06
 
-All three flavors admit exact string/string `==` and `!=`, returning bool.
+All three flavors admit exact string/string `==`, `!=`, `<`, `<=`, `>` and `>=`, returning bool.
+Ordering is lexicographic over unsigned bytes; the shorter equal prefix sorts first.
+Embedded NUL and high bytes participate normally, without numeric interpretation.
 Equality compares the full byte sequence and length, including embedded NUL bytes;
 `!=` is its negation. Comparison is case-sensitive and independent of storage
 identity. Empty strings compare equal. There is no numeric-string conversion,
@@ -423,7 +425,7 @@ No operand storage is modified by comparison. Runtime public operators own byte
 comparison; compiler metadata admits and lowers these operations. Preparation visits
 each operand once without constant folding. This extends the earlier bounded
 string-identity discussion with ordinary equality; it does not admit strict identity,
-ordering, carriers, heterogeneous comparisons, concatenation or text conversion in
+carriers, heterogeneous comparisons, concatenation or text conversion in
 this compiler slice.
 
 ## Agreed family and representation model — 2026-11-06
@@ -530,3 +532,122 @@ Integer truthiness is zero=false, nonzero=true, including uint8/byte. The same r
 applies to supported conditions and `!`, `&&`, `||`, preserving short-circuit behavior.
 This supersedes earlier byte-condition exclusions. Null conditions remain deferred.
 No new bool arithmetic, implicit assignment conversions or optional widths are added.
+
+## Integer bitwise and shift group — 2026-11-06
+
+Active int64/int and uint8/byte admit `& | ^ ~ << >>` and discarded-value compound
+`&= |= ^= <<= >>=` at the existing local/parameter and for-header write positions.
+Bool, floating, string and null operands are rejected. Bitwise binary operators use
+the existing integer domain promotion: byte/byte returns byte; byte/int returns int64.
+`~` preserves the operand identity, including unsigned width: `~(byte)0` is byte 255.
+In contrast, `(byte)~0` complements int64 zero and fails checked narrowing of -1.
+
+Shifts preserve the left operand's identity, independently of count identity. Either
+active integer representation may supply the count. Counts must be nonnegative and
+less than the declared left width (8 or 64); invalid counts fail before shifting.
+Counts are never narrowed to the left representation or masked. Native public bindings
+currently report `std::domain_error("shift_count_out_of_range")`; the source ValueError
+contract is unchanged, and source exception syntax is not introduced by this slice.
+Right shift of signed values sign-extends; unsigned right shift zero-fills. Left shift
+retains the declared-width bit pattern: byte 128 shifted left by one is byte zero;
+int64 one shifted left by 63 is the minimum int64. This adds no signed arithmetic
+wrapping guarantee beyond shifts.
+
+Bitwise compounds calculate in the selected integer domain, then use existing checked
+write-back. Shift compounds calculate directly in the left domain and use identity
+write-back. Failed checks prevent the final store; completed RHS effects remain.
+No new expression-order enforcement, constant folding or writable locations are added.
+
+Precedence from tighter to looser: unary, multiplicative, additive, shifts, ordering,
+equality, bitwise &, bitwise ^, bitwise |, logical &&, logical ||. Binary levels associate
+left. Unary operators associate right. Adjacent angle tokens form shifts only in
+expression context; whitespace-separated `< <` and `> >` are invalid. Reference-parameter
+`&` and logical operator syntax remain unchanged. All three flavors use these rules.
+
+## String-only concatenation — 2026-11-06
+
+PHP admits string/string `.` and `.=`; C++/JS admit string/string `+` and `+=`.
+PHP `+` remains numeric. Concatenation returns string, preserving complete byte
+sequences, embedded NUL and empty operands. No implicit scalar-to-text conversion
+is admitted. PHP dot binds below shifts and above ordering, following the reviewed
+donor precedence; C++/JS addition retains additive precedence.
+
+Compound concatenation uses existing local/reference-parameter writable locations,
+including existing for-header positions. It snapshots the previous left string,
+computes the new value, and assigns only after successful computation. String
+globals, value-producing assignments, new writable locations and text conversions
+remain deferred. Existing operand sequencing and string value-copy contracts apply.
+
+## Eager logical xor — 2026-11-06
+
+All three flavors spell eager logical exclusive-or `xor`; `^` remains integer
+bitwise XOR. Each operand independently accepts the existing generated truthiness
+contract: bool, int64, uint8/byte, float64 and string. Null remains rejected.
+This deliberately broadens the older canonical-numeric-only admission; it does not
+add text conversion, nullable types or bool/numeric arithmetic promotion.
+
+Evaluate and convert the left operand to bool once, then the right operand once,
+even when the left is false. Return bool inequality of those saved truth values.
+A left failure prevents RHS evaluation; a right failure preserves earlier effects.
+
+Xor binds below `||` and is left-associative. To preserve its lower-than-assignment
+contract while assignment expressions remain deferred, an initializer or assignment
+RHS containing xor at its outer precedence level must be parenthesized:
+`bool value = (left xor right);`. Ungrouped `value = left xor right;` is rejected,
+not reinterpreted as assigning the xor result. Conditions, returns and call arguments
+admit the full expression grammar.
+
+## Plain null equality — 2026-11-06
+
+All three flavors admit null/null `==` and `!=`, returning true and false
+respectively. Both operands are evaluated, preserving effects and failures.
+Null versus any non-null scalar is rejected for ordinary equality; neither
+truthiness nor a null-to-value conversion is implied. This is separate from
+strict identity and does not introduce nullable types.
+
+## Plain scalar strict identity — 2026-11-06
+
+All active scalar types admit `===` and `!==` with each other, returning bool.
+Different canonical representations are never identical: byte 1 is not identical
+to int64 1 or float64 1. Aliases share canonical identity, so byte and uint8 do not
+differ. No numeric promotion or text conversion participates.
+
+For the same canonical type, identity compares values. Null is identical to null.
+Strings compare complete bytes and length, including NUL. Float identity uses
+ordinary IEEE equality: positive/negative zero are identical, matching infinities
+are identical, and NaN is nonidentical to every value including itself.
+`!==` negates this result.
+
+Both operands are evaluated once, left then right, even when their different
+canonical types determine the result. A left failure prevents RHS evaluation;
+a right failure preserves earlier effects. Strict identity shares equality
+precedence. This does not broaden heterogeneous ordinary `==`/`!=`.
+
+## Scalar three-way comparison — 2026-11-06
+
+All flavors admit `<=>` for int64/uint8 pairs, numeric pairs containing float64,
+and string/string. The result is canonical int64 -1, 0 or 1. Bool, null and
+heterogeneous string pairs remain rejected. Precedence is the equality level.
+
+Integer pairs use the agreed lossless integer-domain promotion. Mixed floating
+pairs convert the integer to float64 first: rounding above 2^53 remains observable.
+Either floating NaN throws `unordered_comparison`; signed zeros compare equal and
+infinities order normally. Strings compare complete unsigned-byte sequences with
+the shorter equal prefix first, including embedded NUL, without text conversion.
+
+Operands are evaluated once using the existing ordered snapshot path. This operator
+does not authorize compound writes, nullable operands or optional numeric widths.
+
+## Canonical integer power and current error boundary — 2026-11-06
+
+All flavors admit exact int64/int64 ** and discarded-value **= at existing
+writable locations. The value, precedence, associativity and checked-overflow rules
+in [integer_power.md](integer_power.md) apply. Byte, float, bool, null and string
+power remain rejected; no promotion into this operation occurs.
+
+For the current v0.2 runtime, the user approved standard std::runtime_error
+with what() equal to power_negative_exponent or power_overflow.
+Structured component/operator fields and the older wrapper-based public signature
+are not introduced. The named native-value binding is scpp::int64_power.
+Restoring structured error fields is explicit runtime debt; it does not relax
+calculation, failure order or successful-write-only guarantees.

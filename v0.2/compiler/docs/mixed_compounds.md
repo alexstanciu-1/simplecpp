@@ -25,7 +25,7 @@ are reused; binary promotion alone never grants compound permission.
 owns the preparation query. Its default preserves same-type admission/diagnostics.
 The generated float64 override admits the metadata-approved RHS and attaches the
 existing numeric_floating conversion with identity left/write-back conversions,
-still gated by `supports_compound()`.
+still gated by `supports_compound($operator)`.
 Shared preparation resolves the destination once, visits the RHS once and calls
 that query. There is no metadata lookup, synthetic binary node or constant folding.
 

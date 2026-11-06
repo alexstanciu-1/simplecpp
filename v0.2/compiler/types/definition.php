@@ -66,10 +66,16 @@ abstract class type_definition
 	public function prepare_binary(ast_binary_expression $value): void
 	{
 		$result = $this->binary_result($value->operator, $value->right->type_def());
-		if (($value->left->type_def() !== $this) || ($result === null)) {
+		if (($value->left->type_def() !== $this) || ($result === null) || !$this->binary_syntax_allowed($value->operator, $value)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported binary operands or operator');
 		}
 		$value->settle_binary($result);
+	}
+
+	/** Generated flavor restrictions apply only when an operation has flavor-specific spelling. */
+	public function binary_syntax_allowed(binary_operator $operator, ast_node $site): bool
+	{
+		return true;
 	}
 
 	/** Generated operator admission without requiring synthetic syntax; null means the pair is unsupported. */
@@ -81,19 +87,19 @@ abstract class type_definition
 	/** Attach same-type compound facts without creating synthetic binary syntax. */
 	public function prepare_compound(ast_assignment_statement $value, ast_local_binding $local): void
 	{
-		if (!$this->supports_compound() || ($this->binary_result($value->operator, $value->value->type_def()) !== $this)) {
+		if (!$this->supports_compound($value->operator) || !$this->binary_syntax_allowed($value->operator, $value) || ($this->binary_result($value->operator, $value->value->type_def()) !== $this)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported compound operands or write-back type');
 		}
 		$value->settle_compound($local, $this, value_conversion::identity, value_conversion::identity, value_conversion::identity);
 	}
 
 	/** Compound writes may remain unavailable even when ordinary arithmetic is supported. */
-	public function supports_compound(): bool
+	public function supports_compound(binary_operator $operator): bool
 	{
 		return false;
 	}
 
-	public function lower_cpp_binary(binary_operator $operator, string $left, string $right): string
+	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
 	}

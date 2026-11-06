@@ -6,8 +6,8 @@ require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
-	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program,
-	Syntax_Inspection, Compilation_Inspection};
+	Function_Preparation, Preparation,
+	Syntax_Inspection, Compilation_Inspection, Incremental_Project};
 
 function verify(bool $ok, string $message): void
 {
@@ -43,6 +43,31 @@ function rejects(Closure $action, string $message): void
 	throw new RuntimeException('Expected diagnostic: ' . $message);
 }
 
+/** @return string[] Native source output, excluding build bookkeeping. */
+function native_artifacts(string $directory): array /** array<string,string> */
+{
+	$files = [];
+	foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)) as $item) {
+		$path = $item->getPathname();
+		if (in_array(pathinfo($path, PATHINFO_EXTENSION), ['cpp', 'hpp'], true)) {
+			$files[substr($path, strlen($directory) + 1)] = file_get_contents($path);
+		}
+	}
+	ksort($files);
+	return $files;
+}
+
+/** Remove the isolated proof tree. */
+function remove_tree(string $path): void
+{
+	foreach (new DirectoryIterator($path) as $item) {
+		if (!$item->isDot()) {
+			$item->isDir() ? remove_tree($item->getPathname()) : unlink($item->getPathname());
+		}
+	}
+	rmdir($path);
+}
+
 $fixtures = [];
 foreach (flavor::cases() as $flavor)
 {
@@ -66,15 +91,18 @@ foreach (flavor::cases() as $flavor)
 		'!"00"' => false, 'true || false && false' => true, '(true || false) && false' => false,
 		'1 + 2 == 3 && 4 < 5' => true, '!true == false' => true,
 		'true && 8' => true, '0 || "yes"' => true, '"0" || 0.0' => false,
-		'"false" && 1.0' => true, '!((1 + 2) == 3)' => false] as $test => $truth) {
+		'"false" && 1.0' => true, '!((1 + 2) == 3)' => false, 'true xor false' => true, 'true xor true' => false,
+		'false xor false' => false, 'false xor true' => true, 'true xor false || true' => false] as $test => $truth) {
 		$code .= 'if (' . $test . ') { echo "T"; } else { echo "F"; }';
 		$expected .= $truth ? 'T' : 'F';
 	}
 	// Exercise independent admission across every current condition-type pair.
-	foreach (['true', '8', '1.5', '"yes"'] as $left) {
-		foreach (['false', '0', '-0.0', '"0"'] as $right) {
+	foreach (['true', '8', '(byte)8', '1.5', '"yes"'] as $left) {
+		foreach (['false', '0', '(byte)0', '-0.0', '"0"'] as $right) {
 			$code .= 'if (' . $left . ' && ' . $right . ') { echo "WRONG"; }'
-				. 'if (' . $right . ' || ' . $left . ') {} else { echo "WRONG"; }';
+				. 'if (' . $right . ' || ' . $left . ') {} else { echo "WRONG"; }'
+				. 'if (' . $left . ' xor ' . $right . ') {} else { echo "WRONG"; }'
+				. 'if (' . $right . ' xor ' . $left . ') {} else { echo "WRONG"; }';
 		}
 	}
 	$ref = match ($flavor) {
@@ -115,8 +143,8 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['!null', 'true || null', 'false && null'] as $invalid) {
-		rejects(fn() => $prepare($decl('result', 'bool', $invalid) . 'return 8;'), 'Unsupported condition type');
+	foreach (['!null', 'true || null', 'false && null', 'false xor null', 'null xor true'] as $invalid) {
+		rejects(fn() => $prepare($decl('result', 'bool', '(' . $invalid . ')') . 'return 8;'), 'Unsupported condition type');
 	}
 	rejects(fn() => $prepare('if (true || absent()) {} return 8;'), 'Unknown function');
 	rejects(fn() => $prepare($fn('nothing', '', 'void', 'return;') . 'if (false && nothing()) {} return 8;'), 'Void call');
@@ -127,49 +155,78 @@ foreach (flavor::cases() as $flavor)
 		. $decl('narrow', 'byte', $var('x')) . 'return 8;';
 	$fixtures[$flavor->name . '_reference'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
 		'stdout_hex' => '', 'catch_out_of_range' => true];
+	$xor_entry = $prepare($decl('flag', 'bool', '(true xor false)') . 'return 8;');
+	verify($xor_entry->body()->expression_visits === 4, 'Xor revisited operands');
+	foreach ([$decl('flag', 'bool', 'true xor false'),
+		$decl('flag', 'bool', 'false') . $var('flag') . '=true xor false;'] as $invalid) {
+		rejects(fn() => $prepare($invalid . 'return 8;'), 'Parenthesize xor');
+	}
+	$xor_code = $fn('left_xor', '', 'bool', 'echo "L"; return false;')
+		. $fn('right_xor', '', 'string', 'echo "R"; return "yes";')
+		. $fn('clear_xor', $ref, 'bool', $var('v') . '=0; echo "C"; return false;')
+		. 'if (left_xor() xor right_xor()) { echo "T"; }'
+		. $decl('number', 'int', '8')
+		. 'if (' . $var('number') . ' xor clear_xor(' . $var('number') . ')) { echo "S"; }'
+		. 'echo ' . $var('number') . '; return 8;';
+	$fixtures[$flavor->name . '_xor'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($xor_code)),
+		'stdout_hex' => bin2hex('LRTCS0')];
+
+	$failure_code = $fn('xor_fail_right', '', 'bool', 'return false xor (1 / 0);')
+		. $fn('xor_fail_left', '', 'bool', 'return (1 / 0) xor right_xor();')
+		. $fn('right_xor', '', 'bool', 'echo "UNREACHED"; return true;') . 'return 8;';
+	$failure_cpp = str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($failure_code)));
+	$failure_cpp .= "\n#include <stdexcept>\nint main() {\n";
+	foreach (['xor_fail_right', 'xor_fail_left'] as $name) {
+		$failure_cpp .= 'try { (void)scpp_function_' . bin2hex($name) . '(); return 90; } catch (const std::domain_error&) {}' . "\n";
+	}
+	$fixtures[$flavor->name . '_xor_failure'] = ['cpp' => $failure_cpp . "return 8; }\n", 'stdout_hex' => ''];
+
 	$directory = sys_get_temp_dir() . '/scpp-logical-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (false || !value()) { echo "Y"; } return 8;');
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'lib.' . $flavor->name]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->name, 'if (true xor value()) { echo "Y"; } return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
-		$write = static function (string $type, string $value) use ($lib, $fn): void {
+		$stamp = time();
+		$write = static function (string $type, string $value) use ($lib, $fn, &$stamp): void {
 			file_put_contents($lib, $fn('value', '', $type, 'return ' . $value . ';'));
+			touch($lib, ++$stamp);
 		};
+		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));
 		$write('bool', 'false');
-		$compiler = new Project_Compiler();
-		$session = $compiler->frontend($directory);
-		$target = new entry_target(31);
-		Incremental_Preparation::prepare($session, $target);
-		$caller = $session->entry->entry->ast;
+		$project->run();
+		$caller = $project->session()->entry->entry->ast;
 		$tokens = $caller->tokens;
 		$write('null', 'null');
-		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
-		verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature change');
+		rejects(fn() => $project->run(), 'Unsupported condition type');
+		rejects(fn() => $project->run(), 'Unsupported condition type');
+		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
+		rejects(fn() => $fresh->run(), 'Unsupported condition type');
 		$write('string', '"0"');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Logical recovery failed');
-		verify(($session->entry->entry->ast === $caller) && ($caller->tokens === $tokens), 'Caller syntax replaced');
-		// Native emission uses a fresh full preparation; incremental emission is outside this slice.
-		$sources = [];
-		foreach ($session->files() as $path => $file) {
-			$sources[$path] = $file->source();
-		}
-		$program = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
-		$native_files = Cpp_Program::emit($program)->files;
-		$fixtures[$flavor->name . '_recovery'] = ['files' => $native_files, 'stdout_hex' => bin2hex('Y')];
+		verify($project->run()['preparation']['prepared'] === 2, 'Logical recovery failed');
+		$fresh->run();
+		verify(native_artifacts($directory . '/out') === native_artifacts($directory . '/fresh'), 'Xor recovery differs from fresh');
+		verify(($project->session()->entry->entry->ast === $caller) && ($caller->tokens === $tokens), 'Caller syntax replaced');
+		$fixtures[$flavor->name . '_recovery'] = ['files' => native_artifacts($directory . '/out'), 'stdout_hex' => bin2hex('Y')];
+		file_put_contents($lib, '');
+		touch($lib, ++$stamp);
+		rejects(fn() => $project->run(), 'value');
+		rejects(fn() => $project->run(), 'value');
+		$write('string', '"0"');
+		$project->run();
+		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
+		$fresh->run();
+		verify(native_artifacts($directory . '/out') === native_artifacts($directory . '/fresh'), 'Xor deletion recovery differs');
 		$write('string', '"hello"');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body-only edit invalidated caller');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
+		verify($project->run()['preparation']['prepared'] === 1, 'Body-only edit invalidated caller');
+		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
+		$fresh->run();
+		verify(native_artifacts($directory . '/out') === native_artifacts($directory . '/fresh'), 'Xor body edit differs');
+		$fixtures[$flavor->name . '_body_edit'] = ['files' => native_artifacts($directory . '/out'), 'stdout_hex' => ''];
+		verify($project->run()['preparation']['prepared'] === 0, 'No-op rebuilt');
 	}
 	finally {
-		foreach (glob($directory . '/*') as $path) {
-			unlink($path);
-		}
-		rmdir($directory);
+		remove_tree($directory);
 	}
 }
 if (isset($argv[1])) {

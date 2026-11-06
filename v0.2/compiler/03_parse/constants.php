@@ -29,7 +29,7 @@ final class Constant_Syntax
 			$initializer = new ast_integer_expression($literal_start, $cursor->position());
 		}
 		else {
-			$initializer = $parser->value();
+			$initializer = $parser->assignment_value();
 		}
 		if (!($initializer instanceof ast_integer_expression) && !($initializer instanceof ast_float_expression)
 			&& !($initializer instanceof ast_keyword_expression) && !($initializer instanceof ast_string_expression)) {

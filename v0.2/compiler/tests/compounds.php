@@ -101,7 +101,7 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare($decl('x', 'int', '1') . $x . '+=' . $rhs . '; return 8;'), 'Unsupported compound');
 	}
 	foreach (['bool' => 'true', 'null' => 'null', 'string' => '"text"'] as $type => $value) {
-		rejects(fn() => $prepare($decl('x', $type, $value) . $x . '+=' . $x . '; return 8;'), 'Unsupported compound');
+		rejects(fn() => $prepare($decl('x', $type, $value) . $x . '-=' . $x . '; return 8;'), 'Unsupported compound');
 	}
 	rejects(fn() => $prepare($x . '+=1; return 8;'), 'existing local');
 	$constant = $flavor === flavor::js ? 'const LIMIT: int = 1;' : 'const int LIMIT = 1;';

@@ -23,7 +23,7 @@ walk foreign bodies or add listeners. Calls and symbol reads use existing body w
 Incremental reset, grouped queues, selective emission and cleanup remain unchanged.
 
 One admission boundary is now explicit: metadata's `compound` boolean generates
-`supports_compound()`. Assignment preparation requires this capability as well as the
+`supports_compound($operator)`. Assignment preparation requires this capability as well as the
 existing binary result/write-back identity check. Int64 remains enabled; float64 was initially disabled and is now enabled by
 the [float compound slice](float_compounds.md). This prevents adding ordinary arithmetic from accidentally widening writes.
 

@@ -33,7 +33,7 @@ the existing execution-type `lower_cpp_conversion()` before `lower_cpp_binary()`
 Future checked promotions require their own reviewed admission; they are not enabled
 by this slice. Generated inventory version is 16.
 
-Same-type `binary_result()` is unchanged. Compound preparation uses `prepare_compound()` and `supports_compound()`.
+Same-type `binary_result()` is unchanged. Compound preparation uses `prepare_compound()` and `supports_compound($operator)`.
 Only explicit `compound_operators` permissions enable mixed writes.
 Changing contexts to admit assignment would be a separate metadata/policy decision.
 

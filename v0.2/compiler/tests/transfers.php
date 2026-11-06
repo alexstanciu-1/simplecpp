@@ -114,7 +114,7 @@ foreach (flavor::cases() as $flavor)
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
 		$tokens = $caller->tokens;
-		$write('byte', '0');
+		$write('null', 'null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
 		$write('bool', 'false');

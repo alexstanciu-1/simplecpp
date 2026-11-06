@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-Three stable, executable Simple C++ applications for the current v0.2 subset.
+Three stable, executable Simple C++ applications for a frozen v0.2 capability workload.
 Existing `my-try-simple`, the 50K source and panel integer/echo samples are retained
 unchanged. These samples supplement their historical timing baselines.
 
@@ -18,6 +18,7 @@ and the controlled incremental mutations. The C++-flavor `.scpp` files are Simpl
 C++ source, not generated C++ or native runtime sources.
 
 Original baseline: [2026-11-04 report](benchmark-2026-11-04.md).
+Active-scalar compiler measurement: [2026-11-06 report](benchmark-2026-11-06-scalars.md), unchanged workload.
 Historical comparison: [direct lowering and PCH](benchmark-2026-11-04-direct.md).
 Current expanded workload: [five-run report](benchmark-2026-11-05.md). This is a new
 workload baseline; source sizes and operation counts increased intentionally.
@@ -43,8 +44,10 @@ workload baseline; source sizes and operation counts increased intentionally.
 
 This is capability coverage, not every syntax permutation or error path. Dedicated
 compiler tests retain overflow-boundary, zero-divisor, rejection and recovery
-proofs. The samples do not invent unsupported classes, containers, exceptions,
-string operations, unary integer operators or floating arithmetic.
+proofs. The samples omit classes, containers and exceptions, and are not exhaustive coverage
+of later scalar additions. Dedicated compiler proofs cover newer floating operations,
+byte-family behavior, string operations, identity, xor, spaceship and power. Keep this
+workload stable when measuring compiler changes.
 
 `support/core.scpp` is the compact feature tour. `support/labels.jss` supplies
 string/default/void functions and is the incremental-edit target. `billing/`

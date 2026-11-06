@@ -403,7 +403,7 @@ final class Preparation
 			$this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			$this->value($syntax->right, $initializing);
-			if ($syntax->operator->lazy()) {
+			if ($syntax->operator->logical()) {
 				$syntax->left->type_def()->prepare_condition($syntax->left);
 				$syntax->right->type_def()->prepare_condition($syntax->right);
 				$syntax->settle_binary(type_bool::instance());

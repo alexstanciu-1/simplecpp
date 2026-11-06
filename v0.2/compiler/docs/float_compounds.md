@@ -12,7 +12,7 @@ lvalues and assignment expression results remain deferred.
 ## Implementation and structures
 
 Only `compiler.arithmetic.float64.compound` changes to true in runtime metadata.
-Regeneration enables `type_float64::supports_compound()`. The existing binary
+Regeneration enables `type_float64::supports_compound($operator)`. The existing binary
 admission enforces same-type operands; generated lowering selects native operations
 or the existing checked division helper. Disabling the metadata flag again disables
 compound admission, as covered by the generator proof.

@@ -23,9 +23,10 @@ The [byte/uint8 identity migration](byte_alias.md), integer operation groups and
 - `source_types` and `compiler.value_types`: source names, generated type classes,
   compiler representations and boolean/null literal spellings and values.
 - `compiler.arithmetic`: same-type int64 operators, result, native overflow and lowering policies; see [arithmetic](arithmetic.md).
-- `compiler.integer_operators`: integer arithmetic/comparisons, compounds, unary signs, updates and truthiness.
+- `compiler.integer_operators`: integer arithmetic/comparisons, bitwise/shifts, compounds, unary operations, updates and truthiness.
 - `compiler.updates` / `compiler.unary`: remaining explicit floating capabilities and native lowering/overflow policy.
 - `compiler.mixed_numeric_operators`: integer/floating family promotion and floating-destination compound permission.
+- `compiler.strict_identity`, `compiler.three_way`, `compiler.power`, `compiler.concatenation`: bounded scalar groups with explicit identity, promotion, runtime and flavor policies.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
@@ -65,7 +66,7 @@ byte-for-byte with the default metadata, including the inventory version.
 
 - `accepts_name()` and `type_registry::resolve()` provide canonical registration.
 - `type_registry::literal()` supplies generated literal spelling lookup to the parser.
-- Generated `supports_compound()` separates compound syntax availability from arithmetic admission.
+- Generated `supports_compound($operator)` separates compound syntax availability from arithmetic admission.
 - Generated `binary_result(operator, right_type)` supplies shared operator admission without requiring syntax.
 - `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
 - `lower_cpp_binary()` emits the approved operation.

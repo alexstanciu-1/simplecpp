@@ -22,7 +22,7 @@ first writes.
 Generated compound handlers attach calculation identity, operand conversions and
 result write-back to the existing assignment AST. Preparation resolves the destination
 once and prepares the RHS once. Same-type admission reuses `binary_result()` and
-`supports_compound()`; mixed handlers consume the generated promotion/conversion plan.
+`supports_compound($operator)`; mixed handlers consume the generated promotion/conversion plan.
 There is no synthetic expression tree. The [integer extension](integer_compounds.md)
 describes the prepared fields and separate conversion context.
 

@@ -71,7 +71,7 @@ foreach (flavor::cases() as $flavor) {
 		foreach ([['string', '""', 'F'], ['string', '"0"', 'F'], ['string', '"00"', 'T'],
 			['string', '"\0"', 'T'], ['int', '0', 'F'], ['int', '8', 'T'], ['float', '-0.0', 'F'],
 			['float', '1.5', 'T'], ['null', 'null', null], ['bool', 'false', 'F'],
-			['byte', '8', null], ['string', '"recovered"', 'T'], ['', '', null], ['bool', 'true', 'T']]
+			['byte', '8', 'T'], ['string', '"recovered"', 'T'], ['', '', null], ['bool', 'true', 'T']]
 			as $index => [$type, $value, $output]) {
 			$write($type, $value);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));

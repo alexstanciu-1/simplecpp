@@ -94,7 +94,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['(byte)1 + 1.0', 'true + 1', 'null * 1', '"a" + "b"'] as $invalid) {
+	foreach (['(byte)1 + true', 'true + 1', 'null * 1', '"a" - "b"'] as $invalid) {
 		rejects(fn() => $prepare('echo ' . $invalid . '; return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('x', 'int', $var('x') . '+1') . 'return 8;'), 'during its initialization');

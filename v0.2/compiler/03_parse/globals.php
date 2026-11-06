@@ -54,7 +54,7 @@ final class Global_Syntax
 				&& (type_registry::literal($word) === null)) {
 				throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Expected scalar literal for global initializer');
 			}
-			$initializer = $parser->value();
+			$initializer = $parser->assignment_value();
 		}
 		if (!($initializer instanceof ast_integer_expression) && !($initializer instanceof ast_float_expression)
 			&& !($initializer instanceof ast_keyword_expression)) {

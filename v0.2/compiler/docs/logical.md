@@ -3,9 +3,9 @@
 Doc Status: supporting
 
 The [logical contract](../../../specs/expression_evaluation.md#php-first-logical-slice--2026-11-04)
-defines `!`, `&&` and `||` uniformly across cpp/php/js. Each operand independently
-admits the current condition types: bool, int64, float and string. Results are bool.
-Null/byte conditions, keyword logical operators and xor remain deferred.
+defines `!`, `&&`, `||` and the bounded eager `xor` extension across cpp/php/js.
+Each operand independently admits bool, int64, byte/uint8, float and string.
+Results are bool. Null conditions and keyword and/or remain deferred.
 
 ## Mining and agreed boundary
 
@@ -84,3 +84,43 @@ not be added to wall time. LLVM optimizer/codegen columns are parts of backend w
 
 Local generated sources, logs and raw results: `v0.2/build/logical-proof-2026-11-04/`
 (ignored build artifacts). No preparation benchmark speedup is claimed.
+
+## Eager xor extension — 2026-11-06
+
+All flavors now accept the keyword `xor` with independent generated truthiness,
+including uint8/byte. Null remains rejected. The source spelling is distinct from
+bitwise `^`. No runtime type matrix or additional metadata lookup is introduced:
+`prepare_condition()`, `lower_cpp_condition()` and their generated binding/header
+handlers own type-dependent behavior, exactly as for short-circuit logical operators.
+
+`binary_operator::logical()` identifies the shared condition-admission path;
+`lazy()` continues to identify only AND/OR. Xor uses the existing binary AST with
+a bool result, without new facts or preparation passes. Lowering emits ordered bool
+temporaries in a value-returning expression, preserving eager evaluation and failure
+order. This reuses the existing expression-local snapshot approach rather than
+expanding the deferred general execution-order machinery.
+
+The parser's `assignment_value()` boundary rejects ungrouped outer xor in local,
+global and constant initializers and assignment RHSs. Parentheses already recurse
+through the complete expression parser; no extra grouping node is retained.
+
+The logical proof covers all current truthiness pairs, precedence, grouped RHS
+admission, reference mutation, left/RHS runtime failures, and no subsequent effects
+after failure. Its retained-session test now uses incremental emission and compares
+artifacts with fresh compilation after signature failure/retries, deletion/re-addition
+and body-only edits. Unchanged callers retain AST/tokens; no-op work stays empty.
+
+### Xor native proof
+
+Raw results: `build/logical-xor-proof-2026-11-06-final/results.json`.
+18 native fixtures passed; PHP fixture generation and incremental verification
+took 184.42 ms. O2/g0, libc++, Ninja8, mold, no PCH/LTO,
+prebuilt runtime, fresh instrumented application objects. Single measurements:
+
+| Flavor (xor fixture) | Native wall ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 141.12 | 14.37 | 12.97 | 67 |
+| php | 125.97 | 14.13 | 11.12 | 55 |
+| js | 134.05 | 13.75 | 11.18 | 64 |
+
+Trace work is nested and must not be added to wall time.

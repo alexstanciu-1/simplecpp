@@ -246,10 +246,20 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     $compiler = compilerConversionFamilies($metadata, $definitions, $types);
     if (!isset($compiler->integer_operators)) return $compiler;
     $group = $compiler->integer_operators;
-    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings', 'unary', 'updates', 'condition']);
+    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings', 'unary', 'updates', 'condition', 'bitwise', 'shifts']);
     literals($group, ['promotion' => 'integer_domain_maximum']);
     $policy = integerPromotionPolicy($metadata, $types);
-    $arithmetic = names(at($group, 'arithmetic'));
+    $bitwise = names(at($group, 'bitwise'));
+    requireThat(array_diff($bitwise, ['bit_and', 'bit_or', 'bit_xor']) === [], 'Unsupported integer bitwise group');
+    $arithmetic = array_merge(names(at($group, 'arithmetic')), $bitwise);
+    $shift = at($group, 'shifts');
+    fields($shift, ['operators', 'count_type', 'bindings']);
+    $shiftOperators = names(at($shift, 'operators'));
+    requireThat(array_diff($shiftOperators, ['shift_left', 'shift_right']) === [], 'Unsupported integer shift group');
+    $countType = textValue(at($shift, 'count_type'));
+    requireThat(isset($types[$countType], $definitions[$countType]), 'Inactive shift count representation');
+    requireThat(!isset($compiler->shifts), 'Duplicate shift policy owner');
+    $compiler->shifts = (object)[];
     $comparisons = names(at($group, 'comparisons'));
     $compoundPolicy = at($group, 'compounds');
     fields($compoundPolicy, ['types', 'write_back']);
@@ -259,7 +269,7 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     $runtime = object(at($metadata, 'operations'));
     $unary = names(at($group, 'unary'));
     $updates = names(at($group, 'updates'));
-    requireThat(array_diff($unary, ['positive', 'negative']) === [], 'Unsupported integer unary operator');
+    requireThat(array_diff($unary, ['positive', 'negative', 'bit_not']) === [], 'Unsupported integer unary operator');
     requireThat(array_diff($updates, ['increment', 'decrement']) === [], 'Unsupported integer update operator');
     requireThat(at($group, 'condition') === 'nonzero_integer', 'Unsupported integer condition policy');
     foreach ($unary as $operator) {
@@ -276,9 +286,13 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
         $compiler->unary->$identity = (object)['operators' => $unary, 'result' => $identity, 'overflow' => 'native', 'lowering' => 'native'];
         $compiler->updates->$identity = (object)['operators' => $updates, 'overflow' => 'native', 'lowering' => 'native'];
         $compiler->conditions->$identity = $group->condition;
+        requireThat(fits($types[$countType], $type['signed'], digits($type)), 'Shift count transport must preserve the complete source domain');
+        foreach ($shiftOperators as $op) requireThat(($runtime[$op]->promotion ?? null) === 'left_with_checked_count', 'Shift policy mismatch');
+        $compiler->shifts->$identity = (object)['operators' => $shiftOperators, 'counts' => array_keys($integers),
+            'count_type' => $countType, 'bindings' => at(at($shift, 'bindings'), $identity)];
         $operators = [];
         foreach ($arithmetic as $op) {
-            requireThat(isset($runtime[$op]) && in_array($op, ['add', 'subtract', 'multiply', 'divide', 'remainder'], true), 'Unsupported integer arithmetic group');
+            requireThat(isset($runtime[$op]) && in_array($op, ['add', 'subtract', 'multiply', 'divide', 'remainder', 'bit_and', 'bit_or', 'bit_xor'], true), 'Unsupported integer arithmetic group');
             requireThat($runtime[$op]->promotion === $group->promotion, 'Integer arithmetic policy mismatch');
             $operators[$op] = match ($op) { 'divide' => 'zero_checked_divide', 'remainder' => 'zero_checked_remainder', default => 'native' };
         }
@@ -315,22 +329,59 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     return $compiler;
 }
 
+/** Expand three-way numeric pairs using the existing domain policy and conversion permissions. */
+function compilerThreeWayPromotions(mixed $metadata, mixed $compiler, array $definitions, array $types): mixed {
+    if (!isset($compiler->three_way)) return $compiler;
+    $group = $compiler->three_way;
+    fields($group, ['result', 'integer_promotion', 'mixed_promotion', 'types']);
+    literals($group, ['result' => 'int64', 'integer_promotion' => 'integer_domain_maximum', 'mixed_promotion' => 'floating_operand']);
+    $members = object(at($group, 'types'));
+    $policy = integerPromotionPolicy($metadata, $types);
+    foreach ($members as $name => $_) requireThat(isset($definitions[$name]), 'Inactive three-way type');
+    foreach ($members as $left => $_) foreach ($members as $right => $_) {
+        if ($left === $right) continue;
+        $lk = $definitions[$left]['strategy'];
+        $rk = $definitions[$right]['strategy'];
+        if (!in_array($lk, ['integer', 'floating'], true) || !in_array($rk, ['integer', 'floating'], true)) continue;
+        $execution = $lk === 'floating' ? $left : ($rk === 'floating' ? $right : integerExecution($types[$left], $types[$right], $policy));
+        requireThat($execution !== null && isset($members[$execution]), 'Three-way execution domain unavailable');
+        if ($lk === 'integer' && $rk === 'integer') {
+            foreach ([$left, $right] as $source) requireThat(fits($types[$execution], $types[$source]['signed'], digits($types[$source])), 'Three-way integer promotion must be lossless');
+        }
+        foreach ([$left, $right] as $source) {
+            if ($source === $execution) continue;
+            $found = false;
+            foreach ($compiler->conversions as $conversion) {
+                if ($conversion->from !== $source || $conversion->to !== $execution) continue;
+                requireThat(in_array($conversion->operation, ['integer_widen', 'numeric_floating'], true), 'Invalid three-way promotion conversion');
+                $conversion->promotion_operators = array_values(array_unique(array_merge($conversion->promotion_operators, ['compare'])));
+                $found = true;
+            }
+            requireThat($found, 'Missing three-way conversion');
+        }
+        $compiler->promotions[] = (object)['left' => $left, 'right' => $right, 'operators' => ['compare'],
+            'execution_type' => $execution, 'result' => textValue(at($group, 'result'))];
+    }
+    return $compiler;
+}
+
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $metadata = clone $metadata;
     $compiler = compilerIntegerOperations($metadata, $definitions, $types);
+    $compiler = compilerThreeWayPromotions($metadata, $compiler, $definitions, $types);
     $metadata->compiler = $compiler;
     $families = compilerLiteralFamilies($definitions);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
-    $binary = compilerBinaryPlan($compiler, $definitions, $comparisons);
+    $binary = compilerBinaryPlan($compiler, $definitions, $comparisons, $types, names(at(at($metadata, 'string'), 'operations')));
     foreach ($definitions as $identity => $definition) {
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($compiler, $identity, $definitions) . compilerUnary($compiler, $identity, $safety, $definitions, $types) . compilerPromotions($compiler, $conversions, $definitions, $identity, $binary);
         if ($definition['copy_semantics'] === 'trivial') {
@@ -585,7 +636,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $promotion = names(at($row, 'promotion_operators'), 'Duplicate conversion promotion operator');
         // Lossless integer widening and integer-to-float rounding need no occurrence-level checks.
         requireThat($promotion === [] || (in_array($operation, ['numeric_floating', 'integer_widen'], true) && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
-        foreach ($promotion as $operator) requireThat(in_array($operator, ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide', 'remainder'], true) && ($operator !== 'remainder' || $operation === 'integer_widen'), 'Unsupported promotion operator');
+        foreach ($promotion as $operator) requireThat(in_array($operator, ['compare', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide', 'remainder', 'bit_and', 'bit_or', 'bit_xor'], true) && (!in_array($operator, ['remainder', 'bit_and', 'bit_or', 'bit_xor'], true) || $operation === 'integer_widen'), 'Unsupported promotion operator');
         $sourceBinding = null;
         $targetBinding = null;
         if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {
@@ -779,9 +830,10 @@ function compilerConditions(array $conditions, string $identity): string {
 }
 
 /** Resolve a named binary helper; metadata owns its public symbol/header and declared signature. */
-function compilerArithmeticBinding(mixed $compiler, string $name, string $operand, string $result, string $strategy): array {
+function compilerArithmeticBinding(mixed $compiler, string $name, string $operand, string $result, string $strategy, ?string $count = null): array {
     $binding = at(at($compiler, 'runtime_bindings'), $name);
-    fields($binding, ['operand', 'result', 'strategy', 'symbol', 'header']);
+    fields($binding, ['operand', 'result', 'strategy', 'symbol', 'header', 'count']);
+    requireThat(($binding->count ?? null) === $count, 'Invalid arithmetic binding count representation');
     literals($binding, ['operand' => $operand, 'result' => $result, 'strategy' => $strategy]);
     $symbol = textValue(at($binding, 'symbol'));
     $header = textValue(at($binding, 'header'));
@@ -794,7 +846,7 @@ function compilerArithmeticBinding(mixed $compiler, string $name, string $operan
 function compilerLoweringSafety(mixed $compiler): array {
     $safety = [];
     foreach (object(at($compiler, 'lowering_strategies')) as $strategy => $row) {
-        requireThat(in_array($strategy, ['native', 'runtime_compare', 'zero_checked_divide', 'zero_checked_remainder'], true), 'Unsupported lowering safety strategy');
+        requireThat(in_array($strategy, ['native', 'runtime_compare', 'zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'runtime_concat', 'canonical_identity', 'native_three_way', 'checked_three_way', 'string_three_way', 'checked_power'], true), 'Unsupported lowering safety strategy');
         fields($row, ['reorderable']);
         $safe = boolean(at($row, 'reorderable'));
         requireThat(!$safe || $strategy === 'native', 'Checked lowering cannot be reorderable');
@@ -815,7 +867,7 @@ function compilerComparisonPlan(mixed $compiler, array $definitions, array $stri
     $rows = object(at($compiler, 'comparisons'));
     $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
     foreach ($rows as $name => $row) {
-        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string'], true), 'Unsupported compiler comparison type');
+        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
         fields($row, ['operand', 'result', 'lowering', 'operators', 'result_binding']);
         literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => $name === 'string' ? 'runtime_compare' : 'native']);
         $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, textValue(at($row, 'result_binding')), 'bool_t', true) : null;
@@ -824,9 +876,8 @@ function compilerComparisonPlan(mixed $compiler, array $definitions, array $stri
         $operators = [];
         foreach (names(at($row, 'operators'), 'Duplicate comparison operator') as $operator) {
             requireThat(isset($spelling[$operator]), 'Unsupported comparison operator');
-            requireThat($name !== 'bool_t' || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/current narrow integer slice');
+            requireThat(!in_array($name, ['bool_t', 'null_t'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/current narrow integer slice');
             if ($name === 'string') {
-                requireThat(in_array($operator, ['equal', 'not_equal'], true), 'Only string equality is admitted');
                 requireThat(in_array($operator, $stringOperations, true), 'Missing runtime string comparison');
             }
             $operators[$operator] = $spelling[$operator];
@@ -838,21 +889,35 @@ function compilerComparisonPlan(mixed $compiler, array $definitions, array $stri
 }
 
 /** Validate execution operations once; direct lowering and promotion admission share this plan. */
-function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparisons): array {
+function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparisons, array $types, array $stringOperations): array {
     $plan = [];
     foreach ($comparisons as $identity => $comparison) {
         foreach ($comparison['operators'] as $op => $spelling) {
             $plan[$identity][$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'], 'spelling' => $spelling, 'result_binding' => $comparison['result_binding'], 'storage' => $comparison['storage']];
         }
     }
-    $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
+    if (isset($compiler->concatenation)) {
+        $row = $compiler->concatenation;
+        fields($row, ['operand', 'result', 'lowering', 'compound', 'operators']);
+        literals($row, ['operand' => 'string', 'result' => 'string', 'lowering' => 'runtime_concat']);
+        requireThat(isset($definitions['string']) && in_array('add', $stringOperations, true), 'Missing runtime string concatenation');
+        $compound = boolean(at($row, 'compound'));
+        foreach (object(at($row, 'operators')) as $op => $flavors) {
+            requireThat(in_array($op, ['add', 'concatenate'], true), 'Unsupported concatenation operator');
+            $flavors = names($flavors);
+            requireThat($flavors !== [] && array_diff($flavors, $op === 'add' ? ['cpp', 'js'] : ['php']) === [], 'Invalid concatenation flavors');
+            $plan['string'][$op] = ['result' => 'string', 'lowering' => 'runtime_concat', 'spelling' => '+',
+                'storage' => $definitions['string']['storage'], 'flavors' => $flavors, 'compound' => $compound];
+        }
+    }
+    $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^'];
     foreach (object(at($compiler, 'arithmetic')) as $name => $row) {
         requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating'], true), 'Unsupported compiler arithmetic type');
         fields($row, ['operand', 'result', 'overflow', 'compound', 'operators', 'bindings']);
         literals($row, ['operand' => 'same_type', 'result' => $name, 'overflow' => 'native']);
         requireThat(is_bool(at($row, 'compound')), 'Compound policy must be boolean');
         foreach (object(at($row, 'operators')) as $op => $lowering) {
-            requireThat(isset($arithmeticSpelling[$op]) && ($name !== 'float64' || $op !== 'remainder'), 'Unsupported arithmetic operator');
+            requireThat(isset($arithmeticSpelling[$op]) && ($definitions[$name]['strategy'] !== 'floating' || in_array($op, ['add', 'subtract', 'multiply', 'divide'], true)), 'Unsupported arithmetic operator');
             $expected = match ($op) { 'divide' => 'zero_checked_divide', 'remainder' => 'zero_checked_remainder', default => 'native' };
             requireThat($lowering === $expected, 'Unsupported arithmetic lowering policy');
             $binding = null;
@@ -860,6 +925,76 @@ function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparis
                 $binding = compilerArithmeticBinding($compiler, textValue(at(at($row, 'bindings'), $op)), $name, textValue(at($row, 'result')), $lowering);
             }
             $plan[$name][$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op], 'binding' => $binding];
+        }
+    }
+    foreach (object($compiler->shifts ?? (object)[]) as $name => $row) {
+        fields($row, ['operators', 'counts', 'count_type', 'bindings']);
+        requireThat(($definitions[$name]['strategy'] ?? null) === 'integer', 'Shift left must be integer');
+        $counts = names(at($row, 'counts'));
+        $transport = textValue(at($row, 'count_type'));
+        requireThat(isset($types[$transport], $definitions[$transport]), 'Invalid shift count transport');
+        foreach ($counts as $count) {
+            requireThat(($definitions[$count]['strategy'] ?? null) === 'integer', 'Shift count must be integer');
+            requireThat(fits($types[$transport], $types[$count]['signed'], digits($types[$count])), 'Shift count transport would narrow');
+        }
+        foreach (names(at($row, 'operators')) as $op) {
+            requireThat(in_array($op, ['shift_left', 'shift_right'], true), 'Unsupported shift operator');
+            $binding = compilerArithmeticBinding($compiler, textValue(at(at($row, 'bindings'), $op)), $name, $name, 'checked_shift', textValue(at($row, 'count_type')));
+            $plan[$name][$op] = ['result' => $name, 'lowering' => 'checked_shift', 'counts' => $counts, 'binding' => $binding];
+        }
+    }
+    if (isset($compiler->power)) {
+        $row = $compiler->power;
+        fields($row, ['operand', 'result', 'compound', 'lowering', 'binding']);
+        literals($row, ['operand' => 'int64', 'result' => 'int64', 'lowering' => 'checked_power']);
+        requireThat(isset($definitions['int64']), 'Inactive power operand');
+        $plan['int64']['power'] = ['result' => 'int64', 'lowering' => 'checked_power',
+            'compound' => boolean(at($row, 'compound')),
+            'binding' => compilerArithmeticBinding($compiler, textValue(at($row, 'binding')), 'int64', 'int64', 'checked_power')];
+    }
+    if (isset($compiler->three_way)) {
+        $result = textValue(at($compiler->three_way, 'result'));
+        requireThat(isset($definitions[$result]) && $definitions[$result]['strategy'] === 'integer', 'Invalid three-way result');
+        foreach (object(at($compiler->three_way, 'types')) as $name => $row) {
+            fields($row, ['lowering', 'binding', 'result_binding']);
+            $strategy = textValue(at($row, 'lowering'));
+            $expected = match ($definitions[$name]['strategy']) {
+                'integer' => 'native_three_way', 'floating' => 'checked_three_way', 'string' => 'string_three_way',
+                default => throw new \RuntimeException('Unsupported three-way operand'),
+            };
+            requireThat($strategy === $expected, 'Invalid three-way lowering');
+            $operation = ['result' => $result, 'lowering' => $strategy, 'compound' => false];
+            if ($strategy === 'checked_three_way') $operation['binding'] = compilerArithmeticBinding($compiler, textValue(at($row, 'binding')), $name, $result, $strategy);
+            if ($strategy === 'string_three_way') {
+                requireThat(in_array('less', $stringOperations, true) && in_array('greater', $stringOperations, true), 'Missing string three-way comparison');
+                $operation['storage'] = $definitions[$name]['storage'];
+                $operation['result_binding'] = compilerTypeBinding($compiler, textValue(at($row, 'result_binding')), 'bool_t', true);
+            }
+            $plan[$name]['compare'] = $operation;
+        }
+    }
+    if (isset($compiler->strict_identity)) {
+        $row = $compiler->strict_identity;
+        fields($row, ['types', 'same_type', 'different_type', 'result_binding']);
+        literals($row, ['same_type' => 'value_equality', 'different_type' => 'unequal']);
+        $peers = names(at($row, 'types'));
+        $identityCompiler = clone $compiler;
+        $identityCompiler->comparisons = (object)[];
+        foreach ($peers as $name) {
+            requireThat(isset($definitions[$name]), 'Inactive strict identity type');
+            $identityCompiler->comparisons->$name = (object)['operand' => 'same_type', 'result' => 'bool_t',
+                'lowering' => $definitions[$name]['strategy'] === 'string' ? 'runtime_compare' : 'native',
+                'operators' => ['equal', 'not_equal']];
+            if ($definitions[$name]['strategy'] === 'string') {
+                $identityCompiler->comparisons->$name->result_binding = textValue(at($row, 'result_binding'));
+            }
+        }
+        foreach (compilerComparisonPlan($identityCompiler, $definitions, $stringOperations) as $name => $comparison) {
+            foreach (['identical' => 'equal', 'not_identical' => 'not_equal'] as $op => $ordinary) {
+                $plan[$name][$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'],
+                    'spelling' => $comparison['operators'][$ordinary], 'result_binding' => $comparison['result_binding'],
+                    'storage' => $comparison['storage'], 'identity_peers' => $peers, 'different_result' => $op === 'not_identical'];
+            }
         }
     }
     return $plan;
@@ -870,37 +1005,79 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $operations = $binary[$identity] ?? [];
     if ($operations === []) return '';
     $results = '';
+    $rightCases = '';
+    $flavorCases = '';
+    $compoundEnabled = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound;
+    $compoundOperators = [];
     $cases = '';
     $headers = [];
     $reorderable = [];
     foreach ($operations as $op => $operation) {
         $result = 'type_' . $definitions[$operation['result']]['class'];
-        $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
-        if (compilerStrategyReorderable($safety, $operation['lowering'])) $reorderable[] = "binary_operator::$op";
+        if (($operation['compound'] ?? $compoundEnabled) && $operation['result'] === $identity) $compoundOperators[] = "binary_operator::$op";
+        if (isset($operation['flavors'])) {
+            $allowed = implode(', ', array_map(static fn(string $flavor): string => 'flavor::' . $flavor, $operation['flavors']));
+            $flavorCases .= "\t\t\tbinary_operator::$op => match (\$site->source()->flavor) { $allowed => true, default => false },\n";
+        }
+        $rightTypes = $operation['counts'] ?? $operation['identity_peers'] ?? null;
+        if ($rightTypes !== null) {
+            $admission = implode(' || ', array_map(static fn(string $name): string => '$right === type_' . $definitions[$name]['class'] . '::instance()', $rightTypes));
+            $rightCases .= "\t\tif (\$operator === binary_operator::$op) {\n\t\t\treturn (" . ($admission === '' ? 'false' : $admission) . ") ? $result::instance() : null;\n\t\t}\n";
+        } else {
+            $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
+        }
+        if (compilerStrategyReorderable($safety, isset($operation['identity_peers']) ? 'canonical_identity' : $operation['lowering'])) $reorderable[] = "binary_operator::$op";
         if ($operation['lowering'] === 'native') {
             $expression = "'(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')'";
             if ($definitions[$identity]['strategy'] === 'integer' && $types[$identity]['bits'] < 64 && $operation['result'] === $identity) {
                 $expression = "'static_cast<" . $definitions[$identity]['cpp'] . ">(' . " . $expression . " . ')'";
             }
-            $cases .= "\t\t\tbinary_operator::$op => $expression,\n";
+        } elseif (in_array($operation['lowering'], ['native_three_way', 'string_three_way'], true)) {
+            $resultCpp = $definitions[$operation['result']]['cpp'];
+            $extract = '';
+            if ($operation['lowering'] === 'string_three_way') {
+                $extract = '.' . $operation['result_binding']['extract'] . '()';
+                $headers[$operation['storage']['header']][] = "binary_operator::$op";
+                $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
+            }
+            $expression = "'static_cast<$resultCpp>(((' . \$left . ' > ' . \$right . ')$extract) - ((' . \$left . ' < ' . \$right . ')$extract))'";
+        } elseif ($operation['lowering'] === 'runtime_concat') {
+            $expression = "'(' . \$left . ' + ' . \$right . ')'";
+            $headers[$operation['storage']['header']][] = "binary_operator::$op";
         } elseif ($operation['lowering'] === 'runtime_compare') {
             $extract = $operation['result_binding']['extract'];
-            $cases .= "\t\t\tbinary_operator::$op => '((' . \$left . ' " . $operation['spelling'] . " ' . \$right . ').$extract())',\n";
+            $expression = "'((' . \$left . ' " . $operation['spelling'] . " ' . \$right . ').$extract())'";
             $headers[$operation['storage']['header']][] = "binary_operator::$op";
             $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
         } else {
             $symbol = $operation['binding']['symbol'];
-            $cases .= "\t\t\tbinary_operator::$op => '{$symbol}(' . \$left . ', ' . \$right . ')',\n";
+            $expression = "'{$symbol}(' . \$left . ', ' . \$right . ')'";
             $headers[$operation['binding']['header']][] = "binary_operator::$op";
         }
+        if (isset($operation['identity_peers'])) {
+            $different = $operation['different_result'] ? 'true' : 'false';
+            $expression = "(\$right_type === \$this) ? $expression : "
+                . "'(static_cast<void>(' . \$left . '), static_cast<void>(' . \$right . '), $different)'";
+        }
+        $cases .= "\t\t\tbinary_operator::$op => $expression,\n";
     }
-    $compound = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound ? 'true' : 'false';
+    $compound = $compoundOperators === [] ? 'false' : "match (\$operator) { " . implode(', ', $compoundOperators) . " => true, default => false }";
+    $syntaxMethod = $flavorCases === '' ? '' : "\n\t/** Flavor spelling admission generated from operation metadata. */\n\tpublic function binary_syntax_allowed(binary_operator \$operator, ast_node \$site): bool\n\t{\n\t\treturn match (\$operator) {\n$flavorCases\t\t\tdefault => true,\n\t\t};\n\t}\n";
     $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
     $headerMethods = '';
     if ($headers !== []) {
         $headerCases = '';
+        $perOperator = [];
         foreach ($headers as $header => $operators) {
-            $headerCases .= "\t\t\t" . implode(', ', $operators) . ' => [' . var_export($header, true) . "],\n";
+            foreach ($operators as $operator) $perOperator[$operator][$header] = true;
+        }
+        $headerGroups = [];
+        foreach ($perOperator as $operator => $required) {
+            $list = implode(', ', array_map(static fn(string $header): string => var_export($header, true), array_keys($required)));
+            $headerGroups[$list][] = $operator;
+        }
+        foreach ($headerGroups as $list => $operators) {
+            $headerCases .= "\t\t\t" . implode(', ', $operators) . " => [$list],\n";
         }
         $headerMethods = "
 \t/** @return string[] */
@@ -912,9 +1089,9 @@ $headerCases\t\t\tdefault => [],
 \t}
 ";
     }
-    return "
+    return "$syntaxMethod
 \t/** Compound syntax admission is separate from ordinary arithmetic capability. */
-\tpublic function supports_compound(): bool
+\tpublic function supports_compound(binary_operator \$operator): bool
 \t{
 \t\treturn $compound;
 \t}
@@ -922,7 +1099,7 @@ $headerCases\t\t\tdefault => [],
 \t/** Generated same-type admission; result identity follows the selected metadata operation. */
 \tpublic function binary_result(binary_operator \$operator, type_definition \$right): ?type_definition
 \t{
-\t\tif (\$right !== \$this) {
+$rightCases\t\tif (\$right !== \$this) {
 \t\t\treturn null;
 \t\t}
 \t\treturn match (\$operator) {
@@ -931,7 +1108,7 @@ $results\t\t\tdefault => null,
 \t}
 
 \t/** Lower an approved operator on already sequenced operand snapshots. */
-\tpublic function lower_cpp_binary(binary_operator \$operator, string \$left, string \$right): string
+\tpublic function lower_cpp_binary(binary_operator \$operator, string \$left, string \$right, type_definition \$right_type): string
 \t{
 \t\treturn match (\$operator) {
 $cases\t\t\tdefault => throw new \\LogicException('Binary operation was not approved'),
@@ -999,7 +1176,7 @@ function compilerUnary(mixed $compiler, string $identity, array $safety, array $
         literals($row, ['result' => $name, 'overflow' => 'native', 'lowering' => 'native']);
         $operators = names(at($row, 'operators'), 'Duplicate unary operator');
         foreach ($operators as $operator) {
-            requireThat(in_array($operator, ['positive', 'negative'], true), 'Unsupported unary operator');
+            requireThat((in_array($operator, ['positive', 'negative'], true) || ($operator === 'bit_not' && $definitions[$name]['strategy'] === 'integer')), 'Unsupported unary operator');
         }
         if ($identity === $name) $selected = $operators;
     }
@@ -1008,7 +1185,7 @@ function compilerUnary(mixed $compiler, string $identity, array $safety, array $
     $lowering = '';
     foreach ($selected as $operator) {
         $admission[] = 'unary_operator::' . $operator;
-        $sign = $operator === 'positive' ? '+' : '-';
+        $sign = match ($operator) { 'positive' => '+', 'negative' => '-', 'bit_not' => '~' };
         // C++ promotes narrow operands; restore their identity before any enclosing expression uses the result.
         $restore = isset($types[$identity]) && $types[$identity]['bits'] < 64;
         $expression = $restore ? 'static_cast<' . $definitions[$identity]['cpp'] . '>(' . $sign . '(' : '(' . $sign . '(';
@@ -1098,7 +1275,7 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
         $rc = $rc['operation'] ?? 'identity';
         if ($compoundOperators !== []) {
             $compoundCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $compoundOperators));
-            $compounds .= "\t\tif (\$this->supports_compound() && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
+            $compounds .= "\t\tif (\$this->supports_compound(\$value->operator) && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
                 . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\t\$value->settle_compound(\$local, $executionClass::instance(), value_conversion::$lc, value_conversion::$rc, value_conversion::$writeBack);\n\t\t\treturn;\n\t\t}\n";
         }
         $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"

@@ -37,7 +37,7 @@ comparison metadata remains separate, but both feed one generated binary handler
 on each canonical type definition. Unsupported policies fail generation.
 
 `binary_result()` supplies generated admission/result identity shared by ordinary
-expressions and [compound writes](compounds.md); generated `supports_compound()`
+expressions and [compound writes](compounds.md); generated `supports_compound($operator)`
 separately controls whether a type admits compound syntax. `prepare_binary()` attaches
 ordinary expression facts through that query.
 `lower_cpp_binary()` consumes the approved operator. `binary_headers()` reports

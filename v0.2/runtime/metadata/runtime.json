@@ -890,10 +890,27 @@
       }
     },
     "lowering_strategies": {
-      "native": { "reorderable": true },
-      "runtime_compare": { "reorderable": false },
-      "zero_checked_divide": { "reorderable": false },
-      "zero_checked_remainder": { "reorderable": false }
+      "native": {
+        "reorderable": true
+      },
+      "checked_power": { "reorderable": false },
+      "native_three_way": { "reorderable": false },
+      "checked_three_way": { "reorderable": false },
+      "string_three_way": { "reorderable": false },
+      "canonical_identity": { "reorderable": false },
+      "runtime_concat": { "reorderable": false },
+      "runtime_compare": {
+        "reorderable": false
+      },
+      "zero_checked_divide": {
+        "reorderable": false
+      },
+      "zero_checked_remainder": {
+        "reorderable": false
+      },
+      "checked_shift": {
+        "reorderable": false
+      }
     },
     "output": {
       "int64": { "strategy": "integer", "binding": "echo_int" },
@@ -932,6 +949,14 @@
         "strategy": "zero_checked_remainder",
         "symbol": "scpp::int64_remainder",
         "header": "scpp/arithmetic.hpp"
+      },
+      "int64_power": {
+        "operand": "int64", "result": "int64", "strategy": "checked_power",
+        "symbol": "scpp::int64_power", "header": "scpp/arithmetic.hpp"
+      },
+      "float64_compare": {
+        "operand": "float64", "result": "int64", "strategy": "checked_three_way",
+        "symbol": "scpp::float64_compare", "header": "scpp/arithmetic.hpp"
       },
       "float64_divide": {
         "operand": "float64",
@@ -987,6 +1012,38 @@
         "strategy": "zero_checked_remainder",
         "symbol": "scpp::uint8_remainder",
         "header": "scpp/arithmetic.hpp"
+      },
+      "int64_shift_left": {
+        "operand": "int64",
+        "count": "int64",
+        "result": "int64",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int64_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_shift_right": {
+        "operand": "int64",
+        "count": "int64",
+        "result": "int64",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int64_shift_right",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint8_shift_left": {
+        "operand": "uint8",
+        "count": "int64",
+        "result": "uint8",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint8_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint8_shift_right": {
+        "operand": "uint8",
+        "count": "int64",
+        "result": "uint8",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint8_shift_right",
+        "header": "scpp/arithmetic.hpp"
       }
     },
     "integer_operators": {
@@ -1025,13 +1082,36 @@
       },
       "unary": [
         "positive",
-        "negative"
+        "negative",
+        "bit_not"
       ],
       "updates": [
         "increment",
         "decrement"
       ],
-      "condition": "nonzero_integer"
+      "condition": "nonzero_integer",
+      "bitwise": [
+        "bit_and",
+        "bit_or",
+        "bit_xor"
+      ],
+      "shifts": {
+        "operators": [
+          "shift_left",
+          "shift_right"
+        ],
+        "count_type": "int64",
+        "bindings": {
+          "int64": {
+            "shift_left": "int64_shift_left",
+            "shift_right": "int64_shift_right"
+          },
+          "uint8": {
+            "shift_left": "uint8_shift_left",
+            "shift_right": "uint8_shift_right"
+          }
+        }
+      }
     },
     "arithmetic": {
       "float64": {
@@ -1073,14 +1153,52 @@
         "divide"
       ]
     },
+    "concatenation": {
+      "operand": "string",
+      "result": "string",
+      "lowering": "runtime_concat",
+      "compound": true,
+      "operators": { "concatenate": ["php"], "add": ["cpp", "js"] }
+    },
+    "power": {
+      "operand": "int64", "result": "int64", "compound": true,
+      "lowering": "checked_power", "binding": "int64_power"
+    },
+    "three_way": {
+      "result": "int64",
+      "integer_promotion": "integer_domain_maximum",
+      "mixed_promotion": "floating_operand",
+      "types": {
+        "int64": { "lowering": "native_three_way" },
+        "uint8": { "lowering": "native_three_way" },
+        "float64": { "lowering": "checked_three_way", "binding": "float64_compare" },
+        "string": { "lowering": "string_three_way", "result_binding": "boxed_bool" }
+      }
+    },
+    "strict_identity": {
+      "types": ["null_t", "bool_t", "int64", "uint8", "float64", "string"],
+      "same_type": "value_equality",
+      "different_type": "unequal",
+      "result_binding": "boxed_bool"
+    },
     "comparisons": {
+      "null_t": {
+        "operand": "same_type",
+        "result": "bool_t",
+        "lowering": "native",
+        "operators": ["equal", "not_equal"]
+      },
       "string": {
         "operand": "same_type",
         "result": "bool_t",
         "lowering": "runtime_compare",
         "operators": [
           "equal",
-          "not_equal"
+          "not_equal",
+          "less",
+          "less_equal",
+          "greater",
+          "greater_equal"
         ],
         "result_binding": "boxed_bool"
       },

@@ -433,19 +433,28 @@ final class Parser
 	}
 
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
-	public function value(int $minimum_precedence /** uint8 */ = 1): ast_expression
+	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
 	{
 		$left = $this->primary();
 		while (!$this->cursor->at_end()) {
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			$operator = match ($kind) {
+				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
 				token_kind::logical_and => binary_operator::logical_and,
 				token_kind::logical_or => binary_operator::logical_or,
 				token_kind::plus => binary_operator::add,
+			token_kind::dot => $this->cursor->tokens->source->flavor === flavor::php ? binary_operator::concatenate : null,
 				token_kind::minus => binary_operator::subtract,
 				token_kind::star => binary_operator::multiply,
 				token_kind::slash => binary_operator::divide,
 				token_kind::percent => binary_operator::remainder,
+				token_kind::ampersand => binary_operator::bit_and,
+				token_kind::pipe => binary_operator::bit_or,
+				token_kind::caret => binary_operator::bit_xor,
+				token_kind::power => binary_operator::power,
+				token_kind::spaceship => binary_operator::compare,
+				token_kind::identical => binary_operator::identical,
+				token_kind::not_identical => binary_operator::not_identical,
 				token_kind::equal => binary_operator::equal,
 				token_kind::not_equal => binary_operator::not_equal,
 				token_kind::less => binary_operator::less,
@@ -454,11 +463,19 @@ final class Parser
 				token_kind::greater_equal => binary_operator::greater_equal,
 				default => null,
 			};
+			$shift = (($kind === token_kind::less) || ($kind === token_kind::greater))
+				? $this->cursor->tokens->operator_text_at($this->cursor->position()) : '';
+			if ($shift === '<<' || $shift === '>>') {
+				$operator = $shift === '<<' ? binary_operator::shift_left : binary_operator::shift_right;
+			}
 			if (($operator === null) || ($operator->precedence() < $minimum_precedence)) {
 				break;
 			}
 			$this->cursor->take($kind, 'binary operator');
-			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + 1));
+			if ($shift === '<<' || $shift === '>>') {
+				$this->cursor->take($kind, 'shift operator');
+			}
+			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + ($operator === binary_operator::power ? 0 : 1)));
 		}
 		return $left;
 	}
@@ -479,25 +496,40 @@ final class Parser
 		$kind = $tokens->tokens[$start + 3]->kind ?? null;
 		return in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
 			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string,
-			token_kind::lparen, token_kind::bang, token_kind::backslash, token_kind::scope], true)
+			token_kind::lparen, token_kind::bang, token_kind::tilde, token_kind::backslash, token_kind::scope], true)
 			|| ((($kind === token_kind::minus) || ($kind === token_kind::plus))
 				&& (($tokens->tokens[$start + 4]->kind ?? null) === token_kind::floating));
+	}
+
+	/** Low-precedence xor requires grouping until value-producing assignments are implemented. */
+	public function assignment_value(): ast_expression
+	{
+		$value = $this->value(1);
+		if ($this->cursor->keyword('xor')) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+				'Parenthesize xor in an initializer or assignment RHS');
+		}
+		return $value;
 	}
 
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(): ast_expression
 	{
-		if (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
-			&& !$this->cursor->next_is(token_kind::floating)) {
-			$kind = $this->cursor->is(token_kind::plus) ? token_kind::plus : token_kind::minus;
+		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
+			&& !$this->cursor->next_is(token_kind::floating))) {
+			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			$start = $this->cursor->take($kind, 'unary sign');
-			$operator = $kind === token_kind::plus ? unary_operator::positive : unary_operator::negative;
-			$operand = $this->primary();
+			$operator = match ($kind) {
+				token_kind::plus => unary_operator::positive,
+				token_kind::minus => unary_operator::negative,
+				token_kind::tilde => unary_operator::bit_not,
+			};
+			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_unary_expression($start, $this->cursor->position(), $operator, $operand);
 		}
 		if ($this->cursor->is(token_kind::bang)) {
 			$start = $this->cursor->take(token_kind::bang, '!');
-			$operand = $this->primary();
+			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_not_expression($start, $this->cursor->position(), $operand);
 		}
 		if ($this->cast_ahead()) {
@@ -505,7 +537,7 @@ final class Parser
 			$type = $this->cursor->tokens->text_at($this->cursor->position());
 			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'cast type');
 			$this->cursor->take(token_kind::rparen, ')');
-			$operand = $this->primary();
+			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_cast_expression($start, $this->cursor->position(), $type, $operand);
 		}
 		if ($this->cursor->is(token_kind::lparen)) {
@@ -553,7 +585,7 @@ final class Parser
 	public function declaration(int $start /** uint32 */, string $name, ?string $type_name): ast_local_declaration
 	{
 		$this->cursor->take(token_kind::assign, '=');
-		$value = $this->value();
+		$value = $this->assignment_value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
 		return new ast_local_declaration($start, $end, $name, $type_name, $value);
 	}
@@ -588,6 +620,9 @@ final class Parser
 	public function compound_operator(): ?binary_operator
 	{
 		$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind ?? null;
+		if (($kind === token_kind::concat_assign) && ($this->cursor->tokens->source->flavor !== flavor::php)) {
+			return null;
+		}
 		return $kind === null ? null : binary_operator::compound($kind);
 	}
 
@@ -598,7 +633,7 @@ final class Parser
 		$operator = $this->compound_operator();
 		$kind = $operator === null ? token_kind::assign : $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 		$this->cursor->take($kind, 'assignment operator');
-		$value = $this->value();
+		$value = $this->assignment_value();
 		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
 		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
 	}

@@ -19,18 +19,42 @@ enum binary_operator: int
 	case remainder = 11;
 	case logical_and = 12;
 	case logical_or = 13;
+	case bit_and = 14;
+	case bit_or = 15;
+	case bit_xor = 16;
+	case shift_left = 17;
+	case shift_right = 18;
+	case concatenate = 19;
+	case logical_xor = 20;
+	case identical = 21;
+	case not_identical = 22;
+	case compare = 23;
+	case power = 24;
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
 	{
 		return match ($token) {
+			token_kind::power_assign => self::power,
 			token_kind::plus_assign => self::add,
+			token_kind::concat_assign => self::concatenate,
 			token_kind::minus_assign => self::subtract,
 			token_kind::star_assign => self::multiply,
 			token_kind::slash_assign => self::divide,
 			token_kind::percent_assign => self::remainder,
+			token_kind::and_assign => self::bit_and,
+			token_kind::or_assign => self::bit_or,
+			token_kind::xor_assign => self::bit_xor,
+			token_kind::left_assign => self::shift_left,
+			token_kind::right_assign => self::shift_right,
 			default => null,
 		};
+	}
+
+	/** Logical operands use each type's generated condition contract. */
+	public function logical(): bool
+	{
+		return $this->lazy() || ($this === self::logical_xor);
 	}
 
 	public function lazy(): bool
@@ -38,16 +62,23 @@ enum binary_operator: int
 		return ($this === self::logical_and) || ($this === self::logical_or);
 	}
 
-	/** Higher levels bind more tightly; binary levels associate left. */
+	/** Higher levels bind more tightly; power alone associates right. */
 	public function precedence(): int /** uint8 */
 	{
 		return match ($this) {
+			self::logical_xor => 0,
 			self::logical_or => 1,
 			self::logical_and => 2,
-			self::equal, self::not_equal => 3,
-			self::less, self::less_equal, self::greater, self::greater_equal => 4,
-			self::add, self::subtract => 5,
-			self::multiply, self::divide, self::remainder => 6,
+			self::bit_or => 3,
+			self::bit_xor => 4,
+			self::bit_and => 5,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 6,
+			self::less, self::less_equal, self::greater, self::greater_equal => 7,
+			self::concatenate => 8,
+			self::shift_left, self::shift_right => 9,
+			self::add, self::subtract => 10,
+			self::multiply, self::divide, self::remainder => 11,
+			self::power => 12,
 		};
 	}
 }
@@ -112,6 +143,7 @@ enum unary_operator: int
 {
 	case positive = 1;
 	case negative = 2;
+	case bit_not = 3;
 }
 
 /** Owns the operand of e.g. -count(); inherited readiness stores only the approved result type. */

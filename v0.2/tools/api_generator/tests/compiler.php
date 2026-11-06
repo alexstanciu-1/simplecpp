@@ -138,6 +138,29 @@ foreach (['unary', 'updates', 'condition', 'duplicate', 'runtime'] as $change) {
     } catch (\RuntimeException $expected) {
     }
 }
+// Shift counts have their own domain; they never use arithmetic promotion to the left type.
+$subset = unserialize(serialize($rawMetadata));
+$subset->compiler->integer_operators->bitwise = [];
+$subset->compiler->integer_operators->shifts->operators = [];
+$generated = renderCompiler($subset, $facts);
+foreach (['int64', 'uint8'] as $name) {
+    requireThat(!str_contains($generated['types/' . $name . '.php'], 'binary_operator::shift_left')
+        && !str_contains($generated['types/' . $name . '.php'], 'binary_operator::bit_and'), 'Removed group remained');
+}
+foreach (['count', 'operator', 'binding', 'safety'] as $change) {
+    $bad = unserialize(serialize($rawMetadata));
+    match ($change) {
+        'count' => $bad->compiler->integer_operators->shifts->count_type = 'uint8',
+        'operator' => $bad->compiler->integer_operators->bitwise[] = 'divide',
+        'binding' => $bad->compiler->runtime_bindings->uint8_shift_left->count = 'uint8',
+        'safety' => $bad->compiler->lowering_strategies->checked_shift->reorderable = true,
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid bitwise/shift metadata accepted');
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
 $registry = registry($metadata, $facts);
 $normalized = compilerIntegerOperations($metadata, compilerTypePlan($metadata, $facts, $registry), $registry);
@@ -259,7 +282,9 @@ try {
     requireThat(str_contains($expected->getMessage(), 'runtime scalar policy'), $expected->getMessage());
 }
 $without = unserialize(serialize($metadata));
+unset($without->compiler->three_way);
 $without->compiler->conversions = [];
+unset($without->compiler->three_way);
 $without->compiler->promotions = [];
 $withoutFiles = renderCompiler($without, $facts);
 requireThat(!str_contains($withoutFiles['types/uint8.php'], 'scpp::uint8{'), 'Conversion ignored metadata removal');
@@ -390,6 +415,7 @@ $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->int64);
 requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'binary_operator::equal => type_bool::instance()'), 'Removed comparisons still generated');
 $without->compiler->comparisons->float64->operators = ['equal'];
+unset($without->compiler->three_way);
 $without->compiler->promotions = [];
 $limited = renderCompiler($without, $facts)['types/float64.php'];
 requireThat(str_contains($limited, 'binary_operator::equal') && !str_contains($limited, 'binary_operator::less'), 'Removed operator still generated');
@@ -416,7 +442,7 @@ requireThat(str_contains($files['types/int64.php'], 'binary_operator::equal => t
 $without = unserialize(serialize($metadata));
 unset($without->compiler->arithmetic->int64);
 $limited = renderCompiler($without, $facts)['types/int64.php'];
-requireThat(!str_contains($limited, 'binary_operator::add => type_int64::instance()') && !str_contains($limited, 'scpp/arithmetic.hpp'), 'Removed arithmetic still generated');
+requireThat(!str_contains($limited, 'binary_operator::add => type_int64::instance()') && !str_contains($limited, 'scpp::int64_divide('), 'Removed arithmetic still generated');
 $without = unserialize(serialize($metadata));
 unset($without->compiler->arithmetic->int64->operators->divide);
 $limited = renderCompiler($without, $facts)['types/int64.php'];
@@ -638,15 +664,16 @@ foreach (['remainder', 'unchecked_division', 'compound_policy'] as $change) {
         requireThat($error->getMessage() !== '', 'Missing float policy diagnostic');
     }
 }
-requireThat(\scpp\compiler\type_int64::instance()->supports_compound(), 'Integer compounds lost');
-requireThat(\scpp\compiler\type_float64::instance()->supports_compound(), 'Float compounds unavailable');
+require_once $root . '/compiler/03_parse/structures/expressions.php';
+requireThat(\scpp\compiler\type_int64::instance()->supports_compound(\scpp\compiler\binary_operator::add), 'Integer compounds lost');
+requireThat(\scpp\compiler\type_float64::instance()->supports_compound(\scpp\compiler\binary_operator::add), 'Float compounds unavailable');
 $without = unserialize(serialize($metadata));
 $without->compiler->arithmetic->float64->compound = false;
 $limited = renderCompiler($without, $facts)['types/float64.php'];
-requireThat(str_contains($limited, "public function supports_compound(): bool\n\t{\n\t\treturn false;"), 'Disabled compound capability ignored');
+requireThat(str_contains($limited, "public function supports_compound(binary_operator \$operator): bool\n\t{\n\t\treturn false;"), 'Disabled compound capability ignored');
 
 // Backend safety facts follow the admitted implementation strategy, never preparation or AST mutation.
-require $root . '/compiler/03_parse/structures/expressions.php';
+require_once $root . '/compiler/03_parse/structures/expressions.php';
 foreach (['type_int64', 'type_bool', 'type_uint8', 'type_float64', 'type_null'] as $class) {
     $class = 'scpp\\compiler\\' . $class;
     requireThat($class::instance()->cpp_trivial_value(), 'Native scalar copying was not classified');
@@ -730,6 +757,7 @@ foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
 
 // Promotion permissions are operator-local and depend on existing conversion behavior.
 $without = unserialize(serialize($metadata));
+unset($without->compiler->three_way);
 $without->compiler->promotions = [];
 requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'public function prepare_binary'), 'Removed promotion still generated');
 foreach (['missing_conversion', 'duplicate', 'operator', 'execution', 'context'] as $change) {
@@ -749,6 +777,7 @@ foreach (['missing_conversion', 'duplicate', 'operator', 'execution', 'context']
     }
 }
 $limited = unserialize(serialize($metadata));
+unset($limited->compiler->three_way);
 conversion_row($limited, 'int64', 'float64')->contexts = ['explicit_cast'];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, '($context === conversion_context::explicit_cast) && ($value->type_def() === type_int64::instance())'), 'Context subset ignored');
@@ -770,6 +799,7 @@ requireThat(in_array('byte', $definitions['uint8']['aliases'], true), 'Canonical
 
 // Removing the conversion's promotion permission cannot affect explicit casts or silently keep a promotion alive.
 $limited = unserialize(serialize($metadata));
+unset($limited->compiler->three_way);
 conversion_row($limited, 'int64', 'float64')->promotion_operators = [];
 try {
     renderCompiler($limited, $facts);
@@ -781,6 +811,7 @@ $limited->compiler->promotions = [];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, 'value_conversion::numeric_floating'), 'Removing promotion removed boundary conversion');
 $limited = unserialize(serialize($metadata));
+unset($limited->compiler->three_way);
 conversion_row($limited, 'int64', 'float64')->promotion_operators = ['less'];
 $limited->compiler->promotions = array_values(array_filter($limited->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
 foreach ($limited->compiler->promotions as $promotion) $promotion->operators = ['less'];
@@ -849,7 +880,7 @@ foreach (['runtime', 'result', 'ordering', 'safety'] as $change) {
     match ($change) {
         'runtime' => $bad->string->operations = array_values(array_diff($bad->string->operations, ['equal'])),
         'result' => $bad->compiler->comparisons->string->result_binding = 'boxed_int64',
-        'ordering' => $bad->compiler->comparisons->string->operators[] = 'less',
+        'ordering' => $bad->compiler->comparisons->string->operators[] = 'compare',
         'safety' => $bad->compiler->lowering_strategies->runtime_compare->reorderable = true,
     };
     try {
@@ -860,7 +891,119 @@ foreach (['runtime', 'result', 'ordering', 'safety'] as $change) {
 }
 $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->string);
-requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'public function binary_result'), 'Removed string comparison still generated');
+requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'binary_operator::equal =>'), 'Removed string comparison still generated');
 $renamed = unserialize(serialize($metadata));
 $renamed->compiler->runtime_bindings->boxed_bool->extract = 'test_value';
 requireThat(str_contains(renderCompiler($renamed, $facts)['types/string.php'], ').test_value()'), 'String result extraction ignores binding');
+
+// Concatenation is independent of comparisons and requires explicit runtime/flavor/safety policy.
+foreach (['runtime', 'flavor', 'safety', 'result'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'runtime' => $bad->string->operations = array_values(array_diff($bad->string->operations, ['add'])),
+        'flavor' => $bad->compiler->concatenation->operators->add[] = 'php',
+        'safety' => $bad->compiler->lowering_strategies->runtime_concat->reorderable = true,
+        'result' => $bad->compiler->concatenation->result = 'bool_t',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid concatenation metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+$without = unserialize(serialize($metadata));
+unset($without->compiler->concatenation);
+$rendered = renderCompiler($without, $facts)['types/string.php'];
+requireThat(!str_contains($rendered, 'binary_operator::concatenate'), 'Removed concatenation still generated');
+requireThat(str_contains($rendered, 'binary_operator::equal'), 'Removing concatenation removed comparisons');
+$without = unserialize(serialize($metadata));
+$without->compiler->concatenation->compound = false;
+requireThat(str_contains(renderCompiler($without, $facts)['types/string.php'], "function supports_compound(binary_operator \$operator): bool\n\t{\n\t\treturn false;"), 'Compound metadata ignored');
+
+// Null ordinary equality has independent metadata admission; ordering remains invalid.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->comparisons->null_t);
+requireThat(!str_contains(renderCompiler($without, $facts)['types/null.php'], 'binary_operator::equal =>'), 'Removed null equality still generated');
+$bad = unserialize(serialize($metadata));
+$bad->compiler->comparisons->null_t->operators[] = 'less';
+try {
+    renderCompiler($bad, $facts);
+    throw new \LogicException('Null ordering accepted');
+} catch (\RuntimeException $expected) {
+}
+
+// Strict identity is independently admitted and rejects unsafe or unknown policies.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->strict_identity);
+foreach (renderCompiler($without, $facts) as $source) {
+    requireThat(!str_contains($source, 'binary_operator::identical'), 'Removed identity still generated');
+}
+foreach (['peer', 'same', 'different', 'safety'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'peer' => $bad->compiler->strict_identity->types[] = 'unknown',
+        'same' => $bad->compiler->strict_identity->same_type = 'storage_identity',
+        'different' => $bad->compiler->strict_identity->different_type = 'numeric_promote',
+        'safety' => $bad->compiler->lowering_strategies->canonical_identity->reorderable = true,
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid strict identity accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+
+// Three-way admission and promotion are generated from their family policy.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->three_way);
+foreach (renderCompiler($without, $facts) as $source) {
+    requireThat(!str_contains($source, 'binary_operator::compare'), 'Removed spaceship still generated');
+}
+foreach (['type', 'promotion', 'binding', 'result', 'safety', 'string_runtime'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'type' => $bad->compiler->three_way->types->bool_t = (object)['lowering' => 'native_three_way'],
+        'promotion' => $bad->compiler->three_way->integer_promotion = 'native_cpp',
+        'binding' => $bad->compiler->three_way->types->float64->binding = 'float64_divide',
+        'result' => $bad->compiler->three_way->result = 'bool_t',
+        'safety' => $bad->compiler->lowering_strategies->checked_three_way->reorderable = true,
+        'string_runtime' => $bad->string->operations = array_values(array_diff($bad->string->operations, ['less'])),
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid spaceship metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+
+// Power has its own exact representation and per-operator compound permission.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->power);
+foreach (renderCompiler($without, $facts) as $source) {
+    requireThat(!str_contains($source, 'binary_operator::power'), 'Removed power still generated');
+}
+$without = unserialize(serialize($metadata));
+$without->compiler->power->compound = false;
+$source = renderCompiler($without, $facts)['types/int64.php'];
+$start = strpos($source, 'function supports_compound');
+$end = strpos($source, 'function binary_result', $start);
+requireThat(!str_contains(substr($source, $start, $end - $start), 'binary_operator::power'), 'Power compound ignored metadata');
+requireThat(str_contains($source, 'binary_operator::power =>'), 'Removing compound removed power values');
+foreach (['operand', 'result', 'binding', 'safety'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    match ($change) {
+        'operand' => $bad->compiler->power->operand = 'uint8',
+        'result' => $bad->compiler->power->result = 'float64',
+        'binding' => $bad->compiler->power->binding = 'int64_divide',
+        'safety' => $bad->compiler->lowering_strategies->checked_power->reorderable = true,
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid power policy accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+
+// An operation may need both its storage and extraction headers; no match arm may hide either.
+$headers = \scpp\compiler\type_string::instance()->binary_headers(\scpp\compiler\binary_operator::identical);
+requireThat(in_array('scpp/string.hpp', $headers, true) && in_array('scpp/values.hpp', $headers, true), 'Binary header union lost a binding');

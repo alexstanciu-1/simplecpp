@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-06, after integer-family signs, updates and truthiness.
+Updated: 2026-11-06, after the active-scalar completion slices.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -18,7 +18,10 @@ with grouped implementation slices rather than individual operators. Byte/uint8 
 [active numeric family conversions](../../compiler/docs/family_conversions.md) are implemented.
 [Mixed numeric operators](../../compiler/docs/mixed_numeric_families.md) also include byte/float arithmetic, comparisons and floating-destination compounds.
 [Integer signs, discarded-value updates and truthiness](../../compiler/docs/integer_unary_updates.md) now include byte.
-Optional numeric representations and remaining operator groups are pending.
+[Integer bitwise/shifts and compounds](../../compiler/docs/bitwise.md) are implemented.
+[String ordering/concatenation, null equality, strict identity and spaceship](../../compiler/docs/comparisons.md),
+[eager xor](../../compiler/docs/logical.md) and [checked int64 power](../../compiler/docs/power.md) are implemented.
+Optional numeric representations, text conversions, nullable types and value-producing updates remain separate.
 
 ## Compact inventory
 
@@ -29,8 +32,8 @@ not a mandatory dependency order.
 | # | Area / donor reference | Active v0.2 position | Main remaining work |
 | --- | --- | --- | --- |
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment and int64/float64 compounds | Broader constant initializers, chained assignment; expression-dependent examples |
-| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar and string equality comparisons, mixed int64/float64 ordering, equality and arithmetic, int64 and float64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64/float64 compounds (including float destination/int64 RHS), discarded-value int64/float64 updates and int64/float64 unary signs | Bitwise operators, string ordering/null comparisons, eager xor, broader casts/compound writes, value-producing increments, string operations |
-| 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while/for with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, omitted/comma for clauses and foreach, ternary expressions, null/byte conditions and precise flow facts |
+| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar and string equality comparisons, mixed int64/float64 ordering, equality and arithmetic, int64 and float64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64/float64 compounds (including float destination/int64 RHS), discarded-value integer/float updates, integer/float unary signs, integer bitwise/shifts, scalar strict identity, null equality, string ordering/concatenation, eager xor, numeric/string spaceship and checked int64 power | Text conversions, nullable/carrier operators, optional widths, user overloads and value-producing assignments/updates |
+| 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/integer/float64/string truthiness, braced if/elseif/else and while/do-while/for with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, omitted/comma for clauses and foreach, ternary expressions, null conditions and precise flow facts |
 | 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions and explicit casts | Nullable/Result, mixed/dynamic, broader casts, probes/coalescing and text conversions |
 | 06 | [Containers](../../../compiler/my-try/docs/catalog/06_containers.md) | Pending in compiler | vector/hash registration and construction, reads/writes, append, key rules, iteration; mutation policy before mutation during iteration |

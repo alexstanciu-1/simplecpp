@@ -3,11 +3,11 @@
 Doc Status: planning
 Date: 2026-11-06
 Scope: v0.2 scalar metadata, generated compiler types and their runtime bindings.
-Status: identity, active numeric family conversions, integer arithmetic/comparisons, checked integer compounds and mixed numeric operators and integer signs/updates/truthiness implemented. Collections are separate.
+Status: active scalar identity/conversion/operator slices implemented, including string comparisons/concatenation, null equality, strict identity, xor, spaceship and checked int64 power. Final goal validation is recorded separately. Collections are separate.
 
 The [normative scalar amendment](../../../specs/compiler_scalars_v0_2.md#agreed-family-and-representation-model--2026-11-06)
 records the decision. This document organizes implementation, not proof of support.
-The [identity slice](../../compiler/docs/byte_alias.md) and [active family conversions](../../compiler/docs/family_conversions.md) are implemented. Optional representations and remaining operator groups await separate slices.
+The [identity slice](../../compiler/docs/byte_alias.md) and [active family conversions](../../compiler/docs/family_conversions.md) are implemented. The active scalar operation checklist is implemented; see [the completion goal](scalar_completion_goal.md). Optional representations and deferred language features remain separate.
 
 ## Family, representation and activation
 
@@ -83,8 +83,8 @@ consume these policies; user-defined overloads and conversion ranking are deferr
 
 ## Implementation slices
 
-Slices 1–2, active integer arithmetic/comparison/compound groups and [mixed numeric families](../../compiler/docs/mixed_numeric_families.md) are implemented. Integer signs, discarded-value updates and truthiness are also implemented; bitwise/shift
-and string/null groups and optional representations still require agreement.
+Slices 1–2, active integer arithmetic/comparison/compound groups and [mixed numeric families](../../compiler/docs/mixed_numeric_families.md) are implemented. Integer signs, discarded-value updates and truthiness are also implemented; [bitwise/shifts](../../compiler/docs/bitwise.md) are now implemented too.
+Remaining string/null groups and optional representations still require agreement.
 
 1. **Family/representation foundation and byte migration.** Give canonical definitions
    truthful family/representation ownership; derive byte/uint8 identity from runtime

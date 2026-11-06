@@ -1,4 +1,4 @@
-"""Run string equality and byte-content boundary fixtures through the same instrumented native build proof as string locals."""
+"""Run string comparisons and byte-content/order boundary fixtures through the same instrumented native build proof as string locals."""
 import argparse
 from pathlib import Path
 import tempfile

@@ -93,7 +93,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['true == 1', 'true < false', 'null == null', '1 < 2 < 3'] as $invalid) {
+	foreach (['true == 1', 'true < false', 'null == false', '1 < 2 < 3'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('x', 'bool', $var('x') . ' == true') . 'return 8;'), 'during its initialization');

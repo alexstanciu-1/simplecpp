@@ -65,10 +65,15 @@ def benchmark(name, work, php_samples, native_samples):
     (work / 'php.stderr.log').write_bytes(stderr)
     php = json.loads(raw)
     units = [work / 'cpp' / path for path in php['cpp_files']]
+    emitted_root = (work / 'cpp').resolve()
     for unit in units:
-        for include in re.findall(r'^#include [<"]([^>"]+)', unit.read_text(), re.M):
-            assert include.startswith('scpp/'), (unit, include)
-            assert (ROOT / 'runtime/generated/public' / include).is_file(), include
+        for delimiter, include in re.findall(r'^#include ([<"])([^>"]+)', unit.read_text(), re.M):
+            if include.startswith('scpp/'):
+                assert (ROOT / 'runtime/generated/public' / include).is_file(), include
+            else:
+                header = (unit.parent / include).resolve()
+                assert delimiter == '"' and header.is_relative_to(emitted_root), (unit, include)
+                assert header.suffix == '.hpp' and header.is_file(), (unit, include)
     emitted_text = ''.join(unit.read_text() for unit in units)
     generated = {'cpp_bytes': sum(unit.stat().st_size for unit in units),
                  'cpp_lines': sum(len(unit.read_text().splitlines()) for unit in units),
@@ -140,7 +145,7 @@ def benchmark(name, work, php_samples, native_samples):
 def markdown(report):
     def pair(value):
         return f'{value["average"]:.3f} / {value["min"]:.3f}'
-    lines = ['# Refreshed capability benchmarks — 2026-11-05', '', 'Doc Status: supporting', '',
+    lines = ['# Capability benchmarks', '', 'Doc Status: supporting', '',
         'Times in milliseconds, **average / minimum** of five samples per workload.',
         'Five warmed PHP compilations, five fresh application native builds, and five separate instrumented builds.',
         'O2/g0, libc++, Ninja -j8, mold; no PCH/LTO/ccache; prebuilt runtime. One C++ TU per source, plus the entry adapter.', '',
@@ -167,8 +172,8 @@ def markdown(report):
     lines += ['', 'Five retained-session edit sequences per workload: full, no-op, body edit, incompatible signature, recovery, final no-op. Assertions verify source reads, AST/token identity, body reuse and caller invalidation. Edits use disposable copies.',
         'Incremental timings stop after preparation; no incremental native-build speedup is claimed.', '',
         'All 30 measured/traced executables matched expected stdout and exit code 8; measured executables contain no debug sections. Runtime includes use the public API.',
-        'The mixed-flavor workloads exercise current feature families, not every syntax permutation or rejection path. Focused tests retain those checks. The large workload repeats invoice functions; this is synthetic data.',
-        'This is a new workload baseline, not a like-for-like speed comparison against the older samples.',
+        'The frozen mixed-flavor workloads are not exhaustive coverage of the new scalar operations. Dedicated compiler proofs cover those operations. The large workload repeats invoice functions; this is synthetic data.',
+        'This run measures the unchanged workload; it is not a controlled before/after speed comparison.',
         'Raw samples, ranges, versions, source hashes, compiler hashes, logs, generated C++, and per-run Clang traces are retained in the benchmark output directory.', '']
     return '\n'.join(lines)
 
