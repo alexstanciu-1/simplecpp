@@ -199,6 +199,34 @@ try {
     requireThat(str_contains($error->getMessage(), 'condition policy'), 'Unexpected condition diagnostic');
 }
 
+// Condition generation consumes the resolved storage binding and category, not a second identity table.
+$bound = unserialize(serialize($metadata));
+$bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_condition_string';
+$bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_condition_string.hpp';
+$boundCode = renderCompiler($bound, $facts)['types/string.php'];
+requireThat(str_contains($boundCode, 'const scpp::test_condition_string& condition_value'), 'Condition storage spelling ignored');
+$start = strpos($boundCode, 'function condition_headers');
+requireThat(str_contains(substr($boundCode, $start, strpos($boundCode, "\n\t}", $start) - $start), 'scpp/test_condition_string.hpp'), 'Condition header ignored');
+$conditionDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
+$acceptedConditions = ['int64' => 'nonzero_integer', 'float64' => 'nonzero_float', 'bool_t' => 'identity', 'string' => 'nonempty_except_zero'];
+foreach (array_keys($conditionDefinitions) as $identity) {
+    foreach (array_values($acceptedConditions) as $strategy) {
+        $candidate = unserialize(serialize($metadata->compiler));
+        $candidate->conditions = (object)[$identity => $strategy];
+        $accepted = true;
+        try {
+            compilerConditionPlan($candidate, $conditionDefinitions);
+        } catch (\RuntimeException $expected) {
+            $accepted = false;
+        }
+        requireThat($accepted === (($acceptedConditions[$identity] ?? null) === $strategy), 'Condition admission changed');
+    }
+}
+$renamed = $conditionDefinitions;
+$renamed['other_integer'] = $renamed['int64'];
+$renamedCompiler = (object)['conditions' => (object)['other_integer' => 'nonzero_integer']];
+requireThat(isset(compilerConditionPlan($renamedCompiler, $renamed)['other_integer']), 'Condition strategy still depends on identity spelling');
+
 // Operator capability is generated, rather than inferred from native representation or conversion support.
 $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->int64);

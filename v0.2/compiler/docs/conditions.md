@@ -79,3 +79,42 @@ not repeated-run benchmarks. Frontend/backend traces overlap and are not additiv
 
 Braced while/do-while now reuse these block and condition owners; see [loops](loops.md).
 The backend condition helper and shared braced-block parser serve both branches and loops.
+
+## Condition strategy and binding ownership
+
+`compiler.conditions` remains the only admission list. The generator's
+`compilerConditionPlan()` validates each row once against the resolved type strategy:
+identity requires boolean; integer nonzero requires integer; floating nonzero requires
+floating; the string rule requires string storage. This replaces the second fixed
+identity-to-rule mapping without allowing null/byte conditions or extra conversions.
+
+String truthiness uses the resolved storage binding's symbol and public header. The
+handwritten algorithm still evaluates its operand once and rejects empty strings and
+exactly `"0"`; other strings, including NUL bytes and `"00"`, are true. Other strategy
+algorithms and diagnostics are unchanged. Missing rows retain base condition rejection.
+
+With current metadata, all nine generated artifacts are byte-identical, including the
+inventory version. No metadata schema, AST, preparation facts, runtime or emitter
+structure changed; the only new model is a generation-time normalized condition plan.
+Generator mutation tests check storage binding use, the full current type/strategy
+admission matrix and compatibility independent of identity spelling.
+
+Six focused CTests pass (truthiness bindings, conditions, logical operators, loops,
+generator and runtime freshness). Existing native condition proofs also pass. The new
+`tests/truthiness_bindings.php` checks cpp/php/js signature/value edits, null/byte
+rejection, provider declaration deletion, repeated failures without edits, re-addition
+and recovery against fresh emitted output. Unchanged caller ASTs are reused and no-op
+runs prepare no bodies. All 33 native programs confirm expected truth values and one
+provider evaluation per condition. Raw traces/results:
+`v0.2/build/truthiness-binding-proof/` and `v0.2/build/truthiness-condition-regression/`.
+
+Single-run ranges across native recovery states: O2/g0, libc++, Ninja8, mold, no
+PCH/LTO, prebuilt runtime and fresh instrumented application objects. Concurrent proof
+suites make these correctness timings unsuitable for speedup claims; trace stage sums
+are not additive wall-time components.
+
+| Flavor | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 138.07–282.79 | 16.93–41.00 | 17.45–36.62 | 61.00–154.00 |
+| php | 128.81–162.70 | 14.82–35.17 | 16.35–30.82 | 66.00–85.00 |
+| js | 131.81–154.63 | 14.82–33.35 | 16.96–28.12 | 65.00–75.00 |

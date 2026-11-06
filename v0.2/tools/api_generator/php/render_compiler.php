@@ -179,8 +179,9 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $families = compilerLiteralFamilies($definitions);
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
+    $conditions = compilerConditionPlan($compiler, $definitions);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($compiler, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -568,21 +569,37 @@ $headers
 PHP_CODE;
 }
 
-/** Generate one direct condition operation per admitted type; absent metadata retains base rejection. */
-function compilerConditions(mixed $compiler, string $identity): string {
-    $conditions = object(at($compiler, 'conditions'));
-    foreach ($conditions as $name => $rule) {
-        requireThat(in_array($name, ['int64', 'bool_t', 'float64', 'string'], true), 'Unsupported compiler condition type');
-        requireThat($rule === ['int64' => 'nonzero_integer', 'bool_t' => 'identity', 'float64' => 'nonzero_float', 'string' => 'nonempty_except_zero'][$name], 'Unsupported compiler condition policy');
+/** Validate condition strategies against resolved type capabilities once; rows alone grant admission. */
+function compilerConditionPlan(mixed $compiler, array $definitions): array {
+    $plan = [];
+    foreach (object(at($compiler, 'conditions')) as $name => $rule) {
+        requireThat(isset($definitions[$name]), 'Unsupported compiler condition type');
+        $definition = $definitions[$name];
+        $valid = match ($rule) {
+            'identity' => $definition['strategy'] === 'boolean',
+            'nonzero_integer' => $definition['strategy'] === 'integer',
+            'nonzero_float' => $definition['strategy'] === 'floating',
+            'nonempty_except_zero' => $definition['strategy'] === 'string' && $definition['storage'] !== null,
+            default => false,
+        };
+        requireThat($valid, 'Unsupported compiler condition policy');
+        $plan[$name] = ['strategy' => $rule, 'storage' => $definition['storage'] ?? null];
     }
+    return $plan;
+}
+
+/** Emit direct condition handlers; missing rows retain base rejection without per-expression metadata lookup. */
+function compilerConditions(array $conditions, string $identity): string {
     if (!isset($conditions[$identity])) return '';
-    $expression = match ($conditions[$identity]) {
+    $condition = $conditions[$identity];
+    $storage = $condition['storage'];
+    $expression = match ($condition['strategy']) {
         'identity' => '$value',
         'nonzero_integer' => "'(' . \$value . ' != 0)'",
         'nonzero_float' => "'(' . \$value . ' != 0.0)'",
-        'nonempty_except_zero' => var_export("([](const scpp::string& condition_value) -> bool { return condition_value.size() != 0 && (condition_value.size() != 1 || condition_value.data()[0] != '0'); })(", true) . " . \$value . ')'",
+        'nonempty_except_zero' => var_export("([](const " . $storage['symbol'] . "& condition_value) -> bool { return condition_value.size() != 0 && (condition_value.size() != 1 || condition_value.data()[0] != '0'); })(", true) . " . \$value . ')'",
     };
-    $headers = $identity === 'string' ? "['scpp/string.hpp']" : '[]';
+    $headers = $storage === null ? '[]' : '[' . var_export($storage['header'], true) . ']';
     return "
 \t/** Generated condition admission; never an explicit bool conversion. */
 \tpublic function prepare_condition(ast_expression \$value): void

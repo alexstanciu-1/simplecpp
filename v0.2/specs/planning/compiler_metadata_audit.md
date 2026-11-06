@@ -231,3 +231,11 @@ I would **not** treat the following as redundancy to eliminate:
 - Validation that rejects unsupported or inconsistent metadata.
 
 **My recommended first slice is findings 1 and 2: remove the second promotion/conversion matrix while preserving all current admissions and diagnostics.** They are closely related, recent, well-tested, and can improve the model without changing generated application behavior. Then address type registration, followed by named runtime bindings and echo.
+## Follow-up: truthiness binding coverage
+
+Completed the bounded truthiness follow-up: condition strategies are validated against
+resolved type categories, and string truthiness consumes the existing storage binding.
+Default generated output and current admissions/diagnostics are unchanged. See
+[condition ownership and verification](../../compiler/docs/conditions.md#condition-strategy-and-binding-ownership).
+Comparison row consumption and shared runtime declaration/binding ownership remain
+possible later cleanups; they are not part of this change.
