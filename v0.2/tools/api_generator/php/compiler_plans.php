@@ -76,7 +76,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'conversion_binding']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
@@ -130,7 +130,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
                 $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
             }
             $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
-                'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix, 'conversion_binding' => $row->conversion_binding ?? null];
+                'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
             continue;
         }
         if ($kind === 'floating') {
@@ -165,7 +165,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage, 'conversion_binding' => $row->conversion_binding ?? null];
+        $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
     return $definitions;
 }
@@ -197,12 +197,38 @@ function compilerConversionKind(mixed $metadata, string $identity): string {
     return isset($metadata->values->$identity) ? textValue(at($metadata->values->$identity, 'kind')) : 'other';
 }
 
+/** Resolve native bindings from the runtime's canonical conversion recipes, without a publication request. */
+function compilerCheckedConversionBindings(mixed $metadata, array $definitions, array $types, array $facts): array {
+    $integers = array_intersect_key($types, $definitions);
+    $values = [];
+    $boolean = false;
+    $floating = false;
+    foreach ($definitions as $identity => $definition) {
+        $kind = $definition['strategy'];
+        if (!in_array($kind, ['boolean', 'floating'], true)) continue;
+        $values[] = ['name' => $identity, 'kind' => $kind];
+        $boolean = $boolean || $kind === 'boolean';
+        $floating = $floating || $kind === 'floating';
+    }
+    $runtime = ['types' => array_values($integers), 'values' => $values, 'headers' => [],
+        'conversions' => array_merge(integerConversions($integers, []), scalarValueConversions($metadata, $integers, $boolean, $floating))];
+    prepareCheckedConversions($metadata, $facts, $runtime);
+    $bindings = [];
+    foreach ($runtime['checked_conversions']['functions'] ?? [] as $function) {
+        $bindings[$function['source'] . ':' . $function['target']] = [
+            'symbol' => 'scpp::' . $function['symbol'], 'header' => $runtime['checked_conversions']['header'],
+            'source_cpp' => $runtime['checked_conversions']['representations'][$function['source']]['cpp']];
+    }
+    return $bindings;
+}
+
 /** Validate and index declared conversion rows once, shared by boundary and promotion generation. */
-function compilerConversionPlan(mixed $metadata, array $definitions, array $types): array {
+function compilerConversionPlan(mixed $metadata, array $definitions, array $types, array $facts): array {
+    $bindings = compilerCheckedConversionBindings($metadata, $definitions, $types, $facts);
     $plan = [];
     $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
     foreach (listValue(at(at($metadata, 'compiler'), 'conversions')) as $row) {
-        fields($row, ['from', 'to', 'contexts', 'operation', 'promotion_operators', 'source_binding', 'target_binding']);
+        fields($row, ['from', 'to', 'contexts', 'operation', 'promotion_operators']);
         $from = textValue(at($row, 'from'));
         $to = textValue(at($row, 'to'));
         requireThat(isset($definitions[$from], $definitions[$to]), 'Conversion references inactive type');
@@ -241,17 +267,12 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         // Lossless integer widening and integer-to-float rounding need no occurrence-level checks.
         requireThat($promotion === [] || (in_array($operation, ['numeric_floating', 'integer_widen'], true) && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
         foreach ($promotion as $operator) requireThat(in_array($operator, ['compare', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide', 'remainder', 'bit_and', 'bit_or', 'bit_xor'], true) && (!in_array($operator, ['remainder', 'bit_and', 'bit_or', 'bit_xor'], true) || $operation === 'integer_widen'), 'Unsupported promotion operator');
-        $sourceBinding = null;
-        $targetBinding = null;
+        $binding = null;
         if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {
-            $targetBinding = compilerTypeBinding(at($metadata, 'compiler'), textValue(at($row, 'target_binding')), $to, true);
-            if ($operation === 'floating_integer') {
-                $sourceBinding = compilerTypeBinding(at($metadata, 'compiler'), textValue(at($row, 'source_binding')), $from, false);
-            }
+            $binding = $bindings[$key] ?? null;
+            requireThat($binding !== null, 'Compiler checked conversion lacks named runtime binding');
         }
-        requireThat(!isset($row->source_binding) || $sourceBinding !== null, 'Unused source conversion binding');
-        requireThat(!isset($row->target_binding) || $targetBinding !== null, 'Unused target conversion binding');
-        $plan[$key] = ['source_binding' => $sourceBinding, 'target_binding' => $targetBinding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion,
+        $plan[$key] = ['binding' => $binding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion,
             'floating_bound' => $operation === 'floating_integer' ? decimalPowerOfTwo(digits($types[$to])) : null,
             'integer_signed' => $operation === 'floating_integer' ? $types[$to]['signed'] : null];
     }

@@ -78,8 +78,7 @@ def prove(work):
         'scpp\\compiler\\value_conversion::floating_boolean, "next_value(input)");',
         ROOT / 'compiler/boot.php'])).stdout
     driver = work / 'boundary.cpp'
-    driver.write_text('''#include <scpp/integers.hpp>
-#include <scpp/values.hpp>
+    driver.write_text('''#include <scpp/conversions.hpp>
 #include <stdexcept>
 #include <limits>
 #include <initializer_list>

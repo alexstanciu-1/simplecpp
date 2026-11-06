@@ -12,8 +12,11 @@ Runtime metadata `compiler.conversion_families` replaces the concrete conversion
 Seven directional family rules select algorithms and allowed contexts. Generation
 expands these rules over active canonical definitions into twelve concrete numeric
 conversions. Integer representation ranges select widening versus checked narrowing.
-Per-type `conversion_binding` references name the runtime representation needed by
-checked conversions; bool/float/byte are no longer special excluded pairs.
+Runtime-checked bindings resolve by canonical source/destination from shared runtime
+conversion recipes and `checked_conversions` header/prefix metadata. Generated calls
+normalize the argument to its prepared native source representation before invoking
+the exact-input helper. Proven conversions remain native casts. See the
+[named conversion contract](../../specs/checked_conversions.md).
 
 The transient rows feed the existing validator and specialized PHP type renderer.
 Preparation calls generated methods directly: no family interpretation, conversion

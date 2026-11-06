@@ -33,7 +33,8 @@ The [byte/uint8 identity migration](byte_alias.md), integer operation groups and
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
 - `compiler.conversion_families`: family algorithms and allowed contexts, expanded into transient concrete rows during generation.
-- `compiler.value_types.*.conversion_binding`: named runtime representation for checked conversions.
+- `checked_conversions`: shared runtime header/prefix for canonical named conversion functions.
+  Runtime-checked compiler bindings resolve by source/destination identity; no per-type wrapper binding.
   Scalar cross-family rules must also be admitted by runtime `scalar_casts`.
 
 Generation validates the bounded policies, native facts and supported strategies.

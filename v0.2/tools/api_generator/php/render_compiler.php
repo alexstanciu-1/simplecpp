@@ -17,7 +17,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $metadata->compiler = $compiler;
     $families = compilerLiteralFamilies($definitions);
     $files = [];
-    $conversions = compilerConversionPlan($metadata, $definitions, $types);
+    $conversions = compilerConversionPlan($metadata, $definitions, $types, $facts);
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons, $types, names(at(at($metadata, 'string'), 'operations')));
@@ -226,13 +226,12 @@ function compilerConversions(array $conversions, array $definitions, string $tar
         $contexts = $row['contexts'];
         $operation = $row['operation'];
         if ($to !== $target) continue;
-        if ($row['target_binding'] !== null) {
-            $wrapper = $row['target_binding']['symbol'];
-            $extract = $row['target_binding']['extract'];
-            $headers = [$row['target_binding']['header']];
-            if ($row['source_binding'] !== null) $headers[] = $row['source_binding']['header'];
+        if ($row['binding'] !== null) {
+            $symbol = $row['binding']['symbol'];
+            // C++ intermediates (for example LL literals) must match the helper's exact prepared-source ABI.
+            $sourceCpp = $row['binding']['source_cpp'];
             $checked = $operation === 'floating_integer' ? 'floating_integer_checked' : 'integer_checked';
-            $headerCases[] = "\t\t\tvalue_conversion::$checked => [" . implode(', ', array_map(static fn(string $header): string => var_export($header, true), array_unique($headers))) . '],';
+            $headerCases[] = "\t\t\tvalue_conversion::$checked => [" . var_export($row['binding']['header'], true) . '],';
         }
         $condition = '$value->type_def() === type_' . $definitions[$from]['class'] . '::instance()';
         $permission = array_map(static fn(string $context): string => '$context === conversion_context::' . $context, $contexts);
@@ -266,8 +265,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
 			return value_conversion::floating_integer_checked;
 CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $sourceWrapper = $row['source_binding']['symbol'];
-            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '({$wrapper}{{$sourceWrapper}{' . \$value . '}}).{$extract}()',";
+            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '{$symbol}(static_cast<{$sourceCpp}>(' . \$value . '))',";
         } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
@@ -280,7 +278,7 @@ CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
 			return value_conversion::integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::integer_checked => '({$wrapper}{' . \$value . '}).{$extract}()',";
+            $lower[] = "\t\t\tvalue_conversion::integer_checked => '{$symbol}(static_cast<{$sourceCpp}>(' . \$value . '))',";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
             $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";

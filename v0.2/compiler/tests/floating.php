@@ -95,7 +95,7 @@ foreach (flavor::cases() as $flavor)
 	verify($values[5]->initialization() === value_conversion::floating_integer_checked, 'Runtime check missing');
 	verify(!$values[5]->constant_known(), 'Unknown storage incorrectly folded');
 	$cpp = (new Cpp_Emitter())->emit($converted);
-	verify(str_contains($cpp, '#include <scpp/values.hpp>'), 'Missing public float runtime boundary');
+	verify(str_contains($cpp, '#include <scpp/conversions.hpp>'), 'Missing public float runtime boundary');
 	foreach (['1e309', '-1e309', '1.7976931348623159e308'] as $literal) {
 		rejects(fn() => $prepare($decl('float', 'bad', $literal) . 'return 8;'), 'finite range');
 	}

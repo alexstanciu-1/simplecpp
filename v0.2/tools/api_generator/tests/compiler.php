@@ -602,32 +602,42 @@ foreach (['copy_missing', 'copy_invalid', 'strategy_missing', 'strategy_invalid'
     } catch (\RuntimeException $expected) {
     }
 }
-// Type bindings affect only storage and checked branches; proven conversions remain native casts.
+// Shared named bindings affect checked branches; storage bindings and proven casts remain independent.
 $bound = unserialize(serialize($metadata));
-$bound->compiler->runtime_bindings->boxed_uint8->symbol = 'scpp::test_byte';
-$bound->compiler->runtime_bindings->boxed_uint8->extract = 'get_value';
-$bound->compiler->runtime_bindings->boxed_uint8->header = 'scpp/test_byte.hpp';
-$bound->compiler->runtime_bindings->boxed_float64->symbol = 'scpp::test_float';
+$bound->checked_conversions->symbol_prefix = 'test_checked_';
+$bound->checked_conversions->header = 'scpp/test_conversions.hpp';
 $bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_string';
 $bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_string.hpp';
 $boundFiles = renderCompiler($bound, $facts);
-requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_byte{') && str_contains($boundFiles['types/uint8.php'], '.get_value()'), 'Checked wrapper binding ignored');
-requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp/test_byte.hpp'), 'Checked header binding ignored');
-requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_float{'), 'Source wrapper binding ignored');
+requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<__INT64_TYPE__>'), 'Checked binding ignored');
+requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp/test_conversions.hpp'), 'Checked header binding ignored');
+requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64(static_cast<double>'), 'Floating checked binding ignored');
 requireThat(str_contains($boundFiles['types/string.php'], 'scpp::test_string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
 foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
         'missing' => $bad->compiler->value_types->string->storage_binding = 'missing',
-        'identity' => $bad->compiler->runtime_bindings->boxed_uint8->identity = 'int64',
+        'identity' => $bad->compiler->runtime_bindings->string_storage->identity = 'int64',
         'kind' => $bad->compiler->runtime_bindings->string_storage->kind = 'function',
-        'extract' => $bad->compiler->runtime_bindings->boxed_int64->extract = 'value()',
-        'symbol' => $bad->compiler->runtime_bindings->boxed_float64->symbol = 'scpp::type{}',
+        'extract' => $bad->compiler->runtime_bindings->boxed_bool->extract = 'value()',
+        'symbol' => $bad->compiler->runtime_bindings->string_storage->symbol = 'scpp::type{}',
         'header' => $bad->compiler->runtime_bindings->string_storage->header = '../private.hpp',
     };
     try {
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid type binding accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+// Compiler bindings require named helpers only for the runtime-checked branches.
+foreach (['missing', 'prefix', 'header'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    if ($change === 'missing') unset($bad->checked_conversions);
+    elseif ($change === 'prefix') $bad->checked_conversions->symbol_prefix = 'invalid::';
+    else $bad->checked_conversions->header = '../private.hpp';
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid named conversion binding accepted: ' . $change);
     } catch (\RuntimeException $expected) {
     }
 }
@@ -803,7 +813,7 @@ $expected = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boo
     'bool_t:uint8' => 'boolean_integer', 'uint8:bool_t' => 'integer_boolean',
     'uint8:float64' => 'numeric_floating', 'float64:uint8' => 'floating_integer'];
 $definitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
-$plan = compilerConversionPlan($metadata, $definitions, registry($metadata, $facts));
+$plan = compilerConversionPlan($metadata, $definitions, registry($metadata, $facts), $facts);
 $actual = array_map(static fn($row) => $row['operation'], $plan);
 ksort($expected); ksort($actual);
 requireThat($actual === $expected, 'Family expansion changed conversion admission');
@@ -892,7 +902,7 @@ foreach (['runtime', 'result', 'ordering', 'safety'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
         'runtime' => $bad->string->operations = array_values(array_diff($bad->string->operations, ['equal'])),
-        'result' => $bad->compiler->comparisons->string->result_binding = 'boxed_int64',
+        'result' => $bad->compiler->comparisons->string->result_binding = 'string_storage',
         'ordering' => $bad->compiler->comparisons->string->operators[] = 'compare',
         'safety' => $bad->compiler->lowering_strategies->runtime_compare->reorderable = true,
     };

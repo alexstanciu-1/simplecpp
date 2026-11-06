@@ -2,8 +2,10 @@
 
 Doc Status: planning
 Date: 2026-11-06
-Status: direction adopted; [slice 1 implemented](../checked_conversions.md).
-Wrappers remain published; alias cutover and compiler-binding migration are pending.
+Status: direction adopted; [slices 1 and 2 implemented](../checked_conversions.md).
+Wrappers remain published; the coordinated alias cutover is pending.
+Compiler numeric checked conversions now use named helpers; string comparison still
+extracts the wrapped boolean result until its runtime API migrates.
 
 ## Scope and ownership
 

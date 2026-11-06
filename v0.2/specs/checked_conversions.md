@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 Date: 2026-11-06
-Status: alias-migration slice 1 implemented; scalar wrappers and null remain unchanged.
+Status: alias-migration slices 1 and 2 implemented; scalar wrappers and null remain unchanged.
 
 ## Publication contract
 
@@ -62,8 +62,8 @@ responsibility. Compiler conversion contexts and source admissions are unchanged
 - `php/render_conversions.php` emits concrete declarations, strict scalar-input
   fences, native-identity assertions and calls to the existing algorithms.
 - Target facts add `fixed_integers.<identity>.native_name`; no compiler AST or
-  prepared-fact structures change. Existing generated compiler artifacts remain
-  byte-identical. Metadata is consumed during generation, not source preparation.
+  prepared-fact structures change. Slice 1 kept generated compiler artifacts
+  byte-identical; slice 2 changes only checked conversion lowering and header selection. Metadata is consumed during generation, not source preparation.
 
 ## Verification and timing
 
@@ -95,3 +95,62 @@ ASan with the installed libc++ reports an allocation/deallocation mismatch durin
 exception destruction; a runtime-independent std::out_of_range throw/catch reproduces
 it. ASan/UBSan validation passed using separately probed/generated libstdc++ output;
 leak detection was disabled, and no libc++ ASan or leak-check success is claimed.
+
+## Compiler integration (slice 2)
+
+The compiler generator resolves runtime-checked conversions by canonical source and
+destination. `scalarValueConversions` shares the existing runtime conversion recipes;
+`compilerCheckedConversionBindings` combines those with integer conversion recipes
+and the named helper planner. No duplicated function-name or permission matrix is
+introduced. These temporary plans exist only during generation.
+
+Generated lowering now calls:
+
+```cpp
+scpp::checked_int64_to_uint8(static_cast<__INT64_TYPE__>(expression))
+scpp::checked_float64_to_int64(static_cast<double>(expression))
+scpp::checked_float64_to_uint8(static_cast<double>(expression))
+```
+
+The argument cast restores the prepared source representation: an int64 expression
+containing `LL` literals may be a distinct C++ `long long` intermediate even when the
+target's exact int64 is `long`. It does not narrow to the destination unchecked.
+Each expression is evaluated once, and a failed conversion leaves its destination
+unchanged. Required includes now name only `scpp/conversions.hpp` for these conversions.
+
+Retired compiler metadata: per-type `conversion_binding`, plus `boxed_int64`,
+`boxed_uint8` and `boxed_float64`. Transient conversion rows carry one resolved
+`binding` (symbol, header, source C++ representation), replacing source/target wrapper
+bindings. `boxed_bool` remains for string comparison result extraction. There are
+no AST, preparation-fact, watcher, queue or session structure changes. Preparation,
+constant conversion, permission and diagnostic code is byte-identical to slice 1;
+only the checked lowering/header methods differ in regenerated PHP.
+
+Verification: eight focused CTests and compiler style checks passed. Native scalar,
+floating, family-conversion and integer-compound tools passed 60 executable fixtures
+across cpp/php/js, plus separate scalar/floating boundary drivers. Coverage includes
+nonfinite/range failures, exact-input normalization of an `LL` intermediate, single
+evaluation, failed-write preservation, incremental edits, repeated failure, deletion
+and recovery compared with fresh emission. Generator tests check renamed helper
+prefix/header propagation and reject missing or malformed named bindings.
+
+Instrumented representative builds, ranges across the three flavors (milliseconds):
+
+| Fixture | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: |
+| Scalars | 124.7–143.2 | 11.5–13.6 | 5.5–8.7 | 62–67 |
+| Floating | 135.8–142.1 | 39.6–45.4 | 11.6–12.3 | 56–61 |
+| Family conversions | 135.2–137.1 | 15.5–18.1 | 14.0–16.9 | 56–63 |
+| Integer compounds | 136.9–144.0 | 16.6–17.2 | 20.8–22.5 | 55–59 |
+
+O2/g0, libc++, Ninja8, mold, no PCH/LTO, fresh app objects and prebuilt runtime.
+Frontend/backend totals sum translation-unit traces; native wall is the build wall
+clock and link includes driver overhead. One sample per fixture/flavor, not a speedup
+claim. Raw reports are retained under `/tmp/scpp-named-bindings-{scalars,floating,family,compounds}/`.
+
+The shared runtime recipe refactor also passed publication parity: 130 accepted /
+247 rejected runtime cases, 19 accepted / 537 rejected scalar cases (including the
+2,692-operation native matrix), and 17 accepted / 37 rejected CLI cases plus lifecycle
+checks. Runtime artifacts and scalar artifact sets are byte-identical. Reviewed
+snapshot updates contain only metadata-dependent CLI input hashes and scalar case
+keys after removing the obsolete compiler wrapper bindings.

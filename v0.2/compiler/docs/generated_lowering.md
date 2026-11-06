@@ -52,8 +52,8 @@ Proven exit conversions remain native casts. Runtime wrapper APIs remain availab
 for existing native consumers; this slice does not remove them or add arithmetic,
 new source cast syntax, operators, profiles or additional incremental machinery.
 The [core scalar extension](types.md) adds metadata-driven declaration conversions,
-using native storage and reusing the public byte constructor only for unknown-value
-range checking.
+using native storage and named public conversion functions for unknown-value range
+checking. Binding planning reuses runtime recipes; preparation remains unchanged.
 
 ## Generation and verification
 

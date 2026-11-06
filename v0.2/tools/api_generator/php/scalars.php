@@ -79,6 +79,25 @@ function integerConversions(array $types, array $natives): array {
     return $out;
 }
 
+/** Canonical numeric value-conversion recipes shared by runtime and compiler binding planning. */
+function scalarValueConversions(mixed $metadata, array $types, bool $bool, bool $float): array {
+    $out = [];
+    foreach (names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy') as $cast) {
+        requireThat(in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked', 'numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true), 'Unsupported scalar cast policy');
+        if ($float && in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked'], true)) {
+            foreach ($types as $t) {
+                $out[] = $cast === 'integer_to_floating_rounding' ? conversion('float64', $t['name'], false, digits($t) <= 53, 'numeric_cast', false) : conversion($t['name'], 'float64', false, false, 'floating_integer_cast', true);
+            }
+        }
+        if ($bool && in_array($cast, ['numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true)) {
+            foreach (array_merge(array_keys($types), $float ? ['float64']:[]) as $name) {
+                $out[] = $cast === 'numeric_to_boolean_nonzero' ? conversion('bool_t', $name, false, false, 'truth_cast', false) : conversion($name, 'bool_t', false, true, 'numeric_cast', false);
+            }
+        }
+    }
+    return $out;
+}
+
 function sortConversions(array &$rows): void {
     usort($rows, fn(array $a, array $b): int => [$a['target'], $a['source']] <=> [$b['target'], $b['source']]);
 }
@@ -278,19 +297,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
             $plan['conversions'][] = conversion('float64', $n['cpp'], true, $n['digits'] <= 53, 'numeric_cast', false);
         }
     }
-    foreach (names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy') as $cast) {
-        requireThat(in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked', 'numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true), 'Unsupported scalar cast policy');
-        if ($float && in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked'], true)) {
-            foreach ($types as $t) {
-                $plan['conversions'][] = $cast === 'integer_to_floating_rounding' ? conversion('float64', $t['name'], false, digits($t) <= 53, 'numeric_cast', false) : conversion($t['name'], 'float64', false, false, 'floating_integer_cast', true);
-            }
-        }
-        if ($bool && in_array($cast, ['numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true)) {
-            foreach (array_merge(array_keys($types), $float ? ['float64']:[]) as $name) {
-                $plan['conversions'][] = $cast === 'numeric_to_boolean_nonzero' ? conversion('bool_t', $name, false, false, 'truth_cast', false) : conversion($name, 'bool_t', false, true, 'numeric_cast', false);
-            }
-        }
-    }
+    array_push($plan['conversions'], ...scalarValueConversions($metadata, $types, $bool, $float));
     sortConversions($plan['conversions']);
     $pairs = [];
     $requests = [];

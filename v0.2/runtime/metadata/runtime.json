@@ -754,7 +754,6 @@
     },
     "value_types": {
       "int64": {
-        "conversion_binding": "boxed_int64",
         "class": "int64",
         "literal_family": "integer",
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -785,7 +784,6 @@
         }
       },
       "uint8": {
-        "conversion_binding": "boxed_uint8",
         "class": "uint8",
         "literal_family": null,
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -795,7 +793,6 @@
         ]
       },
       "float64": {
-        "conversion_binding": "boxed_float64",
         "class": "float64",
         "literal_family": "floating",
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -968,27 +965,6 @@
         "strategy": "zero_checked_divide",
         "symbol": "scpp::float64_divide",
         "header": "scpp/arithmetic.hpp"
-      },
-      "boxed_int64": {
-        "kind": "type",
-        "identity": "int64",
-        "symbol": "scpp::int64",
-        "header": "scpp/integers.hpp",
-        "extract": "native_value"
-      },
-      "boxed_uint8": {
-        "kind": "type",
-        "identity": "uint8",
-        "symbol": "scpp::uint8",
-        "header": "scpp/integers.hpp",
-        "extract": "native_value"
-      },
-      "boxed_float64": {
-        "kind": "type",
-        "identity": "float64",
-        "symbol": "scpp::float64",
-        "header": "scpp/values.hpp",
-        "extract": "native_value"
       },
       "boxed_bool": {
         "kind": "type",

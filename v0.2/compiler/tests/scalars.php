@@ -80,8 +80,8 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');
-	verify(str_contains($cpp, '#include <scpp/integers.hpp>'), 'Checked conversion lacks public include');
-	verify(str_contains($cpp, 'scpp::uint8{'), 'Checked conversion missing');
+	verify(str_contains($cpp, '#include <scpp/conversions.hpp>'), 'Checked conversion lacks public include');
+	verify(str_contains($cpp, 'scpp::checked_int64_to_uint8(static_cast<__INT64_TYPE__>'), 'Checked conversion missing');
 	$inspection = Compilation_Inspection::program($entry);
 	verify($inspection['statements'][1]['initializer']['constant_known'] === true, 'Inspection loses known null');
 	verify($inspection['statements'][0]['initializer']['constant'] === false, 'Inspection loses false');
