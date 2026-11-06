@@ -240,4 +240,4 @@ Default generated output and current admissions/diagnostics are unchanged. See
 Comparison row consumption is now implemented through a validated generation-time plan
 shared with promotion validation. Current admissions, diagnostics and generated output
 are unchanged; see [comparison verification](../../compiler/docs/comparisons.md#validated-generation-time-comparison-plan).
-Shared runtime declaration/binding ownership remains a possible later cleanup.
+Shared runtime declaration/binding ownership is deferred as [runtime ABI consolidation debt](runtime_abi_consolidation_debt.md).
