@@ -137,9 +137,15 @@ final class Compilation_Inspection
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
-		return ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
+		$row = ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
 			'conversion' => $statement->conversion()->name, 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
+		if ($statement->operator !== null) {
+			$row['execution_type'] = $statement->execution_type()->name;
+			$row['left_conversion'] = $statement->left_conversion()->name;
+			$row['write_back'] = $statement->write_back()->name;
+		}
+		return $row;
 	}
 
 	/**

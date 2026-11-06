@@ -109,7 +109,7 @@ foreach (flavor::cases() as $flavor)
 	foreach (['true', 'null', '"1"', '1.0'] as $other) {
 		rejects(fn() => $prepare('return (int)((byte)1 + ' . $other . ');'), 'Unsupported binary');
 	}
-	rejects(fn() => $prepare($decl('byte', '1') . $x . ' += 1; return 8;'), 'compound');
+	rejects(fn() => $prepare($decl('byte', '1') . $x . ' += 1.0; return 8;'), 'compound');
 	rejects(fn() => $prepare($decl('byte', '1') . $x . '=1; return 8;'), 'implicit conversion');
 	$directory = sys_get_temp_dir() . '/scpp-integer-promotion-' . bin2hex(random_bytes(8));
 	mkdir($directory);

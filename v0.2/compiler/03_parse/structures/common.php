@@ -320,6 +320,12 @@ final class ast_assignment_statement extends ast_storage_write
 	/** PREP FACTS */
 	/** Prepared fact: approved RHS conversion for assignment or compound; null before settlement or after reset. */
 	protected ?value_conversion $conversion = null;
+	/** Prepared fact: non-owning calculation type; null until compound settlement or after reset. */
+	protected ?type_definition $execution_type = null;
+	/** Prepared fact: conversion of the saved destination into the calculation type. */
+	protected value_conversion $left_conversion = value_conversion::identity;
+	/** Prepared fact: conversion of the calculated result back into the destination type. */
+	protected value_conversion $write_back = value_conversion::identity;
 
 	/** CONSTRUCTOR */
 	/**
@@ -345,6 +351,36 @@ final class ast_assignment_statement extends ast_storage_write
 		$this->conversion = $conversion;
 	}
 
+	/** Attach calculation and write-back decisions without constructing synthetic expression nodes. */
+	public function settle_compound(ast_local_binding $local, type_definition $execution,
+		value_conversion $left, value_conversion $right, value_conversion $write_back): void
+	{
+		if ($this->operator === null) {
+			throw new \LogicException('Compound facts require an operator');
+		}
+		$this->settle_assignment($local, $right);
+		$this->execution_type = $execution;
+		$this->left_conversion = $left;
+		$this->write_back = $write_back;
+	}
+
+	public function execution_type(): type_definition
+	{
+		return $this->execution_type ?? throw new \LogicException('Compound execution type is not settled');
+	}
+
+	public function left_conversion(): value_conversion
+	{
+		$this->execution_type();
+		return $this->left_conversion;
+	}
+
+	public function write_back(): value_conversion
+	{
+		$this->execution_type();
+		return $this->write_back;
+	}
+
 	public function conversion(): value_conversion
 	{
 		return $this->conversion ?? throw new \LogicException('Assignment conversion is not settled');
@@ -367,6 +403,9 @@ final class ast_assignment_statement extends ast_storage_write
 	{
 		parent::reset_preparation();
 		$this->conversion = null;
+		$this->execution_type = null;
+		$this->left_conversion = value_conversion::identity;
+		$this->write_back = value_conversion::identity;
 	}
 }
 

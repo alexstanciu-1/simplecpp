@@ -175,12 +175,15 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
     $compiler = unserialize(serialize(at($metadata, 'compiler')));
     if (!isset($compiler->integer_operators)) return $compiler;
     $group = $compiler->integer_operators;
-    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compound_types', 'bindings']);
+    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings']);
     literals($group, ['promotion' => 'integer_domain_maximum']);
     $policy = integerPromotionPolicy($metadata, $types);
     $arithmetic = names(at($group, 'arithmetic'));
     $comparisons = names(at($group, 'comparisons'));
-    $compound = names(at($group, 'compound_types'));
+    $compoundPolicy = at($group, 'compounds');
+    fields($compoundPolicy, ['types', 'write_back']);
+    literals($compoundPolicy, ['write_back' => 'checked']);
+    $compound = names(at($compoundPolicy, 'types'));
     $bindings = object(at($group, 'bindings'));
     $runtime = object(at($metadata, 'operations'));
     $integers = array_intersect_key($types, $definitions);
@@ -217,7 +220,9 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
                 }
                 requireThat($found, 'Integer promotion conversion missing');
             }
-            $compiler->promotions[] = (object)['left' => $left, 'right' => $right, 'operators' => $operators, 'execution_type' => $execution, 'result' => $index === 0 ? $execution : 'bool_t'];
+            $row = (object)['left' => $left, 'right' => $right, 'operators' => $operators, 'execution_type' => $execution, 'result' => $index === 0 ? $execution : 'bool_t'];
+            if ($index === 0 && in_array($left, $compound, true)) $row->compound_operators = $operators;
+            $compiler->promotions[] = $row;
         }
     }
     unset($compiler->integer_operators);
@@ -463,7 +468,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $key = $from . ':' . $to;
         requireThat(!isset($plan[$key]), 'Duplicate compiler conversion');
         $contexts = names(at($row, 'contexts'), 'Duplicate conversion context');
-        foreach ($contexts as $context) requireThat(in_array($context, ['explicit_cast', 'typed_destination', 'assignment', 'inference'], true), 'Unsupported conversion context');
+        foreach ($contexts as $context) requireThat(in_array($context, ['explicit_cast', 'typed_destination', 'assignment', 'inference', 'compound_write_back'], true), 'Unsupported conversion context');
         $operation = textValue(at($row, 'operation'));
         $sourceKind = compilerConversionKind($metadata, $from);
         $targetKind = compilerConversionKind($metadata, $to);
@@ -481,7 +486,8 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
             default => false,
         };
         requireThat($valid, 'Unsupported compiler conversion operation');
-        requireThat(array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Cross-type conversions require explicit intent');
+        requireThat(array_diff($contexts, ['explicit_cast', 'typed_destination', 'compound_write_back']) === [], 'Cross-type conversions require explicit intent');
+        requireThat(!in_array('compound_write_back', $contexts, true) || in_array($operation, ['checked_integer', 'integer_widen'], true), 'Compound write-back requires an integer conversion');
         $required = match ($operation) {
             'boolean_integer' => 'boolean_to_numeric_01',
             'integer_boolean', 'floating_boolean' => 'numeric_to_boolean_nonzero',
@@ -976,10 +982,19 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
             $seen[$key] = true;
         }
         $compoundOperators = names($row->compound_operators ?? [], 'Duplicate compound promotion operator');
+        $writeBack = 'identity';
+        if ($compoundOperators !== [] && $left !== $execution) {
+            $conversion = $conversions[$execution . ':' . $left] ?? null;
+            requireThat($conversion !== null && in_array('compound_write_back', $conversion['contexts'], true), 'Compound write-back conversion is not authorized');
+            $writeBack = match ($conversion['operation']) {
+                'checked_integer' => 'integer_checked', 'integer_widen' => 'integer_widen',
+                default => throw new \RuntimeException('Unsupported compound write-back strategy'),
+            };
+        }
         foreach ($compoundOperators as $operator) {
             requireThat(in_array($operator, $operators, true), 'Compound requires an admitted promotion operator');
-            requireThat($left === $execution && $result === $left, 'Compound promotion must preserve destination type');
-            requireThat(isset($compiler->arithmetic->$left->operators->$operator), 'Compound requires arithmetic execution');
+            requireThat($result === $execution, 'Compound result must match arithmetic execution');
+            requireThat(isset($compiler->arithmetic->$execution->operators->$operator), 'Compound requires arithmetic execution');
         }
         if ($left !== $identity || $operators === []) continue;
         $rightClass = 'type_' . $definitions[$right]['class'];
@@ -991,14 +1006,14 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
         if ($compoundOperators !== []) {
             $compoundCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $compoundOperators));
             $compounds .= "\t\tif (\$this->supports_compound() && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
-                . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\treturn value_conversion::$rc;\n\t\t}\n";
+                . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\t\$value->settle_compound(\$local, $executionClass::instance(), value_conversion::$lc, value_conversion::$rc, value_conversion::$writeBack);\n\t\t\treturn;\n\t\t}\n";
         }
         $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
             . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
             . "\t\t\t\$value->settle_binary($resultClass::instance(), $executionClass::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
     }
-    $compoundMethod = $compounds === '' ? '' : "\n\t/** Return the approved RHS conversion; destination and execution identities stay equal. */\n"
-        . "\tpublic function prepare_compound(ast_assignment_statement \$value): value_conversion\n\t{\n$compounds\t\treturn parent::prepare_compound(\$value);\n\t}\n";
+    $compoundMethod = $compounds === '' ? '' : "\n\t/** Attach generated operand conversions, execution identity and checked result write-back. */\n"
+        . "\tpublic function prepare_compound(ast_assignment_statement \$value, ast_local_binding \$local): void\n\t{\n$compounds\t\tparent::prepare_compound(\$value, \$local);\n\t}\n";
     if ($cases === '') return $compoundMethod;
     return $compoundMethod . "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
         . "\tpublic function prepare_binary(ast_binary_expression \$value): void\n\t{\n$cases\t\tparent::prepare_binary(\$value);\n\t}\n";

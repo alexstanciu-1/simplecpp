@@ -292,20 +292,35 @@ final class Cpp_Emitter
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, string &$snapshot): string
 	{
 		$type = $statement->local_def()->type_def();
+		$execution = $statement->execution_type();
 		$name = $this->name($statement->local_def());
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
-			$right = $type->lower_cpp_conversion($conversion, $right);
-			foreach ($type->conversion_headers($conversion) as $header) {
+			$right = $execution->lower_cpp_conversion($conversion, $right);
+			foreach ($execution->conversion_headers($conversion) as $header) {
 				$headers[$header] = true;
 			}
 		}
-		foreach ($type->binary_headers($statement->operator) as $header) {
+		foreach ($execution->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}
+		$left = 'compound_previous';
+		if ($statement->left_conversion() !== value_conversion::identity) {
+			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left);
+			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
+				$headers[$header] = true;
+			}
+		}
+		$result = $execution->lower_cpp_binary($statement->operator, $left, $right);
+		if ($statement->write_back() !== value_conversion::identity) {
+			$result = $type->lower_cpp_conversion($statement->write_back(), $result);
+			foreach ($type->conversion_headers($statement->write_back()) as $header) {
+				$headers[$header] = true;
+			}
+		}
 		$snapshot = 'compound_previous = ' . $name;
-		return $name . ' = ' . $type->lower_cpp_binary($statement->operator, 'compound_previous', $right);
+		return $name . ' = ' . $result;
 	}
 
 	/**

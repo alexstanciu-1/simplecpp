@@ -101,3 +101,6 @@ now reuse generated conversion behavior; compounds retain same-type admission.
 
 2026-11-06: [integer-family arithmetic and comparisons](../../compiler/docs/integer_promotion.md)
 now cover int64/uint8 in both orders; narrowing compounds remain deferred.
+
+2026-11-06: [integer compounds](../../compiler/docs/integer_compounds.md) now cover
+all five arithmetic compounds for int64/uint8, with checked result write-back.

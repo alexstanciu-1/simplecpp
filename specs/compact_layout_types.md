@@ -538,7 +538,8 @@ Arithmetic returns the selected integer identity. Narrow unsigned results preser
 the representation before an enclosing operation consumes them, despite host C++
 integral promotions. Existing native unsigned reduction and signed-overflow limitations
 remain; this decision adds no checked/saturating arithmetic. Compound write-back is
-a separate policy; narrowing compounds remain deferred.
+a separate policy: the active int64/uint8 compound slice uses checked result conversion
+back to the destination, preserving same-type arithmetic. See [compound write-back](compiler_scalars_v0_2.md#integer-compound-write-back--2026-11-06).
 
 Spaceship remains separately bounded; this slice does not implement it.
 

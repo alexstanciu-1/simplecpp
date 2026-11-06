@@ -17,14 +17,17 @@ operator to be admitted by the promotion and arithmetic execution definitions,
 with destination = execution = result. Existing conversion permission and behavior
 are reused; binary promotion alone never grants compound permission.
 
-`type_definition::prepare_compound(ast_assignment_statement): value_conversion`
+`type_definition::prepare_compound(ast_assignment_statement, ast_local_binding): void`
 owns the preparation query. Its default preserves same-type admission/diagnostics.
-The generated float64 override admits the metadata-approved RHS and returns the
-existing numeric_floating conversion, still gated by `supports_compound()`.
+The generated float64 override admits the metadata-approved RHS and attaches the
+existing numeric_floating conversion with identity left/write-back conversions,
+still gated by `supports_compound()`.
 Shared preparation resolves the destination once, visits the RHS once and calls
 that query. There is no metadata lookup, synthetic binary node or constant folding.
 
-No AST properties/classes, enums or separate preparation records were added.
+The original float slice added no AST properties/classes or enums. The subsequent
+integer extension adds the calculation/write-back facts described below; there is
+still no separate preparation record.
 The existing assignment conversion fact now describes the approved RHS conversion
 for either ordinary or compound assignment. Reset still clears it; compound results
 remain unknown. Lowering consumes that conversion through existing generated handlers
@@ -84,3 +87,6 @@ PHP fixture generation and semantic/incremental checks: 255.50 ms; not an isolat
 preparation timing. Exact visit assertions verify the single RHS traversal.
 
 Raw results/build traces: `v0.2/build/mixed-compounds-proof-2026-11-06/`.
+
+The [integer write-back extension](integer_compounds.md) generalizes prepared compound
+facts to separate calculation and destination identities; float admission is unchanged.

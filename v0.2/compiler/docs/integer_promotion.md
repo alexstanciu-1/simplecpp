@@ -46,13 +46,14 @@ already use their exact signedness-aware helpers.
 
 ## Boundaries and proofs
 
-Narrowing compounds, byte updates/unary signs, byte/float operations, byte truthiness,
+The subsequent [integer compound slice](integer_compounds.md) enables checked write-back.
+Byte updates/unary signs, byte/float operations, byte truthiness,
 byte echo, and optional integer source types are unchanged/deferred. Existing int64
 compounds retain their current admission. Ordinary assignment stays same-type-only.
 
 `tests/integer_promotion.php` checks result/execution identities, one visit per operand,
 pure lowering, wrapping unsigned nested results, mixed ordering/equality at signed
-boundaries, zero divisors, rejected families, and deferred compounds. Incremental
+boundaries, zero divisors, rejected families, and unsupported float compounds. Incremental
 checks cover byte/int/uint8 signature edits, invalid bool signatures, overflow,
 retry without edits, deletion/re-addition and caller edits; unchanged caller ASTs
 remain reused and successful artifacts match fresh compilation.

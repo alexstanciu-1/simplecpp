@@ -97,10 +97,10 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['true', '1.0', 'null', '"text"', '(byte) 1'] as $rhs) {
+	foreach (['true', '1.0', 'null', '"text"'] as $rhs) {
 		rejects(fn() => $prepare($decl('x', 'int', '1') . $x . '+=' . $rhs . '; return 8;'), 'Unsupported compound');
 	}
-	foreach (['bool' => 'true', 'byte' => '1', 'null' => 'null', 'string' => '"text"'] as $type => $value) {
+	foreach (['bool' => 'true', 'null' => 'null', 'string' => '"text"'] as $type => $value) {
 		rejects(fn() => $prepare($decl('x', $type, $value) . $x . '+=' . $x . '; return 8;'), 'Unsupported compound');
 	}
 	rejects(fn() => $prepare($x . '+=1; return 8;'), 'existing local');

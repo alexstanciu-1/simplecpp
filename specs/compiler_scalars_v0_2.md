@@ -476,4 +476,19 @@ supersedes the older mixed-signedness rejection. Active int64 and uint8 support
 `+ - * / %` and `== != < <= > >=` in both operand orders. Same-type arithmetic
 preserves identity; mixed byte/int arithmetic selects int64. Comparisons are exact.
 Ordinary assignment remains same-type-only. Byte/float arithmetic, new unary/update
-capabilities, optional integer representations and narrowing compounds are deferred.
+capabilities, optional integer representations are deferred. Integer compound write-back is defined below.
+
+## Integer compound write-back — 2026-11-06
+
+For active int64/int and uint8/byte, `+= -= *= /= %=` use ordinary binary promotion,
+then convert the calculated result back to the destination through checked integer
+conversion. Same-type byte arithmetic remains uint8 arithmetic; identity write-back
+does not reinterpret it as wider checked arithmetic. Mixed byte/int calculation is
+int64, with range-checked uint8 write-back where required. The RHS is not narrowed
+before calculation. Cross-type ordinary assignment remains prohibited.
+
+A failed calculation or conversion prevents the final compound store; effects already
+performed by RHS evaluation remain. Existing old-destination snapshot semantics and
+zero-divisor errors apply. Checked write-back does not change signed-overflow behavior.
+The same rule applies to supported locals/parameters and for-header compounds.
+Float-to-integer compounds and additional writable locations remain deferred.

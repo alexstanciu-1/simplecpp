@@ -825,7 +825,7 @@
       {
         "from": "int64",
         "to": "uint8",
-        "contexts": ["explicit_cast", "typed_destination"],
+        "contexts": ["explicit_cast", "typed_destination", "compound_write_back"],
         "operation": "checked_integer",
         "promotion_operators": [],
         "target_binding": "boxed_uint8"
@@ -1023,9 +1023,10 @@
         "greater",
         "greater_equal"
       ],
-      "compound_types": [
-        "int64"
-      ],
+      "compounds": {
+        "types": ["int64", "uint8"],
+        "write_back": "checked"
+      },
       "bindings": {
         "int64": {
           "divide": "int64_divide",

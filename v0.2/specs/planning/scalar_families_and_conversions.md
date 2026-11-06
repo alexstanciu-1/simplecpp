@@ -38,7 +38,7 @@ incomparable value domains. Floating storage width and operation execution preci
 must also be distinguished. Do not infer either policy from host PHP/C++ conversions.
 The runtime integer-domain promotion table was adopted on 2026-11-06 for arithmetic;
 comparisons use exact integer values. The active int64/uint8 arithmetic and comparison
-groups are implemented; narrowing compounds remain deferred. char is deferred until byte/code-unit/
+groups are implemented; active int64/uint8 compounds now use checked result write-back. char is deferred until byte/code-unit/
 code-point meaning is agreed; do not inherit platform-dependent C++ char semantics.
 
 ## Agreed conversion behavior (when permitted)

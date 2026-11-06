@@ -43,6 +43,22 @@ foreach (['duplicate_owner', 'unknown_operator', 'bad_policy', 'bad_binding'] as
     } catch (\RuntimeException $expected) {
     }
 }
+// Compound admission is independent of binary admission and checked conversion availability.
+$disabledCompounds = unserialize(serialize($rawMetadata));
+$disabledCompounds->compiler->integer_operators->compounds->types = [];
+$disabledCode = renderCompiler($disabledCompounds, $facts)['types/uint8.php'];
+requireThat(!str_contains($disabledCode, 'public function prepare_compound')
+    && str_contains($disabledCode, 'binary_operator::add'), 'Compound removal changed binary admission');
+foreach (['policy', 'permission'] as $change) {
+    $invalid = unserialize(serialize($rawMetadata));
+    if ($change === 'policy') $invalid->compiler->integer_operators->compounds->write_back = 'unchecked';
+    else $invalid->compiler->conversions[2]->contexts = ['explicit_cast', 'typed_destination'];
+    try {
+        renderCompiler($invalid, $facts);
+        throw new \LogicException('Invalid compound write-back accepted');
+    } catch (\RuntimeException $expected) {
+    }
+}
 // Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
 $registry = registry($metadata, $facts);
 $normalized = compilerIntegerOperations($metadata, compilerTypePlan($metadata, $facts, $registry), $registry);

@@ -10,6 +10,7 @@ enum conversion_context: int
 	case typed_destination = 2;
 	case assignment = 3;
 	case inference = 4;
+	case compound_write_back = 5;
 }
 
 /** Prepared boundary operation, not a value/type copy; generated destination handlers select and lower it. */

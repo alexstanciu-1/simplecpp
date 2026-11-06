@@ -367,11 +367,11 @@ final class Preparation
 		$this->value($statement->value);
 		if ($statement->operator === null) {
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+			$statement->settle_assignment($local, $conversion);
 		}
 		else {
-			$conversion = $type->prepare_compound($statement);
+			$type->prepare_compound($statement, $local);
 		}
-		$statement->settle_assignment($local, $conversion);
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}
 

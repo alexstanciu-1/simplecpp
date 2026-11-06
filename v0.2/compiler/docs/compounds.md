@@ -2,13 +2,12 @@
 
 Doc Status: supporting
 
-The [scalar contract](../../../specs/compiler_scalars_v0_2.md#int64-compound-assignment-statements--2026-11-05)
-admits `+=`, `-=`, `*=`, `/=`, `%=` on existing int64 locals/parameters, including
-mutable reference parameters. All flavors use one mechanism. RHS values must be
-int64; casts can supply that type. The [float64 extension](float_compounds.md) reuses this path for same-type `+= -= *= /=`.
-Globals, constants, fields/indexes, other types,
-and compound expression results remain outside this slice. [For header clauses](for.md)
-reuse the same assignment mechanism.
+The [integer compound extension](integer_compounds.md) admits `+= -= *= /= %=`
+for int64/uint8 locals and value/reference parameters, including mixed operands and
+checked result write-back. The [float64 extension](float_compounds.md) and
+[mixed float/int extension](mixed_compounds.md) retain their existing permissions.
+Globals, fields/indexes and compound expression results remain deferred.
+[For header clauses](for.md) reuse the same assignment mechanism.
 
 ## One syntax and preparation owner
 
@@ -20,14 +19,12 @@ The token-to-operator map is shared; adding a recognized spelling does not itsel
 admit operand types. PHP compound writes require an existing binding, unlike plain
 first writes.
 
-The generated type API now exposes `binary_result(operator, right_type)`. It returns
-the canonical result identity or null, using the existing metadata operation rows.
-The base `prepare_binary()` attaches ordinary binary-expression facts through that
-query. Compound preparation uses the same query after resolving its destination
-once and preparing its RHS once. It requires result identity to match destination
-identity and the generated `supports_compound()` capability, then retains identity write-back. General result conversion remains deferred.
-Compiler generated inventory version is 12; runtime output and metadata rules do
-not change.
+Generated compound handlers attach calculation identity, operand conversions and
+result write-back to the existing assignment AST. Preparation resolves the destination
+once and prepares the RHS once. Same-type admission reuses `binary_result()` and
+`supports_compound()`; mixed handlers consume the generated promotion/conversion plan.
+There is no synthetic expression tree. The [integer extension](integer_compounds.md)
+describes the prepared fields and separate conversion context.
 
 A compound result remains unknown: arithmetic constant folding is not introduced.
 The completed write replaces the latest-write fact, so subsequent reads cannot
