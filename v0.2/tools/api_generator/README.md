@@ -28,7 +28,8 @@ is also the rendering input, avoiding a second serialization model.
 - `php/families.php`: strings, vectors, carriers, hashes, datetime and record ownership.
 - `php/boxed.php`: optional mixed/dynamic publication with measured inline layouts,
   explicit scalar factories and same-family container operations.
-- `php/render*.php`: rendering from prepared facts; no promotion or source admission.
+- `php/render*.php`: runtime rendering from prepared facts. `render_compiler.php` also
+  plans metadata-authorized source admission, conversions and promotions for generated PHP types.
 - `templates/*.cpp.tpl`: readable C++ fragments with named `@placeholder@` slots.
   These retain the existing output spelling; no Rust source is a build input.
 
@@ -151,6 +152,15 @@ Explicit native constructors are available independently. See the
 [integer contract](../../specs/integer_slice.md#optional-native-operator-publication).
 
 ## Compiler backend publication
+
+Compiler generation separates validation/planning from per-type emission. Update,
+unary and promotion plans are built once; their renderers consume only the rows
+indexed under the current canonical type (the left operand for promotions).
+Promotion plans retain validated operand conversions and compound write-back
+strategies. These are temporary generator arrays, not compiler runtime tables;
+the emitted methods remain direct specialized PHP code. Family expansion order
+and the remaining planning/emission separation are unchanged by this first
+simplification slice.
 
 `emit-compiler` generates PHP int64/null/bool/byte/float64/string definitions and source-name/literal
 registration from runtime metadata and validated native facts. `compiler.modules`

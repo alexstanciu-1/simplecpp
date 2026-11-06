@@ -382,8 +382,11 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons, $types, names(at(at($metadata, 'string'), 'operations')));
+    $updates = compilerUpdatePlan($compiler, $definitions);
+    $unary = compilerUnaryPlan($compiler, $definitions);
+    $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($compiler, $identity, $definitions) . compilerUnary($compiler, $identity, $safety, $definitions, $types) . compilerPromotions($compiler, $conversions, $definitions, $identity, $binary);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -1125,9 +1128,9 @@ $safeCases\t\t\tdefault => false,
 $headerMethods";
 }
 
-/** Generate only explicitly admitted scalar updates; no expression result or implicit arithmetic-based admission. */
-function compilerUpdates(mixed $compiler, string $identity, array $definitions): string {
-    $selected = [];
+/** Validate explicitly admitted scalar updates once and index operators by canonical type. */
+function compilerUpdatePlan(mixed $compiler, array $definitions): array {
+    $plan = [];
     foreach (object(at($compiler, 'updates')) as $name => $row) {
         requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating'], true), 'Unsupported compiler update type');
         fields($row, ['operators', 'overflow', 'lowering']);
@@ -1136,8 +1139,13 @@ function compilerUpdates(mixed $compiler, string $identity, array $definitions):
         foreach ($operators as $operator) {
             requireThat(in_array($operator, ['increment', 'decrement'], true), 'Unsupported compiler update operator');
         }
-        if ($name === $identity) $selected = $operators;
+        $plan[$name] = $operators;
     }
+    return $plan;
+}
+
+/** Emit direct update handlers from the validated operator list for one type. */
+function compilerUpdates(array $selected): string {
     if ($selected === []) return '';
     $admission = [];
     $lowering = '';
@@ -1167,9 +1175,9 @@ $lowering\t\t\tdefault => throw new \\LogicException('Update operation was not a
 ";
 }
 
-/** Emit bounded numeric prefix admission and direct lowering from metadata, without per-expression lookup tables. */
-function compilerUnary(mixed $compiler, string $identity, array $safety, array $definitions, array $types): string {
-    $selected = [];
+/** Validate numeric prefix policies once and index admitted operators by canonical type. */
+function compilerUnaryPlan(mixed $compiler, array $definitions): array {
+    $plan = [];
     foreach (object(at($compiler, 'unary')) as $name => $row) {
         requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating'], true), 'Unsupported compiler unary type');
         fields($row, ['result', 'overflow', 'lowering', 'operators']);
@@ -1178,8 +1186,13 @@ function compilerUnary(mixed $compiler, string $identity, array $safety, array $
         foreach ($operators as $operator) {
             requireThat((in_array($operator, ['positive', 'negative'], true) || ($operator === 'bit_not' && $definitions[$name]['strategy'] === 'integer')), 'Unsupported unary operator');
         }
-        if ($identity === $name) $selected = $operators;
+        $plan[$name] = $operators;
     }
+    return $plan;
+}
+
+/** Emit direct unary handlers from the validated operator list for one type. */
+function compilerUnary(array $selected, string $identity, array $safety, array $definitions, array $types): string {
     if ($selected === []) return '';
     $admission = [];
     $lowering = '';
@@ -1224,10 +1237,9 @@ $safeCases\t\t\tdefault => false,
 ";
 }
 
-/** Generate bounded mixed operations from explicit promotion rows; reuse conversion lowering with explicit compound permission. */
-function compilerPromotions(mixed $compiler, array $conversions, array $definitions, string $identity, array $binary): string {
-    $cases = '';
-    $compounds = '';
+/** Validate promotions once, including conversion permissions and compound write-back; index by left-hand type. */
+function compilerPromotionPlan(mixed $compiler, array $conversions, array $definitions, array $binary): array {
+    $plan = [];
     $seen = [];
     foreach (listValue(at($compiler, 'promotions')) as $row) {
         fields($row, ['left', 'right', 'operators', 'execution_type', 'result', 'compound_operators']);
@@ -1266,13 +1278,28 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
             requireThat($result === $execution, 'Compound result must match arithmetic execution');
             requireThat(isset($compiler->arithmetic->$execution->operators->$operator), 'Compound requires arithmetic execution');
         }
-        if ($left !== $identity || $operators === []) continue;
-        $rightClass = 'type_' . $definitions[$right]['class'];
-        $executionClass = 'type_' . $definitions[$execution]['class'];
-        $resultClass = 'type_' . $definitions[$result]['class'];
-        $operatorCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $operators));
-        $lc = $lc['operation'] ?? 'identity';
-        $rc = $rc['operation'] ?? 'identity';
+        if ($operators === []) continue;
+        $plan[$left][] = ['right' => $right, 'execution' => $execution, 'result' => $result,
+            'operators' => $operators, 'compound_operators' => $compoundOperators,
+            'left_conversion' => $lc['operation'] ?? 'identity', 'right_conversion' => $rc['operation'] ?? 'identity',
+            'write_back' => $writeBack];
+    }
+    return $plan;
+}
+
+/** Emit promotion handlers from the validated rows belonging to one left-hand type. */
+function compilerPromotions(array $rows, array $definitions): string {
+    $cases = '';
+    $compounds = '';
+    foreach ($rows as $row) {
+        $rightClass = 'type_' . $definitions[$row['right']]['class'];
+        $executionClass = 'type_' . $definitions[$row['execution']]['class'];
+        $resultClass = 'type_' . $definitions[$row['result']]['class'];
+        $operatorCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $row['operators']));
+        $compoundOperators = $row['compound_operators'];
+        $lc = $row['left_conversion'];
+        $rc = $row['right_conversion'];
+        $writeBack = $row['write_back'];
         if ($compoundOperators !== []) {
             $compoundCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $compoundOperators));
             $compounds .= "\t\tif (\$this->supports_compound(\$value->operator) && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
