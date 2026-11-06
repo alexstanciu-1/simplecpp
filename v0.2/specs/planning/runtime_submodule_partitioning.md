@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Date: 2026-11-06
-Status: export/provider engine and core.scalars consolidation implemented; native-alias integration pulled at 64a2e0437. Verification is recorded below; other runtime partitions remain planned.
+Status: include-selection engine complete and verified. Core.scalars consolidation and review fixes committed as 0f2c3acae. Remaining runtime partition migrations are separate follow-up work.
 
 ## Agreed direction
 
@@ -25,17 +25,21 @@ is historical design context, not a prerequisite for this work.
 
 ## Progress against the original discussion
 
-The include-selection mechanism is implemented for the integrated consumers; the
-full runtime migration is not complete. The string/output slice was committed as
-`bb09d12bc`; representation-independent exports and their review fixes were committed
-as `40695e0f4`. The native-alias work and merge repairs arrived through `64a2e0437`.
-The user authorized repairing that integration and then implementing the bounded
-core.scalars consolidation below. Further partitions require their own scope agreement.
+The original objective of making the compiler select runtime C++ includes from
+metadata is **complete**. This includes metadata-owned providers and type exports,
+publication dependency resolution/validation, generated compiler queries, per-header
+and per-source include collection/deduplication, and incremental include removal.
+It does not mean that every runtime family has migrated to the provider model.
+
+The string/output slice was committed as `bb09d12bc`; representation-independent
+exports and review fixes as `40695e0f4`; native-alias integration arrived through
+`64a2e0437`. Core.scalars consolidation, dependency-ownership fixes and the completed
+verification checklist were committed and pushed as `0f2c3acae`.
 
 | Original requirement | Completed | Remaining |
 | --- | --- | --- |
-| Include runtime C++ headers directly | Generated C++ uses public runtime headers for string storage, output and existing checked scalar conversions. | Connect the remaining public runtime surfaces to the shared export/provider model. |
-| Select small includes per source unit | Generated type/helper queries feed per-header and per-source requirement collection and deduplication. Scalar-only units avoid unnecessary string/output includes. | Extend coverage as additional consumers migrate; keep verifying isolation and obsolete-include removal. |
+| Include runtime C++ headers directly | Complete for integrated consumers: supported scalar lowering, string storage, output and checked scalar conversions use public runtime headers. | Migrate additional runtime families to the completed engine as separate follow-up slices. |
+| Select small includes per source unit | Engine complete: generated type/helper queries feed per-header and per-source collection, deduplication and removal of obsolete includes. Scalar-only units avoid unrelated providers. | Apply the existing mechanism to each additional family and retain its isolation/recovery proofs. |
 | Expose scpp data types through metadata | Type exports resolve canonical identities to public scpp names and provider headers. The pulled alias work also uses those names for supported ordinary scalar declarations, signatures and expression casts. | Some public helper signatures still retain native types; compiler null remains decltype(nullptr). The scpp-types-only public surface is not complete. |
 | Describe runtime partitioning in metadata | Core/numeric scalars, separate checked conversions, string/output providers, semantic export dependencies and transitive validation are implemented. | Establish the broader coarse partition below and migrate families still owned by legacy renderers. |
 | Improve compile time through segmentation | Include isolation and coherent provider relocation are verified. | Measure end-to-end native compilation before claiming a speedup or choosing finer partitions. |
@@ -48,43 +52,50 @@ provider relocation, spelling-only regeneration and cached application/native
 rebuilds. Regenerating PHP handlers requires a compiler process/session restart;
 hot replacement is not implemented.
 
-### Remaining work and sequencing
+### Completed engine and integrated providers
 
-1. **Native-alias integration is now present.** Pulled `64a2e0437`, containing
-   the checked-conversion commits, native-alias migration and provider merge from
-   `simple_cpp_02`. The local follow-up adapts representation-sensitive proofs and
-   reviews regenerated snapshots. Combined verification is recorded below.
-2. **Ordinary scalar lowering now consumes scpp exports.** The incoming compiler
-   changes already resolve supported scalar names and headers through the shared
-   export plan. Expression emission collects result-type headers. Checked conversions
-   call named helpers; public alias names do not choose their semantic policy.
-   No new source widths or container admissions are implied.
-3. **Core scalar consolidation is implemented.** Core declarations and optional-width
-   declarations now have distinct metadata providers. Checked conversions remain
-   separate, with dependencies derived from published signatures. Legacy integer/value
-   headers are retired; the implementation and verification record is below.
-4. **Migrate the remaining runtime groups.** Collections, boxed objects and results
-   still need agreed bounded slices. Existing optional-width declaration placement
-   is bounded by the scalar slice below; broader numeric-module redesign is deferred. Connect other modules
-   to the model while retaining one public header per module initially. The proposed
-   partition table remains provisional; it grants no additional language admission.
-5. **Complete the scpp public-interface review.** Check output, entry, arithmetic and
-   other public signatures against the original scpp-types-only requirement. Output
-   provider selection is complete, but that does not mean its signature migration
-   is complete. Agree treatment of remaining native boundary types explicitly; do
-   not infer it from header reachability or introduce an ABI framework.
-6. **Measure the resulting compilation costs.** Compare include closures and fresh
-   application builds with recorded configurations and cache state. Report frontend,
-   optimization/code generation and linking separately. Tune segmentation through
-   metadata when measurements justify it, rather than fragmenting every type or
-   operation now.
+- Native-alias integration from `simple_cpp_02` is supplied and verified. Supported
+  ordinary scalar lowering consumes metadata-exported scpp names and header queries.
+- Core scalars and existing optional numeric widths have distinct providers. Optional
+  publication demand remains explicit; it grants no new source widths or admissions.
+- Checked conversions remain separate, with dependencies derived from selected
+  signatures. String and output providers also use the shared engine.
+- Preparation owns the effective publication graph and its validation. Rendering
+  consumes that graph. Application compilation uses generated dependency queries;
+  it does not interpret metadata or traverse the publication graph.
+- Verification covers all three source flavors, incremental edit/deletion/failure/
+  recovery, include removal, provider relocation, spelling-only regeneration, cached
+  native rebuilds and CMake demand removal/restoration. All 179 registered tests
+  passed across the recorded runs.
 
-The external native-alias dependency has been supplied and integrated. The user has
-chosen to keep checked conversions separate and authorized the concrete scalar slice
-and checklist below. It supersedes the earlier
-suggestion to defer all optional-width placement: the bounded placement of existing
-custom-size declarations is included so `core.scalars` does not absorb them. No new
-numeric-module policy, representation or source admission is implied.
+These completed capabilities do not depend on finishing the remaining runtime
+partition migrations. No further include-selection engine implementation is currently
+planned; a new requirement would need its own concrete scope.
+
+### Follow-up work: runtime partition migrations
+
+Collections (vectors/hashes), carriers/results, boxed objects and other runtime
+modules still need bounded migrations of their existing declarations and dependencies
+into the completed provider model. Review their dependency relationships before
+choosing each slice; retain the agreed coarse grouping and initially one public
+header per other module. The broader partition table remains provisional.
+
+These are integrations with the existing engine, not unfinished engine work.
+Each migration requires its own scope and verification agreement before implementation.
+Broader numeric-module redesign and new source-language admissions remain deferred.
+
+### Separate follow-up work: public interfaces and measurements
+
+- Review output, entry, arithmetic and other public signatures against the original
+  scpp-types-only requirement. Provider/include selection is complete for those
+  integrated consumers; signature cleanup is a distinct task. Compiler null still
+  lowers to decltype(nullptr). No ABI framework is requested.
+- Compare end-to-end native compilation costs before claiming an overall speedup or
+  choosing finer partitions. Record include closures, build configuration, cache state,
+  frontend, optimization/code generation and linking separately. Existing isolation
+  proofs and focused timings establish no overall compile-time improvement.
+
+This status update authorizes no implementation of the follow-up work.
 
 ## Combined native-alias integration at 64a2e0437
 
