@@ -29,7 +29,9 @@ $rawMetadata = unserialize(serialize($metadata));
 $limitedGroup = unserialize(serialize($metadata));
 $limitedGroup->compiler->integer_operators->arithmetic = ['subtract'];
 $limitedGroup->compiler->integer_operators->comparisons = ['equal'];
-$limitedGroup->compiler->promotions = [];
+$limitedGroup->compiler->mixed_numeric_operators->arithmetic = [];
+$limitedGroup->compiler->mixed_numeric_operators->comparisons = [];
+$limitedGroup->compiler->mixed_numeric_operators->compound_operators = [];
 $limitedFiles = renderCompiler($limitedGroup, $facts);
 foreach (['int64', 'uint8'] as $identity) {
     requireThat(!str_contains($limitedFiles['types/' . $identity . '.php'], 'binary_operator::add')
@@ -82,6 +84,32 @@ foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $
     try {
         renderCompiler($invalid, $facts);
         throw new \LogicException('Invalid family conversion metadata accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+// Mixed operators expand from active families, with independently removable compound permission.
+$definitions = compilerTypePlan($rawMetadata, $facts, $integerTypes);
+$expanded = compilerMixedNumericOperations(clone $rawMetadata->compiler, $definitions);
+requireThat(count($expanded->promotions) === 8, 'Expected both integer representations in mixed groups');
+$subset = unserialize(serialize($rawMetadata));
+$subset->compiler->mixed_numeric_operators->arithmetic = [];
+$subset->compiler->mixed_numeric_operators->compound_operators = [];
+$rows = compilerMixedNumericOperations($subset->compiler, $definitions)->promotions;
+requireThat(count($rows) === 4, 'Arithmetic removal changed mixed comparisons');
+foreach ($rows as $row) requireThat($row->result === 'bool_t' && !isset($row->compound_operators), 'Comparison admitted arithmetic writes');
+foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conversion'] as $change) {
+    $bad = unserialize(serialize($rawMetadata));
+    match ($change) {
+        'duplicate' => $bad->compiler->promotions = [],
+        'arithmetic' => $bad->compiler->mixed_numeric_operators->arithmetic[] = 'remainder',
+        'comparison' => $bad->compiler->mixed_numeric_operators->comparisons[] = 'add',
+        'compound' => $bad->compiler->mixed_numeric_operators->compound_operators[] = 'remainder',
+        'policy' => $bad->compiler->mixed_numeric_operators->promotion = 'integer_operand',
+        'conversion' => $bad->compiler->conversion_families->{'integer:floating'}->operation = 'integer_widen',
+    };
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Invalid mixed numeric family admitted: ' . $change);
     } catch (\RuntimeException $expected) {
     }
 }
@@ -758,7 +786,7 @@ requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'],
 
 // Compound permission is explicit, directional and independently removable.
 $without = unserialize(serialize($metadata));
-unset($without->compiler->promotions[1]->compound_operators);
+foreach ($without->compiler->promotions as $row) unset($row->compound_operators);
 requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'public function prepare_compound'), 'Removed compound permission still generated');
 foreach (['direction', 'operator', 'duplicate'] as $change) {
     $bad = unserialize(serialize($metadata));

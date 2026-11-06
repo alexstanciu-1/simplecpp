@@ -19,7 +19,7 @@ and `inference`. All callers now pass their actual boundary to
 `prepare_conversion(value, context)`. Identity remains a base-class operation;
 reference matching and condition truthiness remain separate.
 
-`compiler.promotions` contains directional rows with left/right types, an operator
+`compiler.mixed_numeric_operators` now generates transient `compiler.promotions` directional rows with left/right types, an operator
 list, execution type float64 and result bool_t for comparisons or float64 for arithmetic. Generator validation requires the
 existing int64 → float64 `numeric_floating` definition and each selected float execution operation.
 Rows may not authorize unsupported types/operators, missing operations or duplicates.

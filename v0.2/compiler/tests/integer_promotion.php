@@ -106,7 +106,7 @@ foreach (flavor::cases() as $flavor)
 				'stdout_hex' => '', 'catch_domain_error' => $operator === '/' ? 'division_by_zero' : 'modulo_by_zero'];
 		}
 	}
-	foreach (['true', 'null', '"1"', '1.0'] as $other) {
+	foreach (['true', 'null', '"1"'] as $other) {
 		rejects(fn() => $prepare('return (int)((byte)1 + ' . $other . ');'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('byte', '1') . $x . ' += 1.0; return 8;'), 'compound');

@@ -2,6 +2,10 @@
 
 Doc Status: supporting
 
+The subsequent [mixed numeric family slice](mixed_numeric_families.md) extends this
+coverage to byte/float and replaces concrete promotion metadata with family rules.
+The implementation and verification below record the original int64/float64 slice.
+
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#mixed-int64float64-arithmetic--2026-11-06)
 owns the semantics. All flavors admit `+ - * /` in either operand order, converting
 int64 to float64 before execution and producing float64. Above 2^53 the conversion
@@ -9,7 +13,7 @@ can round: `9007199254740993 - 9007199254740992.0` produces 0.0. Division reject
 integer zero and both floating zero signs; other floating results retain the existing
 NaN/infinity/underflow/signed-zero contract. Integer-only division is unchanged.
 Float-destination mixed compounds are now covered by [their own permission](mixed_compounds.md).
-[Mixed equality](mixed_equality.md) also uses this path; remainder and bool/byte arithmetic remain deferred.
+[Mixed equality](mixed_equality.md) also uses this path; remainder and bool arithmetic remain deferred; byte/float is now covered by the family slice.
 
 ## Ownership and structure
 

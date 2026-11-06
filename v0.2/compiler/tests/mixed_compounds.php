@@ -112,7 +112,7 @@ foreach (flavor::cases() as $flavor)
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');
 	verify(str_contains($cpp, 'scpp::float64_divide('), 'Division bypassed checked helper');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('ABCDFFFHHR')];
-	foreach (['-=true', '*=(byte)1', '/=null', '%=2.0'] as $invalid) {
+	foreach (['-=true', '/=null', '%=2.0'] as $invalid) {
 		rejects(fn() => $prepare($decl('1.0') . $x . $invalid . '; return 8;'), 'Unsupported compound');
 	}
 	rejects(fn() => $prepare($fn('bad', str_replace('float64', 'int64', $param), 'void', $v . '+=1.0; return;') . 'return 8;'), 'Unsupported compound');

@@ -2,13 +2,18 @@
 
 Doc Status: supporting
 
+The subsequent [mixed numeric family slice](mixed_numeric_families.md) extends this
+coverage to byte/float and replaces concrete promotion metadata with family rules.
+The implementation and verification below record the original int64/float64 slice.
+
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#mixed-int64float64-equality--2026-11-06)
 and [ordinary equality specification](../../../specs/expression_evaluation.md#mixed-numeric-ordinary-equality-for-nullable-and-result--2026-10-20)
 own this slice. All flavors admit plain int64/float64 `== !=` in either operand
 order. Integer operands convert to float64 before comparison; the result is bool.
 Rounding above ±2^53 and at int64 limits is observable. Signed zeros compare equal;
 NaN is unequal, including to itself; `!=` negates `==`. No operand storage is changed.
-Strict identity, carriers, bool/byte mixed equality and string comparisons remain deferred.
+Strict identity, carriers and bool/numeric mixed equality remain deferred. Byte/float
+equality is now covered by the family slice; string equality has its own implemented slice.
 
 ## Implementation and structure
 

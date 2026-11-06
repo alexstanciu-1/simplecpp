@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare($decl('byte', '1') . $x . '=true; return 8;'), 'implicit conversion');
 	rejects(fn() => $prepare($decl('byte', '1') . $x . '=8.75; return 8;'), 'implicit conversion');
 	rejects(fn() => $prepare($fn('reference', $ref, 'void', 'return;') . $decl('bool', 'true') . 'reference(' . $x . '); return 8;'), 'exact storage type');
-	foreach (['(byte)1 + 1.0', '(byte)1 == 1.0', '(byte)1 + true'] as $expression) {
+	foreach (['(byte)1 + true'] as $expression) {
 		rejects(fn() => $prepare('if (' . $expression . ') {} return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('byte', '8') . 'if (' . $x . ') {} return 8;'), 'Unsupported condition');

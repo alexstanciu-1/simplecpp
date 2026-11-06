@@ -170,9 +170,40 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     return $definitions;
 }
 
+/** Expand mixed numeric families before conversions derive their operator permissions. */
+function compilerMixedNumericOperations(object $compiler, array $definitions): object {
+    if (!isset($compiler->mixed_numeric_operators)) return $compiler;
+    requireThat(!isset($compiler->promotions), 'Duplicate promotion policy owner');
+    $group = $compiler->mixed_numeric_operators;
+    fields($group, ['promotion', 'arithmetic', 'comparisons', 'compound_operators']);
+    literals($group, ['promotion' => 'floating_operand']);
+    $arithmetic = names(at($group, 'arithmetic'));
+    $comparisons = names(at($group, 'comparisons'));
+    $compounds = names(at($group, 'compound_operators'));
+    requireThat(array_diff($arithmetic, ['add', 'subtract', 'multiply', 'divide']) === [], 'Unsupported mixed arithmetic operator');
+    requireThat(array_diff($comparisons, COMPARISONS) === [], 'Unsupported mixed comparison operator');
+    requireThat(array_diff($compounds, $arithmetic) === [], 'Compound requires an admitted mixed arithmetic operator');
+    $compiler->promotions = [];
+    foreach ($definitions as $integer => $i) foreach ($definitions as $floating => $f) {
+        if ($i['strategy'] !== 'integer' || $f['strategy'] !== 'floating') continue;
+        foreach ([$arithmetic, $comparisons] as $index => $operators) {
+            if ($operators === []) continue;
+            $result = $index === 0 ? $floating : at(at($compiler->comparisons, $floating), 'result');
+            foreach ([[$integer, $floating], [$floating, $integer]] as [$left, $right]) {
+                $row = (object)['left' => $left, 'right' => $right, 'operators' => $operators,
+                    'execution_type' => $floating, 'result' => $result];
+                if ($index === 0 && $left === $floating) $row->compound_operators = $compounds;
+                $compiler->promotions[] = $row;
+            }
+        }
+    }
+    unset($compiler->mixed_numeric_operators);
+    return $compiler;
+}
+
 /** Expand family permission into concrete generation-time rows; no pair table is retained by the compiler. */
 function compilerConversionFamilies(mixed $metadata, array $definitions, array $types): object {
-    $compiler = unserialize(serialize(at($metadata, 'compiler')));
+    $compiler = compilerMixedNumericOperations(unserialize(serialize(at($metadata, 'compiler'))), $definitions);
     if (!isset($compiler->conversion_families)) return $compiler;
     requireThat(!isset($compiler->conversions), 'Duplicate conversion policy owner');
     $rules = object($compiler->conversion_families);
@@ -273,7 +304,7 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $metadata = clone $metadata;

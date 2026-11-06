@@ -492,3 +492,19 @@ performed by RHS evaluation remain. Existing old-destination snapshot semantics 
 zero-divisor errors apply. Checked write-back does not change signed-overflow behavior.
 The same rule applies to supported locals/parameters and for-header compounds.
 Float-to-integer compounds and additional writable locations remain deferred.
+
+## Mixed numeric families — 2026-11-06
+
+For active int64/int and uint8/byte paired with float64/float, `+ - * /` and
+`== != < <= > >=` are admitted in either operand order. Convert the integer operand
+to the floating operand's representation before execution. Arithmetic returns that
+floating type; comparisons return bool. This supersedes earlier byte/float exclusions.
+Existing int64 rounding above 2^53, checked zero division, floating nonfinite results,
+underflow and signed zero apply unchanged; uint8 converts exactly to float64.
+
+Floating-destination `+= -= *= /=` accepts either active integer RHS through the same
+promotion, including supported locals/parameters and for-header positions. Keep the
+existing destination snapshot, single RHS evaluation and failed-store rules.
+Integer-destination floating compounds and floating remainder remain deferred.
+This does not authorize bool numeric operators, byte truthiness, new unary/update
+behavior, optional representations or cross-type ordinary assignment.

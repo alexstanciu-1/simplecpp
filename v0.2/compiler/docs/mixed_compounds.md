@@ -2,6 +2,10 @@
 
 Doc Status: supporting
 
+The subsequent [mixed numeric family slice](mixed_numeric_families.md) extends this
+coverage to byte/float and replaces concrete promotion metadata with family rules.
+The implementation and verification below record the original int64/float64 slice.
+
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#float-destinationint64-rhs-compounds--2026-11-06)
 and [compound semantics](../../../specs/expression_evaluation.md#float-destination-mixed-compounds--2026-10-19)
 own this slice. All flavors admit float locals/value parameters/reference parameters

@@ -1049,51 +1049,29 @@
         }
       }
     },
-    "promotions": [
-      {
-        "left": "int64",
-        "right": "float64",
-        "operators": ["add", "subtract", "multiply", "divide"],
-        "execution_type": "float64",
-        "result": "float64"
-      },
-      {
-        "left": "float64",
-        "right": "int64",
-        "operators": ["add", "subtract", "multiply", "divide"],
-        "compound_operators": ["add", "subtract", "multiply", "divide"],
-        "execution_type": "float64",
-        "result": "float64"
-      },
-      {
-        "left": "int64",
-        "right": "float64",
-        "operators": [
-          "equal",
-          "not_equal",
-          "less",
-          "less_equal",
-          "greater",
-          "greater_equal"
-        ],
-        "execution_type": "float64",
-        "result": "bool_t"
-      },
-      {
-        "left": "float64",
-        "right": "int64",
-        "operators": [
-          "equal",
-          "not_equal",
-          "less",
-          "less_equal",
-          "greater",
-          "greater_equal"
-        ],
-        "execution_type": "float64",
-        "result": "bool_t"
-      }
-    ],
+    "mixed_numeric_operators": {
+      "promotion": "floating_operand",
+      "arithmetic": [
+        "add",
+        "subtract",
+        "multiply",
+        "divide"
+      ],
+      "comparisons": [
+        "equal",
+        "not_equal",
+        "less",
+        "less_equal",
+        "greater",
+        "greater_equal"
+      ],
+      "compound_operators": [
+        "add",
+        "subtract",
+        "multiply",
+        "divide"
+      ]
+    },
     "comparisons": {
       "string": {
         "operand": "same_type",

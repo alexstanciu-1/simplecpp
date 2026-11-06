@@ -24,6 +24,7 @@ The [byte/uint8 identity migration](byte_alias.md), integer operation groups and
   compiler representations and boolean/null literal spellings and values.
 - `compiler.arithmetic`: same-type int64 operators, result, native overflow and lowering policies; see [arithmetic](arithmetic.md).
 - `compiler.updates`: explicit int64/float64 increment/decrement capability and native lowering/overflow policy.
+- `compiler.mixed_numeric_operators`: integer/floating family promotion and floating-destination compound permission.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
