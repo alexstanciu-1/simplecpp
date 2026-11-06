@@ -946,11 +946,30 @@ try {
 }
 
 // Strict identity is independently admitted and rejects unsafe or unknown policies.
+$identityOnly = unserialize(serialize($metadata));
+unset($identityOnly->compiler->comparisons->string);
+$identityOnly->compiler->runtime_bindings->identity_test_bool = clone $identityOnly->compiler->runtime_bindings->boxed_bool;
+$identityOnly->compiler->runtime_bindings->identity_test_bool->extract = 'identity_value';
+$identityOnly->compiler->strict_identity->result_binding = 'identity_test_bool';
+$identitySource = renderCompiler($identityOnly, $facts)['types/string.php'];
+requireThat(str_contains($identitySource, 'binary_operator::identical')
+    && str_contains($identitySource, ').identity_value()')
+    && !str_contains($identitySource, 'binary_operator::equal =>'), 'Identity depends on ordinary comparison admission/binding');
+$identityOnly->string->operations = array_values(array_diff($identityOnly->string->operations, ['equal']));
+try {
+    renderCompiler($identityOnly, $facts);
+    throw new \LogicException('Identity accepted missing runtime string equality');
+} catch (\RuntimeException $error) {
+    requireThat($error->getMessage() === 'Missing runtime string comparison', 'Identity runtime diagnostic changed');
+}
+
 $without = unserialize(serialize($metadata));
 unset($without->compiler->strict_identity);
-foreach (renderCompiler($without, $facts) as $source) {
+$ordinaryOnly = renderCompiler($without, $facts);
+foreach ($ordinaryOnly as $source) {
     requireThat(!str_contains($source, 'binary_operator::identical'), 'Removed identity still generated');
 }
+requireThat(str_contains($ordinaryOnly['types/string.php'], 'binary_operator::equal =>'), 'Removing identity removed ordinary equality');
 foreach (['peer', 'same', 'different', 'safety'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {

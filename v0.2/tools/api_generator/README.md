@@ -153,7 +153,14 @@ Explicit native constructors are available independently. See the
 
 ## Compiler backend publication
 
-Compiler generation separates validation/planning from per-type emission. Update,
+Ordinary comparisons and strict identity share `compilerComparisonStrategy` for
+native/string execution, operator spelling, storage and bool-result bindings.
+Their admission remains independent: strict identity requests value equality from
+the resolver directly, without constructing synthetic ordinary-comparison metadata.
+Each policy supplies its own binding; both require the runtime string operations
+that their emitted code uses. Removing either policy does not disable the other.
+
+Compiler generation separates validation/planning from per-type emission. Output, update,
 unary and promotion plans are built once; their renderers consume only the rows
 indexed under the current canonical type (the left operand for promotions).
 Promotion plans retain validated operand conversions and compound write-back

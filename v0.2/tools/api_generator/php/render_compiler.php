@@ -401,11 +401,12 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons, $types, names(at(at($metadata, 'string'), 'operations')));
+    $output = compilerOutputPlan($compiler, $definitions);
     $updates = compilerUpdatePlan($compiler, $definitions);
     $unary = compilerUnaryPlan($compiler, $definitions);
     $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -565,9 +566,9 @@ function compilerDeclarations(array $declarations): string {
     return $methods;
 }
 
-/** Generate type-owned output admission and dispatch; formatting/lifetime algorithms stay in the backend. */
-function compilerOutput(mixed $compiler, array $definitions, string $identity): string {
-    $selected = null;
+/** Validate output admission and runtime bindings once, indexed by canonical type. */
+function compilerOutputPlan(mixed $compiler, array $definitions): array {
+    $plan = [];
     foreach (object(at($compiler, 'output')) as $name => $row) {
         requireThat(isset($definitions[$name]), 'Output references inactive type');
         fields($row, ['strategy', 'binding']);
@@ -580,8 +581,13 @@ function compilerOutput(mixed $compiler, array $definitions, string $identity): 
         $header = textValue(at($binding, 'header'));
         requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid output binding symbol');
         requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid output binding header');
-        if ($name === $identity) $selected = ['strategy' => $strategy, 'symbol' => $symbol, 'header' => $header];
+        $plan[$name] = ['strategy' => $strategy, 'symbol' => $symbol, 'header' => $header];
     }
+    return $plan;
+}
+
+/** Emit type-owned output dispatch; formatting/lifetime algorithms stay in the backend. */
+function compilerOutput(?array $selected): string {
     if ($selected === null) return '';
     $header = var_export($selected['header'], true);
     $symbol = var_export($selected['symbol'], true);
@@ -883,29 +889,37 @@ function compilerStrategyReorderable(array $safety, string $strategy): bool {
     return $safety[$strategy];
 }
 
-/** Normalize admitted comparison rows once; source contracts remain bounded by the existing validators. */
+/** Resolve value-comparison mechanics for independently admitted ordinary or identity operators. */
+function compilerComparisonStrategy(mixed $compiler, array $definitions, string $name, array $operators, ?string $binding, array $stringOperations): array {
+    requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
+    $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, $binding, 'bool_t', true) : null;
+    $storage = $name === 'string' ? $definitions[$name]['storage'] : null;
+    requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
+    $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
+    $resolved = [];
+    foreach ($operators as $operator) {
+        requireThat(isset($spelling[$operator]), 'Unsupported comparison operator');
+        requireThat(!in_array($name, ['bool_t', 'null_t'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/current narrow integer slice');
+        if ($name === 'string') {
+            requireThat(in_array($operator, $stringOperations, true), 'Missing runtime string comparison');
+        }
+        $resolved[$operator] = $spelling[$operator];
+    }
+    return ['operand' => 'same_type', 'result' => 'bool_t',
+        'lowering' => $name === 'string' ? 'runtime_compare' : 'native', 'operators' => $resolved,
+        'result_binding' => $resultBinding, 'storage' => $storage];
+}
+
+/** Normalize ordinary comparison admission without consulting strict-identity policy. */
 function compilerComparisonPlan(mixed $compiler, array $definitions, array $stringOperations): array {
     $plan = [];
-    $rows = object(at($compiler, 'comparisons'));
-    $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
-    foreach ($rows as $name => $row) {
+    foreach (object(at($compiler, 'comparisons')) as $name => $row) {
         requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
         fields($row, ['operand', 'result', 'lowering', 'operators', 'result_binding']);
         literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => $name === 'string' ? 'runtime_compare' : 'native']);
-        $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, textValue(at($row, 'result_binding')), 'bool_t', true) : null;
-        $storage = $name === 'string' ? $definitions[$name]['storage'] : null;
-        requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
-        $operators = [];
-        foreach (names(at($row, 'operators'), 'Duplicate comparison operator') as $operator) {
-            requireThat(isset($spelling[$operator]), 'Unsupported comparison operator');
-            requireThat(!in_array($name, ['bool_t', 'null_t'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/current narrow integer slice');
-            if ($name === 'string') {
-                requireThat(in_array($operator, $stringOperations, true), 'Missing runtime string comparison');
-            }
-            $operators[$operator] = $spelling[$operator];
-        }
-        $plan[$name] = ['operand' => textValue(at($row, 'operand')), 'result' => textValue(at($row, 'result')),
-            'lowering' => textValue(at($row, 'lowering')), 'operators' => $operators, 'result_binding' => $resultBinding, 'storage' => $storage];
+        $binding = $name === 'string' ? textValue(at($row, 'result_binding')) : null;
+        $plan[$name] = compilerComparisonStrategy($compiler, $definitions, $name,
+            names(at($row, 'operators'), 'Duplicate comparison operator'), $binding, $stringOperations);
     }
     return $plan;
 }
@@ -1000,18 +1014,11 @@ function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparis
         fields($row, ['types', 'same_type', 'different_type', 'result_binding']);
         literals($row, ['same_type' => 'value_equality', 'different_type' => 'unequal']);
         $peers = names(at($row, 'types'));
-        $identityCompiler = clone $compiler;
-        $identityCompiler->comparisons = (object)[];
         foreach ($peers as $name) {
             requireThat(isset($definitions[$name]), 'Inactive strict identity type');
-            $identityCompiler->comparisons->$name = (object)['operand' => 'same_type', 'result' => 'bool_t',
-                'lowering' => $definitions[$name]['strategy'] === 'string' ? 'runtime_compare' : 'native',
-                'operators' => ['equal', 'not_equal']];
-            if ($definitions[$name]['strategy'] === 'string') {
-                $identityCompiler->comparisons->$name->result_binding = textValue(at($row, 'result_binding'));
-            }
-        }
-        foreach (compilerComparisonPlan($identityCompiler, $definitions, $stringOperations) as $name => $comparison) {
+            $binding = $definitions[$name]['strategy'] === 'string' ? textValue(at($row, 'result_binding')) : null;
+            $comparison = compilerComparisonStrategy($compiler, $definitions, $name,
+                ['equal', 'not_equal'], $binding, $stringOperations);
             foreach (['identical' => 'equal', 'not_identical' => 'not_equal'] as $op => $ordinary) {
                 $plan[$name][$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'],
                     'spelling' => $comparison['operators'][$ordinary], 'result_binding' => $comparison['result_binding'],
