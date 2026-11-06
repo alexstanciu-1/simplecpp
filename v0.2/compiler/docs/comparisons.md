@@ -83,3 +83,58 @@ O2/g0, libc++, mold, Ninja -j8, no PCH/LTO, fresh instrumented application objec
 prebuilt runtime archive. Trace categories overlap and are cumulative across units;
 they are not additive wall-time stages. Raw fixtures, traces, build logs and results:
 `v0.2/build/comparisons-proof-2026-11-04/` (untracked build evidence).
+
+## Validated generation-time comparison plan
+
+`compilerComparisonPlan()` validates comparison rows once and retains their operand
+contract, result identity, lowering strategy and admitted operator spellings. Binary
+handler generation consumes these fields directly; promotion validation shares the
+same normalized comparison rows instead of re-reading/re-sorting the metadata.
+C++ operator spelling remains a handwritten backend implementation table.
+
+Existing restrictions and diagnostic strings remain: same-type comparison operands,
+boolean results, native lowering, numeric ordering and bool/byte equality only. Mixed
+ordering still follows its separately authorized promotion/conversion path. No metadata
+schema, AST, preparation, runtime or emitter changes were required. The plan exists
+only during API generation, not during application compilation.
+
+All nine generated artifacts are byte-identical to the preceding revision. No extra
+preparation calls, allocations, traversals or metadata lookups were introduced. Existing
+comparison proofs assert single-pass operand preparation; incremental proofs verify
+selective body reuse. Five focused CTests pass: generation, comparisons, mixed ordering,
+conditions and runtime freshness. Sixteen native fixtures across cpp/php/js pass in
+the comparison and mixed-ordering suites. The latter compares incremental recovery with
+fresh compilation, including failed retries, signature/operator edits and no-op reuse.
+
+### Focused preparation measurement
+
+`build/comparison-plan-proof/preparation.php` parses outside the timed interval, then
+measures standalone preparation orchestration (including its symbol publication and
+signature setup). The synthetic source has 1,000 comparisons: integer, floating,
+boolean and mixed numeric ordering. Every sample records exactly 3,001 expression
+visits. One warmup and five measured samples per flavor; Xdebug disabled. This is a
+current-cost measurement, not a before/after speedup claim; the executable preparation
+code is unchanged. Observed ranges are noisy and do not establish flavor differences.
+
+| Flavor | Median ms | Minimum ms | Maximum ms |
+| --- | ---: | ---: | ---: |
+| cpp | 17.53 | 12.74 | 19.90 |
+| php | 13.33 | 8.12 | 16.07 |
+| js | 10.87 | 7.50 | 12.79 |
+
+### Native correctness builds
+
+Separate, smaller mixed-ordering recovery fixtures; these are not native timings for
+the 1,000-comparison preparation corpus. O2/g0, libc++, Ninja8, mold, no PCH/LTO,
+prebuilt runtime, fresh instrumented application objects. Proof suites ran concurrently;
+the cpp build experienced substantially higher observed wall/link times. These single
+runs are not comparative benchmarks. Frontend/backend traces are cumulative and are not
+additive wall-time components.
+
+| Flavor | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 365.86 | 32.30 | 44.30 | 198.00 |
+| php | 119.25 | 10.64 | 16.10 | 60.00 |
+| js | 130.78 | 12.99 | 17.86 | 67.00 |
+
+Raw fixtures, logs, native traces and preparation samples: `v0.2/build/comparison-plan-proof/`.

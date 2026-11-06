@@ -180,8 +180,9 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     $conditions = compilerConditionPlan($compiler, $definitions);
+    $comparisons = compilerComparisonPlan($compiler, $definitions);
     foreach ($definitions as $identity => $definition) {
-        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity);
+        $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $comparisons) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity, $comparisons);
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -653,8 +654,9 @@ function compilerStrategyReorderable(array $safety, string $strategy): bool {
     return $safety[$strategy];
 }
 
-/** Generate direct same-type arithmetic/comparison admission and lowering; no per-expression metadata interpretation. */
-function compilerBinary(mixed $compiler, array $definitions, string $identity, array $safety): string {
+/** Normalize admitted comparison rows once; source contracts remain bounded by the existing validators. */
+function compilerComparisonPlan(mixed $compiler, array $definitions): array {
+    $plan = [];
     $rows = object(at($compiler, 'comparisons'));
     $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
     foreach ($rows as $name => $row) {
@@ -662,15 +664,25 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
         fields($row, ['operand', 'result', 'lowering', 'operators']);
         literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => 'native']);
         requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
+        $operators = [];
         foreach (names(at($row, 'operators'), 'Duplicate comparison operator') as $operator) {
             requireThat(isset($spelling[$operator]), 'Unsupported comparison operator');
             requireThat(!in_array($name, ['bool_t', 'byte'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/byte');
+            $operators[$operator] = $spelling[$operator];
         }
+        $plan[$name] = ['operand' => textValue(at($row, 'operand')), 'result' => textValue(at($row, 'result')),
+            'lowering' => textValue(at($row, 'lowering')), 'operators' => $operators];
     }
+    return $plan;
+}
+
+/** Generate direct binary handlers from validated comparisons and existing arithmetic strategies. */
+function compilerBinary(mixed $compiler, array $definitions, string $identity, array $safety, array $comparisons): string {
     $operations = [];
-    if (isset($rows[$identity])) {
-        foreach (names(at($rows[$identity], 'operators'), 'Duplicate comparison operator') as $op) {
-            $operations[$op] = ['result' => 'bool_t', 'lowering' => 'native', 'spelling' => $spelling[$op]];
+    if (isset($comparisons[$identity])) {
+        $comparison = $comparisons[$identity];
+        foreach ($comparison['operators'] as $op => $spelling) {
+            $operations[$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'], 'spelling' => $spelling];
         }
     }
     $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
@@ -858,7 +870,7 @@ $safeCases\t\t\tdefault => false,
 }
 
 /** Generate bounded mixed ordering from explicit promotion rows; reuse conversion lowering, never compound admission. */
-function compilerPromotions(mixed $compiler, array $conversions, array $definitions, string $identity): string {
+function compilerPromotions(mixed $compiler, array $conversions, array $definitions, string $identity, array $comparisons): string {
     $cases = '';
     $seen = [];
     foreach (listValue(at($compiler, 'promotions')) as $row) {
@@ -872,13 +884,13 @@ function compilerPromotions(mixed $compiler, array $conversions, array $definiti
         $lc = compilerPromotionConversion($conversions, $left, $execution);
         $rc = compilerPromotionConversion($conversions, $right, $execution);
         $operators = names(at($row, 'operators'), 'Duplicate promotion operator');
-        $comparison = object(at($compiler, 'comparisons'))[$execution] ?? null;
-        requireThat($comparison !== null && at($comparison, 'result') === $result, 'Promotion execution/result mismatch');
+        $comparison = $comparisons[$execution] ?? null;
+        requireThat($comparison !== null && $comparison['result'] === $result, 'Promotion execution/result mismatch');
         foreach ($operators as $operator) {
             foreach ([$lc, $rc] as $conversion) {
                 requireThat($conversion === null || in_array($operator, $conversion['promotion_operators'], true), 'Unsupported promotion operator');
             }
-            requireThat(in_array($operator, names(at($comparison, 'operators')), true), 'Promotion execution operation unavailable');
+            requireThat(isset($comparison['operators'][$operator]), 'Promotion execution operation unavailable');
             $key = $left . ':' . $right . ':' . $operator;
             requireThat(!isset($seen[$key]), 'Duplicate promotion');
             $seen[$key] = true;

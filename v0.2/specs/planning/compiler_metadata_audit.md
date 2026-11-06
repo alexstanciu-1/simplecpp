@@ -237,5 +237,7 @@ Completed the bounded truthiness follow-up: condition strategies are validated a
 resolved type categories, and string truthiness consumes the existing storage binding.
 Default generated output and current admissions/diagnostics are unchanged. See
 [condition ownership and verification](../../compiler/docs/conditions.md#condition-strategy-and-binding-ownership).
-Comparison row consumption and shared runtime declaration/binding ownership remain
-possible later cleanups; they are not part of this change.
+Comparison row consumption is now implemented through a validated generation-time plan
+shared with promotion validation. Current admissions, diagnostics and generated output
+are unchanged; see [comparison verification](../../compiler/docs/comparisons.md#validated-generation-time-comparison-plan).
+Shared runtime declaration/binding ownership remains a possible later cleanup.

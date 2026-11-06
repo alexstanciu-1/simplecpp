@@ -227,6 +227,29 @@ $renamed['other_integer'] = $renamed['int64'];
 $renamedCompiler = (object)['conditions' => (object)['other_integer' => 'nonzero_integer']];
 requireThat(isset(compilerConditionPlan($renamedCompiler, $renamed)['other_integer']), 'Condition strategy still depends on identity spelling');
 
+// The normalized comparison plan retains validated metadata and resolves operator spellings only once.
+$comparisonDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
+$comparisonPlan = compilerComparisonPlan($metadata->compiler, $comparisonDefinitions);
+foreach (object($metadata->compiler->comparisons) as $identity => $row) {
+    $normalized = $comparisonPlan[$identity];
+    foreach (['operand', 'result', 'lowering'] as $field) {
+        requireThat($normalized[$field] === at($row, $field), 'Comparison field not retained: ' . $field);
+    }
+    requireThat(array_keys($normalized['operators']) === names($row->operators), 'Comparison operators changed');
+}
+$oneComparison = unserialize(serialize($metadata));
+$oneComparison->compiler->comparisons->int64->operators = ['equal'];
+$onePlan = compilerComparisonPlan($oneComparison->compiler, $comparisonDefinitions);
+requireThat($onePlan['int64']['operators'] === ['equal' => '=='], 'Comparison operator removal ignored');
+$badComparison = unserialize(serialize($metadata));
+$badComparison->compiler->comparisons->int64->operators[] = 'equal';
+try {
+    compilerComparisonPlan($badComparison->compiler, $comparisonDefinitions);
+    throw new \LogicException('Duplicate comparison operator accepted');
+} catch (\RuntimeException $expected) {
+    requireThat(str_contains($expected->getMessage(), 'Duplicate comparison'), 'Comparison diagnostic changed');
+}
+
 // Operator capability is generated, rather than inferred from native representation or conversion support.
 $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->int64);
