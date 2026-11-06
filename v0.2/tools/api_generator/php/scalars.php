@@ -201,15 +201,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         requireThat($types !== [], 'Empty integer construction publication');
         return ['kind' => 'prepared_integer_construction', 'schema' => 1, 'types' => $plan['types'], 'native_inputs' => $natives, 'conversions' => $plan['conversions']];
     }
-    $policies = at($metadata, 'promotion_policies');
-    fields($policies, ['integer_domain_maximum']);
-    $policy = at($policies, 'integer_domain_maximum');
-    fields($policy, ['same_type', 'different_signed', 'different_unsigned', 'signed_and_unsigned_below_64_bits', 'signed_and_uint64']);
-    literals($policy, ['same_type' => 'preserve', 'signed_and_uint64' => 'reject']);
-    foreach (['different_signed' => true, 'different_unsigned' => false, 'signed_and_unsigned_below_64_bits' => true] as $key => $signed) {
-        $name = textValue(at($policy, $key));
-        requireThat(isset($registry[$name]) && $registry[$name]['bits'] === 64 && $registry[$name]['signed'] === $signed, 'Domain maximum must be a registered 64-bit type with matching signedness');
-    }
+    $policy = integerPromotionPolicy($metadata, $registry);
     $integerOps = bindings(at($metadata, 'operations'), false);
     $valueTypes = [];
     foreach (object(at($metadata, 'values')) as $name => $row) {
@@ -367,6 +359,28 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
     return $plan;
 }
 
+/** Validate the shared integer-domain policy once during generation. */
+function integerPromotionPolicy(mixed $metadata, array $registry): object {
+    $policies = at($metadata, 'promotion_policies');
+    fields($policies, ['integer_domain_maximum']);
+    $policy = at($policies, 'integer_domain_maximum');
+    fields($policy, ['same_type', 'different_signed', 'different_unsigned', 'signed_and_unsigned_below_64_bits', 'signed_and_uint64']);
+    literals($policy, ['same_type' => 'preserve', 'signed_and_uint64' => 'reject']);
+    foreach (['different_signed' => true, 'different_unsigned' => false, 'signed_and_unsigned_below_64_bits' => true] as $key => $signed) {
+        $name = textValue(at($policy, $key));
+        requireThat(isset($registry[$name]) && $registry[$name]['bits'] === 64 && $registry[$name]['signed'] === $signed, 'Domain maximum must be a registered 64-bit type with matching signedness');
+    }
+    return $policy;
+}
+
+/** Select a lossless integer execution identity; null means no admitted common domain. */
+function integerExecution(array $left, array $right, object $policy): ?string {
+    if ($left['name'] === $right['name']) return $left['name'];
+    if ($left['signed'] === $right['signed']) return $left['signed'] ? $policy->different_signed : $policy->different_unsigned;
+    if (($left['signed'] ? $right['bits'] : $left['bits']) === 64) return null;
+    return $policy->signed_and_unsigned_below_64_bits;
+}
+
 function resolveOperation(string $name, array $binding, array $args, array $registry, object $policy, array $plan): array {
     $left = $args[0];
     $right = $args[1] ?? null;
@@ -400,16 +414,8 @@ function resolveOperation(string $name, array $binding, array $args, array $regi
     else {
         $l = $registry[$left['identity']];
         $r = $registry[$right['identity']];
-        if ($l['name'] === $r['name']) {
-            $execution = $l['name'];
-        }
-        elseif ($l['signed'] === $r['signed']) {
-            $execution = $l['signed'] ? $policy->different_signed:$policy->different_unsigned;
-        }
-        else {
-            requireThat(($l['signed'] ? $r['bits']:$l['bits']) < 64, 'Signed and uint64 arithmetic is not admitted');
-            $execution = $policy->signed_and_unsigned_below_64_bits;
-        }
+        $execution = integerExecution($l, $r, $policy);
+        requireThat($execution !== null, 'Signed and uint64 arithmetic is not admitted');
         requireThat(hasType($plan, $execution), 'Operator requires published execution type');
         requireThat(fits($registry[$execution], $l['signed'], digits($l)) && fits($registry[$execution], $r['signed'], digits($r)), 'Lossy implicit promotion');
         $result = $form === 'compound' ? $left['identity'] : $execution;

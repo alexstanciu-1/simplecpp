@@ -36,8 +36,9 @@ continues to own activation. Exact source-name exposure is settled during migrat
 Unsigned types are not merely narrower signed integers: uint64 and int64 have
 incomparable value domains. Floating storage width and operation execution precision
 must also be distinguished. Do not infer either policy from host PHP/C++ conversions.
-The existing runtime integer-domain promotion metadata is input for review, not a
-new blanket commitment for every operator. char is deferred until byte/code-unit/
+The runtime integer-domain promotion table was adopted on 2026-11-06 for arithmetic;
+comparisons use exact integer values. The active int64/uint8 arithmetic and comparison
+groups are implemented; narrowing compounds remain deferred. char is deferred until byte/code-unit/
 code-point meaning is agreed; do not inherit platform-dependent C++ char semantics.
 
 ## Agreed conversion behavior (when permitted)

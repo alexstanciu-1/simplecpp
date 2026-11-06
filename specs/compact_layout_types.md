@@ -516,21 +516,31 @@ Compiler/PRJ enforcement and byte string helpers remain separate future slices.
 
 ## 7. v0.2 integer arithmetic and numeric comparisons
 
-Agreed 2026-10-10; promotion revised 2026-10-27. For `+`, `-`, `*`, `/`, `%`,
-`==`, `!=`, `<`, `<=`, `>` and `>=`, integer operands must have the same signedness.
-Identical integer types retain their type; different widths select the family
-maximum (int64 for signed, uint64 for unsigned) before computation; `byte` is the `uint8` alias. Canonical `int` is signed 64-bit
-and wins the result identity when either operand is canonical `int`.
+Agreed 2026-10-10; integer promotion revised 2026-11-06. For `+`, `-`, `*`, `/`, `%`,
+identical canonical integer types retain their type. Different signed representations
+select int64; different unsigned representations select uint64. A signed integer and
+an unsigned representation below 64 bits select int64. Signed + uint64 arithmetic
+is rejected because neither domain covers both operands. These rules use complete
+representation domains, never the particular value of an operand or literal.
+`byte` aliases uint8, and `int` aliases int64. Ordinary integer literals remain int64.
 
-Arithmetic returns the selected integer type; comparisons return `bool`.
-Spaceship (`<=>`) uses the same operand selection but returns canonical `int`
-with value -1, 0 or 1; it must compare, not subtract.
+Examples: `byte + byte -> uint8`, `byte + 1 -> int64`, `int32 + int16 -> int64`,
+`uint16 + uint32 -> uint64`. This replaces the older blanket mixed-signedness
+restriction. Operator promotion does not authorize cross-type ordinary assignment.
 
-Examples: `int32 + int64 -> int64`, `uint16 + uint32 -> uint64`,
-`int32 + int -> int`. Signed/unsigned combinations are preparation errors,
-including `uint32 + 1`, because ordinary integer literals have type `int`.
-An explicit conversion, such as `uint32 + (uint32)1`, establishes a common
-signedness; there is no value-dependent literal exception.
+Integer `==`, `!=`, `<`, `<=`, `>` and `>=` compare exact values and return bool,
+including signed/unsigned pairs. They do not require a common arithmetic domain;
+in particular, comparing signed values with uint64 must not convert negative values
+to unsigned or round through floating point. The current compiler activates int64
+and uint8; wider representations remain separate activation work.
+
+Arithmetic returns the selected integer identity. Narrow unsigned results preserve
+the representation before an enclosing operation consumes them, despite host C++
+integral promotions. Existing native unsigned reduction and signed-overflow limitations
+remain; this decision adds no checked/saturating arithmetic. Compound write-back is
+a separate policy; narrowing compounds remain deferred.
+
+Spaceship remains separately bounded; this slice does not implement it.
 
 Evaluation and conversions follow [ordered eager evaluation](expression_evaluation.md).
 Division/remainder retain existing zero-divisor runtime errors and native integer
@@ -545,10 +555,10 @@ does not introduce new float16/float32 types. Documented integer-to-floating pre
 loss is permitted; bool, null and numeric-looking strings do not gain admission.
 Explicit casts establish operand types first and retain their own checked rules.
 
-Implementation checkpoint 2026-10-27: the runtime public metadata resolver and
-normalized arithmetic/comparison functions implement this revised policy. The
-existing my-try frontend still selects the wider integer operand and has narrower
-floating admission; frontend migration is tracked separately. Native helpers accept
+Implementation checkpoint 2026-11-06: the active v0.2 compiler implements the
+int64/uint8 arithmetic and comparison subset through generated handlers and the
+shared runtime integer-domain policy. Historical my-try behavior is reference
+material, not the active implementation of this revision. Native helpers accept
 already-normalized operands; their internal widening templates do not own source
 promotion. Specialized operators, including spaceship, require their separately
 admitted domains and are not implemented by this public slice.

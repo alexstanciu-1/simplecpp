@@ -468,3 +468,12 @@ literals still have int64 identity. The current compiler retains int64↔uint8
 conversion and equality coverage; the family-derived conversion/operator model
 above is not yet fully implemented. The public runtime replaces class byte with
 class uint8 and a byte alias, requiring regeneration and a native rebuild.
+
+## Integer family promotion — 2026-11-06
+
+The integer policy in [compact layout types](compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+supersedes the older mixed-signedness rejection. Active int64 and uint8 support
+`+ - * / %` and `== != < <= > >=` in both operand orders. Same-type arithmetic
+preserves identity; mixed byte/int arithmetic selects int64. Comparisons are exact.
+Ordinary assignment remains same-type-only. Byte/float arithmetic, new unary/update
+capabilities, optional integer representations and narrowing compounds are deferred.

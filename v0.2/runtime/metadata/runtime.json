@@ -918,9 +918,24 @@
     },
     "entry": { "checked_binding": "entry_exit_checked" },
     "runtime_bindings": {
-      "entry_exit_checked": { "operand": "int64", "result": "native_int", "symbol": "scpp::entry_exit_checked", "header": "scpp/entry.hpp" },
-      "echo_int": { "operand": "int64", "strategy": "integer", "symbol": "scpp::echo_int", "header": "scpp/output.hpp" },
-      "echo_bytes": { "operand": "string", "strategy": "bytes", "symbol": "scpp::echo_bytes", "header": "scpp/output.hpp" },
+      "entry_exit_checked": {
+        "operand": "int64",
+        "result": "native_int",
+        "symbol": "scpp::entry_exit_checked",
+        "header": "scpp/entry.hpp"
+      },
+      "echo_int": {
+        "operand": "int64",
+        "strategy": "integer",
+        "symbol": "scpp::echo_int",
+        "header": "scpp/output.hpp"
+      },
+      "echo_bytes": {
+        "operand": "string",
+        "strategy": "bytes",
+        "symbol": "scpp::echo_bytes",
+        "header": "scpp/output.hpp"
+      },
       "int64_divide": {
         "operand": "int64",
         "result": "int64",
@@ -964,34 +979,65 @@
         "extract": "native_value"
       },
       "boxed_bool": {
-        "kind": "type", "identity": "bool_t", "symbol": "scpp::bool_t",
-        "header": "scpp/values.hpp", "extract": "native_value"
+        "kind": "type",
+        "identity": "bool_t",
+        "symbol": "scpp::bool_t",
+        "header": "scpp/values.hpp",
+        "extract": "native_value"
       },
       "string_storage": {
         "kind": "type",
         "identity": "string",
         "symbol": "scpp::string",
         "header": "scpp/string.hpp"
+      },
+      "uint8_divide": {
+        "operand": "uint8",
+        "result": "uint8",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::uint8_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint8_remainder": {
+        "operand": "uint8",
+        "result": "uint8",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::uint8_remainder",
+        "header": "scpp/arithmetic.hpp"
+      }
+    },
+    "integer_operators": {
+      "promotion": "integer_domain_maximum",
+      "arithmetic": [
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "remainder"
+      ],
+      "comparisons": [
+        "equal",
+        "not_equal",
+        "less",
+        "less_equal",
+        "greater",
+        "greater_equal"
+      ],
+      "compound_types": [
+        "int64"
+      ],
+      "bindings": {
+        "int64": {
+          "divide": "int64_divide",
+          "remainder": "int64_remainder"
+        },
+        "uint8": {
+          "divide": "uint8_divide",
+          "remainder": "uint8_remainder"
+        }
       }
     },
     "arithmetic": {
-      "int64": {
-        "operand": "same_type",
-        "result": "int64",
-        "overflow": "native",
-        "operators": {
-          "add": "native",
-          "subtract": "native",
-          "multiply": "native",
-          "divide": "zero_checked_divide",
-          "remainder": "zero_checked_remainder"
-        },
-        "compound": true,
-        "bindings": {
-          "divide": "int64_divide",
-          "remainder": "int64_remainder"
-        }
-      },
       "float64": {
         "operand": "same_type",
         "result": "float64",
@@ -1055,21 +1101,14 @@
     ],
     "comparisons": {
       "string": {
-        "operand": "same_type", "result": "bool_t", "lowering": "runtime_compare",
-        "operators": ["equal", "not_equal"], "result_binding": "boxed_bool"
-      },
-      "int64": {
         "operand": "same_type",
         "result": "bool_t",
-        "lowering": "native",
+        "lowering": "runtime_compare",
         "operators": [
           "equal",
-          "not_equal",
-          "less",
-          "less_equal",
-          "greater",
-          "greater_equal"
-        ]
+          "not_equal"
+        ],
+        "result_binding": "boxed_bool"
       },
       "float64": {
         "operand": "same_type",
@@ -1085,15 +1124,6 @@
         ]
       },
       "bool_t": {
-        "operand": "same_type",
-        "result": "bool_t",
-        "lowering": "native",
-        "operators": [
-          "equal",
-          "not_equal"
-        ]
-      },
-      "uint8": {
         "operand": "same_type",
         "result": "bool_t",
         "lowering": "native",

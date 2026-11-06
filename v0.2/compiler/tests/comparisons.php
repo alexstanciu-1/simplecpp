@@ -96,8 +96,6 @@ foreach (flavor::cases() as $flavor)
 	foreach (['true == 1', 'true < false', 'null == null', '1 < 2 < 3'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
-	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'if (' . $var('b') . ' < ' . $var('b') . ') {} return 8;'), 'Unsupported binary');
-	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'if (' . $var('b') . ' == 1) {} return 8;'), 'Unsupported binary');
 	rejects(fn() => $prepare($decl('x', 'bool', $var('x') . ' == true') . 'return 8;'), 'during its initialization');
 	$directory = sys_get_temp_dir() . '/scpp-comparisons-' . bin2hex(random_bytes(8));
 	mkdir($directory);

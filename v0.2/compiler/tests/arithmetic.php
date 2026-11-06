@@ -97,7 +97,6 @@ foreach (flavor::cases() as $flavor)
 	foreach (['(byte)1 + 1.0', 'true + 1', 'null * 1', '"a" + "b"'] as $invalid) {
 		rejects(fn() => $prepare('echo ' . $invalid . '; return 8;'), 'Unsupported binary');
 	}
-	rejects(fn() => $prepare($decl('b', 'byte', '1') . 'echo ' . $var('b') . '+' . $var('b') . '; return 8;'), 'Unsupported binary');
 	rejects(fn() => $prepare($decl('x', 'int', $var('x') . '+1') . 'return 8;'), 'during its initialization');
 	foreach (['/' => 'division_by_zero', '%' => 'modulo_by_zero'] as $operator => $error) {
 		$failure = $fn('left', '', 'int', 'echo "L"; return 8;')
@@ -126,7 +125,7 @@ foreach (flavor::cases() as $flavor)
 		$target = new entry_target(31);
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
-		$write('float', '8.0');
+		$write('bool', 'true');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported binary');
 		verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature change');

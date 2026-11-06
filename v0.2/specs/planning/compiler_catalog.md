@@ -98,3 +98,6 @@ reuse the same generated update mechanism, including for headers; expression res
 
 [Conversion contexts and mixed numeric ordering](../../compiler/docs/conversion_contexts.md)
 now reuse generated conversion behavior; compounds retain same-type admission.
+
+2026-11-06: [integer-family arithmetic and comparisons](../../compiler/docs/integer_promotion.md)
+now cover int64/uint8 in both orders; narrowing compounds remain deferred.

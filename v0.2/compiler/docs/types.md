@@ -236,3 +236,6 @@ additive wall-time components.
 | cpp | 135.20–151.23 | 10.08–16.99 | 11.99–14.30 | 64.00–81.00 |
 | php | 122.94–135.67 | 9.16–14.05 | 9.54–12.19 | 62.00–78.00 |
 | js | 127.21–138.92 | 8.22–14.80 | 9.58–13.39 | 65.00–73.00 |
+
+The [integer family slice](integer_promotion.md) derives active int64/uint8 arithmetic
+and comparisons from grouped metadata and the shared runtime promotion policy.

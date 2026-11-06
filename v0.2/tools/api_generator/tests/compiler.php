@@ -11,6 +11,46 @@ $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $files = renderCompiler($metadata, $facts);
+// Integer domains are selected from representation facts, independently of source-name aliases.
+$integerTypes = registry($metadata, $facts);
+$integerPolicy = integerPromotionPolicy($metadata, $integerTypes);
+foreach ([['uint8', 'uint8', 'uint8'], ['int8', 'int16', 'int64'], ['uint8', 'uint16', 'uint64'],
+    ['int64', 'uint8', 'int64'], ['uint32', 'int8', 'int64'], ['int64', 'uint64', null],
+    ['uint64', 'int8', null]] as [$left, $right, $execution]) {
+    requireThat(integerExecution($integerTypes[$left], $integerTypes[$right], $integerPolicy) === $execution, 'Incorrect integer domain selection');
+}
+$rawMetadata = unserialize(serialize($metadata));
+$limitedGroup = unserialize(serialize($metadata));
+$limitedGroup->compiler->integer_operators->arithmetic = ['subtract'];
+$limitedGroup->compiler->integer_operators->comparisons = ['equal'];
+$limitedGroup->compiler->promotions = [];
+$limitedFiles = renderCompiler($limitedGroup, $facts);
+foreach (['int64', 'uint8'] as $identity) {
+    requireThat(!str_contains($limitedFiles['types/' . $identity . '.php'], 'binary_operator::add')
+        && !str_contains($limitedFiles['types/' . $identity . '.php'], 'binary_operator::less'), 'Integer group removal ignored');
+}
+foreach (['duplicate_owner', 'unknown_operator', 'bad_policy', 'bad_binding'] as $change) {
+    $invalidGroup = unserialize(serialize($rawMetadata));
+    match ($change) {
+        'duplicate_owner' => $invalidGroup->compiler->arithmetic->uint8 = (object)[],
+        'unknown_operator' => $invalidGroup->compiler->integer_operators->arithmetic[] = 'power',
+        'bad_policy' => $invalidGroup->promotion_policies->integer_domain_maximum->different_unsigned = 'int64',
+        'bad_binding' => $invalidGroup->compiler->integer_operators->bindings->uint8->divide = 'missing',
+    };
+    try {
+        renderCompiler($invalidGroup, $facts);
+        throw new \LogicException('Invalid integer group accepted: ' . $change);
+    } catch (\RuntimeException $expected) {
+    }
+}
+// Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
+$registry = registry($metadata, $facts);
+$normalized = compilerIntegerOperations($metadata, compilerTypePlan($metadata, $facts, $registry), $registry);
+$metadata->compiler = $normalized;
+requireThat(renderCompiler($metadata, $facts) === $files, 'Integer group expansion changed normalized emission');
+$metadata->compiler->promotions = array_values(array_filter($metadata->compiler->promotions,
+    static fn($row) => $row->left === 'float64' || $row->right === 'float64'));
+$files = renderCompiler($metadata, $facts);
 requireThat(!isset($files['cpp/native_values.php']), 'Retired emitter trait still generated');
 requireThat(str_contains($files['types/string.php'], 'String_Literals::decode'), 'Missing generated string preparation');
 requireThat(str_contains($files['types/string.php'], 'scpp/string.hpp'), 'Missing generated string storage header');

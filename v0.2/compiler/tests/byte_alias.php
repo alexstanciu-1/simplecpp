@@ -84,7 +84,7 @@ foreach (flavor::cases() as $flavor)
 	foreach (['byte', 'uint8'] as $name) {
 		rejects(fn() => $prepare($decl($name, '256') . 'return 8;'), 'outside uint8');
 		rejects(fn() => $prepare($decl($name, '8') . $x . '=1; return 8;'), 'implicit conversion');
-		rejects(fn() => $prepare($decl($name, '8') . 'echo ' . $x . '+(byte)1; return 8;'), 'Unsupported binary');
+		rejects(fn() => $prepare($decl($name, '8') . 'echo ' . $x . '+true; return 8;'), 'Unsupported binary');
 	}
 	$directory = sys_get_temp_dir() . '/scpp-byte-alias-' . bin2hex(random_bytes(8));
 	mkdir($directory);
@@ -101,11 +101,11 @@ foreach (flavor::cases() as $flavor)
 		$write('byte', '8');
 		$project->run();
 		$caller = $project->session()->entry->entry->ast;
-		foreach ([['byte', '(byte)8'], ['uint8', '8'], ['int', '8'], ['byte', '8'], ['uint8', '256'], ['uint8', '8']] as [$type, $expression]) {
+		foreach ([['byte', '(byte)8'], ['uint8', '8'], ['bool', 'true'], ['byte', '8'], ['uint8', '256'], ['uint8', '8']] as [$type, $expression]) {
 			$write($type, $expression);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
-			if (($type === 'int') || ($expression === '256')) {
-				$message = $type === 'int' ? 'Unsupported binary' : 'outside uint8';
+			if (($type === 'bool') || ($expression === '256')) {
+				$message = $type === 'bool' ? 'Unsupported binary' : 'outside uint8';
 				rejects(fn() => $project->run(), $message);
 				rejects(fn() => $project->run(), $message);
 				rejects(fn() => $fresh->run(), $message);
