@@ -3,6 +3,14 @@
 Doc Status: planning
 Date: 2026-11-06
 Scope: v0.2 scalar metadata, generated compiler types and their runtime bindings.
+
+The [native representation catalog and vector investigation](native_representation_catalog.md)
+records which identities use native scalar storage and how concrete collection
+publication should reuse those representations. It does not activate new types.
+The [adopted native alias ABI](native_scalar_alias_abi.md) records wrapper retirement
+and named checked-conversion contracts; additive named helpers are implemented,
+while wrapper retirement remains pending.
+
 Status: active scalar identity/conversion/operator slices implemented, including string comparisons/concatenation, null equality, strict identity, xor, spaceship and checked int64 power. Final goal validation is recorded separately. Collections are separate.
 
 The [normative scalar amendment](../../../specs/compiler_scalars_v0_2.md#agreed-family-and-representation-model--2026-11-06)

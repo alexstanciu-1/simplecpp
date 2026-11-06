@@ -47,7 +47,7 @@ function targetFacts(mixed $facts, mixed $context): array {
         $out[$key] = [];
         foreach ($names as $name) {
             $row = at($rows, $name);
-            fields($row, ['signed', 'digits', 'size', 'alignment']);
+            fields($row, $key === 'fixed_integers' ? ['signed', 'digits', 'size', 'alignment', 'native_name'] : ['signed', 'digits', 'size', 'alignment']);
             $item = layout($row);
             $item['signed'] = boolean(at($row, 'signed'));
             $item['digits'] = unsigned(at($row, 'digits'));
@@ -56,6 +56,9 @@ function targetFacts(mixed $facts, mixed $context): array {
                 requireThat($item['signed'] !== str_starts_with($name, 'unsigned'), 'Native integer signedness mismatch');
             }
             else {
+                $item['native_name'] = textValue(at($row, 'native_name'));
+                requireThat(in_array($item['native_name'], ['signed char', 'unsigned char', 'short', 'unsigned short', 'int', 'unsigned int', 'long', 'unsigned long', 'long long', 'unsigned long long'], true), 'Unsupported fixed integer native identity');
+                requireThat($item['signed'] !== str_starts_with($item['native_name'], 'unsigned'), 'Fixed integer native identity signedness mismatch');
                 $bits = (int)preg_replace('/\D/', '', $name);
                 $signed = $name[0] === 'i';
                 requireThat($item['signed'] === $signed && $item['digits'] === $bits - (int)$signed && $item['size'] * 8 === $bits, 'Fixed integer representation mismatch');

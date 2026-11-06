@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/checked_conversions.php';
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts', 'checked_conversions'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];
@@ -354,6 +355,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         }
     }
     usort($plan['operations'], fn(array $a, array $b): int => [$a['operation'], $a['left']['cpp'], $a['right']['cpp'] ?? ''] <=> [$b['operation'], $b['left']['cpp'], $b['right']['cpp'] ?? '']);
+    prepareCheckedConversions($metadata, $facts, $plan);
     return $plan;
 }
 

@@ -603,6 +603,10 @@
       "greater_equal"
     ]
   },
+  "checked_conversions": {
+    "header": "scpp/conversions.hpp",
+    "symbol_prefix": "checked_"
+  },
   "vector": {
     "source_type": "vector",
     "storage": "private_std_vector",

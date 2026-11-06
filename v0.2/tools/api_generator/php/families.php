@@ -6,6 +6,7 @@ require_once __DIR__ . '/json.php';
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
+    if (isset($plan['checked_conversions'])) $paths[] = $plan['checked_conversions']['header'];
     foreach (['string', 'hashes', 'datetime', 'boxed', 'json'] as $key) {
         if (isset($plan[$key])) {
             $paths[] = $plan[$key]['header'];

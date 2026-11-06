@@ -59,6 +59,7 @@ include(cmake/RuntimePublication.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
 set(runtime_outputs
+  ${runtime_generated}/public/scpp/conversions.hpp
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/public/scpp/output.hpp
@@ -148,7 +149,7 @@ if(BUILD_TESTING)
   set(numeric_proof_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-numeric-proof)
   set(numeric_proof_publication ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/numeric_publication.json)
   set(numeric_proof_outputs)
-  foreach(path public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/string.hpp
+  foreach(path public/scpp/conversions.hpp public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/string.hpp
       public/scpp/values.hpp public/scpp/integers.hpp public/scpp/numeric.hpp
       public/scpp/native_bridge.hpp public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
     list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
@@ -161,6 +162,27 @@ if(BUILD_TESTING)
   target_include_directories(numeric_proof_runtime PUBLIC ${numeric_proof_generated}/public
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
   target_compile_features(numeric_proof_runtime PUBLIC cxx_std_23)
+  set(checked_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-checked-conversions)
+  set(checked_outputs)
+  foreach(path src/runtime.cpp prepared.json inventory.json public/scpp/conversions.hpp
+      public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp public/scpp/short_names.hpp
+      public/scpp/arithmetic.hpp public/scpp/output.hpp public/scpp/entry.hpp)
+    list(APPEND checked_outputs ${checked_generated}/${path})
+  endforeach()
+  add_custom_command(OUTPUT ${checked_outputs}
+    COMMAND ${generator_launcher} ${runtime_metadata}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/checked_conversions_publication.json ${checked_generated}
+    DEPENDS scpp_api_generator ${generator_sources} ${native_facts} ${native_context}
+      ${runtime_metadata} ${CMAKE_CURRENT_SOURCE_DIR}/tests/checked_conversions_publication.json VERBATIM)
+  add_library(checked_conversion_runtime STATIC ${checked_generated}/src/runtime.cpp)
+  target_include_directories(checked_conversion_runtime PUBLIC ${checked_generated}/public
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric)
+  target_compile_features(checked_conversion_runtime PUBLIC cxx_std_23)
+  add_executable(checked_conversions_test tests/checked_conversions.cpp)
+  target_link_libraries(checked_conversions_test PRIVATE checked_conversion_runtime)
+  add_test(NAME checked_conversions COMMAND checked_conversions_test)
+  add_test(NAME checked_conversion_generation COMMAND ${PHP_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/checked_conversions.php ${native_facts} ${native_context})
   add_executable(byte_consumer_test tests/byte_consumer.cpp)
   target_link_libraries(byte_consumer_test PRIVATE scpp_runtime)
   add_test(NAME byte_consumer COMMAND byte_consumer_test)

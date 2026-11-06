@@ -25,6 +25,10 @@ is also the rendering input, avoiding a second serialization model.
   field requires values beyond the signed 64-bit host range.
 - `php/target.php`: explicit C++ target facts/context validation.
 - `php/scalars.php`: integer, boolean, null and floating API preparation.
+- `php/checked_conversions.php` and `php/render_conversions.php`: additive concrete
+  native conversion functions derived from existing numeric conversion rows;
+  strict scalar-input fences use probe-measured native type identity. See
+  [the checked-conversion slice](../../specs/checked_conversions.md).
 - `php/families.php`: strings, vectors, carriers, hashes, datetime and record ownership.
 - `php/boxed.php`: optional mixed/dynamic publication with measured inline layouts,
   explicit scalar factories and same-family container operations.

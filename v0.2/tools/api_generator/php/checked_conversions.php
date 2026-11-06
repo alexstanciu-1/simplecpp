@@ -1,0 +1,51 @@
+<?php
+declare(strict_types=1);
+namespace Scpp\Api;
+
+/** Native transport for a published scalar; wrapper identity remains separate during migration. */
+function checkedConversionRepresentation(array $plan, array $facts, string $identity): array {
+    foreach ($plan['types'] as $type) {
+        if ($type['name'] === $identity) {
+            return ['cpp' => $type['representation'], 'native_name' => $facts['fixed_integers'][$identity]['native_name']];
+        }
+    }
+    foreach ($plan['values'] as $type) {
+        if ($type['name'] !== $identity) continue;
+        return match ($type['kind']) {
+            'boolean' => ['cpp' => 'bool', 'native_name' => 'bool'],
+            'floating' => ['cpp' => 'double', 'native_name' => 'double'],
+            default => throw new \RuntimeException('Checked conversion requires a numeric scalar'),
+        };
+    }
+    throw new \RuntimeException('Checked conversion references unpublished scalar');
+}
+
+/** Publish named native entry points for existing canonical numeric conversions, without new admissions. */
+function prepareCheckedConversions(mixed $metadata, array $facts, array &$plan): void {
+    if (!isset($metadata->checked_conversions)) return;
+    $policy = $metadata->checked_conversions;
+    fields($policy, ['header', 'symbol_prefix']);
+    $header = headerPath(at($policy, 'header'));
+    requireThat(!in_array($header, array_values($plan['headers']), true), 'Conflicting checked conversion header');
+    $prefix = textValue(at($policy, 'symbol_prefix'));
+    requireThat(preg_match('/^[A-Za-z][A-Za-z0-9_]*$/D', $prefix) === 1, 'Invalid checked conversion symbol prefix');
+    $representations = [];
+    $functions = [];
+    foreach ($plan['conversions'] as $conversion) {
+        if ($conversion['native_source']) continue;
+        $source = $conversion['source'];
+        $target = $conversion['target'];
+        $implementation = $conversion['implementation'];
+        requireThat(in_array($implementation, ['checked_integer_cast', 'floating_integer_cast', 'numeric_cast', 'truth_cast'], true), 'Unsupported named conversion implementation');
+        foreach ([$source, $target] as $identity) {
+            $representations[$identity] ??= checkedConversionRepresentation($plan, $facts, $identity);
+        }
+        $symbol = $prefix . $source . '_to_' . $target;
+        requireThat(!isset($functions[$symbol]), 'Duplicate checked conversion symbol');
+        $functions[$symbol] = ['source' => $source, 'target' => $target, 'symbol' => $symbol,
+            'implementation' => $implementation, 'can_fail' => $conversion['can_fail'], 'lossless' => $conversion['lossless']];
+    }
+    ksort($representations, SORT_STRING);
+    ksort($functions, SORT_STRING);
+    $plan['checked_conversions'] = ['header' => $header, 'representations' => $representations, 'functions' => array_values($functions)];
+}

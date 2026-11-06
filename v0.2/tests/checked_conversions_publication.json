@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "modules": [
+    "numeric"
+  ],
+  "types": [
+    "int8",
+    "uint8",
+    "int16",
+    "uint16",
+    "int32",
+    "uint32",
+    "int64",
+    "uint64"
+  ],
+  "values": [
+    "bool_t",
+    "float64",
+    "null_t"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "values": "scpp/values.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp"
+  }
+}

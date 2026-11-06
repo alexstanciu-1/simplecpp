@@ -4,6 +4,7 @@ namespace Scpp\Api;
 require_once __DIR__ . '/publication.php';
 require_once __DIR__ . '/render_boxed.php';
 require_once __DIR__ . '/render_json.php';
+require_once __DIR__ . '/render_conversions.php';
 
 const BANNER = "// Generated from reviewed runtime metadata. Do not edit.\n";
 const NATIVES = ['int', 'unsigned int', 'long', 'unsigned long', 'long long', 'unsigned long long', 'short', 'unsigned short', 'bool', 'char', 'signed char', 'unsigned char', 'wchar_t', 'char8_t', 'char16_t', 'char32_t', 'float', 'double', 'long double'];
@@ -120,8 +121,10 @@ function render(array $plan): array {
     if(isset($plan['carriers_header'])) {
         $d .= includeHeader($plan['carriers_header']) . includeHeader('carrier_semantics.hpp');
     }
+    if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $d .= "namespace scpp {\n";
     $files = [];
+    renderCheckedConversions($plan, $files, $d);
     renderSequences($plan, $files, $d);
     $d .= template('integer_access');
     if(isset($plan['string'])) {

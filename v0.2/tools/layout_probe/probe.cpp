@@ -4,16 +4,32 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <type_traits>
 #include "../../runtime/src/boxed/boxed_value.hpp"
 #ifndef SCPP_PROBE_CONTEXT_ID
 #define SCPP_PROBE_CONTEXT_ID "unbound"
 #endif
 
-template<class T> void integer(const char* name, bool comma) {
+template<class T> constexpr const char* native_name() {
+    if constexpr (std::is_same_v<T, signed char>) return "signed char";
+    else if constexpr (std::is_same_v<T, unsigned char>) return "unsigned char";
+    else if constexpr (std::is_same_v<T, short>) return "short";
+    else if constexpr (std::is_same_v<T, unsigned short>) return "unsigned short";
+    else if constexpr (std::is_same_v<T, int>) return "int";
+    else if constexpr (std::is_same_v<T, unsigned int>) return "unsigned int";
+    else if constexpr (std::is_same_v<T, long>) return "long";
+    else if constexpr (std::is_same_v<T, unsigned long>) return "unsigned long";
+    else if constexpr (std::is_same_v<T, long long>) return "long long";
+    else if constexpr (std::is_same_v<T, unsigned long long>) return "unsigned long long";
+    else return "unsupported";
+}
+template<class T> void integer(const char* name, bool comma, bool fixed = false) {
     if (comma) std::cout << ',';
     std::cout << '"' << name << "\":{\"signed\":" << (std::numeric_limits<T>::is_signed ? "true" : "false")
               << ",\"digits\":" << std::numeric_limits<T>::digits
-              << ",\"size\":" << sizeof(T) << ",\"alignment\":" << alignof(T) << '}';
+              << ",\"size\":" << sizeof(T) << ",\"alignment\":" << alignof(T);
+    if (fixed) std::cout << ",\"native_name\":\"" << native_name<T>() << '"';
+    std::cout << '}';
 }
 template<class T> void layout(const char* name, bool comma) {
     if (comma) std::cout << ',';
@@ -35,10 +51,10 @@ int main() {
     integer<long>("long", true); integer<unsigned long>("unsigned long", true);
     integer<long long>("long long", true); integer<unsigned long long>("unsigned long long", true);
     std::cout << "},\"fixed_integers\":{";
-    integer<__INT8_TYPE__>("int8", false); integer<__UINT8_TYPE__>("uint8", true);
-    integer<__INT16_TYPE__>("int16", true); integer<__UINT16_TYPE__>("uint16", true);
-    integer<__INT32_TYPE__>("int32", true); integer<__UINT32_TYPE__>("uint32", true);
-    integer<__INT64_TYPE__>("int64", true); integer<__UINT64_TYPE__>("uint64", true);
+    integer<__INT8_TYPE__>("int8", false, true); integer<__UINT8_TYPE__>("uint8", true, true);
+    integer<__INT16_TYPE__>("int16", true, true); integer<__UINT16_TYPE__>("uint16", true, true);
+    integer<__INT32_TYPE__>("int32", true, true); integer<__UINT32_TYPE__>("uint32", true, true);
+    integer<__INT64_TYPE__>("int64", true, true); integer<__UINT64_TYPE__>("uint64", true, true);
     std::cout << "},\"double\":{\"iec559\":" << (std::numeric_limits<double>::is_iec559 ? "true" : "false")
               << ",\"radix\":" << std::numeric_limits<double>::radix
               << ",\"digits\":" << std::numeric_limits<double>::digits
