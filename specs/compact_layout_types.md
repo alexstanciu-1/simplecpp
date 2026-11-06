@@ -500,6 +500,8 @@ This does not introduce source constant-call evaluation.
 
 ## v0.2 byte and numeric-module amendment — 2026-10-30
 
+The byte identity/restriction below is superseded by the [2026-11-06 scalar model](compiler_scalars_v0_2.md#agreed-family-and-representation-model--2026-11-06): byte aliases uint8 with ordinary integer behavior. Canonical identity and representation are implemented; grouped numeric behavior remains pending. Module ownership remains.
+
 For the PHP-first v0.2 rebuild, `byte` is a distinct unsigned eight-bit core type,
 not an alias of uint8. Core retains int64 and float64; additional integer widths
 require the optional numeric module and explicit demand. Byte admits explicit

@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ['generator', 'facts', 'context', 'work']:
         parser.add_argument('--' + flag, type=Path, required=True)
+    parser.add_argument("--capture", type=Path, help="Explicit reviewed snapshot capture; never enabled by CTest")
     parser.add_argument("--emit", action="store_true", help="Compare complete scalar artifact bytes and compile consumers")
     parser.add_argument("--cxx", default="clang++")
     parser.add_argument("--flag", action="append", default=[])
@@ -27,6 +28,9 @@ def main():
     baseline = json.loads(Path(__file__).with_name("scalar_baseline.json").read_text())["cases"]
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
+    # This full-family contract explicitly enables conversions deferred in the core publication.
+    metadata['deferred_scalar_casts'] = []
+    captured = {}
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
     scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json']}
     publication = json.loads((root / 'tests/generator_parity/numeric_publication.json').read_text())
@@ -61,7 +65,10 @@ def main():
                             return {str(f.relative_to(directory)): f.read_bytes() for f in directory.rglob('*') if f.is_file()}
                         candidate = tree(generated)
                         hashes = {name: hashlib.sha256(data).hexdigest() for name, data in candidate.items()}
-                        assert hashes == baseline[key], label + ': frozen artifact contract differs'
+                        if args.capture:
+                            captured[key] = hashes
+                        else:
+                            assert hashes == baseline[key], label + ': frozen artifact contract differs'
                         assert json.loads(candidate['prepared.json']) == actual, label
                         stamps = {str(f): f.stat().st_mtime_ns for f in generated.rglob('*') if f.is_file()}
                         assert run(command + ['--check']).returncode == 0
@@ -257,6 +264,10 @@ def main():
             output = work / 'unsupported-emission'
             result = run([args.generator, 'emit-scalars', m, p, args.facts, args.context, output])
             assert result.returncode == 1 and not output.exists()
+    if args.capture:
+        snapshot = json.loads(Path(__file__).with_name('scalar_baseline.json').read_text())
+        snapshot['cases'] = captured
+        args.capture.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + '\n')
     (args.work / 'summary.json').write_text(json.dumps(counts, indent=2) + '\n')
     print(json.dumps(counts))
 

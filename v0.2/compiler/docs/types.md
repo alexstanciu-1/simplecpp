@@ -4,10 +4,13 @@ Doc Status: supporting
 
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md) owns semantics.
 The API generator emits canonical `type_int64`, `type_null`, `type_bool`,
-`type_byte`, `type_float64` and `type_string` definitions plus `type_registry`. `int` and `int64` share one identity;
+`type_uint8`, `type_float64` and `type_string` definitions plus `type_registry`. `int` and `int64` share one identity;
 bool/null use the existing metadata identities bool_t/null_t internally. Instances
 are shared definitions, never occurrence-specific records. `type_void` remains a
 small handwritten non-value definition.
+
+The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
+The [byte/uint8 identity migration](byte_alias.md) is implemented; grouped numeric behavior remains pending.
 
 ## Metadata and generated code
 
@@ -15,7 +18,7 @@ small handwritten non-value definition.
 
 - `compiler.modules.default-runtime.types`: always-active membership.
 - `types.int64`: signedness and width; exact decimal limits are computed during generation.
-- `byte`: unsigned width and storage identity, shared by runtime and compiler generation.
+- `types.uint8`: canonical unsigned width/storage; `integer_aliases` supplies byte.
 - `values`: runtime bool/null representation contracts.
 - `source_types` and `compiler.value_types`: source names, generated type classes,
   compiler representations and boolean/null literal spellings and values.
@@ -34,7 +37,7 @@ Byte's width/storage facts are no longer hard-coded in the runtime scalar regist
 Generated methods contain direct branches; compilation does not interpret metadata
 or build a conversion matrix. Unsupported policies fail before publication.
 
-The output is `compiler/generated/types/{int64,null,bool,byte,float64,string,registry}.php` plus
+The output is `compiler/generated/types/{int64,null,bool,uint8,float64,string,registry}.php` plus
 `compiler/generated/bindings/entry.php` and inventory version 17. Generated PHP is not tracked. CMake lists the byproducts and
 checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
 
@@ -107,7 +110,7 @@ Null's native carrier does not introduce pointer semantics or claim the ABI of t
 runtime's distinct `scpp::null_t`; future runtime-call adapters must handle that boundary.
 
 Known valid byte conversions emit a native static cast. Unknown int64-to-byte values
-currently reuse `(scpp::byte{value}).native_value()` and include only the public
+currently reuse `(scpp::uint8{value}).native_value()` and include only the public
 `scpp/integers.hpp` header. This preserves the established checked-conversion behavior
 and evaluates the operand once. A lighter native public helper can replace it later
 if measurements justify that work. No private runtime headers are emitted.

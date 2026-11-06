@@ -117,7 +117,7 @@ foreach (flavor::cases() as $flavor)
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');
-	foreach (['(byte) 256' => 'outside byte range', '(byte) (int) -1.5' => 'outside byte range',
+	foreach (['(byte) 256' => 'outside uint8 range', '(byte) (int) -1.5' => 'outside uint8 range',
 		'(int) 1e100' => 'outside int64 range', '(void) 8' => 'Unsupported cast target',
 		'(bool) "yes"' => 'Unsupported explicit conversion'] as $invalid => $message) {
 		rejects(fn() => $prepare($decl('bad', 'int', $invalid) . 'return 8;'), $message);
@@ -183,7 +183,7 @@ foreach (flavor::cases() as $flavor)
 		$reader = $session->entry->entry->ast;
 		file_put_contents($lib, $constant('300'));
 		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'outside byte range');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'outside uint8 range');
 		file_put_contents($lib, '');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unknown');

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'byte'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_scalar_casts'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];
@@ -34,15 +34,13 @@ function registry(mixed $metadata, array $facts): array {
         $types[$name] = ['name' => $name, 'representation' => '__' . ($signed ? 'INT':'UINT') . $bits . '_TYPE__', 'signed' => $signed, 'bits' => $bits];
     }
     requireThat($types !== [], 'Expected integer type definitions');
-    $byte = at($metadata, 'byte');
-    fields($byte, ['storage', 'signed', 'bits']);
-    $storage = textValue(at($byte, 'storage'));
-    $signed = boolean(at($byte, 'signed'));
-    $bits = unsigned(at($byte, 'bits'));
-    requireThat(!$signed && $bits === 8 && isset($types[$storage])
-        && $types[$storage]['signed'] === $signed && $types[$storage]['bits'] === $bits,
-        'Byte requires unsigned eight-bit storage');
-    $types['byte'] = ['name' => 'byte', 'representation' => $types[$storage]['representation'], 'signed' => $signed, 'bits' => $bits];
+    foreach (object(at($metadata, 'integer_aliases')) as $alias => $target) {
+        requireThat(!isset($types[$alias]) && isset($types[$target]), 'Invalid integer alias');
+        requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $alias) === 1, 'Invalid integer alias name');
+    }
+    foreach (['core_integers', 'deferred_scalar_casts'] as $field) {
+        foreach (names(at($metadata, $field)) as $name) requireThat(isset($types[$name]), 'Unknown integer policy identity');
+    }
     return $types;
 }
 
@@ -185,12 +183,17 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         requireThat($module === 'numeric', 'Unknown scalar module');
     }
     $types = [];
+    $integerAliases = object(at($metadata, 'integer_aliases'));
     foreach (names(at($publication, 'types'), 'Duplicate published type') as $name) {
+        $name = $integerAliases[$name] ?? $name;
         requireThat(isset($registry[$name]), 'Unknown published integer type');
-        requireThat(in_array($name, ['int64', 'byte'], true) || in_array('numeric', $modules, true), 'Integer width requires numeric module');
+        requireThat(in_array($name, names(at($metadata, 'core_integers')), true) || in_array('numeric', $modules, true), 'Integer width requires numeric module');
         $types[$name] = $registry[$name];
     }
     $plan = ['kind' => 'prepared_runtime_api', 'types' => array_values($types), 'native_inputs' => $natives, 'values' => [], 'conversions' => integerConversions($types, $natives), 'operations' => [], 'source_types' => new \stdClass(), 'aliases' => new \stdClass(), 'short_aliases' => [], 'headers' => $headers, 'vectors' => [], 'carriers' => []];
+    foreach ($integerAliases as $alias => $target) {
+        if (isset($types[$target])) $plan['aliases']->{$alias} = $target;
+    }
     if ($integerOnly) {
         foreach (['operators', 'values', 'short_aliases'] as $key) {
             requireThat(listValue(at($publication, $key)) === [], 'Integer construction batch requires empty operators, values and short_aliases');
@@ -286,23 +289,27 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         requireThat(in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked', 'numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true), 'Unsupported scalar cast policy');
         if ($float && in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked'], true)) {
             foreach ($types as $t) {
-                if ($t['name'] === 'byte') continue;
+                if (in_array($t['name'], names(at($metadata, 'deferred_scalar_casts')), true)) continue;
                 $plan['conversions'][] = $cast === 'integer_to_floating_rounding' ? conversion('float64', $t['name'], false, digits($t) <= 53, 'numeric_cast', false) : conversion($t['name'], 'float64', false, false, 'floating_integer_cast', true);
             }
         }
         if ($bool && in_array($cast, ['numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true)) {
             foreach (array_merge(array_keys($types), $float ? ['float64']:[]) as $name) {
-                if ($name === 'byte') continue;
+                if (in_array($name, names(at($metadata, 'deferred_scalar_casts')), true)) continue;
                 $plan['conversions'][] = $cast === 'numeric_to_boolean_nonzero' ? conversion('bool_t', $name, false, false, 'truth_cast', false) : conversion($name, 'bool_t', false, true, 'numeric_cast', false);
             }
         }
     }
     sortConversions($plan['conversions']);
     $pairs = [];
+    $requests = [];
     foreach (listValue(at($publication, 'operators')) as $request) {
         fields($request, ['operation', 'operands', 'both_orders']);
+        $requestKey = encode($request);
+        requireThat(!isset($requests[$requestKey]), 'Duplicate operator request');
+        $requests[$requestKey] = true;
         $name = textValue(at($request, 'operation'));
-        $args = listValue(at($request, 'operands'));
+        $args = array_map(static fn($arg) => is_string($arg) ? ($integerAliases[$arg] ?? $arg) : $arg, listValue(at($request, 'operands')));
         $binding = (in_array('float64', $args, true) ? $floatingOps : $integerOps)[$name] ?? null;
         requireThat($binding !== null, 'Unregistered numeric operation');
         $binary = in_array($binding['form'], ['binary', 'compound'], true);
@@ -327,7 +334,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
                 requireThat($native !== null, 'Unregistered native arithmetic input');
                 $identity = null;
                 foreach ($registry as $t) {
-                    if ($t['name'] !== 'byte' && $t['signed'] === $native['signed'] && digits($t) === $native['digits']) {
+                    if ($t['signed'] === $native['signed'] && digits($t) === $native['digits']) {
                         $identity = $t['name'];
                         break;
                     }
@@ -345,7 +352,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         }
         foreach ($orders as $order) {
             $key = encode([$name, $order[0]['cpp'], $order[1]['cpp'] ?? '']);
-            requireThat(!isset($pairs[$key]), 'Duplicate operator request');
+            if (isset($pairs[$key])) continue;
             $pairs[$key] = true;
             $plan['operations'][] = resolveOperation($name, $binding, $order, $registry, $policy, $plan);
         }
@@ -361,7 +368,6 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
 }
 
 function resolveOperation(string $name, array $binding, array $args, array $registry, object $policy, array $plan): array {
-    validateByteOperation($name, $args);
     $left = $args[0];
     $right = $args[1] ?? null;
     $form = $binding['form'];
@@ -417,19 +423,4 @@ function resolveOperation(string $name, array $binding, array $args, array $regi
         $op[$side . '_conversion'] = $promotion === 'floating_exact_integer' && $arg['identity'] !== $execution ? 'exact_integer_to_floating' : (in_array($promotion, ['exact_integer_comparison', 'preserve_operand', 'left_with_checked_count'], true) ? 'identity' : ($arg['native'] ? 'lossless_native_integer':($arg['identity'] === $execution ? 'identity':'lossless_integer')));
     }
     return $op;
-}
-
-/** Byte has no implicit numeric participation; consumers must explicitly convert first. */
-function validateByteOperation(string $name, array $args): void {
-    if (!in_array('byte', array_column($args, 'identity'), true)) return;
-    requireThat(!in_array(true, array_column($args, 'native'), true), 'Byte operators require explicit runtime operands');
-    $left = $args[0]['identity'];
-    $right = $args[1]['identity'] ?? null;
-    $allowed = match ($name) {
-        'bit_not' => $left === 'byte' && $right === null,
-        'bit_and', 'bit_or', 'bit_xor', 'bit_and_assign', 'bit_or_assign', 'bit_xor_assign', 'equal', 'not_equal' => $left === 'byte' && $right === 'byte',
-        'shift_left', 'shift_right', 'shift_left_assign', 'shift_right_assign' => $left === 'byte' && $right === 'int64',
-        default => false,
-    };
-    requireThat($allowed, 'Byte supports only bitwise operations and same-type equality; convert explicitly for arithmetic');
 }

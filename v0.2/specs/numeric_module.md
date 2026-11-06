@@ -5,6 +5,14 @@ Date: 2026-10-30
 Scope: v0.2 runtime publication and the agreed language direction. PRJ profile
 loading and compiler enforcement remain future compiler work.
 
+## Current migration status — 2026-11-06
+
+The [canonical identity slice](../compiler/docs/byte_alias.md) supersedes the distinct-byte
+policy below. Byte aliases uint8; both names are core. Optional numeric widths remain
+separate. The current compiler keeps its bounded conversion/operation coverage until
+the grouped family slices; the old bitwise-only language restriction is retired.
+The remaining dated material describes the previous publication surface.
+
 ## Core and explicit demand
 
 The default numeric surface is `int64`, `float64` and `byte`. Boolean and null

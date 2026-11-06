@@ -64,7 +64,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
         }
     }
     // Required roles are consumed by existing AST/literal handlers and boot-time generated class references.
-    foreach (array_merge(array_values($sources), ['byte', textValue(at(at($metadata, 'string'), 'type'))]) as $required) {
+    foreach (array_merge(array_values($sources), names(at($metadata, 'core_integers')), [textValue(at(at($metadata, 'string'), 'type'))]) as $required) {
         requireThat(isset($active[$required]), 'Required compiler type missing from default runtime: ' . $required);
     }
     $rows = object(at($compiler, 'value_types'));
@@ -90,6 +90,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
         $classes[$class] = true;
         $aliases = names(at($row, 'source_names'), 'Duplicate source type name');
         foreach ($sources as $alias => $target) if ($target === $identity) $aliases[] = $alias;
+        foreach (object(at($metadata, 'integer_aliases')) as $alias => $target) if ($target === $identity) $aliases[] = $alias;
         $aliases = array_values(array_unique($aliases));
         sort($aliases, SORT_STRING);
         requireThat($aliases !== [], 'Compiler type has no source name');
@@ -104,12 +105,12 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
         if ($identity === at(at($metadata, 'string'), 'type')) $kind = 'string';
         // These are implementation ABI/strategy guards, not a second registration table.
         $expectedClass = match ($kind) {
-            'integer', 'byte', 'floating', 'string' => $identity,
+            'integer', 'floating', 'string' => $identity,
             'boolean' => 'bool', 'null' => 'null',
             default => throw new \RuntimeException('Unsupported compiler type strategy'),
         };
         requireThat($class === $expectedClass, 'Unsupported generated class ABI');
-        if ($kind === 'integer') {
+        if ($kind === 'integer' && $family === 'integer') {
             requireThat($identity === $sources['int'], 'Unsupported compiler integer strategy');
             $type = $types[$identity];
             requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
@@ -180,7 +181,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $files = [];
     $conversions = compilerConversionPlan($metadata, $definitions, $types);
     $conditions = compilerConditionPlan($compiler, $definitions);
-    $comparisons = compilerComparisonPlan($compiler, $definitions);
+    $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons);
     foreach ($definitions as $identity => $definition) {
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($compiler, $definitions, $identity) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary) . compilerUpdates($compiler, $identity) . compilerUnary($compiler, $identity, $safety) . compilerPromotions($compiler, $conversions, $definitions, $identity, $binary);
@@ -193,7 +194,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
 \t}
 ";
         }
-        if ($definition['strategy'] === 'integer') {
+        if ($definition['literal_family'] === 'integer') {
             $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
             $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
@@ -203,7 +204,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
             ]);
             continue;
         }
-        $limits = $identity === 'byte' ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
+        $limits = ($definition['strategy'] === 'integer' && !$types[$identity]['signed'] && $types[$identity]['bits'] < 64) ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
         $literalMethods = $definition['literal_family'] === 'floating'
             ? strtr(readFile(__DIR__ . '/../templates/floating_literal_methods.php.tpl'), [
@@ -234,7 +235,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 17,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 18,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -389,7 +390,6 @@ function compilerOutput(mixed $compiler, array $definitions, string $identity): 
 /** Runtime type categories validate strategy mechanics; they do not grant any source conversion. */
 function compilerConversionKind(mixed $metadata, string $identity): string {
     if (isset($metadata->types->$identity)) return 'integer';
-    if ($identity === 'byte') return 'byte';
     if ($identity === at(at($metadata, 'floating'), 'type')) return 'floating';
     return isset($metadata->values->$identity) ? textValue(at($metadata->values->$identity, 'kind')) : 'other';
 }
@@ -414,8 +414,9 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $valid = match ($operation) {
             'boolean_integer' => $sourceKind === 'boolean' && $targetKind === 'integer',
             'integer_boolean' => $sourceKind === 'integer' && $targetKind === 'boolean',
-            'checked_integer' => $sourceKind === 'integer' && $targetKind === 'byte',
-            'integer_widen' => $sourceKind === 'byte' && $targetKind === 'integer'
+            'checked_integer' => $sourceKind === 'integer' && $targetKind === 'integer'
+                && !$types[$to]['signed'] && $types[$to]['bits'] < 64,
+            'integer_widen' => $sourceKind === 'integer' && $targetKind === 'integer'
                 && fits($types[$to], $types[$from]['signed'], digits($types[$from])),
             'numeric_floating' => in_array($sourceKind, ['integer', 'boolean'], true) && $targetKind === 'floating',
             'floating_boolean' => $sourceKind === 'floating' && $targetKind === 'boolean',
@@ -423,7 +424,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
             default => false,
         };
         requireThat($valid, 'Unsupported compiler conversion operation');
-        requireThat(($sourceKind !== 'byte' && $targetKind !== 'byte') || array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Byte conversions must be explicit');
+        requireThat(array_diff($contexts, ['explicit_cast', 'typed_destination']) === [], 'Cross-type conversions require explicit intent');
         $required = match ($operation) {
             'boolean_integer' => 'boolean_to_numeric_01',
             'integer_boolean', 'floating_boolean' => 'numeric_to_boolean_nonzero',
@@ -508,7 +509,7 @@ CODE;
 			if ($value->constant_known()) {
 				$constant = $value->constant();
 				if (($constant < self::MINIMUM) || ($constant > self::MAXIMUM)) {
-					throw new diagnostic($value->source(), $value->byte_start(), 'Conversion is outside byte range');
+					throw new diagnostic($value->source(), $value->byte_start(), 'Conversion is outside ' . $this->name . ' range');
 				}
 				return value_conversion::integer_proven;
 			}
@@ -640,7 +641,7 @@ function compilerArithmeticBinding(mixed $compiler, string $name, string $operan
 function compilerLoweringSafety(mixed $compiler): array {
     $safety = [];
     foreach (object(at($compiler, 'lowering_strategies')) as $strategy => $row) {
-        requireThat(in_array($strategy, ['native', 'zero_checked_divide', 'zero_checked_remainder'], true), 'Unsupported lowering safety strategy');
+        requireThat(in_array($strategy, ['native', 'runtime_compare', 'zero_checked_divide', 'zero_checked_remainder'], true), 'Unsupported lowering safety strategy');
         fields($row, ['reorderable']);
         $safe = boolean(at($row, 'reorderable'));
         requireThat(!$safe || $strategy === 'native', 'Checked lowering cannot be reorderable');
@@ -656,23 +657,29 @@ function compilerStrategyReorderable(array $safety, string $strategy): bool {
 }
 
 /** Normalize admitted comparison rows once; source contracts remain bounded by the existing validators. */
-function compilerComparisonPlan(mixed $compiler, array $definitions): array {
+function compilerComparisonPlan(mixed $compiler, array $definitions, array $stringOperations): array {
     $plan = [];
     $rows = object(at($compiler, 'comparisons'));
     $spelling = ['equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>='];
     foreach ($rows as $name => $row) {
-        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'byte'], true), 'Unsupported compiler comparison type');
-        fields($row, ['operand', 'result', 'lowering', 'operators']);
-        literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => 'native']);
+        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string'], true), 'Unsupported compiler comparison type');
+        fields($row, ['operand', 'result', 'lowering', 'operators', 'result_binding']);
+        literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => $name === 'string' ? 'runtime_compare' : 'native']);
+        $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, textValue(at($row, 'result_binding')), 'bool_t', true) : null;
+        $storage = $name === 'string' ? $definitions[$name]['storage'] : null;
         requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
         $operators = [];
         foreach (names(at($row, 'operators'), 'Duplicate comparison operator') as $operator) {
             requireThat(isset($spelling[$operator]), 'Unsupported comparison operator');
-            requireThat(!in_array($name, ['bool_t', 'byte'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/byte');
+            requireThat(!in_array($name, ['bool_t', 'uint8'], true) || in_array($operator, ['equal', 'not_equal'], true), 'Ordering unavailable for bool/current narrow integer slice');
+            if ($name === 'string') {
+                requireThat(in_array($operator, ['equal', 'not_equal'], true), 'Only string equality is admitted');
+                requireThat(in_array($operator, $stringOperations, true), 'Missing runtime string comparison');
+            }
             $operators[$operator] = $spelling[$operator];
         }
         $plan[$name] = ['operand' => textValue(at($row, 'operand')), 'result' => textValue(at($row, 'result')),
-            'lowering' => textValue(at($row, 'lowering')), 'operators' => $operators];
+            'lowering' => textValue(at($row, 'lowering')), 'operators' => $operators, 'result_binding' => $resultBinding, 'storage' => $storage];
     }
     return $plan;
 }
@@ -682,7 +689,7 @@ function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparis
     $plan = [];
     foreach ($comparisons as $identity => $comparison) {
         foreach ($comparison['operators'] as $op => $spelling) {
-            $plan[$identity][$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'], 'spelling' => $spelling];
+            $plan[$identity][$op] = ['result' => $comparison['result'], 'lowering' => $comparison['lowering'], 'spelling' => $spelling, 'result_binding' => $comparison['result_binding'], 'storage' => $comparison['storage']];
         }
     }
     $arithmeticSpelling = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%'];
@@ -719,6 +726,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
         if (compilerStrategyReorderable($safety, $operation['lowering'])) $reorderable[] = "binary_operator::$op";
         if ($operation['lowering'] === 'native') {
             $cases .= "\t\t\tbinary_operator::$op => '(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')',\n";
+        } elseif ($operation['lowering'] === 'runtime_compare') {
+            $extract = $operation['result_binding']['extract'];
+            $cases .= "\t\t\tbinary_operator::$op => '((' . \$left . ' " . $operation['spelling'] . " ' . \$right . ').$extract())',\n";
+            $headers[$operation['storage']['header']][] = "binary_operator::$op";
+            $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
         } else {
             $symbol = $operation['binding']['symbol'];
             $cases .= "\t\t\tbinary_operator::$op => '{$symbol}(' . \$left . ', ' . \$right . ')',\n";

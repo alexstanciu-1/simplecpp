@@ -14,8 +14,7 @@ scalar/container types remain separate work.
 
 `int` and `int64` name the same signed 64-bit type. `bool` admits `true` and `false`.
 `null` is its own value type, distinct from void, false and an unknown value.
-`byte` is an unsigned eight-bit value in 0..255, semantically distinct from uint8
-and int64. It has no dedicated literal spelling in this slice. `float` and `float64` name the
+`byte` and `uint8` name the same unsigned eight-bit integer in 0..255, distinct from int64. It has no dedicated literal spelling in this slice. `float` and `float64` name the
 same IEEE binary64 type; source values use decimal-point/exponent notation.
 
 The spellings `true`, `false` and `null` are common to all three source flavors.
@@ -408,4 +407,64 @@ Metadata authorizes the existing numeric-floating conversion for equality and
 selects float64 execution with bool result. Each operand is prepared once using
 existing binary facts and lowering. No constant folding, new runtime helper or
 expanded sequencing mechanism is introduced. Strict identity, carriers,
-bool/byte mixed numeric equality and string comparisons remain deferred.
+bool/byte mixed numeric equality remain deferred; string equality is admitted below.
+
+## String equality — 2026-11-06
+
+All three flavors admit exact string/string `==` and `!=`, returning bool.
+Equality compares the full byte sequence and length, including embedded NUL bytes;
+`!=` is its negation. Comparison is case-sensitive and independent of storage
+identity. Empty strings compare equal. There is no numeric-string conversion,
+Unicode normalization or locale collation: `"10" != "010"` and a composed Unicode
+sequence differs from a byte-distinct decomposed sequence.
+
+Use existing eager operand snapshots to preserve the left value before RHS effects.
+No operand storage is modified by comparison. Runtime public operators own byte
+comparison; compiler metadata admits and lowers these operations. Preparation visits
+each operand once without constant folding. This extends the earlier bounded
+string-identity discussion with ordinary equality; it does not admit strict identity,
+ordering, carriers, heterogeneous comparisons, concatenation or text conversion in
+this compiler slice.
+
+## Agreed family and representation model — 2026-11-06
+
+The scalar model has five semantic families: null, bool, integer, floating and
+string. Integer representations supply width/signedness/range; floating representations
+supply format/precision/range. int aliases int64 and float aliases float64.
+**Byte aliases uint8 and has ordinary integer behavior**, replacing the earlier
+distinct bitwise-only byte policy and its special conversion exclusions. Aliases
+share canonical identity, including reference binding. Runtime metadata still owns
+module activation; this decision does not activate all optional numeric names.
+Char and collections remain separate decisions.
+
+When a context permits conversion, integer-to-integer is value-preserving and
+range-checked where needed; integer-to-floating allows rounding; floating-to-integer
+truncates toward zero and rejects nonfinite/out-of-range results. Floating widening
+is exact; narrowing rounds, allows underflow/signed zero and rejects finite overflow.
+Bool converts to numeric 0/1; numeric zero converts to false and nonzero (including
+NaN) to true. Same-type/null identity and string value-copy semantics remain.
+Cross-family null and numeric/bool text conversions are not admitted by this agreement.
+
+Explicit casts and typed initialization/value arguments/defaults/returns authorize
+defined conversions. Ordinary assignment remains same-canonical-type-only. References
+require exact canonical identity. Inferred locals retain initializer identity and
+reject bare null. Operator promotion, compound write-back and truthiness keep separate
+permissions. No new default-expression grammar or user-defined overload resolution
+is implied.
+
+This is the agreed replacement model, not a claim of completed migration: the canonical byte/uint8 identity is now implemented, while conversion rows and
+operator coverage remain bounded pending subsequent slices.
+The [implementation plan and conversion tables](../v0.2/specs/planning/scalar_families_and_conversions.md)
+track the migration and remaining policy decisions. Earlier implementation-slice
+restrictions above describe existing coverage where migration is pending.
+
+
+### Canonical uint8 identity checkpoint — 2026-11-06
+
+Byte and uint8 are both default-runtime source names for one uint8 identity.
+Alias assignment, value arguments/returns and reference binding use that identity;
+ordinary assignment from a different numeric identity remains rejected. Integer
+literals still have int64 identity. The current compiler retains int64↔uint8
+conversion and equality coverage; the family-derived conversion/operator model
+above is not yet fully implemented. The public runtime replaces class byte with
+class uint8 and a byte alias, requiring regeneration and a native rebuild.

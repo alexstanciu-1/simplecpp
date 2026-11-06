@@ -737,7 +737,7 @@
           "int64",
           "null_t",
           "bool_t",
-          "byte",
+          "uint8",
           "float64",
           "string"
         ]
@@ -779,13 +779,13 @@
           "false": false
         }
       },
-      "byte": {
-        "class": "byte",
+      "uint8": {
+        "class": "uint8",
         "literal_family": null,
         "declarations": { "inferred_local": true, "global_storage": true },
         "copy_semantics": "trivial",
         "source_names": [
-          "byte"
+          "uint8"
         ]
       },
       "float64": {
@@ -824,14 +824,14 @@
       },
       {
         "from": "int64",
-        "to": "byte",
+        "to": "uint8",
         "contexts": ["explicit_cast", "typed_destination"],
         "operation": "checked_integer",
         "promotion_operators": [],
-        "target_binding": "boxed_byte"
+        "target_binding": "boxed_uint8"
       },
       {
-        "from": "byte",
+        "from": "uint8",
         "to": "int64",
         "contexts": ["explicit_cast", "typed_destination"],
         "operation": "integer_widen",
@@ -908,6 +908,7 @@
     },
     "lowering_strategies": {
       "native": { "reorderable": true },
+      "runtime_compare": { "reorderable": false },
       "zero_checked_divide": { "reorderable": false },
       "zero_checked_remainder": { "reorderable": false }
     },
@@ -948,10 +949,10 @@
         "header": "scpp/integers.hpp",
         "extract": "native_value"
       },
-      "boxed_byte": {
+      "boxed_uint8": {
         "kind": "type",
-        "identity": "byte",
-        "symbol": "scpp::byte",
+        "identity": "uint8",
+        "symbol": "scpp::uint8",
         "header": "scpp/integers.hpp",
         "extract": "native_value"
       },
@@ -961,6 +962,10 @@
         "symbol": "scpp::float64",
         "header": "scpp/values.hpp",
         "extract": "native_value"
+      },
+      "boxed_bool": {
+        "kind": "type", "identity": "bool_t", "symbol": "scpp::bool_t",
+        "header": "scpp/values.hpp", "extract": "native_value"
       },
       "string_storage": {
         "kind": "type",
@@ -1049,6 +1054,10 @@
       }
     ],
     "comparisons": {
+      "string": {
+        "operand": "same_type", "result": "bool_t", "lowering": "runtime_compare",
+        "operators": ["equal", "not_equal"], "result_binding": "boxed_bool"
+      },
       "int64": {
         "operand": "same_type",
         "result": "bool_t",
@@ -1084,7 +1093,7 @@
           "not_equal"
         ]
       },
-      "byte": {
+      "uint8": {
         "operand": "same_type",
         "result": "bool_t",
         "lowering": "native",
@@ -1101,9 +1110,7 @@
       "string": "nonempty_except_zero"
     }
   },
-  "byte": {
-    "storage": "uint8",
-    "signed": false,
-    "bits": 8
-  }
+  "integer_aliases": { "byte": "uint8" },
+  "core_integers": ["int64", "uint8"],
+  "deferred_scalar_casts": ["uint8"]
 }

@@ -104,7 +104,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/byte.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -199,6 +199,12 @@ if(BUILD_TESTING)
   add_test(NAME compiler_mixed_equality COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mixed_equality.php)
   add_test(NAME compiler_mixed_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mixed_equality_native.py)
   set_tests_properties(compiler_mixed_equality_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_string_equality COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/string_equality.php)
+  add_test(NAME compiler_string_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/string_equality_native.py)
+  set_tests_properties(compiler_string_equality_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_byte_alias COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/byte_alias.php)
+  add_test(NAME compiler_byte_alias_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/byte_alias_native.py)
+  set_tests_properties(compiler_byte_alias_native PROPERTIES TIMEOUT 60)
   add_test(NAME compiler_float_updates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/float_updates.php)
   add_test(NAME compiler_float_updates_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/float_updates_native.py)
   set_tests_properties(compiler_float_updates_native PROPERTIES TIMEOUT 60)

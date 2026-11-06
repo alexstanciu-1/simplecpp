@@ -59,7 +59,7 @@ def prove(work):
                                     'exit': result.returncode, 'stdout': result.stdout}
     # Exercise the exact generated checked expression with unknown native inputs and side effects.
     expression = success(run(['php', '-r',
-        'require $argv[1]; echo scpp\\compiler\\type_byte::instance()->lower_cpp_conversion('
+        'require $argv[1]; echo scpp\\compiler\\type_uint8::instance()->lower_cpp_conversion('
         'scpp\\compiler\\value_conversion::integer_checked, "next_value(input)");',
         ROOT / 'compiler/boot.php'])).stdout
     driver = work / 'boundary.cpp'

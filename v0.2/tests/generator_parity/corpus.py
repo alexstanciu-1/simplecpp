@@ -114,7 +114,10 @@ def cases(root: Path):
     full["operators"] += [{"operation": op, "operands": ["float64"]} for op in unary if op != "bit_not"]
     for t in ["int8", "int16", "int32", "uint8", "uint16", "uint32"]:
         full["operators"].append({"operation": "add", "operands": [t, "float64"], "both_orders": True})
-    add("numeric_forms", full)
+    full_metadata = copy.deepcopy(metadata)
+    # This fixture explicitly exercises the full integer conversion family.
+    full_metadata["deferred_scalar_casts"] = []
+    add("numeric_forms", full, full_metadata)
 
     def reject(name, path, value, message, base=default, on_metadata=False):
         p, m = copy.deepcopy(base), copy.deepcopy(metadata)

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, type_registry, type_bool, type_null,
-	type_byte, type_int64, value_conversion, Cpp_Emitter, diagnostic, diagnostic_group, Syntax_Inspection,
+	type_uint8, type_int64, value_conversion, Cpp_Emitter, diagnostic, diagnostic_group, Syntax_Inspection,
 	Compilation_Inspection, Project_Compiler, Incremental_Preparation};
 
 function verify(bool $condition, string $message): void
@@ -45,8 +45,8 @@ function declaration(flavor $flavor, string $type, string $name, string $value):
 
 verify(type_registry::resolve('null') === type_null::instance(), 'Null registration');
 verify(type_registry::resolve('bool') === type_bool::instance(), 'Bool registration');
-verify(type_registry::resolve('byte') === type_byte::instance(), 'Byte registration');
-verify((type_byte::MINIMUM === 0) && (type_byte::MAXIMUM === 255), 'Byte limits');
+verify(type_registry::resolve('byte') === type_uint8::instance(), 'Byte registration');
+verify((type_uint8::MINIMUM === 0) && (type_uint8::MAXIMUM === 255), 'Byte limits');
 $generated = [];
 foreach (flavor::cases() as $flavor)
 {
@@ -81,15 +81,15 @@ foreach (flavor::cases() as $flavor)
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');
 	verify(str_contains($cpp, '#include <scpp/integers.hpp>'), 'Checked conversion lacks public include');
-	verify(str_contains($cpp, 'scpp::byte{'), 'Checked conversion missing');
+	verify(str_contains($cpp, 'scpp::uint8{'), 'Checked conversion missing');
 	$inspection = Compilation_Inspection::program($entry);
 	verify($inspection['statements'][1]['initializer']['constant_known'] === true, 'Inspection loses known null');
 	verify($inspection['statements'][0]['initializer']['constant'] === false, 'Inspection loses false');
 	$generated[$flavor->value] = ['source' => $source, 'cpp' => $cpp];
 	foreach (['256', '9223372036854775807'] as $outside) {
-		rejects(fn() => $prepare($decl('byte', 'bad', $outside) . 'return 8;'), 'outside byte');
+		rejects(fn() => $prepare($decl('byte', 'bad', $outside) . 'return 8;'), 'outside uint8');
 	}
-	rejects(fn() => $prepare('global ' . $decl('byte', 'bad', '-1') . 'return 8;'), 'outside byte');
+	rejects(fn() => $prepare('global ' . $decl('byte', 'bad', '-1') . 'return 8;'), 'outside uint8');
 	rejects(fn() => $prepare($decl('byte', 'bad', 'true') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('int', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('null', 'bad', '0') . 'return 8;'), 'conversion');
@@ -98,7 +98,7 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare($decl('byte', 'bad', '1') . 'echo ' . $var('bad') . '; return 8;'), 'Echo currently');
 	$integer = $locals[3]->initializer;
 	rejects(fn() => type_bool::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
-	rejects(fn() => type_byte::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
+	rejects(fn() => type_uint8::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
 	$implicit = type_int64::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment);
 	verify($implicit === value_conversion::identity, 'Implicit identity rejected');
 	$null = $locals[1]->initializer;

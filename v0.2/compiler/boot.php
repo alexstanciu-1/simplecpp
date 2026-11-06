@@ -52,7 +52,7 @@ require_once __DIR__ . '/types/definition.php';
 require_once __DIR__ . '/generated/types/int64.php';
 require_once __DIR__ . '/generated/types/null.php';
 require_once __DIR__ . '/generated/types/bool.php';
-require_once __DIR__ . '/generated/types/byte.php';
+require_once __DIR__ . '/generated/types/uint8.php';
 require_once __DIR__ . '/generated/types/float64.php';
 require_once __DIR__ . '/generated/types/string.php';
 require_once __DIR__ . '/generated/types/registry.php';

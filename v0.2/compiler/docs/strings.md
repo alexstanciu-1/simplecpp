@@ -55,7 +55,8 @@ returned string remains alive across both queries; calls execute exactly once.
 ## Explicit debt
 
 String globals remain rejected until initialization order and lifetime are designed;
-current scalar globals use `constinit`. Text conversions, concatenation/operators,
+current scalar globals use `constinit`. String equality now uses [generated handlers](string_equality.md).
+Text conversions, concatenation and other string operators,
 indexing, methods, interpolation and uninitialized
 locals remain deferred. Native runtime support does not imply compiler admission.
 The broader echo formatting/error contract remains tracked in the existing echo debt.
