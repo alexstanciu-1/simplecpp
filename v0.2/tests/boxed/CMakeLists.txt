@@ -1,8 +1,8 @@
 set(boxed_generated ${CMAKE_BINARY_DIR}/generated-boxed-proof)
 set(boxed_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
-set(boxed_outputs)
-foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp
-    public/scpp/conversions.hpp public/scpp/short_names.hpp public/scpp/string.hpp public/scpp/boxed.hpp
+scpp_provider_outputs(boxed_outputs ${boxed_generated} ${boxed_publication})
+foreach(path public/scpp/numeric.hpp
+    public/scpp/short_names.hpp public/scpp/boxed.hpp
     src/runtime.cpp src/boxed.cpp prepared.json inventory.json)
   list(APPEND boxed_outputs ${boxed_generated}/${path})
 endforeach()

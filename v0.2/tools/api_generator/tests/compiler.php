@@ -612,9 +612,9 @@ foreach (['copy_missing', 'copy_invalid', 'strategy_missing', 'strategy_invalid'
 // Shared named bindings affect checked branches; storage bindings and proven casts remain independent.
 $bound = unserialize(serialize($metadata));
 $bound->checked_conversions->symbol_prefix = 'test_checked_';
-$bound->checked_conversions->header = 'scpp/test_conversions.hpp';
+$bound->submodules->{'core.conversions'}->header = 'scpp/test_conversions.hpp';
 foreach ($bound->type_exports as $export) if ($export->identity === 'uint8') $export->name = 'byte';
-$bound->submodules->{'core.integers'}->header = 'scpp/test_byte.hpp';
+$bound->submodules->{'core.scalars'}->header = 'scpp/test_byte.hpp';
 $bound->submodules->{'core.string'}->header = 'scpp/test_string.hpp';
 $boundFiles = renderCompiler($bound, $facts);
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<scpp::int64>'), 'Checked binding ignored');
@@ -643,7 +643,7 @@ foreach (['missing', 'prefix', 'header'] as $change) {
     $bad = unserialize(serialize($metadata));
     if ($change === 'missing') unset($bad->checked_conversions);
     elseif ($change === 'prefix') $bad->checked_conversions->symbol_prefix = 'invalid::';
-    else $bad->checked_conversions->header = '../private.hpp';
+    else $bad->submodules->{'core.conversions'}->header = '../private.hpp';
     try {
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid named conversion binding accepted: ' . $change);
@@ -1057,4 +1057,4 @@ foreach (['operand', 'result', 'binding', 'safety'] as $change) {
 
 // An operation may need both its storage and extraction headers; no match arm may hide either.
 $headers = \scpp\compiler\type_string::instance()->binary_headers(\scpp\compiler\binary_operator::identical);
-requireThat(in_array('scpp/string.hpp', $headers, true) && in_array('scpp/values.hpp', $headers, true), 'Binary header union lost a binding');
+requireThat(in_array('scpp/string.hpp', $headers, true) && in_array('scpp/core/scalars.hpp', $headers, true), 'Binary header union lost a binding');

@@ -42,6 +42,7 @@ def proof(work):
         run(['php', generator, 'emit-compiler', metadata, facts, context, compiler])
 
     review_contract_proof(work / 'review-contracts', original, publication, facts, context)
+    cmake_provider_proof(work / 'cmake-providers', original, publication, facts, context)
 
     for variant in ('default', 'renamed', 'relocated', 'type_relocated'):
         directory = work / variant
@@ -56,11 +57,8 @@ def proof(work):
             metadata['string']['provider'] = 'core.output'
             metadata['submodules']['core.output']['requires_exports'] = metadata['submodules']['core.string'].pop('requires_exports')
         if variant != 'default':
-            # Move the legacy renderer registration coherently; consumers still name exports.
-            metadata['submodules']['core.scalars'] = metadata['submodules'].pop('core.integers')
-            for row in metadata['type_exports']:
-                if row.get('provider') == 'core.integers':
-                    row['provider'] = 'core.scalars'
+            for provider, header in [('core.scalars', 'scpp/proof/scalars.hpp'), ('numeric.scalars', 'scpp/proof/custom.hpp'), ('core.conversions', 'scpp/proof/conversions.hpp')]:
+                metadata['submodules'][provider]['header'] = header
             next(row for row in metadata['type_exports'] if row['identity'] == 'uint8')['name'] = 'byte'
         path = directory / 'metadata.json'
         path.write_text(json.dumps(metadata))
@@ -80,6 +78,8 @@ def proof(work):
              '-DFACTS=' + str(facts), '-DCONTEXT=' + str(context), '-DOUTPUT=' + str(compiler),
              '-P', ROOT / 'cmake/PublishCompiler.cmake'])
         assert all(Path(p).stat().st_mtime_ns == stamp for p, stamp in stamps.items()), 'No-op publication touched artifacts'
+        core_header = metadata['submodules'][metadata['scalar_providers']['core']]['header']
+        conversion_header = metadata['submodules'][metadata['checked_conversions']['provider']]['header']
         string_header = metadata['submodules'][metadata['string']['provider']]['header']
         output_header = metadata['submodules'][metadata['output']['provider']]['header']
         assert 'scpp/output.hpp' not in (runtime / 'private/output_provider.hpp').read_text() or variant == 'default'
@@ -90,15 +90,15 @@ def proof(work):
                  '-I', runtime / 'public', '-I', runtime / 'private',
                  '-I', ROOT / 'runtime/src/numeric', '-I', ROOT / 'runtime/src/sequence']
         closure = {}
-        for index, header in enumerate(sorted(set([string_header, output_header]))):
+        for index, header in enumerate(sorted(set([core_header, conversion_header, string_header, output_header]))):
             isolated = directory / f'header-{index}.cpp'
             isolated.write_text(f'#include <{header}>\n')
             run([*flags, '-fsyntax-only', isolated])
             closure[header] = run([*flags, '-MM', isolated]).stdout
         if variant != 'default':
-            assert 'scpp::byte{' in (compiler / 'types/uint8.php').read_text()
+            assert "return 'scpp::byte';" in (compiler / 'types/uint8.php').read_text()
             alias_probe = directory / 'alias.cpp'
-            alias_probe.write_text('#include <scpp/integers.hpp>\nstatic_assert(__is_same(scpp::byte, scpp::uint8));\n')
+            alias_probe.write_text(f'#include <{core_header}>\nstatic_assert(__is_same(scpp::byte, scpp::uint8));\n')
             run([*flags, '-fsyntax-only', alias_probe])
         if variant == 'type_relocated':
             assert not (runtime / 'public/scpp/proof/text.hpp').exists()
@@ -134,7 +134,10 @@ def proof(work):
                 target.write_text(text)
                 stamp += 1
                 os.utime(target, (stamp, stamp))
-            write('main', 'visible(); body(); scalar(); return (int) (byte) (scalar() + 1);')
+            narrowed = {'cpp': 'byte narrowed = (byte) (scalar() + 1); return (int) narrowed;',
+                        'php': '$narrowed byte = (byte) (scalar() + 1); return (int) $narrowed;',
+                        'js': 'let narrowed: byte = (byte) (scalar() + 1); return (int) narrowed;'}[flavor]
+            write('main', 'visible(); body(); scalar(); ' + narrowed)
             write('visible', fn('visible', 'string', 'return "V";'))
             write('body', fn('body', 'int', 'return 1;'))
             write('scalar', fn('scalar', 'int', 'return 7;'))
@@ -159,6 +162,13 @@ def proof(work):
                 # Native bundle paths use source keys; find the scalar unit by its definition.
                 scalar_units = {p: text for p, text in artifacts(out).items() if p.endswith('.cpp') and 'return 7LL;' in text}
                 assert scalar_units, 'Missing scalar-only proof unit'
+                for path, text in scalar_units.items():
+                    header = (out / path).with_suffix('.hpp').read_text()
+                    for unit in (header, text):
+                        assert f'#include <{core_header}>' in unit
+                        for excluded in (conversion_header, string_header, output_header,
+                                         metadata['submodules'][metadata['scalar_providers']['numeric']]['header']):
+                            assert f'#include <{excluded}>' not in unit
                 baseline = artifacts(out)
                 local = {'cpp': 'string text = "B";', 'php': '$text string = "B";', 'js': 'let text: string = "B";'}[flavor]
                 write('body', fn('body', 'int', local + ('echo $text;' if flavor == 'php' else 'echo text;') + 'return 1;'))
@@ -167,7 +177,8 @@ def proof(work):
                 fresh()
                 texts = artifacts(out)
                 if variant != 'default':
-                    assert any('scpp::byte{' in text for text in texts.values()), 'Export spelling not used by checked conversion'
+                    assert any('scpp::byte ' in text for text in texts.values()), 'Export spelling not used by scalar declaration'
+                    assert any('scpp::checked_int64_to_uint8(' in text for text in texts.values()), 'Checked conversion helper missing'
                 headers = [text for p, text in texts.items() if p.endswith('.hpp')]
                 assert any(f'#include <{string_header}>' in text for text in headers)
                 if output_header != string_header:
@@ -218,7 +229,7 @@ def proof(work):
     transitive = json.loads(json.dumps(original))
     transitive['submodules']['core.string']['requires_exports'] = []
     transitive['submodules']['core.string']['requires'] = ['core.output']
-    transitive['submodules']['core.output']['requires'] = ['core.integers', 'core.values']
+    transitive['submodules']['core.output']['requires'] = ['core.scalars']
     path = work / 'transitive.json'
     path.write_text(json.dumps(transitive))
     generated = work / 'transitive-runtime'
@@ -227,7 +238,7 @@ def proof(work):
     isolated.write_text('#include <scpp/string.hpp>\n')
     run(['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', generated / 'public', isolated])
     text = (generated / 'public/scpp/string.hpp').read_text()
-    assert '#include "scpp/output.hpp"' in text and '#include "scpp/values.hpp"' not in text
+    assert '#include "scpp/output.hpp"' in text and '#include "scpp/core/scalars.hpp"' not in text
 
     # Invalid metadata must leave a previously published directory intact.
     directory = work / 'default'
@@ -237,18 +248,18 @@ def proof(work):
     mutations = {
         'unknown_provider': lambda m: m['string'].update(provider='missing'),
         'omitted_requirements': lambda m: m['submodules']['core.string'].update(requires=[], requires_exports=[]),
-        'omitted_values': lambda m: m['submodules']['core.string'].update(requires=['core.integers'], requires_exports=[]),
+        'shared_scalar_provider': lambda m: m['scalar_providers'].update(numeric=m['scalar_providers']['core']),
         'missing_dependency': lambda m: m['submodules']['core.string'].update(requires=['missing']),
         'cycle': lambda m: (m['submodules']['core.string'].update(requires=['core.output']), m['submodules']['core.output'].update(requires=['core.string'])),
         'invalid_header': lambda m: m['submodules']['core.string'].update(header='../private.hpp'),
-        'conflict': lambda m: m['submodules']['core.string'].update(header='scpp/values.hpp'),
-        'unknown_export': lambda m: m['type_exports'].append({'identity': 'imaginary', 'name': 'imaginary', 'provider': 'core.values'}),
+        'conflict': lambda m: m['submodules']['core.string'].update(header='scpp/core/scalars.hpp'),
+        'unknown_export': lambda m: m['type_exports'].append({'identity': 'imaginary', 'name': 'imaginary', 'declaration_group': 'scalar_core'}),
         'duplicate_export': lambda m: m['type_exports'].append(m['type_exports'][0].copy()),
         'missing_export': lambda m: m.update(type_exports=[r for r in m['type_exports'] if r['identity'] != 'bool_t']),
-        'unknown_export_provider': lambda m: m['type_exports'][0].update(provider='missing'),
-        'false_placement': lambda m: m['type_exports'][0].update(provider='core.output'),
+        'unknown_export_provider': lambda m: m['scalar_providers'].update(numeric='missing'),
+        'false_placement': lambda m: m['type_exports'][0].update(declaration_group='scalar_core'),
         'undeclared_name': lambda m: m['type_exports'][0].update(name='imaginary'),
-        'missing_export_provider': lambda m: m['type_exports'][0].pop('provider'),
+        'missing_export_provider': lambda m: m['type_exports'][0].pop('declaration_group'),
         'wrong_export_group': lambda m: m['type_exports'][-1].update(declaration_group='output'),
         'competing_export_owner': lambda m: m['type_exports'][-1].update(provider='core.string'),
         'export_cycle': lambda m: m['submodules']['core.output'].update(requires_exports=['string']) or m['submodules']['core.string'].update(requires=['core.output']),
@@ -315,8 +326,69 @@ def proof(work):
 
 
 
+def cmake_provider_proof(work, original, publication_path, facts, context):
+    """Use the production CMake inventory helper across relocation in an existing build."""
+    work.mkdir(exist_ok=True)
+    metadata = work / 'metadata.json'
+    metadata.write_text(json.dumps(original))
+    publication = work / 'publication.json'
+    request = json.loads(publication_path.read_text())
+    request.setdefault('modules', []).append('numeric')
+    request['types'] = list(original['types'])
+    publication.write_text(json.dumps(request))
+    generated, build = work / 'runtime', work / 'build'
+    (work / 'CMakeLists.txt').write_text(f'''cmake_minimum_required(VERSION 3.25)
+project(provider_outputs NONE)
+find_program(PHP_EXECUTABLE php REQUIRED)
+set(runtime_metadata "{metadata}")
+set(php_generator_source "{ROOT / 'tools/api_generator/generate.php'}")
+include("{ROOT / 'cmake/ProviderOutputs.cmake'}")
+scpp_provider_outputs(outputs "{generated}" "{publication}")
+file(WRITE "${{CMAKE_BINARY_DIR}}/outputs.txt" "${{outputs}}")
+add_custom_command(OUTPUT ${{outputs}}
+  COMMAND ${{PHP_EXECUTABLE}} ${{php_generator_source}} emit-runtime
+    ${{runtime_metadata}} "{publication}" "{facts}" "{context}" "{generated}"
+  DEPENDS ${{runtime_metadata}} "{publication}" VERBATIM)
+add_custom_target(publication ALL DEPENDS ${{outputs}})
+''')
+    run(['cmake', '-G', 'Ninja', '-S', work, '-B', build])
+    def check():
+        run(['cmake', '--build', build])
+        paths = (build / 'outputs.txt').read_text().split(';')
+        assert all(Path(path).is_file() for path in paths)
+        stamps = {path: Path(path).stat().st_mtime_ns for path in paths}
+        assert 'no work to do' in run(['cmake', '--build', build]).stdout
+        assert all(Path(path).stat().st_mtime_ns == stamp for path, stamp in stamps.items())
+        return paths
+    before = check()
+    value = json.loads(json.dumps(original))
+    for provider, name in [('core.scalars', 'core'), ('numeric.scalars', 'custom'), ('core.conversions', 'checked')]:
+        value['submodules'][provider]['header'] = f'scpp/cmake/{name}.hpp'
+    metadata.write_text(json.dumps(value))
+    after = check()  # Ninja must trigger CMake regeneration itself.
+    assert before != after
+    assert all(not Path(path).exists() for path in set(before) - set(after))
+    assert all(str(generated / f'public/scpp/cmake/{name}.hpp') in after for name in ('core', 'custom', 'checked'))
+    # A missing declared output must regenerate, without a manual clean/configure.
+    Path(after[0]).unlink()
+    check()
+    # Removing optional demand must retire its header and CMake output in the same build.
+    request['types'] = list(original['core_integers'])
+    request['modules'] = []
+    publication.write_text(json.dumps(request))
+    reduced = check()
+    custom = str(generated / 'public/scpp/cmake/custom.hpp')
+    assert custom not in reduced and not Path(custom).exists()
+    assert set(after) - set(reduced) == {custom}
+    # Re-enabling demand must restore the output without a manual clean/configure.
+    request['types'] = list(original['types'])
+    request['modules'] = ['numeric']
+    publication.write_text(json.dumps(request))
+    assert check() == after
+
+
 def review_contract_proof(work, original, publication_path, facts, context):
-    """Check shared scalar paths and dependencies of reduced, actually published strings."""
+    """Scalar demand, separate checked helpers, semantic dependencies and header retirement."""
     work.mkdir(exist_ok=True)
     generator = ROOT / 'tools/api_generator/generate.php'
     publication = json.loads(publication_path.read_text())
@@ -325,58 +397,113 @@ def review_contract_proof(work, original, publication_path, facts, context):
     def emit(metadata, publication, expected=0):
         metadata_path.write_text(json.dumps(metadata))
         request.write_text(json.dumps(publication))
+        prepared = run(['php', generator, 'prepare-runtime', metadata_path, request, facts, context], expected)
         result = run(['php', generator, 'emit-runtime', metadata_path, request, facts, context, runtime], expected)
+        if expected == 0:
+            assert json.loads(prepared.stdout) == json.loads((runtime / 'prepared.json').read_text())
+            headers = json.loads(run(['php', generator, 'provider-headers', metadata_path, request]).stdout)
+            assert all((runtime / 'public' / h).is_file() for h in headers)
+        else:
+            assert prepared.stderr == result.stderr
         return result
+    def compile_header(header, body=''):
+        source = work / 'header.cpp'
+        source.write_text(f'#include <{header}>\n' + body)
+        run(['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', runtime / 'public', source])
+    # Seed obsolete outputs and require the publisher to retire both legacy scalar headers.
+    legacy = runtime / 'public/scpp'
+    legacy.mkdir(parents=True, exist_ok=True)
+    for name in ('integers.hpp', 'values.hpp'):
+        (legacy / name).write_text('// obsolete scalar output\n')
     emit(original, publication)
-    baseline = snapshot(runtime)
-    for provider, slot in [('core.integers', 'types'), ('core.values', 'values')]:
-        renamed = json.loads(json.dumps(original))
-        renamed['submodules'][provider]['header'] = f'scpp/review/{slot}.hpp'
-        assert 'conflicts with provider' in emit(renamed, publication, 1).stderr
-        assert snapshot(runtime) == baseline, 'Conflicting metadata path changed publication'
-        changed = json.loads(json.dumps(publication))
-        changed['headers'][slot] = f'scpp/review/{slot}.hpp'
-        assert 'conflicts with provider' in emit(original, changed, 1).stderr
-        assert snapshot(runtime) == baseline, 'Conflicting publication path changed publication'
-    matched = json.loads(json.dumps(original))
-    matched_request = json.loads(json.dumps(publication))
-    for provider, slot in [('core.integers', 'types'), ('core.values', 'values')]:
-        header = f'scpp/review/{slot}.hpp'
-        matched['submodules'][provider]['header'] = header
-        matched_request['headers'][slot] = header
-    emit(matched, matched_request)
-    run(['php', generator, 'emit-compiler', metadata_path, facts, context, compiler])
-    flags = ['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', runtime / 'public']
-    for slot, identity in [('types', 'uint8'), ('values', 'float64')]:
-        header = matched_request['headers'][slot]
-        consumer = 'uint8' if slot == 'types' else 'int64'
-        assert header in (compiler / f'types/{consumer}.php').read_text()
-        source = work / f'{slot}.cpp'
-        source.write_text(f'#include <{header}>\nscpp::{identity} value;\n')
-        run([*flags, source])
-    run([*flags, '-I', runtime / 'private', '-I', ROOT / 'runtime/src/numeric',
-         '-I', ROOT / 'runtime/src/sequence', runtime / 'src/runtime.cpp'])
-    # The full capability catalog remains unchanged; only emitted casts and graph edges shrink.
-    reduced = json.loads(json.dumps(original))
-    reduced['submodules']['core.string']['requires_exports'] = ['bool_t']
-    reduced_request = {k: v for k, v in publication.items() if k in
-                       ('version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases')}
-    reduced_request.update(operators=[], values=['bool_t'], short_aliases=[], string={'operations': [], 'casts': []})
-    for casts in ([], ['bool_t']):
-        reduced_request['string']['casts'] = casts
-        emit(reduced, reduced_request)
-        header = (runtime / 'public/scpp/string.hpp').read_text()
-        assert 'scpp/values.hpp' in header and 'scpp/integers.hpp' not in header
-        source = work / 'string.cpp'
-        source.write_text('#include <scpp/string.hpp>\nscpp::string value;\n')
-        run([*flags, source])
+    for name in ('integers.hpp', 'values.hpp', 'numeric/scalars.hpp'):
+        assert not (legacy / name).exists()
+    core = (legacy / 'core/scalars.hpp').read_text()
+    assert '#include' not in core and 'using int16 =' not in core and 'using uint32 =' not in core
+    compile_header('scpp/core/scalars.hpp', 'static_assert(__is_same(scpp::int64, __INT64_TYPE__));\nstatic_assert(__is_same(scpp::byte, __UINT8_TYPE__));\nstatic_assert(__is_same(scpp::bool_t, bool));\nstatic_assert(__is_same(scpp::float64, double));\n')
+    compile_header('scpp/conversions.hpp', 'auto convert(scpp::int64 x) { return scpp::checked_int64_to_uint8(x); }\n')
+    assert 'numeric/scalars.hpp' not in (legacy / 'conversions.hpp').read_text()
     before = snapshot(runtime)
-    reduced_request['string']['casts'] = ['int64']
-    assert 'requires type export int64' in emit(reduced, reduced_request, 1).stderr
-    assert snapshot(runtime) == before, 'Omitted actual cast dependency changed publication'
-    reduced['submodules']['core.string']['requires_exports'].append('int64')
-    emit(reduced, reduced_request)
-    run([*flags, source])
+    for field in ('types', 'values'):
+        invalid = json.loads(json.dumps(publication))
+        invalid['headers'][field] = 'scpp/old.hpp'
+        assert 'Obsolete scalar header fields' in emit(original, invalid, 1).stderr
+        assert snapshot(runtime) == before
+    cyclic = json.loads(json.dumps(original))
+    cyclic['submodules']['core.scalars']['requires'] = ['core.conversions']
+    assert 'Cyclic' in emit(cyclic, publication, 1).stderr
+    assert snapshot(runtime) == before
+    absent = json.loads(json.dumps(original))
+    absent['submodules']['core.output']['requires'] = ['numeric.scalars']
+    assert 'not published' in emit(absent, publication, 1).stderr
+    assert snapshot(runtime) == before
+    # The standalone scalar preparation entry point must enforce the same graph contract.
+    scalar_request = {key: value for key, value in publication.items() if key in
+                      ('version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules')}
+    request.write_text(json.dumps(scalar_request))
+    metadata_path.write_text(json.dumps(cyclic))
+    for command in ('prepare-scalars', 'emit-scalars'):
+        args = [runtime] if command == 'emit-scalars' else []
+        assert 'Cyclic' in run(['php', generator, command, metadata_path, request, facts, context, *args], 1).stderr
+    assert snapshot(runtime) == before
+    # Runtime finalization must wait for string demand; the scalar projection lacks it.
+    later_family = json.loads(json.dumps(original))
+    later_family['submodules']['core.output']['requires'] = ['core.string']
+    emit(later_family, publication)
+    request.write_text(json.dumps(scalar_request))
+    before = snapshot(runtime)
+    for command in ('prepare-scalars', 'emit-scalars'):
+        args = [runtime] if command == 'emit-scalars' else []
+        assert 'not published' in run(['php', generator, command, metadata_path, request, facts, context, *args], 1).stderr
+    assert snapshot(runtime) == before
+    # Optional numeric publication changes declaration demand, not source admissions.
+    numeric = json.loads(json.dumps(publication))
+    numeric['modules'] = ['numeric']
+    numeric['types'] = list(original['types'])
+    emit(original, numeric)
+    compile_header('scpp/numeric/scalars.hpp', 'static_assert(__is_same(scpp::int16, __INT16_TYPE__));\nstatic_assert(__is_same(scpp::uint16, __UINT16_TYPE__));\nstatic_assert(__is_same(scpp::uint32, __UINT32_TYPE__));\n')
+    assert '#include' not in (legacy / 'numeric/scalars.hpp').read_text()
+    assert 'numeric/scalars.hpp' in (legacy / 'conversions.hpp').read_text()
+    # Reduced numeric-only publication must not pull an absent core provider.
+    reduced = {k: v for k, v in numeric.items() if k in
+               ('version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules')}
+    reduced.update(types=['int16', 'uint16'], values=[], operators=[], short_aliases=[])
+    emit(original, reduced)
+    assert not (legacy / 'core/scalars.hpp').exists()
+    assert 'core/scalars.hpp' not in (legacy / 'conversions.hpp').read_text()
+    compile_header('scpp/numeric/scalars.hpp')
+    compile_header('scpp/conversions.hpp')
+    denied = json.loads(json.dumps(reduced))
+    denied['modules'] = []
+    before = snapshot(runtime)
+    assert 'requires numeric module' in emit(original, denied, 1).stderr
+    assert snapshot(runtime) == before
+    # String conversion dependencies follow published casts, including optional widths.
+    reduced.update(types=['int64', 'int16'], values=['bool_t'], string={'operations': [], 'casts': []})
+    emit(original, reduced)
+    assert 'numeric/scalars.hpp' not in (legacy / 'string.hpp').read_text()
+    reduced['string']['casts'] = ['int16']
+    emit(original, reduced)
+    assert 'numeric/scalars.hpp' in (legacy / 'string.hpp').read_text()
+    graph = json.loads((runtime / 'prepared.json').read_text())['submodules']
+    for provider in ('core.string', 'core.conversions'):
+        assert 'numeric.scalars' in graph['nodes'][provider]['requires']
+        assert 'numeric.scalars' in graph['closures'][provider]
+    compile_header('scpp/string.hpp')
+    # Relocate all three providers with real declarations and checked helper signatures.
+    matched = json.loads(json.dumps(original))
+    for provider, header in [('core.scalars', 'scpp/review/core.hpp'), ('numeric.scalars', 'scpp/review/custom.hpp'), ('core.conversions', 'scpp/review/checked.hpp')]:
+        matched['submodules'][provider]['header'] = header
+    emit(matched, numeric)
+    run(['php', generator, 'emit-compiler', metadata_path, facts, context, compiler])
+    for identity in ('uint8', 'int64', 'float64', 'bool'):
+        assert 'scpp/review/core.hpp' in (compiler / f'types/{identity}.php').read_text()
+    assert 'scpp/review/checked.hpp' in (compiler / 'types/uint8.php').read_text()
+    for header in ('scpp/review/core.hpp', 'scpp/review/custom.hpp', 'scpp/review/checked.hpp'):
+        compile_header(header)
+    run(['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', runtime / 'public',
+         '-I', runtime / 'private', '-I', ROOT / 'runtime/src/numeric',
+         '-I', ROOT / 'runtime/src/sequence', runtime / 'src/runtime.cpp'])
 
 
 def cached_application_proof(work, original, facts, context, publication):
@@ -413,7 +540,10 @@ def cached_application_proof(work, original, facts, context, publication):
         local = {'cpp': 'string text = "cached";', 'php': '$text string = "cached";',
                  'js': 'let text: string = "cached";'}[flavor]
         source = app / ('main.' + flavor)
-        source.write_text(local + ('echo $text;' if flavor == 'php' else 'echo text;') + 'return (int) (byte) value();')
+        narrowed = {'cpp': 'byte narrowed = (byte) value(); return (int) narrowed;',
+                    'php': '$narrowed byte = (byte) value(); return (int) $narrowed;',
+                    'js': 'let narrowed: byte = (byte) value(); return (int) narrowed;'}[flavor]
+        source.write_text(local + ('echo $text;' if flavor == 'php' else 'echo text;') + narrowed)
         provider_source = app / ('value.' + flavor)
         provider_source.write_text(('int value()' if flavor == 'cpp' else 'function value(): int') + '{return 8;}')
         provider_before = provider_source.stat().st_mtime_ns, provider_source.read_bytes()
@@ -423,7 +553,7 @@ def cached_application_proof(work, original, facts, context, publication):
         # Reset the publication for this flavor before its initial build.
         generate(original)
         assert compile_project()['rebuilt']
-        assert 'scpp::uint8{' in '\n'.join(artifacts(out).values())
+        assert 'scpp::uint8 ' in '\n'.join(artifacts(out).values())
         assert not compile_project()['rebuilt'], 'Initial application cache not reusable'
         units = sorted(out.rglob('*.cpp'))
         flags = ['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-I', str(runtime / 'public'),
@@ -451,6 +581,8 @@ def cached_application_proof(work, original, facts, context, publication):
             if label != 'spelling_only':
                 value['submodules']['core.string']['header'] = 'scpp/cache/text.hpp'
                 value['submodules']['core.output']['header'] = 'scpp/cache/write.hpp'
+                value['submodules']['core.scalars']['header'] = 'scpp/cache/scalars.hpp'
+                value['submodules']['core.conversions']['header'] = 'scpp/cache/checked.hpp'
             if label == 'relocated':
                 value['output']['provider'] = 'core.string'
             if label == 'type_relocated':
@@ -469,11 +601,14 @@ def cached_application_proof(work, original, facts, context, publication):
             assert response['rebuilt'], 'Regenerated compiler did not invalidate application cache'
             texts = artifacts(out)
             joined = '\n'.join(texts.values())
-            assert 'scpp::byte{' in joined and 'scpp::uint8{' not in joined
+            assert 'scpp::byte ' in joined and 'scpp::uint8 ' not in joined
+            assert 'scpp::checked_int64_to_uint8(' in joined
             if label == 'spelling_only':
-                assert texts == {path: text.replace('scpp::uint8{', 'scpp::byte{')
+                assert texts == {path: text.replace('scpp::uint8', 'scpp::byte')
                                  for path, text in application_before.items()}, 'Spelling-only change affected other emission'
             else:
+                assert '<scpp/core/scalars.hpp>' not in joined and '<scpp/conversions.hpp>' not in joined
+                assert '<scpp/cache/scalars.hpp>' in joined and '<scpp/cache/checked.hpp>' in joined
                 assert '<scpp/string.hpp>' not in joined and '<scpp/output.hpp>' not in joined
                 assert ('<scpp/cache/text.hpp>' in joined) == (label != 'type_relocated')
                 assert ('<scpp/cache/write.hpp>' in joined) == (label != 'relocated')

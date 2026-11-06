@@ -6,6 +6,8 @@ Current ABI override: [native scalar aliases](native_scalar_aliases.md) supersed
 wrapper constructors, extraction methods, overloaded scalar operators and native
 bridge descriptions below. Those ABI descriptions record the earlier slices;
 source-language checking continues through generated handlers and named helpers.
+Current scalar placement is metadata-owned `scpp/core/scalars.hpp` (with optional
+widths in `scpp/numeric/scalars.hpp`); references to values.hpp below are historical.
 
 Scope: runtime and physical API preparation inside v0.2. Source eligibility,
 sequencing and contextual decisions remain compiler-owned. The active PHP compiler

@@ -1,8 +1,8 @@
 set(hash_generated ${CMAKE_BINARY_DIR}/generated-hash-proof)
 set(hash_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
-set(hash_outputs)
-foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp
-    public/scpp/conversions.hpp public/scpp/short_names.hpp public/scpp/string.hpp public/scpp/carriers.hpp public/scpp/hashes.hpp
+scpp_provider_outputs(hash_outputs ${hash_generated} ${hash_publication})
+foreach(path public/scpp/numeric.hpp
+    public/scpp/short_names.hpp public/scpp/carriers.hpp public/scpp/hashes.hpp
     src/runtime.cpp src/hash.cpp prepared.json inventory.json)
   list(APPEND hash_outputs ${hash_generated}/${path})
 endforeach()

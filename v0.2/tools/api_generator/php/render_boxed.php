@@ -4,7 +4,7 @@ namespace Scpp\Api;
 function renderBoxed(array $plan, array &$files): void {
     if (!isset($plan['boxed'])) return;
     $box = $plan['boxed'];
-    $h = BANNER . "#pragma once\n" . includeHeader($plan['headers']['types']) . includeHeader($plan['headers']['values']) . includeHeader($plan['string']['header']);
+    $h = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . includeHeader($plan['string']['header']);
     $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\nenum class boxed_kind { null, boolean, integer, floating, string, container };\n";
     foreach ($box['families'] as $family) $h .= "class {$family['name']};\n";
     $d = BANNER . includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";

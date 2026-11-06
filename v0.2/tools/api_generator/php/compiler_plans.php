@@ -218,7 +218,7 @@ function compilerCheckedConversionBindings(mixed $metadata, array $definitions, 
         $boolean = $boolean || $kind === 'boolean';
         $floating = $floating || $kind === 'floating';
     }
-    $runtime = ['types' => array_values($integers), 'values' => $values, 'headers' => [],
+    $runtime = ['types' => array_values($integers), 'values' => $values, 'headers' => [], 'submodules' => submodulePlan($metadata),
         'conversions' => array_merge(integerConversions($integers, []), scalarValueConversions($metadata, $integers, $boolean, $floating))];
     prepareCheckedConversions($metadata, $facts, $runtime);
     $bindings = [];

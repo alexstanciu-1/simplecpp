@@ -25,7 +25,7 @@ requireThat(!str_contains($header, "void checked_int64_to_uint8($native) = delet
 
 // Changing metadata changes the named ABI without editing the renderer or scalar algorithms.
 $renamed = unserialize(serialize($metadata));
-$renamed->checked_conversions->header = 'scpp/named_numeric.hpp';
+$renamed->submodules->{'core.conversions'}->header = 'scpp/named_numeric.hpp';
 $renamed->checked_conversions->symbol_prefix = 'convert_';
 $renamedFiles = render(prepareRuntime($renamed, $publication, $facts));
 requireThat(!isset($renamedFiles['public/scpp/conversions.hpp'])
@@ -44,8 +44,8 @@ foreach (['prefix', 'path', 'collision'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
         'prefix' => $bad->checked_conversions->symbol_prefix = 'bad()',
-        'path' => $bad->checked_conversions->header = '../private.hpp',
-        'collision' => $bad->checked_conversions->header = $publication->headers->types,
+        'path' => $bad->submodules->{'core.conversions'}->header = '../private.hpp',
+        'collision' => $bad->submodules->{'core.conversions'}->header = 'scpp/core/scalars.hpp',
     };
     try {
         prepareRuntime($bad, $publication, $facts);

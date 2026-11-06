@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
-/** Native transport for a published scalar; wrapper identity remains separate during migration. */
+/** Native identity for a published scalar; independent of public export spelling. */
 function checkedConversionRepresentation(array $plan, array $facts, string $identity): array {
     if ($identity === 'string' && isset($plan['string'])) return ['cpp' => 'const string&', 'native_name' => null];
     foreach ($plan['types'] as $type) {
@@ -25,8 +25,10 @@ function checkedConversionRepresentation(array $plan, array $facts, string $iden
 function prepareCheckedConversions(mixed $metadata, array $facts, array &$plan): void {
     if (!isset($metadata->checked_conversions)) return;
     $policy = $metadata->checked_conversions;
-    fields($policy, ['header', 'symbol_prefix']);
-    $header = headerPath(at($policy, 'header'));
+    fields($policy, ['provider', 'symbol_prefix']);
+    $provider = textValue(at($policy, 'provider'));
+    $providers = $plan['submodules'];
+    $header = providerHeader($providers, $provider);
     requireThat(!in_array($header, array_values($plan['headers']), true), 'Conflicting checked conversion header');
     $prefix = textValue(at($policy, 'symbol_prefix'));
     requireThat(preg_match('/^[A-Za-z][A-Za-z0-9_]*$/D', $prefix) === 1, 'Invalid checked conversion symbol prefix');
@@ -48,5 +50,6 @@ function prepareCheckedConversions(mixed $metadata, array $facts, array &$plan):
     }
     ksort($representations, SORT_STRING);
     ksort($functions, SORT_STRING);
-    $plan['checked_conversions'] = ['header' => $header, 'representations' => $representations, 'functions' => array_values($functions)];
+    $requirements = exportProviders($providers, array_values(array_diff(array_keys($representations), ['string'])));
+    $plan['checked_conversions'] = ['provider' => $provider, 'requires' => $requirements, 'header' => $header, 'representations' => $representations, 'functions' => array_values($functions)];
 }

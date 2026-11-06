@@ -6,6 +6,9 @@ require_once __DIR__ . '/json.php';
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
+    foreach (['scalar_core', 'scalar_numeric'] as $group) {
+        $paths[] = providerHeader($plan['submodules'], $plan['submodules']['groups'][$group]['provider']);
+    }
     if (isset($plan['checked_conversions'])) $paths[] = $plan['checked_conversions']['header'];
     foreach (['string', 'hashes', 'datetime', 'boxed', 'json'] as $key) {
         if (isset($plan[$key])) {
@@ -31,7 +34,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
     fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
-    $plan = prepareScalars($metadata, $scalarRequest, $facts);
+    $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
     prepareCheckedConversions($metadata, $facts, $plan);
@@ -43,6 +46,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareJson($metadata, $publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
+    finalizePublicationProviders($plan);
     return $plan;
 }
 
@@ -88,14 +92,14 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $plan['conversions'][] = conversion($target, 'string', false, false, $target === 'bool_t' ? 'parse_boolean_text':'parse_decimal', true);
         $plan['conversions'][] = conversion('string', $target, false, $target !== 'float64', $target === 'bool_t' ? 'format_boolean_text':'format_decimal', true);
     }
-    requireExportDependencies($plan['submodules'], $provider, array_merge(['bool_t'], names(at($p, 'casts'))));
+    $requirements = exportProviders($plan['submodules'], array_merge(['bool_t'], names(at($p, 'casts'))));
     $methods = [];
     $countRepresentation = $registry[$count]['representation'];
     foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {
         $methods[] = ['name' => $name, 'result' => $result, 'receiver' => in_array($name, ['append', 'clear'], true) ? 'mutable_reference':'const_reference', 'arguments' => $name === 'append' ? ['const string&']:[], 'result_category' => $name === 'data' ? 'borrowed_bytes_until_mutation_or_destruction':'value', 'can_fail' => in_array($name, ['size', 'append'], true)];
     }
     $plan['source_types']->string = 'string';
-    $plan['string'] = ['provider' => $provider, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'empty_state' => 'null_storage', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
+    $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'empty_state' => 'null_storage', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
 }
 
 function prepareVectors(mixed $metadata, mixed $publication, array $registry, array &$plan): void {

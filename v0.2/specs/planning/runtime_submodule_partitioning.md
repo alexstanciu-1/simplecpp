@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Date: 2026-11-06
-Status: string/output engine and representation-independent export/dependency slices implemented; verification recorded below.
+Status: export/provider engine and core.scalars consolidation implemented; native-alias integration pulled at 64a2e0437. Verification is recorded below; other runtime partitions remain planned.
 
 ## Agreed direction
 
@@ -28,15 +28,16 @@ is historical design context, not a prerequisite for this work.
 The include-selection mechanism is implemented for the integrated consumers; the
 full runtime migration is not complete. The string/output slice was committed as
 `bb09d12bc`; representation-independent exports and their review fixes were committed
-as `40695e0f4`. This status records completed work and remaining planning, and does
-not authorize another implementation slice.
+as `40695e0f4`. The native-alias work and merge repairs arrived through `64a2e0437`.
+The user authorized repairing that integration and then implementing the bounded
+core.scalars consolidation below. Further partitions require their own scope agreement.
 
 | Original requirement | Completed | Remaining |
 | --- | --- | --- |
 | Include runtime C++ headers directly | Generated C++ uses public runtime headers for string storage, output and existing checked scalar conversions. | Connect the remaining public runtime surfaces to the shared export/provider model. |
 | Select small includes per source unit | Generated type/helper queries feed per-header and per-source requirement collection and deduplication. Scalar-only units avoid unnecessary string/output includes. | Extend coverage as additional consumers migrate; keep verifying isolation and obsolete-include removal. |
-| Expose scpp data types through metadata | Type exports resolve canonical identities to existing public scpp names and provider headers without selecting representation or conversion strategy. | Ordinary scalar declarations still use native C++ spellings; some public helper signatures also retain native types. The scpp-types-only public surface is not complete. |
-| Describe runtime partitioning in metadata | Current submodule headers, semantic export dependencies, provider edges and transitive dependency validation are implemented. | Establish the broader coarse partition below and migrate families still owned by legacy renderers. |
+| Expose scpp data types through metadata | Type exports resolve canonical identities to public scpp names and provider headers. The pulled alias work also uses those names for supported ordinary scalar declarations, signatures and expression casts. | Some public helper signatures still retain native types; compiler null remains decltype(nullptr). The scpp-types-only public surface is not complete. |
+| Describe runtime partitioning in metadata | Core/numeric scalars, separate checked conversions, string/output providers, semantic export dependencies and transitive validation are implemented. | Establish the broader coarse partition below and migrate families still owned by legacy renderers. |
 | Improve compile time through segmentation | Include isolation and coherent provider relocation are verified. | Measure end-to-end native compilation before claiming a speedup or choosing finer partitions. |
 | Avoid a general ABI framework | No general ABI framework was introduced. | Keep it outside this work; existing helper bindings do not justify a separate ABI project. |
 
@@ -49,24 +50,22 @@ hot replacement is not implemented.
 
 ### Remaining work and sequencing
 
-1. **Review and integrate the published native-alias work.** It belongs to
-   `/home/alexv/__AI/simple_cpp/simple_cpp_02`; the user will provide its commit when
-   ready. No published commit from that workstream has been integrated in this
-   checkout as part of this plan. Do not duplicate it or assume its final aliases,
-   widths, representations or conversion interfaces. Review the actual published
-   contract before agreeing an integration slice.
-2. **Migrate ordinary scalar lowering to scpp exports.** After that contract is
-   available, use metadata-exported names and include requirements for ordinary
-   scalar declarations and signatures. Review construction, extraction, conversions
-   and operators against the actual runtime implementation, preserving source
-   semantics. Public name selection alone must not switch lowering strategy.
-3. **Establish the core scalar submodule.** Current integer/value/operator headers
-   remain under their existing renderers. The proof that renames an integer renderer
-   registration to `core.scalars` is not a consolidated scalar implementation.
-   Coordinate actual scalar placement with the published alias work and verify
-   coherent runtime/compiler paths and standalone headers.
-4. **Migrate the remaining runtime groups.** Collections, boxed objects, results and
-   optional numeric widths still need agreed bounded slices. Connect other modules
+1. **Native-alias integration is now present.** Pulled `64a2e0437`, containing
+   the checked-conversion commits, native-alias migration and provider merge from
+   `simple_cpp_02`. The local follow-up adapts representation-sensitive proofs and
+   reviews regenerated snapshots. Combined verification is recorded below.
+2. **Ordinary scalar lowering now consumes scpp exports.** The incoming compiler
+   changes already resolve supported scalar names and headers through the shared
+   export plan. Expression emission collects result-type headers. Checked conversions
+   call named helpers; public alias names do not choose their semantic policy.
+   No new source widths or container admissions are implied.
+3. **Core scalar consolidation is implemented.** Core declarations and optional-width
+   declarations now have distinct metadata providers. Checked conversions remain
+   separate, with dependencies derived from published signatures. Legacy integer/value
+   headers are retired; the implementation and verification record is below.
+4. **Migrate the remaining runtime groups.** Collections, boxed objects and results
+   still need agreed bounded slices. Existing optional-width declaration placement
+   is bounded by the scalar slice below; broader numeric-module redesign is deferred. Connect other modules
    to the model while retaining one public header per module initially. The proposed
    partition table remains provisional; it grants no additional language admission.
 5. **Complete the scpp public-interface review.** Check output, entry, arithmetic and
@@ -80,13 +79,55 @@ hot replacement is not implemented.
    metadata when measurements justify it, rather than fragmenting every type or
    operation now.
 
-The external native-alias work is a dependency for the next scalar integration and
-lowering decisions, not a missing prerequisite for the already completed include
-engine. Planning the other partitions can continue independently; their
-implementation order and any representation-sensitive adaptations must be agreed
-before code changes. Null representation, new widths/admissions, collection/boxed
-adaptation and broader public-signature changes remain deferred until their own
-slices are defined.
+The external native-alias dependency has been supplied and integrated. The user has
+chosen to keep checked conversions separate and authorized the concrete scalar slice
+and checklist below. It supersedes the earlier
+suggestion to defer all optional-width placement: the bounded placement of existing
+custom-size declarations is included so `core.scalars` does not absorb them. No new
+numeric-module policy, representation or source admission is implied.
+
+## Combined native-alias integration at 64a2e0437
+
+The pull was a fast-forward. A full native build regenerated target facts, runtime
+headers, runtime libraries and compiler handlers together. This avoids mixing old
+wrapper archives with alias headers. Ordinary scalar lowering was already implemented
+in the incoming code; local repairs do not duplicate that work.
+
+The provider proof now uses explicit byte declarations and named checked conversions.
+Its spelling-only mutation changes declarations/casts from `scpp::uint8` to
+`scpp::byte`, while canonical checked-helper names remain unchanged. It still checks
+unchanged source files, exact emitted differences, runtime C++ stability, native
+execution and subsequent compiler/Ninja no-ops across cpp/php/js. Scalar-only units
+now legitimately include their scalar alias provider, while remaining isolated from
+string/output headers. Custom scalar header proofs also compile the generated runtime
+source, which includes the checked conversion declarations.
+
+All three corpus captures retain their acceptance counts: runtime 130/247, scalar
+19/537 and generator 17/37 accepted/rejected, with 2,692 maximum scalar operation
+recipes. Compared with the alias-only snapshots, reviewed changes are the submodule
+plan/input fingerprints, output-provider bridge, corresponding inventory/counts and
+one blank line removed from the assembled output header. Other generated public and
+private artifact hashes match. Scalar case keys change with their metadata inputs.
+
+Verification status: all 179 CTests pass across the combined runs. The four
+provider/frozen-contract CTests passed in 107.36 seconds. The other 175 passed
+across the ordinary run (131.57 seconds, with one socket-restricted test) and a
+focused frontend-service rerun (3.28 seconds) with Unix socket access. The sandbox rejected Unix socket bind with EPERM; the service test passed
+outside that restriction. The separately run provider proof passed. Raw evidence:
+`build/alias-integration-proof/results.json` and the CTest logs.
+
+Default-provider native application timing samples across cpp/php/js (milliseconds):
+
+| Native wall including link | Clang frontend | LLVM backend | Optimizer | Code generation | Link command |
+| --- | --- | --- | --- | --- | --- |
+| 337.9–376.4 | 26.6–31.0 | 30.4–34.2 | 10.7–12.2 | 10.7–12.0 | 62.4–76.2 |
+
+Clang/C++23, libc++, O2/g0, mold, sequential application compile/link commands,
+no PCH/LTO; each variant's runtime objects were built once and reused. Tests ran
+concurrently. Frontend/backend phase totals sum translation-unit traces, and nested
+optimizer/code-generation totals must not be added to their parent totals. These
+are integration samples, not a controlled before/after speedup claim. Comparative
+compile-time evaluation remains outstanding.
 
 ## Runtime surfaces still to migrate
 
@@ -513,15 +554,17 @@ partition deferrals remain unchanged.
 
 ## Representation-independent type exports and dependencies
 
-Status: implementation authorized in the subsequent user request; local slice implemented.
+Status: original export slice implemented at 40695e0f4. The following records its
+pre-alias scope and verification; current representation details are superseded by
+the combined native-alias integration recorded above.
 
 ### Workstream boundary
 
-The native-alias migration is being implemented separately in
-`/home/alexv/__AI/simple_cpp/simple_cpp_02`. The user will publish its commit when
-ready. Do not duplicate that work, modify that checkout, or assume its pending
-implementation details here. Integrate and verify the published changes in a
-separately authorized step.
+The original export slice left native-alias migration to
+`/home/alexv/__AI/simple_cpp/simple_cpp_02`. That work was subsequently published
+and pulled through `64a2e0437` under separate user authorization. The integration
+record above covers its actual implementation; the original boundary below explains
+why the export engine did not implement scalar representations itself.
 
 This checkout owns the export/provider/dependency engine. Its interface must remain
 usable when a runtime type changes between a class and a native alias. The broader
@@ -728,6 +771,291 @@ Completion means the scoped consumers resolve public type names and dependencies
 through semantic exports without knowing their implementation representation.
 After the external alias commit is published, a separate integration verification
 must exercise the actual aliases; this slice alone cannot certify that migration.
+
+## Implemented slice: core.scalars consolidation
+
+Status: implemented and verified; the completion evidence is recorded below.
+Checked conversions remain separate from scalar declarations. This slice builds on
+the verified alias/provider integration at `64a2e0437`; it does not reimplement the
+native-alias migration or change that external checkout.
+
+### Intended partition and dependency contract
+
+Provider identities and default paths below are the implemented targets.
+Metadata remains authoritative for their paths; tests must also exercise relocation.
+
+| Provider | Default header | Contents | Public dependencies |
+| --- | --- | --- | --- |
+| `core.scalars` | `scpp/core/scalars.hpp` | Published core integer aliases selected by `core_integers` (currently int64 and uint8), byte, bool_t, float64, existing null_t/null and their existing declaration-associated aliases/operations | No string, conversion, collection or custom-size provider |
+| `numeric.scalars` | `scpp/numeric/scalars.hpp` | Published non-core integer aliases: currently int8, int16, int32, uint16, uint32 and uint64; any existing aliases attached to those identities | Only dependencies actually required by its declarations; independent builtin aliases do not require core merely because they are numeric |
+| `core.conversions` | `scpp/conversions.hpp` | Existing named checked numeric conversions and selected string parsers; existing strict input fences | Providers of source/result types appearing in actually published functions; core alone for the default numeric surface, plus numeric.scalars when selected functions use custom-size types |
+
+`numeric.scalars` is the custom-size partition under the existing optional `numeric`
+module. The slice does not rename that module to `custom_size`, enable it by default,
+add widths, or admit additional source-language scalar types. In particular, uint32
+and the 16-bit types remain optional runtime types under current metadata; spelling
+them as native aliases does not make them core. Core membership comes from metadata,
+not a new handwritten width list in the compiler or renderer.
+
+Preserve publication demand: a catalog export describes availability, while the
+publication request selects actual declarations and functions. Core-only publication
+must not emit or pull custom-size declarations. Reduced/optional-width-only runtime
+publications must retain their existing supported behavior; a provider without
+selected declarations must not accidentally be pulled by generated dependencies.
+Byte remains an alias of uint8; source-default aliases follow their existing target
+and publication rules rather than being duplicated into both headers.
+
+String parsing helpers may retain their existing concrete string forward declaration,
+owned by their renderer. This slice adds no generic forward-declaration engine and
+must not create a scalar/string/conversion include cycle. String formatting remains
+with string construction. A declaration-only scalar unit includes core.scalars;
+a checked conversion adds the conversion provider through its generated operation
+requirements. Proven conversions retain their existing helper-free lowering.
+
+### Ownership and implementation scope
+
+1. **One declaration placement model.** Replace the legacy assumption that integer
+   and value renderer slots uniquely determine scalar ownership. Prepare scalar
+   declaration groups from existing canonical identities, core membership and
+   publication demand. Each export has one declaration owner and provider. The
+   renderer emits those declarations into the same providers advertised to consumers;
+   do not allow duplicate paths as a special case or advertise one header while
+   continuing to declare the type in another.
+2. **Reuse the existing submodule engine.** Feed prepared declaration fragments into
+   the current assembly process. Keep export resolution, cycle/reachability checks,
+   deterministic output and failure-before-publication in their shared owners. Lists
+   of declarations and dependencies represent valid multiplicity; this slice adds
+   no AST duplicate chains or new symbol publication protocol.
+3. **Keep conversions separate.** Connect the existing checked-conversion planner
+   and renderer to a provider and derive declaration dependencies from its actual
+   function rows. Preserve canonical helper names, native-identity input fences,
+   failure/lossless facts, implementation algorithms and admission. Compiler checked
+   operation queries and runtime declarations must resolve the same provider path.
+4. **Migrate configuration and consumers coherently.** Replace scalar output-path
+   ownership through legacy `headers.types`/`headers.values` with provider-owned
+   placement in metadata/publication preparation. Update repository publication
+   fixtures, runtime includes, CMake byproducts and native consumers in the same
+   slice. Conflicting/obsolete configuration must produce explicit diagnostics;
+   do not silently accept two independent path authorities. Retire generated
+   integers.hpp/values.hpp after their consumers migrate, with cleanup verification.
+   Do not introduce new forwarding compatibility headers.
+5. **Preserve existing aggregates without making them compiler defaults.** The
+   existing numeric.hpp convenience aggregate and short_names.hpp may retain their
+   supported roles, with includes derived from selected scalar providers. They must
+   not merge checked conversions into core.scalars or become blanket compiler
+   includes. Do not retain a file with no truthful consumer/API role merely to satisfy
+   stale snapshots; record any retirement and update its owning contract/tests.
+6. **Keep compiler changes declarative.** Supported ordinary scalar names already
+   use exports. Connect the new placement and conversion provider through generated
+   type/operation header queries. The application include collector must not branch
+   on core/custom-size names, paths, widths or alias implementation details.
+
+The owning areas are API-generator scalar/conversion preparation and rendering,
+runtime metadata/publication, CMake output registration, existing native consumers
+and generated compiler queries. No new semantic preparation, AST/fact, watcher or
+session ownership model is needed. If a wider module-loading or public-signature
+redesign proves necessary, report that boundary instead of extending this slice.
+
+### Deferred work and non-goals
+
+- No changes to native aliases, scalar construction/initialization semantics,
+  conversion permissions, promotions, checked arithmetic, exceptions or null
+  representation. Runtime null_t/null stay concrete; compiler null remains
+  decltype(nullptr).
+- No new source widths or vector/hash/carrier admissions; no numeric-module rename,
+  installation/discovery framework or new profile policy.
+- No migration of collections, boxed objects, results, JSON, datetime or ownership
+  into new providers. Update their existing includes only as required to consume
+  the relocated scalars/conversions; preserve their current declaration ownership.
+- No output/entry/arithmetic signature redesign or general ABI framework. Existing
+  helpers keep their current contracts. Their scpp-types-only surface review remains
+  a separate slice.
+- No one-header-per-type/function fragmentation, new runtime libraries or PHP handler
+  hot reload. Restart compiler processes after regeneration.
+- No compile-time speedup claim from include counts alone; broad comparative
+  benchmarking and further partition tuning remain later work.
+
+### Verification checklist
+
+- [x] Validate unique export/declaration ownership, missing/conflicting providers,
+  obsolete or conflicting scalar path fields, unknown dependencies and cycles before
+  output changes. Failed generation must preserve the prior publication.
+- [x] Verify core-only, optional numeric, reduced scalar and existing optional-width-
+  only publications. Check exact exported names, native alias identities (including
+  both 16-bit types and byte), null contracts and unchanged module/source admissions.
+  Core-only headers must not contain custom-size declarations or include their provider.
+- [x] Compile each selected scalar and conversion header independently. Verify
+  conversions include precisely the declaration providers their signatures need,
+  including optional-width and selected string-parser cases. Check no cycles,
+  implementation/STL leakage or new public templates.
+- [x] Prove ordinary scalar declarations use core.scalars without conversion/string/
+  output/custom-size includes. Prove checked conversions add their provider, proven
+  conversions need no checked helper, and runtime optional-width consumers get the
+  numeric provider. Inspect both emitted application headers and source units.
+- [x] Relocate core, numeric and conversion providers coherently through metadata.
+  Verify actual declaration placement, generated compiler queries, native depfiles,
+  CMake output tracking, retired paths and execution agree. Use the existing provider
+  proof infrastructure rather than another include-selection implementation.
+- [x] Preserve scalar/conversion boundaries, strict input filtering, overflow and
+  failed-write behavior. Run affected native scalar, string, vector, carrier, boxed,
+  hash, JSON, datetime and ownership consumers after their include migration.
+- [x] Across cpp/php/js, compare affecting edits, deletion/repeated failure/recovery
+  with fresh compilation; verify obsolete include removal, unrelated unit isolation
+  and no-op reuse. Keep optional-width source admissions unchanged.
+- [x] Regenerate and restart the compiler against unchanged cached applications and
+  native build directories. Exercise provider relocation and spelling-only changes
+  separately; verify updated includes/spellings, executable behavior and subsequent
+  compiler/Ninja no-ops.
+- [x] Check metadata purity, deterministic generation, publication freshness and
+  no-op timestamp preservation. Review snapshot differences by declaration/header
+  ownership and admission; do not accept hash changes without explanation. Run
+  relevant generator contracts, compiler style checks and diff checks.
+- [x] Record focused include closures and native compilation timings using consistent
+  compiler flags, optimization/debug settings, jobs, runtime reuse and cache state.
+  Separate frontend, LLVM optimization/code generation and linking; report scope
+  and limitations rather than implying an overall speedup.
+- [x] Update owning contracts and this note with actual paths, retired artifacts,
+  verification results and remaining work before declaring the slice complete.
+
+Completion means core scalar declarations have one metadata-owned provider, existing
+custom-size declarations remain separately demand-selected, and checked conversions
+have a separate provider whose dependencies match published signatures. The compiler
+selects those includes through the existing engine, with source semantics unchanged.
+It does not mean the entire runtime partition map or scpp-only helper surface is done.
+
+### Implementation and verification record — 2026-11-06
+
+- Scalar declarations and their aliases now render as fragments owned by
+  `scalar_core` / `scalar_numeric` declaration groups. All type exports reference
+  their declaration group; the legacy scalar renderer-slot adapter is removed.
+  Metadata core membership and publication demand determine placement. Checked
+  helpers use `core.conversions` and requirements derived from actual function rows.
+  String cast requirements also derive from selected publication rows, allowing
+  optional-width casts without pulling numeric.scalars into core-only publications.
+- Publication preparation now validates catalog plus selected signature dependencies,
+  preserves transitive requirements and rejects unpublished dependencies/cycles.
+  Rendering consumes the finalized graph; see the review-fix record below.
+  No application include-collector special cases were added.
+- Default paths are exactly those in the table above. `integers.hpp` / `values.hpp`
+  and publication `headers.types` / `headers.values` are retired without shims.
+  Native consumers and existing family renderers use the selected scalar providers
+  or existing numeric aggregate. No other family acquired a new declaration owner.
+- `provider-headers` exposes managed output paths to `cmake/ProviderOutputs.cmake`.
+  The production inventory helper is exercised in an isolated CMake/Ninja build:
+  all three scalar/conversion providers relocate through metadata, Ninja triggers
+  reconfiguration, old outputs disappear, missing outputs regenerate, and the
+  following build is a no-op. The normal native build also passes; a subsequent
+  build runs only existing freshness checks, with no native recompilation/linking.
+- `tools/api_generator/tests/submodules.py --output build/core-scalars-proof-3`
+  passes. It covers core-only/all-width/reduced/optional-only demand, native identity
+  of both 16-bit types and byte, selected string casts, standalone headers, rejected
+  obsolete configuration, export/provider errors, dependency cycles, failure
+  atomicity, cleanup, metadata relocation and actual compiler queries/depfiles.
+  Across cpp/php/js it executes fresh and incremental emission after affecting edits,
+  deletion, repeated failure and recovery. Restarted project compilers reuse unchanged
+  applications/native directories for independent spelling-only changes and provider
+  relocation, checking execution and subsequent compiler/Ninja no-ops.
+- All 179 registered CTests pass across selections: the main 175-test run,
+  the three frozen contracts (102.45 seconds), and the final provider CTest
+  (99.05 seconds), including explicit scalar-only header/source exclusion checks.
+  The frontend-service test
+  requires Unix sockets denied by the sandbox and passes when rerun with that access.
+  Native coverage includes scalar/conversion boundaries, failed writes, string,
+  vectors, carriers, hash, boxed/results, JSON, datetime and ownership. Compiler
+  writing checks pass for 154 files; diff whitespace checks pass.
+- Reviewed frozen contracts retain **130 accepted / 247 rejected runtime cases**,
+  **19 accepted / 537 rejected scalar cases (2,692 maximum operations)** and
+  **17 accepted / 37 rejected CLI cases**, plus publication lifecycle proofs.
+  Changes are declaration placement, dependent header includes, prepared provider
+  and signature dependency records, inventories and input fingerprints. Custom-header
+  cases now relocate the conversion provider too. Direct before/after rendering of
+  default and numeric publications confirms their runtime implementation sources are
+  byte-identical; their existing declaration headers differ only in required includes.
+  The combined scalar declarations preserve existing aliases and null operations.
+  Rejection tests targeting retired path slots now target remaining aggregate paths;
+  the provider proof separately rejects both retired scalar fields.
+- Public contracts and generator documentation now describe the actual placement,
+  configure-time inventory and retirement. Native-alias representation, source
+  admissions, public helper signature redesign and all other deferred work are unchanged.
+
+Focused measurement from `build/core-scalars-proof-3/results.json`, default provider
+publication, milliseconds:
+
+| Flavor | Native wall | Clang frontend | LLVM optimizer | Code-generation passes | LLVM backend total | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| cpp | 465.7 | 40.7 | 13.5 | 12.6 | 36.9 | 84.9 |
+| php | 410.5 | 32.3 | 13.6 | 11.5 | 36.1 | 79.6 |
+| js | 483.7 | 40.0 | 15.3 | 15.1 | 42.2 | 98.6 |
+
+Clang C++23/libc++, O2/g0, mold, sequential application commands, fresh application
+objects, no PCH/LTO; each variant runtime is compiled once and reused (default runtime
+build: 9.95 seconds). Timings are instrumented single samples under concurrent test
+load. Frontend/backend are sums of translation-unit traces; optimizer/codegen are
+subphases, not additional independent totals. Native wall includes driver overhead
+and linking. These numbers do not establish an overall speedup.
+
+Default native depfiles show core.scalars has no further project-header dependencies;
+conversions and string each depend only on core.scalars. Optional numeric scalars
+compile independently with no includes. Core-only declarations exclude the conversion,
+string, output and custom-size providers. Output's existing C-system-header dependencies
+remain unchanged (`-MM` intentionally reports only project headers). Wider benchmark
+comparisons and public-interface cleanup remain deferred.
+
+### Dependency ownership review fixes
+
+The review reproduced a preparation/emission mismatch: a catalog edge from
+core.scalars to core.conversions passed `prepare-runtime`, while rendering added
+the reverse signature dependency and rejected the cycle. The effective graph was
+also missing from serialized preparation output.
+
+- `finalizePublicationProviders` now owns publication graph finalization in the
+  generator preparation layer. It combines catalog edges and selected signature
+  requirements, canonicalizes edges, validates cycles and published dependency
+  availability, and records effective nodes/closures plus selected providers in
+  `submodules.published`.
+- `prepareScalars` finalizes scalar publications. `prepareRuntime` shares the scalar
+  preparation stage but waits until all family demand is prepared before finalizing.
+  Construction-only queries still return their existing recipe projection, without
+  treating it as a header publication. No new framework or cache is introduced.
+- Render fragments no longer carry dependency requirements. The assembler emits
+  includes from the prepared graph and checks fragment/provider agreement; it does
+  not resolve graph edges or perform semantic dependency validation.
+- Compiler dependency queries remain generated PHP code. No application-time JSON
+  interpretation, graph traversal, new width admissions or include-collector branches
+  were added. The relocated compiler publication remains byte-identical to the
+  pre-review version. Checked conversions retain their separate provider and existing
+  signatures/behavior; all previously listed deferred work remains out of scope.
+- Regression coverage compares preparation output with serialized emission plans,
+  checks effective signature edges and closures, and requires matching rejection of
+  cycles and unpublished dependencies before modifying existing outputs. Both scalar
+  and runtime entry points are covered. A runtime publication depending on a later
+  string family succeeds; its scalar-only projection correctly fails.
+- The CMake regression removes numeric demand in an existing relocated build, checks
+  automatic reconfiguration, retirement of the optional header and registered output,
+  and a subsequent no-op. Restoring demand recreates the same output inventory and
+  again reaches a no-op, without manual clean/configure.
+
+Verification for these fixes:
+
+- The dedicated provider proof at `build/scalars-ownership-fix` passes, including
+  CMake numeric-demand removal/restoration, all-flavor incremental recovery, cached
+  rebuilds and publication freshness. The focused preparation regression also passes
+  the later-family finalization case added during the fix.
+- Reviewed captures retain 130 accepted / 247 rejected runtime cases, 19 accepted /
+  537 rejected scalar cases (2,692 maximum operations), and 17 accepted / 37 rejected
+  CLI cases plus lifecycle checks. Only `prepared.json` hashes change in all three
+  frozen contracts; all other artifact hashes and case inventories are unchanged.
+  The eight generated compiler PHP files in the relocated proof are byte-identical.
+- The native build passes; the subsequent build performs only freshness checks,
+  without native compilation/linking. The 174-test regression selection passes
+  (109.42 seconds); the frontend-service test passes with required Unix socket access
+  (4.51 seconds). All four final contract/provider CTests pass as well, including
+  the complete preparation/emission and CMake demand-removal regressions. Together
+  these runs cover all 179 registered tests after the ownership fix.
+- Compiler writing checks pass for 154 files, and `git diff --check` passes.
+  No new application compilation overhead or speedup is claimed: compiler queries
+  and emitted C++ are unchanged. The existing focused timing record remains applicable
+  to those unchanged artifacts; this fix concerns generation-time ownership.
 
 ## Verification for subsequent partitions
 

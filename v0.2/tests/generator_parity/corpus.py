@@ -71,9 +71,9 @@ def cases(root: Path):
         renamed[key]["header"] = renamed[key]["header"].replace("scpp/", "scpp/custom/")
     renamed_metadata = copy.deepcopy(metadata)
     renamed_metadata["submodules"]["core.string"]["header"] = renamed["string"]["header"]
-    for node in renamed_metadata["submodules"].values():
-        if "existing" in node:
-            node["header"] = renamed["headers"][node["existing"]]
+    for group in ['core.scalars', 'numeric.scalars', 'core.conversions']:
+        node = renamed_metadata['submodules'][group]
+        node['header'] = node['header'].replace('scpp/', 'scpp/custom/')
     add("custom_headers", renamed, renamed_metadata)
 
     vectors = copy.deepcopy(default)
@@ -138,8 +138,8 @@ def cases(root: Path):
     reject("bad_policy", ["promotion_policies", "integer_domain_maximum", "same_type"], "widen", "Unsupported same_type", on_metadata=True)
     reject("unknown_type", ["types"], ["int128"], "Unknown published integer type", base=scalar)
     reject("duplicate_type", ["types"], ["int32", "int32"], "Duplicate published type", base=scalar)
-    reject("unsafe_header", ["headers", "types"], "../outside.hpp", "Invalid public header path")
-    reject("header_collision", ["headers", "types"], "scpp/values.hpp", "Conflicting public headers")
+    reject("unsafe_header", ["headers", "operators"], "../outside.hpp", "Invalid public header path")
+    reject("header_collision", ["headers", "operators"], "scpp/core/scalars.hpp", "Conflicting public headers")
     reject("unknown_operator", ["operators"], [{"operation": "magic", "operands": ["int64", "int64"]}], "Unregistered numeric operation", base=scalar)
     reject("duplicate_operator", ["operators"], [one_way["operators"][0]] * 2, "Duplicate operator request", base=scalar)
     reject("signed_uint64", ["operators"], [{"operation": "add", "operands": ["int64", "uint64"]}], "Signed and uint64 arithmetic is not admitted", base=compiler)

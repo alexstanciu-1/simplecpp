@@ -56,31 +56,21 @@ add_custom_target(scpp_api_generator DEPENDS scpp_api_tooling scpp_layout_facts)
 
 set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
 include(cmake/RuntimePublication.cmake)
+include(cmake/ProviderOutputs.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
-set(runtime_outputs
-  ${runtime_generated}/public/scpp/conversions.hpp
+scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication})
+list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
   ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
-  ${runtime_generated}/public/scpp/values.hpp
-  ${runtime_generated}/public/scpp/integers.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
   ${runtime_generated}/public/scpp/short_names.hpp
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
-# Track metadata-selected string/output byproducts; PHP validates their contracts.
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${runtime_metadata})
-file(READ ${runtime_metadata} runtime_provider_metadata)
-foreach(group string output)
-  string(JSON provider GET "${runtime_provider_metadata}" ${group} provider)
-  string(JSON header GET "${runtime_provider_metadata}" submodules ${provider} header)
-  list(APPEND runtime_outputs ${runtime_generated}/public/${header})
-endforeach()
-list(REMOVE_DUPLICATES runtime_outputs)
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
 endif()
@@ -153,9 +143,8 @@ if(BUILD_TESTING)
   # Its generated directory is a sibling, never a child of another publication.
   set(numeric_proof_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-numeric-proof)
   set(numeric_proof_publication ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/numeric_publication.json)
-  set(numeric_proof_outputs)
-  foreach(path public/scpp/conversions.hpp public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/string.hpp
-      public/scpp/values.hpp public/scpp/integers.hpp public/scpp/numeric.hpp
+  scpp_provider_outputs(numeric_proof_outputs ${numeric_proof_generated} ${numeric_proof_publication})
+  foreach(path public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/numeric.hpp
       public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
     list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
   endforeach()
@@ -168,10 +157,10 @@ if(BUILD_TESTING)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
   target_compile_features(numeric_proof_runtime PUBLIC cxx_std_23)
   set(checked_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-checked-conversions)
-  set(checked_outputs)
-  foreach(path src/runtime.cpp prepared.json inventory.json public/scpp/conversions.hpp
-      public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp public/scpp/short_names.hpp
-      public/scpp/arithmetic.hpp public/scpp/output.hpp public/scpp/entry.hpp)
+  scpp_provider_outputs(checked_outputs ${checked_generated} ${CMAKE_CURRENT_SOURCE_DIR}/tests/checked_conversions_publication.json)
+  foreach(path src/runtime.cpp prepared.json inventory.json
+      public/scpp/numeric.hpp public/scpp/short_names.hpp
+      public/scpp/arithmetic.hpp public/scpp/entry.hpp)
     list(APPEND checked_outputs ${checked_generated}/${path})
   endforeach()
   add_custom_command(OUTPUT ${checked_outputs}

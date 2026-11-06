@@ -22,8 +22,6 @@
   "operators": [],
   "short_aliases": [],
   "headers": {
-    "types": "scpp/integers.hpp",
-    "values": "scpp/values.hpp",
     "operators": "scpp/numeric.hpp",
     "short_names": "scpp/short_names.hpp"
   }

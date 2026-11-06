@@ -28,6 +28,16 @@ extraction adapters and overloaded scalar arithmetic are retired. This is an ABI
 break: regenerate headers and rebuild the runtime and all consumers together.
 Do not link an old wrapper archive against alias headers.
 
+## Scalar declaration placement
+
+Core scalar declarations now live in metadata provider `core.scalars`, default
+`scpp/core/scalars.hpp`; optional widths live in `numeric.scalars`, default
+`scpp/numeric/scalars.hpp`. Published aliases follow their target. Core-only and
+optional-width-only publications do not pull an unselected scalar provider.
+Checked functions remain in separate `core.conversions`, with signature-derived
+dependencies. `integers.hpp` and `values.hpp` are retired; regenerate and rebuild
+consumers together. This consolidation changes no native representation or admission.
+
 ## Strict library inputs and carriers
 
 A shared generator helper uses target native identity to deduplicate overloads and

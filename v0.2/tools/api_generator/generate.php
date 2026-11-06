@@ -15,6 +15,9 @@ require_once __DIR__ . '/php/render_modules.php';
 function run(array $args): array {
     requireThat(PHP_VERSION_ID >= 80500 && PHP_INT_SIZE === 8, 'The API generator requires 64-bit PHP 8.5 or later');
     $command = $args[0] ?? '';
+    if ($command === 'provider-headers' && count($args) === 3) {
+        return publicationProviderHeaders(decode(readFile($args[1]), 'metadata'), decode(readFile($args[2]), 'publication'));
+    }
     if($command === 'validate-target' && count($args) === 3) {
         $facts = targetFacts(decode(readFile($args[1]), 'target facts'), decode(readFile($args[2]), 'target context'));
         return ['context_id' => $facts['id'], 'target' => $facts['target'], 'standard_library' => $facts['standard_library'], 'status' => 'valid'];

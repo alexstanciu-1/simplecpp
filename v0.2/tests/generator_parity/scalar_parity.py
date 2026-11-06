@@ -252,7 +252,7 @@ def main():
             check('invalid-publication-' + field, scalar_metadata, p, False)
         p = copy.deepcopy(base); p['types'] = ['int8', 'int16']; p['operators'] = [{'operation': 'add', 'operands': ['int8', 'int16']}]
         check('missing-domain-maximum', scalar_metadata, p, False)
-        p = copy.deepcopy(base); p['headers']['values'] = p['headers']['types']
+        p = copy.deepcopy(base); p['headers']['short_names'] = p['headers']['operators']
         check('header-collision', scalar_metadata, p, False)
         # Non-scalar demand is a deliberate PHP-only boundary, not a parity claim.
         p = work / 'full-publication.json'; p.write_text((root / 'tests/generator_parity/numeric_publication.json').read_text())

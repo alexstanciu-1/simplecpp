@@ -1,8 +1,8 @@
 set(ownership_generated ${CMAKE_BINARY_DIR}/generated-ownership-proof)
 set(ownership_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
-set(ownership_outputs)
-foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp
-    public/scpp/conversions.hpp public/scpp/short_names.hpp public/scpp/ownership.hpp
+scpp_provider_outputs(ownership_outputs ${ownership_generated} ${ownership_publication})
+foreach(path public/scpp/numeric.hpp
+    public/scpp/short_names.hpp public/scpp/ownership.hpp
     src/runtime.cpp src/ownership.cpp prepared.json inventory.json)
   list(APPEND ownership_outputs ${ownership_generated}/${path})
 endforeach()

@@ -5,15 +5,27 @@ namespace Scpp\Api;
 /**
  * Contracts of the implemented declaration groups, adjacent to their assembly owner.
  * These describe template requirements and exported binding roles, not C++ ABI signatures.
- * Provider placement remains metadata-owned; existing scalar slots keep their renderer owner.
+ * Provider placement remains metadata-owned; scalar membership comes from canonical metadata.
  */
 function declarationGroups(mixed $metadata): array {
+    $core = array_values(array_intersect(names(at($metadata, 'core_integers')), array_keys(object(at($metadata, 'types')))));
+    fields(at($metadata, 'scalar_providers'), ['core', 'numeric']);
     $contracts = [
         'string' => ['requires' => ['bool_t'], 'types' => ['string'], 'bindings' => []],
         'output' => ['requires' => [], 'types' => [], 'bindings' => [
             ['operand' => 'int64', 'strategy' => 'integer'], ['operand' => 'string', 'strategy' => 'bytes']]],
     ];
-    $groups = [];
+    $groups = [
+        'scalar_core' => ['requires' => [],
+            'types' => array_merge($core, array_keys(object(at($metadata, 'values'))), [textValue(at($metadata->floating, 'type'))]),
+            'bindings' => [], 'provider' => textValue(at($metadata->scalar_providers, 'core'))],
+        'scalar_numeric' => ['requires' => [],
+            'types' => array_values(array_diff(array_keys(object(at($metadata, 'types'))), $core)),
+            'bindings' => [], 'provider' => textValue(at($metadata->scalar_providers, 'numeric'))],
+    ];
+    if (isset($metadata->checked_conversions)) {
+        $groups['conversions'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->checked_conversions, 'provider'))];
+    }
     foreach ($contracts as $name => $contract) {
         // Scalar-only preparation may omit the string family entirely.
         if ($name === 'string' && !isset($metadata->string)) continue;
@@ -24,41 +36,30 @@ function declarationGroups(mixed $metadata): array {
 }
 
 /** Resolve canonical runtime identities and existing public spellings, without inspecting representations.
- * The legacy renderer adapter checks placement; it does not choose construction or extraction.
+ * Declaration groups own placement; exports do not choose construction or extraction.
  */
-function typeExports(mixed $metadata, array $nodes, array $groups, array $existing): array {
+function typeExports(mixed $metadata, array $nodes, array $groups): array {
     $owners = [];
-    foreach (object(at($metadata, 'types')) as $identity => $_) $owners[$identity] = $existing['types'] ?? null;
-    foreach (object(at($metadata, 'values')) as $identity => $_) $owners[$identity] = $existing['values'] ?? null;
-    $owners[textValue(at($metadata->floating, 'type'))] = $existing['values'] ?? null;
-    $typeGroups = [];
     foreach ($groups as $group => $contract) {
         foreach ($contract['types'] as $identity) {
             requireThat(!array_key_exists($identity, $owners), 'Ambiguous type declaration owner');
-            $owners[$identity] = $contract['provider'];
-            $typeGroups[$identity] = $group;
+            $owners[$identity] = $group;
         }
     }
     $aliases = object(at($metadata, 'integer_aliases'));
     $exports = [];
     foreach (listValue(at($metadata, 'type_exports')) as $row) {
-        fields($row, ['identity', 'name', 'provider', 'declaration_group']);
+        fields($row, ['identity', 'name', 'declaration_group']);
         $identity = textValue(at($row, 'identity'));
         requireThat(array_key_exists($identity, $owners), 'Unknown type export: ' . $identity);
         requireThat(!isset($exports[$identity]), 'Duplicate type export: ' . $identity);
         $name = textValue(at($row, 'name'));
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $name) === 1, 'Invalid public type name');
         requireThat(($aliases[$name] ?? $name) === $identity, 'Public type name is not declared for export: ' . $identity);
-        if (isset($row->declaration_group)) {
-            $group = textValue($row->declaration_group);
-            requireThat(!isset($row->provider) && ($typeGroups[$identity] ?? null) === $group, 'Incompatible type export declaration group');
-            $provider = $groups[$group]['provider'];
-        } else {
-            requireThat(!isset($typeGroups[$identity]), 'Type export requires its declaration group');
-            $provider = textValue(at($row, 'provider'));
-        }
+        $group = textValue(at($row, 'declaration_group'));
+        requireThat($owners[$identity] === $group, 'Incompatible type export declaration group');
+        $provider = $groups[$group]['provider'];
         requireThat(isset($nodes[$provider]), 'Unknown type export provider: ' . $provider);
-        requireThat($owners[$identity] === $provider, 'Type export disagrees with declaration placement: ' . $identity);
         $exports[$identity] = ['symbol' => 'scpp::' . $name, 'provider' => $provider];
     }
     ksort($exports, SORT_STRING);
@@ -71,33 +72,23 @@ function typeExport(array $plan, string $identity): array {
     return $plan['type_exports'][$identity];
 }
 
-/** Resolve public providers once; metadata owns paths; legacy publication fields must agree. */
-function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
+/** Resolve catalog providers; publication demand never grants source-language admission. */
+function submodulePlan(mixed $metadata): array {
     $nodes = [];
     $paths = [];
-    $existing = [];
     foreach (object(at($metadata, 'submodules')) as $id => $row) {
         requireThat(preg_match('/^[a-z][a-z0-9_.]*$/D', $id) === 1, 'Invalid submodule identity');
-        fields($row, ['module', 'header', 'requires', 'requires_exports', 'existing']);
-        // Only core providers are integrated in this slice; header reachability grants no language admission.
-        requireThat(textValue(at($row, 'module')) === 'core', 'Unavailable submodule module');
+        fields($row, ['module', 'header', 'requires', 'requires_exports']);
+        // Numeric catalog presence does not activate optional publication or compiler types.
+        requireThat(in_array(textValue(at($row, 'module')), ['core', 'numeric'], true), 'Unavailable submodule module');
         $header = textValue(at($row, 'header'));
-        if (isset($row->existing)) {
-            $slot = textValue($row->existing);
-            requireThat(in_array($slot, ['types', 'values'], true), 'Unknown existing submodule renderer');
-            requireThat(!isset($existing[$slot]), 'Duplicate existing submodule renderer');
-            $existing[$slot] = $id;
-            requireThat(names(at($row, 'requires')) === [] && names($row->requires_exports ?? []) === [], 'Existing renderer dependencies are not configurable');
-            requireThat(!isset($existingHeaders[$slot]) || $existingHeaders[$slot] === $header,
-                'Scalar publication header conflicts with provider: ' . $id);
-        }
         requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid submodule header');
         requireThat(!isset($paths[$header]), 'Conflicting submodule headers');
         $paths[$header] = true;
-        $nodes[$id] = ['header' => $header, 'requires' => names(at($row, 'requires')), 'existing' => isset($row->existing)];
+        $nodes[$id] = ['header' => $header, 'requires' => names(at($row, 'requires')), 'module' => textValue(at($row, 'module'))];
     }
     $groups = declarationGroups($metadata);
-    $exports = typeExports($metadata, $nodes, $groups, $existing);
+    $exports = typeExports($metadata, $nodes, $groups);
     $plan = ['nodes' => $nodes, 'groups' => $groups, 'type_exports' => $exports];
     foreach (object(at($metadata, 'submodules')) as $id => $row) {
         foreach (names($row->requires_exports ?? [], 'Duplicate export dependency') as $identity) {
@@ -107,6 +98,30 @@ function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
         $nodes[$id]['requires'] = array_values(array_unique($nodes[$id]['requires']));
         sort($nodes[$id]['requires'], SORT_STRING);
     }
+    ksort($nodes, SORT_STRING);
+    $closures = providerClosures($nodes);
+    fields(at($metadata, 'output'), ['provider']);
+    $plan['nodes'] = $nodes;
+    $plan['closures'] = $closures;
+    foreach ($plan['groups'] as $name => $group) {
+        $id = $group['provider'];
+        providerHeader($plan, $id);
+        requireThat($nodes[$id]['module'] === ($name === 'scalar_numeric' ? 'numeric' : 'core'), 'Declaration group module mismatch');
+        requireExportDependencies($plan, $id, $group['requires']);
+    }
+    $separate = [$groups['scalar_core']['provider'], $groups['scalar_numeric']['provider']];
+    foreach ($groups as $name => $group) {
+        if (!in_array($name, ['scalar_core', 'scalar_numeric'], true)) {
+            requireThat(!in_array($group['provider'], $separate, true), 'Scalar declaration providers must remain independent');
+        }
+    }
+    if (isset($groups['conversions'])) $separate[] = $groups['conversions']['provider'];
+    requireThat(count(array_unique($separate)) === count($separate), 'Scalar and conversion providers must be separate');
+    return $plan;
+}
+
+/** Validate one provider graph for catalog edges and selected declaration requirements. */
+function providerClosures(array $nodes): array {
     $states = [];
     $closures = [];
     $visit = function (string $id) use (&$visit, &$states, &$closures, $nodes): void {
@@ -123,20 +138,19 @@ function submodulePlan(mixed $metadata, ?array $existingHeaders = null): array {
         $states[$id] = 2;
     };
     foreach (array_keys($nodes) as $id) $visit($id);
-    ksort($nodes, SORT_STRING);
     foreach ($closures as &$closure) ksort($closure, SORT_STRING);
     unset($closure);
     ksort($closures, SORT_STRING);
-    fields(at($metadata, 'output'), ['provider']);
-    $plan['nodes'] = $nodes;
-    $plan['closures'] = $closures;
-    foreach ($plan['groups'] as $name => $group) {
-        $id = $group['provider'];
-        providerHeader($plan, $id);
-        requireThat(!$nodes[$id]['existing'], 'Declaration group cannot replace an existing renderer');
-        requireExportDependencies($plan, $id, $group['requires']);
-    }
-    return $plan;
+    return $closures;
+}
+
+/** Resolve actual signature/declaration identities to provider dependencies. */
+function exportProviders(array $plan, array $identities): array {
+    $providers = [];
+    foreach ($identities as $identity) $providers[typeExport($plan, $identity)['provider']] = true;
+    $out = array_keys($providers);
+    sort($out, SORT_STRING);
+    return $out;
 }
 
 /** Validate intrinsic declaration requirements against the resolved metadata dependency graph. */
@@ -201,7 +215,54 @@ function compilerProviderMetadata(mixed $metadata, ?array $plan = null): object 
     return $copy;
 }
 
-/** Assemble movable declaration groups; implementation-only includes stay in their source files. */
+/** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
+function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
+    $plan = submodulePlan($metadata);
+    $aliases = object(at($metadata, 'integer_aliases'));
+    $identities = array_map(fn(string $name): string => $aliases[$name] ?? $name, names(at($publication, 'types')));
+    $identities = array_merge($identities, names(at($publication, 'values')));
+    $providers = exportProviders($plan, $identities);
+    foreach (['output', 'conversions', 'string'] as $group) {
+        if (!isset($plan['groups'][$group]) || ($group === 'string' && !isset($publication->string))) continue;
+        $providers[] = $plan['groups'][$group]['provider'];
+    }
+    $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    sort($headers, SORT_STRING);
+    return $headers;
+}
+
+/** Resolve the effective graph once all published declarations and signatures are prepared. */
+function finalizePublicationProviders(array &$plan): void {
+    $providers = &$plan['submodules'];
+    $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
+    $published[] = $providers['groups']['output']['provider'];
+    foreach (['string', 'checked_conversions'] as $family) {
+        if (!isset($plan[$family])) continue;
+        $declaration = $plan[$family];
+        $id = $declaration['provider'];
+        $published[] = $id;
+        foreach ($declaration['requires'] as $dependency) {
+            if ($dependency !== $id && !isset($providers['closures'][$id][$dependency])) {
+                $providers['nodes'][$id]['requires'][] = $dependency;
+            }
+        }
+    }
+    foreach ($providers['nodes'] as &$node) {
+        $node['requires'] = array_values(array_unique($node['requires']));
+        sort($node['requires'], SORT_STRING);
+    }
+    unset($node);
+    $providers['closures'] = providerClosures($providers['nodes']);
+    $providers['published'] = array_values(array_unique($published));
+    sort($providers['published'], SORT_STRING);
+    foreach ($providers['published'] as $id) {
+        foreach ($providers['nodes'][$id]['requires'] as $dependency) {
+            requireThat(in_array($dependency, $providers['published'], true), 'Submodule dependency is not published: ' . $dependency);
+        }
+    }
+}
+
+/** Render the finalized publication graph; implementation-only includes stay in source files. */
 function assembleSubmodules(array $plan, array $groups, array &$files): void {
     $content = [];
     $system = [];
@@ -210,6 +271,9 @@ function assembleSubmodules(array $plan, array $groups, array &$files): void {
         $content[$id][] = $group['declarations'];
         foreach ($group['system'] as $header) $system[$id][$header] = true;
     }
+    $published = array_keys($content);
+    sort($published, SORT_STRING);
+    requireThat($published === $plan['published'], 'Rendered declaration providers disagree with prepared publication');
     foreach ($content as $id => $declarations) {
         $node = $plan['nodes'][$id];
         $path = 'public/' . $node['header'];
@@ -217,7 +281,6 @@ function assembleSubmodules(array $plan, array $groups, array &$files): void {
         $includes = [];
         foreach ($node['requires'] as $dependency) {
             $header = providerHeader($plan, $dependency);
-            requireThat(isset($files['public/' . $header]) || isset($content[$dependency]), 'Submodule dependency is not published: ' . $dependency);
             $includes[$header] = true;
         }
         ksort($includes, SORT_STRING);

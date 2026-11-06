@@ -3,10 +3,11 @@ declare(strict_types=1);
 namespace Scpp\Api;
 
 /** Concrete public declarations and private calls to the shared checked algorithms. */
-function renderCheckedConversions(array $plan, array &$files, string &$definitions): void {
+function renderCheckedConversions(array $plan, array &$groups, string &$definitions): void {
     if (!isset($plan['checked_conversions'])) return;
     $binding = $plan['checked_conversions'];
-    $header = BANNER . "#pragma once\n" . includeHeader($plan['headers']['types']) . includeHeader($plan['headers']['values']) . "namespace scpp {\nclass string;\n";
+    $header = "namespace scpp {\n";
+    if (isset($binding['representations']['string'])) $header .= "class string;\n";
     $asserted = [];
     foreach ($binding['functions'] as $function) {
         $source = $binding['representations'][$function['source']];
@@ -30,5 +31,5 @@ function renderCheckedConversions(array $plan, array &$files, string &$definitio
         $specialization = $function['implementation'] === 'parse_boolean_text' ? '' : '<' . $function['target'] . '>';
         $definitions .= "$signature { return detail::{$function['implementation']}$specialization($argument); }\n";
     }
-    $files['public/' . $binding['header']] = $header . "}\n";
+    $groups[] = ['provider' => $binding['provider'], 'declarations' => $header . "}\n", 'system' => []];
 }

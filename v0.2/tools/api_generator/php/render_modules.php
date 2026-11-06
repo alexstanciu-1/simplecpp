@@ -39,7 +39,7 @@ function renderDatetime(array $plan, array &$files): void {
         return;
     }
     $module = $plan['datetime'];
-    $includes = [$plan['headers']['types']];
+    $includes = scalarProviderHeaders($plan);
     foreach($module['operations'] as $op) {
         if($op['result'] === 'string' || in_array('const string&', $op['arguments'], true)) {
             $includes[] = $plan['string']['header'];
@@ -101,7 +101,7 @@ function renderOwnership(array $plan, array &$files): void {
         return;
     }
     $o = $plan['ownership'];
-    $h = "// Generated ownership API; edit metadata/publication.\n#pragma once\n" . includeHeader($plan['headers']['types']) . includeHeader($plan['headers']['values']);
+    $h = "// Generated ownership API; edit metadata/publication.\n#pragma once\n" . scalarProviderIncludes($plan);
     $headers = array_unique(array_column($o['records'], 'header'));
     sort($headers, SORT_STRING);
     foreach($headers as $header) {

@@ -80,7 +80,7 @@ def string_cases(proof, m, p):
     proof.mutations(m, p, [
         (['string', 'operations'], ['unknown']), (['string', 'operations'], ['add', 'add']),
         (['string', 'casts'], ['null_t']), (['string', 'casts'], ['int64', 'int64']),
-        (['string', 'header'], '../escape.hpp'), (['string', 'header'], p['headers']['types']),
+        (['string', 'header'], '../escape.hpp'), (['string', 'header'], p['headers']['operators']),
         (['string', 'extra'], True),
     ], 'publication')
     for field, value in [('operations', []), ('text_casts', [])]:
@@ -270,7 +270,7 @@ def ownership_cases(proof, m, p, default):
         proof.mutations(m,default,[(path,value)],'metadata')
     proof.mutations(m,p,[
         (['ownership','records'],[]),
-        (['ownership','header'],p['headers']['types']),
+        (['ownership','header'],p['headers']['operators']),
         (['ownership','records',0,'header'],p['ownership']['header']),
         (['ownership','records',0,'header'],'../outside.hpp'),
         (['ownership','records',0,'name'],'int64'),

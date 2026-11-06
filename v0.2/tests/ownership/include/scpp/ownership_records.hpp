@@ -1,5 +1,5 @@
 #pragma once
-#include "scpp/integers.hpp"
+#include "scpp/numeric.hpp"
 
 namespace scpp {
 struct record_construction_failure {};

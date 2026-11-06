@@ -1,5 +1,4 @@
 #include "scpp/short_names.hpp"
-#include "scpp/integers.hpp"
 #include "scpp/numeric.hpp"
 #include "scpp/conversions.hpp"
 #include <limits>

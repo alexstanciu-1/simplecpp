@@ -25,7 +25,7 @@ is also the rendering input, avoiding a second serialization model.
   field requires values beyond the signed 64-bit host range.
 - `php/target.php`: explicit C++ target facts/context validation.
 - `php/submodules.php`: shared provider/dependency planning, compiler binding resolution
-  and assembly of movable string/output declaration groups. Runtime group providers
+  and assembly of scalar, conversion, string and output declaration groups. Runtime group providers
   are independent of compiler strategies; other families keep existing renderers.
 - `php/scalars.php`: integer, boolean, null and floating API preparation.
 - `php/checked_conversions.php` and `php/render_conversions.php`: additive concrete
@@ -75,6 +75,7 @@ prepare-runtime METADATA PUBLICATION FACTS CONTEXT
 prepare-scalars METADATA PUBLICATION FACTS CONTEXT
 prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT
 validate-target FACTS CONTEXT
+provider-headers METADATA PUBLICATION
 ```
 
 Preparation commands print JSON. Successful generation/check prints JSON containing
@@ -241,12 +242,24 @@ retained PHP compiler processes after regeneration; hot replacement is not suppo
 
 The export plan resolves `requires_exports` into ordinary provider edges before
 cycle and reachability checks. Runtime export names reuse canonical declarations
-and existing aliases; the scalar adapter checks real renderer placement. Include
+and existing aliases; declaration groups own scalar and string placement. Include
 selection never inspects representation or conversion strategy. Tests cover a
 `uint8` export spelled `byte`, string type relocation, invalid export identities and
 placement, all-flavor recovery, and restarted cached application/native rebuilds.
 
-Scalar publication paths must agree with metadata provider paths; the adapter rejects
-conflicts before publishing. String cast dependencies come from the actual publication,
+Scalar providers own paths exclusively; obsolete publication `headers.types` and
+`headers.values` fields are rejected before publication. Core and optional numeric
+scalar fragments share the assembler with string/output and separate checked helpers.
+`provider-headers METADATA PUBLICATION` exposes the managed output inventory for CMake;
+full runtime preparation remains responsible for semantic publication validation. String cast dependencies come from the actual publication,
 not the enabled conversion-policy catalog. The provider proof covers both rules and
 an independent spelling-only cached rebuild using an executed checked byte conversion.
+
+Publication dependency finalization belongs to preparation. `prepare-scalars` and
+`prepare-runtime` validate the graph after their full declaration demand is known;
+rendering consumes the resulting provider edges and closures without modifying them.
+`prepared.json` includes the selected `submodules.published` providers. Construction-only
+queries return recipes and do not finalize a header publication. The configure-time
+inventory query remains target-independent; it is not a substitute for full preparation.
+Compiler dependency queries remain generated PHP methods, with no runtime metadata
+interpretation or provider-graph traversal during application compilation.

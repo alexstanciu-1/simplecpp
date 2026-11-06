@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
         if key == 'string': del pub[key]
         else: pub[key] = []
         run(metadata, pub, accepted=False)
-    for header in ['../bad.hpp', 'scpp/string.hpp', 'scpp/values.hpp']:
+    for header in ['../bad.hpp', 'scpp/string.hpp', 'scpp/core/scalars.hpp']:
         pub = copy.deepcopy(publication); pub['boxed']['header'] = header
         run(metadata, pub, accepted=False)
     for field, value in [('string_keys', 'coerce'), ('integer_keys', 'int64'), ('conversion', 'containers')]:

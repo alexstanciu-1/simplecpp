@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Date: 2026-11-06
-Status: conflicts resolved; quick generator checks passed; full integration verification pending
+Status: receiving checkout integration repaired and verified; all 179 CTests pass across combined runs
 
 The user requested pushing a logically aligned merge now, leaving integration
 repairs/verification to the other worker. This is not a fully validated release.
@@ -57,3 +57,25 @@ No combined native build or full incremental recovery suite has been run.
    Restart retained PHP compiler processes after regenerating compiler definitions.
 
 No source vector/hash functionality or new source conversion permissions are added.
+
+## Receiving checkout follow-up
+
+Pulled the published merge `64a2e0437` into `simple_cpp_01`. The full native build
+passes. Provider proofs now assert alias declaration/cast spelling and canonical
+named checked conversions, preserving all-flavor native execution, relocation,
+publication atomicity, incremental recovery, spelling-only cached rebuild and no-op
+checks. No wrapper compatibility path was restored.
+
+All 175 tests outside the four provider/frozen-contract CTests pass across two runs.
+The frontend-service test needed Unix socket access: the sandbox's bind probe fails
+with EPERM, and the isolated elevated test passes. The provider proof also passes
+when run directly. All four frozen-contract/provider CTests now pass as well
+(107.36 seconds), completing the 179-test suite across the combined runs.
+
+Captured corpora preserve 130/247 runtime, 19/537 scalar and 17/37 generator
+acceptance/rejection counts. Snapshot review confirms all other generated artifacts
+match the alias-only baseline after excluding the new output-provider bridge,
+inventory/count changes, prepared plans and the output header's removed blank line.
+Compiler style checks pass for 154 files. Detailed evidence, timing samples and the
+remaining partition scope are recorded in
+[runtime_submodule_partitioning.md](runtime_submodule_partitioning.md#combined-native-alias-integration-at-64a2e0437).

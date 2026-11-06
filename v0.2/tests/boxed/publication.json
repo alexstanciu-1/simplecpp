@@ -2,11 +2,8 @@
   "version": 1,
   "namespace": "scpp",
   "headers": {
-    "types": "scpp/integers.hpp",
     "operators": "scpp/numeric.hpp",
-    "short_names": "scpp/short_names.hpp",
-
-    "values": "scpp/values.hpp"
+    "short_names": "scpp/short_names.hpp"
   },
   "types": [
     "int64"

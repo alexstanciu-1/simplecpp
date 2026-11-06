@@ -6,8 +6,9 @@ Status: slices 1–3 implemented. Numeric/boolean names are native aliases; null
 
 ## Publication contract
 
-Runtime metadata `checked_conversions` supplies a header and symbol prefix. The
-default is `scpp/conversions.hpp`, with names `checked_<source>_to_<target>` using
+Runtime metadata `checked_conversions` supplies a provider and symbol prefix. The
+provider resolves through `submodules`; its default is `core.conversions` at
+`scpp/conversions.hpp`, with names `checked_<source>_to_<target>` using
 canonical identities (including bool_t and uint8, not a duplicate byte identity).
 The generator derives functions from existing published non-native numeric
 conversion rows; it does not maintain a second permission or algorithm matrix.
@@ -28,7 +29,9 @@ bool_t checked_float64_to_bool_t(float64 value) noexcept;
 int64 checked_string_to_int64(const string& value);
 ```
 
-The header includes public scalar alias headers and forward-declares string. It
+The header includes only the scalar providers needed by published signatures and
+forward-declares string when a string parser is selected. Core-only helpers include
+core.scalars; custom-size helpers add numeric.scalars when their signatures need it. It
 contains concrete declarations/deleted overloads, no templates or implementation.
 Definitions in generated runtime.cpp reuse the private checked_integer_cast,
 floating_integer_cast, numeric_cast, truth_cast and string parsing algorithms.

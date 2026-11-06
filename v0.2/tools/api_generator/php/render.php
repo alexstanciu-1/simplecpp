@@ -36,34 +36,49 @@ function scalarRepresentation(array $plan, string $name): string {
     };
 }
 
-function renderValues(array $plan): string {
-    $out = BANNER . "#pragma once\nnamespace scpp {\n";
-    foreach ($plan['values'] as $value) {
-        $name = $value['name'];
-        if ($value['kind'] !== 'null') {
-            $out .= "using $name = " . scalarRepresentation($plan, $name) . ";\n";
+/** Scalar declarations are placed by their canonical export, never by an old header slot. */
+function renderScalarGroups(array $plan, array &$groups): void {
+    $declarations = [];
+    foreach (array_merge($plan['types'], $plan['values']) as $type) {
+        $name = $type['name'];
+        $provider = typeExport($plan['submodules'], $name)['provider'];
+        if (($type['kind'] ?? '') !== 'null') {
+            $declarations[$provider][] = "using $name = " . scalarRepresentation($plan, $name) . ";\n";
         } else {
-            $out .= "class $name final { public: constexpr $name() noexcept = default; };\ninline constexpr $name null{};\n";
-            foreach ($value['operations'] as $operation) {
+            $text = "class $name final { public: constexpr $name() noexcept = default; };\ninline constexpr $name null{};\n";
+            foreach ($type['operations'] as $operation) {
                 $symbol = $operation === 'equal' ? '==' : '!=';
                 $result = $operation === 'equal' ? 'true' : 'false';
-                $out .= "constexpr bool operator$symbol($name, $name) noexcept { return $result; }\n";
+                $text .= "constexpr bool operator$symbol($name, $name) noexcept { return $result; }\n";
             }
+            $declarations[$provider][] = $text;
         }
     }
     foreach (object($plan['aliases']) as $alias => $target) {
-        if (hasValue($plan, $target)) $out .= "using $alias = $target;\n";
+        $provider = typeExport($plan['submodules'], $target)['provider'];
+        $declarations[$provider][] = "using $alias = $target;\n";
     }
-    return $out . "}\n";
+    foreach ($declarations as $provider => $parts) {
+        $groups[] = ['provider' => $provider, 'declarations' => "namespace scpp {\n" . implode('', $parts) . "}\n", 'system' => []];
+    }
+}
+
+/** Existing non-partitioned consumers retain their aggregate of selected scalar declarations. */
+function scalarProviderHeaders(array $plan): array {
+    $providers = exportProviders($plan['submodules'], array_column(array_merge($plan['types'], $plan['values']), 'name'));
+    $headers = array_map(fn(string $provider): string => providerHeader($plan['submodules'], $provider), $providers);
+    sort($headers, SORT_STRING);
+    return $headers;
+}
+
+function scalarProviderIncludes(array $plan): string {
+    return implode('', array_map(__NAMESPACE__ . '\\includeHeader', scalarProviderHeaders($plan)));
 }
 
 function render(array $plan): array {
     $groups = [];
     $headers = $plan['headers'];
-    $types = $headers['types'];
-    $vals = $headers['values'];
     $ops = $headers['operators'];
-    $h = BANNER . "#pragma once\nnamespace scpp {\n";
     $d = BANNER . includeHeader($ops) . includeHeader('scalar_semantics.hpp');
     if(isset($plan['string'])) {
         $d .= includeHeader($plan['string']['header']) . includeHeader('sequence_semantics.hpp');
@@ -78,7 +93,8 @@ function render(array $plan): array {
     $d .= "namespace scpp {\n";
     $files = [];
     renderSequences($plan, $files, $d, $groups);
-    renderCheckedConversions($plan, $files, $d);
+    renderCheckedConversions($plan, $groups, $d);
+    renderScalarGroups($plan, $groups);
     if (hasValue($plan, 'float64')) $d .= template('float_assertions');
     foreach ($plan['conversions'] as $conversion) {
         if ($conversion['target'] !== 'string') continue;
@@ -92,16 +108,9 @@ function render(array $plan): array {
     foreach($plan['types'] as $t) {
         $n = $t['name'];
         $rep = $t['representation'];
-        $h .= "using $n = $rep;\n";
         $d .= template('integer_assertions', compact('n', 'rep') + ['digits' => digits($t)]);
     }
-    foreach(object($plan['aliases']) as $alias => $target) {
-        if(hasType($plan, $target)) {
-            $h .= "using $alias = $target;\n";
-        }
-    }
-    $h .= "}\n";
-    $operators = BANNER . "#pragma once\n" . includeHeader($types) . includeHeader($vals) . "namespace scpp {\n";
+    $operators = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . "namespace scpp {\n";
     // Builtin scalar aliases use native operators. Checked source operations are emitted by the compiler.
     $short = BANNER . "#pragma once\n" . includeHeader($ops);
     if(isset($plan['string'])) {
@@ -134,7 +143,7 @@ function render(array $plan): array {
         $short .= includeHeader($plan['boxed']['header']);
         foreach ($plan['boxed']['families'] as $family) $short .= "using scpp::{$family['name']};\n";
     }
-    $files += ['public/' . $types => $h, 'public/' . $vals => renderValues($plan), 'public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
+    $files += ['public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
     renderOwnership($plan, $files);
     renderHashes($plan, $files);
     renderDatetime($plan, $files);
