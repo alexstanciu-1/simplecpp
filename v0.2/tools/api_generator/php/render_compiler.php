@@ -202,8 +202,7 @@ function compilerMixedNumericOperations(object $compiler, array $definitions): o
 }
 
 /** Expand family permission into concrete generation-time rows; no pair table is retained by the compiler. */
-function compilerConversionFamilies(mixed $metadata, array $definitions, array $types): object {
-    $compiler = compilerMixedNumericOperations(unserialize(serialize(at($metadata, 'compiler'))), $definitions);
+function compilerConversionFamilies(object $compiler, array $definitions, array $types): object {
     if (!isset($compiler->conversion_families)) return $compiler;
     requireThat(!isset($compiler->conversions), 'Duplicate conversion policy owner');
     $rules = object($compiler->conversion_families);
@@ -230,11 +229,6 @@ function compilerConversionFamilies(mixed $metadata, array $definitions, array $
             $row->target_binding = $target['conversion_binding'];
             if ($operation === 'floating_integer') $row->source_binding = $source['conversion_binding'];
         }
-        // Operator rows own promotion permission; conversion availability alone never grants it.
-        foreach (listValue(at($compiler, 'promotions')) as $promotion) {
-            if ($promotion->execution_type !== $to || !in_array($from, [$promotion->left, $promotion->right], true)) continue;
-            $row->promotion_operators = array_values(array_unique(array_merge($row->promotion_operators, names($promotion->operators))));
-        }
         $compiler->conversions[] = $row;
     }
     unset($compiler->conversion_families);
@@ -242,8 +236,7 @@ function compilerConversionFamilies(mixed $metadata, array $definitions, array $
 }
 
 /** Expand active integer families at generation time; runtime and compiler share the domain resolver. */
-function compilerIntegerOperations(mixed $metadata, array $definitions, array $types): object {
-    $compiler = compilerConversionFamilies($metadata, $definitions, $types);
+function compilerIntegerOperations(mixed $metadata, object $compiler, array $definitions, array $types, array &$requirements): object {
     if (!isset($compiler->integer_operators)) return $compiler;
     $group = $compiler->integer_operators;
     fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings', 'unary', 'updates', 'condition', 'bitwise', 'shifts']);
@@ -309,20 +302,10 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
         requireThat(isset($integers[$execution]) && fits($types[$execution], $l['signed'], digits($l)) && fits($types[$execution], $r['signed'], digits($r)), 'Integer execution domain is unavailable or lossy');
         foreach ([$arithmetic, $comparisons] as $index => $operators) {
             if ($operators === []) continue;
-            foreach ([$left, $right] as $source) {
-                if ($source === $execution) continue;
-                $found = false;
-                foreach ($compiler->conversions as $conversion) {
-                    if ($conversion->from !== $source || $conversion->to !== $execution) continue;
-                    requireThat($conversion->operation === 'integer_widen', 'Integer promotion needs a lossless conversion');
-                    $conversion->promotion_operators = array_values(array_unique(array_merge($conversion->promotion_operators, $operators)));
-                    $found = true;
-                }
-                requireThat($found, 'Integer promotion conversion missing');
-            }
             $row = (object)['left' => $left, 'right' => $right, 'operators' => $operators, 'execution_type' => $execution, 'result' => $index === 0 ? $execution : 'bool_t'];
             if ($index === 0 && in_array($left, $compound, true)) $row->compound_operators = $operators;
             $compiler->promotions[] = $row;
+            $requirements[] = ['promotion' => $row, 'policy' => 'integer'];
         }
     }
     unset($compiler->integer_operators);
@@ -330,7 +313,7 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
 }
 
 /** Expand three-way numeric pairs using the existing domain policy and conversion permissions. */
-function compilerThreeWayPromotions(mixed $metadata, mixed $compiler, array $definitions, array $types): mixed {
+function compilerThreeWayPromotions(mixed $metadata, object $compiler, array $definitions, array $types, array &$requirements): object {
     if (!isset($compiler->three_way)) return $compiler;
     $group = $compiler->three_way;
     fields($group, ['result', 'integer_promotion', 'mixed_promotion', 'types']);
@@ -348,21 +331,58 @@ function compilerThreeWayPromotions(mixed $metadata, mixed $compiler, array $def
         if ($lk === 'integer' && $rk === 'integer') {
             foreach ([$left, $right] as $source) requireThat(fits($types[$execution], $types[$source]['signed'], digits($types[$source])), 'Three-way integer promotion must be lossless');
         }
-        foreach ([$left, $right] as $source) {
-            if ($source === $execution) continue;
-            $found = false;
-            foreach ($compiler->conversions as $conversion) {
-                if ($conversion->from !== $source || $conversion->to !== $execution) continue;
-                requireThat(in_array($conversion->operation, ['integer_widen', 'numeric_floating'], true), 'Invalid three-way promotion conversion');
-                $conversion->promotion_operators = array_values(array_unique(array_merge($conversion->promotion_operators, ['compare'])));
-                $found = true;
-            }
-            requireThat($found, 'Missing three-way conversion');
-        }
-        $compiler->promotions[] = (object)['left' => $left, 'right' => $right, 'operators' => ['compare'],
+        $row = (object)['left' => $left, 'right' => $right, 'operators' => ['compare'],
             'execution_type' => $execution, 'result' => textValue(at($group, 'result'))];
+        $compiler->promotions[] = $row;
+        $requirements[] = ['promotion' => $row, 'policy' => 'three_way'];
     }
     return $compiler;
+}
+
+/** Expand families in explicit dependency order on a private metadata copy. */
+function compilerFamilyPlan(mixed $metadata, array $definitions, array $types): object {
+    $compiler = unserialize(serialize(at($metadata, 'compiler')));
+    $familyConversions = isset($compiler->conversion_families);
+    $compiler = compilerConversionFamilies($compiler, $definitions, $types);
+    $compiler = compilerMixedNumericOperations($compiler, $definitions);
+    $requirements = [];
+    if ($familyConversions) {
+        foreach (listValue(at($compiler, 'promotions')) as $row) {
+            $requirements[] = ['promotion' => $row, 'policy' => 'family'];
+        }
+    }
+    $compiler = compilerIntegerOperations($metadata, $compiler, $definitions, $types, $requirements);
+    $compiler = compilerThreeWayPromotions($metadata, $compiler, $definitions, $types, $requirements);
+    compilerPromotionPermissions($compiler, $requirements);
+    return $compiler;
+}
+
+/** Finalize only expansion-owned permissions; explicit promotion rows never grant themselves permission. */
+function compilerPromotionPermissions(object $compiler, array $requirements): void {
+    $conversions = [];
+    foreach (listValue(at($compiler, 'conversions')) as $row) {
+        $key = textValue(at($row, 'from')) . ':' . textValue(at($row, 'to'));
+        requireThat(!isset($conversions[$key]), 'Duplicate compiler conversion');
+        $conversions[$key] = $row;
+    }
+    foreach ($requirements as $requirement) {
+        $promotion = $requirement['promotion'];
+        $policy = $requirement['policy'];
+        foreach ([$promotion->left, $promotion->right] as $source) {
+            if ($source === $promotion->execution_type) continue;
+            $conversion = $conversions[$source . ':' . $promotion->execution_type] ?? null;
+            // Family expansion may omit a conversion; the promotion validator owns that rejection.
+            if ($policy === 'family' && $conversion === null) continue;
+            requireThat($conversion !== null, $policy === 'integer' ? 'Integer promotion conversion missing' : 'Missing three-way conversion');
+            if ($policy === 'integer') {
+                requireThat($conversion->operation === 'integer_widen', 'Integer promotion needs a lossless conversion');
+            } elseif ($policy === 'three_way') {
+                requireThat(in_array($conversion->operation, ['integer_widen', 'numeric_floating'], true), 'Invalid three-way promotion conversion');
+            }
+            $conversion->promotion_operators = array_values(array_unique(array_merge(
+                $conversion->promotion_operators, names($promotion->operators))));
+        }
+    }
 }
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
@@ -373,8 +393,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $metadata = clone $metadata;
-    $compiler = compilerIntegerOperations($metadata, $definitions, $types);
-    $compiler = compilerThreeWayPromotions($metadata, $compiler, $definitions, $types);
+    $compiler = compilerFamilyPlan($metadata, $definitions, $types);
     $metadata->compiler = $compiler;
     $families = compilerLiteralFamilies($definitions);
     $files = [];

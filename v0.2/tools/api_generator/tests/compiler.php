@@ -161,9 +161,22 @@ foreach (['count', 'operator', 'binding', 'safety'] as $change) {
     } catch (\RuntimeException $expected) {
     }
 }
+// Expansion owns a private copy; repeated generation must not consume the caller's family policies.
+$originalMetadata = serialize($metadata);
+$registry = registry($metadata, $facts);
+$definitions = compilerTypePlan($metadata, $facts, $registry);
+$familyPlan = compilerFamilyPlan($metadata, $definitions, $registry);
+requireThat(serialize($metadata) === $originalMetadata, 'Family planning mutated input metadata');
+requireThat(serialize(compilerFamilyPlan($metadata, $definitions, $registry)) === serialize($familyPlan), 'Family planning is not repeatable');
+
 // Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
 $registry = registry($metadata, $facts);
-$normalized = compilerIntegerOperations($metadata, compilerTypePlan($metadata, $facts, $registry), $registry);
+$definitions = compilerTypePlan($metadata, $facts, $registry);
+$normalized = compilerConversionFamilies(unserialize(serialize($metadata->compiler)), $definitions, $registry);
+$normalized = compilerMixedNumericOperations($normalized, $definitions);
+$requirements = array_map(static fn($row) => ['promotion' => $row, 'policy' => 'family'], $normalized->promotions);
+$normalized = compilerIntegerOperations($metadata, $normalized, $definitions, $registry, $requirements);
+compilerPromotionPermissions($normalized, $requirements);
 $metadata->compiler = $normalized;
 requireThat(renderCompiler($metadata, $facts) === $files, 'Integer group expansion changed normalized emission');
 $metadata->compiler->promotions = array_values(array_filter($metadata->compiler->promotions,
