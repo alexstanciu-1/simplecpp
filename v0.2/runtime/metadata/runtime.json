@@ -581,6 +581,7 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "provider": "core.string",
     "type": "string",
     "source_type": "string",
     "storage": "private_std_string",
@@ -928,13 +929,13 @@
         "operand": "int64",
         "strategy": "integer",
         "symbol": "scpp::echo_int",
-        "header": "scpp/output.hpp"
+        "declaration_group": "output"
       },
       "echo_bytes": {
         "operand": "string",
         "strategy": "bytes",
         "symbol": "scpp::echo_bytes",
-        "header": "scpp/output.hpp"
+        "declaration_group": "output"
       },
       "int64_divide": {
         "operand": "int64",
@@ -997,7 +998,7 @@
         "kind": "type",
         "identity": "string",
         "symbol": "scpp::string",
-        "header": "scpp/string.hpp"
+        "declaration_group": "string"
       },
       "uint8_divide": {
         "operand": "uint8",
@@ -1233,5 +1234,33 @@
   },
   "integer_aliases": { "byte": "uint8" },
   "core_integers": ["int64", "uint8"],
-  "deferred_text_casts": ["uint8"]
+  "deferred_text_casts": ["uint8"],
+  "output": { "provider": "core.output" },
+  "submodules": {
+    "core.integers": {
+      "module": "core",
+      "header": "scpp/integers.hpp",
+      "requires": [],
+      "existing": "types"
+    },
+    "core.values": {
+      "module": "core",
+      "header": "scpp/values.hpp",
+      "requires": [],
+      "existing": "values"
+    },
+    "core.string": {
+      "module": "core",
+      "header": "scpp/string.hpp",
+      "requires": [
+        "core.integers",
+        "core.values"
+      ]
+    },
+    "core.output": {
+      "module": "core",
+      "header": "scpp/output.hpp",
+      "requires": []
+    }
+  }
 }

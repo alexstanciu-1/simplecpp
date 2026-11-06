@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/submodules.php';
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts', 'submodules', 'output'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];
@@ -190,7 +191,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         requireThat(in_array($name, names(at($metadata, 'core_integers')), true) || in_array('numeric', $modules, true), 'Integer width requires numeric module');
         $types[$name] = $registry[$name];
     }
-    $plan = ['kind' => 'prepared_runtime_api', 'types' => array_values($types), 'native_inputs' => $natives, 'values' => [], 'conversions' => integerConversions($types, $natives), 'operations' => [], 'source_types' => new \stdClass(), 'aliases' => new \stdClass(), 'short_aliases' => [], 'headers' => $headers, 'vectors' => [], 'carriers' => []];
+    $plan = ['kind' => 'prepared_runtime_api', 'types' => array_values($types), 'native_inputs' => $natives, 'values' => [], 'conversions' => integerConversions($types, $natives), 'operations' => [], 'source_types' => new \stdClass(), 'aliases' => new \stdClass(), 'short_aliases' => [], 'submodules' => submodulePlan($metadata, $headers), 'headers' => $headers, 'vectors' => [], 'carriers' => []];
     foreach ($integerAliases as $alias => $target) {
         if (isset($types[$target])) $plan['aliases']->{$alias} = $target;
     }

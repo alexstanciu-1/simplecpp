@@ -20,8 +20,9 @@ its API; they must not carry duplicate nontrivial runtime implementations.
 
 ## Current output boundary
 
-The generator always publishes `scpp/output.hpp` as a fixed core compiler-facing
-ABI, independent of optional modules. It includes only `<stddef.h>` and `<stdint.h>`:
+The generator always publishes the core output declaration group, independent of
+optional modules. Runtime metadata selects its provider submodule; the default is
+`scpp/output.hpp`, including only `<stddef.h>` and `<stdint.h>`:
 
 ```cpp
 void scpp::echo_bytes(const char* data, ::size_t length);
@@ -41,6 +42,36 @@ a short write throws, but a failure deferred until a later flush is not diagnose
 this API. There is no new automatic flush policy. The remaining source-language
 work is tracked in [echo debt](planning/echo_debt.md); the authoritative output
 semantics remain [output_v0_2](../../specs/output_v0_2.md).
+
+## Metadata-owned string/output providers
+
+`runtime.json` owns `submodules` (module, header and direct `requires` dependencies).
+The runtime string and output records select their provider. Compiler bindings
+reference the runtime `declaration_group`, so runtime publication does not depend
+on compiler lowering strategies or maintain a second header spelling.
+
+The API generator validates this graph and each declaration group's intrinsic
+provider requirements before publication. Requirements may be satisfied through
+transitive dependencies. Group export contracts also reject incompatible compiler
+bindings and literal-header fallbacks for migrated bindings. The prepared plan
+separates provider `nodes` from declaration `groups`. The assembler places string
+and output declaration groups into their selected headers. Both may share a
+provider. Existing scalar headers are registered dependency providers whose
+contents and publication-selected paths remain owned by their existing renderers.
+Only core submodules and complete-header dependencies are supported in this slice.
+Other families, scalar representations and general forward-declaration synthesis
+are unchanged.
+
+String publication requests no longer need a header field. A supplied legacy field
+must agree with the provider; it cannot override metadata. The compiler's generated
+header queries resolve providers during generation and retain per-file collection
+at application compilation. The handwritten output implementation includes a
+stable generated private `output_provider.hpp`, which includes the selected public
+header. This private bridge follows relocation without exposing implementation
+headers to application code.
+
+See the [partition plan](planning/runtime_submodule_partitioning.md) for subsequent
+work and the first-slice verification record.
 
 ## Entry target boundary
 

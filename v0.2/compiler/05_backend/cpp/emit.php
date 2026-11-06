@@ -109,6 +109,22 @@ final class Cpp_Emitter
 				$prototypes .= $this->declaration($function, $required_headers) . "\n";
 			}
 		}
+		ksort($global_references, \SORT_STRING);
+		foreach ($global_references as $name => $global) {
+			$include = $this->headers?->declaration_header($global);
+			if ($include !== null) {
+				$unit_headers[$include] = true;
+			}
+			else {
+				$prototypes .= $this->declaration($global, $required_headers) . "\n";
+			}
+		}
+		foreach ($file->globals() as $global) {
+			$include = $this->headers?->declaration_header($global);
+			if ($include !== null) {
+				$unit_headers[$include] = true;
+			}
+		}
 		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
 			$header .= '#include <' . Cpp_Entry_Binding::header() . ">\n";
@@ -117,22 +133,6 @@ final class Cpp_Emitter
 		ksort($required_headers, \SORT_STRING);
 		foreach ($required_headers as $include => $unused) {
 			$header .= '#include <' . $include . ">\n";
-		}
-		ksort($global_references, \SORT_STRING);
-		foreach ($global_references as $name => $global) {
-			$include = $this->headers?->declaration_header($global);
-			if ($include !== null) {
-				$unit_headers[$include] = true;
-			}
-			else {
-				$header .= $this->declaration($global, $required_headers) . "\n";
-			}
-		}
-		foreach ($file->globals() as $global) {
-			$include = $this->headers?->declaration_header($global);
-			if ($include !== null) {
-				$unit_headers[$include] = true;
-			}
 		}
 		ksort($unit_headers, \SORT_STRING);
 		foreach ($unit_headers as $include => $_) {

@@ -699,7 +699,6 @@
     "int_t"
   ],
   "string": {
-    "header": "scpp/string.hpp",
     "operations": [
       "add",
       "add_assign",

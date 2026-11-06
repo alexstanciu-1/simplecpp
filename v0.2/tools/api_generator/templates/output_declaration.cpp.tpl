@@ -1,7 +1,3 @@
-#pragma once
-#include <stddef.h>
-#include <stdint.h>
-
 namespace scpp {
 // Compiler-facing output boundary. Bytes are borrowed for the duration of the call.
 // Writes exact bytes with no separator/newline; integers use locale-independent decimal.

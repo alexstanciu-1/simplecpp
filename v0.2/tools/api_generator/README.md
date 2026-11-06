@@ -24,6 +24,9 @@ is also the rendering input, avoiding a second serialization model.
   Semantic integer fields require exact nonnegative PHP integers; no supported
   field requires values beyond the signed 64-bit host range.
 - `php/target.php`: explicit C++ target facts/context validation.
+- `php/submodules.php`: shared provider/dependency planning, compiler binding resolution
+  and assembly of movable string/output declaration groups. Runtime group providers
+  are independent of compiler strategies; other families keep existing renderers.
 - `php/scalars.php`: integer, boolean, null and floating API preparation.
 - `php/families.php`: strings, vectors, carriers, hashes, datetime and record ownership.
 - `php/boxed.php`: optional mixed/dynamic publication with measured inline layouts,
@@ -208,3 +211,30 @@ outcomes and native facts were compared and remained identical.
 Publication manifest version 2 records the native string byte-count API change.
 String constructor counts and size results use the prepared native representation;
 the wrapped count signature is no longer emitted. See [string boundaries](../../specs/string_slice.md).
+
+## String/output submodule verification
+
+The core string/output providers and their direct public dependencies live in
+`runtime/metadata/runtime.json`. Compiler bindings refer to runtime declaration
+groups; public paths are resolved once during compiler generation. Runtime
+publication version 3 also records `private/output_provider.hpp` for the compiled
+output implementation. Default APIs and scalar storage remain unchanged.
+
+Run the relocation, native include-selection, incremental recovery and publication
+proof after building `scpp_runtime`:
+
+```sh
+XDEBUG_MODE=off python3 -B tools/api_generator/tests/submodules.py \
+  --output build/submodules-proof
+```
+
+The proof uses isolated publications and compiler bootstraps, never replaces the
+production generated PHP, and writes stage timings/include closures to
+`results.json`. It is registered as CTest `runtime_submodule_providers`.
+
+The shared plan separates provider nodes from declaration groups. Group contracts
+supply intrinsic dependencies and exported binding roles; the planner validates
+dependency reachability, and compiler resolution rejects wrong owners or migrated
+literal-header fallbacks. The provider proof also regenerates handlers and restarts
+the real project compiler against an existing application/native build. Restart
+retained PHP compiler processes after regeneration; hot replacement is not supported.

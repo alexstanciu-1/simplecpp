@@ -6,7 +6,9 @@ This implements the arithmetic-binding portion of finding 4 in the
 [saved metadata audit](../../specs/planning/compiler_metadata_audit.md).
 
 `compiler.runtime_bindings` in runtime metadata owns each helper's public C++ symbol,
-header, operand/result identities and supported lowering strategy. Arithmetic rows
+operand/result identities and supported lowering strategy. Legacy bindings retain
+a header field; string storage and output instead reference a runtime-owned
+`declaration_group`, whose provider determines the header during generation. Arithmetic rows
 refer to these records through `bindings`, keyed by operator. The three current
 bindings are int64 division, int64 remainder and float64 division.
 
@@ -175,3 +177,24 @@ instrumented application objects. Stage trace sums are not additive wall-time co
 | cpp | 116.75 | 9.74 | 14.25 | 60.00 |
 | php | 151.33 | 11.11 | 18.40 | 80.00 |
 | js | 116.47 | 8.61 | 15.18 | 60.00 |
+
+## String/output submodule providers
+
+String storage and output header queries now consume the shared submodule plan.
+Runtime string/output records own group placement; bindings reference those groups
+without duplicating header paths. Application compilation still uses the existing
+per-file header collection and does not interpret metadata. Global declaration
+requirements are now collected before include emission, including standalone
+emission without a cross-unit header planner.
+
+The [partition plan](../../specs/planning/runtime_submodule_partitioning.md) records
+scope and verification. Scalar representations, output signatures and other
+runtime families are unchanged in this first slice.
+
+Group export contracts now validate that migrated bindings select their actual
+owner; those bindings cannot opt back into an independent header field. After
+regenerating compiler PHP, restart the compiler process and any retained
+`Incremental_Project` session. Loaded PHP classes are not hot-reloaded. A new
+`Project_Compiler` process uses the existing compiler-input scan to invalidate
+cached application output when its generated handlers change. The provider proof
+covers this path against an existing application/native build for all flavors.

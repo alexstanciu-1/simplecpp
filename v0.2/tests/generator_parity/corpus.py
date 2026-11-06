@@ -69,7 +69,9 @@ def cases(root: Path):
             group[key] = value.replace("scpp/", "scpp/custom/")
     for key in ["string", "vectors", "carriers"]:
         renamed[key]["header"] = renamed[key]["header"].replace("scpp/", "scpp/custom/")
-    add("custom_headers", renamed)
+    renamed_metadata = copy.deepcopy(metadata)
+    renamed_metadata["submodules"]["core.string"]["header"] = renamed["string"]["header"]
+    add("custom_headers", renamed, renamed_metadata)
 
     vectors = copy.deepcopy(default)
     del vectors["carriers"]

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Scpp\Api;
 
 // Bump when generated output layout or contracts require a fresh publication.
-const OUTPUT_VERSION = 2;
+const OUTPUT_VERSION = 3;
 const OUTPUT_EXTENSIONS = ['hpp', 'cpp', 'json'];
 
 /** Enumerate disposable output without following directory or file symlinks. */

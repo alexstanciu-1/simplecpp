@@ -5,14 +5,18 @@ function lifecycle(string $n): array {
     return [template('lifecycle_declaration', ['n' => $n]), template('lifecycle_definition', ['n' => $n])];
 }
 
-function renderSequences(array $plan, array &$files, string &$definitions): void {
+function renderSequences(array $plan, array &$files, string &$definitions, array &$groups): void {
     foreach(['string' => 'renderString', 'vectors' => 'renderVectors', 'carriers' => 'renderCarriers'] as $family => $renderer) {
         $path = $family === 'string' ? ($plan['string']['header'] ?? null):($plan[$family . '_header'] ?? null);
         if($path === null) {
             continue;
         }
         [$h, $d] = (__NAMESPACE__ . '\\' . $renderer)($plan);
-        $files['public/' . $path] = BANNER . $h;
+        if ($family === 'string') {
+            $groups[] = ['provider' => $plan['string']['provider'], 'declarations' => $h, 'system' => []];
+        } else {
+            $files['public/' . $path] = BANNER . $h;
+        }
         $definitions .= $d;
     }
 }
@@ -21,10 +25,8 @@ function renderString(array $plan): array {
     $s = $plan['string'];
     $n = $s['name'];
     $count = $s['count_representation'];
-    $types = $plan['headers']['types'];
-    $vals = $plan['headers']['values'];
     [$lh, $ld] = lifecycle($n);
-    $vars = compact('n', 'count', 'types', 'vals', 'lh', 'ld');
+    $vars = compact('n', 'count', 'lh', 'ld');
     $h = template('string_declaration', $vars);
     foreach(NATIVES as $native) {
         $h .= "    explicit $n($native) = delete;\n";
