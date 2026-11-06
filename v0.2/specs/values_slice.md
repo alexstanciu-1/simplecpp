@@ -2,6 +2,11 @@
 
 Doc Status: normative
 
+Current ABI override: [native scalar aliases](native_scalar_aliases.md) supersedes
+wrapper constructors, extraction methods, overloaded scalar operators and native
+bridge descriptions below. Those ABI descriptions record the earlier slices;
+source-language checking continues through generated handlers and named helpers.
+
 Scope: standalone runtime/generator contracts inside v0.2, not compiler source
 admission. This extends the integer contract without importing the old runtime.
 

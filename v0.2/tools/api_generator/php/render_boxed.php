@@ -14,9 +14,15 @@ function renderBoxed(array $plan, array &$files): void {
         $peer = $n === 'mixed' ? 'dynamic' : 'mixed';
         $vars = $family + ['count' => $plan['string']['count_representation'], 'n' => $n, 'conversion' => $box['scalar_conversions'] ? "    static $n from_{$peer}_scalar(const $peer& value);\n" : '',
             'self' => $get('*this'), 'other' => $get('other'), 'result' => $get('result'), 'value' => $get('value')];
-        $h .= template('boxed_declaration', $vars);
+        $fences = '';
+        foreach (['from_boolean' => 'bool_t', 'from_integer' => 'int64', 'from_floating' => 'float64'] as $method => $input) {
+            $fences .= preg_replace('/^void /m', 'static void ', scalarInputFences($plan, $method, [[$input]]));
+        }
+        foreach (['read', 'has', 'remove'] as $method) $fences .= scalarInputFences($plan, $method, [['const int64&'], ['const string&']], false, $method === 'remove' ? '' : ' const');
+        $fences .= scalarInputFences($plan, 'set', [['int64', $n], ['const string&', $n]]);
+        $h .= template('boxed_declaration', $vars + ['fences' => $fences]);
         $d .= template('boxed_definition', $vars);
-        foreach (['int64' => 'key.native_value()', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
+        foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";
             $d .= "bool_t $n::has(const $key& key) const { return bool_t{{$self}.contains($expression)}; }\n";

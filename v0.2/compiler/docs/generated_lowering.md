@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+Current representation: [native scalar aliases](../../specs/native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
 ## Agreed direction
 
 The runtime API generator also generates executable PHP traits for the C++ backend.

@@ -34,6 +34,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     $plan = prepareScalars($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
+    prepareCheckedConversions($metadata, $facts, $plan);
     prepareVectors($metadata, $publication, $registry, $plan);
     prepareBoxed($metadata, $publication, $facts, $plan);
     prepareCarriers($metadata, $publication, $plan);
@@ -259,7 +260,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         requireThat($family !== 'result' || (isset($plan['string']) && hasType($plan, 'int64')), 'Result error payload requires string and int64');
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
-        $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['default_state' => CARRIER_DEFAULTS[$family], 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'query_state_explicitly', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
+        $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['default_state' => CARRIER_DEFAULTS[$family], 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'cpp_payload_conversion_rules', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
         if ($payloadInfo['kind'] === 'boxed') {
             $carriers[$name]['payload_header'] = $payloadInfo['header'];
             $carriers[$name]['payload_copy'] = $payloadInfo['copy'];

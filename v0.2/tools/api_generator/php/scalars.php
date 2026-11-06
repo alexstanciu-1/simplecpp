@@ -32,7 +32,7 @@ function registry(mixed $metadata, array $facts): array {
         requireThat($name === ($signed ? 'int' : 'uint') . $bits, 'Integer identity disagrees with width/signedness');
         $native = $facts['fixed_integers'][$name] ?? null;
         requireThat($native !== null && $native['signed'] === $signed && $native['digits'] === $bits - (int)$signed, 'Native fixed-width mismatch');
-        $types[$name] = ['name' => $name, 'representation' => '__' . ($signed ? 'INT':'UINT') . $bits . '_TYPE__', 'signed' => $signed, 'bits' => $bits];
+        $types[$name] = ['name' => $name, 'representation' => '__' . ($signed ? 'INT':'UINT') . $bits . '_TYPE__', 'native_name' => $native['native_name'], 'signed' => $signed, 'bits' => $bits];
     }
     requireThat($types !== [], 'Expected integer type definitions');
     foreach (object(at($metadata, 'integer_aliases')) as $alias => $target) {
@@ -125,11 +125,10 @@ function hasNative(array $plan, string $name): bool {
 
 function scalarHeaders(mixed $publication): array {
     $headers = at($publication, 'headers');
-    $keys = ['types', 'values', 'operators', 'short_names', 'native_bridge'];
+    $keys = ['types', 'values', 'operators', 'short_names'];
     fields($headers, $keys);
     $out = [];
     foreach ($keys as $key) {
-        if ($key === 'native_bridge' && !property_exists($headers, $key)) continue;
         $path = headerPath(at($headers, $key));
         requireThat(!in_array($path, $out, true), 'Conflicting public headers');
         $out[$key] = $path;
@@ -320,7 +319,6 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
             }
             else {
                 fields($arg, ['native']);
-                requireThat(isset($headers['native_bridge']), 'Native operators require a native_bridge header');
                 requireThat($binding['native'], 'Native arithmetic is not enabled');
                 $cpp = textValue(at($arg, 'native'));
                 $native = null;

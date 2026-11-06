@@ -46,18 +46,10 @@ foreach ($core->operators as $request) {
 }
 requireThat(encode(prepareRuntime($meta, $both, $facts)) === encode($plan), 'Alias publication created duplicate definitions');
 $before = render($plan);
-requireThat(str_contains($before['public/scpp/integers.hpp'], 'class uint8 final') && str_contains($before['public/scpp/integers.hpp'], 'using byte = uint8;'), 'No canonical uint8 and byte alias');
-requireThat(!str_contains($before['public/scpp/integers.hpp'], 'class int32'), 'Optional width leaked into core');
+requireThat(str_contains($before['public/scpp/integers.hpp'], 'using uint8 = __UINT8_TYPE__') && str_contains($before['public/scpp/integers.hpp'], 'using byte = uint8;'), 'No canonical uint8 and byte alias');
+requireThat(!str_contains($before['public/scpp/integers.hpp'], 'using int32 ='), 'Optional width leaked into core');
 echo "Numeric module and canonical byte alias contracts passed\n";
 
-// Native operator publication is explicit; constructors remain core.
-$withoutBridge = decode(encode($core), 'core');
-unset($withoutBridge->headers->native_bridge);
-rejects(fn() => prepareRuntime($meta, $withoutBridge, $facts), 'native_bridge header');
-$withoutBridge->operators = array_values(array_filter($withoutBridge->operators,
-    fn(object $request): bool => count(array_filter($request->operands, fn(mixed $operand): bool => is_object($operand))) === 0));
-$bridgeFree = render(prepareRuntime($meta, $withoutBridge, $facts));
-requireThat(!isset($bridgeFree['public/scpp/native_bridge.hpp']), 'Bridge emitted without explicit header request');
-requireThat(isset($before['public/scpp/native_bridge.hpp']), 'Explicit bridge request was ignored');
-requireThat(str_contains($bridgeFree['public/scpp/integers.hpp'], 'explicit int64(int value)'), 'Bridge removal disabled native construction');
-echo "Optional native bridge contracts passed\n";
+// Native arithmetic is builtin; the old operator bridge is retired.
+requireThat(!isset($before['public/scpp/native_bridge.hpp']), 'Retired native bridge emitted');
+requireThat(!str_contains($before['public/scpp/numeric.hpp'], 'operator'), 'Scalar overloads survived alias migration');

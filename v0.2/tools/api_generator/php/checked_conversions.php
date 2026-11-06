@@ -4,6 +4,7 @@ namespace Scpp\Api;
 
 /** Native transport for a published scalar; wrapper identity remains separate during migration. */
 function checkedConversionRepresentation(array $plan, array $facts, string $identity): array {
+    if ($identity === 'string' && isset($plan['string'])) return ['cpp' => 'const string&', 'native_name' => null];
     foreach ($plan['types'] as $type) {
         if ($type['name'] === $identity) {
             return ['cpp' => $type['representation'], 'native_name' => $facts['fixed_integers'][$identity]['native_name']];
@@ -32,11 +33,11 @@ function prepareCheckedConversions(mixed $metadata, array $facts, array &$plan):
     $representations = [];
     $functions = [];
     foreach ($plan['conversions'] as $conversion) {
-        if ($conversion['native_source']) continue;
+        if ($conversion['native_source'] || $conversion['target'] === 'string') continue;
         $source = $conversion['source'];
         $target = $conversion['target'];
         $implementation = $conversion['implementation'];
-        requireThat(in_array($implementation, ['checked_integer_cast', 'floating_integer_cast', 'numeric_cast', 'truth_cast'], true), 'Unsupported named conversion implementation');
+        requireThat(in_array($implementation, ['checked_integer_cast', 'floating_integer_cast', 'numeric_cast', 'truth_cast', 'parse_decimal', 'parse_boolean_text'], true), 'Unsupported named conversion implementation');
         foreach ([$source, $target] as $identity) {
             $representations[$identity] ??= checkedConversionRepresentation($plan, $facts, $identity);
         }

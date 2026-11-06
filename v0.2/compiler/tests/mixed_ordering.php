@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify($before === serialize($entry), 'Lowering mutated facts');
-	verify(str_contains($cpp, 'static_cast<double>'), 'Missing shared numeric conversion');
+	verify(str_contains($cpp, 'static_cast<scpp::float64>'), 'Missing shared numeric conversion');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected)];
 	foreach (['true < 1.0'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');

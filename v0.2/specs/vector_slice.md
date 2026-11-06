@@ -2,6 +2,8 @@
 
 Doc Status: normative
 
+Current representation: [native scalar aliases](native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 

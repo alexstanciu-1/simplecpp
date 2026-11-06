@@ -382,6 +382,9 @@ final class Cpp_Emitter
 		bool &$reorderable = false): string
 	{
 		$reorderable = false;
+		foreach ($value->type_def()->cpp_headers() as $header) {
+			$required_headers[$header] = true;
+		}
 		if ($value instanceof ast_cast_expression) {
 			$type = $value->type_def();
 			$conversion = $value->conversion();

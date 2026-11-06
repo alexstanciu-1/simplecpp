@@ -67,7 +67,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
         compile(out, f'int main() {{ auto r = scpp::json::encode({expression}); }}')
         compile(out, '', preprocess=True)
         for rejected in ['42LL', 'true', '1.25', '"text"', 'scpp::null_t{}']:
-            compile(out, f'int main() {{ auto r = scpp::json::encode({rejected}); }}', False)
+            compile(out, f'int main() {{ auto r = scpp::json::encode({rejected}); }}',
+                    (argument == 'bool_t' and rejected == 'true') or (argument == 'float64' and rejected == '1.25'))
         compile(out, 'int main() { auto r = scpp::json::decode(scpp::string{}); }', False)
         for other in ['int64', 'float64', 'bool_t', 'string']:
             if other != argument:

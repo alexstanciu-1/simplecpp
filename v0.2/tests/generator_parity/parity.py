@@ -92,7 +92,7 @@ def publish(generator, case, work):
     stdout = invoke(generator, args)
     first = tree(output)
     manifest = json.loads(first["inventory.json"])
-    require(manifest["generator"] == "scpp-api" and manifest["version"] == 2, "manifest identity/version")
+    require(manifest["generator"] == "scpp-api" and manifest["version"] == 3, "manifest identity/version")
     inventory = manifest["files"]
     require(inventory == sorted(set(first) - {"inventory.json"}), f"{case.name}: inventory mismatch")
     timestamps = {p: p.stat().st_mtime_ns for p in output.rglob("*") if p.is_file()}

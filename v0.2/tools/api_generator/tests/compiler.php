@@ -193,7 +193,7 @@ try {
 } catch (\RuntimeException $error) {
     requireThat(str_contains($error->getMessage(), 'count_type'), 'Unexpected string rejection');
 }
-requireThat(str_contains($files['types/int64.php'], "return '__INT64_TYPE__'"), 'Missing metadata-derived representation');
+requireThat(str_contains($files['types/int64.php'], "return 'scpp::int64'"), 'Missing metadata-derived representation');
 $bad = clone $metadata;
 $bad->types = clone $metadata->types;
 unset($bad->types->int64);
@@ -335,7 +335,7 @@ try {
     requireThat(\scpp\compiler\type_registry::resolve('int') === $type && \scpp\compiler\type_registry::resolve('int64') === $type, 'Registration identity differs');
     requireThat(\scpp\compiler\type_registry::resolve('vector') === null, 'Out-of-scope type registered');
     requireThat($type::MINIMUM === PHP_INT_MIN && $type::MAXIMUM === PHP_INT_MAX, 'Generated bounds differ');
-    requireThat($type->cpp_type() === '__INT64_TYPE__', 'Wrong native type');
+    requireThat($type->cpp_type() === 'scpp::int64', 'Wrong native type');
     requireThat($type->accepts_name('int') && $type->accepts_name('int64'), 'Missing canonical source aliases');
     foreach ([0, 8, PHP_INT_MAX, PHP_INT_MIN] as $value) {
         $expected = $value === PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : $value . 'LL';
@@ -609,9 +609,9 @@ $bound->checked_conversions->header = 'scpp/test_conversions.hpp';
 $bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_string';
 $bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_string.hpp';
 $boundFiles = renderCompiler($bound, $facts);
-requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<__INT64_TYPE__>'), 'Checked binding ignored');
+requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<scpp::int64>'), 'Checked binding ignored');
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp/test_conversions.hpp'), 'Checked header binding ignored');
-requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64(static_cast<double>'), 'Floating checked binding ignored');
+requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64(static_cast<scpp::float64>'), 'Floating checked binding ignored');
 requireThat(str_contains($boundFiles['types/string.php'], 'scpp::test_string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
 foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $change) {
     $bad = unserialize(serialize($metadata));
@@ -619,7 +619,7 @@ foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $chan
         'missing' => $bad->compiler->value_types->string->storage_binding = 'missing',
         'identity' => $bad->compiler->runtime_bindings->string_storage->identity = 'int64',
         'kind' => $bad->compiler->runtime_bindings->string_storage->kind = 'function',
-        'extract' => $bad->compiler->runtime_bindings->boxed_bool->extract = 'value()',
+        'extract' => $bad->compiler->runtime_bindings->scalar_bool->extract = 'value()',
         'symbol' => $bad->compiler->runtime_bindings->string_storage->symbol = 'scpp::type{}',
         'header' => $bad->compiler->runtime_bindings->string_storage->header = '../private.hpp',
     };
@@ -916,7 +916,7 @@ $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->string);
 requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'binary_operator::equal =>'), 'Removed string comparison still generated');
 $renamed = unserialize(serialize($metadata));
-$renamed->compiler->runtime_bindings->boxed_bool->extract = 'test_value';
+$renamed->compiler->runtime_bindings->scalar_bool->extract = 'test_value';
 requireThat(str_contains(renderCompiler($renamed, $facts)['types/string.php'], ').test_value()'), 'String result extraction ignores binding');
 
 // Concatenation is independent of comparisons and requires explicit runtime/flavor/safety policy.
@@ -958,7 +958,7 @@ try {
 // Strict identity is independently admitted and rejects unsafe or unknown policies.
 $identityOnly = unserialize(serialize($metadata));
 unset($identityOnly->compiler->comparisons->string);
-$identityOnly->compiler->runtime_bindings->identity_test_bool = clone $identityOnly->compiler->runtime_bindings->boxed_bool;
+$identityOnly->compiler->runtime_bindings->identity_test_bool = clone $identityOnly->compiler->runtime_bindings->scalar_bool;
 $identityOnly->compiler->runtime_bindings->identity_test_bool->extract = 'identity_value';
 $identityOnly->compiler->strict_identity->result_binding = 'identity_test_bool';
 $identitySource = renderCompiler($identityOnly, $facts)['types/string.php'];

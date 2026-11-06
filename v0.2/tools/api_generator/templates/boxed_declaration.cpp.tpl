@@ -28,7 +28,7 @@ public:
     int64 container_size() const;
     bool_t is_packed_container() const;
     void clean() noexcept;
-@conversion@private:
+@conversion@@fences@private:
     friend struct detail::ownership_access;
     alignas(@alignment@) unsigned char storage_[@size@];
 };

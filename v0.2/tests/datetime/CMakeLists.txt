@@ -2,7 +2,7 @@ set(datetime_generated ${CMAKE_BINARY_DIR}/generated-datetime-proof)
 set(datetime_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(datetime_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp
-    public/scpp/native_bridge.hpp public/scpp/short_names.hpp public/scpp/string.hpp
+    public/scpp/conversions.hpp public/scpp/short_names.hpp public/scpp/string.hpp
     public/scpp/carriers.hpp public/scpp/datetime.hpp src/runtime.cpp src/datetime.cpp prepared.json inventory.json)
   list(APPEND datetime_outputs ${datetime_generated}/${path})
 endforeach()

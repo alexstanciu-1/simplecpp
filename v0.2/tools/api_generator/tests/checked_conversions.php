@@ -16,9 +16,9 @@ $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[
 $plan = prepareRuntime($metadata, $publication, $facts);
 $files = render($plan);
 $header = $files['public/scpp/conversions.hpp'];
-requireThat(count($plan['checked_conversions']['functions']) === 12, 'Core numeric conversion surface changed');
+requireThat(count(array_filter($plan['checked_conversions']['functions'], static fn(array $function): bool => $function['source'] !== 'string')) === 12, 'Core numeric conversion surface changed');
 requireThat(!str_contains($header, 'null_t') && !str_contains($header, 'to_string'), 'Unrelated conversion admitted');
-requireThat(!str_contains($header, 'template') && !str_contains($header, '#include'), 'Conversion header gained implementation dependencies');
+requireThat(!str_contains($header, 'template') && !str_contains($header, '#include <'), 'Conversion header gained implementation dependencies');
 requireThat(str_contains($header, 'void checked_int64_to_uint8(double) = delete;'), 'Floating input narrowing is not fenced');
 $native = $facts['fixed_integers']['int64']['native_name'];
 requireThat(!str_contains($header, "void checked_int64_to_uint8($native) = delete;"), 'Primary native alias was deleted');
@@ -31,7 +31,7 @@ $renamedFiles = render(prepareRuntime($renamed, $publication, $facts));
 requireThat(!isset($renamedFiles['public/scpp/conversions.hpp'])
     && str_contains($renamedFiles['public/scpp/named_numeric.hpp'], 'convert_float64_to_int64'), 'Named binding policy ignored');
 
-// Removing a scalar cast policy removes helpers as well as wrappers; there is no second admission matrix.
+// Removing a scalar cast policy removes helpers; there is no second admission matrix.
 $limited = unserialize(serialize($metadata));
 $limited->scalar_casts = array_values(array_diff($limited->scalar_casts, ['floating_to_integer_truncate_checked']));
 $limitedFiles = render(prepareRuntime($limited, $publication, $facts));
@@ -53,7 +53,7 @@ foreach (['prefix', 'path', 'collision'] as $change) {
     } catch (\RuntimeException $expected) {}
 }
 
-// This migration slice is additive: existing wrapper artifacts remain byte-identical.
+// This migration slice is additive: existing alias artifacts remain byte-identical.
 $without = unserialize(serialize($metadata));
 unset($without->checked_conversions);
 $oldFiles = render(prepareRuntime($without, $publication, $facts));
@@ -62,4 +62,4 @@ foreach ($oldFiles as $path => $contents) {
     requireThat($contents === $files[$path], 'Named helper publication changed an existing API: ' . $path);
 }
 requireThat(!isset($oldFiles['public/scpp/conversions.hpp']), 'Removed helper policy still emitted');
-echo "Named conversion bindings, admission, input guards and unchanged wrapper APIs passed\n";
+echo "Named conversion bindings, admission, input guards and alias APIs passed\n";

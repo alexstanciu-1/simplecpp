@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-profiles-') as temporary:
         assert 'native_bridge' not in plan['headers']
         assert not (root/'runtime/generated/public/scpp/native_bridge.hpp').exists()
         types = {t['name'] for t in plan['types']}
-        assert types == {'int64', 'byte'} | ({'int32'} if numeric else set()) | ({'uint64'} if dt else set())
+        assert types == {'int64', 'uint8'} | ({'int32'} if numeric else set()) | ({'uint64'} if dt else set())
         assert (root/'runtime/generated/public/scpp/json.hpp').exists() == js
         assert (root/'runtime/generated/src/json.cpp').exists() == js
         assert (root/'runtime/generated/public/scpp/datetime.hpp').exists() == dt
@@ -48,17 +48,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-profiles-') as temporary:
         assert 'Generating ' not in log and 'Building CXX' not in log
         print('production profile passed:', profile or 'core', flush=True)
 
-    # Opt in, compile native arithmetic, then disable and remove the stale header.
+    # Native aliases need no opt-in bridge and still have a standalone public boundary.
     generated = root/'runtime/generated'
-    probe = root/'bridge_probe.cpp'
-    for enabled in [True, False]:
-        run('cmake', '--preset', 'default', '-DSCPP_ENABLE_NATIVE_BRIDGE='+('ON' if enabled else 'OFF'))
-        run('cmake', '--build', '--preset', 'default')
-        assert (generated/'public/scpp/native_bridge.hpp').exists() == enabled
-        header = 'native_bridge' if enabled else 'numeric'
-        probe.write_text('#include <scpp/'+header+'.hpp>\n'
-            'template<class T> concept native_add = requires(T v) { v + 2; 2 + v; };\n'
-            'static_assert('+('' if enabled else '!')+'native_add<scpp::int64>);\n'
-            'auto typed_add() { return scpp::int64{1} + scpp::int64{2}; }\n')
-        run('clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(generated/'public'), str(probe))
-        print('native bridge profile passed:', enabled, flush=True)
+    probe = root/'alias_probe.cpp'
+    probe.write_text('#include <scpp/numeric.hpp>\n'
+        'template<class T> concept native_add = requires(T v) { v + 2; 2 + v; };\n'
+        'static_assert(native_add<scpp::int64>);\n')
+    run('clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(generated/'public'), str(probe))

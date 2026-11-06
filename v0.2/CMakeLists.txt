@@ -73,9 +73,6 @@ set(runtime_outputs
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
-if(SCPP_ENABLE_NATIVE_BRIDGE)
-  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/native_bridge.hpp)
-endif()
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
 endif()
@@ -151,14 +148,14 @@ if(BUILD_TESTING)
   set(numeric_proof_outputs)
   foreach(path public/scpp/conversions.hpp public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/string.hpp
       public/scpp/values.hpp public/scpp/integers.hpp public/scpp/numeric.hpp
-      public/scpp/native_bridge.hpp public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
+      public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
     list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
   endforeach()
   add_custom_command(OUTPUT ${numeric_proof_outputs}
     COMMAND ${generator_launcher} ${runtime_metadata} ${numeric_proof_publication} ${numeric_proof_generated}
     DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context}
       ${generator_launcher} ${runtime_metadata} ${numeric_proof_publication} VERBATIM)
-  add_library(numeric_proof_runtime STATIC ${numeric_proof_generated}/src/runtime.cpp)
+  add_library(numeric_proof_runtime STATIC ${numeric_proof_generated}/src/runtime.cpp runtime/src/numeric/arithmetic.cpp)
   target_include_directories(numeric_proof_runtime PUBLIC ${numeric_proof_generated}/public
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
   target_compile_features(numeric_proof_runtime PUBLIC cxx_std_23)
@@ -440,12 +437,12 @@ if(BUILD_TESTING)
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/integer-full-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/integer_full_publication.cmake)
-  add_test(NAME native_operator_publication COMMAND ${CMAKE_COMMAND}
+  add_test(NAME scalar_alias_publication COMMAND ${CMAKE_COMMAND}
     -DGENERATOR=${generator_launcher}
     -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/native-publication-proof
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_operator_publication.cmake)
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/scalar_alias_publication.cmake)
 endif()
 
 

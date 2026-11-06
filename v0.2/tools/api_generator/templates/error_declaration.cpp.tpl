@@ -8,9 +8,9 @@ public:
     string get_message() const;
     int64 get_line() const noexcept;
     string get_file() const;
-private:
+@fences@private:
     bool present_ = false;
     string message_;
-    int64 line_;
+    int64 line_{};
     string file_;
 };

@@ -61,7 +61,7 @@ int main() {
     auto locked = observer_copy.lock();
     require(&*locked == address && &*copy == address);
     copy->value = int64{9};
-    require(owner->value.native_value() == 9 && ownership_test::copied == 0);
+    require(owner->value == 9 && ownership_test::copied == 0);
     auto moved = std::move(copy);
     require(!copy && &*moved == address);
     copy = std::move(moved);
@@ -86,7 +86,7 @@ int main() {
     require(unique_cost == 1);
     start = allocations.load();
     auto moved_unique = std::move(unique);
-    require(!unique && moved_unique->value.native_value() == 3);
+    require(!unique && moved_unique->value == 3);
     unique = std::move(moved_unique);
     auto &unique_self = unique; unique = std::move(unique_self);
     require(static_cast<bool>(unique));
@@ -102,7 +102,7 @@ int main() {
         auto acquired = weak.lock();
         require(&*acquired == &*second);
         auto exclusive = unique_record_noncopyable::make(int64{6});
-        require(exclusive->value.native_value() == 6);
+        require(exclusive->value == 6);
     }
     require(ownership_test::live == 0);
     // Failed construction must release its allocation, and replacement preserves the old owner.
@@ -110,12 +110,12 @@ int main() {
     const auto baseline = allocations.load() - releases.load();
     rejects<record_construction_failure>([&] { preserved = shared_record_probe::make(int64{-1}); });
     rejects<record_construction_failure>([] { (void)unique_record_probe::make(int64{-1}); });
-    require(preserved->value.native_value() == 11 && allocations.load() - releases.load() == baseline);
+    require(preserved->value == 11 && allocations.load() - releases.load() == baseline);
     fail_allocation = true;
     rejects<std::bad_alloc>([&] { preserved = shared_record_probe::make(int64{12}); });
     fail_allocation = true;
     rejects<std::bad_alloc>([] { (void)unique_record_probe::make(int64{12}); });
-    require(preserved->value.native_value() == 11);
+    require(preserved->value == 11);
     preserved.reset();
 
     // Distinct weak handles race lock against last strong release; payload is read-only.
@@ -129,7 +129,7 @@ int main() {
             while (!go.load()) std::this_thread::yield();
             for (unsigned i = 0; i < 256; ++i) {
                 auto acquired = weak.lock();
-                if (acquired) require(acquired->value.native_value() == 42);
+                if (acquired) require(acquired->value == 42);
             }
         });
         while (!ready.load()) std::this_thread::yield();

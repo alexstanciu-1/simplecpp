@@ -1,11 +1,9 @@
 # Adopted native scalar alias ABI and checked conversions
 
-Doc Status: planning
-Date: 2026-11-06
-Status: direction adopted; [slices 1 and 2 implemented](../checked_conversions.md).
-Wrappers remain published; the coordinated alias cutover is pending.
-Compiler numeric checked conversions now use named helpers; string comparison still
-extracts the wrapped boolean result until its runtime API migrates.
+Doc Status: slices 1–3 implemented. See the current
+[native scalar ABI](../native_scalar_aliases.md) and [checked conversions](../checked_conversions.md).
+The user approved implicit carrier extraction followed by native conversions and
+truthiness. The former no-truthiness wrapper restriction is superseded.
 
 ## Scope and ownership
 
@@ -110,7 +108,7 @@ C++ semantics; callers needing Simple C++ behavior must use the named operations
 
 ## Initialization, collections and migration constraints
 
-Wrapper default constructors currently establish zero/false. Native aliases do not
+Former wrapper default constructors established zero/false. Native aliases do not
 zero-initialize an uninitialized local. Generated declarations and runtime fields
 must explicitly initialize where the existing contract requires it. Preserve reset,
 moved-from, nullable/result and container lifecycle states when replacing wrappers.
@@ -120,8 +118,8 @@ explicitly selected adapters are admitted; other native inputs retain generated
 deleted overload fences. Alias-equivalent types share one signature. Vector casts
 must use named checked conversion bindings before appending/storing; partial failure
 discards the temporary and preserves source/destination. No public template is needed.
-Null behavior is unchanged. Native bool element storage and its std::vector<bool>
-proxy implications need their own bounded review before migration.
+Null behavior is unchanged. Native bool vector reads normalize private proxies to
+values before conversion; the migrated vector consumers verify this boundary.
 
 This is a coordinated ABI break, not a source-compatible typedef substitution.
 Rebuild generated runtime implementations, archives and consumers together. Retire
@@ -129,7 +127,7 @@ obsolete scalar constructors/operators/native bridges rather than keep two perma
 scalar APIs. Temporary coexistence while introducing helpers is a migration stage,
 not the final design. Do not add compatibility wrappers or module-version machinery.
 
-## Proposed implementation slices for discussion
+## Implementation slices (1–3 complete)
 
 1. Add named concrete conversion functions while wrappers still exist. Use native
    representations in their ABI, metadata-selected bindings, exact input guards and
@@ -157,10 +155,6 @@ do not establish a measured speedup.
 
 ## Current worktree boundary
 
-The earlier bounded vector migration is paused and saved outside the active source
-changes as a local patch (`/tmp/scpp-paused-vector-arwtc0f6/prototype.patch`). Its
-wrapped API baseline was restored for slice 1, so named conversion publication is
-additive and does not change collection consumers. Probe-measured native identities
-were retained as a prerequisite for exact conversion-input fences. Reconcile the
-saved vector prototype with the alias cutover before resuming it; it is not a
-completed migration or part of the checked-conversion implementation.
+The alias cutover supersedes the earlier standalone vector prototype. Do not reapply
+that saved patch. Runtime publication fixtures are consolidated with this cutover;
+source vector<T> syntax and compiler integration remain the next separate discussion.

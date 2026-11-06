@@ -28,10 +28,10 @@ for name, operations, types, strings, carriers, body in [
     ('signed',['now_unix_seconds','sleep_millis'],['int64'],False,False,'scpp::dt::sleep_millis(scpp::int64{0}); (void)scpp::dt::now_unix_seconds();'),
     ('unsigned',['monotonic_nanos'],['uint64'],False,False,'(void)scpp::dt::monotonic_nanos();'),
     ('format',['format_iso_utc'],['int64'],True,False,'return scpp::dt::format_iso_utc(scpp::int64{0}).size()!=20;'),
-    ('parse',['parse_iso_utc'],['int64'],True,True,'return !scpp::dt::parse_iso_utc(scpp::string{"1970-01-01T00:00:00Z"}).has_value().native_value();'),
+    ('parse',['parse_iso_utc'],['int64'],True,True,'return !scpp::dt::parse_iso_utc(scpp::string{"1970-01-01T00:00:00Z"}).has_value();'),
     ('local-format',['format_local'],['int64'],True,False,'return scpp::dt::format_local(scpp::string{"U"},scpp::int64{0}).size()!=1;'),
     ('local-now',['format_local_now'],['int64'],True,False,'return scpp::dt::format_local_now(scpp::string{"x"}).size()!=1;'),
-    ('local-parse',['parse_common_local'],['int64'],True,True,'return !scpp::dt::parse_common_local(scpp::string{"1970-01-01T00:00:00Z"}).has_value().native_value();'),
+    ('local-parse',['parse_common_local'],['int64'],True,True,'return !scpp::dt::parse_common_local(scpp::string{"1970-01-01T00:00:00Z"}).has_value();'),
 ]:
     request=json.loads(json.dumps(p))
     request['types']=types

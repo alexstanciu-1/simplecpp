@@ -12,9 +12,9 @@ static_assert(sizeof(@native@) == @size@ && alignof(@native@) == @alignment@);
 @n@::@n@(@n@&& other) noexcept { detail::ownership_access::construct<@native@>(*this, std::move(@other@)); }
 @n@& @n@::operator=(const @n@& other) noexcept { @self@ = @other@; return *this; }
 @n@& @n@::operator=(@n@&& other) noexcept { @self@ = std::move(@other@); return *this; }
-@n@ @n@::from_boolean(bool_t value) noexcept { @n@ result; @result@ = @native@::boolean(value.native_value()); return result; }
-@n@ @n@::from_integer(int64 value) noexcept { @n@ result; @result@ = @native@::integer(value.native_value()); return result; }
-@n@ @n@::from_floating(float64 value) noexcept { @n@ result; @result@ = @native@::floating(value.native_value()); return result; }
+@n@ @n@::from_boolean(bool_t value) noexcept { @n@ result; @result@ = @native@::boolean(value); return result; }
+@n@ @n@::from_integer(int64 value) noexcept { @n@ result; @result@ = @native@::integer(value); return result; }
+@n@ @n@::from_floating(float64 value) noexcept { @n@ result; @result@ = @native@::floating(value); return result; }
 @n@ @n@::from_string(const string& value) { @n@ result; @result@ = @native@::string({value.data(), static_cast<std::size_t>(value.size())}); return result; }
 @n@ @n@::container() { @n@ result; @result@ = @native@::container(); return result; }
 boxed_kind @n@::kind() const noexcept { return static_cast<boxed_kind>(@self@.type()); }

@@ -21,7 +21,7 @@ file(READ "${WORK}/generated/public/scpp/carriers.hpp" header)
 if(header MATCHES "error_t|template[ \t]*<")
   message(FATAL_ERROR "Minimal nullable publication imported unrelated error/template surface")
 endif()
-file(WRITE "${WORK}/consumer.cpp" "#include <scpp/carriers.hpp>\n#include <type_traits>\nusing namespace scpp;\nstatic_assert(!std::is_convertible_v<nullable_int32,int32>);\nstatic_assert(std::is_constructible_v<int32,nullable_int32>);\nint main(){nullable_int32 x{int32{42}};return static_cast<int32>(x).native_value()==42?0:1;}\n")
+file(WRITE "${WORK}/consumer.cpp" "#include <scpp/carriers.hpp>\n#include <type_traits>\nusing namespace scpp;\nstatic_assert(!std::is_convertible_v<nullable_int32,int32>);\nstatic_assert(std::is_constructible_v<int32,nullable_int32>);\nint main(){nullable_int32 x{int32{42}};return static_cast<int32>(x)==42?0:1;}\n")
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
 execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "--ld-path=${MOLD_LINKER}"
   "-I${WORK}/generated/public" "-I${SOURCE}/runtime/src/numeric" "-I${SOURCE}/runtime/src/sequence"

@@ -2,6 +2,11 @@
 
 Doc Status: normative
 
+Current ABI override: [native scalar aliases](native_scalar_aliases.md) supersedes
+wrapper constructors, extraction methods, overloaded scalar operators and native
+bridge descriptions below. Those ABI descriptions record the earlier slices;
+source-language checking continues through generated handlers and named helpers.
+
 Scope: the first standalone v0.2 integer slice, not full language/compiler admission.
 The PHP tool emits C++23 with Clang/GCC fixed-width type macros and uses explicit
 native C++ probe facts. Generation runs for the

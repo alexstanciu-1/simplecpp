@@ -36,9 +36,9 @@ foreach ([
 }
 verify(count(array_unique($outputs)) === 1, 'Flavor output differs');
 verify(str_contains($outputs[0], '#include <scpp/output.hpp>'), 'Missing public output API');
-verify(str_contains($outputs[0], '__INT64_TYPE__ local_0 = 8LL;'), 'Missing native int64 storage');
+verify(str_contains($outputs[0], 'scpp::int64 local_0 = 8LL;'), 'Missing native int64 storage');
 verify(str_contains($outputs[0], 'scpp::echo_int(local_0);'), 'Echo must consume native storage directly');
-foreach (['scpp::int64', 'native_value()', '<scpp/integers.hpp>', '<charconv>', '<cstdio>', '<system_error>',
+foreach (['native_value()', '<charconv>', '<cstdio>', '<system_error>',
 		'std::to_chars', 'std::fwrite', 'static void scpp_echo'] as $implementation) {
 	verify(!str_contains($outputs[0], $implementation), 'Output implementation leaked into generated source');
 }

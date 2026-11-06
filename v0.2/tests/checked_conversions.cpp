@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 using I = __INT64_TYPE__;
 using U = __UINT64_TYPE__;
@@ -16,7 +17,7 @@ template<class T> concept accepts_integer = requires(T value) { scpp::checked_in
 template<class T> concept accepts_float = requires(T value) { scpp::checked_float64_to_int64(value); };
 template<class T> concept accepts_bool = requires(T value) { scpp::checked_bool_t_to_int64(value); };
 static_assert(accepts_integer<I> && !accepts_integer<double> && !accepts_integer<bool>);
-static_assert(!accepts_integer<U> && !accepts_integer<scpp::int64> && !accepts_integer<decltype(nullptr)>);
+static_assert(!accepts_integer<U> && accepts_integer<scpp::int64> && !accepts_integer<decltype(nullptr)>);
 static_assert(accepts_integer<long> == std::is_same_v<I, long>);
 static_assert(accepts_integer<long long> == std::is_same_v<I, long long>);
 static_assert(accepts_float<double> && !accepts_float<float> && !accepts_float<I>);
@@ -34,13 +35,21 @@ template<class Function> void out_of_range(Function function) {
     throw std::runtime_error("Expected checked conversion failure");
 }
 
-// Compare values and rejection diagnostics with the still-published wrapper boundary.
+// Check admitted values independently of the runtime implementation; never cast an out-of-range input.
 template<class To, class From, class Function, class Value>
 void equivalent(Function function, Value value) {
     using Result = decltype(function(value));
     Result expected{};
-    try { expected = To{From{value}}.native_value(); }
-    catch (const std::out_of_range&) { out_of_range([&] { function(value); }); return; }
+    bool fits = true;
+    if constexpr (std::is_integral_v<To> && !std::is_same_v<To, bool>) {
+        if constexpr (std::is_floating_point_v<From>) {
+            const long double truncated = std::trunc(static_cast<long double>(value));
+            const long double bound = std::ldexp(1.0L, std::numeric_limits<To>::digits);
+            fits = std::isfinite(value) && truncated >= (std::is_signed_v<To> ? -bound : 0) && truncated < bound;
+        } else if constexpr (!std::is_same_v<From, bool>) fits = std::in_range<To>(value);
+    }
+    if (!fits) { out_of_range([&] { function(value); }); return; }
+    expected = static_cast<To>(value);
     const auto actual = function(value);
     if constexpr (std::is_floating_point_v<Result>) {
         require((std::isnan(expected) && std::isnan(actual)) || expected == actual);

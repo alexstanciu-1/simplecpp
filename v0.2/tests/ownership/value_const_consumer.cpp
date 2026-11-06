@@ -46,20 +46,20 @@ int main() {
         value_record_probe a{int64{7}};
         auto b = a;
         b->value = int64{8};
-        require(a->value.native_value() == 7 && b->value.native_value() == 8);
+        require(a->value == 7 && b->value == 8);
         value_record_noncopyable immobile{int64{4}};
-        require(immobile->value.native_value() == 4);
+        require(immobile->value == 4);
         value_record_move_only m{int64{9}}, destination;
         auto moved = std::move(m);
         destination = std::move(moved);
-        require(destination->value.native_value() == 9 && m->value.native_value() == 0);
+        require(destination->value == 9 && m->value == 0);
         value_record_throwing_move throwing{int64{-1}}, kept{int64{10}};
         rejects<record_move_failure>([&] { auto bad = std::move(throwing); (void)bad; });
         rejects<record_move_failure>([&] { kept = std::move(throwing); });
-        require(kept->value.native_value() == 10);
+        require(kept->value == 10);
         value_record_throwing_move successful{int64{11}};
         kept = std::move(successful);
-        require(kept->value.native_value() == 11 && successful->value.native_value() == 0);
+        require(kept->value == 11 && successful->value == 0);
     }
     require(allocations == start && ownership_test::live == 0);
     {
@@ -75,11 +75,11 @@ int main() {
         auto locked = observer.lock();
         require(&*locked == &*mutable_owner && &*from_shared.lock() == &*view);
         mutable_owner->value = int64{21};
-        require(view->value.native_value() == 21); // Read-only access is not deep immutability.
+        require(view->value == 21); // Read-only access is not deep immutability.
         shared_const_record_probe moved{std::move(mutable_owner)};
         require(!mutable_owner && &*moved == &*view);
         unique_const_record_probe exclusive{std::move(unique_owner)};
-        require(!unique_owner && exclusive->value.native_value() == 30);
+        require(!unique_owner && exclusive->value == 30);
         auto const_copy = view;
         weak_const_record_probe const_observer{const_copy};
         require(&*const_observer.lock() == &*view);
@@ -94,7 +94,7 @@ int main() {
         auto shared = shared_const_record_noncopyable::make(int64{40});
         auto unique = unique_const_record_noncopyable::make(int64{50});
         weak_const_record_noncopyable weak{shared};
-        require(weak.lock()->value.native_value() == 40 && unique->value.native_value() == 50);
+        require(weak.lock()->value == 40 && unique->value == 50);
         require(allocations == creation + 2);
     }
     require(allocations.load() - start == releases.load() - released_start);

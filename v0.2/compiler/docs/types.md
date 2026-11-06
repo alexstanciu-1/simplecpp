@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+Current representation: [native scalar aliases](../../specs/native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md) owns semantics.
 The API generator emits canonical `type_int64`, `type_null`, `type_bool`,
 `type_uint8`, `type_float64` and `type_string` definitions plus `type_registry`. `int` and `int64` share one identity;

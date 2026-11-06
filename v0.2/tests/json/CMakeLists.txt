@@ -2,7 +2,7 @@ set(json_generated ${CMAKE_BINARY_DIR}/generated-json-proof)
 set(json_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(json_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp
-    public/scpp/native_bridge.hpp public/scpp/short_names.hpp public/scpp/string.hpp public/scpp/boxed.hpp public/scpp/carriers.hpp
+    public/scpp/conversions.hpp public/scpp/short_names.hpp public/scpp/string.hpp public/scpp/boxed.hpp public/scpp/carriers.hpp
     src/runtime.cpp src/boxed.cpp src/json.cpp public/scpp/json.hpp prepared.json inventory.json)
   list(APPEND json_outputs ${json_generated}/${path})
 endforeach()

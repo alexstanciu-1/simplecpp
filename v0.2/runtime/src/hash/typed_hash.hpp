@@ -17,12 +17,12 @@ namespace scpp::detail {
 
 // Concrete runtime types use private adapters. No numeric-string normalization.
 template<class Key> struct integer_hash_key {
-    using rep = decltype(std::declval<Key>().native_value());
+    using rep = Key;
     static std::uint64_t hash(const Key& key) noexcept {
-        return hash_detail::mix64(static_cast<std::uint64_t>(key.native_value()));
+        return hash_detail::mix64(static_cast<std::uint64_t>(key));
     }
     static bool equal(const Key& a, const Key& b) noexcept {
-        return a.native_value() == b.native_value();
+        return a == b;
     }
 };
 template<class Key> struct string_hash_key {
@@ -246,7 +246,7 @@ class typed_hash final {
 		bool found_non_negative_key = false;
 		for (std::uint32_t i = 0; i < keys_.size(); ++i) {
 			if (!live_[i]) continue;
-			const auto native_key = keys_[i].native_value();
+			const auto native_key = keys_[i];
 			if constexpr (std::is_signed_v<rep_t>) {
 				if (native_key < 0) {
 					continue;

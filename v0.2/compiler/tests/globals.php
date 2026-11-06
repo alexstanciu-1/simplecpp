@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($program);
 	$output = Cpp_Program::emit($program);
 	verify(serialize($program) === $before, 'Lowering mutated facts');
-	verify(str_contains(implode('', $output->files), 'constinit __INT64_TYPE__'), 'Static initialization missing');
+	verify(str_contains(implode('', $output->files), 'constinit scpp::int64'), 'Static initialization missing');
 	$outputs[] = $output->files;
 	if (isset($argv[1])) {
 		foreach ($output->files as $path => $text) {

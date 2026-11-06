@@ -17,43 +17,43 @@ template<class Value> auto decode(const char* text) {
 }
 template<class Value> void grammar() {
     auto null = decode<Value>("null");
-    require(null.has_value().native_value() && null.value().kind() == boxed_kind::null);
+    require(null.has_value() && null.value().kind() == boxed_kind::null);
     auto no = decode<Value>("false");
-    require(no.has_value().native_value() && !no.value().get_boolean().native_value());
+    require(no.has_value() && !no.value().get_boolean());
     auto tree = decode<Value>(R"({"a":[null,false,true,42,-9,1.25,"\uD834\uDD1E\u0000"]})");
-    require(tree.has_value().native_value());
+    require(tree.has_value());
     auto row = tree.value().read(string{"a"});
-    require(row.container_size().native_value() == 7);
-    require(row.read(int64{3LL}).get_integer().native_value() == 42);
-    require(row.read(int64{4LL}).get_integer().native_value() == -9);
-    require(row.read(int64{5LL}).get_floating().native_value() == 1.25);
+    require(row.container_size() == 7);
+    require(row.read(int64{3LL}).get_integer() == 42);
+    require(row.read(int64{4LL}).get_integer() == -9);
+    require(row.read(int64{5LL}).get_floating() == 1.25);
     require(bytes(row.read(int64{6LL}).get_string()) == std::string("\xF0\x9D\x84\x9E\0", 5));
     for (auto bad : {"", " ", "nul", "null x", "01", "+1", ".1", "1.", "1e", "1e+", "--1", "1e999", "[", "[1,]", "{", "{\"a\"}", "{\"a\":1,}", "{\"a\":}", "\"\\x\"", "\"\\uD800\"", "\"\\uDC00\"", "\"\\uD800\\u0041\"", "\"\n\"", "\"unterminated"}) {
         auto failed = decode<Value>(bad);
-        require(failed.has_error().native_value());
+        require(failed.has_error());
         require(bytes(failed.error().get_message()).find("byte ") != std::string::npos);
     }
     auto duplicate = decode<Value>(R"({"a":1,"\u0061":2})");
-    require(duplicate.has_error().native_value());
+    require(duplicate.has_error());
     require(bytes(duplicate.error().get_message()).find("byte 7: duplicate") != std::string::npos);
-    require(decode<Value>(R"({"a":{"x":1},"b":{"x":2}})").has_value().native_value());
-    require(decode<Value>("9223372036854775807").value().get_integer().native_value() == std::numeric_limits<long long>::max());
-    require(decode<Value>("-9223372036854775808").value().get_integer().native_value() == std::numeric_limits<long long>::min());
+    require(decode<Value>(R"({"a":{"x":1},"b":{"x":2}})").has_value());
+    require(decode<Value>("9223372036854775807").value().get_integer() == std::numeric_limits<long long>::max());
+    require(decode<Value>("-9223372036854775808").value().get_integer() == std::numeric_limits<long long>::min());
     require(decode<Value>("9223372036854775808").value().kind() == boxed_kind::floating);
-    require(decode<Value>("1e-999").value().get_floating().native_value() == 0);
+    require(decode<Value>("1e-999").value().get_floating() == 0);
     for (auto bad : {R"({"2147483648":0})", R"({"4294967295":0})"}) {
         auto failed = decode<Value>(bad);
-        require(failed.has_error().native_value());
+        require(failed.has_error());
         require(bytes(failed.error().get_message()).find("byte 1: numeric object key exceeds INT32_MAX") != std::string::npos);
     }
     auto keys = decode<Value>(R"({"0":1,"00":2,"-1":3,"2147483647":4,"4294967296":5,"99999999999999999999999":6})");
-    require(keys.has_value().native_value());
-    require(keys.value().read(int64{0LL}).get_integer().native_value() == 1);
-    require(keys.value().read(string{"00"}).get_integer().native_value() == 2);
-    require(keys.value().read(string{"-1"}).get_integer().native_value() == 3);
-    require(keys.value().read(int64{2147483647LL}).get_integer().native_value() == 4);
-    require(keys.value().read(string{"4294967296"}).get_integer().native_value() == 5);
-    require(keys.value().read(string{"99999999999999999999999"}).get_integer().native_value() == 6);
+    require(keys.has_value());
+    require(keys.value().read(int64{0LL}).get_integer() == 1);
+    require(keys.value().read(string{"00"}).get_integer() == 2);
+    require(keys.value().read(string{"-1"}).get_integer() == 3);
+    require(keys.value().read(int64{2147483647LL}).get_integer() == 4);
+    require(keys.value().read(string{"4294967296"}).get_integer() == 5);
+    require(keys.value().read(string{"99999999999999999999999"}).get_integer() == 6);
     require(bytes(json::encode(decode<Value>("{}").value()).value()) == "[]");
     require(bytes(json::encode(decode<Value>(R"({"0":1,"1":2})").value()).value()) == "[1,2]");
     require(bytes(json::encode(decode<Value>(R"({"1":2,"0":1})").value()).value()) == R"({"1":2,"0":1})");
@@ -64,26 +64,26 @@ template<class Value> void grammar() {
     auto raw = Value::from_string(string{"\xff", 1LL});
     require(bytes(json::encode(raw).value()) == std::string("\"\xff\"", 3));
     for (double bad : {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
-        require(json::encode(Value::from_floating(float64{bad})).has_error().native_value());
+        require(json::encode(Value::from_floating(float64{bad})).has_error());
     require(bytes(json::encode(Value::from_integer(int64{42LL})).value()) == "42");
 }
 void ownership_and_cycles() {
     auto mixed_result = json::decode_mixed(string{R"({"a":1})"});
     auto independent = mixed_result.value(); independent.set(string{"a"}, mixed::from_integer(int64{2LL}));
-    require(mixed_result.value().read(string{"a"}).get_integer().native_value() == 1);
+    require(mixed_result.value().read(string{"a"}).get_integer() == 1);
     auto dynamic_result = json::decode(string{R"({"a":1})"});
     auto shared = dynamic_result.value(); shared.set(string{"a"}, dynamic::from_integer(int64{2LL}));
-    require(dynamic_result.value().read(string{"a"}).get_integer().native_value() == 2);
+    require(dynamic_result.value().read(string{"a"}).get_integer() == 2);
     auto graph = dynamic::container();
     graph.set(string{"left"}, shared); graph.set(string{"right"}, shared);
     require(bytes(json::encode(graph).value()) == R"({"left":{"a":2},"right":{"a":2}})");
     shared.set(string{"back"}, graph);
-    require(json::encode(graph).has_error().native_value());
-    require(shared.remove(string{"back"}).native_value());
-    require(json::encode(graph).has_value().native_value());
+    require(json::encode(graph).has_error());
+    require(shared.remove(string{"back"}));
+    require(json::encode(graph).has_value());
     graph.set(string{"self"}, graph);
-    require(json::encode(graph).has_error().native_value());
-    require(graph.remove(string{"self"}).native_value());
+    require(json::encode(graph).has_error());
+    require(graph.remove(string{"self"}));
 }
 void allocation_failures() {
     const string input{R"({"long unique allocation probe name":[1,2,"a string long enough to allocate its contents"]})"};
@@ -91,14 +91,14 @@ void allocation_failures() {
     bool decode_failed = false, decode_succeeded = false, encode_failed = false, encode_succeeded = false;
     for (long n = 0; n < 80; ++n) {
         allocation_probe::fail_after = n;
-        try { auto value = json::decode(input); allocation_probe::fail_after = -1; require(value.has_value().native_value()); decode_succeeded = true; }
+        try { auto value = json::decode(input); allocation_probe::fail_after = -1; require(value.has_value()); decode_succeeded = true; }
         catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; decode_failed = true; }
         allocation_probe::fail_after = n;
-        try { auto value = json::encode(tree); allocation_probe::fail_after = -1; require(value.has_value().native_value()); encode_succeeded = true; }
+        try { auto value = json::encode(tree); allocation_probe::fail_after = -1; require(value.has_value()); encode_succeeded = true; }
         catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; encode_failed = true; }
     }
     require(decode_failed && decode_succeeded && encode_failed && encode_succeeded);
-    require(json::encode(tree).has_value().native_value());
+    require(json::encode(tree).has_value());
     // Formatting must not swallow a failed stream allocation into partial output.
     auto number = dynamic::from_floating(float64{1.2345678901234567e100});
     auto expected = bytes(json::encode(number).value());
@@ -121,7 +121,7 @@ void typed_scalars() {
         require(bytes(json::encode(value).value()) == bytes(json::encode(dynamic::from_floating(value)).value()));
     }
     for (double number : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
-        require(json::encode(float64{number}).has_error().native_value());
+        require(json::encode(float64{number}).has_error());
     const string text{"a\0\n\"\\", 5LL};
     require(bytes(json::encode(text).value()) == R"("a\u0000\n\"\\")");
     require(bytes(json::encode(string{"null"}).value()) == R"("null")");
@@ -134,7 +134,7 @@ void typed_scalars() {
         try {
             auto result = json::encode(long_text);
             allocation_probe::fail_after = -1;
-            require(result.has_value().native_value());
+            require(result.has_value());
             require(bytes(result.value()) == "\"" + bytes(long_text) + "\"");
             succeeded = true;
         } catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; failed = true; }
@@ -144,10 +144,10 @@ void typed_scalars() {
 template<class Nullable, class Value> void nullable_scalar(Value value) {
     Nullable empty;
     require(bytes(json::encode(empty).value()) == "null");
-    require(!empty.has_value().native_value());
+    require(!empty.has_value());
     Nullable present{value};
     require(bytes(json::encode(present).value()) == bytes(json::encode(value).value()));
-    require(present.has_value().native_value());
+    require(present.has_value());
     present.reset();
     require(bytes(json::encode(present).value()) == "null");
 }
@@ -162,8 +162,8 @@ void nullable_scalars() {
     nullable_scalar<nullable_string>(string{"null"});
     nullable_scalar<nullable_string>(string{"a\0b", 3LL});
     nullable_float64 invalid{float64{std::numeric_limits<double>::infinity()}};
-    require(json::encode(invalid).has_error().native_value());
-    require(invalid.has_value().native_value());
+    require(json::encode(invalid).has_error());
+    require(invalid.has_value());
     invalid.reset();
     require(bytes(json::encode(invalid).value()) == "null");
     const string long_text{"a sufficiently long nullable string to allocate a payload copy during encoding"};
@@ -177,7 +177,7 @@ void nullable_scalars() {
             require(bytes(result.value()) == "\"" + bytes(long_text) + "\"");
             succeeded = true;
         } catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; failed = true; }
-        require(original.has_value().native_value() && bytes(original.value()) == bytes(long_text));
+        require(original.has_value() && bytes(original.value()) == bytes(long_text));
     }
     require(failed && succeeded);
 }
@@ -186,7 +186,7 @@ int main() {
     grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures(); typed_scalars(); nullable_scalars();
     auto old = std::locale::global(std::locale(std::locale::classic(), new comma_punctuation));
     require(bytes(json::encode(dynamic::from_floating(float64{1.25})).value()) == "1.25");
-    require(json::decode(string{"1.25"}).value().get_floating().native_value() == 1.25);
+    require(json::decode(string{"1.25"}).value().get_floating() == 1.25);
     require(bytes(json::encode(float64{1.25}).value()) == "1.25");
     std::locale::global(old);
     std::puts("JSON consumer passed");

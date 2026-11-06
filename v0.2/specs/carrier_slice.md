@@ -53,21 +53,19 @@ Use has_value() to test presence and value() to observe payload truth.
 nullable_int64 maybe{int64{20}};
 result_int64 computed{int64{3}};
 int64 sum = maybe + computed; // Plain payload result: 23.
-int64 next = maybe + 1;       // With the optional native numeric bridge.
+int64 next = maybe + 1;       // Native payload arithmetic after extraction.
 result_or_bool_bool_t actual_false{bool_t{false}}; // has_value() is true.
 auto sentinel = result_or_bool_bool_t::from_false(); // has_value() is false.
 ```
 
-There is no direct carrier condition conversion. In particular, carrier<bool_t>
-requires an explicit value()/state query: C++ does not chain the carrier-to-bool_t
-and bool_t-to-native-bool user conversions for if(carrier). Extraction is exactly
-one layer and does not itself change numeric type. Explicit target construction can
-still compose a payload extraction with a checked target constructor under normal
-C++ rules. No implicit cross-carrier conversion is added; explicit reboxing can
-extract a successful exact payload and never propagates empty/error states silently.
-Same-identity copying preserves the entire state, rather than extracting.
-Payload operators such as ! on bool_t can still bind after extraction: !carrier
-tests the boolean payload and throws for a missing payload, not for presence.
+Implicit extraction now returns a native scalar alias. Ordinary C++ standard
+conversions can follow that one user-defined conversion: `if (carrier)` observes
+payload truth, and an integer payload can convert to double. This is the explicitly
+approved native ABI policy; use `has_value()` to test presence instead. A false
+payload is present, while extracting an empty/error/sentinel state still throws.
+No implicit cross-carrier conversion is added; explicit reboxing never propagates
+empty/error states silently. Same-identity copying preserves the entire state.
+Source-language carrier admission remains a separate compiler feature.
 Because extraction returns a value, it does not supply a mutable payload reference
 for ++carrier or carrier += value. Explicitly extract, update and rebox when a
 caller intends to replace the stored payload; compiler lowering owns source updates.

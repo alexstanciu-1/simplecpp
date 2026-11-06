@@ -21,9 +21,11 @@ function renderHashes(array $plan, array &$files): void {
         [$lh, $ld] = lifecycle($n);
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh', 'ld') + ['policy' => $k === 'int64' ? 'integer_hash_key':'string_hash_key'];
         $h .= template('hash_declaration', $vars);
+        foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
+        $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
         $d .= template('hash_storage', $vars) . template('hash_methods_definition', $vars);
         if($k === 'int64') {
-            $h .= "    $k append($v value);\n";
+            $h .= "    $k append($v value);\n" . scalarInputFences($plan, 'append', [[$v]]);
             $d .= "$k $n::append($v value) { if (!storage_) storage_ = new storage; return storage_->table.append(std::move(value)); }\n";
         }
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
@@ -62,22 +64,22 @@ function renderDatetime(array $plan, array &$files): void {
         $name = $op['name'];
         $result = $op['result'];
         $signature = "$result $name(" . implode(', ', $args) . ')';
-        $h .= "$signature;\n";
+        $h .= "$signature;\n" . scalarInputFences($plan, $name, [$op['arguments']]);
         if($op['arguments'] === []) {
             $native = $result === 'uint64' ? 'unsigned long long':'long long';
             $body = "return $result{static_cast<$native>(detail::datetime::$name())};";
         }
         elseif($name === 'sleep_millis') {
-            $body = 'detail::datetime::sleep_millis(input0.native_value());';
+            $body = 'detail::datetime::sleep_millis(input0);';
         }
         elseif($name === 'format_iso_utc') {
-            $body = 'const auto bytes = detail::datetime::format_iso_utc(input0.native_value()); return string{bytes.data(), 20LL};';
+            $body = 'const auto bytes = detail::datetime::format_iso_utc(input0); return string{bytes.data(), 20LL};';
         }
         elseif($result === 'result_int64') {
             $body = "const auto parsed = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size())}); if (parsed.error) return result_int64{error_t{string{parsed.error}}}; return result_int64{int64{static_cast<long long>(parsed.value)}};";
         }
         else {
-            $seconds = $name === 'format_local' ? ', input1.native_value()':'';
+            $seconds = $name === 'format_local' ? ', input1':'';
             $body = "const auto bytes = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size())}$seconds); return string{bytes.data(), detail::checked_integer_cast<{$plan['string']['count_representation']}>(bytes.size())};";
         }
         $d .= "$signature { $body }\n";
@@ -127,6 +129,7 @@ function renderOwnership(array $plan, array &$files): void {
                     $h .= "    explicit $n($params)$spec;\n";
                     $d .= "$n::$n($params)$spec : payload_($values) {}\n";
                 }
+                $h .= scalarInputFences($plan, $n, $r['constructors'], true);
                 foreach([false, true] as $readOnly) {
                     $ty = ($readOnly ? 'const ':'') . $record;
                     $q = $readOnly ? ' const':'';
@@ -166,6 +169,7 @@ function renderOwnership(array $plan, array &$files): void {
                     $d .= "$n $n::make($params) { $n result; $result = std::make_$family<$t>($values); return result; }\n";
                 }
             }
+            if ($family !== 'weak') $h .= preg_replace('/^void /m', 'static void ', scalarInputFences($plan, 'make', $r['constructors']));
             foreach($s['qualification_constructors'] as $c) {
                 $source = null;
                 foreach($r['families'] as $f) {

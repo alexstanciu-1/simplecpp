@@ -5,6 +5,7 @@ require_once __DIR__ . '/publication.php';
 require_once __DIR__ . '/render_boxed.php';
 require_once __DIR__ . '/render_json.php';
 require_once __DIR__ . '/render_conversions.php';
+require_once __DIR__ . '/scalar_abi.php';
 
 const BANNER = "// Generated from reviewed runtime metadata. Do not edit.\n";
 const NATIVES = ['int', 'unsigned int', 'long', 'unsigned long', 'long long', 'unsigned long long', 'short', 'unsigned short', 'bool', 'char', 'signed char', 'unsigned char', 'wchar_t', 'char8_t', 'char16_t', 'char32_t', 'float', 'double', 'long double'];
@@ -37,72 +38,23 @@ function scalarRepresentation(array $plan, string $name): string {
 
 function renderValues(array $plan): string {
     $out = BANNER . "#pragma once\nnamespace scpp {\n";
-    if(isset($plan['string'])) {
-        $out .= "class string;\n";
-    }
-    foreach(array_merge($plan['types'], $plan['values']) as $t) {
-        $out .= "class {$t['name']};\n";
-    }
-    foreach($plan['values'] as $v) {
-        $n = $v['name'];
-        $out .= "class $n final {\npublic:\n    constexpr $n() noexcept = default;\n";
-        foreach($plan['conversions'] as $c) {
-            if($c['target'] === $n) {
-                $out .= "    explicit $n(" . scalarInput($c['source']) . " value)" . ($c['can_fail'] ? '':' noexcept') . ";\n";
-            }
-        }
-        if($v['kind'] === 'floating') {
-            foreach(NATIVES as $native) {
-                if(!hasCast($plan, $n, $native, true)) {
-                    $out .= "    explicit $n($native) = delete;\n";
-                }
-            }
-            $out .= template('int128_fences', ['name' => $n]) . template('float_storage');
-        }
-        elseif($v['kind'] === 'boolean') {
-            $out .= "    explicit constexpr $n(bool value) noexcept : value_(value) {}\n";
-            foreach(NATIVES as $native) {
-                if($native !== 'bool') {
-                    $out .= "    explicit $n($native) = delete;\n";
-                }
-            }
-            $out .= template('int128_fences', ['name' => $n]) . "    explicit $n(const void*) = delete;\n" . template('bool_storage');
-        }
-        $out .= "};\n";
-    }
-    foreach($plan['values'] as $v) {
-        $n = $v['name'];
-        if($v['kind'] === 'null') {
-            $out .= "inline constexpr $n null{};\n";
-        }
-        foreach($v['operations'] as $op) {
-            if($op === 'not') {
-                $out .= "constexpr bool_t operator!($n value) noexcept { return bool_t{!value.native_value()}; }\n";
-            }
-            else {
-                $symbol = $op === 'equal' ? '==':'!=';
-                $out .= $v['kind'] === 'null' ? "constexpr bool_t operator$symbol($n, $n) noexcept { return bool_t{" . ($op === 'equal' ? 'true':'false') . "}; }\n" :"constexpr bool_t operator$symbol($n left, $n right) noexcept { return bool_t{left.native_value() $symbol right.native_value()}; }\n";
+    foreach ($plan['values'] as $value) {
+        $name = $value['name'];
+        if ($value['kind'] !== 'null') {
+            $out .= "using $name = " . scalarRepresentation($plan, $name) . ";\n";
+        } else {
+            $out .= "class $name final { public: constexpr $name() noexcept = default; };\ninline constexpr $name null{};\n";
+            foreach ($value['operations'] as $operation) {
+                $symbol = $operation === 'equal' ? '==' : '!=';
+                $result = $operation === 'equal' ? 'true' : 'false';
+                $out .= "constexpr bool operator$symbol($name, $name) noexcept { return $result; }\n";
             }
         }
     }
-    foreach(object($plan['aliases']) as $alias => $target) {
-        if(hasValue($plan, $target)) {
-            $out .= "using $alias = $target;\n";
-        }
+    foreach (object($plan['aliases']) as $alias => $target) {
+        if (hasValue($plan, $target)) $out .= "using $alias = $target;\n";
     }
     return $out . "}\n";
-}
-
-function signature(array $op): string {
-    $form = $op['form'];
-    $out = $op['result'] . (in_array($form, ['compound', 'prefix'], true) ? '&':'') . ' operator' . $op['symbol'] . '(' . $op['left']['cpp'] . (in_array($form, ['compound', 'prefix', 'postfix'], true) ? '&':'') . ' left';
-    if(isset($op['right'])) {
-        $out .= ', ' . $op['right']['cpp'] . ' right';
-    }
-    if($form === 'postfix') {
-        $out .= ', int';
-    }
-    return $out . ')';
 }
 
 function render(array $plan): array {
@@ -110,7 +62,7 @@ function render(array $plan): array {
     $types = $headers['types'];
     $vals = $headers['values'];
     $ops = $headers['operators'];
-    $h = BANNER . "#pragma once\nnamespace scpp {\nnamespace detail { struct integer_access; }\n";
+    $h = BANNER . "#pragma once\nnamespace scpp {\n";
     $d = BANNER . includeHeader($ops) . includeHeader('scalar_semantics.hpp');
     if(isset($plan['string'])) {
         $d .= includeHeader($plan['string']['header']) . includeHeader('sequence_semantics.hpp');
@@ -124,35 +76,14 @@ function render(array $plan): array {
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $d .= "namespace scpp {\n";
     $files = [];
-    renderCheckedConversions($plan, $files, $d);
     renderSequences($plan, $files, $d);
-    $d .= template('integer_access');
-    if(isset($plan['string'])) {
-        $h .= "class string;\n";
-    }
-    foreach(array_merge($plan['types'], $plan['values']) as $t) {
-        $h .= "class {$t['name']};\n";
-    }
-    if(hasValue($plan, 'float64')) {
-        $d .= template('float_assertions');
-    }
-    foreach($plan['conversions'] as $c) {
-        $target = $c['target'];
-        $source = $c['source'];
-        $impl = $c['implementation'];
-        if($source === 'string') {
-            $suffix = $impl === 'parse_decimal' ? '<' . scalarRepresentation($plan, $target) . '>':'';
-            $d .= "$target::$target(const string& value) : value_(detail::$impl$suffix(detail::string_access::read(value))) {}\n";
-        }
-        elseif($target === 'string') {
-            $d .= "string::string($source value) : storage_(new storage{detail::$impl(value.native_value())}) {}\n";
-        }
-        else {
-            $noexcept = $c['can_fail'] ? '':' noexcept';
-            $rep = scalarRepresentation($plan, $target);
-            $arg = $c['native_source'] ? 'value':'value.native_value()';
-            $d .= "$target::$target($source value)$noexcept : value_(detail::$impl<$rep>($arg)) {}\n";
-        }
+    renderCheckedConversions($plan, $files, $d);
+    if (hasValue($plan, 'float64')) $d .= template('float_assertions');
+    foreach ($plan['conversions'] as $conversion) {
+        if ($conversion['target'] !== 'string') continue;
+        $source = $conversion['source'];
+        $implementation = $conversion['implementation'];
+        $d .= "string::string($source value) : storage_(new storage{detail::$implementation(value)}) {}\n";
     }
     foreach($plan['native_inputs'] as $n) {
         $d .= "static_assert(std::numeric_limits<{$n['cpp']}>::digits == {$n['digits']});\nstatic_assert(std::numeric_limits<{$n['cpp']}>::is_signed == " . ($n['signed'] ? 'true':'false') . ");\n";
@@ -160,18 +91,7 @@ function render(array $plan): array {
     foreach($plan['types'] as $t) {
         $n = $t['name'];
         $rep = $t['representation'];
-        $h .= "class $n final {\npublic:\n    constexpr $n() noexcept = default;\n";
-        foreach($plan['conversions'] as $c) {
-            if($c['target'] === $n) {
-                $h .= "    explicit $n(" . scalarInput($c['source']) . " value)" . ($c['can_fail'] ? '':' noexcept') . ";\n";
-            }
-        }
-        foreach(NATIVES as $native) {
-            if(!hasNative($plan, $native)) {
-                $h .= "    explicit $n($native) = delete;\n";
-            }
-        }
-        $h .= template('int128_fences', ['name' => $n]) . template('integer_storage', compact('n', 'rep'));
+        $h .= "using $n = $rep;\n";
         $d .= template('integer_assertions', compact('n', 'rep') + ['digits' => digits($t)]);
     }
     foreach(object($plan['aliases']) as $alias => $target) {
@@ -181,63 +101,7 @@ function render(array $plan): array {
     }
     $h .= "}\n";
     $operators = BANNER . "#pragma once\n" . includeHeader($types) . includeHeader($vals) . "namespace scpp {\n";
-    $bridge = BANNER . "#pragma once\n" . includeHeader($ops) . "namespace scpp {\n";
-    $emitted = [];
-    $symbols = [];
-    foreach($plan['operations'] as $op) {
-        $symbol = $op['symbol'];
-        $emitted[encode([$symbol, $op['left']['cpp'], $op['right']['cpp'] ?? ''])] = true;
-        $decl = signature($op);
-        $execution = $op['execution'];
-        if($op['left']['native'] || ($op['right']['native'] ?? false)) {
-            $symbols[$symbol] = true;
-            $left = $op['form'] === 'compound' ? 'left':"static_cast<$execution>(left)";
-            $bridge .= "inline $decl {\n    return $left $symbol static_cast<$execution>(right);\n}\n";
-            continue;
-        }
-        $operators .= "$decl;\n";
-        $impl = $op['implementation'];
-        $result = $op['result'];
-        if($op['promotion'] === 'exact_integer_comparison') {
-            $d .= "$decl {\n    return $result{detail::$impl(left.native_value(), right.native_value())};\n}\n";
-            continue;
-        }
-        $rep = scalarRepresentation($plan, $execution);
-        $args = !isset($op['right']) ? "static_cast<$rep>(left.native_value())":($op['promotion'] === 'left_with_checked_count' ? 'left.native_value(), right.native_value()':"static_cast<$rep>(left.native_value()), static_cast<$rep>(right.native_value())");
-        $call = "detail::$impl<$rep>($args)";
-        if($result === 'bool_t') {
-            $d .= "$decl {\n    return bool_t{{$call}};\n}\n";
-            continue;
-        }
-        $value = $execution === 'float64' ? "float64{{$call}}":"detail::integer_access::make<$execution>($call)";
-        $d .= "$decl {\n";
-        $d .= match($op['form']) {
-            'compound' => "    left = static_cast<{$op['left']['cpp']}>($value);\n    return left;\n", 'prefix' => "    left = $value;\n    return left;\n", 'postfix' => "    const auto old = left;\n    left = $value;\n    return old;\n", default => "    return $value;\n"
-        };
-        $d .= "}\n";
-    }
-    ksort($symbols, SORT_STRING);
-    $numeric = array_merge(array_column($plan['types'], 'name'), hasValue($plan, 'float64') ? ['float64']:[]);
-    foreach(array_keys($symbols) as $symbol) {
-        foreach($numeric as $name) {
-            foreach([NATIVES, ['__int128', 'unsigned __int128']] as $index => $natives) {
-                if($index === 1) {
-                    $bridge .= "#ifdef __SIZEOF_INT128__\n";
-                }
-                foreach($natives as $native) {
-                    if(!isset($emitted[encode([$symbol, $name, $native])])) {
-                        $bridge .= "void operator$symbol($name, $native) = delete;\n";
-                    }
-                    if(!isset($emitted[encode([$symbol, $native, $name])])) {
-                        $bridge .= "void operator$symbol($native, $name) = delete;\n";
-                    }
-                }
-                if($index === 1) {
-                    $bridge .= "#endif\n";
-                }
-            }
-        }
-    }
+    // Builtin scalar aliases use native operators. Checked source operations are emitted by the compiler.
     $short = BANNER . "#pragma once\n" . includeHeader($ops);
     if(isset($plan['string'])) {
         $short .= includeHeader($plan['string']['header']) . "using scpp::string;\n";
@@ -270,9 +134,6 @@ function render(array $plan): array {
         foreach ($plan['boxed']['families'] as $family) $short .= "using scpp::{$family['name']};\n";
     }
     $files += ['public/' . $types => $h, 'public/' . $vals => renderValues($plan), 'public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
-    if (isset($headers['native_bridge'])) {
-        $files['public/' . $headers['native_bridge']] = $bridge . "}\n";
-    }
     renderOwnership($plan, $files);
     renderHashes($plan, $files);
     renderDatetime($plan, $files);

@@ -44,7 +44,7 @@ function declaration(flavor $flavor, string $type, string $name, string $value):
 }
 
 verify(type_registry::resolve('float') === type_registry::resolve('float64'), 'Float alias identity');
-verify(type_float64::instance()->cpp_type() === 'double', 'Float representation');
+verify(type_float64::instance()->cpp_type() === 'scpp::float64', 'Float representation');
 $literal_cases = [
 	'0.0' => '0000000000000000', '-0.0' => '8000000000000000', '1e-400' => '0000000000000000',
 	'-1e-400' => '8000000000000000', '5e-324' => '0000000000000001', '-5e-324' => '8000000000000001',

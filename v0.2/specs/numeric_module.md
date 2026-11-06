@@ -1,6 +1,11 @@
 # Core byte and optional numeric module
 
 Doc Status: normative
+
+Current ABI override: [native scalar aliases](native_scalar_aliases.md) supersedes
+wrapper constructors, extraction methods, overloaded scalar operators and native
+bridge descriptions below. Those ABI descriptions record the earlier slices;
+source-language checking continues through generated handlers and named helpers.
 Date: 2026-10-30
 Scope: v0.2 runtime publication and the agreed language direction. PRJ profile
 loading and compiler enforcement remain future compiler work.

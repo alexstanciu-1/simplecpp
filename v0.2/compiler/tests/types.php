@@ -49,5 +49,5 @@ $minimum = $entry->file->globals()[0]->initializer;
 $before = serialize($entry);
 verify($integer->lower_cpp_literal($minimum) === '(-9223372036854775807LL - 1LL)', 'Minimum lowering changed');
 verify(serialize($entry) === $before, 'Type lowering mutated AST facts');
-verify($integer->cpp_type() === '__INT64_TYPE__', 'Metadata-derived representation changed');
+verify($integer->cpp_type() === 'scpp::int64', 'Metadata-derived representation changed');
 echo "Canonical type identities, aliases, literal readiness and lowering purity passed\n";

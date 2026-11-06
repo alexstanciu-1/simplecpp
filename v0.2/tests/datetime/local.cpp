@@ -10,7 +10,7 @@
 using namespace scpp;
 void require(bool ok) { if(!ok) throw std::runtime_error("local datetime proof failed"); }
 std::string bytes(const string& value) { return {value.data(),static_cast<std::size_t>(value.size())}; }
-long long parse(const char* text) { auto p=dt::parse_common_local(string{text}); require(p.has_value().native_value()); return p.value().native_value(); }
+long long parse(const char* text) { auto p=dt::parse_common_local(string{text}); require(p.has_value()); return p.value(); }
 std::string format(const char* pattern,long long time) { return bytes(dt::format_local(string{pattern},int64{time})); }
 struct alien_numbers : std::num_put<char> {
     iter_type do_put(iter_type out,std::ios_base&,char_type,long) const override { *out++='X'; return out; }
@@ -48,11 +48,11 @@ int main(int argc,char** argv) {
     }
     for(const char* bad : {"", "2024-02-30", "1900-02-29", "2024-01-01 24:00:00", "2024-01-01T00:00:60",
         "2024-01-01 ", "2024-01-01T00:00:00z", "2024-01-01T00:00:00+00:00", "next Tuesday"})
-        require(dt::parse_common_local(string{bad}).has_error().native_value());
+        require(dt::parse_common_local(string{bad}).has_error());
     std::string valid="2024-02-29 12:34:56";
     for(std::size_t i=0;i<valid.size();++i) {
         auto text=valid; text[i]='\0';
-        require(dt::parse_common_local(string{text.data(),static_cast<long long>(text.size())}).has_error().native_value());
+        require(dt::parse_common_local(string{text.data(),static_cast<long long>(text.size())}).has_error());
     }
     const char pattern[]={'Y','\0','U','\\'};
     auto binary=dt::format_local(string{pattern,4},int64{0});
@@ -89,7 +89,7 @@ int main(int argc,char** argv) {
     auto cost=allocation_probe::calls;
     auto parsed=dt::parse_common_local(input);
     cost=allocation_probe::calls-cost;
-    require(parsed.has_value().native_value() && cost==1);
+    require(parsed.has_value() && cost==1);
     auto copy=dt::format_local(output_pattern,int64{0});
     const auto expected_copy=bytes(copy); output_pattern=string{"changed"};
     require(bytes(copy)==expected_copy);

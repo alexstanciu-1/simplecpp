@@ -141,22 +141,16 @@ public classes use opaque inline storage with compile-time ABI checks.
 
 ## Core and numeric demand
 
-Core's default integer/byte types are int64 and distinct byte; float64 remains core.
+Core publishes int64, uint8 (also named byte), bool_t and float64 as native aliases.
 Additional integer widths require `"modules": ["numeric"]` in publication metadata.
-Only explicitly requested types/operators are emitted. The build option
-`SCPP_ENABLE_NUMERIC=ON` composes `runtime/metadata/numeric_publication.json` with
-core. This is API publication selection, not implemented source-level PRJ parsing.
-See [the numeric/byte and cleanup contract](../../specs/numeric_module.md).
+`SCPP_ENABLE_NUMERIC=ON` composes the numeric publication with core. Publication
+selects concrete types, checked helpers and library APIs; builtin scalar operators
+are native C++, not generated overloads. Compiler metadata still owns source
+operation admission and checked lowering.
 
-## Optional native bridge
-
-CMake defaults `SCPP_ENABLE_NATIVE_BRIDGE=OFF`. Enable it to publish native C++
-scalar operator adapters, then explicitly include `<scpp/native_bridge.hpp>`.
-The build selects its request in `build/clang/runtime-publication.json`.
-Direct generator callers opt in by supplying `headers.native_bridge` and native
-operator requests; omitting the header requires omitting those requests as well.
-Explicit native constructors are available independently. See the
-[integer contract](../../specs/integer_slice.md#optional-native-operator-publication).
+The old native_bridge header/build option is retired. Public scalar alias headers
+contain no implementation templates; checked operations use named functions.
+See [the native ABI contract](../../specs/native_scalar_aliases.md).
 
 ## Compiler backend publication
 

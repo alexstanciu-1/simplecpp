@@ -2,6 +2,11 @@
 
 Doc Status: normative
 
+Current ABI override: [native scalar aliases](native_scalar_aliases.md) supersedes
+wrapper constructors, extraction methods, overloaded scalar operators and native
+bridge descriptions below. Those ABI descriptions record the earlier slices;
+source-language checking continues through generated handlers and named helpers.
+
 Scope: runtime and physical API preparation inside v0.2. Source eligibility,
 sequencing and contextual decisions remain compiler-owned. The active PHP compiler
 now implements [literal and typed-destination rules](../../specs/compiler_scalars_v0_2.md#floating-literal-policy):

@@ -9,7 +9,7 @@ require_once __DIR__ . '/compiler_plans.php';
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
+    fields($compiler, ['scalar_headers', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $metadata = clone $metadata;
@@ -27,6 +27,10 @@ function renderCompiler(mixed $metadata, array $facts): array {
     $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
     foreach ($definitions as $identity => $definition) {
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        if (isset($definition['cpp_header'])) {
+            $header = var_export($definition['cpp_header'], true);
+            $methods .= "\n\t/** @return string[] */\n\tpublic function cpp_headers(): array /** list<string> */\n\t{\n\t\treturn [$header];\n\t}\n";
+        }
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
 \t/** Native scalar storage has no observable copy operation. */
@@ -77,7 +81,7 @@ function renderCompiler(mixed $metadata, array $facts): array {
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 18,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 19,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -404,7 +408,7 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $resultCpp = $definitions[$operation['result']]['cpp'];
             $extract = '';
             if ($operation['lowering'] === 'string_three_way') {
-                $extract = '.' . $operation['result_binding']['extract'] . '()';
+                $extract = $operation['result_binding']['extract'] === null ? '' : '.' . $operation['result_binding']['extract'] . '()';
                 $headers[$operation['storage']['header']][] = "binary_operator::$op";
                 $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
             }
@@ -413,8 +417,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $expression = "'(' . \$left . ' + ' . \$right . ')'";
             $headers[$operation['storage']['header']][] = "binary_operator::$op";
         } elseif ($operation['lowering'] === 'runtime_compare') {
-            $extract = $operation['result_binding']['extract'];
-            $expression = "'((' . \$left . ' " . $operation['spelling'] . " ' . \$right . ').$extract())'";
+            $extract = $operation['result_binding']['extract'] === null ? '' : '.' . $operation['result_binding']['extract'] . '()';
+            $expression = "'((' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')$extract)'";
             $headers[$operation['storage']['header']][] = "binary_operator::$op";
             $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
         } else {

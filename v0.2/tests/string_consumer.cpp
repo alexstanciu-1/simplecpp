@@ -1,5 +1,5 @@
 #include <scpp/short_names.hpp>
-#include <scpp/native_bridge.hpp>
+#include <scpp/conversions.hpp>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -17,7 +17,7 @@ template<class L, class R> concept adds = requires(L l, R r) { l + r; };
 static_assert(!std::is_convertible_v<const char*, string>);
 static_assert(!std::is_convertible_v<int64, string>);
 static_assert(!std::is_convertible_v<string, int64>);
-static_assert(!std::is_constructible_v<string, int>);
+static_assert(std::is_constructible_v<string, int>);
 static_assert(!std::is_constructible_v<string, null_t>);
 static_assert(!std::is_convertible_v<string, bool>);
 static_assert(!adds<string, int64> && !adds<string, const char*>);
@@ -27,7 +27,7 @@ static_assert(std::is_same_v<decltype(std::declval<string&>() += string{}), stri
 
 static_assert(std::is_same_v<decltype(string{}.size()), __INT64_TYPE__>);
 static_assert(std::is_constructible_v<string, const char*, __INT64_TYPE__>);
-static_assert(!std::is_constructible_v<string, const char*, int64>);
+static_assert(std::is_constructible_v<string, const char*, int64>);
 
 int main() {
     string empty;
@@ -73,18 +73,18 @@ int main() {
     fails<std::invalid_argument>([] { string invalid{nullptr}; });
     fails<std::invalid_argument>([] { string invalid{nullptr, 0}; });
     fails<std::out_of_range>([] { string invalid{"x", -1}; });
-    require(static_cast<int64>(string{"-9223372036854775808"}).native_value() == std::numeric_limits<long long>::min());
+    require(scpp::checked_string_to_int64(string{"-9223372036854775808"}) == std::numeric_limits<long long>::min());
     require(static_cast<bool>(static_cast<string>(int64{42}) == string{"42"}));
-    require(static_cast<float64>(string{"1.25e2"}).native_value() == 125.0);
+    require(scpp::checked_string_to_float64(string{"1.25e2"}) == 125.0);
     require(static_cast<bool>(static_cast<string>(float64{1.25}) == string{"1.25"}));
-    require(static_cast<bool>(static_cast<bool_t>(string{"true"})));
+    require(static_cast<bool>(scpp::checked_string_to_bool_t(string{"true"})));
     require(static_cast<bool>(static_cast<string>(bool_t{false}) == string{"false"}));
-    fails<std::invalid_argument>([] { static_cast<void>(static_cast<bool_t>(string{"0"})); });
-    fails<std::invalid_argument>([&] { static_cast<void>(static_cast<int64>(binary)); });
-    fails<std::out_of_range>([] { static_cast<void>(static_cast<int32>(string{"2147483648"})); });
+    fails<std::invalid_argument>([] { static_cast<void>(scpp::checked_string_to_bool_t(string{"0"})); });
+    fails<std::invalid_argument>([&] { static_cast<void>(scpp::checked_string_to_int64(binary)); });
+    fails<std::out_of_range>([] { static_cast<void>(scpp::checked_string_to_int32(string{"2147483648"})); });
     fails<std::out_of_range>([] { static_cast<void>(static_cast<string>(float64{std::numeric_limits<double>::infinity()})); });
     int32 unchanged{7};
-    fails<std::out_of_range>([&] { unchanged = static_cast<int32>(string{"2147483648"}); });
-    require(unchanged.native_value() == 7);
-    require((int64{2} + 1).native_value() == 3); // Composition with the optional numeric bridge.
+    fails<std::out_of_range>([&] { unchanged = scpp::checked_string_to_int32(string{"2147483648"}); });
+    require(unchanged == 7);
+    require((int64{2} + 1) == 3); // Composition with the optional numeric bridge.
 }

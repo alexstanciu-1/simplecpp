@@ -734,6 +734,11 @@
     ]
   },
   "compiler": {
+    "scalar_headers": {
+      "integer": "scpp/integers.hpp",
+      "boolean": "scpp/values.hpp",
+      "floating": "scpp/values.hpp"
+    },
     "modules": {
       "default-runtime": {
         "always_available": true,
@@ -966,12 +971,12 @@
         "symbol": "scpp::float64_divide",
         "header": "scpp/arithmetic.hpp"
       },
-      "boxed_bool": {
+      "scalar_bool": {
         "kind": "type",
         "identity": "bool_t",
         "symbol": "scpp::bool_t",
         "header": "scpp/values.hpp",
-        "extract": "native_value"
+        "extract": null
       },
       "string_storage": {
         "kind": "type",
@@ -1152,14 +1157,14 @@
         "int64": { "lowering": "native_three_way" },
         "uint8": { "lowering": "native_three_way" },
         "float64": { "lowering": "checked_three_way", "binding": "float64_compare" },
-        "string": { "lowering": "string_three_way", "result_binding": "boxed_bool" }
+        "string": { "lowering": "string_three_way", "result_binding": "scalar_bool" }
       }
     },
     "strict_identity": {
       "types": ["null_t", "bool_t", "int64", "uint8", "float64", "string"],
       "same_type": "value_equality",
       "different_type": "unequal",
-      "result_binding": "boxed_bool"
+      "result_binding": "scalar_bool"
     },
     "comparisons": {
       "null_t": {
@@ -1180,7 +1185,7 @@
           "greater",
           "greater_equal"
         ],
-        "result_binding": "boxed_bool"
+        "result_binding": "scalar_bool"
       },
       "float64": {
         "operand": "same_type",

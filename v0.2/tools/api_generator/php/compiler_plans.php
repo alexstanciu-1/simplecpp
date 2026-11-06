@@ -39,7 +39,7 @@ function compilerTypeBinding(mixed $compiler, string $name, string $identity, bo
     $header = textValue(at($row, 'header'));
     requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid type binding symbol');
     requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid public type binding header');
-    $member = $extract ? textValue(at($row, 'extract')) : null;
+    $member = $extract && at($row, 'extract') !== null ? textValue($row->extract) : null;
     requireThat($member === null || preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $member) === 1, 'Invalid type binding extraction member');
     return ['symbol' => $symbol, 'header' => $header, 'extract' => $member];
 }
@@ -167,6 +167,15 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 
         $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
+    $headers = fields(at($compiler, 'scalar_headers'), ['integer', 'boolean', 'floating']);
+    foreach (['integer', 'boolean', 'floating'] as $kind) headerPath(at((object)$headers, $kind));
+    foreach ($definitions as $identity => &$definition) {
+        $kind = $definition['strategy'];
+        if (!isset($headers[$kind])) continue;
+        $definition['cpp'] = 'scpp::' . $identity;
+        $definition['cpp_header'] = $headers[$kind];
+    }
+    unset($definition);
     return $definitions;
 }
 
@@ -217,7 +226,7 @@ function compilerCheckedConversionBindings(mixed $metadata, array $definitions, 
     foreach ($runtime['checked_conversions']['functions'] ?? [] as $function) {
         $bindings[$function['source'] . ':' . $function['target']] = [
             'symbol' => 'scpp::' . $function['symbol'], 'header' => $runtime['checked_conversions']['header'],
-            'source_cpp' => $runtime['checked_conversions']['representations'][$function['source']]['cpp']];
+            'source_cpp' => 'scpp::' . $function['source']];
     }
     return $bindings;
 }

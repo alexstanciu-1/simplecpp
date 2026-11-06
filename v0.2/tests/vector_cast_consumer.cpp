@@ -18,14 +18,24 @@ static_assert(std::is_constructible_v<vector_int32, const vector_int64&>);
 static_assert(!std::is_convertible_v<vector_int64, vector_int32>);
 static_assert(!std::is_constructible_v<vector_null_t, vector_int64>);
 static_assert(!std::is_constructible_v<vector_int64, vector_float64>); // Not requested.
+template<class V, class T> concept const_index = requires(const V& value, T index) { value.at(index); };
+static_assert(native_value<vector_int32> && native_value<vector_float64>);
+static_assert(!const_index<vector_int64, double> && !const_index<vector_float64, bool>);
 int main() {
+    vector_float64 native_floats;
+    native_floats.append(7); native_floats.set(0, 9);
+    require(native_floats.at(0) == 9.0);
+    vector_int32 native_integers;
+    native_integers.append(7); native_integers.set(0, 9);
+    require(native_integers.at(0) == 9);
+
     vector_int64 source;
     source.append(int64{7}); source.append(int64{2147483648LL});
     fails<std::out_of_range>([&] { static_cast<void>(static_cast<vector_int32>(source)); });
-    require(source.at(int64{0}).native_value() == 7 && source.at(int64{1}).native_value() == 2147483648LL);
+    require(source.at(int64{0}) == 7 && source.at(int64{1}) == 2147483648LL);
     vector_int32 unchanged; unchanged.append(int32{9});
     fails<std::out_of_range>([&] { unchanged = static_cast<vector_int32>(source); });
-    require(unchanged.at(int64{0}).native_value() == 9);
+    require(unchanged.at(int64{0}) == 9);
     source.set(int64{1}, int64{20});
     const auto narrow = static_cast<vector_int32>(source);
     require(static_cast<bool>(static_cast<vector_int64>(narrow) == source));
@@ -39,7 +49,7 @@ int main() {
     vector_bool_t flags; flags.append(bool_t{true}); flags.append(bool_t{false});
     require(static_cast<bool>(static_cast<vector_bool_t>(static_cast<vector_string>(flags)) == flags));
     vector_float64 floats = static_cast<vector_float64>(source);
-    require(floats.at(int64{1}).native_value() == 20.0);
+    require(floats.at(int64{1}) == 20.0);
     floats.append(float64{std::numeric_limits<double>::infinity()});
     fails<std::out_of_range>([&] { static_cast<void>(static_cast<vector_string>(floats)); });
     floats.set(int64{2}, float64{std::numeric_limits<double>::quiet_NaN()});

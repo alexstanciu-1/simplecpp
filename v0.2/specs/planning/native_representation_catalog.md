@@ -7,9 +7,8 @@ Scope: representation direction and vector investigation; implementation status 
 The [adopted alias ABI and named conversion contract](native_scalar_alias_abi.md)
 supersedes the earlier choice between a parallel native API and migrating individual
 vector signatures. The agreed destination replaces numeric/boolean wrappers with
-scpp aliases, keeps vector filtering strict and leaves null unchanged. The first
-[named-conversion slice](../checked_conversions.md) is implemented; alias cutover
-is pending and the vector prototype is saved separately and paused.
+scpp aliases, keeps vector filtering strict and leaves null unchanged. The [alias cutover](../native_scalar_aliases.md) is implemented, including native
+vector element storage and bindings. The earlier separate vector prototype is superseded.
 
 ## Representation catalog
 

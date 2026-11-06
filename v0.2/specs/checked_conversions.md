@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 Date: 2026-11-06
-Status: alias-migration slices 1 and 2 implemented; scalar wrappers and null remain unchanged.
+Status: slices 1–3 implemented. Numeric/boolean names are native aliases; null is unchanged.
 
 ## Publication contract
 
@@ -11,28 +11,27 @@ default is `scpp/conversions.hpp`, with names `checked_<source>_to_<target>` usi
 canonical identities (including bool_t and uint8, not a duplicate byte identity).
 The generator derives functions from existing published non-native numeric
 conversion rows; it does not maintain a second permission or algorithm matrix.
-Core publication has 12 functions. Publishing all eight integer representations,
-float64 and bool_t yields 90. No identity, null or text conversion helpers are added.
+Core publication has 12 numeric helpers plus three published string parsers.
+All eight integer representations, float64 and bool_t yield 90 numeric helpers.
+Published text parsing rows also produce helpers; formatting remains string construction.
+No identity or null conversion helpers are added.
 Removing a scalar cast policy removes its corresponding functions. Removing this
-optional metadata block removes the helper publication; wrapper APIs remain usable.
+optional metadata block removes helper publication; consumers requiring helpers must supply it.
 
-Arguments/results use native representations while wrapper names remain occupied.
-For example:
+Arguments/results use explicit native aliases, for example:
 
 ```cpp
-__UINT8_TYPE__ checked_int64_to_uint8(__INT64_TYPE__ value);
-__INT64_TYPE__ checked_float64_to_int64(double value);
-__INT64_TYPE__ checked_uint8_to_int64(__UINT8_TYPE__ value) noexcept;
-bool checked_float64_to_bool_t(double value) noexcept;
+uint8 checked_int64_to_uint8(int64 value);
+int64 checked_float64_to_int64(float64 value);
+int64 checked_uint8_to_int64(uint8 value) noexcept;
+bool_t checked_float64_to_bool_t(float64 value) noexcept;
+int64 checked_string_to_int64(const string& value);
 ```
 
-The later alias cutover can retain explicit scpp type spellings without changing
-these underlying native signatures. No parallel scpp::native hierarchy is added.
-
-The header contains concrete declarations and deleted overloads only: no includes,
-templates or implementation. Definitions are compiled into generated `runtime.cpp`
-and invoke the same private `checked_integer_cast`, `floating_integer_cast`,
-`numeric_cast` and `truth_cast` algorithms as existing wrapper constructors.
+The header includes public scalar alias headers and forward-declares string. It
+contains concrete declarations/deleted overloads, no templates or implementation.
+Definitions in generated runtime.cpp reuse the private checked_integer_cast,
+floating_integer_cast, numeric_cast, truth_cast and string parsing algorithms.
 The prefix does not imply lossless numeric conversion: integer-to-float still
 permits rounding, and numeric-to-bool still follows the established nonzero rule.
 Range failures preserve std::out_of_range("integer_cast_out_of_range"). Destination
@@ -65,7 +64,7 @@ responsibility. Compiler conversion contexts and source admissions are unchanged
   prepared-fact structures change. Slice 1 kept generated compiler artifacts
   byte-identical; slice 2 changes only checked conversion lowering and header selection. Metadata is consumed during generation, not source preparation.
 
-## Verification and timing
+## Historical slice 1 verification and timing
 
 `tests/checked_conversions.cpp` checks native input admission, alias identity,
 integer extrema, 16-bit bounds, unsigned/signed crossings, floating truncation,
@@ -154,3 +153,8 @@ The shared runtime recipe refactor also passed publication parity: 130 accepted 
 checks. Runtime artifacts and scalar artifact sets are byte-identical. Reviewed
 snapshot updates contain only metadata-dependent CLI input hashes and scalar case
 keys after removing the obsolete compiler wrapper bindings.
+
+## Slice 3 verification
+
+The wrapper comparison oracle is replaced with independent native domain checks.
+See [alias migration verification](native_scalar_aliases.md) for current results.

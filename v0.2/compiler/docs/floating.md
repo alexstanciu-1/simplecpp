@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+Current representation: [native scalar aliases](../../specs/native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
 The [source contract](../../../specs/compiler_scalars_v0_2.md#floating-literal-policy)
 owns admission. `float` and `float64` share one generated canonical definition,
 activated by default-runtime membership. Float32 and floating output formatting remain deferred. Explicit casts use the

@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+Current representation: [native scalar aliases](native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
 This is a consolidated map of the implemented v0.2 runtime/generator surface.
 The family contracts linked below own exact semantics. Compiler integration is not
 implemented or implied by generated physical plans.

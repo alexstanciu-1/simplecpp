@@ -86,7 +86,7 @@ def main():
                             if label == 'default-scalars':
                                 for consumer in ['integer_consumer', 'value_consumer', 'floating_consumer']:
                                     exe = case / consumer
-                                    compiled = run(flags + [root / ('tests/' + consumer + '.cpp'), obj, '-o', exe])
+                                    compiled = run(flags + [root / ('tests/' + consumer + '.cpp'), obj, root / 'runtime/src/numeric/arithmetic.cpp', '-o', exe])
                                     assert compiled.returncode == 0, compiled.stderr
                                     assert run([exe]).returncode == 0, consumer
                                 # Read-only freshness failure and obsolete-inventory protection.

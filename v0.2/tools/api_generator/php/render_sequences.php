@@ -26,8 +26,12 @@ function renderString(array $plan): array {
     [$lh, $ld] = lifecycle($n);
     $vars = compact('n', 'count', 'types', 'vals', 'lh', 'ld');
     $h = template('string_declaration', $vars);
-    foreach(NATIVES as $native) {
-        $h .= "    explicit $n($native) = delete;\n";
+    $inputs = [];
+    foreach ($plan['conversions'] as $conversion) {
+        if ($conversion['target'] === $n) $inputs[] = scalarNativeIdentity($plan, $conversion['source']);
+    }
+    foreach (NATIVES as $native) {
+        if (!in_array($native, $inputs, true)) $h .= "    explicit $n($native) = delete;\n";
     }
     $h .= template('int128_fences', ['name' => $n]);
     foreach($plan['conversions'] as $c) {
@@ -76,63 +80,47 @@ function renderVectors(array $plan): array {
         foreach($v['casts_from'] as $c) {
             $src = $c['source'];
             $h .= "    explicit $n(const $src&);\n";
-            $d .= template('vector_cast', $vars + ['src' => $src]);
+            $sourceElement = substr($src, strlen('vector_'));
+            $expression = "static_cast<$sourceElement>(item)";
+            if ($e !== 'string') {
+                $binding = null;
+                foreach ($plan['checked_conversions']['functions'] ?? [] as $function) {
+                    if ($function['source'] === $sourceElement && $function['target'] === $e) $binding = $function['symbol'];
+                }
+                requireThat($binding !== null, 'Vector conversion lacks named runtime binding');
+                $expression = "$binding($expression)";
+            }
+            if ($e === 'string') $expression = "string{static_cast<$sourceElement>(item)}";
+            $d .= template('vector_cast', $vars + ['src' => $src, 'conversion' => $expression]);
         }
         $h .= template('vector_methods_declaration', $vars);
         $d .= template('vector_methods_definition', $vars);
         $indices = [$count];
         $values = [$e];
-        if($v['native_index']) {
+        if ($v['native_index'] && scalarNativeIdentity($plan, $count) !== 'int') {
             $indices[] = 'int';
             $h .= "    $e at(int index) const;\n";
-            $d .= "$e $n::at(int index) const { return at($count{index}); }\n";
+            $d .= "$e $n::at(int index) const { return at(detail::checked_integer_cast<$count>(index)); }\n";
         }
-        if($v['native_value'] !== '') {
-            $native = $v['native_value'];
+        $native = $v['native_value'];
+        if ($native !== '' && scalarNativeIdentity($plan, $e) !== $native) {
             $values[] = $native;
             $h .= "    void append($native value);\n";
-            $d .= "void $n::append($native value) { append($e{value}); }\n";
+            $conversion = nativeScalarConversion($plan, $e, $native, 'value');
+            $d .= "void $n::append($native value) { append($conversion); }\n";
         }
-        foreach($indices as $index) {
-            foreach($values as $value) {
-                if($index === $count && $value === $e) {
-                    continue;
-                }
-                $h .= "    void set($index index, $value value);\n";
-                $a = $index === $count ? 'index':"$count{index}";
-                $b = $value === $e ? 'std::move(value)':"$e{value}";
-                $d .= "void $n::set($index index, $value value) { set($a, $b); }\n";
-            }
+        $sets = [];
+        foreach ($indices as $index) foreach ($values as $value) {
+            $sets[] = [$index, $value];
+            if ($index === $count && $value === $e) continue;
+            $h .= "    void set($index index, $value value);\n";
+            $a = $index === $count ? 'index' : "detail::checked_integer_cast<$count>(index)";
+            $b = $value === $e ? 'std::move(value)' : nativeScalarConversion($plan, $e, $value, 'value');
+            $d .= "void $n::set($index index, $value value) { set($a, $b); }\n";
         }
-        foreach([NATIVES, ['__int128', 'unsigned __int128']] as $group => $natives) {
-            if($group === 1 && !$v['native_index'] && $v['native_value'] === '') {
-                continue;
-            }
-            if($group === 1) {
-                $h .= "#ifdef __SIZEOF_INT128__\n";
-            }
-            $deleted = [];
-            foreach($natives as $native) {
-                if($v['native_index'] && $native !== 'int') {
-                    $deleted[] = "    void at($native) const = delete;\n";
-                    foreach($values as $value) {
-                        $deleted[] = "    void set($native, $value) = delete;\n";
-                    }
-                }
-                if($v['native_value'] !== '' && $v['native_value'] !== $native) {
-                    $deleted[] = "    void append($native) = delete;\n";
-                    foreach($indices as $index) {
-                        $deleted[] = "    void set($index, $native) = delete;\n";
-                    }
-                }
-            }
-            $deleted = array_unique($deleted);
-            sort($deleted, SORT_STRING);
-            $h .= implode('', $deleted);
-            if($group === 1) {
-                $h .= "#endif\n";
-            }
-        }
+        $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
+        $h .= scalarInputFences($plan, 'append', array_map(static fn(string $type): array => [$type], $values));
+        $h .= scalarInputFences($plan, 'set', $sets);
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::vector_access;\n};\n";
         foreach($v['operations'] as $op) {
             $sig = "bool_t operator{$op['symbol']}(const $n& left, const $n& right)";
@@ -161,7 +149,7 @@ function renderCarriers(array $plan): array {
     $h .= "namespace scpp {\n";
     $d = '';
     if(isset($plan['error'])) {
-        $h .= template('error_declaration');
+        $h .= template('error_declaration', ['fences' => scalarInputFences($plan, 'error_t', [['string', 'int64'], ['string', 'int64', 'string']], true)]);
         $d .= template('error_definition');
     }
     foreach($plan['carriers'] as $c) {
@@ -171,7 +159,7 @@ function renderCarriers(array $plan): array {
         $nullable = $c['family'] === 'nullable';
         [$lh, $ld] = lifecycle($n);
         $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', error_t':''];
-        $h .= template('carrier_declaration', $vars);
+        $h .= template('carrier_declaration', $vars) . scalarInputFences($plan, $n, [[$p]], true);
         $d .= template('carrier_storage', $vars) . template('carrier_value_definition', $vars) . ' ';
         if($result) {
             $d .= "if (!storage_) return $p{}; ";

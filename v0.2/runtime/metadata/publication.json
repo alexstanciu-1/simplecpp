@@ -687,7 +687,7 @@
     "types": "scpp/integers.hpp",
     "operators": "scpp/numeric.hpp",
     "short_names": "scpp/short_names.hpp",
-    "native_bridge": "scpp/native_bridge.hpp",
+
     "values": "scpp/values.hpp"
   },
   "values": [
