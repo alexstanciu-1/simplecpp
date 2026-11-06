@@ -39,7 +39,7 @@ def proof(work):
 
     def generate(metadata, runtime, compiler):
         run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
-        run(['php', generator, 'emit-compiler', metadata, facts, context, compiler])
+        run(['php', generator, 'emit-compiler', metadata, publication, facts, context, compiler])
 
     review_contract_proof(work / 'review-contracts', original, publication, facts, context)
     cmake_provider_proof(work / 'cmake-providers', original, publication, facts, context)
@@ -68,13 +68,13 @@ def proof(work):
         generate(path, runtime, compiler)
         assert snapshot(runtime) == before, 'Nondeterministic publication'
         run(['php', generator, 'emit-runtime', path, publication, facts, context, runtime, '--check'])
-        run(['php', generator, 'emit-compiler', path, facts, context, compiler, '--check'])
+        run(['php', generator, 'emit-compiler', path, publication, facts, context, compiler, '--check'])
         # Exercise the real freshness wrappers, which preserve timestamps on no-op builds.
         stamps = {str(p): p.stat().st_mtime_ns for base in (runtime, compiler) for p in base.rglob('*') if p.is_file()}
         run(['cmake', '-DGENERATOR=' + str(ROOT / 'build/clang/scpp_api_generator'),
              '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(publication), '-DOUTPUT=' + str(runtime),
              '-P', ROOT / 'cmake/PublishRuntime.cmake'])
-        run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(path),
+        run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(publication),
              '-DFACTS=' + str(facts), '-DCONTEXT=' + str(context), '-DOUTPUT=' + str(compiler),
              '-P', ROOT / 'cmake/PublishCompiler.cmake'])
         assert all(Path(p).stat().st_mtime_ns == stamp for p, stamp in stamps.items()), 'No-op publication touched artifacts'
@@ -273,7 +273,7 @@ def proof(work):
         invalid.write_text(json.dumps(metadata))
         run(['php', generator, 'emit-runtime', invalid, publication, facts, context, destination], 1)
         assert snapshot(destination) == before, name
-        run(['php', generator, 'emit-compiler', invalid, facts, context, directory / 'compiler'], 1)
+        run(['php', generator, 'emit-compiler', invalid, publication, facts, context, directory / 'compiler'], 1)
         assert snapshot(directory / 'compiler') == compiler_before, name
     binding_mutations = {
         'competing_header': lambda m: m['compiler']['runtime_bindings']['echo_bytes'].update(header='scpp/other.hpp'),
@@ -290,7 +290,7 @@ def proof(work):
         mutate(metadata)
         invalid = work / (name + '.json')
         invalid.write_text(json.dumps(metadata))
-        run(['php', generator, 'emit-compiler', invalid, facts, context, directory / 'compiler'], 1)
+        run(['php', generator, 'emit-compiler', invalid, publication, facts, context, directory / 'compiler'], 1)
         assert snapshot(directory / 'compiler') == compiler_before, name
     # Native depfiles must observe metadata-driven changes to the generated private bridge.
     command = ['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-I', str(destination / 'public'),
@@ -307,11 +307,11 @@ def proof(work):
     # Rename/relocate into the same publication and require obsolete paths to disappear.
     renamed = work / 'renamed/metadata.json'
     run(['php', generator, 'emit-runtime', renamed, publication, facts, context, destination, '--check'], 1)
-    run(['php', generator, 'emit-compiler', renamed, facts, context, directory / 'compiler', '--check'], 1)
+    run(['php', generator, 'emit-compiler', renamed, publication, facts, context, directory / 'compiler', '--check'], 1)
     run(['cmake', '-DGENERATOR=' + str(ROOT / 'build/clang/scpp_api_generator'),
          '-DMETADATA=' + str(renamed), '-DPUBLICATION=' + str(publication), '-DOUTPUT=' + str(destination),
          '-P', ROOT / 'cmake/PublishRuntime.cmake'])
-    run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(renamed),
+    run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(renamed), '-DPUBLICATION=' + str(publication),
          '-DFACTS=' + str(facts), '-DCONTEXT=' + str(context), '-DOUTPUT=' + str(directory / 'compiler'),
          '-P', ROOT / 'cmake/PublishCompiler.cmake'])
     run(['ninja', '-f', graph.name], cwd=directory)
@@ -495,7 +495,7 @@ def review_contract_proof(work, original, publication_path, facts, context):
     for provider, header in [('core.scalars', 'scpp/review/core.hpp'), ('numeric.scalars', 'scpp/review/custom.hpp'), ('core.conversions', 'scpp/review/checked.hpp')]:
         matched['submodules'][provider]['header'] = header
     emit(matched, numeric)
-    run(['php', generator, 'emit-compiler', metadata_path, facts, context, compiler])
+    run(['php', generator, 'emit-compiler', metadata_path, request, facts, context, compiler])
     for identity in ('uint8', 'int64', 'float64', 'bool'):
         assert 'scpp/review/core.hpp' in (compiler / f'types/{identity}.php').read_text()
     assert 'scpp/review/checked.hpp' in (compiler / 'types/uint8.php').read_text()
@@ -530,7 +530,7 @@ def cached_application_proof(work, original, facts, context, publication):
     def generate(value):
         metadata.write_text(json.dumps(value))
         run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
-        run(['php', generator, 'emit-compiler', metadata, facts, context, compiler / 'generated'])
+        run(['php', generator, 'emit-compiler', metadata, publication, facts, context, compiler / 'generated'])
     generate(original)
     for flavor in ('cpp', 'php', 'js'):
         app, out, native = (work / flavor / name for name in ('app', 'out', 'native'))

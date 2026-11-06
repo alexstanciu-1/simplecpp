@@ -50,6 +50,29 @@ Nodes keep names and operators directly when needed; ordinary semantic lookup do
 not walk parents. A processing worker may retain source context for its traversal.
 Native parent links are non-owning; PHP currently uses ordinary object references.
 
+## Compact written type references
+
+Written types are ast_type_reference nodes: name, first_child and next_sibling,
+plus the inherited token range and parent. No argument array or cached arity is
+stored. The first child and sibling chain own arguments in source order; every
+argument's parent is the containing type reference, not its preceding sibling.
+Links are readonly after construction. Build a sibling chain from the end, then
+attach it when constructing its containing type. Shared resolved type definitions
+are semantic links and never share or reparent these syntax nodes.
+
+Locals, parameters, global/constant declarations and cast targets own type_reference;
+functions own return_type_reference. No duplicate type-name string is retained.
+Inferred declarations have no written type node. Implicit main owns a synthetic int
+reference with an empty token range at the existing entry anchor. Resolved facts
+stay on their current declaration/expression owners; reset does not mutate syntax.
+
+The parser constructs generic arguments directly as linked nodes in all three flavors.
+`spelling()` derives composite names for diagnostics, inspection and incremental
+contracts without retaining another string. Shared type resolution admits only
+published vector specializations; vector operations remain deferred. See
+[vector type resolution](vector_types.md). Other AST collections and duplicate chains
+keep their existing representation.
+
 ## Prepared facts belong to their AST owner
 
 The direction is one AST that gains explicitly documented facts, not a parallel
@@ -58,18 +81,17 @@ prepared fact in a doc comment next to the property, identifying when it becomes
 available and what null means. For example:
 
 ```php
-/** Written type name; null when omitted. */
-public readonly ?string $type_name;
+/** Native owning written type syntax; null when omitted. */
+public readonly ?ast_type_reference $type_reference;
 
 /** Prepared fact: resolved type identity; null until this declaration is prepared. */
 protected ?type_definition $type_def = null;
 ```
 
 Authored syntax and resolved facts are different even when both are names/types.
-A local owns `type_name` and `type_def`; a function owns `return_type_name` and
+A local owns `type_reference` and `type_def`; a function owns `return_type_reference` and
 `return_type_def`. Omitted written syntax does not mean the resolved type may stay
-unknown after successful preparation. Current missing-type inference remains
-unsupported. Checked accessors reject premature fact reads.
+unknown after successful preparation. Supported missing-type inference leaves the written reference null. Checked accessors reject premature fact reads.
 
 Calls retain stable symbol entries resolving to current function declarations;
 variable references retain either a local declaration or a stable global entry.
@@ -148,3 +170,17 @@ No prepared block copies or per-arm watchers are introduced. See [conditions](co
 These nodes add no prepared-loop copy or watcher. Conditions belong to the loop node,
 not the body scope; do-while tests cannot see body-local names. Shared traversal owners
 cover reset, diagnostics, inspection, preparation and lowering. See [loops](loops.md).
+
+## Initial leaf-only type-reference verification (2026-11-06)
+
+The focused linked-node/leaf test and 76 selected compiler CTests pass, as do the
+parser and writing-guide checks. Sixteen native fixtures cover parameter defaults,
+casts and incremental recovery in all three flavors. This initial proof preceded
+the generic parsing slice documented in [vector type resolution](vector_types.md).
+
+Representative parameter-default fixture timings across cpp/php/js: native build
+134.94–142.20 ms; Clang frontend 12.52–13.77 ms; LLVM backend 23.22–26.85 ms;
+link command 56–58 ms. O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime,
+fresh instrumented application objects. Single verification samples, not a speedup
+claim. Reports: `/tmp/scpp-type-refs-defaults/results.json` and
+`/tmp/scpp-type-refs-casts/results.json`.

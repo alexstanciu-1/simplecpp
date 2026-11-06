@@ -9,8 +9,8 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	use ast_declaration;
 
 	/** PROPERTIES */
-	/** Written type; null requests scalar-literal inference in this slice. */
-	public readonly ?string $type_name;
+	/** Native owning written type; null requests scalar-literal inference in this slice. */
+	public readonly ?ast_type_reference $type_reference;
 	/** Native owning initializer syntax. */
 	public readonly ast_expression $initializer;
 
@@ -23,12 +23,13 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	/** CONSTRUCTOR */
 	/** $start and $end are token boundaries, with exclusive end. */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?string $namespace, ?string $type_name, ast_expression $initializer)
+		?string $namespace, ?ast_type_reference $type_reference, ast_expression $initializer)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
 		$this->namespace = $namespace;
-		$this->type_name = $type_name;
+		$this->type_reference = $type_reference;
+		$type_reference?->attach($this);
 		$this->initializer = $initializer;
 		$initializer->attach($this);
 	}

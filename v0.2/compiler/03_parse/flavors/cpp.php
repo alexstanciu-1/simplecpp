@@ -14,12 +14,34 @@ namespace scpp\compiler;
  */
 final class Cpp_Grammar implements statement_grammar
 {
+	/** Look past a balanced type-argument list without allocating AST nodes or changing the cursor. */
 	public function function_start(Parser $parser): bool
 	{
-		return ($parser->cursor->is(token_kind::identifier) || $parser->cursor->keyword('void')
-			|| ($parser->cursor->is(token_kind::keyword) && type_registry::resolve($parser->cursor->tokens->text_at($parser->cursor->position())) !== null))
-			&& ($parser->cursor->tokens->tokens[$parser->cursor->position() + 2]->kind ?? null) === token_kind::lparen
-			&& ($parser->cursor->next_is(token_kind::identifier));
+		$cursor = $parser->cursor;
+		if (!$cursor->is(token_kind::identifier) && !$cursor->keyword('void')
+			&& !($cursor->is(token_kind::keyword) && type_registry::resolve($cursor->tokens->text_at($cursor->position())) !== null)) {
+			return false;
+		}
+		$position = $cursor->position() + 1;
+		$tokens = $cursor->tokens->tokens;
+		if (($tokens[$position]->kind ?? null) === token_kind::less) {
+			$depth = 0;
+			do {
+				$kind = $tokens[$position]->kind ?? null;
+				if ($kind === token_kind::less) {
+					$depth++;
+				}
+				elseif ($kind === token_kind::greater) {
+					$depth--;
+				}
+				elseif (!in_array($kind, [token_kind::identifier, token_kind::keyword, token_kind::comma], true)) {
+					return false;
+				}
+				$position++;
+			} while ($depth > 0);
+		}
+		return (($tokens[$position]->kind ?? null) === token_kind::identifier)
+			&& (($tokens[$position + 1]->kind ?? null) === token_kind::lparen);
 	}
 
 	/** C++ flavor places the explicit return type before the function name. */
@@ -44,7 +66,7 @@ final class Cpp_Grammar implements statement_grammar
 		}
 		$first = $parser->named_type();
 		if ($cursor->is(token_kind::assign) || ($parser->compound_operator() !== null)) {
-			return $parser->assignment($start, $first, assignment_intent::existing_binding);
+			return $parser->assignment($start, $first->name, assignment_intent::existing_binding);
 		}
 		return $parser->declaration($start, $cursor->name(token_kind::identifier), $first);
 	}

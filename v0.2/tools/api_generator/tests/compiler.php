@@ -351,7 +351,7 @@ try {
         requireThat($type->lower_cpp_literal($literal) === $expected, 'Incorrect literal lowering');
     }
 } finally {
-    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/uint8.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'bindings/entry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
+    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/uint8.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'types/vectors.php', 'bindings/entry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
         if (file_exists($work . '/' . $path)) unlink($work . '/' . $path);
     }
     rmdir($work . '/types');

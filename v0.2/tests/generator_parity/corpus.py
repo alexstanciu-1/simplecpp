@@ -71,6 +71,7 @@ def cases(root: Path):
         renamed[key]["header"] = renamed[key]["header"].replace("scpp/", "scpp/custom/")
     renamed_metadata = copy.deepcopy(metadata)
     renamed_metadata["submodules"]["core.string"]["header"] = renamed["string"]["header"]
+    renamed_metadata["submodules"]["core.vectors"]["header"] = renamed["vectors"]["header"]
     for group in ['core.scalars', 'numeric.scalars', 'core.conversions']:
         node = renamed_metadata['submodules'][group]
         node['header'] = node['header'].replace('scpp/', 'scpp/custom/')

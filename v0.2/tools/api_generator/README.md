@@ -68,7 +68,7 @@ The positional runtime launcher supplies that build's explicit native facts:
 The general launcher accepts the same commands as `php tools/api_generator/generate.php`:
 
 ```text
-emit-compiler METADATA FACTS CONTEXT OUTPUT [--check]
+emit-compiler METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check]
 emit-runtime METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check]
 emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check]
 prepare-runtime METADATA PUBLICATION FACTS CONTEXT
@@ -190,7 +190,8 @@ When metadata contains several independent errors, validation phase ordering may
 change which error is reported first; individual rejection messages are retained.
 
 `emit-compiler` generates PHP int64/null/bool/byte/float64/string definitions and source-name/literal
-registration from runtime metadata and validated native facts. `compiler.modules`
+registration from runtime metadata and validated native facts. The CLI also prepares
+the runtime publication and uses its concrete exports for vector type registration. `compiler.modules`
 declares always-available default-runtime membership; `compiler.integer_literals`
 records decimal/reject/signed-carrier policy. `compiler.value_types` describes core
 literal/representation mappings; `compiler.conversions` supplies generated conversion
@@ -200,8 +201,9 @@ overloads and further types remain deferred. `compiler.floating_literals` owns
 rounding/overflow/underflow admission; normalized target facts retain validated
 binary64 precision/exponent information for generated float preparation/lowering. See [the type contract](../../compiler/docs/types.md).
 
-Output lives in `compiler/generated/`, independently of runtime API demands; compiler
-inventory version 6 lists the new definitions. Cleanup remains limited to `.php` and
+Output lives in `compiler/generated/`. Inventory version 20 includes `types/vectors.php`;
+vector identities depend on the selected runtime publication. Scalar activation
+continues to follow compiler default-runtime membership. Cleanup remains limited to `.php` and
 `.json`. CMake checks and repairs publication while preserving unchanged timestamps.
 Runtime publication bytes and cleanup are unchanged. The parity baseline update for
 this slice changes input hashes only; all artifact hashes, prepared models, rejection
@@ -263,3 +265,18 @@ queries return recipes and do not finalize a header publication. The configure-t
 inventory query remains target-independent; it is not a substitute for full preparation.
 Compiler dependency queries remain generated PHP methods, with no runtime metadata
 interpretation or provider-graph traversal during application compilation.
+
+### Vector specialization exports
+
+Validated vector publication requests register concrete type exports in the runtime
+plan. `vector.provider` selects placement; the shared provider finalizer and assembler
+own dependency validation and includes. An optional publication header must agree.
+`provider-headers` includes the selected vector provider for CMake byproducts. No
+vector requests means no concrete vector exports or vector declaration fragment.
+Compiler generation consumes the same validated publication plan, emitting concrete
+vector definitions with export-selected C++ names and provider headers. Only
+specializations whose elements are active compiler types are registered. Scalar-only
+generator unit tests may omit the runtime plan; the production CLI requires it.
+`vector_provider_exports` verifies relocation, shared placement, retirement/recovery,
+generated compiler bindings, strict native inputs and template-free headers. See
+[compiler vector types](../../compiler/docs/vector_types.md).

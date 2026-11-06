@@ -104,7 +104,7 @@ final class Parser
 		if ($statements !== [])
 		{
 			$main = new ast_function_declaration('main',
-				'int', $body_start, $body_start, true, $namespace);
+				new ast_type_reference($body_start, $body_start, 'int'), $body_start, $body_start, true, $namespace);
 			$main->attach($this->root);
 			$main->complete_body($collector->body($body_start, $body_end, $statements));
 			$declarations->import($main);
@@ -386,13 +386,9 @@ final class Parser
 		return new ast_call_expression($start, $this->cursor->position(), $name, $member, $arguments);
 	}
 
-	public function return_type(): string
+	public function return_type(): ast_type_reference
 	{
-		if ($this->cursor->keyword('void')) {
-			$this->cursor->take(token_kind::keyword, 'void');
-			return 'void';
-		}
-		return $this->named_type();
+		return $this->type_reference(false, true);
 	}
 
 	/** All flavors share return syntax; analysis distinguishes void bodies from the integer entry. */
@@ -405,17 +401,37 @@ final class Parser
 		return new ast_return_statement($start, $end, $value);
 	}
 
-	/** Type keywords and identifiers share generated registration; unknown identifiers remain diagnosable later. */
-	public function named_type(): string
+	/** Type keywords and identifiers share generated registration; preparation owns argument admission. */
+	public function named_type(): ast_type_reference
 	{
-		if ($this->cursor->is(token_kind::keyword)) {
-			$word = $this->cursor->tokens->text_at($this->cursor->position());
-			if (type_registry::resolve($word) !== null) {
-				$this->cursor->take_keyword($word);
-				return $word;
-			}
+		return $this->type_reference();
+	}
+
+	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
+	private function type_reference(bool $argument = false, bool $allow_void = false): ast_type_reference
+	{
+		$start = $this->cursor->position();
+		$word = $this->cursor->tokens->text_at($start);
+		if ($this->cursor->is(token_kind::keyword)
+			&& ((type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
+			$this->cursor->take_keyword($word);
 		}
-		return $this->cursor->name(token_kind::identifier);
+		else {
+			$word = $this->cursor->name(token_kind::identifier);
+		}
+		$child = null;
+		if ($this->cursor->is(token_kind::less)) {
+			$this->cursor->take(token_kind::less, '<');
+			$child = $this->type_reference(true, true);
+			$this->cursor->take(token_kind::greater, '>');
+		}
+		$end = $this->cursor->position();
+		$next = null;
+		if ($argument && $this->cursor->is(token_kind::comma)) {
+			$this->cursor->take(token_kind::comma, ',');
+			$next = $this->type_reference(true, true);
+		}
+		return new ast_type_reference($start, $end, $word, $child, $next);
 	}
 
 	/** Parse ordered comma-separated echo operands. */
@@ -535,7 +551,9 @@ final class Parser
 		if ($this->cast_ahead()) {
 			$start = $this->cursor->take(token_kind::lparen, '(');
 			$type = $this->cursor->tokens->text_at($this->cursor->position());
-			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'cast type');
+			$type_start = $this->cursor->position();
+			$this->cursor->take($this->cursor->tokens->tokens[$type_start]->kind, 'cast type');
+			$type = new ast_type_reference($type_start, $this->cursor->position(), $type);
 			$this->cursor->take(token_kind::rparen, ')');
 			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_cast_expression($start, $this->cursor->position(), $type, $operand);
@@ -582,12 +600,12 @@ final class Parser
 	}
 
 	/** $start: token position. */
-	public function declaration(int $start /** uint32 */, string $name, ?string $type_name): ast_local_declaration
+	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference): ast_local_declaration
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-		return new ast_local_declaration($start, $end, $name, $type_name, $value);
+		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
 
 	/** Recognize discarded-value update syntax only at statement and header boundaries. */

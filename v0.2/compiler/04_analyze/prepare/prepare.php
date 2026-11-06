@@ -318,11 +318,11 @@ final class Preparation
 				'Duplicate local: ' . $name);
 		}
 		$type = null;
-		if ($declaration->type_name !== null) {
-			$type = type_registry::resolve($declaration->type_name);
+		if ($declaration->type_reference !== null) {
+			$type = Type_Resolution::resolve($declaration->type_reference);
 			if ($type === null) {
 				throw new diagnostic($source, $root->byte_at($declaration->type_position()),
-					'Unknown or unsupported type: ' . $declaration->type_name);
+					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
 			}
 		}
 		$this->value($declaration->initializer, $name);
@@ -333,7 +333,7 @@ final class Preparation
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null ? conversion_context::typed_destination : conversion_context::inference);
+		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
 			$declaration->initializer->constant_known(), $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
@@ -381,9 +381,9 @@ final class Preparation
 		$this->expression_visits++;
 		if ($syntax instanceof ast_cast_expression) {
 			$this->value($syntax->operand, $initializing);
-			$type = type_registry::resolve($syntax->type_name);
+			$type = Type_Resolution::resolve($syntax->type_reference);
 			if ($type === null) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_name);
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
 			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;

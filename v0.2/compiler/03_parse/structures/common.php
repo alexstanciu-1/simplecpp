@@ -169,15 +169,15 @@ final class ast_name_expression extends ast_expression
  * ```text
  * $value int = 3;
  * ```
- * short_name is value, type_name is int, and the initializer is an integer expression.
+ * short_name is value, type_reference names int, and the initializer is an integer expression.
  */
 final class ast_local_declaration extends ast_statement implements ast_local_binding
 {
 	use ast_declaration;
 
 	/** PROPERTIES */
-	/** Written type name; null when omitted, independently of later resolution. */
-	public readonly ?string $type_name;
+	/** Native owning written type syntax; null when omitted, independently of later resolution. */
+	public readonly ?ast_type_reference $type_reference;
 	/** Body-local declaration ordinal, assigned by collection. */
 	public readonly int $id /** uint32 */;
 	/** Native owning; initializer syntax child. */
@@ -200,11 +200,12 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */,
 		string $name,
-		?string $type_name, ast_expression $initializer)
+		?ast_type_reference $type_reference, ast_expression $initializer)
 	{
 		$this->short_name = $name;
 		$this->namespace = null;
-		$this->type_name = $type_name;
+		$this->type_reference = $type_reference;
+		$type_reference?->attach($this);
 		$this->initializer = $initializer;
 		$initializer->attach($this);
 
@@ -278,7 +279,8 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	 */
 	public function name_position(): int /** uint32 */
 	{
-		return $this->start + ($this->source()->flavor === flavor::php ? 0 : 1);
+		return $this->source()->flavor === flavor::cpp && $this->type_reference !== null
+			? $this->type_reference->end : $this->start + ($this->source()->flavor === flavor::php ? 0 : 1);
 	}
 
 	/**
@@ -288,12 +290,10 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	 */
 	public function type_position(): int /** uint32 */
 	{
-		if ($this->type_name === null) {
+		if ($this->type_reference === null) {
 			throw new \LogicException('No written local type');
 		}
-		return $this->start + match ($this->source()->flavor) {
-			flavor::cpp => 0, flavor::php => 1, flavor::js => 3,
-		};
+		return $this->type_reference->start;
 	}
 
 }

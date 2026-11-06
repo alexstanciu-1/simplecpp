@@ -16,17 +16,17 @@ final class Literal_Declaration_Preparation
 			}
 			$declaration->reset_preparation();
 			type_registry::prepare_literal($declaration->initializer);
-			$type = $declaration->type_name === null ? $declaration->initializer->type_def()
-				: type_registry::resolve($declaration->type_name);
+			$type = $declaration->type_reference === null ? $declaration->initializer->type_def()
+				: Type_Resolution::resolve($declaration->type_reference);
 			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(),
 					'Unknown or unsupported ' . ($declaration instanceof ast_global_declaration ? 'global' : 'constant')
-					. ' type: ' . $declaration->type_name);
+					. ' type: ' . $declaration->type_reference?->spelling());
 			}
 			if (($declaration instanceof ast_global_declaration) && !$type->supports_global_storage()) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 			}
-			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_name !== null ? conversion_context::typed_destination : conversion_context::inference);
+			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 			$declaration->settle_type($type, $conversion);
 		}
 	}

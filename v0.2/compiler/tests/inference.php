@@ -58,7 +58,7 @@ foreach (flavor::cases() as $flavor)
 	foreach (['int', 'float', 'bool', 'string', 'byte', 'byte', 'int', 'string', 'null', 'string'] as $index => $type) {
 		verify($locals[$index]->type_def() === type_registry::resolve($type), 'Wrong inferred type');
 		if (!in_array($index, [4, 8], true)) {
-			verify($locals[$index]->type_name === null, 'Inference invented written type syntax');
+			verify($locals[$index]->type_reference === null, 'Inference invented written type syntax');
 		}
 	}
 	verify($entry->body()->statements[10] instanceof ast_assignment_statement, 'Later PHP write became another declaration');

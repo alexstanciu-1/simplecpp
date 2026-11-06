@@ -65,6 +65,7 @@ From `v0.2/`:
 cmake --preset default
 cmake --build --preset default --target scpp_runtime
 php tools/api_generator/generate.php emit-compiler runtime/metadata/runtime.json \
+  build/clang/runtime-publication.json \
   build/clang/native-layout/facts.json build/clang/native-layout/context.json \
   compiler/generated --check
 ```

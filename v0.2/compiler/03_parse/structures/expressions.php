@@ -194,7 +194,8 @@ final class ast_not_expression extends ast_expression
 final class ast_cast_expression extends ast_expression
 {
 	/** PROPERTIES */
-	public readonly string $type_name;
+	/** Native owning written type syntax. */
+	public readonly ast_type_reference $type_reference;
 	/** Native owning operand; a cast produces a value, never mutable-reference storage. */
 	public readonly ast_expression $operand;
 
@@ -204,11 +205,12 @@ final class ast_cast_expression extends ast_expression
 
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions spanning the written target and operand, including operand grouping. */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $type_name,
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_type_reference $type_reference,
 		ast_expression $operand)
 	{
 		parent::__construct($start, $end);
-		$this->type_name = $type_name;
+		$this->type_reference = $type_reference;
+		$type_reference->attach($this);
 		$this->operand = $operand;
 		$operand->attach($this);
 	}

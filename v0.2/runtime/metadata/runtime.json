@@ -609,6 +609,7 @@
     "symbol_prefix": "checked_"
   },
   "vector": {
+    "provider": "core.vectors",
     "source_type": "vector",
     "storage": "private_std_vector",
     "count_type": "int64",
@@ -1216,6 +1217,11 @@
   "output": { "provider": "core.output" },
   "scalar_providers": {"core": "core.scalars", "numeric": "numeric.scalars"},
   "submodules": {
+    "core.vectors": {
+      "module": "core",
+      "header": "scpp/vectors.hpp",
+      "requires": []
+    },
     "core.string": {
       "module": "core",
       "header": "scpp/string.hpp",

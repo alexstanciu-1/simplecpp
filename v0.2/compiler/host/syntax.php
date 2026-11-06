@@ -26,10 +26,10 @@ final class Syntax_Inspection
 			$body = array_map(self::statement(...), $function->body()->statements);
 			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
-					'name' => $parameter->short_name, 'type' => $parameter->type_name,
+					'name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling(),
 					'default' => $parameter->default_value?->source_text(), 'passing' => $parameter->mode->name,
 				], $function->parameters),
-				'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
+				'return_type' => self::name($function, $function->return_type_reference?->spelling(), $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
@@ -40,11 +40,11 @@ final class Syntax_Inspection
 			'local_name' => $import->local_name, 'span' => self::span($import),
 		], $file->imports);
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
-			'name' => $global->short_name, 'qualified_name' => $global->name(), 'type' => $global->type_name,
+			'name' => $global->short_name, 'qualified_name' => $global->name(), 'type' => $global->type_reference?->spelling(),
 			'initializer' => self::expression($global->initializer), 'span' => self::span($global),
 		], $file->globals());
 		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
-			'name' => $constant->short_name, 'qualified_name' => $constant->name(), 'type' => $constant->type_name,
+			'name' => $constant->short_name, 'qualified_name' => $constant->name(), 'type' => $constant->type_reference?->spelling(),
 			'initializer' => self::expression($constant->initializer), 'span' => self::span($constant),
 		], $file->constants());
 		if ($file->diagnostics !== []) {
@@ -82,7 +82,7 @@ final class Syntax_Inspection
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
 		if ($expression instanceof ast_cast_expression) {
-			return ['kind' => 'cast', 'type_name' => $expression->type_name,
+			return ['kind' => 'cast', 'type_name' => $expression->type_reference->spelling(),
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_unary_expression) {
@@ -167,7 +167,7 @@ final class Syntax_Inspection
 		}
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'name' => self::name($statement, $statement->short_name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
-				'type' => $statement->type_name === null ? null : self::name($statement, $statement->type_name,
+				'type' => $statement->type_reference === null ? null : self::name($statement, $statement->type_reference?->spelling(),
 					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];
 		}

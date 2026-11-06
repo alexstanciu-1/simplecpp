@@ -23,7 +23,7 @@ foreach ([['int count = 3; count = next;', flavor::cpp],
 	check(count($file->main()->body()->statements) === 2, 'Two shared statements');
 	$local = $file->main()->body()->statements[0];
 	check($local instanceof ast_local_declaration, 'Shared local declaration');
-	check(($local->short_name === 'count') && ($local->type_name === 'int'), 'Names and type syntax');
+	check(($local->short_name === 'count') && ($local->type_reference?->name === 'int'), 'Names and type syntax');
 	check(($local->initializer instanceof ast_integer_expression) && ($local->initializer->source_text() === '3'),
 		'Raw integer');
 	check(($local->byte_start() === 0) && str_ends_with($local->source_text(), ';'), 'Statement includes semicolon');
@@ -40,7 +40,7 @@ foreach ([['int count = 3; count = next;', flavor::cpp],
 }
 foreach ([['auto x = missing;', flavor::cpp], ['let x = missing;', flavor::js]] as [$text, $flavor]) {
 	$local = $frontend->parse(new source_file('inferred', $text, $flavor))->main()->body()->statements[0];
-	check(($local instanceof ast_local_declaration) && ($local->type_name === null),
+	check(($local instanceof ast_local_declaration) && ($local->type_reference === null),
 		'Inferred syntax without inference');
 }
 $file = $frontend->parse(new source_file('writes', '$x = 1; $x = 2;', flavor::php));
@@ -54,11 +54,14 @@ $file = $frontend->parse(new source_file('unresolved', 'Unknown x = ' . $huge . 
 check($file->main()->body()->statements[0]->initializer->source_text() === $huge, 'No host integer conversion');
 check($file->main()->body()->statements[1]->initializer instanceof ast_name_expression,
 	'No symbol lookup or duplicate check');
+// Supported constant references and arithmetic are semantic work, not parser rejections.
+$frontend->parse(new source_file('constant-reference', '$x = bare;', flavor::php));
+$frontend->parse(new source_file('arithmetic', 'int x = 1 + 2;', flavor::cpp));
 foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js],
 		['let x = 1;', flavor::php], ['$x int = 1;', flavor::js], ['let x: int = 1;', flavor::cpp],
-		['auto x = 1;', flavor::js], ['int $x = 1;', flavor::cpp], ['$x = bare;', flavor::php],
-		['const x = 1;', flavor::js], ['int x = 1 + 2;', flavor::cpp], ['{ int x = 1; }', flavor::cpp],
-		['vector<int> x = y;', flavor::cpp], ['let x = 1 = 2;', flavor::js]] as [$text,
+		['auto x = 1;', flavor::js], ['int $x = 1;', flavor::cpp],
+		['const x = 1;', flavor::js], ['{ int x = 1; }', flavor::cpp],
+		['let x = 1 = 2;', flavor::js]] as [$text,
 		$flavor])
 {
 	try {

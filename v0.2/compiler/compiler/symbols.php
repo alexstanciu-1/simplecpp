@@ -173,15 +173,15 @@ final class Symbol_Publication implements declaration_sink
 				$contracts[$key] = null;
 			}
 			elseif ($head instanceof ast_constant_declaration) {
-				$contracts[$key] = json_encode([$head->type_name, $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
+				$contracts[$key] = json_encode([$head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
 			elseif ($head instanceof ast_global_declaration) {
-				$contracts[$key] = 'global:' . ($head->type_name ?? type_registry::literal_type($head->initializer)->name);
+				$contracts[$key] = 'global:' . ($head->type_reference?->spelling() ?? type_registry::literal_type($head->initializer)->name);
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->return_type_name, array_map(
-					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_name, $parameter->mode->value,
+				$contracts[$key] = json_encode([$head->return_type_reference?->spelling(), array_map(
+					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
 		}

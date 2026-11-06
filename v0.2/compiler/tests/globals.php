@@ -138,7 +138,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$case = $sources;
 	$case['root'] = new source_file('root', $root_code . global_text($flavor, 'bad', '1', 'vector'), $flavor);
-	rejects(fn() => $prepare($case), 'unsupported global type');
+	rejects(fn() => $prepare($case), 'Type requires exactly one argument');
 	$case = $sources;
 	$case['duplicate'] = new source_file('duplicate', wrap($flavor, 'Lib', global_text($flavor, 'value', '99')), $flavor);
 	rejects(fn() => $prepare($case), 'Duplicate global: Lib\value');
@@ -197,7 +197,7 @@ foreach (flavor::cases() as $flavor)
 		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '1', 'vector')));
 		touch($lib_path, time() + 2);
 		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'unsupported global type');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Type requires exactly one argument');
 	}
 	finally {
 		foreach (glob($directory . '/*') as $path) {

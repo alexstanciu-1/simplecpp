@@ -95,7 +95,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	rejects(fn() => $prepare($const('VALUE', 'byte', '256') . 'return 8;'), 'range');
 	rejects(fn() => $prepare($const('VALUE', 'int', '9223372036854775808') . 'return 8;'), 'range');
-	rejects(fn() => $prepare($const('VALUE', 'vector', '8') . 'return 8;'), 'Unknown or unsupported constant type');
+	rejects(fn() => $prepare($const('VALUE', 'vector', '8') . 'return 8;'), 'Type requires exactly one argument');
 	rejects(fn() => $prepare($fn('bad', '', 'void', $const('VALUE', 'int', '8')) . 'return 8;'), 'Constant declarations are only allowed');
 	rejects(fn() => $prepare($const('VALUE', 'int', '8') . $const('VALUE', 'int', '9') . 'return 8;'), 'Duplicate constant');
 	// A PHP variable spelling stays separate; cpp/js locals shadow bare constant references.

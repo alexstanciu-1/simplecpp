@@ -24,15 +24,15 @@ final class Compilation_Inspection
 		$functions = [];
 		foreach ($file->functions() as $id => $function) {
 			$functions[] = ['id' => $id, 'name' => $function->name(),
-				'return_type' => $function->return_type_name,
+				'return_type' => $function->return_type_reference?->spelling(),
 				'body_locals' => count($function->body()->locals)];
 		}
 		$result = ['locals' => $locals, 'references' => $references, 'functions' => $functions];
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
-			'name' => $global->name(), 'symbol' => $global->symbol_key(), 'type' => $global->type_name,
+			'name' => $global->name(), 'symbol' => $global->symbol_key(), 'type' => $global->type_reference?->spelling(),
 		], $file->globals());
 		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
-			'name' => $constant->name(), 'symbol' => $constant->symbol_key(), 'type' => $constant->type_name,
+			'name' => $constant->name(), 'symbol' => $constant->symbol_key(), 'type' => $constant->type_reference?->spelling(),
 		], $file->constants());
 		if ($file->diagnostics !== []) {
 			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(),

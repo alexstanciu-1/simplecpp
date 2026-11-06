@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 namespace scpp\compiler;
+require_once __DIR__ . '/vectors.php';
 
 // Generated from the always-available default-runtime module. Do not edit.
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
@@ -11,6 +12,24 @@ final class type_registry
 	{
 		return match ($name) {
 @cases@
+			default => null,
+		};
+	}
+
+	/** Generic family registration is independent of whether a specialization was published. */
+	public static function generic_arity(string $name): ?int /** uint8|null */
+	{
+		return $name === @vector_family@ ? 1 : null;
+	}
+
+	/** Select a published canonical specialization; no descriptor lookup or per-use allocation. */
+	public static function specialize(string $family, type_definition $element): ?type_definition
+	{
+		if ($family !== @vector_family@) {
+			return null;
+		}
+		return match ($element) {
+@vector_cases@
 			default => null,
 		};
 	}

@@ -107,7 +107,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     if ($m === null) {
         return;
     }
-    fields($m, ['source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations']);
+    fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations']);
     literals($m, ['source_type' => 'vector', 'storage' => 'private_std_vector', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'Vector count requires signed integer type');
@@ -128,8 +128,9 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     }
     $p = $publication->vectors;
     fields($p, ['header', 'specializations']);
-    $header = headerPath(at($p, 'header'));
-    checkHeader($plan, $header);
+    $provider = $plan['submodules']['groups']['vectors']['provider'];
+    $header = providerHeader($plan['submodules'], $provider);
+    if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Vector publication header conflicts with provider');
     requireThat(hasType($plan, $count) && hasNative($plan, 'long long'), 'Vector requires published count and native long long construction');
     requireThat(hasValue($plan, 'bool_t'), 'Vector requires published boolean type');
     $vectors = [];
@@ -215,6 +216,9 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     unset($v);
     $plan['vectors'] = array_values($vectors);
     $plan['vectors_header'] = $header;
+    publishTypeExports($plan['submodules'], 'vectors', array_keys($vectors));
+    $plan['vector_publication'] = ['provider' => $provider,
+        'requires' => exportProviders($plan['submodules'], array_merge([$count, 'bool_t'], array_column($vectors, 'element')))];
 }
 // Resolve published payload identities before carrier admission. This does not
 // recursively synthesize dependencies or infer payloads from requested names.

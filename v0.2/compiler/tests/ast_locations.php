@@ -5,7 +5,7 @@ require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/syntax.php';
 
 use scpp\compiler\{Source_Frontend, Syntax_Inspection, ast_node, ast_file_node, ast_function_declaration,
-		ast_function_body, ast_name_expression, diagnostic, entry_target, flavor, source_file};
+		ast_function_body, ast_type_reference, ast_name_expression, diagnostic, entry_target, flavor, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -25,7 +25,15 @@ function check_tree(ast_node $node, ast_file_node $root): void
 		$children = array_values($node->declarations);
 	}
 	elseif ($node instanceof ast_function_declaration) {
-		$children = [$node->body()];
+		$children = [$node->body(), ...$node->parameters];
+		if ($node->return_type_reference !== null) {
+			$children[] = $node->return_type_reference;
+		}
+	}
+	elseif ($node instanceof ast_type_reference) {
+		for ($child = $node->first_child; $child !== null; $child = $child->next_sibling) {
+			$children[] = $child;
+		}
 	}
 	elseif ($node instanceof ast_function_body) {
 		$children = $node->statements;
@@ -63,7 +71,7 @@ foreach ([
 	$call = $root->main()->body()->statements[0];
 	verify($call->source_text() === 'ping /* interior */ ();', 'Interior trivia lost');
 	verify(($root->main()->is_implicit_entry) && ($root->main()->short_name === 'main'), 'Implicit entry identity');
-	verify($root->main()->return_type_name === 'int', 'Implicit entry type spelling');
+	verify($root->main()->return_type_reference?->name === 'int', 'Implicit entry type spelling');
 	$view = Syntax_Inspection::file($file);
 	verify($view['statements'][0]['span']['start'] === strpos($text, 'ping /*'), 'CLI byte location changed');
 	$eof = new ast_name_expression('synthetic', $root->end, $root->end);

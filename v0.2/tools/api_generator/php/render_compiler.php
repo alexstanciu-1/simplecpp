@@ -5,10 +5,12 @@ require_once __DIR__ . '/submodules.php';
 
 require_once __DIR__ . '/compiler_families.php';
 require_once __DIR__ . '/compiler_plans.php';
+require_once __DIR__ . '/render_compiler_vectors.php';
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
-function renderCompiler(mixed $metadata, array $facts): array {
-    $providers = submodulePlan($metadata);
+function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): array {
+    // A null plan is the scalar-only generator test surface; production always supplies a validated runtime plan.
+    $providers = $runtime['submodules'] ?? submodulePlan($metadata);
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
@@ -79,12 +81,15 @@ function renderCompiler(mixed $metadata, array $facts): array {
             $literalCases[] = "\t\t\t" . var_export($word, true) . ' => type_' . $definition['class'] . '::instance(),';
         }
     }
+    [$vectorCode, $vectorCases, $vectorFamily] = compilerVectorTypes($metadata, $runtime, $definitions);
+    $files['types/vectors.php'] = $vectorCode;
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
+        '@vector_cases@' => $vectorCases, '@vector_family@' => var_export($vectorFamily, true),
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 19,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 20,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }

@@ -215,7 +215,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```text
  * function ping(): void { return; }
  * ```
- * short_name is ping, return_type_name is void, and return_type_def() is unavailable until declaration preparation.
+ * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
 final class ast_function_declaration extends ast_node implements ast_declaration_interface
 {
@@ -224,8 +224,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** PROPERTIES */
 	public readonly bool $is_private;
 	public readonly bool $is_implicit_entry;
-	/** Written return type name; absence is distinct from an unresolved return type. */
-	public readonly ?string $return_type_name;
+	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
+	public readonly ?ast_type_reference $return_type_reference;
 	/** @var ast_parameter_declaration[] Native owning signature syntax in positional order. */
 	public readonly array $parameters /** list<ast_parameter_declaration> */;
 	/** Exclusive header token boundary. */
@@ -245,7 +245,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 * $header_end: exclusive token position.
 	 * @param ast_parameter_declaration[] $parameters
 	 */
-	public function __construct(string $name, ?string $return_type_name, int $start /** uint32 */,
+	public function __construct(string $name, ?ast_type_reference $return_type_reference, int $start /** uint32 */,
 		int $header_end /** uint32 */,
 		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [])
 	{
@@ -253,7 +253,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->namespace = $namespace;
 		$this->is_private = $is_implicit_entry;
 		$this->is_implicit_entry = $is_implicit_entry;
-		$this->return_type_name = $return_type_name;
+		$this->return_type_reference = $return_type_reference;
+		$return_type_reference?->attach($this);
 		$this->header_end = $header_end;
 		$this->parameters = $parameters;
 		foreach ($parameters as $parameter) {
@@ -316,14 +317,14 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Return: token position. */
 	public function name_position(): int /** uint32 */
 	{
-		return $this->is_implicit_entry ? $this->start : $this->start + 1;
+		return $this->is_implicit_entry ? $this->start
+			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
 	}
 
 	/** Return: token position. */
 	public function return_type_position(): int /** uint32 */
 	{
-		return (($this->is_implicit_entry) || ($this->source()->flavor === flavor::cpp))
-			? $this->start : $this->header_end - 1;
+		return $this->return_type_reference?->start ?? $this->start;
 	}
 }
 

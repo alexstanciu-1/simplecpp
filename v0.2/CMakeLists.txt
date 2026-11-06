@@ -65,7 +65,6 @@ list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
   ${runtime_generated}/public/scpp/carriers.hpp
-  ${runtime_generated}/public/scpp/vectors.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
   ${runtime_generated}/public/scpp/short_names.hpp
   ${runtime_generated}/src/runtime.cpp
@@ -90,18 +89,18 @@ add_custom_target(scpp_runtime_publication
   VERBATIM)
 add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/numeric/arithmetic.cpp)
 add_dependencies(scpp_runtime scpp_runtime_publication)
-# The PHP compiler consumes generated backend code, independently of runtime API demands.
+# The PHP compiler consumes the same validated publication demand as the runtime.
 # Runtime-only source exports intentionally omit the compiler tree.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
   set(compiler_generated ${CMAKE_CURRENT_SOURCE_DIR}/compiler/generated)
   add_custom_target(scpp_compiler_publication ALL
     COMMAND ${CMAKE_COMMAND}
       -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}
-      -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
+      -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
-    DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
 endif()
@@ -144,7 +143,7 @@ if(BUILD_TESTING)
   set(numeric_proof_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-numeric-proof)
   set(numeric_proof_publication ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/numeric_publication.json)
   scpp_provider_outputs(numeric_proof_outputs ${numeric_proof_generated} ${numeric_proof_publication})
-  foreach(path public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/numeric.hpp
+  foreach(path public/scpp/carriers.hpp public/scpp/numeric.hpp
       public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
     list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
   endforeach()
@@ -191,6 +190,9 @@ if(BUILD_TESTING)
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tools/check_style.py)
   add_test(NAME compiler_scopes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scopes.php)
   add_test(NAME compiler_ast_file COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ast_file.php)
+  add_test(NAME compiler_vector_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_types.php)
+  add_test(NAME compiler_vector_types_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_types_native.py)
+  add_test(NAME compiler_type_references COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/type_references.php)
   add_test(NAME compiler_ast_locations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ast_locations.php)
   add_test(NAME compiler_ast_preparation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ast_preparation.php)
   add_test(NAME compiler_declaration_facts COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/declaration_facts.php)
@@ -341,6 +343,8 @@ if(BUILD_TESTING)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
+  add_test(NAME vector_provider_exports COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
   add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py)
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}

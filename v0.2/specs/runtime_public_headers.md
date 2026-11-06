@@ -129,3 +129,13 @@ The include planner knows nothing about classes versus native aliases, construct
 extraction members or conversion admission. Existing lowering strategies retain
 those responsibilities. Native scalar aliases are already integrated; partitioning
 changes placement and dependencies, not their implementation or source semantics.
+
+## Publication-resolved vector exports
+
+The vectors declaration group joins the provider assembler. `vector.provider` owns
+placement; validated publication specializations supply its concrete type identities
+and exports. Count, boolean and element identities supply actual public dependencies.
+No second metadata specialization list is required. Type-export lookup on the
+prepared runtime plan now yields each concrete vector's C++ symbol and provider.
+Compiler generation consumes these exports for [vector type resolution](../compiler/docs/vector_types.md).
+Vector value operations remain deferred. See [the vector contract](vector_slice.md).

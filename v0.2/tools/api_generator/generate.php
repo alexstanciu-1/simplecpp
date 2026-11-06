@@ -23,12 +23,14 @@ function run(array $args): array {
         return ['context_id' => $facts['id'], 'target' => $facts['target'], 'standard_library' => $facts['standard_library'], 'status' => 'valid'];
     }
     if ($command === 'emit-compiler') {
-        requireThat(in_array(count($args), [5, 6], true), 'Usage: generate.php emit-compiler METADATA FACTS CONTEXT OUTPUT [--check]');
-        $check = count($args) === 6;
-        requireThat(!$check || $args[5] === '--check', 'Unknown generator option');
-        $facts = targetFacts(decode(readFile($args[2]), 'target facts'), decode(readFile($args[3]), 'target context'));
-        $files = renderCompiler(decode(readFile($args[1]), 'runtime metadata'), $facts);
-        publish($files, $args[4], $check, ['php', 'json']);
+        requireThat(in_array(count($args), [6, 7], true), 'Usage: generate.php emit-compiler METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check]');
+        $check = count($args) === 7;
+        requireThat(!$check || $args[6] === '--check', 'Unknown generator option');
+        $facts = targetFacts(decode(readFile($args[3]), 'target facts'), decode(readFile($args[4]), 'target context'));
+        $metadata = decode(readFile($args[1]), 'runtime metadata');
+        $runtime = prepareRuntime($metadata, decode(readFile($args[2]), 'publication'), $facts);
+        $files = renderCompiler($metadata, $facts, $runtime);
+        publish($files, $args[5], $check, ['php', 'json']);
         return ['status' => $check ? 'verified':'generated', 'artifacts' => count($files)];
     }
     $emit = in_array($command, ['emit-runtime', 'emit-scalars'], true);

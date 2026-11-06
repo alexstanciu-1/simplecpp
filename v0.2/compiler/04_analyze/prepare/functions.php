@@ -106,18 +106,18 @@ final class Function_Preparation
 			if ($declaration->return_type_ready()) {
 				continue;
 			}
-			$type = $declaration->return_type_name === 'void' ? type_void::instance()
-				: type_registry::resolve($declaration->return_type_name ?? '');
+			$type = $declaration->return_type_reference === null ? null
+				: Type_Resolution::resolve($declaration->return_type_reference, true);
 			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
-					'Unknown or unsupported return type: ' . $declaration->return_type_name);
+					'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 			}
 			$optional = false;
 			foreach ($declaration->parameters as $parameter) {
 				$parameter->reset_preparation();
-				$parameter_type = type_registry::resolve($parameter->type_name);
+				$parameter_type = Type_Resolution::resolve($parameter->type_reference);
 				if ($parameter_type === null) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_name);
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 				}
 				$parameter->settle_type($parameter_type);
 				$default = $parameter->default_value;

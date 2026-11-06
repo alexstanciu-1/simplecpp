@@ -9,7 +9,8 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	use ast_declaration;
 
 	/** PROPERTIES */
-	public readonly string $type_name;
+	/** Native owning written type syntax. */
+	public readonly ast_type_reference $type_reference;
 	public readonly passing_mode $mode;
 	public readonly int $id /** uint32 */;
 	/** Owned literal syntax; null means a required parameter. */
@@ -23,13 +24,14 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions; $id: body storage ordinal. */
-	public function __construct(string $name, string $type_name, int $id /** uint32 */,
+	public function __construct(string $name, ast_type_reference $type_reference, int $id /** uint32 */,
 		int $start /** uint32 */, int $end /** uint32 */, ?ast_expression $default_value = null,
 		passing_mode $mode = passing_mode::value)
 	{
 		$this->short_name = $name;
 		$this->namespace = null;
-		$this->type_name = $type_name;
+		$this->type_reference = $type_reference;
+		$type_reference->attach($this);
 		$this->mode = $mode;
 		$this->id = $id;
 		parent::__construct($start, $end);

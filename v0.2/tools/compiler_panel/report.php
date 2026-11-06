@@ -68,9 +68,9 @@ try {
 				for ($f = $head; $f !== null; $f = $f->duplicate_element()) {
 					$row = ['file' => basename($f->source()->path), 'token_start' => $f->start];
 					if ($f instanceof ast_global_declaration) {
-						$row += ['kind' => 'global', 'type_name' => $f->type_name];
+						$row += ['kind' => 'global', 'type_name' => $f->type_reference?->spelling()];
 					} else {
-						$row += ['kind' => 'function', 'return_type_name' => $f->return_type_name];
+						$row += ['kind' => 'function', 'return_type_name' => $f->return_type_reference?->spelling()];
 					}
 					$rows[$head->name()][] = $row;
 				}

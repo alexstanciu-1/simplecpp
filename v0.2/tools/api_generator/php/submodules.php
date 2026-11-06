@@ -23,6 +23,9 @@ function declarationGroups(mixed $metadata): array {
             'types' => array_values(array_diff(array_keys(object(at($metadata, 'types'))), $core)),
             'bindings' => [], 'provider' => textValue(at($metadata->scalar_providers, 'numeric'))],
     ];
+    if (isset($metadata->vector)) {
+        $groups['vectors'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->vector, 'provider'))];
+    }
     if (isset($metadata->checked_conversions)) {
         $groups['conversions'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->checked_conversions, 'provider'))];
     }
@@ -64,6 +67,17 @@ function typeExports(mixed $metadata, array $nodes, array $groups): array {
     }
     ksort($exports, SORT_STRING);
     return $exports;
+}
+
+/** Publish concrete family identities from the validated specialization owner, not a second metadata inventory. */
+function publishTypeExports(array &$plan, string $group, array $identities): void {
+    $provider = $plan['groups'][$group]['provider'];
+    foreach ($identities as $identity) {
+        requireThat(!isset($plan['type_exports'][$identity]), 'Duplicate published type export: ' . $identity);
+        $plan['type_exports'][$identity] = ['symbol' => 'scpp::' . $identity, 'provider' => $provider];
+    }
+    $plan['groups'][$group]['types'] = $identities;
+    ksort($plan['type_exports'], SORT_STRING);
 }
 
 /** A semantic export requirement resolves to the same provider used by compiler name queries. */
@@ -222,8 +236,8 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     $identities = array_map(fn(string $name): string => $aliases[$name] ?? $name, names(at($publication, 'types')));
     $identities = array_merge($identities, names(at($publication, 'values')));
     $providers = exportProviders($plan, $identities);
-    foreach (['output', 'conversions', 'string'] as $group) {
-        if (!isset($plan['groups'][$group]) || ($group === 'string' && !isset($publication->string))) continue;
+    foreach (['output', 'conversions', 'string', 'vectors'] as $group) {
+        if (!isset($plan['groups'][$group]) || (in_array($group, ['string', 'vectors'], true) && !isset($publication->{$group}))) continue;
         $providers[] = $plan['groups'][$group]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
@@ -236,7 +250,7 @@ function finalizePublicationProviders(array &$plan): void {
     $providers = &$plan['submodules'];
     $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
     $published[] = $providers['groups']['output']['provider'];
-    foreach (['string', 'checked_conversions'] as $family) {
+    foreach (['string', 'checked_conversions', 'vector_publication'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

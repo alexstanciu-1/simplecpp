@@ -1085,3 +1085,12 @@ build configuration and cache state.
 Remaining non-goals: a separate ABI framework, changing
 source semantics, adding unsupported types/operations, one header per function,
 or splitting compiled runtime libraries solely because public headers are split.
+
+## Follow-on: concrete vector exports
+
+The [vector provider slice](../vector_slice.md#concrete-exports-and-provider-ownership)
+connects existing validated specializations to the common runtime export index and
+provider assembler. It derives concrete exports from publication requests and does
+not activate compiler vector support. Metadata owns vector placement; actual count,
+boolean and element identities own public dependency requirements. Other collection
+and carrier declaration owners remain separate future work.

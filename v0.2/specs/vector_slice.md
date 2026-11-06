@@ -14,9 +14,10 @@ a published signed count type (currently int64), value-copy reads and explicit s
 mutation. It admits registered integer, floating, boolean, null and string element
 families. Publication requests concrete specializations; the default emits
 vector_int64 and vector_string in scpp/vectors.hpp. There is no public vector<T>
-template or standard container alias. The compiler resolves source vector<T> and
-aliases to a requested concrete identity; the API generator does not resolve source
-symbols. Nested vectors, arbitrary user classes and carriers are not admitted.
+template or standard container alias. The compiler now resolves source vector<T> and
+element aliases to a requested concrete identity through the shared export plan;
+[source vector operations remain deferred](../compiler/docs/vector_types.md).
+The API generator does not resolve source symbols. Nested vectors, arbitrary user classes and carriers are not admitted.
 
 Each class owns a private incomplete pointer to a generated std::vector<element>
 storage record. Default and moved-from values are empty without allocation.
@@ -28,6 +29,42 @@ Preparation validates count/boolean publication, element families, native constr
 equality dependencies and explicit conversions before emission. Private generated
 assertions verify element copy construction and nonthrowing move construction/assignment.
 No old-tree include or link dependency is introduced.
+
+## Concrete exports and provider ownership
+
+Runtime metadata `vector.provider` owns the vector declaration group's placement
+(default `core.vectors`, `scpp/vectors.hpp`). The optional legacy publication header
+must agree; it cannot override metadata. Specializations remain requested only in
+`publication.vectors.specializations`.
+
+After validating those requests, prepareVectors publishes each canonical identity
+through the shared type-export index: vector_int64 maps to scpp::vector_int64 and
+its provider. The vectors declaration group's type index contains exactly those
+selected identities. No duplicate specialization catalog is added to metadata.
+These are publication-resolved exports. Compiler generation consumes the validated
+runtime plan to register selected specializations; the metadata-only catalog does
+not invent them.
+
+`vector_publication` records the provider and dependencies derived from count,
+boolean and selected element identities. Finalization validates the effective graph,
+including cycles and unpublished dependencies, before any output is written. The
+renderer supplies a declaration fragment; the shared assembler emits its header
+and dependencies. Int-only vectors need no string or optional numeric include.
+Checked vector-cast helpers remain implementation dependencies, not public includes.
+Existing vector names, signatures, operations and failure behavior are unchanged.
+
+CMake obtains the vector header from the common provider-output inventory. Header
+relocation, provider sharing, removal and re-addition use existing publication cleanup.
+Unrequested specializations have no concrete exports. Existing aggregate consumers
+retain the derived vectors_header path; their declaration owners are not migrated
+by the provider-only slice. The subsequent compiler slice consumes these exports
+for type resolution, as described in [compiler vector types](../compiler/docs/vector_types.md).
+
+The vector_provider_exports test covers export/provider identity, relocation and
+sharing with string, strict inputs, bounds/copy/NUL behavior, minimal dependencies,
+no-STL public closure, rejected-publication preservation and removal/re-addition.
+It also verifies generated compiler bindings follow placement and specialization retirement;
+unaffected scalar definitions remain byte-identical.
 
 ## Members and ownership
 
@@ -65,11 +102,10 @@ numbers.append(20);
 numbers.set(0, int64{3});
 ```
 
-These concrete members explicitly construct runtime arguments before calling core
+These concrete members use the validated conversion recipes before calling core
 members. Exact deleted overloads prevent other native numeric types from narrowing
 into int signatures. They add declarations, not runtime algorithms. C++ cannot
-distinguish an int literal from an int variable. Member adapters belong to the class
-publication, independent of the optional numeric native_bridge.hpp include. A tested
+distinguish an int literal from an int variable. Member adapters belong to the class publication. The former native bridge is retired. A tested
 adapters-disabled publication requires explicit count and element values. Compiler
 lowering must not depend on optional plain-C++ conveniences.
 
@@ -115,3 +151,31 @@ Clang/libc++ UBSan build with no generated inputs or original-tree dependencies.
 Default vector ownership and the alternate cross-element cast consumer both pass
 ASan+UBSan under Clang/libstdc++. As in the earlier string proof, LSan is disabled
 for the known environment limitation; no leak-sanitizer result is claimed.
+
+## Initial provider-only integration verification (2026-11-06)
+
+The runtime build and 55 runtime CTests pass. The focused vector-provider proof
+passes default, relocated and shared-string placement, failure preservation,
+removal/re-addition and unchanged compiler PHP. The existing provider proof passes
+all-flavor incremental recovery and CMake demand removal/restoration. A subsequent
+runtime build performs freshness checks without native compilation or linking.
+
+Reviewed publication captures retain 130 accepted/247 rejected runtime cases,
+19 accepted/537 rejected scalar cases and 17 accepted/37 rejected CLI cases.
+Runtime snapshot changes are limited to prepared plans and vector header includes;
+scalar-only C++ artifacts remain identical. The custom-header fixture now changes
+the owning vector provider together with its legacy header assertion.
+
+Representative native proof timings (milliseconds):
+
+| Placement | Compile driver | Clang frontend | LLVM backend | Link driver |
+| --- | ---: | ---: | ---: | ---: |
+| Default | 64.27 | 13.75 | 9.67 | 54.38 |
+| Relocated | 70.65 | 14.93 | 10.42 | 55.32 |
+| Shared with string | 113.21 | 21.89 | 16.93 | 97.07 |
+
+Clang C++23/libc++, O2/g0, mold, no PCH/LTO, one application translation unit,
+separately compiled runtime object reused at link. These are single verification
+samples taken while other native work was running, not comparative performance
+claims. Runtime compilation is excluded from the application figures. Raw proof
+and trace files are retained in `/tmp/scpp-vector-provider-proof/`.

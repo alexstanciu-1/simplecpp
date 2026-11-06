@@ -14,6 +14,11 @@ small handwritten non-value definition.
 The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
 The [byte/uint8 identity migration](byte_alias.md), integer operation groups and [active numeric family conversions](family_conversions.md) are implemented.
 
+Published vector specializations also have canonical generated definitions, derived
+from the validated runtime export plan. `Type_Resolution` resolves written argument
+nodes once at declaration boundaries. See [vector type resolution](vector_types.md);
+this does not enable vector value operations.
+
 ## Metadata and generated code
 
 `runtime/metadata/runtime.json` owns:

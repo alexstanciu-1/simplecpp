@@ -33,8 +33,8 @@ $ast = $file;
 $ping = $ast->declarations['func:ping'];
 $main = $ast->main();
 [$first, $second, $call, $return] = $main->body()->statements;
-verify(($first->short_name === 'first') && ($first->type_name === 'int'), 'Declaration lost written names');
-verify($ping->return_type_name === 'void', 'Function lost written return type');
+verify(($first->short_name === 'first') && ($first->type_reference?->name === 'int'), 'Declaration lost written names');
+verify($ping->return_type_reference?->name === 'void', 'Function lost written return type');
 unresolved(fn() => $first->type_def());
 unresolved(fn() => $ping->return_type_def());
 unresolved(fn() => $call->function_def());
@@ -61,11 +61,11 @@ foreach ([['auto x = 3; return 8;', flavor::cpp], ['let x = 3; return 8;', flavo
 {
 	$missing = $frontend->collect(new source_file('missing', $text, $flavor));
 	$local = $missing->main()->body()->locals[0];
-	verify($local->type_name === null, 'Missing written type was fabricated');
+	verify($local->type_reference === null, 'Missing written type was fabricated');
 	unresolved(fn() => $local->type_def());
 	(new Preparation())->prepare($missing, new entry_target(31));
 	verify($local->type_def() === type_int64::instance(), 'Initializer type was not inferred');
-	verify($local->type_name === null, 'Inference changed written syntax');
+	verify($local->type_reference === null, 'Inference changed written syntax');
 }
 foreach (get_declared_classes() as $class) {
 	if (is_subclass_of($class, ast_node::class)) {

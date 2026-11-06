@@ -12,8 +12,9 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
             continue;
         }
         [$h, $d] = (__NAMESPACE__ . '\\' . $renderer)($plan);
-        if ($family === 'string') {
-            $groups[] = ['provider' => $plan['string']['provider'], 'declarations' => $h, 'system' => []];
+        if ($family === 'string' || $family === 'vectors') {
+            $provider = $family === 'string' ? $plan['string']['provider'] : $plan['vector_publication']['provider'];
+            $groups[] = ['provider' => $provider, 'declarations' => $h, 'system' => []];
         } else {
             $files['public/' . $path] = BANNER . $h;
         }
@@ -56,11 +57,7 @@ function renderString(array $plan): array {
 }
 
 function renderVectors(array $plan): array {
-    $h = "#pragma once\n" . includeHeader($plan['headers']['operators']);
-    if(isset($plan['string'])) {
-        $h .= includeHeader($plan['string']['header']);
-    }
-    $h .= "namespace scpp {\nnamespace detail { struct vector_access; }\n";
+    $h = "namespace scpp {\nnamespace detail { struct vector_access; }\n";
     $d = '';
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
