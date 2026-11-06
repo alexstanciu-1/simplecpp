@@ -1,4 +1,4 @@
-#include <scpp/output.hpp>
+#include "output_provider.hpp"
 
 #include <charconv>
 #include <cstdio>

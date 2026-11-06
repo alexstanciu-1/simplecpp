@@ -20,8 +20,9 @@ its API; they must not carry duplicate nontrivial runtime implementations.
 
 ## Current output boundary
 
-The generator always publishes `scpp/output.hpp` as a fixed core compiler-facing
-ABI, independent of optional modules. It includes only `<stddef.h>` and `<stdint.h>`:
+The generator always publishes the core output declaration group, independent of
+optional modules. Runtime metadata selects its provider submodule; the default is
+`scpp/output.hpp`, including only `<stddef.h>` and `<stdint.h>`:
 
 ```cpp
 void scpp::echo_bytes(const char* data, ::size_t length);
@@ -41,6 +42,39 @@ a short write throws, but a failure deferred until a later flush is not diagnose
 this API. There is no new automatic flush policy. The remaining source-language
 work is tracked in [echo debt](planning/echo_debt.md); the authoritative output
 semantics remain [output_v0_2](../../specs/output_v0_2.md).
+
+## Metadata-owned string/output providers
+
+`runtime.json` owns `submodules` (module, header, direct `requires` providers and
+`requires_exports` semantic type dependencies).
+The runtime string and output records select their provider. Compiler bindings
+reference `type_export` for types and `declaration_group` for output helpers.
+Runtime publication does not depend on compiler lowering strategies.
+
+The API generator validates this graph and each declaration group's intrinsic
+provider requirements before publication. Requirements may be satisfied through
+transitive dependencies. Group export contracts also reject incompatible compiler
+bindings and literal-header fallbacks for migrated bindings. The prepared plan
+separates provider `nodes` from declaration `groups`. The assembler places string
+and output declaration groups into their selected headers. Both may share a
+provider. Existing scalar headers are registered dependency providers whose
+contents remain owned by their existing renderers. Metadata owns provider paths;
+legacy scalar publication header fields must match them or generation fails before
+publication.
+Only core submodules and complete-header dependencies are supported in this slice.
+Other families, scalar representations and general forward-declaration synthesis
+are unchanged.
+
+String publication requests no longer need a header field. A supplied legacy field
+must agree with the provider; it cannot override metadata. The compiler's generated
+header queries resolve providers during generation and retain per-file collection
+at application compilation. The handwritten output implementation includes a
+stable generated private `output_provider.hpp`, which includes the selected public
+header. This private bridge follows relocation without exposing implementation
+headers to application code.
+
+See the [partition plan](planning/runtime_submodule_partitioning.md) for subsequent
+work and the first-slice verification record.
 
 ## Entry target boundary
 
@@ -70,3 +104,24 @@ existing private scalar semantics for zero-divisor checks and native arithmetic.
 It does not add signed-overflow checks. Compiler lowering emits ordered snapshots
 before invoking these functions; plain addition/subtraction/multiplication need no
 runtime include. The isolated-header proof is `tests/arithmetic_runtime.py`.
+
+## Representation-independent type exports
+
+`type_exports` is a list of existing canonical identities, public `name` spellings
+and placement references. Scalar rows select a `provider`; movable type rows select
+their owning `declaration_group`, which supplies the provider. The planner resolves
+`scpp::` names and dependency providers once. Names must already be declared for the
+identity (including existing integer aliases such as `byte`); exports do not invent
+new declarations or admit new source types.
+
+The bounded scalar adapter validates that an export's provider is the registered
+renderer that actually declares it. Moving those declarations requires changing
+their renderer owner, not merely relabeling an export. String placement can already
+move between assembled providers. Its invariant contract requires `bool_t`; string
+preparation adds dependencies for the casts actually selected by the publication.
+Enabled but unpublished text-conversion capabilities add no intrinsic requirements.
+The count representation is native and adds no public type dependency.
+
+The include planner knows nothing about classes versus native aliases, constructors,
+extraction members or conversion admission. Existing lowering strategies retain
+those responsibilities. The native-alias migration is a separate workstream.

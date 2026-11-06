@@ -1,17 +1,20 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/submodules.php';
 
 require_once __DIR__ . '/compiler_families.php';
 require_once __DIR__ . '/compiler_plans.php';
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts): array {
+    $providers = submodulePlan($metadata);
+    $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['scalar_headers', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
     $safety = compilerLoweringSafety($compiler);
-    $definitions = compilerTypePlan($metadata, $facts, $types);
+    $definitions = compilerTypePlan($metadata, $facts, $types, $providers);
     $metadata = clone $metadata;
     $compiler = compilerFamilyPlan($metadata, $definitions, $types);
     $metadata->compiler = $compiler;

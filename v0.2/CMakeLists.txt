@@ -62,10 +62,9 @@ set(runtime_outputs
   ${runtime_generated}/public/scpp/conversions.hpp
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/entry.hpp
-  ${runtime_generated}/public/scpp/output.hpp
+  ${runtime_generated}/private/output_provider.hpp
   ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
-  ${runtime_generated}/public/scpp/string.hpp
   ${runtime_generated}/public/scpp/values.hpp
   ${runtime_generated}/public/scpp/integers.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
@@ -73,6 +72,15 @@ set(runtime_outputs
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
+# Track metadata-selected string/output byproducts; PHP validates their contracts.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${runtime_metadata})
+file(READ ${runtime_metadata} runtime_provider_metadata)
+foreach(group string output)
+  string(JSON provider GET "${runtime_provider_metadata}" ${group} provider)
+  string(JSON header GET "${runtime_provider_metadata}" submodules ${provider} header)
+  list(APPEND runtime_outputs ${runtime_generated}/public/${header})
+endforeach()
+list(REMOVE_DUPLICATES runtime_outputs)
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
 endif()
@@ -109,7 +117,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
 endif()
 target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
+  PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 if(SCPP_ENABLE_DATETIME)
@@ -344,6 +352,8 @@ if(BUILD_TESTING)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
+  add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py)
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/numeric.php ${native_facts} ${native_context})
   add_test(NAME generator_input_contract COMMAND ${PHP_EXECUTABLE}

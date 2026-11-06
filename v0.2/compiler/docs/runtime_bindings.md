@@ -6,7 +6,9 @@ This implements the arithmetic-binding portion of finding 4 in the
 [saved metadata audit](../../specs/planning/compiler_metadata_audit.md).
 
 `compiler.runtime_bindings` in runtime metadata owns each helper's public C++ symbol,
-header, operand/result identities and supported lowering strategy. Arithmetic rows
+operand/result identities and supported lowering strategy. Legacy bindings retain
+a header field; output references a runtime-owned `declaration_group`, and type
+bindings reference `type_export`. Their providers determine headers during generation. Arithmetic rows
 refer to these records through `bindings`, keyed by operator. The three current
 bindings are int64 division, int64 remainder and float64 division.
 
@@ -53,8 +55,9 @@ observer fixtures, are retained under `v0.2/build/arithmetic-bindings-proof/`.
 ## Checked conversions and string storage
 
 The same `compiler.runtime_bindings` catalog now includes named `kind: type` records
-for boxed int64, byte, float64 and string storage. Each declares its semantic identity,
-public C++ symbol and header. Wrappers used to extract a native result also declare
+for boxed int64, byte, bool, float64 and string storage. Each declares its semantic
+identity and a `type_export` reference. The runtime export plan supplies its public
+C++ name and provider header. Independent symbol/header overrides are rejected. Wrappers used to extract a native result also declare
 an `extract` member. No arbitrary executable expressions are accepted.
 
 Checked conversion rows reference `target_binding` and, for floating-to-integer,
@@ -175,3 +178,43 @@ instrumented application objects. Stage trace sums are not additive wall-time co
 | cpp | 116.75 | 9.74 | 14.25 | 60.00 |
 | php | 151.33 | 11.11 | 18.40 | 80.00 |
 | js | 116.47 | 8.61 | 15.18 | 60.00 |
+
+## String/output submodule providers
+
+String storage and output header queries now consume the shared submodule plan.
+Runtime string/output records own group placement; type bindings reference semantic
+exports and output bindings reference their declaration group without duplicating paths. Application compilation still uses the existing
+per-file header collection and does not interpret metadata. Global declaration
+requirements are now collected before include emission, including standalone
+emission without a cross-unit header planner.
+
+The [partition plan](../../specs/planning/runtime_submodule_partitioning.md) records
+scope and verification. Scalar representations, output signatures and other
+runtime families are unchanged in this first slice.
+
+Group export contracts now validate that migrated bindings select their actual
+owner; those bindings cannot opt back into an independent header field. After
+regenerating compiler PHP, restart the compiler process and any retained
+`Incremental_Project` session. Loaded PHP classes are not hot-reloaded. A new
+`Project_Compiler` process uses the existing compiler-input scan to invalidate
+cached application output when its generated handlers change. The provider proof
+covers this path against an existing application/native build for all flavors.
+
+
+Type exports do not replace native scalar storage spellings with wrapper names.
+`cpp_type`, checked construction and `extract` remain owned by their existing
+representation/lowering contracts. Export spelling can select an already published
+name, such as `scpp::byte` for `uint8`, without changing semantic identity or strategy.
+The shared plan validates declaration placement before generating name/header queries.
+
+## Native alias integration (2026-11-06)
+
+Scalar wrappers and their boxed numeric conversion bindings are retired. Checked
+conversions use named functions. `scalar_bool` references the bool_t type export
+with null extraction; string_storage references the string export. Compiler scalar
+representations now use the public alias names and headers from the same export
+plan. Underlying native identity remains owned by target facts, not export spelling.
+The earlier wrapper descriptions above record the pre-alias stages.
+
+See the [integration handoff](../../specs/planning/alias_provider_integration.md)
+for the deliberately pending combined verification.

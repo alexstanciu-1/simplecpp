@@ -24,6 +24,9 @@ is also the rendering input, avoiding a second serialization model.
   Semantic integer fields require exact nonnegative PHP integers; no supported
   field requires values beyond the signed 64-bit host range.
 - `php/target.php`: explicit C++ target facts/context validation.
+- `php/submodules.php`: shared provider/dependency planning, compiler binding resolution
+  and assembly of movable string/output declaration groups. Runtime group providers
+  are independent of compiler strategies; other families keep existing renderers.
 - `php/scalars.php`: integer, boolean, null and floating API preparation.
 - `php/checked_conversions.php` and `php/render_conversions.php`: additive concrete
   native conversion functions derived from existing numeric conversion rows;
@@ -206,3 +209,44 @@ outcomes and native facts were compared and remained identical.
 Publication manifest version 2 records the native string byte-count API change.
 String constructor counts and size results use the prepared native representation;
 the wrapped count signature is no longer emitted. See [string boundaries](../../specs/string_slice.md).
+
+## String/output submodule verification
+
+The core string/output providers and their direct public dependencies live in
+`runtime/metadata/runtime.json`. Compiler bindings refer to runtime declaration
+groups for helpers and semantic `type_export` identities for types; names and
+public paths are resolved once during compiler generation. Runtime
+publication version 3 also records `private/output_provider.hpp` for the compiled
+output implementation. Default APIs and scalar storage remain unchanged.
+
+Run the relocation, native include-selection, incremental recovery and publication
+proof after building `scpp_runtime`:
+
+```sh
+XDEBUG_MODE=off python3 -B tools/api_generator/tests/submodules.py \
+  --output build/submodules-proof
+```
+
+The proof uses isolated publications and compiler bootstraps, never replaces the
+production generated PHP, and writes stage timings/include closures to
+`results.json`. It is registered as CTest `runtime_submodule_providers`.
+
+The shared plan separates provider nodes from declaration groups. Group contracts
+supply intrinsic dependencies and exported binding roles; the planner validates
+dependency reachability, and compiler resolution rejects wrong owners or migrated
+literal-header fallbacks. The provider proof also regenerates handlers and restarts
+the real project compiler against an existing application/native build. Restart
+retained PHP compiler processes after regeneration; hot replacement is not supported.
+
+
+The export plan resolves `requires_exports` into ordinary provider edges before
+cycle and reachability checks. Runtime export names reuse canonical declarations
+and existing aliases; the scalar adapter checks real renderer placement. Include
+selection never inspects representation or conversion strategy. Tests cover a
+`uint8` export spelled `byte`, string type relocation, invalid export identities and
+placement, all-flavor recovery, and restarted cached application/native rebuilds.
+
+Scalar publication paths must agree with metadata provider paths; the adapter rejects
+conflicts before publishing. String cast dependencies come from the actual publication,
+not the enabled conversion-policy catalog. The provider proof covers both rules and
+an independent spelling-only cached rebuild using an executed checked byte conversion.

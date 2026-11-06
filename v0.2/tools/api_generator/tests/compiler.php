@@ -16,7 +16,14 @@ function conversion_row(object $metadata, string $from, string $to): object {
 $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
+$originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
+// Export planning is pure and order independent; public names do not select storage strategy.
+$reorderedExports = unserialize($originalExportMetadata);
+$reorderedExports->type_exports = array_reverse($reorderedExports->type_exports);
+$reorderedExports->submodules->{'core.string'}->requires_exports = array_reverse($reorderedExports->submodules->{'core.string'}->requires_exports);
+requireThat(renderCompiler($reorderedExports, $facts) === $files, 'Export order changed compiler artifacts');
+requireThat(serialize($metadata) === $originalExportMetadata, 'Export resolution mutated metadata');
 // Integer domains are selected from representation facts, independently of source-name aliases.
 $integerTypes = registry($metadata, $facts);
 $integerPolicy = integerPromotionPolicy($metadata, $integerTypes);
@@ -88,7 +95,7 @@ foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $
     }
 }
 // Mixed operators expand from active families, with independently removable compound permission.
-$definitions = compilerTypePlan($rawMetadata, $facts, $integerTypes);
+$definitions = compilerTypePlan(compilerProviderMetadata($rawMetadata), $facts, $integerTypes);
 $expanded = compilerMixedNumericOperations(clone $rawMetadata->compiler, $definitions);
 requireThat(count($expanded->promotions) === 8, 'Expected both integer representations in mixed groups');
 $subset = unserialize(serialize($rawMetadata));
@@ -164,14 +171,14 @@ foreach (['count', 'operator', 'binding', 'safety'] as $change) {
 // Expansion owns a private copy; repeated generation must not consume the caller's family policies.
 $originalMetadata = serialize($metadata);
 $registry = registry($metadata, $facts);
-$definitions = compilerTypePlan($metadata, $facts, $registry);
+$definitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, $registry);
 $familyPlan = compilerFamilyPlan($metadata, $definitions, $registry);
 requireThat(serialize($metadata) === $originalMetadata, 'Family planning mutated input metadata');
 requireThat(serialize(compilerFamilyPlan($metadata, $definitions, $registry)) === serialize($familyPlan), 'Family planning is not repeatable');
 
 // Test grouped metadata expansion separately, then exercise the existing normalized handler validators.
 $registry = registry($metadata, $facts);
-$definitions = compilerTypePlan($metadata, $facts, $registry);
+$definitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, $registry);
 $normalized = compilerConversionFamilies(unserialize(serialize($metadata->compiler)), $definitions, $registry);
 $normalized = compilerMixedNumericOperations($normalized, $definitions);
 $requirements = array_map(static fn($row) => ['promotion' => $row, 'policy' => 'family'], $normalized->promotions);
@@ -201,7 +208,7 @@ try {
     renderCompiler($bad, $facts);
     throw new \LogicException('Missing int64 was accepted');
 } catch (\RuntimeException $error) {
-    requireThat(str_contains($error->getMessage(), 'Unknown integer policy identity'), $error->getMessage());
+    requireThat(str_contains($error->getMessage(), 'Unknown type export: int64'), $error->getMessage());
 }
 requireThat(decimalPowerOfTwo(7) === '128' && decimalPredecessor('128') === '127', 'Integer boundary algorithm');
 requireThat(decimalPowerOfTwo(63) === '9223372036854775808', 'Exact signed-width magnitude');
@@ -232,7 +239,7 @@ requireThat(renderCompiler($reordered, $facts) === $files, 'Module order changed
 $aliasMetadata = unserialize(serialize($metadata));
 $aliasMetadata->compiler->value_types->float64->source_names = ['real'];
 $aliasMetadata->compiler->value_types->int64->source_names = [];
-$aliasPlan = compilerTypePlan($aliasMetadata, $facts, registry($aliasMetadata, $facts));
+$aliasPlan = compilerTypePlan(compilerProviderMetadata($aliasMetadata), $facts, registry($aliasMetadata, $facts));
 requireThat($aliasPlan['float64']['aliases'] === ['float', 'real'], 'Shared/extra floating aliases ignored');
 requireThat($aliasPlan['int64']['aliases'] === ['int'], 'Removed compiler-only integer alias retained');
 $aliasFiles = renderCompiler($aliasMetadata, $facts);
@@ -374,13 +381,13 @@ try {
 
 // Condition generation consumes the resolved storage binding and category, not a second identity table.
 $bound = unserialize(serialize($metadata));
-$bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_condition_string';
-$bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_condition_string.hpp';
+// The runtime declaration owns spelling; the scoped export keeps its canonical name.
+$bound->submodules->{'core.string'}->header = 'scpp/test_condition_string.hpp';
 $boundCode = renderCompiler($bound, $facts)['types/string.php'];
-requireThat(str_contains($boundCode, 'const scpp::test_condition_string& condition_value'), 'Condition storage spelling ignored');
+requireThat(str_contains($boundCode, 'const scpp::string& condition_value'), 'Condition storage spelling ignored');
 $start = strpos($boundCode, 'function condition_headers');
 requireThat(str_contains(substr($boundCode, $start, strpos($boundCode, "\n\t}", $start) - $start), 'scpp/test_condition_string.hpp'), 'Condition header ignored');
-$conditionDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
+$conditionDefinitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, registry($metadata, $facts));
 $acceptedConditions = ['uint8' => 'nonzero_integer', 'int64' => 'nonzero_integer', 'float64' => 'nonzero_float', 'bool_t' => 'identity', 'string' => 'nonempty_except_zero'];
 foreach (array_keys($conditionDefinitions) as $identity) {
     foreach (array_values($acceptedConditions) as $strategy) {
@@ -401,8 +408,8 @@ $renamedCompiler = (object)['conditions' => (object)['other_integer' => 'nonzero
 requireThat(isset(compilerConditionPlan($renamedCompiler, $renamed)['other_integer']), 'Condition strategy still depends on identity spelling');
 
 // The normalized comparison plan retains validated metadata and resolves operator spellings only once.
-$comparisonDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
-$comparisonPlan = compilerComparisonPlan($metadata->compiler, $comparisonDefinitions, names($metadata->string->operations));
+$comparisonDefinitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, registry($metadata, $facts));
+$comparisonPlan = compilerComparisonPlan(compilerProviderMetadata($metadata)->compiler, $comparisonDefinitions, names($metadata->string->operations));
 foreach (object($metadata->compiler->comparisons) as $identity => $row) {
     $normalized = $comparisonPlan[$identity];
     foreach (['operand', 'result', 'lowering'] as $field) {
@@ -412,12 +419,12 @@ foreach (object($metadata->compiler->comparisons) as $identity => $row) {
 }
 $oneComparison = unserialize(serialize($metadata));
 $oneComparison->compiler->comparisons->int64->operators = ['equal'];
-$onePlan = compilerComparisonPlan($oneComparison->compiler, $comparisonDefinitions, names($metadata->string->operations));
+$onePlan = compilerComparisonPlan(compilerProviderMetadata($oneComparison)->compiler, $comparisonDefinitions, names($metadata->string->operations));
 requireThat($onePlan['int64']['operators'] === ['equal' => '=='], 'Comparison operator removal ignored');
 $badComparison = unserialize(serialize($metadata));
 $badComparison->compiler->comparisons->int64->operators[] = 'equal';
 try {
-    compilerComparisonPlan($badComparison->compiler, $comparisonDefinitions, names($metadata->string->operations));
+    compilerComparisonPlan(compilerProviderMetadata($badComparison)->compiler, $comparisonDefinitions, names($metadata->string->operations));
     throw new \LogicException('Duplicate comparison operator accepted');
 } catch (\RuntimeException $expected) {
     requireThat(str_contains($expected->getMessage(), 'Duplicate comparison'), 'Comparison diagnostic changed');
@@ -500,7 +507,7 @@ foreach (['missing', 'operand', 'result', 'symbol', 'header'] as $change) {
     }
 }
 // Family registration owns direct AST dispatch and canonical accessors; keyword owners share one AST family.
-$literalDefinitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
+$literalDefinitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, registry($metadata, $facts));
 $familyPlan = compilerLiteralFamilies($literalDefinitions);
 requireThat(str_contains($familyPlan['cases'], 'ast_string_expression => self::string()'), 'String family dispatch missing');
 $renamedDefinitions = $literalDefinitions;
@@ -555,7 +562,7 @@ $noOutputFiles = renderCompiler($noOutput, $facts);
 requireThat(!str_contains($noOutputFiles['types/int64.php'], 'function supports_output'), 'Removed output admission retained');
 $boundOutput = unserialize(serialize($metadata));
 $boundOutput->compiler->runtime_bindings->echo_int->symbol = 'scpp::test_echo';
-$boundOutput->compiler->runtime_bindings->echo_bytes->header = 'scpp/test_output.hpp';
+$boundOutput->submodules->{'core.output'}->header = 'scpp/test_output.hpp';
 $boundOutputFiles = renderCompiler($boundOutput, $facts);
 requireThat(str_contains($boundOutputFiles['types/int64.php'], 'scpp::test_echo'), 'Output symbol ignored');
 requireThat(str_contains($boundOutputFiles['types/string.php'], 'scpp/test_output.hpp'), 'Output header ignored');
@@ -567,7 +574,7 @@ foreach (['missing', 'operand', 'strategy', 'unsupported', 'symbol', 'header'] a
         'strategy' => $bad->compiler->runtime_bindings->echo_bytes->strategy = 'integer',
         'unsupported' => $bad->compiler->output->bool_t = (object)['strategy' => 'integer', 'binding' => 'echo_int'],
         'symbol' => $bad->compiler->runtime_bindings->echo_int->symbol = 'bad()',
-        'header' => $bad->compiler->runtime_bindings->echo_bytes->header = '../private.hpp',
+        'header' => $bad->submodules->{'core.output'}->header = '../private.hpp',
     };
     try {
         renderCompiler($bad, $facts);
@@ -606,13 +613,15 @@ foreach (['copy_missing', 'copy_invalid', 'strategy_missing', 'strategy_invalid'
 $bound = unserialize(serialize($metadata));
 $bound->checked_conversions->symbol_prefix = 'test_checked_';
 $bound->checked_conversions->header = 'scpp/test_conversions.hpp';
-$bound->compiler->runtime_bindings->string_storage->symbol = 'scpp::test_string';
-$bound->compiler->runtime_bindings->string_storage->header = 'scpp/test_string.hpp';
+foreach ($bound->type_exports as $export) if ($export->identity === 'uint8') $export->name = 'byte';
+$bound->submodules->{'core.integers'}->header = 'scpp/test_byte.hpp';
+$bound->submodules->{'core.string'}->header = 'scpp/test_string.hpp';
 $boundFiles = renderCompiler($bound, $facts);
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<scpp::int64>'), 'Checked binding ignored');
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp/test_conversions.hpp'), 'Checked header binding ignored');
 requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64(static_cast<scpp::float64>'), 'Floating checked binding ignored');
-requireThat(str_contains($boundFiles['types/string.php'], 'scpp::test_string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
+requireThat(str_contains($boundFiles['types/string.php'], 'scpp::string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
+requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::byte') && str_contains($boundFiles['types/uint8.php'], 'scpp/test_byte.hpp'), 'Scalar export binding ignored');
 foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
@@ -621,7 +630,7 @@ foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $chan
         'kind' => $bad->compiler->runtime_bindings->string_storage->kind = 'function',
         'extract' => $bad->compiler->runtime_bindings->scalar_bool->extract = 'value()',
         'symbol' => $bad->compiler->runtime_bindings->string_storage->symbol = 'scpp::type{}',
-        'header' => $bad->compiler->runtime_bindings->string_storage->header = '../private.hpp',
+        'header' => $bad->submodules->{'core.string'}->header = '../private.hpp',
     };
     try {
         renderCompiler($bad, $facts);
@@ -812,8 +821,8 @@ $expected = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boo
     'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer',
     'bool_t:uint8' => 'boolean_integer', 'uint8:bool_t' => 'integer_boolean',
     'uint8:float64' => 'numeric_floating', 'float64:uint8' => 'floating_integer'];
-$definitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
-$plan = compilerConversionPlan($metadata, $definitions, registry($metadata, $facts), $facts);
+$definitions = compilerTypePlan(compilerProviderMetadata($metadata), $facts, registry($metadata, $facts));
+$plan = compilerConversionPlan(compilerProviderMetadata($metadata), $definitions, registry($metadata, $facts), $facts);
 $actual = array_map(static fn($row) => $row['operation'], $plan);
 ksort($expected); ksort($actual);
 requireThat($actual === $expected, 'Family expansion changed conversion admission');

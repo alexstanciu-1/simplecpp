@@ -45,7 +45,7 @@ function compilerTypeBinding(mixed $compiler, string $name, string $identity, bo
 }
 
 /** Resolve active membership, aliases and representations once for class and registry generation. */
-function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
+function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $providers = null): array {
     $compiler = at($metadata, 'compiler');
     $sources = fields(at($metadata, 'source_types'), ['int', 'bool', 'null', 'float']);
     requireThat(($sources['int'] ?? null) === 'int64' && isset($types[$sources['int']]), 'Compiler int requires int64 metadata');
@@ -167,13 +167,12 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
 
         $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
     }
-    $headers = fields(at($compiler, 'scalar_headers'), ['integer', 'boolean', 'floating']);
-    foreach (['integer', 'boolean', 'floating'] as $kind) headerPath(at((object)$headers, $kind));
+    $providers ??= submodulePlan($metadata);
     foreach ($definitions as $identity => &$definition) {
-        $kind = $definition['strategy'];
-        if (!isset($headers[$kind])) continue;
-        $definition['cpp'] = 'scpp::' . $identity;
-        $definition['cpp_header'] = $headers[$kind];
+        if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating'], true)) continue;
+        $export = typeExport($providers, $identity);
+        $definition['cpp'] = $export['symbol'];
+        $definition['cpp_header'] = providerHeader($providers, $export['provider']);
     }
     unset($definition);
     return $definitions;
@@ -226,7 +225,7 @@ function compilerCheckedConversionBindings(mixed $metadata, array $definitions, 
     foreach ($runtime['checked_conversions']['functions'] ?? [] as $function) {
         $bindings[$function['source'] . ':' . $function['target']] = [
             'symbol' => 'scpp::' . $function['symbol'], 'header' => $runtime['checked_conversions']['header'],
-            'source_cpp' => 'scpp::' . $function['source']];
+            'source_cpp' => $definitions[$function['source']]['cpp']];
     }
     return $bindings;
 }

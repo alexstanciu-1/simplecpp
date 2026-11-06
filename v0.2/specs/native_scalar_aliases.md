@@ -53,8 +53,9 @@ carrier integration remains deferred.
 
 - New generator helper `php/scalar_abi.php` owns native identity, input fences and
   native adapter recipe selection; temporary scalar plans retain native_name.
-- Compiler scalar_headers metadata selects minimal public alias headers. Generated
-  type plans carry cpp_header; emitted numeric types use scpp aliases. Expression
+- Runtime type_exports and submodule providers select scalar names and public headers;
+  the temporary compiler.scalar_headers mapping was removed during integration.
+  Generated type plans carry cpp_header; emitted numeric types use scpp aliases. Expression
   emission collects its resolved type's headers, including bool lambda results.
 - The scalar_bool binding replaces boxed_bool and has no extraction accessor.
 - Checked conversion publication includes selected string parsing rows; emission

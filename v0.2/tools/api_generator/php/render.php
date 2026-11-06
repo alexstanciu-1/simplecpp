@@ -58,6 +58,7 @@ function renderValues(array $plan): string {
 }
 
 function render(array $plan): array {
+    $groups = [];
     $headers = $plan['headers'];
     $types = $headers['types'];
     $vals = $headers['values'];
@@ -76,7 +77,7 @@ function render(array $plan): array {
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $d .= "namespace scpp {\n";
     $files = [];
-    renderSequences($plan, $files, $d);
+    renderSequences($plan, $files, $d, $groups);
     renderCheckedConversions($plan, $files, $d);
     if (hasValue($plan, 'float64')) $d .= template('float_assertions');
     foreach ($plan['conversions'] as $conversion) {
@@ -139,12 +140,14 @@ function render(array $plan): array {
     renderDatetime($plan, $files);
     renderJson($plan, $files);
     renderBoxed($plan, $files);
-    requireThat(!isset($files['public/scpp/output.hpp']), 'The core output header path is reserved');
-    $files['public/scpp/output.hpp'] = BANNER . template('output_declaration');
+    $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration'), 'system' => ['stddef.h', 'stdint.h']];
+    $files['private/output_provider.hpp'] = BANNER . '#pragma once' . "\n"
+        . includeHeader(providerHeader($plan['submodules'], $plan['submodules']['groups']['output']['provider']));
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('arithmetic_declaration');
+    assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
     ksort($files, SORT_STRING);

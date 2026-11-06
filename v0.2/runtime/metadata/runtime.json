@@ -581,6 +581,7 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "provider": "core.string",
     "type": "string",
     "source_type": "string",
     "storage": "private_std_string",
@@ -734,11 +735,6 @@
     ]
   },
   "compiler": {
-    "scalar_headers": {
-      "integer": "scpp/integers.hpp",
-      "boolean": "scpp/values.hpp",
-      "floating": "scpp/values.hpp"
-    },
     "modules": {
       "default-runtime": {
         "always_available": true,
@@ -934,13 +930,13 @@
         "operand": "int64",
         "strategy": "integer",
         "symbol": "scpp::echo_int",
-        "header": "scpp/output.hpp"
+        "declaration_group": "output"
       },
       "echo_bytes": {
         "operand": "string",
         "strategy": "bytes",
         "symbol": "scpp::echo_bytes",
-        "header": "scpp/output.hpp"
+        "declaration_group": "output"
       },
       "int64_divide": {
         "operand": "int64",
@@ -974,15 +970,13 @@
       "scalar_bool": {
         "kind": "type",
         "identity": "bool_t",
-        "symbol": "scpp::bool_t",
-        "header": "scpp/values.hpp",
+        "type_export": "bool_t",
         "extract": null
       },
       "string_storage": {
         "kind": "type",
         "identity": "string",
-        "symbol": "scpp::string",
-        "header": "scpp/string.hpp"
+        "type_export": "string"
       },
       "uint8_divide": {
         "operand": "uint8",
@@ -1218,5 +1212,45 @@
   },
   "integer_aliases": { "byte": "uint8" },
   "core_integers": ["int64", "uint8"],
-  "deferred_text_casts": ["uint8"]
+  "deferred_text_casts": ["uint8"],
+  "output": { "provider": "core.output" },
+  "submodules": {
+    "core.integers": {
+      "module": "core",
+      "header": "scpp/integers.hpp",
+      "requires": [],
+      "existing": "types"
+    },
+    "core.values": {
+      "module": "core",
+      "header": "scpp/values.hpp",
+      "requires": [],
+      "existing": "values"
+    },
+    "core.string": {
+      "module": "core",
+      "header": "scpp/string.hpp",
+      "requires": [],
+      "requires_exports": ["int64", "float64", "bool_t"]
+    },
+    "core.output": {
+      "module": "core",
+      "header": "scpp/output.hpp",
+      "requires": []
+    }
+  },
+  "type_exports": [
+    {"identity": "int8", "name": "int8", "provider": "core.integers"},
+    {"identity": "int16", "name": "int16", "provider": "core.integers"},
+    {"identity": "int32", "name": "int32", "provider": "core.integers"},
+    {"identity": "int64", "name": "int64", "provider": "core.integers"},
+    {"identity": "uint8", "name": "uint8", "provider": "core.integers"},
+    {"identity": "uint16", "name": "uint16", "provider": "core.integers"},
+    {"identity": "uint32", "name": "uint32", "provider": "core.integers"},
+    {"identity": "uint64", "name": "uint64", "provider": "core.integers"},
+    {"identity": "null_t", "name": "null_t", "provider": "core.values"},
+    {"identity": "bool_t", "name": "bool_t", "provider": "core.values"},
+    {"identity": "float64", "name": "float64", "provider": "core.values"},
+    {"identity": "string", "name": "string", "declaration_group": "string"}
+  ]
 }
