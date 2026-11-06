@@ -9,7 +9,7 @@ can round: `9007199254740993 - 9007199254740992.0` produces 0.0. Division reject
 integer zero and both floating zero signs; other floating results retain the existing
 NaN/infinity/underflow/signed-zero contract. Integer-only division is unchanged.
 Float-destination mixed compounds are now covered by [their own permission](mixed_compounds.md).
-Mixed equality, remainder and bool/byte arithmetic remain deferred.
+[Mixed equality](mixed_equality.md) also uses this path; remainder and bool/byte arithmetic remain deferred.
 
 ## Ownership and structure
 

@@ -253,7 +253,7 @@ try {
 // Operator capability is generated, rather than inferred from native representation or conversion support.
 $without = unserialize(serialize($metadata));
 unset($without->compiler->comparisons->int64);
-requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'binary_operator::equal'), 'Removed comparisons still generated');
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'binary_operator::equal => type_bool::instance()'), 'Removed comparisons still generated');
 $without->compiler->comparisons->float64->operators = ['equal'];
 $without->compiler->promotions = [];
 $limited = renderCompiler($without, $facts)['types/float64.php'];
@@ -708,5 +708,21 @@ foreach (['direction', 'operator', 'duplicate'] as $change) {
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid mixed compound metadata accepted: ' . $change);
     } catch (\RuntimeException $expected) {
+    }
+}
+
+// Equality promotions require the conversion permission and the actual float equality operation.
+foreach (['permission', 'execution'] as $change) {
+    $bad = unserialize(serialize($metadata));
+    if ($change === 'permission') {
+        $bad->compiler->conversions[4]->promotion_operators = array_values(array_diff($bad->compiler->conversions[4]->promotion_operators, ['equal']));
+    } else {
+        $bad->compiler->comparisons->float64->operators = array_values(array_diff($bad->compiler->comparisons->float64->operators, ['equal']));
+    }
+    try {
+        renderCompiler($bad, $facts);
+        throw new \LogicException('Missing mixed equality permission/operation accepted');
+    } catch (\RuntimeException $error) {
+        requireThat($error->getMessage() === ($change === 'permission' ? 'Unsupported promotion operator' : 'Promotion execution operation unavailable'), 'Wrong equality metadata diagnostic');
     }
 }

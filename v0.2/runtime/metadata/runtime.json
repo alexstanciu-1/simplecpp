@@ -842,7 +842,7 @@
         "to": "float64",
         "contexts": ["explicit_cast", "typed_destination"],
         "operation": "numeric_floating",
-        "promotion_operators": ["less", "less_equal", "greater", "greater_equal", "add", "subtract", "multiply", "divide"]
+        "promotion_operators": ["equal", "not_equal", "less", "less_equal", "greater", "greater_equal", "add", "subtract", "multiply", "divide"]
       },
       {
         "from": "bool_t",
@@ -1023,6 +1023,8 @@
         "left": "int64",
         "right": "float64",
         "operators": [
+          "equal",
+          "not_equal",
           "less",
           "less_equal",
           "greater",
@@ -1035,6 +1037,8 @@
         "left": "float64",
         "right": "int64",
         "operators": [
+          "equal",
+          "not_equal",
           "less",
           "less_equal",
           "greater",

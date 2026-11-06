@@ -435,7 +435,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $promotion = names(at($row, 'promotion_operators'), 'Duplicate conversion promotion operator');
         // Only the currently implemented unchecked rounding conversion can be settled without value checks.
         requireThat($promotion === [] || ($operation === 'numeric_floating' && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
-        foreach ($promotion as $operator) requireThat(in_array($operator, ['less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide'], true), 'Unsupported promotion operator');
+        foreach ($promotion as $operator) requireThat(in_array($operator, ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide'], true), 'Unsupported promotion operator');
         $sourceBinding = null;
         $targetBinding = null;
         if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {

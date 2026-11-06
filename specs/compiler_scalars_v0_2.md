@@ -352,7 +352,7 @@ Missing conversion definitions or execution operations are generator errors.
 The mixed-ordering contract in `expression_evaluation.md` applies: integer rounding
 is observable, NaN makes all four comparisons false, and signed-zero/infinity
 ordering follows binary64. The bounded compiler slice supports plain scalar values;
-carriers and mixed equality remain deferred; mixed arithmetic and float-destination
+carriers remain deferred; mixed equality, arithmetic and float-destination
 compound writes are specified below.
 Each operand is prepared once. Promotion settles conversion/execution facts on the
 existing binary node, without synthetic cast nodes or arithmetic constant folding.
@@ -373,7 +373,7 @@ the float64 arithmetic contract above, including overflow, NaN, underflow and si
 zero. Literal overflow rejection remains separate from arithmetic results.
 
 Metadata authorizes these operator-local conversions; ordinary assignment,
-reference binding and compound admissions are unchanged. Mixed equality, floating remainder and bool/byte arithmetic remain deferred.
+reference binding and compound admissions are unchanged. Floating remainder and bool/byte arithmetic remain deferred; mixed equality is admitted below.
 Float-destination/int64-RHS compounds are admitted below.
 Prepare each operand once and retain existing execution/conversion facts; no
 arithmetic constant folding or expanded evaluation-order machinery is introduced.
@@ -394,3 +394,18 @@ boundary conversions. Int64 destinations with float64 RHS remain rejected. Globa
 indexed/field destinations, carriers and value-producing compound expressions remain
 outside this compiler slice. Preparation visits the RHS once, retains its conversion
 on the assignment node and invalidates old constant knowledge; no folding is added.
+
+## Mixed int64/float64 equality — 2026-11-06
+
+All three flavors admit plain int64/float64 `==` and `!=` in either operand order.
+Convert the integer to float64 before comparison; the result is bool. The plain
+scalar equality contract in `expression_evaluation.md` applies: rounding is
+observable near ±2^53 and int64 limits, signed zeros compare equal, and NaN compares
+unequal. `!=` negates `==`. Under the normal rounding environment,
+`9007199254740993 == 9007199254740992.0` is true. Storage is never converted in place.
+
+Metadata authorizes the existing numeric-floating conversion for equality and
+selects float64 execution with bool result. Each operand is prepared once using
+existing binary facts and lowering. No constant folding, new runtime helper or
+expanded sequencing mechanism is introduced. Strict identity, carriers,
+bool/byte mixed numeric equality and string comparisons remain deferred.

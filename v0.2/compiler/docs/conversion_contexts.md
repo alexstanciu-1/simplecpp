@@ -7,7 +7,7 @@ and [mixed-ordering semantics](../../../specs/expression_evaluation.md#mixed-can
 own this slice. It adds plain int64/float64 `< <= > >=` in both operand orders.
 Mixed arithmetic is also admitted as described in [mixed arithmetic](mixed_arithmetic.md).
 Float-destination compounds are explicitly admitted by [compound promotion](mixed_compounds.md).
-Mixed equality, carriers and conversion-chain search remain deferred.
+[Mixed equality](mixed_equality.md) also uses this path; carriers and conversion-chain search remain deferred.
 
 ## Metadata and generated interfaces
 
@@ -19,7 +19,7 @@ and `inference`. All callers now pass their actual boundary to
 reference matching and condition truthiness remain separate.
 
 `compiler.promotions` contains directional rows with left/right types, an operator
-list, execution type float64 and result bool_t for ordering or float64 for arithmetic. Generator validation requires the
+list, execution type float64 and result bool_t for comparisons or float64 for arithmetic. Generator validation requires the
 existing int64 → float64 `numeric_floating` definition and each selected float execution operation.
 Rows may not authorize unsupported types/operators, missing operations or duplicates.
 The conversion context list does not contain a general operator permission.
@@ -107,7 +107,7 @@ Categories come from runtime type declarations; byte remains a distinct category
 The widening strategy additionally verifies that the destination represents the source domain.
 
 Each conversion row now has `promotion_operators`. Only the int64 → float64 row
-lists `< <= > >= + - * /`; other rows have empty lists. Context permission and promotion
+lists `== != < <= > >= + - * /`; other rows have empty lists. Context permission and promotion
 permission are independent. Checked promotions remain rejected because the current
 promotion path cannot perform their required value-dependent preparation.
 

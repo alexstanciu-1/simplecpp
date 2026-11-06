@@ -105,7 +105,7 @@ foreach (flavor::cases() as $flavor)
 	verify($before === serialize($entry), 'Lowering mutated facts');
 	verify(str_contains($cpp, 'static_cast<double>'), 'Missing shared numeric conversion');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected)];
-	foreach (['1 == 1.0', '1.0 != 1', 'true < 1.0', '(byte)1 < 1.0'] as $invalid) {
+	foreach (['true < 1.0', '(byte)1 < 1.0'] as $invalid) {
 		rejects(fn() => $prepare('if (' . $invalid . ') {} return 8;'), 'Unsupported binary');
 	}
 	rejects(fn() => $prepare($decl('1.0') . $x . '+=(byte)1; return 8;'), 'Unsupported compound');

@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-06, after float-destination/int64-RHS compounds.
+Updated: 2026-11-06, after mixed int64/float64 equality.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -22,7 +22,7 @@ not a mandatory dependency order.
 | # | Area / donor reference | Active v0.2 position | Main remaining work |
 | --- | --- | --- | --- |
 | 01 | [Literals and locals](../../../compiler/my-try/docs/catalog/01_literals_locals.md) | Partial: int/int64, null, bool, byte, float/float64, strings; typed/inferred locals, copies, plain reassignment and int64/float64 compounds | Broader constant initializers, chained assignment; expression-dependent examples |
-| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons, mixed int64/float64 ordering and arithmetic, int64 and float64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64/float64 compounds (including float destination/int64 RHS), discarded-value int64/float64 updates and int64/float64 unary signs | Bitwise operators, mixed equality and string/null comparisons, eager xor, broader casts/compound writes, value-producing increments, string operations |
+| 02 | [Expressions](../../../compiler/my-try/docs/catalog/02_expressions.md) | Partial: literal/name leaves, typed-initialization conversions, signed floating literals, grouping, same-type scalar comparisons, mixed int64/float64 ordering, equality and arithmetic, int64 and float64 arithmetic and generated-truthiness `!`/`&&`/`||`; explicit scalar casts, int64/float64 compounds (including float destination/int64 RHS), discarded-value int64/float64 updates and int64/float64 unary signs | Bitwise operators, string/null comparisons, eager xor, broader casts/compound writes, value-producing increments, string operations |
 | 03 | [Control flow](../../../compiler/my-try/docs/catalog/03_control_flow.md) | Partial: metadata-generated bool/int64/float64/string truthiness, braced if/elseif/else and while/do-while/for with bare break/continue, lexical body scopes and structural return completion | Unbraced bodies, numbered/labelled transfers, omitted/comma for clauses and foreach, ternary expressions, null/byte conditions and precise flow facts |
 | 04 | [Functions](../../../compiler/my-try/docs/catalog/04_functions.md) | Partial: typed value parameters/returns for current types, nested/value calls, cross-file signatures, trailing literal defaults, mutable reference parameters and ordered argument conversion | General-expression defaults, terminating recursion proofs, variadics, read-only references/reference defaults, named arguments and signature inference; overloads remain unimplemented |
 | 05 | [Dynamic boundaries](../../../compiler/my-try/docs/catalog/05_dynamic_boundaries.md) | Partial: null value and bounded metadata-driven scalar conversions and explicit casts | Nullable/Result, mixed/dynamic, broader casts, probes/coalescing and text conversions |
