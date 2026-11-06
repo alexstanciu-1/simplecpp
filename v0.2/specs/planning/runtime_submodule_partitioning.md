@@ -23,22 +23,83 @@ The [public-header contract](../runtime_public_headers.md) remains current
 authority. The earlier [ABI consolidation debt](runtime_abi_consolidation_debt.md)
 is historical design context, not a prerequisite for this work.
 
-## Current implementation evidence
+## Progress against the original discussion
 
-The current generator, templates and publication metadata were reviewed. Local
-generated headers reflected an older publication and were not treated as the
-current source of truth.
+The include-selection mechanism is implemented for the integrated consumers; the
+full runtime migration is not complete. The string/output slice was committed as
+`bb09d12bc`; representation-independent exports and their review fixes were committed
+as `40695e0f4`. This status records completed work and remaining planning, and does
+not authorize another implementation slice.
+
+| Original requirement | Completed | Remaining |
+| --- | --- | --- |
+| Include runtime C++ headers directly | Generated C++ uses public runtime headers for string storage, output and existing checked scalar conversions. | Connect the remaining public runtime surfaces to the shared export/provider model. |
+| Select small includes per source unit | Generated type/helper queries feed per-header and per-source requirement collection and deduplication. Scalar-only units avoid unnecessary string/output includes. | Extend coverage as additional consumers migrate; keep verifying isolation and obsolete-include removal. |
+| Expose scpp data types through metadata | Type exports resolve canonical identities to existing public scpp names and provider headers without selecting representation or conversion strategy. | Ordinary scalar declarations still use native C++ spellings; some public helper signatures also retain native types. The scpp-types-only public surface is not complete. |
+| Describe runtime partitioning in metadata | Current submodule headers, semantic export dependencies, provider edges and transitive dependency validation are implemented. | Establish the broader coarse partition below and migrate families still owned by legacy renderers. |
+| Improve compile time through segmentation | Include isolation and coherent provider relocation are verified. | Measure end-to-end native compilation before claiming a speedup or choosing finer partitions. |
+| Avoid a general ABI framework | No general ABI framework was introduced. | Keep it outside this work; existing helper bindings do not justify a separate ABI project. |
+
+The implemented path is runtime metadata → generated name/header queries →
+per-file compiler include selection. The application compiler does not interpret
+runtime metadata directly. Verification covers cpp/php/js, edit/failure/recovery,
+provider relocation, spelling-only regeneration and cached application/native
+rebuilds. Regenerating PHP handlers requires a compiler process/session restart;
+hot replacement is not implemented.
+
+### Remaining work and sequencing
+
+1. **Review and integrate the published native-alias work.** It belongs to
+   `/home/alexv/__AI/simple_cpp/simple_cpp_02`; the user will provide its commit when
+   ready. No published commit from that workstream has been integrated in this
+   checkout as part of this plan. Do not duplicate it or assume its final aliases,
+   widths, representations or conversion interfaces. Review the actual published
+   contract before agreeing an integration slice.
+2. **Migrate ordinary scalar lowering to scpp exports.** After that contract is
+   available, use metadata-exported names and include requirements for ordinary
+   scalar declarations and signatures. Review construction, extraction, conversions
+   and operators against the actual runtime implementation, preserving source
+   semantics. Public name selection alone must not switch lowering strategy.
+3. **Establish the core scalar submodule.** Current integer/value/operator headers
+   remain under their existing renderers. The proof that renames an integer renderer
+   registration to `core.scalars` is not a consolidated scalar implementation.
+   Coordinate actual scalar placement with the published alias work and verify
+   coherent runtime/compiler paths and standalone headers.
+4. **Migrate the remaining runtime groups.** Collections, boxed objects, results and
+   optional numeric widths still need agreed bounded slices. Connect other modules
+   to the model while retaining one public header per module initially. The proposed
+   partition table remains provisional; it grants no additional language admission.
+5. **Complete the scpp public-interface review.** Check output, entry, arithmetic and
+   other public signatures against the original scpp-types-only requirement. Output
+   provider selection is complete, but that does not mean its signature migration
+   is complete. Agree treatment of remaining native boundary types explicitly; do
+   not infer it from header reachability or introduce an ABI framework.
+6. **Measure the resulting compilation costs.** Compare include closures and fresh
+   application builds with recorded configurations and cache state. Report frontend,
+   optimization/code generation and linking separately. Tune segmentation through
+   metadata when measurements justify it, rather than fragmenting every type or
+   operation now.
+
+The external native-alias work is a dependency for the next scalar integration and
+lowering decisions, not a missing prerequisite for the already completed include
+engine. Planning the other partitions can continue independently; their
+implementation order and any representation-sensitive adaptations must be agreed
+before code changes. Null representation, new widths/admissions, collection/boxed
+adaptation and broader public-signature changes remain deferred until their own
+slices are defined.
+
+## Runtime surfaces still to migrate
 
 - Scalars span `integers.hpp`, `values.hpp` and `numeric.hpp`; optional integer
   widths currently join the same headers as core types.
-- `string.hpp` includes integer and value declarations.
+- String dependencies now resolve through semantic exports. Its actual published
+  cast list determines the required conversion-type dependencies.
 - Vectors include numeric operators and strings. Carriers include vectors;
-  hashes include carriers.
+  hashes include carriers. These families retain their existing rendering paths.
 - Boxed types include scalars and strings, without requiring public vector/hash
   APIs for their private container implementation.
-- JSON and datetime already have one public header each.
-- Header paths are partly metadata-owned, but include dependencies are largely
-  selected by handwritten renderers.
+- JSON and datetime already have one public header each; that alone does not mean
+  their dependency selection has migrated to the new engine.
 
 Relevant owners:
 [runtime metadata](../../runtime/metadata/runtime.json),
