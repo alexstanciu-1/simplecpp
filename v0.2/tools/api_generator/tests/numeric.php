@@ -10,9 +10,12 @@ requireThat(array_column($plan['types'], 'name') === ['uint8', 'int64'], 'Core i
 requireThat(hasValue($plan, 'float64'), 'Core float64 missing');
 foreach ($plan['conversions'] as $cast) {
     if ($cast['target'] === 'uint8' || $cast['source'] === 'uint8') {
-        requireThat(!in_array($cast['target'], ['float64', 'bool_t', 'string'], true)
-            && !in_array($cast['source'], ['float64', 'bool_t', 'string'], true), 'Byte acquired a non-integer cast');
+        requireThat(!in_array($cast['target'], ['string'], true)
+            && !in_array($cast['source'], ['string'], true), 'Byte acquired a deferred text cast');
     }
+}
+foreach (['float64', 'bool_t'] as $type) {
+    requireThat(hasCast($plan, 'uint8', $type) && hasCast($plan, $type, 'uint8'), 'Missing numeric family conversion');
 }
 foreach (array_keys(object($meta->types)) as $type) {
     $p = clone $core;

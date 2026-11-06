@@ -28,8 +28,6 @@ def main():
     baseline = json.loads(Path(__file__).with_name("scalar_baseline.json").read_text())["cases"]
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
-    # This full-family contract explicitly enables conversions deferred in the core publication.
-    metadata['deferred_scalar_casts'] = []
     captured = {}
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
     scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json']}

@@ -76,7 +76,7 @@ foreach (flavor::cases() as $flavor)
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset changed defaults');
 	foreach ([
 		[$fn('bad', [$p('a', 'int', '1'), $p('b', 'int')], 'void', ''), 'Required parameter follows'],
-		[$fn('bad', [$p('a', 'byte', '256')], 'void', ''), 'byte range'],
+		[$fn('bad', [$p('a', 'byte', '256')], 'void', ''), 'uint8 range'],
 		[$fn('bad', [$p('a', 'string', '1')], 'void', ''), 'conversion'],
 		[$fn('bad', [$p('a', 'int', 'null')], 'void', ''), 'conversion'],
 		[$fn('bad', [$p('a', 'float', '1e999')], 'void', ''), 'finite range'],
@@ -88,7 +88,7 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare($invalid . 'return 8;'), $message);
 	}
 	// Even a supplied argument cannot hide an invalid declaration default.
-	rejects(fn() => $prepare($fn('bad', [$p('a', 'byte', '256')], 'void', '') . 'bad(1); return 8;'), 'byte range');
+	rejects(fn() => $prepare($fn('bad', [$p('a', 'byte', '256')], 'void', '') . 'bad(1); return 8;'), 'uint8 range');
 
 	$directory = sys_get_temp_dir() . '/scpp-defaults-' . bin2hex(random_bytes(8));
 	mkdir($directory);

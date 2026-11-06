@@ -13,8 +13,8 @@ static_assert(std::is_same_v<byte, scpp::uint8>);
 static_assert(adds<int64, int64> && !adds<int64, int> && !adds<int, int64>);
 static_assert(!std::is_same_v<byte, int64>);
 static_assert(!std::is_convertible_v<int64, byte> && !std::is_convertible_v<byte, int64>);
-static_assert(!std::is_constructible_v<byte, scpp::float64> && !std::is_constructible_v<scpp::float64, byte>);
-static_assert(!std::is_constructible_v<byte, scpp::bool_t> && !std::is_constructible_v<scpp::bool_t, byte>);
+static_assert(std::is_constructible_v<byte, scpp::float64> && std::is_constructible_v<scpp::float64, byte>);
+static_assert(std::is_constructible_v<byte, scpp::bool_t> && std::is_constructible_v<scpp::bool_t, byte>);
 static_assert(!adds<byte, byte> && !adds<byte, int64> && !increments<byte>);
 static_assert(std::is_same_v<decltype(byte{} & byte{}), byte>);
 static_assert(std::is_same_v<decltype(byte{} << int64{}), byte>);
@@ -30,6 +30,11 @@ int main() {
     require(int64{byte{255}}.native_value() == 255);
     a |= b;
     require(a.native_value() == 255);
+    require(byte{scpp::float64{255.9}}.native_value() == 255);
+    require(byte{scpp::float64{-0.9}}.native_value() == 0);
+    require(byte{scpp::bool_t{true}}.native_value() == 1);
+    require(scpp::float64{byte{255}}.native_value() == 255.0);
+    require(scpp::bool_t{byte{255}}.native_value());
     int rejected = 0;
     try { a = byte{int64{256}}; } catch (const std::out_of_range&) { ++rejected; }
     try { a = byte{int64{-1}}; } catch (const std::out_of_range&) { ++rejected; }

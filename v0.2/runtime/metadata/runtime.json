@@ -750,6 +750,7 @@
     },
     "value_types": {
       "int64": {
+        "conversion_binding": "boxed_int64",
         "class": "int64",
         "literal_family": "integer",
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -780,6 +781,7 @@
         }
       },
       "uint8": {
+        "conversion_binding": "boxed_uint8",
         "class": "uint8",
         "literal_family": null,
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -789,6 +791,7 @@
         ]
       },
       "float64": {
+        "conversion_binding": "boxed_float64",
         "class": "float64",
         "literal_family": "floating",
         "declarations": { "inferred_local": true, "global_storage": true },
@@ -807,67 +810,58 @@
         "storage_binding": "string_storage"
       }
     },
-    "conversions": [
-      {
-        "from": "bool_t",
-        "to": "int64",
-        "contexts": ["explicit_cast", "typed_destination"],
+    "conversion_families": {
+      "integer:integer": {
+        "operation": "integer_range",
+        "contexts": [
+          "explicit_cast",
+          "typed_destination",
+          "compound_write_back"
+        ]
+      },
+      "boolean:integer": {
         "operation": "boolean_integer",
-        "promotion_operators": []
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       },
-      {
-        "from": "int64",
-        "to": "bool_t",
-        "contexts": ["explicit_cast", "typed_destination"],
+      "integer:boolean": {
         "operation": "integer_boolean",
-        "promotion_operators": []
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       },
-      {
-        "from": "int64",
-        "to": "uint8",
-        "contexts": ["explicit_cast", "typed_destination", "compound_write_back"],
-        "operation": "checked_integer",
-        "promotion_operators": [],
-        "target_binding": "boxed_uint8"
-      },
-      {
-        "from": "uint8",
-        "to": "int64",
-        "contexts": ["explicit_cast", "typed_destination"],
-        "operation": "integer_widen",
-        "promotion_operators": []
-      },
-      {
-        "from": "int64",
-        "to": "float64",
-        "contexts": ["explicit_cast", "typed_destination"],
+      "integer:floating": {
         "operation": "numeric_floating",
-        "promotion_operators": ["equal", "not_equal", "less", "less_equal", "greater", "greater_equal", "add", "subtract", "multiply", "divide"]
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       },
-      {
-        "from": "bool_t",
-        "to": "float64",
-        "contexts": ["explicit_cast", "typed_destination"],
+      "boolean:floating": {
         "operation": "numeric_floating",
-        "promotion_operators": []
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       },
-      {
-        "from": "float64",
-        "to": "int64",
-        "contexts": ["explicit_cast", "typed_destination"],
+      "floating:integer": {
         "operation": "floating_integer",
-        "promotion_operators": [],
-        "source_binding": "boxed_float64",
-        "target_binding": "boxed_int64"
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       },
-      {
-        "from": "float64",
-        "to": "bool_t",
-        "contexts": ["explicit_cast", "typed_destination"],
+      "floating:boolean": {
         "operation": "floating_boolean",
-        "promotion_operators": []
+        "contexts": [
+          "explicit_cast",
+          "typed_destination"
+        ]
       }
-    ],
+    },
     "floating_literals": {
       "radix": 10,
       "overflow": "reject",
@@ -1143,5 +1137,5 @@
   },
   "integer_aliases": { "byte": "uint8" },
   "core_integers": ["int64", "uint8"],
-  "deferred_scalar_casts": ["uint8"]
+  "deferred_text_casts": ["uint8"]
 }

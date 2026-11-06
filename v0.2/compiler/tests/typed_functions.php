@@ -106,7 +106,7 @@ foreach (flavor::cases() as $flavor)
 		[$fn('bad', [], 'void', 'return 8;') . 'return 8;', 'cannot return a value'],
 		[$definitions . 'id_int(); return 8;', 'Argument count mismatch'],
 		[$definitions . 'id_int(1,2); return 8;', 'Argument count mismatch'],
-		[$definitions . 'id_byte(256); return 8;', 'byte range'],
+		[$definitions . 'id_byte(256); return 8;', 'uint8 range'],
 		[$definitions . 'id_string(8); return 8;', 'conversion'],
 		[$definitions . $decl('bad', 'discard(null)') . 'return 8;', 'Void call'],
 		[$definitions . $decl('bad', 'id_null(null)') . 'return 8;', 'Cannot infer'],

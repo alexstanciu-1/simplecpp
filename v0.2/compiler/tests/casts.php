@@ -61,7 +61,7 @@ foreach (flavor::cases() as $flavor)
 	$values = ['int' => '8', 'bool' => 'true', 'byte' => '(byte) 8', 'float' => '8.75', 'null' => 'null', 'string' => '"Hi"'];
 	$matrix = '';
 	$matrix_output = '';
-	$extra = ['int' => ['bool', 'byte', 'float'], 'bool' => ['int', 'float'], 'byte' => ['int'], 'float' => ['int', 'bool']];
+	$extra = ['int' => ['bool', 'byte', 'float'], 'bool' => ['int', 'float', 'byte'], 'byte' => ['int', 'bool', 'float'], 'float' => ['int', 'bool', 'byte']];
 	foreach ($values as $destination => $_) {
 		foreach ($values as $source => $value) {
 			$code = $decl('converted', $destination, '(' . $destination . ') (' . $value . ')') . 'return 8;';

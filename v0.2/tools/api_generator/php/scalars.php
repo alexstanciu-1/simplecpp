@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_scalar_casts'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];
@@ -38,7 +38,7 @@ function registry(mixed $metadata, array $facts): array {
         requireThat(!isset($types[$alias]) && isset($types[$target]), 'Invalid integer alias');
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $alias) === 1, 'Invalid integer alias name');
     }
-    foreach (['core_integers', 'deferred_scalar_casts'] as $field) {
+    foreach (['core_integers', 'deferred_text_casts'] as $field) {
         foreach (names(at($metadata, $field)) as $name) requireThat(isset($types[$name]), 'Unknown integer policy identity');
     }
     return $types;
@@ -281,13 +281,11 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
         requireThat(in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked', 'numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true), 'Unsupported scalar cast policy');
         if ($float && in_array($cast, ['integer_to_floating_rounding', 'floating_to_integer_truncate_checked'], true)) {
             foreach ($types as $t) {
-                if (in_array($t['name'], names(at($metadata, 'deferred_scalar_casts')), true)) continue;
                 $plan['conversions'][] = $cast === 'integer_to_floating_rounding' ? conversion('float64', $t['name'], false, digits($t) <= 53, 'numeric_cast', false) : conversion($t['name'], 'float64', false, false, 'floating_integer_cast', true);
             }
         }
         if ($bool && in_array($cast, ['numeric_to_boolean_nonzero', 'boolean_to_numeric_01'], true)) {
             foreach (array_merge(array_keys($types), $float ? ['float64']:[]) as $name) {
-                if (in_array($name, names(at($metadata, 'deferred_scalar_casts')), true)) continue;
                 $plan['conversions'][] = $cast === 'numeric_to_boolean_nonzero' ? conversion('bool_t', $name, false, false, 'truth_cast', false) : conversion($name, 'bool_t', false, true, 'numeric_cast', false);
             }
         }

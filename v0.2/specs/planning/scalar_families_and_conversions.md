@@ -3,11 +3,11 @@
 Doc Status: planning
 Date: 2026-11-06
 Scope: v0.2 scalar metadata, generated compiler types and their runtime bindings.
-Status: user-approved model; canonical byte/uint8 identity implemented, broader behavior pending. Collections are separate.
+Status: identity, active numeric family conversions, integer arithmetic/comparisons and checked compounds implemented. Collections are separate.
 
 The [normative scalar amendment](../../../specs/compiler_scalars_v0_2.md#agreed-family-and-representation-model--2026-11-06)
 records the decision. This document organizes implementation, not proof of support.
-The [identity slice](../../compiler/docs/byte_alias.md) is implemented. Conversion exclusions and grouped operators remain pending.
+The [identity slice](../../compiler/docs/byte_alias.md) and [active family conversions](../../compiler/docs/family_conversions.md) are implemented. Optional representations and remaining operator groups await separate slices.
 
 ## Family, representation and activation
 
@@ -83,7 +83,7 @@ consume these policies; user-defined overloads and conversion ranking are deferr
 
 ## Implementation slices
 
-Slice 1 was authorized and implemented; later slices still require agreement.
+Slices 1–2 and the active integer arithmetic/comparison/compound groups are implemented. Remaining groups require agreement.
 
 1. **Family/representation foundation and byte migration.** Give canonical definitions
    truthful family/representation ownership; derive byte/uint8 identity from runtime

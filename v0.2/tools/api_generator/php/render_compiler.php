@@ -76,7 +76,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'conversion_binding']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
@@ -130,7 +130,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
                 $aliases = array_values(array_unique(array_merge([$identity], $aliases)));
             }
             $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => [],
-                'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix];
+                'strategy' => $kind, 'maximum' => $maximum, 'magnitude' => $magnitude, 'minimum_cpp' => $minimumCpp, 'suffix' => $suffix, 'conversion_binding' => $row->conversion_binding ?? null];
             continue;
         }
         if ($kind === 'floating') {
@@ -165,14 +165,54 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types): array {
             $literals = [];
         }
 
-        $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage];
+        $definitions[$identity] = ['literal_family' => $family, 'declarations' => $declarations, 'copy_semantics' => $copy, 'class' => $class, 'aliases' => $aliases, 'cpp' => $cpp, 'literals' => $literals, 'strategy' => $kind, 'storage' => $storage, 'conversion_binding' => $row->conversion_binding ?? null];
     }
     return $definitions;
 }
 
+/** Expand family permission into concrete generation-time rows; no pair table is retained by the compiler. */
+function compilerConversionFamilies(mixed $metadata, array $definitions, array $types): object {
+    $compiler = unserialize(serialize(at($metadata, 'compiler')));
+    if (!isset($compiler->conversion_families)) return $compiler;
+    requireThat(!isset($compiler->conversions), 'Duplicate conversion policy owner');
+    $rules = object($compiler->conversion_families);
+    foreach ($rules as $pair => $rule) {
+        $families = explode(':', $pair);
+        requireThat(count($families) === 2 && array_diff($families, ['integer', 'floating', 'boolean']) === [], 'Unsupported conversion family');
+        fields($rule, ['operation', 'contexts']);
+        textValue(at($rule, 'operation'));
+        names(at($rule, 'contexts'));
+    }
+    $compiler->conversions = [];
+    foreach ($definitions as $from => $source) foreach ($definitions as $to => $target) {
+        if ($from === $to) continue;
+        $rule = $rules[$source['strategy'] . ':' . $target['strategy']] ?? null;
+        if ($rule === null) continue;
+        $operation = textValue(at($rule, 'operation'));
+        if ($operation === 'integer_range') {
+            requireThat(isset($types[$from], $types[$to]), 'Integer range conversion needs integer representations');
+            $operation = fits($types[$to], $types[$from]['signed'], digits($types[$from])) ? 'integer_widen' : 'checked_integer';
+        }
+        $row = (object)['from' => $from, 'to' => $to, 'contexts' => names(at($rule, 'contexts')),
+            'operation' => $operation, 'promotion_operators' => []];
+        if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {
+            $row->target_binding = $target['conversion_binding'];
+            if ($operation === 'floating_integer') $row->source_binding = $source['conversion_binding'];
+        }
+        // Operator rows own promotion permission; conversion availability alone never grants it.
+        foreach (listValue(at($compiler, 'promotions')) as $promotion) {
+            if ($promotion->execution_type !== $to || !in_array($from, [$promotion->left, $promotion->right], true)) continue;
+            $row->promotion_operators = array_values(array_unique(array_merge($row->promotion_operators, names($promotion->operators))));
+        }
+        $compiler->conversions[] = $row;
+    }
+    unset($compiler->conversion_families);
+    return $compiler;
+}
+
 /** Expand active integer families at generation time; runtime and compiler share the domain resolver. */
 function compilerIntegerOperations(mixed $metadata, array $definitions, array $types): object {
-    $compiler = unserialize(serialize(at($metadata, 'compiler')));
+    $compiler = compilerConversionFamilies($metadata, $definitions, $types);
     if (!isset($compiler->integer_operators)) return $compiler;
     $group = $compiler->integer_operators;
     fields($group, ['promotion', 'arithmetic', 'comparisons', 'compounds', 'bindings']);
@@ -233,7 +273,7 @@ function compilerIntegerOperations(mixed $metadata, array $definitions, array $t
 function renderCompiler(mixed $metadata, array $facts): array {
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators']);
+    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types);
     $metadata = clone $metadata;
@@ -482,7 +522,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
                 && fits($types[$to], $types[$from]['signed'], digits($types[$from])),
             'numeric_floating' => in_array($sourceKind, ['integer', 'boolean'], true) && $targetKind === 'floating',
             'floating_boolean' => $sourceKind === 'floating' && $targetKind === 'boolean',
-            'floating_integer' => $sourceKind === 'floating' && $targetKind === 'integer' && $types[$to]['signed'],
+            'floating_integer' => $sourceKind === 'floating' && $targetKind === 'integer' && ($types[$to]['signed'] || $types[$to]['bits'] < 64),
             default => false,
         };
         requireThat($valid, 'Unsupported compiler conversion operation');
@@ -510,7 +550,9 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         }
         requireThat(!isset($row->source_binding) || $sourceBinding !== null, 'Unused source conversion binding');
         requireThat(!isset($row->target_binding) || $targetBinding !== null, 'Unused target conversion binding');
-        $plan[$key] = ['source_binding' => $sourceBinding, 'target_binding' => $targetBinding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion];
+        $plan[$key] = ['source_binding' => $sourceBinding, 'target_binding' => $targetBinding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion,
+            'floating_bound' => $operation === 'floating_integer' ? decimalPowerOfTwo(digits($types[$to])) : null,
+            'integer_signed' => $operation === 'floating_integer' ? $types[$to]['signed'] : null];
     }
     return $plan;
 }
@@ -553,17 +595,19 @@ function compilerConversions(array $conversions, array $definitions, string $tar
         };
         $constants[] = "\t\t\t" . $constantCases . ' => ' . $constantOperation . ',';
         if ($operation === 'floating_integer') {
-            $prepare[] = <<<'CODE'
+            $bound = $row['floating_bound'] . '.0';
+            $lowerBound = $row['integer_signed'] ? '-' . $bound : '0.0';
+            $prepare[] = strtr(<<<'CODE'
 			if ($value->constant_known()) {
 				$constant = $value->constant();
 				$truncated = $constant < 0.0 ? ceil($constant) : floor($constant);
-				if (!is_finite($constant) || ($truncated < (float) self::MINIMUM) || ($truncated >= -(float) self::MINIMUM)) {
-					throw new diagnostic($value->source(), $value->byte_start(), 'Floating conversion is outside int64 range');
+				if (!is_finite($constant) || ($truncated < @lower@) || ($truncated >= @upper@)) {
+					throw new diagnostic($value->source(), $value->byte_start(), 'Floating conversion is outside ' . $this->name . ' range');
 				}
 				return value_conversion::floating_integer_proven;
 			}
 			return value_conversion::floating_integer_checked;
-CODE;
+CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
             $sourceWrapper = $row['source_binding']['symbol'];
             $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '({$wrapper}{{$sourceWrapper}{' . \$value . '}}).{$extract}()',";

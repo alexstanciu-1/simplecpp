@@ -90,7 +90,7 @@ foreach (flavor::cases() as $flavor)
 		rejects(fn() => $prepare($decl('byte', 'bad', $outside) . 'return 8;'), 'outside uint8');
 	}
 	rejects(fn() => $prepare('global ' . $decl('byte', 'bad', '-1') . 'return 8;'), 'outside uint8');
-	rejects(fn() => $prepare($decl('byte', 'bad', 'true') . 'return 8;'), 'conversion');
+	rejects(fn() => $prepare($decl('byte', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('int', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('null', 'bad', '0') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare('return true;'), 'requires int64');

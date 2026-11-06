@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-Updated: 2026-11-06, after string equality.
+Updated: 2026-11-06, after active numeric family conversions.
 Scope: the active `v0.2/compiler/` PHP compiler and its generated C++ programs.
 Reference: [my-try catalog](../../../compiler/my-try/docs/catalog/README.md).
 
@@ -14,7 +14,9 @@ Statuses below reflect reviewed implementation/docs and existing proofs, not a n
 catalog-wide test run. No whole chapter is claimed complete.
 
 Next scalar work follows the [agreed family/representation and conversion plan](scalar_families_and_conversions.md),
-with grouped implementation slices rather than individual operators. Byte/uint8 canonical identity is implemented; broader behavior remains pending.
+with grouped implementation slices rather than individual operators. Byte/uint8 identity, integer arithmetic/comparisons/checked compounds and
+[active numeric family conversions](../../compiler/docs/family_conversions.md) are implemented.
+Optional numeric representations and remaining operator groups are pending.
 
 ## Compact inventory
 

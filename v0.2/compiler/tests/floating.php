@@ -107,8 +107,6 @@ foreach (flavor::cases() as $flavor)
 	$minimum = $prepare('global ' . $decl('int', 'low', '-9223372036854775808.0') . 'return 8;');
 	verify($minimum->file->globals()[0]->type_def()->convert_constant(value_conversion::floating_integer_proven,
 		$minimum->file->globals()[0]->initializer->constant()) === PHP_INT_MIN, 'Exact int64 lower boundary');
-	rejects(fn() => $prepare($decl('byte', 'bad', '8.0') . 'return 8;'), 'conversion');
-	rejects(fn() => $prepare($decl('byte', 'small', '8') . $decl('float', 'bad', $var('small')) . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('float', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare('return 8.0;'), 'requires int64');
 	rejects(fn() => $prepare('echo 8.0; return 8;'), 'Echo currently');

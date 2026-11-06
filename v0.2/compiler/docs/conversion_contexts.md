@@ -11,9 +11,10 @@ Float-destination compounds are explicitly admitted by [compound promotion](mixe
 
 ## Metadata and generated interfaces
 
-`compiler.conversions` replaces `explicit` with `contexts`. Existing rows specify
-`["explicit_cast", "typed_destination"]`; their source/destination and operation
-remain unchanged. The uint8-intent `conversion_context` enum also names `assignment`
+`compiler.conversion_families` now owns family algorithms and context permissions;
+[family expansion](family_conversions.md) produces transient concrete conversion rows.
+Explicit casts and typed destinations admit the active numeric conversions; integer
+write-back also has its dedicated compound context. The uint8-intent `conversion_context` enum also names `assignment`
 and `inference`. All callers now pass their actual boundary to
 `prepare_conversion(value, context)`. Identity remains a base-class operation;
 reference matching and condition truthiness remain separate.
@@ -124,7 +125,8 @@ are unchanged. No inventory bump is needed for identical output. SHA-256 evidenc
 retained at `v0.2/build/conversion-matrix-refactor/generated-parity.json`.
 
 Generator tests check all 252 combinations of seven strategies and six source/destination
-types against an independent test oracle: exactly the existing eight conversions pass.
+types against an independent test oracle: eight conversions passed at that checkpoint.
+The subsequent family slice extends this oracle to twelve active numeric conversions.
 They also check permission removal/subsets and rejection of checked promotions.
 Malformed metadata has explicit generator diagnostics; the new permission field adds
 new validation without changing source-program diagnostics. Generated code is unchanged,

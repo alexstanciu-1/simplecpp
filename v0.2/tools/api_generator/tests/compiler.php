@@ -7,6 +7,12 @@ require_once __DIR__ . '/../php/scalars.php';
 require_once __DIR__ . '/../php/publication.php';
 require_once __DIR__ . '/../php/render_compiler.php';
 
+/** Locate a normalized test row by canonical identity, independent of family expansion order. */
+function conversion_row(object $metadata, string $from, string $to): object {
+    foreach ($metadata->compiler->conversions as $row) if ($row->from === $from && $row->to === $to) return $row;
+    throw new \LogicException('Missing test conversion');
+}
+
 $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
@@ -52,10 +58,30 @@ requireThat(!str_contains($disabledCode, 'public function prepare_compound')
 foreach (['policy', 'permission'] as $change) {
     $invalid = unserialize(serialize($rawMetadata));
     if ($change === 'policy') $invalid->compiler->integer_operators->compounds->write_back = 'unchecked';
-    else $invalid->compiler->conversions[2]->contexts = ['explicit_cast', 'typed_destination'];
+    else $invalid->compiler->conversion_families->{'integer:integer'}->contexts = ['explicit_cast', 'typed_destination'];
     try {
         renderCompiler($invalid, $facts);
         throw new \LogicException('Invalid compound write-back accepted');
+    } catch (\RuntimeException $expected) {
+    }
+}
+// Family permissions affect every active representation; removing a rule cannot leave pair-specific remnants.
+$familySubset = unserialize(serialize($rawMetadata));
+unset($familySubset->compiler->conversion_families->{'boolean:integer'});
+$familyCode = renderCompiler($familySubset, $facts);
+foreach (['int64', 'uint8'] as $identity) requireThat(!str_contains($familyCode['types/' . $identity . '.php'], '$value->type_def() === type_bool::instance()'), 'Removed family retained a conversion');
+foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $change) {
+    $invalid = unserialize(serialize($rawMetadata));
+    match ($change) {
+        'unknown' => $invalid->compiler->conversion_families->{'imaginary:integer'} = (object)['operation' => 'boolean_integer', 'contexts' => []],
+        'algorithm' => $invalid->compiler->conversion_families->{'floating:integer'}->operation = 'integer_widen',
+        'implicit' => $invalid->compiler->conversion_families->{'boolean:integer'}->contexts = ['assignment'],
+        'duplicate_owner' => $invalid->compiler->conversions = [],
+        'binding' => $invalid->compiler->value_types->uint8->conversion_binding = 'missing',
+    };
+    try {
+        renderCompiler($invalid, $facts);
+        throw new \LogicException('Invalid family conversion metadata accepted: ' . $change);
     } catch (\RuntimeException $expected) {
     }
 }
@@ -150,11 +176,11 @@ foreach (['byte_width', 'byte_implicit', 'conversion_kind', 'duplicate_conversio
     $bad = unserialize(serialize($metadata));
     match ($change) {
         'byte_width' => $bad->types->uint8->bits = 16,
-        'byte_implicit' => $bad->compiler->conversions[2]->contexts = ['assignment'],
-        'conversion_kind' => $bad->compiler->conversions[0]->operation = 'truncate',
-        'duplicate_conversion' => $bad->compiler->conversions[] = clone $bad->compiler->conversions[0],
+        'byte_implicit' => conversion_row($bad, 'int64', 'uint8')->contexts = ['assignment'],
+        'conversion_kind' => conversion_row($bad, 'bool_t', 'int64')->operation = 'truncate',
+        'duplicate_conversion' => $bad->compiler->conversions[] = clone conversion_row($bad, 'bool_t', 'int64'),
         'literal' => $bad->compiler->value_types->bool_t->literals->true = 1,
-        'inactive_target' => $bad->compiler->conversions[0]->to = 'vector',
+        'inactive_target' => conversion_row($bad, 'bool_t', 'int64')->to = 'vector',
     };
     try {
         renderCompiler($bad, $facts);
@@ -660,7 +686,7 @@ foreach (['missing_conversion', 'duplicate', 'operator', 'execution', 'context']
         'duplicate' => $bad->compiler->promotions[] = clone $bad->compiler->promotions[0],
         'operator' => $bad->compiler->promotions[0]->operators = ['equal'],
         'execution' => $bad->compiler->promotions[0]->execution_type = 'int64',
-        'context' => $bad->compiler->conversions[0]->contexts = ['anywhere'],
+        'context' => conversion_row($bad, 'bool_t', 'int64')->contexts = ['anywhere'],
     };
     try {
         renderCompiler($bad, $facts);
@@ -670,26 +696,28 @@ foreach (['missing_conversion', 'duplicate', 'operator', 'execution', 'context']
     }
 }
 $limited = unserialize(serialize($metadata));
-$limited->compiler->conversions[4]->contexts = ['explicit_cast'];
+conversion_row($limited, 'int64', 'float64')->contexts = ['explicit_cast'];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, '($context === conversion_context::explicit_cast) && ($value->type_def() === type_int64::instance())'), 'Context subset ignored');
 
-// Canonicalizing byte changes identity, not the currently activated conversion surface.
+// Family rules expand to the twelve cross-type numeric conversions among active representations.
 $expected = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boolean',
     'int64:uint8' => 'checked_integer', 'uint8:int64' => 'integer_widen',
     'int64:float64' => 'numeric_floating', 'bool_t:float64' => 'numeric_floating',
-    'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer'];
+    'float64:bool_t' => 'floating_boolean', 'float64:int64' => 'floating_integer',
+    'bool_t:uint8' => 'boolean_integer', 'uint8:bool_t' => 'integer_boolean',
+    'uint8:float64' => 'numeric_floating', 'float64:uint8' => 'floating_integer'];
 $definitions = compilerTypePlan($metadata, $facts, registry($metadata, $facts));
 $plan = compilerConversionPlan($metadata, $definitions, registry($metadata, $facts));
 $actual = array_map(static fn($row) => $row['operation'], $plan);
 ksort($expected); ksort($actual);
-requireThat($actual === $expected, 'Identity migration changed conversion admission');
+requireThat($actual === $expected, 'Family expansion changed conversion admission');
 requireThat($definitions['uint8']['strategy'] === 'integer', 'Narrow integer still has a separate family');
 requireThat(in_array('byte', $definitions['uint8']['aliases'], true), 'Canonical definition lost byte alias');
 
 // Removing the conversion's promotion permission cannot affect explicit casts or silently keep a promotion alive.
 $limited = unserialize(serialize($metadata));
-$limited->compiler->conversions[4]->promotion_operators = [];
+conversion_row($limited, 'int64', 'float64')->promotion_operators = [];
 try {
     renderCompiler($limited, $facts);
     throw new \LogicException('Promotion ignored removed conversion permission');
@@ -700,14 +728,14 @@ $limited->compiler->promotions = [];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, 'value_conversion::numeric_floating'), 'Removing promotion removed boundary conversion');
 $limited = unserialize(serialize($metadata));
-$limited->compiler->conversions[4]->promotion_operators = ['less'];
+conversion_row($limited, 'int64', 'float64')->promotion_operators = ['less'];
 $limited->compiler->promotions = array_values(array_filter($limited->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
 foreach ($limited->compiler->promotions as $promotion) $promotion->operators = ['less'];
 $code = renderCompiler($limited, $facts)['types/int64.php'];
 $promotionMethod = substr($code, strpos($code, 'public function prepare_binary'));
 requireThat(str_contains($promotionMethod, 'binary_operator::less => true') && !str_contains($promotionMethod, 'binary_operator::greater'), 'Promotion subset ignored');
 $bad = unserialize(serialize($metadata));
-$bad->compiler->conversions[6]->promotion_operators = ['less'];
+conversion_row($bad, 'float64', 'int64')->promotion_operators = ['less'];
 try {
     renderCompiler($bad, $facts);
     throw new \LogicException('Checked promotion accepted without preparation support');
@@ -750,7 +778,7 @@ foreach (['direction', 'operator', 'duplicate'] as $change) {
 foreach (['permission', 'execution'] as $change) {
     $bad = unserialize(serialize($metadata));
     if ($change === 'permission') {
-        $bad->compiler->conversions[4]->promotion_operators = array_values(array_diff($bad->compiler->conversions[4]->promotion_operators, ['equal']));
+        conversion_row($bad, 'int64', 'float64')->promotion_operators = array_values(array_diff(conversion_row($bad, 'int64', 'float64')->promotion_operators, ['equal']));
     } else {
         $bad->compiler->comparisons->float64->operators = array_values(array_diff($bad->compiler->comparisons->float64->operators, ['equal']));
     }

@@ -41,11 +41,10 @@ queues or conversion enums were added.
 The old byte-only runtime operation validator is removed. Explicit runtime
 publication requests and ordinary integer operation policies now control admission;
 the default publication still requests the prior operations. The identity slice initially retained equality-only compiler rows; the subsequent
-[integer family slice](integer_promotion.md) adds arithmetic and all six comparisons. Runtime
-`deferred_scalar_casts` explicitly retains uint8 bool/float/text exclusions during
-this intermediate migration; it is not a semantic integer-family restriction.
-The full-family generator proofs explicitly clear that deferral to test
-existing generic runtime capabilities. Source compiler admissions remain unchanged.
+[integer family slice](integer_promotion.md) adds arithmetic and all six comparisons.
+The identity slice initially retained uint8 bool/float/text exclusions. The subsequent
+[family conversion slice](family_conversions.md) removes numeric exclusions and replaces
+that policy with `deferred_text_casts`, retaining only the uint8 text boundary.
 
 ## Verification
 

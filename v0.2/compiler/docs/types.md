@@ -10,7 +10,7 @@ are shared definitions, never occurrence-specific records. `type_void` remains a
 small handwritten non-value definition.
 
 The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
-The [byte/uint8 identity migration](byte_alias.md) is implemented; grouped numeric behavior remains pending.
+The [byte/uint8 identity migration](byte_alias.md), integer operation groups and [active numeric family conversions](family_conversions.md) are implemented.
 
 ## Metadata and generated code
 
@@ -29,7 +29,8 @@ The [byte/uint8 identity migration](byte_alias.md) is implemented; grouped numer
 - `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
-- `compiler.conversions`: source/destination, allowed context list and implementation strategy.
+- `compiler.conversion_families`: family algorithms and allowed contexts, expanded into transient concrete rows during generation.
+- `compiler.value_types.*.conversion_binding`: named runtime representation for checked conversions.
   Scalar cross-family rules must also be admitted by runtime `scalar_casts`.
 
 Generation validates the bounded policies, native facts and supported strategies.
