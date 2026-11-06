@@ -5,7 +5,8 @@ Doc Status: supporting
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#conversion-contexts-and-mixed-ordering--2026-11-05)
 and [mixed-ordering semantics](../../../specs/expression_evaluation.md#mixed-canonical-numeric-ordering--2026-10-19)
 own this slice. It adds plain int64/float64 `< <= > >=` in both operand orders.
-Mixed equality, arithmetic, compounds, carriers and conversion-chain search remain deferred.
+Mixed arithmetic is also admitted as described in [mixed arithmetic](mixed_arithmetic.md).
+Mixed equality, compounds, carriers and conversion-chain search remain deferred.
 
 ## Metadata and generated interfaces
 
@@ -16,9 +17,9 @@ and `inference`. All callers now pass their actual boundary to
 `prepare_conversion(value, context)`. Identity remains a base-class operation;
 reference matching and condition truthiness remain separate.
 
-`compiler.promotions` contains two directional rows with left/right types, an operator
-list, execution type float64 and result bool_t. Generator validation requires the
-existing int64 → float64 `numeric_floating` definition and each float comparison.
+`compiler.promotions` contains directional rows with left/right types, an operator
+list, execution type float64 and result bool_t for ordering or float64 for arithmetic. Generator validation requires the
+existing int64 → float64 `numeric_floating` definition and each selected float execution operation.
 Rows may not authorize unsupported types/operators, missing operations or duplicates.
 The conversion context list does not contain a general operator permission.
 
@@ -105,13 +106,13 @@ Categories come from runtime type declarations; byte remains a distinct category
 The widening strategy additionally verifies that the destination represents the source domain.
 
 Each conversion row now has `promotion_operators`. Only the int64 → float64 row
-lists `< <= > >=`; other rows have empty lists. Context permission and promotion
+lists `< <= > >= + - * /`; other rows have empty lists. Context permission and promotion
 permission are independent. Checked promotions remain rejected because the current
 promotion path cannot perform their required value-dependent preparation.
 
 Promotion generation resolves left → execution and right → execution through the
 shared plan (identity needs no row). It derives result/execution class references
-from the promotion row and checks the execution comparison's result and operator
+from the promotion row and checks the execution operation's result and operator
 availability. It no longer contains a fixed operand-pair whitelist, int64-specific
 conversion search, fixed bool/float class emission or int64-specific side selection.
 

@@ -69,12 +69,13 @@ in all flavors. Operands are evaluated and printed once in source order; empty l
 Same-type [scalar comparisons](../compiler/docs/comparisons.md) and parentheses are implemented in all flavors.
 Int/int64 binary `+ - * / %` are implemented through the same metadata-driven path.
 Multiplicative operators bind above additive operators, then relational operators, then equality;
-all levels associate left. Unary integer operators and mixed/float arithmetic remain deferred.
+all levels associate left. Integer/float unary signs, same-type float arithmetic and
+mixed int64/float64 `+ - * /` use generated type handlers. Mixed compounds remain deferred.
 Logical `!`, `&&` and `||` reuse generated condition truthiness in all flavors.
 Prefix `!` binds above arithmetic; `&&` binds below equality and above `||`.
 Each operand independently admits bool, int64, float or string; the result is bool.
 See [logical expressions](../compiler/docs/logical.md) for short-circuit and incremental boundaries.
-There is no member access, general string expressions or floating arithmetic, const declarations, PHP tags/HTML
+There is no member access, general string expressions, PHP tags/HTML
 modes, C++ preprocessing, JS prototypes or JS template literals yet.
 
 Planned type syntax will preserve nested type arguments, including vector<vector<int>>.

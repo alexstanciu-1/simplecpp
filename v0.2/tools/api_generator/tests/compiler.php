@@ -281,11 +281,11 @@ requireThat(str_contains($files['types/int64.php'], 'binary_operator::equal => t
 $without = unserialize(serialize($metadata));
 unset($without->compiler->arithmetic->int64);
 $limited = renderCompiler($without, $facts)['types/int64.php'];
-requireThat(!str_contains($limited, 'binary_operator::add') && !str_contains($limited, 'scpp/arithmetic.hpp'), 'Removed arithmetic still generated');
+requireThat(!str_contains($limited, 'binary_operator::add => type_int64::instance()') && !str_contains($limited, 'scpp/arithmetic.hpp'), 'Removed arithmetic still generated');
 $without = unserialize(serialize($metadata));
 unset($without->compiler->arithmetic->int64->operators->divide);
 $limited = renderCompiler($without, $facts)['types/int64.php'];
-requireThat(!str_contains($limited, 'binary_operator::divide') && str_contains($limited, 'binary_operator::remainder'), 'Removed division still generated');
+requireThat(!str_contains($limited, 'binary_operator::divide => type_int64::instance()') && str_contains($limited, 'binary_operator::remainder'), 'Removed division still generated');
 foreach (['type', 'operator', 'overflow', 'lowering', 'result'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
@@ -481,10 +481,11 @@ foreach (['missing', 'operand', 'result', 'strategy', 'symbol', 'header'] as $ch
     } catch (\RuntimeException $expected) {
     }
 }
-// Float arithmetic shares generated dispatch, but does not implicitly enable compounds or mixed operands.
+// Removing an execution domain also requires removing promotions that depend on it.
 foreach (['arithmetic', 'unary'] as $section) {
     $without = unserialize(serialize($metadata));
     unset($without->compiler->$section->float64);
+    if ($section === 'arithmetic') $without->compiler->promotions = array_values(array_filter($without->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
     $limited = renderCompiler($without, $facts)['types/float64.php'];
     requireThat(!str_contains($limited, $section === 'arithmetic' ? 'scpp::float64_divide' : 'public function prepare_unary'), 'Removed float capability still generated');
 }
@@ -665,6 +666,7 @@ $code = renderCompiler($limited, $facts)['types/float64.php'];
 requireThat(str_contains($code, 'value_conversion::numeric_floating'), 'Removing promotion removed boundary conversion');
 $limited = unserialize(serialize($metadata));
 $limited->compiler->conversions[4]->promotion_operators = ['less'];
+$limited->compiler->promotions = array_values(array_filter($limited->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
 foreach ($limited->compiler->promotions as $promotion) $promotion->operators = ['less'];
 $code = renderCompiler($limited, $facts)['types/int64.php'];
 $promotionMethod = substr($code, strpos($code, 'public function prepare_binary'));
@@ -677,3 +679,16 @@ try {
 } catch (\RuntimeException $error) {
     requireThat($error->getMessage() === 'Conversion strategy does not support promotion', 'Wrong checked promotion diagnostic');
 }
+
+// Mixed arithmetic resolves the same validated execution operation used by float lowering.
+$without = unserialize(serialize($metadata));
+unset($without->compiler->arithmetic->float64->operators->divide);
+try {
+    renderCompiler($without, $facts);
+    throw new \LogicException('Promotion accepted a missing arithmetic execution operation');
+} catch (\RuntimeException $error) {
+    requireThat($error->getMessage() === 'Promotion execution operation unavailable', 'Wrong missing arithmetic diagnostic');
+}
+$without->compiler->promotions = array_values(array_filter($without->compiler->promotions,
+    static fn($row) => $row->result === 'bool_t'));
+requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'scpp::float64_divide('), 'Missing division still lowered');

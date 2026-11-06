@@ -296,7 +296,7 @@ exception/environment controls or fast-math behavior is introduced.
 Literal preparation still rejects overflow and accepts underflow; arithmetic
 results are not subjected to the finite-literal restriction. NaN and Infinity
 literal spellings remain unavailable. Preparation does not constant-fold these
-operations. Mixed int64/float64 arithmetic and floating remainder remain deferred.
+operations. Mixed int64/float64 arithmetic is admitted by the amendment below; floating remainder remains deferred.
 Discarded-value float updates are specified below.
 Same-type compound statements are specified below. Explicit conversions may establish float64 operands.
 Runtime metadata controls admission and lowering; checked division remains behind
@@ -352,6 +352,27 @@ Missing conversion definitions or execution operations are generator errors.
 The mixed-ordering contract in `expression_evaluation.md` applies: integer rounding
 is observable, NaN makes all four comparisons false, and signed-zero/infinity
 ordering follows binary64. The bounded compiler slice supports plain scalar values;
-carriers, mixed equality/arithmetic and mixed compound writes remain deferred.
+carriers, mixed equality and mixed compound writes remain deferred; mixed arithmetic is specified below.
 Each operand is prepared once. Promotion settles conversion/execution facts on the
 existing binary node, without synthetic cast nodes or arithmetic constant folding.
+
+## Mixed int64/float64 arithmetic — 2026-11-06
+
+All three flavors admit `+ - * /` between plain canonical int64 and float64,
+in either operand order. Convert the integer operand to binary64 before computation;
+the execution and result type are float64. Source aliases int/float preserve these
+identities. Binary64 rounding is observable: under the normal rounding environment,
+`9007199254740993 - 9007199254740992.0` is 0.0, not 1.0.
+No exact-integer intermediate or floating-environment controls are introduced.
+
+Mixed division is floating division: `7 / 2.0` and `7.0 / 2` yield 3.5;
+unchanged int64 division `7 / 2` yields 3. Integer zero and either floating zero
+sign throw `division_by_zero`, including nonfinite numerators. Other results retain
+the float64 arithmetic contract above, including overflow, NaN, underflow and signed
+zero. Literal overflow rejection remains separate from arithmetic results.
+
+Metadata authorizes these operator-local conversions; ordinary assignment,
+reference binding and compound admissions are unchanged. Mixed equality, mixed
+compound writes, floating remainder and bool/byte arithmetic remain deferred.
+Prepare each operand once and retain existing execution/conversion facts; no
+arithmetic constant folding or expanded evaluation-order machinery is introduced.

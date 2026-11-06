@@ -90,7 +90,7 @@ foreach (flavor::cases() as $flavor)
 		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
 	}
 	$fixtures[$flavor->name] = ['cpp' => str_replace('int main()', 'int tested_entry()', $cpp) . $observer, 'stdout_hex' => ''];
-	foreach (['1.0 + 1', '1 + 1.0', '1.0 % 2.0', 'true * 1.0'] as $invalid) {
+	foreach (['1.0 % 2.0', 'true * 1.0'] as $invalid) {
 		rejects(fn() => $prepare($decl($invalid) . 'return 8;'), 'Unsupported binary');
 	}
 	foreach (['+=', '-=', '*=', '/='] as $op) {
@@ -112,12 +112,12 @@ foreach (flavor::cases() as $flavor)
 		$write('float', '8.0');
 		$project->run();
 		$caller = $project->session()->entry->entry->ast;
-		foreach ([['float64', '16.0 / 2.0'], ['int', '8'], ['float', '4.0 * 2.0'],
+		foreach ([['float64', '16.0 / 2.0'], ['int', '8'], ['bool', 'true'], ['float', '4.0 * 2.0'],
 			['float', '1e309'], ['float64', '+(10.0) - 2.0']] as [$type, $expression]) {
 			$write($type, $expression);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
-			if (($type === 'int') || ($expression === '1e309')) {
-				$message = $type === 'int' ? 'Unsupported binary' : 'finite';
+			if (($type === 'bool') || ($expression === '1e309')) {
+				$message = $type === 'bool' ? 'Unsupported unary' : 'finite';
 				rejects(fn() => $project->run(), $message);
 				rejects(fn() => $project->run(), $message);
 				rejects(fn() => $fresh->run(), $message);
