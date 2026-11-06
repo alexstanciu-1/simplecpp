@@ -28,8 +28,11 @@ is also the rendering input, avoiding a second serialization model.
 - `php/families.php`: strings, vectors, carriers, hashes, datetime and record ownership.
 - `php/boxed.php`: optional mixed/dynamic publication with measured inline layouts,
   explicit scalar factories and same-family container operations.
-- `php/render*.php`: runtime rendering from prepared facts. `render_compiler.php` also
-  plans metadata-authorized source admission, conversions and promotions for generated PHP types.
+- `php/compiler_families.php`: explicit family expansion and promotion-permission finalization.
+- `php/compiler_plans.php`: type/representation, binding, safety and concrete operation validation/planning.
+- `php/render_compiler.php`: compiler-generation entry point, planning orchestration and PHP emission;
+  loads both planning files so callers keep the same entry point.
+- Other `php/render*.php`: runtime rendering from prepared facts.
 - `templates/*.cpp.tpl`: readable C++ fragments with named `@placeholder@` slots.
   These retain the existing output spelling; no Rust source is a build input.
 
