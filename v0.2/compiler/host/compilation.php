@@ -125,8 +125,8 @@ final class Compilation_Inspection
 					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
 			elseif ($statement instanceof ast_call_statement) {
-				$statements[] = ['kind' => 'call', 'target' => $statement->function_def()->name(),
-					'return_type' => $statement->function_def()->return_type_def()->name,
+				$statements[] = ['kind' => 'call', 'target' => $statement->value->target_name(),
+					'return_type' => $statement->value->type_def()->name,
 					'arguments' => array_map(self::value(...), $statement->value->arguments)];
 			}
 		}
@@ -193,7 +193,7 @@ final class Compilation_Inspection
 			$row['right'] = self::value($value->right);
 		}
 		if ($value instanceof ast_call_expression) {
-			$row['target'] = $value->function_def()->name();
+			$row['target'] = $value->target_name();
 			$row['arguments'] = array_map(self::value(...), $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {

@@ -31,7 +31,9 @@ def proof(work):
         for name in ['conversion', 'definition', 'vector', 'carrier', 'hash', 'boxed'])
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $name) require $argv[1].'/types/'.$name.'.php';\n"
         + "$t=\\scpp\\compiler\\type_registry::specialize('hash',\\scpp\\compiler\\type_registry::integer(),\\scpp\\compiler\\type_registry::string());\n"
-        + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers()]);\n")
+        + "$queries = []; if ($t !== null) foreach (\\scpp\\compiler\\collection_cardinality::cases() as $op) {\n"
+        + "    $queries[] = [$t->cardinality_result($op)->name, $t->lower_cpp_cardinality($op, 'receiver')]; }\n"
+        + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers(), $queries]);\n")
 
     def emit(m, p, expected=0):
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(p))
@@ -43,6 +45,7 @@ def proof(work):
             assert headers == sorted(plan['submodules']['nodes'][p]['header'] for p in plan['submodules']['published'])
             return plan
 
+    observations = [['int64', '(receiver).size()'], ['bool_t', '(receiver).empty()']]
     default = emit(metadata, publication)
     assert len(default['hashes']['specializations']) == 4
     for specialization in default['hashes']['specializations']:
@@ -57,7 +60,7 @@ def proof(work):
         plan = emit(m, publication)
         provider = plan['submodules']['type_exports']['hash_int64_string']['provider']
         header = plan['submodules']['nodes'][provider]['header']
-        assert json.loads(run(['php', runner, compiler])) == ['hash<int64,string>', 'scpp::hash_int64_string', [header]]
+        assert json.loads(run(['php', runner, compiler])) == ['hash<int64,string>', 'scpp::hash_int64_string', [header], observations]
         after = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
         assert {k:v for k,v in before.items() if k != 'hashes.php'} == {k:v for k,v in after.items() if k != 'hashes.php'}
         assert not (runtime / 'public/scpp/hashes.hpp').exists()

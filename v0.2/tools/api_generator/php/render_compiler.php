@@ -10,6 +10,26 @@ require_once __DIR__ . '/render_compiler_carriers.php';
 require_once __DIR__ . '/render_compiler_hashes.php';
 require_once __DIR__ . '/boxed_dispatch.php';
 
+/** Bind the two source observations to checked, nullary runtime member signatures. */
+function compilerCardinalityMethods(array $methods, string $count, array $definitions): string {
+    $bindings = [];
+    foreach ($methods as $method) {
+        $name = $method['name'];
+        if (!in_array($name, ['size', 'empty'], true) || $method['arguments'] !== []) continue;
+        $result = $name === 'size' ? $count : 'bool_t';
+        $readOnly = isset($method['receiver'])
+            ? $method['receiver'] === 'const_reference' && $method['result_category'] === 'value'
+            : $method['mutates'] === false;
+        requireThat($readOnly && $method['result'] === $result && isset($definitions[$result]),
+            'Invalid collection cardinality binding: ' . $name);
+        requireThat(!isset($bindings['@' . $name . '@']), 'Duplicate collection cardinality binding');
+        $bindings['@' . $name . '@'] = $name;
+        $bindings[$name === 'size' ? '@count_type@' : '@empty_type@'] = 'type_' . $definitions[$result]['class'];
+    }
+    requireThat(isset($bindings['@size@'], $bindings['@empty@']), 'Missing collection cardinality binding');
+    return strtr(readFile(__DIR__ . '/../templates/collection_cardinality.php.tpl'), $bindings);
+}
+
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): array {
     // A null plan is the scalar-only generator test surface; production always supplies a validated runtime plan.

@@ -48,6 +48,7 @@ final class @class@ extends hash_type_definition
 			. 'static_cast<' . @value@::instance()->cpp_type() . '>(' . $value . '))';
 	}
 
+@cardinality@
 	/** STATIC METHODS */
 	public static function instance(): self
 	{

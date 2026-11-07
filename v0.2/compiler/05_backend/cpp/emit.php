@@ -499,6 +499,13 @@ final class Cpp_Emitter
 				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right') . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
+			if ($value->cardinality !== null) {
+				$receiver = $value->arguments[0];
+				/** @var counted_collection_type $type */
+				$type = $receiver->type_def();
+				return $type->lower_cpp_cardinality($value->cardinality,
+					$this->value($receiver, $global_references, $declarations, $required_headers));
+			}
 			$function = $value->function_def();
 			if ($function instanceof runtime_function) {
 				$required_headers[$function->header] = true;

@@ -35,7 +35,11 @@ including owned string copies preserving embedded NUL bytes. An indexed read can
 bind a mutable reference. Append requires existing local storage, not a constant,
 global or arbitrary temporary. Ordinary vector assignment/copy, function arguments
 (including reference arguments), returns, populated literals, indexed writes,
-size/empty helpers, iteration and other methods remain deferred.
+iteration and other methods remain deferred.
+
+Source `count(values)` returns the published count type and `empty(values)` returns bool.
+The generated specialization validates and lowers the zero-argument const members
+`size()` and `empty()` from the runtime plan. Both observe current cardinality.
 
 ## Ownership and generated handlers
 

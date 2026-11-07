@@ -381,7 +381,7 @@ final class Parser
 	private function call(): ast_call_expression
 	{
 		$start = $this->cursor->position();
-		$name = $this->names->path(true);
+		$name = $this->names->path(true, call: true);
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {

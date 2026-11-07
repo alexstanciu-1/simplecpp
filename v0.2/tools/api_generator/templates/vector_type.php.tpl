@@ -51,6 +51,7 @@ final class @class@ extends vector_type_definition
 		return '(' . $receiver . ').@index@(static_cast<' . @count@::instance()->cpp_type() . '>(' . $index . '))';
 	}
 
+@cardinality@
 	/** STATIC METHODS */
 	public static function instance(): self
 	{

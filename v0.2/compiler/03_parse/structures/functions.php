@@ -76,6 +76,8 @@ final class ast_call_expression extends ast_expression
 	public readonly array $arguments /** list<ast_expression> */;
 
 	/** PREP FACTS */
+	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
+	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
 	private symbol_entry|runtime_function|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
@@ -102,6 +104,17 @@ final class ast_call_expression extends ast_expression
 	public function symbol_key(): string
 	{
 		return $this->root()->function_key($this->name);
+	}
+
+	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
+	{
+		$this->cardinality = $operation;
+		$this->settle_value($receiver->cardinality_result($operation), null);
+	}
+
+	public function target_name(): string
+	{
+		return $this->cardinality?->name ?? $this->function_def()->name();
 	}
 
 	/** @param int[] $conversions */
@@ -141,6 +154,7 @@ final class ast_call_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->function_symbol = null;
+		$this->cardinality = null;
 		$this->conversions = [];
 	}
 }

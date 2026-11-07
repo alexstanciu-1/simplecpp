@@ -26,6 +26,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
         $code .= strtr(readFile(__DIR__ . '/../templates/vector_type.php.tpl'), [
+            '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,

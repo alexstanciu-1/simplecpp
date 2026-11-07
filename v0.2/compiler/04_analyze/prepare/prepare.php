@@ -482,7 +482,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_call_expression) {
-			$this->call($syntax);
+			$this->call($syntax, $initializing);
 			if ($syntax->type_def() === type_void::instance()) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
@@ -540,7 +540,7 @@ final class Preparation
 	}
 
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
-	private function call(ast_call_expression $call): void
+	private function call(ast_call_expression $call, ?string $initializing = null): void
 	{
 		$separator = strpos($call->name, '\\');
 		if ($call->member_syntax && ($separator !== false) && ($this->find_local(substr($call->name, 0, $separator)) !== null)) {
@@ -566,7 +566,26 @@ final class Preparation
 				$call->settle_runtime($runtime);
 				return;
 			}
-			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
+			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			$operation = match ($builtin) {
+				'count' => collection_cardinality::count,
+				'empty' => collection_cardinality::empty,
+				default => null,
+			};
+			if ($operation === null) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
+			}
+			if (count($call->arguments) !== 1) {
+				throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires one collection argument');
+			}
+			$receiver = $call->arguments[0];
+			$this->value($receiver, $initializing);
+			$type = $receiver->type_def();
+			if (!($type instanceof counted_collection_type)) {
+				throw new diagnostic($receiver->source(), $receiver->byte_start(), $operation->name . ' requires a published vector or hash');
+			}
+			$call->settle_cardinality($operation, $type);
+			return;
 		}
 		$supplied = count($call->arguments);
 		// Settled signatures have a trailing optional suffix: checking its first omitted slot is sufficient.

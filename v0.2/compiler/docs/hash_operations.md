@@ -19,6 +19,10 @@ existing generated checked conversions, including checked carrier extraction. Re
 return copies and throw the existing out-of-range error for missing keys; they never
 insert. Replacing a key keeps the runtime's existing storage behavior.
 
+Source `count(h)` and `empty(h)` observe the number of live keys through the
+published `size()` and `empty()` members. Replacing an existing key preserves its
+count. Presence of a zero or empty-string value still makes the hash nonempty.
+
 ## Owners and structures
 
 Runtime metadata declares empty construction, strict keys, copied reads and the set/at
