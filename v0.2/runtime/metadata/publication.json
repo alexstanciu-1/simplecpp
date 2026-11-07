@@ -697,6 +697,7 @@
     "int_t"
   ],
   "string": {
+    "functions": ["strlen"],
     "operations": [
       "add",
       "add_assign",

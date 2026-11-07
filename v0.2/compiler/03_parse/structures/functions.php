@@ -3,6 +3,38 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Immutable published unary function signature and C++ binding, e.g. strlen(string): int. */
+final readonly class runtime_function
+{
+	/** PROPERTIES */
+	private string $source_name;
+	public type_definition $parameter;
+	private type_definition $result;
+	public string $symbol;
+	public string $header;
+
+	/** CONSTRUCTOR */
+	public function __construct(string $name, type_definition $parameter, type_definition $result, string $symbol, string $header)
+	{
+		$this->source_name = $name;
+		$this->parameter = $parameter;
+		$this->result = $result;
+		$this->symbol = $symbol;
+		$this->header = $header;
+	}
+
+	/** METHODS */
+	public function name(): string
+	{
+		return $this->source_name;
+	}
+
+	public function return_type_def(): type_definition
+	{
+		return $this->result;
+	}
+}
+
 /** Statement-position invocation owns the same call expression used in value positions: ping(); */
 final class ast_call_statement extends ast_statement
 {
@@ -23,7 +55,7 @@ final class ast_call_statement extends ast_statement
 	}
 
 	/** Inspection requires completion of the enclosing function, including calls inside nested arms. */
-	public function function_def(): ast_function_declaration
+	public function function_def(): ast_function_declaration|runtime_function
 	{
 		$owner = $this->parent;
 		while (!($owner instanceof ast_function_body)) {
@@ -44,8 +76,8 @@ final class ast_call_expression extends ast_expression
 	public readonly array $arguments /** list<ast_expression> */;
 
 	/** PREP FACTS */
-	/** Prepared fact: native non-owning stable symbol; null before preparation or after reset. */
-	private ?symbol_entry $function_symbol = null;
+	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
+	private symbol_entry|runtime_function|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -84,8 +116,18 @@ final class ast_call_expression extends ast_expression
 		$this->conversions = $conversions;
 	}
 
-	public function function_def(): ast_function_declaration
+	public function settle_runtime(runtime_function $function): void
 	{
+		$this->settle_value($function->return_type_def(), null);
+		$this->function_symbol = $function;
+		$this->conversions = [value_conversion::identity];
+	}
+
+	public function function_def(): ast_function_declaration|runtime_function
+	{
+		if ($this->function_symbol instanceof runtime_function) {
+			return $this->function_symbol;
+		}
 		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
 	}
 

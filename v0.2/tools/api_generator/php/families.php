@@ -55,7 +55,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions']);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -71,7 +71,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         return;
     }
     $p = $publication->string;
-    fields($p, ['header', 'operations', 'casts']);
+    fields($p, ['header', 'operations', 'casts', 'functions']);
     $provider = textValue(at($m, 'provider'));
     $header = providerHeader($plan['submodules'], $provider);
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'String publication header conflicts with provider');
@@ -92,12 +92,28 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $plan['conversions'][] = conversion($target, 'string', false, false, $target === 'bool_t' ? 'parse_boolean_text':'parse_decimal', true);
         $plan['conversions'][] = conversion('string', $target, false, $target !== 'float64', $target === 'bool_t' ? 'format_boolean_text':'format_decimal', true);
     }
-    $requirements = exportProviders($plan['submodules'], array_merge(['bool_t'], names(at($p, 'casts'))));
     $methods = [];
     $countRepresentation = $registry[$count]['representation'];
     foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {
         $methods[] = ['name' => $name, 'result' => $result, 'receiver' => in_array($name, ['append', 'clear'], true) ? 'mutable_reference':'const_reference', 'arguments' => $name === 'append' ? ['const string&']:[], 'result_category' => $name === 'data' ? 'borrowed_bytes_until_mutation_or_destruction':'value', 'can_fail' => in_array($name, ['size', 'append'], true)];
     }
+    $symbols = [];
+    foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
+        $function = at(at($m, 'functions'), $name);
+        fields($function, ['parameter', 'result', 'symbol', 'method']);
+        literals($function, ['parameter' => 'string', 'result' => $count, 'method' => 'size']);
+        $symbol = textValue(at($function, 'symbol'));
+        requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
+            && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
+        requireThat(hasType($plan, $count), 'String function requires its result type');
+        requireThat(!isset($symbols[$symbol]), 'Duplicate string function binding');
+        $symbols[$symbol] = true;
+        $plan['string_functions'][$name] = ['parameter' => $function->parameter, 'result' => $count,
+            'symbol' => $symbol, 'method' => $function->method, 'header' => $header];
+    }
+    $requires = array_merge(['bool_t'], names(at($p, 'casts')));
+    if ($symbols) $requires[] = $count;
+    $requirements = exportProviders($plan['submodules'], $requires);
     $plan['source_types']->string = 'string';
     $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'empty_state' => 'null_storage', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
 }

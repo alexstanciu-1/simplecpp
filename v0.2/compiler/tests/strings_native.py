@@ -101,9 +101,10 @@ def prove(work, fixture_script="strings.php", check_copy=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php'], default='strings.php')
     args = parser.parse_args()
     if args.output:
-        prove(args.output.resolve())
+        prove(args.output.resolve(), args.fixture, check_copy=args.fixture == 'strings.php')
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-strings-native-') as directory:
-            prove(Path(directory))
+            prove(Path(directory), args.fixture, check_copy=args.fixture == 'strings.php')

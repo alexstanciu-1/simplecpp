@@ -500,6 +500,10 @@ final class Cpp_Emitter
 		}
 		if ($value instanceof ast_call_expression) {
 			$function = $value->function_def();
+			if ($function instanceof runtime_function) {
+				$required_headers[$function->header] = true;
+				return $function->symbol . '(' . $this->value($value->arguments[0], $global_references, $declarations, $required_headers) . ')';
+			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			if ($function->parameters === []) {

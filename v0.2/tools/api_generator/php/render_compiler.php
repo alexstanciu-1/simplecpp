@@ -112,8 +112,16 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     if (isset($runtime['boxed_dispatch'])) {
         $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases);
     }
+    $runtimeCases = [];
+    foreach ($runtime['string_functions'] ?? [] as $name => $binding) {
+        if (!isset($definitions[$binding['parameter']], $definitions[$binding['result']])) continue;
+        $parameter = $definitions[$binding['parameter']]['class'];
+        $result = $definitions[$binding['result']]['class'];
+        $runtimeCases[] = "\t\t\t'func:$name' => \$bindings[\$key] ??= new runtime_function('$name', "
+            . "type_$parameter::instance(), type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
-        '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
+        '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

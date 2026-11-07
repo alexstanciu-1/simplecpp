@@ -547,10 +547,25 @@ final class Preparation
 			throw new diagnostic($call->source(), $call->byte_start(), 'Member calls are not supported in this slice');
 		}
 		$this->name_lookups++;
-		$symbol = $this->symbols->entry($call->symbol_key());
+		$file = $call->root();
+		$key = $file->function_key($call->name);
+		$symbol = $this->symbols->entry($key);
 		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration)) {
+			$runtime = runtime_functions::resolve($file->runtime_function_key($call->name, $key));
+			if ($runtime !== null) {
+				if (count($call->arguments) !== 1) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+				}
+				$argument = $call->arguments[0];
+				$this->value($argument);
+				if ($argument->type_def() !== $runtime->parameter) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $runtime->parameter->name);
+				}
+				$call->settle_runtime($runtime);
+				return;
+			}
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
 		}
 		$supplied = count($call->arguments);

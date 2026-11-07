@@ -86,3 +86,15 @@ commands and results are in `v0.2/build/strings-proof-2026-11-04/` (untracked).
 Runtime generator parity retained identical generated artifacts and rejection
 contracts across 17 accepted and 37 rejected fixtures; only metadata input hashes
 changed in the baseline.
+
+## Runtime byte length
+
+The default string provider publishes `strlen(string): int`. Its generated binding
+`scpp::str::byte_length(const scpp::string&)` forwards to the existing stored byte
+count. Embedded NUL contributes one byte and UTF-8 contributes its encoded byte length.
+
+Preparation first watches the ordinary source function slot. When the slot is empty,
+the generated runtime registry supplies its immutable unary signature, binding and
+provider header. A local source definition can shadow it and deletion restores the
+runtime target. The existing call AST keeps either that signature or the stable source
+symbol. Lowering evaluates the argument once and passes the string by const reference.

@@ -170,6 +170,15 @@ final class ast_file_node extends ast_node
 		return 'func:' . ($import?->target ?? Source_Names::resolve($name, $this->scope->namespace));
 	}
 
+	/** Registered unqualified builtins are language-scoped; explicit imports and qualified calls retain exact targets. */
+	public function runtime_function_key(string $name, string $resolved_key): string
+	{
+		if (!isset($this->function_imports[$name]) && !str_contains($name, '\\')) {
+			return 'func:' . $name;
+		}
+		return $resolved_key;
+	}
+
 	public function constant_key(string $name): string
 	{
 		$import = $this->constant_imports[$name] ?? null;

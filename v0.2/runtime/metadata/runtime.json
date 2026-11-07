@@ -581,6 +581,9 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "functions": {
+      "strlen": {"parameter": "string", "result": "int64", "symbol": "scpp::str::byte_length", "method": "size"}
+    },
     "provider": "core.string",
     "type": "string",
     "source_type": "string",

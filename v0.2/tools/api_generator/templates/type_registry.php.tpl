@@ -63,3 +63,16 @@ final class type_registry
 
 @family_accessors@
 }
+
+/** Published unary runtime call signatures, shared across source units. */
+final class runtime_functions
+{
+	public static function resolve(string $key): ?runtime_function
+	{
+		static $bindings = [];
+		return match ($key) {
+@runtime_cases@
+			default => null,
+		};
+	}
+}

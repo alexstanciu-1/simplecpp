@@ -6,6 +6,9 @@ require_once __DIR__ . '/../php/target.php';
 require_once __DIR__ . '/../php/scalars.php';
 require_once __DIR__ . '/../php/publication.php';
 require_once __DIR__ . '/../php/render_compiler.php';
+require_once __DIR__ . '/../php/families.php';
+require_once __DIR__ . '/../php/render.php';
+require_once __DIR__ . '/../php/render_sequences.php';
 
 /** Locate a normalized test row by canonical identity, independent of family expansion order. */
 function conversion_row(object $metadata, string $from, string $to): object {
@@ -18,6 +21,21 @@ $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
+// A runtime function must follow the published source spelling and binding in both outputs.
+$functionMetadata = unserialize($originalExportMetadata);
+$declaration = $functionMetadata->string->functions->strlen;
+unset($functionMetadata->string->functions->strlen);
+$functionMetadata->string->functions->count_bytes = $declaration;
+$declaration->symbol = 'scpp::str::measured_bytes';
+$demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
+$demand->string->functions = ['count_bytes'];
+$functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];
+requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")
+    && !str_contains($registry, "'func:strlen'"), 'Source function registration ignored runtime metadata');
+requireThat(str_contains(renderString($functionPlan)[0], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
+$demand->string->functions = [];
+requireThat(!isset(prepareRuntime($functionMetadata, $demand, $facts)['string_functions']), 'Deselected string function remains published');
 // Export planning is pure and order independent; public names do not select storage strategy.
 $reorderedExports = unserialize($originalExportMetadata);
 $reorderedExports->type_exports = array_reverse($reorderedExports->type_exports);

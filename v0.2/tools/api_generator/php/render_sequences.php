@@ -53,6 +53,10 @@ function renderString(array $plan): array {
         $d .= $append ? 'left.append(right); return left;':"return bool_t{detail::string_access::read(left) $symbol detail::string_access::read(right)};";
         $d .= " }\n";
     }
+    foreach ($plan['string_functions'] ?? [] as $function) {
+        $name = substr($function['symbol'], strlen('scpp::str::'));
+        $h .= "namespace str { inline {$function['result']} $name(const string& value) { return value.{$function['method']}(); } }\n";
+    }
     return [$h . "}\n", $d];
 }
 
