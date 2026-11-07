@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition
+abstract class hash_type_definition extends type_definition implements keyed_collection_type
 {
 	/** PROPERTIES */
 	/** Native non-owning canonical value type. */
@@ -31,12 +31,15 @@ abstract class hash_type_definition extends type_definition
 		throw new diagnostic($value->source(), $value->byte_start(), 'Hash value operations are deferred');
 	}
 
-	/** Generated handlers select exact key admission and checked value conversion from the published contract. */
-	abstract public function prepare_key(ast_expression $key): void;
-	abstract public function prepare_write(ast_expression $value): int /** uint16 */;
-	abstract public function lower_cpp_empty(): string;
-	abstract public function lower_cpp_index(string $receiver, string $index): string;
-	abstract public function lower_cpp_write(string $receiver, string $index, string $value): string;
+	public function write_type(): type_definition
+	{
+		return $this->value_type;
+	}
+
+	public function lower_cpp_key(string $key): string
+	{
+		return $key;
+	}
 
 	public function prepare_index(ast_index_expression $value): void
 	{

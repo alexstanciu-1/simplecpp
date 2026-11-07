@@ -42,13 +42,48 @@ foreach (flavor::cases() as $flavor) {
 	$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 		? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 
+	$x = $var('x');
+	$y = $var('y');
+	$infer = static fn(string $name, string $value) => match ($flavor) {
+		flavor::cpp => "auto $name = $value;", flavor::php => '$' . "$name = $value;",
+		flavor::js => "let $name = $value;",
+	};
+	$index = static fn(string $name, string $key) => $var($name) . '[' . $key . ']';
+
 	foreach (['mixed', 'dynamic'] as $family) {
-		$x = $var('x');
-		$y = $var('y');
-		$infer = static fn(string $name, string $value) => match ($flavor) {
-			flavor::cpp => "auto $name = $value;", flavor::php => '$' . "$name = $value;",
-			flavor::js => "let $name = $value;",
-		};
+		$box = $decl($family, 'x', '[]') . $index('x', '"1"') . ' = 8;'
+			. $decl($family, 'y', $x) . $index('y', '1') . ' = 9;'
+			. 'echo (int)' . $index('x', '1') . ', (int)' . $index('y', '"1"') . ';'
+			. $index('x', '"01"') . ' = 2;' . $index('x', '"a\0b"') . ' = 3;'
+			. $index('x', '"4294967296"') . ' = 4;' . $index('x', '2147483647') . ' = 5;'
+			. "$y = 7; echo (int)" . $index('x', '"1"') . ', (int)' . $index('x', '"01"')
+			. ', (int)' . $index('x', '"a\0b"') . ', (int)' . $index('x', '"4294967296"')
+			. ', (int)' . $index('x', '"2147483647"') . ';'
+			. $decl('null', 'miss', $index('x', '"absent"')) . $decl($family, 'nil', 'null')
+			. $decl('null', 'again', $index('nil', '0'));
+		if ($family === 'mixed') {
+			$box .= $index('nil', '0') . ' = 6; echo (int)' . $index('nil', '0') . ';';
+		}
+		$box .= $decl($family, 'parent_box', '[]') . $index('parent_box', '0') . " = $x;"
+			. $decl($family, 'child', $index('parent_box', '0')) . $index('child', '1') . ' = 7;'
+			. 'echo (int)' . $index('x', '1') . ';';
+		$fixtures[$flavor->name . '-' . $family . '-container'] = [
+			'cpp' => (new Cpp_Emitter())->emit($prepare($box . ' return 8;')),
+			'stdout_hex' => bin2hex($family === 'mixed' ? '898234568' : '99923457')];
+		foreach (['true', '1.5', 'null', $x] as $key) {
+			rejects(fn() => $prepare($decl($family, 'x', '[]') . $index('x', $key) . ' = 1;'), 'key requires int or string');
+		}
+		$bad = $decl($family, 'x', 'null') . $index('x', '"2147483648"') . ' = (int)' . $x . '; return 8;';
+		$fixtures[$flavor->name . '-' . $family . '-key-first'] = [
+			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => '', 'catch_out_of_range' => true];
+		$bad = $decl($family, 'x', '1') . $decl($family, 'y', $index('x', '0')) . 'return 8;';
+		$fixtures[$flavor->name . '-' . $family . '-scalar-read'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bad)),
+			'stdout_hex' => '', 'catch_runtime_error' => 'boxed_expected_container'];
+		if ($family === 'dynamic') {
+			$bad = $decl($family, 'x', 'null') . $index('x', '0') . ' = 1; return 8;';
+			$fixtures[$flavor->name . '-dynamic-null-write'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bad)),
+				'stdout_hex' => '', 'catch_runtime_error' => 'dynamic_requires_container'];
+		}
 		$probe = $prepare($decl($family, 'x', '8.75') . $infer('boxed', "2.0 + $x")
 			. $infer('plain', "2.0 + (float)$x") . $infer('ordered', "$x < $x") . 'return 8;');
 		$locals = $probe->file->main()->body()->statements;
@@ -93,65 +128,70 @@ foreach (flavor::cases() as $flavor) {
 		rejects(fn() => $prepare($decl($family, 'x', '1') . 'echo (int)(' . $x . ' + true);'), 'Unsupported boxed binary');
 		rejects(fn() => $prepare($decl($family, 'x', '1') . $decl($family === 'mixed' ? 'dynamic' : 'mixed', 'y', $x)), 'Unsupported boxed conversion');
 	}
-	$directory = sys_get_temp_dir() . '/scpp-boxed-scalars-' . bin2hex(random_bytes(8));
-	mkdir($directory);
-	try {
-		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$library = $directory . '/lib.' . $flavor->name;
-		file_put_contents($main, 'echo (int)(number() + 2); return 8;');
-		$revision = time();
-		$write = static function (?string $type, string $value = '') use ($library, &$revision, $function): void {
-			if ($type === null) {
-				unlink($library);
-				return;
+	foreach ([false, true] as $containers) {
+		$directory = sys_get_temp_dir() . '/scpp-boxed-scalars-' . bin2hex(random_bytes(8));
+		mkdir($directory);
+		try {
+			file_put_contents($directory . '/module.json', '{}');
+			$main = $directory . '/main.' . $flavor->name;
+			$library = $directory . '/lib.' . $flavor->name;
+			file_put_contents($main, $containers ? $infer('x', 'number()') . $infer('y', $x)
+				. $index('y', '"1"') . ' = 22; echo (int)' . $index('x', '1') . '; return 8;' : 'echo (int)(number() + 2); return 8;');
+			$revision = time();
+			$write = static function (?string $type, string $value = '') use ($library, &$revision, $function, $containers, $decl, $index, $x): void {
+				if ($type === null) {
+					unlink($library);
+					return;
+				}
+				$body = $containers && $type !== 'bool' ? $decl($type, 'x', '[]') . $index('x', '1') . ' = ' . $value . "; return $x;"
+					: 'return ' . $value . ';';
+				file_put_contents($library, $function($type, 'number', $body));
+				touch($library, ++$revision);
+			};
+			$compiler = new Project_Compiler();
+			$target = new entry_target(31);
+			$session = null;
+			$root = null;
+			foreach ([['mixed', '8', $containers ? '8' : '10'], ['dynamic', '9.75', $containers ? '22' : '11'], ['bool', 'true', null],
+				['retry', '', null], [null, '', null], ['dynamic', '12.5', $containers ? '22' : '14'], ['mixed', '8', $containers ? '8' : '10']] as $step => [$type, $value, $expected]) {
+				if ($type !== 'retry') {
+					$write($type, $value);
+					$session = $compiler->frontend($directory, $session);
+				}
+				$root ??= $session->entry->entry->ast;
+				verify($session->entry->entry->ast === $root, 'Unchanged consumer AST replaced');
+				if ($expected === null) {
+					rejects(fn() => Incremental_Preparation::prepare($session, $target), $type === null ? 'Unknown function' : ($containers ? 'Keyed write requires' : 'Unsupported'));
+					continue;
+				}
+				$stats = Incremental_Preparation::prepare($session, $target);
+				if ($step === 1) {
+					verify($stats['prepared'] === 2, 'Signature change did not reprepare boxed consumer');
+				}
+				$files = $session->files();
+				$incremental = Cpp_Program::emit(new prepared_program($session->entry_key(), $files,
+					new prepared_entry($root, $target), $session))->files;
+				$sources = [];
+				foreach ($files as $key => $file) {
+					$sources[$key] = $file->source();
+				}
+				$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
+				verify($incremental === $fresh, 'Incremental boxed output differs from fresh');
+				$fixtures[$flavor->name . ($containers ? '-container-incremental-' : '-incremental-') . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex($expected)];
 			}
-			file_put_contents($library, $function($type, 'number', 'return ' . $value . ';'));
-			touch($library, ++$revision);
-		};
-		$compiler = new Project_Compiler();
-		$target = new entry_target(31);
-		$session = null;
-		$root = null;
-		foreach ([['mixed', '8', '10'], ['dynamic', '9.75', '11'], ['bool', 'true', null],
-			['retry', '', null], [null, '', null], ['dynamic', '12.5', '14'], ['mixed', '8', '10']] as $step => [$type, $value, $expected]) {
-			if ($type !== 'retry') {
-				$write($type, $value);
-				$session = $compiler->frontend($directory, $session);
-			}
-			$root ??= $session->entry->entry->ast;
-			verify($session->entry->entry->ast === $root, 'Unchanged consumer AST replaced');
-			if ($expected === null) {
-				rejects(fn() => Incremental_Preparation::prepare($session, $target), $type === null ? 'Unknown function' : 'Unsupported');
-				continue;
-			}
-			$stats = Incremental_Preparation::prepare($session, $target);
-			if ($step === 1) {
-				verify($stats['prepared'] === 2, 'Signature change did not reprepare boxed consumer');
-			}
-			$files = $session->files();
-			$incremental = Cpp_Program::emit(new prepared_program($session->entry_key(), $files,
-				new prepared_entry($root, $target), $session))->files;
-			$sources = [];
-			foreach ($files as $key => $file) {
-				$sources[$key] = $file->source();
-			}
-			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
-			verify($incremental === $fresh, 'Incremental boxed output differs from fresh');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex($expected)];
-		}
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op lost prepared bodies');
+			$session = $compiler->frontend($directory, $session);
+			verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op lost prepared bodies');
 
-	}
-	finally {
-		foreach (glob($directory . '/*') as $path) {
-			unlink($path);
 		}
-		rmdir($directory);
+		finally {
+			foreach (glob($directory . '/*') as $path) {
+				unlink($path);
+			}
+			rmdir($directory);
+		}
 	}
 }
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 }
-echo "Boxed scalar operations and incremental recovery passed\n";
+echo "Boxed scalar and container operations and incremental recovery passed\n";

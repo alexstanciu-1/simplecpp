@@ -157,13 +157,13 @@ final class Preparation
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
 				}
 				$type = $statement->receiver->type_def();
-				if (!($type instanceof hash_type_definition)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a hash; vector indexed writes are deferred');
+				if (!($type instanceof keyed_collection_type)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a hash or boxed container; vector indexed writes are deferred');
 				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
 				$this->value($statement->value);
-				$statement->settle_write($type->prepare_write($statement->value));
+				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				$this->value($statement->receiver);
@@ -351,7 +351,7 @@ final class Preparation
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
 			}
 		}
-		if (($declaration->initializer instanceof ast_empty_collection_expression) && (($type instanceof vector_type_definition) || ($type instanceof hash_type_definition))) {
+		if (($declaration->initializer instanceof ast_empty_collection_expression) && ($type instanceof indexed_collection_type)) {
 			$this->expression_visits++;
 			$declaration->initializer->settle_collection($type);
 		}
@@ -412,13 +412,13 @@ final class Preparation
 	{
 		$this->expression_visits++;
 		if ($syntax instanceof ast_empty_collection_expression) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector or hash)');
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
 		}
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
-			if (!($type instanceof vector_type_definition) && !($type instanceof hash_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector or hash');
+			if (!($type instanceof indexed_collection_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash or boxed container');
 			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);

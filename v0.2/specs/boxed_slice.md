@@ -1,7 +1,7 @@
 # Concrete mixed and dynamic publication
 
 Doc Status: normative
-Scope: bounded v0.2 native C++ API; source compiler integration is not claimed.
+Scope: v0.2 boxed runtime publication and the supported source bindings.
 
 ## Owners and demand
 
@@ -26,8 +26,7 @@ Either family may be requested alone with `scalar_conversions: false`. Requestin
 conversion requires both. Duplicate/unknown/empty requests, missing policy, header
 or name collisions, and missing dependencies reject before any output is written.
 The complete bounded API requires published int64, bool_t, float64 and string,
-including explicit native long-long/double transport. The default publication remains
-unchanged. Boxed values are not admitted as typed vector/hash payloads. The subsequent
+including explicit native long-long/double transport. The default publication selects both families independently. Boxed values are not admitted as typed vector/hash payloads. The subsequent
 [boxed-result extension](boxed_results.md) admits result_mixed/result_dynamic only;
 other boxed carrier families remain deferred.
 
@@ -85,9 +84,11 @@ intern strings or allocate tables. Non-container scalar indexed access throws.
 
 This native API consumes classified keys: integers in 0…INT32_MAX and byte-exact
 strings, including numeric spellings and embedded NUL. It does not implement source
-numeric-string normalization. A future source adapter must apply the language rule
-before calling it; typed and boxed source integration must not infer normalization
-from these physical overloads. This is not full source mixed/dynamic availability.
+numeric-string normalization. Source indexed operations use a separate adapter that shares canonical unsigned decimal
+classification with JSON. Decimal spellings through UINT32_MAX normalize to integers;
+integer keys above INT32_MAX then fail. Wider spellings, signed spellings, leading zeroes
+(except "0") and embedded NUL remain byte strings. Each keyed write validates its key
+before RHS evaluation. Typed hashes continue to use their declared key domain.
 
 The storage contracts own failure behavior. Invalid kinds throw runtime errors,
 invalid integer keys throw out_of_range, append exhaustion throws overflow_error,
@@ -109,5 +110,8 @@ The default publication enables `boxed.scalar_dispatch`. It registers `mixed` an
 addition and ordering. Each family has its own public header and runtime bindings.
 Generated dispatch selects the ordinary scalar rule for the observed kind. The application
 links the prebuilt runtime. The boxed storage API above can also be published separately.
-Source container operations, key normalization and explicit family crossing remain deferred.
+Typed local `[]`, single-level indexed reads and keyed writes are available in all three
+flavors. Keys have static type int64 or string. A read returns a same-family value and
+writes use ordinary same-family copies or scalar boxing. Append, boxed key expressions,
+populated literals, nested writes and explicit family crossing remain deferred.
 Public traversal remains RT-DEBT-01. See [validation](boxed_slice_validation.md).

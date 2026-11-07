@@ -3,6 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Collection protocols implemented by published types that support typed [] and copied reads. */
+interface indexed_collection_type
+{
+	public function prepare_index(ast_index_expression $value): void;
+	public function lower_cpp_empty(): string;
+	public function lower_cpp_index(string $receiver, string $index): string;
+}
+
+/** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
+interface keyed_collection_type extends indexed_collection_type
+{
+	public function prepare_key(ast_expression $key): void;
+	public function write_type(): type_definition;
+	public function lower_cpp_key(string $key): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+}
+
 /** Shared semantic type contract; canonical definitions own type-specific behavior, never occurrence facts. */
 abstract class type_definition
 {

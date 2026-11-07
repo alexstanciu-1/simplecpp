@@ -32,11 +32,6 @@ final class @class@ extends hash_type_definition
 		}
 	}
 
-	public function prepare_write(ast_expression $value): int /** uint16 */
-	{
-		return @value@::instance()->prepare_conversion($value, conversion_context::typed_destination);
-	}
-
 	public function lower_cpp_empty(): string
 	{
 		return @cpp@ . '{}';

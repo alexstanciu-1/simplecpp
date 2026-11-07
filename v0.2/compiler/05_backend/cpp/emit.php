@@ -233,18 +233,19 @@ final class Cpp_Emitter
 				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
 			}
 			elseif ($statement instanceof ast_index_assignment) {
-				/** @var hash_type_definition $type */
+				/** @var keyed_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
-				foreach ($type->value_type->conversion_headers($conversion) as $header) {
+				$destination = $type->write_type();
+				foreach ($destination->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$value = $type->value_type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
+				$value = $destination->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
 				// Separate statements keep key evaluation before RHS effects and conversion before mutation.
-				$lines[] = "\t{ const auto hash_key = " . $key . '; const auto hash_value = ' . $value . '; '
+				$lines[] = "\t{ const auto hash_key = " . $type->lower_cpp_key($key) . '; const auto hash_value = ' . $value . '; '
 					. $type->lower_cpp_write($receiver, 'hash_key', 'hash_value') . '; }';
 			}
 			elseif ($statement instanceof ast_append_statement) {
@@ -413,12 +414,12 @@ final class Cpp_Emitter
 			$required_headers[$header] = true;
 		}
 		if ($value instanceof ast_empty_collection_expression) {
-			/** @var vector_type_definition|hash_type_definition $type */
+			/** @var indexed_collection_type $type */
 			$type = $value->type_def();
 			return $type->lower_cpp_empty();
 		}
 		if ($value instanceof ast_index_expression) {
-			/** @var vector_type_definition|hash_type_definition $type */
+			/** @var indexed_collection_type $type */
 			$type = $value->receiver->type_def();
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);

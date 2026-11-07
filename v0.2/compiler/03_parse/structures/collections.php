@@ -6,7 +6,7 @@ namespace scpp\compiler;
 /** Empty [] initializer; its explicitly typed local supplies the concrete collection identity during preparation. */
 final class ast_empty_collection_expression extends ast_expression
 {
-	public function settle_collection(vector_type_definition|hash_type_definition $type): void
+	public function settle_collection(type_definition&indexed_collection_type $type): void
 	{
 		$this->settle_value($type, null);
 	}

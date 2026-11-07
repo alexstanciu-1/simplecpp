@@ -45,7 +45,7 @@ Already available in bounded form:
 | ID | Area | What is missing from the current source compiler | Existing foundation / boundary |
 | --- | --- | --- | --- |
 | BX-01 | mixed/dynamic scalar values | Implemented for active scalar kinds | Default independent providers expose boxing, value copies and checked scalar conversion at typed boundaries |
-| BX-02 | mixed/dynamic containers | Empty construction, keyed reads/writes, append and reset; source key classification | Native storage/APIs exist. Mixed COW versus dynamic identity must remain observable; numeric-string normalization is a source adapter concern |
+| BX-02 | mixed/dynamic containers | Append/reset, populated construction, nested access and runtime-checked boxed keys | Typed empty locals and single-level int/string reads and writes share key normalization with JSON. Native storage owns mixed copy-on-write and dynamic aliasing |
 | BX-03 | Boxed operations | Truthiness/probes, further operators and compound/update rules | Numeric addition and ordering use runtime dispatch generated from scalar plans |
 | BX-04 | Family boundaries | Explicit mixed↔dynamic scalar/null crossing and checked rejection of container crossing | Native scalar bridges exist. Typed destinations do not authorize implicit family crossing; recursive container conversion remains deferred |
 | CT-01 | Collection utility operations | size/count/empty, hash membership/find/remove/clear and int-key append; vector keyed replacement and other existing native methods | Bounded native methods exist; source syntax and helper binding need agreement. Read failure differs: hash at throws, boxed miss returns family-null |

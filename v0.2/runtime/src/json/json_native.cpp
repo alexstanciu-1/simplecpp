@@ -3,6 +3,7 @@
 #include "json_native.hpp"
 #include "reader.hpp"
 #include "boxed_inspection.hpp"
+#include "source_key.hpp"
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -29,14 +30,8 @@ locale_t numeric_locale() {
 // Preserve donor normalization: canonical unsigned decimal through UINT32_MAX.
 // Wider spellings remain strings. Recognized but unrepresentable keys are errors.
 template<class Value> void set_object_entry(Value& out, const std::string& key, Value value, std::size_t position) {
-    bool numeric = !key.empty() && !(key.size() > 1 && key[0] == '0');
-    std::uint64_t number = 0;
-    for (unsigned char c : key) {
-        if (c < '0' || c > '9') { numeric = false; break; }
-        number = number * 10 + (c - '0');
-        if (number > std::numeric_limits<std::uint32_t>::max()) { numeric = false; break; }
-    }
-    if (numeric) {
+    const auto number = source_key_index(key);
+    if (number >= 0) {
         if (number > packed_key::max_integer)
             fail_json_parse("numeric object key exceeds INT32_MAX", position, "key_limit");
         out.set(static_cast<std::int64_t>(number), std::move(value));

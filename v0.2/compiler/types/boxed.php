@@ -4,8 +4,50 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
-abstract class boxed_type_definition extends type_definition
+abstract class boxed_type_definition extends type_definition implements keyed_collection_type
 {
+	public function prepare_key(ast_expression $key): void
+	{
+		$type = $key->type_def();
+		if ($type !== type_int64::instance() && $type !== type_string::instance()) {
+			throw new diagnostic($key->source(), $key->byte_start(), 'Boxed container key requires int or string');
+		}
+	}
+
+	public function prepare_index(ast_index_expression $value): void
+	{
+		if ($value->receiver instanceof ast_index_expression) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
+		}
+		$this->prepare_key($value->index);
+		$value->settle_element($this);
+	}
+
+	public function write_type(): type_definition
+	{
+		return $this;
+	}
+
+	public function lower_cpp_empty(): string
+	{
+		return $this->cpp_type() . '::container()';
+	}
+
+	public function lower_cpp_key(string $key): string
+	{
+		return 'scpp::boxed_key(' . $key . ')';
+	}
+
+	public function lower_cpp_index(string $receiver, string $index): string
+	{
+		return '(' . $receiver . ').source_read(' . $this->lower_cpp_key($index) . ')';
+	}
+
+	public function lower_cpp_write(string $receiver, string $key, string $value): string
+	{
+		return '(' . $receiver . ').source_set(' . $key . ', ' . $value . ')';
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;
