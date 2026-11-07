@@ -98,3 +98,12 @@ the generated runtime registry supplies its immutable unary signature, binding a
 provider header. A local source definition can shadow it and deletion restores the
 runtime target. The existing call AST keeps either that signature or the stable source
 symbol. Lowering evaluates the argument once and passes the string by const reference.
+
+## Explicit text conversion
+
+The string provider publishes explicit formatters in runtime metadata. Compiler
+generation uses these rows for cast permission, lowering and provider includes.
+The boxed generator selects the same named bindings by stored kind. Preparation
+records the ordinary conversion code on the cast expression. The default runtime
+formats finite floats and integers with `to_chars` into a stack buffer and copies
+the resulting bytes into the owning string. See [the scalar contract](../../../specs/compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02).

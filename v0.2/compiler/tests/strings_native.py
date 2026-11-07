@@ -49,20 +49,13 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                       '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
                       '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
             source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
-            if fixture.get('catch_out_of_range'):
-                # Test-only exception observation; this does not enable source try/catch syntax.
-                source = '#include <stdexcept>\n' + source.replace('int main()', 'int tested_entry()')
-                source += '\nint main() { try { tested_entry(); } catch (const std::out_of_range&) { return 8; } return 90; }\n'
-            if fixture.get('catch_domain_error'):
-                source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
-                message = json.dumps(fixture['catch_domain_error'])
-                source += ('\nint main() { try { tested_entry(); } catch (const std::domain_error& e) { '
-                           'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
-            if fixture.get('catch_runtime_error'):
-                source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
-                message = json.dumps(fixture['catch_runtime_error'])
-                source += ('\nint main() { try { tested_entry(); } catch (const std::runtime_error& e) { '
-                           'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
+            for exception in ('out_of_range', 'domain_error', 'runtime_error'):
+                expected = fixture.get('catch_' + exception)
+                if expected:
+                    source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
+                    check = '8' if expected is True else f'std::string_view(e.what()) == {json.dumps(expected)} ? 8 : 91'
+                    source += (f'\nint main() {{ try {{ tested_entry(); }} catch (const std::{exception}& e) {{ '
+                               f'return {check}; }} return 90; }}\n')
             cpp.write_text(source)
             units = [cpp]
             for index, extra in enumerate(fixture.get('extra_cpp', [])):
@@ -101,7 +94,7 @@ def prove(work, fixture_script="strings.php", check_copy=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php'], default='strings.php')
+    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php', 'text_casts.php'], default='strings.php')
     args = parser.parse_args()
     if args.output:
         prove(args.output.resolve(), args.fixture, check_copy=args.fixture == 'strings.php')

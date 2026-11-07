@@ -33,7 +33,7 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
     }
     if (boolean($p->scalar_dispatch ?? false)) {
         foreach ($requested as $family) publishTypeExports($plan['submodules'], $family, [$family]);
-        $plan['boxed_dispatch'] = boxedScalarPlan($metadata, $facts, $plan['submodules']);
+        $plan['boxed_dispatch'] = boxedScalarPlan($metadata, $facts, $plan['submodules'], $plan['explicit_formatters'] ?? []);
     }
     $plan['boxed'] = ['header' => $header, 'families' => $families,
         'scalar_conversions' => $convert, 'integer_keys' => [0, 2147483647],

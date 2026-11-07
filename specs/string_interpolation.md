@@ -47,3 +47,6 @@ sequential append statements. The existing string runtime owns conversion and st
 collection, source ranges, diagnostics and incremental behavior.
 [Generated-program fixtures](../compiler/my-try/tests/s2s.php) compare exact output
 bytes across both spellings, scalar conversions, escapes and snapshots.
+
+For v0.2, [the scalar cast amendment](compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02)
+sets the boolean words to `true` and `false`. String interpolation itself is deferred in v0.2.

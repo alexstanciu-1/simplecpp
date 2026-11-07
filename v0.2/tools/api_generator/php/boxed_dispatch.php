@@ -3,13 +3,13 @@ declare(strict_types=1);
 namespace Scpp\Api;
 
 /** Project the existing scalar plans onto the published box tags and the first five boxed operators. */
-function boxedScalarPlan(object $metadata, array $facts, array $providers): array {
+function boxedScalarPlan(object $metadata, array $facts, array $providers, array $formatters): array {
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $defs = compilerTypePlan($metadata, $facts, $types, $providers);
     $metadata = clone $metadata;
     $compiler = $metadata->compiler = compilerFamilyPlan($metadata, $defs, $types);
-    $conversions = compilerConversionPlan($metadata, $defs, $types, $facts);
+    $conversions = compilerConversionPlan($metadata, $defs, $types, $facts, $formatters);
     $strings = names($metadata->string->operations);
     $binary = compilerBinaryPlan($compiler, $defs, compilerComparisonPlan($compiler, $defs, $strings), $types, $strings);
     $promotions = compilerPromotionPlan($compiler, $conversions, $defs, $binary);

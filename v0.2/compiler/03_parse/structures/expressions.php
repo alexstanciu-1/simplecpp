@@ -220,7 +220,7 @@ final class ast_cast_expression extends ast_expression
 	public function settle_cast(type_definition $type, int $conversion /** uint16 */): void
 	{
 		$this->settle_value($type, $type->convert_constant($conversion, $this->operand->constant()),
-			$this->operand->constant_known() && !($type instanceof boxed_type_definition));
+			$this->operand->constant_known() && !($type instanceof boxed_type_definition) && $type !== type_string::instance());
 		$this->conversion = $conversion;
 	}
 

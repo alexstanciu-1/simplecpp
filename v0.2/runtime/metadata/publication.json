@@ -697,6 +697,7 @@
     "int_t"
   ],
   "string": {
+    "explicit_formatters": ["bool_t", "uint8", "int64", "float64"],
     "functions": ["strlen"],
     "operations": [
       "add",

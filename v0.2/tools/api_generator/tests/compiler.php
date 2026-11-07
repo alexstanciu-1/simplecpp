@@ -36,6 +36,17 @@ requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($regis
 requireThat(str_contains(renderString($functionPlan)[0], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
 $demand->string->functions = [];
 requireThat(!isset(prepareRuntime($functionMetadata, $demand, $facts)['string_functions']), 'Deselected string function remains published');
+// A published formatter supplies the runtime and compiler binding together.
+$functionMetadata->string->explicit_formatters->int64->symbol = 'format_integer_probe';
+$formatPlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(str_contains(renderString($formatPlan)[0], 'format_integer_probe(int64 value)')
+    && str_contains(renderCompiler($functionMetadata, $facts, $formatPlan)['types/string.php'], 'scpp::str::format_integer_probe'),
+    'Text cast binding ignored formatter metadata');
+$demand->string->explicit_formatters = [];
+$formatPlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(!isset($formatPlan['explicit_formatters'])
+    && !str_contains(renderCompiler($functionMetadata, $facts, $formatPlan)['types/string.php'], 'value_conversion::format_int64'),
+    'Deselected formatter remains available to the compiler');
 // Export planning is pure and order independent; public names do not select storage strategy.
 $reorderedExports = unserialize($originalExportMetadata);
 $reorderedExports->type_exports = array_reverse($reorderedExports->type_exports);

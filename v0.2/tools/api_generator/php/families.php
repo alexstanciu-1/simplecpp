@@ -55,7 +55,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'explicit_formatters']);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -71,7 +71,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         return;
     }
     $p = $publication->string;
-    fields($p, ['header', 'operations', 'casts', 'functions']);
+    fields($p, ['header', 'operations', 'casts', 'functions', 'explicit_formatters']);
     $provider = textValue(at($m, 'provider'));
     $header = providerHeader($plan['submodules'], $provider);
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'String publication header conflicts with provider');
@@ -113,6 +113,23 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     }
     $requires = array_merge(['bool_t'], names(at($p, 'casts')));
     if ($symbols) $requires[] = $count;
+    foreach (names($p->explicit_formatters ?? [], 'Duplicate explicit formatter') as $source) {
+        $row = at(at($m, 'explicit_formatters'), $source);
+        fields($row, ['policy', 'symbol']);
+        $policy = hasType($plan, $source) ? 'decimal_integer' : match ($source) {
+            'bool_t' => 'boolean_words', 'float64' => 'decimal_float', default => null,
+        };
+        requireThat((hasType($plan, $source) || hasValue($plan, $source)) && in_array($policy, $casts, true),
+            'Explicit formatter requires a published scalar and enabled text policy');
+        literals($row, ['policy' => $policy]);
+        $name = textValue(at($row, 'symbol'));
+        requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1, 'Invalid formatter symbol');
+        $symbol = "scpp::str::$name";
+        requireThat(!isset($symbols[$symbol]), 'Duplicate string binding');
+        $symbols[$symbol] = true;
+        $plan['explicit_formatters'][$source] = ['policy' => $policy, 'name' => $name, 'symbol' => $symbol, 'header' => $header];
+        $requires[] = $source;
+    }
     $requirements = exportProviders($plan['submodules'], $requires);
     $plan['source_types']->string = 'string';
     $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'empty_state' => 'null_storage', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];

@@ -53,6 +53,14 @@ function renderString(array $plan): array {
         $d .= $append ? 'left.append(right); return left;':"return bool_t{detail::string_access::read(left) $symbol detail::string_access::read(right)};";
         $d .= " }\n";
     }
+    foreach ($plan['explicit_formatters'] ?? [] as $source => $formatter) {
+        $signature = "string {$formatter['name']}($source value)";
+        $h .= "namespace str { $signature; }\n";
+        $body = $formatter['policy'] === 'boolean_words'
+            ? 'return value ? string{"true", 4} : string{"false", 5};'
+            : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
+        $d .= "namespace str { $signature { $body } }\n";
+    }
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
         $h .= "namespace str { inline {$function['result']} $name(const string& value) { return value.{$function['method']}(); } }\n";

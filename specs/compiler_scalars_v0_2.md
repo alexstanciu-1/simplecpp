@@ -651,3 +651,17 @@ Structured component/operator fields and the older wrapper-based public signatur
 are not introduced. The named native-value binding is scpp::int64_power.
 Restoring structured error fields is explicit runtime debt; it does not relax
 calculation, failure order or successful-write-only guarantees.
+
+## Explicit scalar-to-string casts in v0.2
+
+All flavors accept `(string)expression`. Bool produces the ASCII bytes `true` or
+`false`. Byte/uint8 and int/int64 produce base-ten digits with a minus sign for
+negative values. Float/float64 uses locale-independent shortest round-trip text
+with the C++ floating `to_chars` contract. Negative zero produces `-0`. NaN and
+infinities raise `nonfinite_decimal_text`. A string retains its exact bytes.
+
+Mixed and dynamic dispatch on the stored scalar kind and use the same formatter.
+A statically known null is rejected during preparation. A boxed null or container
+raises `boxed_scalar_kind` at execution. Formatting requires an explicit cast.
+Echo admission and formatting are independent. This amendment supersedes older
+cast examples that render true as `1` and false as an empty string.

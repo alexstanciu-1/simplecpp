@@ -581,6 +581,12 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "explicit_formatters": {
+      "bool_t": {"policy": "boolean_words", "symbol": "format_bool"},
+      "uint8": {"policy": "decimal_integer", "symbol": "format_uint8"},
+      "int64": {"policy": "decimal_integer", "symbol": "format_int64"},
+      "float64": {"policy": "decimal_float", "symbol": "format_float64"}
+    },
     "functions": {
       "strlen": {"parameter": "string", "result": "int64", "symbol": "scpp::str::byte_length", "method": "size"}
     },

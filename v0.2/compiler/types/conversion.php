@@ -38,6 +38,11 @@ final class value_conversion
 	public const int unbox_typed /** uint16 */ = 15;
 	public const int unbox_assignment /** uint16 */ = 16;
 
+	public const int format_bool_t /** uint16 */ = 17;
+	public const int format_uint8 /** uint16 */ = 18;
+	public const int format_int64 /** uint16 */ = 19;
+	public const int format_float64 /** uint16 */ = 20;
+
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int|exit_conversion $code /** uint16|exit_conversion */): string
 	{
@@ -46,6 +51,10 @@ final class value_conversion
 		}
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::format_bool_t => 'format_bool_t',
+			self::format_uint8 => 'format_uint8',
+			self::format_int64 => 'format_int64',
+			self::format_float64 => 'format_float64',
 			self::box_scalar => 'box_scalar',
 			self::unbox_explicit => 'boxed_explicit_cast',
 			self::unbox_typed => 'boxed_typed_destination',

@@ -539,7 +539,7 @@ final class Parser
 			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string,
 			token_kind::lparen, token_kind::bang, token_kind::tilde, token_kind::backslash, token_kind::scope], true)
 			|| ((($kind === token_kind::minus) || ($kind === token_kind::plus))
-				&& (($tokens->tokens[$start + 4]->kind ?? null) === token_kind::floating));
+				&& in_array($tokens->tokens[$start + 4]->kind ?? null, [token_kind::integer, token_kind::floating], true));
 	}
 
 	/** Low-precedence xor requires grouping until value-producing assignments are implemented. */

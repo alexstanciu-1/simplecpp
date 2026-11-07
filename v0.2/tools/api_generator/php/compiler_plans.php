@@ -237,7 +237,7 @@ function compilerCheckedConversionBindings(mixed $metadata, array $definitions, 
 }
 
 /** Validate and index declared conversion rows once, shared by boundary and promotion generation. */
-function compilerConversionPlan(mixed $metadata, array $definitions, array $types, array $facts): array {
+function compilerConversionPlan(mixed $metadata, array $definitions, array $types, array $facts, array $formatters = []): array {
     $bindings = compilerCheckedConversionBindings($metadata, $definitions, $types, $facts);
     $plan = [];
     $scalarPolicies = names(at($metadata, 'scalar_casts'), 'Duplicate scalar cast policy');
@@ -289,6 +289,12 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $plan[$key] = ['binding' => $binding, 'from' => $from, 'to' => $to, 'contexts' => $contexts, 'operation' => $operation, 'promotion_operators' => $promotion,
             'floating_bound' => $operation === 'floating_integer' ? decimalPowerOfTwo(digits($types[$to])) : null,
             'integer_signed' => $operation === 'floating_integer' ? $types[$to]['signed'] : null];
+    }
+    foreach ($formatters as $source => $binding) {
+        if (!isset($definitions[$source], $definitions['string'])) continue;
+        $binding['source_cpp'] = $definitions[$source]['cpp'];
+        $plan[$source . ':string'] = ['binding' => $binding, 'from' => $source, 'to' => 'string',
+            'contexts' => ['explicit_cast'], 'operation' => 'format_text', 'promotion_operators' => []];
     }
     return $plan;
 }

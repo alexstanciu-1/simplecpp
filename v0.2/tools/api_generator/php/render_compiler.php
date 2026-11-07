@@ -25,7 +25,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata->compiler = $compiler;
     $families = compilerLiteralFamilies($definitions);
     $files = [];
-    $conversions = compilerConversionPlan($metadata, $definitions, $types, $facts);
+    $conversions = compilerConversionPlan($metadata, $definitions, $types, $facts, $runtime['explicit_formatters'] ?? []);
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
     $binary = compilerBinaryPlan($compiler, $definitions, $comparisons, $types, names(at(at($metadata, 'string'), 'operations')));
@@ -276,6 +276,16 @@ function compilerConversions(array $conversions, array $definitions, string $tar
         $contexts = $row['contexts'];
         $operation = $row['operation'];
         if ($to !== $target) continue;
+        if ($operation === 'format_text') {
+            $condition = '$context === conversion_context::explicit_cast && $value->value_type() === type_' . $definitions[$from]['class'] . '::instance()';
+            $code = 'value_conversion::format_' . $from;
+            $prepare[] = "\t\tif ($condition) {\n\t\t\treturn $code;\n\t\t}";
+            $binding = $row['binding'];
+            $lower[] = "\t\t\t$code => '{$binding['symbol']}(static_cast<{$binding['source_cpp']}>(' . \$value . '))',";
+            $constants[] = "\t\t\t$code => null,";
+            $headerCases[] = "\t\t\t$code => [" . var_export($binding['header'], true) . '],';
+            continue;
+        }
         if ($row['binding'] !== null) {
             $symbol = $row['binding']['symbol'];
             // C++ intermediates (for example LL literals) must match the helper's exact prepared-source ABI.

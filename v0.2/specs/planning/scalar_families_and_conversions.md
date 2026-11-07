@@ -63,7 +63,7 @@ code-point meaning is agreed; do not inherit platform-dependent C++ char semanti
 | String → string | Existing value-copy semantics |
 | Null → null | Identity |
 | Null ↔ other families | Rejected until nullable-type work |
-| Numeric/bool ↔ string | Deferred; text conversion needs its own contract |
+| Numeric/bool → string | Explicit formatting for active representations; reverse text parsing deferred |
 
 This derives byte↔float and bool↔byte conversions from the families, rather than
 preserving the old special exclusions. Future smaller floating formats need concrete

@@ -103,7 +103,7 @@ Number parse_decimal(const std::string &text) {
 }
 
 template<class Number>
-std::string format_decimal(Number number) {
+std::size_t format_decimal_into(Number number, char (&buffer)[128]) {
     static_assert(std::is_integral_v<Number> || std::is_floating_point_v<Number>);
     static_assert(!std::is_same_v<Number, bool>);
     if constexpr (std::is_floating_point_v<Number>) {
@@ -111,10 +111,16 @@ std::string format_decimal(Number number) {
     }
     // Integral decimal digits and shortest round-trip floating forms fit this
     // bound for the fixed-width integers and binary64 registered by metadata.
-    char buffer[128];
     const auto formatted = std::to_chars(buffer, buffer + sizeof(buffer), number);
     if (formatted.ec != std::errc{}) throw std::length_error("decimal_text_too_long");
-    return std::string(buffer, formatted.ptr);
+    return static_cast<std::size_t>(formatted.ptr - buffer);
+}
+
+template<class Number>
+std::string format_decimal(Number number) {
+    char buffer[128];
+    const auto size = format_decimal_into(number, buffer);
+    return std::string(buffer, size);
 }
 
 inline bool parse_boolean_text(const std::string &text) {
