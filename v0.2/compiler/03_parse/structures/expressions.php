@@ -97,9 +97,9 @@ final class ast_binary_expression extends ast_expression
 	/** Prepared fact: native non-owning execution type; null before settlement or after reset. */
 	protected ?type_definition $execution_type = null;
 	/** Prepared fact: approved left conversion; identity before settlement or after reset. */
-	public value_conversion $left_conversion = value_conversion::identity;
+	public int $left_conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: approved right conversion; identity before settlement or after reset. */
-	public value_conversion $right_conversion = value_conversion::identity;
+	public int $right_conversion /** uint16 */ = value_conversion::identity;
 
 	/** CONSTRUCTOR */
 
@@ -117,12 +117,12 @@ final class ast_binary_expression extends ast_expression
 	/** METHODS */
 	/** Settles the approved result identity; no constant folding or duplicate prepared tree. */
 	public function settle_binary(type_definition $result, ?type_definition $execution = null,
-		value_conversion $left = value_conversion::identity, value_conversion $right = value_conversion::identity): void
+		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity): void
 	{
 		$this->settle_value($result, null);
-		$this->execution_type = $execution ?? $this->left->type_def();
-		$this->left_conversion = $left;
-		$this->right_conversion = $right;
+		$this->execution_type = $execution ?? $this->left->value_type();
+		$this->left_conversion = $left | (!$this->operator->logical() && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
+		$this->right_conversion = $right | (!$this->operator->logical() && $this->right->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
 	}
 	public function execution_type(): type_definition
 	{
@@ -201,7 +201,7 @@ final class ast_cast_expression extends ast_expression
 
 	/** PREP FACTS */
 	/** Prepared fact: generated conversion decision; null before preparation or after reset. */
-	protected ?value_conversion $conversion = null;
+	protected ?int $conversion /** uint16 */ = null;
 
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions spanning the written target and operand, including operand grouping. */
@@ -217,14 +217,14 @@ final class ast_cast_expression extends ast_expression
 
 	/** METHODS */
 	/** Keep converted scalar facts on this occurrence; the generated destination owns conversion behavior. */
-	public function settle_cast(type_definition $type, value_conversion $conversion): void
+	public function settle_cast(type_definition $type, int $conversion /** uint16 */): void
 	{
 		$this->settle_value($type, $type->convert_constant($conversion, $this->operand->constant()),
-			$this->operand->constant_known());
+			$this->operand->constant_known() && !($type instanceof boxed_type_definition));
 		$this->conversion = $conversion;
 	}
 
-	public function conversion(): value_conversion
+	public function conversion(): int /** uint16 */
 	{
 		return $this->conversion ?? throw new \LogicException('Cast conversion is not settled');
 	}
@@ -233,5 +233,25 @@ final class ast_cast_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->conversion = null;
+	}
+}
+
+/** Presence query, e.g. isset(value); retains its carrier operand without extracting the payload. */
+final class ast_isset_expression extends ast_expression
+{
+	/** Native owning queried expression. */
+	public readonly ast_expression $operand;
+
+	/** $start/$end: token positions including the keyword and closing parenthesis. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $operand)
+	{
+		parent::__construct($start, $end);
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	public function settle_presence(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
 	}
 }

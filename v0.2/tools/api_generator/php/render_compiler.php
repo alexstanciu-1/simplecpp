@@ -6,6 +6,9 @@ require_once __DIR__ . '/submodules.php';
 require_once __DIR__ . '/compiler_families.php';
 require_once __DIR__ . '/compiler_plans.php';
 require_once __DIR__ . '/render_compiler_vectors.php';
+require_once __DIR__ . '/render_compiler_carriers.php';
+require_once __DIR__ . '/render_compiler_hashes.php';
+require_once __DIR__ . '/boxed_dispatch.php';
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): array {
@@ -83,13 +86,40 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     [$vectorCode, $vectorCases, $vectorFamily] = compilerVectorTypes($metadata, $runtime, $definitions);
     $files['types/vectors.php'] = $vectorCode;
+    [$carrierCode, $carrierCases, $carrierLiterals] = compilerCarrierTypes($runtime, $definitions);
+    $files['types/carriers.php'] = $carrierCode;
+    $literalCases = array_merge($literalCases, $carrierLiterals);
+    $genericCases = [];
+    if ($vectorFamily !== null) $genericCases[$vectorFamily] = $vectorCases;
+    foreach ($runtime['carrier_families'] ?? [] as $family => $policy) {
+        $genericCases[$family] = implode("\n", $carrierCases[$family] ?? []);
+    }
+    $arity = [];
+    $specializations = '';
+    foreach ($genericCases as $family => $matches) {
+        $name = var_export($family, true);
+        $matches = str_replace("\t\t\t", "\t\t\t\t", $matches);
+        $arity[] = "\t\t\t$name => 1,";
+        $specializations .= "\t\tif (\$family === $name) {\n\t\t\treturn match (\$element) {\n$matches\n\t\t\t\tdefault => null,\n\t\t\t};\n\t\t}\n";
+    }
+    [$hashCode, $hashCases, $hashFamily] = compilerHashTypes($metadata, $runtime, $definitions);
+    $files['types/hashes.php'] = $hashCode;
+    if ($hashFamily !== null) {
+        $name = var_export($hashFamily, true);
+        $arity[] = "\t\t\t$name => 2,";
+        $specializations .= "\t\tif (\$family === $name) {\n$hashCases\n\t\t\treturn null;\n\t\t}\n";
+    }
+    if (isset($runtime['boxed_dispatch'])) {
+        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases);
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
-        '@vector_cases@' => $vectorCases, '@vector_family@' => var_export($vectorFamily, true),
+        '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
+        '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 20,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 25,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -245,7 +275,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
             $checked = $operation === 'floating_integer' ? 'floating_integer_checked' : 'integer_checked';
             $headerCases[] = "\t\t\tvalue_conversion::$checked => [" . var_export($row['binding']['header'], true) . '],';
         }
-        $condition = '$value->type_def() === type_' . $definitions[$from]['class'] . '::instance()';
+        $condition = '$value->value_type() === type_' . $definitions[$from]['class'] . '::instance()';
         $permission = array_map(static fn(string $context): string => '$context === conversion_context::' . $context, $contexts);
         $condition = '(' . ($permission === [] ? 'false' : implode(' || ', $permission)) . ') && (' . $condition . ')';
         $prepare[] = "\t\tif ($condition) {";
@@ -308,7 +338,7 @@ CODE;
         $headers = <<<PHP_CODE
 
 	/** @return string[] Public runtime includes required by the selected conversion only. */
-	public function conversion_headers(value_conversion \$conversion): array /** list<string> */
+	public function scalar_conversion_headers(int \$conversion /** uint16 */): array /** list<string> */
 	{
 		return match (\$conversion) {
 $cases
@@ -319,27 +349,27 @@ PHP_CODE;
     }
     return <<<PHP_CODE
 	/** Select the conversion once; the caller marks written destinations or explicit cast boundaries. */
-	public function prepare_conversion(ast_expression \$value, conversion_context \$context): value_conversion
+	public function prepare_scalar_conversion(ast_expression \$value, conversion_context \$context): int /** uint16 */
 	{
 $prepare
-		return parent::prepare_conversion(\$value, \$context);
+		return parent::prepare_scalar_conversion(\$value, \$context);
 	}
 
 	/** Render an approved boundary without repeating source-type resolution or changing facts. */
-	public function lower_cpp_conversion(value_conversion \$conversion, string \$value): string
+	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value): string
 	{
 		return match (\$conversion) {
 $lower
-			default => parent::lower_cpp_conversion(\$conversion, \$value),
+			default => parent::lower_scalar_conversion(\$conversion, \$value),
 		};
 	}
 
 	/** Preserve unknown values; convert known payloads using the selected operation only. */
-	public function convert_constant(value_conversion \$conversion, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int \$conversion /** uint16 */, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
 	{
 		return match (\$conversion) {
 $constants
-			default => parent::convert_constant(\$conversion, \$value),
+			default => parent::convert_scalar_constant(\$conversion, \$value),
 		};
 	}
 $headers
@@ -362,7 +392,7 @@ function compilerConditions(array $conditions, string $identity): string {
 \t/** Generated condition admission; never an explicit bool conversion. */
 \tpublic function prepare_condition(ast_expression \$value): void
 \t{
-\t\tif (\$value->type_def() !== \$this) {
+\t\tif (\$value->value_type() !== \$this) {
 \t\t\tthrow new \\LogicException('Condition type does not match its prepared operand');
 \t\t}
 \t}
@@ -555,7 +585,7 @@ function compilerUnary(array $selected, string $identity, array $safety, array $
 \t/** Generated prefix admission; operand preparation is owned by the single source traversal. */
 \tpublic function prepare_unary(ast_unary_expression \$value): void
 \t{
-\t\tif ((\$value->operand->type_def() !== \$this) || !match (\$value->operator) {
+\t\tif ((\$value->operand->value_type() !== \$this) || !match (\$value->operator) {
 \t\t\t$cases => true,
 \t\t\tdefault => false,
 \t\t}) {
@@ -600,7 +630,7 @@ function compilerPromotions(array $rows, array $definitions): string {
             $compounds .= "\t\tif (\$this->supports_compound(\$value->operator) && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
                 . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\t\$value->settle_compound(\$local, $executionClass::instance(), value_conversion::$lc, value_conversion::$rc, value_conversion::$writeBack);\n\t\t\treturn;\n\t\t}\n";
         }
-        $cases .= "\t\tif ((\$value->left->type_def() === \$this) && (\$value->right->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
+        $cases .= "\t\tif ((\$value->left->value_type() === \$this) && (\$value->right->value_type() === $rightClass::instance()) && match (\$value->operator) {\n"
             . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
             . "\t\t\t\$value->settle_binary($resultClass::instance(), $executionClass::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
     }

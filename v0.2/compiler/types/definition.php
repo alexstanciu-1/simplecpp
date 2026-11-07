@@ -65,8 +65,8 @@ abstract class type_definition
 	/** Attach ordinary binary facts through generated type admission. */
 	public function prepare_binary(ast_binary_expression $value): void
 	{
-		$result = $this->binary_result($value->operator, $value->right->type_def());
-		if (($value->left->type_def() !== $this) || ($result === null) || !$this->binary_syntax_allowed($value->operator, $value)) {
+		$result = $this->binary_result($value->operator, $value->right->value_type());
+		if (($value->left->value_type() !== $this) || ($result === null) || !$this->binary_syntax_allowed($value->operator, $value)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported binary operands or operator');
 		}
 		$value->settle_binary($result);
@@ -102,6 +102,12 @@ abstract class type_definition
 	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
+	}
+
+	/** Consume the original prepared operand types when selecting the native binding. */
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right): string
+	{
+		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type());
 	}
 
 	/** @return string[] Public includes needed by an approved binary operation. */
@@ -176,25 +182,114 @@ abstract class type_definition
 		throw new \LogicException('Literal lowering is unavailable for type: ' . $this->name);
 	}
 
-	/** Same-type initialization needs no work; other rules are generated on the destination definition. */
-	public function prepare_conversion(ast_expression $value, conversion_context $context): value_conversion
+	/** Select scalar work once, with carrier transport encoded independently in the prepared integer. */
+	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
-		if ($value->type_def() === $this) {
+		$source = $value->type_def();
+		if ($source instanceof boxed_type_definition && $source !== $this) {
+			if (!$source->admits_extraction($this, $context)) {
+				throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported boxed conversion to ' . $this->name);
+			}
+			return match ($context) {
+				conversion_context::typed_destination => value_conversion::unbox_typed,
+				conversion_context::explicit_cast => value_conversion::unbox_explicit,
+				conversion_context::assignment => value_conversion::unbox_assignment,
+			};
+		}
+		if ($source === $this && $this instanceof carrier_type_definition) {
+			return value_conversion::identity;
+		}
+		if ($source instanceof carrier_type_definition) {
+			$source->require_extraction($value, $context);
+		}
+		if ($this instanceof carrier_type_definition) {
+			return $this->prepare_construction($value, $context);
+		}
+		if (($source instanceof carrier_type_definition) && ($source->payload_type === $this)) {
+			return value_conversion::identity | value_conversion::EXTRACT;
+		}
+		$conversion = $this->prepare_scalar_conversion($value, $context);
+		return $conversion | ($source instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
+	}
+
+	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
+	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?type_definition $source = null): string
+	{
+		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $source !== null) {
+			return $this->box_cpp($source, $value);
+		}
+		if ($source instanceof boxed_type_definition && $conversion !== value_conversion::identity) {
+			$context = match ($conversion) {
+				value_conversion::unbox_typed => 'typed_destination',
+				value_conversion::unbox_explicit => 'explicit_cast',
+				value_conversion::unbox_assignment => 'assignment',
+			};
+			return 'scpp::boxed_' . $source->name . '_' . $context . '_' . $this->name . '(' . $value . ')';
+		}
+		if (($conversion & value_conversion::EXTRACT) !== 0) {
+			if (!($source instanceof carrier_type_definition)) {
+				throw new \LogicException('Checked extraction requires its source carrier type');
+			}
+			$value = $source->lower_cpp_extract($value);
+		}
+		if ($this instanceof carrier_type_definition) {
+			if ($conversion === value_conversion::sentinel_carrier) {
+				if (!($source instanceof carrier_sentinel_type_definition)) {
+					throw new \LogicException('Sentinel conversion requires its source identity');
+				}
+				return $this->cpp_type() . '::' . $this->sentinel_factory($source->state) . '()';
+			}
+			if ($conversion === value_conversion::empty_carrier) {
+				return '((void)(' . $value . '), ' . $this->cpp_type() . '{})';
+			}
+			if (($conversion & value_conversion::WRAP) !== 0) {
+				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value);
+				return $this->cpp_type() . '{static_cast<' . $this->payload_type->cpp_type() . '>(' . $value . ')}';
+			}
+		}
+		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value);
+	}
+
+	/** Carrier states are not scalar constant facts; do not confuse absent values with known scalar null. */
+	final public function convert_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	{
+		if (($this instanceof boxed_type_definition) || ($conversion >= value_conversion::unbox_explicit && $conversion <= value_conversion::unbox_assignment)
+			|| ($this instanceof carrier_type_definition) || (($conversion & value_conversion::EXTRACT) !== 0)) {
+			return null;
+		}
+		return $this->convert_scalar_constant($conversion, $value);
+	}
+
+	/** @return string[] Includes for the prepared payload conversion and destination carrier. */
+	final public function conversion_headers(int $conversion /** uint16 */): array /** list<string> */
+	{
+		if ($this instanceof carrier_type_definition) {
+			return ($conversion & value_conversion::WRAP) !== 0
+				? array_merge($this->cpp_headers(), $this->payload_type->scalar_conversion_headers($conversion & value_conversion::OPERATION_MASK))
+				: $this->cpp_headers();
+		}
+		return $this->scalar_conversion_headers($conversion & value_conversion::OPERATION_MASK);
+	}
+
+	/** Same-type initialization needs no work; other rules are generated on the destination definition. */
+	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		if ($value->value_type() === $this) {
 			return value_conversion::identity;
 		}
 		throw new diagnostic($value->source(), $value->byte_start(),
 			'Unsupported ' . (in_array($context, [conversion_context::explicit_cast, conversion_context::typed_destination], true) ? 'explicit' : 'implicit') . ' conversion from '
-			. $value->type_def()->name . ' to ' . $this->name);
+			. $value->value_type()->name . ' to ' . $this->name);
 	}
 
-	public function lower_cpp_conversion(value_conversion $conversion, string $value): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value): string
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Conversion does not belong to this destination type');
 	}
 
 	/** Convert only an already-checked constant; null also carries an unknown payload beside its known flag. */
-	public function convert_constant(value_conversion $conversion, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Constant conversion does not belong to this destination type');
@@ -207,7 +302,7 @@ abstract class type_definition
 	}
 
 	/** @return string[] Public runtime includes required by the selected conversion only. */
-	public function conversion_headers(value_conversion $conversion): array /** list<string> */
+	public function scalar_conversion_headers(int $conversion /** uint16 */): array /** list<string> */
 	{
 		return [];
 	}

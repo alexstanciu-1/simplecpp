@@ -191,7 +191,7 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	/** Prepared fact: whether the initializer payload is known; false before settlement or after reset. */
 	protected bool $constant_known = false;
 	/** Prepared fact: destination-bound conversion; null until initialization is approved. */
-	protected ?value_conversion $initialization = null;
+	protected ?int $initialization /** uint16 */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -238,7 +238,7 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 
 	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
 	public function settle_type(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */,
-		bool $known = false, value_conversion $conversion = value_conversion::identity): void
+		bool $known = false, int $conversion /** uint16 */ = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Local type is already settled');
@@ -267,7 +267,7 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 		return $this->constant_known;
 	}
 
-	public function initialization(): value_conversion
+	public function initialization(): int /** uint16 */
 	{
 		return $this->initialization ?? throw new \LogicException('Initialization is not prepared');
 	}
@@ -319,13 +319,13 @@ final class ast_assignment_statement extends ast_storage_write
 
 	/** PREP FACTS */
 	/** Prepared fact: approved RHS conversion for assignment or compound; null before settlement or after reset. */
-	protected ?value_conversion $conversion = null;
+	protected ?int $conversion /** uint16 */ = null;
 	/** Prepared fact: non-owning calculation type; null until compound settlement or after reset. */
 	protected ?type_definition $execution_type = null;
 	/** Prepared fact: conversion of the saved destination into the calculation type. */
-	protected value_conversion $left_conversion = value_conversion::identity;
+	protected int $left_conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: conversion of the calculated result back into the destination type. */
-	protected value_conversion $write_back = value_conversion::identity;
+	protected int $write_back /** uint16 */ = value_conversion::identity;
 
 	/** CONSTRUCTOR */
 	/**
@@ -345,7 +345,7 @@ final class ast_assignment_statement extends ast_storage_write
 	}
 
 	/** METHODS */
-	public function settle_assignment(ast_local_binding $local, value_conversion $conversion): void
+	public function settle_assignment(ast_local_binding $local, int $conversion /** uint16 */): void
 	{
 		$this->settle_binding($local);
 		$this->conversion = $conversion;
@@ -353,7 +353,7 @@ final class ast_assignment_statement extends ast_storage_write
 
 	/** Attach calculation and write-back decisions without constructing synthetic expression nodes. */
 	public function settle_compound(ast_local_binding $local, type_definition $execution,
-		value_conversion $left, value_conversion $right, value_conversion $write_back): void
+		int $left /** uint16 */, int $right /** uint16 */, int $write_back /** uint16 */): void
 	{
 		if ($this->operator === null) {
 			throw new \LogicException('Compound facts require an operator');
@@ -369,19 +369,19 @@ final class ast_assignment_statement extends ast_storage_write
 		return $this->execution_type ?? throw new \LogicException('Compound execution type is not settled');
 	}
 
-	public function left_conversion(): value_conversion
+	public function left_conversion(): int /** uint16 */
 	{
 		$this->execution_type();
 		return $this->left_conversion;
 	}
 
-	public function write_back(): value_conversion
+	public function write_back(): int /** uint16 */
 	{
 		$this->execution_type();
 		return $this->write_back;
 	}
 
-	public function conversion(): value_conversion
+	public function conversion(): int /** uint16 */
 	{
 		return $this->conversion ?? throw new \LogicException('Assignment conversion is not settled');
 	}
@@ -396,7 +396,8 @@ final class ast_assignment_statement extends ast_storage_write
 	public function constant_known(): bool
 	{
 		$this->local_def();
-		return ($this->operator === null) && $this->value->constant_known();
+		return ($this->operator === null) && !($this->local_def()->type_def() instanceof carrier_type_definition)
+			&& !($this->local_def()->type_def() instanceof boxed_type_definition) && $this->value->constant_known();
 	}
 
 	public function reset_preparation(): void

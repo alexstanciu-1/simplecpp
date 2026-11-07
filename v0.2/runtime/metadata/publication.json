@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "boxed": {"header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",
   "types": [
     "int64",
@@ -803,6 +804,26 @@
       {
         "family": "result_or_bool",
         "payload": "vector_string"
+      }
+    ]
+  },
+  "hashes": {
+    "specializations": [
+      {
+        "value": "int64",
+        "key": "int64"
+      },
+      {
+        "value": "int64",
+        "key": "string"
+      },
+      {
+        "value": "string",
+        "key": "int64"
+      },
+      {
+        "value": "string",
+        "key": "string"
       }
     ]
   }

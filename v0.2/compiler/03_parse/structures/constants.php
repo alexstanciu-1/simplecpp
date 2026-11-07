@@ -25,6 +25,6 @@ final class ast_constant_declaration extends ast_literal_declaration
 
 	public function constant_known(): bool
 	{
-		return $this->initializer->constant_known();
+		return !($this->type_def() instanceof boxed_type_definition) && $this->initializer->constant_known();
 	}
 }

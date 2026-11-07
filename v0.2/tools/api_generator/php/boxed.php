@@ -5,13 +5,13 @@ namespace Scpp\Api;
 function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'boxed', 'boxed', 'Boxed');
     if ($m === null) return;
-    fields($m, ['binding', 'families', 'integer_keys', 'string_keys', 'read', 'conversion']);
+    fields($m, ['binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion']);
     literals($m, ['binding' => 'private_inline_boxed', 'integer_keys' => 'nonnegative_int31',
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss', 'conversion' => 'explicit_scalar_only']);
     requireThat(names(at($m, 'families'), 'Duplicate boxed policy') === ['dynamic', 'mixed'], 'Unsupported boxed families');
     if (!property_exists($publication, 'boxed')) return;
     $p = $publication->boxed;
-    fields($p, ['header', 'families', 'scalar_conversions']);
+    fields($p, ['header', 'families', 'scalar_conversions', 'scalar_dispatch']);
     $header = headerPath(at($p, 'header'));
     checkHeader($plan, $header);
     $requested = names(at($p, 'families'), 'Duplicate boxed family');
@@ -30,6 +30,10 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         $families[] = ['name' => $family, 'native' => 'detail::'.$family.'_value',
             'copy' => $family === 'mixed' ? 'cow' : 'shared_container_identity',
             'null_write' => $family === 'mixed' ? 'bootstrap' : 'reject'] + $facts['boxed'][$family];
+    }
+    if (boolean($p->scalar_dispatch ?? false)) {
+        foreach ($requested as $family) publishTypeExports($plan['submodules'], $family, [$family]);
+        $plan['boxed_dispatch'] = boxedScalarPlan($metadata, $facts, $plan['submodules']);
     }
     $plan['boxed'] = ['header' => $header, 'families' => $families,
         'scalar_conversions' => $convert, 'integer_keys' => [0, 2147483647],

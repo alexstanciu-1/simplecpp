@@ -1,8 +1,9 @@
 # Concrete typed hashes
 
 Doc Status: normative
-Scope: bounded v0.2 native runtime/API generation; source compiler integration and
-public traversal are not implemented by this slice.
+Scope: bounded v0.2 native runtime/API generation. Compiler type resolution is now
+connected through [published hash identities](../compiler/docs/hash_types.md); source
+[empty construction and keyed operations](../compiler/docs/hash_operations.md) are supported; public traversal remains deferred.
 
 ## Owners and publication
 
@@ -12,11 +13,10 @@ public traversal are not implemented by this slice.
 `runtime/src/hash/typed_hash.hpp` owns the reviewed private table algorithms.
 `hash_index.hpp` owns shared index primitives used by typed and packed storage.
 
-A publication requests `hashes: {header: "scpp/hashes.hpp", specializations:
-[{value: "int64", key: "string"}]}`. The name is `hash_VALUE_KEY`, matching source
+A publication requests `hashes: {specializations: [{value: "int64", key: "string"}]}`.
+The metadata provider owns the header; an optional legacy header must agree with it. The name is `hash_VALUE_KEY`, matching source
 `hash<V,K>`. This slice admits int64/string keys and values, all four combinations.
-The default publication remains unchanged; tests/hash/publication.json requests all
-four. Mixed, dynamic, object keys, nested containers, native conveniences, extra
+The default publication and tests/hash/publication.json now request all four. Mixed, dynamic, object keys, nested containers, native conveniences, extra
 operators and hash payloads in carriers are not admitted.
 
 Publication requires int64 counts, bool_t, the requested key/value types and an

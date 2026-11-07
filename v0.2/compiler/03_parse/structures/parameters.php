@@ -20,7 +20,7 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	/** Prepared fact: canonical signature type; null until declaration preparation or after signature reset. */
 	private ?type_definition $type_def = null;
 	/** Prepared fact: checked default conversion; null for required or unprepared parameters. */
-	private ?value_conversion $default_conversion = null;
+	private ?int $default_conversion = null;
 
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions; $id: body storage ordinal. */
@@ -63,12 +63,12 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 		$this->type_def = $type;
 	}
 
-	public function default_conversion(): value_conversion
+	public function default_conversion(): int /** uint16 */
 	{
 		return $this->default_conversion ?? throw new \LogicException('Parameter default is not prepared');
 	}
 
-	public function settle_default(value_conversion $conversion): void
+	public function settle_default(int $conversion /** uint16 */): void
 	{
 		if (($this->default_value === null) || ($this->default_conversion !== null)) {
 			throw new \LogicException('Invalid parameter default settlement');

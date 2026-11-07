@@ -280,3 +280,27 @@ generator unit tests may omit the runtime plan; the production CLI requires it.
 `vector_provider_exports` verifies relocation, shared placement, retirement/recovery,
 generated compiler bindings, strict native inputs and template-free headers. See
 [compiler vector types](../../compiler/docs/vector_types.md).
+
+The compiler vector renderer also consumes canonical append/at member signatures from
+the validated plan, generating typed-destination append admission and exact count-type
+index admission. Generated lowering uses concrete exports and normalizes approved
+arguments to their exact ABI representation; it introduces no public C++ templates.
+See [the first vector operations](../../compiler/docs/vector_operations.md).
+
+### Carrier specialization exports
+
+`carriers.families` records allowed states and defaults; `carriers.provider` selects
+placement. Validated requests publish concrete identities and the error type through
+the shared provider/export path. `types/carriers.php` supplies generated compiler
+identities for active payloads, and inventory version 21 tracks the new file.
+See [carrier type resolution](../../compiler/docs/carrier_types.md). The runtime ABI
+and private storage algorithms are unchanged; source value operations remain deferred.
+
+### Hash provider/type integration
+
+`hash.provider` and `hash.source_type` connect existing concrete hash specializations
+through the common export/provider path. The default publication includes all four
+int64/string key/value combinations. Provider-owned headers and generated src/hash.cpp
+are tracked by CMake. Compiler generation emits hashes.php and direct two-argument
+registration from the same validated runtime plan; source hash operations remain deferred.
+See [compiler hash identities](../../compiler/docs/hash_types.md) for scope and proofs.

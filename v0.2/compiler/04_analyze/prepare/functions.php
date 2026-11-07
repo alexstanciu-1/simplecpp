@@ -51,6 +51,15 @@ final class Function_Preparation
 				}
 				continue;
 			}
+			if (($statement instanceof ast_append_statement) || ($statement instanceof ast_index_assignment)) {
+				$statement->reset_preparation();
+				self::expression($statement->receiver);
+				if ($statement instanceof ast_index_assignment) {
+					self::expression($statement->index);
+				}
+				self::expression($statement->value);
+				continue;
+			}
 			if (($statement instanceof ast_local_declaration)
 				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_storage_write)) {
 				$statement->reset_preparation();
@@ -76,9 +85,13 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
-		if (($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
+		}
+		if ($value instanceof ast_index_expression) {
+			self::expression($value->receiver);
+			self::expression($value->index);
 		}
 		if ($value instanceof ast_binary_expression) {
 			self::expression($value->left);

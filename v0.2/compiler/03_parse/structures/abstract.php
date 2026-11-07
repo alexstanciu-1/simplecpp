@@ -220,6 +220,13 @@ abstract class ast_expression extends ast_node
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
 	}
 
+	/** Operator/conversion view of one payload layer; the stored expression type remains unchanged. */
+	public function value_type(): type_definition
+	{
+		$type = $this->type_def();
+		return $type instanceof carrier_type_definition ? $type->payload_type : $type;
+	}
+
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
 		$this->type_def();

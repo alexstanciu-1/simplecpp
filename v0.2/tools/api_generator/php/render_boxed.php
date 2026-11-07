@@ -1,13 +1,21 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
-function renderBoxed(array $plan, array &$files): void {
+function renderBoxed(array $plan, array &$files, array &$groups): void {
     if (!isset($plan['boxed'])) return;
     $box = $plan['boxed'];
     $h = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . includeHeader($plan['string']['header']);
     $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\nenum class boxed_kind { null, boolean, integer, floating, string, container };\n";
     foreach ($box['families'] as $family) $h .= "class {$family['name']};\n";
+    $split = isset($plan['boxed_dispatch']);
+    if ($split) {
+        $files['public/scpp/boxed_kind.hpp'] = BANNER . "#pragma once\nnamespace scpp { enum class boxed_kind { null, boolean, integer, floating, string, container }; }\n";
+        $h = BANNER . "#pragma once\n";
+    }
     $d = BANNER . includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";
+    if ($split) {
+        $d = str_replace("namespace scpp {\n", implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
+    }
     foreach ($box['families'] as $family) {
         $n = $family['name']; $native = $family['native'];
         $get = fn(string $value): string => "detail::ownership_access::get<$native>($value)";
@@ -20,7 +28,18 @@ function renderBoxed(array $plan, array &$files): void {
         }
         foreach (['read', 'has', 'remove'] as $method) $fences .= scalarInputFences($plan, $method, [['const int64&'], ['const string&']], false, $method === 'remove' ? '' : ' const');
         $fences .= scalarInputFences($plan, 'set', [['int64', $n], ['const string&', $n]]);
-        $h .= template('boxed_declaration', $vars + ['fences' => $fences]);
+        $decl = template('boxed_declaration', $vars + ['fences' => $fences]);
+        if ($split) {
+            $provider = typeExport($plan['submodules'], $n)['provider'];
+            $h .= includeHeader(providerHeader($plan['submodules'], $provider));
+            [$api, $impl] = renderBoxedDispatch($plan['boxed_dispatch'], $n);
+            $forward = $box['scalar_conversions'] ? "class $peer; " : '';
+            $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
+                includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $api . "}\n"];
+            $d .= $impl;
+        } else {
+            $h .= $decl;
+        }
         $d .= template('boxed_definition', $vars);
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
@@ -34,6 +53,6 @@ function renderBoxed(array $plan, array &$files): void {
             $d .= "$n $n::from_{$peer}_scalar(const $peer& value) { $n result; {$vars['result']} = detail::{$n}_from_{$peer}_scalar(detail::ownership_access::get<detail::{$peer}_value>(value)); return result; }\n";
         }
     }
-    $files['public/'.$box['header']] = $h . "}\n";
+    $files['public/'.$box['header']] = $h . ($split ? '' : "}\n");
     $files['src/boxed.cpp'] = $d . "}\n";
 }

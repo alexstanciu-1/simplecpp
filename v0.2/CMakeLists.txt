@@ -64,17 +64,28 @@ list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
-  ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
   ${runtime_generated}/public/scpp/short_names.hpp
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
+string(JSON hash_publication_type ERROR_VARIABLE hash_publication_error TYPE "${runtime_profile}" hashes)
+if(hash_publication_type STREQUAL "OBJECT")
+  list(APPEND runtime_outputs ${runtime_generated}/src/hash.cpp)
+endif()
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
 endif()
+string(JSON boxed_publication_type ERROR_VARIABLE boxed_publication_error TYPE "${runtime_profile}" boxed)
+if(boxed_publication_type STREQUAL "OBJECT")
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/boxed.hpp ${runtime_generated}/src/boxed.cpp)
+  string(JSON boxed_dispatch ERROR_VARIABLE boxed_dispatch_error GET "${runtime_profile}" boxed scalar_dispatch)
+  if(boxed_dispatch)
+    list(APPEND runtime_outputs ${runtime_generated}/public/scpp/boxed_kind.hpp)
+  endif()
+endif()
 if(SCPP_ENABLE_JSON)
-  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/boxed.hpp ${runtime_generated}/src/boxed.cpp
+  list(APPEND runtime_outputs
     ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
 # This source-local publication may have been written by another build profile.
@@ -88,6 +99,9 @@ add_custom_target(scpp_runtime_publication
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
 add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/numeric/arithmetic.cpp)
+if(hash_publication_type STREQUAL "OBJECT")
+  target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/hash.cpp)
+endif()
 add_dependencies(scpp_runtime scpp_runtime_publication)
 # The PHP compiler consumes the same validated publication demand as the runtime.
 # Runtime-only source exports intentionally omit the compiler tree.
@@ -99,14 +113,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
 endif()
 target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
-  PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
+  PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/hash)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 if(SCPP_ENABLE_DATETIME)
@@ -116,18 +130,25 @@ if(SCPP_ENABLE_DATETIME)
 endif()
 
 # Private storage shared by generated boxed APIs and module implementations.
-add_library(scpp_packed_storage STATIC runtime/src/hash/packed_key.cpp)
+add_library(scpp_packed_objects OBJECT runtime/src/hash/packed_key.cpp)
+target_compile_features(scpp_packed_objects PRIVATE cxx_std_23)
+add_library(scpp_packed_storage STATIC $<TARGET_OBJECTS:scpp_packed_objects>)
 target_compile_features(scpp_packed_storage PUBLIC cxx_std_23)
-add_library(scpp_boxed_storage STATIC runtime/src/boxed/boxed_value.cpp runtime/src/boxed/boxed_conversion.cpp)
-target_include_directories(scpp_boxed_storage PRIVATE runtime/src/hash)
+add_library(scpp_boxed_objects OBJECT runtime/src/boxed/boxed_value.cpp runtime/src/boxed/boxed_conversion.cpp)
+target_include_directories(scpp_boxed_objects PRIVATE runtime/src/hash)
+target_compile_features(scpp_boxed_objects PRIVATE cxx_std_23)
+add_library(scpp_boxed_storage STATIC $<TARGET_OBJECTS:scpp_boxed_objects>)
 target_link_libraries(scpp_boxed_storage PRIVATE scpp_packed_storage)
 target_compile_features(scpp_boxed_storage PUBLIC cxx_std_23)
 
-if(SCPP_ENABLE_JSON)
-  target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/boxed.cpp)
+# Application builders link one prebuilt runtime archive. Reuse the same private objects in proof archives.
+if(boxed_publication_type STREQUAL "OBJECT")
+  target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/boxed.cpp
+    $<TARGET_OBJECTS:scpp_boxed_objects> $<TARGET_OBJECTS:scpp_packed_objects>)
   target_include_directories(scpp_runtime PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/boxed ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/ownership)
-  target_link_libraries(scpp_runtime PRIVATE scpp_boxed_storage)
+endif()
+if(SCPP_ENABLE_JSON)
   scpp_add_json(scpp_json scpp_runtime ${runtime_generated})
   add_executable(scpp_json_demo examples/json_demo.cpp)
   target_link_libraries(scpp_json_demo PRIVATE scpp_json)
@@ -143,7 +164,7 @@ if(BUILD_TESTING)
   set(numeric_proof_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-numeric-proof)
   set(numeric_proof_publication ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/numeric_publication.json)
   scpp_provider_outputs(numeric_proof_outputs ${numeric_proof_generated} ${numeric_proof_publication})
-  foreach(path public/scpp/carriers.hpp public/scpp/numeric.hpp
+  foreach(path public/scpp/numeric.hpp
       public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
     list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
   endforeach()
@@ -190,6 +211,18 @@ if(BUILD_TESTING)
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tools/check_style.py)
   add_test(NAME compiler_scopes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scopes.php)
   add_test(NAME compiler_ast_file COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ast_file.php)
+  add_test(NAME compiler_vector_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations.php)
+  add_test(NAME compiler_vector_operations_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations_native.py)
+  add_test(NAME compiler_carrier_values COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values.php)
+  add_test(NAME compiler_carrier_values_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values_native.py)
+  add_test(NAME compiler_boxed_scalars COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars.php)
+  add_test(NAME compiler_boxed_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars_native.py)
+  add_test(NAME compiler_hash_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_operations.php)
+  add_test(NAME compiler_hash_operations_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_operations_native.py)
+  add_test(NAME compiler_hash_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_types.php)
+  add_test(NAME compiler_hash_types_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_types_native.py)
+  add_test(NAME compiler_carrier_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_types.php)
+  add_test(NAME compiler_carrier_types_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_types_native.py)
   add_test(NAME compiler_vector_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_types.php)
   add_test(NAME compiler_vector_types_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_types_native.py)
   add_test(NAME compiler_type_references COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/type_references.php)
@@ -343,6 +376,9 @@ if(BUILD_TESTING)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
+  add_test(NAME hash_provider_exports COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/hash_providers.py)
+  add_test(NAME carrier_provider_exports COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/carrier_providers.py)
   add_test(NAME vector_provider_exports COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
   add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B

@@ -12,7 +12,8 @@ own this slice. All flavors admit plain int64/float64 `== !=` in either operand
 order. Integer operands convert to float64 before comparison; the result is bool.
 Rounding above ±2^53 and at int64 limits is observable. Signed zeros compare equal;
 NaN is unequal, including to itself; `!=` negates `==`. No operand storage is changed.
-Strict identity, carriers and bool/numeric mixed equality remain deferred. Byte/float
+This slice originally deferred strict identity, carriers and bool/numeric mixed equality.
+For current carrier payload reuse, see [carrier values](carrier_values.md). Byte/float
 equality is now covered by the family slice; string equality has its own implemented slice.
 
 ## Implementation and structure

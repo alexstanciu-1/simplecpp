@@ -18,7 +18,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	/** Prepared fact: canonical declared type; null before preparation or after reset. */
 	protected ?type_definition $type_def = null;
 	/** Prepared fact: approved destination conversion; null before settlement or after reset. */
-	protected ?value_conversion $initialization = null;
+	protected ?int $initialization /** uint16 */ = null;
 
 	/** CONSTRUCTOR */
 	/** $start and $end are token boundaries, with exclusive end. */
@@ -48,7 +48,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	}
 
 	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
-	public function settle_type(type_definition $type, value_conversion $conversion = value_conversion::identity): void
+	public function settle_type(type_definition $type, int $conversion /** uint16 */ = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Literal declaration type is already settled');
@@ -58,7 +58,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 		$this->initialization = $conversion;
 	}
 
-	public function initialization(): value_conversion
+	public function initialization(): int /** uint16 */
 	{
 		return $this->initialization ?? throw new \LogicException('Literal declaration initialization is not prepared');
 	}

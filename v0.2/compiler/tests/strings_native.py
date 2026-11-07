@@ -58,6 +58,11 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                 message = json.dumps(fixture['catch_domain_error'])
                 source += ('\nint main() { try { tested_entry(); } catch (const std::domain_error& e) { '
                            'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
+            if fixture.get('catch_runtime_error'):
+                source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
+                message = json.dumps(fixture['catch_runtime_error'])
+                source += ('\nint main() { try { tested_entry(); } catch (const std::runtime_error& e) { '
+                           'return std::string_view(e.what()) == ' + message + ' ? 8 : 91; } return 90; }\n')
             cpp.write_text(source)
             units = [cpp]
             for index, extra in enumerate(fixture.get('extra_cpp', [])):

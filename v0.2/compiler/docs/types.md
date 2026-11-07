@@ -17,7 +17,21 @@ The [byte/uint8 identity migration](byte_alias.md), integer operation groups and
 Published vector specializations also have canonical generated definitions, derived
 from the validated runtime export plan. `Type_Resolution` resolves written argument
 nodes once at declaration boundaries. See [vector type resolution](vector_types.md);
-this does not enable vector value operations.
+the bounded [vector operations](vector_operations.md) reuse generated element conversions.
+
+Published [hash identities](hash_types.md) now resolve `hash<Value,Key>` through the same
+export/provider mechanism. The default publication includes the four int64/string pairs;
+the bounded [hash operations](hash_operations.md) support empty construction, keyed writes and copied reads.
+
+The four [carrier families](carrier_types.md) use one `carrier_type_definition` base and
+the same published-specialization resolution path. [Packed conversion codes](carrier_values.md)
+compose checked extraction, existing payload conversion and wrapping without allocating conversion objects.
+
+The default publication exports `mixed` and `dynamic` independently. Both generated
+definitions extend `boxed_type_definition`. Their preparation handlers select admission
+and result type directly. Runtime tag dispatch implements the corresponding scalar rule.
+For example, with a dynamic operand, `2.0 + x` has type dynamic, `2.0 + (float)x`
+has type float64, and `2 < x` has type bool. See the [boxed runtime API](../../specs/boxed_slice.md).
 
 ## Metadata and generated code
 
@@ -79,7 +93,7 @@ byte-for-byte with the default metadata, including the inventory version.
 - `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
 - `lower_cpp_binary()` emits the approved operation.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
-- `prepare_conversion(value, context)` selects a `value_conversion` enum at a destination boundary.
+- `prepare_conversion(value, context)` selects a packed `value_conversion` integer at a destination boundary.
 - `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
 - `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
 - `cpp_type()` and `lower_cpp_literal()` consume settled source facts.

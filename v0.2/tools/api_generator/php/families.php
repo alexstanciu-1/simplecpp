@@ -238,8 +238,10 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['extraction', 'construction', 'families', 'error']);
+    fields($m, ['provider', 'extraction', 'payload_access', 'presence', 'sentinels', 'construction', 'families', 'error']);
     $extraction = textValue(at($m, 'extraction'));
+    $payloadAccess = textValue(at($m, 'payload_access'));
+    requireThat($payloadAccess === 'value', 'Unsupported carrier payload access binding');
     requireThat(in_array($extraction, ['implicit_checked_one_layer_value_copy', 'explicit_checked_one_layer_value_copy'], true), 'Unsupported carrier extraction policy');
     literals($m, ['construction' => 'explicit']);
     $error = at($m, 'error');
@@ -247,16 +249,41 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     literals($error, ['type' => 'error_t', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'state' => 'explicit_present']);
     $families = at($m, 'families');
     fields($families, array_keys(CARRIER_DEFAULTS));
-    foreach(object($families) as $f => $state) {
-        requireThat(textValue($state) === CARRIER_DEFAULTS[$f], 'Unsupported carrier default state');
+    $familyPlans = [];
+    foreach(object($families) as $f => $policy) {
+        fields($policy, ['default_state', 'states']);
+        $default = textValue(at($policy, 'default_state'));
+        requireThat($default === CARRIER_DEFAULTS[$f], 'Unsupported carrier default state');
+        $states = object(at($policy, 'states'));
+        $expected = match ($f) {
+            'nullable' => ['value' => 'payload', 'empty' => null],
+            'result' => ['value' => 'payload', 'error' => 'error_t'],
+            'result_or_false' => ['value' => 'payload', 'false' => null],
+            'result_or_bool' => ['value' => 'payload', 'false' => null, 'true' => null],
+        };
+        ksort($states); ksort($expected);
+        requireThat($states === $expected, 'Unsupported carrier states');
+        $familyPlans[$f] = ['default_state' => $default, 'states' => $states];
+    }
+    fields(at($m, 'presence'), ['value', 'true']);
+    literals($m->presence, ['value' => 'has_value', 'true' => 'is_true']);
+    $plan['carrier_families'] = $familyPlans;
+    $sentinels = at($m, 'sentinels');
+    fields($sentinels, ['false', 'true']);
+    $plan['carrier_sentinels'] = [];
+    foreach (object($sentinels) as $state => $sentinel) {
+        fields($sentinel, ['literal', 'factory']);
+        literals($sentinel, ['literal' => $state . '_sentinel', 'factory' => 'from_' . $state]);
+        $plan['carrier_sentinels'][$state] = object($sentinel);
     }
     if(!property_exists($publication, 'carriers')) {
         return;
     }
     $p = $publication->carriers;
     fields($p, ['header', 'specializations']);
-    $header = headerPath(at($p, 'header'));
-    checkHeader($plan, $header);
+    $provider = textValue(at($m, 'provider'));
+    $header = providerHeader($plan['submodules'], $provider);
+    if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Carrier publication header conflicts with provider');
     requireThat(hasValue($plan, 'bool_t'), 'Carriers require published boolean type');
     $carriers = [];
     foreach(listValue(at($p, 'specializations')) as $item) {
@@ -271,7 +298,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         requireThat($family !== 'result' || (isset($plan['string']) && hasType($plan, 'int64')), 'Result error payload requires string and int64');
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
-        $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['default_state' => CARRIER_DEFAULTS[$family], 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'cpp_payload_conversion_rules', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
+        $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['payload_access' => $payloadAccess, 'presence' => object($m->presence)] + $familyPlans[$family] + [ 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'cpp_payload_conversion_rules', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
         if ($payloadInfo['kind'] === 'boxed') {
             $carriers[$name]['payload_header'] = $payloadInfo['header'];
             $carriers[$name]['payload_copy'] = $payloadInfo['copy'];
@@ -285,6 +312,17 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     ksort($carriers, SORT_STRING);
     $plan['carriers'] = array_values($carriers);
     $plan['carriers_header'] = $header;
+    $exports = array_keys($carriers);
+    if (isset($plan['error'])) $exports[] = 'error_t';
+    publishTypeExports($plan['submodules'], 'carriers', $exports);
+    $dependencies = ['bool_t'];
+    foreach ($carriers as $carrier) {
+        if (!isset($carrier['payload_header'])) $dependencies[] = $carrier['payload'];
+        if ($carrier['family'] === 'nullable') $dependencies[] = 'null_t';
+        if ($carrier['family'] === 'result') $dependencies = array_merge($dependencies, ['string', 'int64']);
+    }
+    $plan['carrier_publication'] = ['provider' => $provider,
+        'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
 }
 
 function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void {
@@ -292,8 +330,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['binding', 'key_types', 'value_types', 'count_type', 'key_policy', 'read', 'optional_lookup', 'append']);
-    literals($m, ['binding' => 'ordered_typed_swiss', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
+    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'read', 'optional_lookup', 'append']);
+    literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     foreach(['key_types', 'value_types'] as $key) {
         requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
     }
@@ -302,8 +340,9 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     }
     $p = $publication->hashes;
     fields($p, ['header', 'specializations']);
-    $header = headerPath(at($p, 'header'));
-    checkHeader($plan, $header);
+    $provider = textValue(at($m, 'provider'));
+    $header = providerHeader($plan['submodules'], $provider);
+    if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Hash publication header conflicts with provider');
     requireThat(hasType($plan, 'int64'), 'Hash requires published int64 count');
     requireThat(hasValue($plan, 'bool_t'), 'Hash requires published bool_t');
     $hashes = [];
@@ -316,7 +355,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
             requireThat($type !== 'string' || isset($plan['string']), 'Hash requires published string');
         }
         $nullable = 'nullable_' . $value;
-        requireThat(in_array($nullable, array_column($plan['carriers'], 'name'), true), 'Hash find requires published nullable payload');
+        requireThat(in_array($nullable, array_column($plan['carriers'] ?? [], 'name'), true), 'Hash find requires published nullable payload');
         $name = "hash_{$value}_$key";
         requireThat(!property_exists($plan['aliases'], $name), 'Conflicting hash name');
         requireThat(!isset($hashes[$name]), 'Duplicate hash specialization');
@@ -334,10 +373,14 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => 'hash', 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_typed_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => 'deferred_RT-DEBT-01'];
+        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_typed_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => 'deferred_RT-DEBT-01'];
     }
     requireThat($hashes !== [], 'Empty hash publication');
     ksort($hashes, SORT_STRING);
+    publishTypeExports($plan['submodules'], 'hashes', array_keys($hashes));
+    $dependencies = ['bool_t', 'int64'];
+    foreach ($hashes as $hash) $dependencies = array_merge($dependencies, [$hash['key'], $hash['value'], 'nullable_' . $hash['value']]);
+    $plan['hash_publication'] = ['provider' => $provider, 'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
     $plan['hashes'] = ['header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
 }
 const DATETIME_SIGNATURES = [ 'now_unix_seconds' => ['int64', []], 'now_unix_millis' => ['int64', []], 'monotonic_millis' => ['int64', []], 'monotonic_micros' => ['uint64', []], 'monotonic_nanos' => ['uint64', []], 'sleep_millis' => ['void', ['int64']], 'format_iso_utc' => ['string', ['int64']], 'parse_iso_utc' => ['result_int64', ['string']], 'parse_common_local' => ['result_int64', ['string']], 'format_local' => ['string', ['string', 'int64']], 'format_local_now' => ['string', ['string']]];

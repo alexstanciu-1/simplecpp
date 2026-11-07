@@ -94,6 +94,24 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     for field, value in [('alignment', 3), ('size', 0)]:
         f = copy.deepcopy(facts); f['boxed']['mixed'][field] = value
         run(metadata, publication, f, accepted=False)
+    # Source-enabled families must publish, compile and execute independently.
+    for family, absent in [('mixed', 'dynamic'), ('dynamic', 'mixed')]:
+        pub = json.loads((a.source/'runtime/metadata/publication.json').read_text())
+        pub['boxed']['families'] = [family]
+        one, selected = run(metadata, pub)
+        assert absent not in selected['submodules']['type_exports']
+        assert not (one/'out/public/scpp'/f'{absent}.hpp').exists()
+        header = one/'out/public/scpp'/f'{family}.hpp'
+        assert absent not in header.read_text()
+        (one/'consumer.cpp').write_text(f'#include <scpp/{family}.hpp>\n'
+            f'int main() {{ auto v = scpp::{family}::from_integer(scpp::int64{{8}}); '
+            f'return scpp::boxed_add_{family}_int64(v, 2).get_integer() == 10 ? 0 : 1; }}\n')
+        cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-I'+str(one/'out/public')]
+        cmd += ['-I'+str(a.source/'runtime/src'/d) for d in ['numeric', 'sequence', 'boxed', 'hash', 'ownership']]
+        cmd += [one/'consumer.cpp', one/'out/src/runtime.cpp', one/'out/src/boxed.cpp']
+        cmd += [a.source/'runtime/src'/f for f in ['boxed/boxed_value.cpp', 'boxed/boxed_conversion.cpp', 'hash/packed_key.cpp']]
+        subprocess.run([*cmd, '-o', one/'consumer'], check=True)
+        subprocess.run([one/'consumer'], check=True)
     # Structurally valid but wrong facts must fail the generated ABI assertions.
     f = copy.deepcopy(facts); f['boxed']['mixed']['size'] += f['boxed']['mixed']['alignment']
     wrong, _ = run(metadata, publication, f)

@@ -2,7 +2,7 @@ set(boxed_result_generated ${CMAKE_BINARY_DIR}/generated-boxed-result-proof)
 set(boxed_result_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 scpp_provider_outputs(boxed_result_outputs ${boxed_result_generated} ${boxed_result_publication})
 foreach(path public/scpp/numeric.hpp
-    public/scpp/short_names.hpp public/scpp/boxed.hpp public/scpp/carriers.hpp
+    public/scpp/short_names.hpp public/scpp/boxed.hpp
     src/runtime.cpp src/boxed.cpp prepared.json inventory.json)
   list(APPEND boxed_result_outputs ${boxed_result_generated}/${path})
 endforeach()

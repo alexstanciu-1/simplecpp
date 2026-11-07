@@ -12,12 +12,12 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
             continue;
         }
         [$h, $d] = (__NAMESPACE__ . '\\' . $renderer)($plan);
-        if ($family === 'string' || $family === 'vectors') {
-            $provider = $family === 'string' ? $plan['string']['provider'] : $plan['vector_publication']['provider'];
-            $groups[] = ['provider' => $provider, 'declarations' => $h, 'system' => []];
-        } else {
-            $files['public/' . $path] = BANNER . $h;
-        }
+        $provider = match ($family) {
+            'string' => $plan['string']['provider'],
+            'vectors' => $plan['vector_publication']['provider'],
+            'carriers' => $plan['carrier_publication']['provider'],
+        };
+        $groups[] = ['provider' => $provider, 'declarations' => $h, 'system' => []];
         $definitions .= $d;
     }
 }
@@ -131,13 +131,7 @@ function renderVectors(array $plan): array {
 }
 
 function renderCarriers(array $plan): array {
-    $h = "#pragma once\n" . includeHeader($plan['headers']['operators']);
-    if(isset($plan['string'])) {
-        $h .= includeHeader($plan['string']['header']);
-    }
-    if(isset($plan['vectors_header'])) {
-        $h .= includeHeader($plan['vectors_header']);
-    }
+    $h = '';
     $payloadHeaders = [];
     foreach ($plan['carriers'] as $carrier) {
         if (isset($carrier['payload_header'])) $payloadHeaders[] = $carrier['payload_header'];

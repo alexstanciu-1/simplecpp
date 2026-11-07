@@ -16,7 +16,8 @@ families. Publication requests concrete specializations; the default emits
 vector_int64 and vector_string in scpp/vectors.hpp. There is no public vector<T>
 template or standard container alias. The compiler now resolves source vector<T> and
 element aliases to a requested concrete identity through the shared export plan;
-[source vector operations remain deferred](../compiler/docs/vector_types.md).
+[typed empty construction, append and indexed reads](../compiler/docs/vector_operations.md)
+are supported; other source vector operations remain deferred.
 The API generator does not resolve source symbols. Nested vectors, arbitrary user classes and carriers are not admitted.
 
 Each class owns a private incomplete pointer to a generated std::vector<element>

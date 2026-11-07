@@ -1,16 +1,12 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
-function renderHashes(array $plan, array &$files): void {
+function renderHashes(array $plan, array &$files, array &$groups): void {
     if(!isset($plan['hashes'])) {
         return;
     }
     $hashes = $plan['hashes'];
-    $h = BANNER . "#pragma once\n" . includeHeader($plan['headers']['operators']) . includeHeader($plan['carriers_header']);
-    if(isset($plan['string'])) {
-        $h .= includeHeader($plan['string']['header']);
-    }
-    $h .= "namespace scpp {\n";
+    $h = "namespace scpp {\n";
     $d = BANNER . includeHeader($hashes['header']) . includeHeader('typed_hash.hpp') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";
     foreach($hashes['specializations'] as $hash) {
         $n = $hash['name'];
@@ -30,7 +26,7 @@ function renderHashes(array $plan, array &$files): void {
         }
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
     }
-    $files['public/' . $hashes['header']] = $h . "}\n";
+    $groups[] = ['provider' => $plan['hash_publication']['provider'], 'declarations' => $h . "}\n", 'system' => []];
     $files['src/hash.cpp'] = $d . "}\n";
 }
 

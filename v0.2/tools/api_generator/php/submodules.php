@@ -23,6 +23,16 @@ function declarationGroups(mixed $metadata): array {
             'types' => array_values(array_diff(array_keys(object(at($metadata, 'types'))), $core)),
             'bindings' => [], 'provider' => textValue(at($metadata->scalar_providers, 'numeric'))],
     ];
+    foreach (object($metadata->boxed->providers ?? (object)[]) as $family => $provider) {
+        requireThat(in_array($family, ['mixed', 'dynamic'], true), 'Unknown boxed provider family');
+        $groups[$family] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue($provider)];
+    }
+    if (isset($metadata->carriers)) {
+        $groups['carriers'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->carriers, 'provider'))];
+    }
+    if (isset($metadata->hash)) {
+        $groups['hashes'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->hash, 'provider'))];
+    }
     if (isset($metadata->vector)) {
         $groups['vectors'] = ['requires' => [], 'types' => [], 'bindings' => [], 'provider' => textValue(at($metadata->vector, 'provider'))];
     }
@@ -236,9 +246,12 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     $identities = array_map(fn(string $name): string => $aliases[$name] ?? $name, names(at($publication, 'types')));
     $identities = array_merge($identities, names(at($publication, 'values')));
     $providers = exportProviders($plan, $identities);
-    foreach (['output', 'conversions', 'string', 'vectors'] as $group) {
-        if (!isset($plan['groups'][$group]) || (in_array($group, ['string', 'vectors'], true) && !isset($publication->{$group}))) continue;
+    foreach (['output', 'conversions', 'string', 'vectors', 'carriers', 'hashes'] as $group) {
+        if (!isset($plan['groups'][$group]) || (in_array($group, ['string', 'vectors', 'carriers', 'hashes'], true) && !isset($publication->{$group}))) continue;
         $providers[] = $plan['groups'][$group]['provider'];
+    }
+    if ($publication->boxed->scalar_dispatch ?? false) {
+        foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
     sort($headers, SORT_STRING);
@@ -250,7 +263,7 @@ function finalizePublicationProviders(array &$plan): void {
     $providers = &$plan['submodules'];
     $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
     $published[] = $providers['groups']['output']['provider'];
-    foreach (['string', 'checked_conversions', 'vector_publication'] as $family) {
+    foreach (['string', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];
@@ -258,6 +271,15 @@ function finalizePublicationProviders(array &$plan): void {
         foreach ($declaration['requires'] as $dependency) {
             if ($dependency !== $id && !isset($providers['closures'][$id][$dependency])) {
                 $providers['nodes'][$id]['requires'][] = $dependency;
+            }
+        }
+    }
+    if (isset($plan['boxed_dispatch'])) {
+        foreach ($plan['boxed']['families'] as $family) {
+            $id = typeExport($providers, $family['name'])['provider'];
+            $published[] = $id;
+            foreach (exportProviders($providers, ['int64', 'bool_t', 'float64', 'string']) as $dependency) {
+                if ($dependency !== $id) $providers['nodes'][$id]['requires'][] = $dependency;
             }
         }
     }

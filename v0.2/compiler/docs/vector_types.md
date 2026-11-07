@@ -5,10 +5,10 @@ Doc Status: supporting
 ## Scope and ownership
 
 All three flavors parse generic type arguments into `ast_type_reference` using
-`first_child` and `next_sibling`. This slice resolves published `vector<T>` types;
-it does not enable construction, literals, indexing, methods, casts or value copies.
-An unused vector-typed parameter can be emitted and compiled, providing a concrete
-export/header proof without introducing vector operations.
+`first_child` and `next_sibling`. Type resolution admits published `vector<T>` specializations. The subsequent
+[first value-operation slice](vector_operations.md) adds typed empty construction,
+append and indexed reads. General methods, casts and vector copies remain deferred.
+An unused vector-typed parameter can also be emitted for export/header proofs.
 
 The generator CLI receives metadata, runtime publication and native facts. It prepares
 the runtime plan before generating compiler types. `compilerVectorTypes()` consumes
@@ -40,7 +40,7 @@ Incremental declaration contracts include the full written type spelling, so cha
 only an element type invalidates observing bodies. Existing publication, preparation,
 cleanup and emission boundaries remain unchanged.
 
-## Verification (2026-11-06)
+## Initial type-resolution verification (2026-11-06)
 
 The 77 selected compiler CTests pass. Focused tests cover all three flavors, aliases,
 linked nested syntax, arity errors, unpublished specializations, element-only signature

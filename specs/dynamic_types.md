@@ -27,6 +27,49 @@ entry and `dynamic_v` boxing proposal is superseded for v0.2.
 Brace notation and explicit `Type::{...}` / `Type::[...]` construction are agreed
 v0.2 semantics with implementation pending, not already-supported v0.1 forms.
 
+### v0.2 scalar results and typed destinations — 2026-11-07
+
+For scalar expressions involving `mixed` or `dynamic`, preparation uses the
+possible scalar kinds of each operand. An operation is admissible when at least
+one permitted kind combination succeeds. At execution, evaluate each required
+operand once, inspect its actual kind and apply the corresponding scalar rule.
+An unsupported combination fails at runtime. Existing short-circuit evaluation
+and operator-specific admission still apply.
+
+A typed scalar destination authorizes the same conversion that it would authorize
+for an ordinary scalar of the stored kind. An explicit cast uses the explicit-cast
+context instead. The runtime checks the kind and any value-dependent limits before
+committing the converted value. This rule covers value conversions at typed
+boundaries. Reference binding continues to require compatible addressable storage.
+
+An operator with a fixed scalar result keeps that result type for every admitted
+boxed operand form. Preparation can settle its result type before runtime kind
+checks. For example, ordering comparisons return plain bool whether one or both
+operands are boxed. An unsupported payload pair still fails its runtime guard.
+
+For arithmetic whose result type depends on promotion, such as addition, a
+`mixed` operand gives the expression type `mixed` in either operand order. Scalar promotion determines the payload kind. The static result
+stays mixed even when a float peer guarantees a floating result on every
+successful path. An explicit scalar operand cast participates in type resolution
+before arithmetic. A typed destination converts the completed expression.
+The same rule preserves the dynamic family for dynamic/scalar, scalar/dynamic
+and dynamic/dynamic addition. Implicit mixed/dynamic crossing remains unavailable.
+
+| PHP-flavor example with boxed input of unknown kind | Required behavior |
+| --- | --- |
+| `$a int = $x;` with float payload 8.75 | Apply the float-to-int typed-destination conversion and store 8. |
+| `$a int = $x + 2;` with float payload -1.75 | Add as float to obtain 0.25, then convert to int and store 0. Converting the input first would incorrectly yield 1. |
+| `$y = $x + 2;` | Infer mixed storage and preserve the selected integer or floating payload. |
+| `$y = $x + 2.0;` | Infer mixed storage with a float64 payload on success. |
+| `$y = 2.0 + (float)$x;` | Check the explicit cast, then add two float64 operands. Infer float64 storage. |
+| `$ok = 2 < $x;` | Ordering declares bool. Infer bool storage. |
+| `$ok = $x > $y;` with two mixed operands | Check both payload kinds. An admitted comparison returns plain bool. |
+
+The result examples use a source operand declared mixed. Both boxed families
+use runtime scalar-kind dispatch and context-aware typed scalar extraction. Same-family whole-box
+copies preserve the box. Explicit family crossing, boxed null equality, container
+identity, indexed reads and compound write-back retain their separate contracts.
+
 ### v0.2 separated mixed/dynamic families — 2026-10-05
 
 This amendment records the approved replacement contract. It overrides the older
@@ -58,7 +101,7 @@ compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mi
   Reject statically known invalid crossings during preparation. Where the source
   kind is unknown, check at runtime before replacing the receiving value.
 - Shared boxed operator rules apply to both families, not separate dynamic coercion
-  rules. Numeric operations preserve the boxed family; scalar peers follow the
+  rules. The November scalar-results amendment governs numeric expression results. Scalar peers follow the
   established numeric admission rules. Numeric compound updates preserve the stored
   numeric kind and check before replacement. Ordinary assignment and text compound
   assignment may replace the kind. Comparisons return bool, and concatenation returns
@@ -91,11 +134,9 @@ provide an admission bypass or duplicate scalar operator semantics.
 ### v0.2 boxed integer operators — 2026-10-20
 
 Homogeneous `mixed` operands and homogeneous `dynamic` operands admit `&`, `|`,
-`^`, `<<`, `>>` and unary `~`. Each result preserves its boxed family and contains
-an integer payload. Both binary payloads (or the unary payload) must have integer
+`^`, `<<`, `>>` and unary `~`. Each successful expression produces an integer under the November scalar-results amendment. Both binary payloads (or the unary payload) must have integer
 kind; bool, float, string, null and container kinds throw instead of coercing.
-This family-preserving result rule supersedes older matrix binary rows that named
-plain `int_t` results. Dynamic never converts through the mixed family.
+Dispatch inspects the kinds of the original operands directly.
 
 Binary expressions evaluate left then right exactly once, capturing the left
 value before later source mutation. Runtime kind validation occurs after both

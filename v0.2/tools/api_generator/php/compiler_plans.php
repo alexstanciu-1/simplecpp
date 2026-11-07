@@ -76,12 +76,18 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
         foreach (['inferred_local', 'global_storage'] as $capability) {
             $declarations[$capability] = boolean(at(at($row, 'declarations'), $capability));
+        }
+        // Descriptive metadata only; source-member enforcement is deferred.
+        $visibility = isset($row->member_visibility) ? object($row->member_visibility) : [];
+        foreach ($visibility as $member => $access) {
+            requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $member) === 1, 'Invalid compiler member name');
+            requireThat(in_array($access, ['compiler_internal', 'source_visible'], true), 'Invalid compiler member visibility');
         }
         $copy = textValue(at($row, 'copy_semantics'));
         requireThat(in_array($copy, ['trivial', 'nontrivial'], true), 'Unsupported copy semantics');

@@ -633,13 +633,20 @@
     ]
   },
   "carriers": {
+    "provider": "core.carriers",
     "construction": "explicit",
     "extraction": "implicit_checked_one_layer_value_copy",
+    "payload_access": "value",
+    "presence": {"value": "has_value", "true": "is_true"},
+    "sentinels": {
+      "false": {"literal": "false_sentinel", "factory": "from_false"},
+      "true": {"literal": "true_sentinel", "factory": "from_true"}
+    },
     "families": {
-      "nullable": "empty",
-      "result": "value",
-      "result_or_false": "false",
-      "result_or_bool": "false"
+      "nullable": { "default_state": "empty", "states": { "value": "payload", "empty": null } },
+      "result": { "default_state": "value", "states": { "value": "payload", "error": "error_t" } },
+      "result_or_false": { "default_state": "false", "states": { "value": "payload", "false": null } },
+      "result_or_bool": { "default_state": "false", "states": { "value": "payload", "false": null, "true": null } }
     },
     "error": {
       "type": "error_t",
@@ -671,7 +678,10 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
+    "provider": "core.hashes",
+    "source_type": "hash",
     "binding": "ordered_typed_swiss",
+    "construction": "empty",
     "key_types": [
       "int64",
       "string"
@@ -707,6 +717,8 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
+    "providers": {"mixed": "core.mixed", "dynamic": "core.dynamic"},
     "binding": "private_inline_boxed",
     "families": [
       "dynamic",
@@ -810,7 +822,8 @@
         "source_names": [
           "string"
         ],
-        "storage_binding": "string_storage"
+        "storage_binding": "string_storage",
+        "member_visibility": { "data": "compiler_internal" }
       }
     },
     "conversion_families": {
@@ -1217,6 +1230,10 @@
   "output": { "provider": "core.output" },
   "scalar_providers": {"core": "core.scalars", "numeric": "numeric.scalars"},
   "submodules": {
+    "core.mixed": {"module": "core", "header": "scpp/mixed.hpp", "requires": []},
+    "core.dynamic": {"module": "core", "header": "scpp/dynamic.hpp", "requires": []},
+    "core.hashes": { "module": "core", "header": "scpp/hashes.hpp", "requires": [] },
+    "core.carriers": { "module": "core", "header": "scpp/carriers.hpp", "requires": [] },
     "core.vectors": {
       "module": "core",
       "header": "scpp/vectors.hpp",

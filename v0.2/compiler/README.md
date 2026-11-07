@@ -32,6 +32,9 @@ See [canonical type definitions](docs/types.md) for core scalar/void identity an
 See [stable symbols and preparation caches](docs/stable_symbols.md) for the current
 in-process incremental preparation API and its lowering boundary.
 
+See the [remaining non-object feature catalog](../specs/planning/non_object_feature_catalog.md)
+for current gaps and the proposed mixed/dynamic direction.
+
 See the [compact development catalog](../specs/planning/compiler_catalog.md) for the
 feature checklist mined from my-try, current bounded support and proposed next slices.
 

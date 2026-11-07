@@ -6,7 +6,8 @@ The [scalar contract](../../../specs/compiler_scalars_v0_2.md#string-equality--2
 admits exact string/string `== !=` in all flavors. Equality compares complete bytes
 and length, including embedded NULs, independently of storage identity. There is no
 numeric coercion, case folding, Unicode normalization or locale collation. Ordering,
-strict identity, cross-type equality, carriers and text conversions remain deferred.
+this original slice deferred strict identity, cross-type equality, carriers and text conversions.
+Current carrier payload equality is covered by [carrier values](carrier_values.md).
 
 ## Ownership and structure
 

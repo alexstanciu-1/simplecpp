@@ -65,7 +65,9 @@ approved native ABI policy; use `has_value()` to test presence instead. A false
 payload is present, while extracting an empty/error/sentinel state still throws.
 No implicit cross-carrier conversion is added; explicit reboxing never propagates
 empty/error states silently. Same-identity copying preserves the entire state.
-Source-language carrier admission remains a separate compiler feature.
+The compiler supports [published carrier type resolution](../compiler/docs/carrier_types.md) and
+[packed carrier conversions and payload operations](../compiler/docs/carrier_values.md).
+The compiler documentation records the bounded source slice and its explicit donor departures.
 Because extraction returns a value, it does not supply a mutable payload reference
 for ++carrier or carrier += value. Explicitly extract, update and rebox when a
 caller intends to replace the stored payload; compiler lowering owns source updates.
@@ -121,7 +123,7 @@ adds an allocation and indirection. This favors a simple template-free boundary 
 inline storage; no allocation/performance equivalence to std::optional is claimed.
 Standard allocation exceptions propagate. Null/nested carrier payloads, move extraction,
 state-propagating arithmetic, conditional extraction transactions and compiler source
-integration remain explicit later slices, not implied capabilities.
+value operations remain explicit later slices, not implied capabilities.
 
 ## Validation and cleanup
 
@@ -138,3 +140,12 @@ Validation: all 24 tests pass in Release and in a fresh standalone Clang/libc++
 UBSan build with recovery disabled. The ownership/error-state consumer passes
 Clang/libstdc++ ASan+UBSan; leak detection remains disabled for the previously
 recorded environment limitation. No libc++ ASan or leak-sanitizer success is claimed.
+
+## Shared type/export integration
+
+Metadata family records explicitly retain default_state and states. `carriers.provider`
+owns placement; requested specializations and error_t enter the shared export index.
+Provider assembly derives dependencies from actual payloads. A legacy publication header
+is accepted only when it agrees with provider placement. No ABI or lifetime algorithm
+changes accompany this integration. See [compiler carrier types](../compiler/docs/carrier_types.md)
+for supported payloads, incremental proofs and the boundary before source value operations.

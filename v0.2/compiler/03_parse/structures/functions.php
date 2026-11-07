@@ -46,8 +46,8 @@ final class ast_call_expression extends ast_expression
 	/** PREP FACTS */
 	/** Prepared fact: native non-owning stable symbol; null before preparation or after reset. */
 	private ?symbol_entry $function_symbol = null;
-	/** @var value_conversion[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
-	private array $conversions /** list<value_conversion> */ = [];
+	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
+	private array $conversions /** list<uint16> */ = [];
 
 	/** CONSTRUCTOR */
 	/**
@@ -72,8 +72,8 @@ final class ast_call_expression extends ast_expression
 		return $this->root()->function_key($this->name);
 	}
 
-	/** @param value_conversion[] $conversions */
-	public function settle_function(symbol_entry $symbol, array $conversions /** list<value_conversion> */): void
+	/** @param int[] $conversions */
+	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */): void
 	{
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
@@ -90,7 +90,7 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** $index: argument ordinal. */
-	public function conversion(int $index /** uint32 */): value_conversion
+	public function conversion(int $index /** uint32 */): int /** uint16 */
 	{
 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
 	}
@@ -346,7 +346,7 @@ final class ast_return_statement extends ast_statement
 
 	/** PREP FACTS */
 	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
-	protected exit_conversion|value_conversion|null $conversion = null;
+	protected exit_conversion|int|null $conversion /** exit_conversion|uint16|null */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -362,7 +362,7 @@ final class ast_return_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_conversion(exit_conversion|value_conversion $conversion): void
+	public function settle_conversion(exit_conversion|int $conversion /** exit_conversion|uint16 */): void
 	{
 		if ($this->conversion !== null) {
 			throw new \LogicException('Return conversion already settled');
@@ -370,7 +370,7 @@ final class ast_return_statement extends ast_statement
 		$this->conversion = $conversion;
 	}
 
-	public function conversion(): exit_conversion|value_conversion
+	public function conversion(): exit_conversion|int /** exit_conversion|uint16 */
 	{
 		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
 	}

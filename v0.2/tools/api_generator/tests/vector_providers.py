@@ -53,6 +53,9 @@ def proof(work):
     runner.write_text("<?php\nrequire " + repr(str(ROOT / 'compiler/types/conversion.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/definition.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/vector.php')) + ";\n"
+        + "require " + repr(str(ROOT / 'compiler/types/carrier.php')) + ";\n"
+        + "require " + repr(str(ROOT / 'compiler/types/hash.php')) + ";\n"
+        + "require " + repr(str(ROOT / 'compiler/types/boxed.php')) + ";\n"
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $type) require $argv[1] . '/types/' . $type . '.php';\n"
         + "$type = \\scpp\\compiler\\type_registry::specialize('vector', \\scpp\\compiler\\type_registry::integer());\n"
         + "echo json_encode($type === null ? null : [$type->name, $type->cpp_type(), $type->cpp_headers()]);\n")
@@ -82,7 +85,7 @@ def proof(work):
     assert snapshot() == original
 
     no_vectors = copy.deepcopy(publication)
-    no_vectors.pop('vectors'); no_vectors.pop('carriers')
+    no_vectors.pop('vectors'); no_vectors.pop('carriers'); no_vectors.pop('hashes', None)
     absent = emit(metadata, no_vectors)
     assert not (output / 'public/scpp/vectors.hpp').exists()
     assert not any(k.startswith('vector_') for k in absent['submodules']['type_exports'])
@@ -96,6 +99,7 @@ def proof(work):
     # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
     minimal = copy.deepcopy(no_vectors)
     minimal.pop('string')
+    minimal.pop('boxed')
     minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}
     narrow = emit(metadata, minimal)
     assert narrow['submodules']['nodes']['core.vectors']['requires'] == ['core.scalars']

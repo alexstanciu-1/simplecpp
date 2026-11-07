@@ -69,7 +69,8 @@ stay on their current declaration/expression owners; reset does not mutate synta
 The parser constructs generic arguments directly as linked nodes in all three flavors.
 `spelling()` derives composite names for diagnostics, inspection and incremental
 contracts without retaining another string. Shared type resolution admits only
-published vector specializations; vector operations remain deferred. See
+published vector specializations; the bounded [vector operations](vector_operations.md)
+use dedicated syntax nodes with AST-owned facts. See
 [vector type resolution](vector_types.md). Other AST collections and duplicate chains
 keep their existing representation.
 

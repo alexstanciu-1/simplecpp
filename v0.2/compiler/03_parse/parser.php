@@ -161,6 +161,20 @@ final class Parser
 			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
 			return new ast_call_statement($value->start, $end, $value);
 		}
+		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::lbracket)) {
+			$start = $this->cursor->position();
+			$name = $this->cursor->name($name_kind);
+			$receiver = new ast_name_expression($name, $start, $start + 1);
+			$this->cursor->take(token_kind::lbracket, '[');
+			$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
+			$this->cursor->take(token_kind::rbracket, ']');
+			$this->cursor->take(token_kind::assign, '=');
+			$value = $this->assignment_value();
+			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+			return $index === null ? new ast_append_statement($receiver, $value, $end)
+				: new ast_index_assignment($receiver, $index, $value, $end);
+		}
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $collector);
 	}
 
@@ -411,6 +425,17 @@ final class Parser
 	private function type_reference(bool $argument = false, bool $allow_void = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
+		if ($this->cursor->is(token_kind::question)) {
+			$this->cursor->take(token_kind::question, '?');
+			$payload = $this->type_reference(false, false);
+			$end = $this->cursor->position();
+			$next = null;
+			if ($argument && $this->cursor->is(token_kind::comma)) {
+				$this->cursor->take(token_kind::comma, ',');
+				$next = $this->type_reference(true, true);
+			}
+			return new ast_type_reference($start, $end, 'nullable', $payload, $next);
+		}
 		$word = $this->cursor->tokens->text_at($start);
 		if ($this->cursor->is(token_kind::keyword)
 			&& ((type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
@@ -531,6 +556,32 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(): ast_expression
 	{
+		$value = $this->atom();
+		while ($this->cursor->is(token_kind::lbracket)) {
+			$this->cursor->take(token_kind::lbracket, '[');
+			$index = $this->value();
+			$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+			$value = new ast_index_expression($value, $index, $end);
+		}
+		return $value;
+	}
+
+	/** Parse one primary or prefix expression before postfix indexing. */
+	private function atom(): ast_expression
+	{
+		if (!$this->cursor->at_end() && ($this->cursor->tokens->text_at($this->cursor->position()) === 'isset')) {
+			$start = $this->cursor->position();
+			$this->cursor->take($this->cursor->tokens->tokens[$start]->kind, 'isset');
+			$this->cursor->take(token_kind::lparen, '(');
+			$operand = $this->value();
+			$this->cursor->take(token_kind::rparen, ')');
+			return new ast_isset_expression($start, $this->cursor->position(), $operand);
+		}
+		if ($this->cursor->is(token_kind::lbracket)) {
+			$start = $this->cursor->take(token_kind::lbracket, '[');
+			$end = $this->cursor->take(token_kind::rbracket, '] (only empty typed collection initializers are supported)') + 1;
+			return new ast_empty_collection_expression($start, $end);
+		}
 		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
 			&& !$this->cursor->next_is(token_kind::floating))) {
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;

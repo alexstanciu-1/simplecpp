@@ -78,7 +78,7 @@ foreach (['policy', 'permission'] as $change) {
 $familySubset = unserialize(serialize($rawMetadata));
 unset($familySubset->compiler->conversion_families->{'boolean:integer'});
 $familyCode = renderCompiler($familySubset, $facts);
-foreach (['int64', 'uint8'] as $identity) requireThat(!str_contains($familyCode['types/' . $identity . '.php'], '$value->type_def() === type_bool::instance()'), 'Removed family retained a conversion');
+foreach (['int64', 'uint8'] as $identity) requireThat(!str_contains($familyCode['types/' . $identity . '.php'], '$value->value_type() === type_bool::instance()'), 'Removed family retained a conversion');
 foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $change) {
     $invalid = unserialize(serialize($rawMetadata));
     match ($change) {
@@ -351,7 +351,7 @@ try {
         requireThat($type->lower_cpp_literal($literal) === $expected, 'Incorrect literal lowering');
     }
 } finally {
-    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/uint8.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'types/vectors.php', 'bindings/entry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
+    foreach (['types/int64.php', 'types/null.php', 'types/bool.php', 'types/uint8.php', 'types/float64.php', 'types/string.php', 'types/registry.php', 'types/vectors.php', 'types/carriers.php', 'types/hashes.php', 'bindings/entry.php', 'inventory.json', 'retired.php', 'keep.txt'] as $path) {
         if (file_exists($work . '/' . $path)) unlink($work . '/' . $path);
     }
     rmdir($work . '/types');
@@ -812,7 +812,7 @@ $limited = unserialize(serialize($metadata));
 unset($limited->compiler->three_way);
 conversion_row($limited, 'int64', 'float64')->contexts = ['explicit_cast'];
 $code = renderCompiler($limited, $facts)['types/float64.php'];
-requireThat(str_contains($code, '($context === conversion_context::explicit_cast) && ($value->type_def() === type_int64::instance())'), 'Context subset ignored');
+requireThat(str_contains($code, '($context === conversion_context::explicit_cast) && ($value->value_type() === type_int64::instance())'), 'Context subset ignored');
 
 // Family rules expand to the twelve cross-type numeric conversions among active representations.
 $expected = ['bool_t:int64' => 'boolean_integer', 'int64:bool_t' => 'integer_boolean',

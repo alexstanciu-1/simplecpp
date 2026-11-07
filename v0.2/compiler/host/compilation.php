@@ -58,13 +58,13 @@ final class Compilation_Inspection
 		], $program->file->globals());
 		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
 			'name' => $constant->name(), 'type' => $constant->type_def()->name,
-			'conversion' => $constant->initialization()->name, 'initializer' => self::value($constant->initializer),
+			'conversion' => value_conversion::name($constant->initialization()), 'initializer' => self::value($constant->initializer),
 		], $program->file->constants());
 		foreach ($program->file->functions() as $function) {
 			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
-					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : $parameter->default_conversion()->name,
+					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : value_conversion::name($parameter->default_conversion()),
 				], $function->parameters), 'body' => self::body($function->body())];
 		}
 		return $result;
@@ -109,11 +109,20 @@ final class Compilation_Inspection
 				$statements[] = self::binding($statement);
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$statements[] = ['kind' => 'return', 'conversion' => $statement->conversion()->name,
+				$statements[] = ['kind' => 'return', 'conversion' => value_conversion::name($statement->conversion()),
 					'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_return_statement) {
 				$statements[] = ['kind' => 'return', 'value' => null];
+			}
+			elseif ($statement instanceof ast_index_assignment) {
+				$statements[] = ['kind' => 'keyed_write', 'receiver' => self::value($statement->receiver),
+					'index' => self::value($statement->index), 'value' => self::value($statement->value),
+					'conversion' => value_conversion::name($statement->conversion())];
+			}
+			elseif ($statement instanceof ast_append_statement) {
+				$statements[] = ['kind' => 'append', 'receiver' => self::value($statement->receiver),
+					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$statements[] = ['kind' => 'call', 'target' => $statement->function_def()->name(),
@@ -138,12 +147,12 @@ final class Compilation_Inspection
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
 		$row = ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
-			'conversion' => $statement->conversion()->name, 'operator' => $statement->operator?->name,
+			'conversion' => value_conversion::name($statement->conversion()), 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
 		if ($statement->operator !== null) {
 			$row['execution_type'] = $statement->execution_type()->name;
-			$row['left_conversion'] = $statement->left_conversion()->name;
-			$row['write_back'] = $statement->write_back()->name;
+			$row['left_conversion'] = value_conversion::name($statement->left_conversion());
+			$row['write_back'] = value_conversion::name($statement->write_back());
 		}
 		return $row;
 	}
@@ -158,22 +167,26 @@ final class Compilation_Inspection
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
 		if ($value instanceof ast_cast_expression) {
-			$row['conversion'] = $value->conversion()->name;
+			$row['conversion'] = value_conversion::name($value->conversion());
 			$row['operand'] = self::value($value->operand);
 		}
 		if ($value instanceof ast_unary_expression) {
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
-		if ($value instanceof ast_not_expression) {
-			$row['operator'] = 'logical_not';
+		if (($value instanceof ast_not_expression) || ($value instanceof ast_isset_expression)) {
+			$row['operator'] = $value instanceof ast_isset_expression ? 'isset' : 'logical_not';
 			$row['operand'] = self::value($value->operand);
+		}
+		if ($value instanceof ast_index_expression) {
+			$row['receiver'] = self::value($value->receiver);
+			$row['index'] = self::value($value->index);
 		}
 		if ($value instanceof ast_binary_expression) {
 			if (!$value->operator->lazy()) {
 				$row['execution_type'] = $value->execution_type()->name;
-				$row['left_conversion'] = $value->left_conversion->name;
-				$row['right_conversion'] = $value->right_conversion->name;
+				$row['left_conversion'] = value_conversion::name($value->left_conversion);
+				$row['right_conversion'] = value_conversion::name($value->right_conversion);
 			}
 			$row['operator'] = $value->operator->name;
 			$row['left'] = self::value($value->left);

@@ -81,6 +81,12 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_empty_collection_expression) {
+			return ['kind' => 'empty_collection'];
+		}
+		if ($expression instanceof ast_index_expression) {
+			return ['kind' => 'index', 'receiver' => self::expression($expression->receiver), 'index' => self::expression($expression->index)];
+		}
 		if ($expression instanceof ast_cast_expression) {
 			return ['kind' => 'cast', 'type_name' => $expression->type_reference->spelling(),
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
@@ -89,8 +95,8 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
-		if ($expression instanceof ast_not_expression) {
-			return ['kind' => 'logical_not', 'operand' => self::expression($expression->operand),
+		if (($expression instanceof ast_not_expression) || ($expression instanceof ast_isset_expression)) {
+			return ['kind' => $expression instanceof ast_isset_expression ? 'isset' : 'logical_not', 'operand' => self::expression($expression->operand),
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_binary_expression) {
@@ -161,6 +167,13 @@ final class Syntax_Inspection
 		if ($statement instanceof ast_return_statement) {
 			return ['kind' => 'return', 'value' => $statement->value === null ? null : self::expression($statement->value),
 				'span' => self::span($statement)];
+		}
+		if ($statement instanceof ast_index_assignment) {
+			return ['kind' => 'keyed_write', 'receiver' => self::expression($statement->receiver),
+				'index' => self::expression($statement->index), 'value' => self::expression($statement->value)];
+		}
+		if ($statement instanceof ast_append_statement) {
+			return ['kind' => 'append', 'receiver' => self::expression($statement->receiver), 'value' => self::expression($statement->value)];
 		}
 		if ($statement instanceof ast_call_statement) {
 			return self::expression($statement->value) + ['statement_span' => self::span($statement)];

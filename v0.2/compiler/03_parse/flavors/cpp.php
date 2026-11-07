@@ -19,10 +19,11 @@ final class Cpp_Grammar implements statement_grammar
 	{
 		$cursor = $parser->cursor;
 		if (!$cursor->is(token_kind::identifier) && !$cursor->keyword('void')
+			&& !$cursor->is(token_kind::question)
 			&& !($cursor->is(token_kind::keyword) && type_registry::resolve($cursor->tokens->text_at($cursor->position())) !== null)) {
 			return false;
 		}
-		$position = $cursor->position() + 1;
+		$position = $cursor->position() + ($cursor->is(token_kind::question) ? 2 : 1);
 		$tokens = $cursor->tokens->tokens;
 		if (($tokens[$position]->kind ?? null) === token_kind::less) {
 			$depth = 0;

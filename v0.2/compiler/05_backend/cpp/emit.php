@@ -232,6 +232,33 @@ final class Cpp_Emitter
 				$write = $this->compound($statement, $global_references, $declarations, $required_headers, $snapshot);
 				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
 			}
+			elseif ($statement instanceof ast_index_assignment) {
+				/** @var hash_type_definition $type */
+				$type = $statement->receiver->type_def();
+				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
+				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
+				$conversion = $statement->conversion();
+				foreach ($type->value_type->conversion_headers($conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+				$value = $type->value_type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
+				// Separate statements keep key evaluation before RHS effects and conversion before mutation.
+				$lines[] = "\t{ const auto hash_key = " . $key . '; const auto hash_value = ' . $value . '; '
+					. $type->lower_cpp_write($receiver, 'hash_key', 'hash_value') . '; }';
+			}
+			elseif ($statement instanceof ast_append_statement) {
+				/** @var vector_type_definition $type */
+				$type = $statement->receiver->type_def();
+				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
+				$conversion = $statement->conversion();
+				foreach ($type->element_type->conversion_headers($conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+				$value = $type->element_type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
+				$lines[] = "\t" . $type->lower_cpp_append($receiver, $value) . ';';
+			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$lines[] = "\t" . $this->binding($statement, $global_references, $declarations, $required_headers) . ';';
 			}
@@ -243,7 +270,7 @@ final class Cpp_Emitter
 				}
 				else {
 					$type = $function->return_type_def();
-					$value = $type->lower_cpp_conversion($conversion, $value);
+					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
 					foreach ($type->conversion_headers($conversion) as $header) {
 						$required_headers[$header] = true;
 					}
@@ -297,7 +324,7 @@ final class Cpp_Emitter
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
-			$right = $execution->lower_cpp_conversion($conversion, $right);
+			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value->type_def());
 			foreach ($execution->conversion_headers($conversion) as $header) {
 				$headers[$header] = true;
 			}
@@ -366,7 +393,7 @@ final class Cpp_Emitter
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
-		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand);
+		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand, $value->type_def());
 	}
 
 	/**
@@ -385,6 +412,18 @@ final class Cpp_Emitter
 		foreach ($value->type_def()->cpp_headers() as $header) {
 			$required_headers[$header] = true;
 		}
+		if ($value instanceof ast_empty_collection_expression) {
+			/** @var vector_type_definition|hash_type_definition $type */
+			$type = $value->type_def();
+			return $type->lower_cpp_empty();
+		}
+		if ($value instanceof ast_index_expression) {
+			/** @var vector_type_definition|hash_type_definition $type */
+			$type = $value->receiver->type_def();
+			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
+			return $type->lower_cpp_index($receiver, $index);
+		}
 		if ($value instanceof ast_cast_expression) {
 			$type = $value->type_def();
 			$conversion = $value->conversion();
@@ -395,14 +434,23 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
-			return '(' . $type->lower_cpp_conversion($conversion, $operand) . ')';
+			return '(' . $type->lower_cpp_conversion($conversion, $operand, $value->operand->type_def()) . ')';
 		}
 		if ($value instanceof ast_unary_expression) {
 			$operand_safe = false;
 			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers, $operand_safe);
-			$type = $value->operand->type_def();
+			$type = $value->operand->value_type();
+			if ($value->operand->type_def() instanceof carrier_type_definition) {
+				$operand = $value->operand->type_def()->lower_cpp_extract($operand);
+				$operand_safe = false;
+			}
 			$reorderable = $operand_safe && $type->cpp_unary_reorderable($value->operator);
 			return $type->lower_cpp_unary($value->operator, $operand);
+		}
+		if ($value instanceof ast_isset_expression) {
+			/** @var carrier_type_definition $type */
+			$type = $value->operand->type_def();
+			return $type->lower_cpp_presence($this->value($value->operand, $global_references, $declarations, $required_headers));
 		}
 		if ($value instanceof ast_not_expression) {
 			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
@@ -424,13 +472,13 @@ final class Cpp_Emitter
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $type->lower_cpp_conversion($value->left_conversion, $left);
+				$left = $type->lower_cpp_conversion($value->left_conversion, $left, $value->left->type_def());
 				foreach ($type->conversion_headers($value->left_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
 			}
 			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $type->lower_cpp_conversion($value->right_conversion, $right);
+				$right = $type->lower_cpp_conversion($value->right_conversion, $right, $value->right->type_def());
 				foreach ($type->conversion_headers($value->right_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
@@ -442,12 +490,12 @@ final class Cpp_Emitter
 			$reorderable = $left_safe && $right_safe && ($left !== $right)
 				&& $type->cpp_binary_reorderable($value->operator);
 			if ($reorderable) {
-				return $type->lower_cpp_binary($value->operator, $left, $right, $value->right->type_def());
+				return $type->lower_prepared_binary($value, $left, $right);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
 			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left
 				. '; const auto binary_right = ' . $right . '; return '
-				. $type->lower_cpp_binary($value->operator, 'binary_left', 'binary_right', $value->right->type_def()) . '; }())';
+				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right') . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
 			$function = $value->function_def();
@@ -477,7 +525,7 @@ final class Cpp_Emitter
 				}
 				else {
 					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
-						. $type->lower_cpp_conversion($conversion, $operand) . ';';
+						. $type->lower_cpp_conversion($conversion, $operand, $argument->type_def()) . ';';
 					$arguments[] = $type->cpp_trivial_value() ? $temporary
 						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 				}
@@ -508,7 +556,7 @@ final class Cpp_Emitter
 					$type->conversion_headers($conversion)) as $header) {
 					$required_headers[$header] = true;
 				}
-				return $type->lower_cpp_conversion($conversion, $literal);
+				return $type->lower_cpp_conversion($conversion, $literal, $declaration->initializer->type_def());
 			}
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);

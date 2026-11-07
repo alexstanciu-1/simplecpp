@@ -61,6 +61,13 @@ final class Body_Collection
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
+		elseif (($statement instanceof ast_append_statement) || ($statement instanceof ast_index_assignment)) {
+			$this->expression($statement->receiver);
+			if ($statement instanceof ast_index_assignment) {
+				$this->expression($statement->index);
+			}
+			$value = $statement->value;
+		}
 		elseif ($statement instanceof ast_echo_statement) {
 			foreach ($statement->values as $value) {
 				$this->expression($value);
@@ -121,9 +128,13 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
-		if (($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			$this->expression($value->operand);
+		}
+		if ($value instanceof ast_index_expression) {
+			$this->expression($value->receiver);
+			$this->expression($value->index);
 		}
 		if ($value instanceof ast_binary_expression) {
 			$this->expression($value->left);

@@ -138,4 +138,4 @@ and exports. Count, boolean and element identities supply actual public dependen
 No second metadata specialization list is required. Type-export lookup on the
 prepared runtime plan now yields each concrete vector's C++ symbol and provider.
 Compiler generation consumes these exports for [vector type resolution](../compiler/docs/vector_types.md).
-Vector value operations remain deferred. See [the vector contract](vector_slice.md).
+The first [vector value operations](../compiler/docs/vector_operations.md) use these concrete bindings. See [the vector contract](vector_slice.md).

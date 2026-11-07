@@ -151,6 +151,32 @@ final class Preparation
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 			}
+			elseif ($statement instanceof ast_index_assignment) {
+				$this->value($statement->receiver);
+				if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
+				}
+				$type = $statement->receiver->type_def();
+				if (!($type instanceof hash_type_definition)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a hash; vector indexed writes are deferred');
+				}
+				$this->value($statement->index);
+				$type->prepare_key($statement->index);
+				$this->value($statement->value);
+				$statement->settle_write($type->prepare_write($statement->value));
+			}
+			elseif ($statement instanceof ast_append_statement) {
+				$this->value($statement->receiver);
+				if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
+				}
+				$type = $statement->receiver->type_def();
+				if (!($type instanceof vector_type_definition)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires a vector');
+				}
+				$this->value($statement->value);
+				$statement->settle_append($type->prepare_append($statement->value));
+			}
 			elseif ($statement instanceof ast_storage_write) {
 				$this->write($statement);
 			}
@@ -325,7 +351,13 @@ final class Preparation
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
 			}
 		}
-		$this->value($declaration->initializer, $name);
+		if (($declaration->initializer instanceof ast_empty_collection_expression) && (($type instanceof vector_type_definition) || ($type instanceof hash_type_definition))) {
+			$this->expression_visits++;
+			$declaration->initializer->settle_collection($type);
+		}
+		else {
+			$this->value($declaration->initializer, $name);
+		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
 			if (!$type->supports_inferred_local()) {
@@ -335,7 +367,7 @@ final class Preparation
 		}
 		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
-			$declaration->initializer->constant_known(), $conversion);
+			$declaration->initializer->constant_known() && !($type instanceof carrier_type_definition) && !($type instanceof boxed_type_definition), $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
@@ -379,6 +411,19 @@ final class Preparation
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
+		if ($syntax instanceof ast_empty_collection_expression) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector or hash)');
+		}
+		if ($syntax instanceof ast_index_expression) {
+			$this->value($syntax->receiver, $initializing);
+			$type = $syntax->receiver->type_def();
+			if (!($type instanceof vector_type_definition) && !($type instanceof hash_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector or hash');
+			}
+			$this->value($syntax->index, $initializing);
+			$type->prepare_index($syntax);
+			return;
+		}
 		if ($syntax instanceof ast_cast_expression) {
 			$this->value($syntax->operand, $initializing);
 			$type = Type_Resolution::resolve($syntax->type_reference);
@@ -390,7 +435,18 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_unary_expression) {
 			$this->value($syntax->operand, $initializing);
-			$syntax->operand->type_def()->prepare_unary($syntax);
+			if ($syntax->operand->type_def() instanceof carrier_type_definition) {
+				$syntax->operand->type_def()->require_extraction($syntax->operand, conversion_context::assignment);
+			}
+			$syntax->operand->value_type()->prepare_unary($syntax);
+			return;
+		}
+		if ($syntax instanceof ast_isset_expression) {
+			$this->value($syntax->operand, $initializing);
+			if (!($syntax->operand->type_def() instanceof carrier_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier');
+			}
+			$syntax->settle_presence();
 			return;
 		}
 		if ($syntax instanceof ast_not_expression) {
@@ -409,7 +465,20 @@ final class Preparation
 				$syntax->settle_binary(type_bool::instance());
 				return;
 			}
-			$syntax->left->type_def()->prepare_binary($syntax);
+			$left = $syntax->left->type_def();
+			$right = $syntax->right->type_def();
+			$box = $left instanceof boxed_type_definition ? $left : $right;
+			if ($box instanceof boxed_type_definition) {
+				$box->prepare_binary($syntax);
+				return;
+			}
+			if ($syntax->left->type_def() instanceof carrier_type_definition) {
+				$syntax->left->type_def()->require_extraction($syntax->left, conversion_context::assignment);
+			}
+			if ($syntax->right->type_def() instanceof carrier_type_definition) {
+				$syntax->right->type_def()->require_extraction($syntax->right, conversion_context::assignment);
+			}
+			$syntax->left->value_type()->prepare_binary($syntax);
 			return;
 		}
 		if ($syntax instanceof ast_call_expression) {
@@ -495,6 +564,12 @@ final class Preparation
 		foreach ($call->arguments as $index => $argument) {
 			$this->value($argument);
 			$parameter = $function->parameters[$index];
+			if ($parameter->type_def() instanceof hash_type_definition) {
+				throw new diagnostic($argument->source(), $argument->byte_start(), 'Hash argument passing is deferred');
+			}
+			if ($parameter->type_def() instanceof vector_type_definition) {
+				throw new diagnostic($argument->source(), $argument->byte_start(), 'Vector argument passing is deferred');
+			}
 			if ($parameter->mode === passing_mode::reference) {
 				if (!($argument instanceof ast_name_expression)) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');

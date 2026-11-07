@@ -3,7 +3,7 @@ set(datetime_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 scpp_provider_outputs(datetime_outputs ${datetime_generated} ${datetime_publication})
 foreach(path public/scpp/numeric.hpp
     public/scpp/short_names.hpp
-    public/scpp/carriers.hpp public/scpp/datetime.hpp src/runtime.cpp src/datetime.cpp prepared.json inventory.json)
+    public/scpp/datetime.hpp src/runtime.cpp src/datetime.cpp prepared.json inventory.json)
   list(APPEND datetime_outputs ${datetime_generated}/${path})
 endforeach()
 add_custom_command(OUTPUT ${datetime_outputs}

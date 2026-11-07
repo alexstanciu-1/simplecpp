@@ -145,10 +145,10 @@ function render(array $plan): array {
     }
     $files += ['public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
     renderOwnership($plan, $files);
-    renderHashes($plan, $files);
+    renderHashes($plan, $files, $groups);
     renderDatetime($plan, $files);
     renderJson($plan, $files);
-    renderBoxed($plan, $files);
+    renderBoxed($plan, $files, $groups);
     $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration'), 'system' => ['stddef.h', 'stdint.h']];
     $files['private/output_provider.hpp'] = BANNER . '#pragma once' . "\n"
         . includeHeader(providerHeader($plan['submodules'], $plan['submodules']['groups']['output']['provider']));

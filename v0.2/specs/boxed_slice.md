@@ -104,6 +104,10 @@ are `runtime/src/boxed`, `runtime/src/ownership`, and `runtime/src/numeric`, plu
 `runtime/src/sequence` for generated core string support. The example publication
 and complete link setup are under `tests/boxed/`.
 
-Operators, general casts, boxed keys, native weak/shared adapters, source nested-write
-lowering, source key normalization, JSON and compiler registration remain separate.
+The default publication enables `boxed.scalar_dispatch`. It registers `mixed` and
+`dynamic` through independent providers and adds checked scalar conversions, numeric
+addition and ordering. Each family has its own public header and runtime bindings.
+Generated dispatch selects the ordinary scalar rule for the observed kind. The application
+links the prebuilt runtime. The boxed storage API above can also be published separately.
+Source container operations, key normalization and explicit family crossing remain deferred.
 Public traversal remains RT-DEBT-01. See [validation](boxed_slice_validation.md).

@@ -7,7 +7,7 @@ and [mixed-ordering semantics](../../../specs/expression_evaluation.md#mixed-can
 own this slice. It adds plain int64/float64 `< <= > >=` in both operand orders.
 Mixed arithmetic is also admitted as described in [mixed arithmetic](mixed_arithmetic.md).
 Float-destination compounds are explicitly admitted by [compound promotion](mixed_compounds.md).
-[Mixed equality](mixed_equality.md) also uses this path; carriers and conversion-chain search remain deferred.
+[Mixed equality](mixed_equality.md) also uses this path; [carrier transport](carrier_values.md) now composes extraction/wrapping flags with these same scalar operations. General conversion-chain search remains deferred.
 
 ## Metadata and generated interfaces
 
