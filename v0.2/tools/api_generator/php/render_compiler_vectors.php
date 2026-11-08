@@ -2,6 +2,13 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+/** The checked sequence read has one preparation and member-call shape for strings and vectors. */
+function compilerIndexRead(string $receiver, string $count, string $element, string $method): string {
+    return strtr(readFile(__DIR__ . '/../templates/index_read.php.tpl'), [
+        '@receiver@' => $receiver, '@count@' => $count, '@element@' => $element, '@index@' => $method,
+    ]);
+}
+
 /** Emit concrete identities and bounded member handlers from validated runtime specializations. */
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
@@ -29,7 +36,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
-            '@append@' => $append['name'], '@index@' => $index['name'],
+            '@append@' => $append['name'], '@index_methods@' => compilerIndexRead('Vector', $countClass, $elementClass, $index['name']),
         ]);
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }

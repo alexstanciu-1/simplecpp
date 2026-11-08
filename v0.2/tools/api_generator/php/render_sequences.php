@@ -42,8 +42,15 @@ function renderString(array $plan): array {
             $h .= "    explicit $n(" . scalarInput($c['source']) . " value);\n";
         }
     }
+    $read = $plan['string_index_read'] ?? null;
+    if ($read) $h .= "    {$read['result']} {$read['name']}({$read['key']} index) const;\n";
     $h .= template('string_methods_declaration', $vars);
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
+    if ($read) {
+        $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
+            . "    const auto bytes = detail::string_access::read(*this);\n"
+            . "    return static_cast<{$read['result']}>(bytes[detail::sequence_index(index, bytes.size())]);\n}\n";
+    }
     foreach($s['operations'] as $op) {
         $append = $op['implementation'] === 'string_append';
         $symbol = $op['symbol'];

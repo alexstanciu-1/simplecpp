@@ -419,7 +419,7 @@ final class Cpp_Emitter
 			return $type->lower_cpp_empty();
 		}
 		if ($value instanceof ast_index_expression) {
-			/** @var indexed_collection_type $type */
+			/** @var index_read_type $type */
 			$type = $value->receiver->type_def();
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);

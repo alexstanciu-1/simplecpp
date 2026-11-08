@@ -55,7 +55,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'explicit_formatters']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'explicit_formatters', 'index_read']);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -71,7 +71,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         return;
     }
     $p = $publication->string;
-    fields($p, ['header', 'operations', 'casts', 'functions', 'explicit_formatters']);
+    fields($p, ['header', 'operations', 'casts', 'functions', 'explicit_formatters', 'index_read']);
     $provider = textValue(at($m, 'provider'));
     $header = providerHeader($plan['submodules'], $provider);
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'String publication header conflicts with provider');
@@ -112,6 +112,18 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'symbol' => $symbol, 'method' => $function->method, 'header' => $header];
     }
     $requires = array_merge(['bool_t'], names(at($p, 'casts')));
+    if (boolean($p->index_read ?? false)) {
+        $read = at($m, 'index_read');
+        fields($read, ['method', 'key', 'result', 'policy']);
+        literals($read, ['policy' => 'checked_byte_offset', 'key' => $count, 'result' => 'uint8']);
+        $method = textValue(at($read, 'method'));
+        requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $method) === 1 && !in_array($method, array_column($methods, 'name'), true), 'Invalid string index method');
+        requireThat(hasType($plan, $read->key) && hasType($plan, $read->result), 'String indexing requires published key and byte types');
+        $plan['string_index_read'] = ['name' => $method, 'key' => $read->key, 'result' => $read->result];
+        $methods[] = ['name' => $method, 'receiver' => 'const_reference', 'arguments' => [$read->key],
+            'result' => $read->result, 'result_category' => 'value', 'can_fail' => true];
+        array_push($requires, $read->key, $read->result);
+    }
     if ($symbols) $requires[] = $count;
     foreach (names($p->explicit_formatters ?? [], 'Duplicate explicit formatter') as $source) {
         $row = at(at($m, 'explicit_formatters'), $source);

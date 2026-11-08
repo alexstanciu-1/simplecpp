@@ -581,6 +581,7 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "index_read": {"method": "byte_at", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
     "explicit_formatters": {
       "bool_t": {"policy": "boolean_words", "symbol": "format_bool"},
       "uint8": {"policy": "decimal_integer", "symbol": "format_uint8"},

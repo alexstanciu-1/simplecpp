@@ -28,14 +28,6 @@ final class @class@ extends vector_type_definition
 		return @element@::instance()->prepare_conversion($value, conversion_context::typed_destination);
 	}
 
-	public function prepare_index(ast_index_expression $value): void
-	{
-		if ($value->index->type_def() !== @count@::instance()) {
-			throw new diagnostic($value->index->source(), $value->index->byte_start(), 'Vector index requires ' . @count@::instance()->name);
-		}
-		$value->settle_element(@element@::instance());
-	}
-
 	public function lower_cpp_empty(): string
 	{
 		return @cpp@ . '{}';
@@ -46,11 +38,7 @@ final class @class@ extends vector_type_definition
 		return '(' . $receiver . ').@append@(static_cast<' . @element@::instance()->cpp_type() . '>(' . $value . '))';
 	}
 
-	public function lower_cpp_index(string $receiver, string $index): string
-	{
-		return '(' . $receiver . ').@index@(static_cast<' . @count@::instance()->cpp_type() . '>(' . $index . '))';
-	}
-
+@index_methods@
 	/** STATIC METHODS */
 	public static function instance(): self
 	{

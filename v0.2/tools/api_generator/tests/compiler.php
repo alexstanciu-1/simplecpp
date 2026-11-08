@@ -47,6 +47,17 @@ $formatPlan = prepareRuntime($functionMetadata, $demand, $facts);
 requireThat(!isset($formatPlan['explicit_formatters'])
     && !str_contains(renderCompiler($functionMetadata, $facts, $formatPlan)['types/string.php'], 'value_conversion::format_int64'),
     'Deselected formatter remains available to the compiler');
+// A publication may rename or omit the checked string read independently of other string operations.
+$functionMetadata->string->index_read->method = 'read_byte_probe';
+$indexPlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(str_contains(renderString($indexPlan)[0], 'uint8 read_byte_probe(int64 index) const')
+    && str_contains(renderCompiler($functionMetadata, $facts, $indexPlan)['types/string.php'], '.read_byte_probe('),
+    'String index lowering ignored its published binding');
+$demand->string->index_read = false;
+$indexPlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(!str_contains(renderString($indexPlan)[0], 'read_byte_probe')
+    && !str_contains(renderCompiler($functionMetadata, $facts, $indexPlan)['types/string.php'], 'implements index_read_type'),
+    'Deselected string read is still published');
 // Export planning is pure and order independent; public names do not select storage strategy.
 $reorderedExports = unserialize($originalExportMetadata);
 $reorderedExports->type_exports = array_reverse($reorderedExports->type_exports);

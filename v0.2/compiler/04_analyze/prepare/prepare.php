@@ -417,8 +417,8 @@ final class Preparation
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
-			if (!($type instanceof indexed_collection_type)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash or boxed container');
+			if (!($type instanceof index_read_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);

@@ -3,12 +3,17 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Collection protocols implemented by published types that support typed [] and copied reads. */
-interface indexed_collection_type
+/** A receiver with a non-addressable indexed value, e.g. text[0]. */
+interface index_read_type
 {
 	public function prepare_index(ast_index_expression $value): void;
-	public function lower_cpp_empty(): string;
 	public function lower_cpp_index(string $receiver, string $index): string;
+}
+
+/** Indexed collections that can also be initialized with []. */
+interface indexed_collection_type extends index_read_type
+{
+	public function lower_cpp_empty(): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */

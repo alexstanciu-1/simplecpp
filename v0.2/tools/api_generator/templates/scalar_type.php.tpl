@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 // Generated from runtime metadata and validated target facts. Do not edit.
 /** Canonical @name@ definition; literal facts belong to source AST nodes, not this shared identity. */
-final class type_@class@ extends type_definition
+final class type_@class@ extends type_definition@index_interface@
 {
 @limits@	/** STATIC PROPERTIES */
 	private static ?self $instance = null;

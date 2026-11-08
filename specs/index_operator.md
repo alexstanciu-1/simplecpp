@@ -58,7 +58,7 @@ contract; ordinary dynamic value reads also return dynamic under the approved
 separated-family contract (runtime/compiler migration pending). Path brackets are
 not prepared or emitted as copied value reads.
 
-String indexing, unregistered receivers, zero-argument value reads, intermediate append,
+Unregistered receivers, zero-argument value reads, intermediate append,
 indexed updates and native reference arguments remain deferred.
 Effective storage modifiers and broader key families are not admitted by this slice.
 
@@ -81,11 +81,20 @@ while preserving lazy probe-key evaluation. It does not admit nullable stored ke
 types or PHP bool/float/null key coercion. The focused nullable_keys.py proof covers
 ordinary and prelowered execution, identity upcasts and failure ordering.
 
+## String byte reads in v0.2
+
+For the v0.2 compiler the published string read supersedes the historical
+[runtime string-index reservation](../runtime/specs/spec.md). In every flavor,
+`text[i]` takes an int/int64 byte offset and returns a copied byte/uint8 in
+0..255. The valid interval is `0 <= i < strlen(text)`. An invalid offset,
+including any offset into an empty string, throws `std::out_of_range` with
+code `sequence_index_out_of_range`. UTF-8 bytes and embedded NUL are ordinary
+payload bytes. The trailing storage terminator is outside this interval.
+Strings do not provide indexed writes, append brackets or reference binding.
+
 ## Runtime and legacy boundary
 
-The existing [runtime string-index reservation](../runtime/specs/spec.md) remains
-unchanged. Byte versus code-point indexing, result types, bounds behavior and writes
-must be settled by the future string operator contract. Existing legacy generator
+Existing legacy generator
 container/append behavior does not define this canonical bracket model.
 
 LLVM remains parked. Its existing fixed-array one-argument path is unchanged; an

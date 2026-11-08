@@ -66,11 +66,19 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
             ]) : compilerLiteralMethods($definition);
         if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
+        $indexInterface = '';
+        if ($identity === 'string' && isset($runtime['string_index_read'])) {
+            $read = $runtime['string_index_read'];
+            requireThat(isset($definitions[$read['key']], $definitions[$read['result']]), 'Compiler string index requires key and result types');
+            $indexInterface = ' implements index_read_type';
+            $methods .= "\n" . compilerIndexRead('String', 'type_' . $definitions[$read['key']]['class'],
+                'type_' . $definitions[$read['result']]['class'], $read['name']);
+        }
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';
         $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalar_type.php.tpl'), [
-            '@name@' => $identity, '@class@' => $definition['class'], '@limits@' => $limits,
+            '@name@' => $identity, '@class@' => $definition['class'], '@limits@' => $limits, '@index_interface@' => $indexInterface,
             '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
             '@constructor_checks@' => $hostChecks, '@literal_methods@' => $literalMethods, '@conversion_methods@' => $methods,
         ]);
