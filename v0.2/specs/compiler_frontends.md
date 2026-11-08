@@ -78,7 +78,7 @@ Prefix `!` binds above arithmetic; `&&` binds below equality and above `||`.
 Each operand independently admits bool, int64, float or string; the result is bool.
 See [logical expressions](../compiler/docs/logical.md) for short-circuit and incremental boundaries.
 There is no member access, general string expressions, PHP tags/HTML
-modes, C++ preprocessing, JS prototypes or JS template literals yet.
+modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded [three-flavor grammar](../../specs/string_interpolation.md#active-v02-flavors).
 
 Planned type syntax will preserve nested type arguments, including vector<vector<int>>.
 This is syntax admission, not container construction, type lookup or generic lowering.

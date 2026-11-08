@@ -166,6 +166,12 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_interpolated_string) {
+			$row['parts'] = array_map(self::value(...), $value->parts);
+		}
+		if ($value instanceof ast_interpolation_name) {
+			$row['conversion'] = value_conversion::name($value->conversion());
+		}
 		if ($value instanceof ast_cast_expression) {
 			$row['conversion'] = value_conversion::name($value->conversion());
 			$row['operand'] = self::value($value->operand);

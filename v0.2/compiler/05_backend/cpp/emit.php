@@ -425,6 +425,30 @@ final class Cpp_Emitter
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
 			return $type->lower_cpp_index($receiver, $index);
 		}
+		if ($value instanceof ast_interpolated_string) {
+			$type = $value->type_def();
+			$code = '';
+			foreach ($value->parts as $part) {
+				$operand = $this->value($part, $global_references, $declarations, $required_headers);
+				if ($part instanceof ast_interpolation_name) {
+					$conversion = $part->conversion();
+					foreach ($type->scalar_conversion_headers($conversion) as $header) {
+						$required_headers[$header] = true;
+					}
+					$operand = $type->lower_scalar_conversion($conversion, $operand);
+				}
+				if ($code === '') {
+					if (count($value->parts) === 1) {
+						return $type->cpp_type() . '(' . $operand . ')';
+					}
+					$code = '([&]() { ' . $type->cpp_type() . ' result = ' . $operand . ';';
+				}
+				else {
+					$code .= ' result.append(' . $operand . ');';
+				}
+			}
+			return $code . ' return result; }())';
+		}
 		if ($value instanceof ast_cast_expression) {
 			$type = $value->type_def();
 			$conversion = $value->conversion();

@@ -85,6 +85,12 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
+		if ($value instanceof ast_interpolated_string) {
+			foreach ($value->parts as $part) {
+				self::expression($part);
+			}
+			return;
+		}
 		if (($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);

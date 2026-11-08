@@ -73,7 +73,7 @@ final class ast_keyword_expression extends ast_expression
  * ```
  * The expression stores value as its name; source tokens retain the leading dollar.
  */
-final class ast_name_expression extends ast_expression
+class ast_name_expression extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly string $name;

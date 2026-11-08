@@ -107,7 +107,7 @@ foreach (token_kind::cases() as $kind)
 	check(is_int($kind->value) && ($kind->value > 0) && ($kind->value <= 127), 'Kind ID fits seven bits');
 	check(token_kind::from($kind->value) === $kind, 'Integer kind round trip');
 	if (!in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::integer,
-				token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::keyword],
+				token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string, token_kind::keyword],
 			true)) {
 		$list = scan($kind->label());
 		check((count($list->tokens) === 1) && ($list->tokens[0]->kind === $kind),

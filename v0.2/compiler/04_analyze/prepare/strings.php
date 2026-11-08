@@ -10,15 +10,18 @@ final class String_Literals
 	public static function decode(ast_string_expression $syntax): string
 	{
 		$text = $syntax->source_text();
-		$single = $text[0] === "'";
-		$end = strlen($text) - 1;
+		$part = $syntax instanceof ast_interpolation_text;
+		$cpp = $part ? $syntax->source()->flavor === flavor::cpp : str_starts_with($text, 'f"');
+		$js = $part ? $syntax->source()->flavor === flavor::js : $text[0] === '`';
+		$single = !$part && $text[0] === "'";
+		$end = strlen($text) - ($part ? 0 : 1);
 		$bytes = '';
-		for ($index = 1; $index < $end; ++$index)
+		for ($index = $part ? 0 : ($cpp ? 2 : 1); $index < $end; ++$index)
 		{
 			$byte = $text[$index];
-			if ((!$single) && ($byte === '$')) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start() + $index,
-					'String interpolation is not supported yet; escape the dollar or use single quotes');
+			if ($cpp && ($byte === '{' || $byte === '}')) {
+				// Parsing validated doubled literal braces before preparation.
+				++$index;
 			}
 			if ($byte !== '\\') {
 				$bytes .= $byte;
@@ -36,7 +39,7 @@ final class String_Literals
 			}
 			$decoded = match ($next) {
 				'\\' => '\\', '"' => '"', '$' => '$',
-					'n' => "\n", 'r' => "\r", 't' => "\t", '0' => "\0",
+					'`' => $js ? '`' : null, 'n' => "\n", 'r' => "\r", 't' => "\t", '0' => "\0",
 					default => null,
 			};
 			$following = $text[$index + 1] ?? '';

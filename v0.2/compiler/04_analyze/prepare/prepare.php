@@ -425,6 +425,17 @@ final class Preparation
 			$type->prepare_index($syntax);
 			return;
 		}
+		if ($syntax instanceof ast_interpolated_string) {
+			$string = type_registry::string();
+			foreach ($syntax->parts as $part) {
+				$this->value($part, $initializing);
+				if ($part instanceof ast_interpolation_name) {
+					$part->prepare_text($string);
+				}
+			}
+			$syntax->settle_string($string);
+			return;
+		}
 		if ($syntax instanceof ast_cast_expression) {
 			$this->value($syntax->operand, $initializing);
 			$type = Type_Resolution::resolve($syntax->type_reference);
@@ -511,6 +522,9 @@ final class Preparation
 				$write = $this->latest_writes[$id] ?? null;
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown);
 				return;
+			}
+			if ($syntax instanceof ast_interpolation_name) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
 			}
 			$separator = strpos($name, '\\');
 			if ($syntax->member_syntax && ($separator !== false)

@@ -56,7 +56,9 @@ foreach (flavor::cases() as $flavor)
 		$decl('string', 'bad', '8'), $decl('int', 'bad', '"8"'),
 		$decl('bool', 'bad', '"true"'), $decl('float', 'bad', '"8.5"'),
 		'global ' . $decl('string', 'bad', '"x"'), 'global ' . $decl('string', 'bad', '1'),
-		'return "x";', $decl('string', 'bad', '"$interpolation"'), $decl('string', 'bad', '"\\q"'),
+		'return "x";', $decl('string', 'bad', match ($flavor) {
+			flavor::php => '"$missing"', flavor::js => '`${missing}`', flavor::cpp => 'f"{missing}"',
+		}), $decl('string', 'bad', '"\\q"'),
 	] as $invalid) {
 		try {
 			$prepare($invalid . 'return 8;');

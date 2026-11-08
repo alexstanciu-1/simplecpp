@@ -121,7 +121,13 @@ final class Tokenizer
 				}
 				continue;
 			}
-			if (($first === '"') || ($first === "'")) {
+			if ((($first === '`') && ($source->flavor === flavor::js)) || str_starts_with($word, 'f"')) {
+				if (!self::closed_quote($word, $first === 'f' ? 1 : 0)) {
+					throw new diagnostic($source, $start, 'Unterminated interpolated string');
+				}
+				$kind = token_kind::template_string;
+			}
+			elseif (($first === '"') || ($first === "'")) {
 				if (!self::closed_quote($word)) {
 					throw new diagnostic($source, $start, 'Unterminated quoted string');
 				}
@@ -169,10 +175,10 @@ final class Tokenizer
 
 	/** STATIC METHODS */
 	/** A failed quote match consumes the remaining source once, avoiding repeated suffix scans. */
-	private static function closed_quote(string $word): bool
+	private static function closed_quote(string $word, int $opening /** uint8 */ = 0): bool
 	{
 		$last = strlen($word) - 1;
-		if (($last === 0) || ($word[$last] !== $word[0])) {
+		if (($last === $opening) || ($word[$last] !== $word[$opening])) {
 			return false;
 		}
 		$index = $last - 1;
@@ -208,6 +214,12 @@ final class Tokenizer
 		$strings = <<<'REGEX'
 "[^"\\]*+(?:\\[\s\S][^"\\]*+)*+"|'[^'\\]*+(?:\\[\s\S][^'\\]*+)*+'
 REGEX;
+		if ($flavor === flavor::cpp) {
+			$strings = 'f?' . $strings . '|f"[\s\S]*+\z';
+		}
+		elseif ($flavor === flavor::js) {
+			$strings .= '|' . str_replace('"', '`', strstr($strings, '|', true)) . '|`[\s\S]*+\z';
+		}
 		$names = match ($flavor) {
 			flavor::php => '\$[A-Za-z_][A-Za-z_0-9]*+|[A-Za-z_][A-Za-z_0-9]*+',
 				flavor::cpp => '[A-Za-z_][A-Za-z_0-9]*+',

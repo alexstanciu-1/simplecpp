@@ -87,6 +87,10 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_index_expression) {
 			return ['kind' => 'index', 'receiver' => self::expression($expression->receiver), 'index' => self::expression($expression->index)];
 		}
+		if ($expression instanceof ast_interpolated_string) {
+			return ['kind' => 'interpolated_string', 'parts' => array_map(self::expression(...), $expression->parts),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_cast_expression) {
 			return ['kind' => 'cast', 'type_name' => $expression->type_reference->spelling(),
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
@@ -126,7 +130,7 @@ final class Syntax_Inspection
 			return ['kind' => 'integer', 'spelling' => $expression->source_text(), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_name_expression) {
-			return ['kind' => 'name', 'name' => self::name($expression, $expression->name, $expression->start, $expression->end),
+			return ['kind' => 'name', 'name' => ['text' => $expression->name, 'span' => self::span($expression)],
 				'span' => self::span($expression)];
 		}
 		throw new \LogicException('Unhandled expression inspection');

@@ -73,6 +73,7 @@ enum token_kind: int /** uint8 */
 	case backslash = 60;
 	case assign = 61;
 	case keyword = 62;
+	case template_string = 63;
 
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
@@ -85,6 +86,7 @@ enum token_kind: int /** uint8 */
 				self::floating => 'floating',
 				self::single_string => 'single_string',
 				self::double_string => 'double_string',
+				self::template_string => 'template_string',
 				self::ellipsis => '...',
 				self::power_assign => '**=',
 				self::left_assign => '<<=',

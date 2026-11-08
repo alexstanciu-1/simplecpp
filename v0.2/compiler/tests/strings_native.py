@@ -94,7 +94,7 @@ def prove(work, fixture_script="strings.php", check_copy=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php', 'text_casts.php', 'string_index.php'], default='strings.php')
+    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php', 'text_casts.php', 'string_index.php', 'interpolation.php'], default='strings.php')
     args = parser.parse_args()
     if args.output:
         prove(args.output.resolve(), args.fixture, check_copy=args.fixture == 'strings.php')

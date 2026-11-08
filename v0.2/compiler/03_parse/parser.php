@@ -536,7 +536,7 @@ final class Parser
 		}
 		$kind = $tokens->tokens[$start + 3]->kind ?? null;
 		return in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
-			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string,
+			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string,
 			token_kind::lparen, token_kind::bang, token_kind::tilde, token_kind::backslash, token_kind::scope], true)
 			|| ((($kind === token_kind::minus) || ($kind === token_kind::plus))
 				&& in_array($tokens->tokens[$start + 4]->kind ?? null, [token_kind::integer, token_kind::floating], true));
@@ -619,9 +619,13 @@ final class Parser
 			return $this->call();
 		}
 		$start = $this->cursor->position();
-		if ($this->cursor->is(token_kind::single_string) || $this->cursor->is(token_kind::double_string)) {
-			$kind = $this->cursor->is(token_kind::single_string) ? token_kind::single_string : token_kind::double_string;
+		if ($this->cursor->is(token_kind::single_string) || $this->cursor->is(token_kind::double_string)
+			|| $this->cursor->is(token_kind::template_string)) {
+			$kind = $this->cursor->tokens->tokens[$start]->kind;
 			$this->cursor->take($kind, 'string literal');
+			if ($kind === token_kind::template_string || ($kind === token_kind::double_string && $this->cursor->tokens->source->flavor === flavor::php)) {
+				return Interpolation::parse($this->cursor->tokens, $start);
+			}
 			return new ast_string_expression($start, $start + 1);
 		}
 		if (($this->cursor->is(token_kind::minus) || $this->cursor->is(token_kind::plus))

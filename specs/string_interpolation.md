@@ -4,7 +4,7 @@ Doc Status: normative
 Agreed 2026-10-02 for the my-try v0.2 frontend. This contract does not expand legacy
 frontend support or change ordinary concatenation conversion rules.
 
-Double-quoted strings admit `$name` and `{$name}` insertions. Names use the ordinary
+In the PHP flavor, double-quoted strings admit `$name` and `{$name}` insertions. Names use the ordinary
 ASCII identifier grammar and resolve to existing locals or parameters. Unbraced
 names consume the longest identifier; braces disambiguate a literal suffix.
 Single quotes never interpolate. Existing double-quote escapes remain unchanged:
@@ -14,7 +14,7 @@ and UTF-8 sequences.
 
 Each insertion accepts a scalar supported by the existing explicit string cast:
 string identity, integer widths, float and bool. Its representation is exactly that
-of `(string)$name`; for example true becomes `"1"` and false becomes `""`. No
+of `(string)$name` under the active scalar cast contract; v0.2 renders booleans as `"true"` and `"false"`. No
 independent formatting policy, mixed-value coercion or object stringification is added.
 
 Parts are evaluated and converted once each, left-to-right, then appended to a new
@@ -25,7 +25,7 @@ checked even when an enclosing runtime operation could skip evaluation.
 
 ## Bounded grammar
 
-Fields, indexes, calls, assignments, arbitrary expressions, variable variables and
+In the PHP spelling, fields, indexes, calls, assignments, arbitrary expressions, variable variables and
 `${name}` are unsupported insertion forms. Braced syntax must be exactly `{$name}`.
 Unbraced names followed immediately by `[`, `->` or `(` are rejected rather than
 partially accepting a larger insertion. Use `"{$name}[0]"` or `"{$name}()"` when those
@@ -48,5 +48,20 @@ collection, source ranges, diagnostics and incremental behavior.
 [Generated-program fixtures](../compiler/my-try/tests/s2s.php) compare exact output
 bytes across both spellings, scalar conversions, escapes and snapshots.
 
-For v0.2, [the scalar cast amendment](compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02)
-sets the boolean words to `true` and `false`. String interpolation itself is deferred in v0.2.
+## Active v0.2 flavors
+
+| Flavor | Example | Literal markers |
+| --- | --- | --- |
+| PHP | `"Hi $name, count={$n}"` | `\$` is a literal dollar; single quotes preserve markers. |
+| JS | `` `Hi ${name}, count=${n}` `` | Backticks activate interpolation. A backslash escapes a dollar or backtick. |
+| C++ | `f"Hi {name}, count={n}"` | `{{` and `}}` insert literal braces. The prefix is adjacent to the opening quote. |
+
+Ordinary JS and C++ quoted strings keep markers as text. The C++ flavor implements
+the f-literal spelling in the Simple C++ frontend. Native builds consume ordinary
+runtime string operations. Each flavor admits a single local or parameter name
+per insertion using its existing ASCII name characters. Calls, expressions,
+global names and formatting specifiers are outside this slice.
+
+String, bool, byte/uint8, int/int64 and float/float64 insertions use the
+[explicit scalar cast](compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02).
+Null, boxed values, carriers and collections require separate handling by the caller.

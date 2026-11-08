@@ -41,6 +41,7 @@ require_once __DIR__ . '/03_parse/namespaces.php';
 require_once __DIR__ . '/03_parse/imports.php';
 require_once __DIR__ . '/03_parse/globals.php';
 require_once __DIR__ . '/03_parse/constants.php';
+require_once __DIR__ . '/03_parse/interpolation.php';
 require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/03_parse/flavors/cpp.php';
 require_once __DIR__ . '/03_parse/flavors/php.php';
