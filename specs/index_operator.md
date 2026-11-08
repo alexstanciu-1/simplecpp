@@ -90,7 +90,13 @@ For the v0.2 compiler the published string read supersedes the historical
 including any offset into an empty string, throws `std::out_of_range` with
 code `sequence_index_out_of_range`. UTF-8 bytes and embedded NUL are ordinary
 payload bytes. The trailing storage terminator is outside this interval.
-Strings do not provide indexed writes, append brackets or reference binding.
+A writable string local or parameter also supports `text[i] = value`. The key is
+evaluated once before the right-hand side. The typed byte destination uses the
+ordinary checked conversions. After conversion the same read bounds apply to the
+current string; a successful store replaces one byte in place, preserving length
+and storage form. A conversion or bounds failure performs no store. Ordinary
+value copies remain independent. Append brackets, compound stores and references
+to individual bytes are deferred.
 
 ## Runtime and legacy boundary
 

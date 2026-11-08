@@ -157,13 +157,14 @@ final class Preparation
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
 				}
 				$type = $statement->receiver->type_def();
-				if (!($type instanceof keyed_collection_type)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a hash or boxed container; vector indexed writes are deferred');
+				if (!($type instanceof index_write_type)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, hash or boxed container; vector indexed writes are deferred');
 				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
 				$this->value($statement->value);
 				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
+				$this->latest_writes[$statement->receiver->declaration()->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				$this->value($statement->receiver);

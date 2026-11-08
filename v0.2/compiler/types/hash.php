@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements keyed_collection_type
+abstract class hash_type_definition extends type_definition implements indexed_collection_type, index_write_type
 {
 	/** PROPERTIES */
 	/** Native non-owning canonical value type. */

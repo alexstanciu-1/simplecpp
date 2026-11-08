@@ -17,7 +17,7 @@ interface indexed_collection_type extends index_read_type
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
-interface keyed_collection_type extends indexed_collection_type
+interface index_write_type
 {
 	public function prepare_key(ast_expression $key): void;
 	public function write_type(): type_definition;

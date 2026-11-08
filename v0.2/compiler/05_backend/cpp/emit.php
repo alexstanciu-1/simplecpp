@@ -233,7 +233,7 @@ final class Cpp_Emitter
 				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
 			}
 			elseif ($statement instanceof ast_index_assignment) {
-				/** @var keyed_collection_type $type */
+				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
 				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
@@ -245,8 +245,8 @@ final class Cpp_Emitter
 				}
 				$value = $destination->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
 				// Separate statements keep key evaluation before RHS effects and conversion before mutation.
-				$lines[] = "\t{ const auto hash_key = " . $type->lower_cpp_key($key) . '; const auto hash_value = ' . $value . '; '
-					. $type->lower_cpp_write($receiver, 'hash_key', 'hash_value') . '; }';
+				$lines[] = "\t{ const auto index_key = " . $type->lower_cpp_key($key) . '; const auto index_value = ' . $value . '; '
+					. $type->lower_cpp_write($receiver, 'index_key', 'index_value') . '; }';
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				/** @var vector_type_definition $type */

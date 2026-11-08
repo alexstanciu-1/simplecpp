@@ -74,6 +74,15 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $methods .= "\n" . compilerIndexRead('String', 'type_' . $definitions[$read['key']]['class'],
                 'type_' . $definitions[$read['result']]['class'], $read['name']);
         }
+        if ($identity === 'string' && isset($runtime['string_index_write'])) {
+            $write = $runtime['string_index_write'];
+            requireThat(isset($definitions[$write['key']], $definitions[$write['value']]), 'Compiler string store requires key and byte types');
+            $indexInterface .= $indexInterface === '' ? ' implements index_write_type' : ', index_write_type';
+            $methods .= "\n" . strtr(readFile(__DIR__ . '/../templates/string_index_write.php.tpl'), [
+                '@key@' => 'type_' . $definitions[$write['key']]['class'], '@value@' => 'type_' . $definitions[$write['value']]['class'],
+                '@method@' => $write['name'],
+            ]);
+        }
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';

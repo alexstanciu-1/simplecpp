@@ -697,6 +697,7 @@
     "int_t"
   ],
   "string": {
+    "index_write": true,
     "index_read": true,
     "explicit_formatters": ["bool_t", "uint8", "int64", "float64"],
     "functions": ["strlen"],

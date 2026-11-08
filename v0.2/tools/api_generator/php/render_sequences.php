@@ -44,12 +44,20 @@ function renderString(array $plan): array {
     }
     $read = $plan['string_index_read'] ?? null;
     if ($read) $h .= "    {$read['result']} {$read['name']}({$read['key']} index) const;\n";
+    $write = $plan['string_index_write'] ?? null;
+    if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
         $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
             . "    const auto bytes = detail::string_access::read(*this);\n"
             . "    return static_cast<{$read['result']}>(bytes[detail::sequence_index(index, bytes.size())]);\n}\n";
+    }
+    if ($write) {
+        $d .= "void $n::{$write['name']}({$write['key']} index, {$write['value']} value) {\n"
+            . "    const auto offset = detail::sequence_index(index, detail::string_access::read(*this).size());\n"
+            . "    char* bytes = is_inline() ? rep_.small.bytes : rep_.large.ptr->bytes.data();\n"
+            . "    bytes[offset] = static_cast<char>(value);\n}\n";
     }
     foreach($s['operations'] as $op) {
         $append = $op['implementation'] === 'string_append';

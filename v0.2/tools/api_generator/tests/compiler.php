@@ -58,6 +58,17 @@ $indexPlan = prepareRuntime($functionMetadata, $demand, $facts);
 requireThat(!str_contains(renderString($indexPlan)[0], 'read_byte_probe')
     && !str_contains(renderCompiler($functionMetadata, $facts, $indexPlan)['types/string.php'], 'implements index_read_type'),
     'Deselected string read is still published');
+// Byte replacement can be published without a read and has its own runtime binding.
+$functionMetadata->string->index_write->method = 'replace_byte_probe';
+$writePlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(str_contains(renderString($writePlan)[0], 'void replace_byte_probe(int64 index, uint8 value)')
+    && str_contains(renderCompiler($functionMetadata, $facts, $writePlan)['types/string.php'], '.replace_byte_probe('),
+    'String store ignored its published binding');
+$demand->string->index_write = false;
+$writePlan = prepareRuntime($functionMetadata, $demand, $facts);
+requireThat(!str_contains(renderString($writePlan)[0], 'replace_byte_probe')
+    && !str_contains(renderCompiler($functionMetadata, $facts, $writePlan)['types/string.php'], 'index_write_type'),
+    'Disabled string store is still published');
 // Export planning is pure and order independent; public names do not select storage strategy.
 $reorderedExports = unserialize($originalExportMetadata);
 $reorderedExports->type_exports = array_reverse($reorderedExports->type_exports);
