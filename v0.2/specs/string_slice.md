@@ -98,11 +98,11 @@ coercion, native numeric construction or automatic native-pointer concatenation.
 Use `a + string{"Ada"}`. C-string construction consumes up to the first NUL;
 pointer/count construction preserves every supplied byte. Size measures bytes.
 
-Storage is an incomplete private pointer to a generated owner containing
-std::string. This avoids exposing templates and depending on standard-library
-layout/ABI sizes. Its cost is an extra allocation/indirection for materialized
-strings, including short strings; this slice makes no performance-equivalence
-claim to an inline std::string. Default and moved-from values need no allocation.
+The public object occupies 24 bytes. Up to 22 payload bytes live inline, with a
+separate byte length and trailing NUL. Longer strings own private std::string
+storage. Default and moved-from values are inline and empty. Native consumers
+can inspect the limit via `string::inline_capacity` and the current form via
+`is_inline()`. Neither form adds standard-library includes to the public API.
 Copies own independent bytes; moves leave an empty, reusable source. Copy assignment
 constructs the replacement before changing the target. Self-copy, self-move and
 self-append are supported. Clear releases the stored value. `data()` is a native

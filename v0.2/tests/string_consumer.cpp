@@ -30,6 +30,25 @@ static_assert(std::is_constructible_v<string, const char*, __INT64_TYPE__>);
 static_assert(std::is_constructible_v<string, const char*, int64>);
 
 int main() {
+    static_assert(sizeof(string) == 24 && string::inline_capacity == 22);
+    const std::string fill(23, 'z');
+    string edge{fill.data(), 21};
+    edge.append(string{"x"});
+    require(edge.is_inline() && edge.size() == 22 && edge.data()[22] == 0);
+    edge.append(string{"y"});
+    require(!edge.is_inline() && edge.size() == 23 && edge.data()[23] == 0);
+    auto long_copy = edge;
+    edge.append(edge);
+    require(edge.size() == 46 && long_copy.size() == 23 && std::memcmp(edge.data(), edge.data() + 23, 23) == 0);
+    string crossing{"1234567890ab"};
+    crossing.append(crossing);
+    require(!crossing.is_inline() && crossing == string{"1234567890ab1234567890ab"});
+    crossing = string{"short"};
+    require(crossing.is_inline());
+    crossing = std::move(long_copy);
+    require(!crossing.is_inline() && long_copy.empty() && long_copy.is_inline());
+    crossing.clear();
+    require(crossing.is_inline() && crossing.data()[0] == 0);
     string empty;
     require(static_cast<bool>(empty.empty()) && empty.size() == 0 && empty.data()[0] == '\0');
     require(string{"x", 0LL}.size() == 0);

@@ -139,3 +139,14 @@ No second metadata specialization list is required. Type-export lookup on the
 prepared runtime plan now yields each concrete vector's C++ symbol and provider.
 Compiler generation consumes these exports for [vector type resolution](../compiler/docs/vector_types.md).
 The first [vector value operations](../compiler/docs/vector_operations.md) use these concrete bindings. See [the vector contract](vector_slice.md).
+
+## String storage ABI
+
+The native string object occupies 24 bytes. Its public header exposes
+`scpp::string::inline_capacity` (22 payload bytes) and `value.is_inline()`.
+Construction selects storage by byte length. The inline form keeps an explicit
+length and a trailing NUL, including for binary strings with embedded NULs.
+Append promotes to private heap storage when the result exceeds 22 bytes.
+Clear and moved-from values use the empty inline form. Both forms pass borrowed
+bytes to the runtime through a private view. The layout change requires a
+coordinated rebuild of native consumers and runtime archives.

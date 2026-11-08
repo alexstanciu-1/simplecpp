@@ -12,6 +12,8 @@ require_once __DIR__ . '/../php/render_modules.php';
 $root = dirname(__DIR__, 3);
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $publication = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
+// Exercise the standalone scalar runtime surface while deliberately varying its conversion policies.
+$publication->boxed->scalar_dispatch = false;
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $plan = prepareRuntime($metadata, $publication, $facts);
 $files = render($plan);

@@ -26,8 +26,8 @@ function renderString(array $plan): array {
     $s = $plan['string'];
     $n = $s['name'];
     $count = $s['count_representation'];
-    [$lh, $ld] = lifecycle($n);
-    $vars = compact('n', 'count', 'lh', 'ld');
+    $lh = template('lifecycle_declaration', ['n' => $n]);
+    $vars = compact('n', 'count', 'lh') + ['inline_capacity' => $s['inline_capacity']];
     $h = template('string_declaration', $vars);
     $inputs = [];
     foreach ($plan['conversions'] as $conversion) {

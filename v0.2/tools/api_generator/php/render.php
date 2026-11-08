@@ -100,7 +100,7 @@ function render(array $plan): array {
         if ($conversion['target'] !== 'string') continue;
         $source = $conversion['source'];
         $implementation = $conversion['implementation'];
-        $d .= "string::string($source value) : storage_(new storage{detail::$implementation(value)}) {}\n";
+        $d .= "string::string($source value) { detail::string_access::init(*this, detail::$implementation(value)); }\n";
     }
     foreach($plan['native_inputs'] as $n) {
         $d .= "static_assert(std::numeric_limits<{$n['cpp']}>::digits == {$n['digits']});\nstatic_assert(std::numeric_limits<{$n['cpp']}>::is_signed == " . ($n['signed'] ? 'true':'false') . ");\n";

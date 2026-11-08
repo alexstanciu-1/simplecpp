@@ -593,7 +593,7 @@
     "provider": "core.string",
     "type": "string",
     "source_type": "string",
-    "storage": "private_std_string",
+    "storage": "inline_22_private_std_string",
     "count_type": "int64",
     "construction": "explicit",
     "null_pointer": "reject",

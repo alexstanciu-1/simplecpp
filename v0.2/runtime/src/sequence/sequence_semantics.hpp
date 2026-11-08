@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -44,7 +45,7 @@ std::string string_from_bytes(const char *bytes, Integer count) {
 
 // Locale-independent explicit text conversion. These are private algorithms;
 // metadata selects which concrete constructor signatures publish them.
-inline bool decimal_floating_syntax(const std::string &text) {
+inline bool decimal_floating_syntax(std::string_view text) {
     std::size_t i = 0;
     if (i < text.size() && text[i] == '-') ++i;
     const auto digits = [&] {
@@ -64,7 +65,7 @@ inline bool decimal_floating_syntax(const std::string &text) {
 }
 
 template<class Number>
-Number parse_decimal(const std::string &text) {
+Number parse_decimal(std::string_view text) {
     static_assert(std::is_integral_v<Number> || std::is_floating_point_v<Number>);
     static_assert(!std::is_same_v<Number, bool>);
     Number result{};
@@ -81,7 +82,7 @@ Number parse_decimal(const std::string &text) {
     } else {
         // libc++ 18 lacks floating from_chars. Use its standard numeric parser
         // with the classic locale, after validating the same decimal grammar.
-        std::istringstream input(text);
+        std::istringstream input{std::string(text)};
         input.imbue(std::locale::classic());
         input >> std::noskipws >> result;
         // libc++ marks representable subnormal results as ERANGE/failbit too.
@@ -123,7 +124,7 @@ std::string format_decimal(Number number) {
     return std::string(buffer, size);
 }
 
-inline bool parse_boolean_text(const std::string &text) {
+inline bool parse_boolean_text(std::string_view text) {
     if (text == "true") return true;
     if (text == "false") return false;
     throw std::invalid_argument("invalid_boolean_text");

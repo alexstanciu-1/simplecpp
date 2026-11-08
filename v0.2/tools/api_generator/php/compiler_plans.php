@@ -154,7 +154,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
             $literals = [];
         } elseif ($kind === 'string') {
             literals(at($metadata, 'string'), ['type' => 'string', 'source_type' => 'string',
-                'storage' => 'private_std_string', 'count_type' => 'int64', 'construction' => 'explicit']);
+                'storage' => 'inline_22_private_std_string', 'count_type' => 'int64', 'construction' => 'explicit']);
             $storage = compilerTypeBinding($compiler, textValue(at($row, 'storage_binding')), $identity, false);
             $cpp = $storage['symbol'];
             $literals = [];

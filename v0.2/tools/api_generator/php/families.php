@@ -56,7 +56,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         return;
     }
     fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'explicit_formatters']);
-    literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
+    literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
     $caps = names(at($m, 'operations'), 'Duplicate string operation');
@@ -94,7 +94,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     }
     $methods = [];
     $countRepresentation = $registry[$count]['representation'];
-    foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {
+    foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'is_inline' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {
         $methods[] = ['name' => $name, 'result' => $result, 'receiver' => in_array($name, ['append', 'clear'], true) ? 'mutable_reference':'const_reference', 'arguments' => $name === 'append' ? ['const string&']:[], 'result_category' => $name === 'data' ? 'borrowed_bytes_until_mutation_or_destruction':'value', 'can_fail' => in_array($name, ['size', 'append'], true)];
     }
     $symbols = [];
@@ -132,7 +132,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     }
     $requirements = exportProviders($plan['submodules'], $requires);
     $plan['source_types']->string = 'string';
-    $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'empty_state' => 'null_storage', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
+    $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'inline_22_private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'inline_capacity' => 22, 'empty_state' => 'inline', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
 }
 
 function prepareVectors(mixed $metadata, mixed $publication, array $registry, array &$plan): void {
