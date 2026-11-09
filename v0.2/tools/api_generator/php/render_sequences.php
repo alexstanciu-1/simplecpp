@@ -182,6 +182,9 @@ function renderString(array $plan): array {
         $signature = "{$function['result']} $name(" . implode(', ', $parameters) . ')';
         if ($function['implementation'] === 'byte_length') {
             $h .= "namespace str { inline $signature { return value.size(); } }\n";
+        } elseif ($function['implementation'] === 'count_matches') {
+            $h .= "namespace str { $signature; }\n";
+            $d .= template('string_count_matches', ['signature' => $signature]);
         } elseif ($function['implementation'] === 'checked_single_byte') {
             $h .= "namespace str { $signature; }\n";
             $d .= "namespace str { $signature {\n"

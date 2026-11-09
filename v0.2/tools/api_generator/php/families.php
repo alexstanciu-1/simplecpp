@@ -115,7 +115,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $signature = match ($implementation) {
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
-            'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
+            'find', 'rfind', 'count_matches' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
@@ -145,8 +145,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat($padding === isset($function->pad_side), 'Padding requires a side');
         $spellings = ['php' => $name] + $members;
         requireThat($padding === isset($function->flavors), 'Padding adapters require explicit flavors');
+        if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
-            checkHeader($plan, 'scpp/value_error.hpp');
             $side = $function->pad_side;
             requireThat(in_array($side, ['argument', 'left', 'right'], true), 'Invalid padding side');
             $expected = $side === 'argument' ? ['php'] : ['cpp', 'js'];

@@ -51,6 +51,29 @@ foreach (flavor::cases() as $flavor) {
 		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
+	$count_matches = static fn(string $subject, string $args): string => match ($flavor) {
+		flavor::php => "substr_count($subject, $args)", flavor::js => "$subject.countMatches($args)",
+		flavor::cpp => "$subject.count_matches($args)",
+	};
+	$counts = [];
+	$expected_counts = [];
+	foreach ([['"aaaaa"', '"aa"', 2], ['"ababa"', '"aba"', 1], ['"abc"', '"abc"', 1],
+		['"A"', '"a"', 0], ['""', '"x"', 0], ['"a"', '"ab"', 0],
+		['"a\0a\0"', '"\0"', 2], ['"a\0a\0"', '"a\0"', 2], ['"é中é"', '"é"', 2]] as [$subject, $needle, $count]) {
+		$counts[] = $count_matches($subject, $needle);
+		$expected_counts[] = $count;
+	}
+	$code = 'echo ' . implode(', "|", ', $counts) . '; return 8;';
+	$fixtures[$flavor->name . '-count'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'stdout_hex' => bin2hex(implode('|', $expected_counts))];
+	foreach (['""', '"abc"'] as $index => $subject) {
+		$code = 'echo ' . $count_matches($subject, '""') . '; return 8;';
+		$fixtures[$flavor->name . '-count-empty-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+			'catch_ValueError' => 'Substring count requires a nonempty needle', 'stdout_hex' => ''];
+	}
+	foreach (['"a", 0', '"a", 0, 1'] as $args) {
+		rejects(fn() => $prepare('echo ' . $count_matches('"abc"', $args) . '; return 8;'), 'Argument count');
+	}
 	$replace_names = match ($flavor) {
 		flavor::php => ['str_replace_first', 'str_replace'], flavor::js => ['replace', 'replaceAll'],
 		flavor::cpp => ['replace_first', 'replace_all'],

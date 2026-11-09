@@ -243,6 +243,8 @@ function stringAdapterHeader(string $flavor): string {
     return "scpp/$flavor/string.hpp";
 }
 
+const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['pad_bytes', 'count_matches'];
+
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
     $plan = submodulePlan($metadata);
@@ -260,8 +262,8 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
     foreach ($publication->string->functions ?? [] as $name) {
         $function = at($metadata->string->functions, $name);
+        if (in_array($function->implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) $headers[] = 'scpp/value_error.hpp';
         if (!($function->flavor_adapters ?? false)) continue;
-        if ($function->implementation === 'pad_bytes') $headers[] = 'scpp/value_error.hpp';
         $flavors = $function->flavors ?? ['php', ...array_keys(isset($function->members) ? object($function->members) : [])];
         foreach ($flavors as $flavor) $headers[] = stringAdapterHeader($flavor);
     }

@@ -58,6 +58,13 @@ def prove(work):
             invalid = text.replace(candidate, candidate.replace('$n)', '200)').replace('(n)', '(200)'))
             edits['bad-' + role + '-' + flavor] = (path, invalid)
             edits['recovery-' + role + '-' + flavor] = (path, text.replace('return ', 'return !!') if role == 'prefix' else text)
+    count_calls = {'php': 'substr_count($s,$n)', 'js': 's.countMatches(n)', 'cpp': 's.count_matches(n)'}
+    for flavor, call in count_calls.items():
+        needle = '$n' if flavor == 'php' else 'n'
+        condition = f'strlen({needle}) === 0 || {call} > 0'
+        text = originals[flavor].replace(calls[flavor][0], condition)
+        edits[f'bad-count-{flavor}'] = (predicates[flavor], text.replace(call, call.replace(needle + ')', '7)')))
+        edits[f'recovery-count-{flavor}'] = (predicates[flavor], text)
     # Repair the count in a nested string-producing call. The cross-unit caller stays unchanged.
     transforms = {
         'php': 'str_contains(strtoupper(strtolower($s)), strtoupper(str_repeat($n, 1)))',

@@ -80,7 +80,7 @@ function scalarProviderIncludes(array $plan): string {
 }
 
 function render(array $plan): array {
-    $padding = in_array('pad_bytes', array_column($plan['string_functions'] ?? [], 'implementation'), true);
+    $valueErrors = array_intersect(STRING_VALUE_ERROR_IMPLEMENTATIONS, array_column($plan['string_functions'] ?? [], 'implementation'));
     $groups = [];
     $headers = $plan['headers'];
     $ops = $headers['operators'];
@@ -96,7 +96,7 @@ function render(array $plan): array {
     }
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $files = [];
-    if ($padding) {
+    if ($valueErrors) {
         $files['public/scpp/value_error.hpp'] = BANNER . "#pragma once\n#include <stdexcept>\nnamespace scpp { class ValueError : public std::invalid_argument { public: using std::invalid_argument::invalid_argument; }; }\n";
         $d .= includeHeader('scpp/value_error.hpp');
     }
