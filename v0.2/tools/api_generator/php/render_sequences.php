@@ -211,7 +211,7 @@ function renderString(array $plan): array {
             $args = 'const string& subject, const string& needle';
             $method = $function['implementation'];
             $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset, search_policy policy); }\n";
-            $d .= template('string_search', ['name' => $name, 'args' => $args, 'method' => $method,
+            $d .= template('string_search', ['name' => $name, 'args' => $args, 'fold' => isset($function['ascii_fold']) ? 'true' : 'false',
                 'reverse' => $method === 'rfind' ? 'true' : 'false']);
             continue;
         }

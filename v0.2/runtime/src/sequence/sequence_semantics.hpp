@@ -13,6 +13,10 @@
 #include <utility>
 
 namespace scpp::detail {
+inline constexpr unsigned char fold_ascii_byte(unsigned char byte) noexcept {
+    return byte >= 'A' && byte <= 'Z' ? static_cast<unsigned char>(byte + ('a' - 'A')) : byte;
+}
+
 // Keep signed indices intact until both bounds have been checked. This is shared
 // by generated concrete sequences; it is not a source-level indexing protocol.
 template<class Integer>

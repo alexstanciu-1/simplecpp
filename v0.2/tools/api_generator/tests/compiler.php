@@ -54,6 +54,16 @@ $registry = renderCompiler($functionMetadata, $facts, $predicatePlan)['types/reg
 requireThat(str_contains($registry, "'js:string:hasBytes'") && str_contains($registry, "'php:func:str_contains'")
     && !str_contains($registry, "'js:string:includes'") && !str_contains($registry, "'cpp:string:starts_with'"),
     'String member lookup ignored flavor metadata or publication selection');
+// Adding receiver spellings in metadata reuses the same folded search with ordinary JS/C++ integer results.
+$demand->string->functions = ['stripos'];
+$functionMetadata->string->functions->stripos->members = (object)['js' => 'probeIndex', 'cpp' => 'probe_find'];
+$probe = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $probe)['types/registry.php'];
+$adapters = $probe['string_functions']['stripos']['adapters'];
+requireThat(str_contains($registry, "'js:string:probeIndex'") && str_contains($registry, "'cpp:string:probe_find'")
+    && $adapters['js']['search_offset'] === 'clamp' && $adapters['cpp']['search_offset'] === 'nonnegative'
+    && !isset($adapters['js']['body']) && !isset($adapters['cpp']['body']) && $adapters['php']['body'] === 'search_offset_or_false',
+    'Folded byte search failed to reuse flavor bindings');
 // Each comparison adapter can be published independently.
 foreach (['strcmp' => 'compare_bytes(arg0, arg1, false)', 'strcasecmp' => 'compare_bytes(arg0, arg1, true)',
     'strncmp' => 'compare_prefix(arg0, arg1, arg2, false)', 'strncasecmp' => 'compare_prefix(arg0, arg1, arg2, true)'] as $name => $call) {

@@ -163,6 +163,7 @@ Receiver `s` and argument names below stand for expressions. The table lists pub
 | Suffix | str_ends_with(s, needle) | s.endsWith(needle) | s.ends_with(needle) | Same |
 | Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
 | First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional int64 position: PHP signed, JS clamped, C++ nonnegative |
+| ASCII-insensitive first / last position | stripos(s, needle[, offset]), strripos(s, needle[, offset]) | — | — | Same byte offsets, empty needles and false-on-miss rules as strpos/strrpos |
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Byte coordinates; signed clamped bounds; final bound optional |
 | Trim both / left / right | trim(s[, mask]), ltrim(s[, mask]), rtrim(s[, mask]) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
 | Compare whole strings | strcmp(s, other), strcasecmp(s, other) | — | — | Unsigned byte ordering; strcasecmp folds ASCII A–Z; only the sign is guaranteed |

@@ -65,6 +65,13 @@ def prove(work):
             valid = originals[flavor].replace(prefix, bounded)
             edits[f'bad-offset-{role}-{flavor}'] = (path, valid.replace(', 0)', ', "bad")'))
             edits[f'recovery-offset-{role}-{flavor}'] = (path, valid)
+    for name, pos in [('stripos', 0), ('strripos', 3)]:
+        for suffix in ['', ', 0']:
+            call = f'{name}("Ab\\0aB","ab"{suffix})'
+            valid = originals['php'].replace('return ', f'return {call} + 0 === {pos} && ')
+            role = f'ascii-search-{name}-{2 + bool(suffix)}'
+            edits['bad-' + role] = (predicates['php'], valid.replace(call, f'{name}("Ab","ab","bad")'))
+            edits['recovery-' + role] = (predicates['php'], valid)
     count_calls = {'php': 'substr_count($s,$n)', 'js': 's.countMatches(n)', 'cpp': 's.count_matches(n)'}
     for flavor, call in count_calls.items():
         needle = '$n' if flavor == 'php' else 'n'
@@ -247,7 +254,7 @@ def prove(work):
             run = subprocess.run([native / 'program'], capture_output=True)
             expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow', 'recovery-trim-php', 'recovery-ltrim-php') else b'1101'
             assert (run.returncode, run.stdout) == (8, expected), (label, run)
-            if label.startswith(('recovery-format-', 'recovery-byte-compare-')):
+            if label.startswith(('recovery-format-', 'recovery-byte-compare-', 'recovery-ascii-search-')):
                 clean = fresh_folder / 'native'
                 clean.mkdir()
                 command = write_build(clean, [fresh_folder / name for name in data['translation_units']])

@@ -211,7 +211,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat(($function->flavor_adapters ?? false) === true, 'Replacement requires flavor adapters');
         }
         $compare = in_array($implementation, ['compare_bytes', 'compare_prefix'], true);
-        requireThat($compare === isset($function->ascii_fold), 'Byte comparisons require an ASCII folding policy');
+        requireThat($search || $compare === isset($function->ascii_fold), 'Byte comparisons require an ASCII folding policy');
         $trim = $implementation === 'trim_bytes';
         requireThat($trim === property_exists($function, 'side'), 'Trim direction required only for trim bindings');
         if ($trim) {
@@ -224,6 +224,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
+        if ($search && boolean($function->ascii_fold ?? false)) $plan['string_functions'][$name]['ascii_fold'] = true;
         $formatted = $implementation === 'format_number';
         requireThat($formatted === isset($function->numeric_inputs) && $formatted === isset($function->arities),
             'Numeric input overloads require explicit arities');
@@ -246,7 +247,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $signatures = isset($function->signatures) ? fields($function->signatures, array_keys(['php' => $name] + $members)) : [];
         requireThat(!$signatures || $enabled, 'Flavor signatures require generated adapters');
         if ($enabled) {
-            requireThat($members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
+            requireThat($search || $members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
                 if ($compare) $options['ascii_fold'] = boolean($function->ascii_fold);

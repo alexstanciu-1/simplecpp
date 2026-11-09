@@ -554,6 +554,40 @@ SCPP;
 		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
 		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
+	if ($flavor === flavor::php) {
+		$source = 'function show_position(result_or_false<int> $p): void { if (isset($p)) { echo $p + 0; } else { echo "F"; } echo ","; }';
+		$source .= 'function probe_search(string $s, string $n): void { show_position(stripos($s,$n)); show_position(strripos($s,$n));'
+			. '$i = -strlen($s); while ($i <= strlen($s)) { show_position(stripos($s,$n,$i)); show_position(strripos($s,$n,$i)); $i += 1; } }';
+		$expected = '';
+		$literal = static function (string $bytes): string {
+			$parts = [];
+			foreach (str_split($bytes) as $byte) $parts[] = 'string_byte_from_int(' . ord($byte) . ')';
+			return $parts ? implode(' . ', $parts) : '""';
+		};
+		foreach ([['', ''], ['', 'a'], ['ab', ''], ['AaAaA', 'aAa'], ['aaa', 'aAaA'], ['AbaBa', 'BA'],
+			["Ab\0aB", "B\0A"], ["A\0", "\0"], ["\xc0a\xe0A", "\xe0a"], ["\xffA\xffa", "\xffa"]] as [$subject, $needle]) {
+			$source .= 'probe_search(' . $literal($subject) . ',' . $literal($needle) . ');';
+			$subject = strtolower($subject);
+			$needle = strtolower($needle);
+			foreach ([null, ...range(-strlen($subject), strlen($subject))] as $offset) {
+				foreach (['strpos', 'strrpos'] as $find) {
+					$answer = $offset === null ? $find($subject, $needle) : $find($subject, $needle, $offset);
+					$expected .= ($answer === false ? 'F' : $answer) . ',';
+				}
+			}
+		}
+		$fixtures['php-ascii-search'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')), 'stdout_hex' => bin2hex($expected)];
+		foreach (['stripos', 'strripos'] as $name) {
+			foreach ([$minimum, $maximum] as $index => $offset) {
+				$fixtures["php-$name-bound-$index"] = ['cpp' => (new Cpp_Emitter())->emit($prepare("echo (int)isset($name(\"abc\",\"\",$offset)); return 8;")),
+					'stdout_hex' => '', 'catch_ValueError' => 'Search offset outside subject'];
+			}
+		}
+	} else {
+		foreach (['stripos', 'strripos'] as $name) {
+			rejects(fn() => $prepare("echo $name(\"A\",\"a\"); return 8;"), 'Unknown function');
+		}
+	}
 	$position_call = static fn(string $op, string $s, string $n, string $offset): string => $flavor === flavor::php
 		? "$op($s,$n,$offset)" : "$s.$op($n,$offset)";
 	// Columns give the first and last absolute byte positions, with -1 denoting a miss.
