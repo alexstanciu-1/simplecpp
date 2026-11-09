@@ -397,6 +397,32 @@ SCPP;
 		}
 		$source .= 'echo (strcasecmp("A\0bCD","a\0Bcd") <=> 0), (strcasecmp("ab","ABc") <=> 0); return 8;';
 		$fixtures['php-byte-compare'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)), 'stdout_hex' => bin2hex('0-110-110-1')];
+		$bounded = [
+			['"x","y",0', 0, 0], ['"","a",0', 0, 0], ['"","",1', 0, 0],
+			['"a","ab",1', 0, 0], ['"a","ab",2', -1, -1], ['"ab","a",' . $max, 1, 1],
+			['"","x",' . $max, -1, -1], ['"same","same",' . $max, 0, 0],
+			['"A","a",1', -1, 0], ['"a\0B","a\0b",2', 0, 0], ['"a\0B","a\0b",3', -1, 0],
+			['"a\0c","A\0B",' . $max, 1, 1], ['"a\0","a",2', 1, 1],
+			['string_byte_from_int(192),string_byte_from_int(224),1', -1, -1],
+			['string_byte_from_int(255),string_byte_from_int(127),1', 1, 1],
+		];
+		$source = $expected = '';
+		foreach (['strncmp', 'strncasecmp'] as $index => $name) {
+			foreach ($bounded as $case) {
+				$source .= 'echo (' . $name . '(' . $case[0] . ') <=> 0), ",";';
+				$expected .= $case[1 + $index] . ',';
+			}
+			foreach (['"a","a",-1', '"","",' . $min] as $error => $args) {
+				$fixtures["php-$name-negative-$error"] = ['cpp' => (new Cpp_Emitter())->emit($prepare("echo $name($args); return 8;")),
+					'catch_ValueError' => 'Byte comparison limit must be nonnegative', 'stdout_hex' => ''];
+			}
+			foreach (['"a","b"', '"a","b",1,true'] as $args) {
+				rejects(fn() => $prepare("echo $name($args); return 8;"), 'Argument count');
+			}
+			rejects(fn() => $prepare("echo $name(\"a\",\"b\",\"1\"); return 8;"), 'requires int');
+		}
+		$fixtures['php-prefix-compare'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')),
+			'stdout_hex' => bin2hex($expected)];
 		$comparisons = [
 			['"abc","bcXYZ",1', -1], ['"abc","bcXYZ",1,2', 0], ['"abc","bc",-2', 0],
 			['"abc","a",-3', 1], ['"abc","",3', 0], ['"abc","a",4', -1],
@@ -465,6 +491,9 @@ SCPP;
 	} else {
 		foreach (['strcmp', 'strcasecmp'] as $name) {
 			rejects(fn() => $prepare("echo $name(\"a\",\"b\"); return 8;"), 'Unknown function');
+		}
+		foreach (['strncmp', 'strncasecmp'] as $name) {
+			rejects(fn() => $prepare("echo $name(\"a\",\"b\",1); return 8;"), 'Unknown function');
 		}
 		rejects(fn() => $prepare('echo substr_compare("abc","bc",1); return 8;'), 'Unknown function');
 		rejects(fn() => $prepare('echo number_format(1); return 8;'), 'Unknown function');

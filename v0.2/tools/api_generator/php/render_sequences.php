@@ -192,7 +192,7 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
-    if (array_intersect($classic, ['compare_bytes', 'compare_window'])) $d .= template('string_compare_views');
+    if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('string_compare_views');
     $comparisonSymbols = [];
     $windowPositionEmitted = false;
     $searchPolicyEmitted = false;
@@ -251,11 +251,14 @@ function renderString(array $plan): array {
             $d .= template('string_number_format', ['name' => $name]);
             continue;
         }
-        if ($function['implementation'] === 'compare_bytes') {
+        if (in_array($function['implementation'], ['compare_bytes', 'compare_prefix'], true)) {
             if (!isset($comparisonSymbols[$name])) {
-                $signature = "int64 $name(const string& left, const string& right, bool_t insensitive)";
+                $bounded = $function['implementation'] === 'compare_prefix';
+                $limit = $bounded ? 'int64 limit, ' : '';
+                $signature = "int64 $name(const string& left, const string& right, {$limit}bool_t insensitive)";
                 $h .= "namespace str { $signature; }\n";
-                $d .= "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
+                $d .= $bounded ? template('string_compare_prefix', ['signature' => $signature])
+                    : "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
                     . " detail::string_access::read(right), insensitive); } }\n";
                 $comparisonSymbols[$name] = true;
             }

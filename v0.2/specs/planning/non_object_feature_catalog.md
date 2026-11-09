@@ -166,6 +166,7 @@ Receiver `s` and argument names below stand for expressions. The table lists pub
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Byte coordinates; signed clamped bounds; final bound optional |
 | Trim both / left / right | trim(s[, mask]), ltrim(s[, mask]), rtrim(s[, mask]) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
 | Compare whole strings | strcmp(s, other), strcasecmp(s, other) | — | — | Unsigned byte ordering; strcasecmp folds ASCII A–Z; only the sign is guaranteed |
+| Compare prefixes | strncmp(s, other, limit), strncasecmp(s, other, limit) | — | — | Cap both strings in bytes; zero compares equal; negative limit throws ValueError |
 | Compare byte window | substr_compare(s, other, offset[, length[, case_insensitive]]) | — | — | Signed byte windows, unsigned byte ordering, optional ASCII case folding |
 | Replace byte window | substr_replace(s, replacement, offset[, length]) | — | — | Omitted length inserts; unusable negative length leaves the subject unchanged |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s[, count]) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |

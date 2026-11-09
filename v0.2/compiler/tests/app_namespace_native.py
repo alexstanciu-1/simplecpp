@@ -132,6 +132,12 @@ def prove(work):
         valid = originals['php'].replace('return ', f'return {call} {comparison} && ')
         edits[f'bad-byte-compare-{name}'] = (predicates['php'], valid.replace(call, f'{name}("a",7)'))
         edits[f'recovery-byte-compare-{name}'] = (predicates['php'], valid)
+    for name, comparison in [('strncmp', '< 0'), ('strncasecmp', '=== 0')]:
+        args = '"a\\0B","a\\0b"'
+        call = f'{name}({args},3)'
+        valid = originals['php'].replace('return ', f'return {call} {comparison} && ')
+        edits[f'bad-byte-compare-{name}'] = (predicates['php'], valid.replace(call, f'{name}({args},"3")'))
+        edits[f'recovery-byte-compare-{name}'] = (predicates['php'], valid)
     for args, bad_args in [('1', '"bad"'), ('1, 2', '1, "bad"'), ('1, 2, true', '1, 2, "bad"')]:
         arity = 2 + len(args.split(','))
         call = f'substr_compare("aBc","Bc",{args})'

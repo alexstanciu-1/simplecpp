@@ -246,7 +246,7 @@ function stringAdapterHeader(string $flavor, string $implementation): string {
     return "scpp/$flavor/$file.hpp";
 }
 
-const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['pad_bytes', 'count_matches', 'split_bytes', 'find', 'rfind'];
+const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['compare_prefix', 'pad_bytes', 'count_matches', 'split_bytes', 'find', 'rfind'];
 
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {

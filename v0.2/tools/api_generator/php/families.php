@@ -135,6 +135,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
             'format_number' => ['parameters' => ['int64', 'int64', 'string', 'string'], 'result' => 'string'],
+            'compare_prefix' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64'],
             'compare_bytes' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'compare_window' => ['parameters' => ['string', 'string', 'int64', 'int64', 'bool_t'], 'required_parameters' => 3, 'result' => 'int64'],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
@@ -170,7 +171,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
+        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
@@ -209,8 +210,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat(in_array($function->replace_mode, ['first', 'all'], true), 'Invalid replacement mode');
             requireThat(($function->flavor_adapters ?? false) === true, 'Replacement requires flavor adapters');
         }
-        $compare = $implementation === 'compare_bytes';
-        requireThat($compare === isset($function->ascii_fold), 'Whole-string comparisons require an ASCII folding policy');
+        $compare = in_array($implementation, ['compare_bytes', 'compare_prefix'], true);
+        requireThat($compare === isset($function->ascii_fold), 'Byte comparisons require an ASCII folding policy');
         $trim = $implementation === 'trim_bytes';
         requireThat($trim === property_exists($function, 'side'), 'Trim direction required only for trim bindings');
         if ($trim) {
