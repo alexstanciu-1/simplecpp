@@ -196,7 +196,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 38,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 42,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -507,6 +507,7 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $compoundEnabled = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound;
     $compoundOperators = [];
     $nativeCompoundCases = [];
+    $exactResults = [];
     $cases = '';
     $headers = [];
     $reorderable = [];
@@ -555,13 +556,17 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             }
         } elseif (in_array($operation['lowering'], ['native_three_way', 'string_three_way'], true)) {
             $resultCpp = $definitions[$operation['result']]['cpp'];
+            $exactResults[] = "binary_operator::$op => $result::instance()";
             $extract = '';
             if ($operation['lowering'] === 'string_three_way') {
                 $extract = $operation['result_binding']['extract'] === null ? '' : '.' . $operation['result_binding']['extract'] . '()';
                 $headers[$operation['storage']['header']][] = "binary_operator::$op";
                 $headers[$operation['result_binding']['header']][] = "binary_operator::$op";
             }
-            $expression = "'static_cast<$resultCpp>(((' . \$left . ' > ' . \$right . ')$extract) - ((' . \$left . ' < ' . \$right . ')$extract))'";
+            // The native integer comparison difference is int and can only be -1, 0 or 1.
+            $cast = $operation['lowering'] === 'native_three_way'
+                ? "(\$typed_initializer ? '' : 'static_cast<$resultCpp>')" : "'static_cast<$resultCpp>'";
+            $expression = "$cast . '(((' . \$left . ' > ' . \$right . ')$extract) - ((' . \$left . ' < ' . \$right . ')$extract))'";
         } elseif ($operation['lowering'] === 'runtime_concat') {
             $expression = "'(' . \$left . ' + ' . \$right . ')'";
             $headers[$operation['storage']['header']][] = "binary_operator::$op";
@@ -574,6 +579,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $symbol = $operation['binding']['symbol'];
             $expression = "'{$symbol}(' . \$left . ', ' . \$right . ')'";
             $headers[$operation['binding']['header']][] = "binary_operator::$op";
+            // compilerArithmeticBinding validates the helper's declared result against the operation.
+            $exactResults[] = "binary_operator::$op => $result::instance()";
         }
         if (isset($operation['identity_peers'])) {
             $different = $operation['different_result'] ? 'true' : 'false';
@@ -631,7 +638,20 @@ $headerCases\t\t\tdefault => [],
 ";
     }
     $nativeCompoundMethod = $nativeCompoundCases === [] ? '' : "\n\tpublic function cpp_compound_operator(binary_operator \$operator): ?string\n\t{\n\t\treturn match (\$operator) { " . implode(', ', $nativeCompoundCases) . ", default => null };\n\t}\n";
-    return "$syntaxMethod$nativeCompoundMethod
+    $exactMethod = '';
+    if ($exactResults !== []) {
+        $arms = implode(",\n\t\t\t", $exactResults);
+        $exactMethod = "
+\tpublic function cpp_exact_binary_result(binary_operator \$operator): ?type_definition
+\t{
+\t\treturn match (\$operator) {
+\t\t\t$arms,
+\t\t\tdefault => null,
+\t\t};
+\t}
+";
+    }
+    return "$syntaxMethod$nativeCompoundMethod$exactMethod
 \t/** Compound syntax admission is separate from ordinary arithmetic capability. */
 \tpublic function supports_compound(binary_operator \$operator): bool
 \t{
@@ -650,7 +670,7 @@ $results\t\t\tdefault => null,
 \t}
 
 \t/** Lower an approved operator on already sequenced operand snapshots. */
-\tpublic function lower_cpp_binary(binary_operator \$operator, string \$left, string \$right, type_definition \$right_type): string
+\tpublic function lower_cpp_binary(binary_operator \$operator, string \$left, string \$right, type_definition \$right_type, bool \$typed_initializer = false): string
 \t{
 \t\treturn match (\$operator) {
 $cases\t\t\tdefault => throw new \\LogicException('Binary operation was not approved'),

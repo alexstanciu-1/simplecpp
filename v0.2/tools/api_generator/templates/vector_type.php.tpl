@@ -23,11 +23,6 @@ final class @class@ extends vector_type_definition
 		return [@header@];
 	}
 
-	public function prepare_append(ast_expression $value): int /** uint16 */
-	{
-		return @element@::instance()->prepare_conversion($value, conversion_context::typed_destination);
-	}
-
 	public function prepare_key(ast_expression $key): void
 	{
 		if ($key->type_def() !== @count@::instance()) {
@@ -40,14 +35,16 @@ final class @class@ extends vector_type_definition
 		return @cpp@ . '{}';
 	}
 
-	public function lower_cpp_append(string $receiver, string $value): string
+	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value): string
 	{
-		return '(' . $receiver . ').@append@(static_cast<' . @element@::instance()->cpp_type() . '>(' . $value . '))';
+		$value = @element@::instance()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return '(' . $receiver . ').@append@(' . $value . ')';
 	}
 
-	public function lower_cpp_index(string $receiver, string $index): string
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(' . $receiver . ').@index@(static_cast<' . @count@::instance()->cpp_type() . '>(' . $index . '))';
+		$index = @count@::instance()->lower_cpp_exact_argument($key, value_conversion::identity, $index);
+		return '(' . $receiver . ').@index@(' . $index . ')';
 	}
 
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value): string

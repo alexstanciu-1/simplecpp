@@ -104,11 +104,11 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $x = $a << $b;           |                                                                                                               | No unit header.                  |                                        |
 | $y = $a ** $b;           |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                    | scpp::int64 var_x_2 = static_cast<scpp::int64>(((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)));                | .cpp includes                    | Integer <=> reads distinct locals or   |
-|     $a int = 6;          | scpp::bool_t var_ok_3 = (var_a_0 != var_b_1);                                                                 | #include <scpp/core/scalars.hpp> | parameters directly when conversions   |
-|     $b int = 2;          |                                                                                                               | No unit header.                  | are identity. Calls are evaluated once |
-| $x = $a <=> $b;          |                                                                                                               |                                  | into snapshots. Same-type integer !==  |
-| $ok = $a !== $b;         |                                                                                                               |                                  | uses native != on these locals.        |
+| Given                    | scpp::int64 var_x_2 = (((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)));                                        | .cpp includes                    | The integer comparison yields -1, 0 or |
+|     $a int = 6;          | scpp::bool_t var_ok_3 = (var_a_0 != var_b_1);                                                                 | #include <scpp/core/scalars.hpp> | 1. The typed local widens that result. |
+|     $b int = 2;          |                                                                                                               | No unit header.                  | Exact arguments retain their int64     |
+| $x = $a <=> $b;          |                                                                                                               |                                  | type. Calls use snapshots; distinct    |
+| $ok = $a !== $b;         |                                                                                                               |                                  | local reads can be repeated.           |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    | scpp::float64 var_x_2 = (static_cast<scpp::float64>(var_a_0) + var_f_1);                                      | .cpp includes                    | The numeric family plan selects the    |
 |     $a int = 6;          | scpp::bool_t var_ok_3 = (static_cast<scpp::float64>(var_a_0) < var_f_1);                                      | #include <scpp/core/scalars.hpp> | mixed execution type or comparison     |
@@ -227,17 +227,18 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                               |                                                                                                 | #include <scpp/vectors.hpp>      | handler emits the exported type and    |
 |                               |                                                                                                 | No unit header.                  | empty constructor.                     |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                         | (var_v_0).append(static_cast<scpp::int64>(8LL));                                                | .cpp includes                    | The vector specialization binds append |
-|     $v vector<int> = [];      | scpp::int64 var_x_1 = (var_v_0).at(static_cast<scpp::int64>(0LL));                              | #include <scpp/core/scalars.hpp> | and value-copy at. These paths still   |
-| $v[] = 8;                     |                                                                                                 | #include <scpp/vectors.hpp>      | normalize their native arguments.      |
+| Given                         | (var_v_0).append(8L);                                                                           | .cpp includes                    | Append and at use the published        |
+|     $v vector<int> = [];      | scpp::int64 var_x_1 = (var_v_0).at(0L);                                                         | #include <scpp/core/scalars.hpp> | parameter type to select the native    |
+| $v[] = 8;                     |                                                                                                 | #include <scpp/vectors.hpp>      | integer literal suffix.                |
 | $x = $v[0];                   |                                                                                                 | No unit header.                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                         | var_v_0.set(var_i_1, var_x_2);                                                                  | .cpp includes                    | Both operands already have the         |
-|     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | canonical parameter representation.    |
-|     $v[] = 0;                 |                                                                                                 | #include <scpp/vectors.hpp>      | The generated set binding emits one    |
-|     $i int = 0;               |                                                                                                 | No unit header.                  | member call.                           |
-|     $x int = 8;               |                                                                                                 |                                  |                                        |
-| $v[$i] = $x;                  |                                                                                                 |                                  |                                        |
+| Given                         |                                                                                                 | .cpp includes                    | Local reads already have the declared  |
+|     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | parameter type. Integer <=> widens its |
+|     $v[] = 0;                 |                                                                                                 | #include <scpp/vectors.hpp>      | result to that same type for an exact  |
+|     $i int = 0;               |                                                                                                 | No unit header.                  | argument. The set binding passes it    |
+|     $x int = 8;               |                                                                                                 |                                  | directly.                              |
+| $v[$i] = $x;                  | var_v_0.set(var_i_1, var_x_2);                                                                  |                                  |                                        |
+| $v[$i] = $x <=> $i;           | var_v_0.set(var_i_1, static_cast<scpp::int64>(((var_x_2 > var_i_1)) - ((var_x_2 < var_i_1))));  |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | var_v_0.set(0L, 9L);                                                                            | .cpp includes                    | Preparation proves the conversion;     |
 |     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | exact-argument lowering folds the      |
@@ -272,10 +273,10 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | {                                                                                               | .cpp includes                    | The hash lowering snapshots the key    |
 |     $h hash<int,string> = []; |     const auto write_key = scpp::string{"\153", 1};                                             | #include <scpp/core/scalars.hpp> | and converted value for set; the read  |
-| $h["k"] = 7;                  |     const auto write_value = 7LL;                                                               | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
-| $x = $h["k"];                 |     (var_h_0).set(static_cast<scpp::string>(write_key), static_cast<scpp::int64>(write_value)); | #include <scpp/string.hpp>       | accessor.                              |
+| $h["k"] = 7;                  |     const auto write_value = 7L;                                                                | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
+| $x = $h["k"];                 |     (var_h_0).set(write_key, write_value);                                                      | #include <scpp/string.hpp>       | accessor.                              |
 |                               | }                                                                                               | No unit header.                  |                                        |
-|                               | scpp::int64 var_x_1 = (var_h_0).at(static_cast<scpp::string>(scpp::string{"\153", 1}));         |                                  |                                        |
+|                               | scpp::int64 var_x_1 = (var_h_0).at(scpp::string{"\153", 1});                                    |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 

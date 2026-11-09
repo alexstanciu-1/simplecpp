@@ -8,6 +8,8 @@ import subprocess
 import tempfile
 import time
 
+from provider_inventory import prepared_provider_headers
+
 ROOT = Path(__file__).resolve().parents[3]
 ENV = {**os.environ, 'XDEBUG_MODE': 'off'}
 
@@ -37,7 +39,7 @@ def proof(work):
             raw, _ = run(['php', generator, 'prepare-runtime', mp, pp, facts, context])
             assert prepared == json.loads(raw), 'Emission changed prepared provider graph'
             headers, _ = run(['php', generator, 'provider-headers', mp, pp])
-            expected_headers = sorted(prepared['submodules']['nodes'][p]['header'] for p in prepared['submodules']['published'])
+            expected_headers = prepared_provider_headers(prepared)
             assert json.loads(headers) == expected_headers, 'CMake inventory differs from published providers'
             return prepared
 
@@ -88,7 +90,11 @@ def proof(work):
     assert snapshot() == original
 
     no_vectors = copy.deepcopy(publication)
-    no_vectors.pop('vectors'); no_vectors.pop('carriers'); no_vectors.pop('hashes', None)
+    no_vectors.pop('vectors')
+    no_vectors['carriers']['specializations'] = [
+        carrier for carrier in publication['carriers']['specializations']
+        if carrier['payload'] not in names
+    ]
     absent = emit(metadata, no_vectors)
     assert not (output / 'public/scpp/vectors.hpp').exists()
     assert not any(k.startswith('vector_') for k in absent['submodules']['type_exports'])
@@ -101,6 +107,8 @@ def proof(work):
 
     # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
     minimal = copy.deepcopy(no_vectors)
+    minimal.pop('hashes')
+    minimal.pop('carriers')
     minimal.pop('string')
     minimal.pop('boxed')
     minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}

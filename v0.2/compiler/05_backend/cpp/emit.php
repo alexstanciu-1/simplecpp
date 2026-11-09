@@ -256,16 +256,15 @@ final class Cpp_Emitter
 				$lines[] = "\t" . $type->lower_cpp_store($statement, $receiver, $key, $value);
 			}
 			elseif ($statement instanceof ast_append_statement) {
-				/** @var vector_type_definition $type */
+				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
-				foreach ($type->element_type->conversion_headers($conversion) as $header) {
+				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$value = $type->element_type->lower_cpp_conversion($conversion, $value, $statement->value);
-				$lines[] = "\t" . $type->lower_cpp_append($receiver, $value) . ';';
+				$lines[] = "\t" . $type->lower_cpp_append($statement, $receiver, $value) . ';';
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
@@ -409,7 +408,8 @@ final class Cpp_Emitter
 				return '(void)' . $prefix;
 			}
 		}
-		$operand = $this->value($value, $global_references, $declarations, $headers);
+		$operand = $this->value($value, $global_references, $declarations, $headers,
+			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity));
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
@@ -417,6 +417,7 @@ final class Cpp_Emitter
 	}
 
 	/**
+	 * Only the root of an identity initializer may rely on its destination for the native result type.
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
 	 * $reorderable: output proof for this subtree, computed during lowering, never retained in preparation.
 	 * True permits unsequenced evaluation only alongside other proven subtrees; calls always remain false.
@@ -426,7 +427,7 @@ final class Cpp_Emitter
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false): string
+		bool &$reorderable = false, bool $typed_initializer = false): string
 	{
 		$reorderable = false;
 		foreach ($value->type_def()->cpp_headers() as $header) {
@@ -442,7 +443,7 @@ final class Cpp_Emitter
 			$type = $value->receiver->type_def();
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
-			return $type->lower_cpp_index($receiver, $index);
+			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}
 		if ($value instanceof ast_interpolated_string) {
 			$type = $value->type_def();
@@ -537,12 +538,12 @@ final class Cpp_Emitter
 			if ($reorderable || ($value->left_conversion === value_conversion::identity
 				&& $value->right_conversion === value_conversion::identity
 				&& $type->cpp_direct_binary($value, $left_safe && $right_safe, $left === $right))) {
-				return $type->lower_prepared_binary($value, $left, $right);
+				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
 			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left
 				. '; const auto binary_right = ' . $right . '; return '
-				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right') . '; }())';
+				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right', $typed_initializer) . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
 			if ($value->cardinality !== null) {

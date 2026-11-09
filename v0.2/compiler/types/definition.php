@@ -21,13 +21,20 @@ interface counted_collection_type
 interface index_read_type
 {
 	public function prepare_index(ast_index_expression $value): void;
-	public function lower_cpp_index(string $receiver, string $index): string;
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
 }
 
 /** Indexed collections that can also be initialized with []. */
 interface indexed_collection_type extends index_read_type
 {
 	public function lower_cpp_empty(): string;
+}
+
+/** Source append on a writable receiver with a published value parameter. */
+interface appendable_collection_type
+{
+	public function write_type(): type_definition;
+	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
@@ -42,13 +49,13 @@ interface index_write_type
 trait ordered_keyed_store
 {
 	abstract public function write_type(): type_definition;
-	abstract public function lower_cpp_key(string $key): string;
+	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
 	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
 
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
 	{
-		$value = $this->write_type()->lower_cpp_conversion($write->conversion(), $value, $write->value);
-		return '{ const auto write_key = ' . $this->lower_cpp_key($key) . '; const auto write_value = ' . $value . '; '
+		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; const auto write_value = ' . $value . '; '
 			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
 	}
 }
@@ -155,15 +162,21 @@ abstract class type_definition
 		return null;
 	}
 
-	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type): string
+	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type, bool $typed_initializer = false): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
 	}
 
 	/** Consume the original prepared operand types when selecting the native binding. */
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
 	{
-		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type());
+		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type(), $typed_initializer);
+	}
+
+	/** A known exact native result when emitted as an argument. Null leaves normalization to the consumer. */
+	public function cpp_exact_binary_result(binary_operator $operator): ?type_definition
+	{
+		return null;
 	}
 
 	/** @return string[] Public includes needed by an approved binary operation. */

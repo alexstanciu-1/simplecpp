@@ -38,9 +38,9 @@ abstract class hash_type_definition extends type_definition implements indexed_c
 		return $this->value_type;
 	}
 
-	public function lower_cpp_key(string $key): string
+	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
-		return $key;
+		return $this->key_type->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
 	}
 
 	public function prepare_index(ast_index_expression $value): void

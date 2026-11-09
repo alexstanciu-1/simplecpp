@@ -74,7 +74,7 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('hash<int,int>', 'values', '[]') . "$v" . '[1] = "no";', 'conversion'],
 		[$decl('hash<string,int>', 'values', '[]') . "$v" . '[1] = 1;', 'conversion'],
 		[$decl('hash<int,int>', 'values', '[1]'), 'only empty typed collection'],
-		[$decl('hash<int,int>', 'values', '[]') . "$v" . '[] = 1;', 'Append requires a vector'],
+		[$decl('hash<int,int>', 'values', '[]') . "$v" . '[] = 1;', 'Append requires an appendable collection'],
 		[$decl('hash<int,int>', 'values', '[]') . $decl('hash<int,int>', 'copy', $v), 'Hash value operations are deferred'],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);
@@ -129,10 +129,33 @@ foreach (flavor::cases() as $flavor) {
 		flavor::cpp => 'int &key', flavor::php => 'int &$key', flavor::js => '&key: int',
 	};
 	$mutator = ($flavor === flavor::cpp ? "int mutate($parameter)" : "function mutate($parameter): int")
-		. '{' . $var('key') . ' = 2; return 7;}';
+		. '{' . $var('key') . ' = 2; echo "R"; return 7;}';
 	$order = $prepare($mutator . $decl('hash<int,int>', 'values', '[]') . $decl('int', 'key', '1')
 		. "$v" . '[' . $var('key') . '] = mutate(' . $var('key') . '); echo ' . "$v" . '[1]; return 8;');
-	$fixtures[$flavor->name . '-key-order'] = ['cpp' => (new Cpp_Emitter())->emit($order), 'stdout_hex' => bin2hex('7')];
+	$fixtures[$flavor->name . '-key-order'] = ['cpp' => (new Cpp_Emitter())->emit($order), 'stdout_hex' => bin2hex('R7')];
+
+	$k = $var('key');
+	$item = $var('item');
+	$forms = $decl('hash<int,string>', 'values', '[]') . $decl('string', 'key', '"key"') . $decl('int', 'item', '2')
+		. $v . "[$k] = $item; echo " . $v . "[$k]; return 8;";
+	$cpp = (new Cpp_Emitter())->emit($prepare($forms));
+	verify(str_contains($cpp, 'const auto write_key = var_key_1; const auto write_value = var_item_2;')
+		&& str_contains($cpp, '.set(write_key, write_value)') && str_contains($cpp, '.at(var_key_1)'),
+		'Hash write must capture exact arguments and read must bind the string key directly');
+	$fixtures[$flavor->name . '-exact-locals'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2')];
+
+	$h = $var('hash');
+	$checked = $decl('vector<int>', 'values', '[]') . $decl('hash<int,int>', 'hash', '[]')
+		. $decl('int', 'key', '8') . $decl('int', 'item', '3')
+		. $v . "[] = $k / $item;" . $h . "[$k % $item] = $k / $item; echo "
+		. $v . '[0], ' . $h . "[$k % $item]; return 8;";
+	$cpp = (new Cpp_Emitter())->emit($prepare($checked));
+	$division = 'scpp::int64_divide(var_key_2, var_item_3)';
+	$remainder = 'scpp::int64_remainder(var_key_2, var_item_3)';
+	verify(str_contains($cpp, '#include <scpp/arithmetic.hpp>') && str_contains($cpp, ".append($division)")
+		&& str_contains($cpp, "const auto write_key = $remainder; const auto write_value = $division;")
+		&& str_contains($cpp, ".at($remainder)"), 'Collection arguments should use the exact checked helper result');
+	$fixtures[$flavor->name . '-checked-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('22')];
 
 	$wrapped = $prepare($decl('hash<int,int>', 'values', '[]') . $decl('nullable<int>', 'item', '13')
 		. "$v" . '[0] = ' . $var('item') . '; echo ' . "$v" . '[0]; return 8;');
@@ -148,6 +171,18 @@ foreach (flavor::cases() as $flavor) {
 		"\ttry {\n$1\t} catch (const std::out_of_range&) { return var_values_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
 	verify($count === 1, 'Missing keyed write for atomicity observation');
 	$fixtures[$flavor->name . '-conversion-atomicity'] = ['cpp' => "#include <stdexcept>\n" . $atomic, 'stdout_hex' => ''];
+
+	// Check failures against a populated hash, including the read path which must never insert.
+	foreach (['replace' => $v . '[0] = huge();', 'miss' => 'echo ' . $v . '[1];'] as $case => $operation) {
+		$source = $function('float', 'huge', 'return 1e100;') . $decl('hash<int,int>', 'values', '[]')
+			. $v . '[0] = 7;' . $operation . 'return 91;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		$cpp = preg_replace('/^(\t[^\n]*(?:huge_\(\)|echo_int\()[^\n]*\n)(\treturn )/m',
+			"\ttry {\n$1\t} catch (const std::out_of_range&) { return var_values_0.size() == 1 && var_values_0.at(scpp::int64{0}) == 7 ? 8 : 92; }\n$2",
+			$cpp, 1, $matches);
+		verify($matches === 1, 'Missing final hash operation for failure observation');
+		$fixtures[$flavor->name . '-atomic-' . $case] = ['cpp' => "#include <stdexcept>\n" . $cpp, 'stdout_hex' => ''];
+	}
 
 	$directory = sys_get_temp_dir() . '/scpp-hash-operations-' . bin2hex(random_bytes(8));
 	mkdir($directory);

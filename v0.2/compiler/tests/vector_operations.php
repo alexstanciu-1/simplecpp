@@ -66,7 +66,7 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[] = 1e100;', 'outside'],
 		[$decl('vector<int>', 'values', '[]') . 'echo ' . "$v" . '[1.0];', 'Vector index requires int64'],
-		[$decl('int', 'values', '1') . "$v" . '[] = 1;', 'Append requires a vector'],
+		[$decl('int', 'values', '1') . "$v" . '[] = 1;', 'Append requires an appendable collection'],
 		[$decl('int', 'values', '1') . 'echo ' . "$v" . '[0];', 'Indexed read requires a vector'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[false] = 2;', 'Vector index requires int64'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
@@ -96,6 +96,18 @@ foreach (flavor::cases() as $flavor) {
 			'stdout_hex' => '', 'catch_out_of_range' => true];
 	}
 
+	// Catch at the append site so native code can inspect the vector after a rejected value.
+	foreach (['overflow' => ['huge()', 'std::out_of_range'], 'empty' => [$var('item'), 'std::runtime_error']] as $case => [$rhs, $error]) {
+		$source = $function('float', 'huge', 'return 1e100;') . $decl('nullable<int>', 'item', 'null')
+			. $decl('vector<int>', 'values', '[]') . $v . '[] = 7;' . $v . "[] = $rhs; return 91;";
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		$cpp = preg_replace('/(\t\(var_values_1\)\.append\([^\n]+\n)(\treturn )/',
+			"\ttry {\n$1\t} catch (const $error&) { return var_values_1.size() == 1 && var_values_1.at(scpp::int64{0}) == 7 ? 8 : 92; }\n$2",
+			$cpp, 1, $matches);
+		verify($matches === 1, 'Missing final append for failure observation');
+		$fixtures[$flavor->name . '-append-atomic-' . $case] = ['cpp' => "#include <stdexcept>\n" . $cpp, 'stdout_hex' => ''];
+	}
+
 	// Each argument executes once. The direct native call permits either argument order.
 	$replace = $function('int', 'index', 'echo "!"; return 0;')
 		. $function('float', 'rhs', 'echo "!"; return 9.75;')
@@ -119,6 +131,14 @@ foreach (flavor::cases() as $flavor) {
 	verify(str_contains($fixtures[$flavor->name . '-replace']['cpp'], 'scpp::checked_float64_to_int64(rhs_('),
 		'Unknown float must use the checked helper directly');
 	$fixtures[$flavor->name . '-native-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('1')];
+
+	$forms = $decl('vector<int>', 'values', '[]') . $decl('int', 'i', '0') . $decl('int', 'x', '8')
+		. $v . "[] = $x; " . $v . "[] = $x <=> $i; echo " . $v . "[$i], " . $v . "[$i + 1]; return 8;";
+	$cpp = (new Cpp_Emitter())->emit($prepare($forms));
+	verify(str_contains($cpp, '.append(var_x_2)') && str_contains($cpp, '.at(var_i_1)')
+		&& str_contains($cpp, '.append(static_cast<scpp::int64>(((var_x_2 > var_i_1)) - ((var_x_2 < var_i_1))))'),
+		'Read and append must reuse exact argument representations');
+	$fixtures[$flavor->name . '-read-append-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('81')];
 
 	// Source catch is deferred. Catch around the emitted store while its destination is still in scope.
 	foreach (['empty' => [0, 0, '2'], 'negative' => [2, -1, '2'], 'end' => [2, 2, '2'],

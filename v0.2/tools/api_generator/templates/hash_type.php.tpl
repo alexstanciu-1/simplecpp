@@ -37,15 +37,14 @@ final class @class@ extends hash_type_definition
 		return @cpp@ . '{}';
 	}
 
-	public function lower_cpp_index(string $receiver, string $index): string
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(' . $receiver . ').@index@(static_cast<' . @key@::instance()->cpp_type() . '>(' . $index . '))';
+		return '(' . $receiver . ').@index@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
 	public function lower_cpp_write(string $receiver, string $index, string $value): string
 	{
-		return '(' . $receiver . ').@set@(static_cast<' . @key@::instance()->cpp_type() . '>(' . $index . '), '
-			. 'static_cast<' . @value@::instance()->cpp_type() . '>(' . $value . '))';
+		return '(' . $receiver . ').@set@(' . $index . ', ' . $value . ')';
 	}
 
 @cardinality@

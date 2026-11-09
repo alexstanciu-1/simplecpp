@@ -88,6 +88,9 @@ final class type_@name@ extends type_definition
 		if ($conversion === value_conversion::identity && @native_suffix@ !== @cpp_suffix@
 			&& !($syntax instanceof ast_call_expression) && !($syntax instanceof ast_index_expression)
 			&& !(($syntax instanceof ast_name_expression) && !($syntax->declaration() instanceof ast_constant_declaration))) {
+			if ($syntax instanceof ast_binary_expression && $syntax->execution_type()->cpp_exact_binary_result($syntax->operator) === $this) {
+				return $operand;
+			}
 			// An inlined constant or arithmetic subtree can still carry the ordinary literal suffix.
 			return 'static_cast<' . $this->cpp_type() . '>(' . $operand . ')';
 		}
