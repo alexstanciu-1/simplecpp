@@ -1,4 +1,4 @@
-# Builtin Contract â€” `number_format`
+# Builtin Contract — `number_format`
 Doc Status: normative
 ## Identity
 - Name: `number_format`
@@ -23,19 +23,20 @@ Doc Status: normative
 - Formats the numeric input with fixed decimal digits and 3-digit thousands grouping.
 - Default decimal separator is `.`.
 - Default thousands separator is `,`.
+- Integers retain their full int64 precision. Decimal ties round away from zero, including a carry past the original int64 range. Rounded zero has no minus sign.
+- Separators are literal byte strings and may be empty or contain NUL. Group after rounding.
 - Trailing zeroes are preserved to the requested decimal count.
 - Negative `decimals` follow modern PHP-style left-of-decimal rounding.
 - Direct string input rejects during v0.2 preparation. Historical runtime overloads
   throw `TypeError` for direct strings and mixed strings.
 
-## Compatibility table
-- PHP supports 1-, 2-, and 4-argument forms â†’ Prism++ supports the same practical forms â†’ kept
-- PHP keeps fixed trailing zeroes â†’ Prism++ keeps fixed trailing zeroes â†’ kept
-- PHP 8.3+ negative `decimals` round digits before the decimal point â†’ Prism++ now mirrors that practical behavior â†’ kept
-- PHP rejects direct string input for `$num` in current versions â†’ Prism++ now rejects direct `string_t` and mixed-string input with `TypeError` â†’ kept
+## PHP compatibility
+- The PHP flavor exposes the one-, two-, and four-argument forms.
+- Fixed precision preserves fractional trailing zeroes. Negative precision rounds before the decimal point.
+- PHP can coerce numeric strings in weak mode. Simple C++ requires an exact numeric first argument during preparation.
 
 ## Error policy
-- Does not throw for ordinary formatting inputs.
+- A finite result whose output length cannot be represented raises `length_error`. Nonfinite float inputs use PHP’s `nan` and `inf` spellings (both infinity signs format as `inf`).
 - Statically unsupported input types/arity reject during v0.2 preparation.
 - Historical runtime string/mixed-string overloads throw `TypeError`; this does
   not imply availability of boxed formatting in the v0.2 catalog.
@@ -50,7 +51,7 @@ Doc Status: normative
 ## Compile plan summary
 - Implemented by shared string runtime support under `runtime/include/modules/strings/strings.hpp` with PHP wrapper exposure in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
-- v0.2 int/float contracts are registered in `runtime/metadata/modules/strings.json`.
+- The active v0.2 [runtime catalog](../../../v0.2/runtime/metadata/runtime.json) publishes the PHP adapter for both numeric inputs and all three arities.
 
 ## Test matrix
 - integer default formatting
@@ -59,5 +60,6 @@ Doc Status: normative
 - negative input
 - trailing zero preservation
 - negative decimals rounding before the decimal point
-- direct string input rejected with `TypeError`
-- mixed-string input rejected with `TypeError`
+- direct strings and boxed inputs rejected during v0.2 preparation
+- embedded NUL and empty separators
+- int64 extrema, positive precision overflow, negative precision extrema and rounded zero

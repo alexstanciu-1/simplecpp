@@ -394,8 +394,48 @@ SCPP;
 		foreach (['"a","b"', '"a","b",0,1,false,0'] as $args) {
 			rejects(fn() => $prepare("echo substr_compare($args); return 8;"), 'Argument count');
 		}
+		$cases = [
+			['1234', '1,234'], ['1234,2', '1,234.00'], ['1234,2,",","_"', '1_234,00'],
+			['1234.5', '1,235'], ['-1234.5,2', '-1,234.50'], ['999.995,2,",","_"', '1_000,00'],
+			['-1.005,2', '-1.01'], ['-0.004,2', '0.00'], ['-0.0', '0'],
+			['1450,-2', '1,500'], ['-1450,-2', '-1,500'], ['-1449.99,-2', '-1,400'],
+			['49,-2', '0'], ['50,-2', '100'], ['-0.05,1', '-0.1'],
+			['9007199254740993', '9,007,199,254,740,993'], [$max, '9,223,372,036,854,775,807'],
+			[$min, '-9,223,372,036,854,775,808'], [$max . ',-19', '10,000,000,000,000,000,000'],
+			[$min . ',-19', '-10,000,000,000,000,000,000'], [$max . ',' . $min, '0'],
+			['1.0e308,' . $min, '0'], ['0.1,20', '0.10000000000000000555'],
+			['1234567.5,2,"\0!","_\0"', "1_\0" . "234_\0" . "567\0!50"],
+			['1234.5,2,"",""', '123450'], ['1234.0,0,"point","::"', '1::234'],
+			['0.3,53', '0.29999999999999998889776975374843459576368331909179688'],
+			['1.25,1100,".",""', '1.25' . str_repeat('0', 1098)],
+		];
+		$source = '$huge = 1.0e308; $inf = $huge * $huge; echo number_format($inf), "|", number_format(-$inf), "|", number_format($inf - $inf), "|";';
+		$expected = 'inf|inf|nan|';
+		foreach ($cases as [$args, $formatted]) {
+			$source .= 'echo number_format(' . $args . '), "|";';
+			$expected .= $formatted . '|';
+		}
+		$fixtures['php-number-format'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')),
+			'stdout_hex' => bin2hex($expected)];
+		foreach (['1', '0.5'] as $i => $number) {
+			$fixtures['php-format-size-' . $i] = ['cpp' => (new Cpp_Emitter())->emit($prepare("echo number_format($number,$max); return 8;")),
+				'stdout_hex' => '', 'catch_length_error' => 'number_format_too_large'];
+		}
+		foreach (['', '0,2,"."', '0,2,".",",",0'] as $args) {
+			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'Argument count');
+		}
+		foreach (['true', '"123"', 'null'] as $arg) {
+			rejects(fn() => $prepare("echo number_format($arg); return 8;"), 'Unsupported first argument type');
+		}
+		foreach (['1,"two"', '1,2,0,","', '1,2,".",false'] as $args) {
+			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'number_format requires');
+		}
+		foreach (['mixed', 'dynamic', 'byte'] as $type) {
+			rejects(fn() => $prepare('$v ' . $type . ' = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
+		}
 	} else {
 		rejects(fn() => $prepare('echo substr_compare("abc","bc",1); return 8;'), 'Unknown function');
+		rejects(fn() => $prepare('echo number_format(1); return 8;'), 'Unknown function');
 	}
 	foreach (['lcfirst', 'ucfirst', 'bin2hex', 'hex2bin'] as $name) {
 		if ($flavor === flavor::php) {

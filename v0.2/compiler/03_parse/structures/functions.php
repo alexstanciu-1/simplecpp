@@ -14,15 +14,18 @@ final readonly class runtime_function
 	public string $symbol;
 	public string $header;
 	public ?string $adapter_flavor;
+	/** Emit the exact native first argument type when it selects a C++ overload. */
+	public bool $overloaded_first;
 	public int $required_parameters /** uint32 */;
 	/** One bit per mutable reference argument in the generated signature. */
 	private int $reference_mask /** uint32 */;
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false)
 	{
 		$this->reference_mask = $reference_mask;
+		$this->overloaded_first = $overloaded_first;
 		$this->source_name = $name;
 		$this->required_parameters = $required_parameters ?? count($parameters);
 		$this->parameters = $parameters;
@@ -46,6 +49,19 @@ final readonly class runtime_function
 	public function return_type_def(): type_definition
 	{
 		return $this->result;
+	}
+}
+
+/** Published runtime signatures selected by supplied arity and exact first argument type, e.g. number_format. */
+final readonly class runtime_overloads
+{
+	/** @var array<int,array<class-string<type_definition>,runtime_function>> */
+	public array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */;
+
+	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity */
+	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */)
+	{
+		$this->by_arity = $by_arity;
 	}
 }
 

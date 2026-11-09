@@ -39,6 +39,21 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $files[$path] .= includeHeader($resultHeader);
                         $carrierIncludes[$path] = true;
                     }
+                    if (isset($binding['overloads'])) {
+                        foreach ($binding['overloads'] as $arity => $variants) {
+                            foreach ($variants as $types) {
+                                $parameters = $arguments = [];
+                                foreach ($types as $i => $type) {
+                                    $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " arg$i";
+                                    $arguments[] = "arg$i";
+                                }
+                                if ($arity === 1) $arguments[] = '0';
+                                if ($arity < 4) array_push($arguments, '::scpp::string{".", 1}', '::scpp::string{",", 1}');
+                                $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $parameters, $binding['symbol'], $arguments);
+                            }
+                        }
+                        continue;
+                    }
                     $parameters = [];
                     $arguments = [];
                     $types = stringAdapterOrder($adapter['parameters'] ?? $binding['parameters'], $adapter);
@@ -145,7 +160,7 @@ function renderString(array $plan): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
+    $vars['classic_storage'] = array_intersect($classic, ['format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
         ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
@@ -225,6 +240,13 @@ function renderString(array $plan): array {
         if (!$windowPositionEmitted && in_array($function['implementation'], ['slice_bytes', 'replace_window'], true)) {
             $d .= template('string_byte_position');
             $windowPositionEmitted = true;
+        }
+        if ($function['implementation'] === 'format_number') {
+            foreach ($function['overloads'][1] as $input => $_) {
+                $h .= "namespace str { string $name($input value, int64 decimals, const string& point, const string& group); }\n";
+            }
+            $d .= template('string_number_format', ['name' => $name]);
+            continue;
         }
         if ($function['implementation'] === 'compare_window') {
             $args = 'const string& subject, const string& other, int64 offset';

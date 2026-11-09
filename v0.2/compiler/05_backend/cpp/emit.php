@@ -558,27 +558,29 @@ final class Cpp_Emitter
 					$symbol = in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
-				if (count($operands) === 1) {
+				if (count($operands) === 1 && !$function->overloaded_first) {
 					return $symbol . '(' . $this->value($operands[0], $global_references, $declarations, $required_headers) . ')';
 				}
 				$arguments = [];
 				$direct = true;
-				foreach ($operands as $argument) {
+				foreach ($operands as $index => $argument) {
 					$safe = false;
-					$arguments[] = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					$arguments[] = $index === 0 && $function->overloaded_first
+						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
 				}
 				$steps = [];
-				if (!$direct) {
+				if (!$direct && count($arguments) > 1) {
 					foreach ($arguments as $index => $operand) {
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
 						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
 				$call = $symbol . '(' . implode(', ', $arguments) . ')';
-				return $direct ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+				return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;

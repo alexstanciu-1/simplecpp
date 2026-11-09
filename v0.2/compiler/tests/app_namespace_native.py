@@ -133,6 +133,12 @@ def prove(work):
         valid = originals['php'].replace('return ', f'return {call} === 0 && ')
         edits[f'bad-substr-compare-{arity}'] = (predicates['php'], valid.replace(call, f'substr_compare("aBc","Bc",{bad_args})'))
         edits[f'recovery-substr-compare-{arity}'] = (predicates['php'], valid)
+    for value, unit, positive in [('1234', 'int', '1,234'), ('1234.5', 'float', '1,235')]:
+        for arity, suffix, expected in [(1, '', positive), (2, ', 0', positive), (4, ', 0, ".", "_"', positive.replace(',', '_'))]:
+            call = f'number_format({value}{suffix})'
+            valid = originals['php'].replace('return ', f'return {call} === "{expected}" && ')
+            edits[f'bad-format-{unit}-{arity}'] = (predicates['php'], valid.replace(call, f'number_format("123"{suffix})'))
+            edits[f'recovery-format-{unit}-{arity}'] = (predicates['php'], valid)
     counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
     edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
     edits['recovery-replace-count-php'] = (predicates['php'], counted)
@@ -230,6 +236,13 @@ def prove(work):
             run = subprocess.run([native / 'program'], capture_output=True)
             expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow', 'recovery-trim-php', 'recovery-ltrim-php') else b'1101'
             assert (run.returncode, run.stdout) == (8, expected), (label, run)
+            if label.startswith('recovery-format-'):
+                clean = fresh_folder / 'native'
+                clean.mkdir()
+                command = write_build(clean, [fresh_folder / name for name in data['translation_units']])
+                subprocess.run(command, cwd=clean, check=True, capture_output=True)
+                fresh_run = subprocess.run([clean / 'program'], capture_output=True)
+                assert (run.returncode, run.stdout, run.stderr) == (fresh_run.returncode, fresh_run.stdout, fresh_run.stderr), label
             rows.append((label, round(wall, 2)))
         print(rows)
     finally:

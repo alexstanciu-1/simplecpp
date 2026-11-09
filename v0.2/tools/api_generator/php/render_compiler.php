@@ -178,6 +178,21 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($binding['adapters'] as $flavor => $adapter) {
                 $scope = $flavor === 'php' || isset($adapter['free']) ? 'func' : $binding['parameters'][0];
                 $key = "$flavor:$scope:" . $adapter['name'];
+                if (isset($binding['overloads'])) {
+                    $rows = [];
+                    foreach ($binding['overloads'] as $argumentCount => $variants) {
+                        $byType = [];
+                        foreach ($variants as $input => $types) {
+                            if (!isset($runtimeTypes[$input])) continue;
+                            $params = array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
+                            $byType[] = 'type_' . $runtimeTypes[$input] . "::class => new runtime_function('$name', ["
+                                . implode(', ', $params) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor', overloaded_first: true)";
+                        }
+                        $rows[] = "$argumentCount => [" . implode(', ', $byType) . ']';
+                    }
+                    $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows) . ']),';
+                    continue;
+                }
                 $arguments = isset($adapter['parameters'])
                     ? array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $adapter['parameters'])
                     : stringAdapterOrder($parameters, $adapter);

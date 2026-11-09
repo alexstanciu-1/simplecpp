@@ -583,15 +583,31 @@ final class Preparation
 	}
 
 	/** Validate supplied runtime arguments against their generated signature. */
-	private function runtime_call(ast_call_expression $call, runtime_function $runtime): void
+	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime): void
 	{
 		$operands = $call->runtime_operands();
-		if (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
+		$prepared = $call->receiver;
+		if ($runtime instanceof runtime_overloads) {
+			$variants = $runtime->by_arity[count($operands)] ?? null;
+			if ($variants === null) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+			}
+			$first = $operands[0];
+			if ($first !== $prepared) {
+				$this->value($first);
+				$prepared = $first;
+			}
+			$runtime = $variants[$first->type_def()::class] ?? null;
+			if ($runtime === null) {
+				throw new diagnostic($first->source(), $first->byte_start(), 'Unsupported first argument type for ' . $call->name);
+			}
+		}
+		elseif (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		$writes = [];
 		foreach ($operands as $index => $argument) {
-			if ($argument !== $call->receiver) {
+			if ($argument !== $prepared) {
 				$this->value($argument);
 			}
 			$type = $runtime->parameters[$index];

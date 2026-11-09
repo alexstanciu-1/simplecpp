@@ -170,6 +170,7 @@ Receiver `s` and argument names below stand for expressions. The table lists pub
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s[, count]) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | ASCII first-byte upper / lower | ucfirst(s), lcfirst(s) | — | — | Empty and nonletter-leading strings retain their bytes |
+| Numeric formatting | number_format(n[, decimals]) or number_format(n, decimals, decimal, group) | — | — | Exact int64 or float64, half-away rounding, literal byte separators |
 | Binary / hex conversion | bin2hex(s), hex2bin(s) | — | — | Lowercase encoding; invalid or odd-length hex decodes to false without a warning |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
 | Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Byte width; default space; PHP supports both sides and validates fill |

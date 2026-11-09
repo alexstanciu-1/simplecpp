@@ -121,7 +121,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'arities']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -134,6 +134,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
+            'format_number' => ['parameters' => ['int64', 'int64', 'string', 'string'], 'result' => 'string'],
             'compare_window' => ['parameters' => ['string', 'string', 'int64', 'int64', 'bool_t'], 'required_parameters' => 3, 'result' => 'int64'],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
             'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
@@ -168,7 +169,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['replace_window', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
+        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
@@ -219,6 +220,21 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
+        $formatted = $implementation === 'format_number';
+        requireThat($formatted === isset($function->numeric_inputs) && $formatted === isset($function->arities),
+            'Numeric input overloads require explicit arities');
+        if ($formatted) {
+            literals($function, ['numeric_inputs' => ['int64', 'float64'], 'arities' => [1, 2, 4]]);
+            foreach ($function->numeric_inputs as $input) {
+                requireThat(hasType($plan, $input) || hasValue($plan, $input), "Number formatting requires $input");
+                $requires[] = $input;
+                $params = $signature['parameters'];
+                $params[0] = $input;
+                foreach ($function->arities as $arity) {
+                    $plan['string_functions'][$name]['overloads'][$arity][$input] = array_slice($params, 0, $arity);
+                }
+            }
+        }
         if ($firstByte) $plan['string_functions'][$name]['first_byte_only'] = true;
         $enabled = boolean($function->flavor_adapters ?? false);
         requireThat($enabled || !in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true),
