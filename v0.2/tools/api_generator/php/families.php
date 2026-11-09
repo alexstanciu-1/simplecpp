@@ -123,7 +123,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'join_bytes' => ['parameters' => ['vector<string>', 'string'], 'result' => 'string'],
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
-            'find', 'rfind', 'count_matches' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
+            'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
+            'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
@@ -176,7 +177,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $split = $implementation === 'split_bytes';
         requireThat($split === isset($function->limit_policy), 'Split bindings require a limit policy');
         if ($split) $limits = fields($function->limit_policy, ['php', 'cpp', 'js']);
-        requireThat(($split || $slice || $padding) === isset($function->required_parameters) && $slice === isset($function->bound), 'Invalid optional string function parameters');
+        requireThat(isset($signature['required_parameters']) === isset($function->required_parameters) && $slice === isset($function->bound), 'Invalid optional string function parameters');
         if ($slice) {
             $bounds = fields($function->bound, ['php', 'cpp', 'js']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Slice requires flavor adapters');

@@ -148,9 +148,34 @@ foreach (flavor::cases() as $flavor) {
 		$fixtures[$flavor->name . '-count-empty-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
 			'catch_ValueError' => 'Substring count requires a nonempty needle', 'stdout_hex' => ''];
 	}
-	foreach (['"a", 0', '"a", 0, 1'] as $args) {
-		rejects(fn() => $prepare('echo ' . $count_matches('"abc"', $args) . '; return 8;'), 'Argument count');
+	$windows = [
+		['"ababab"', '"ab", -4', 2], ['"ababab"', '"ab", -6', 3], ['"ababab"', '"ab", 6', 0],
+		['"ababab"', '"ab", 2, -1', 1], ['"ababab"', '"ab", 2, -4', 0], ['"ababab"', '"ab", -4, 4', 2],
+		['"ababab"', '"ab", -4, -1', 1], ['"ababab"', '"ab", 6, 0', 0], ['""', '"a", 0, 0', 0],
+		['"aaaaaa"', '"aa", 1, 4', 2], ['"a\0a\0"', '"\0", -3, 2', 1],
+		['"éé"', '"é", 1, 2', 0], ['"éé"', 'string_byte_from_int(169), 1, 1', 1],
+	];
+	$counts = [];
+	$expected_counts = [];
+	foreach ($windows as [$subject, $args, $expected]) {
+		$counts[] = $count_matches($subject, $args);
+		$expected_counts[] = $expected;
 	}
+	$code = 'echo ' . implode(', "|", ', $counts) . '; return 8;';
+	$fixtures[$flavor->name . '-count-window'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'stdout_hex' => bin2hex(implode('|', $expected_counts))];
+	$maximum = '9223372036854775807';
+	foreach ([['"a", -4', 'offset'], ['"a", 4', 'offset'], ['"a", ' . $minimum, 'offset'],
+		['"a", ' . $maximum, 'offset'], ['"a", 1, 3', 'length'], ['"a", 1, -3', 'length'],
+		['"a", 1, ' . $minimum, 'length'], ['"a", 1, ' . $maximum, 'length']] as $index => [$args, $bound]) {
+		$code = 'echo ' . $count_matches('"abc"', $args) . '; return 8;';
+		$fixtures[$flavor->name . '-count-bound-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+			'catch_ValueError' => "Substring count $bound outside subject", 'stdout_hex' => ''];
+	}
+	$code = 'echo ' . $count_matches('"abc"', '"", 3, 0') . '; return 8;';
+	$fixtures[$flavor->name . '-count-empty-window'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'catch_ValueError' => 'Substring count requires a nonempty needle', 'stdout_hex' => ''];
+	rejects(fn() => $prepare('echo ' . $count_matches('"abc"', '"a", 0, 1, 2') . '; return 8;'), 'Argument count');
 	$replace_names = match ($flavor) {
 		flavor::php => ['str_replace_first', 'str_replace'], flavor::js => ['replace', 'replaceAll'],
 		flavor::cpp => ['replace_first', 'replace_all'],

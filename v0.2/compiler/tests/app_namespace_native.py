@@ -65,6 +65,11 @@ def prove(work):
         text = originals[flavor].replace(calls[flavor][0], condition)
         edits[f'bad-count-{flavor}'] = (predicates[flavor], text.replace(call, call.replace(needle + ')', '7)')))
         edits[f'recovery-count-{flavor}'] = (predicates[flavor], text)
+        bounded = call[:-1] + ', 0, strlen(' + ('$s' if flavor == 'php' else 's') + '))'
+        valid = text.replace(call, bounded)
+        edits[f'bad-count-window-{flavor}'] = (predicates[flavor], valid.replace(', 0, strlen(', ', "bad", strlen('))
+        edits[f'bad-count-length-{flavor}'] = (predicates[flavor], text.replace(call, call[:-1] + ', 0, "bad")'))
+        edits[f'recovery-count-window-{flavor}'] = (predicates[flavor], valid)
     round_trips = {'php': 'implode("!", explode("!", $n))', 'cpp': 'join(n.split("!"), "!")',
                    'js': 'n.split("!").join("!")'}
     for flavor, call in round_trips.items():

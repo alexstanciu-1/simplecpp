@@ -42,6 +42,14 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $parameters[] = "$cppType $arg";
                     }
                     $arguments = stringAdapterOrder($arguments, $adapter);
+                    if ($binding['implementation'] === 'count_matches') {
+                        for ($arity = $binding['required_parameters']; $arity < count($parameters); ++$arity) {
+                            $params = implode(', ', array_slice($parameters, 0, $arity));
+                            $args = implode(', ', array_slice($arguments, 0, $arity));
+                            $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}($params)"
+                                . " { return ::{$binding['symbol']}($args); }\n}\n";
+                        }
+                    }
                     if (isset($adapter['limit_policy'])) {
                         $short = implode(', ', array_slice($parameters, 0, 2));
                         $args = implode(', ', array_slice($arguments, 0, 2));
@@ -203,8 +211,9 @@ function renderString(array $plan): array {
         if ($function['implementation'] === 'byte_length') {
             $h .= "namespace str { inline $signature { return value.size(); } }\n";
         } elseif ($function['implementation'] === 'count_matches') {
-            $h .= "namespace str { $signature; }\n";
-            $d .= template('string_count_matches', ['signature' => $signature]);
+            $args = "const string& value, const string& other";
+            $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset); int64 $name($args, int64 offset, int64 length); }\n";
+            $d .= template('string_count_matches', ['name' => $name, 'args' => $args]);
         } elseif ($function['implementation'] === 'checked_single_byte') {
             $h .= "namespace str { $signature; }\n";
             $d .= "namespace str { $signature {\n"
