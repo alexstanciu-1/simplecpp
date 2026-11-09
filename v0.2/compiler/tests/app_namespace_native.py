@@ -127,6 +127,11 @@ def prove(work):
         valid = originals['php'].replace('return ', f'return {condition} && ')
         edits[f'bad-{name}-php'] = (predicates['php'], valid.replace(call, f'{name}(7)'))
         edits[f'recovery-{name}-php'] = (predicates['php'], valid)
+    for name, comparison in [('strcmp', '< 0'), ('strcasecmp', '=== 0')]:
+        call = f'{name}("a\\0B","a\\0b")'
+        valid = originals['php'].replace('return ', f'return {call} {comparison} && ')
+        edits[f'bad-byte-compare-{name}'] = (predicates['php'], valid.replace(call, f'{name}("a",7)'))
+        edits[f'recovery-byte-compare-{name}'] = (predicates['php'], valid)
     for args, bad_args in [('1', '"bad"'), ('1, 2', '1, "bad"'), ('1, 2, true', '1, 2, "bad"')]:
         arity = 2 + len(args.split(','))
         call = f'substr_compare("aBc","Bc",{args})'
@@ -236,7 +241,7 @@ def prove(work):
             run = subprocess.run([native / 'program'], capture_output=True)
             expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow', 'recovery-trim-php', 'recovery-ltrim-php') else b'1101'
             assert (run.returncode, run.stdout) == (8, expected), (label, run)
-            if label.startswith('recovery-format-'):
+            if label.startswith(('recovery-format-', 'recovery-byte-compare-')):
                 clean = fresh_folder / 'native'
                 clean.mkdir()
                 command = write_build(clean, [fresh_folder / name for name in data['translation_units']])

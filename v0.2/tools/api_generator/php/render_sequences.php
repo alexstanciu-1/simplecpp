@@ -74,6 +74,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         }
                     }
                     if ($binding['implementation'] === 'replace_window') $parameters[3] .= ' = 0';
+                    if (isset($adapter['ascii_fold'])) $arguments[] = $adapter['ascii_fold'] ? 'true' : 'false';
                     if (isset($adapter['search_offset'])) $arguments[] = '::scpp::str::search_policy::' . $adapter['search_offset'];
                     if (isset($adapter['limit_policy'])) {
                         $short = implode(', ', array_slice($parameters, 0, 2));
@@ -191,6 +192,8 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
+    if (array_intersect($classic, ['compare_bytes', 'compare_window'])) $d .= template('string_compare_views');
+    $comparisonSymbols = [];
     $windowPositionEmitted = false;
     $searchPolicyEmitted = false;
     $padSymbols = [];
@@ -246,6 +249,16 @@ function renderString(array $plan): array {
                 $h .= "namespace str { string $name($input value, int64 decimals, const string& point, const string& group); }\n";
             }
             $d .= template('string_number_format', ['name' => $name]);
+            continue;
+        }
+        if ($function['implementation'] === 'compare_bytes') {
+            if (!isset($comparisonSymbols[$name])) {
+                $signature = "int64 $name(const string& left, const string& right, bool_t insensitive)";
+                $h .= "namespace str { $signature; }\n";
+                $d .= "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
+                    . " detail::string_access::read(right), insensitive); } }\n";
+                $comparisonSymbols[$name] = true;
+            }
             continue;
         }
         if ($function['implementation'] === 'compare_window') {

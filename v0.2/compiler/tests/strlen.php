@@ -368,6 +368,35 @@ SCPP;
 		$expected = bin2hex($raw) . '|S' . $raw . "|[]S|S\0\xffA|" . str_repeat('F|', 9);
 		$fixtures['php-hex'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'stdout_hex' => bin2hex($expected), 'stderr' => ''];
+		$source = <<<'SCPP'
+function ascii_key(int $i): int {
+	if ($i >= 65 && $i <= 90) { return $i + 32; }
+	return $i;
+}
+$i = 0;
+while ($i < 256) {
+	$a = "X\0" . string_byte_from_int($i);
+	$j = 0;
+	while ($j < 256) {
+		$b = "X\0" . string_byte_from_int($j);
+		if ((strcmp($a, $b) <=> 0) !== ($i <=> $j)) { return 1; }
+		if ((strcasecmp($a, $b) <=> 0) !== (ascii_key($i) <=> ascii_key($j))) { return 2; }
+		$j += 1;
+	}
+	$i += 1;
+}
+SCPP;
+		foreach (['strcmp', 'strcasecmp'] as $name) {
+			$source .= "echo ($name(\"\",\"\") <=> 0), ($name(\"a\",\"a\\0\") <=> 0), ($name(\"ab\",\"a\") <=> 0);";
+			foreach (['"a"', '"a","b","c"'] as $args) {
+				rejects(fn() => $prepare("echo $name($args); return 8;"), 'Argument count');
+			}
+			foreach (['7,"a"', '"a",7'] as $args) {
+				rejects(fn() => $prepare("echo $name($args); return 8;"), 'requires string');
+			}
+		}
+		$source .= 'echo (strcasecmp("A\0bCD","a\0Bcd") <=> 0), (strcasecmp("ab","ABc") <=> 0); return 8;';
+		$fixtures['php-byte-compare'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)), 'stdout_hex' => bin2hex('0-110-110-1')];
 		$comparisons = [
 			['"abc","bcXYZ",1', -1], ['"abc","bcXYZ",1,2', 0], ['"abc","bc",-2', 0],
 			['"abc","a",-3', 1], ['"abc","",3', 0], ['"abc","a",4', -1],
@@ -434,6 +463,9 @@ SCPP;
 			rejects(fn() => $prepare('$v ' . $type . ' = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
 		}
 	} else {
+		foreach (['strcmp', 'strcasecmp'] as $name) {
+			rejects(fn() => $prepare("echo $name(\"a\",\"b\"); return 8;"), 'Unknown function');
+		}
 		rejects(fn() => $prepare('echo substr_compare("abc","bc",1); return 8;'), 'Unknown function');
 		rejects(fn() => $prepare('echo number_format(1); return 8;'), 'Unknown function');
 	}

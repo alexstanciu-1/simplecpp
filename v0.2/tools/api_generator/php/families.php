@@ -121,7 +121,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'arities']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -135,6 +135,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
             'format_number' => ['parameters' => ['int64', 'int64', 'string', 'string'], 'result' => 'string'],
+            'compare_bytes' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'compare_window' => ['parameters' => ['string', 'string', 'int64', 'int64', 'bool_t'], 'required_parameters' => 3, 'result' => 'int64'],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
             'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
@@ -169,7 +170,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
+        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
@@ -208,6 +209,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat(in_array($function->replace_mode, ['first', 'all'], true), 'Invalid replacement mode');
             requireThat(($function->flavor_adapters ?? false) === true, 'Replacement requires flavor adapters');
         }
+        $compare = $implementation === 'compare_bytes';
+        requireThat($compare === isset($function->ascii_fold), 'Whole-string comparisons require an ASCII folding policy');
         $trim = $implementation === 'trim_bytes';
         requireThat($trim === property_exists($function, 'side'), 'Trim direction required only for trim bindings');
         if ($trim) {
@@ -216,7 +219,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $defaults = fields(at($m, 'trim_defaults'), ['php', 'js', 'cpp']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Default trim requires flavor adapters');
         }
-        requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
+        requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding || $compare) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
@@ -245,6 +248,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat($members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
+                if ($compare) $options['ascii_fold'] = boolean($function->ascii_fold);
                 if ($split) {
                     $policy = $limits[$flavor] ?? null;
                     requireThat(in_array($policy, ['remainder', 'uint32_cap', 'cap'], true), 'Unknown split limit policy');

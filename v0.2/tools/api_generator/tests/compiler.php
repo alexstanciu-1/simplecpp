@@ -54,6 +54,18 @@ $registry = renderCompiler($functionMetadata, $facts, $predicatePlan)['types/reg
 requireThat(str_contains($registry, "'js:string:hasBytes'") && str_contains($registry, "'php:func:str_contains'")
     && !str_contains($registry, "'js:string:includes'") && !str_contains($registry, "'cpp:string:starts_with'"),
     'String member lookup ignored flavor metadata or publication selection');
+// Whole-string comparison adapters can each be published independently of the windowed comparison.
+foreach (['strcmp' => 'false', 'strcasecmp' => 'true'] as $name => $fold) {
+    $demand->string->functions = [$name];
+    $comparison = prepareRuntime($functionMetadata, $demand, $facts);
+    $comparisonFiles = $groups = [];
+    $definitions = '';
+    renderSequences($comparison, $comparisonFiles, $definitions, $groups);
+    $header = $comparisonFiles['public/scpp/php/string.hpp'];
+    requireThat(str_contains($header, " $name(") && str_contains($header, "compare_bytes(arg0, arg1, $fold)")
+        && !str_contains($header, 'substr_compare(') && substr_count($definitions, 'static int64 compare_byte_views(') === 1,
+        'Isolated byte comparison publication mismatch');
+}
 // A flavor result is part of the public signature and must be available in this publication.
 foreach (['strpos' => 'int64', 'hex2bin' => 'string'] as $name => $payload) {
     $restricted = unserialize(serialize($demand));
