@@ -638,6 +638,9 @@ final class Cpp_Emitter
 		if ($value instanceof ast_name_expression) {
 			$reorderable = $value->type_def()->cpp_trivial_value();
 			$declaration = $value->declaration();
+			if ($declaration instanceof runtime_integer_constant) {
+				return $declaration->value . 'LL';
+			}
 			if ($declaration instanceof ast_constant_declaration) {
 				$type = $declaration->type_def();
 				$conversion = $declaration->initialization();

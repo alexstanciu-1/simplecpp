@@ -86,6 +86,19 @@ def prove(work):
             text = originals[flavor].replace(calls[flavor][0], calls[flavor][0].replace(operand, argument))
             edits[f'bad-{name}-{flavor}'] = (predicates[flavor], text.replace('"y"', '5'))
             edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], text)
+    pads = {'php': 'str_pad($n, 0, "x", STR_PAD_LEFT)', 'js': 'n.padStart(0, "x")', 'cpp': 'n.pad_end(0, "x")'}
+    for flavor, call in pads.items():
+        operand = '$n)' if flavor == 'php' else '(n)'
+        argument = call + ')' if flavor == 'php' else f'({call})'
+        text = originals[flavor].replace(calls[flavor][0], calls[flavor][0].replace(operand, argument))
+        if flavor == 'php':
+            text = text.replace(';', ' && STR_PAD_LEFT === 0;')
+        edits[f'bad-pad-{flavor}'] = (predicates[flavor], text.replace('"x"', '7'))
+        edits[f'recovery-pad-{flavor}'] = (predicates[flavor], text)
+    # A foreign declaration shadows the PHP provider constant in an unchanged caller.
+    cpp_pad = edits['recovery-pad-cpp'][1]
+    edits['recovery-pad-shadow'] = (cpp, cpp_pad + ' const int STR_PAD_LEFT = 1;')
+    edits['recovery-pad-unshadow'] = (cpp, cpp_pad)
     trim_names = {'php': ('trim', 'ltrim', 'rtrim'), 'js': ('trim', 'trimStart', 'trimEnd'),
                   'cpp': ('trim', 'trim_start', 'trim_end')}
     for flavor, names in trim_names.items():
@@ -129,6 +142,8 @@ def prove(work):
                 continue
             assert 'error' not in result and 'error' not in other, (result, other)
             expected_emits = 1 if label.startswith('recovery-') else (0 if label == 'no_edit' else 4)
+            if label in ('recovery-pad-shadow', 'recovery-pad-unshadow'):
+                expected_emits = 2
             assert len(result['emitted_sources']) == expected_emits, result
             assert artifacts(output) == artifacts(fresh_folder), label
             data = json.loads((output / 'manifest.json').read_text())
@@ -157,7 +172,7 @@ def prove(work):
             assert build.returncode == 0, build.stdout
             wall = 1000 * (time.perf_counter() - start)
             run = subprocess.run([native / 'program'], capture_output=True)
-            expected = b'0101' if label == 'recovery-suffix-php' else b'1101'
+            expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow') else b'1101'
             assert (run.returncode, run.stdout) == (8, expected), (label, run)
             rows.append((label, round(wall, 2)))
         print(rows)

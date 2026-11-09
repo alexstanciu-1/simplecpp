@@ -49,12 +49,16 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                       '\tif (var_first_0.size() != 0 || var_copy_1.size() != 13) return 91;\n'
                       '\tif (var_copy_1.data()[6] != 0 || var_copy_1.data()[12] != \'\\n\') return 92;\n')
             source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
-            for exception in ('length_error', 'invalid_argument', 'out_of_range', 'domain_error', 'runtime_error'):
+            for exception in ('length_error', 'invalid_argument', 'out_of_range', 'domain_error', 'runtime_error', 'ValueError'):
                 expected = fixture.get('catch_' + exception)
                 if expected:
                     source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
+                    error_type = 'std::' + exception
+                    if exception == 'ValueError':
+                        source = '#include <scpp/value_error.hpp>\n' + source
+                        error_type = 'scpp::ValueError'
                     check = '8' if expected is True else f'std::string_view(e.what()) == {json.dumps(expected)} ? 8 : 91'
-                    source += (f'\nint main() {{ try {{ tested_entry(); }} catch (const std::{exception}& e) {{ '
+                    source += (f'\nint main() {{ try {{ tested_entry(); }} catch (const {error_type}& e) {{ '
                                f'return {check}; }} return 90; }}\n')
             cpp.write_text(source)
             units = [cpp]

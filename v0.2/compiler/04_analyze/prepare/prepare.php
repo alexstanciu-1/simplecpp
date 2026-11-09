@@ -547,6 +547,13 @@ final class Preparation
 					$syntax->settle_constant($symbol);
 					return;
 				}
+				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
+					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));
+					if ($constant !== null) {
+						$syntax->settle_runtime_constant($constant);
+						return;
+					}
+				}
 			}
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
@@ -680,7 +687,8 @@ final class Preparation
 				if (!($argument instanceof ast_name_expression)) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
 				}
-				if ($argument->declaration() instanceof ast_constant_declaration) {
+				$storage = $argument->declaration();
+				if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
 				}
 				if ($argument->type_def() !== $parameter->type_def()) {

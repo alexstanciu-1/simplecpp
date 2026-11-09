@@ -170,7 +170,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
-| Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Width in bytes; settle fill and PHP side notation |
+| Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Byte width; default space; PHP supports both sides and validates fill |
 | Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Coordinate vector<string> boundaries; settle empty separator and limit |
 | Count matches | substr_count(s, needle) | s.countMatches(needle) | s.count_matches(needle) | Non-overlapping literal matches; settle empty needle |
 
@@ -195,9 +195,8 @@ See [the byte/text portability precedent](../../../specs/portability/utf8_text_c
   signed byte bounds for PHP/C++ length and JS exclusive end.
 - The [padding contract](../../../specs/builtins/string/str_pad.md) covers 2/3/4
   arguments, a one-space default fill, left/right/both, and an extra byte on the
-  right for both-side padding. Empty fill and invalid mode fail even for a no-op.
-  Publishing its three named integer constants and selecting a runtime binding
-  by arity need compiler support beyond the current fixed-signature registry.
+  right for both-side padding. PHP validates fill and side before the width shortcut and publishes three integer constants.
+  JS/C++ return the input for an explicit empty fill.
 - The native vector_string export already provides append, size and indexed
   reads. Ownership coordination concerns publishing a function with a collection
   parameter/result and selecting its provider. The [split](../../../specs/builtins/string/explode.md)

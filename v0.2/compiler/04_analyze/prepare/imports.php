@@ -41,7 +41,9 @@ final class Import_Preparation
 		};
 		foreach ($kinds as $kind) {
 			$key = $kind . ':' . $import->target;
-			if ($symbols->resolve($key) === null && ($kind !== 'func' || runtime_functions::free($key, $file->source()->flavor) === null)) {
+			if ($symbols->resolve($key) === null && ($kind === 'func'
+				? runtime_functions::free($key, $file->source()->flavor) === null
+				: ($file->source()->flavor !== flavor::php || runtime_constants::integer($key) === null))) {
 				continue;
 			}
 			$found = true;

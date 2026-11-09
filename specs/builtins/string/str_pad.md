@@ -24,12 +24,22 @@ Doc Status: normative
 - If `pad_length` is not greater than the input length, the original string is returned unchanged.
 - For `STR_PAD_BOTH`, odd extra padding keeps the extra byte on the right.
 
+## v0.2 flavors
+
+PHP exposes all three arities and the three named side constants. JS exposes
+`s.padStart(width[, fill])` and `s.padEnd(width[, fill])`; C++ exposes
+`s.pad_start(width[, fill])` and `s.pad_end(width[, fill])`. All widths are signed
+byte counts. Omitted fill is one ASCII space. JS and C++ return the input bytes
+for an explicit empty fill; PHP raises ValueError before the width shortcut.
+Both-side PHP padding restarts the fill on each side. All forms preserve embedded NUL
+and may truncate the final repetition inside a UTF-8 sequence.
+
 ## Compatibility table
 - PHP pads by repeated/truncated pad string bytes â†’ Prism++ keeps the same practical direction â†’ kept
 - PHP validates empty pad string and pad type â†’ Prism++ throws `ValueError` for those invalid cases â†’ kept
 
 ## Error policy
-- Throws `ValueError` if `pad_string` is empty.
+- PHP throws `ValueError` if `pad_string` is empty.
 - Throws `ValueError` if `pad_type` is not one of the supported constants.
 
 ## Runtime and wrapper split

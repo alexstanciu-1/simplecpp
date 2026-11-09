@@ -110,13 +110,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'bound', 'replace_mode']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
+            'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
+                ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
             'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
             'slice_bytes' => ['parameters' => ['string', 'int64', 'int64'], 'result' => 'string', 'required_parameters' => 2],
             'repeat' => ['parameters' => ['string', 'int64'], 'result' => 'string'],
@@ -139,8 +141,27 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                 && !isset($memberNames[$flavor][$member]), 'Invalid or duplicate string member binding');
             $memberNames[$flavor][$member] = true;
         }
+        $padding = $implementation === 'pad_bytes';
+        requireThat($padding === isset($function->pad_side), 'Padding requires a side');
+        $spellings = ['php' => $name] + $members;
+        requireThat($padding === isset($function->flavors), 'Padding adapters require explicit flavors');
+        if ($padding) {
+            checkHeader($plan, 'scpp/value_error.hpp');
+            $side = $function->pad_side;
+            requireThat(in_array($side, ['argument', 'left', 'right'], true), 'Invalid padding side');
+            $expected = $side === 'argument' ? ['php'] : ['cpp', 'js'];
+            literals($function, ['flavors' => $expected, 'flavor_adapters' => true]);
+            $spellings = array_intersect_key($spellings, array_flip($expected));
+            requireThat(count($spellings) === count($expected), 'Missing padding spelling');
+        }
+        requireThat(($padding && $side === 'argument') === isset($function->constants), 'PHP padding publishes side constants');
+        if (isset($function->constants)) {
+            $values = fields($function->constants, ['STR_PAD_LEFT', 'STR_PAD_RIGHT', 'STR_PAD_BOTH']);
+            literals($function->constants, ['STR_PAD_LEFT' => 0, 'STR_PAD_RIGHT' => 1, 'STR_PAD_BOTH' => 2]);
+            $plan['php_integer_constants'] = $values;
+        }
         $slice = $implementation === 'slice_bytes';
-        requireThat($slice === isset($function->required_parameters) && $slice === isset($function->bound), 'Slice bindings require a trailing optional bound');
+        requireThat(($slice || $padding) === isset($function->required_parameters) && $slice === isset($function->bound), 'Slice bindings require a trailing optional bound');
         if ($slice) {
             $bounds = fields($function->bound, ['php', 'cpp', 'js']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Slice requires flavor adapters');
@@ -159,7 +180,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $defaults = fields(at($m, 'trim_defaults'), ['php', 'js', 'cpp']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Default trim requires flavor adapters');
         }
-        requireThat(!isset($symbols[$symbol]) || (($trim || $replace) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
+        requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
@@ -167,9 +188,10 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $signatures = isset($function->signatures) ? fields($function->signatures, array_keys(['php' => $name] + $members)) : [];
         requireThat(!$signatures || $enabled, 'Flavor signatures require generated adapters');
         if ($enabled) {
-            requireThat($members !== [], 'Flavor adapters require flavor-specific string spellings');
-            foreach (['php' => $name] + $members as $flavor => $spelling) {
+            requireThat($members !== [] || $padding, 'Flavor adapters require flavor-specific string spellings');
+            foreach ($spellings as $flavor => $spelling) {
                 $options = [];
+                if ($padding) $options['pad_side'] = $side;
                 if ($replace) {
                     $options['replace_mode'] = $function->replace_mode;
                 }

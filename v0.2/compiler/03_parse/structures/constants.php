@@ -3,6 +3,24 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Published integer literal from runtime metadata, e.g. PHP STR_PAD_LEFT. */
+final readonly class runtime_integer_constant
+{
+	private string $key;
+	public int $value /** int64 */;
+
+	public function __construct(string $key, int $value /** int64 */)
+	{
+		$this->key = $key;
+		$this->value = $value;
+	}
+
+	public function symbol_key(): string
+	{
+		return $this->key;
+	}
+}
+
 /** Immutable namespace value, e.g. const int LIMIT = 8; published as const:LIMIT with AST-owned literal facts. */
 final class ast_constant_declaration extends ast_literal_declaration
 {

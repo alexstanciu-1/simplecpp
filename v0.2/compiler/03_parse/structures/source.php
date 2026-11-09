@@ -184,6 +184,13 @@ final class ast_file_node extends ast_node
 		return $resolved_key;
 	}
 
+	/** Resolve unqualified runtime constants after the namespace's source declaration. */
+	public function runtime_constant_key(string $name): string
+	{
+		return !isset($this->constant_imports[$name]) && !str_contains($name, '\\')
+			? 'const:' . $name : $this->constant_key($name);
+	}
+
 	public function constant_key(string $name): string
 	{
 		$import = $this->constant_imports[$name] ?? null;

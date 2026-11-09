@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, Cpp_Emitter, entry_target, Project_Compiler,
 	Incremental_Preparation, prepared_program, prepared_entry, Cpp_Program, Program_Frontend, diagnostic, diagnostic_group};
@@ -73,6 +74,50 @@ foreach (flavor::cases() as $flavor) {
 	$code = 'echo ' . implode(', "|", ', $replacements) . '; return 8;';
 	$fixtures[$flavor->name . '-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
 		'stdout_hex' => bin2hex(implode('|', $expected))];
+	$pad = static function (string $value, string $width, ?string $fill, string $side) use ($flavor): string {
+		$args = $width . ($fill === null ? '' : ", $fill");
+		if ($flavor === flavor::php) {
+			return "str_pad($value, $args" . ($side === 'default' ? '' : ', STR_PAD_' . strtoupper($side)) . ')';
+		}
+		$method = $side === 'left' ? ($flavor === flavor::js ? 'padStart' : 'pad_start')
+			: ($flavor === flavor::js ? 'padEnd' : 'pad_end');
+		return "$value.$method($args)";
+	};
+	$pads = [];
+	$expected = [];
+	$cases = [
+		['"x"', '4', null, 'default', 'x   '], ['"x"', '6', '"ab"', 'default', 'xababa'],
+		['"x"', '4', '"ab"', 'left', 'abax'], ['"x"', '4', '"ab"', 'right', 'xaba'],
+		['"é"', '3', '"中"', 'right', "é\xe4"], ['"\0"', '4', '"\0x"', 'left', "\0x\0\0"],
+		['"abc"', '-1', '"x"', 'left', 'abc'], ['"abc"', '3', null, 'default', 'abc'],
+		['""', '31', '"ab"', 'left', str_repeat('ab', 15) . 'a'],
+	];
+	if ($flavor === flavor::php) {
+		$cases[] = ['"x"', '4', '"ab"', 'both', 'axab'];
+		$cases[] = ['"x"', '5', '"ab"', 'both', 'abxab'];
+		foreach (['str_pad("abc", 1, "")' => 'str_pad(): Argument #3 ($pad_string) must not be empty',
+			'str_pad("abc", 1, "x", 99)' => 'str_pad(): Argument #4 ($pad_type) must be STR_PAD_LEFT, STR_PAD_RIGHT, or STR_PAD_BOTH'] as $call => $message) {
+			$fixtures['pad-error-' . count($fixtures)] = ['cpp' => (new Cpp_Emitter())->emit($prepare("echo $call; return 8;")),
+				'catch_ValueError' => $message, 'stdout_hex' => ''];
+		}
+	}
+	else {
+		$cases[] = ['"abc"', '8', '""', 'left', 'abc'];
+		$cases[] = ['"abc"', '1', '""', 'right', 'abc'];
+		$cases[] = ['"x"', '3', null, 'left', '  x'];
+		rejects(fn() => $prepare('echo STR_PAD_LEFT; return 8;'), 'Unknown');
+	}
+	foreach ($cases as [$value, $width, $fill, $side, $result]) {
+		$pads[] = $pad($value, $width, $fill, $side);
+		$expected[] = $result;
+	}
+	$code = 'echo ' . implode(', "|", ', $pads) . '; return 8;';
+	$prepared = $prepare($code);
+	if ($flavor === flavor::php) {
+		$inspection = json_encode(\scpp\compiler\Compilation_Inspection::program($prepared), JSON_THROW_ON_ERROR);
+		verify(str_contains($inspection, 'const:STR_PAD_LEFT'), 'Padding constant missing from preparation report');
+	}
+	$fixtures[$flavor->name . '-padding'] = ['cpp' => (new Cpp_Emitter())->emit($prepared), 'stdout_hex' => bin2hex(implode('|', $expected))];
 	$slice = static fn(string $value, string $args): string => match ($flavor) {
 		flavor::php => 'substr(' . $value . ($args === '' ? '' : ',' . $args) . ')',
 		flavor::cpp => "$value.substr($args)", flavor::js => "$value.slice($args)",

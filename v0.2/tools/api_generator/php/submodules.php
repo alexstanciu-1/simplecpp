@@ -261,7 +261,9 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     foreach ($publication->string->functions ?? [] as $name) {
         $function = at($metadata->string->functions, $name);
         if (!($function->flavor_adapters ?? false)) continue;
-        foreach (['php', ...array_keys(isset($function->members) ? object($function->members) : [])] as $flavor) $headers[] = stringAdapterHeader($flavor);
+        if ($function->implementation === 'pad_bytes') $headers[] = 'scpp/value_error.hpp';
+        $flavors = $function->flavors ?? ['php', ...array_keys(isset($function->members) ? object($function->members) : [])];
+        foreach ($flavors as $flavor) $headers[] = stringAdapterHeader($flavor);
     }
     $headers = array_values(array_unique($headers));
     sort($headers, SORT_STRING);

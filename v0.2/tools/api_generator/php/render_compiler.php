@@ -167,9 +167,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $keys = [$binding['members'] ? "php:func:$name" : "func:$name"];
         foreach ($binding['members'] as $flavor => $member) $keys[] = "$flavor:string:$member";
         if (isset($binding['adapters'])) {
-            foreach ($keys as $key) {
-                $flavor = explode(':', $key, 2)[0];
-                $adapter = $binding['adapters'][$flavor];
+            foreach ($binding['adapters'] as $flavor => $adapter) {
+                $key = $flavor === 'php' ? "php:func:$name" : "$flavor:string:" . $adapter['name'];
                 $adapterResult = $adapter['result'] ?? $result;
                 $required = isset($binding['required_parameters']) ? ', ' . $binding['required_parameters'] : '';
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
@@ -185,9 +184,13 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     if (isset($runtime['string'])) $exportedNames[] = $runtime['string']['name'];
     $exportedNames = array_merge($exportedNames, array_keys((array) ($runtime['aliases'] ?? [])));
     $shortTypes = implode(', ', array_map(static fn($name) => var_export($name, true), $exportedNames));
+    $constantCases = [];
+    foreach ($runtime['php_integer_constants'] ?? [] as $name => $value) {
+        $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
-        '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
+        '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

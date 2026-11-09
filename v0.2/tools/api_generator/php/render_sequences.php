@@ -35,6 +35,19 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = $arg = "arg$i";
                         $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
                     }
+                    if (isset($adapter['pad_side'])) {
+                        $parameters[2] .= ' = ::scpp::string{" ", 1}';
+                        if ($adapter['pad_side'] === 'argument') {
+                            foreach ($plan['php_integer_constants'] as $constant => $number) {
+                                $files[$path] .= "namespace scpp::php { inline constexpr ::scpp::int64 $constant = $number; }\n";
+                            }
+                            $parameters[3] .= ' = STR_PAD_RIGHT';
+                            $arguments[] = 'true';
+                        } else {
+                            $arguments[] = 'static_cast<::scpp::int64>(::scpp::str::pad_side::' . $adapter['pad_side'] . ')';
+                            $arguments[] = 'false';
+                        }
+                    }
                     if (isset($adapter['replace_mode'])) {
                         if ($flavor === 'php') $arguments = ['arg2', 'arg0', 'arg1'];
                         $arguments[] = '::scpp::str::replace_mode::' . $adapter['replace_mode'];
@@ -88,7 +101,7 @@ function renderString(array $plan): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes'])
+    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes'])
         ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
@@ -119,10 +132,21 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
+    $padSymbols = [];
     $trimSymbols = [];
     $replaceSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
+        if ($function['implementation'] === 'pad_bytes') {
+            if (!$padSymbols) $h .= "namespace str { enum class pad_side : int64 { left = 0, right = 1, both = 2 }; }\n";
+            if (!isset($padSymbols[$name])) {
+                $signature = "string $name(const string& subject, int64 width, const string& fill, int64 side, bool reject_empty)";
+                $h .= "namespace str { $signature; }\n";
+                $d .= template('string_pad', ['signature' => $signature]);
+                $padSymbols[$name] = true;
+            }
+            continue;
+        }
         if ($function['implementation'] === 'replace_bytes') {
             if (!$replaceSymbols) $h .= "namespace str { enum class replace_mode { first, all }; }\n";
             if (!isset($replaceSymbols[$name])) {

@@ -84,10 +84,10 @@ class ast_name_expression extends ast_expression
 
 	/** PREP FACTS */
 	/**
-	 * Prepared fact: local AST identity or stable global/constant symbol; null before preparation or after reset.
+	 * Prepared fact: local AST identity, stable source symbol or runtime constant; null until prepared.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_binding|symbol_entry|null $binding = null;
+	protected ast_local_binding|symbol_entry|runtime_integer_constant|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -136,10 +136,17 @@ class ast_name_expression extends ast_expression
 		$this->binding = $symbol;
 	}
 
-	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration
+	/** Module constants provide the value after ordinary source lookup has been observed. */
+	public function settle_runtime_constant(runtime_integer_constant $constant): void
 	{
-		if ($this->binding instanceof ast_local_binding) {
+		$this->settle_value(type_int64::instance(), $constant->value);
+		$this->binding = $constant;
+	}
+
+	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
+	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant
+	{
+		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();

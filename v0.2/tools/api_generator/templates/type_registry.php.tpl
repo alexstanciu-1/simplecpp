@@ -90,3 +90,16 @@ final class runtime_functions
 		};
 	}
 }
+
+/** Integer constants published by the PHP runtime provider. */
+final class runtime_constants
+{
+	public static function integer(string $key): ?runtime_integer_constant
+	{
+		static $constants = [];
+		return match ($key) {
+@integer_constants@
+			default => null,
+		};
+	}
+}
