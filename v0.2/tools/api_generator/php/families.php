@@ -234,9 +234,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     $options = ['trim_side' => $side, 'trim_set' => $set];
                 }
                 if (array_key_exists($flavor, $signatures)) {
-                    $options = fields($signatures[$flavor], ['result', 'body']);
-                    literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
-                    requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
+                    if ($trim) {
+                        requireThat($flavor === 'php', 'Explicit trim masks require the PHP flavor');
+                        $options += fields($signatures[$flavor], ['parameters', 'required_parameters']);
+                        literals($signatures[$flavor], ['parameters' => ['string', 'string'], 'required_parameters' => 1]);
+                    } else {
+                        $options += fields($signatures[$flavor], ['result', 'body']);
+                        literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
+                        requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
+                    }
                 }
                 if ($search) {
                     $policy = $offsets[$flavor] ?? null;

@@ -173,9 +173,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($binding['adapters'] as $flavor => $adapter) {
                 $scope = $flavor === 'php' || isset($adapter['free']) ? 'func' : $binding['parameters'][0];
                 $key = "$flavor:$scope:" . $adapter['name'];
-                $arguments = stringAdapterOrder($parameters, $adapter);
+                $arguments = isset($adapter['parameters'])
+                    ? array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $adapter['parameters'])
+                    : stringAdapterOrder($parameters, $adapter);
                 $adapterResult = $adapter['result'] ?? $result;
-                $required = isset($binding['required_parameters']) ? ', ' . $binding['required_parameters'] : '';
+                $requiredCount = $adapter['required_parameters'] ?? $binding['required_parameters'] ?? null;
+                $required = $requiredCount === null ? '' : ', ' . $requiredCount;
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
                     . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }

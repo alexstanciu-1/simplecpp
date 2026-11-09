@@ -136,9 +136,10 @@ def prove(work):
             call = f'{name}($n)' if flavor == 'php' else f'n.{name}()'
             arg = calls[flavor][0].replace('$n)', call + ')') if flavor == 'php' else calls[flavor][0].replace('(n)', f'({call})')
             text = originals[flavor].replace(calls[flavor][0], arg)
-            bad_call = f'{name}($n,"x")' if flavor == 'php' else f'n.{name}("x")'
+            bad_call = f'{name}($n,1)' if flavor == 'php' else f'n.{name}("x")'
             edits[f'bad-{name}-{flavor}'] = (predicates[flavor], text.replace(call, bad_call))
-            edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], text)
+            repaired = text.replace(call, f'{name}($n,"a")') if flavor == 'php' else text
+            edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], repaired)
     for flavor, call in [('php', 'str_starts_with'), ('js', 'startsWith'), ('cpp', 'starts_with')]:
         probe = (f'#include <scpp/{flavor}/string.hpp>\nnamespace Consumer {{\n'
                  f'using namespace ::scpp::types; using namespace ::scpp::{flavor};\n'
@@ -202,7 +203,7 @@ def prove(work):
             assert build.returncode == 0, build.stdout
             wall = 1000 * (time.perf_counter() - start)
             run = subprocess.run([native / 'program'], capture_output=True)
-            expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow') else b'1101'
+            expected = b'0101' if label in ('recovery-suffix-php', 'recovery-pad-shadow', 'recovery-trim-php', 'recovery-ltrim-php') else b'1101'
             assert (run.returncode, run.stdout) == (8, expected), (label, run)
             rows.append((label, round(wall, 2)))
         print(rows)

@@ -40,7 +40,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     }
                     $parameters = [];
                     $arguments = [];
-                    $types = stringAdapterOrder($binding['parameters'], $adapter);
+                    $types = stringAdapterOrder($adapter['parameters'] ?? $binding['parameters'], $adapter);
                     foreach ($types as $i => $type) {
                         $arguments[] = $arg = "arg$i";
                         $cppType = match ($type) {
@@ -93,8 +93,14 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = '::scpp::str::slice_bound::' . $adapter['bound'];
                     }
                     if (isset($adapter['trim_side'])) {
-                        $arguments[] = '::scpp::str::trim_side::' . $adapter['trim_side'];
-                        $arguments[] = '::scpp::str::trim_set::' . $adapter['trim_set'];
+                        $side = '::scpp::str::trim_side::' . $adapter['trim_side'];
+                        $default = [$arguments[0], $side, '::scpp::str::trim_set::' . $adapter['trim_set']];
+                        if (isset($adapter['parameters'])) {
+                            $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, [$parameters[0]], $binding['symbol'], $default);
+                            $arguments[] = $side;
+                        } else {
+                            $arguments = $default;
+                        }
                     }
                     $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $parameters, $binding['symbol'], $arguments);
                 }
@@ -214,8 +220,9 @@ function renderString(array $plan): array {
             }
             if (!isset($trimSymbols[$name])) {
                 $signature = "string $name(const string& value, trim_side side, trim_set set)";
-                $h .= "namespace str { $signature; }\n";
-                $d .= template('string_trim', ['signature' => $signature, 'count' => $count]);
+                $masked = "string $name(const string& value, const string& mask, trim_side side)";
+                $h .= "namespace str { $signature; $masked; }\n";
+                $d .= template('string_trim', ['signature' => $signature, 'masked' => $masked, 'count' => $count]);
                 $trimSymbols[$name] = true;
             }
             continue;

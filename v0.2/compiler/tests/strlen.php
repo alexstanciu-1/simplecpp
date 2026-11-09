@@ -413,7 +413,29 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name . '-trim'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($trim_source . 'return 8;')),
 		'stdout_hex' => bin2hex($expected)];
 	if ($flavor === flavor::php) {
-		foreach ($trim_names as $name) rejects(fn() => $prepare("echo $name(\"x\",\"x\");return 8;"), 'Argument count');
+		$masked = 'echo trim($s,$m), "|", ltrim($s,$m), "|", rtrim($s,$m);';
+		$source = $counter . 'while ($i < 256) { $m = string_byte_from_int($i); $s = $m . "A\0B" . $m; '
+			. $masked . ' $i += 1; }';
+		$expected = '';
+		for ($n = 0; $n < 256; ++$n) {
+			$m = chr($n);
+			$v = $m . "A\0B" . $m;
+			$expected .= trim($v, $m) . '|' . ltrim($v, $m) . '|' . rtrim($v, $m);
+		}
+		foreach ([
+			['" a "', '""', ' a | a | a '], ['""', '"x"', '||'],
+			['"a..b..z"', '"a..z"', 'b|b..z|a..b'],
+			['"..a.."', '".."', 'a|a..|..a'], ['"aaa"', '"aa"', '||'],
+			['"\0xA\0Bx\0"', '"\0x"', "A\0B|A\0Bx\0|\0xA\0B"],
+			['string_byte_from_int(255) . "a" . string_byte_from_int(128)', 'string_byte_from_int(128) . string_byte_from_int(255)',
+				"a|a\x80|\xffa"],
+		] as [$subject, $set, $result]) {
+			$source .= '$s = ' . $subject . '; $m = ' . $set . '; ' . $masked;
+			$expected .= $result;
+		}
+		$fixtures['php-trim-mask'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')),
+			'stdout_hex' => bin2hex($expected)];
+		foreach ($trim_names as $name) rejects(fn() => $prepare("echo $name(\"x\",\"x\",\"x\");return 8;"), 'Argument count');
 	}
 	$bytes = $counter . "while ($i < 256) { echo string_byte_from_int($i); $i += 1; } return 8;";
 	$fixtures[$flavor->name . '-all-bytes'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bytes)),
