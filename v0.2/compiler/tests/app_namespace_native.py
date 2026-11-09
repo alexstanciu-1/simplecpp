@@ -44,8 +44,19 @@ def prove(work):
     cpp.write_text(original)
     predicates = {flavor: app / ('predicate.' + flavor) for flavor in ('cpp', 'php', 'js')}
     originals = {flavor: path.read_text() for flavor, path in predicates.items()}
-    argument = {'cpp': '(n)', 'php': ',$n)', 'js': '(n)'}
-    failures = {'cpp': '(20)', 'php': ',20)', 'js': '(20)'}
+    calls = {
+        'php': ('str_starts_with($s,$n)', 'str_ends_with($s,$n)', 'str_contains($s,$n)'),
+        'js': ('s.startsWith(n)', 's.endsWith(n)', 's.includes(n)'),
+        'cpp': ('s.starts_with(n)', 's.ends_with(n)', 's.contains(n)'),
+    }
+    edits = {}
+    for flavor, path in predicates.items():
+        prefix, suffix, contains = calls[flavor]
+        for role, candidate in [('prefix', prefix), ('suffix', suffix), ('contains', contains)]:
+            text = originals[flavor].replace(prefix, candidate)
+            invalid = text.replace(candidate, candidate.replace('$n)', '200)').replace('(n)', '(200)'))
+            edits['bad-' + role + '-' + flavor] = (path, invalid)
+            edits['recovery-' + role + '-' + flavor] = (path, text.replace('return ', 'return !!') if role == 'prefix' else text)
     for flavor, call in [('php', 'str_starts_with'), ('js', 'startsWith'), ('cpp', 'starts_with')]:
         probe = (f'#include <scpp/{flavor}/string.hpp>\nnamespace Consumer {{\n'
                  f'using namespace ::scpp::types; using namespace ::scpp::{flavor};\n'
@@ -54,22 +65,20 @@ def prove(work):
         subprocess.run(['clang++', '-std=c++23', '-fsyntax-only', '-x', 'c++', '-I',
                         ROOT / 'runtime/generated/public', '-'], input=probe, text=True, check=True)
     process = service(app, output)
+    revision = int(time.time())
     rows = []
     try:
         for label, config in [('default', {}), ('custom', {'cpp_namespace': 'acme::ledger'}),
                               ('no_edit', {'cpp_namespace': 'acme::ledger'}), ('global', {'cpp_namespace': None}),
                               ('invalid', {'cpp_namespace': 'bad::class'}), ('retry', {'cpp_namespace': 'bad::class'}),
                               ('shadow', {'cpp_namespace': 'starts_with'}), ('restore', {}),
-                              *[(stage + '-' + flavor, {}) for flavor in predicates for stage in ('bad', 'recovery')]]:
+                              *((label, {}) for label in edits)]:
             manifest.write_text(json.dumps(config))
-            if '-' in label:
-                stage, flavor = label.split('-')
-                text = originals[flavor]
-                if stage == 'bad':
-                    text = text.replace(argument[flavor], failures[flavor])
-                else:
-                    text = text.replace('return ', 'return !!')
-                predicates[flavor].write_text(text)
+            if label in edits:
+                path, text = edits[label]
+                path.write_text(text)
+                revision += 1
+                os.utime(path, (revision, revision))
             before = artifacts(output)
             result = invoke(process)
             fresh_folder = work / ('fresh-' + label)
@@ -77,7 +86,7 @@ def prove(work):
                 other = invoke(fresh)
                 fresh.stdin.close()
             if label in ('invalid', 'retry') or label.startswith('bad-'):
-                assert result['error'] == other['error'] and before == artifacts(output), result
+                assert 'error' in result and result['error'] == other.get('error') and before == artifacts(output), (label, result)
                 continue
             assert 'error' not in result and 'error' not in other, (result, other)
             expected_emits = 1 if label.startswith('recovery-') else (0 if label == 'no_edit' else 4)
@@ -109,7 +118,8 @@ def prove(work):
             assert build.returncode == 0, build.stdout
             wall = 1000 * (time.perf_counter() - start)
             run = subprocess.run([native / 'program'], capture_output=True)
-            assert (run.returncode, run.stdout) == (8, b'1101'), (label, run)
+            expected = b'0101' if label == 'recovery-suffix-php' else b'1101'
+            assert (run.returncode, run.stdout) == (8, expected), (label, run)
             rows.append((label, round(wall, 2)))
         print(rows)
     finally:

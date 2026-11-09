@@ -51,7 +51,19 @@ foreach (flavor::cases() as $flavor) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
 	$predicate = $local . 'echo ' . implode(', ', $checks) . '; return 8;';
-	$fixtures[$flavor->name . '-predicates'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($predicate)),
+	$predicate_cpp = (new Cpp_Emitter())->emit($prepare($predicate));
+	verify(str_contains($predicate_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>'), 'Missing flavor provider');
+	$adapter_names = match ($flavor) {
+		flavor::php => ['str_ends_with', 'str_contains'],
+		flavor::cpp => ['ends_with', 'contains'],
+		flavor::js => ['endsWith', 'includes'],
+	};
+	foreach ($adapter_names as $adapter) {
+		verify(str_contains($predicate_cpp, $adapter . '('), 'Missing generated adapter call: ' . $adapter);
+	}
+	verify(!str_contains($predicate_cpp, 'scpp::str::ends_with(') && !str_contains($predicate_cpp, 'scpp::str::contains('),
+		'Predicate bypassed its flavor adapter');
+	$fixtures[$flavor->name . '-predicates'] = ['cpp' => $predicate_cpp,
 		'stdout_hex' => bin2hex('11111100')];
 	rejects(fn() => $prepare($local . 'echo (int)' . $method('contains', $s, '5') . '; return 8;'), 'requires string');
 	$classic = match ($flavor) {
@@ -92,7 +104,8 @@ foreach (flavor::cases() as $flavor) {
 	try {
 		$lib = "$dir/lib." . $flavor->name;
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(strlen(word())), (int)' . $method('contains', 'word()', '"中"') . '; return 8;');
+		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(strlen(word())), (int)' . $method('contains', 'word()', '"中"')
+			. ', (int)' . $method('ends_with', 'word()', '"😀"') . '; return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 		$valid = $function('string', 'word', 'echo "X"; return "é中😀";');
@@ -135,7 +148,7 @@ foreach (flavor::cases() as $flavor) {
 			Incremental_Preparation::prepare($session, $target);
 			$code = Cpp_Program::emit(new prepared_program($session->entry_key(), $files, new prepared_entry($root, $target), $session))->files;
 			verify($code === Cpp_Program::emit($fresh())->files, 'Incremental and fresh unary function lowering differ');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex("X\x09X1")];
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex("X\x09X1X1")];
 		}
 	}
 	finally {

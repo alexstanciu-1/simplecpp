@@ -167,5 +167,7 @@ bool_t matches(const string& value, const string& prefix) {
 ```
 
 Public app headers use qualified types. In global-emission mode the using-directives
-are function-local. The prefix predicate is the first generated adapter. Each binding
-selects its own flavor header and forwards to the same length-aware byte implementation.
+are function-local. Prefix, suffix and containment predicates share one header per flavor.
+PHP exposes `str_starts_with`, `str_ends_with` and `str_contains`. JS uses
+`startsWith`, `endsWith` and `includes`; C++ uses `starts_with`, `ends_with`
+and `contains`. Each inline adapter forwards to its canonical byte predicate in `::scpp::str`.
