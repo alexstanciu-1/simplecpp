@@ -126,6 +126,33 @@ foreach (flavor::cases() as $flavor) {
 	$counter = match ($flavor) {
 		flavor::cpp => 'int i = 0;', flavor::php => '$i int = 0;', flavor::js => 'let i: int = 0;',
 	};
+	$trim_names = match ($flavor) {
+		flavor::php => ['trim', 'ltrim', 'rtrim'], flavor::js => ['trim', 'trimStart', 'trimEnd'],
+		flavor::cpp => ['trim', 'trim_start', 'trim_end'],
+	};
+	$trim_call = static fn(string $name, string $value): string => $flavor === flavor::php
+		? "$name($value)" : "$value.$name()";
+	$trim_output = 'echo ' . implode(', "|", ', array_map(static fn($name) => $trim_call($name, $s), $trim_names)) . ';';
+	$concat = $flavor === flavor::php ? '.' : '+';
+	$byte = "string_byte_from_int($i)";
+	$trim_source = $local . $counter . "while ($i < 256) { $s = $byte $concat " . '"A\0B"' . " $concat $byte;"
+		. $trim_output . "$i += 1; }";
+	$expected = '';
+	$mask = " \t\n\r\v" . ($flavor === flavor::php ? "\0" : "\f");
+	$oracle = static fn(string $v): string => trim($v, $mask) . '|' . ltrim($v, $mask) . '|' . rtrim($v, $mask);
+	for ($n = 0; $n < 256; ++$n) {
+		$expected .= $oracle(chr($n) . "A\0B" . chr($n));
+	}
+	foreach (['""' => '', '" \t\r\n "' => " \t\r\n ", '"\0 A \0"' => "\0 A \0",
+		'" long unchanged UTF-8 string "' => ' long unchanged UTF-8 string '] as $literal => $value) {
+		$trim_source .= "$s = $literal;" . $trim_output;
+		$expected .= $oracle($value);
+	}
+	$fixtures[$flavor->name . '-trim'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($trim_source . 'return 8;')),
+		'stdout_hex' => bin2hex($expected)];
+	if ($flavor === flavor::php) {
+		foreach ($trim_names as $name) rejects(fn() => $prepare("echo $name(\"x\",\"x\");return 8;"), 'Argument count');
+	}
 	$bytes = $counter . "while ($i < 256) { echo string_byte_from_int($i); $i += 1; } return 8;";
 	$fixtures[$flavor->name . '-all-bytes'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bytes)),
 		'stdout_hex' => bin2hex(implode('', array_map(chr(...), range(0, 255))))];

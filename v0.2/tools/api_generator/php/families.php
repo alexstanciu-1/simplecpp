@@ -63,7 +63,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'explicit_formatters', 'index_read', 'index_write']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'explicit_formatters', 'index_read', 'index_write']);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -110,13 +110,13 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
-            'ascii_lower', 'ascii_upper' => ['parameters' => ['string'], 'result' => 'string'],
+            'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'repeat' => ['parameters' => ['string', 'int64'], 'result' => 'string'],
             'starts_with', 'ends_with', 'contains' => ['parameters' => ['string', 'string'], 'result' => 'bool_t'],
             default => null,
@@ -137,8 +137,16 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                 && !isset($memberNames[$flavor][$member]), 'Invalid or duplicate string member binding');
             $memberNames[$flavor][$member] = true;
         }
-        requireThat(!isset($symbols[$symbol]), 'Duplicate string function binding');
-        $symbols[$symbol] = true;
+        $trim = $implementation === 'trim_bytes';
+        requireThat($trim === property_exists($function, 'side'), 'Trim direction required only for trim bindings');
+        if ($trim) {
+            $side = textValue($function->side);
+            requireThat(in_array($side, ['both', 'start', 'end'], true), 'Unknown trim direction');
+            $defaults = fields(at($m, 'trim_defaults'), ['php', 'js', 'cpp']);
+            requireThat(($function->flavor_adapters ?? false) === true, 'Default trim requires flavor adapters');
+        }
+        requireThat(!isset($symbols[$symbol]) || ($trim && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
+        $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
         $enabled = boolean($function->flavor_adapters ?? false);
@@ -148,6 +156,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat($members !== [], 'Flavor adapters require flavor-specific string spellings');
             foreach (['php' => $name] + $members as $flavor => $spelling) {
                 $options = [];
+                if ($trim) {
+                    $set = $defaults[$flavor] ?? null;
+                    requireThat(in_array($set, ['php_space', 'ascii_space'], true), 'Unknown default trim byte set');
+                    $options = ['trim_side' => $side, 'trim_set' => $set];
+                }
                 if (array_key_exists($flavor, $signatures)) {
                     $options = fields($signatures[$flavor], ['result', 'body']);
                     literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);

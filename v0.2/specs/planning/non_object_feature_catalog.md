@@ -155,7 +155,7 @@ string API. ASCII case operations transform only ASCII letters. Reserve `mb_*`
 for future Unicode text functions. Existing `strlen`, indexing, byte construction,
 casts, interpolation, comparison and concatenation remain available.
 
-Receiver `s` and argument names below stand for expressions. Predicate, search, ASCII case and repeat spellings are implemented.
+Receiver `s` and argument names below stand for expressions. Predicate, search, ASCII case, repeat and default trim spellings are implemented.
 The remaining rows are proposed source spellings;
 the runtime operation is shared. PHP's argument order is shown where it differs.
 
@@ -166,7 +166,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
 | First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional start deferred |
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Decide negative/clamped bounds and exclusive-end adapter |
-| Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | Agree exact byte set, including NUL |
+| Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal replacement; settle empty needle |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
@@ -187,8 +187,7 @@ See [the byte/text portability precedent](../../../specs/portability/utf8_text_c
 ### Existing contracts to reconcile before the next groups
 
 - The [trim contract](../../../specs/builtins/string/trim.md) includes NUL in
-  the default mask and also specifies a two-argument byte-set form. The proposed
-  NUL-preserving default would change observable behavior.
+  the PHP default mask. Its two-argument byte-set form remains deferred.
 - The [replacement contract](../../../specs/builtins/string/str_replace.md)
   specifies an unchanged subject for an empty search in replace-all. Rejecting
   an empty search would be a language change. Count and replace-first need

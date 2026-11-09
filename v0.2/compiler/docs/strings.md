@@ -120,6 +120,11 @@ PHP uses `strtolower`, `strtoupper` and `str_repeat`; JS uses `toLowerCase`,
 Each returns an owned string. ASCII case conversion preserves all other bytes. Predicates
 and searches view the existing string storage and accept embedded NUL. Repeat
 checks its signed count and output size before allocating.
+Default trim returns an owned byte string and scans only the selected edges. PHP
+`trim/ltrim/rtrim` remove space, HT, LF, VT, CR and NUL. JS `trim/trimStart/trimEnd`
+and C++ `trim/trim_start/trim_end` use form feed in place of NUL. High bytes and
+interior bytes are preserved. Explicit PHP byte masks are deferred.
+
 See the [three-flavor catalog](../../specs/planning/non_object_feature_catalog.md#classic-string-functions).
 
 ## Explicit text conversion

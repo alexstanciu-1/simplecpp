@@ -35,6 +35,10 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = $arg = "arg$i";
                         $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
                     }
+                    if (isset($adapter['trim_side'])) {
+                        $arguments[] = '::scpp::str::trim_side::' . $adapter['trim_side'];
+                        $arguments[] = '::scpp::str::trim_set::' . $adapter['trim_set'];
+                    }
                     $body = isset($adapter['body'])
                         ? rtrim(template($adapter['body'], ['symbol' => $binding['symbol'], 'result' => $result]))
                         : "{ return ::{$binding['symbol']}(" . implode(', ', $arguments) . "); }";
@@ -105,8 +109,21 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
+    $trimSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
+        if ($function['implementation'] === 'trim_bytes') {
+            if (!$trimSymbols) {
+                $h .= "namespace str { enum class trim_side { both, start, end }; enum class trim_set { php_space, ascii_space }; }\n";
+            }
+            if (!isset($trimSymbols[$name])) {
+                $signature = "string $name(const string& value, trim_side side, trim_set set)";
+                $h .= "namespace str { $signature; }\n";
+                $d .= template('string_trim', ['signature' => $signature, 'count' => $count]);
+                $trimSymbols[$name] = true;
+            }
+            continue;
+        }
         $parameters = [];
         foreach ($function['parameters'] as $index => $type) {
             $parameters[] = scalarInput($type) . ' ' . (['value', 'other', 'third', 'fourth'][$index]);

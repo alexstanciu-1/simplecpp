@@ -69,6 +69,16 @@ def prove(work):
         text = originals[flavor].replace(calls[flavor][0], expression)
         edits['bad-transforms-' + flavor] = (path, text.replace('1)', '"bad")'))
         edits['recovery-transforms-' + flavor] = (path, text)
+    trim_names = {'php': ('trim', 'ltrim', 'rtrim'), 'js': ('trim', 'trimStart', 'trimEnd'),
+                  'cpp': ('trim', 'trim_start', 'trim_end')}
+    for flavor, names in trim_names.items():
+        for name in names:
+            call = f'{name}($n)' if flavor == 'php' else f'n.{name}()'
+            arg = calls[flavor][0].replace('$n)', call + ')') if flavor == 'php' else calls[flavor][0].replace('(n)', f'({call})')
+            text = originals[flavor].replace(calls[flavor][0], arg)
+            bad_call = f'{name}($n,"x")' if flavor == 'php' else f'n.{name}("x")'
+            edits[f'bad-{name}-{flavor}'] = (predicates[flavor], text.replace(call, bad_call))
+            edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], text)
     for flavor, call in [('php', 'str_starts_with'), ('js', 'startsWith'), ('cpp', 'starts_with')]:
         probe = (f'#include <scpp/{flavor}/string.hpp>\nnamespace Consumer {{\n'
                  f'using namespace ::scpp::types; using namespace ::scpp::{flavor};\n'

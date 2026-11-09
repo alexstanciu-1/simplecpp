@@ -581,6 +581,7 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "trim_defaults": {"php": "php_space", "js": "ascii_space", "cpp": "ascii_space"},
     "index_write": {"method": "set_byte", "key": "int64", "value": "uint8", "policy": "checked_byte_offset"},
     "index_read": {"method": "byte_at", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
     "explicit_formatters": {
@@ -599,6 +600,9 @@
       "strrpos": {"parameters": ["string", "string"], "result": "int64", "symbol": "scpp::str::rfind", "implementation": "rfind", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false"}}, "members": {"cpp": "rfind", "js": "lastIndexOf"}},
       "strtolower": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::ascii_lower", "implementation": "ascii_lower", "flavor_adapters": true, "members": {"cpp": "to_lower", "js": "toLowerCase"}},
       "strtoupper": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::ascii_upper", "implementation": "ascii_upper", "flavor_adapters": true, "members": {"cpp": "to_upper", "js": "toUpperCase"}},
+      "trim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "both", "members": {"cpp": "trim", "js": "trim"}, "flavor_adapters": true},
+      "ltrim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "start", "members": {"cpp": "trim_start", "js": "trimStart"}, "flavor_adapters": true},
+      "rtrim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "end", "members": {"cpp": "trim_end", "js": "trimEnd"}, "flavor_adapters": true},
       "str_repeat": {"parameters": ["string", "int64"], "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
     },
     "provider": "core.string",
