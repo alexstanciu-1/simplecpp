@@ -80,9 +80,11 @@ final class Cpp_Emitter
 		$global_references = [];
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
+			$initializer = self::plain_integer_initializer($global->initializer, $global->initialization())
+				?? $global->type_def()->lower_cpp_conversion($global->initialization(),
+					$global->initializer->type_def()->lower_cpp_literal($global->initializer));
 			$definitions[] = 'constinit ' . $global->type_def()->cpp_type() . ' ' . self::global_name($global)
-				. ' = ' . $global->type_def()->lower_cpp_conversion($global->initialization(),
-					$global->initializer->type_def()->lower_cpp_literal($global->initializer)) . ";\n";
+				. ' = ' . $initializer . ";\n";
 			foreach ($global->type_def()->conversion_headers($global->initialization()) as $header) {
 				$required_headers[$header] = true;
 			}
@@ -243,10 +245,7 @@ final class Cpp_Emitter
 				foreach ($destination->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$value = $destination->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
-				// Separate statements keep key evaluation before RHS effects and conversion before mutation.
-				$lines[] = "\t{ const auto hash_key = " . $type->lower_cpp_key($key) . '; const auto hash_value = ' . $value . '; '
-					. $type->lower_cpp_write($receiver, 'hash_key', 'hash_value') . '; }';
+				$lines[] = "\t" . $type->lower_cpp_store($statement, $receiver, $key, $value);
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				/** @var vector_type_definition $type */
@@ -257,7 +256,7 @@ final class Cpp_Emitter
 				foreach ($type->element_type->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$value = $type->element_type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
+				$value = $type->element_type->lower_cpp_conversion($conversion, $value, $statement->value);
 				$lines[] = "\t" . $type->lower_cpp_append($receiver, $value) . ';';
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
@@ -271,7 +270,7 @@ final class Cpp_Emitter
 				}
 				else {
 					$type = $function->return_type_def();
-					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value->type_def());
+					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
 						$required_headers[$header] = true;
 					}
@@ -305,7 +304,7 @@ final class Cpp_Emitter
 
 	private function name(ast_local_binding $binding): string
 	{
-		return 'local_' . $binding->storage_id();
+		return 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
 	}
 
 	/**
@@ -325,7 +324,7 @@ final class Cpp_Emitter
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
-			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value->type_def());
+			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value);
 			foreach ($execution->conversion_headers($conversion) as $header) {
 				$headers[$header] = true;
 			}
@@ -379,6 +378,10 @@ final class Cpp_Emitter
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
+			$literal = self::plain_integer_initializer($value, $conversion);
+			if ($literal !== null) {
+				return $prefix . ' = ' . $literal;
+			}
 		}
 		else {
 			$type = $statement->local_def()->type_def();
@@ -394,7 +397,7 @@ final class Cpp_Emitter
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
-		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand, $value->type_def());
+		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand, $value);
 	}
 
 	/**
@@ -435,7 +438,7 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
-			return '(' . $type->lower_cpp_conversion($conversion, $operand, $value->operand->type_def()) . ')';
+			return '(' . $type->lower_cpp_conversion($conversion, $operand, $value->operand) . ')';
 		}
 		if ($value instanceof ast_unary_expression) {
 			$operand_safe = false;
@@ -473,13 +476,13 @@ final class Cpp_Emitter
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $type->lower_cpp_conversion($value->left_conversion, $left, $value->left->type_def());
+				$left = $type->lower_cpp_conversion($value->left_conversion, $left, $value->left);
 				foreach ($type->conversion_headers($value->left_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
 			}
 			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $type->lower_cpp_conversion($value->right_conversion, $right, $value->right->type_def());
+				$right = $type->lower_cpp_conversion($value->right_conversion, $right, $value->right);
 				foreach ($type->conversion_headers($value->right_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
@@ -490,7 +493,10 @@ final class Cpp_Emitter
 			// Retain snapshots for identical spellings to avoid Clang self-comparison diagnostics.
 			$reorderable = $left_safe && $right_safe && ($left !== $right)
 				&& $type->cpp_binary_reorderable($value->operator);
-			if ($reorderable) {
+			// Direct spelling does not make a checked result reorderable in its parent.
+			if ($reorderable || ($value->left_conversion === value_conversion::identity
+				&& $value->right_conversion === value_conversion::identity
+				&& $type->cpp_direct_binary($value, $left_safe && $right_safe, $left === $right))) {
 				return $type->lower_prepared_binary($value, $left, $right);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
@@ -526,6 +532,16 @@ final class Cpp_Emitter
 				$type = $parameter->type_def();
 				$operand_safe = false;
 				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe);
+				if (count($function->parameters) === 1) {
+					$direct_binding = match ($parameter->mode) {
+						passing_mode::reference => $argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration,
+						passing_mode::value => $value->arguments === [] && $argument instanceof ast_string_expression
+							&& $conversion === value_conversion::identity,
+					};
+					if ($direct_binding) {
+						return $name . '(' . $operand . ')';
+					}
+				}
 				$direct_arguments[] = $operand;
 				$direct = $direct && $operand_safe && $type->cpp_trivial_value()
 					&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
@@ -537,7 +553,7 @@ final class Cpp_Emitter
 				}
 				else {
 					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
-						. $type->lower_cpp_conversion($conversion, $operand, $argument->type_def()) . ';';
+						. $type->lower_cpp_conversion($conversion, $operand, $argument) . ';';
 					$arguments[] = $type->cpp_trivial_value() ? $temporary
 						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 				}
@@ -568,12 +584,12 @@ final class Cpp_Emitter
 					$type->conversion_headers($conversion)) as $header) {
 					$required_headers[$header] = true;
 				}
-				return $type->lower_cpp_conversion($conversion, $literal, $declaration->initializer->type_def());
+				return $type->lower_cpp_conversion($conversion, $literal, $declaration->initializer);
 			}
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);
 				$global_references[$name] = $declaration;
-				return $name;
+				return '::' . $name;
 			}
 			return $this->name($declaration);
 		}
@@ -603,13 +619,36 @@ final class Cpp_Emitter
 	}
 
 	/** STATIC METHODS */
+	/** Typed storage supplies the native type. Leave the signed minimum to the literal renderer. */
+	private static function plain_integer_initializer(ast_expression $value, int $conversion /** uint16 */): ?string
+	{
+		if (!($value instanceof ast_integer_expression)
+			|| ($conversion !== value_conversion::identity && $conversion !== value_conversion::integer_proven)) {
+			return null;
+		}
+		$integer = $value->integer();
+		return $integer === \PHP_INT_MIN ? null : (string)$integer;
+	}
+
+	/** Escape individual bytes as Zhh. Keep C++ reserved underscores and our namespace delimiter out of components. */
+	private static function name_component(string $name): string
+	{
+		return preg_replace_callback('/Z|[^A-Za-z0-9_]|^[_0-9]|_(?=_|$|ns(?:_|$))/',
+			static fn(array $match): string => 'Z' . bin2hex($match[0]), $name);
+	}
+
+	private static function qualified_name(ast_declaration_interface $declaration): string
+	{
+		return implode('_ns_', array_map(self::name_component(...), explode('\\', $declaration->name())));
+	}
+
 	public static function global_name(ast_global_declaration $declaration): string
 	{
-		return 'scpp_global_' . bin2hex($declaration->name());
+		return 'var_' . self::qualified_name($declaration);
 	}
 
 	public static function function_name(ast_function_declaration $declaration): string
 	{
-		return 'scpp_function_' . bin2hex($declaration->name());
+		return self::qualified_name($declaration) . '_';
 	}
 }

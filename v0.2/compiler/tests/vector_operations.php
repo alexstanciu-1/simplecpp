@@ -68,7 +68,9 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('vector<int>', 'values', '[]') . 'echo ' . "$v" . '[1.0];', 'Vector index requires int64'],
 		[$decl('int', 'values', '1') . "$v" . '[] = 1;', 'Append requires a vector'],
 		[$decl('int', 'values', '1') . 'echo ' . "$v" . '[0];', 'Indexed read requires a vector'],
-		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = 2;', 'indexed writes are deferred'],
+		[$decl('vector<int>', 'values', '[]') . "$v" . '[false] = 2;', 'Vector index requires int64'],
+		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
+		[$decl('vector<string>', 'strings', '[]') . "$s" . '[0] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . $decl('vector<int>', 'copy', $v), 'Vector value operations are deferred'],
 		['echo [];', 'explicitly typed local initializer'],
 	] as [$text, $message]) {
@@ -94,13 +96,58 @@ foreach (flavor::cases() as $flavor) {
 			'stdout_hex' => '', 'catch_out_of_range' => true];
 	}
 
+	// Each argument executes once. The direct native call permits either argument order.
+	$replace = $function('int', 'index', 'echo "!"; return 0;')
+		. $function('float', 'rhs', 'echo "!"; return 9.75;')
+		. $decl('vector<int>', 'values', '[]') . $v . '[] = 7;' . $v . '[] = 8;'
+		. $v . '[index()] = rhs();' . $v . '[1] = false; echo ' . $v . '[0], ' . $v . '[1], count(' . $v . ');'
+		. $decl('vector<string>', 'strings', '[]') . $s . '[] = "old";' . $s . '[] = "a\0b";'
+		. $s . '[0] = ' . $s . '[1];' . $s . '[1] = "new"; echo ' . $s . '[0], ' . $s . '[1]; return 8;';
+	$fixtures[$flavor->name . '-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($replace)),
+		'stdout_hex' => bin2hex("!!902a\0bnew")];
+
+	$i = $var('i');
+	$x = $var('x');
+	$b = $var('flag');
+	$forms = $decl('vector<int>', 'values', '[]') . $decl('int', 'i', '0') . $decl('int', 'x', '8')
+		. $decl('bool', 'flag', 'true') . $v . '[] = 0;' . $v . "[$i] = $x;" . $v . "[0] = 9.75;" . $v . "[$i] = $b;"
+		. 'echo ' . $v . '[0]; return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($forms));
+	verify(str_contains($cpp, 'var_values_0.set(var_i_1, var_x_2);'), 'Exact native locals need a direct call');
+	verify(preg_match('/var_values_0\.set\(0(L{0,2}), 9\1\);/', $cpp) === 1, 'Expected exact typed, folded literals');
+	verify(str_contains($cpp, 'var_values_0.set(var_i_1, static_cast<scpp::int64>(var_flag_3));'), 'Strict overload requires bool conversion');
+	verify(str_contains($fixtures[$flavor->name . '-replace']['cpp'], 'scpp::checked_float64_to_int64(rhs_('),
+		'Unknown float must use the checked helper directly');
+	$fixtures[$flavor->name . '-native-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('1')];
+
+	// Source catch is deferred. Catch around the emitted store while its destination is still in scope.
+	foreach (['empty' => [0, 0, '2'], 'negative' => [2, -1, '2'], 'end' => [2, 2, '2'],
+		'conversion' => [2, 1, '1e100'], 'conversion-before-bounds' => [2, 2, '1e100'], 'failing-index' => [2, 2, '2']] as $case => [$size, $index, $rhs]) {
+		$key = $case === 'failing-index' ? $v . '[index()]' : 'index()';
+		$source = $function('int', 'index', 'return ' . $index . ';')
+			. $function('float', 'rhs', 'return ' . $rhs . ';') . $decl('vector<int>', 'values', '[]')
+			. ($size === 0 ? '' : $v . '[] = 7;' . $v . '[] = 8;') . $v . '[' . $key . '] = rhs(); return 91;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		$unchanged = 'var_values_0.size() == ' . $size;
+		if ($size > 0) {
+			$unchanged .= ' && var_values_0.at(scpp::int64{0}) == 7 && var_values_0.at(scpp::int64{1}) == 8';
+		}
+		$reason = $rhs === '1e100' ? 'integer_cast_out_of_range' : 'sequence_index_out_of_range';
+		$catch = "\t} catch (const std::out_of_range& error) {\n"
+			. "\t\treturn std::string_view(error.what()) == \"$reason\" && $unchanged ? 8 : 92;\n\t}\n";
+		$cpp = preg_replace('/(\tvar_values_0\.set\([^\n]+\n)/', "\ttry {\n$1" . $catch, $cpp, 1, $matches);
+		verify($matches === 1, 'Missing vector replacement for failure observation');
+		$fixtures[$flavor->name . '-replace-' . $case] = ['cpp' => "#include <stdexcept>\n#include <string_view>\n" . $cpp,
+			'stdout_hex' => ''];
+	}
+
 	$directory = sys_get_temp_dir() . '/scpp-vector-operations-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/lib.' . $flavor->name;
-		file_put_contents($main, $decl('vector<int>', 'values', '[]') . "$v" . '[] = number(); echo ' . "$v" . '[0]; return 8;');
+		file_put_contents($main, $decl('vector<int>', 'values', '[]') . $v . '[] = number();' . $v . '[0] = number(); echo ' . $v . '[0]; return 8;');
 		$revision = time();
 		$write = static function (?string $type, string $value = '') use ($library, &$revision, $function): void {
 			if ($type === null) {
@@ -145,7 +192,7 @@ foreach (flavor::cases() as $flavor) {
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op lost prepared bodies');
 		$library_ast = $session->scope->entry('func:number')->declaration();
 		foreach ([['string', '"text"', 'text'], ['string', '1', null], ['int', '18', '18']] as $step => [$element, $value, $expected]) {
-			file_put_contents($main, $decl('vector<' . $element . '>', 'values', '[]') . "$v" . '[] = ' . $value
+			file_put_contents($main, $decl('vector<' . $element . '>', 'values', '[]') . $v . '[] = ' . ($element === 'string' ? '""' : '0') . ';' . $v . '[0] = ' . $value
 				. '; echo ' . "$v" . '[0]; return 8;');
 			touch($main, ++$revision);
 			$session = $compiler->frontend($directory, $session);
@@ -178,4 +225,4 @@ foreach (flavor::cases() as $flavor) {
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 }
-echo "Vector empty construction, checked append, value-copy indexing and incremental recovery passed\n";
+echo "Vector construction, append, indexed reads and replacements, and incremental recovery passed\n";

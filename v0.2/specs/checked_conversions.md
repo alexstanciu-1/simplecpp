@@ -110,11 +110,12 @@ Generated lowering now calls:
 
 ```cpp
 scpp::checked_int64_to_uint8(static_cast<__INT64_TYPE__>(expression))
-scpp::checked_float64_to_int64(static_cast<double>(expression))
-scpp::checked_float64_to_uint8(static_cast<double>(expression))
+scpp::checked_float64_to_int64(expression)
+scpp::checked_float64_to_uint8(expression)
 ```
 
-The argument cast restores the prepared source representation: an int64 expression
+Floating operands already produce the published native double type. The integer
+argument cast restores the prepared source representation: an int64 expression
 containing `LL` literals may be a distinct C++ `long long` intermediate even when the
 target's exact int64 is `long`. It does not narrow to the destination unchecked.
 Each expression is evaluated once, and a failed conversion leaves its destination

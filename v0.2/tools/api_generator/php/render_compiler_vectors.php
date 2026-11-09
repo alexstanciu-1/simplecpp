@@ -16,11 +16,15 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $elementClass = 'type_' . $definitions[$element]['class'];
         $append = null;
         $index = null;
+        $set = null;
         foreach ($vector['methods'] as $method) {
             if ($method['name'] === 'append' && $method['arguments'] === [$element]) $append = $method;
+            if ($method['name'] === 'set' && $method['arguments'] === [$vector['count_type'], $element]) $set = $method;
             if ($method['name'] === 'at' && $method['arguments'] === [$vector['count_type']]) $index = $method;
         }
         requireThat($append !== null && $append['receiver'] === 'mutable_reference' && $append['result'] === 'void', 'Compiler vector requires canonical append binding');
+        requireThat($set !== null && $set['receiver'] === 'mutable_reference' && $set['result'] === 'void'
+            && $set['adaptation'] === 'checked_index_move_value', 'Compiler vector requires canonical set binding');
         requireThat($index !== null && $index['receiver'] === 'const_reference' && $index['result'] === $element
             && $index['result_category'] === 'value', 'Compiler vector requires value-copy index binding');
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
@@ -30,7 +34,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
-            '@append@' => $append['name'], '@index@' => $index['name'],
+            '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
         ]);
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }

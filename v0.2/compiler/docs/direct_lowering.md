@@ -4,15 +4,16 @@ Doc Status: supporting
 
 Step 1 removes unnecessary sequencing wrappers inside the C++ backend. Source
 semantics, preparation algorithms, AST fields and dependency watches are unchanged.
-The owning evaluation contract remains [ordered evaluation](../../../specs/expression_evaluation.md).
+The owning evaluation contract remains [expression evaluation](../../../specs/expression_evaluation.md).
 
 ## Bounded safety proof
 
 The emitter computes a temporary `reorderable` result alongside each expression's
 C++ text in its existing recursive traversal. It is an output parameter, not an
 AST fact or retained cache, and requires no second walk or callee-body inspection.
-Reordering is permitted only when it cannot be observed within the currently
-supported language and defined native arithmetic domain.
+The emitter uses this conservative fact to select compact spellings. The generated
+`type_dynamic` also admits a dynamic local with an integer literal for addition
+and less-than. Its runtime helpers still check the boxed payload.
 
 - Generated `cpp_trivial_value()` classifies native scalar copies as nonthrowing,
   nonallocating and free of user callbacks. Strings and unknown types default false.
@@ -20,20 +21,19 @@ supported language and defined native arithmetic domain.
   language has no volatile/atomic reads or concurrent unsynchronized global writes.
 - A binary subtree is safe only if both children are safe and the generated
   `cpp_binary_reorderable()` admits its lowering strategy. Current primitive native
-  comparisons and int64 `+ - *` qualify. Checked division/remainder do not.
+  comparisons and int64 `+ - *` qualify. Checked division/remainder may throw. Integer helpers take safe operands with identity conversions directly and still report the result as potentially throwing to the enclosing expression.
 - Source calls always return false, even if their arguments permit direct spelling.
   No assumption is made about the callee's effects or exceptions.
-- Function invocation omits its argument wrapper only when all arguments are safe,
-  trivial by-value values with identity conversions. References, string copies and
-  every nonidentity conversion retain ordered temporaries. Default arguments obey
-  the same rule. Trivial scalar temporaries need no rvalue casts; strings keep them.
+- A single reference parameter binds directly to a local declaration of the exact
+  type. Preparation checks writable storage. Calls also omit their wrapper when all
+  arguments are safe, trivial by-value values with identity conversions. A default
+  string literal can directly initialize a sole by-value parameter with identity
+  conversion. Other argument lists retain their temporaries.
 
-Generated properties derive from already-validated storage and lowering strategies;
-there is no runtime metadata interpretation or handwritten source-type admission
-matrix in the backend. Inventory version is 12. No algebraic reassociation, constant
-folding, unsigned wrapping or new signed-overflow behavior is introduced. Native
-floating comparisons retain their contract; this does not introduce floating
-exception-environment controls.
+The generator derives the type-specific direct-spelling rules from validated
+operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
+owns the generated inventory version. A checked operation can use direct operands
+and still report a potentially throwing result to its parent.
 
 Conservative warning handling retains snapshots for identical operand spellings,
 so valid self-comparisons do not trigger Clang's `-Wtautological-compare`. This also
@@ -55,15 +55,19 @@ subtotal = (price * 162LL) + quantity;
 keeps sequencing so the left failure suppresses the later call. A string argument
 is copied before a subsequent reference argument can mutate its source.
 
-This is not statement-based lowering. Necessary lambdas stay in their original
-expression positions, so while/do-while tests still execute on each test and
-else-if tests remain conditional. Flattening those sequences into prerequisite
-statements is deferred. Further evaluation-order enforcement is
-[paused as debt](../../specs/planning/evaluation_order_debt.md); it is not the
-next scheduled lowering step. The language guarantee itself remains open for
-future review, with no specification change made yet.
+Sequencing wrappers stay in expression positions where the current lowering
+uses them, including loop tests and conditional arms. The
+[eager operand order contract](../../../specs/expression_evaluation.md)
+leaves eager binary operand order to the native C++ implementation. Lazy
+operators keep their short-circuit behavior.
 
 ## Proofs
+
+After building `scpp_compiler_publication` with the default LP64 publication, run
+`ctest --test-dir v0.2/build/clang -R '^compiler_lowering_catalog$' --output-on-failure`
+from the repository root. It compiles each PHP example in the
+[lowering catalog](php_lowering_catalog.md) through C++ emission and compares both
+its implementation excerpt and its include and header declarations.
 
 `tests/direct_lowering.php` checks direct scalar operations and identity/default
 arguments, conservative throwing operations, AST/preparation purity and retained
@@ -73,6 +77,4 @@ ordering. Existing arithmetic/comparison proofs retain all-flavor incremental
 signature-change/recovery tests. The capability benchmark repeats retained-session
 no-op/body-edit/signature-error/recovery checks for all three workload sizes.
 
-No compiler preparation structures were added or changed. Existing type definitions
-have two backend-only generated queries; `Cpp_Emitter::value()` has one transient
-boolean output. Timing/size comparisons belong to the capability sample report.
+No compiler preparation structures were added or changed. The emitter consumes backend queries during the existing expression walk. Timing/size comparisons belong to the capability sample report.

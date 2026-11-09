@@ -35,14 +35,14 @@ def prove(work):
         directory = work / flavor
         directory.mkdir(exist_ok=True)
         literals = directory / 'literals.cpp'
-        checks = ''.join(f'\tif (std::bit_cast<std::uint64_t>(local_{i}) != 0x{bits}ULL) return 91;\n'
+        checks = ''.join(f'\tif (std::bit_cast<std::uint64_t>(var_value{i}_{i}) != 0x{bits}ULL) return 91;\n'
                          for i, bits in enumerate(fixture['bits']))
         # Instrument only the proof artifact; the compiler output remains unchanged.
         literals.write_text('#include <bit>\n#include <cstdint>\n' + fixture['literal_cpp'].replace(
             'int main()', 'int check_literals()').replace('\treturn ', checks + '\treturn '))
         cpp = directory / 'program.cpp'
         checks = ('\tif (check_literals() != 8) return 92;\n'
-                  '\tif (local_0 != 9007199254740992.0 || local_1 != 1.0 || local_2 || !local_3) return 93;\n')
+                  '\tif (var_from_int_0 != 9007199254740992.0 || var_from_bool_1 != 1.0 || var_from_zero_2 || !var_from_nonzero_3) return 93;\n')
         cpp.write_text('int check_literals();\n' + fixture['cpp'].replace('\treturn ', checks + '\treturn '))
         command = write_build(directory, [cpp, literals])
         command[2] = '8'

@@ -51,8 +51,8 @@ def prove(work):
             assert {str(p.relative_to(generated)) for p in generated.rglob('*.hpp')} == set(manifest['headers'])
             paths = {key.split('/')[-1]: generated / value for key, value in manifest['sources'].items()}
             main = paths['main.' + flavor]; library = paths['provider.' + flavor]
-            visible = 'scpp_function_' + 'visible'.encode().hex()
-            hidden = 'scpp_function_' + 'hidden'.encode().hex()
+            visible = 'visible_'
+            hidden = 'hidden_'
             if exported:
                 header = generated / manifest['headers'][0]
                 assert visible in header.read_text() and hidden not in header.read_text(), 'Header exposed private function'

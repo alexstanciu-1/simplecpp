@@ -76,6 +76,24 @@ final class type_@name@ extends type_definition
 		return $value . @cpp_suffix@;
 	}
 
+	/** Emit target-native literals only at exact overload boundaries. Fold literal conversions after preparation. */
+	public function lower_cpp_exact_argument(ast_expression $syntax, int $conversion /** uint16 */, string $operand): string
+	{
+		if ($syntax instanceof ast_integer_expression || $syntax instanceof ast_float_expression || $syntax instanceof ast_keyword_expression) {
+			$value = $this->convert_constant($conversion, $syntax->constant());
+			if (is_int($value)) {
+				return $value === self::MINIMUM ? @native_minimum@ : $value . @native_suffix@;
+			}
+		}
+		if ($conversion === value_conversion::identity && @native_suffix@ !== @cpp_suffix@
+			&& !($syntax instanceof ast_call_expression) && !($syntax instanceof ast_index_expression)
+			&& !(($syntax instanceof ast_name_expression) && !($syntax->declaration() instanceof ast_constant_declaration))) {
+			// An inlined constant or arithmetic subtree can still carry the ordinary literal suffix.
+			return 'static_cast<' . $this->cpp_type() . '>(' . $operand . ')';
+		}
+		return parent::lower_cpp_exact_argument($syntax, $conversion, $operand);
+	}
+
 @conversion_methods@
 	/** STATIC METHODS */
 	public static function instance(): self

@@ -6,6 +6,8 @@ namespace scpp\compiler;
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
 abstract class hash_type_definition extends type_definition implements keyed_collection_type, counted_collection_type
 {
+	use ordered_keyed_store;
+
 	/** PROPERTIES */
 	/** Native non-owning canonical value type. */
 	public readonly type_definition $value_type;

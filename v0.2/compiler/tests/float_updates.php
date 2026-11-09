@@ -110,7 +110,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$observer = file_get_contents(__DIR__ . '/float_updates_observer.cpp');
 	foreach (array_keys($forms) as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];

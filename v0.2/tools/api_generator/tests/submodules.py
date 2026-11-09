@@ -150,7 +150,11 @@ def proof(work):
                 for name, typ in [('list_size', 'vector<int>'), ('map_size', 'hash<int,int>')]:
                     local = {'cpp': f'{typ} v = [];', 'php': f'$v {typ} = [];', 'js': f'let v: {typ} = [];'}[flavor]
                     v = '$v' if flavor == 'php' else 'v'
-                    write(name, fn(name, 'int', local + f'if (empty({v})) {{return count({v});}} return 91;'))
+                    body = f'if (empty({v})) {{return count({v});}} return 91;'
+                    if typ == 'vector<int>':
+                        body = (f'if (!empty({v})) {{return 91;}} {v}[] = 1; {v}[0] = 8; '
+                                f'if ({v}[0] !== 8) {{return 91;}} return count({v}) - 1;')
+                    write(name, fn(name, 'int', local + body))
                     observations += f'if ({name}() !== 0) {{return 91;}} '
             write('main', observations + 'visible(); body(); scalar(); ' + narrowed)
             write('visible', fn('visible', 'string', 'return "V";'))

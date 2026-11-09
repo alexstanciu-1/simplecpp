@@ -82,7 +82,7 @@ foreach (flavor::cases() as $flavor)
 	$source .= $fn('compound', $ref, 'void', $v . '+=1; return;');
 	$observer = file_get_contents(__DIR__ . '/integer_unary_updates_observer.cpp');
 	foreach (['positive', 'negative', 'nested', 'truth', 'logical', 'pre_inc', 'post_inc', 'pre_dec', 'post_dec', 'compound'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$source .= $fn('effect', '', 'byte', 'echo "E"; return 1;');

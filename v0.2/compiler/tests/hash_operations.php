@@ -144,8 +144,8 @@ foreach (flavor::cases() as $flavor) {
 	// Test-only exception observation verifies conversion failure leaves the hash empty; source catch is deferred.
 	$atomic = (new Cpp_Emitter())->emit($prepare($function('float', 'huge', 'return 1e100;')
 		. $decl('hash<int,int>', 'values', '[]') . "$v" . '[0] = huge(); return 8;'));
-	$atomic = preg_replace('/(\t\{ const auto hash_key = [^\n]+\n)/',
-		"\ttry {\n$1\t} catch (const std::out_of_range&) { return local_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
+	$atomic = preg_replace('/(\t\{ const auto write_key = [^\n]+\n)/',
+		"\ttry {\n$1\t} catch (const std::out_of_range&) { return var_values_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
 	verify($count === 1, 'Missing keyed write for atomicity observation');
 	$fixtures[$flavor->name . '-conversion-atomicity'] = ['cpp' => "#include <stdexcept>\n" . $atomic, 'stdout_hex' => ''];
 

@@ -114,8 +114,8 @@ def main():
                     key = event['name'][6:]
                     totals[key] = totals.get(key,0)+event['dur']/1000
         row['trace_sum_ms'] = totals
-        _, symbols, _ = base.run(['nm', '--defined-only', directory/'program'])
-        row['defined_sample_functions'] = sum(b'scpp_function_' in line for line in symbols.splitlines())
+        _, symbols, _ = base.run(['nm', '-C', '--defined-only', directory/'program'])
+        row['defined_sample_functions'] = len(re.findall(rb' T sample_unit_\d+_\(\)$', symbols, re.M))
         assert row['defined_sample_functions'] == 256
         row['summary_ms'] = {k:base.stats([s[k] for s in row['samples']]) for k in
             ('php_ms','grouping_ms','native_ms','total_ms','compile_window_ms','compile_sum_ms','link_ms')}

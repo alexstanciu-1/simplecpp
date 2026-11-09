@@ -153,7 +153,7 @@ foreach (flavor::cases() as $flavor)
 		. $fn('header_update', $params, 'void', 'for (' . $v . '=' . $v . '; ' . $v . '<256; ' . $v . '+=' . $var('rhs') . ') {} return;');
 	$observer = file_get_contents(__DIR__ . '/integer_compounds_observer.cpp');
 	foreach (['add', 'subtract', 'multiply', 'divide', 'remainder', 'mutate_then_fail', 'rhs_failure', 'header_init', 'header_update'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];

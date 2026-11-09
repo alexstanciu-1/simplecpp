@@ -34,7 +34,7 @@ final class @class@ extends carrier_type_definition
 
 	public function lower_cpp_presence(string $value): string
 	{
-		return '([&]() { const auto &carrier = ' . $value . '; return carrier.@presence@() || @true_presence@; }())';
+		return @presence_expression@;
 	}
 
 	public function lower_cpp_condition(string $value): string

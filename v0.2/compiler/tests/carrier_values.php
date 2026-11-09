@@ -83,7 +83,10 @@ foreach (flavor::cases() as $flavor) {
 		. $function('nullable<int>', 'once', 'echo "once"; return 1;')
 		. 'echo (int)isset(once()); if (once()) {echo "ok";}'
 		. 'if (' . $var('none') . ' && once()) {echo "bad";} return 8;';
-	$fixtures[$flavor->name . '-presence'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($presence)),
+	$cpp = (new Cpp_Emitter())->emit($prepare($presence));
+	verify(str_contains($cpp, '(once_()).has_value()') && str_contains($cpp, '(var_absent_2).has_value()'),
+		'Expected direct value-presence checks on both a call and a local');
+	$fixtures[$flavor->name . '-presence'] = ['cpp' => $cpp,
 		'stdout_hex' => bin2hex('0101yes1once1onceok')];
 	$vector = $decl('vector<string>', 'items', '[]') . $var('items') . '[] = "first";'
 		. $decl('nullable<vector<string>>', 'packed', $var('items'))

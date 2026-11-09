@@ -81,9 +81,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-functions-') as temporary:
         manifest = json.loads((output / 'manifest.json').read_text())
         units = [output / path for path in manifest['translation_units']]
         build(units, work / f'multi-program-{flavor}')
-        assert 'void scpp_function_70696e67();' in (output / manifest['sources']['main']).read_text()
-        assert 'void scpp_function_70696e67()\n{' not in (output / manifest['sources']['main']).read_text()
-        assert 'void scpp_function_70696e67()\n{' in (output / manifest['sources']['support.cpp']).read_text()
+        assert 'void ping_();' in (output / manifest['sources']['main']).read_text()
+        assert 'void ping_()\n{' not in (output / manifest['sources']['main']).read_text()
+        assert 'void ping_()\n{' in (output / manifest['sources']['support.cpp']).read_text()
         reordered = work / f'reordered-{flavor}'
         success(compile_program(reordered, list(reversed(items))))
         assert snapshot(reordered) == snapshot(output)

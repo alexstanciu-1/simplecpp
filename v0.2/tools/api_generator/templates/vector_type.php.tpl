@@ -1,5 +1,5 @@
 
-/** Canonical published @class@ identity; empty construction, checked append and value-copy indexing. */
+/** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
 final class @class@ extends vector_type_definition
 {
 	/** STATIC PROPERTIES */
@@ -28,12 +28,11 @@ final class @class@ extends vector_type_definition
 		return @element@::instance()->prepare_conversion($value, conversion_context::typed_destination);
 	}
 
-	public function prepare_index(ast_index_expression $value): void
+	public function prepare_key(ast_expression $key): void
 	{
-		if ($value->index->type_def() !== @count@::instance()) {
-			throw new diagnostic($value->index->source(), $value->index->byte_start(), 'Vector index requires ' . @count@::instance()->name);
+		if ($key->type_def() !== @count@::instance()) {
+			throw new diagnostic($key->source(), $key->byte_start(), 'Vector index requires ' . @count@::instance()->name);
 		}
-		$value->settle_element(@element@::instance());
 	}
 
 	public function lower_cpp_empty(): string
@@ -49,6 +48,13 @@ final class @class@ extends vector_type_definition
 	public function lower_cpp_index(string $receiver, string $index): string
 	{
 		return '(' . $receiver . ').@index@(static_cast<' . @count@::instance()->cpp_type() . '>(' . $index . '))';
+	}
+
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value): string
+	{
+		$index = @count@::instance()->lower_cpp_exact_argument($write->index, value_conversion::identity, $index);
+		$value = @element@::instance()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return $receiver . '.@set@(' . $index . ', ' . $value . ');';
 	}
 
 @cardinality@

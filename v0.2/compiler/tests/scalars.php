@@ -62,6 +62,8 @@ foreach (flavor::cases() as $flavor)
 		. $decl('int', 'result', $var('checked'))
 		. $decl('bool', 'runtime_bool', $var('external')) . $decl('int', 'runtime_int', $var('runtime_bool'))
 		. $decl('null', 'copy_null', $var('nothing'))
+		. 'global ' . $decl('int', 'minimum', '-9223372036854775808') . $decl('int', 'maximum', '9223372036854775807')
+		. $decl('byte', 'low', '0')
 		. 'echo ' . $var('zero') . '; echo ' . $var('one') . '; echo ' . $var('wide') . '; echo '
 		. $var('result') . '; echo ' . $var('runtime_int') . '; return ' . $var('result') . ';';
 	$frontend = new Source_Frontend();
@@ -80,6 +82,10 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');
+	foreach (['scpp::uint8 var_small_5 = 255;', 'scpp::uint8 var_low_13 = 0;', ' = 9223372036854775807;',
+		' = (-9223372036854775807LL - 1LL);', 'var_stored = 255;'] as $spelling) {
+		verify(str_contains($cpp, $spelling), 'Missing direct initialization: ' . $spelling);
+	}
 	verify(str_contains($cpp, '#include <scpp/conversions.hpp>'), 'Checked conversion lacks public include');
 	verify(str_contains($cpp, 'scpp::checked_int64_to_uint8(static_cast<scpp::int64>'), 'Checked conversion missing');
 	$inspection = Compilation_Inspection::program($entry);

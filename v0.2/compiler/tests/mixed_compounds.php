@@ -130,7 +130,7 @@ foreach (flavor::cases() as $flavor)
 		. $fn('rhs_failure', $ref, 'void', $v . '+=zero(' . $v . ')/0; return;');
 	$observer = file_get_contents(__DIR__ . '/mixed_compounds_observer.cpp');
 	foreach (['add', 'subtract', 'multiply', 'divide', 'mutate_then_fail', 'rhs_failure'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];

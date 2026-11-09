@@ -34,10 +34,17 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
                 $sentinelCases[] = "\t\t\t" . var_export($state, true) . ' => ' . var_export($sentinel['factory'], true) . ',';
             }
         }
+        $valuePresence = $carrier['presence']['value'];
+        $hasTrueState = array_key_exists('true', $carrier['states']);
+        $truePresence = $hasTrueState ? 'carrier.' . $carrier['presence']['true'] . '()' : 'false';
+        $presenceExpression = $hasTrueState
+            ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
+            : "'(' . \$value . ').{$valuePresence}()'";
         $code .= strtr(readFile(__DIR__ . '/../templates/carrier_type.php.tpl'), [
             '@sentinel_cases@' => implode("\n", $sentinelCases),
-            '@presence@' => $carrier['presence']['value'],
-            '@true_presence@' => array_key_exists('true', $carrier['states']) ? 'carrier.' . $carrier['presence']['true'] . '()' : 'false',
+            '@presence_expression@' => $presenceExpression,
+            '@presence@' => $valuePresence,
+            '@true_presence@' => $truePresence,
             '@empty@' => array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@implicit@' => $carrier['extraction'] === 'implicit_checked_one_layer_value_copy' ? 'true' : 'false',
             '@access@' => $carrier['payload_access'],

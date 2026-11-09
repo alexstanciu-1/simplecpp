@@ -158,7 +158,7 @@ final class Preparation
 				}
 				$type = $statement->receiver->type_def();
 				if (!($type instanceof keyed_collection_type)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a hash or boxed container; vector indexed writes are deferred');
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a vector, hash or boxed container');
 				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);

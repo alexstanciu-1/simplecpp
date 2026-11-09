@@ -56,7 +56,8 @@ foreach (flavor::cases() as $flavor)
 		'app' => new source_file('app', wrap($flavor, 'App', function_text($flavor, 'run', 'echo "app\n";')), $flavor),
 		'sub' => new source_file('sub', wrap($flavor, 'App\Sub', $ping), $flavor),
 		'lib' => new source_file('lib', wrap($flavor, 'Lib', $ping), $flavor),
-		'global' => new source_file('global', function_text($flavor, 'global_ping', 'echo "root\n";'), $flavor),
+		'global' => new source_file('global', function_text($flavor, 'global_ping', 'echo "root\n";')
+			. function_text($flavor, 'Lib_ns_ping', 'return;'), $flavor),
 	];
 	$fixtures[$flavor->value] = $sources;
 	$program = (new Program_Frontend())->prepare_sources('main', $sources, new entry_target(31));
@@ -70,6 +71,12 @@ foreach (flavor::cases() as $flavor)
 	verify($entry->statements[2]->source_text() === $root_marker . 'Lib' . $separator . 'ping();', 'Original spelling lost');
 	$output = Cpp_Program::emit($program);
 	$outputs[] = $output->files;
+	$emitted = implode("\n", $output->files);
+	verify(str_contains($emitted, 'void LibZ5fns_ping_()'), 'A literal namespace separator must be escaped');
+	foreach (['App_ns_Sub_ns_ping_', 'Lib_ns_ping_'] as $symbol) {
+		verify(str_contains($emitted, 'void ' . $symbol . '();') && str_contains($emitted, "\t" . $symbol . '();'),
+			'Missing qualified cross-unit name ' . $symbol);
+	}
 	if (isset($argv[1])) {
 		$dest = $argv[1] . '/' . $flavor->value;
 		foreach ($output->files as $path => $text) {

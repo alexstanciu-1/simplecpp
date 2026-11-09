@@ -8,7 +8,7 @@ The [feature catalog](non_object_feature_catalog.md) tracks the collection work 
 
 ## CT-01 source operations
 
-Examples use cpp-flavor local names. PHP uses its usual `$` variable prefix. The same operation and result contracts should apply across cpp, php and js. The count and empty rows are implemented. The remaining rows are proposed source bindings.
+Examples use cpp-flavor local names. PHP uses its usual `$` variable prefix. The same operation and result contracts should apply across cpp, php and js. Count, empty and vector indexed replacement are implemented. The remaining rows are proposed source bindings.
 
 | Proposed source spelling | Published runtime operation | Source behavior |
 | --- | --- | --- |
@@ -28,12 +28,12 @@ For hash append, choose zero when there is no live nonnegative key, otherwise on
 
 ## Compiler and runtime ownership
 
-Use the validated runtime specialization and member plans to generate operation bindings on concrete collection types. Source preparation checks the receiver, exact key or index type, writable local for mutations, typed destination conversion and result type. Lower through the existing collection syntax nodes where applicable. In particular, keyed probes and removal must access the receiver and key directly: evaluating the throwing indexed read first would give the wrong behavior on absence. Preserve single evaluation and key-before-RHS ordering for indexed writes. Record provider requirements through the generated include queries. Coordinate edits to shared keyed syntax with the boxed workspace.
+Use the validated runtime specialization and member plans to generate operation bindings on concrete collection types. Source preparation checks the receiver, exact key or index type, writable local for mutations, typed destination conversion and result type. Lower through the existing collection syntax nodes where applicable. In particular, keyed probes and removal must access the receiver and key directly: evaluating the throwing indexed read first would give the wrong behavior on absence. Preserve single evaluation. Existing hash writes retain key-before-RHS ordering. Vector replacement uses native argument ordering. Record provider requirements through the generated include queries. Coordinate edits to shared keyed syntax with the boxed workspace.
 
 ## CT-01 verification checklist
 
 - [x] Exercise count and empty on all six default specializations across cpp/php/js. Check empty and populated cardinality, a stored zero or empty string, vector growth and hash replacement at constant size.
-- [ ] Verify vector replacement at the first and last valid indices. Reject negative and past-end indices, including index zero on an empty vector. Check evaluation order, single evaluation, and destination contents after bounds or conversion failure.
+- [x] Verify vector replacement at the first and last valid indices. Reject negative and past-end indices, including index zero on an empty vector. Check single evaluation and destination contents after bounds or conversion failure.
 - [ ] Compare hash probe, find and indexed read on the same missing key. Check count after each operation. Verify present zero/empty-string values, copied find payloads, embedded NUL keys and distinct numeric-looking string keys.
 - [ ] Verify removal of present and absent keys, strict key types, writable receivers and conversion failures. Check integer append on empty, negative-only and gapped keys, after removal of the maximum and after clear. Exercise overflow with the prior membership and values intact.
 - [ ] Verify vector clear's capacity contract before admitting the binding. Exercise repeated clear and reuse for both families.
@@ -80,10 +80,29 @@ socket-enabled frontend-service run passed 195 of 197 tests. The two failures,
 clean export of baseline `e40949352`: their standalone test setup calls
 `prepareBoxed()` without loading `boxedScalarPlan()`.
 
+## Indexed vector replacement
+
+Published vector types now implement the keyed-store contract used by
+`ast_index_assignment`. Reads and writes share the exact count-type index check.
+The generator binds the published mutable `set(count, element)` signature.
+Preparation selects the element conversion. Lowering emits a direct call to `set`, which checks bounds. See the
+[native lowering plan and inventory](native_cpp_lowering.md) for exact argument policy.
+
+The cpp/php/js native fixtures replace the first and last elements of int and
+string vectors, including an embedded NUL string copied from another slot.
+Effectful operands verify single evaluation. Their relative order is deferred. Test-only C++ catchers inspect the
+original count and elements after empty, negative, past-end and overflowing
+conversion cases. When both conversion and bounds would fail, conversion fails
+first. Incremental signature and element-type edits exercise rejected
+conversions, retries and recovery against fresh output. The relocated-provider
+application also replaces and reads a vector slot. All 12 focused CTests passed,
+including the native vector fixtures and the hash and boxed regression suites.
+The native build and compiler style check passed.
+
 ## Sequencing and ownership of later work
 
 1. **CT-02** covers same-type initialization and assignment, by-value parameters and returns, then whole-collection reference parameters. Prove independent copies and caller-visible reference mutation.
 2. **CT-03** starts with flat, explicitly typed populated literals. Add nesting and further published specializations once payload copy, conversion and publication requirements are defined.
 3. **CT-04** is a separate foreach discussion after the other collection work. Traversal order and mutation during traversal belong to that contract. CT-01 verification observes values and membership by explicit index or key.
 
-Mixed/dynamic compiler and container work continues in `simple_cpp_02`. The remaining CT-01 operations follow the cardinality slice.
+Mixed/dynamic compiler and container work continues in `simple_cpp_02`. Hash probe, find, removal and append, and both clear operations remain deferred.

@@ -70,7 +70,13 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
         if ($definition['literal_family'] === 'integer') {
             $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
+            $nativeSuffix = match ($types[$identity]['native_name']) {
+                'int' => '', 'long' => 'L', 'long long' => 'LL',
+                default => throw new \RuntimeException('Unsupported native signed integer literal type'),
+            };
             $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
+                '@native_suffix@' => var_export($nativeSuffix, true),
+                '@native_minimum@' => var_export('(-' . $definition['maximum'] . $nativeSuffix . ' - 1' . $nativeSuffix . ')', true),
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
                 '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
                 '@cpp_minimum@' => var_export($definition['minimum_cpp'], true), '@cpp_suffix@' => var_export($definition['suffix'], true),
@@ -147,7 +153,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 25,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 33,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -335,7 +341,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
 			return value_conversion::floating_integer_checked;
 CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '{$symbol}(static_cast<{$sourceCpp}>(' . \$value . '))',";
+            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '{$symbol}(' . \$value . ')',";
         } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
@@ -348,7 +354,7 @@ CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
 			return value_conversion::integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::integer_checked => '{$symbol}(static_cast<{$sourceCpp}>(' . \$value . '))',";
+            $lower[] = "\t\t\tvalue_conversion::integer_checked => '{$symbol}(' . self::checked_integer_operand(\$syntax, \$value, '{$sourceCpp}') . ')',";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
             $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
@@ -384,7 +390,7 @@ $prepare
 	}
 
 	/** Render an approved boundary without repeating source-type resolution or changing facts. */
-	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value): string
+	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value, ?ast_expression \$syntax = null): string
 	{
 		return match (\$conversion) {
 $lower
@@ -450,6 +456,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $cases = '';
     $headers = [];
     $reorderable = [];
+    $directCases = [];
+    $stringLiteralOps = [];
     foreach ($operations as $op => $operation) {
         $result = 'type_' . $definitions[$operation['result']]['class'];
         if (($operation['compound'] ?? $compoundEnabled) && $operation['result'] === $identity) $compoundOperators[] = "binary_operator::$op";
@@ -465,6 +473,21 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
         }
         if (compilerStrategyReorderable($safety, isset($operation['identity_peers']) ? 'canonical_identity' : $operation['lowering'])) $reorderable[] = "binary_operator::$op";
+        if ($definitions[$identity]['strategy'] === 'integer') {
+            if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
+                $directCases[] = "binary_operator::$op => true,";
+            } elseif ($operation['lowering'] === 'native_three_way') {
+                // This formula reads both operands twice. Only repeat plain, distinct storage reads.
+                $directCases[] = "binary_operator::$op => !\$same_spelling && \$expr->right->type_def() === \$this"
+                    . "\n\t\t\t\t&& \$expr->left instanceof ast_name_expression && \$expr->left->declaration() instanceof ast_local_binding"
+                    . "\n\t\t\t\t&& \$expr->right instanceof ast_name_expression && \$expr->right->declaration() instanceof ast_local_binding,";
+            } elseif ($op === 'not_identical' && isset($operation['identity_peers'])) {
+                $directCases[] = "binary_operator::$op => \$expr->right->value_type() === \$this && !\$same_spelling,";
+            }
+        } elseif ($definitions[$identity]['strategy'] === 'string'
+            && ($operation['lowering'] === 'runtime_concat' || ($op === 'identical' && isset($operation['identity_peers'])))) {
+            $stringLiteralOps[] = "binary_operator::$op";
+        }
         if ($operation['lowering'] === 'native') {
             $expression = "'(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')'";
             if ($definitions[$identity]['strategy'] === 'integer' && $types[$identity]['bits'] < 64 && $operation['result'] === $identity) {
@@ -502,6 +525,26 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $compound = $compoundOperators === [] ? 'false' : "match (\$operator) { " . implode(', ', $compoundOperators) . " => true, default => false }";
     $syntaxMethod = $flavorCases === '' ? '' : "\n\t/** Flavor spelling admission generated from operation metadata. */\n\tpublic function binary_syntax_allowed(binary_operator \$operator, ast_node \$site): bool\n\t{\n\t\treturn match (\$operator) {\n$flavorCases\t\t\tdefault => true,\n\t\t};\n\t}\n";
     $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
+    if ($stringLiteralOps !== []) {
+        $operators = implode(', ', $stringLiteralOps);
+        $directCases[] = "{$operators} => \$expr->left instanceof ast_name_expression"
+            . "\n\t\t\t\t&& \$expr->left->declaration() instanceof ast_local_declaration && \$expr->left->type_def() === \$this"
+            . "\n\t\t\t\t&& \$expr->right instanceof ast_string_expression,";
+    }
+    $directMethod = '';
+    if ($directCases !== []) {
+        $casesText = implode("\n\t\t\t", $directCases);
+        $guard = $definitions[$identity]['strategy'] === 'integer' ? '$operands_safe && ' : '';
+        $directMethod = "
+\tpublic function cpp_direct_binary(ast_binary_expression \$expr, bool \$operands_safe, bool \$same_spelling): bool
+\t{
+\t\treturn {$guard}match (\$expr->operator) {
+\t\t\t$casesText
+\t\t\tdefault => false,
+\t\t};
+\t}
+";
+    }
     $headerMethods = '';
     if ($headers !== []) {
         $headerCases = '';
@@ -560,7 +603,7 @@ $cases\t\t\tdefault => throw new \\LogicException('Binary operation was not appr
 $safeCases\t\t\tdefault => false,
 \t\t};
 \t}
-$headerMethods";
+$directMethod$headerMethods";
 }
 
 /** Emit direct update handlers from the validated operator list for one type. */

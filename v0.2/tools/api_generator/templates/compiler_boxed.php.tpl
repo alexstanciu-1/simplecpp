@@ -38,7 +38,7 @@ final class type_@name@ extends boxed_type_definition
 		};
 	}
 
-	/** STATIC METHODS */
+@direct_method@	/** STATIC METHODS */
 	public static function instance(): self
 	{
 		return self::$instance ??= new self('@name@');

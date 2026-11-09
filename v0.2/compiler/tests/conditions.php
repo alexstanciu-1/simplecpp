@@ -51,6 +51,18 @@ foreach (flavor::cases() as $flavor)
 	$p = $flavor === flavor::php ? 'bool $flag' : ($flavor === flavor::cpp ? 'bool flag' : 'flag: bool');
 	$decl = static fn(string $name, string $type, string $value): string => local($flavor, $name, $type, $value);
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('conditions', $source, $flavor), new entry_target(31));
+	// The global i_0 and the first local i have identical C++ spellings in different scopes.
+	$names = 'global ' . $decl('i_0', 'int', '2')
+		. $fn('_X', '', 'int', 'return 3;') . $fn('Z5fX', '', 'int', 'return 4;')
+		. $fn('co_await', '', 'int', 'return 5;')
+		. $decl('i', 'int', $var('i_0')) . 'echo ' . $var('i') . ';'
+		. 'if (true) {' . $decl('i', 'int', '7') . 'echo ' . $var('i') . ';}'
+		. 'echo ' . $var('i') . ', ' . $var('i_0') . ', _X(), Z5fX(), co_await(); return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($names));
+	foreach (['var_i_0 = ::var_i_0;', 'var_i_1 = 7;', 'Z5fX_()', 'Z5a5fX_()', 'co_await_()'] as $name) {
+		verify(str_contains($cpp, $name), 'Missing C++ spelling ' . $name);
+	}
+	$fixtures[$flavor->name . '_names'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2722345')];
 	$single_pass = $prepare('if (true) { echo 1; } elseif (false) { echo 2; } else { echo 3; } return 8;');
 	verify($single_pass->body()->statement_visits === 5 && $single_pass->body()->expression_visits === 6,
 		'Conditions and arm statements must be prepared exactly once');

@@ -133,7 +133,7 @@ foreach (flavor::cases() as $flavor)
 	$observer = file_get_contents(__DIR__ . '/mixed_ordering_observer.cpp');
 	foreach (['less', 'less_equal', 'greater', 'greater_equal'] as $name) {
 		foreach (['if', 'fi'] as $order) {
-			$observer = str_replace('@' . $name . '_' . $order . '@', 'scpp_function_' . bin2hex($name . '_' . $order), $observer);
+			$observer = str_replace('@' . $name . '_' . $order . '@', $name . '_' . $order . '_', $observer);
 		}
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',

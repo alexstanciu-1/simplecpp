@@ -30,8 +30,22 @@ interface keyed_collection_type extends indexed_collection_type
 {
 	public function prepare_key(ast_expression $key): void;
 	public function write_type(): type_definition;
-	public function lower_cpp_key(string $key): string;
-	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string;
+}
+
+/** Hash and boxed stores preserve their established key-before-value snapshots. */
+trait ordered_keyed_store
+{
+	abstract public function write_type(): type_definition;
+	abstract public function lower_cpp_key(string $key): string;
+	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
+
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
+	{
+		$value = $this->write_type()->lower_cpp_conversion($write->conversion(), $value, $write->value);
+		return '{ const auto write_key = ' . $this->lower_cpp_key($key) . '; const auto write_value = ' . $value . '; '
+			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
+	}
 }
 
 /** Shared semantic type contract; canonical definitions own type-specific behavior, never occurrence facts. */
@@ -159,6 +173,12 @@ abstract class type_definition
 		return false;
 	}
 
+	/** Whether this lowering accepts the identity-converted operands directly, independently of result reorderability. */
+	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
+	{
+		return false;
+	}
+
 	/** Generated numeric prefix admission attaches only the result identity to the original AST. */
 	public function prepare_unary(ast_unary_expression $value): void
 	{
@@ -243,9 +263,16 @@ abstract class type_definition
 		return $conversion | ($source instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
 	}
 
-	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
-	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?type_definition $source = null): string
+	/** Lower a prepared operand for an overload requiring this exact native representation. */
+	public function lower_cpp_exact_argument(ast_expression $syntax, int $conversion /** uint16 */, string $operand): string
 	{
+		return $this->lower_cpp_conversion($conversion, $operand, $syntax);
+	}
+
+	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
+	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	{
+		$source = $syntax?->type_def();
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $source !== null) {
 			return $this->box_cpp($source, $value);
 		}
@@ -262,6 +289,7 @@ abstract class type_definition
 				throw new \LogicException('Checked extraction requires its source carrier type');
 			}
 			$value = $source->lower_cpp_extract($value);
+			$syntax = null;
 		}
 		if ($this instanceof carrier_type_definition) {
 			if ($conversion === value_conversion::sentinel_carrier) {
@@ -274,11 +302,11 @@ abstract class type_definition
 				return '((void)(' . $value . '), ' . $this->cpp_type() . '{})';
 			}
 			if (($conversion & value_conversion::WRAP) !== 0) {
-				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value);
+				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
 				return $this->cpp_type() . '{static_cast<' . $this->payload_type->cpp_type() . '>(' . $value . ')}';
 			}
 		}
-		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value);
+		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
 	}
 
 	/** Carrier states are not scalar constant facts; do not confuse absent values with known scalar null. */
@@ -313,7 +341,7 @@ abstract class type_definition
 			. $value->value_type()->name . ' to ' . $this->name);
 	}
 
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Conversion does not belong to this destination type');
@@ -336,5 +364,15 @@ abstract class type_definition
 	public function scalar_conversion_headers(int $conversion /** uint16 */): array /** list<string> */
 	{
 		return [];
+	}
+
+	/** STATIC METHODS */
+	protected static function checked_integer_operand(?ast_expression $syntax, string $value, string $parameter): string
+	{
+		if ($syntax instanceof ast_call_expression && $syntax->cardinality === null
+			&& $syntax->type_def()->cpp_type() === $parameter) {
+			return $value;
+		}
+		return 'static_cast<' . $parameter . '>(' . $value . ')';
 	}
 }
