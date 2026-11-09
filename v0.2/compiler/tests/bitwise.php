@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 		. $fn('failed_write', $ref, 'void', $a . '<<=bad_count(' . $a . '); return;');
 	$names[] = 'failed_write';
 	$observer = file_get_contents(__DIR__ . '/bitwise_observer.cpp');
-	foreach ($names as $name) $observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+	foreach ($names as $name) $observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$code = $decl('byte', '128') . $x . '<<=1; if (!' . $x . ') { echo "A"; }'
 		. $x . '|=3;' . $x . '^=1;' . $x . '&=6;' . $x . '>>=1; if (' . $x . '==1) { echo "B"; }'

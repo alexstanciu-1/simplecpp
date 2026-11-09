@@ -38,6 +38,49 @@ foreach (flavor::cases() as $flavor) {
 	$cpp = (new Cpp_Emitter())->emit($prepare($main));
 	verify(str_contains($cpp, 'scpp::str::byte_length(local_0)'), 'Expected direct runtime call on owned string');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('039')];
+	$method = static fn(string $op, string $value, string $needle): string => match ($flavor) {
+		flavor::php => "str_$op($value, $needle)",
+		flavor::cpp => "$value.$op($needle)",
+		flavor::js => $value . '.' . ['starts_with' => 'startsWith', 'ends_with' => 'endsWith', 'contains' => 'includes'][$op]
+			. "($needle)",
+	};
+	$checks = [];
+	foreach ([['starts_with', $s, '"é"'], ['ends_with', $s, '"😀"'], ['contains', $s, '"中"'],
+		['contains', '"a\0b"', '"\0"'], ['contains', 'string_byte_from_int(255)', 'string_byte_from_int(255)'],
+		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
+		$checks[] = '(int)' . $method($op, $value, $needle);
+	}
+	$predicate = $local . 'echo ' . implode(', ', $checks) . '; return 8;';
+	$fixtures[$flavor->name . '-predicates'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($predicate)),
+		'stdout_hex' => bin2hex('11111100')];
+	rejects(fn() => $prepare($local . 'echo (int)' . $method('contains', $s, '5') . '; return 8;'), 'requires string');
+	$classic = match ($flavor) {
+		flavor::php => 'echo strpos("A😀B","B"), strrpos("a😀a","a"), strpos("abc","x"), strrpos("ab",""), strtolower("ÉAb"), strtoupper("éAb"), str_repeat("x\0",2);',
+		flavor::js => 'echo "A😀B".indexOf("B"), "a😀a".lastIndexOf("a"), "abc".indexOf("x"), "ab".lastIndexOf(""), "ÉAb".toLowerCase(), "éAb".toUpperCase(), "x\0".repeat(2);',
+		flavor::cpp => 'echo "A😀B".find("B"), "a😀a".rfind("a"), "abc".find("x"), "ab".rfind(""), "ÉAb".to_lower(), "éAb".to_upper(), "x\0".repeat(2);',
+	};
+	$fixtures[$flavor->name . '-classic'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($classic . 'return 8;')),
+		'stdout_hex' => bin2hex("55-12ÉabéABx\0x\0")];
+	$repeat = static fn(string $value, string $count): string => $flavor === flavor::php
+		? "str_repeat($value, $count)" : "$value.repeat($count)";
+	foreach ([['-1', 'invalid_argument', 'negative_string_repeat'], ['9223372036854775807', 'length_error', 'string_repeat_too_large']] as [$n, $exception, $message]) {
+		$fixtures[$flavor->name . '-repeat-' . $exception] = ['cpp' => (new Cpp_Emitter())->emit($prepare(
+			'echo ' . $repeat('"ab"', $n) . '; return 8;')), 'stdout_hex' => '', 'catch_' . $exception => $message];
+	}
+	$i = $flavor === flavor::php ? '$i' : 'i';
+	$counter = match ($flavor) {
+		flavor::cpp => 'int i = 0;', flavor::php => '$i int = 0;', flavor::js => 'let i: int = 0;',
+	};
+	$bytes = $counter . "while ($i < 256) { echo string_byte_from_int($i); $i += 1; } return 8;";
+	$fixtures[$flavor->name . '-all-bytes'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bytes)),
+		'stdout_hex' => bin2hex(implode('', array_map(chr(...), range(0, 255))))];
+	foreach ([-1, 256] as $value) {
+		$fixtures[$flavor->name . '-invalid-' . $value] = [
+			'cpp' => (new Cpp_Emitter())->emit($prepare("echo string_byte_from_int($value); return 8;")),
+			'stdout_hex' => '', 'catch_invalid_argument' => 'Byte value must be between 0 and 255',
+		];
+	}
+	rejects(fn() => $prepare('echo string_byte_from_int("65"); return 8;'), 'requires int64');
 	$namespaced = 'namespace App { use function strlen as bytes; echo strlen("é"), bytes("x"); return 8; }';
 	$fixtures[$flavor->name . '-namespace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($namespaced)), 'stdout_hex' => bin2hex('21')];
 	foreach (['strlen()' => 'Argument count', 'strlen("x","y")' => 'Argument count', 'strlen(1)' => 'requires string'] as $call => $error) {
@@ -49,7 +92,7 @@ foreach (flavor::cases() as $flavor) {
 	try {
 		$lib = "$dir/lib." . $flavor->name;
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, 'echo strlen(word()); return 8;');
+		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(strlen(word())), (int)' . $method('contains', 'word()', '"中"') . '; return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 		$valid = $function('string', 'word', 'echo "X"; return "é中😀";');
@@ -58,10 +101,11 @@ foreach (flavor::cases() as $flavor) {
 		$root = null;
 		$revision = time();
 		foreach ([$valid, $function('int', 'word', 'return 2;'), 'retry', null,
-			$valid . $function('int', 'strlen', 'return 1;'), $valid, 'add_shadow', 'retry', 'remove_shadow'] as $step => $body) {
+			$valid . $function('int', 'strlen', 'return 1;'), $valid, 'add_shadow', 'retry', 'remove_shadow', 'shadow_byte', 'retry', 'remove_shadow'] as $step => $body) {
 			if ($body !== 'retry') {
-				if ($body === 'add_shadow') {
-					file_put_contents("$dir/shadow." . $flavor->name, $function('int', 'strlen', 'return 1;'));
+				if ($body === 'shadow_byte' || $body === 'add_shadow') {
+					$name = $body === 'shadow_byte' ? 'string_byte_from_int' : 'strlen';
+					file_put_contents("$dir/shadow." . $flavor->name, $function('int', $name, 'return 1;'));
 				}
 				elseif ($body === 'remove_shadow') {
 					unlink("$dir/shadow." . $flavor->name);
@@ -77,20 +121,21 @@ foreach (flavor::cases() as $flavor) {
 			}
 			$root ??= $session->entry->entry->ast;
 			verify($session->entry->entry->ast === $root, 'Unchanged caller was reparsed');
-			if (in_array($step, [1, 2, 3, 4, 6, 7], true)) {
+			$files = $session->files();
+			$sources = array_map(static fn($file) => $file->source(), $files);
+			$fresh = static fn() => (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
+			if (in_array($step, [1, 2, 3, 4, 6, 7, 9, 10], true)) {
 				$error = match ($step) {
-					3 => 'Unknown function', 4, 6, 7 => 'Argument count', default => 'requires string',
+					3 => 'Unknown function', 4, 6, 7, 9, 10 => 'Argument count', default => 'requires string',
 				};
 				rejects(fn() => Incremental_Preparation::prepare($session, $target), $error);
+				rejects($fresh, $error);
 				continue;
 			}
 			Incremental_Preparation::prepare($session, $target);
-			$files = $session->files();
 			$code = Cpp_Program::emit(new prepared_program($session->entry_key(), $files, new prepared_entry($root, $target), $session))->files;
-			$sources = array_map(static fn($file) => $file->source(), $files);
-			$fresh = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
-			verify($code === Cpp_Program::emit($fresh)->files, 'Incremental and fresh strlen lowering differ');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex('X9')];
+			verify($code === Cpp_Program::emit($fresh())->files, 'Incremental and fresh unary function lowering differ');
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex("X\x09X1")];
 		}
 	}
 	finally {
@@ -100,7 +145,63 @@ foreach (flavor::cases() as $flavor) {
 		rmdir($dir);
 	}
 }
+// An unchanged JS caller switches between namespace and member as a source unit changes.
+$dir = sys_get_temp_dir() . '/scpp-string-namespace-' . bin2hex(random_bytes(8));
+mkdir($dir);
+try {
+	file_put_contents("$dir/module.json", '{}');
+	file_put_contents("$dir/main.js", 'echo (int)Box.includes("a"), (int)\Box.includes("a"); return 8;');
+	file_put_contents("$dir/lib.js", 'namespace Box { function includes(s: string): bool { return false; } }');
+	$session = null;
+	$compiler = new Project_Compiler();
+	foreach ([false, true, false] as $step => $shadow) {
+		if ($shadow) {
+			file_put_contents("$dir/value.js", 'const Box: string = "abc";');
+		}
+		elseif ($step !== 0) {
+			unlink("$dir/value.js");
+		}
+		$session = $compiler->frontend($dir, $session);
+		Incremental_Preparation::prepare($session, $target);
+		$files = $session->files();
+		$program = new prepared_program($session->entry_key(), $files, new prepared_entry($session->entry->entry->ast, $target), $session);
+		$code = Cpp_Program::emit($program)->files;
+		$fresh = (new Program_Frontend())->prepare_sources($session->entry_key(), array_map(static fn($f) => $f->source(), $files), $target);
+		verify($code === Cpp_Program::emit($fresh)->files, 'Namespace/member incremental selection differs from fresh');
+		$fixtures['js-qualifier-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex($shadow ? '10' : '00')];
+	}
+	file_put_contents("$dir/nested.js", 'namespace Box.Inner { function ping(): int { return 17; } }');
+	file_put_contents("$dir/main.js", 'echo Box.Inner.ping(); return 8;');
+	foreach (['clean', 'shadow', 'retry', 'recover'] as $step) {
+		if ($step === 'shadow') {
+			file_put_contents("$dir/value.js", 'const Box: string = "abc";');
+		}
+		if ($step === 'recover') {
+			unlink("$dir/value.js");
+		}
+		$session = $compiler->frontend($dir, $session);
+		$files = $session->files();
+		$fresh = static fn() => (new Program_Frontend())->prepare_sources($session->entry_key(),
+			array_map(static fn($f) => $f->source(), $files), $target);
+		if ($step === 'shadow' || $step === 'retry') {
+			rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Member reads');
+			rejects($fresh, 'Member reads');
+			continue;
+		}
+		Incremental_Preparation::prepare($session, $target);
+		$program = new prepared_program($session->entry_key(), $files, new prepared_entry($session->entry->entry->ast, $target), $session);
+		$code = Cpp_Program::emit($program)->files;
+		verify($code === Cpp_Program::emit($fresh())->files, 'Nested namespace recovery differs from fresh');
+		$fixtures['js-nested-' . $step] = ['files' => $code, 'stdout_hex' => bin2hex('17')];
+	}
+}
+finally {
+	foreach (glob($dir . '/*') as $file) {
+		unlink($file);
+	}
+	rmdir($dir);
+}
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR));
 }
-echo "strlen byte lengths, admission and incremental recovery passed\n";
+echo "Unary byte functions, admission and incremental recovery passed\n";

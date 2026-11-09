@@ -177,7 +177,7 @@ foreach (flavor::cases() as $flavor)
 	$failure_cpp = str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($failure_code)));
 	$failure_cpp .= "\n#include <stdexcept>\nint main() {\n";
 	foreach (['xor_fail_right', 'xor_fail_left'] as $name) {
-		$failure_cpp .= 'try { (void)scpp_function_' . bin2hex($name) . '(); return 90; } catch (const std::domain_error&) {}' . "\n";
+		$failure_cpp .= 'try { (void)::App::scpp_function_' . bin2hex($name) . '(); return 90; } catch (const std::domain_error&) {}' . "\n";
 	}
 	$fixtures[$flavor->name . '_xor_failure'] = ['cpp' => $failure_cpp . "return 8; }\n", 'stdout_hex' => ''];
 

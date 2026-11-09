@@ -554,12 +554,77 @@ final class Preparation
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
+	/** Validate fixed-arity runtime arguments against their generated signature. */
+	private function runtime_call(ast_call_expression $call, runtime_function $runtime): void
+	{
+		$operands = $call->runtime_operands();
+		if (count($operands) !== count($runtime->parameters)) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+		}
+		foreach ($operands as $index => $argument) {
+			if ($argument !== $call->receiver) {
+				$this->value($argument);
+			}
+			$type = $runtime->parameters[$index];
+			if ($argument->type_def() !== $type) {
+				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
+			}
+		}
+		$call->settle_runtime($runtime);
+	}
+
+	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */
+	private function has_receiver(ast_name_expression $receiver): bool
+	{
+		$file = $receiver->root();
+		$prefix = '';
+		foreach (explode('\\', $receiver->name) as $part) {
+			$local = $prefix === '' && $this->find_local($part) !== null;
+			$prefix = $prefix === '' ? $part : $prefix . '\\' . $part;
+			if (!$local) {
+				$found = false;
+				foreach (['var:' . Source_Names::resolve($prefix, $this->owner->scope->namespace),
+					$file->constant_key($prefix)] as $key) {
+					$entry = $this->symbols->entry($key);
+					$this->dependencies?->watch($entry, $this->owner);
+					if ($entry->declaration() !== null) {
+						$found = true;
+						break;
+					}
+				}
+				if (!$found) {
+					continue;
+				}
+			}
+			if ($prefix !== $receiver->name) {
+				throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Member reads are not supported in this slice');
+			}
+			return true;
+		}
+		return false;
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call): void
 	{
-		$separator = strpos($call->name, '\\');
-		if ($call->member_syntax && ($separator !== false) && ($this->find_local(substr($call->name, 0, $separator)) !== null)) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Member calls are not supported in this slice');
+		$receiver = $call->receiver;
+		if ($receiver !== null) {
+			$separator = strrpos($call->name, '\\');
+			$member = $separator === false;
+			if (!$member && $receiver instanceof ast_name_expression) {
+				$member = $this->has_receiver($receiver);
+			}
+			if ($member) {
+				$this->value($receiver);
+				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
+				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
+				$runtime = runtime_functions::resolve($key);
+				if ($runtime === null) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
+				}
+				$this->runtime_call($call, $runtime);
+				return;
+			}
 		}
 		$this->name_lookups++;
 		$file = $call->root();
@@ -568,17 +633,9 @@ final class Preparation
 		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration)) {
-			$runtime = runtime_functions::resolve($file->runtime_function_key($call->name, $key));
+			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null) {
-				if (count($call->arguments) !== 1) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
-				}
-				$argument = $call->arguments[0];
-				$this->value($argument);
-				if ($argument->type_def() !== $runtime->parameter) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $runtime->parameter->name);
-				}
-				$call->settle_runtime($runtime);
+				$this->runtime_call($call, $runtime);
 				return;
 			}
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);

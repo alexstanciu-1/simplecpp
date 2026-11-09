@@ -23,10 +23,11 @@ In `App`, `ping` resolves to `App\ping`, `Sub\ping` to `App\Sub\ping`, and
 `\Lib\ping` to `Lib\ping`. There is no parent-namespace or arbitrary-global fallback.
 Paths retain spelling/case; no case-folding is introduced by normalization.
 
-JS dotted qualification retains a `member_syntax` flag. If the first component
-names a visible local value, preparation rejects the currently unsupported member
-call instead of treating it as a namespace. Root qualification bypasses that local
-ambiguity. General member-access and object-call functionality is not introduced.
+A JS dotted call first resolves a visible receiver value. Its type selects a published
+runtime member. A missing method on a value is a diagnostic. When the receiver
+has no value binding, the dotted path selects a namespace function. Preparation
+watches candidate published values so adding or removing one invalidates an
+unchanged caller. Root qualification always selects a namespace path.
 
 Namespace declarations are visible without export. `export` is reserved/rejected
 in JS; export/API visibility is deferred and not silently ignored. JS syntax design
@@ -134,3 +135,37 @@ AST/target identity, inspection, lowering purity and incremental target retireme
 and reactivation. Run `tests/namespaces_native.py --imports` for its Clang executable
 proof and separate frontend/LLVM/linker measurements.
 See [the import slice proof](import_slice_proof.md) for structure changes and retained measurements.
+
+For project-controlled native names, generated provider headers and runtime flavor
+lookup, see the [application namespace and adapter plan](../../specs/planning/app_namespace_and_flavor_adapters.md).
+
+## Native application and runtime names
+
+The selected app’s `module.json` controls the C++ namespace for emitted definitions and
+cross-unit declarations. The default is `App`. For example, `"cpp_namespace": "acme::ledger"`
+produces a global `main()` that calls `::acme::ledger::scpp_entry_body()`. JSON `null`
+selects global emission. Each namespace component starts with an ASCII letter and
+contains letters, digits or underscores. C++ keywords, double underscores and the
+reserved components `main`, `std` and `scpp` are rejected. Changing this option
+requires re-emitting all app units. Source-language namespace lookup and stable symbol keys
+are independent of this setting.
+
+`scpp::types` exposes the same canonical C++ types and ABI through using-declarations.
+Each provider contributes its own names when included. For example, the string provider
+makes `string` available alongside the core scalar provider’s `int64`, `byte` and
+`bool_t`. An adapter-consuming implementation can write:
+
+```cpp
+#include <scpp/php/string.hpp>
+namespace App {
+using namespace ::scpp::types;
+using namespace ::scpp::php;
+bool_t matches(const string& value, const string& prefix) {
+    return str_starts_with(value, prefix);
+}
+}
+```
+
+Public app headers use qualified types. In global-emission mode the using-directives
+are function-local. The prefix predicate is the first generated adapter. Each binding
+selects its own flavor header and forwards to the same length-aware byte implementation.

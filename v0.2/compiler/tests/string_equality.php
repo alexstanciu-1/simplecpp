@@ -171,7 +171,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$observer = file_get_contents(__DIR__ . '/string_equality_observer.cpp');
 	foreach (['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'compare'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
@@ -187,7 +187,7 @@ foreach (flavor::cases() as $flavor)
 		. $fn('null_effect', '', 'null', 'echo "UNREACHED"; return null;') . 'return 8;';
 	$observer = file_get_contents(__DIR__ . '/identity_observer.cpp');
 	foreach (['same_float', 'different_float', 'identity_fail_right', 'identity_fail_left', 'compare_float'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
 	}
 	$fixtures[$flavor->name . '_identity_float'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($float_code))) . $observer, 'stdout_hex' => ''];

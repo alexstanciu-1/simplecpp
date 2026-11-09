@@ -43,7 +43,8 @@ final class Cpp_Headers
 			foreach ($includes as $include => $_) {
 				$text .= '#include <' . $include . ">\n";
 			}
-			$this->files['units/' . $header] = $text . implode("\n", $lines) . "\n";
+			$this->files['units/' . $header] = $text . Cpp_Emitter::namespace_body(
+				$program->session?->cpp_namespace ?? 'App', implode("\n", $lines) . "\n");
 		}
 		ksort($this->files, \SORT_STRING);
 	}

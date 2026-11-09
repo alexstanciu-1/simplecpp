@@ -109,6 +109,11 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
+			if ($expression->receiver !== null) {
+				return ['kind' => 'member_or_qualified_call', 'name' => $expression->name,
+					'receiver' => self::expression($expression->receiver),
+					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+			}
 			$name_end = $expression->start;
 			while ($expression->root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
 				$name_end++;

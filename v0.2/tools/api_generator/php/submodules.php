@@ -239,6 +239,10 @@ function compilerProviderMetadata(mixed $metadata, ?array $plan = null): object 
     return $copy;
 }
 
+function stringAdapterHeader(string $flavor): string {
+    return "scpp/$flavor/string.hpp";
+}
+
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
     $plan = submodulePlan($metadata);
@@ -254,6 +258,12 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    foreach ($publication->string->functions ?? [] as $name) {
+        $function = at($metadata->string->functions, $name);
+        if (!($function->flavor_adapters ?? false)) continue;
+        foreach (['php', ...array_keys(isset($function->members) ? object($function->members) : [])] as $flavor) $headers[] = stringAdapterHeader($flavor);
+    }
+    $headers = array_values(array_unique($headers));
     sort($headers, SORT_STRING);
     return $headers;
 }

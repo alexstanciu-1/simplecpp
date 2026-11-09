@@ -54,8 +54,8 @@ Already available in bounded form:
 | CT-04 | Iteration | foreach over typed and boxed containers, key/value binding and mutation rules | Public traversal is still runtime debt RT-DEBT-01. This needs runtime API work as well as compiler lowering; do not expose private storage |
 | CR-01 | Result/error handling | Source error construction/inspection, take, explicit propagation helpers | Native structured error and result storage exist. Current carrier extraction/conditions are already implemented |
 | CR-02 | Carrier extensions | Compound/update writes, more payload specializations, nested compositions and direct text/output handling | Packed conversion code and generated payload handlers exist; composition/admission must be checked rather than assumed |
-| ST-01 | String API | Source length/search/slicing and other published methods/helpers, indexing and mutation policy | Native string API exists; choose a small source binding slice. data() remains metadata-marked compiler-internal; no source borrowed-pointer API is proposed |
-| ST-02 | Text boundaries | Scalar-to-string conversion/formatting, broader echo, interpolation | String equality/order/concatenation already work. General to_string and formatting/output contract remain separate |
+| ST-01 | String API | Source length/search/slicing and other published methods/helpers, indexing and mutation policy | Byte length, construction and indexed reads/writes are available. See the [classic string function catalog](#classic-string-functions) for the remaining groups. |
+| ST-02 | Text boundaries | Scalar-to-string conversion/formatting, broader echo, interpolation | Equality, ordering, concatenation, explicit scalar string casts and scalar local/parameter interpolation are available. General formatting remains separate. |
 | TY-01 | Additional numeric representations | Activate optional integer widths in compiler generation and exercise family rules | Runtime numeric module exists. Byte/uint8 is already core. Additional floats/char representations need a separate contract/runtime inventory; do not assume availability |
 | TY-02 | Enums and type naming | Enum declarations/identity/backing/value access; source aliases where admitted by specs | No source-defined enum model yet. Review namespace/import and incremental identity effects; no record implementation required |
 | EX-01 | Conditional expressions/probes | Ternary, coalescing/coalescing assignment, broader isset/empty, null conditions | Carrier isset and truthiness are already present. General branch result typing and lazy evaluation need their own preparation path |
@@ -147,3 +147,62 @@ known runtime reclamation debt, not a reason to silently change identity semanti
 - [Boxed API](../boxed_slice.md), [mixed storage](../mixed_storage.md), [dynamic storage](../dynamic_storage.md), [boxed results](../boxed_results.md), [JSON](../json_module.md), [datetime](../datetime_module.md).
 - [Array semantics](../../../specs/array_semantics.md), [data construction](../../../specs/data_initialization.md), [count/empty/isset](../../../specs/count_empty_isset_contract.md).
 - [Donor catalog](../../../compiler/my-try/docs/catalog/README.md): topic inventory only; mined structures require discussion before adoption.
+
+## Classic string functions
+
+Doc Status: planning. All three flavors use byte positions and widths in the ordinary
+string API. ASCII case operations transform only ASCII letters. Reserve `mb_*`
+for future Unicode text functions. Existing `strlen`, indexing, byte construction,
+casts, interpolation, comparison and concatenation remain available.
+
+Receiver `s` and argument names below stand for expressions. Predicate, search, ASCII case and repeat spellings are implemented.
+The remaining rows are proposed source spellings;
+the runtime operation is shared. PHP's argument order is shown where it differs.
+
+| Operation | PHP flavor | JavaScript flavor | C++ flavor | Contract / open decision |
+| --- | --- | --- | --- | --- |
+| Prefix | str_starts_with(s, needle) | s.startsWith(needle) | s.starts_with(needle) | Exact bytes, bool; empty needle matches |
+| Suffix | str_ends_with(s, needle) | s.endsWith(needle) | s.ends_with(needle) | Same |
+| Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
+| First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; -1 on miss, 0 for a match at the start; optional start deferred |
+| Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Decide negative/clamped bounds and exclusive-end adapter |
+| Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | Agree exact byte set, including NUL |
+| Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal replacement; settle empty needle |
+| ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
+| Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
+| Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Width in bytes; settle fill and PHP side notation |
+| Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Coordinate vector<string> boundaries; settle empty separator and limit |
+| Count matches | substr_count(s, needle) | s.countMatches(needle) | s.count_matches(needle) | Non-overlapping literal matches; settle empty needle |
+
+Implementation order: predicates and fixed-arity runtime calls first; locate and
+slice after their position contracts; trim, replacement, ASCII case, repeat,
+padding and count in focused groups. Split/join depends on collection integration.
+Verify source spellings, embedded NUL, arbitrary bytes and valid UTF-8, admission,
+incremental recovery versus fresh builds, and Clang frontend/backend/link timings.
+
+See [the byte/text portability precedent](../../../specs/portability/utf8_text_contract.md),
+[PHP string functions](https://www.php.net/manual/en/ref.strings.php) and
+[ECMAScript text processing](https://tc39.es/ecma262/multipage/text-processing.html).
+
+### Existing contracts to reconcile before the next groups
+
+- The [trim contract](../../../specs/builtins/string/trim.md) includes NUL in
+  the default mask and also specifies a two-argument byte-set form. The proposed
+  NUL-preserving default would change observable behavior.
+- The [replacement contract](../../../specs/builtins/string/str_replace.md)
+  specifies an unchanged subject for an empty search in replace-all. Rejecting
+  an empty search would be a language change. Count and replace-first need
+  explicit treatment even if they ultimately share the same scan.
+- The [substring contract](../../../specs/builtins/string/substr.md) specifies
+  code-point coordinates. The agreed byte policy changes that for this compiler.
+  The PHP offset/count and JS start/end spellings still need a bounds decision.
+- The [padding contract](../../../specs/builtins/string/str_pad.md) covers 2/3/4
+  arguments, a one-space default fill, left/right/both, and an extra byte on the
+  right for both-side padding. Empty fill and invalid mode fail even for a no-op.
+  Publishing its three named integer constants and selecting a runtime binding
+  by arity need compiler support beyond the current fixed-signature registry.
+- The native vector_string export already provides append, size and indexed
+  reads. Ownership coordination concerns publishing a function with a collection
+  parameter/result and selecting its provider. The [split](../../../specs/builtins/string/explode.md)
+  and [join](../../../specs/builtins/string/implode.md) contracts document the
+  existing PHP forms.

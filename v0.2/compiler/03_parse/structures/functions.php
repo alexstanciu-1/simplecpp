@@ -3,24 +3,28 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Immutable published unary function signature and C++ binding, e.g. strlen(string): int. */
+/** Immutable published fixed-arity function signature and C++ binding, e.g. strlen(string): int. */
 final readonly class runtime_function
 {
 	/** PROPERTIES */
 	private string $source_name;
-	public type_definition $parameter;
+	/** @var type_definition[] Non-owning canonical parameter types in call order. */
+	public array $parameters /** list<type_definition> */;
 	private type_definition $result;
 	public string $symbol;
 	public string $header;
+	public ?string $adapter_flavor;
 
 	/** CONSTRUCTOR */
-	public function __construct(string $name, type_definition $parameter, type_definition $result, string $symbol, string $header)
+	/** @param type_definition[] $parameters */
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null)
 	{
 		$this->source_name = $name;
-		$this->parameter = $parameter;
+		$this->parameters = $parameters;
 		$this->result = $result;
 		$this->symbol = $symbol;
 		$this->header = $header;
+		$this->adapter_flavor = $adapter_flavor;
 	}
 
 	/** METHODS */
@@ -72,6 +76,8 @@ final class ast_call_expression extends ast_expression
 	/** PROPERTIES */
 	public readonly string $name;
 	public readonly bool $member_syntax;
+	/** Native owning receiver; a relative JS dotted path may instead resolve as a namespace call. */
+	public readonly ?ast_expression $receiver;
 	/** @var ast_expression[] Native owning arguments in source order. */
 	public readonly array $arguments /** list<ast_expression> */;
 
@@ -87,11 +93,13 @@ final class ast_call_expression extends ast_expression
 	 * @param ast_expression[] $arguments
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		bool $member_syntax, array $arguments /** list<ast_expression> */)
+		bool $member_syntax, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null)
 	{
 		parent::__construct($start, $end);
 		$this->name = $name;
 		$this->member_syntax = $member_syntax;
+		$this->receiver = $receiver;
+		$receiver?->attach($this);
 		$this->arguments = $arguments;
 		foreach ($arguments as $argument) {
 			$argument->attach($this);
@@ -116,11 +124,17 @@ final class ast_call_expression extends ast_expression
 		$this->conversions = $conversions;
 	}
 
+	/** @return ast_expression[] Runtime operands in evaluation order, including a method receiver. */
+	public function runtime_operands(): array /** list<ast_expression> */
+	{
+		return $this->receiver === null ? $this->arguments : [$this->receiver, ...$this->arguments];
+	}
+
 	public function settle_runtime(runtime_function $function): void
 	{
 		$this->settle_value($function->return_type_def(), null);
 		$this->function_symbol = $function;
-		$this->conversions = [value_conversion::identity];
+		$this->conversions = [];
 	}
 
 	public function function_def(): ast_function_declaration|runtime_function
@@ -134,6 +148,9 @@ final class ast_call_expression extends ast_expression
 	/** $index: argument ordinal. */
 	public function conversion(int $index /** uint32 */): int /** uint16 */
 	{
+		if ($this->function_symbol instanceof runtime_function && isset($this->arguments[$index])) {
+			return value_conversion::identity;
+		}
 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
 	}
 

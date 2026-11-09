@@ -34,6 +34,18 @@ $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/regi
 requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")
     && !str_contains($registry, "'func:strlen'"), 'Source function registration ignored runtime metadata');
 requireThat(str_contains(renderString($functionPlan)[0], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
+$demand->string->functions = ['string_byte_from_int'];
+$bytePlan = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $bytePlan)['types/registry.php'];
+requireThat(str_contains($registry, "'func:string_byte_from_int'") && !str_contains($registry, "'func:count_bytes'")
+    && str_contains(renderString($bytePlan)[0], 'string byte_from_int(int64 value)'), 'Checked byte function publication mismatch');
+$demand->string->functions = ['str_contains'];
+$functionMetadata->string->functions->str_contains->members->js = 'hasBytes';
+$predicatePlan = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $predicatePlan)['types/registry.php'];
+requireThat(str_contains($registry, "'js:string:hasBytes'") && str_contains($registry, "'php:func:str_contains'")
+    && !str_contains($registry, "'js:string:includes'") && !str_contains($registry, "'cpp:string:starts_with'"),
+    'String member lookup ignored flavor metadata or publication selection');
 $demand->string->functions = [];
 requireThat(!isset(prepareRuntime($functionMetadata, $demand, $facts)['string_functions']), 'Deselected string function remains published');
 // A published formatter supplies the runtime and compiler binding together.

@@ -156,8 +156,12 @@ final class Parser
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
 		}
-		if ($this->names->call_start()) {
-			$value = $this->call();
+		if ($this->names->call_start() || ($this->cursor->tokens->source->flavor === flavor::cpp
+			&& $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
+			$value = $this->primary();
+			if (!($value instanceof ast_call_expression)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
+			}
 			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
 			return new ast_call_statement($value->start, $end, $value);
 		}
@@ -382,6 +386,19 @@ final class Parser
 	{
 		$start = $this->cursor->position();
 		$name = $this->names->path(true);
+		$member = $this->cursor->tokens->source->flavor === flavor::js
+			&& !str_starts_with($name, '\\') && str_contains($name, '\\');
+		$receiver = null;
+		if ($member) {
+			$prefix = substr($name, 0, strrpos($name, '\\'));
+			$receiver = new ast_name_expression($prefix, $start, $this->cursor->position() - 2, str_contains($prefix, '\\'));
+		}
+		return $this->call_arguments($start, $name, $member, $receiver);
+	}
+
+	/** Parse the common argument list after a function path or member name. */
+	private function call_arguments(int $start /** uint32 */, string $name, bool $member, ?ast_expression $receiver): ast_call_expression
+	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
@@ -395,9 +412,7 @@ final class Parser
 			}
 		}
 		$this->cursor->take(token_kind::rparen, ')');
-		$member = $this->cursor->tokens->source->flavor === flavor::js
-			&& !str_starts_with($name, '\\') && str_contains($name, '\\');
-		return new ast_call_expression($start, $this->cursor->position(), $name, $member, $arguments);
+		return new ast_call_expression($start, $this->cursor->position(), $name, $member, $arguments, $receiver);
 	}
 
 	public function return_type(): ast_type_reference
@@ -557,7 +572,16 @@ final class Parser
 	private function primary(): ast_expression
 	{
 		$value = $this->atom();
-		while ($this->cursor->is(token_kind::lbracket)) {
+		while (true) {
+			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
+				$this->cursor->take(token_kind::dot, '.');
+				$name = $this->cursor->name(token_kind::identifier);
+				$value = $this->call_arguments($value->start, $name, true, $value);
+				continue;
+			}
+			if (!$this->cursor->is(token_kind::lbracket)) {
+				break;
+			}
 			$this->cursor->take(token_kind::lbracket, '[');
 			$index = $this->value();
 			$end = $this->cursor->take(token_kind::rbracket, ']') + 1;

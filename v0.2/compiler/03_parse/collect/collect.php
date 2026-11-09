@@ -147,6 +147,9 @@ final class Body_Collection
 			$this->expression($value->right);
 		}
 		if ($value instanceof ast_call_expression) {
+			if ($value->receiver !== null) {
+				$this->expression($value->receiver);
+			}
 			foreach ($value->arguments as $argument) {
 				$this->expression($argument);
 			}

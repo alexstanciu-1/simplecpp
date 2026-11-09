@@ -30,6 +30,16 @@ std::size_t byte_count(Integer count) {
     return static_cast<std::size_t>(count);
 }
 
+inline std::string repeat_bytes(std::string_view value, long long count) {
+    if (count < 0) throw std::invalid_argument("negative_string_repeat");
+    std::string result;
+    if (value.empty() || count == 0) return result;
+    if (std::cmp_greater(count, result.max_size() / value.size())) throw std::length_error("string_repeat_too_large");
+    result.reserve(static_cast<std::size_t>(count) * value.size());
+    while (count-- > 0) result.append(value);
+    return result;
+}
+
 inline std::string string_from_c_string(const char *text) {
     if (!text) throw std::invalid_argument("null_string_pointer");
     return std::string(text);

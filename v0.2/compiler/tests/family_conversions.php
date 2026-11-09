@@ -113,7 +113,7 @@ foreach (flavor::cases() as $flavor)
 		. $fn('bool_to_byte', $param('bool', 'v'), 'byte', 'return ' . $v . ';');
 	$observer = file_get_contents(__DIR__ . '/family_conversions_observer.cpp');
 	foreach (['float_to_byte', 'byte_to_float', 'byte_to_bool', 'bool_to_byte'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];

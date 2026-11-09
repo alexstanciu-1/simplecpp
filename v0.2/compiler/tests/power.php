@@ -107,7 +107,7 @@ foreach (flavor::cases() as $flavor) {
 		. 'return 8;';
 	$observer = file_get_contents(__DIR__ . '/power_observer.cpp');
 	foreach (['power_value', 'power_write', 'power_effect'] as $name) {
-		$observer = str_replace('@' . $name . '@', 'scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source))) . $observer, 'stdout_hex' => ''];

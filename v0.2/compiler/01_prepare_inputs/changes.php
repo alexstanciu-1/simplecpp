@@ -58,7 +58,7 @@ final class Project_Changes
 		ksort($other_inputs, \SORT_STRING);
 		ksort($modules, \SORT_STRING);
 		return ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
-			'modules' => $modules, 'other_inputs' => $other_inputs];
+			'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 
 	/**

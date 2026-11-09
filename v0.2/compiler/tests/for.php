@@ -159,7 +159,7 @@ foreach (flavor::cases() as $flavor)
 			. $fn('update', $ref, 'void', 'for (' . ($in_initializer ? $failure : $v . '+=0') . ';true;'
 				. ($in_initializer ? $v . '+=1' : $failure) . ') { continue; } return;') . 'return 8;';
 		$prepared = $prepare($source);
-		$name = Cpp_Emitter::function_name($prepared->file->declarations['func:update']);
+		$name = '::App::' . Cpp_Emitter::function_name($prepared->file->declarations['func:update']);
 		$cpp = "#include <stdexcept>\n" . str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($prepared));
 		$cpp .= "\nint main() { " . scpp\compiler\type_int64::instance()->cpp_type() . ' value=10; try { ' . $name . '(value); }'
 			. ' catch (const std::domain_error&) { return value == 100 ? 8 : 91; } return 90; }';

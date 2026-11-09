@@ -37,6 +37,7 @@ root-level `main.cpp`, `main.php` or `main.js`, and include the runtime's defaul
 | --- | --- |
 | `name` | Folder name when omitted; unique within the selected graph. |
 | `type` | `default` or native `c++`; defaults to `default`. The executable app must be `default`. |
+| `cpp_namespace` | Selected app’s native namespace. Omit for `App`, use a qualified path such as `acme::ledger`, or JSON `null` for global emission. |
 | `entry` | Application-relative entry; otherwise find exactly one root-level `main`. |
 | `sources` | Application source list or path-to-flavor map; omission discovers, `[]` selects none. |
 | `dependencies` | Named object of dependency requests; defaults to empty, plus implicit runtime for the application. |

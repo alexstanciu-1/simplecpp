@@ -15,6 +15,10 @@ final class Cpp_Program
 	{
 		$program->require_prepared();
 		$bodies = [];
+		$root = $program->session?->cpp_namespace ?? 'App';
+		if ($previous?->cpp_namespace !== $root) {
+			$changed = null;
+		}
 		$headers = new Cpp_Headers($program);
 		$header_files = $headers->files();
 		$emitted = [];
@@ -29,10 +33,10 @@ final class Cpp_Program
 			}
 			$emitted[] = (string) $path;
 			$bodies[$path] = (string) $path === $program->entry_path
-				? (new Cpp_Emitter($headers))->entry_body($program->entry)
-				: (new Cpp_Emitter($headers))->source_definitions($file);
+				? (new Cpp_Emitter($headers, $root))->entry_body($program->entry)
+				: (new Cpp_Emitter($headers, $root))->source_definitions($file);
 		}
-		$output = self::assemble($program->entry_path, $bodies);
+		$output = self::assemble($program->entry_path, $bodies, $root);
 		$native = [];
 		foreach ($program->session?->units() ?? [] as $unit) {
 			if ($unit->module->type === 'c++') {
@@ -47,7 +51,7 @@ final class Cpp_Program
 		}
 		sort($native, \SORT_STRING);
 		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files), $native,
-			array_values(array_unique($links)), $emitted);
+			array_values(array_unique($links)), $emitted, $root);
 	}
 
 	public static function empty_unit(): string
@@ -60,7 +64,7 @@ final class Cpp_Program
 	 *
 	 * @param string[] $bodies
 	 */
-	public static function assemble(string $entry_path, array $bodies /** array<string,string> */): cpp_program_output
+	public static function assemble(string $entry_path, array $bodies /** array<string,string> */, string $root = 'App'): cpp_program_output
 	{
 		$units = [];
 		$files = [];
@@ -72,7 +76,12 @@ final class Cpp_Program
 			$files[$unit] = $bodies[$path];
 		}
 		$files['entry.cpp'] = "// Generated adapter for the explicitly selected entry.\n"
-			. "int scpp_entry_body();\n\nint main()\n{\n\treturn scpp_entry_body();\n}\n";
-		return new cpp_program_output($entry_path, $units, $files);
+			. Cpp_Emitter::namespace_body($root, "int scpp_entry_body();\n") . self::main_adapter($root);
+		return new cpp_program_output($entry_path, $units, $files, cpp_namespace: $root);
+	}
+
+	public static function main_adapter(string $root): string
+	{
+		return "\nint main() { return ::" . ($root === '' ? '' : $root . '::') . "scpp_entry_body(); }\n";
 	}
 }

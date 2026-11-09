@@ -127,7 +127,8 @@ final class Compilation_Inspection
 			elseif ($statement instanceof ast_call_statement) {
 				$statements[] = ['kind' => 'call', 'target' => $statement->function_def()->name(),
 					'return_type' => $statement->function_def()->return_type_def()->name,
-					'arguments' => array_map(self::value(...), $statement->value->arguments)];
+					'arguments' => array_map(self::value(...), $statement->function_def() instanceof runtime_function
+						? $statement->value->runtime_operands() : $statement->value->arguments)];
 			}
 		}
 		return ['statements' => $statements,
@@ -200,7 +201,8 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->function_def()->name();
-			$row['arguments'] = array_map(self::value(...), $value->arguments);
+			$row['arguments'] = array_map(self::value(...), $value->function_def() instanceof runtime_function
+				? $value->runtime_operands() : $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {
 			$row['bytes_hex'] = bin2hex($value->bytes());

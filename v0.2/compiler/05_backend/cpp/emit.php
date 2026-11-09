@@ -24,11 +24,15 @@ final class Cpp_Emitter
 	/** PROPERTIES */
 	/** Native non-owning; null keeps standalone single-file emission self-contained. */
 	private readonly ?Cpp_Headers $headers;
+	private readonly string $root;
+	/** Set while lowering a function that calls a generated flavor adapter. */
+	private ?string $adapter_flavor = null;
 
 	/** CONSTRUCTOR */
-	public function __construct(?Cpp_Headers $headers = null)
+	public function __construct(?Cpp_Headers $headers = null, string $root = 'App')
 	{
 		$this->headers = $headers;
+		$this->root = $root;
 	}
 
 	/** METHODS */
@@ -42,13 +46,13 @@ final class Cpp_Emitter
 		foreach ($node->type_def()->cpp_headers() as $header) {
 			$includes[$header] = true;
 		}
-		return 'extern ' . $node->type_def()->cpp_type() . ' ' . self::global_name($node) . ';';
+		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
 	}
 
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
 	public function emit(prepared_entry $program): string
 	{
-		return $this->render($program, 'main');
+		return $this->entry_body($program) . Cpp_Program::main_adapter($this->root);
 	}
 
 	public function entry_body(prepared_entry $program): string
@@ -87,15 +91,21 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 		}
+		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			$definitions[] = $this->signature($function, $required_headers) . "\n{\n"
-				. implode("\n", $this->statements($function->body(), $declarations, $global_references, $required_headers)) . "\n}\n";
+			$this->adapter_flavor = null;
+			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
+			$unit_flavor ??= $this->adapter_flavor;
+			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
+				. "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		if ($entry !== null) {
-			$definitions[] = 'int ' . $entry_name . "()\n{\n"
-				. implode("\n", $this->statements($entry->body(), $declarations, $global_references, $required_headers)) . "\n}\n";
+			$this->adapter_flavor = null;
+			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
+			$unit_flavor ??= $this->adapter_flavor;
+			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		$prototypes = '';
 		$unit_headers = [];
@@ -138,7 +148,8 @@ final class Cpp_Emitter
 		foreach ($unit_headers as $include => $_) {
 			$header .= '#include "' . $include . "\"\n";
 		}
-		return $header . $prototypes . implode("\n", $definitions);
+		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
+		return $header . self::namespace_body($this->root, $imports . $prototypes . implode("\n", $definitions));
 	}
 
 	/**
@@ -526,7 +537,35 @@ final class Cpp_Emitter
 			$function = $value->function_def();
 			if ($function instanceof runtime_function) {
 				$required_headers[$function->header] = true;
-				return $function->symbol . '(' . $this->value($value->arguments[0], $global_references, $declarations, $required_headers) . ')';
+				$symbol = $function->symbol;
+				if ($function->adapter_flavor !== null) {
+					$this->adapter_flavor = $function->adapter_flavor;
+					$short = substr($symbol, strrpos($symbol, '::') + 2);
+					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
+					$symbol = in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+				}
+				$operands = $value->runtime_operands();
+				if (count($operands) === 1) {
+					return $symbol . '(' . $this->value($operands[0], $global_references, $declarations, $required_headers) . ')';
+				}
+				$arguments = [];
+				$direct = true;
+				foreach ($operands as $argument) {
+					$safe = false;
+					$arguments[] = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					// Reading a local string or literal cannot mutate another argument.
+					$direct = $direct && ($safe || $argument instanceof ast_string_expression
+						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
+				}
+				$steps = [];
+				if (!$direct) {
+					foreach ($arguments as $index => $operand) {
+						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
+						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
+					}
+				}
+				$call = $symbol . '(' . implode(', ', $arguments) . ')';
+				return $direct ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
@@ -601,7 +640,7 @@ final class Cpp_Emitter
 	 * Emit declarations from settled signatures, without looking inside foreign bodies.
 	 * @param bool[] $headers
 	 */
-	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */): string
+	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
 		$parameters = [];
 		foreach ($function->return_type_def()->cpp_headers() as $header) {
@@ -609,17 +648,46 @@ final class Cpp_Emitter
 		}
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			$parameters[] = '[[maybe_unused]] ' . $type->cpp_type() . ' '
+			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($type, $short_types) . ' '
 				. ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
 		}
-		return $function->return_type_def()->cpp_type() . ' ' . self::function_name($function)
+		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
 			. '(' . implode(', ', $parameters) . ')';
 	}
 
+	/** Public headers qualify runtime names; private adapter units may use provider-exported type names. */
+	private function signature_type(type_definition $type, bool $short): string
+	{
+		$name = $type->cpp_type();
+		if (!str_starts_with($name, 'scpp::')) {
+			return $name;
+		}
+		$word = substr($name, 6);
+		if ($short && type_registry::has_cpp_type_alias($word) && !in_array($word, explode('::', $this->root), true)) {
+			return $word;
+		}
+		return '::' . $name;
+	}
+
+	private function local_imports(): string
+	{
+		return $this->root === '' && $this->adapter_flavor !== null ? self::imports($this->adapter_flavor) : '';
+	}
+
 	/** STATIC METHODS */
+	private static function imports(string $flavor): string
+	{
+		return "using namespace ::scpp::types;\nusing namespace ::scpp::$flavor;\n";
+	}
+
+	public static function namespace_body(string $root, string $body): string
+	{
+		return $root === '' ? $body : "namespace $root {\n" . $body . "}\n";
+	}
+
 	public static function global_name(ast_global_declaration $declaration): string
 	{
 		return 'scpp_global_' . bin2hex($declaration->name());

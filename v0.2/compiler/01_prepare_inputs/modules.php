@@ -19,6 +19,8 @@ final class compilation_session
 	public readonly array $modules /** array<string,module> */;
 	/** Native non-owning reference into modules. */
 	public readonly module $entry;
+	/** Native namespace root selected for this application. Empty selects global emission. */
+	public readonly string $cpp_namespace;
 	/**
 	 * Previous frontend generation owns replaced/removed roots; unchanged roots may be shared.
 	 * Native shared-owning; retains prior syntax generations.
@@ -40,12 +42,13 @@ final class compilation_session
 
 	/** CONSTRUCTOR */
 	/** @param module[] $modules */
-	public function __construct(array $modules /** array<string,module> */, module $entry)
+	public function __construct(array $modules /** array<string,module> */, module $entry, string $cpp_namespace = 'App')
 	{
 		$this->dependency_watches = new Dependency_Watches();
 		$this->preparation_work = new preparation_work();
 		$this->modules = $modules;
 		$this->entry = $entry;
+		$this->cpp_namespace = $cpp_namespace;
 	}
 
 	/** METHODS */

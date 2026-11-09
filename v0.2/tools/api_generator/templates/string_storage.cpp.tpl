@@ -4,7 +4,7 @@ namespace detail { struct string_access {
         if (value.is_inline()) return {value.rep_.small.bytes, value.rep_.small.tag};
         return value.rep_.large.ptr->bytes;
     }
-    // Called only during construction, with the empty short member active.
+@classic_storage@    // Called only during construction, with the empty short member active.
     static void init(@n@& value, std::string_view bytes) {
         if (bytes.size() <= @n@::inline_capacity) {
             bytes.copy(value.rep_.small.bytes, bytes.size());

@@ -10,6 +10,15 @@ require_once __DIR__ . '/hashes.php';
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
+	/** Type names introduced by the active providers into scpp::types. */
+	public static function has_cpp_type_alias(string $name): bool
+	{
+		return match ($name) {
+@cpp_type_aliases@
+			default => false,
+		};
+	}
+
 	public static function resolve(string $name): ?type_definition
 	{
 		return match ($name) {
@@ -64,9 +73,14 @@ final class type_registry
 @family_accessors@
 }
 
-/** Published unary runtime call signatures, shared across source units. */
+/** Published fixed-arity runtime call signatures, shared across source units. */
 final class runtime_functions
 {
+	public static function free(string $key, flavor $flavor): ?runtime_function
+	{
+		return self::resolve($key) ?? self::resolve($flavor->name . ':' . $key);
+	}
+
 	public static function resolve(string $key): ?runtime_function
 	{
 		static $bindings = [];

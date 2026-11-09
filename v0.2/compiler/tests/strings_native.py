@@ -49,7 +49,7 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                       '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
                       '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
             source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
-            for exception in ('out_of_range', 'domain_error', 'runtime_error'):
+            for exception in ('length_error', 'invalid_argument', 'out_of_range', 'domain_error', 'runtime_error'):
                 expected = fixture.get('catch_' + exception)
                 if expected:
                     source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
@@ -71,8 +71,8 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         build = success(run(command, directory))
         elapsed = (time.perf_counter() - start) * 1000
         (directory / 'build.log').write_text(build.stdout + build.stderr)
-        result = run([directory / 'program'])
-        assert result.returncode == 8 and result.stdout.encode().hex() == fixture['stdout_hex'], result
+        result = subprocess.run([directory / 'program'], capture_output=True)
+        assert result.returncode == 8 and result.stdout.hex() == fixture['stdout_hex'], result
         totals = {}
         for path in directory.glob('unit-*.json'):
             for event in json.loads(path.read_text())['traceEvents']:
@@ -86,7 +86,7 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         results['builds'][flavor] = {'native_ms': elapsed, 'frontend_ms': totals['Frontend'],
             'llvm_backend_ms': totals['Backend'], 'optimizer_ms': totals.get('Optimizer', 0),
             'codegen_ms': totals.get('CodeGenPasses', 0), 'link_command_ms': int(link[1]) - int(link[0]),
-            'stdout_hex': result.stdout.encode().hex(), 'exit': result.returncode, 'copy_independence': check_copy}
+            'stdout_hex': result.stdout.hex(), 'exit': result.returncode, 'copy_independence': check_copy}
     (work / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
     print(json.dumps(results, indent=2))
 

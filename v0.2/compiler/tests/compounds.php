@@ -123,7 +123,7 @@ foreach (flavor::cases() as $flavor)
 		$source = $fn('change', $ref, 'int', $var('v') . '=100; echo "R"; return 0;')
 			. $fn('update', $ref, 'void', $var('v') . $update . '; return;') . 'return 8;';
 		$entry = $prepare($source);
-		$name = Cpp_Emitter::function_name($entry->file->declarations['func:update']);
+		$name = '::App::' . Cpp_Emitter::function_name($entry->file->declarations['func:update']);
 		$cpp = '#include <stdexcept>' . "\n#include <string_view>\n"
 			. str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($entry));
 		$cpp .= "\nint main() { " . type_int64::instance()->cpp_type() . ' value = 10; try { ' . $name . '(value); }'

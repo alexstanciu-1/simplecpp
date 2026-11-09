@@ -17,6 +17,23 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
             'vectors' => $plan['vector_publication']['provider'],
             'carriers' => $plan['carrier_publication']['provider'],
         };
+        if ($family === 'string') {
+            $h .= "namespace scpp::types { using ::scpp::string; }\n";
+            foreach ($plan['string_functions'] ?? [] as $binding) {
+                foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
+                    $path = 'public/' . $adapter['header'];
+                    $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
+                    $parameters = [];
+                    $arguments = [];
+                    foreach ($binding['parameters'] as $i => $type) {
+                        $arguments[] = $arg = "arg$i";
+                        $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
+                    }
+                    $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::{$binding['result']} {$adapter['name']}("
+                        . implode(', ', $parameters) . ") { return ::{$binding['symbol']}(" . implode(', ', $arguments) . "); }\n}\n";
+                }
+            }
+        }
         $groups[] = ['provider' => $provider, 'declarations' => $h, 'system' => []];
         $definitions .= $d;
     }
@@ -47,6 +64,9 @@ function renderString(array $plan): array {
     $write = $plan['string_index_write'] ?? null;
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
+    $classic = array_column($plan['string_functions'] ?? [], 'implementation');
+    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper'])
+        ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
         $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
@@ -78,7 +98,30 @@ function renderString(array $plan): array {
     }
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
-        $h .= "namespace str { inline {$function['result']} $name(const string& value) { return value.{$function['method']}(); } }\n";
+        $parameters = [];
+        foreach ($function['parameters'] as $index => $type) {
+            $parameters[] = scalarInput($type) . ' ' . (['value', 'other', 'third', 'fourth'][$index]);
+        }
+        $signature = "{$function['result']} $name(" . implode(', ', $parameters) . ')';
+        if ($function['implementation'] === 'byte_length') {
+            $h .= "namespace str { inline $signature { return value.size(); } }\n";
+        } elseif ($function['implementation'] === 'checked_single_byte') {
+            $h .= "namespace str { $signature; }\n";
+            $d .= "namespace str { $signature {\n"
+                . "    if (value < 0 || value > 255) throw std::invalid_argument(\"Byte value must be between 0 and 255\");\n"
+                . "    const char byte = static_cast<char>(value);\n    return string{&byte, 1};\n} }\n";
+        } else {
+            $h .= "namespace str { $signature; }\n";
+            $method = $function['implementation'];
+            $bytes = 'detail::string_access::read';
+            $body = match ($method) {
+                'find', 'rfind' => "const auto pos = $bytes(value).$method($bytes(other)); return pos == std::string_view::npos ? -1 : detail::checked_integer_cast<int64>(pos);",
+                'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false') . ');',
+                'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
+                default => "return $bytes(value).$method($bytes(other));",
+            };
+            $d .= "namespace str { $signature { $body } }\n";
+        }
     }
     return [$h . "}\n", $d];
 }

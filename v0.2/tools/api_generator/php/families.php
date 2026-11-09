@@ -97,21 +97,51 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     foreach (['size' => $countRepresentation, 'empty' => 'bool_t', 'is_inline' => 'bool_t', 'data' => 'const char*', 'append' => 'void', 'clear' => 'void'] as $name => $result) {
         $methods[] = ['name' => $name, 'result' => $result, 'receiver' => in_array($name, ['append', 'clear'], true) ? 'mutable_reference':'const_reference', 'arguments' => $name === 'append' ? ['const string&']:[], 'result_category' => $name === 'data' ? 'borrowed_bytes_until_mutation_or_destruction':'value', 'can_fail' => in_array($name, ['size', 'append'], true)];
     }
+    $requires = array_merge(['bool_t'], names(at($p, 'casts')));
     $symbols = [];
+    $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameter', 'result', 'symbol', 'method']);
-        literals($function, ['parameter' => 'string', 'result' => $count, 'method' => 'size']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters']);
+        $implementation = textValue(at($function, 'implementation'));
+        $signature = match ($implementation) {
+            'byte_length' => ['parameters' => ['string'], 'result' => $count],
+            'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
+            'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
+            'ascii_lower', 'ascii_upper' => ['parameters' => ['string'], 'result' => 'string'],
+            'repeat' => ['parameters' => ['string', 'int64'], 'result' => 'string'],
+            'starts_with', 'ends_with', 'contains' => ['parameters' => ['string', 'string'], 'result' => 'bool_t'],
+            default => null,
+        };
+        requireThat($signature !== null, 'Unknown string function implementation');
+        literals($function, $signature);
         $symbol = textValue(at($function, 'symbol'));
         requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
             && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
-        requireThat(hasType($plan, $count), 'String function requires its result type');
+        foreach ([...$signature['parameters'], $signature['result']] as $type) {
+            if ($type === 'string') continue;
+            requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
+            $requires[] = $type;
+        }
+        $members = isset($function->members) ? fields($function->members, ['cpp', 'js']) : [];
+        foreach ($members as $flavor => $member) {
+            requireThat($signature['parameters'][0] === 'string' && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', textValue($member)) === 1
+                && !isset($memberNames[$flavor][$member]), 'Invalid or duplicate string member binding');
+            $memberNames[$flavor][$member] = true;
+        }
         requireThat(!isset($symbols[$symbol]), 'Duplicate string function binding');
         $symbols[$symbol] = true;
-        $plan['string_functions'][$name] = ['parameter' => $function->parameter, 'result' => $count,
-            'symbol' => $symbol, 'method' => $function->method, 'header' => $header];
+        $plan['string_functions'][$name] = $signature + [
+            'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
+        if (boolean($function->flavor_adapters ?? false)) {
+            requireThat($members !== [], 'Flavor adapters require flavor-specific string spellings');
+            foreach (['php' => $name] + $members as $flavor => $spelling) {
+                checkHeader($plan, stringAdapterHeader($flavor));
+                $plan['string_functions'][$name]['adapters'][$flavor] = [
+                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor)];
+            }
+        }
     }
-    $requires = array_merge(['bool_t'], names(at($p, 'casts')));
     foreach (['index_read' => 'result', 'index_write' => 'value'] as $operation => $element) {
         if (!boolean($p->$operation ?? false)) continue;
         $row = at($m, $operation);
@@ -127,7 +157,6 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'result' => $writes ? 'void' : $row->$element, 'result_category' => 'value', 'can_fail' => true];
         array_push($requires, $row->key, $row->$element);
     }
-    if ($symbols) $requires[] = $count;
     foreach (names($p->explicit_formatters ?? [], 'Duplicate explicit formatter') as $source) {
         $row = at(at($m, 'explicit_formatters'), $source);
         fields($row, ['policy', 'symbol']);

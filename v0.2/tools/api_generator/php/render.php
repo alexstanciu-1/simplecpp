@@ -39,9 +39,11 @@ function scalarRepresentation(array $plan, string $name): string {
 /** Scalar declarations are placed by their canonical export, never by an old header slot. */
 function renderScalarGroups(array $plan, array &$groups): void {
     $declarations = [];
+    $exports = [];
     foreach (array_merge($plan['types'], $plan['values']) as $type) {
         $name = $type['name'];
         $provider = typeExport($plan['submodules'], $name)['provider'];
+        $exports[$provider][] = $name;
         if (($type['kind'] ?? '') !== 'null') {
             $declarations[$provider][] = "using $name = " . scalarRepresentation($plan, $name) . ";\n";
         } else {
@@ -56,10 +58,12 @@ function renderScalarGroups(array $plan, array &$groups): void {
     }
     foreach (object($plan['aliases']) as $alias => $target) {
         $provider = typeExport($plan['submodules'], $target)['provider'];
+        $exports[$provider][] = $alias;
         $declarations[$provider][] = "using $alias = $target;\n";
     }
     foreach ($declarations as $provider => $parts) {
-        $groups[] = ['provider' => $provider, 'declarations' => "namespace scpp {\n" . implode('', $parts) . "}\n", 'system' => []];
+        $aliases = implode('', array_map(static fn($name) => "using ::scpp::$name;\n", $exports[$provider]));
+        $groups[] = ['provider' => $provider, 'declarations' => "namespace scpp {\n" . implode('', $parts) . "}\nnamespace scpp::types {\n$aliases}\n", 'system' => []];
     }
 }
 

@@ -143,7 +143,7 @@ foreach (flavor::cases() as $flavor)
 	$observer = file_get_contents(__DIR__ . '/mixed_arithmetic_observer.cpp');
 	foreach (['add', 'subtract', 'multiply', 'divide'] as $name) {
 		foreach (['if', 'fi'] as $order) {
-			$observer = str_replace('@' . $name . '_' . $order . '@', 'scpp_function_' . bin2hex($name . '_' . $order), $observer);
+			$observer = str_replace('@' . $name . '_' . $order . '@', '::App::scpp_function_' . bin2hex($name . '_' . $order), $observer);
 		}
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',

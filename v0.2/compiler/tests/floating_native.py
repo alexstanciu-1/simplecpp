@@ -39,7 +39,7 @@ def prove(work):
                          for i, bits in enumerate(fixture['bits']))
         # Instrument only the proof artifact; the compiler output remains unchanged.
         literals.write_text('#include <bit>\n#include <cstdint>\n' + fixture['literal_cpp'].replace(
-            'int main()', 'int check_literals()').replace('\treturn ', checks + '\treturn '))
+            'int main()', 'int check_literals()').replace('scpp_entry_body', 'literal_entry_body').replace('\treturn ', checks + '\treturn '))
         cpp = directory / 'program.cpp'
         checks = ('\tif (check_literals() != 8) return 92;\n'
                   '\tif (local_0 != 9007199254740992.0 || local_1 != 1.0 || local_2 || !local_3) return 93;\n')

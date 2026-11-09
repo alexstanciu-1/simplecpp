@@ -87,17 +87,32 @@ Runtime generator parity retained identical generated artifacts and rejection
 contracts across 17 accepted and 37 rejected fixtures; only metadata input hashes
 changed in the baseline.
 
-## Runtime byte length
+## Metadata-declared byte functions
 
 The default string provider publishes `strlen(string): int`. Its generated binding
 `scpp::str::byte_length(const scpp::string&)` forwards to the existing stored byte
 count. Embedded NUL contributes one byte and UTF-8 contributes its encoded byte length.
 
 Preparation first watches the ordinary source function slot. When the slot is empty,
-the generated runtime registry supplies its immutable unary signature, binding and
+the generated runtime registry supplies its immutable fixed-arity signature, binding and
 provider header. A local source definition can shadow it and deletion restores the
 runtime target. The existing call AST keeps either that signature or the stable source
-symbol. Lowering evaluates the argument once and passes the string by const reference.
+symbol. Lowering evaluates the argument once.
+
+The same registry publishes `string_byte_from_int(int): string`. Its binding takes
+a canonical int64 by value and constructs an owned one-byte string, including for
+0 and 255. Values outside 0..255 throw native `std::invalid_argument` with
+`Byte value must be between 0 and 255`. The function accepts an exact integer
+argument through the same runtime call path as `strlen`.
+
+PHP free functions and JS/C++ receiver methods select the same native operation
+through generated signature keys. Preparation checks the receiver and positional
+arguments once. Calls preserve source evaluation order when an argument can have
+side effects. The default library counts offsets in bytes; find and reverse find
+return -1 on a miss. ASCII case conversion preserves all other bytes. Predicates
+and searches view the existing string storage and accept embedded NUL. Repeat
+checks its signed count and output size before allocating.
+See the [three-flavor catalog](../../specs/planning/non_object_feature_catalog.md#classic-string-functions).
 
 ## Explicit text conversion
 

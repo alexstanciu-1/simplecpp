@@ -104,6 +104,9 @@ final class Function_Preparation
 			self::expression($value->right);
 		}
 		if ($value instanceof ast_call_expression) {
+			if ($value->receiver !== null) {
+				self::expression($value->receiver);
+			}
 			foreach ($value->arguments as $argument) {
 				self::expression($argument);
 			}

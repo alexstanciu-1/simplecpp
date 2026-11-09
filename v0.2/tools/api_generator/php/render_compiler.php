@@ -131,13 +131,34 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $runtimeCases = [];
     foreach ($runtime['string_functions'] ?? [] as $name => $binding) {
-        if (!isset($definitions[$binding['parameter']], $definitions[$binding['result']])) continue;
-        $parameter = $definitions[$binding['parameter']]['class'];
+        if (!isset($definitions[$binding['result']])) continue;
+        $parameters = [];
+        foreach ($binding['parameters'] as $type) {
+            if (!isset($definitions[$type])) continue 2;
+            $parameters[] = 'type_' . $definitions[$type]['class'] . '::instance()';
+        }
         $result = $definitions[$binding['result']]['class'];
-        $runtimeCases[] = "\t\t\t'func:$name' => \$bindings[\$key] ??= new runtime_function('$name', "
-            . "type_$parameter::instance(), type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
+        $keys = [$binding['members'] ? "php:func:$name" : "func:$name"];
+        foreach ($binding['members'] as $flavor => $member) $keys[] = "$flavor:string:$member";
+        if (isset($binding['adapters'])) {
+            foreach ($keys as $key) {
+                $flavor = explode(':', $key, 2)[0];
+                $adapter = $binding['adapters'][$flavor];
+                $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
+                    . implode(', ', $parameters) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'),";
+            }
+            continue;
+        }
+        $labels = implode(', ', array_map(static fn($key) => var_export($key, true), $keys));
+        $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
+            . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
+    $exportedNames = array_column(array_merge($runtime['types'] ?? [], $runtime['values'] ?? []), 'name');
+    if (isset($runtime['string'])) $exportedNames[] = $runtime['string']['name'];
+    $exportedNames = array_merge($exportedNames, array_keys((array) ($runtime['aliases'] ?? [])));
+    $shortTypes = implode(', ', array_map(static fn($name) => var_export($name, true), $exportedNames));
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
+        '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations,
