@@ -57,6 +57,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                                 $binding['symbol'], array_slice($arguments, 0, $arity));
                         }
                     }
+                    if ($binding['implementation'] === 'replace_window') $parameters[3] .= ' = 0';
                     if (isset($adapter['search_offset'])) $arguments[] = '::scpp::str::search_policy::' . $adapter['search_offset'];
                     if (isset($adapter['limit_policy'])) {
                         $short = implode(', ', array_slice($parameters, 0, 2));
@@ -174,6 +175,7 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
+    $windowPositionEmitted = false;
     $searchPolicyEmitted = false;
     $padSymbols = [];
     $trimSymbols = [];
@@ -217,6 +219,16 @@ function renderString(array $plan): array {
                 $d .= template('string_replace_count', ['name' => $name, 'args' => $args]);
                 $replaceSymbols[$name] = true;
             }
+            continue;
+        }
+        if (!$windowPositionEmitted && in_array($function['implementation'], ['slice_bytes', 'replace_window'], true)) {
+            $d .= template('string_byte_position');
+            $windowPositionEmitted = true;
+        }
+        if ($function['implementation'] === 'replace_window') {
+            $signature = "string $name(const string& subject, const string& replacement, int64 offset, int64 length)";
+            $h .= "namespace str { $signature; }\n";
+            $d .= template('string_replace_window', ['signature' => $signature]);
             continue;
         }
         if ($function['implementation'] === 'slice_bytes') {

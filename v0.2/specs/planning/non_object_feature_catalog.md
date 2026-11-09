@@ -167,6 +167,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional int64 position: PHP signed, JS clamped, C++ nonnegative |
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Byte coordinates; signed clamped bounds; final bound optional |
 | Trim both / left / right | trim(s[, mask]), ltrim(s[, mask]), rtrim(s[, mask]) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
+| Replace byte window | substr_replace(s, replacement, offset[, length]) | — | — | Omitted length inserts; unusable negative length leaves the subject unchanged |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s[, count]) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |

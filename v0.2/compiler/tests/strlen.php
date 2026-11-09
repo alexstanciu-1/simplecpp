@@ -226,6 +226,32 @@ foreach (flavor::cases() as $flavor) {
 	else {
 		rejects(fn() => $prepare('echo "a".' . $replace_names[1] . '("a","b",0); return 8;'), 'Argument count');
 	}
+	if ($flavor === flavor::php) {
+		$source = 'function change(string &$s, int &$calls): int { $calls++; $s = "changed"; return 1; }';
+		$expected = '';
+		foreach ([
+			['"abcdef"', '"X"', '2', 'abXcdef'], ['"abcdef"', '"X"', '-2, 0', 'abcdXef'],
+			['"abcdef"', '"X"', '2, -1', 'abXf'], ['"abcdef"', '"X"', '2, -4', 'abcdef'],
+			['"abcdef"', '"X"', "$maximum, -1", 'abcdef'], ['"abcdef"', '"X"', $maximum, 'abcdefX'],
+			['"abcdef"', '"X"', "$minimum, 2", 'Xcdef'], ['"abcdef"', '"X"', "1, $maximum", 'aX'],
+			['"abcdef"', '"X"', "0, $minimum", 'abcdef'], ['""', '"X"', '0', 'X'],
+			['"a\0bc"', '"\0X"', '1, 2', "a\0Xc"], ['"éx"', '""', '1, 1', "\xc3x"],
+		] as [$subject, $replacement, $bounds, $result]) {
+			$source .= "echo substr_replace($subject,$replacement,$bounds), \"|\";";
+			$expected .= $result . '|';
+		}
+		$source .= '$s = "abcdefghijklmnopqrstuvwxy"; $saved = substr_replace($s,$s,1,2); $s = "new"; echo $saved, "|";'
+			. '$s = "abc"; $calls = 0; echo substr_replace($s,$s,change($s,$calls),-2), "|", $s, "|", $calls; return 8;';
+		$expected .= 'aabcdefghijklmnopqrstuvwxydefghijklmnopqrstuvwxy|abc|changed|1';
+		$fixtures['php-substr-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)), 'stdout_hex' => bin2hex($expected)];
+		foreach (['"a","b"' => 'Argument count', '"a","b",0,1,2' => 'Argument count',
+			'"a","b","0"' => 'requires int64', '"a","b",0,"1"' => 'requires int64'] as $args => $error) {
+			rejects(fn() => $prepare("echo substr_replace($args); return 8;"), $error);
+		}
+	}
+	else {
+		rejects(fn() => $prepare('echo substr_replace("a","b",0); return 8;'), 'Unknown function');
+	}
 	$pad = static function (string $value, string $width, ?string $fill, string $side) use ($flavor): string {
 		$args = $width . ($fill === null ? '' : ", $fill");
 		if ($flavor === flavor::php) {

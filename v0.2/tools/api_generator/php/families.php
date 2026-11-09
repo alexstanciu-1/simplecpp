@@ -128,6 +128,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
+            'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
             'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
             'slice_bytes' => ['parameters' => ['string', 'int64', 'int64'], 'result' => 'string', 'required_parameters' => 2],
             'repeat' => ['parameters' => ['string', 'int64'], 'result' => 'string'],
@@ -157,15 +158,19 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $padding = $implementation === 'pad_bytes';
         requireThat($padding === isset($function->pad_side), 'Padding requires a side');
         $spellings = ['php' => $name] + $members + $freeNames;
-        requireThat($padding === isset($function->flavors), 'Padding adapters require explicit flavors');
+        $window = $implementation === 'replace_window';
+        requireThat(($padding || $window) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
             $side = $function->pad_side;
             requireThat(in_array($side, ['argument', 'left', 'right'], true), 'Invalid padding side');
             $expected = $side === 'argument' ? ['php'] : ['cpp', 'js'];
+        }
+        if ($padding || $window) {
+            if ($window) $expected = ['php'];
             literals($function, ['flavors' => $expected, 'flavor_adapters' => true]);
             $spellings = array_intersect_key($spellings, array_flip($expected));
-            requireThat(count($spellings) === count($expected), 'Missing padding spelling');
+            requireThat(count($spellings) === count($expected), 'Missing flavor spelling');
         }
         requireThat(($padding && $side === 'argument') === isset($function->constants), 'PHP padding publishes side constants');
         if (isset($function->constants)) {
@@ -211,7 +216,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $signatures = isset($function->signatures) ? fields($function->signatures, array_keys(['php' => $name] + $members)) : [];
         requireThat(!$signatures || $enabled, 'Flavor signatures require generated adapters');
         if ($enabled) {
-            requireThat($members !== [] || $padding, 'Flavor adapters require flavor-specific string spellings');
+            requireThat($members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
                 if ($split) {

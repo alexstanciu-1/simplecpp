@@ -119,6 +119,11 @@ def prove(work):
     counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
     edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
     edits['recovery-replace-count-php'] = (predicates['php'], counted)
+    for form, args, expected in [('insert', '1', 'aXbc'), ('negative', '1, -2', 'abc')]:
+        call = f'substr_replace("abc","X",{args})'
+        text = originals['php'].replace('return ', f'return {call} === "{expected}" && ')
+        edits[f'bad-substr-replace-{form}'] = (predicates['php'], text.replace(call, call[:-1] + ', "bad")'))
+        edits[f'recovery-substr-replace-{form}'] = (predicates['php'], text)
     pads = {'php': 'str_pad($n, 0, "x", STR_PAD_LEFT)', 'js': 'n.padStart(0, "x")', 'cpp': 'n.pad_end(0, "x")'}
     for flavor, call in pads.items():
         operand = '$n)' if flavor == 'php' else '(n)'

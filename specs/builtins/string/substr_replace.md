@@ -44,6 +44,8 @@ Doc Status: normative
 - Shared implementation: `runtime/include/modules/strings/strings.hpp`; PHP adapter: `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
+The active v0.2 runtime publishes a PHP adapter through its [string metadata](../../../v0.2/runtime/metadata/runtime.json). The C++ and JS source flavors have no binding.
+
 ## Test matrix
 - positive offset replace
 - negative offset replace
