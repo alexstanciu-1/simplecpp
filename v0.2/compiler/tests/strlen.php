@@ -337,6 +337,29 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name . '-predicates'] = ['cpp' => $predicate_cpp,
 		'stdout_hex' => bin2hex('11111100')];
 	rejects(fn() => $prepare($local . 'echo (int)' . $method('contains', $s, '5') . '; return 8;'), 'requires string');
+	if ($flavor === flavor::php) {
+		$source = 'function check_first(string $s): void { echo ucfirst($s), lcfirst($s), $s; }'
+			. 'check_first(""); $i = 0; while ($i < 256) { $b = string_byte_from_int($i);';
+		$tails = ['aZ\0' => "aZ\0", 'aZ\0abcdefghijklmnopqrstuvwxyzABC' => "aZ\0abcdefghijklmnopqrstuvwxyzABC"];
+		foreach ($tails as $literal => $tail) $source .= 'check_first($b . "' . $literal . '");';
+		$source .= '$i += 1; } return 8;';
+		$expected = '';
+		for ($i = 0; $i < 256; ++$i) {
+			$upper = chr($i >= 97 && $i <= 122 ? $i - 32 : $i);
+			$lower = chr($i >= 65 && $i <= 90 ? $i + 32 : $i);
+			foreach ($tails as $tail) $expected .= $upper . $tail . $lower . $tail . chr($i) . $tail;
+		}
+		$fixtures['php-first-case'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)), 'stdout_hex' => bin2hex($expected)];
+	}
+	foreach (['lcfirst', 'ucfirst'] as $name) {
+		if ($flavor === flavor::php) {
+			rejects(fn() => $prepare("echo $name(); return 8;"), 'Argument count');
+			rejects(fn() => $prepare("echo $name(7); return 8;"), 'requires string');
+		}
+		else {
+			rejects(fn() => $prepare("echo $name(\"abc\"); return 8;"), 'Unknown function');
+		}
+	}
 	$classic = match ($flavor) {
 		flavor::php => 'echo strpos("A😀B","B")+0, strrpos("a😀a","a")+0, (int)isset(strpos("abc","x")), strrpos("ab","")+0, strtolower("ÉAb"), strtoupper("éAb"), str_repeat("x\0",2);',
 		flavor::js => 'echo "A😀B".indexOf("B"), "a😀a".lastIndexOf("a"), "abc".indexOf("x"), "ab".lastIndexOf(""), "ÉAb".toLowerCase(), "éAb".toUpperCase(), "x\0".repeat(2);',

@@ -32,7 +32,11 @@ Doc Status: normative
 
 ## Compile plan summary
 
-v0.2 registers this contract in [runtime strings metadata](../../../runtime/metadata/modules/strings.json),
+The active v0.2 PHP compiler publishes the unary string binding from
+[the runtime metadata](../../../v0.2/runtime/metadata/runtime.json). It uses ASCII
+case conversion on byte zero and returns an independent string value.
+
+The donor compiler registers this contract in [runtime strings metadata](../../../runtime/metadata/modules/strings.json),
 using `modules/strings/strings.hpp`. Ordinary shared argument conversions still
 apply; boxed conversion failures remain runtime checks. Older binding notes below
 describe the v0.1 implementation.

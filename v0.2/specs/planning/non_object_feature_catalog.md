@@ -155,9 +155,7 @@ string API. ASCII case operations transform only ASCII letters. Reserve `mb_*`
 for future Unicode text functions. Existing `strlen`, indexing, byte construction,
 casts, interpolation, comparison and concatenation remain available.
 
-Receiver `s` and argument names below stand for expressions. Predicate, search, ASCII case, repeat and default trim spellings are implemented.
-The remaining rows are proposed source spellings;
-the runtime operation is shared. PHP's argument order is shown where it differs.
+Receiver `s` and argument names below stand for expressions. The table lists published source spellings. PHP's argument order is shown where it differs.
 
 | Operation | PHP flavor | JavaScript flavor | C++ flavor | Contract / open decision |
 | --- | --- | --- | --- | --- |
@@ -170,6 +168,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Replace byte window | substr_replace(s, replacement, offset[, length]) | — | — | Omitted length inserts; unusable negative length leaves the subject unchanged |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s[, count]) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
+| ASCII first-byte upper / lower | ucfirst(s), lcfirst(s) | — | — | Empty and nonletter-leading strings retain their bytes |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
 | Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Byte width; default space; PHP supports both sides and validates fill |
 | Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Explicit separator; preserve empty fields; empty split separator throws; PHP remainder/drop, JS uint32 field cap, C++ nonnegative field cap |

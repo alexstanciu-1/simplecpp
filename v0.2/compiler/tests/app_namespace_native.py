@@ -116,6 +116,11 @@ def prove(work):
             text = originals[flavor].replace(calls[flavor][0], calls[flavor][0].replace(operand, argument))
             edits[f'bad-{name}-{flavor}'] = (predicates[flavor], text.replace('"y"', '5'))
             edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], text)
+    for name, arg, expected in [('ucfirst', 'aBc', 'ABc'), ('lcfirst', 'ABc', 'aBc')]:
+        call = f'{name}("{arg}")'
+        valid = originals['php'].replace('return ', f'return {call} === "{expected}" && ')
+        edits[f'bad-{name}-php'] = (predicates['php'], valid.replace(call, f'{name}(7)'))
+        edits[f'recovery-{name}-php'] = (predicates['php'], valid)
     counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
     edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
     edits['recovery-replace-count-php'] = (predicates['php'], counted)

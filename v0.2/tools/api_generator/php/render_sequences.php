@@ -271,7 +271,8 @@ function renderString(array $plan): array {
             $method = $function['implementation'];
             $bytes = 'detail::string_access::read';
             $body = match ($method) {
-                'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false') . ');',
+                'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false')
+                    . ', ' . (isset($function['first_byte_only']) ? 'true' : 'false') . ');',
                 'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
                 default => "return $bytes(value).$method($bytes(other));",
             };

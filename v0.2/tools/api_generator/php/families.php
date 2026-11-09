@@ -116,7 +116,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants', 'free_names']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -158,16 +158,18 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $padding = $implementation === 'pad_bytes';
         requireThat($padding === isset($function->pad_side), 'Padding requires a side');
         $spellings = ['php' => $name] + $members + $freeNames;
-        $window = $implementation === 'replace_window';
-        requireThat(($padding || $window) === isset($function->flavors), 'Invalid string adapter flavor selection');
+        $firstByte = boolean($function->first_byte_only ?? false);
+        requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
+            'First-byte case requires an ASCII case operation');
+        $phpOnly = $implementation === 'replace_window' || $firstByte;
+        requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
             $side = $function->pad_side;
             requireThat(in_array($side, ['argument', 'left', 'right'], true), 'Invalid padding side');
-            $expected = $side === 'argument' ? ['php'] : ['cpp', 'js'];
         }
-        if ($padding || $window) {
-            if ($window) $expected = ['php'];
+        if ($padding || $phpOnly) {
+            $expected = ($phpOnly || $side === 'argument') ? ['php'] : ['cpp', 'js'];
             literals($function, ['flavors' => $expected, 'flavor_adapters' => true]);
             $spellings = array_intersect_key($spellings, array_flip($expected));
             requireThat(count($spellings) === count($expected), 'Missing flavor spelling');
@@ -210,6 +212,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
+        if ($firstByte) $plan['string_functions'][$name]['first_byte_only'] = true;
         $enabled = boolean($function->flavor_adapters ?? false);
         requireThat($enabled || !in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true),
             'String/vector operations require flavor adapters');
