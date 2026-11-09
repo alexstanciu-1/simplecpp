@@ -48,6 +48,11 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
             $export = typeExport($plan['submodules'], $vector);
             $plan['string_functions'][$name]['header'] = providerHeader($plan['submodules'], $export['provider']);
         }
+        if ($binding['implementation'] === 'hex_decode') {
+            $export = $plan['source_types']->{$binding['result']} ?? null;
+            requireThat($export !== null, "$name requires published " . $binding['result']);
+            $plan['string_functions'][$name]['result_header'] = $plan['carriers_header'];
+        }
         foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
             if (!isset($adapter['body'])) continue;
             $export = $plan['source_types']->{$adapter['result']} ?? null;
@@ -125,7 +130,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
-            'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
+            'hex_decode' => ['parameters' => ['string'], 'result' => 'result_or_false<string>'],
+            'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
@@ -141,7 +147,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
             && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
         foreach ([...$signature['parameters'], $signature['result']] as $type) {
-            if ($type === 'string' || $type === 'vector<string>') continue;
+            if ($type === 'string' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
             requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
             $requires[] = $type;
         }
@@ -161,7 +167,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = $implementation === 'replace_window' || $firstByte;
+        $phpOnly = in_array($implementation, ['replace_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {

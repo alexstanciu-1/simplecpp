@@ -169,6 +169,7 @@ Receiver `s` and argument names below stand for expressions. The table lists pub
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s[, count]) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | ASCII first-byte upper / lower | ucfirst(s), lcfirst(s) | — | — | Empty and nonletter-leading strings retain their bytes |
+| Binary / hex conversion | bin2hex(s), hex2bin(s) | — | — | Lowercase encoding; invalid or odd-length hex decodes to false without a warning |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
 | Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Byte width; default space; PHP supports both sides and validates fill |
 | Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Explicit separator; preserve empty fields; empty split separator throws; PHP remainder/drop, JS uint32 field cap, C++ nonnegative field cap |

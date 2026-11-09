@@ -77,6 +77,8 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         (directory / 'build.log').write_text(build.stdout + build.stderr)
         result = subprocess.run([directory / 'program'], capture_output=True)
         assert result.returncode == 8 and result.stdout.hex() == fixture['stdout_hex'], result
+        if 'stderr' in fixture:
+            assert result.stderr == fixture['stderr'].encode(), result
         totals = {}
         for path in directory.glob('unit-*.json'):
             for event in json.loads(path.read_text())['traceEvents']:

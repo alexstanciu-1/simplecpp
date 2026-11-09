@@ -121,6 +121,12 @@ def prove(work):
         valid = originals['php'].replace('return ', f'return {call} === "{expected}" && ')
         edits[f'bad-{name}-php'] = (predicates['php'], valid.replace(call, f'{name}(7)'))
         edits[f'recovery-{name}-php'] = (predicates['php'], valid)
+    for call, condition in [('bin2hex("A")', 'bin2hex("A") === "41"'),
+                            ('hex2bin("")', 'isset(hex2bin("")) && !isset(hex2bin("zz"))')]:
+        name = call.split('(')[0]
+        valid = originals['php'].replace('return ', f'return {condition} && ')
+        edits[f'bad-{name}-php'] = (predicates['php'], valid.replace(call, f'{name}(7)'))
+        edits[f'recovery-{name}-php'] = (predicates['php'], valid)
     counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
     edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
     edits['recovery-replace-count-php'] = (predicates['php'], counted)

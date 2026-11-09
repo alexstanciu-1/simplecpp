@@ -34,14 +34,8 @@ Doc Status: normative
 
 ## Compile plan summary
 
-v0.2 registers the supported forms in [runtime strings metadata](../../../runtime/metadata/modules/strings.json),
-using `modules/strings/strings.hpp`. The trim family uses separate fixed-arity
-contracts, not synthesized default arguments. Overload selection follows the shared
-exact-match rule; ordinary conversions apply after a unique fixed target is selected.
-Older binding notes below describe the v0.1 implementation.
-
-- Implemented in `runtime/include/scpp/support/php.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+The v0.2 [runtime metadata](../../../v0.2/runtime/metadata/runtime.json) declares the PHP-only unary binding.
+The generator publishes its PHP adapter and registers the same signature with the compiler.
 
 ## Test matrix
 - empty string

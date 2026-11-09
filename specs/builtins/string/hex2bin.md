@@ -26,7 +26,7 @@ Doc Status: normative
 
 ## Error policy
 - Does not throw for ordinary invalid input.
-- Returns `false` on invalid hex input or odd input length.
+- Returns `false` without a warning or partial output on invalid hex input or odd input length.
 
 ## Runtime and wrapper split
 - Runtime: validate pairs of hex digits, decode each pair into one byte, and return string-or-false as `result_or_false<string_t>`.
@@ -36,12 +36,9 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented through shared strict decoding support with PHP-visible adapter shaping in `runtime/include/lang/php/support/php_string.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
-- Shared plain-name exposure in strict should preserve the same visible `string|false` contract rather than exposing the internal strict `result<string_t>` helper directly.
-- The visible PHP-facing carrier for this shared helper contract is `result_or_false<string_t>`, not `mixed_t`.
-- v0.2 registers that same adapter contract in the strings catalog; it does not
-  replace ordinary invalid-input false states with the internal decoder's errors.
+
+The v0.2 [runtime metadata](../../../v0.2/runtime/metadata/runtime.json) declares the PHP-only unary binding.
+The generator publishes its PHP adapter and registers the same signature with the compiler.
 
 ## Test matrix
 - empty string

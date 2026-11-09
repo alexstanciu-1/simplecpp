@@ -350,8 +350,26 @@ foreach (flavor::cases() as $flavor) {
 			foreach ($tails as $tail) $expected .= $upper . $tail . $lower . $tail . chr($i) . $tail;
 		}
 		$fixtures['php-first-case'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)), 'stdout_hex' => bin2hex($expected)];
+		$source = <<<'SCPP'
+function decoded(string $text): void {
+	$d = hex2bin($text);
+	if (isset($d)) { $bytes string = $d; echo "S", $bytes, "|"; } else { echo "F|"; }
+}
+$raw = ""; $i = 0;
+while ($i < 256) { $raw .= string_byte_from_int($i); $i += 1; }
+$encoded = bin2hex($raw);
+echo $encoded, "|"; decoded($encoded);
+echo "[", bin2hex(""), "]"; decoded(""); decoded("00fF41");
+decoded("0"); decoded("AbC"); decoded("0g"); decoded("g0"); decoded("41zz");
+decoded("0x41"); decoded(" 0"); decoded("0\0"); decoded(string_byte_from_int(255) . "0");
+return 8;
+SCPP;
+		$raw = implode('', array_map('chr', range(0, 255)));
+		$expected = bin2hex($raw) . '|S' . $raw . "|[]S|S\0\xffA|" . str_repeat('F|', 9);
+		$fixtures['php-hex'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
+			'stdout_hex' => bin2hex($expected), 'stderr' => ''];
 	}
-	foreach (['lcfirst', 'ucfirst'] as $name) {
+	foreach (['lcfirst', 'ucfirst', 'bin2hex', 'hex2bin'] as $name) {
 		if ($flavor === flavor::php) {
 			rejects(fn() => $prepare("echo $name(); return 8;"), 'Argument count');
 			rejects(fn() => $prepare("echo $name(7); return 8;"), 'requires string');

@@ -160,6 +160,11 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['vectors'] ?? [] as $vector) {
         if (isset($definitions[$vector['element']])) $runtimeTypes[$vector['source_type']] = $vector['name'];
     }
+    foreach ($runtime['carriers'] ?? [] as $carrier) {
+        if (isset($definitions[$carrier['payload']])) {
+            $runtimeTypes[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $carrier['name'];
+        }
+    }
     $runtimeCases = [];
     foreach ($runtime['string_functions'] ?? [] as $name => $binding) {
         if (!isset($runtimeTypes[$binding['result']])) continue;

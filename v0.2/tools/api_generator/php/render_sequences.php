@@ -34,8 +34,9 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
                     $result = $adapter['result'] ?? $binding['result'];
                     $result = $plan['source_types']->{$result} ?? $result;
-                    if (isset($adapter['body']) && !isset($carrierIncludes[$path])) {
-                        $files[$path] .= includeHeader($plan['carriers_header']);
+                    $resultHeader = $binding['result_header'] ?? (isset($adapter['body']) ? $plan['carriers_header'] : null);
+                    if ($resultHeader !== null && !isset($carrierIncludes[$path])) {
+                        $files[$path] .= includeHeader($resultHeader);
                         $carrierIncludes[$path] = true;
                     }
                     $parameters = [];
@@ -144,7 +145,7 @@ function renderString(array $plan): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
+    $vars['classic_storage'] = array_intersect($classic, ['hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
         ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
@@ -255,7 +256,13 @@ function renderString(array $plan): array {
             $parameters[] = scalarInput($type) . ' ' . (['value', 'other', 'third', 'fourth'][$index]);
         }
         $signature = "{$function['result']} $name(" . implode(', ', $parameters) . ')';
-        if ($function['implementation'] === 'byte_length') {
+        if ($function['implementation'] === 'hex_encode' || $function['implementation'] === 'hex_decode') {
+            $result = $plan['source_types']->{$function['result']};
+            if (isset($function['result_header'])) $h .= "class $result;\n";
+            $signature = "$result $name(" . implode(', ', $parameters) . ')';
+            $h .= "namespace str { $signature; }\n";
+            $d .= template($function['implementation'], ['signature' => $signature, 'result' => $result]);
+        } elseif ($function['implementation'] === 'byte_length') {
             $h .= "namespace str { inline $signature { return value.size(); } }\n";
         } elseif ($function['implementation'] === 'count_matches') {
             $args = "const string& value, const string& other";
