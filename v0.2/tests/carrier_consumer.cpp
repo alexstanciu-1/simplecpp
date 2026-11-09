@@ -11,6 +11,8 @@ template<class Error, class F> static void fails(F f) {
 template<class T> concept condition = requires(T x) { x ? 1 : 0; };
 template<class L, class R> concept adds = requires(L l, R r) { l + r; };
 template<class T> concept increments = requires(T x) { ++x; };
+template<class T> concept accepts_zero_literal = requires { T{0}; };
+static_assert(!accepts_zero_literal<nullable_string>);
 static_assert(std::is_convertible_v<nullable_int64, int64>);
 static_assert(!std::is_convertible_v<int64, nullable_int64>);
 static_assert(!std::is_constructible_v<nullable_int64, int>);
@@ -32,6 +34,8 @@ int main() {
     const double native_double = native_conversion;
     require(native_double == 8.0);
 
+    require(!nullable_string{nullptr}.has_value());
+    require(!nullable_string{scpp::null}.has_value());
     nullable_int64 empty{null};
     require(!static_cast<bool>(empty.has_value()));
     fails<std::runtime_error>([&] { int64 value = empty; (void)value; });

@@ -4,6 +4,8 @@ Doc Status: planning
 
 Scope is the active v0.2 application C++ backend shared by cpp/php/js. The inventory follows the emitter and its generated type handlers, including file-level output. Runtime library implementations, historical generators and unimplemented source features are outside this inventory.
 
+The [C++ emission audit and refactor plan](cpp_emission_refactor.md) records the current ownership assessment, correctness findings and proposed migration sequence.
+
 ## Ownership and first correction
 
 Preparation owns source admission, destination type, approved conversion and any proof that a constant is in range. Runtime publication owns member signatures, adapters and scalar input fences. Target layout facts identify which C++ fundamental type implements an exported alias. Generate the target-specific decisions once. Application lowering consumes prepared facts and generated handlers.

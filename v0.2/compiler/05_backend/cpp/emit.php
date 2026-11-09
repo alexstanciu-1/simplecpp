@@ -84,12 +84,13 @@ final class Cpp_Emitter
 		$global_references = [];
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
+			$type = $global->type_def();
 			$initializer = self::plain_integer_initializer($global->initializer, $global->initialization())
-				?? $global->type_def()->lower_cpp_conversion($global->initialization(),
+				?? $type->lower_cpp_conversion($global->initialization(),
 					$global->initializer->type_def()->lower_cpp_literal($global->initializer));
-			$definitions[] = 'constinit ' . $global->type_def()->cpp_type() . ' ' . self::global_name($global)
+			$definitions[] = 'constinit ' . $type->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $initializer . ";\n";
-			foreach ($global->type_def()->conversion_headers($global->initialization()) as $header) {
+			foreach (array_merge($type->cpp_headers(), $type->conversion_headers($global->initialization())) as $header) {
 				$required_headers[$header] = true;
 			}
 		}
@@ -202,17 +203,25 @@ final class Cpp_Emitter
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
-				$compound_header = ($statement instanceof ast_for_statement)
-					&& ((($statement->update instanceof ast_assignment_statement) && ($statement->update->operator !== null))
-						|| (($statement->initializer instanceof ast_assignment_statement) && ($statement->initializer->operator !== null)));
-				if ($compound_header) {
-					/** @var ast_assignment_statement $binding */
-					$binding = (($statement->update instanceof ast_assignment_statement) && ($statement->update->operator !== null)) ? $statement->update : $statement->initializer;
-					$lines[] = "\t{ " . $binding->local_def()->type_def()->cpp_type() . ' compound_previous;';
-				}
+				$compound_update = false;
 				if ($statement instanceof ast_for_statement) {
-					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers);
-					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers);
+					$init = $statement->initializer;
+					if (($init instanceof ast_assignment_statement) && ($init->operator !== null)) {
+						// A compound initializer executes once, with its own statement-local snapshot.
+						$lines[] = "\t" . $this->compound($init, $global_references, $declarations, $required_headers);
+						$initializer = '';
+					}
+					else {
+						$initializer = $this->binding($init, $global_references, $declarations, $required_headers);
+					}
+					$compound_update = ($statement->update instanceof ast_assignment_statement) && ($statement->update->operator !== null);
+					if ($compound_update) {
+						$lines[] = "\t{ " . $statement->update->local_def()->type_def()->cpp_type() . ' compound_previous;';
+						$update = $this->compound($statement->update, $global_references, $declarations, $required_headers, loop_update: true);
+					}
+					else {
+						$update = $this->binding($statement->update, $global_references, $declarations, $required_headers);
+					}
 					$lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
 				}
 				else {
@@ -222,7 +231,7 @@ final class Cpp_Emitter
 					$lines[] = "\t" . $line;
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
-				if ($compound_header) {
+				if ($compound_update) {
 					$lines[] = "\t}";
 				}
 			}
@@ -241,9 +250,7 @@ final class Cpp_Emitter
 				}
 			}
 			elseif (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
-				$snapshot = '';
-				$write = $this->compound($statement, $global_references, $declarations, $required_headers, $snapshot);
-				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
+				$lines[] = "\t" . $this->compound($statement, $global_references, $declarations, $required_headers);
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
@@ -319,15 +326,14 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Produce a snapshot assignment and final write expression; enclosing syntax owns storage and sequencing.
-	 * $snapshot: output assignment to the context-owned compound_previous temporary.
+	 * A statement owns its snapshot locally. A for update assigns to storage supplied by its loop.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
 	private function compound(ast_assignment_statement $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, bool $loop_update = false): string
 	{
 		$type = $statement->local_def()->type_def();
 		$execution = $statement->execution_type();
@@ -358,12 +364,12 @@ final class Cpp_Emitter
 			}
 		}
 		$snapshot = 'compound_previous = ' . $name;
-		return $name . ' = ' . $result;
+		$write = $name . ' = ' . $result;
+		return $loop_update ? '(' . $snapshot . ', ' . $write . ')' : '{ const auto ' . $snapshot . '; ' . $write . '; }';
 	}
 
 	/**
-	 * Render a declaration/write without its delimiter, shared by body statements and for headers.
-	 * A compound header requires compound_previous storage supplied by the enclosing loop.
+	 * Render a declaration, plain write or unary update without its delimiter, shared by statements and for headers.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
@@ -375,11 +381,6 @@ final class Cpp_Emitter
 		if ($statement instanceof ast_update_statement) {
 			return $statement->local_def()->type_def()->lower_cpp_update($statement->operator,
 				$this->name($statement->local_def()), $statement->postfix);
-		}
-		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
-			$snapshot = '';
-			$write = $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
-			return '(' . $snapshot . ', ' . $write . ')';
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();

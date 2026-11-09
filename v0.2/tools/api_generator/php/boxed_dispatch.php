@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/compiler_families.php';
+require_once __DIR__ . '/compiler_plans.php';
+require_once __DIR__ . '/submodules.php';
 
 /** Project the existing scalar plans onto the published box tags and the first five boxed operators. */
 function boxedScalarPlan(object $metadata, array $facts, array $providers, array $formatters): array {

@@ -39,9 +39,9 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $ok bool = true;             | scpp::bool_t var_ok_1 = true;                                      | #include <scpp/core/scalars.hpp> | literal fits during preparation. The   |
 |                              |                                                                    | No unit header.                  | bool export supplies the native alias. |
 +------------------------------+--------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $f float = 1.5;              | scpp::float64 var_f_0 = 0x1.8000000000000p0;                       | .cpp includes                    | Generated literal handlers preserve    |
-| $n null = null;              | decltype(nullptr) var_n_1 = nullptr;                               | #include <scpp/core/scalars.hpp> | the binary64 value and emit the native |
-|                              |                                                                    | No unit header.                  | null-pointer literal for source null.  |
+| $f float = 1.5;              | scpp::float64 var_f_0 = 0x1.8000000000000p0;                       | .cpp includes                    | The scalar exports name both types.    |
+| $n null = null;              | scpp::null_t var_n_1 = nullptr;                                    | #include <scpp/core/scalars.hpp> | Literal handlers preserve binary64 and |
+|                              |                                                                    | No unit header.                  | emit nullptr for source null.          |
 +------------------------------+--------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | $x = 9;                      | scpp::int64 var_x_0 = 9;                                           | .cpp includes                    | Preparation binds both occurrences to  |
 | $x = 4;                      | var_x_0 = 4LL;                                                     | #include <scpp/core/scalars.hpp> | one storage ID. Assignment consumes    |
@@ -375,6 +375,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | global $N int = 7;                       | scpp::int64 var_x_0 = ::App::var_N;                                 | #include <scpp/core/scalars.hpp>                 | stable symbol. The owner emits         |
 | main                                     | lib                                                                 | #include "lib.hpp"                               | constinit storage and publishes an     |
 | $x = $N;                                 | constinit scpp::int64 var_N = 7;                                    | lib.cpp includes                                 | extern declaration.                    |
+|                                          |                                                                     | #include <scpp/core/scalars.hpp>                 |                                        |
 |                                          |                                                                     | #include "lib.hpp"                               |                                        |
 |                                          |                                                                     | lib.hpp                                          |                                        |
 |                                          |                                                                     | #pragma once                                     |                                        |

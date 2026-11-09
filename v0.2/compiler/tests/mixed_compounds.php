@@ -112,6 +112,16 @@ foreach (flavor::cases() as $flavor)
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');
 	verify(str_contains($cpp, 'scpp::float64_divide('), 'Division bypassed checked helper');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('ABCDFFFHHR')];
+	$i = $var('i');
+	$counter = match ($flavor) {
+		flavor::php => '$i int = 0;', flavor::cpp => 'int i = 0;', flavor::js => 'let i: int = 0;',
+	};
+	$loops = $counter . $decl('0.5')
+		. "for ($x += 0.5; $i < 0; $i += 1) { return 9; }"
+		. "if ($x !== 1.0) { return 9; }"
+		. "for ($x += 0.5; $i < 2; $i += 1) { continue; }"
+		. "if ($x !== 1.5 || $i !== 2) { return 9; } return 8;";
+	$fixtures[$flavor->name . '_loop_snapshots'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($loops)), 'stdout_hex' => ''];
 	foreach (['-=true', '/=null', '%=2.0'] as $invalid) {
 		rejects(fn() => $prepare($decl('1.0') . $x . $invalid . '; return 8;'), 'Unsupported compound');
 	}

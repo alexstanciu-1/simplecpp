@@ -25,7 +25,7 @@ C++ implicit conversions, promotions or unchecked source-language operations.
 | bool | bool | Native; currently active |
 | float / float64 | Validated binary64 double | Native; currently active |
 | float32 | Validated binary32 float | Native when activated |
-| null | decltype(nullptr) | Current native sentinel; nullable storage is separate |
+| null | scpp::null_t (alias for decltype(nullptr)) | Current native sentinel; nullable storage is separate |
 | char and other character types | Depends on encoding and language contract | Deferred; native char is not assumed equivalent |
 | Unusual/wider numeric formats | Target extension or library representation | Decide per format and target |
 | string | scpp::string | Retain library storage/lifecycle |

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/boxed_dispatch.php';
 
 function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'boxed', 'boxed', 'Boxed');

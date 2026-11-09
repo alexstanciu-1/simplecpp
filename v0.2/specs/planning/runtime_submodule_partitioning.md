@@ -40,7 +40,7 @@ verification checklist were committed and pushed as `0f2c3acae`.
 | --- | --- | --- |
 | Include runtime C++ headers directly | Complete for integrated consumers: supported scalar lowering, string storage, output and checked scalar conversions use public runtime headers. | Migrate additional runtime families to the completed engine as separate follow-up slices. |
 | Select small includes per source unit | Engine complete: generated type/helper queries feed per-header and per-source collection, deduplication and removal of obsolete includes. Scalar-only units avoid unrelated providers. | Apply the existing mechanism to each additional family and retain its isolation/recovery proofs. |
-| Expose scpp data types through metadata | Type exports resolve canonical identities to public scpp names and provider headers. The pulled alias work also uses those names for supported ordinary scalar declarations, signatures and expression casts. | Some public helper signatures still retain native types; compiler null remains decltype(nullptr). The scpp-types-only public surface is not complete. |
+| Expose scpp data types through metadata | Type exports resolve canonical identities to public scpp names and provider headers. The pulled alias work also uses those names for supported ordinary scalar declarations, signatures and expression casts. | Some public helper signatures still retain native types. The scpp-types-only public surface is not complete. |
 | Describe runtime partitioning in metadata | Core/numeric scalars, separate checked conversions, string/output providers, semantic export dependencies and transitive validation are implemented. | Establish the broader coarse partition below and migrate families still owned by legacy renderers. |
 | Improve compile time through segmentation | Include isolation and coherent provider relocation are verified. | Measure end-to-end native compilation before claiming a speedup or choosing finer partitions. |
 | Avoid a general ABI framework | No general ABI framework was introduced. | Keep it outside this work; existing helper bindings do not justify a separate ABI project. |
@@ -88,8 +88,7 @@ Broader numeric-module redesign and new source-language admissions remain deferr
 
 - Review output, entry, arithmetic and other public signatures against the original
   scpp-types-only requirement. Provider/include selection is complete for those
-  integrated consumers; signature cleanup is a distinct task. Compiler null still
-  lowers to decltype(nullptr). No ABI framework is requested.
+  integrated consumers; signature cleanup is a distinct task. Compiler null uses the core scalar export. No ABI framework is requested.
 - Compare end-to-end native compilation costs before claiming an overall speedup or
   choosing finer partitions. Record include closures, build configuration, cache state,
   frontend, optimization/code generation and linking separately. Existing isolation
@@ -871,8 +870,8 @@ redesign proves necessary, report that boundary instead of extending this slice.
 
 - No changes to native aliases, scalar construction/initialization semantics,
   conversion permissions, promotions, checked arithmetic, exceptions or null
-  representation. Runtime null_t/null stay concrete; compiler null remains
-  decltype(nullptr).
+  representation in this consolidation slice. The subsequent null alias change
+  is recorded in the [scalar representation contract](../native_scalar_aliases.md).
 - No new source widths or vector/hash/carrier admissions; no numeric-module rename,
   installation/discovery framework or new profile policy.
 - No migration of collections, boxed objects, results, JSON, datetime or ownership

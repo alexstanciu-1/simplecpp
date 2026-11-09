@@ -156,7 +156,10 @@ def proof(work):
                                 f'if ({v}[0] !== 8) {{return 91;}} return count({v}) - 1;')
                     write(name, fn(name, 'int', local + body))
                     observations += f'if ({name}() !== 0) {{return 91;}} '
-            write('main', observations + 'visible(); body(); scalar(); ' + narrowed)
+            write('main', observations + 'visible(); body(); scalar(); absent(); ' + narrowed)
+            write('unobserved', {'cpp': 'global null unused = null;', 'php': 'global $unused null = null;',
+                                 'js': 'global let unused: null = null;'}[flavor])
+            write('absent', fn('absent', 'null', 'return null;'))
             write('visible', fn('visible', 'string', 'return "V";'))
             write('body', fn('body', 'int', 'return 1;'))
             write('scalar', fn('scalar', 'int', 'return 7;'))
@@ -189,6 +192,15 @@ def proof(work):
                                          metadata['submodules'][metadata['scalar_providers']['numeric']]['header']):
                             assert f'#include <{excluded}>' not in unit
                 baseline = artifacts(out)
+                globals_only = [p for p, text in baseline.items() if p.endswith('.cpp') and 'constinit scpp::null_t var_unused' in text]
+                assert len(globals_only) == 1
+                assert not (out / globals_only[0]).with_suffix('.hpp').exists()
+                assert [line for line in baseline[globals_only[0]].splitlines() if line.startswith('#include')] == [f'#include <{core_header}>']
+                null_units = [p for p, text in baseline.items() if p.endswith('.cpp') and 'scpp::null_t absent_()' in text]
+                assert len(null_units) == 1
+                for suffix in ('.cpp', '.hpp'):
+                    unit = (out / null_units[0]).with_suffix(suffix).read_text()
+                    assert [line for line in unit.splitlines() if line.startswith('#include <')] == [f'#include <{core_header}>']
                 if variant == 'relocated':
                     query_units = [unit for path, unit in baseline.items() if path.endswith('.cpp')
                                    and '.size()' in unit and '.empty()' in unit]
@@ -445,6 +457,22 @@ def review_contract_proof(work, original, publication_path, facts, context):
     emit(original, publication)
     for name in ('integers.hpp', 'values.hpp', 'numeric/scalars.hpp'):
         assert not (legacy / name).exists()
+    # The provider can exist even when its null declaration is not requested.
+    compiler_command = ['php', generator, 'emit-compiler', metadata_path, request, facts, context, compiler]
+    run(compiler_command)
+    compiler_before = snapshot(compiler)
+    without_null = {key: value for key, value in publication.items() if key not in ('carriers', 'hashes', 'boxed')}
+    without_null['string'] = dict(publication['string'], functions=[])
+    without_null['values'] = [name for name in publication['values'] if name != 'null_t']
+    emit(original, without_null)
+    assert 'using null_t' not in (legacy / 'core/scalars.hpp').read_text()
+    assert 'null_t' in run(compiler_command, 1).stderr
+    assert snapshot(compiler) == compiler_before
+    without_null['values'].append('null_t')
+    emit(original, without_null)
+    run(compiler_command)
+    compile_header('scpp/core/scalars.hpp', 'scpp::null_t value = nullptr;')
+    emit(original, publication)
     core = (legacy / 'core/scalars.hpp').read_text()
     assert '#include' not in core and 'using int16 =' not in core and 'using uint32 =' not in core
     compile_header('scpp/core/scalars.hpp', 'static_assert(__is_same(scpp::int64, __INT64_TYPE__));\nstatic_assert(__is_same(scpp::byte, __UINT8_TYPE__));\nstatic_assert(__is_same(scpp::bool_t, bool));\nstatic_assert(__is_same(scpp::float64, double));\n')

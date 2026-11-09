@@ -6,7 +6,7 @@ namespace Scpp\Api;
 function scalarNativeIdentity(array $plan, string $type): string {
     $type = trim(str_replace(['const ', '&'], '', $type));
     foreach ($plan['types'] as $row) if ($row['name'] === $type) return $row['native_name'];
-    return match ($type) { 'bool_t' => 'bool', 'float64' => 'double', default => $type };
+    return match ($type) { 'bool_t' => 'bool', 'float64' => 'double', 'null_t' => 'decltype(nullptr)', default => $type };
 }
 
 /** Reject unintended builtin inputs at concrete API boundaries without public templates. */
@@ -19,10 +19,17 @@ function scalarInputFences(array $plan, string $name, array $signatures, bool $c
     foreach ($signatures as $arguments) {
         foreach ($arguments as $position => $type) {
             $identity = scalarNativeIdentity($plan, $type);
-            if (!in_array($identity, NATIVES, true)) continue;
             // Preserve already-native API parameters; fence scalar aliases whose wrappers enforced exact input.
             if ($identity === trim(str_replace(['const ', '&'], '', $type))) continue;
-            foreach (array_merge(NATIVES, ['decltype(nullptr)', 'const void*', '__int128', 'unsigned __int128']) as $other) {
+            if ($identity === 'decltype(nullptr)') {
+                // A zero literal converts equally well to either null or a pointer; nullptr is an exact match for null_t.
+                $alternatives = ['const void*'];
+            } elseif (in_array($identity, NATIVES, true)) {
+                $alternatives = array_merge(NATIVES, ['decltype(nullptr)', 'const void*', '__int128', 'unsigned __int128']);
+            } else {
+                continue;
+            }
+            foreach ($alternatives as $other) {
                 $candidate = $arguments;
                 $candidate[$position] = $other;
                 $key = array_map(static fn(string $type): string => scalarNativeIdentity($plan, $type), $candidate);

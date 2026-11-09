@@ -241,7 +241,7 @@ function prepareScalarPlan(mixed $metadata, mixed $publication, array $facts, bo
         fields($row, ['kind', 'representation', 'construction', 'condition', 'operations']);
         $kind = textValue(at($row, 'kind'));
         requireThat(($name === 'bool_t' && $kind === 'boolean') || ($name === 'null_t' && $kind === 'null'), 'Unsupported simple value identity');
-        $representation = $kind === 'boolean' ? 'native_bool' : 'empty';
+        $representation = $kind === 'boolean' ? 'native_bool' : 'native_nullptr';
         literals($row, ['representation' => $representation, 'construction' => $kind === 'boolean' ? 'explicit':'default']);
         if ($kind === 'boolean') {
             literals($row, ['condition' => 'explicit_native_bool']);

@@ -40,6 +40,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types, $providers);
+    if ($runtime !== null) {
+        $nullIdentity = $metadata->source_types->null;
+        requireThat(hasValue($runtime, $nullIdentity), "Compiler null requires published $nullIdentity");
+    }
     $metadata = clone $metadata;
     $compiler = compilerFamilyPlan($metadata, $definitions, $types);
     $metadata->compiler = $compiler;
@@ -192,7 +196,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 33,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 34,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }

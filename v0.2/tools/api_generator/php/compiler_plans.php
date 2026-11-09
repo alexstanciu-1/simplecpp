@@ -161,7 +161,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
         } elseif (in_array($kind, ['boolean', 'null'], true)) {
             requireThat(($sources[$class] ?? null) === $identity, 'Source type identity mismatch');
             $value = at(at($metadata, 'values'), $identity);
-            requireThat(at($value, 'representation') === ($kind === 'boolean' ? 'native_bool' : 'empty'), 'Unsupported scalar representation');
+            requireThat(at($value, 'representation') === ($kind === 'boolean' ? 'native_bool' : 'native_nullptr'), 'Unsupported scalar representation');
             $cpp = textValue(at($row, 'cpp_type'));
             requireThat($cpp === ($kind === 'boolean' ? 'bool' : 'decltype(nullptr)'), 'Unsupported compiler scalar representation');
             $literals = object(at($row, 'literals'));
@@ -175,7 +175,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     }
     $providers ??= submodulePlan($metadata);
     foreach ($definitions as $identity => &$definition) {
-        if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating'], true)) continue;
+        if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating', 'null'], true)) continue;
         $export = typeExport($providers, $identity);
         $definition['cpp'] = $export['symbol'];
         $definition['cpp_header'] = providerHeader($providers, $export['provider']);

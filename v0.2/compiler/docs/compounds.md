@@ -50,9 +50,9 @@ remainder require the existing public arithmetic header/helpers.
 A failed RHS or operation prevents the compound store. Prior RHS writes remain;
 there is no rollback. Native signed-overflow limitations and zero-divisor errors
 are unchanged. General lvalue address/owner retention is deferred with complex
-destinations. The shared lowerer supplies a snapshot assignment and final write
-expression. Statement contexts supply a scoped const temporary; for-header contexts
-supply scoped temporary storage and sequence those expressions with a comma.
+destinations. Standalone statements and compound loop initializers each use a
+statement-local snapshot. A compound loop update saves its destination in a
+separate loop-scoped temporary before evaluating its RHS.
 Operator/type admission and write-back generation are identical.
 
 ## Mining and proof

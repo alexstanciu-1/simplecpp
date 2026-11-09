@@ -22,7 +22,7 @@ static_assert(std::is_same_v<decltype(bool_t{} != bool_t{}), bool_t>);
 static_assert(std::is_same_v<decltype(null == null_t{}), bool_t>);
 static_assert(std::is_same_v<decltype(null != null_t{}), bool_t>);
 static_assert(std::is_same_v<decltype(int64{} < int64{}), bool_t>);
-static_assert(std::is_trivially_copyable_v<bool_t> && std::is_empty_v<null_t>);
+static_assert(std::is_trivially_copyable_v<bool_t> && std::is_same_v<null_t, decltype(nullptr)>);
 static_assert(!std::is_aggregate_v<null_t> && std::is_nothrow_default_constructible_v<null_t>);
 static_assert(static_cast<bool>(!bool_t{}));
 static_assert(static_cast<bool>(bool_t{true} != bool_t{false}));
