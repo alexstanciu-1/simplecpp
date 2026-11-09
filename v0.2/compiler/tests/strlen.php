@@ -50,6 +50,29 @@ foreach (flavor::cases() as $flavor) {
 		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
+	$replace_names = match ($flavor) {
+		flavor::php => ['str_replace_first', 'str_replace'], flavor::js => ['replace', 'replaceAll'],
+		flavor::cpp => ['replace_first', 'replace_all'],
+	};
+	$replacements = [];
+	$expected = [];
+	foreach ($replace_names as $mode => $name) {
+		foreach ([
+			['"aaaaa"', '"aa"', '"X"', 'Xaaa', 'XXa'],
+			['"a\0b\0"', '"\0"', '"\0X"', "a\0Xb\0", "a\0Xb\0X"],
+			['"ab"', '""', '"X"', 'ab', 'ab'], ['""', '""', '"X"', '', ''],
+			['"ab"', '"z"', '"X"', 'ab', 'ab'], ['"aba"', '"a"', '""', 'ba', 'b'],
+			['"aa"', '"a"', '"aa"', 'aaa', 'aaaa'], ['"éé"', '"é"', '"$&"', '$&é', '$&$&'],
+			['"aaaaaaaaaaaaaaaaaaaaaaaa"', '"a"', '"XY"', 'XY' . str_repeat('a', 23), str_repeat('XY', 24)],
+		] as [$value, $search, $replacement, $first, $all]) {
+			$replacements[] = $flavor === flavor::php ? "$name($search, $replacement, $value)"
+				: "$value.$name($search, $replacement)";
+			$expected[] = $mode === 0 ? $first : $all;
+		}
+	}
+	$code = 'echo ' . implode(', "|", ', $replacements) . '; return 8;';
+	$fixtures[$flavor->name . '-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'stdout_hex' => bin2hex(implode('|', $expected))];
 	$slice = static fn(string $value, string $args): string => match ($flavor) {
 		flavor::php => 'substr(' . $value . ($args === '' ? '' : ',' . $args) . ')',
 		flavor::cpp => "$value.substr($args)", flavor::js => "$value.slice($args)",

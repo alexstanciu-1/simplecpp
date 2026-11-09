@@ -35,6 +35,10 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = $arg = "arg$i";
                         $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
                     }
+                    if (isset($adapter['replace_mode'])) {
+                        if ($flavor === 'php') $arguments = ['arg2', 'arg0', 'arg1'];
+                        $arguments[] = '::scpp::str::replace_mode::' . $adapter['replace_mode'];
+                    }
                     if (isset($adapter['bound'])) {
                         $short = implode(', ', array_slice($parameters, 0, $binding['required_parameters']));
                         $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}($short)"
@@ -84,7 +88,7 @@ function renderString(array $plan): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper'])
+    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes'])
         ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
@@ -116,8 +120,19 @@ function renderString(array $plan): array {
         $d .= "namespace str { $signature { $body } }\n";
     }
     $trimSymbols = [];
+    $replaceSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
+        if ($function['implementation'] === 'replace_bytes') {
+            if (!$replaceSymbols) $h .= "namespace str { enum class replace_mode { first, all }; }\n";
+            if (!isset($replaceSymbols[$name])) {
+                $signature = "string $name(const string& subject, const string& search, const string& replacement, replace_mode mode)";
+                $h .= "namespace str { $signature; }\n";
+                $d .= template('string_replace', ['signature' => $signature]);
+                $replaceSymbols[$name] = true;
+            }
+            continue;
+        }
         if ($function['implementation'] === 'slice_bytes') {
             $signature = "string $name(const string& value, int64 start, int64 bound, slice_bound mode)";
             $h .= "namespace str { enum class slice_bound { to_end, length, exclusive_end }; $signature; }\n";

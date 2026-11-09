@@ -700,7 +700,7 @@
     "index_write": true,
     "index_read": true,
     "explicit_formatters": ["bool_t", "uint8", "int64", "float64"],
-    "functions": ["strlen", "string_byte_from_int", "str_starts_with", "str_ends_with", "str_contains", "strpos", "strrpos", "strtolower", "strtoupper", "str_repeat", "trim", "ltrim", "rtrim", "substr"],
+    "functions": ["strlen", "string_byte_from_int", "str_starts_with", "str_ends_with", "str_contains", "strpos", "strrpos", "strtolower", "strtoupper", "str_repeat", "trim", "ltrim", "rtrim", "substr", "str_replace_first", "str_replace"],
     "operations": [
       "add",
       "add_assign",

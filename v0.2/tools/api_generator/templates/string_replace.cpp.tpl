@@ -1,0 +1,21 @@
+namespace str {
+@signature@ {
+    const auto needle = detail::string_access::read(search);
+    if (needle.empty()) return subject;
+    auto remaining = detail::string_access::read(subject);
+    auto match = remaining.find(needle);
+    if (match == std::string_view::npos) return subject;
+
+    const auto inserted = detail::string_access::read(replacement);
+    std::string output;
+    do {
+        output.append(remaining.substr(0, match));
+        output.append(inserted);
+        remaining.remove_prefix(match + needle.size());
+        if (mode == replace_mode::first) break;
+        match = remaining.find(needle);
+    } while (match != std::string_view::npos);
+    output.append(remaining);
+    return detail::string_access::own(std::move(output));
+}
+}
