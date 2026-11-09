@@ -46,6 +46,17 @@ $registry = renderCompiler($functionMetadata, $facts, $predicatePlan)['types/reg
 requireThat(str_contains($registry, "'js:string:hasBytes'") && str_contains($registry, "'php:func:str_contains'")
     && !str_contains($registry, "'js:string:includes'") && !str_contains($registry, "'cpp:string:starts_with'"),
     'String member lookup ignored flavor metadata or publication selection');
+// A flavor result is part of the public signature and must be available in this publication.
+$searchDemand = unserialize(serialize($demand));
+$searchDemand->string->functions = ['strpos'];
+$searchDemand->carriers->specializations = array_values(array_filter($searchDemand->carriers->specializations,
+    static fn($row) => $row->family !== 'result_or_false' || $row->payload !== 'int64'));
+try {
+    prepareRuntime($functionMetadata, $searchDemand, $facts);
+    throw new \LogicException('Missing search result carrier was accepted');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'strpos requires published result_or_false<int64>'), $error->getMessage());
+}
 $demand->string->functions = [];
 requireThat(!isset(prepareRuntime($functionMetadata, $demand, $facts)['string_functions']), 'Deselected string function remains published');
 // A published formatter supplies the runtime and compiler binding together.

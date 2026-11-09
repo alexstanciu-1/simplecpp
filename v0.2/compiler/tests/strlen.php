@@ -67,12 +67,40 @@ foreach (flavor::cases() as $flavor) {
 		'stdout_hex' => bin2hex('11111100')];
 	rejects(fn() => $prepare($local . 'echo (int)' . $method('contains', $s, '5') . '; return 8;'), 'requires string');
 	$classic = match ($flavor) {
-		flavor::php => 'echo strpos("A😀B","B"), strrpos("a😀a","a"), strpos("abc","x"), strrpos("ab",""), strtolower("ÉAb"), strtoupper("éAb"), str_repeat("x\0",2);',
+		flavor::php => 'echo strpos("A😀B","B")+0, strrpos("a😀a","a")+0, (int)isset(strpos("abc","x")), strrpos("ab","")+0, strtolower("ÉAb"), strtoupper("éAb"), str_repeat("x\0",2);',
 		flavor::js => 'echo "A😀B".indexOf("B"), "a😀a".lastIndexOf("a"), "abc".indexOf("x"), "ab".lastIndexOf(""), "ÉAb".toLowerCase(), "éAb".toUpperCase(), "x\0".repeat(2);',
 		flavor::cpp => 'echo "A😀B".find("B"), "a😀a".rfind("a"), "abc".find("x"), "ab".rfind(""), "ÉAb".to_lower(), "éAb".to_upper(), "x\0".repeat(2);',
 	};
 	$fixtures[$flavor->name . '-classic'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($classic . 'return 8;')),
-		'stdout_hex' => bin2hex("55-12ÉabéABx\0x\0")];
+		'stdout_hex' => bin2hex(($flavor === flavor::php ? "5502" : "55-12") . "ÉabéABx\0x\0")];
+	[$first, $last] = match ($flavor) {
+		flavor::php => ['strpos', 'strrpos'], flavor::cpp => ['find', 'rfind'], flavor::js => ['indexOf', 'lastIndexOf'],
+	};
+	$searches = [];
+	foreach ([$first, $last] as $search) {
+		foreach ([['"a\0a"', '"a"'], ['"a\0a"', '"\0"'], ['"é"', '""'], ['"x"', '"z"']] as [$value, $needle]) {
+			$searches[] = $flavor === flavor::php ? "$search($value,$needle)" : "$value.$search($needle)";
+		}
+	}
+	$expected = '0,1,0,-1,2,1,2,-1';
+	if ($flavor === flavor::php) {
+		$source = '';
+		foreach ($searches as $call) {
+			$source .= '$pos = ' . $call . '; if (isset($pos)) { echo $pos + 0; } else { echo "false"; } echo ",";';
+		}
+		$search = $prepare($source . 'return 8;');
+		verify($search->file->main()->body()->statements[0]->type_def() === scpp\compiler\type_result_or_false_int64::instance(),
+			'PHP byte search must infer the published carrier');
+		$expected = '0,1,0,false,2,1,2,false,';
+	}
+	else {
+		$search = $prepare('echo ' . implode(', ",", ', $searches) . '; return 8;');
+	}
+	$search_cpp = (new Cpp_Emitter())->emit($search);
+	verify(str_contains($search_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>')
+		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
+		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
+	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
 	$repeat = static fn(string $value, string $count): string => $flavor === flavor::php
 		? "str_repeat($value, $count)" : "$value.repeat($count)";
 	foreach ([['-1', 'invalid_argument', 'negative_string_repeat'], ['9223372036854775807', 'length_error', 'string_repeat_too_large']] as [$n, $exception, $message]) {

@@ -41,6 +41,14 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareVectors($metadata, $publication, $registry, $plan);
     prepareBoxed($metadata, $publication, $facts, $plan);
     prepareCarriers($metadata, $publication, $plan);
+    foreach ($plan['string_functions'] ?? [] as $name => $binding) {
+        foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
+            if (!isset($adapter['body'])) continue;
+            $export = $plan['source_types']->{$adapter['result']} ?? null;
+            requireThat($export !== null, "$name requires published " . $adapter['result']);
+            $plan['string_functions'][$name]['adapters'][$flavor]['result'] = $export;
+        }
+    }
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);
@@ -102,7 +110,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
@@ -133,12 +141,21 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbols[$symbol] = true;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
-        if (boolean($function->flavor_adapters ?? false)) {
+        $enabled = boolean($function->flavor_adapters ?? false);
+        $signatures = isset($function->signatures) ? fields($function->signatures, array_keys(['php' => $name] + $members)) : [];
+        requireThat(!$signatures || $enabled, 'Flavor signatures require generated adapters');
+        if ($enabled) {
             requireThat($members !== [], 'Flavor adapters require flavor-specific string spellings');
             foreach (['php' => $name] + $members as $flavor => $spelling) {
+                $options = [];
+                if (array_key_exists($flavor, $signatures)) {
+                    $options = fields($signatures[$flavor], ['result', 'body']);
+                    literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
+                    requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
+                }
                 checkHeader($plan, stringAdapterHeader($flavor));
                 $plan['string_functions'][$name]['adapters'][$flavor] = [
-                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor)];
+                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor)] + $options;
             }
         }
     }

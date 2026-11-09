@@ -45,14 +45,15 @@ def prove(work):
     predicates = {flavor: app / ('predicate.' + flavor) for flavor in ('cpp', 'php', 'js')}
     originals = {flavor: path.read_text() for flavor, path in predicates.items()}
     calls = {
-        'php': ('str_starts_with($s,$n)', 'str_ends_with($s,$n)', 'str_contains($s,$n)'),
-        'js': ('s.startsWith(n)', 's.endsWith(n)', 's.includes(n)'),
-        'cpp': ('s.starts_with(n)', 's.ends_with(n)', 's.contains(n)'),
+        'php': ('str_starts_with($s,$n)', 'str_ends_with($s,$n)', 'str_contains($s,$n)',
+                'isset(strpos($s,$n))', 'isset(strrpos($s,$n))'),
+        'js': ('s.startsWith(n)', 's.endsWith(n)', 's.includes(n)', 's.indexOf(n) >= 0', 's.lastIndexOf(n) >= 0'),
+        'cpp': ('s.starts_with(n)', 's.ends_with(n)', 's.contains(n)', 's.find(n) >= 0', 's.rfind(n) >= 0'),
     }
     edits = {}
     for flavor, path in predicates.items():
-        prefix, suffix, contains = calls[flavor]
-        for role, candidate in [('prefix', prefix), ('suffix', suffix), ('contains', contains)]:
+        prefix = calls[flavor][0]
+        for role, candidate in zip(('prefix', 'suffix', 'contains', 'first', 'last'), calls[flavor], strict=True):
             text = originals[flavor].replace(prefix, candidate)
             invalid = text.replace(candidate, candidate.replace('$n)', '200)').replace('(n)', '(200)'))
             edits['bad-' + role + '-' + flavor] = (path, invalid)

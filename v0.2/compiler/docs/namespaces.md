@@ -171,3 +171,10 @@ are function-local. Prefix, suffix and containment predicates share one header p
 PHP exposes `str_starts_with`, `str_ends_with` and `str_contains`. JS uses
 `startsWith`, `endsWith` and `includes`; C++ uses `starts_with`, `ends_with`
 and `contains`. Each inline adapter forwards to its canonical byte predicate in `::scpp::str`.
+
+First and last byte search use the same flavor headers. PHP spells them `strpos` and
+`strrpos`, JS uses `indexOf` and `lastIndexOf`, and C++ uses `find` and `rfind`.
+PHP declares `result_or_false<int>` for both calls. The inferred local keeps the
+carrier. Use `isset($pos)` to distinguish a successful zero offset from the false
+sentinel. JS and C++ return an `int64` byte offset and −1 on a miss. An empty needle matches at zero for first search and at the byte length
+for last search.

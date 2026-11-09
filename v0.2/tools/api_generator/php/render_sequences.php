@@ -19,18 +19,27 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
         };
         if ($family === 'string') {
             $h .= "namespace scpp::types { using ::scpp::string; }\n";
+            $carrierIncludes = [];
             foreach ($plan['string_functions'] ?? [] as $binding) {
                 foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
                     $path = 'public/' . $adapter['header'];
                     $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
+                    $result = $adapter['result'] ?? $binding['result'];
+                    if (isset($adapter['body']) && !isset($carrierIncludes[$path])) {
+                        $files[$path] .= includeHeader($plan['carriers_header']);
+                        $carrierIncludes[$path] = true;
+                    }
                     $parameters = [];
                     $arguments = [];
                     foreach ($binding['parameters'] as $i => $type) {
                         $arguments[] = $arg = "arg$i";
                         $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
                     }
-                    $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::{$binding['result']} {$adapter['name']}("
-                        . implode(', ', $parameters) . ") { return ::{$binding['symbol']}(" . implode(', ', $arguments) . "); }\n}\n";
+                    $body = isset($adapter['body'])
+                        ? rtrim(template($adapter['body'], ['symbol' => $binding['symbol'], 'result' => $result]))
+                        : "{ return ::{$binding['symbol']}(" . implode(', ', $arguments) . "); }";
+                    $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::{$result} {$adapter['name']}("
+                        . implode(', ', $parameters) . ") $body\n}\n";
                 }
             }
         }

@@ -164,7 +164,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Prefix | str_starts_with(s, needle) | s.startsWith(needle) | s.starts_with(needle) | Exact bytes, bool; empty needle matches |
 | Suffix | str_ends_with(s, needle) | s.endsWith(needle) | s.ends_with(needle) | Same |
 | Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
-| First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; -1 on miss, 0 for a match at the start; optional start deferred |
+| First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional start deferred |
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Decide negative/clamped bounds and exclusive-end adapter |
 | Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | Agree exact byte set, including NUL |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal replacement; settle empty needle |

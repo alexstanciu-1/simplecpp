@@ -108,8 +108,11 @@ argument through the same runtime call path as `strlen`.
 PHP free functions and JS/C++ receiver methods select the same native operation
 through generated signature keys. Preparation checks the receiver and positional
 arguments once. Calls preserve source evaluation order when an argument can have
-side effects. The default library counts offsets in bytes; find and reverse find
-return -1 on a miss. ASCII case conversion preserves all other bytes. Predicates
+side effects. All searches count bytes. JS and C++ return −1 on a miss. PHP
+`strpos` and `strrpos` declare `result_or_false<int>` in their flavor signatures.
+The generated body calls the byte search once and wraps a hit, including offset zero,
+or returns the false sentinel. An inferred PHP local keeps that carrier; `isset($pos)`
+tests for a payload. This slice supports the two-argument forms. ASCII case conversion preserves all other bytes. Predicates
 and searches view the existing string storage and accept embedded NUL. Repeat
 checks its signed count and output size before allocating.
 See the [three-flavor catalog](../../specs/planning/non_object_feature_catalog.md#classic-string-functions).

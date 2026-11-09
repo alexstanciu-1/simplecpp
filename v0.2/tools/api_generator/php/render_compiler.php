@@ -144,8 +144,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($keys as $key) {
                 $flavor = explode(':', $key, 2)[0];
                 $adapter = $binding['adapters'][$flavor];
+                $adapterResult = $adapter['result'] ?? $result;
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                    . implode(', ', $parameters) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'),";
+                    . implode(', ', $parameters) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'),";
             }
             continue;
         }
