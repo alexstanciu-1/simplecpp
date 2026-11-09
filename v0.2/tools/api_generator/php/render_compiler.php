@@ -155,27 +155,34 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     if (isset($runtime['boxed_dispatch'])) {
         $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases);
     }
+    $runtimeTypes = [];
+    foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
+    foreach ($runtime['vectors'] ?? [] as $vector) {
+        if (isset($definitions[$vector['element']])) $runtimeTypes[$vector['source_type']] = $vector['name'];
+    }
     $runtimeCases = [];
     foreach ($runtime['string_functions'] ?? [] as $name => $binding) {
-        if (!isset($definitions[$binding['result']])) continue;
+        if (!isset($runtimeTypes[$binding['result']])) continue;
         $parameters = [];
         foreach ($binding['parameters'] as $type) {
-            if (!isset($definitions[$type])) continue 2;
-            $parameters[] = 'type_' . $definitions[$type]['class'] . '::instance()';
+            if (!isset($runtimeTypes[$type])) continue 2;
+            $parameters[] = 'type_' . $runtimeTypes[$type] . '::instance()';
         }
-        $result = $definitions[$binding['result']]['class'];
-        $keys = [$binding['members'] ? "php:func:$name" : "func:$name"];
-        foreach ($binding['members'] as $flavor => $member) $keys[] = "$flavor:string:$member";
+        $result = $runtimeTypes[$binding['result']];
         if (isset($binding['adapters'])) {
             foreach ($binding['adapters'] as $flavor => $adapter) {
-                $key = $flavor === 'php' ? "php:func:$name" : "$flavor:string:" . $adapter['name'];
+                $scope = $flavor === 'php' || isset($adapter['free']) ? 'func' : $binding['parameters'][0];
+                $key = "$flavor:$scope:" . $adapter['name'];
+                $arguments = isset($adapter['reverse']) ? array_reverse($parameters) : $parameters;
                 $adapterResult = $adapter['result'] ?? $result;
                 $required = isset($binding['required_parameters']) ? ', ' . $binding['required_parameters'] : '';
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                    . implode(', ', $parameters) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
+                    . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }
             continue;
         }
+        $keys = [$binding['members'] ? "php:func:$name" : "func:$name"];
+        foreach ($binding['members'] as $flavor => $member) $keys[] = "$flavor:string:$member";
         $labels = implode(', ', array_map(static fn($key) => var_export($key, true), $keys));
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";

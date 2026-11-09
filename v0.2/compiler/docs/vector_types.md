@@ -40,6 +40,14 @@ Incremental declaration contracts include the full written type spelling, so cha
 only an element type invalidates observing bodies. Existing publication, preparation,
 cleanup and emission boundaries remain unchanged.
 
+## Split and join
+
+A published runtime call returning a concrete vector can initialize an inferred or
+explicitly typed local of the same specialization. Split returns an owning
+`vector<string>`; join accepts that exact specialization. The generated
+flavor adapters include the vector export's provider through a dedicated
+`string_vectors.hpp` header. Ordinary string calls retain their existing includes.
+
 ## Initial type-resolution verification (2026-11-06)
 
 The 77 selected compiler CTests pass. Focused tests cover all three flavors, aliases,

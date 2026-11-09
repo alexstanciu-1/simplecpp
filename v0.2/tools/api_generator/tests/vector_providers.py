@@ -38,7 +38,10 @@ def proof(work):
             assert prepared == json.loads(raw), 'Emission changed prepared provider graph'
             headers, _ = run(['php', generator, 'provider-headers', mp, pp])
             expected_headers = sorted(prepared['submodules']['nodes'][p]['header'] for p in prepared['submodules']['published'])
-            assert json.loads(headers) == expected_headers, 'CMake inventory differs from published providers'
+            adapters = {a['header'] for f in prepared.get('string_functions', {}).values() for a in f.get('adapters', {}).values()}
+            if (output / 'public/scpp/value_error.hpp').exists():
+                adapters.add('scpp/value_error.hpp')
+            assert json.loads(headers) == sorted(set(expected_headers) | adapters), 'CMake inventory differs from published providers'
             return prepared
 
     def snapshot():
@@ -89,7 +92,11 @@ def proof(work):
 
     no_vectors = copy.deepcopy(publication)
     no_vectors.pop('vectors'); no_vectors.pop('carriers'); no_vectors.pop('hashes', None)
+    emit(metadata, no_vectors, 1)  # Split/join explicitly demand the vector<string> export.
+    no_vectors['string']['functions'] = [f for f in no_vectors['string']['functions']
+                                         if f not in ('explode', 'implode', 'strpos', 'strrpos')]
     absent = emit(metadata, no_vectors)
+    assert not list((output / 'public/scpp').glob('*/string_vectors.hpp'))
     assert not (output / 'public/scpp/vectors.hpp').exists()
     assert not any(k.startswith('vector_') for k in absent['submodules']['type_exports'])
     assert 'core.vectors' not in absent['submodules']['published']
@@ -121,6 +128,9 @@ def proof(work):
         after = {p.name: p.read_bytes() for p in compiler.rglob('*.php')}
         assert {k: v for k, v in after.items() if k != 'vectors.php'} == {k: v for k, v in compiler_before.items() if k != 'vectors.php'}, 'Scalar compiler output changed'
         assert binding() == ['vector<int64>', 'scpp::vector_int64', [header], observations], 'Compiler ignored runtime export placement'
+        for flavor in ('cpp', 'php', 'js'):
+            adapter = output / f'public/scpp/{flavor}/string_vectors.hpp'
+            assert f'#include "{header}"' in adapter.read_text()
         source = work / 'consumer.cpp'
         source.write_text(f'''#include <{header}>
 #include <stdexcept>
@@ -147,7 +157,7 @@ int main() {{
         rejected.write_text(f'#include <{header}>\nvoid f() {{ scpp::vector_int64 v; v.append(1.5); }}\n')
         run([*flags, '-fsyntax-only', rejected], 1)
         runtime_object = work / 'runtime.o'
-        run([*flags, '-I' + str(ROOT / 'runtime/src/numeric'), '-I' + str(ROOT / 'runtime/src/sequence'),
+        run([*flags, '-I' + str(ROOT / 'runtime/src/numeric'), '-I' + str(ROOT / 'runtime/src/sequence'), '-I' + str(ROOT / 'runtime/src/ownership'),
              '-c', output / 'src/runtime.cpp', '-o', runtime_object])
         obj = work / 'consumer.o'
         _, compile_ms = run([*flags, '-ftime-trace', '-ftime-trace-granularity=0', '-c', source, '-o', obj])

@@ -51,6 +51,48 @@ foreach (flavor::cases() as $flavor) {
 		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
+	$split = static fn(string $subject, string $sep): string => $flavor === flavor::php
+		? "explode($sep, $subject)" : "$subject.split($sep)";
+	$join = static fn(string $parts, string $sep): string => match ($flavor) {
+		flavor::php => "implode($sep, $parts)", flavor::cpp => "join($parts, $sep)", flavor::js => "$parts.join($sep)",
+	};
+	$parts = $flavor === flavor::php ? '$parts' : 'parts';
+	$init = $split('",a,,b,"', '","');
+	$decl = match ($flavor) {
+		flavor::cpp => "auto parts = $init; vector<string> empty_parts = [];",
+		flavor::js => "let parts = $init; let empty_parts: vector<string> = [];",
+		flavor::php => '$parts = ' . $init . '; $empty_parts vector<string> = [];',
+	};
+	$empty = $flavor === flavor::php ? '$empty_parts' : 'empty_parts';
+	$fields = [
+		"count($parts)", $join($parts, '":"'), $join($parts, '""'), $join($empty, '"!"'),
+		'count(' . $split('""', '","') . ')', $join($split('"abc"', '"longer"'), '"|"'),
+		$join($split('"aaa"', '"aa"'), '"|"'), $join($split('"a\0b\0"', '"\0"'), '"\0"'),
+		$join($split('"é中é"', '"é"'), '"-"'),
+	];
+	$code = $decl . 'echo ' . implode(', ";", ', $fields) . '; return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($code));
+	verify(str_contains($cpp, '<scpp/' . $flavor->name . '/string_vectors.hpp>') && !str_contains($cpp, 'std::vector'),
+		'Split/join must use concrete vector bindings');
+	$fixtures[$flavor->name . '-split-join'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("5;:a::b:;ab;;1;abc;|a;a\0b\0;-中-")];
+	foreach (['""', '"abc"'] as $index => $subject) {
+		$code = 'echo count(' . $split($subject, '""') . '); return 8;';
+		$fixtures[$flavor->name . '-split-empty-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+			'catch_ValueError' => 'Split requires a nonempty separator', 'stdout_hex' => ''];
+	}
+	$too_many = $flavor === flavor::php ? 'explode(",", "abc", 1)' : '"abc".split(",", 1)';
+	rejects(fn() => $prepare('echo count(' . $too_many . '); return 8;'), 'Argument count');
+	$integers = match ($flavor) {
+		flavor::php => '$ints vector<int> = [];', flavor::cpp => 'vector<int> ints = [];', flavor::js => 'let ints: vector<int> = [];',
+	};
+	$bad_join = $join($flavor === flavor::php ? '$ints' : 'ints', '","');
+	rejects(fn() => $prepare($integers . "echo $bad_join; return 8;"), $flavor === flavor::js ? 'unknown method' : 'requires vector<string>');
+	if ($flavor === flavor::php) {
+		$code = 'function subject(int &$calls, string &$sep): string { $calls++; $sep = ":"; return "a,b"; }'
+			. '$sep = ","; $calls = 0; $parts vector<string> = explode($sep, subject($calls, $sep));'
+			. 'echo implode("|", $parts), ";", $sep, ";", $calls; return 8;';
+		$fixtures['php-split-order'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)), 'stdout_hex' => bin2hex('a|b;:;1')];
+	}
 	$count_matches = static fn(string $subject, string $args): string => match ($flavor) {
 		flavor::php => "substr_count($subject, $args)", flavor::js => "$subject.countMatches($args)",
 		flavor::cpp => "$subject.count_matches($args)",

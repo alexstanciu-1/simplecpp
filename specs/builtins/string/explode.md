@@ -49,6 +49,16 @@ Doc Status: normative
 - v0.2 registers both arities through the strings module catalog, bound directly to
   shared `scpp::str::split`; it does not introduce nullable limit arguments.
 
+## Active v0.2 compiler
+
+The active v0.2 compiler publishes `explode(separator, subject)` in PHP and
+`subject.split(separator)` in JS and C++. These forms return an owning
+`vector<string>`. The full separator is matched as literal bytes, including NUL.
+Keep leading, adjacent and trailing empty fields. An absent separator yields one
+field containing the subject, including one empty field for an empty subject.
+An empty separator raises ValueError in every flavor, even for an empty subject.
+The optional PHP limit described above remains deferred in this compiler.
+
 ## Test matrix
 - default split
 - positive limit

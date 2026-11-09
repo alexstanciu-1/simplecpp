@@ -48,6 +48,15 @@ Doc Status: normative
   is not enabled: historical adapter casts must first be reconciled with the
   string-only element contract. No coercing boxed behavior is implicitly adopted.
 
+## Active v0.2 compiler
+
+The active v0.2 compiler publishes `implode(separator, parts)` in PHP,
+`parts.join(separator)` in JS and `join(parts, separator)` in C++.
+The separator is explicit and may be empty. Parts must be a `vector<string>`.
+Write exactly one separator between each pair of consecutive elements, including
+empty elements. An empty vector yields an empty string. Both separator and
+elements preserve their exact bytes, including NUL.
+
 ## Test matrix
 - packed hash join
 - associative hash join

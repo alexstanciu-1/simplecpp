@@ -239,11 +239,14 @@ function compilerProviderMetadata(mixed $metadata, ?array $plan = null): object 
     return $copy;
 }
 
-function stringAdapterHeader(string $flavor): string {
-    return "scpp/$flavor/string.hpp";
+const STRING_VECTOR_IMPLEMENTATIONS = ['split_bytes', 'join_bytes'];
+
+function stringAdapterHeader(string $flavor, string $implementation): string {
+    $file = in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true) ? 'string_vectors' : 'string';
+    return "scpp/$flavor/$file.hpp";
 }
 
-const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['pad_bytes', 'count_matches'];
+const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['pad_bytes', 'count_matches', 'split_bytes'];
 
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
@@ -264,8 +267,8 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $function = at($metadata->string->functions, $name);
         if (in_array($function->implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) $headers[] = 'scpp/value_error.hpp';
         if (!($function->flavor_adapters ?? false)) continue;
-        $flavors = $function->flavors ?? ['php', ...array_keys(isset($function->members) ? object($function->members) : [])];
-        foreach ($flavors as $flavor) $headers[] = stringAdapterHeader($flavor);
+        $flavors = $function->flavors ?? ['php', ...array_keys((array)($function->members ?? []) + (array)($function->free_names ?? []))];
+        foreach ($flavors as $flavor) $headers[] = stringAdapterHeader($flavor, $function->implementation);
     }
     $headers = array_values(array_unique($headers));
     sort($headers, SORT_STRING);

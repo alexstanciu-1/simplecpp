@@ -42,6 +42,12 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareBoxed($metadata, $publication, $facts, $plan);
     prepareCarriers($metadata, $publication, $plan);
     foreach ($plan['string_functions'] ?? [] as $name => $binding) {
+        if (in_array($binding['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) {
+            $vector = $plan['source_types']->{'vector<string>'} ?? null;
+            requireThat($vector !== null, "$name requires a published vector<string>");
+            $export = typeExport($plan['submodules'], $vector);
+            $plan['string_functions'][$name]['header'] = providerHeader($plan['submodules'], $export['provider']);
+        }
         foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
             if (!isset($adapter['body'])) continue;
             $export = $plan['source_types']->{$adapter['result']} ?? null;
@@ -110,9 +116,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants', 'free_names']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
+            'split_bytes' => ['parameters' => ['string', 'string'], 'result' => 'vector<string>'],
+            'join_bytes' => ['parameters' => ['vector<string>', 'string'], 'result' => 'string'],
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'find', 'rfind', 'count_matches' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
@@ -131,19 +139,23 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
             && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
         foreach ([...$signature['parameters'], $signature['result']] as $type) {
-            if ($type === 'string') continue;
+            if ($type === 'string' || $type === 'vector<string>') continue;
             requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
             $requires[] = $type;
         }
         $members = isset($function->members) ? fields($function->members, ['cpp', 'js']) : [];
-        foreach ($members as $flavor => $member) {
-            requireThat($signature['parameters'][0] === 'string' && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', textValue($member)) === 1
+        $freeNames = isset($function->free_names) ? fields($function->free_names, ['cpp', 'js']) : [];
+        requireThat(!array_intersect_key($members, $freeNames), 'Duplicate flavor spelling');
+        requireThat(!$members || in_array($signature['parameters'][0], ['string', 'vector<string>'], true),
+            'Invalid string member receiver');
+        foreach ($members + $freeNames as $flavor => $member) {
+            requireThat(preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', textValue($member)) === 1
                 && !isset($memberNames[$flavor][$member]), 'Invalid or duplicate string member binding');
             $memberNames[$flavor][$member] = true;
         }
         $padding = $implementation === 'pad_bytes';
         requireThat($padding === isset($function->pad_side), 'Padding requires a side');
-        $spellings = ['php' => $name] + $members;
+        $spellings = ['php' => $name] + $members + $freeNames;
         requireThat($padding === isset($function->flavors), 'Padding adapters require explicit flavors');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
@@ -185,6 +197,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
         $enabled = boolean($function->flavor_adapters ?? false);
+        requireThat($enabled || !in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true),
+            'String/vector operations require flavor adapters');
         $signatures = isset($function->signatures) ? fields($function->signatures, array_keys(['php' => $name] + $members)) : [];
         requireThat(!$signatures || $enabled, 'Flavor signatures require generated adapters');
         if ($enabled) {
@@ -210,9 +224,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
                     requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
                 }
-                checkHeader($plan, stringAdapterHeader($flavor));
+                if (isset($freeNames[$flavor])) $options['free'] = true;
+                if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['reverse'] = true;
+                checkHeader($plan, stringAdapterHeader($flavor, $implementation));
                 $plan['string_functions'][$name]['adapters'][$flavor] = [
-                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor)] + $options;
+                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor, $implementation)] + $options;
             }
         }
     }

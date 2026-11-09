@@ -25,16 +25,23 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     $path = 'public/' . $adapter['header'];
                     $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
                     $result = $adapter['result'] ?? $binding['result'];
+                    $result = $plan['source_types']->{$result} ?? $result;
                     if (isset($adapter['body']) && !isset($carrierIncludes[$path])) {
                         $files[$path] .= includeHeader($plan['carriers_header']);
                         $carrierIncludes[$path] = true;
                     }
                     $parameters = [];
                     $arguments = [];
-                    foreach ($binding['parameters'] as $i => $type) {
+                    $types = isset($adapter['reverse']) ? array_reverse($binding['parameters']) : $binding['parameters'];
+                    foreach ($types as $i => $type) {
                         $arguments[] = $arg = "arg$i";
-                        $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
+                        $cppType = match ($type) {
+                            'string', 'vector<string>' => 'const ::scpp::' . $plan['source_types']->{$type} . '&',
+                            default => "::scpp::$type",
+                        };
+                        $parameters[] = "$cppType $arg";
                     }
+                    if (isset($adapter['reverse'])) $arguments = array_reverse($arguments);
                     if (isset($adapter['pad_side'])) {
                         $parameters[2] .= ' = ::scpp::string{" ", 1}';
                         if ($adapter['pad_side'] === 'argument') {
@@ -101,7 +108,7 @@ function renderString(array $plan): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes'])
+    $vars['classic_storage'] = array_intersect($classic, ['repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
         ? template('string_classic_storage', ['n' => $n]) : '';
     $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
     if ($read) {
@@ -137,6 +144,7 @@ function renderString(array $plan): array {
     $replaceSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
+        if (in_array($function['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) continue;
         if ($function['implementation'] === 'pad_bytes') {
             if (!$padSymbols) $h .= "namespace str { enum class pad_side : int64 { left = 0, right = 1, both = 2 }; }\n";
             if (!isset($padSymbols[$name])) {
@@ -276,6 +284,16 @@ function renderVectors(array $plan): array {
             $h .= "$sig;\n";
             $d .= template('vector_comparison', $vars + ['sig' => $sig, 'negate' => $op['operation'] === 'equal' ? '':'!']);
         }
+    }
+    foreach ($plan['string_functions'] ?? [] as $binding) {
+        if (!in_array($binding['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) continue;
+        $vector = $plan['source_types']->{'vector<string>'};
+        $name = substr($binding['symbol'], strlen('scpp::str::'));
+        $signature = $binding['implementation'] === 'split_bytes'
+            ? "$vector $name(const string& subject, const string& separator)"
+            : "string $name(const $vector& pieces, const string& separator)";
+        $h .= "namespace str { $signature; }\n";
+        $d .= template($binding['implementation'], ['signature' => $signature, 'vector' => $vector]);
     }
     return [$h . "}\n", $d];
 }

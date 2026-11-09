@@ -21,10 +21,21 @@ abstract class vector_type_definition extends type_definition implements indexed
 	}
 
 	/** METHODS */
+	public function supports_inferred_local(): bool
+	{
+		return true;
+	}
+
+	/** Empty construction and owning runtime results can initialize a local with the same specialization. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		if (($value instanceof ast_empty_collection_expression) && ($value->type_def() === $this)
 			&& ($context === conversion_context::typed_destination)) {
+			return value_conversion::identity;
+		}
+		if ($value instanceof ast_call_expression && $value->parent instanceof ast_local_declaration
+			&& $value->type_def() === $this && $value->function_def() instanceof runtime_function
+			&& in_array($context, [conversion_context::typed_destination, conversion_context::inference], true)) {
 			return value_conversion::identity;
 		}
 		throw new diagnostic($value->source(), $value->byte_start(), 'Vector value operations are deferred');

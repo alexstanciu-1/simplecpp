@@ -65,6 +65,14 @@ def prove(work):
         text = originals[flavor].replace(calls[flavor][0], condition)
         edits[f'bad-count-{flavor}'] = (predicates[flavor], text.replace(call, call.replace(needle + ')', '7)')))
         edits[f'recovery-count-{flavor}'] = (predicates[flavor], text)
+    round_trips = {'php': 'implode("!", explode("!", $n))', 'cpp': 'join(n.split("!"), "!")',
+                   'js': 'n.split("!").join("!")'}
+    for flavor, call in round_trips.items():
+        # Keep the caller unchanged while the edited function switches providers.
+        expression = calls[flavor][0].replace('$n)', call + ')') if flavor == 'php' else calls[flavor][0].replace('(n)', f'({call})')
+        valid = originals[flavor].replace(calls[flavor][0], expression)
+        edits['bad-split-join-' + flavor] = (predicates[flavor], valid.replace('"!"', '7'))
+        edits['recovery-split-join-' + flavor] = (predicates[flavor], valid)
     # Repair the count in a nested string-producing call. The cross-unit caller stays unchanged.
     transforms = {
         'php': 'str_contains(strtoupper(strtolower($s)), strtoupper(str_repeat($n, 1)))',
