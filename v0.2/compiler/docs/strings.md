@@ -112,7 +112,12 @@ side effects. All searches count bytes. JS and C++ return −1 on a miss. PHP
 `strpos` and `strrpos` declare `result_or_false<int>` in their flavor signatures.
 The generated body calls the byte search once and wraps a hit, including offset zero,
 or returns the false sentinel. An inferred PHP local keeps that carrier; `isset($pos)`
-tests for a payload. This slice supports the two-argument forms. ASCII case conversion preserves all other bytes. Predicates
+tests for a payload. This slice supports the two-argument forms.
+
+The generated flavor headers also expose ASCII lowercase, ASCII uppercase and repeat.
+PHP uses `strtolower`, `strtoupper` and `str_repeat`; JS uses `toLowerCase`,
+`toUpperCase` and `repeat`; C++ uses `to_lower`, `to_upper` and `repeat`.
+Each returns an owned string. ASCII case conversion preserves all other bytes. Predicates
 and searches view the existing string storage and accept embedded NUL. Repeat
 checks its signed count and output size before allocating.
 See the [three-flavor catalog](../../specs/planning/non_object_feature_catalog.md#classic-string-functions).

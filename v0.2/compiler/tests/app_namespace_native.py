@@ -58,6 +58,17 @@ def prove(work):
             invalid = text.replace(candidate, candidate.replace('$n)', '200)').replace('(n)', '(200)'))
             edits['bad-' + role + '-' + flavor] = (path, invalid)
             edits['recovery-' + role + '-' + flavor] = (path, text.replace('return ', 'return !!') if role == 'prefix' else text)
+    # Repair the count in a nested string-producing call. The cross-unit caller stays unchanged.
+    transforms = {
+        'php': 'str_contains(strtoupper(strtolower($s)), strtoupper(str_repeat($n, 1)))',
+        'js': 's.toLowerCase().toUpperCase().includes(n.repeat(1).toUpperCase())',
+        'cpp': 's.to_lower().to_upper().contains(n.repeat(1).to_upper())',
+    }
+    for flavor, expression in transforms.items():
+        path = predicates[flavor]
+        text = originals[flavor].replace(calls[flavor][0], expression)
+        edits['bad-transforms-' + flavor] = (path, text.replace('1)', '"bad")'))
+        edits['recovery-transforms-' + flavor] = (path, text)
     for flavor, call in [('php', 'str_starts_with'), ('js', 'startsWith'), ('cpp', 'starts_with')]:
         probe = (f'#include <scpp/{flavor}/string.hpp>\nnamespace Consumer {{\n'
                  f'using namespace ::scpp::types; using namespace ::scpp::{flavor};\n'

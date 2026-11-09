@@ -71,7 +71,19 @@ foreach (flavor::cases() as $flavor) {
 		flavor::js => 'echo "A😀B".indexOf("B"), "a😀a".lastIndexOf("a"), "abc".indexOf("x"), "ab".lastIndexOf(""), "ÉAb".toLowerCase(), "éAb".toUpperCase(), "x\0".repeat(2);',
 		flavor::cpp => 'echo "A😀B".find("B"), "a😀a".rfind("a"), "abc".find("x"), "ab".rfind(""), "ÉAb".to_lower(), "éAb".to_upper(), "x\0".repeat(2);',
 	};
-	$fixtures[$flavor->name . '-classic'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($classic . 'return 8;')),
+	$classic_cpp = (new Cpp_Emitter())->emit($prepare($classic . 'return 8;'));
+	$transform_names = match ($flavor) {
+		flavor::php => ['strtolower', 'strtoupper', 'str_repeat'],
+		flavor::js => ['toLowerCase', 'toUpperCase', 'repeat'],
+		flavor::cpp => ['to_lower', 'to_upper', 'repeat'],
+	};
+	foreach ($transform_names as $name) {
+		verify(str_contains($classic_cpp, $name . '('), 'Missing string adapter call: ' . $name);
+	}
+	foreach (['ascii_lower', 'ascii_upper', 'repeat'] as $name) {
+		verify(!str_contains($classic_cpp, 'scpp::str::' . $name . '('), 'String transformation bypassed its adapter');
+	}
+	$fixtures[$flavor->name . '-classic'] = ['cpp' => $classic_cpp,
 		'stdout_hex' => bin2hex(($flavor === flavor::php ? "5502" : "55-12") . "ÉabéABx\0x\0")];
 	[$first, $last] = match ($flavor) {
 		flavor::php => ['strpos', 'strrpos'], flavor::cpp => ['find', 'rfind'], flavor::js => ['indexOf', 'lastIndexOf'],
@@ -103,6 +115,9 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
 	$repeat = static fn(string $value, string $count): string => $flavor === flavor::php
 		? "str_repeat($value, $count)" : "$value.repeat($count)";
+	$empty_repeats = 'echo "[",' . $repeat('"abc"', '0') . ', ' . $repeat('""', '2') . ', "]"; return 8;';
+	$fixtures[$flavor->name . '-repeat-empty'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($empty_repeats)),
+		'stdout_hex' => bin2hex('[]')];
 	foreach ([['-1', 'invalid_argument', 'negative_string_repeat'], ['9223372036854775807', 'length_error', 'string_repeat_too_large']] as [$n, $exception, $message]) {
 		$fixtures[$flavor->name . '-repeat-' . $exception] = ['cpp' => (new Cpp_Emitter())->emit($prepare(
 			'echo ' . $repeat('"ab"', $n) . '; return 8;')), 'stdout_hex' => '', 'catch_' . $exception => $message];
