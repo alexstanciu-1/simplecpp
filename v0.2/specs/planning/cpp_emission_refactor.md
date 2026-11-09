@@ -120,6 +120,22 @@ Vector and hash provider-export fixtures check the configure-time inventory agai
 the prepared provider graph and string adapters, including reduced publications.
 [Target test](../../tools/api_generator/tests/collection_arguments.py) · [Relocation proof](../../tools/api_generator/tests/submodules.py)
 
-### Next collection slice — mixed and dynamic together
+### Second collection slice — mixed and dynamic
 
-Apply the same argument rule inside the boxed bindings for both families. For example, a comparison can already supply the exact integer input to `mixed::from_integer`, while the factory must still produce the box. Keep key classification and validation before RHS conversion on writes. For valid keys, a miss or a read from null yields a same-family null, and indexing a non-null scalar throws. A keyed write to null creates a container for `mixed` and throws for `dynamic`. Mixed container copies detach on mutation, while dynamic aliases observe the mutation. Verify these differences side by side, including key failure before an effectful RHS, admitted scalar boxing, same-family values and rejection of implicit cross-family writes. [Boxed key and store lowering](../../compiler/types/boxed.php) · [Factory generation](../../tools/api_generator/php/boxed_dispatch.php) · [Runtime mutation](../../runtime/src/boxed/boxed_value.cpp) · [Boxed regressions](../../compiler/tests/boxed_scalars.php)
+Both generated family bindings pass the prepared scalar expression to the shared exact-argument
+renderer for the factory parameter. It gives integer literals the target suffix, passes an
+exact local or an already-normalized comparison directly, and widens a byte for the integer
+factory. A same-family value uses the existing identity conversion. The key adapter takes an
+integer or string and completes range checking or string classification before the write
+evaluates its RHS. This slice adds no preparation facts.
+
+The cpp/php/js fixtures exercise both copy policies, null and missing-key reads, writes to
+null, scalar-receiver errors and rejected cross-family stores. A negative integer key suppresses
+an observable RHS call. For a key function returning the string `"1"`, the native fixtures
+observe one key call, one RHS call and the stored value. Returning `"2147483648"` instead
+produces only the key marker and the `packed_integer_key_limit` exception.
+Explicit conversions that already produce int64 pass straight to the factory, including
+checked float conversion and boxed extraction. An identity cast around an ordinary literal
+still needs the target's overload rules. The target test compiles these argument boundaries
+for both native integer layouts.
+[Boxed regressions](../../compiler/tests/boxed_scalars.php) · [Factory generation](../../tools/api_generator/php/boxed_dispatch.php) · [Target test](../../tools/api_generator/tests/collection_arguments.py)

@@ -88,6 +88,10 @@ final class type_@name@ extends type_definition
 		if ($conversion === value_conversion::identity && @native_suffix@ !== @cpp_suffix@
 			&& !($syntax instanceof ast_call_expression) && !($syntax instanceof ast_index_expression)
 			&& !(($syntax instanceof ast_name_expression) && !($syntax->declaration() instanceof ast_constant_declaration))) {
+			// An explicit nonidentity integer conversion emits a target cast, extraction or typed helper.
+			if ($syntax instanceof ast_cast_expression && $syntax->conversion() !== value_conversion::identity) {
+				return $operand;
+			}
 			if ($syntax instanceof ast_binary_expression && $syntax->execution_type()->cpp_exact_binary_result($syntax->operator) === $this) {
 				return $operand;
 			}

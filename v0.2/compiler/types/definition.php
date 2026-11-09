@@ -297,8 +297,8 @@ abstract class type_definition
 	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
 	{
 		$source = $syntax?->type_def();
-		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $source !== null) {
-			return $this->box_cpp($source, $value);
+		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
+			return $this->box_cpp($syntax, $value);
 		}
 		if ($source instanceof boxed_type_definition && $conversion !== value_conversion::identity) {
 			$context = match ($conversion) {

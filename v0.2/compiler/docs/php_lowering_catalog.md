@@ -306,7 +306,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                                            |                                                                                               | #include <scpp/core/scalars.hpp> | emits its published value predicate    |
 |                                            |                                                                                               | No unit header.                  | directly, evaluating the operand once. |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(static_cast<scpp::int64>(8LL));               | .cpp includes                    | The mixed binding boxes the scalar and |
+| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(8L);                                          | .cpp includes                    | The mixed binding boxes the scalar and |
 | $y int = $x;                               | scpp::int64 var_y_1 = scpp::boxed_mixed_typed_destination_int64(var_x_0);                     | #include <scpp/core/scalars.hpp> | selects typed-destination extraction.  |
 |                                            |                                                                                               | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
 |                                            |                                                                                               | No unit header.                  |                                        |
@@ -318,12 +318,14 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                                      | {                                                                                             | .cpp includes                    | The boxed type constructs the runtime  |
 |     $x mixed = [];                         |     const auto write_key = scpp::boxed_key(scpp::string{"\153", 1});                          | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
-| $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(static_cast<scpp::int64>(8LL));        | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
+| $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(8L);                                   | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
 | $v = $x["k"];                              |     (var_x_0).source_set(write_key, write_value);                                             | #include <scpp/string.hpp>       |                                        |
 |                                            | }                                                                                             | No unit header.                  |                                        |
 |                                            | scpp::mixed var_v_1 = (var_x_0).source_read(scpp::boxed_key(scpp::string{"\153", 1}));        |                                  |                                        |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
+
+Mixed and dynamic use the same argument lowering for their scalar factories. In the keyed write above, `8L` already has the factory’s `scpp::int64` parameter type on this target. An `int` local passes directly and a byte local needs widening. A checked float-to-integer conversion or explicit boxed-to-integer extraction already returns the factory parameter type. Both families validate the key before evaluating the value.
 
 ## Functions, namespaces and project units
 

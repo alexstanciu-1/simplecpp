@@ -19,14 +19,15 @@ echo (new Cpp_Emitter())->emit((new Source_Frontend())->prepare($file, new entry
 
 def program(flavor):
     declarations = {
-        'cpp': 'vector<int> v = []; hash<int,int> h = []; int i = 0; int j = 1;',
-        'php': '$v vector<int> = []; $h hash<int,int> = []; $i int = 0; $j int = 1;',
-        'js': 'let v: vector<int> = []; let h: hash<int,int> = []; let i: int = 0; let j: int = 1;',
+        'cpp': 'vector<int> v = []; hash<int,int> h = []; int i = 0; int j = 1; mixed m = []; dynamic d = [];',
+        'php': '$v vector<int> = []; $h hash<int,int> = []; $i int = 0; $j int = 1; $m mixed = []; $d dynamic = [];',
+        'js': 'let v: vector<int> = []; let h: hash<int,int> = []; let i: int = 0; let j: int = 1; let m: mixed = []; let d: dynamic = [];',
     }
     prefix = '$' if flavor == 'php' else ''
     v, h, i, j = (prefix + name for name in ('v', 'h', 'i', 'j'))
-    return (declarations[flavor] + f'{v}[] = 1; {v}[] = {j} <=> {i};'
-            f'{h}[{i} + 1] = {v}[{j}]; {h}[0] = {v}[{i}] + 1; return {h}[0];')
+    boxed = ''.join(f'{prefix}{box}[{i}] = 1; {prefix}{box}[{j}] = {i} + 1;' for box in ('m', 'd'))
+    return (declarations[flavor] + boxed + f'{v}[] = 1; {v}[] = {j} <=> {i};'
+            f'{v}[] = (int)4; {v}[] = (int)true; {h}[{i} + 1] = {v}[{j}]; {h}[0] = {v}[{i}] + 1; return {h}[0];')
 
 
 def proof(work, native_facts, context):
@@ -54,12 +55,16 @@ def proof(work, native_facts, context):
         for flavor in ('cpp', 'php', 'js'):
             cpp = subprocess.check_output(['php', '-r', EMIT, boot, flavor, program(flavor)], text=True)
             for call in (f'.append(1{suffix})', f'.at(0{suffix})', '.at(var_j_3)',
+                         '.append((static_cast<scpp::int64>(true)))',
                          '.set(write_key, write_value)'):
                 assert call in cpp, (target, flavor, call, cpp)
             arithmetic = '(var_i_2 + 1LL)'
             if native == 'long':
                 arithmetic = f'static_cast<scpp::int64>({arithmetic})'
             assert f'const auto write_key = {arithmetic};' in cpp, (target, flavor, cpp)
+            for family in ('mixed', 'dynamic'):
+                for argument in ('1' + suffix, arithmetic):
+                    assert f'scpp::{family}::from_integer({argument})' in cpp, (target, flavor, cpp)
             # Also check the modeled native identity against Clang's actual target type.
             unit = cpp + f'\nstatic_assert(__is_same(scpp::int64, {native}));\n'
             subprocess.run(['clang++', '-target', target, '-ffreestanding', '-std=c++23',

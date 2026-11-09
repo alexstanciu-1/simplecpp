@@ -62,7 +62,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 
 	abstract public function accepts_scalar(type_definition $source): bool;
 	abstract public function admits_extraction(type_definition $target, conversion_context $context): bool;
-	abstract public function box_cpp(type_definition $source, string $value): string;
+	abstract public function box_cpp(ast_expression $syntax, string $value): string;
 	abstract public function admits_pair(binary_operator $operator, type_definition $peer, bool $box_left): bool;
 
 	/** Admit copies within this family and box scalar values through the generated bindings. */

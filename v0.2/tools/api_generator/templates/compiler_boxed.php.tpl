@@ -24,8 +24,9 @@ final class type_@name@ extends boxed_type_definition
 		};
 	}
 
-	public function box_cpp(type_definition $source, string $value): string
+	public function box_cpp(ast_expression $syntax, string $value): string
 	{
+		$source = $syntax->type_def();
 		return match ($source->name) {
 @factories@			default => throw new \LogicException('Unprepared boxing operation'),
 		};
