@@ -13,7 +13,7 @@ A **staged refactor of the C++ backend and its generated handlers is warranted**
 ## Evidence from current emission
 
 - For two plain integer locals, `$a + $b` emits an addition. `$a + $a` emits a lambda and two snapshots. The same-spelling guard protects self-comparisons from a Clang warning and also catches addition. Warning handling belongs to the operation that can trigger the warning.
-- For `function greet(string $s = "hi"): void`, `greet()` passes the constructed string directly. `greet("hi")` emits a lambda, a named string and an rvalue cast. Preparation knows the destination and passing mode for both. The call emitter also builds temporary-binding text while iterating general arguments, even when it ultimately returns the direct call. Emitted bytes and PHP lowering cost are separate measurements.
+- At the time of the audit, for `function greet(string $s = "hi"): void`, `greet()` passes the constructed string directly. `greet("hi")` emits a lambda, a named string and an rvalue cast. Preparation knows the destination and passing mode for both. The call emitter also builds temporary-binding text while iterating general arguments, even when it ultimately returns the direct call. Emitted bytes and PHP lowering cost are separate measurements.
 - The integer three-way formula reads each operand twice and returns C++ `int` before its explicit result cast. Two independent decisions follow. A call operand needs one evaluation. A typed `scpp::int64` initializer can supply the final widening. An enclosing overload or arithmetic operation may require the exact result type earlier.
 - A small PHP input measured 145 source bytes, 1,048 bytes for its implementation unit, 122 bytes for the separate entry adapter, no application header and two immediately invoked lambdas. Input was the following single line, without a trailing newline. Counts include generated includes, prototypes and formatting. This is a reproducible shape probe; compile-time impact remains unmeasured.
 
@@ -139,3 +139,15 @@ checked float conversion and boxed extraction. An identity cast around an ordina
 still needs the target's overload rules. The target test compiles these argument boundaries
 for both native integer layouts.
 [Boxed regressions](../../compiler/tests/boxed_scalars.php) · [Factory generation](../../tools/api_generator/php/boxed_dispatch.php) · [Target test](../../tools/api_generator/tests/collection_arguments.py)
+
+## Single by-value source parameter
+
+A source call with one by-value parameter now applies the supplied argument's prepared
+conversion, or the declaration's prepared default conversion, directly inside the call.
+The callee's parameter owns its copy. The cpp/php/js fixtures cover explicit and default
+strings, caller-visible copy independence, and a checked byte conversion whose producer
+runs once and whose failure suppresses the callee. A byte parameter with default 7
+exercises both conversions on the same declaration. After a library default changes
+from 8 to 123, and again after removal and restoration to 8, the published incremental
+caller matches fresh emission byte for byte. Typed-initialization spelling and
+multiple-parameter calls remain deferred. [Direct-call regressions](../../compiler/tests/direct_lowering.php) · [Defaults](../../compiler/tests/parameter_defaults.php)

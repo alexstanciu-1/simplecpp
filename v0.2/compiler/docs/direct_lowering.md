@@ -25,10 +25,11 @@ and less-than. Its runtime helpers still check the boxed payload.
 - Source calls always return false, even if their arguments permit direct spelling.
   No assumption is made about the callee's effects or exceptions.
 - A single reference parameter binds directly to a local declaration of the exact
-  type. Preparation checks writable storage. Calls also omit their wrapper when all
-  arguments are safe, trivial by-value values with identity conversions. A default
-  string literal can directly initialize a sole by-value parameter with identity
-  conversion. Other argument lists retain their temporaries.
+  type. Preparation checks writable storage. For a sole by-value parameter, the
+  emitter applies the prepared conversion to the supplied argument or declaration
+  default directly in the call. C++ initializes the parameter, including copying
+  an lvalue string. Calls with multiple arguments can omit temporaries when all
+  arguments are safe, trivial by-value values with identity conversions.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)

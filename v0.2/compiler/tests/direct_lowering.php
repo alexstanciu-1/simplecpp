@@ -85,6 +85,22 @@ foreach (flavor::cases() as $flavor)
 	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
 	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "pair($x, 1); return 8;");
 	verify(str_contains($cpp, 'bump_(argument_') && str_contains($cpp, 'pair_(argument_'), 'Other reference call forms changed');
+	$change = $fn('change', $param('string', 's'), 'void', $s . ' = "changed"; echo ' . $s . ';');
+	$cpp = $emit($change . $string . "change($s); echo $s; return 8;");
+	verify(str_contains($cpp, 'change_(var_s_0);'), 'The by-value string parameter should make the copy');
+	$fixtures[$flavor->name . '_string_parameter_copy'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('changedhi')];
+	$accept = $fn('accept', $param('byte', 'x'), 'void', 'echo "C", (int)' . $x . ';');
+	foreach ([7, 300] as $number) {
+		$source = $fn('produce', '', 'int', 'echo "P"; return ' . $number . ';') . $accept . 'accept(produce()); return 8;';
+		$cpp = $emit($source);
+		verify(str_contains($cpp, 'accept_(scpp::checked_int64_to_uint8(produce_()));')
+			&& str_contains($cpp, '#include <scpp/conversions.hpp>'), 'Expected direct checked parameter conversion and its provider');
+		$fixture = ['cpp' => $cpp, 'stdout_hex' => bin2hex($number === 7 ? 'PC7' : 'P')];
+		if ($number === 300) {
+			$fixture['catch_out_of_range'] = 'integer_cast_out_of_range';
+		}
+		$fixtures[$flavor->name . '_checked_parameter_' . $number] = $fixture;
+	}
 	$divide = $emit('echo (8 / 2) + 1; return 8;');
 	verify(str_contains($divide, 'const auto binary_left = scpp::int64_divide(8LL, 2LL);'), 'Nested checked division should feed the existing outer snapshot directly');
 	foreach (['int' => 'int64', 'byte' => 'uint8'] as $name => $native) {

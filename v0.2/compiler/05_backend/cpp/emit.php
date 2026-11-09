@@ -601,15 +601,15 @@ final class Cpp_Emitter
 				$type = $parameter->type_def();
 				$operand_safe = false;
 				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe);
-				if (count($function->parameters) === 1) {
-					$direct_binding = match ($parameter->mode) {
-						passing_mode::reference => $argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration,
-						passing_mode::value => $value->arguments === [] && $argument instanceof ast_string_expression
-							&& $conversion === value_conversion::identity,
-					};
-					if ($direct_binding) {
-						return $name . '(' . $operand . ')';
-					}
+				foreach ($type->conversion_headers($conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+				if ($parameter->mode === passing_mode::value) {
+					$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
+				}
+				if (count($function->parameters) === 1 && ($parameter->mode === passing_mode::value
+					|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration))) {
+					return $name . '(' . $operand . ')';
 				}
 				$direct_arguments[] = $operand;
 				$direct = $direct && $operand_safe && $type->cpp_trivial_value()
@@ -621,13 +621,9 @@ final class Cpp_Emitter
 					$arguments[] = $temporary;
 				}
 				else {
-					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
-						. $type->lower_cpp_conversion($conversion, $operand, $argument) . ';';
+					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
 					$arguments[] = $type->cpp_trivial_value() ? $temporary
 						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-				}
-				foreach ($type->conversion_headers($conversion) as $header) {
-					$required_headers[$header] = true;
 				}
 			}
 			if ($direct) {
