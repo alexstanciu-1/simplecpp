@@ -32,7 +32,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     }
                     $parameters = [];
                     $arguments = [];
-                    $types = isset($adapter['reverse']) ? array_reverse($binding['parameters']) : $binding['parameters'];
+                    $types = stringAdapterOrder($binding['parameters'], $adapter);
                     foreach ($types as $i => $type) {
                         $arguments[] = $arg = "arg$i";
                         $cppType = match ($type) {
@@ -41,7 +41,19 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         };
                         $parameters[] = "$cppType $arg";
                     }
-                    if (isset($adapter['reverse'])) $arguments = array_reverse($arguments);
+                    $arguments = stringAdapterOrder($arguments, $adapter);
+                    if (isset($adapter['limit_policy'])) {
+                        $short = implode(', ', array_slice($parameters, 0, 2));
+                        $args = implode(', ', array_slice($arguments, 0, 2));
+                        $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}($short)"
+                            . " { return ::{$binding['symbol']}($args); }\n}\n";
+                        $policy = $adapter['limit_policy'];
+                        if ($policy === 'uint32_cap') {
+                            $arguments[2] = '(arg2 & 0xffffffffLL)';
+                            $policy = 'cap';
+                        }
+                        $arguments[] = "::scpp::str::split_policy::$policy";
+                    }
                     if (isset($adapter['pad_side'])) {
                         $parameters[2] .= ' = ::scpp::string{" ", 1}';
                         if ($adapter['pad_side'] === 'argument') {
@@ -293,7 +305,13 @@ function renderVectors(array $plan): array {
             ? "$vector $name(const string& subject, const string& separator)"
             : "string $name(const $vector& pieces, const string& separator)";
         $h .= "namespace str { $signature; }\n";
-        $d .= template($binding['implementation'], ['signature' => $signature, 'vector' => $vector]);
+        $vars = ['signature' => $signature, 'vector' => $vector];
+        if ($binding['implementation'] === 'split_bytes') {
+            $vars['limited'] = "$vector $name(const string& subject, const string& separator, int64 limit, split_policy policy)";
+            $vars['name'] = $name;
+            $h .= "namespace str { enum class split_policy { remainder, cap }; {$vars['limited']}; }\n";
+        }
+        $d .= template($binding['implementation'], $vars);
     }
     return [$h . "}\n", $d];
 }

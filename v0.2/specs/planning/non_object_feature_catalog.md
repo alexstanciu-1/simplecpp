@@ -171,7 +171,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
 | Repeat | str_repeat(s, n) | s.repeat(n) | s.repeat(n) | Zero gives empty; check size and negative count |
 | Left / right pad | str_pad(s, width, fill, side) | s.padStart(width, fill), s.padEnd(width, fill) | s.pad_start(width, fill), s.pad_end(width, fill) | Byte width; default space; PHP supports both sides and validates fill |
-| Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Explicit separator; preserve empty fields; empty split separator throws; limits deferred |
+| Split / join | explode(sep, s), implode(sep, parts) | s.split(sep), parts.join(sep) | s.split(sep), join(parts, sep) | Explicit separator; preserve empty fields; empty split separator throws; PHP remainder/drop, JS uint32 field cap, C++ nonnegative field cap |
 | Count matches | substr_count(s, needle) | s.countMatches(needle) | s.count_matches(needle) | Non-overlapping byte matches; empty needle throws ValueError |
 
 Implementation order: predicates and fixed-arity runtime calls first; locate and

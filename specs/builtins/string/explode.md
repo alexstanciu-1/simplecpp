@@ -57,7 +57,12 @@ The active v0.2 compiler publishes `explode(separator, subject)` in PHP and
 Keep leading, adjacent and trailing empty fields. An absent separator yields one
 field containing the subject, including one empty field for an empty subject.
 An empty separator raises ValueError in every flavor, even for an empty subject.
-The optional PHP limit described above remains deferred in this compiler.
+All three flavors accept a trailing int64 limit. An omitted limit returns every field.
+Validate the separator before applying the limit, even for a zero cap.
+
+- PHP keeps the unsplit remainder in the last field for a positive limit, treats zero as one, and drops trailing fields for a negative limit.
+- JS takes the low 32 bits of the supplied integer as an unsigned cap and returns up to that many complete fields.
+- C++ takes a nonnegative cap on complete fields. A negative limit raises ValueError.
 
 ## Test matrix
 - default split

@@ -73,6 +73,9 @@ def prove(work):
         valid = originals[flavor].replace(calls[flavor][0], expression)
         edits['bad-split-join-' + flavor] = (predicates[flavor], valid.replace('"!"', '7'))
         edits['recovery-split-join-' + flavor] = (predicates[flavor], valid)
+        bounded = valid.replace('explode("!", $n)', 'explode("!", $n, 2)').replace('split("!")', 'split("!", 2)')
+        edits['bad-split-limit-' + flavor] = (predicates[flavor], bounded.replace(', 2)', ', "bad")'))
+        edits['recovery-split-limit-' + flavor] = (predicates[flavor], bounded)
     # Repair the count in a nested string-producing call. The cross-unit caller stays unchanged.
     transforms = {
         'php': 'str_contains(strtoupper(strtolower($s)), strtoupper(str_repeat($n, 1)))',

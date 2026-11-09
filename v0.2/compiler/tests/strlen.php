@@ -51,8 +51,10 @@ foreach (flavor::cases() as $flavor) {
 		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
-	$split = static fn(string $subject, string $sep): string => $flavor === flavor::php
-		? "explode($sep, $subject)" : "$subject.split($sep)";
+	$split = static function (string $subject, string $sep, ?string $limit = null) use ($flavor): string {
+		$extra = $limit === null ? '' : ", $limit";
+		return $flavor === flavor::php ? "explode($sep, $subject$extra)" : "$subject.split($sep$extra)";
+	};
 	$join = static fn(string $parts, string $sep): string => match ($flavor) {
 		flavor::php => "implode($sep, $parts)", flavor::cpp => "join($parts, $sep)", flavor::js => "$parts.join($sep)",
 	};
@@ -75,12 +77,45 @@ foreach (flavor::cases() as $flavor) {
 	verify(str_contains($cpp, '<scpp/' . $flavor->name . '/string_vectors.hpp>') && !str_contains($cpp, 'std::vector'),
 		'Split/join must use concrete vector bindings');
 	$fixtures[$flavor->name . '-split-join'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("5;:a::b:;ab;;1;abc;|a;a\0b\0;-中-")];
-	foreach (['""', '"abc"'] as $index => $subject) {
-		$code = 'echo count(' . $split($subject, '""') . '); return 8;';
-		$fixtures[$flavor->name . '-split-empty-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
-			'catch_ValueError' => 'Split requires a nonempty separator', 'stdout_hex' => ''];
+	$limits = [
+		// Each expected value encodes field count, then the fields joined by a pipe.
+		['",a,,b,"', '","', '2', '2:|a,,b,', '2:|a'],
+		['"a,,b,"', '","', '1', '1:a,,b,', '1:a'],
+		['"a,b"', '","', '0', '1:a,b', '0:'],
+		['""', '","', '2', '1:', '1:'],
+		['"a,b,"', '","', '9223372036854775807', '3:a|b|', '3:a|b|'],
+		['"a,b,c"', '","', '4294967296', '3:a|b|c', $flavor === flavor::js ? '0:' : '3:a|b|c'],
+		['"a,b,c"', '","', '4294967297', '3:a|b|c', $flavor === flavor::js ? '1:a' : '3:a|b|c'],
+		['"a\0b\0c"', '"\0"', '2', "2:a|b\0c", '2:a|b'],
+		['"ab::::cd"', '"::"', '2', '2:ab|::cd', '2:ab|'],
+	];
+	$minimum = '(-9223372036854775807 - 1)';
+	if ($flavor !== flavor::cpp) {
+		$limits[] = ['"a,b,"', '","', '-1', '2:a|b', '3:a|b|'];
+		$limits[] = ['"a,b,c"', '","', '-2', '1:a', '3:a|b|c'];
+		$limits[] = ['"abc"', '","', '-1', '0:', '1:abc'];
+		$limits[] = ['"a,b"', '","', '-4294967295', '0:', '1:a'];
+		$limits[] = ['"a,b"', '","', $minimum, '0:', '0:'];
 	}
-	$too_many = $flavor === flavor::php ? 'explode(",", "abc", 1)' : '"abc".split(",", 1)';
+	$checks_limits = [];
+	$expected_limits = [];
+	foreach ($limits as [$subject, $separator, $limit, $php_result, $cap_result]) {
+		$value = $split($subject, $separator, $limit);
+		$checks_limits[] = 'count(' . $value . '), ":", ' . $join($value, '"|"');
+		$expected_limits[] = $flavor === flavor::php ? $php_result : $cap_result;
+	}
+	$code = 'echo ' . implode(', ";", ', $checks_limits) . '; return 8;';
+	$fixtures[$flavor->name . '-split-limits'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'stdout_hex' => bin2hex(implode(';', $expected_limits))];
+	$errors = [['""', '""', null, 'Split requires a nonempty separator'], ['"abc"', '""', '0', 'Split requires a nonempty separator'],
+		['"abc"', '""', '-1', 'Split requires a nonempty separator']];
+	if ($flavor === flavor::cpp) $errors[] = ['"abc"', '","', $minimum, 'Split limit must be nonnegative'];
+	foreach ($errors as $index => [$subject, $separator, $limit, $error]) {
+		$code = 'echo count(' . $split($subject, $separator, $limit) . '); return 8;';
+		$fixtures[$flavor->name . '-split-error-' . $index] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+			'catch_ValueError' => $error, 'stdout_hex' => ''];
+	}
+	$too_many = $flavor === flavor::php ? 'explode(",", "abc", 1, 2)' : '"abc".split(",", 1, 2)';
 	rejects(fn() => $prepare('echo count(' . $too_many . '); return 8;'), 'Argument count');
 	$integers = match ($flavor) {
 		flavor::php => '$ints vector<int> = [];', flavor::cpp => 'vector<int> ints = [];', flavor::js => 'let ints: vector<int> = [];',

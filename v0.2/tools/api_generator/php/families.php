@@ -116,10 +116,10 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants', 'free_names']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'flavors', 'constants', 'free_names']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
-            'split_bytes' => ['parameters' => ['string', 'string'], 'result' => 'vector<string>'],
+            'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
             'join_bytes' => ['parameters' => ['vector<string>', 'string'], 'result' => 'string'],
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
@@ -173,7 +173,10 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $plan['php_integer_constants'] = $values;
         }
         $slice = $implementation === 'slice_bytes';
-        requireThat(($slice || $padding) === isset($function->required_parameters) && $slice === isset($function->bound), 'Slice bindings require a trailing optional bound');
+        $split = $implementation === 'split_bytes';
+        requireThat($split === isset($function->limit_policy), 'Split bindings require a limit policy');
+        if ($split) $limits = fields($function->limit_policy, ['php', 'cpp', 'js']);
+        requireThat(($split || $slice || $padding) === isset($function->required_parameters) && $slice === isset($function->bound), 'Invalid optional string function parameters');
         if ($slice) {
             $bounds = fields($function->bound, ['php', 'cpp', 'js']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Slice requires flavor adapters');
@@ -205,6 +208,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat($members !== [] || $padding, 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
+                if ($split) {
+                    $policy = $limits[$flavor] ?? null;
+                    requireThat(in_array($policy, ['remainder', 'uint32_cap', 'cap'], true), 'Unknown split limit policy');
+                    $options['limit_policy'] = $policy;
+                }
                 if ($padding) $options['pad_side'] = $side;
                 if ($replace) {
                     $options['replace_mode'] = $function->replace_mode;
@@ -225,7 +233,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
                 }
                 if (isset($freeNames[$flavor])) $options['free'] = true;
-                if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['reverse'] = true;
+                if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['swap_first_two'] = true;
                 checkHeader($plan, stringAdapterHeader($flavor, $implementation));
                 $plan['string_functions'][$name]['adapters'][$flavor] = [
                     'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor, $implementation)] + $options;
@@ -712,4 +720,11 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     requireThat($records !== [], 'Ownership: empty record publication');
     usort($records, fn(array $a, array $b):int => strcmp($a['name'], $b['name']));
     $plan['ownership'] = ['header' => $header, 'handle_binding' => 'std_smart_pointer_inline', 'handle_empty_access' => 'std::runtime_error:ownership_empty_access', 'weak_lock_failure' => 'empty_shared', 'handle_copy_allocation' => 'none', 'weak_condition' => 'not_published', 'handle_payload_access' => 'checked_borrow_no_implicit_extraction', 'records' => $records];
+}
+
+function stringAdapterOrder(array $arguments, array $adapter): array {
+    if (isset($adapter['swap_first_two'])) {
+        [$arguments[0], $arguments[1]] = [$arguments[1], $arguments[0]];
+    }
+    return $arguments;
 }
