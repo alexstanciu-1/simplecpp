@@ -179,6 +179,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $adapterResult = $adapter['result'] ?? $result;
                 $requiredCount = $adapter['required_parameters'] ?? $binding['required_parameters'] ?? null;
                 $required = $requiredCount === null ? '' : ', ' . $requiredCount;
+                if (isset($adapter['reference_parameters'])) {
+                    $required .= ', reference_mask: ' . array_sum(array_map(static fn($i) => 1 << $i, $adapter['reference_parameters']));
+                }
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
                     . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }

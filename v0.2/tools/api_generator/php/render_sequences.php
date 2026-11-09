@@ -47,6 +47,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                             'string', 'vector<string>' => 'const ::scpp::' . $plan['source_types']->{$type} . '&',
                             default => "::scpp::$type",
                         };
+                        if (in_array($i, $adapter['reference_parameters'] ?? [], true)) $cppType .= '&';
                         $parameters[] = "$cppType $arg";
                     }
                     $arguments = stringAdapterOrder($arguments, $adapter);
@@ -85,6 +86,11 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     if (isset($adapter['replace_mode'])) {
                         if ($flavor === 'php') $arguments = ['arg2', 'arg0', 'arg1'];
                         $arguments[] = '::scpp::str::replace_mode::' . $adapter['replace_mode'];
+                        if (isset($adapter['reference_parameters'])) {
+                            $files[$path] .= stringAdapterOverload($flavor, $adapter, $result,
+                                array_slice($parameters, 0, $adapter['required_parameters']), $binding['symbol'], $arguments);
+                            $arguments[] = 'arg3';
+                        }
                     }
                     if (isset($adapter['bound'])) {
                         $short = implode(', ', array_slice($parameters, 0, $binding['required_parameters']));
@@ -200,10 +206,15 @@ function renderString(array $plan): array {
         }
         if ($function['implementation'] === 'replace_bytes') {
             if (!$replaceSymbols) $h .= "namespace str { enum class replace_mode { first, all }; }\n";
+            $args = 'const string& subject, const string& search, const string& replacement, replace_mode mode';
             if (!isset($replaceSymbols[$name])) {
-                $signature = "string $name(const string& subject, const string& search, const string& replacement, replace_mode mode)";
-                $h .= "namespace str { $signature; }\n";
-                $d .= template('string_replace', ['signature' => $signature]);
+                $h .= "namespace str { string $name($args); }\n";
+                $d .= template('string_replace', ['name' => $name, 'args' => $args]);
+                $replaceSymbols[$name] = false;
+            }
+            if (isset($function['adapters']['php']['reference_parameters']) && !$replaceSymbols[$name]) {
+                $h .= "namespace str { string $name($args, int64& count); }\n";
+                $d .= template('string_replace_count', ['name' => $name, 'args' => $args]);
                 $replaceSymbols[$name] = true;
             }
             continue;

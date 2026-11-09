@@ -116,6 +116,9 @@ def prove(work):
             text = originals[flavor].replace(calls[flavor][0], calls[flavor][0].replace(operand, argument))
             edits[f'bad-{name}-{flavor}'] = (predicates[flavor], text.replace('"y"', '5'))
             edits[f'recovery-{name}-{flavor}'] = (predicates[flavor], text)
+    counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
+    edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
+    edits['recovery-replace-count-php'] = (predicates['php'], counted)
     pads = {'php': 'str_pad($n, 0, "x", STR_PAD_LEFT)', 'js': 'n.padStart(0, "x")', 'cpp': 'n.pad_end(0, "x")'}
     for flavor, call in pads.items():
         operand = '$n)' if flavor == 'php' else '(n)'

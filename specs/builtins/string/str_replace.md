@@ -9,8 +9,8 @@ Doc Status: normative
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `str_replace(string $search, string $replace, string $subject): string`
-- Accepted argument types: `string_t`, `string_t`, `string_t`
+- Supported three-argument form: `str_replace(string $search, string $replace, string $subject): string`
+- PHP also accepts a fourth argument: an existing writable int/int64 variable bound by reference.
 - Current scope: string-only form
 
 ## Behavior
@@ -26,13 +26,17 @@ Doc Status: normative
 | C++ | `subject.replace_first(search, replacement)` | `subject.replace_all(search, replacement)` |
 | JS | `subject.replace(search, replacement)` | `subject.replaceAll(search, replacement)` |
 
-Each form takes three strings including the receiver and returns an owning string.
+Each form takes three string inputs including any receiver and returns an owning string.
+PHP replace-all optionally overwrites a fourth argument with the number of non-overlapping
+matches in the original subject, including identical replacements. Empty search or no match
+writes zero. The count is committed after successful result construction. Locals, parameters
+and explicit globals of exact int64 storage can bind; the call does not declare a missing variable.
 Only the original subject bytes participate in the scan. Replacement bytes are literal,
 including embedded NUL and sequences such as `$&`. An empty replacement deletes
 matched bytes. An empty search or a missing match returns the original byte content.
 
 ## Compatibility table
-- PHP supports array forms and count output â†’ Prism++ currently supports only the string-only form â†’ modified
+- PHP array forms remain deferred.
 - PHP replaces all non-overlapping matches â†’ Prism++ keeps the same practical direction â†’ kept
 
 ## Error policy
@@ -47,10 +51,10 @@ matched bytes. An empty search or a missing match returns the original byte cont
 
 ## Compile plan summary
 
-v0.2 registers the supported forms in [runtime strings metadata](../../../runtime/metadata/modules/strings.json),
-using `modules/strings/strings.hpp`. The trim family uses separate fixed-arity
-contracts, not synthesized default arguments. Overload selection follows the shared
-exact-match rule; ordinary conversions apply after a unique fixed target is selected.
+v0.2 declares the optional PHP reference in [runtime metadata](../../../v0.2/runtime/metadata/runtime.json).
+The counted overload traverses the original subject once. The three-argument overload
+uses the same scan with counting disabled.
+
 Older binding notes below describe the v0.1 implementation.
 
 - Implemented in `runtime/include/scpp/support/php.hpp`.

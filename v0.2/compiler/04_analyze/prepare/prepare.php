@@ -561,21 +561,49 @@ final class Preparation
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
-	/** Validate fixed-arity runtime arguments against their generated signature. */
+	/**
+	 * Validate mutable storage and defer invalidation until every argument has been evaluated.
+	 * @param int[] $writes Local storage IDs invalidated by the call.
+	 */
+	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */): void
+	{
+		if (!($argument instanceof ast_name_expression)) {
+			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
+		}
+		$storage = $argument->declaration();
+		if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
+			throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
+		}
+		if ($argument->type_def() !== $type) {
+			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
+		}
+		if ($storage instanceof ast_local_binding) {
+			$writes[] = $storage->storage_id();
+		}
+	}
+
+	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function $runtime): void
 	{
 		$operands = $call->runtime_operands();
 		if (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
+		$writes = [];
 		foreach ($operands as $index => $argument) {
 			if ($argument !== $call->receiver) {
 				$this->value($argument);
 			}
 			$type = $runtime->parameters[$index];
-			if ($argument->type_def() !== $type) {
+			if ($runtime->is_reference($index)) {
+				$this->bind_reference($argument, $type, $writes);
+			}
+			elseif ($argument->type_def() !== $type) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
 			}
+		}
+		foreach ($writes as $id) {
+			$this->latest_writes[$id] = null;
 		}
 		$call->settle_runtime($runtime);
 	}
@@ -673,7 +701,7 @@ final class Preparation
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		$conversions = [];
-		$references = false;
+		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
 			$this->value($argument);
 			$parameter = $function->parameters[$index];
@@ -684,34 +712,16 @@ final class Preparation
 				throw new diagnostic($argument->source(), $argument->byte_start(), 'Vector argument passing is deferred');
 			}
 			if ($parameter->mode === passing_mode::reference) {
-				if (!($argument instanceof ast_name_expression)) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
-				}
-				$storage = $argument->declaration();
-				if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
-				}
-				if ($argument->type_def() !== $parameter->type_def()) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
-				}
+				$this->bind_reference($argument, $parameter->type_def(), $writes);
 				$conversions[] = value_conversion::identity;
-				$references = true;
 			}
 			else {
 				$conversions[] = $parameter->type_def()->prepare_conversion($argument, conversion_context::typed_destination);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.
-		if ($references) {
-			foreach ($call->arguments as $index => $argument) {
-				if ($function->parameters[$index]->mode === passing_mode::reference) {
-					/** @var ast_name_expression $argument */
-					$binding = $argument->declaration();
-					if ($binding instanceof ast_local_binding) {
-						$this->latest_writes[$binding->storage_id()] = null;
-					}
-				}
-			}
+		foreach ($writes as $id) {
+			$this->latest_writes[$id] = null;
 		}
 		$call->settle_function($symbol, $conversions);
 	}

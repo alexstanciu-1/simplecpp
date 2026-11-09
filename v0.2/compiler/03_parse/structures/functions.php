@@ -15,11 +15,14 @@ final readonly class runtime_function
 	public string $header;
 	public ?string $adapter_flavor;
 	public int $required_parameters /** uint32 */;
+	/** One bit per mutable reference argument in the generated signature. */
+	private int $reference_mask /** uint32 */;
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0)
 	{
+		$this->reference_mask = $reference_mask;
 		$this->source_name = $name;
 		$this->required_parameters = $required_parameters ?? count($parameters);
 		$this->parameters = $parameters;
@@ -30,6 +33,11 @@ final readonly class runtime_function
 	}
 
 	/** METHODS */
+	public function is_reference(int $index /** uint32 */): bool
+	{
+		return ($this->reference_mask & (1 << $index)) !== 0;
+	}
+
 	public function name(): string
 	{
 		return $this->source_name;

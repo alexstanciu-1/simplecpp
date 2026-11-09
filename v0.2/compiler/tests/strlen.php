@@ -199,6 +199,33 @@ foreach (flavor::cases() as $flavor) {
 	$code = 'echo ' . implode(', "|", ', $replacements) . '; return 8;';
 	$fixtures[$flavor->name . '-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
 		'stdout_hex' => bin2hex(implode('|', $expected))];
+	if ($flavor === flavor::php) {
+		$source = 'global $g int = 55; function subject(string &$key): string { $key = "z"; return "aa"; }'
+			. 'function forward(int &$out): string { return str_replace("a","x","aa",$out); }'
+			. '$count int64 = 99; $key = "a"; echo str_replace($key,"X",subject($key),$count), $count, $key, "|";'
+			. 'echo str_replace("aa","aa","aaaaa",$count), $count, "|";'
+			. 'echo str_replace("","X","abc",$count), $count, "|";'
+			. '$count = 88; echo str_replace("z","X","abc",$count), $count, "|";'
+			. 'echo str_replace("\0","", "a\0b\0",$g), $g, "|";'
+			. 'echo forward($count), $count, "|";'
+			. 'echo str_replace("a","aa","a",$count), $count; return 8;';
+		$fixtures['php-replace-count'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
+			'stdout_hex' => bin2hex('XX2z|aaaaa2|abc0|abc0|ab2|xx2|aa1')];
+		$source = '$n = 0; str_replace("a","",str_repeat("a",300),$n); $b byte = $n; return 8;';
+		$fixtures['php-replace-count-range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
+			'catch_out_of_range' => true, 'stdout_hex' => ''];
+		foreach ([
+			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'stable variable storage'],
+			['$x = 1;', '$x + 1', 'stable variable storage'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
+			['$b byte = 1;', '$b', 'exact storage type'],
+		] as [$setup, $output, $message]) {
+			rejects(fn() => $prepare($setup . "echo str_replace(\"a\",\"b\",\"a\",$output); return 8;"), $message);
+		}
+		rejects(fn() => $prepare('$n = 0; echo str_replace_first("a","b","a",$n); return 8;'), 'Argument count');
+	}
+	else {
+		rejects(fn() => $prepare('echo "a".' . $replace_names[1] . '("a","b",0); return 8;'), 'Argument count');
+	}
 	$pad = static function (string $value, string $width, ?string $fill, string $side) use ($flavor): string {
 		$args = $width . ($fill === null ? '' : ", $fill");
 		if ($flavor === flavor::php) {

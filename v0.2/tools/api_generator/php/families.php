@@ -238,6 +238,13 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                         requireThat($flavor === 'php', 'Explicit trim masks require the PHP flavor');
                         $options += fields($signatures[$flavor], ['parameters', 'required_parameters']);
                         literals($signatures[$flavor], ['parameters' => ['string', 'string'], 'required_parameters' => 1]);
+                    } elseif ($replace) {
+                        requireThat($flavor === 'php' && $function->replace_mode === 'all', 'Count output requires PHP replace-all');
+                        $options += fields($signatures[$flavor], ['parameters', 'required_parameters', 'reference_parameters']);
+                        literals($signatures[$flavor], ['parameters' => ['string', 'string', 'string', 'int64'],
+                            'required_parameters' => 3, 'reference_parameters' => [3]]);
+                        requireThat(hasType($plan, 'int64'), 'Replacement count requires int64');
+                        $requires[] = 'int64';
                     } else {
                         $options += fields($signatures[$flavor], ['result', 'body']);
                         literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);

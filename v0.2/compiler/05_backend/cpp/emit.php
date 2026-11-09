@@ -574,7 +574,7 @@ final class Cpp_Emitter
 				if (!$direct) {
 					foreach ($arguments as $index => $operand) {
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
-						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
+						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
 				$call = $symbol . '(' . implode(', ', $arguments) . ')';
