@@ -54,7 +54,9 @@ final class Namespace_Syntax
 			}
 			$index++;
 		}
-		return false;
+		return (($tokens[$index]->kind ?? null) === token_kind::keyword)
+			&& ($this->cursor->tokens->text_at($index) === 'empty')
+			&& (($tokens[$index + 1]->kind ?? null) === token_kind::lparen);
 	}
 
 	/** PHP qualifies the final variable token (test\$value); other flavors qualify ordinary identifiers. */
@@ -81,19 +83,25 @@ final class Namespace_Syntax
 	}
 
 	/** Normalize only admitted name-path syntax; JS value/member ambiguity is checked by body preparation. */
-	public function path(bool $allow_root, bool $allow_group = false): string
+	public function path(bool $allow_root, bool $allow_group = false, bool $call = false): string
 	{
 		$rooted = ($allow_root) && $this->cursor->is($this->root_marker);
 		if ($rooted) {
 			$this->cursor->take($this->root_marker, 'root qualifier');
 		}
-		$name = ($rooted ? '\\' : '') . $this->cursor->name(token_kind::identifier);
-		while ($this->cursor->is($this->separator)) {
+		$name = $rooted ? '\\' : '';
+		while (true) {
+			// PHP tokenizes the empty call name as a keyword.
+			$kind = $call && $this->cursor->keyword('empty') ? token_kind::keyword : token_kind::identifier;
+			$name .= $this->cursor->name($kind);
+			if (!($this->cursor->is($this->separator))) {
+				break;
+			}
 			$this->cursor->take($this->separator, 'namespace separator');
 			if ($allow_group && $this->cursor->is(token_kind::lbrace)) {
 				break;
 			}
-			$name .= '\\' . $this->cursor->name(token_kind::identifier);
+			$name .= '\\';
 		}
 		return $name;
 	}

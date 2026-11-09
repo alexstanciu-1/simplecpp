@@ -6,6 +6,8 @@ namespace scpp\compiler;
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
 abstract class boxed_type_definition extends type_definition implements indexed_collection_type, index_write_type
 {
+	use ordered_keyed_store;
+
 	public function prepare_key(ast_expression $key): void
 	{
 		$type = $key->type_def();

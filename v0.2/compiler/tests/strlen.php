@@ -36,7 +36,7 @@ foreach (flavor::cases() as $flavor) {
 	$s = $flavor === flavor::php ? '$s' : 's';
 	$main = $local . 'echo strlen(""), strlen("a\0b"), strlen(' . $s . '); return 8;';
 	$cpp = (new Cpp_Emitter())->emit($prepare($main));
-	verify(str_contains($cpp, 'scpp::str::byte_length(local_0)'), 'Expected direct runtime call on owned string');
+	verify(str_contains($cpp, 'scpp::str::byte_length(var_s_0)'), 'Expected direct runtime call on owned string');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('039')];
 	$method = static fn(string $op, string $value, string $needle): string => match ($flavor) {
 		flavor::php => "str_$op($value, $needle)",

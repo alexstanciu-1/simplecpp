@@ -87,7 +87,7 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($cpp, 'scpp::float64_divide('), 'Division bypassed checked helper');
 	$observer = file_get_contents(__DIR__ . '/float_arithmetic_observer.cpp');
 	foreach (['add', 'subtract', 'multiply', 'divide', 'positive', 'negative'] as $name) {
-		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
 	$fixtures[$flavor->name] = ['cpp' => str_replace('int main()', 'int tested_entry()', $cpp) . $observer, 'stdout_hex' => ''];
 	foreach (['1.0 % 2.0', 'true * 1.0'] as $invalid) {

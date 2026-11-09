@@ -34,6 +34,13 @@ function rejects(Closure $action, string $message): void
 	throw new RuntimeException('Expected rejection: ' . $message);
 }
 
+// Only the generated dynamic handler owns the direct-spelling exception.
+foreach ([scpp\compiler\type_dynamic::class => scpp\compiler\type_dynamic::class,
+	scpp\compiler\type_mixed::class => scpp\compiler\type_definition::class] as $type => $owner) {
+	$method = new ReflectionMethod($type, 'cpp_direct_binary');
+	verify($method->getDeclaringClass()->getName() === $owner, "$type direct binary lowering owner");
+}
+
 $fixtures = [];
 foreach (flavor::cases() as $flavor) {
 	$decl = static fn(string $type, string $name, string $value) => declaration($flavor, $type, $name, $value);
@@ -106,6 +113,14 @@ foreach (flavor::cases() as $flavor) {
 		$cpp = (new Cpp_Emitter())->emit($entry);
 		verify($before === serialize($entry), 'Emitter mutated boxed facts');
 		$fixtures[$flavor->name . '-' . $family] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("8104Y2551a\0bS07")];
+		$literal = $decl($family, 'x', '8') . $infer('sum', "$x + 2") . $infer('less', "$x < 3")
+			. 'echo (int)' . $var('sum') . ', (int)' . $var('less') . "; $x = 1; if ($x < 3) { echo 1; } return 8;";
+		$cpp = (new Cpp_Emitter())->emit($prepare($literal));
+		foreach (['add' => '2LL', 'less' => '3LL'] as $op => $rhs) {
+			$args = $family === 'dynamic' ? "var_x_0, $rhs" : 'binary_left, binary_right';
+			verify(str_contains($cpp, "scpp::boxed_{$op}_{$family}_int64($args)"), 'Unexpected boxed literal operands');
+		}
+		$fixtures[$flavor->name . '-' . $family . '-literal'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('1001')];
 		$param = match ($flavor) {
 			flavor::cpp => "int read_box($family x)", flavor::php => 'function read_box(' . $family . ' $x): int',
 			flavor::js => "function read_box(x: $family): int",
@@ -117,7 +132,7 @@ foreach (flavor::cases() as $flavor) {
 		$fixtures[$flavor->name . '-' . $family . '-parameter'] = ['files' => Cpp_Program::emit($program)->files,
 			'stdout_hex' => bin2hex('984')];
 		foreach (['add' => 'echo (int)(' . $x . ' + 2);', 'order' => 'if (2 < ' . $x . ') { echo 1; }',
-			'cast' => 'echo (int)' . $x . ';'] as $case => $operation) {
+			'less-literal' => 'if (' . $x . ' < 3) { echo 1; }', 'cast' => 'echo (int)' . $x . ';'] as $case => $operation) {
 			$bad = $prepare($decl($family, 'x', '"8"') . $operation . 'return 8;');
 			$fixtures[$flavor->name . '-' . $family . '-' . $case] = ['cpp' => (new Cpp_Emitter())->emit($bad),
 				'stdout_hex' => '', 'catch_runtime_error' => 'boxed_scalar_kind'];
@@ -127,6 +142,11 @@ foreach (flavor::cases() as $flavor) {
 			'stdout_hex' => '', 'catch_out_of_range' => true];
 		rejects(fn() => $prepare($decl($family, 'x', '1') . 'echo (int)(' . $x . ' + true);'), 'Unsupported boxed binary');
 		rejects(fn() => $prepare($decl($family, 'x', '1') . $decl($family === 'mixed' ? 'dynamic' : 'mixed', 'y', $x)), 'Unsupported boxed conversion');
+	}
+	foreach (["2 + $x", "$x + " . $var('n'), "$x + 2.0", "$x >= 3"] as $expression) {
+		$source = $decl('dynamic', 'x', '8') . $decl('int', 'n', '2') . $infer('probe', $expression);
+		$cpp = (new Cpp_Emitter())->emit($prepare($source . 'return 8;'));
+		verify(str_contains($cpp, 'const auto binary_left'), 'Unexpected direct boxed lowering for ' . $expression);
 	}
 	foreach ([false, true] as $containers) {
 		$directory = sys_get_temp_dir() . '/scpp-boxed-scalars-' . bin2hex(random_bytes(8));

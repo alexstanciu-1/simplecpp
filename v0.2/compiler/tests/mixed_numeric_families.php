@@ -99,10 +99,10 @@ foreach (flavor::cases() as $flavor)
 		. $fn('failed_write', $ref, 'void', $var('v') . '/=zero(' . $var('v') . '); return;');
 	$observer = file_get_contents(__DIR__ . '/mixed_numeric_families_observer.cpp');
 	foreach (array_keys($arithmetic + $comparisons) as $name) {
-		foreach (['bf', 'fb'] as $order) $observer = str_replace('@' . $name . '_' . $order . '@', '::App::scpp_function_' . bin2hex($name . '_' . $order), $observer);
+		foreach (['bf', 'fb'] as $order) $observer = str_replace('@' . $name . '_' . $order . '@', '::App::' . $name . '_' . $order . '_', $observer);
 	}
 	foreach (array_merge(array_map(static fn(string $name): string => $name . '_write', array_keys($arithmetic)), ['failed_write']) as $name) {
-		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($code . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$main = $decl('float', '8.0') . $x . '+=(byte)2;' . $x . '-=(uint8)4;' . $x . '*=(byte)3;' . $x . '/=(byte)2;'

@@ -1,3 +1,5 @@
+	use ordered_keyed_store;
+
 	public function prepare_key(ast_expression $key): void
 	{
 		if ($key->type_def() !== @key@::instance()) {

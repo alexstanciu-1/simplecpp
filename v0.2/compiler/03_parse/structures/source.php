@@ -166,8 +166,13 @@ final class ast_file_node extends ast_node
 	/** Imports affect only complete unqualified names, never namespace prefixes or rooted paths. */
 	public function function_key(string $name): string
 	{
-		$import = $this->function_imports[$name] ?? null;
-		return 'func:' . ($import?->target ?? Source_Names::resolve($name, $this->scope->namespace));
+		return 'func:' . ($this->imported_function_target($name) ?? Source_Names::resolve($name, $this->scope->namespace));
+	}
+
+	/** A function or plain import binds this spelling to an exact declaration lookup. */
+	public function imported_function_target(string $name): ?string
+	{
+		return $this->function_imports[$name]->target ?? null;
 	}
 
 	/** Registered unqualified builtins are language-scoped; explicit imports and qualified calls retain exact targets. */

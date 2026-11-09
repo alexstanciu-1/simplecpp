@@ -12,20 +12,19 @@ additional effect/reference analysis solely to enforce evaluation order. New
 feature slices should record ordering gaps here rather than expand sequencing
 machinery as an implicit prerequisite.
 
-The language guarantee may be relaxed or removed later; that decision is open.
-This planning note does not amend the current normative
-[expression evaluation contract](../../../specs/expression_evaluation.md).
-Existing sequencing tests describe retained behavior, not a mandate to extend
-that machinery to every future feature before proceeding.
-
-When revisiting, decide the language contract first, including operand and
-argument order, conversion failures and observable effects. C++ does not impose
-a universal right-to-left order, and reference parameters are not the only source
-of observable ordering. Preserve short-circuit and branch-selection semantics
-separately from any decision about eager operand ordering.
+Decision on 2026-11-08: eager binary operand order follows the native C++ implementation.
+The [expression evaluation contract](../../../specs/expression_evaluation.md) records
+the decision. Existing sequencing tests can verify a particular lowering. Checked
+integer division and remainder now pass safe, identity-converted operands directly
+to the runtime helper. The enclosing emitter still treats the call as potentially throwing.
 
 Current implementation: [direct scalar lowering](../../compiler/docs/direct_lowering.md).
 No compiler code, structures or existing tests change with this deferral.
+
+Vector replacement now uses a direct native member call. The index and RHS can
+execute in either order, including when one throws. Bounds checking and mutation
+remain inside the member, after both arguments succeed. See the
+[native lowering inventory](native_cpp_lowering.md).
 
 ## Alternative to evaluate later: GNU statement expressions
 

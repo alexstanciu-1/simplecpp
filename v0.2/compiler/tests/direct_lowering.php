@@ -60,9 +60,86 @@ foreach (flavor::cases() as $flavor)
 	$safe = $emit($sum . $decl('x', 'int', '2') . 'echo sum(' . $var('x') . '*3+1); return 8;');
 	verify(!str_contains($safe, '([&]()'), 'Trivial operands or identity arguments still wrapped');
 	verify(!str_contains($safe, '&&>('), 'Scalar identity arguments still moved');
-	verify(str_contains($safe, '(local_0 * 3LL)'), 'Original arithmetic grouping lost');
+	verify(str_contains($safe, '(var_x_0 * 3LL)'), 'Original arithmetic grouping lost');
+	$s = $var('s');
+	$concat = $flavor === flavor::php ? '.' : '+';
+	$string = $decl('s', 'string', '"hi"');
+	$bytes = $emit($string . $s . ' = ' . $s . ' ' . $concat . ' "!\0x"; echo ' . $s . ';'
+		. 'if (' . $s . ' === "hi!\0x") { echo 1; } if (' . $s . ' === "hi!\0y") { echo 2; } return 8;');
+	verify(str_contains($bytes, 'var_s_0 = (var_s_0 + scpp::string{"\041\000\170", 3});')
+		&& str_contains($bytes, 'var_s_0 == scpp::string{"\150\151\041\000\170", 5}') && !str_contains($bytes, '([&]()'),
+		'String local and literal should use the direct runtime operators');
+	$fixtures[$flavor->name . '_string_literal'] = ['cpp' => $bytes, 'stdout_hex' => bin2hex("hi!\0x1")];
+	foreach (["$s === $s" => 'bool', '"hi" === ' . $s => 'bool', $s . ' !== "hi"' => 'bool',
+		$s . ' == "hi"' => 'bool', "$s $concat $s" => 'string'] as $expression => $result_type) {
+		$cpp = $emit($string . $decl('v', $result_type, $expression) . 'return 8;');
+		verify(str_contains($cpp, 'const auto binary_left'), 'Unexpected direct lowering for ' . $expression);
+	}
+	$x = $var('x');
+	$bump = $fn('bump', $param('int', 'x', true), 'void', "$x++;");
+	$caller = $decl('x', 'int', '1') . "bump($x); echo $x; return 8;";
+	$cpp = $emit($bump . $caller);
+	verify(str_contains($cpp, 'bump_(var_x_0);') && !str_contains($cpp, 'argument_'), 'Expected direct reference binding');
+	$fixtures[$flavor->name . '_reference_local'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2')];
+	$forward = $fn('forward', $param('int', 'x', true), 'void', "bump($x);");
+	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
+	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "pair($x, 1); return 8;");
+	verify(str_contains($cpp, 'bump_(argument_') && str_contains($cpp, 'pair_(argument_'), 'Other reference call forms changed');
 	$divide = $emit('echo (8 / 2) + 1; return 8;');
-	verify(substr_count($divide, '([&]()') === 2, 'Throwing operation or its containing expression lost sequencing');
+	verify(str_contains($divide, 'const auto binary_left = scpp::int64_divide(8LL, 2LL);'), 'Nested checked division should feed the existing outer snapshot directly');
+	foreach (['int' => 'int64', 'byte' => 'uint8'] as $name => $native) {
+		$source = $decl('a', $name, '6') . $decl('b', $name, '2');
+		$source .= $decl('x', $name, $var('a') . '/' . $var('b')) . $decl('y', $name, $var('b') . '%' . $var('b'));
+		$cpp = $emit($source . 'return 8;');
+		verify(str_contains($cpp, "scpp::{$native}_divide(var_a_0, var_b_1)") &&
+			str_contains($cpp, "scpp::{$native}_remainder(var_b_1, var_b_1)"), 'Expected direct checked integer helpers');
+	}
+	$a = $var('a');
+	$b = $var('b');
+	$prefix = $decl('a', 'int', '6') . $decl('b', 'int', '2');
+	$direct = $emit($prefix . "echo $a << $b, $a >> $b, $a ** $b; if ($a !== $b) { echo 1; } return 8;");
+	foreach (['int64_shift_left', 'int64_shift_right', 'int64_power'] as $helper) {
+		verify(str_contains($direct, "scpp::{$helper}(var_a_0, var_b_1)"), 'Expected direct ' . $helper);
+	}
+	verify(str_contains($direct, 'var_a_0 != var_b_1') && !str_contains($direct, '([&]()'), 'Expected direct same-type integer comparison');
+	$fixtures[$flavor->name . '_integer_operators'] = ['cpp' => $direct, 'stdout_hex' => bin2hex('241361')];
+	$byte = $emit($decl('a', 'byte', '6') . $decl('b', 'byte', '2') . "if ($a !== $b) { echo 1; } return 8;");
+	verify(str_contains($byte, 'var_a_0 != var_b_1'), 'Expected direct byte comparison');
+	$self = $emit($prefix . "if ($a !== $a) { echo 1; } return 8;");
+	verify(str_contains($self, 'binary_left != binary_right'), 'Self-comparison lost its warning-safe spelling');
+	$mixed = $emit($decl('a', 'int', '6') . $decl('b', 'byte', '2') . "if ($a !== $b) { echo 1; } return 8;");
+	verify(str_contains($mixed, 'const auto binary_left'), 'Cross-type strict identity changed lowering');
+	$compare = $fn('cmp', $param('byte', 'a') . ', ' . $param('byte', 'b'), 'int', "return $a <=> $b;");
+	$locals = $emit($compare . $prefix . "echo $a <=> $b, cmp((byte)1, (byte)2), cmp((byte)2, (byte)2); return 8;");
+	$formula = 'static_cast<scpp::int64>(((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)))';
+	verify(substr_count($locals, $formula) === 2 && !str_contains($locals, 'const auto binary_left'),
+		'Expected direct three-way comparisons for distinct int locals and byte parameters');
+	$fixtures[$flavor->name . '_three_way_storage'] = ['cpp' => $locals, 'stdout_hex' => bin2hex('1-10')];
+	foreach (["$a <=> $a", "$a <=> 2", "($a + 1) <=> $b"] as $expression) {
+		verify(str_contains($emit($prefix . "echo $expression; return 8;"), 'const auto binary_left'),
+			'Expected three-way snapshots for ' . $expression);
+	}
+
+	$global = $emit('global ' . $decl('a', 'int', '6') . $decl('b', 'int', '2') . "echo $a <=> $b; return 8;");
+	verify(str_contains($global, 'const auto binary_left = ::App::var_a;'), 'Global read lost its three-way snapshot');
+	$widen = $emit($decl('a', 'byte', '6') . $decl('b', 'int', '2') . "echo $a <=> $b; return 8;");
+	verify(str_contains($widen, 'const auto binary_left'), 'Three-way operand promotion lost its snapshot');
+
+	// Independent counters prove single evaluation without asserting which call runs first.
+	$count = $var('calls');
+	$effects = $fn('low', $param('int', 'calls', true), 'int', "$count++; return 1;")
+		. $fn('high', $param('int', 'calls', true), 'int', "$count++; return 2;")
+		. $decl('a', 'int', '0') . $decl('b', 'int', '0')
+		. "echo low($a) <=> high($b); echo $a, $b; return 8;";
+	$calls = $emit($effects);
+	verify(str_contains($calls, '((binary_left > binary_right)) - ((binary_left < binary_right))'),
+		'Three-way comparison of calls must compare their snapshots');
+	$fixtures[$flavor->name . '_three_way_calls'] = ['cpp' => $calls, 'stdout_hex' => bin2hex('-111')];
+	$promoted = $emit($decl('a', 'byte', '6') . $decl('b', 'int', '2') . 'echo ' . $var('a') . '/' . $var('b') . '; return 8;');
+	verify(str_contains($promoted, 'scpp::int64_divide(binary_left, binary_right)'), 'Operand promotion lost its existing snapshots');
+	$floating = $emit($decl('a', 'float', '6.0') . $decl('b', 'float', '2.0')
+		. $decl('x', 'float', $var('a') . '/' . $var('b')) . 'return 8;');
+	verify(str_contains($floating, 'scpp::float64_divide(binary_left, binary_right)'), 'Floating division changed lowering');
 	$code = $sum
 		. $fn('bump', $param('int', 'x', true), 'int', $var('x') . '=9; return 2;')
 		. $fn('pick', $param('string', 'a') . ',' . $param('string', 'b'), 'string', 'echo ' . $var('a') . '; return ' . $var('b') . ';')

@@ -58,11 +58,14 @@ def proof(work):
         + "require " + repr(str(ROOT / 'compiler/types/boxed.php')) + ";\n"
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $type) require $argv[1] . '/types/' . $type . '.php';\n"
         + "$type = \\scpp\\compiler\\type_registry::specialize('vector', \\scpp\\compiler\\type_registry::integer());\n"
-        + "echo json_encode($type === null ? null : [$type->name, $type->cpp_type(), $type->cpp_headers()]);\n")
+        + "$queries = []; if ($type !== null) foreach (\\scpp\\compiler\\collection_cardinality::cases() as $op) {\n"
+        + "    $queries[] = [$type->cardinality_result($op)->name, $type->lower_cpp_cardinality($op, 'receiver')]; }\n"
+        + "echo json_encode($type === null ? null : [$type->name, $type->cpp_type(), $type->cpp_headers(), $queries]);\n")
     def binding():
         value, _ = run(['php', runner, compiler])
         return json.loads(value)
-    assert binding() == ['vector<int64>', 'scpp::vector_int64', ['scpp/vectors.hpp']]
+    observations = [['int64', '(receiver).size()'], ['bool_t', '(receiver).empty()']]
+    assert binding() == ['vector<int64>', 'scpp::vector_int64', ['scpp/vectors.hpp'], observations]
     names = sorted(v['name'] for v in baseline['vectors'])
     assert names == ['vector_int64', 'vector_string']
     for name in names:
@@ -117,7 +120,7 @@ def proof(work):
         run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
         after = {p.name: p.read_bytes() for p in compiler.rglob('*.php')}
         assert {k: v for k, v in after.items() if k != 'vectors.php'} == {k: v for k, v in compiler_before.items() if k != 'vectors.php'}, 'Scalar compiler output changed'
-        assert binding() == ['vector<int64>', 'scpp::vector_int64', [header]], 'Compiler ignored runtime export placement'
+        assert binding() == ['vector<int64>', 'scpp::vector_int64', [header], observations], 'Compiler ignored runtime export placement'
         source = work / 'consumer.cpp'
         source.write_text(f'''#include <{header}>
 #include <stdexcept>

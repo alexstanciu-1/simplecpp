@@ -34,7 +34,9 @@ def proof(work):
     generator = ROOT / 'tools/api_generator/generate.php'
     original = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = work / 'publication.json'
-    publication.write_text((ROOT / 'runtime/metadata/publication.json').read_text())
+    published = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
+    published['vectors'].pop('header', None)  # Provider metadata owns the relocatable spelling.
+    publication.write_text(json.dumps(published))
     report = {'configuration': 'Clang, C++23, libc++, O2/g0, mold, sequential commands, no PCH/LTO; variant runtime compiled once and reused for application builds', 'variants': {}}
 
     def generate(metadata, runtime, compiler):
@@ -53,6 +55,8 @@ def proof(work):
             metadata['submodules']['core.output']['header'] = 'scpp/proof/write.hpp'
         if variant == 'relocated':
             metadata['output']['provider'] = 'core.string'
+            metadata['submodules']['core.vectors']['header'] = 'scpp/proof/list.hpp'
+            metadata['submodules']['core.hashes']['header'] = 'scpp/proof/map.hpp'
         if variant == 'type_relocated':
             metadata['string']['provider'] = 'core.output'
             metadata['submodules']['core.output']['requires_exports'] = metadata['submodules']['core.string'].pop('requires_exports')
@@ -105,8 +109,12 @@ def proof(work):
             assert 'class string final' in (runtime / 'public' / string_header).read_text()
         runtime_objects = []
         start = time.perf_counter()
-        for index, source in enumerate([runtime / 'src/runtime.cpp', ROOT / 'runtime/src/output/output.cpp',
-                                        ROOT / 'runtime/src/entry/entry.cpp', ROOT / 'runtime/src/numeric/arithmetic.cpp']):
+        runtime_sources = [runtime / 'src/runtime.cpp', ROOT / 'runtime/src/output/output.cpp',
+                           ROOT / 'runtime/src/entry/entry.cpp', ROOT / 'runtime/src/numeric/arithmetic.cpp']
+        if variant == 'relocated':
+            runtime_sources.append(runtime / 'src/hash.cpp')
+            flags.extend(['-I', ROOT / 'runtime/src/hash'])
+        for index, source in enumerate(runtime_sources):
             obj = directory / f'runtime-{index}.o'
             run([*flags, '-c', source, '-o', obj])
             runtime_objects.append(obj)
@@ -137,7 +145,18 @@ def proof(work):
             narrowed = {'cpp': 'byte narrowed = (byte) (scalar() + 1); return (int) narrowed;',
                         'php': '$narrowed byte = (byte) (scalar() + 1); return (int) $narrowed;',
                         'js': 'let narrowed: byte = (byte) (scalar() + 1); return (int) narrowed;'}[flavor]
-            write('main', 'visible(); body(); scalar(); ' + narrowed)
+            observations = ''
+            if variant == 'relocated':
+                for name, typ in [('list_size', 'vector<int>'), ('map_size', 'hash<int,int>')]:
+                    local = {'cpp': f'{typ} v = [];', 'php': f'$v {typ} = [];', 'js': f'let v: {typ} = [];'}[flavor]
+                    v = '$v' if flavor == 'php' else 'v'
+                    body = f'if (empty({v})) {{return count({v});}} return 91;'
+                    if typ == 'vector<int>':
+                        body = (f'if (!empty({v})) {{return 91;}} {v}[] = 1; {v}[0] = 8; '
+                                f'if ({v}[0] !== 8) {{return 91;}} return count({v}) - 1;')
+                    write(name, fn(name, 'int', local + body))
+                    observations += f'if ({name}() !== 0) {{return 91;}} '
+            write('main', observations + 'visible(); body(); scalar(); ' + narrowed)
             write('visible', fn('visible', 'string', 'return "V";'))
             write('body', fn('body', 'int', 'return 1;'))
             write('scalar', fn('scalar', 'int', 'return 7;'))
@@ -170,6 +189,14 @@ def proof(work):
                                          metadata['submodules'][metadata['scalar_providers']['numeric']]['header']):
                             assert f'#include <{excluded}>' not in unit
                 baseline = artifacts(out)
+                if variant == 'relocated':
+                    query_units = [unit for path, unit in baseline.items() if path.endswith('.cpp')
+                                   and '.size()' in unit and '.empty()' in unit]
+                    assert len(query_units) == 2
+                    for family in ('core.vectors', 'core.hashes'):
+                        header = metadata['submodules'][family]['header']
+                        assert sum(f'#include <{header}>' in unit for unit in query_units) == 1
+                        assert not (runtime / 'public' / original['submodules'][family]['header']).exists()
                 local = {'cpp': 'string text = "B";', 'php': '$text string = "B";', 'js': 'let text: string = "B";'}[flavor]
                 write('body', fn('body', 'int', local + ('echo $text;' if flavor == 'php' else 'echo text;') + 'return 1;'))
                 changed = step()

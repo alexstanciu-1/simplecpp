@@ -84,6 +84,47 @@ foreach (flavor::cases() as $flavor) {
 		$fixtures[$flavor->name . '-' . $case] = ['cpp' => (new Cpp_Emitter())->emit($bad),
 			'stdout_hex' => '', 'catch_out_of_range' => true];
 	}
+	// Exercise both observations on each concrete published signature, including falsey payloads.
+	$observations = '';
+	foreach (['int', 'string'] as $element) {
+		$item = $element === 'int' ? '0' : '""';
+		foreach (['vector', 'int', 'string'] as $key_type) {
+			$name = 'c_' . $element . '_' . $key_type;
+			$local = $var($name);
+			$vector = $key_type === 'vector';
+			$type = $vector ? "vector<$element>" : "hash<$element,$key_type>";
+			$key = $key_type === 'int' ? '7' : '"key"';
+			$write = $local . ($vector ? '[]' : "[$key]") . " = $item;";
+			$observations .= $decl($type, $name, '[]')
+				. "if (!empty($local)) {return 91;} echo count($local);"
+				. $write . "if (empty($local)) {return 92;} echo count($local);"
+				. $write . "echo count($local);";
+		}
+	}
+	$observed = $prepare($observations . 'return 8;');
+	$cardinality_cpp = (new Cpp_Emitter())->emit($observed);
+	verify(substr_count($cardinality_cpp, '.size()') === 18 && substr_count($cardinality_cpp, '.empty()') === 12,
+		'Expected one published member call per source observation');
+	$fixtures[$flavor->name . '-cardinality'] = ['cpp' => $cardinality_cpp, 'stdout_hex' => bin2hex(str_repeat('012011011', 2))];
+	foreach (['count(1)', 'empty("abc")', 'count()', 'empty(1,2)'] as $invalid) {
+		rejects(fn() => $prepare("$invalid; return 8;"), 'requires');
+	}
+	$shadow = $prepare($function('int', 'count', 'return 8;') . 'return count();');
+	$fixtures[$flavor->name . '-declared-count'] = ['cpp' => (new Cpp_Emitter())->emit($shadow), 'stdout_hex' => ''];
+
+	$imported = static fn(string $main, string $lib) => (new Program_Frontend())->prepare_sources('main', [
+		'main' => new source_file('main', $main, $flavor), 'lib' => new source_file('lib', $lib, $flavor),
+	], new entry_target(31));
+	$constant = static fn(string $name) => $flavor === flavor::js ? "const $name: int=7;" : "const int $name=7;";
+	$values = $decl('vector<int>', 'values', '[]');
+	rejects(fn() => $imported("use count as n; $values return n($v);", $constant('count')), 'Unknown function: n');
+	rejects(fn() => $imported("use LIMIT as count; $values return count($v);", $constant('LIMIT')), 'Unknown function: count');
+	$declared = $imported('use function answer as count; return count();', $function('int', 'answer', 'return 8;'));
+	$fixtures[$flavor->name . '-imported-count'] = ['files' => Cpp_Program::emit($declared)->files, 'stdout_hex' => ''];
+
+	$ns_body = $decl('vector<int>', 'values', '[]') . "if (empty($v)) {return count($v) + 8;} return 90;";
+	$ns = $flavor === flavor::php ? "namespace App; $ns_body" : "namespace App { $ns_body }";
+	$fixtures[$flavor->name . '-namespace-cardinality'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($ns)), 'stdout_hex' => ''];
 	$parameter = match ($flavor) {
 		flavor::cpp => 'int &key', flavor::php => 'int &$key', flavor::js => '&key: int',
 	};
@@ -103,8 +144,8 @@ foreach (flavor::cases() as $flavor) {
 	// Test-only exception observation verifies conversion failure leaves the hash empty; source catch is deferred.
 	$atomic = (new Cpp_Emitter())->emit($prepare($function('float', 'huge', 'return 1e100;')
 		. $decl('hash<int,int>', 'values', '[]') . "$v" . '[0] = huge(); return 8;'));
-	$atomic = preg_replace('/(\t\{ const auto index_key = [^\n]+\n)/',
-		"\ttry {\n$1\t} catch (const std::out_of_range&) { return local_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
+	$atomic = preg_replace('/(\t\{ const auto write_key = [^\n]+\n)/',
+		"\ttry {\n$1\t} catch (const std::out_of_range&) { return var_values_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
 	verify($count === 1, 'Missing keyed write for atomicity observation');
 	$fixtures[$flavor->name . '-conversion-atomicity'] = ['cpp' => "#include <stdexcept>\n" . $atomic, 'stdout_hex' => ''];
 
@@ -114,7 +155,7 @@ foreach (flavor::cases() as $flavor) {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/lib.' . $flavor->name;
-		file_put_contents($main, $decl('hash<int,int>', 'values', '[]') . "$v" . '[0] = number(); echo ' . "$v" . '[0]; return 8;');
+		file_put_contents($main, $decl('hash<int,int>', 'values', '[]') . "$v" . '[0] = number();' . "if (empty($v) || count($v) !== 1) {return 91;} echo " . "$v" . '[0]; return 8;');
 		$revision = time();
 		$write = static function (?string $type, string $value = '') use ($library, &$revision, $function): void {
 			if ($type === null) {
@@ -155,6 +196,19 @@ foreach (flavor::cases() as $flavor) {
 			verify($incremental === $fresh, 'Incremental hash output differs from fresh');
 			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex($expected)];
 		}
+		// Adding/removing an ordinary declaration must invalidate the builtin call in the retained caller.
+		file_put_contents($library, $function('int', 'count', 'return 0;'), FILE_APPEND);
+		touch($library, ++$revision);
+		$session = $compiler->frontend($directory, $session);
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Argument count mismatch');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Argument count mismatch');
+		$write('int', '8');
+		$session = $compiler->frontend($directory, $session);
+		Incremental_Preparation::prepare($session, $target);
+		verify($session->entry->entry->ast === $root, 'Builtin recovery replaced caller AST');
+		$recovered = Cpp_Program::emit(new prepared_program($session->entry_key(), $session->files(),
+			new prepared_entry($root, $target), $session))->files;
+		verify($recovered === $fresh, 'Builtin recovery differs from fresh emission');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op lost prepared bodies');
 		$library_ast = $session->scope->entry('func:number')->declaration();

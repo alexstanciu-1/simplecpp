@@ -125,7 +125,7 @@ def prove(work):
                 assert f'#include <scpp/{flavor}/string.hpp>' in text and f'using namespace ::scpp::{flavor};' in text
                 assert 'using namespace ::scpp::types;' in text
                 if box:
-                    assert 'namespace ' + box + ' {' in text and 'bool_t scpp_function_' in text
+                    assert 'namespace ' + box + ' {' in text and f'bool_t {flavor[0]}_(' in text
                 if label == 'shadow' and flavor == 'cpp':
                     assert '::scpp::cpp::starts_with(' in text
             for header in data['headers']:

@@ -58,7 +58,7 @@ foreach (flavor::cases() as $flavor)
 	verify($update->local_def() === $entry->body()->statements[0], 'Shared storage binding');
 	verify($entry->body()->expression_visits === 2, 'Update fabricated an expression traversal');
 	$direct = (new Cpp_Emitter())->emit($entry);
-	verify(str_contains($direct, '++local_0;') && !str_contains($direct, 'compound_previous') && !str_contains($direct, '([&]'), 'Update must lower directly');
+	verify(str_contains($direct, '++var_x_0;') && !str_contains($direct, 'compound_previous') && !str_contains($direct, '([&]'), 'Update must lower directly');
 	$ref = match ($flavor) {
 		flavor::php => 'int &$v',
 		flavor::cpp => 'int &v',

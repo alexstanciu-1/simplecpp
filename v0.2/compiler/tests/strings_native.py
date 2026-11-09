@@ -45,9 +45,9 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         else:
             cpp = directory / 'program.cpp'
             # Only the proof artifact exercises mutation: source-level methods remain deferred.
-            checks = ('\tlocal_0.clear();\n'
-                      '\tif (local_0.size() != 0 || local_1.size() != 13) return 91;\n'
-                      '\tif (local_1.data()[6] != 0 || local_1.data()[12] != \'\\n\') return 92;\n')
+            checks = ('\tvar_first_0.clear();\n'
+                      '\tif (var_first_0.size() != 0 || var_copy_1.size() != 13) return 91;\n'
+                      '\tif (var_copy_1.data()[6] != 0 || var_copy_1.data()[12] != \'\\n\') return 92;\n')
             source = fixture['cpp'].replace('\treturn ', checks + '\treturn ') if check_copy else fixture['cpp']
             for exception in ('length_error', 'invalid_argument', 'out_of_range', 'domain_error', 'runtime_error'):
                 expected = fixture.get('catch_' + exception)

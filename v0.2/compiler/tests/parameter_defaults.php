@@ -57,7 +57,7 @@ foreach (flavor::cases() as $flavor)
 	foreach (['int' => '8', 'int64' => '9', 'bool' => '1', 'byte' => '255', 'float' => '8', 'float64' => '-0.0', 'string' => '"S"', 'null' => 'null'] as $type => $default) {
 		$code .= $fn('default_' . $type, [$p('v', $type, $default)], $type, 'return ' . $var('v') . ';');
 	}
-	$code .= 'print("R"); print("X",9); print("Y",10,"?"); mutable(); mutable();'
+	$code .= 'print("R"); print("X",9); print("Y",10,"?"); mutable(); mutable(); mutable("X");'
 		. 'echo pair(mark(3)); echo pair(mark(4),mark(5)); echo default_int64(); echo default_string();'
 		. 'default_bool(); default_byte(); default_float(); default_float64(); default_null(); return default_int();';
 	$entry = $prepare($code);
@@ -67,7 +67,9 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("R8!X9!Y10?A\0BA\0B324559S")];
+	verify(substr_count($cpp, 'mutable_(scpp::string{"\101\000\102", 3});') === 2, 'Expected direct default string arguments');
+	verify(str_contains($cpp, 'mutable_(static_cast<scpp::string&&>(argument_'), 'Explicit string argument lost its temporary');
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("R8!X9!Y10?A\0BA\0BX324559S")];
 	foreach ($entry->file->functions() as $function) {
 		Function_Preparation::reset($function);
 	}

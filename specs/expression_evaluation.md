@@ -1,6 +1,20 @@
 # Expression evaluation — v0.2
 Doc Status: normative
 
+## Current eager operand order (2026-11-08)
+
+For eager binary operations, v0.2 leaves operand evaluation order to the native C++
+implementation. Source programs cannot rely on either operand running first, on
+which operand failure is observed first, or on a sibling's effects occurring
+before a failure. Grouping, operand conversions, and the operation's runtime
+checks still apply. Lazy operators retain their short-circuit rules.
+
+This amendment supersedes the eager operand ordering and snapshot requirements
+in the earlier decisions below and in operator-specific descriptions. A backend
+may still sequence operands. Such sequencing describes that lowering only.
+
+## Earlier decisions
+
 Agreed 2026-10-10. This amendment defines eager binary operand sequencing for
 Simple C++ v0.2. It supersedes the previous order-independent operand restriction
 and unspecified ordering of operand failures, including integer exponentiation.

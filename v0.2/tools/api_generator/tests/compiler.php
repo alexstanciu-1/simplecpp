@@ -21,6 +21,14 @@ $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
+// The target, rather than the PHP host or ordinary LL carrier, selects exact overload literals.
+foreach (['long' => 'L', 'long long' => 'LL'] as $native => $suffix) {
+    $target = $facts;
+    $target['fixed_integers']['int64']['native_name'] = $native;
+    $integer = renderCompiler($metadata, $target)['types/int64.php'];
+    requireThat(str_contains($integer, "'(-9223372036854775807$suffix - 1$suffix)' : \$value . '$suffix'"),
+        'Exact argument literals ignored target native identity');
+}
 // A runtime function must follow the published source spelling and binding in both outputs.
 $functionMetadata = unserialize($originalExportMetadata);
 $declaration = $functionMetadata->string->functions->strlen;
@@ -691,9 +699,9 @@ foreach ($bound->type_exports as $export) if ($export->identity === 'uint8') $ex
 $bound->submodules->{'core.scalars'}->header = 'scpp/test_byte.hpp';
 $bound->submodules->{'core.string'}->header = 'scpp/test_string.hpp';
 $boundFiles = renderCompiler($bound, $facts);
-requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8(static_cast<scpp::int64>'), 'Checked binding ignored');
+requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::test_checked_int64_to_uint8('), 'Checked binding ignored');
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp/test_conversions.hpp'), 'Checked header binding ignored');
-requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64(static_cast<scpp::float64>'), 'Floating checked binding ignored');
+requireThat(str_contains($boundFiles['types/int64.php'], 'scpp::test_checked_float64_to_int64('), 'Floating checked binding ignored');
 requireThat(str_contains($boundFiles['types/string.php'], 'scpp::string') && str_contains($boundFiles['types/string.php'], 'scpp/test_string.hpp'), 'Storage binding ignored');
 requireThat(str_contains($boundFiles['types/uint8.php'], 'scpp::byte') && str_contains($boundFiles['types/uint8.php'], 'scpp/test_byte.hpp'), 'Scalar export binding ignored');
 foreach (['missing', 'identity', 'kind', 'extract', 'symbol', 'header'] as $change) {

@@ -54,7 +54,7 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated prepared facts');
-	verify(str_contains($cpp, 'local_0 = 8LL;'), 'Assignment not emitted');
+	verify(str_contains($cpp, 'var_number_0 = 8LL;'), 'Assignment not emitted');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("38198N\0W")];
 	$unknown = $prepare('global ' . $decl('int', 'external', '8') . $decl('int', 'value', '1')
 		. $write('value', $var('external')) . 'return ' . $var('value') . ';');

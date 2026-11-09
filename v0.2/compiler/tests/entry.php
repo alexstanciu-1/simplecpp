@@ -83,7 +83,7 @@ $good = new source_file('good', 'int ret=8; return ret;', flavor::cpp);
 verify($emitter->emit($preparation->prepare($frontend->collect($good), $target)) === $stable,
 	'Failed preparation leaves no bindings in the next run');
 $leading = $frontend->prepare(new source_file('decimal', 'int ret=0008; return ret;', flavor::cpp), $target);
-verify(str_contains($emitter->emit($leading), '= 8LL;'), 'Leading zeros emit decimal, never octal');
+verify(str_contains($emitter->emit($leading), '= 8;'), 'Leading zeros emit decimal, never octal');
 $maximum = $frontend->prepare(new source_file('max', 'int unused=9223372036854775807; return 8;', flavor::cpp), $target);
 verify($maximum->body()->statements[0]->initializer->constant() === \PHP_INT_MAX, 'Exact int64 maximum');
 $span = $parsed->main()->body()->statements[1];

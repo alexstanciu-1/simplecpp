@@ -113,13 +113,23 @@ foreach (flavor::cases() as $flavor)
 		. $fn('bool_to_byte', $param('bool', 'v'), 'byte', 'return ' . $v . ';');
 	$observer = file_get_contents(__DIR__ . '/family_conversions_observer.cpp');
 	foreach (['float_to_byte', 'byte_to_float', 'byte_to_bool', 'bool_to_byte'] as $name) {
-		$observer = str_replace('@' . $name . '@', '::App::scpp_function_' . bin2hex($name), $observer);
+		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
 	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$failure = $fn('outside', '', 'float', 'echo "X"; return 256.0;') . $decl('byte', 'outside()') . 'return 8;';
 	$fixtures[$flavor->name . '_once'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
 		'stdout_hex' => bin2hex('X'), 'catch_out_of_range' => true];
+	foreach ([-1, 0, 255, 256] as $input) {
+		$source = $fn('number', '', 'int', 'echo "N"; return ' . $input . ';')
+			. $decl('byte', 'number()') . 'echo (int)' . $x . '; return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		verify(str_contains($cpp, 'scpp::checked_int64_to_uint8(number_())'),
+			'Direct int return must feed the checked helper unchanged');
+		$outside = $input < 0 || $input > 255;
+		$fixtures[$flavor->name . '_checked_call_' . $input] = ['cpp' => $cpp,
+			'stdout_hex' => bin2hex($outside ? 'N' : 'N' . $input), 'catch_out_of_range' => $outside];
+	}
 	$directory = sys_get_temp_dir() . '/scpp-family-conversions-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {

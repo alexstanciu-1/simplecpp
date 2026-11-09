@@ -66,7 +66,7 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated inferred facts');
-	verify(!str_contains($cpp, 'auto local_'), 'C++ was asked to infer source types');
+	verify(!str_contains($cpp, 'auto var_'), 'C++ was asked to infer source types');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("47N\0W981")];
 	Function_Preparation::reset_body($entry->body());
 	$entry = (new Preparation())->prepare($entry->file, new entry_target(31));
