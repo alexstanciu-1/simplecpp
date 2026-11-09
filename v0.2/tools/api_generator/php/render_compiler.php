@@ -196,7 +196,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 34,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 38,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -506,6 +506,7 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $flavorCases = '';
     $compoundEnabled = isset($compiler->arithmetic->$identity) && $compiler->arithmetic->$identity->compound;
     $compoundOperators = [];
+    $nativeCompoundCases = [];
     $cases = '';
     $headers = [];
     $reorderable = [];
@@ -513,7 +514,13 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $stringLiteralOps = [];
     foreach ($operations as $op => $operation) {
         $result = 'type_' . $definitions[$operation['result']]['class'];
-        if (($operation['compound'] ?? $compoundEnabled) && $operation['result'] === $identity) $compoundOperators[] = "binary_operator::$op";
+        if (($operation['compound'] ?? $compoundEnabled) && $operation['result'] === $identity) {
+            $compoundOperators[] = "binary_operator::$op";
+            if ($operation['lowering'] === 'native' && $definitions[$identity]['strategy'] === 'integer'
+                && $types[$identity]['signed'] && $types[$identity]['bits'] === 64) {
+                $nativeCompoundCases[] = "binary_operator::$op => " . var_export($operation['spelling'] . '=', true);
+            }
+        }
         if (isset($operation['flavors'])) {
             $allowed = implode(', ', array_map(static fn(string $flavor): string => 'flavor::' . $flavor, $operation['flavors']));
             $flavorCases .= "\t\t\tbinary_operator::$op => match (\$site->source()->flavor) { $allowed => true, default => false },\n";
@@ -623,7 +630,8 @@ $headerCases\t\t\tdefault => [],
 \t}
 ";
     }
-    return "$syntaxMethod
+    $nativeCompoundMethod = $nativeCompoundCases === [] ? '' : "\n\tpublic function cpp_compound_operator(binary_operator \$operator): ?string\n\t{\n\t\treturn match (\$operator) { " . implode(', ', $nativeCompoundCases) . ", default => null };\n\t}\n";
+    return "$syntaxMethod$nativeCompoundMethod
 \t/** Compound syntax admission is separate from ordinary arithmetic capability. */
 \tpublic function supports_compound(binary_operator \$operator): bool
 \t{

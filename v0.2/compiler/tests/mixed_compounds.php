@@ -116,10 +116,14 @@ foreach (flavor::cases() as $flavor)
 	$counter = match ($flavor) {
 		flavor::php => '$i int = 0;', flavor::cpp => 'int i = 0;', flavor::js => 'let i: int = 0;',
 	};
-	$loops = $counter . $decl('0.5')
-		. "for ($x += 0.5; $i < 0; $i += 1) { return 9; }"
-		. "if ($x !== 1.0) { return 9; }"
-		. "for ($x += 0.5; $i < 2; $i += 1) { continue; }"
+	$int_ref = match ($flavor) {
+		flavor::php => 'int &$v', flavor::cpp => 'int &v', flavor::js => '&v: int',
+	};
+	// Losing the float snapshot truncates 0.5; losing the integer snapshot uses the 100 written by step.
+	$loops = $fn('step', $int_ref, 'int', "$v = 100; return 1;") . $counter . $decl('0.5')
+		. "for ($x += 0.5; $i < 0; $i += step($i)) { return 9; }"
+		. "if ($x !== 1.0 || $i !== 0) { return 9; }"
+		. "for ($x += 0.5; $i < 2; $i += step($i)) { continue; }"
 		. "if ($x !== 1.5 || $i !== 2) { return 9; } return 8;";
 	$fixtures[$flavor->name . '_loop_snapshots'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($loops)), 'stdout_hex' => ''];
 	foreach (['-=true', '/=null', '%=2.0'] as $invalid) {

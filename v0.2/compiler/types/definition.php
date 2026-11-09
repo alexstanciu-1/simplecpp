@@ -149,6 +149,12 @@ abstract class type_definition
 		return false;
 	}
 
+	/** Native spelling when this execution type permits a direct compound write. */
+	public function cpp_compound_operator(binary_operator $operator): ?string
+	{
+		return null;
+	}
+
 	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
