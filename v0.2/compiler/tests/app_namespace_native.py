@@ -127,6 +127,12 @@ def prove(work):
         valid = originals['php'].replace('return ', f'return {condition} && ')
         edits[f'bad-{name}-php'] = (predicates['php'], valid.replace(call, f'{name}(7)'))
         edits[f'recovery-{name}-php'] = (predicates['php'], valid)
+    for args, bad_args in [('1', '"bad"'), ('1, 2', '1, "bad"'), ('1, 2, true', '1, 2, "bad"')]:
+        arity = 2 + len(args.split(','))
+        call = f'substr_compare("aBc","Bc",{args})'
+        valid = originals['php'].replace('return ', f'return {call} === 0 && ')
+        edits[f'bad-substr-compare-{arity}'] = (predicates['php'], valid.replace(call, f'substr_compare("aBc","Bc",{bad_args})'))
+        edits[f'recovery-substr-compare-{arity}'] = (predicates['php'], valid)
     counted = originals['php'].replace('return ', '$out = 99; str_replace("x", "y", $s, $out); return $out === 0 && ')
     edits['bad-replace-count-php'] = (predicates['php'], counted.replace(', $out)', ', 0)'))
     edits['recovery-replace-count-php'] = (predicates['php'], counted)

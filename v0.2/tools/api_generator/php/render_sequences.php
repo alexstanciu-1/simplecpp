@@ -52,7 +52,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $parameters[] = "$cppType $arg";
                     }
                     $arguments = stringAdapterOrder($arguments, $adapter);
-                    if ($binding['implementation'] === 'count_matches' || isset($adapter['search_offset'])) {
+                    if (in_array($binding['implementation'], ['count_matches', 'compare_window'], true) || isset($adapter['search_offset'])) {
                         for ($arity = $binding['required_parameters']; $arity < count($parameters); ++$arity) {
                             $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, array_slice($parameters, 0, $arity),
                                 $binding['symbol'], array_slice($arguments, 0, $arity));
@@ -225,6 +225,12 @@ function renderString(array $plan): array {
         if (!$windowPositionEmitted && in_array($function['implementation'], ['slice_bytes', 'replace_window'], true)) {
             $d .= template('string_byte_position');
             $windowPositionEmitted = true;
+        }
+        if ($function['implementation'] === 'compare_window') {
+            $args = 'const string& subject, const string& other, int64 offset';
+            $h .= "namespace str { int64 $name($args); int64 $name($args, int64 length, bool_t insensitive = false); }\n";
+            $d .= template('string_compare_window', ['name' => $name, 'args' => $args]);
+            continue;
         }
         if ($function['implementation'] === 'replace_window') {
             $signature = "string $name(const string& subject, const string& replacement, int64 offset, int64 length)";

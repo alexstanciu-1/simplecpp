@@ -19,7 +19,7 @@ Doc Status: normative
 - Compares a byte slice of `main_str` against `str` and returns a native compare-style integer.
 - Negative offsets count from the end.
 - Omitted length compares the full remainder of `main_str`.
-- Negative lengths trim the comparison window from the end of `main_str`.
+- A nonnegative length caps both operands. A negative length trims the comparison window from the end of `main_str` and caps the right operand at the remaining left width.
 - Case-insensitive mode is ASCII-only and byte-oriented.
 - If normalization yields no usable subject window, Prism++ compares an empty left slice.
 
@@ -42,7 +42,7 @@ Doc Status: normative
 ## Compile plan summary
 - Implemented in `runtime/include/modules/strings/strings.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
-- v0.2 registers all three fixed arities through the strings module catalog.
+- The active v0.2 [runtime metadata](../../../v0.2/runtime/metadata/runtime.json) publishes the three PHP arities through one byte-window comparison. Only the sign of a nonzero result is significant.
 
 ## Test matrix
 - positive offset compare

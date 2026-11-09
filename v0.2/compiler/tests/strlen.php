@@ -368,6 +368,34 @@ SCPP;
 		$expected = bin2hex($raw) . '|S' . $raw . "|[]S|S\0\xffA|" . str_repeat('F|', 9);
 		$fixtures['php-hex'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'stdout_hex' => bin2hex($expected), 'stderr' => ''];
+		$comparisons = [
+			['"abc","bcXYZ",1', -1], ['"abc","bcXYZ",1,2', 0], ['"abc","bc",-2', 0],
+			['"abc","a",-3', 1], ['"abc","",3', 0], ['"abc","a",4', -1],
+			['"abc","a",-4', -1], ['"abc","x",0,0', 0], ['"abc","bQ",1,-1', 0],
+			['"abc","x",1,-3', 0], ['"abc","x",4,-1', 0], ['"abc","x",4,1', -1],
+			['"abc","x",' . $min, -1], ['"abc","x",' . $max, -1],
+			['"abc","abc",0,' . $max, 0], ['"abc","x",0,' . $min, 0],
+			['"abc","x",' . $min . ',' . $min, 0], ['"abc","abcd",0,' . $max, -1],
+			['"","",0', 0], ['"","x",0', -1], ['"x","",0,1,true', 1],
+			['"A\0b","a\0B",0,3,true', 0], ['"A\0b","a\0B",0,3,false', -1],
+			['"a\0d","A\0C",0,3,true', 1], ['"a\0b","a\0c",0', -1],
+			['string_byte_from_int(255),string_byte_from_int(127),0', 1],
+			['string_byte_from_int(192),string_byte_from_int(224),0,1,true', -1],
+			['"@","[",0,1,true', -1],
+		];
+		$source = '';
+		$expected = '';
+		foreach ($comparisons as [$args, $sign]) {
+			$source .= 'echo (substr_compare(' . $args . ') <=> 0), ",";';
+			$expected .= $sign . ',';
+		}
+		$fixtures['php-substr-compare'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')),
+			'stdout_hex' => bin2hex($expected)];
+		foreach (['"a","b"', '"a","b",0,1,false,0'] as $args) {
+			rejects(fn() => $prepare("echo substr_compare($args); return 8;"), 'Argument count');
+		}
+	} else {
+		rejects(fn() => $prepare('echo substr_compare("abc","bc",1); return 8;'), 'Unknown function');
 	}
 	foreach (['lcfirst', 'ucfirst', 'bin2hex', 'hex2bin'] as $name) {
 		if ($flavor === flavor::php) {

@@ -134,6 +134,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
+            'compare_window' => ['parameters' => ['string', 'string', 'int64', 'int64', 'bool_t'], 'required_parameters' => 3, 'result' => 'int64'],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
             'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
             'slice_bytes' => ['parameters' => ['string', 'int64', 'int64'], 'result' => 'string', 'required_parameters' => 2],
@@ -167,7 +168,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['replace_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
+        $phpOnly = in_array($implementation, ['replace_window', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {
