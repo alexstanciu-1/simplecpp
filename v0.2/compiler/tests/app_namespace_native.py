@@ -58,6 +58,13 @@ def prove(work):
             invalid = text.replace(candidate, candidate.replace('$n)', '200)').replace('(n)', '(200)'))
             edits['bad-' + role + '-' + flavor] = (path, invalid)
             edits['recovery-' + role + '-' + flavor] = (path, text.replace('return ', 'return !!') if role == 'prefix' else text)
+        # Both position overloads must recover after an invalid typed offset.
+        for role, candidate in zip(('first', 'last'), calls[flavor][3:], strict=True):
+            needle = '$n' if flavor == 'php' else 'n'
+            bounded = candidate.replace(needle + ')', needle + ', 0)')
+            valid = originals[flavor].replace(prefix, bounded)
+            edits[f'bad-offset-{role}-{flavor}'] = (path, valid.replace(', 0)', ', "bad")'))
+            edits[f'recovery-offset-{role}-{flavor}'] = (path, valid)
     count_calls = {'php': 'substr_count($s,$n)', 'js': 's.countMatches(n)', 'cpp': 's.count_matches(n)'}
     for flavor, call in count_calls.items():
         needle = '$n' if flavor == 'php' else 'n'

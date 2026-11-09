@@ -164,7 +164,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Prefix | str_starts_with(s, needle) | s.startsWith(needle) | s.starts_with(needle) | Exact bytes, bool; empty needle matches |
 | Suffix | str_ends_with(s, needle) | s.endsWith(needle) | s.ends_with(needle) | Same |
 | Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
-| First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional start deferred |
+| First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional int64 position: PHP signed, JS clamped, C++ nonnegative |
 | Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Byte coordinates; signed clamped bounds; final bound optional |
 | Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal bytes; empty needle preserves the subject |

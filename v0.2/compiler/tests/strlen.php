@@ -331,6 +331,50 @@ foreach (flavor::cases() as $flavor) {
 		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
 		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
+	$position_call = static fn(string $op, string $s, string $n, string $offset): string => $flavor === flavor::php
+		? "$op($s,$n,$offset)" : "$s.$op($n,$offset)";
+	// Columns give the first and last absolute byte positions, with -1 denoting a miss.
+	$php = $flavor === flavor::php;
+	$cases = [
+		['"ababab"', '"ab"', '1', 2, $php ? 4 : 0], ['"ababab"', '"ab"', '0', 0, $php ? 4 : 0],
+		['"ababab"', '"ab"', '6', -1, $php ? -1 : 4], ['""', '""', '0', 0, 0],
+		['"ababab"', '""', '1', 1, $php ? 6 : 1], ['"aaa"', '"aa"', '1', 1, 1],
+		['"é\0é"', '"é"', '1', 3, $php ? 3 : 0], ['"é\0é"', '"\0"', '2', 2, 2],
+	];
+	if ($flavor !== flavor::cpp) {
+		$cases[] = ['"ababab"', '"ab"', '-3', $php ? 4 : 0, $php ? 2 : 0];
+		$cases[] = ['"ababab"', '"ab"', '-4', $php ? 2 : 0, $php ? 2 : 0];
+		$cases[] = ['"ababab"', '""', '-1', $php ? 5 : 0, $php ? 5 : 0];
+		$cases[] = ['"ababab"', '"ab"', '-6', 0, 0];
+	}
+	if (!$php) {
+		$cases[] = ['"ababab"', '""', $maximum, $flavor === flavor::js ? 6 : -1, 6];
+		$cases[] = ['"ababab"', '"ab"', $maximum, -1, 4];
+	}
+	if ($flavor === flavor::js) $cases[] = ['"ababab"', '""', $minimum, 0, 0];
+	$source = '';
+	$expected = '';
+	foreach ($cases as [$subject, $needle, $offset, $forward, $reverse]) {
+		foreach ([$first => $forward, $last => $reverse] as $op => $answer) {
+			$call = $position_call($op, $subject, $needle, $offset);
+			$source .= $php ? '$pos = ' . $call . '; if (isset($pos)) { echo $pos + 0; } else { echo "false"; } echo ",";'
+				: "echo $call, \",\";";
+			$expected .= ($php && $answer === -1 ? 'false' : $answer) . ',';
+		}
+	}
+	$fixtures[$flavor->name . '-search-offset'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source . 'return 8;')),
+		'stdout_hex' => bin2hex($expected)];
+	foreach ([$first, $last] as $op) {
+		$invalid = match ($flavor) {
+			flavor::php => [$minimum, $maximum, '-4', '4'], flavor::cpp => [$minimum, '-1'], flavor::js => [],
+		};
+		foreach ($invalid as $i => $offset) {
+			$call = $position_call($op, '"abc"', '""', $offset);
+			$expr = $php ? "(int)isset($call)" : $call;
+			$fixtures["{$flavor->name}-$op-position-error-$i"] = ['cpp' => (new Cpp_Emitter())->emit($prepare("echo $expr; return 8;")),
+				'catch_ValueError' => $php ? 'Search offset outside subject' : 'Search position must be nonnegative', 'stdout_hex' => ''];
+		}
+	}
 	$repeat = static fn(string $value, string $count): string => $flavor === flavor::php
 		? "str_repeat($value, $count)" : "$value.repeat($count)";
 	$empty_repeats = 'echo "[",' . $repeat('"abc"', '0') . ', ' . $repeat('""', '2') . ', "]"; return 8;';

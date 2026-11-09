@@ -72,3 +72,8 @@ The v0.2 provider target is `scpp::php::strrpos_bytes` in
 consumers and the portability text framework. That adapter's behavior does not
 override this source contract. Shared code-point search and the explicit
 `string_byte_find` nonnegative-offset contract remain unchanged.
+
+## Active v0.2 flavor adapters
+
+JS `lastIndexOf` clamps its position to [0, N]. C++ `rfind` rejects negative positions with `ValueError`. Both use the position as the latest allowable match start. A position past N permits the full reverse search.
+Here N is the subject’s byte length. Omission searches the whole subject. JS and C++ return −1 on a miss; PHP retains its signed-offset and falseable-result contract above.

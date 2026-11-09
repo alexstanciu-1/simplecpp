@@ -5,6 +5,14 @@ function lifecycle(string $n): array {
     return [template('lifecycle_declaration', ['n' => $n]), template('lifecycle_definition', ['n' => $n])];
 }
 
+function stringAdapterOverload(string $flavor, array $adapter, string $result, array $parameters, string $symbol, array $arguments): string {
+    $args = implode(', ', $arguments);
+    $body = isset($adapter['body'])
+        ? rtrim(template($adapter['body'], ['symbol' => $symbol, 'result' => $result, 'args' => $args]))
+        : "{ return ::$symbol($args); }";
+    return "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}(" . implode(', ', $parameters) . ") $body\n}\n";
+}
+
 function renderSequences(array $plan, array &$files, string &$definitions, array &$groups): void {
     foreach(['string' => 'renderString', 'vectors' => 'renderVectors', 'carriers' => 'renderCarriers'] as $family => $renderer) {
         $path = $family === 'string' ? ($plan['string']['header'] ?? null):($plan[$family . '_header'] ?? null);
@@ -42,14 +50,13 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $parameters[] = "$cppType $arg";
                     }
                     $arguments = stringAdapterOrder($arguments, $adapter);
-                    if ($binding['implementation'] === 'count_matches') {
+                    if ($binding['implementation'] === 'count_matches' || isset($adapter['search_offset'])) {
                         for ($arity = $binding['required_parameters']; $arity < count($parameters); ++$arity) {
-                            $params = implode(', ', array_slice($parameters, 0, $arity));
-                            $args = implode(', ', array_slice($arguments, 0, $arity));
-                            $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}($params)"
-                                . " { return ::{$binding['symbol']}($args); }\n}\n";
+                            $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, array_slice($parameters, 0, $arity),
+                                $binding['symbol'], array_slice($arguments, 0, $arity));
                         }
                     }
+                    if (isset($adapter['search_offset'])) $arguments[] = '::scpp::str::search_policy::' . $adapter['search_offset'];
                     if (isset($adapter['limit_policy'])) {
                         $short = implode(', ', array_slice($parameters, 0, 2));
                         $args = implode(', ', array_slice($arguments, 0, 2));
@@ -89,11 +96,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = '::scpp::str::trim_side::' . $adapter['trim_side'];
                         $arguments[] = '::scpp::str::trim_set::' . $adapter['trim_set'];
                     }
-                    $body = isset($adapter['body'])
-                        ? rtrim(template($adapter['body'], ['symbol' => $binding['symbol'], 'result' => $result]))
-                        : "{ return ::{$binding['symbol']}(" . implode(', ', $arguments) . "); }";
-                    $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::{$result} {$adapter['name']}("
-                        . implode(', ', $parameters) . ") $body\n}\n";
+                    $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $parameters, $binding['symbol'], $arguments);
                 }
             }
         }
@@ -159,12 +162,26 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
+    $searchPolicyEmitted = false;
     $padSymbols = [];
     $trimSymbols = [];
     $replaceSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
         if (in_array($function['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) continue;
+        if (in_array($function['implementation'], ['find', 'rfind'], true)) {
+            if (!$searchPolicyEmitted) {
+                $h .= "namespace str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n";
+                $d .= template('string_search_position');
+                $searchPolicyEmitted = true;
+            }
+            $args = 'const string& subject, const string& needle';
+            $method = $function['implementation'];
+            $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset, search_policy policy); }\n";
+            $d .= template('string_search', ['name' => $name, 'args' => $args, 'method' => $method,
+                'reverse' => $method === 'rfind' ? 'true' : 'false']);
+            continue;
+        }
         if ($function['implementation'] === 'pad_bytes') {
             if (!$padSymbols) $h .= "namespace str { enum class pad_side : int64 { left = 0, right = 1, both = 2 }; }\n";
             if (!isset($padSymbols[$name])) {
@@ -224,7 +241,6 @@ function renderString(array $plan): array {
             $method = $function['implementation'];
             $bytes = 'detail::string_access::read';
             $body = match ($method) {
-                'find', 'rfind' => "const auto pos = $bytes(value).$method($bytes(other)); return pos == std::string_view::npos ? -1 : detail::checked_integer_cast<int64>(pos);",
                 'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false') . ');',
                 'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
                 default => "return $bytes(value).$method($bytes(other));",

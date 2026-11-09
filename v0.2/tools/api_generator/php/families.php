@@ -69,7 +69,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'explicit_formatters', 'index_read', 'index_write']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write']);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -124,7 +124,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'byte_length' => ['parameters' => ['string'], 'result' => $count],
             'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
-            'find', 'rfind' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
+            'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
@@ -172,6 +172,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $values = fields($function->constants, ['STR_PAD_LEFT', 'STR_PAD_RIGHT', 'STR_PAD_BOTH']);
             literals($function->constants, ['STR_PAD_LEFT' => 0, 'STR_PAD_RIGHT' => 1, 'STR_PAD_BOTH' => 2]);
             $plan['php_integer_constants'] = $values;
+        }
+        $search = in_array($implementation, ['find', 'rfind'], true);
+        if ($search) {
+            $offsets = fields(at($m, 'search_offsets'), ['php', 'js', 'cpp']);
+            requireThat(($function->flavor_adapters ?? false) === true, 'Search requires flavor adapters');
         }
         $slice = $implementation === 'slice_bytes';
         $split = $implementation === 'split_bytes';
@@ -232,6 +237,11 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     $options = fields($signatures[$flavor], ['result', 'body']);
                     literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
                     requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
+                }
+                if ($search) {
+                    $policy = $offsets[$flavor] ?? null;
+                    requireThat(in_array($policy, ['signed_offset', 'clamp', 'nonnegative'], true), 'Unknown search offset policy');
+                    $options['search_offset'] = $policy;
                 }
                 if (isset($freeNames[$flavor])) $options['free'] = true;
                 if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['swap_first_two'] = true;
