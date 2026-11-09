@@ -558,7 +558,7 @@ final class Preparation
 	private function runtime_call(ast_call_expression $call, runtime_function $runtime): void
 	{
 		$operands = $call->runtime_operands();
-		if (count($operands) !== count($runtime->parameters)) {
+		if (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		foreach ($operands as $index => $argument) {

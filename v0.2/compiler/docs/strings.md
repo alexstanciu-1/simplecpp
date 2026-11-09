@@ -94,8 +94,8 @@ The default string provider publishes `strlen(string): int`. Its generated bindi
 count. Embedded NUL contributes one byte and UTF-8 contributes its encoded byte length.
 
 Preparation first watches the ordinary source function slot. When the slot is empty,
-the generated runtime registry supplies its immutable fixed-arity signature, binding and
-provider header. A local source definition can shadow it and deletion restores the
+the generated runtime registry supplies the parameter types, required argument count,
+result type, C++ binding and provider header. A local source definition can shadow it and deletion restores the
 runtime target. The existing call AST keeps either that signature or the stable source
 symbol. Lowering evaluates the argument once.
 

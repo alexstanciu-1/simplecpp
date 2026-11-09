@@ -35,6 +35,12 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[] = $arg = "arg$i";
                         $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " $arg";
                     }
+                    if (isset($adapter['bound'])) {
+                        $short = implode(', ', array_slice($parameters, 0, $binding['required_parameters']));
+                        $files[$path] .= "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}($short)"
+                            . " { return ::{$binding['symbol']}(arg0, arg1, 0, ::scpp::str::slice_bound::to_end); }\n}\n";
+                        $arguments[] = '::scpp::str::slice_bound::' . $adapter['bound'];
+                    }
                     if (isset($adapter['trim_side'])) {
                         $arguments[] = '::scpp::str::trim_side::' . $adapter['trim_side'];
                         $arguments[] = '::scpp::str::trim_set::' . $adapter['trim_set'];
@@ -112,6 +118,12 @@ function renderString(array $plan): array {
     $trimSymbols = [];
     foreach ($plan['string_functions'] ?? [] as $function) {
         $name = substr($function['symbol'], strlen('scpp::str::'));
+        if ($function['implementation'] === 'slice_bytes') {
+            $signature = "string $name(const string& value, int64 start, int64 bound, slice_bound mode)";
+            $h .= "namespace str { enum class slice_bound { to_end, length, exclusive_end }; $signature; }\n";
+            $d .= template('string_slice', ['signature' => $signature]);
+            continue;
+        }
         if ($function['implementation'] === 'trim_bytes') {
             if (!$trimSymbols) {
                 $h .= "namespace str { enum class trim_side { both, start, end }; enum class trim_set { php_space, ascii_space }; }\n";

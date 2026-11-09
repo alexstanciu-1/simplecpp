@@ -171,8 +171,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $flavor = explode(':', $key, 2)[0];
                 $adapter = $binding['adapters'][$flavor];
                 $adapterResult = $adapter['result'] ?? $result;
+                $required = isset($binding['required_parameters']) ? ', ' . $binding['required_parameters'] : '';
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                    . implode(', ', $parameters) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'),";
+                    . implode(', ', $parameters) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }
             continue;
         }

@@ -1008,6 +1008,8 @@ remain successful Result values. Filter, callbacks, count outputs and limited
   (`vector<string>` or inferred `hash<string,K>`), code-point `substr` (2/3 args),
   byte-based `substr_compare` (3/4/5 args), and `hex2bin` with its documented
   `result_or_false<string>` contract through the existing PHP adapter.
+  The active v0.2 compiler publishes byte-based PHP/C++ substr and JS slice through
+  its [byte slicing contract](builtins/string/substr.md).
   Explicit byte helpers (`string_byte_len`, `string_byte_at`, `string_byte_find`,
   `string_byte_slice`, `string_byte_slice_equals`), UTF-8 helpers
   (`string_utf8_codepoint_count`, `string_utf8_codepoint_at`,

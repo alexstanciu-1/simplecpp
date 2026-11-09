@@ -603,6 +603,7 @@
       "trim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "both", "members": {"cpp": "trim", "js": "trim"}, "flavor_adapters": true},
       "ltrim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "start", "members": {"cpp": "trim_start", "js": "trimStart"}, "flavor_adapters": true},
       "rtrim": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "end", "members": {"cpp": "trim_end", "js": "trimEnd"}, "flavor_adapters": true},
+      "substr": {"parameters": ["string", "int64", "int64"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::slice_bytes", "implementation": "slice_bytes", "bound": {"php": "length", "cpp": "length", "js": "exclusive_end"}, "flavor_adapters": true, "members": {"cpp": "substr", "js": "slice"}},
       "str_repeat": {"parameters": ["string", "int64"], "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
     },
     "provider": "core.string",

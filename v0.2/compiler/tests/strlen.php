@@ -50,6 +50,31 @@ foreach (flavor::cases() as $flavor) {
 		['starts_with', '""', '""'], ['ends_with', '"x"', '"xy"'], ['contains', '"ABC"', '"b"']] as [$op, $value, $needle]) {
 		$checks[] = '(int)' . $method($op, $value, $needle);
 	}
+	$slice = static fn(string $value, string $args): string => match ($flavor) {
+		flavor::php => 'substr(' . $value . ($args === '' ? '' : ',' . $args) . ')',
+		flavor::cpp => "$value.substr($args)", flavor::js => "$value.slice($args)",
+	};
+	$min = '(-9223372036854775807 - 1)';
+	$max = '9223372036854775807';
+	$cases = [
+		['"abcdef"', '2', 'cdef'], ['"abcdef"', '-2', 'ef'], ['"abcdef"', '2,3', 'cde', 'c'],
+		['"abcdef"', '3,1', 'd', ''], ['"abcdef"', '-4,-1', 'cde'], ['"abcdef"', '1,0', ''],
+		['"abc"', $min, 'abc'], ['"abc"', $max, ''], ['"abc"', "1,$min", ''], ['"abc"', "1,$max", 'bc'],
+		['"a\0b"', '1,2', "\0b", "\0"], ['"A😀B"', '1,2', "\xf0\x9f", "\xf0"], ['""', '-1', ''],
+	];
+	$slices = [];
+	$expected = [];
+	foreach ($cases as $case) {
+		[$value, $args, $length_result] = $case;
+		$slices[] = $slice($value, $args);
+		$expected[] = $flavor === flavor::js ? ($case[3] ?? $length_result) : $length_result;
+	}
+	$code = 'echo ' . implode(', "|", ', $slices) . '; return 8;';
+	$fixtures[$flavor->name . '-slices'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
+		'stdout_hex' => bin2hex(implode('|', $expected))];
+	foreach (['', '1,2,3'] as $args) {
+		rejects(fn() => $prepare('echo ' . $slice('"abc"', $args) . '; return 8;'), 'Argument count');
+	}
 	$predicate = $local . 'echo ' . implode(', ', $checks) . '; return 8;';
 	$predicate_cpp = (new Cpp_Emitter())->emit($prepare($predicate));
 	verify(str_contains($predicate_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>'), 'Missing flavor provider');

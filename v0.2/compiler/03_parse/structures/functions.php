@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Immutable published fixed-arity function signature and C++ binding, e.g. strlen(string): int. */
+/** Immutable published function signature and C++ binding, e.g. strlen(string): int. */
 final readonly class runtime_function
 {
 	/** PROPERTIES */
@@ -14,12 +14,14 @@ final readonly class runtime_function
 	public string $symbol;
 	public string $header;
 	public ?string $adapter_flavor;
+	public int $required_parameters /** uint32 */;
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null)
 	{
 		$this->source_name = $name;
+		$this->required_parameters = $required_parameters ?? count($parameters);
 		$this->parameters = $parameters;
 		$this->result = $result;
 		$this->symbol = $symbol;

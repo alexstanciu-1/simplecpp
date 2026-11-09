@@ -165,7 +165,7 @@ the runtime operation is shared. PHP's argument order is shown where it differs.
 | Suffix | str_ends_with(s, needle) | s.endsWith(needle) | s.ends_with(needle) | Same |
 | Contains | str_contains(s, needle) | s.includes(needle) | s.contains(needle) | Same |
 | First / last position | strpos(s, needle), strrpos(s, needle) | s.indexOf(needle), s.lastIndexOf(needle) | s.find(needle), s.rfind(needle) | Byte offsets; PHP returns result_or_false<int>, JS/C++ return -1 on miss; optional start deferred |
-| Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Decide negative/clamped bounds and exclusive-end adapter |
+| Slice | substr(s, start, length) | s.slice(start, end) | s.substr(start, length) | Byte coordinates; signed clamped bounds; final bound optional |
 | Trim both / left / right | trim(s), ltrim(s), rtrim(s) | s.trim(), s.trimStart(), s.trimEnd() | s.trim(), s.trim_start(), s.trim_end() | PHP includes NUL; JS/C++ include form feed instead; all include space, HT, LF, VT, CR |
 | Replace first / all | str_replace_first(old, new, s), str_replace(old, new, s) | s.replace(old, new), s.replaceAll(old, new) | s.replace_first(old, new), s.replace_all(old, new) | Literal replacement; settle empty needle |
 | ASCII lower / upper | strtolower(s), strtoupper(s) | s.toLowerCase(), s.toUpperCase() | s.to_lower(), s.to_upper() | Preserve every byte outside ASCII letters |
@@ -192,9 +192,8 @@ See [the byte/text portability precedent](../../../specs/portability/utf8_text_c
   specifies an unchanged subject for an empty search in replace-all. Rejecting
   an empty search would be a language change. Count and replace-first need
   explicit treatment even if they ultimately share the same scan.
-- The [substring contract](../../../specs/builtins/string/substr.md) specifies
-  code-point coordinates. The agreed byte policy changes that for this compiler.
-  The PHP offset/count and JS start/end spellings still need a bounds decision.
+- The [substring contract](../../../specs/builtins/string/substr.md) defines
+  signed byte bounds for PHP/C++ length and JS exclusive end.
 - The [padding contract](../../../specs/builtins/string/str_pad.md) covers 2/3/4
   arguments, a one-space default fill, left/right/both, and an extra byte on the
   right for both-side padding. Empty fill and invalid mode fail even for a no-op.

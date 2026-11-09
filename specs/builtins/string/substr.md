@@ -1,53 +1,25 @@
-# Builtin Contract - `substr`
+# Builtin contract for byte slicing
+
 Doc Status: normative
 
-## Identity
+## v0.2 signatures
 
-- Name: `substr`
-- Module/family: string
-- Category/classification: Slice Wrapper
-- Status: experimental
-- Source-language reference target: PHP `substr`
-- Compatibility level: practical
+| Flavor | Remainder | Bounded slice |
+| --- | --- | --- |
+| PHP | `substr(value, start)` | `substr(value, start, length)` |
+| C++ | `value.substr(start)` | `value.substr(start, length)` |
+| JS | `value.slice(start)` | `value.slice(start, end)` |
 
-## Signature
+The receiver or first argument is a string. Each bound is a signed int64. All forms return an owning string.
 
-- Supported forms:
-  - `substr(string $value, int $offset): string`
-  - `substr(string $value, int $offset, int $length): string`
-- Accepted argument types: `string_t`, `int_t`, optional `int_t`
+## Byte coordinates
 
-## Behavior
+Let N be the byte length. A nonnegative position is clamped to N. A negative position counts from N and is clamped to zero. Normalize the start this way for all three flavors. Omitting the final argument selects all remaining bytes.
 
-- Returns a substring selected by offset and optional length.
-- Negative offsets count from the end.
-- Omitted length returns the remainder of the string.
-- Negative lengths trim the returned window from the end.
-- Current slicing follows the runtime string codepoint-slice policy used by `string_t`.
-- The v0.2 strings catalog registers both arities with that same code-point policy.
-  The byte-counting `strlen` decision does not change substring coordinates.
+- PHP and C++ take a length. A nonnegative length selects at most that many remaining bytes. A negative length sets the exclusive end relative to the end of the original string.
+- JS takes an exclusive end position, normalized by the same rule as start.
+- An end at or before the normalized start yields an empty string. Every int64 bound is valid, including both extremes.
 
-## Compatibility table
+For `"abcdef"`, start 2 and final argument 3 yield `"cde"` in PHP/C++ and `"c"` in JS. Embedded NUL is an ordinary byte. A slice may split a UTF-8 sequence and return bytes that independently form invalid UTF-8.
 
-- PHP offset and length normalization direction is preserved for the supported typed forms.
-- PHP can return `false` for some broader invalid inputs; Simple C++ strict keeps this typed string-only contract deterministic.
-
-## Error policy
-
-- Does not return an error sentinel for valid typed inputs.
-
-## Runtime and wrapper split
-
-- Runtime: normalize start/end positions and return a `string_t` slice.
-- Wrapper: expose PHP-visible name only.
-
-## Configuration visibility
-
-- Implicitly available by project policy.
-
-## Test matrix
-
-- positive offset
-- positive offset with length
-- negative offset
-- negative length
+The historical `my-try` implementation used code-point coordinates. v0.2 uses the same byte coordinates as its indexing, length and search functions.

@@ -69,6 +69,13 @@ def prove(work):
         text = originals[flavor].replace(calls[flavor][0], expression)
         edits['bad-transforms-' + flavor] = (path, text.replace('1)', '"bad")'))
         edits['recovery-transforms-' + flavor] = (path, text)
+    for flavor, name in [('php', 'substr'), ('cpp', 'substr'), ('js', 'slice')]:
+        for args in ('0', '0, 99'):
+            call = f'substr($n, {args})' if flavor == 'php' else f'n.{name}({args})'
+            expression = calls[flavor][0].replace('$n)', call + ')') if flavor == 'php' else calls[flavor][0].replace('(n)', f'({call})')
+            text = originals[flavor].replace(calls[flavor][0], expression)
+            edits[f'bad-slice-{args}-{flavor}'] = (predicates[flavor], text.replace(args + ')', '"bad")'))
+            edits[f'recovery-slice-{args}-{flavor}'] = (predicates[flavor], text)
     trim_names = {'php': ('trim', 'ltrim', 'rtrim'), 'js': ('trim', 'trimStart', 'trimEnd'),
                   'cpp': ('trim', 'trim_start', 'trim_end')}
     for flavor, names in trim_names.items():
