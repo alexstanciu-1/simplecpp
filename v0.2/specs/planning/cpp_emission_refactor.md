@@ -12,7 +12,7 @@ A **staged refactor of the C++ backend and its generated handlers is warranted**
 
 ## Evidence from current emission
 
-- For two plain integer locals, `$a + $b` emits an addition. `$a + $a` emits a lambda and two snapshots. The same-spelling guard protects self-comparisons from a Clang warning and also catches addition. Warning handling belongs to the operation that can trigger the warning.
+- At the time of the audit, `$a + $b` emitted an addition for plain integer locals, while `$a + $a` emitted a lambda and two snapshots. The same-spelling guard protects self-comparisons from a Clang warning and also catches addition. Warning handling belongs to the operation that can trigger the warning.
 - At the time of the audit, for `function greet(string $s = "hi"): void`, `greet()` passes the constructed string directly. `greet("hi")` emits a lambda, a named string and an rvalue cast. Preparation knows the destination and passing mode for both. The call emitter also builds temporary-binding text while iterating general arguments, even when it ultimately returns the direct call. Emitted bytes and PHP lowering cost are separate measurements.
 - The integer three-way formula reads each operand twice and returns C++ `int` before its explicit result cast. Two independent decisions follow. A call operand needs one evaluation. A typed `scpp::int64` initializer can supply the final widening. An enclosing overload or arithmetic operation may require the exact result type earlier.
 - A small PHP input measured 145 source bytes, 1,048 bytes for its implementation unit, 122 bytes for the separate entry adapter, no application header and two immediately invoked lambdas. Input was the following single line, without a trailing newline. Counts include generated includes, prototypes and formatting. This is a reproducible shape probe; compile-time impact remains unmeasured.
@@ -151,3 +151,10 @@ exercises both conversions on the same declaration. After a library default chan
 from 8 to 123, and again after removal and restoration to 8, the published incremental
 caller matches fresh emission byte for byte. Typed-initialization spelling and
 multiple-parameter calls remain deferred. [Direct-call regressions](../../compiler/tests/direct_lowering.php) · [Defaults](../../compiler/tests/parameter_defaults.php)
+
+## Repeated integer operands
+
+The generated operation uses its native operator spelling to decide whether equal operands
+need warning protection. Safe nested sums compose directly. Self-comparisons and equal
+XOR operands keep their warning-safe snapshots. The cpp/php/js fixtures cover repeated
+nested sums, byte narrowing before widening and two calls returning successive counter values.

@@ -196,7 +196,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 43,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 44,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -533,7 +533,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
         } else {
             $results .= "\t\t\tbinary_operator::$op => $result::instance(),\n";
         }
-        if (compilerStrategyReorderable($safety, isset($operation['identity_peers']) ? 'canonical_identity' : $operation['lowering'])) $reorderable[] = "binary_operator::$op";
+        if (compilerStrategyReorderable($safety, isset($operation['identity_peers']) ? 'canonical_identity' : $operation['lowering'])) {
+            // Native self-comparisons and literal XOR such as 2LL ^ 2LL can trigger Clang warnings.
+            $guard = in_array($operation['spelling'], ['==', '!=', '<', '<=', '>', '>=', '^'], true) ? '!$same_spelling' : 'true';
+            $reorderable[$guard][] = "binary_operator::$op";
+        }
         if ($definitions[$identity]['strategy'] === 'integer') {
             if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
                 $directCases[] = "binary_operator::$op => true,";
@@ -591,7 +595,10 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     }
     $compound = $compoundOperators === [] ? 'false' : "match (\$operator) { " . implode(', ', $compoundOperators) . " => true, default => false }";
     $syntaxMethod = $flavorCases === '' ? '' : "\n\t/** Flavor spelling admission generated from operation metadata. */\n\tpublic function binary_syntax_allowed(binary_operator \$operator, ast_node \$site): bool\n\t{\n\t\treturn match (\$operator) {\n$flavorCases\t\t\tdefault => true,\n\t\t};\n\t}\n";
-    $safeCases = $reorderable === [] ? '' : "\t\t\t" . implode(', ', $reorderable) . " => true,\n";
+    $safeCases = '';
+    foreach ($reorderable as $guard => $operators) {
+        $safeCases .= "\t\t\t" . implode(', ', $operators) . " => $guard,\n";
+    }
     if ($stringLiteralOps !== []) {
         $operators = implode(', ', $stringLiteralOps);
         $directCases[] = "{$operators} => \$expr->left instanceof ast_name_expression"
@@ -678,7 +685,7 @@ $cases\t\t\tdefault => throw new \\LogicException('Binary operation was not appr
 \t}
 
 \t/** Only admitted primitive native operations permit reordering of independently safe operands. */
-\tpublic function cpp_binary_reorderable(binary_operator \$operator): bool
+\tpublic function cpp_binary_reorderable(binary_operator \$operator, bool \$same_spelling = false): bool
 \t{
 \t\treturn match (\$operator) {
 $safeCases\t\t\tdefault => false,

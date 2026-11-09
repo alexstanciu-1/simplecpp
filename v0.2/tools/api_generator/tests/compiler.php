@@ -798,7 +798,9 @@ foreach (['type_int64', 'type_bool', 'type_uint8', 'type_float64', 'type_null'] 
 }
 requireThat(!\scpp\compiler\type_string::instance()->cpp_trivial_value(), 'String copy incorrectly classified as trivial');
 $type = \scpp\compiler\type_int64::instance();
-requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add), 'Native addition not classified');
+requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add, true), 'Safe identical additions not classified');
+requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::less)
+    && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::less, true), 'Native comparison ignored operand spelling');
 requireThat(!$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::divide)
     && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::remainder), 'Checked operations classified as reorderable');
 

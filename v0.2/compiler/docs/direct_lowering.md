@@ -36,9 +36,11 @@ operation plans. Its [compiler renderer](../../tools/api_generator/php/render_co
 owns the generated inventory version. A checked operation can use direct operands
 and still report a potentially throwing result to its parent.
 
-Conservative warning handling retains snapshots for identical operand spellings,
-so valid self-comparisons do not trigger Clang's `-Wtautological-compare`. This also
-leaves some identical-spelling arithmetic wrapped. Direct boolean binary conditions
+Generated native operations decide whether equal C++ operand spellings need snapshots.
+Safe arithmetic sums compose directly even when both subtrees spell the same sum.
+Comparisons retain protection against Clang's `-Wtautological-compare`, and XOR
+keeps equal operands separated because literals such as `2LL ^ 2LL` trigger
+`-Wxor-used-as-pow`. Direct boolean binary conditions
 omit their expression's outer grouping pair because the condition statement already
 supplies it; generated boolean identity truthiness adds no redundant pair. Warning
 flags remain unchanged, including `-Werror`.

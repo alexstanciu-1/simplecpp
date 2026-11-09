@@ -191,8 +191,8 @@ abstract class type_definition
 		return false;
 	}
 
-	/** Backend property of an approved operation, excluding its operands; conservative for unknown strategies. */
-	public function cpp_binary_reorderable(binary_operator $operator): bool
+	/** Whether this operation can directly combine independently safe operands with these C++ spellings. */
+	public function cpp_binary_reorderable(binary_operator $operator, bool $same_spelling = false): bool
 	{
 		return false;
 	}

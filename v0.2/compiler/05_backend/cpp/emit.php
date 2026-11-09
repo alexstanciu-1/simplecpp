@@ -531,13 +531,13 @@ final class Cpp_Emitter
 			foreach ($type->binary_headers($value->operator) as $header) {
 				$required_headers[$header] = true;
 			}
-			// Retain snapshots for identical spellings to avoid Clang self-comparison diagnostics.
-			$reorderable = $left_safe && $right_safe && ($left !== $right)
-				&& $type->cpp_binary_reorderable($value->operator);
+			$same_spelling = $left === $right;
+			$operands_safe = $left_safe && $right_safe;
+			$reorderable = $operands_safe && $type->cpp_binary_reorderable($value->operator, $same_spelling);
 			// Direct spelling does not make a checked result reorderable in its parent.
 			if ($reorderable || ($value->left_conversion === value_conversion::identity
 				&& $value->right_conversion === value_conversion::identity
-				&& $type->cpp_direct_binary($value, $left_safe && $right_safe, $left === $right))) {
+				&& $type->cpp_direct_binary($value, $operands_safe, $same_spelling))) {
 				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.

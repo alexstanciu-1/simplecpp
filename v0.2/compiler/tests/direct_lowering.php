@@ -119,6 +119,24 @@ foreach (flavor::cases() as $flavor)
 	}
 	verify(str_contains($direct, 'var_a_0 != var_b_1') && !str_contains($direct, '([&]()'), 'Expected direct same-type integer comparison');
 	$fixtures[$flavor->name . '_integer_operators'] = ['cpp' => $direct, 'stdout_hex' => bin2hex('241361')];
+	$part = "($a + $a)";
+	$repeat = $emit($prefix . $decl('x', 'int', "$a + $a") . "echo $x, $part * $b, $part + $part;"
+		. "if ($part < $part) { echo 9; } if ($a === $a) { echo 1; } echo 2 ^ 2; return 8;");
+	$native_part = '(var_a_0 + var_a_0)';
+	verify(str_contains($repeat, "var_x_2 = $native_part;") && str_contains($repeat, "($native_part * var_b_1)")
+		&& str_contains($repeat, "($native_part + $native_part)"), 'Safe repeated sums should compose directly');
+	verify(str_contains($repeat, "const auto binary_left = $native_part; const auto binary_right = $native_part; return (binary_left < binary_right);")
+		&& str_contains($repeat, 'binary_left == binary_right'), 'Self-comparisons must retain warning-safe operands');
+	$fixtures[$flavor->name . '_repeated_sum'] = ['cpp' => $repeat, 'stdout_hex' => bin2hex('12242410')];
+
+	$repeat_byte = $emit($decl('b', 'byte', '130') . "echo (int)($b + $b); return 8;");
+	verify(str_contains($repeat_byte, 'static_cast<scpp::uint8>((var_b_0 + var_b_0))'), 'Byte sum must narrow before widening');
+	$fixtures[$flavor->name . '_repeated_byte'] = ['cpp' => $repeat_byte, 'stdout_hex' => bin2hex('4')];
+
+	$count = $var('calls');
+	$next = $fn('number', $param('int', 'calls', true), 'int', "$count++; return $count;");
+	$repeat_calls = $emit($next . $decl('calls', 'int', '0') . "echo number($count) + number($count), $count; return 8;");
+	$fixtures[$flavor->name . '_repeated_calls'] = ['cpp' => $repeat_calls, 'stdout_hex' => bin2hex('32')];
 	$byte = $emit($decl('a', 'byte', '6') . $decl('b', 'byte', '2') . "if ($a !== $b) { echo 1; } return 8;");
 	verify(str_contains($byte, 'var_a_0 != var_b_1'), 'Expected direct byte comparison');
 	$self = $emit($prefix . "if ($a !== $a) { echo 1; } return 8;");
