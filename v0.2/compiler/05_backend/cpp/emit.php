@@ -166,15 +166,23 @@ final class Cpp_Emitter
 	{
 		$type = $condition->type_def();
 		$direct = false;
-		$operand = $this->value($condition, $global_references, $declarations, $headers, $direct);
-		if ($direct && ($condition instanceof ast_binary_expression) && ($type === type_bool::instance())) {
-			// Native binary handlers supply one outer pair; the condition statement supplies its own.
+		$operand = $this->value($condition, $global_references, $declarations, $headers, $direct, logical_root: true);
+		$logical_parent = $condition->parent;
+		$negated = $logical_parent instanceof ast_not_expression;
+		if ($condition instanceof ast_binary_expression && $condition->operator->lazy()
+			&& ($negated || ($logical_parent instanceof ast_binary_expression && $logical_parent->operator->lazy()
+				&& $logical_parent->operator !== $condition->operator))) {
+			// Mixed && and || need explicit grouping for precedence or Clang's -Wlogical-op-parentheses.
+			$operand = '(' . $operand . ')';
+		}
+		elseif (!$negated && $direct && ($condition instanceof ast_binary_expression) && ($type === type_bool::instance())) {
+			// Direct boolean comparisons already have one outer pair. A negated comparison needs it.
 			$operand = substr($operand, 1, -1);
 		}
 		foreach ($type->condition_headers() as $header) {
 			$headers[$header] = true;
 		}
-		return $type->lower_cpp_condition($operand);
+		return $type->lower_cpp_condition($operand, $negated);
 	}
 
 	/**
@@ -271,8 +279,9 @@ final class Cpp_Emitter
 				$lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
+				$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
+					logical_root: $conversion === value_conversion::identity);
 				if ($conversion instanceof exit_conversion) {
 					$value = Cpp_Exit::expression($conversion, $value);
 				}
@@ -409,7 +418,8 @@ final class Cpp_Emitter
 			}
 		}
 		$operand = $this->value($value, $global_references, $declarations, $headers,
-			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity));
+			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity),
+			logical_root: $conversion === value_conversion::identity);
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
@@ -419,6 +429,7 @@ final class Cpp_Emitter
 	/**
 	 * Only the root of an identity initializer may rely on its destination for the native result type.
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
+	 * $logical_root: the caller supplies any required grouping for a logical expression.
 	 * $reorderable: output proof for this subtree, computed during lowering, never retained in preparation.
 	 * True permits unsequenced evaluation only alongside other proven subtrees; calls always remain false.
 	 * @param ast_function_declaration[] $declarations
@@ -427,7 +438,7 @@ final class Cpp_Emitter
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false): string
 	{
 		$reorderable = false;
 		foreach ($value->type_def()->cpp_headers() as $header) {
@@ -498,7 +509,8 @@ final class Cpp_Emitter
 			return $type->lower_cpp_presence($this->value($value->operand, $global_references, $declarations, $required_headers));
 		}
 		if ($value instanceof ast_not_expression) {
-			return '(!(' . $this->condition($value->operand, $global_references, $declarations, $required_headers) . '))';
+			$expression = '!' . $this->condition($value->operand, $global_references, $declarations, $required_headers);
+			return $logical_root ? $expression : '(' . $expression . ')';
 		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator->logical()) {
@@ -508,8 +520,8 @@ final class Cpp_Emitter
 					return '([&]() -> bool { const bool logical_left = ' . $left
 						. '; const bool logical_right = ' . $right . '; return logical_left != logical_right; }())';
 				}
-				return '((' . $left . ') ' . ($value->operator === binary_operator::logical_and ? '&&' : '||')
-					. ' (' . $right . '))';
+				$expression = $left . ($value->operator === binary_operator::logical_and ? ' && ' : ' || ') . $right;
+				return $logical_root ? $expression : '(' . $expression . ')';
 			}
 			$type = $value->execution_type();
 			$left_safe = false;
@@ -600,7 +612,8 @@ final class Cpp_Emitter
 				$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				$operand_safe = false;
-				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe);
+				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
+					logical_root: $conversion === value_conversion::identity);
 				foreach ($type->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}

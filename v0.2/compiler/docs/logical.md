@@ -37,7 +37,9 @@ this slice needs no branch map copies or merge. Revisit this boundary when assig
 expressions or other fact-producing conditional effects are introduced.
 
 Lowering calls generated `lower_cpp_condition()` and `condition_headers()` and emits
-built-in C++ `!`, `&&` and `||`. RHS text stays inside its lazy operand, including any
+built-in C++ `!`, `&&` and `||`. The enclosing logical operator groups a lazy child
+under negation or when mixing AND and OR. The generated numeric truth test groups
+its comparison under negation. RHS text stays inside its lazy operand, including any
 existing call/conversion wrappers. No sequencing lambda is added by these operators.
 The existing generated string-truthiness helper still binds a returned string once;
 this is not the deferred general lambda-removal experiment. Conservative parent
@@ -55,8 +57,7 @@ emission of recovered source uses the separate full-build path; incremental nati
 emission is not introduced.
 
 `tests/logical_native.py` runs the generated fixtures through the shared instrumented
-Clang proof, retaining frontend, LLVM and linker timings. Existing generated
-truthiness methods and their metadata remain unchanged; no regeneration is needed.
+Clang proof, retaining frontend, LLVM and linker timings. Generated scalar handlers supply the numeric truth tests.
 
 ## Native proof — 2026-11-04
 

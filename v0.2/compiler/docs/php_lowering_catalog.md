@@ -118,7 +118,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $x = $a + $f;            |                                                                                                               |                                  |                                        |
 | $ok = $a < $f;           |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                    | scpp::bool_t var_ok_2 = (((!((var_a_0 != 0))))                  || ((((var_a_0 != 0)) && ((var_b_1 != 0))))); | .cpp includes                    | Condition handlers select truth tests. |
+| Given                    | scpp::bool_t var_ok_2 = !(var_a_0 != 0) || (var_a_0 != 0 && var_b_1 != 0);                                    | .cpp includes                    | Condition handlers select truth tests. |
 |     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | Native logical operators retain lazy   |
 |     $b int = 2;          |                                                                                                               | No unit header.                  | RHS evaluation.                        |
 | $ok = !$a || ($a && $b); |                                                                                                               |                                  |                                        |
@@ -143,17 +143,17 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | PHP-flavor pattern     | Lowered C++ code                                                        | Lowered C++ header code          | Generation and lowering                |
 +========================+=========================================================================+==================================+========================================+
-| $s string = "a\0b";    | scpp::string var_s_0 = scpp::string{"\141\000\142", 3};                 | .cpp includes                    | The string export supplies the owning  |
+| $s string = "a\0b";    | scpp::string var_s_0 = scpp::string{"a\0b", 3};                         | .cpp includes                    | The string export supplies the owning  |
 |                        |                                                                         | #include <scpp/core/scalars.hpp> | type. The literal renderer emits exact |
 |                        |                                                                         | #include <scpp/string.hpp>       | bytes and their length.                |
 |                        |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                  | var_s_0 = (var_s_0 + scpp::string{"\041", 1});                          | .cpp includes                    | The string local and literal feed the  |
-|     $s string = "hi";  | scpp::bool_t var_ok_1 = ((var_s_0 == scpp::string{"\150\151\041", 3})); | #include <scpp/core/scalars.hpp> | runtime operators directly. The        |
+| Given                  | var_s_0 = (var_s_0 + scpp::string{"!", 1});                             | .cpp includes                    | The string local and literal feed the  |
+|     $s string = "hi";  | scpp::bool_t var_ok_1 = ((var_s_0 == scpp::string{"hi!", 3}));          | #include <scpp/core/scalars.hpp> | runtime operators directly. The        |
 | $s = $s . "!";         |                                                                         | #include <scpp/string.hpp>       | literal carries its byte length.       |
 | $ok = $s === "hi!";    |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                  | scpp::echo_bytes("\101", 1);                                            | .cpp includes                    | Output bindings select literal bytes,  |
+| Given                  | scpp::echo_bytes("A", 1);                                               | .cpp includes                    | Output bindings select literal bytes,  |
 |     $n int = 8;        | scpp::echo_int(var_n_0);                                                | #include <scpp/core/scalars.hpp> | integer output and a retained string   |
 |     $s string = "ok";  | {                                                                       | #include <scpp/output.hpp>       | reference for the data/size pair.      |
 | echo "A", $n, $s;      |     const auto& output_value = var_s_1;                                 | #include <scpp/string.hpp>       |                                        |
@@ -184,7 +184,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +----------------------------------+-----------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                            | while (var_a_0 > 0LL) {                                   | .cpp includes                    | Loop preparation resolves the          |
 |     $a int = 6;                  |     var_a_0--;                                            | #include <scpp/core/scalars.hpp> | transfers. The condition and updates   |
-|     $b int = 2;                  |     if ((!((var_a_0 != 0)))) {                            | No unit header.                  | reuse their scalar handlers.           |
+|     $b int = 2;                  |     if (!(var_a_0 != 0)) {                                | No unit header.                  | reuse their scalar handlers.           |
 | while ($a > 0) {                 |         break;                                            |                                  |                                        |
 |     $a--;                        |     }                                                     |                                  |                                        |
 |     if (!$a) {                   |     continue;                                             |                                  |                                        |
@@ -274,11 +274,11 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                               |                                                                                                 | No unit header.                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | {                                                                                               | .cpp includes                    | The hash lowering snapshots the key    |
-|     $h hash<int,string> = []; |     const auto write_key = scpp::string{"\153", 1};                                             | #include <scpp/core/scalars.hpp> | and converted value for set; the read  |
+|     $h hash<int,string> = []; |     const auto write_key = scpp::string{"k", 1};                                                | #include <scpp/core/scalars.hpp> | and converted value for set; the read  |
 | $h["k"] = 7;                  |     const auto write_value = 7L;                                                                | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
 | $x = $h["k"];                 |     (var_h_0).set(write_key, write_value);                                                      | #include <scpp/string.hpp>       | accessor.                              |
 |                               | }                                                                                               | No unit header.                  |                                        |
-|                               | scpp::int64 var_x_1 = (var_h_0).at(scpp::string{"\153", 1});                                    |                                  |                                        |
+|                               | scpp::int64 var_x_1 = (var_h_0).at(scpp::string{"k", 1});                                       |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
@@ -319,11 +319,11 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $b = $x < 3;                               |                                                                                               | No unit header.                  | stored payload kind.                   |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                                      | {                                                                                             | .cpp includes                    | The boxed type constructs the runtime  |
-|     $x mixed = [];                         |     const auto write_key = scpp::boxed_key(scpp::string{"\153", 1});                          | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
+|     $x mixed = [];                         |     const auto write_key = scpp::boxed_key(scpp::string{"k", 1});                             | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
 | $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(8L);                                   | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
 | $v = $x["k"];                              |     (var_x_0).source_set(write_key, write_value);                                             | #include <scpp/string.hpp>       |                                        |
 |                                            | }                                                                                             | No unit header.                  |                                        |
-|                                            | scpp::mixed var_v_1 = (var_x_0).source_read(scpp::boxed_key(scpp::string{"\153", 1}));        |                                  |                                        |
+|                                            | scpp::mixed var_v_1 = (var_x_0).source_read(scpp::boxed_key(scpp::string{"k", 1}));           |                                  |                                        |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
@@ -358,8 +358,8 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 |                                          |                                                                     | void bump_(::scpp::int64 &var_x_0);              |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 | lib                                      | main                                                                | .cpp includes                                    | The caller resolves the explicit or    |
-| function greet(string $s = "hi"): void { | greet_(scpp::string{"\150\151", 2});                                | #include <scpp/core/scalars.hpp>                 | default argument and applies the       |
-|     echo $s;                             | greet_(scpp::string{"\150\151", 2});                                | #include <scpp/string.hpp>                       | prepared conversion. The parameter     |
+| function greet(string $s = "hi"): void { | greet_(scpp::string{"hi", 2});                                      | #include <scpp/core/scalars.hpp>                 | default argument and applies the       |
+|     echo $s;                             | greet_(scpp::string{"hi", 2});                                      | #include <scpp/string.hpp>                       | prepared conversion. The parameter     |
 | }                                        | lib                                                                 | #include "lib.hpp"                               | takes the resulting string by value.   |
 | main                                     | void greet_(::scpp::string var_s_0)                                 | lib.cpp includes                                 |                                        |
 | greet();                                 | {                                                                   | #include <scpp/output.hpp>                       |                                        |

@@ -84,6 +84,19 @@ foreach (flavor::cases() as $flavor)
 	verify($expression->left->operand->parent === $expression->left, 'Negation parent');
 	$direct = (new Cpp_Emitter())->emit($entry);
 	verify(!str_contains($direct, '([&]'), 'Logical operators introduced a sequencing lambda');
+	$a = $var('a');
+	$b = $var('b');
+	$c = $var('c');
+	$grouping = $decl('a', 'int', '1') . $decl('b', 'int', '1') . $decl('c', 'int', '0')
+		. $decl('ok', 'bool', "!$a || ($a && $b)") . $decl('negated', 'bool', "!($a || $b)")
+		. $decl('joined', 'bool', "($a || $b) && $c")
+		. 'echo (int)' . $var('ok') . ', (int)' . $var('negated') . ', (int)' . $var('joined') . '; return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($grouping));
+	foreach (['!(var_a_0 != 0) || (var_a_0 != 0 && var_b_1 != 0)', '!(var_a_0 != 0 || var_b_1 != 0)',
+		'(var_a_0 != 0 || var_b_1 != 0) && var_c_2 != 0'] as $expression_cpp) {
+		verify(str_contains($cpp, ' = ' . $expression_cpp . ';'), 'Incorrect logical grouping: ' . $expression_cpp);
+	}
+	$fixtures[$flavor->name . '_grouping'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('100')];
 	$code = '';
 	$expected = '';
 	foreach (['!false' => true, '!!true' => true, '!8' => false, '!0' => true,

@@ -30,10 +30,14 @@ foreach (flavor::cases() as $flavor)
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$prepare = static fn(string $code) => (new Source_Frontend())->prepare(
 		new source_file('strings', $code, $flavor), new entry_target(31));
+	// Use actual NUL bytes in the source. Its escape grammar rejects ambiguous octal spellings.
+	$boundary = implode("\0", ['A', '0', '7', '8??/']);
+	$quoted = '"' . $boundary . '"';
 	$code = $decl('string', 'first', '"héllo\\0world\\n"') . $decl('string', 'copy', $var('first'))
 		. $decl('string', 'empty', '""') . $decl('string', 'single', "'a\\nb'")
 		. 'echo ' . $var('first') . '; echo ' . $var('copy') . '; echo ' . $var('empty')
-		. '; echo ' . $var('single') . '; echo "!"; return 8;';
+		. '; echo ' . $var('single') . '; echo "!";'
+		. $decl('string', 'boundary', $quoted) . 'echo ' . $var('boundary') . '; echo ' . $quoted . '; return 8;';
 	$entry = $prepare($code);
 	$locals = array_values($entry->body()->locals);
 	verify($locals[0]->initializer instanceof ast_string_expression, 'String syntax missing');
@@ -49,9 +53,12 @@ foreach (flavor::cases() as $flavor)
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
 	verify(str_contains($cpp, '#include <scpp/string.hpp>'), 'Missing public string API');
 	verify(str_contains($cpp, 'scpp::string var_copy_1 = var_first_0;'), 'Copy is not owning storage');
+	$argument = '"A\0000\0007\08?\?/", 10';
+	verify(str_contains($cpp, 'scpp::string{' . $argument . '}') && str_contains($cpp, 'scpp::echo_bytes(' . $argument . ')'),
+		'Expected byte-exact C++ spelling for both string construction and echo');
 	$direct = (new Cpp_Emitter())->emit($prepare('echo "direct"; return 8;'));
 	verify(!str_contains($direct, 'scpp::string') && !str_contains($direct, '<scpp/string.hpp>'), 'Direct echo allocated storage');
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!")];
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!" . $boundary . $boundary)];
 	foreach ([
 		$decl('string', 'bad', '8'), $decl('int', 'bad', '"8"'),
 		$decl('bool', 'bad', '"true"'), $decl('float', 'bad', '"8.5"'),

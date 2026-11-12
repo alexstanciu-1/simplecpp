@@ -66,8 +66,8 @@ foreach (flavor::cases() as $flavor)
 	$string = $decl('s', 'string', '"hi"');
 	$bytes = $emit($string . $s . ' = ' . $s . ' ' . $concat . ' "!\0x"; echo ' . $s . ';'
 		. 'if (' . $s . ' === "hi!\0x") { echo 1; } if (' . $s . ' === "hi!\0y") { echo 2; } return 8;');
-	verify(str_contains($bytes, 'var_s_0 = (var_s_0 + scpp::string{"\041\000\170", 3});')
-		&& str_contains($bytes, 'var_s_0 == scpp::string{"\150\151\041\000\170", 5}') && !str_contains($bytes, '([&]()'),
+	verify(str_contains($bytes, 'var_s_0 = (var_s_0 + scpp::string{"!\0x", 3});')
+		&& str_contains($bytes, 'var_s_0 == scpp::string{"hi!\0x", 5}') && !str_contains($bytes, '([&]()'),
 		'String local and literal should use the direct runtime operators');
 	$fixtures[$flavor->name . '_string_literal'] = ['cpp' => $bytes, 'stdout_hex' => bin2hex("hi!\0x1")];
 	foreach (["$s === $s" => 'bool', '"hi" === ' . $s => 'bool', $s . ' !== "hi"' => 'bool',

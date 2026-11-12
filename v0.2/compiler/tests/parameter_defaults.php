@@ -67,8 +67,8 @@ foreach (flavor::cases() as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
-	verify(substr_count($cpp, 'mutable_(scpp::string{"\101\000\102", 3});') === 2, 'Expected direct default string arguments');
-	verify(str_contains($cpp, 'mutable_(scpp::string{"\130", 1});'), 'Expected direct explicit string argument');
+	verify(substr_count($cpp, 'mutable_(scpp::string{"A\0B", 3});') === 2, 'Expected direct default string arguments');
+	verify(str_contains($cpp, 'mutable_(scpp::string{"X", 1});'), 'Expected direct explicit string argument');
 	verify(str_contains($cpp, 'default_bool_((1LL != 0))') && str_contains($cpp, 'default_bool_((0LL != 0))'),
 		'Expected prepared integer-to-bool conversion for both default and supplied arguments');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("R8!X9!Y10?A\0BA\0BX324559S10")];
