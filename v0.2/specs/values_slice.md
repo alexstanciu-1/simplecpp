@@ -51,7 +51,7 @@ a compiler lowering a source boolean value must explicitly construct bool_t when
 that result crosses back into the runtime value API. Source evaluation order and
 condition normalization are compiler responsibilities, not runtime dispatch.
 
-Null is an empty, default-constructible value with one inline constexpr sentinel
+Null uses the native alias `using null_t = decltype(nullptr);` with one inline constexpr sentinel
 `scpp::null`. Null/null equality returns true, inequality false, both as bool_t.
 Null is distinct from false and integer zero. No null/numeric or null/boolean
 conversion is introduced. Explicit bool/numeric casts are now provided by the

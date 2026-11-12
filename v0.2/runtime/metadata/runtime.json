@@ -360,7 +360,7 @@
   "values": {
     "null_t": {
       "kind": "null",
-      "representation": "empty",
+      "representation": "native_nullptr",
       "construction": "default",
       "operations": [
         "equal",

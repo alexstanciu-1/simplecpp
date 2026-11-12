@@ -24,9 +24,9 @@ function definition(flavor $flavor, string $name, string $parameters, string $ty
 function local(flavor $flavor, string $name, string $type, string $value): string
 {
 	return match ($flavor) {
-		flavor::php => "$$name $type=$value;",
-		flavor::cpp => "$type $name=$value;",
-		flavor::js => "let $name: $type=$value;",
+		flavor::php => "$$name $type = $value;",
+		flavor::cpp => "$type $name = $value;",
+		flavor::js => "let $name: $type = $value;",
 	};
 }
 
@@ -85,6 +85,22 @@ foreach (flavor::cases() as $flavor)
 	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
 	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "pair($x, 1); return 8;");
 	verify(str_contains($cpp, 'bump_(argument_') && str_contains($cpp, 'pair_(argument_'), 'Other reference call forms changed');
+	$change = $fn('change', $param('string', 's'), 'void', $s . ' = "changed"; echo ' . $s . ';');
+	$cpp = $emit($change . $string . "change($s); echo $s; return 8;");
+	verify(str_contains($cpp, 'change_(var_s_0);'), 'The by-value string parameter should make the copy');
+	$fixtures[$flavor->name . '_string_parameter_copy'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('changedhi')];
+	$accept = $fn('accept', $param('byte', 'x'), 'void', 'echo "C", (int)' . $x . ';');
+	foreach ([7, 300] as $number) {
+		$source = $fn('produce', '', 'int', 'echo "P"; return ' . $number . ';') . $accept . 'accept(produce()); return 8;';
+		$cpp = $emit($source);
+		verify(str_contains($cpp, 'accept_(scpp::checked_int64_to_uint8(produce_()));')
+			&& str_contains($cpp, '#include <scpp/conversions.hpp>'), 'Expected direct checked parameter conversion and its provider');
+		$fixture = ['cpp' => $cpp, 'stdout_hex' => bin2hex($number === 7 ? 'PC7' : 'P')];
+		if ($number === 300) {
+			$fixture['catch_out_of_range'] = 'integer_cast_out_of_range';
+		}
+		$fixtures[$flavor->name . '_checked_parameter_' . $number] = $fixture;
+	}
 	$divide = $emit('echo (8 / 2) + 1; return 8;');
 	verify(str_contains($divide, 'const auto binary_left = scpp::int64_divide(8LL, 2LL);'), 'Nested checked division should feed the existing outer snapshot directly');
 	foreach (['int' => 'int64', 'byte' => 'uint8'] as $name => $native) {
@@ -103,6 +119,24 @@ foreach (flavor::cases() as $flavor)
 	}
 	verify(str_contains($direct, 'var_a_0 != var_b_1') && !str_contains($direct, '([&]()'), 'Expected direct same-type integer comparison');
 	$fixtures[$flavor->name . '_integer_operators'] = ['cpp' => $direct, 'stdout_hex' => bin2hex('241361')];
+	$part = "($a + $a)";
+	$repeat = $emit($prefix . $decl('x', 'int', "$a + $a") . "echo $x, $part * $b, $part + $part;"
+		. "if ($part < $part) { echo 9; } if ($a === $a) { echo 1; } echo 2 ^ 2; return 8;");
+	$native_part = '(var_a_0 + var_a_0)';
+	verify(str_contains($repeat, "var_x_2 = $native_part;") && str_contains($repeat, "($native_part * var_b_1)")
+		&& str_contains($repeat, "($native_part + $native_part)"), 'Safe repeated sums should compose directly');
+	verify(str_contains($repeat, "const auto binary_left = $native_part; const auto binary_right = $native_part; return (binary_left < binary_right);")
+		&& str_contains($repeat, 'binary_left == binary_right'), 'Self-comparisons must retain warning-safe operands');
+	$fixtures[$flavor->name . '_repeated_sum'] = ['cpp' => $repeat, 'stdout_hex' => bin2hex('12242410')];
+
+	$repeat_byte = $emit($decl('b', 'byte', '130') . "echo (int)($b + $b); return 8;");
+	verify(str_contains($repeat_byte, 'static_cast<scpp::uint8>((var_b_0 + var_b_0))'), 'Byte sum must narrow before widening');
+	$fixtures[$flavor->name . '_repeated_byte'] = ['cpp' => $repeat_byte, 'stdout_hex' => bin2hex('4')];
+
+	$count = $var('calls');
+	$next = $fn('number', $param('int', 'calls', true), 'int', "$count++; return $count;");
+	$repeat_calls = $emit($next . $decl('calls', 'int', '0') . "echo number($count) + number($count), $count; return 8;");
+	$fixtures[$flavor->name . '_repeated_calls'] = ['cpp' => $repeat_calls, 'stdout_hex' => bin2hex('32')];
 	$byte = $emit($decl('a', 'byte', '6') . $decl('b', 'byte', '2') . "if ($a !== $b) { echo 1; } return 8;");
 	verify(str_contains($byte, 'var_a_0 != var_b_1'), 'Expected direct byte comparison');
 	$self = $emit($prefix . "if ($a !== $a) { echo 1; } return 8;");
@@ -115,6 +149,18 @@ foreach (flavor::cases() as $flavor)
 	verify(substr_count($locals, $formula) === 2 && !str_contains($locals, 'const auto binary_left'),
 		'Expected direct three-way comparisons for distinct int locals and byte parameters');
 	$fixtures[$flavor->name . '_three_way_storage'] = ['cpp' => $locals, 'stdout_hex' => bin2hex('1-10')];
+	$v = $var('v');
+	$uses = $emit($prefix . $decl('x', 'int', "$a <=> $b") . $decl('v', 'vector<int>', '[]')
+		. $v . '[] = 0;' . $v . '[] = 0;' . $v . "[$a <=> $b] = $b <=> $a;"
+		. $v . "[0] = $b + 1; echo $x, " . $v . '[1], ' . $v . '[0]; return 8;');
+	verify(str_contains($uses, 'scpp::int64 var_x_2 = (((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)));'),
+		'Typed initialization should widen the integer comparison result directly');
+	$reverse = 'static_cast<scpp::int64>(((var_b_1 > var_a_0)) - ((var_b_1 < var_a_0)))';
+	verify(str_contains($uses, "var_v_3.set($formula, $reverse);"),
+		'Vector set must use the exact comparison results directly for the index and element');
+	$fixtures[$flavor->name . '_three_way_destinations'] = ['cpp' => $uses, 'stdout_hex' => bin2hex('1-13')];
+	$nested = $emit($prefix . $decl('x', 'int', "($a <=> $b) + 1") . 'return 8;');
+	verify(str_contains($nested, $formula), 'Initializer context leaked into nested arithmetic');
 	foreach (["$a <=> $a", "$a <=> 2", "($a + 1) <=> $b"] as $expression) {
 		verify(str_contains($emit($prefix . "echo $expression; return 8;"), 'const auto binary_left'),
 			'Expected three-way snapshots for ' . $expression);
@@ -130,9 +176,9 @@ foreach (flavor::cases() as $flavor)
 	$effects = $fn('low', $param('int', 'calls', true), 'int', "$count++; return 1;")
 		. $fn('high', $param('int', 'calls', true), 'int', "$count++; return 2;")
 		. $decl('a', 'int', '0') . $decl('b', 'int', '0')
-		. "echo low($a) <=> high($b); echo $a, $b; return 8;";
+		. $decl('x', 'int', "low($a) <=> high($b)") . "echo $x, $a, $b; return 8;";
 	$calls = $emit($effects);
-	verify(str_contains($calls, '((binary_left > binary_right)) - ((binary_left < binary_right))'),
+	verify(str_contains($calls, 'return (((binary_left > binary_right)) - ((binary_left < binary_right)));'),
 		'Three-way comparison of calls must compare their snapshots');
 	$fixtures[$flavor->name . '_three_way_calls'] = ['cpp' => $calls, 'stdout_hex' => bin2hex('-111')];
 	$promoted = $emit($decl('a', 'byte', '6') . $decl('b', 'int', '2') . 'echo ' . $var('a') . '/' . $var('b') . '; return 8;');

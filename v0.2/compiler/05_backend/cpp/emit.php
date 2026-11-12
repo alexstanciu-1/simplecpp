@@ -84,12 +84,13 @@ final class Cpp_Emitter
 		$global_references = [];
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
+			$type = $global->type_def();
 			$initializer = self::plain_integer_initializer($global->initializer, $global->initialization())
-				?? $global->type_def()->lower_cpp_conversion($global->initialization(),
+				?? $type->lower_cpp_conversion($global->initialization(),
 					$global->initializer->type_def()->lower_cpp_literal($global->initializer));
-			$definitions[] = 'constinit ' . $global->type_def()->cpp_type() . ' ' . self::global_name($global)
+			$definitions[] = 'constinit ' . $type->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $initializer . ";\n";
-			foreach ($global->type_def()->conversion_headers($global->initialization()) as $header) {
+			foreach (array_merge($type->cpp_headers(), $type->conversion_headers($global->initialization())) as $header) {
 				$required_headers[$header] = true;
 			}
 		}
@@ -202,17 +203,18 @@ final class Cpp_Emitter
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
-				$compound_header = ($statement instanceof ast_for_statement)
-					&& ((($statement->update instanceof ast_assignment_statement) && ($statement->update->operator !== null))
-						|| (($statement->initializer instanceof ast_assignment_statement) && ($statement->initializer->operator !== null)));
-				if ($compound_header) {
-					/** @var ast_assignment_statement $binding */
-					$binding = (($statement->update instanceof ast_assignment_statement) && ($statement->update->operator !== null)) ? $statement->update : $statement->initializer;
-					$lines[] = "\t{ " . $binding->local_def()->type_def()->cpp_type() . ' compound_previous;';
-				}
+				$update_snapshot = null;
 				if ($statement instanceof ast_for_statement) {
-					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers);
-					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers);
+					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers, $init_snapshot);
+					if ($init_snapshot !== null) {
+						$lines[] = "\t{ const auto " . $init_snapshot . '; ' . $initializer . '; }';
+						$initializer = '';
+					}
+					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers, $update_snapshot);
+					if ($update_snapshot !== null) {
+						$lines[] = "\t{ " . $statement->update->local_def()->type_def()->cpp_type() . ' compound_previous;';
+						$update = '(' . $update_snapshot . ', ' . $update . ')';
+					}
 					$lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
 				}
 				else {
@@ -222,7 +224,7 @@ final class Cpp_Emitter
 					$lines[] = "\t" . $line;
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
-				if ($compound_header) {
+				if ($update_snapshot !== null) {
 					$lines[] = "\t}";
 				}
 			}
@@ -240,11 +242,6 @@ final class Cpp_Emitter
 					$lines[] = "\t}";
 				}
 			}
-			elseif (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
-				$snapshot = '';
-				$write = $this->compound($statement, $global_references, $declarations, $required_headers, $snapshot);
-				$lines[] = "\t{ const auto " . $snapshot . '; ' . $write . '; }';
-			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
@@ -259,19 +256,19 @@ final class Cpp_Emitter
 				$lines[] = "\t" . $type->lower_cpp_store($statement, $receiver, $key, $value);
 			}
 			elseif ($statement instanceof ast_append_statement) {
-				/** @var vector_type_definition $type */
+				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
-				foreach ($type->element_type->conversion_headers($conversion) as $header) {
+				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$value = $type->element_type->lower_cpp_conversion($conversion, $value, $statement->value);
-				$lines[] = "\t" . $type->lower_cpp_append($receiver, $value) . ';';
+				$lines[] = "\t" . $type->lower_cpp_append($statement, $receiver, $value) . ';';
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
-				$lines[] = "\t" . $this->binding($statement, $global_references, $declarations, $required_headers) . ';';
+				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
+				$lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
@@ -319,21 +316,30 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Produce a snapshot assignment and final write expression; enclosing syntax owns storage and sequencing.
-	 * $snapshot: output assignment to the context-owned compound_previous temporary.
+	 * A statement owns its snapshot locally. A for update assigns to storage supplied by its loop.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
 	private function compound(ast_assignment_statement $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
 		$type = $statement->local_def()->type_def();
 		$execution = $statement->execution_type();
 		$name = $this->name($statement->local_def());
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
+		if (($type === $execution) && ($statement->local_def() instanceof ast_local_declaration)
+			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
+			&& ($statement->write_back() === value_conversion::identity)
+			&& (($statement->value instanceof ast_integer_expression) || (($statement->value instanceof ast_name_expression)
+				&& ($statement->value->declaration() instanceof ast_local_declaration)))) {
+			$operator = $execution->cpp_compound_operator($statement->operator);
+			if ($operator !== null) {
+				return $name . ' ' . $operator . ' ' . $right;
+			}
+		}
 		if ($conversion !== value_conversion::identity) {
 			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value);
 			foreach ($execution->conversion_headers($conversion) as $header) {
@@ -362,24 +368,22 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Render a declaration/write without its delimiter, shared by body statements and for headers.
-	 * A compound header requires compound_previous storage supplied by the enclosing loop.
+	 * Render a binding without its delimiter and report any required prior read to its enclosing statement or loop.
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
+		$snapshot = null;
+		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
+			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
+		}
 		if ($statement instanceof ast_update_statement) {
 			return $statement->local_def()->type_def()->lower_cpp_update($statement->operator,
 				$this->name($statement->local_def()), $statement->postfix);
-		}
-		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
-			$snapshot = '';
-			$write = $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
-			return '(' . $snapshot . ', ' . $write . ')';
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
@@ -404,7 +408,8 @@ final class Cpp_Emitter
 				return '(void)' . $prefix;
 			}
 		}
-		$operand = $this->value($value, $global_references, $declarations, $headers);
+		$operand = $this->value($value, $global_references, $declarations, $headers,
+			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity));
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
@@ -412,6 +417,7 @@ final class Cpp_Emitter
 	}
 
 	/**
+	 * Only the root of an identity initializer may rely on its destination for the native result type.
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
 	 * $reorderable: output proof for this subtree, computed during lowering, never retained in preparation.
 	 * True permits unsequenced evaluation only alongside other proven subtrees; calls always remain false.
@@ -421,7 +427,7 @@ final class Cpp_Emitter
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false): string
+		bool &$reorderable = false, bool $typed_initializer = false): string
 	{
 		$reorderable = false;
 		foreach ($value->type_def()->cpp_headers() as $header) {
@@ -437,7 +443,7 @@ final class Cpp_Emitter
 			$type = $value->receiver->type_def();
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
-			return $type->lower_cpp_index($receiver, $index);
+			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}
 		if ($value instanceof ast_interpolated_string) {
 			$type = $value->type_def();
@@ -525,19 +531,19 @@ final class Cpp_Emitter
 			foreach ($type->binary_headers($value->operator) as $header) {
 				$required_headers[$header] = true;
 			}
-			// Retain snapshots for identical spellings to avoid Clang self-comparison diagnostics.
-			$reorderable = $left_safe && $right_safe && ($left !== $right)
-				&& $type->cpp_binary_reorderable($value->operator);
+			$same_spelling = $left === $right;
+			$operands_safe = $left_safe && $right_safe;
+			$reorderable = $operands_safe && $type->cpp_binary_reorderable($value->operator, $same_spelling);
 			// Direct spelling does not make a checked result reorderable in its parent.
 			if ($reorderable || ($value->left_conversion === value_conversion::identity
 				&& $value->right_conversion === value_conversion::identity
-				&& $type->cpp_direct_binary($value, $left_safe && $right_safe, $left === $right))) {
-				return $type->lower_prepared_binary($value, $left, $right);
+				&& $type->cpp_direct_binary($value, $operands_safe, $same_spelling))) {
+				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
 			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left
 				. '; const auto binary_right = ' . $right . '; return '
-				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right') . '; }())';
+				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right', $typed_initializer) . '; }())';
 		}
 		if ($value instanceof ast_call_expression) {
 			if ($value->cardinality !== null) {
@@ -597,15 +603,15 @@ final class Cpp_Emitter
 				$type = $parameter->type_def();
 				$operand_safe = false;
 				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe);
-				if (count($function->parameters) === 1) {
-					$direct_binding = match ($parameter->mode) {
-						passing_mode::reference => $argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration,
-						passing_mode::value => $value->arguments === [] && $argument instanceof ast_string_expression
-							&& $conversion === value_conversion::identity,
-					};
-					if ($direct_binding) {
-						return $name . '(' . $operand . ')';
-					}
+				foreach ($type->conversion_headers($conversion) as $header) {
+					$required_headers[$header] = true;
+				}
+				if ($parameter->mode === passing_mode::value) {
+					$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
+				}
+				if (count($function->parameters) === 1 && ($parameter->mode === passing_mode::value
+					|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration))) {
+					return $name . '(' . $operand . ')';
 				}
 				$direct_arguments[] = $operand;
 				$direct = $direct && $operand_safe && $type->cpp_trivial_value()
@@ -617,13 +623,9 @@ final class Cpp_Emitter
 					$arguments[] = $temporary;
 				}
 				else {
-					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = '
-						. $type->lower_cpp_conversion($conversion, $operand, $argument) . ';';
+					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
 					$arguments[] = $type->cpp_trivial_value() ? $temporary
 						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-				}
-				foreach ($type->conversion_headers($conversion) as $header) {
-					$required_headers[$header] = true;
 				}
 			}
 			if ($direct) {

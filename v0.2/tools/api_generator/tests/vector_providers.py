@@ -8,6 +8,8 @@ import subprocess
 import tempfile
 import time
 
+from provider_inventory import prepared_provider_headers
+
 ROOT = Path(__file__).resolve().parents[3]
 ENV = {**os.environ, 'XDEBUG_MODE': 'off'}
 
@@ -37,11 +39,8 @@ def proof(work):
             raw, _ = run(['php', generator, 'prepare-runtime', mp, pp, facts, context])
             assert prepared == json.loads(raw), 'Emission changed prepared provider graph'
             headers, _ = run(['php', generator, 'provider-headers', mp, pp])
-            expected_headers = sorted(prepared['submodules']['nodes'][p]['header'] for p in prepared['submodules']['published'])
-            adapters = {a['header'] for f in prepared.get('string_functions', {}).values() for a in f.get('adapters', {}).values()}
-            if (output / 'public/scpp/value_error.hpp').exists():
-                adapters.add('scpp/value_error.hpp')
-            assert json.loads(headers) == sorted(set(expected_headers) | adapters), 'CMake inventory differs from published providers'
+            expected_headers = prepared_provider_headers(prepared, output)
+            assert json.loads(headers) == expected_headers, 'CMake inventory differs from published providers'
             return prepared
 
     def snapshot():
@@ -91,10 +90,13 @@ def proof(work):
     assert snapshot() == original
 
     no_vectors = copy.deepcopy(publication)
-    no_vectors.pop('vectors'); no_vectors.pop('carriers'); no_vectors.pop('hashes', None)
-    emit(metadata, no_vectors, 1)  # Split/join explicitly demand the vector<string> export.
-    no_vectors['string']['functions'] = [f for f in no_vectors['string']['functions']
-                                         if f not in ('explode', 'implode', 'strpos', 'strrpos')]
+    no_vectors.pop('vectors')
+    no_vectors['carriers']['specializations'] = [
+        carrier for carrier in publication['carriers']['specializations']
+        if carrier['payload'] not in names
+    ]
+    emit(metadata, no_vectors, 1)  # Split/join still need vector<string>.
+    no_vectors['string']['functions'] = [f for f in no_vectors['string']['functions'] if f not in ('explode', 'implode')]
     absent = emit(metadata, no_vectors)
     assert not list((output / 'public/scpp').glob('*/string_vectors.hpp'))
     assert not (output / 'public/scpp/vectors.hpp').exists()
@@ -108,6 +110,8 @@ def proof(work):
 
     # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
     minimal = copy.deepcopy(no_vectors)
+    minimal.pop('hashes')
+    minimal.pop('carriers')
     minimal.pop('string')
     minimal.pop('boxed')
     minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}

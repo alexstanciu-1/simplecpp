@@ -25,19 +25,22 @@ and less-than. Its runtime helpers still check the boxed payload.
 - Source calls always return false, even if their arguments permit direct spelling.
   No assumption is made about the callee's effects or exceptions.
 - A single reference parameter binds directly to a local declaration of the exact
-  type. Preparation checks writable storage. Calls also omit their wrapper when all
-  arguments are safe, trivial by-value values with identity conversions. A default
-  string literal can directly initialize a sole by-value parameter with identity
-  conversion. Other argument lists retain their temporaries.
+  type. Preparation checks writable storage. For a sole by-value parameter, the
+  emitter applies the prepared conversion to the supplied argument or declaration
+  default directly in the call. C++ initializes the parameter, including copying
+  an lvalue string. Calls with multiple arguments can omit temporaries when all
+  arguments are safe, trivial by-value values with identity conversions.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
 owns the generated inventory version. A checked operation can use direct operands
 and still report a potentially throwing result to its parent.
 
-Conservative warning handling retains snapshots for identical operand spellings,
-so valid self-comparisons do not trigger Clang's `-Wtautological-compare`. This also
-leaves some identical-spelling arithmetic wrapped. Direct boolean binary conditions
+Generated native operations decide whether equal C++ operand spellings need snapshots.
+Safe arithmetic sums compose directly even when both subtrees spell the same sum.
+Comparisons retain protection against Clang's `-Wtautological-compare`, and XOR
+keeps equal operands separated because literals such as `2LL ^ 2LL` trigger
+`-Wxor-used-as-pow`. Direct boolean binary conditions
 omit their expression's outer grouping pair because the condition statement already
 supplies it; generated boolean identity truthiness adds no redundant pair. Warning
 flags remain unchanged, including `-Werror`.

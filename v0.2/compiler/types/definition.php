@@ -21,13 +21,20 @@ interface counted_collection_type
 interface index_read_type
 {
 	public function prepare_index(ast_index_expression $value): void;
-	public function lower_cpp_index(string $receiver, string $index): string;
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
 }
 
 /** Indexed collections that can also be initialized with []. */
 interface indexed_collection_type extends index_read_type
 {
 	public function lower_cpp_empty(): string;
+}
+
+/** Source append on a writable receiver with a published value parameter. */
+interface appendable_collection_type
+{
+	public function write_type(): type_definition;
+	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
@@ -42,13 +49,13 @@ interface index_write_type
 trait ordered_keyed_store
 {
 	abstract public function write_type(): type_definition;
-	abstract public function lower_cpp_key(string $key): string;
+	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
 	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
 
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
 	{
-		$value = $this->write_type()->lower_cpp_conversion($write->conversion(), $value, $write->value);
-		return '{ const auto write_key = ' . $this->lower_cpp_key($key) . '; const auto write_value = ' . $value . '; '
+		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; const auto write_value = ' . $value . '; '
 			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
 	}
 }
@@ -149,15 +156,27 @@ abstract class type_definition
 		return false;
 	}
 
-	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type): string
+	/** Native spelling when this execution type permits a direct compound write. */
+	public function cpp_compound_operator(binary_operator $operator): ?string
+	{
+		return null;
+	}
+
+	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type, bool $typed_initializer = false): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
 	}
 
 	/** Consume the original prepared operand types when selecting the native binding. */
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
 	{
-		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type());
+		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type(), $typed_initializer);
+	}
+
+	/** A known exact native result when emitted as an argument. Null leaves normalization to the consumer. */
+	public function cpp_exact_binary_result(binary_operator $operator): ?type_definition
+	{
+		return null;
 	}
 
 	/** @return string[] Public includes needed by an approved binary operation. */
@@ -172,8 +191,8 @@ abstract class type_definition
 		return false;
 	}
 
-	/** Backend property of an approved operation, excluding its operands; conservative for unknown strategies. */
-	public function cpp_binary_reorderable(binary_operator $operator): bool
+	/** Whether this operation can directly combine independently safe operands with these C++ spellings. */
+	public function cpp_binary_reorderable(binary_operator $operator, bool $same_spelling = false): bool
 	{
 		return false;
 	}
@@ -278,8 +297,8 @@ abstract class type_definition
 	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
 	{
 		$source = $syntax?->type_def();
-		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $source !== null) {
-			return $this->box_cpp($source, $value);
+		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
+			return $this->box_cpp($syntax, $value);
 		}
 		if ($source instanceof boxed_type_definition && $conversion !== value_conversion::identity) {
 			$context = match ($conversion) {

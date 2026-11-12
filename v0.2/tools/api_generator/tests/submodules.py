@@ -39,9 +39,9 @@ def proof(work):
     publication.write_text(json.dumps(published))
     report = {'configuration': 'Clang, C++23, libc++, O2/g0, mold, sequential commands, no PCH/LTO; variant runtime compiled once and reused for application builds', 'variants': {}}
 
-    def generate(metadata, runtime, compiler):
-        run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
-        run(['php', generator, 'emit-compiler', metadata, publication, facts, context, compiler])
+    def generate(metadata, runtime, compiler, demand=publication):
+        run(['php', generator, 'emit-runtime', metadata, demand, facts, context, runtime])
+        run(['php', generator, 'emit-compiler', metadata, demand, facts, context, compiler])
 
     review_contract_proof(work / 'review-contracts', original, publication, facts, context)
     cmake_provider_proof(work / 'cmake-providers', original, publication, facts, context)
@@ -50,10 +50,16 @@ def proof(work):
         directory = work / variant
         directory.mkdir(exist_ok=True)
         metadata = json.loads(json.dumps(original))
+        demand = publication
         if variant != 'default':
             metadata['submodules']['core.string']['header'] = 'scpp/proof/text.hpp'
             metadata['submodules']['core.output']['header'] = 'scpp/proof/write.hpp'
         if variant == 'relocated':
+            reduced = json.loads(publication.read_text())
+            for vector in reduced['vectors']['specializations']:
+                vector.update(native_index=False, native_value='none')
+            demand = directory / 'canonical-publication.json'
+            demand.write_text(json.dumps(reduced))
             metadata['output']['provider'] = 'core.string'
             metadata['submodules']['core.vectors']['header'] = 'scpp/proof/list.hpp'
             metadata['submodules']['core.hashes']['header'] = 'scpp/proof/map.hpp'
@@ -67,18 +73,18 @@ def proof(work):
         path = directory / 'metadata.json'
         path.write_text(json.dumps(metadata))
         runtime, compiler = directory / 'runtime', directory / 'compiler'
-        generate(path, runtime, compiler)
+        generate(path, runtime, compiler, demand)
         before = snapshot(runtime)
-        generate(path, runtime, compiler)
+        generate(path, runtime, compiler, demand)
         assert snapshot(runtime) == before, 'Nondeterministic publication'
-        run(['php', generator, 'emit-runtime', path, publication, facts, context, runtime, '--check'])
-        run(['php', generator, 'emit-compiler', path, publication, facts, context, compiler, '--check'])
+        run(['php', generator, 'emit-runtime', path, demand, facts, context, runtime, '--check'])
+        run(['php', generator, 'emit-compiler', path, demand, facts, context, compiler, '--check'])
         # Exercise the real freshness wrappers, which preserve timestamps on no-op builds.
         stamps = {str(p): p.stat().st_mtime_ns for base in (runtime, compiler) for p in base.rglob('*') if p.is_file()}
         run(['cmake', '-DGENERATOR=' + str(ROOT / 'build/clang/scpp_api_generator'),
-             '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(publication), '-DOUTPUT=' + str(runtime),
+             '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(demand), '-DOUTPUT=' + str(runtime),
              '-P', ROOT / 'cmake/PublishRuntime.cmake'])
-        run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(publication),
+        run(['cmake', '-DPHP=php', '-DGENERATOR=' + str(generator), '-DMETADATA=' + str(path), '-DPUBLICATION=' + str(demand),
              '-DFACTS=' + str(facts), '-DCONTEXT=' + str(context), '-DOUTPUT=' + str(compiler),
              '-P', ROOT / 'cmake/PublishCompiler.cmake'])
         assert all(Path(p).stat().st_mtime_ns == stamp for p, stamp in stamps.items()), 'No-op publication touched artifacts'
@@ -147,16 +153,19 @@ def proof(work):
                         'js': 'let narrowed: byte = (byte) (scalar() + 1); return (int) narrowed;'}[flavor]
             observations = ''
             if variant == 'relocated':
+                write('fraction', fn('fraction', 'float', 'return 8.75;'))
                 for name, typ in [('list_size', 'vector<int>'), ('map_size', 'hash<int,int>')]:
                     local = {'cpp': f'{typ} v = [];', 'php': f'$v {typ} = [];', 'js': f'let v: {typ} = [];'}[flavor]
                     v = '$v' if flavor == 'php' else 'v'
-                    body = f'if (empty({v})) {{return count({v});}} return 91;'
-                    if typ == 'vector<int>':
-                        body = (f'if (!empty({v})) {{return 91;}} {v}[] = 1; {v}[0] = 8; '
-                                f'if ({v}[0] !== 8) {{return 91;}} return count({v}) - 1;')
+                    write_value = f'{v}[] = fraction(); {v}[0] = {v}[0];' if typ == 'vector<int>' else f'{v}[0] = fraction();'
+                    body = (f'if (!empty({v})) {{return 91;}} {write_value} '
+                            f'if ({v}[0] !== 8) {{return 91;}} return count({v}) - 1;')
                     write(name, fn(name, 'int', local + body))
                     observations += f'if ({name}() !== 0) {{return 91;}} '
-            write('main', observations + 'visible(); body(); scalar(); ' + narrowed)
+            write('main', observations + 'visible(); body(); scalar(); absent(); ' + narrowed)
+            write('unobserved', {'cpp': 'global null unused = null;', 'php': 'global $unused null = null;',
+                                 'js': 'global let unused: null = null;'}[flavor])
+            write('absent', fn('absent', 'null', 'return null;'))
             write('visible', fn('visible', 'string', 'return "V";'))
             write('body', fn('body', 'int', 'return 1;'))
             write('scalar', fn('scalar', 'int', 'return 7;'))
@@ -189,10 +198,20 @@ def proof(work):
                                          metadata['submodules'][metadata['scalar_providers']['numeric']]['header']):
                             assert f'#include <{excluded}>' not in unit
                 baseline = artifacts(out)
+                globals_only = [p for p, text in baseline.items() if p.endswith('.cpp') and 'constinit scpp::null_t var_unused' in text]
+                assert len(globals_only) == 1
+                assert not (out / globals_only[0]).with_suffix('.hpp').exists()
+                assert [line for line in baseline[globals_only[0]].splitlines() if line.startswith('#include')] == [f'#include <{core_header}>']
+                null_units = [p for p, text in baseline.items() if p.endswith('.cpp') and 'scpp::null_t absent_()' in text]
+                assert len(null_units) == 1
+                for suffix in ('.cpp', '.hpp'):
+                    unit = (out / null_units[0]).with_suffix(suffix).read_text()
+                    assert [line for line in unit.splitlines() if line.startswith('#include <')] == [f'#include <{core_header}>']
                 if variant == 'relocated':
                     query_units = [unit for path, unit in baseline.items() if path.endswith('.cpp')
                                    and '.size()' in unit and '.empty()' in unit]
                     assert len(query_units) == 2
+                    assert all(f'#include <{conversion_header}>' in unit for unit in query_units)
                     for family in ('core.vectors', 'core.hashes'):
                         header = metadata['submodules'][family]['header']
                         assert sum(f'#include <{header}>' in unit for unit in query_units) == 1
@@ -445,6 +464,22 @@ def review_contract_proof(work, original, publication_path, facts, context):
     emit(original, publication)
     for name in ('integers.hpp', 'values.hpp', 'numeric/scalars.hpp'):
         assert not (legacy / name).exists()
+    # The provider can exist even when its null declaration is not requested.
+    compiler_command = ['php', generator, 'emit-compiler', metadata_path, request, facts, context, compiler]
+    run(compiler_command)
+    compiler_before = snapshot(compiler)
+    without_null = {key: value for key, value in publication.items() if key not in ('carriers', 'hashes', 'boxed')}
+    without_null['string'] = dict(publication['string'], functions=[])
+    without_null['values'] = [name for name in publication['values'] if name != 'null_t']
+    emit(original, without_null)
+    assert 'using null_t' not in (legacy / 'core/scalars.hpp').read_text()
+    assert 'null_t' in run(compiler_command, 1).stderr
+    assert snapshot(compiler) == compiler_before
+    without_null['values'].append('null_t')
+    emit(original, without_null)
+    run(compiler_command)
+    compile_header('scpp/core/scalars.hpp', 'scpp::null_t value = nullptr;')
+    emit(original, publication)
     core = (legacy / 'core/scalars.hpp').read_text()
     assert '#include' not in core and 'using int16 =' not in core and 'using uint32 =' not in core
     compile_header('scpp/core/scalars.hpp', 'static_assert(__is_same(scpp::int64, __INT64_TYPE__));\nstatic_assert(__is_same(scpp::byte, __UINT8_TYPE__));\nstatic_assert(__is_same(scpp::bool_t, bool));\nstatic_assert(__is_same(scpp::float64, double));\n')

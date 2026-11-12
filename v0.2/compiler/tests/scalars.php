@@ -79,6 +79,10 @@ foreach (flavor::cases() as $flavor)
 	verify($locals[7]->initialization() === value_conversion::integer_checked, 'Unknown byte lacks check');
 	verify($locals[5]->initialization() === value_conversion::integer_proven, 'Known byte check not discharged');
 	verify($locals[11]->constant_known(), 'Null local propagation');
+	$null_cpp = (new Cpp_Emitter())->emit($prepare($decl('null', 'nothing', 'null') . 'return 0;'));
+	verify(str_contains($null_cpp, 'scpp::null_t var_nothing_0 = nullptr;'), 'Null storage spelling');
+	verify(type_null::instance()->cpp_headers() === ['scpp/core/scalars.hpp']
+		&& str_contains($null_cpp, '#include <scpp/core/scalars.hpp>'), 'Null storage provider');
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify($before === serialize($entry), 'Lowering mutated prepared facts');

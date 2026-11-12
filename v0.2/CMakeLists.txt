@@ -386,6 +386,8 @@ if(BUILD_TESTING)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
+  add_test(NAME collection_argument_targets COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_arguments.py ${native_facts} ${native_context})
   add_test(NAME hash_provider_exports COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/hash_providers.py)
   add_test(NAME carrier_provider_exports COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/carrier_providers.py)

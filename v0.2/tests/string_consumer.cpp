@@ -18,7 +18,7 @@ static_assert(!std::is_convertible_v<const char*, string>);
 static_assert(!std::is_convertible_v<int64, string>);
 static_assert(!std::is_convertible_v<string, int64>);
 static_assert(std::is_constructible_v<string, int>);
-static_assert(!std::is_constructible_v<string, null_t>);
+static_assert(std::is_constructible_v<string, null_t>);
 static_assert(!std::is_convertible_v<string, bool>);
 static_assert(!adds<string, int64> && !adds<string, const char*>);
 static_assert(std::is_same_v<decltype(string{} == string{}), bool_t>);
@@ -89,7 +89,7 @@ int main() {
     auto independent = large;
     large.clear();
     require(independent.size() == 4096 && static_cast<bool>(large.empty()));
-    fails<std::invalid_argument>([] { string invalid{nullptr}; });
+    fails<std::invalid_argument>([] { string invalid{scpp::null}; });
     fails<std::invalid_argument>([] { string invalid{nullptr, 0}; });
     fails<std::out_of_range>([] { string invalid{"x", -1}; });
     require(scpp::checked_string_to_int64(string{"-9223372036854775808"}) == std::numeric_limits<long long>::min());

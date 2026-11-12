@@ -77,11 +77,61 @@ foreach (flavor::cases() as $flavor) {
 		$fixtures[$flavor->name . '-' . $family . '-container'] = [
 			'cpp' => (new Cpp_Emitter())->emit($prepare($box . ' return 8;')),
 			'stdout_hex' => bin2hex($family === 'mixed' ? '898234568' : '99923457')];
+		$key = $var('key');
+		$item = $var('item');
+		$arguments = $function('int', 'number', 'echo "!"; return 6;')
+			. $decl($family, 'x', '[]') . $decl('int', 'key', '0') . $decl('int', 'item', '2')
+			. $index('x', $key) . " = $item; echo (int)" . $index('x', $key) . ';'
+			. $index('x', $key) . " = $item <=> $key; echo (int)" . $index('x', $key) . ';'
+			. $index('x', $key) . ' = number(); echo (int)' . $index('x', $key) . ';'
+			. $decl('byte', 'small', '255') . $index('x', $key) . ' = ' . $var('small') . '; echo (int)' . $index('x', $key) . ';'
+			. $decl($family, 'y', '7') . $index('x', $key) . " = $y; echo (int)" . $index('x', $key) . '; return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($arguments));
+		$factory = "scpp::{$family}::from_integer";
+		foreach (['var_item_2', 'static_cast<scpp::int64>(((var_item_2 > var_key_1)) - ((var_item_2 < var_key_1)))',
+			'number_()', 'static_cast<scpp::int64>(var_small_3)'] as $argument) {
+			verify(str_contains($cpp, "const auto write_value = $factory($argument);"), "Unexpected $family factory argument: $argument");
+		}
+		verify(str_contains($cpp, 'const auto write_key = scpp::boxed_key(var_key_1);')
+			&& str_contains($cpp, '.source_read(scpp::boxed_key(var_key_1))')
+			&& str_contains($cpp, 'const auto write_value = var_y_4;'), 'Lost key validation or same-family binding');
+		$fixtures[$flavor->name . '-' . $family . '-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('21!62557')];
+		$f = $var('f');
+		$casts = $function('float', 'fraction', 'return 6.75;') . $decl($family, 'x', '[]')
+			. $decl('float', 'f', '2.5') . $decl($family, 'y', '7')
+			. $index('x', '0') . " = (int)$f;" . $index('x', '1') . ' = (int)fraction();'
+			. $index('x', '2') . " = (int)$y;" . $index('x', '3') . ' = (int)4;'
+			. 'echo (int)' . $index('x', '0') . ', (int)' . $index('x', '1') . ', (int)' . $index('x', '2')
+			. ', (int)' . $index('x', '3') . '; return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($casts));
+		foreach (['static_cast<scpp::int64>(var_f_1)', 'scpp::checked_float64_to_int64(fraction_())',
+			"scpp::boxed_{$family}_explicit_cast_int64(var_y_2)"] as $converted) {
+			verify(str_contains($cpp, "$factory(($converted))"), "Expected exact converted argument: $converted");
+		}
+		$fixtures[$flavor->name . '-' . $family . '-cast-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2674')];
+		$peer = $family === 'mixed' ? 'dynamic' : 'mixed';
+		rejects(fn() => $prepare($decl($family, 'x', '[]') . $decl($peer, 'y', '8')
+			. $index('x', '0') . " = $y;"), 'Unsupported boxed conversion');
 		foreach (['true', '1.5', 'null', $x] as $key) {
 			rejects(fn() => $prepare($decl($family, 'x', '[]') . $index('x', $key) . ' = 1;'), 'key requires int or string');
 		}
 		$bad = $decl($family, 'x', 'null') . $index('x', '"2147483648"') . ' = (int)' . $x . '; return 8;';
 		$fixtures[$flavor->name . '-' . $family . '-key-first'] = [
+			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => '', 'catch_out_of_range' => 'packed_integer_key_limit'];
+		foreach (['1', '2147483648'] as $key_text) {
+			$order = $function('string', 'key', 'echo "K"; return "' . $key_text . '";')
+				. $function('int', 'rhs', 'echo "R"; return 7;') . $decl($family, 'x', '[]')
+				. $index('x', 'key()') . ' = rhs(); echo (int)' . $index('x', '1') . '; return 8;';
+			$fixture = ['cpp' => (new Cpp_Emitter())->emit($prepare($order)),
+				'stdout_hex' => bin2hex($key_text === '1' ? 'KR7' : 'K')];
+			if ($key_text !== '1') {
+				$fixture['catch_out_of_range'] = 'packed_integer_key_limit';
+			}
+			$fixtures[$flavor->name . '-' . $family . '-key-order-' . $key_text] = $fixture;
+		}
+		$bad = $function('int', 'rhs', 'echo "!"; return 8;') . $decl($family, 'x', '[]')
+			. $index('x', '-1') . ' = rhs(); return 8;';
+		$fixtures[$flavor->name . '-' . $family . '-negative-key'] = [
 			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => '', 'catch_out_of_range' => true];
 		$bad = $decl($family, 'x', '1') . $decl($family, 'y', $index('x', '0')) . 'return 8;';
 		$fixtures[$flavor->name . '-' . $family . '-scalar-read'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bad)),

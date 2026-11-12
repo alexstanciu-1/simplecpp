@@ -31,9 +31,9 @@ function scalarRepresentation(array $plan, string $name): string {
             return $t['representation'];
         }
     }
-    return match($name) {
-        'bool_t' => 'bool', 'float64' => 'double', default => throw new \RuntimeException("Missing prepared scalar representation: $name")
-    };
+    $native = scalarNativeIdentity($plan, $name);
+    requireThat($native !== $name, "Missing prepared scalar representation: $name");
+    return $native;
 }
 
 /** Scalar declarations are placed by their canonical export, never by an old header slot. */
@@ -44,17 +44,8 @@ function renderScalarGroups(array $plan, array &$groups): void {
         $name = $type['name'];
         $provider = typeExport($plan['submodules'], $name)['provider'];
         $exports[$provider][] = $name;
-        if (($type['kind'] ?? '') !== 'null') {
-            $declarations[$provider][] = "using $name = " . scalarRepresentation($plan, $name) . ";\n";
-        } else {
-            $text = "class $name final { public: constexpr $name() noexcept = default; };\ninline constexpr $name null{};\n";
-            foreach ($type['operations'] as $operation) {
-                $symbol = $operation === 'equal' ? '==' : '!=';
-                $result = $operation === 'equal' ? 'true' : 'false';
-                $text .= "constexpr bool operator$symbol($name, $name) noexcept { return $result; }\n";
-            }
-            $declarations[$provider][] = $text;
-        }
+        $declarations[$provider][] = "using $name = " . scalarRepresentation($plan, $name) . ";\n";
+        if (($type['kind'] ?? '') === 'null') $declarations[$provider][] = "inline constexpr $name null = nullptr;\n";
     }
     foreach (object($plan['aliases']) as $alias => $target) {
         $provider = typeExport($plan['submodules'], $target)['provider'];

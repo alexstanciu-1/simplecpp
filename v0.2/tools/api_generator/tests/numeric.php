@@ -46,6 +46,7 @@ foreach ($core->operators as $request) {
 }
 requireThat(encode(prepareRuntime($meta, $both, $facts)) === encode($plan), 'Alias publication created duplicate definitions');
 $before = render($plan);
+requireThat(str_contains($before['public/scpp/core/scalars.hpp'], 'using null_t = decltype(nullptr);'), 'Missing native null alias in core scalars');
 requireThat(str_contains($before['public/scpp/core/scalars.hpp'], 'using uint8 = __UINT8_TYPE__') && str_contains($before['public/scpp/core/scalars.hpp'], 'using byte = uint8;'), 'No canonical uint8 and byte alias');
 requireThat(!str_contains($before['public/scpp/core/scalars.hpp'], 'using int32 ='), 'Optional width leaked into core');
 echo "Numeric module and canonical byte alias contracts passed\n";

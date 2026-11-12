@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/compiler_families.php';
+require_once __DIR__ . '/compiler_plans.php';
+require_once __DIR__ . '/submodules.php';
 
 /** Project the existing scalar plans onto the published box tags and the first five boxed operators. */
 function boxedScalarPlan(object $metadata, array $facts, array $providers, array $formatters): array {
@@ -138,9 +141,15 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
         $input = $plan['kinds'] + ['uint8' => 'integer'];
         $factories = '';
         foreach ($input as $source => $tag) {
-            $cpp = $plan['cpp'][$tag === 'integer' ? 'int64' : $source];
-            $factory = $tag === 'null' ? "'((void)(' . \$value . '), scpp::$name{})'" :
-                ($tag === 'string' ? "'scpp::$name::from_string(' . \$value . ')'" : "'scpp::$name::from_$tag(static_cast<$cpp>(' . \$value . '))'");
+            if ($tag === 'null') {
+                $factory = "'((void)(' . \$value . '), scpp::$name{})'";
+            } else {
+                // The integer factory takes canonical int64, including when boxing a byte.
+                $argument = $tag === 'integer' && $source !== 'int64'
+                    ? 'type_registry::integer()->lower_cpp_exact_argument($syntax, value_conversion::integer_widen, $value)'
+                    : '$source->lower_cpp_exact_argument($syntax, value_conversion::identity, $value)';
+                $factory = "'scpp::$name::from_$tag(' . $argument . ')'";
+            }
             $factories .= "\t\t\t'$source' => $factory,\n";
         }
         $pairs = [];

@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
-	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program};
+	Incremental_Project, Module_Loader, Function_Preparation, Preparation, Program_Frontend, Cpp_Program};
 
 function verify(bool $ok, string $message): void
 {
@@ -59,7 +59,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$code .= 'print("R"); print("X",9); print("Y",10,"?"); mutable(); mutable(); mutable("X");'
 		. 'echo pair(mark(3)); echo pair(mark(4),mark(5)); echo default_int64(); echo default_string();'
-		. 'default_bool(); default_byte(); default_float(); default_float64(); default_null(); return default_int();';
+		. 'echo (int)default_bool(), (int)default_bool(0); default_byte(); default_float(); default_float64(); default_null(); return default_int();';
 	$entry = $prepare($code);
 	$parameter = $entry->file->functions()[0]->parameters[1];
 	verify($parameter->default_value->parent === $parameter, 'Default is not parameter-owned');
@@ -68,8 +68,17 @@ foreach (flavor::cases() as $flavor)
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
 	verify(substr_count($cpp, 'mutable_(scpp::string{"\101\000\102", 3});') === 2, 'Expected direct default string arguments');
-	verify(str_contains($cpp, 'mutable_(static_cast<scpp::string&&>(argument_'), 'Explicit string argument lost its temporary');
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("R8!X9!Y10?A\0BA\0BX324559S")];
+	verify(str_contains($cpp, 'mutable_(scpp::string{"\130", 1});'), 'Expected direct explicit string argument');
+	verify(str_contains($cpp, 'default_bool_((1LL != 0))') && str_contains($cpp, 'default_bool_((0LL != 0))'),
+		'Expected prepared integer-to-bool conversion for both default and supplied arguments');
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("R8!X9!Y10?A\0BA\0BX324559S10")];
+	$override = $fn('accept', [$p('v', 'byte', '7')], 'void', 'echo "C", (int)' . $var('v') . ';')
+		. $fn('produce', [], 'int', 'echo "P"; return 300;') . 'accept(); accept(produce()); return 8;';
+	$override_cpp = (new Cpp_Emitter())->emit($prepare($override));
+	verify(str_contains($override_cpp, 'accept_(scpp::checked_int64_to_uint8(produce_()));'),
+		'Explicit override must use its checked conversion');
+	$fixtures[$flavor->name . '-checked-override'] = ['cpp' => $override_cpp, 'stdout_hex' => bin2hex('C7P'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
 	foreach ($entry->file->functions() as $function) {
 		Function_Preparation::reset($function);
 	}
@@ -103,37 +112,47 @@ foreach (flavor::cases() as $flavor)
 			file_put_contents($lib, $fn('result', [$p('n', 'int', $default)], 'int', $body . 'return ' . $var('n') . ';'));
 		};
 		$write('8');
-		$compiler = new Project_Compiler();
-		$session = $compiler->frontend($directory);
+		$output = $directory . '/generated';
 		$target = new entry_target(31);
-		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Initial preparation');
+		$project = new Incremental_Project($directory, $output, $target);
+		$compare_caller = static function () use ($directory, $output, $target): string {
+			$fresh_session = (new Module_Loader())->load($directory, $output);
+			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare($fresh_session, $target));
+			$unit = $fresh->source_units[$fresh->entry_path];
+			$incremental = file_get_contents($output . '/' . $unit);
+			verify($incremental === $fresh->files[$unit], 'Incremental caller differs from fresh emission');
+			return $incremental;
+		};
+		verify($project->run()['preparation']['prepared'] === 2, 'Initial preparation');
+		$initial_cpp = $compare_caller();
+		$session = $project->session();
 		$caller = $session->entry->entry->ast;
 		$symbol = $session->scope->entry('func:result');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
+		verify($project->run()['preparation']['reused'] === 2, 'No-op rebuilt');
 		$write('123');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Default edit retained stale caller');
+		verify($project->run()['preparation']['prepared'] === 2, 'Default edit retained stale caller');
+		verify($compare_caller() !== $initial_cpp, 'Caller still embeds the initial default');
+		$session = $project->session();
 		verify($session->entry->entry->ast === $caller, 'Default edit reparsed unchanged caller');
 		verify($session->scope->entry('func:result') === $symbol, 'Default edit replaced stable symbol');
 		verify($symbol->declaration()->parameters[0]->default_value->constant() === 123, 'Stale prepared default');
 		$write(null);
-		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Argument count mismatch');
+		rejects(fn() => $project->run(), 'Argument count mismatch');
 		$write('8');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Default repair failed');
+		verify($project->run()['preparation']['prepared'] === 2, 'Default repair failed');
+		verify($compare_caller() === $initial_cpp, 'Recovered caller differs from its initial output');
 		$call = $caller->main()->body()->statements[0]->value;
 		verify($call->function_def() === $symbol->declaration(), 'Repaired call retained old declaration');
 		verify($call->function_def()->parameters[0]->default_value->constant() === 8, 'Repair retained old default');
 		$write('8', 'echo "";');
-		$session = $compiler->frontend($directory, $session);
-		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body edit invalidated caller');
-		verify($session->entry->entry->ast === $caller, 'Repair reparsed caller');
+		verify($project->run()['preparation']['reused'] === 1, 'Body edit invalidated caller');
+		verify($project->session()->entry->entry->ast === $caller, 'Repair reparsed caller');
 	}
 	finally {
-		foreach (glob($directory . '/*') as $path) {
-			unlink($path);
+		$items = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST);
+		foreach ($items as $item) {
+			$item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
 		}
 		rmdir($directory);
 	}

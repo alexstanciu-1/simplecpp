@@ -131,9 +131,8 @@ owner or additional watcher graph is introduced.
 
 ## Native lowering
 
-Storage uses `__INT64_TYPE__`, `bool`, `__UINT8_TYPE__`, `double` and `decltype(nullptr)`.
-Null's native carrier does not introduce pointer semantics or claim the ABI of the
-runtime's distinct `scpp::null_t`; future runtime-call adapters must handle that boundary.
+Scalar storage uses metadata-exported names. A source null declaration uses
+`scpp::null_t` from `core.scalars`, and its literal lowers to `nullptr`.
 
 Known valid byte conversions emit a native static cast. Unknown int64-to-byte values
 currently reuse `(scpp::uint8{value}).native_value()` and include only the public

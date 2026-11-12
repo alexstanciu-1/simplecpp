@@ -12,7 +12,7 @@
 		return @value@::instance();
 	}
 
-	public function lower_cpp_key(string $key): string
+	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
 		return 'static_cast<' . @key@::instance()->cpp_type() . '>(' . $key . ')';
 	}

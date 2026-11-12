@@ -14,7 +14,7 @@ CHECK_ALIAS(int64, __INT64_TYPE__); CHECK_ALIAS(uint64, __UINT64_TYPE__);
 #undef CHECK_ALIAS
 static_assert(std::is_same_v<scpp::byte, scpp::uint8>);
 static_assert(std::is_same_v<scpp::bool_t, bool> && std::is_same_v<scpp::float64, double>);
-static_assert(std::is_empty_v<scpp::null_t> && !std::is_convertible_v<scpp::null_t, bool>);
+static_assert(std::is_same_v<scpp::null_t, decltype(nullptr)> && !std::is_convertible_v<scpp::null_t, bool>);
 
 // Native aliases use ordinary C++ promotion. Source-family behavior remains compiler-owned.
 template<class T, class Parse> static void check(Parse parse) {

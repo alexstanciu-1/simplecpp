@@ -15,9 +15,12 @@ arithmetic rules. Compiler-generated handlers retain source admission, promotion
 checked arithmetic and conversion semantics. Optional runtime widths are not newly
 activated in the source compiler.
 
-String, vectors, hashes, carriers, ownership handles and null remain concrete
-library types. Runtime null_t retains its explicit default constructor and sentinel;
-compiler null lowering remains decltype(nullptr). Scalar fields requiring zero must
+The runtime and compiler use `scpp::null_t`, an alias for `decltype(nullptr)`.
+The runtime sentinel `scpp::null` and the lowered literal `nullptr` have the same
+value. Compiler publication requires the runtime to publish the null declaration.
+A runtime-only publication may omit it. Rebuild native consumers of the former empty class, including nullable
+constructors whose parameter type changes. Strings, vectors, hashes, carriers
+and ownership handles remain concrete library types. Scalar fields requiring zero must
 use value initialization (`{}`); error_t's line field now does this explicitly.
 
 Named checked conversions reuse the existing private algorithms, including published
@@ -45,6 +48,9 @@ emit deleted concrete overloads for other builtin scalar inputs, nullptr and obj
 pointers. This preserves strict scalar filtering on vectors and affected library
 APIs, including const receivers. Existing explicitly native adapter parameters keep
 their previous native policy. Equal width alone does not establish native identity.
+For a `null_t` parameter, a deleted pointer overload makes an integer zero literal
+ambiguous while `nullptr` and `scpp::null` select the exact sentinel overload.
+Declared payload overloads remain available, including exact integer payloads.
 No public templates or generic user-defined conversion prohibition are introduced.
 
 Vectors store the metadata-selected alias directly. Public reads return values;

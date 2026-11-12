@@ -445,7 +445,10 @@ function renderCarriers(array $plan): array {
         $nullable = $c['family'] === 'nullable';
         [$lh, $ld] = lifecycle($n);
         $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', error_t':''];
-        $h .= template('carrier_declaration', $vars) . scalarInputFences($plan, $n, [[$p]], true);
+        $constructors = [[$p]];
+        if ($nullable) $constructors[] = ['null_t'];
+        if ($result) $constructors[] = ['error_t'];
+        $h .= template('carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
         $d .= template('carrier_storage', $vars) . template('carrier_value_definition', $vars) . ' ';
         if($result) {
             $d .= "if (!storage_) return $p{}; ";

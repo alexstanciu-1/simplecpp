@@ -35,14 +35,14 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $this->cpp_type() . '::container()';
 	}
 
-	public function lower_cpp_key(string $key): string
+	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
 		return 'scpp::boxed_key(' . $key . ')';
 	}
 
-	public function lower_cpp_index(string $receiver, string $index): string
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(' . $receiver . ').source_read(' . $this->lower_cpp_key($index) . ')';
+		return '(' . $receiver . ').source_read(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
 	public function lower_cpp_write(string $receiver, string $key, string $value): string
@@ -62,7 +62,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 
 	abstract public function accepts_scalar(type_definition $source): bool;
 	abstract public function admits_extraction(type_definition $target, conversion_context $context): bool;
-	abstract public function box_cpp(type_definition $source, string $value): string;
+	abstract public function box_cpp(ast_expression $syntax, string $value): string;
 	abstract public function admits_pair(binary_operator $operator, type_definition $peer, bool $box_left): bool;
 
 	/** Admit copies within this family and box scalar values through the generated bindings. */
@@ -88,7 +88,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		$value->settle_binary($value->operator === binary_operator::add ? $this : type_bool::instance(), $this);
 	}
 
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
 	{
 		return 'scpp::boxed_' . $expr->operator->name . '_' . $expr->left->type_def()->name . '_'
 			. $expr->right->type_def()->name . '(' . $left . ', ' . $right . ')';

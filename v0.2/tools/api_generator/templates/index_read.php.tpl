@@ -6,7 +6,7 @@
 		$value->settle_element(@element@::instance());
 	}
 
-	public function lower_cpp_index(string $receiver, string $index): string
+	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
 		return '(' . $receiver . ').@index@(static_cast<' . @count@::instance()->cpp_type() . '>(' . $index . '))';
 	}

@@ -39,9 +39,9 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $ok bool = true;             | scpp::bool_t var_ok_1 = true;                                      | #include <scpp/core/scalars.hpp> | literal fits during preparation. The   |
 |                              |                                                                    | No unit header.                  | bool export supplies the native alias. |
 +------------------------------+--------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $f float = 1.5;              | scpp::float64 var_f_0 = 0x1.8000000000000p0;                       | .cpp includes                    | Generated literal handlers preserve    |
-| $n null = null;              | decltype(nullptr) var_n_1 = nullptr;                               | #include <scpp/core/scalars.hpp> | the binary64 value and emit the native |
-|                              |                                                                    | No unit header.                  | null-pointer literal for source null.  |
+| $f float = 1.5;              | scpp::float64 var_f_0 = 0x1.8000000000000p0;                       | .cpp includes                    | The scalar exports name both types.    |
+| $n null = null;              | scpp::null_t var_n_1 = nullptr;                                    | #include <scpp/core/scalars.hpp> | Literal handlers preserve binary64 and |
+|                              |                                                                    | No unit header.                  | emit nullptr for source null.          |
 +------------------------------+--------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | $x = 9;                      | scpp::int64 var_x_0 = 9;                                           | .cpp includes                    | Preparation binds both occurrences to  |
 | $x = 4;                      | var_x_0 = 4LL;                                                     | #include <scpp/core/scalars.hpp> | one storage ID. Assignment consumes    |
@@ -83,9 +83,11 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | PHP-flavor pattern       | Lowered C++ code                                                                                              | Lowered C++ header code          | Generation and lowering                |
 +==========================+===============================================================================================================+==================================+========================================+
 | Given                    | scpp::int64 var_x_2 = (var_a_0 + (var_b_1 * 2LL));                                                            | .cpp includes                    | Integer operator metadata admits the   |
-|     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | native operations. Lowering keeps      |
-|     $b int = 2;          |                                                                                                               | No unit header.                  | precedence and takes the direct path   |
-| $x = $a + $b * 2;        |                                                                                                               |                                  | for trivial operands.                  |
+|     $a int = 6;          | scpp::int64 var_y_3 = (var_a_0 + var_a_0);                                                                    | #include <scpp/core/scalars.hpp> | native operations. Lowering keeps      |
+|     $b int = 2;          | scpp::int64 var_z_4 = ((var_a_0 + var_a_0) + (var_a_0 + var_a_0));                                            | No unit header.                  | precedence and emits safe repeated     |
+| $x = $a + $b * 2;        |                                                                                                               |                                  | sums directly, including nested sums.  |
+| $y = $a + $a;            |                                                                                                               |                                  |                                        |
+| $z = ($a+$a) + ($a+$a);  |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    | scpp::int64 var_x_2 = scpp::int64_divide(var_a_0, var_b_1);                                                   | .cpp includes                    | Safe reads with identity conversions   |
 |     $a int = 6;          | scpp::int64 var_y_3 = scpp::int64_remainder(var_a_0, var_b_1);                                                | #include <scpp/arithmetic.hpp>   | go directly to the checked helpers.    |
@@ -104,11 +106,11 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $x = $a << $b;           |                                                                                                               | No unit header.                  |                                        |
 | $y = $a ** $b;           |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                    | scpp::int64 var_x_2 = static_cast<scpp::int64>(((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)));                | .cpp includes                    | Integer <=> reads distinct locals or   |
-|     $a int = 6;          | scpp::bool_t var_ok_3 = (var_a_0 != var_b_1);                                                                 | #include <scpp/core/scalars.hpp> | parameters directly when conversions   |
-|     $b int = 2;          |                                                                                                               | No unit header.                  | are identity. Calls are evaluated once |
-| $x = $a <=> $b;          |                                                                                                               |                                  | into snapshots. Same-type integer !==  |
-| $ok = $a !== $b;         |                                                                                                               |                                  | uses native != on these locals.        |
+| Given                    | scpp::int64 var_x_2 = (((var_a_0 > var_b_1)) - ((var_a_0 < var_b_1)));                                        | .cpp includes                    | The integer comparison yields -1, 0 or |
+|     $a int = 6;          | scpp::bool_t var_ok_3 = (var_a_0 != var_b_1);                                                                 | #include <scpp/core/scalars.hpp> | 1. The typed local widens that result. |
+|     $b int = 2;          |                                                                                                               | No unit header.                  | Exact arguments retain their int64     |
+| $x = $a <=> $b;          |                                                                                                               |                                  | type. Calls use snapshots; distinct    |
+| $ok = $a !== $b;         |                                                                                                               |                                  | local reads can be repeated.           |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    | scpp::float64 var_x_2 = (static_cast<scpp::float64>(var_a_0) + var_f_1);                                      | .cpp includes                    | The numeric family plan selects the    |
 |     $a int = 6;          | scpp::bool_t var_ok_3 = (static_cast<scpp::float64>(var_a_0) < var_f_1);                                      | #include <scpp/core/scalars.hpp> | mixed execution type or comparison     |
@@ -121,10 +123,15 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |     $b int = 2;          |                                                                                                               | No unit header.                  | RHS evaluation.                        |
 | $ok = !$a || ($a && $b); |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                    | {                                                                                                             | .cpp includes                    | The compound operation snapshots its   |
-|     $a int = 6;          |     const auto compound_previous = var_a_0;                                                                   | #include <scpp/core/scalars.hpp> | old value and writes back the prepared |
-|     $b int = 2;          |     var_a_0 = (compound_previous + var_b_1);                                                                  | No unit header.                  | result. Update statements use their    |
-| $a += $b;                | }                                                                                                             |                                  | generated type handlers.               |
+| Given                    |                                                                                                               | .cpp includes                    | The integer handler supplies native    |
+|     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | compound operators. For plain locals   |
+|     $b int = 2;          |                                                                                                               | No unit header.                  | with identity conversions, the emitter |
+| $a += $b;                | var_a_0 += var_b_1;                                                                                           |                                  | writes the operator directly. A call   |
+| $a -= $b;                | var_a_0 -= var_b_1;                                                                                           |                                  | that can mutate the destination needs  |
+| $a *= $b;                | var_a_0 *= var_b_1;                                                                                           |                                  | its value saved before the call.       |
+| $a &= $b;                | var_a_0 &= var_b_1;                                                                                           |                                  | Unary updates use their type handlers. |
+| $a |= $b;                | var_a_0 |= var_b_1;                                                                                           |                                  |                                        |
+| $a ^= $b;                | var_a_0 ^= var_b_1;                                                                                           |                                  |                                        |
 | ++$a;                    | ++var_a_0;                                                                                                    |                                  |                                        |
 | $b--;                    | var_b_1--;                                                                                                    |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
@@ -222,17 +229,18 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                               |                                                                                                 | #include <scpp/vectors.hpp>      | handler emits the exported type and    |
 |                               |                                                                                                 | No unit header.                  | empty constructor.                     |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                         | (var_v_0).append(static_cast<scpp::int64>(8LL));                                                | .cpp includes                    | The vector specialization binds append |
-|     $v vector<int> = [];      | scpp::int64 var_x_1 = (var_v_0).at(static_cast<scpp::int64>(0LL));                              | #include <scpp/core/scalars.hpp> | and value-copy at. These paths still   |
-| $v[] = 8;                     |                                                                                                 | #include <scpp/vectors.hpp>      | normalize their native arguments.      |
+| Given                         | (var_v_0).append(8L);                                                                           | .cpp includes                    | Append and at use the published        |
+|     $v vector<int> = [];      | scpp::int64 var_x_1 = (var_v_0).at(0L);                                                         | #include <scpp/core/scalars.hpp> | parameter type to select the native    |
+| $v[] = 8;                     |                                                                                                 | #include <scpp/vectors.hpp>      | integer literal suffix.                |
 | $x = $v[0];                   |                                                                                                 | No unit header.                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                         | var_v_0.set(var_i_1, var_x_2);                                                                  | .cpp includes                    | Both operands already have the         |
-|     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | canonical parameter representation.    |
-|     $v[] = 0;                 |                                                                                                 | #include <scpp/vectors.hpp>      | The generated set binding emits one    |
-|     $i int = 0;               |                                                                                                 | No unit header.                  | member call.                           |
-|     $x int = 8;               |                                                                                                 |                                  |                                        |
-| $v[$i] = $x;                  |                                                                                                 |                                  |                                        |
+| Given                         |                                                                                                 | .cpp includes                    | Local reads already have the declared  |
+|     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | parameter type. Integer <=> widens its |
+|     $v[] = 0;                 |                                                                                                 | #include <scpp/vectors.hpp>      | result to that same type for an exact  |
+|     $i int = 0;               |                                                                                                 | No unit header.                  | argument. The set binding passes it    |
+|     $x int = 8;               |                                                                                                 |                                  | directly.                              |
+| $v[$i] = $x;                  | var_v_0.set(var_i_1, var_x_2);                                                                  |                                  |                                        |
+| $v[$i] = $x <=> $i;           | var_v_0.set(var_i_1, static_cast<scpp::int64>(((var_x_2 > var_i_1)) - ((var_x_2 < var_i_1))));  |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | var_v_0.set(0L, 9L);                                                                            | .cpp includes                    | Preparation proves the conversion;     |
 |     $v vector<int> = [];      |                                                                                                 | #include <scpp/core/scalars.hpp> | exact-argument lowering folds the      |
@@ -267,10 +275,10 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | {                                                                                               | .cpp includes                    | The hash lowering snapshots the key    |
 |     $h hash<int,string> = []; |     const auto write_key = scpp::string{"\153", 1};                                             | #include <scpp/core/scalars.hpp> | and converted value for set; the read  |
-| $h["k"] = 7;                  |     const auto write_value = 7LL;                                                               | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
-| $x = $h["k"];                 |     (var_h_0).set(static_cast<scpp::string>(write_key), static_cast<scpp::int64>(write_value)); | #include <scpp/string.hpp>       | accessor.                              |
+| $h["k"] = 7;                  |     const auto write_value = 7L;                                                                | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
+| $x = $h["k"];                 |     (var_h_0).set(write_key, write_value);                                                      | #include <scpp/string.hpp>       | accessor.                              |
 |                               | }                                                                                               | No unit header.                  |                                        |
-|                               | scpp::int64 var_x_1 = (var_h_0).at(static_cast<scpp::string>(scpp::string{"\153", 1}));         |                                  |                                        |
+|                               | scpp::int64 var_x_1 = (var_h_0).at(scpp::string{"\153", 1});                                    |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
@@ -300,7 +308,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                                            |                                                                                               | #include <scpp/core/scalars.hpp> | emits its published value predicate    |
 |                                            |                                                                                               | No unit header.                  | directly, evaluating the operand once. |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(static_cast<scpp::int64>(8LL));               | .cpp includes                    | The mixed binding boxes the scalar and |
+| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(8L);                                          | .cpp includes                    | The mixed binding boxes the scalar and |
 | $y int = $x;                               | scpp::int64 var_y_1 = scpp::boxed_mixed_typed_destination_int64(var_x_0);                     | #include <scpp/core/scalars.hpp> | selects typed-destination extraction.  |
 |                                            |                                                                                               | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
 |                                            |                                                                                               | No unit header.                  |                                        |
@@ -312,12 +320,14 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                                      | {                                                                                             | .cpp includes                    | The boxed type constructs the runtime  |
 |     $x mixed = [];                         |     const auto write_key = scpp::boxed_key(scpp::string{"\153", 1});                          | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
-| $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(static_cast<scpp::int64>(8LL));        | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
+| $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(8L);                                   | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
 | $v = $x["k"];                              |     (var_x_0).source_set(write_key, write_value);                                             | #include <scpp/string.hpp>       |                                        |
 |                                            | }                                                                                             | No unit header.                  |                                        |
 |                                            | scpp::mixed var_v_1 = (var_x_0).source_read(scpp::boxed_key(scpp::string{"\153", 1}));        |                                  |                                        |
 +--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
+
+Mixed and dynamic use the same argument lowering for their scalar factories. In the keyed write above, `8L` already has the factory’s `scpp::int64` parameter type on this target. An `int` local passes directly and a byte local needs widening. A checked float-to-integer conversion or explicit boxed-to-integer extraction already returns the factory parameter type. Both families validate the key before evaluating the value.
 
 ## Functions, namespaces and project units
 
@@ -347,17 +357,17 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                                          |                                                                     | #include <scpp/core/scalars.hpp>                 |                                        |
 |                                          |                                                                     | void bump_(::scpp::int64 &var_x_0);              |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
-| lib                                      | main                                                                | .cpp includes                                    | The caller gets the default literal    |
-| function greet(string $s = "hi"): void { | greet_(scpp::string{"\150\151", 2});                                | #include <scpp/core/scalars.hpp>                 | from the declaration. Its owning       |
-|     echo $s;                             | lib                                                                 | #include <scpp/string.hpp>                       | string directly initializes the        |
-| }                                        | void greet_(::scpp::string var_s_0)                                 | #include "lib.hpp"                               | single by-value parameter.             |
-| main                                     | {                                                                   | lib.cpp includes                                 |                                        |
-| greet();                                 |     {                                                               | #include <scpp/output.hpp>                       |                                        |
-|                                          |         const auto& output_value = var_s_0;                         | #include <scpp/string.hpp>                       |                                        |
-|                                          |         scpp::echo_bytes(output_value.data(), output_value.size()); | #include "lib.hpp"                               |                                        |
-|                                          |     }                                                               | lib.hpp                                          |                                        |
-|                                          | }                                                                   | #pragma once                                     |                                        |
-|                                          |                                                                     | #include <scpp/string.hpp>                       |                                        |
+| lib                                      | main                                                                | .cpp includes                                    | The caller resolves the explicit or    |
+| function greet(string $s = "hi"): void { | greet_(scpp::string{"\150\151", 2});                                | #include <scpp/core/scalars.hpp>                 | default argument and applies the       |
+|     echo $s;                             | greet_(scpp::string{"\150\151", 2});                                | #include <scpp/string.hpp>                       | prepared conversion. The parameter     |
+| }                                        | lib                                                                 | #include "lib.hpp"                               | takes the resulting string by value.   |
+| main                                     | void greet_(::scpp::string var_s_0)                                 | lib.cpp includes                                 |                                        |
+| greet();                                 | {                                                                   | #include <scpp/output.hpp>                       |                                        |
+| greet("hi");                             |     {                                                               | #include <scpp/string.hpp>                       |                                        |
+|                                          |         const auto& output_value = var_s_0;                         | #include "lib.hpp"                               |                                        |
+|                                          |         scpp::echo_bytes(output_value.data(), output_value.size()); | lib.hpp                                          |                                        |
+|                                          |     }                                                               | #pragma once                                     |                                        |
+|                                          | }                                                                   | #include <scpp/string.hpp>                       |                                        |
 |                                          |                                                                     | void greet_(::scpp::string var_s_0);             |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 | lib                                      | main                                                                | .cpp includes                                    | File-local import resolution selects   |
@@ -375,6 +385,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | global $N int = 7;                       | scpp::int64 var_x_0 = ::App::var_N;                                 | #include <scpp/core/scalars.hpp>                 | stable symbol. The owner emits         |
 | main                                     | lib                                                                 | #include "lib.hpp"                               | constinit storage and publishes an     |
 | $x = $N;                                 | constinit scpp::int64 var_N = 7;                                    | lib.cpp includes                                 | extern declaration.                    |
+|                                          |                                                                     | #include <scpp/core/scalars.hpp>                 |                                        |
 |                                          |                                                                     | #include "lib.hpp"                               |                                        |
 |                                          |                                                                     | lib.hpp                                          |                                        |
 |                                          |                                                                     | #pragma once                                     |                                        |

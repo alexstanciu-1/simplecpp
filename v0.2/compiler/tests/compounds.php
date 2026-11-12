@@ -60,6 +60,27 @@ foreach (flavor::cases() as $flavor)
 	verify($entry->body()->expression_visits === 3, 'One visit per RHS, no synthetic binary preparation');
 	$direct = (new Cpp_Emitter())->emit($entry);
 	verify(!str_contains($direct, '([&]') && !str_contains($direct, 'scpp/arithmetic.hpp'), 'Plain addition added a lambda or runtime include');
+	$b = $var('b');
+	foreach (['add' => ['+=', '<16', '1317'], 'subtract' => ['-=', '>4', '73'],
+		'multiply' => ['*=', '<60', '3090']] as $operation => [$operator, $condition, $output]) {
+		$plain = $decl('x', 'int', '10') . $decl('b', 'int', '3') . $x . $operator . $b . '; echo ' . $x . ';'
+			. 'for (' . $x . $operator . '1;' . $x . $condition . ';' . $x . $operator . $b . '){continue;} echo ' . $x . '; return 8;';
+		$plain_cpp = (new Cpp_Emitter())->emit($prepare($plain));
+		verify(str_contains($plain_cpp, "var_x_0 $operator var_b_1;") && str_contains($plain_cpp, "for (var_x_0 $operator 1")
+			&& str_contains($plain_cpp, "; var_x_0 $operator var_b_1)") && !str_contains($plain_cpp, 'compound_previous'),
+			"Expected native $operator in the statement and both for clauses");
+		$fixtures[$flavor->name . '_plain_' . $operation] = ['cpp' => $plain_cpp, 'stdout_hex' => bin2hex($output)];
+	}
+	// Isolate each operator so another helper cannot supply its include.
+	foreach (['/=' => ['int64_divide', 3], '%=' => ['int64_remainder', 1], '<<=' => ['int64_shift_left', 80],
+		'>>=' => ['int64_shift_right', 1], '**=' => ['int64_power', 1000]] as $operator => [$helper, $expected]) {
+		$source = $decl('x', 'int', '10') . $decl('b', 'int', '3')
+			. "$x $operator $b; if ($x !== $expected) { return 9; } return 8;";
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		verify(str_contains($cpp, "scpp::$helper("), "$flavor->name $operator must call $helper");
+		verify(str_contains($cpp, '#include <scpp/arithmetic.hpp>'), "$flavor->name $operator missing arithmetic header");
+		$fixtures[$flavor->name . '_' . $helper] = ['cpp' => $cpp, 'stdout_hex' => ''];
+	}
 	$code = $decl('x', 'int64', '10');
 	foreach (['+=3', '-=2', '*=4', '/=3', '%=5'] as $operation) {
 		$code .= $x . $operation . '; echo ' . $x . '; echo ",";';
@@ -69,6 +90,24 @@ foreach (flavor::cases() as $flavor)
 		flavor::cpp => 'int &v',
 		flavor::js => '&v: int',
 	};
+	// change writes 100 and returns 3. Each call must run once, after saving 10.
+	$bitwise = $fn('change', $ref, 'int', $var('v') . '=100; echo "R"; return 3;')
+		. $decl('x', 'int', '10') . $decl('b', 'int', '3');
+	$expected = '';
+	foreach (['&' => [2, 8], '|' => [11, 14], '^' => [9, 6]] as $operator => [$local_result, $literal_result]) {
+		$bitwise .= $x . '=10;' . $x . $operator . '=' . $b . '; echo ' . $x . ';'
+			. $x . '=10;' . $x . $operator . '=12; echo ' . $x . ';'
+			. $x . '=10;' . $x . $operator . '=change(' . $x . '); echo ' . $x . ';';
+		$expected .= $local_result . $literal_result . 'R' . $local_result;
+	}
+	$bitwise_cpp = (new Cpp_Emitter())->emit($prepare($bitwise . 'return 8;'));
+	foreach (['&', '|', '^'] as $operator) {
+		verify(str_contains($bitwise_cpp, "var_x_0 $operator= var_b_1;") && str_contains($bitwise_cpp, "var_x_0 $operator= 12"),
+			"Expected native $operator= for a local or integer literal");
+		verify(str_contains($bitwise_cpp, "{ const auto compound_previous = var_x_0; var_x_0 = (compound_previous $operator change_(var_x_0)); }"),
+			"Expected a snapshot for $operator= before a mutating call");
+	}
+	$fixtures[$flavor->name . '_bitwise'] = ['cpp' => $bitwise_cpp, 'stdout_hex' => bin2hex($expected)];
 	$param = match ($flavor) {
 		flavor::php => 'int $v',
 		flavor::cpp => 'int v',
@@ -77,6 +116,8 @@ foreach (flavor::cases() as $flavor)
 	$code .= $fn('change', $ref, 'int', $var('v') . '=100; echo "R"; return 3;')
 		. $fn('bump', $ref, 'void', $var('v') . '+=2; return;')
 		. $fn('copy', $param, 'int', $var('v') . '*=2; return ' . $var('v') . ';')
+		. $x . '=10;' . $x . '*=change(' . $x . '); echo ' . $x . ';'
+		. $x . '=10;' . $x . '-=change(' . $x . '); echo ' . $x . ';'
 		. $x . '=10;' . $x . '+=change(' . $x . '); echo ' . $x . ';'
 		. 'bump(' . $x . '); echo ' . $x . '; echo copy(' . $x . '); echo ' . $x . ';'
 		. $x . '=3;' . $x . '+=' . $x . '; echo ' . $x . ';'
@@ -90,10 +131,14 @@ foreach (flavor::cases() as $flavor)
 	$entry = $prepare($code);
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
+	foreach (['+', '-', '*'] as $operator) {
+		verify(str_contains($cpp, "{ const auto compound_previous = var_x_0; var_x_0 = (compound_previous $operator change_(var_x_0)); }"),
+			"Expected a snapshot before a mutating call in $operator=");
+	}
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
 	Syntax_Inspection::file($entry->file);
 	Compilation_Inspection::body($entry->body());
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('13,11,44,14,4,R1315301567120-8-12')];
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('13,11,44,14,4,R30R7R1315301567120-8-12')];
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Reset/reprepare differs');

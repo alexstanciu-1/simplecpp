@@ -172,11 +172,11 @@ final class Preparation
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 				}
 				$type = $statement->receiver->type_def();
-				if (!($type instanceof vector_type_definition)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires a vector');
+				if (!($type instanceof appendable_collection_type)) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires an appendable collection');
 				}
 				$this->value($statement->value);
-				$statement->settle_append($type->prepare_append($statement->value));
+				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 			}
 			elseif ($statement instanceof ast_storage_write) {
 				$this->write($statement);

@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
+from provider_inventory import prepared_provider_headers
+
 ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -42,7 +44,7 @@ def proof(work):
         if expected == 0:
             plan = json.loads((runtime / 'prepared.json').read_text())
             headers = json.loads(run(['php', generator, 'provider-headers', mp, pp]))
-            assert headers == sorted(plan['submodules']['nodes'][p]['header'] for p in plan['submodules']['published'])
+            assert headers == prepared_provider_headers(plan, runtime)
             return plan
 
     observations = [['int64', '(receiver).size()'], ['bool_t', '(receiver).empty()']]

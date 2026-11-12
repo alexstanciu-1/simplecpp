@@ -87,12 +87,11 @@ own ordinary assignment statements, whose optional operator identifies compounds
 The parser no longer rejects them. All ordinary admission, binding, latest-write
 invalidation and per-clause preparation paths remain unchanged.
 
-The shared `Cpp_Emitter::compound()` produces a snapshot assignment and final write
-expression. Standalone statements wrap these in a block with a const temporary.
-Header rendering sequences them using the built-in comma operator. The enclosing
-loop supplies one scoped int64 temporary, shared by its initializer/update because
-both currently have the same int64 storage contract and never overlap. Nested loops
-own separate scopes; no source binding or prepared fact is added for this temporary.
+Native integer [compound writes](compounds.md) on plain locals use the same eligibility rule in both header clauses as in a standalone statement. When a snapshot is required, a compound initializer executes once in a block immediately before the native
+loop. It uses the ordinary compound statement's local `const auto` snapshot.
+A compound update requiring a snapshot has its own temporary of the update destination's C++ type,
+scoped to the loop. The built-in comma operator sequences the snapshot and
+write in the update clause, including when the body executes `continue`.
 
 ```cpp
 { int64_t compound_previous;
@@ -148,5 +147,5 @@ and `ast_update_statement`. Prefix/postfix increment/decrement therefore reuse t
 existing header storage scope and preparation order. They have no RHS expression
 to collect or reset. Native header emission calls the generated update handler
 directly; it creates no temporary or lambda. Compound snapshot storage is allocated
-only when an actual compound assignment is present in either clause. Mixed
+only for clauses requiring a prior destination read. Mixed
 assignment/compound/update headers and shadowing are covered by update native tests.

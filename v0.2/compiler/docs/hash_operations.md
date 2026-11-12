@@ -40,8 +40,9 @@ packed approved value-conversion code as a prepared fact. Collection, preparatio
 inspection and emission visit those children through their existing traversal owners.
 Compiler inventory version is 24. No symbol, observer, work-queue or cleanup structures change.
 
-Lowering emits a small statement block: snapshot the key, evaluate/convert the RHS,
-then call the generated set binding. This preserves key-before-RHS order and prevents
+Lowering normalizes the key before its snapshot, evaluates and converts the RHS
+once, then passes both snapshots to the generated set binding. Reads pass an exact
+key directly to the const-reference parameter. This preserves key-before-RHS order and prevents
 failed conversion from inserting or replacing an entry. The receiver is a simple local
 name. This does not expand the deferred general expression-sequencing work.
 

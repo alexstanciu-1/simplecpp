@@ -62,10 +62,11 @@ Scalar element conversion remains with the element's generated handler. No runti
 metadata is interpreted during application preparation. Each operand is prepared once;
 reads are not constant-folded and no element-content cache or alias graph is added.
 
-Lowering emits the exported concrete C++ type and ordinary member calls. ABI argument
-normalization happens after approved conversion: a source int64 literal may be emitted
-as long long while the target's canonical int64 alias is long. Append and indexed reads currently normalize their arguments with casts. Replacement
-uses [exact native argument lowering](../../specs/planning/native_cpp_lowering.md). String arguments retain their value-copy semantics.
+Append preparation queries the receiver’s append capability for its value type. Append,
+indexed read and replacement use the same exact-argument renderer. It uses the prepared
+operand and conversion to select the target literal suffix, pass an exact local directly,
+or normalize arithmetic for the canonical overload. Conversion headers are collected
+before the call. String arguments retain their value-copy semantics.
 
 Generated application code and public vector headers remain template-free. The existing
 runtime's private storage implementation continues using std::vector. No runtime ABI,

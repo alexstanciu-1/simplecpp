@@ -811,6 +811,10 @@ $without->compiler->arithmetic->float64->compound = false;
 $limited = renderCompiler($without, $facts)['types/float64.php'];
 requireThat(str_contains($limited, "public function supports_compound(binary_operator \$operator): bool\n\t{\n\t\treturn false;"), 'Disabled compound capability ignored');
 
+$without->compiler->arithmetic->int64->compound = false;
+requireThat(!str_contains(renderCompiler($without, $facts)['types/int64.php'], 'function cpp_compound_operator'),
+    'Disabled integer compound still publishes a native compound spelling');
+
 // Backend safety facts follow the admitted implementation strategy, never preparation or AST mutation.
 require_once $root . '/compiler/03_parse/structures/expressions.php';
 foreach (['type_int64', 'type_bool', 'type_uint8', 'type_float64', 'type_null'] as $class) {
@@ -819,7 +823,9 @@ foreach (['type_int64', 'type_bool', 'type_uint8', 'type_float64', 'type_null'] 
 }
 requireThat(!\scpp\compiler\type_string::instance()->cpp_trivial_value(), 'String copy incorrectly classified as trivial');
 $type = \scpp\compiler\type_int64::instance();
-requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add), 'Native addition not classified');
+requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::add, true), 'Safe identical additions not classified');
+requireThat($type->cpp_binary_reorderable(\scpp\compiler\binary_operator::less)
+    && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::less, true), 'Native comparison ignored operand spelling');
 requireThat(!$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::divide)
     && !$type->cpp_binary_reorderable(\scpp\compiler\binary_operator::remainder), 'Checked operations classified as reorderable');
 

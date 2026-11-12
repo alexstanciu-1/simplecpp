@@ -34,7 +34,7 @@ prepared record, listener or dependency graph is introduced.
 
 ## Lowering and failures
 
-A scoped C++ block preserves the old destination before RHS evaluation, then uses
+For a plain signed 64-bit integer local, the generated handler supplies `+=`, `-=`, `*=`, `&=`, `|=` and `^=`. The emitter uses these directly with a local or integer literal RHS when the prepared left, right and write-back conversions are identity. A reference-mutating call requires the value held before the call. A scoped C++ block preserves the old destination before RHS evaluation, then uses
 the generated binary lowering and performs one assignment:
 
 ```cpp
@@ -50,9 +50,9 @@ remainder require the existing public arithmetic header/helpers.
 A failed RHS or operation prevents the compound store. Prior RHS writes remain;
 there is no rollback. Native signed-overflow limitations and zero-divisor errors
 are unchanged. General lvalue address/owner retention is deferred with complex
-destinations. The shared lowerer supplies a snapshot assignment and final write
-expression. Statement contexts supply a scoped const temporary; for-header contexts
-supply scoped temporary storage and sequence those expressions with a comma.
+destinations. When a snapshot is needed, standalone statements and compound loop initializers each use a
+statement-local snapshot. A compound loop update saves its destination in a
+separate loop-scoped temporary before evaluating its RHS.
 Operator/type admission and write-back generation are identical.
 
 ## Mining and proof
