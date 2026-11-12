@@ -226,7 +226,7 @@ abstract class type_definition
 		throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported condition type: ' . $this->name);
 	}
 
-	public function lower_cpp_condition(string $value): string
+	public function lower_cpp_condition(string $value, bool $negated = false): string
 	{
 		throw new \LogicException('Condition lowering is unavailable for type: ' . $this->name);
 	}

@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 44,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 45,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -507,8 +507,8 @@ function compilerConditions(array $conditions, string $identity): string {
     $storage = $condition['storage'];
     $expression = match ($condition['strategy']) {
         'identity' => '$value',
-        'nonzero_integer' => "'(' . \$value . ' != 0)'",
-        'nonzero_float' => "'(' . \$value . ' != 0.0)'",
+        'nonzero_integer' => "\$negated ? '(' . \$value . ' != 0)' : \$value . ' != 0'",
+        'nonzero_float' => "\$negated ? '(' . \$value . ' != 0.0)' : \$value . ' != 0.0'",
         'nonempty_except_zero' => var_export("([](const " . $storage['symbol'] . "& condition_value) -> bool { return condition_value.size() != 0 && (condition_value.size() != 1 || condition_value.data()[0] != '0'); })(", true) . " . \$value . ')'",
     };
     $headers = $storage === null ? '[]' : '[' . var_export($storage['header'], true) . ']';
@@ -521,7 +521,7 @@ function compilerConditions(array $conditions, string $identity): string {
 \t\t}
 \t}
 
-\tpublic function lower_cpp_condition(string \$value): string
+\tpublic function lower_cpp_condition(string \$value, bool \$negated = false): string
 \t{
 \t\treturn $expression;
 \t}

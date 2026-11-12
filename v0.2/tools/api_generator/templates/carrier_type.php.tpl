@@ -37,7 +37,7 @@ final class @class@ extends carrier_type_definition
 		return @presence_expression@;
 	}
 
-	public function lower_cpp_condition(string $value): string
+	public function lower_cpp_condition(string $value, bool $negated = false): string
 	{
 		return '([&]() { const auto &carrier = ' . $value . '; return carrier.@presence@() ? '
 			. $this->payload_type->lower_cpp_condition('carrier.@access@()') . ' : @true_presence@; }())';

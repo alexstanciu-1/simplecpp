@@ -33,8 +33,8 @@ without source-name lookup, decoding or mutation.
 
 The C++ backend includes `scpp/output.hpp` only when needed and calls the compiled
 runtime output API. Its private implementation formats integers using locale-independent `std::to_chars`; strings use length-aware
-`std::fwrite`, preserving NUL and arbitrary bytes. Literal spelling uses fixed-width
-octal escapes. A reported short write throws; this does not promise flushing on
+`std::fwrite`, preserving NUL and arbitrary bytes. Literal spelling shares the string renderer’s readable ASCII and byte-exact
+escapes. A reported short write throws; this does not promise flushing on
 every statement or detection of later buffered flush failures.
 
 This follows the donor's separation of literal preparation from output emission.

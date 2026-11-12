@@ -34,7 +34,7 @@ activated even though the native runtime already implements some of them.
   positions stay unchanged; wording now says string instead of echo.
 - Generated `type_string` dispatches decoding and emits length-aware
   `scpp::string{literal, length}`. `Cpp_String_Literals` supplies shared byte spelling
-  for construction and direct echo, using fixed-width octal escapes.
+  for construction and direct echo, with readable ASCII and byte-exact escapes. A NUL before an octal digit uses `\000` so the digit stays separate.
 - `type_definition::cpp_headers()` supplies storage requirements, separately from
   conversion headers. Only actual string locals require `scpp/string.hpp`.
 - No new prepared-value hierarchy, dependency graph or duplicated bytes are added.
