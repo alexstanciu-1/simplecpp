@@ -60,6 +60,7 @@ final class Cpp_Emitter
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
 				$params = $this->constructor_parameters($constructor, $includes);
+				if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
 				$name = Cpp_Identifier::source($node->short_name);
 				$layout[] = "\t" . $name . '(' . $params . ');';
 				if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
@@ -214,7 +215,8 @@ CPP;
 			$args[] = $parameter->type_def()->cpp_trivial_value() ? $name : 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $name . ')';
 		}
 		$forward = implode(', ', $args);
-		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : value($forward) {}\n";
+		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
+		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : value($payload_args) {}\n";
 		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tresult.ptr = new allocation($forward);\n\treturn result;\n}\n";
 	}
 
@@ -277,7 +279,7 @@ CPP;
 			if ($function->is_constructor()) {
 				$owner = $function->parent->definition->shared;
 				$declarations[$owner->name] = $owner;
-				foreach (self::signature_records($function) as $parameter_owner) $declarations[$parameter_owner->name] = $parameter_owner;
+				$this->collect_signature_types($function, $declarations);
 				$definitions[] = $this->allocation_factory($owner, $required_headers);
 				// Embedded fields use native {}. Keep the literal defaults in their defining unit.
 				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
@@ -310,10 +312,7 @@ CPP;
 		// Calls and definitions need complete value and handle types even when only the signature names them.
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_function_declaration) {
-				foreach (self::signature_records($function) as $type) {
-					if ($type instanceof struct_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
-					else $declarations[$type->name] = $type;
-				}
+				$this->collect_signature_types($function, $declarations);
 			}
 		}
 		foreach ($global_references as $property) {
@@ -766,7 +765,7 @@ CPP;
 			$record = $shared ? $type->payload : $type;
 			$constructor = $record->declaration->methods['__construct'] ?? null;
 			if ($constructor === null) return $type->cpp_type() . '::make()';
-			foreach (self::signature_records($constructor) as $owner) $declarations[$owner->name] = $owner;
+			$this->collect_signature_types($constructor, $declarations);
 			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
 				$global_references, $declarations, $required_headers);
 		}
@@ -1053,7 +1052,8 @@ CPP;
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
 			if (!$method && count($function->parameters) === 1) {
-				return $name . '(' . $operand . ')';
+				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
+				return $name . '(' . $tag . $operand . ')';
 			}
 			$direct_arguments[] = $operand;
 			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
@@ -1089,13 +1089,24 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
-	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */
+	/** Calls and definitions use complete record types. @param (ast_declaration_interface|struct_handle_definition)[] $declarations */
+	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
+	{
+		foreach (self::signature_records($function) as $type) {
+			if ($type instanceof struct_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			else $declarations[$type->name] = $type;
+		}
+	}
+
+	/** Parameter types need only forward declarations in the native payload and owner declarations. */
 	private function constructor_forwards(ast_struct_declaration $record): string
 	{
 		$forwards = [];
 		foreach ($record->methods['__construct']->parameters ?? [] as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			if ($type instanceof struct_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
+			} elseif ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 		}
 		return implode('', $forwards);
 	}
@@ -1114,6 +1125,7 @@ CPP;
 	{
 		$parameters = $this->parameters($function, $headers, $short_types);
 		if ($function->is_constructor()) {
+			if (self::self_value_constructor($function)) array_unshift($parameters, 'int');
 			return $function->parent->definition->cpp_type() . '::' . Cpp_Identifier::source($function->parent->short_name)
 				. '(' . implode(', ', $parameters) . ')';
 		}
@@ -1132,7 +1144,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if ($function->is_constructor() && $type instanceof struct_handle_definition) {
+			if ($function->is_constructor() && ($type instanceof struct_handle_definition || $type instanceof struct_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -1164,6 +1176,12 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */
+	private static function self_value_constructor(ast_function_declaration $constructor): bool
+	{
+		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
+	}
+
 	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
 	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
 	{

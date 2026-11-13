@@ -250,7 +250,8 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
-Free functions and ordinary methods may accept and return an inline struct by value. A parameter
+Constructors, free functions and ordinary methods may accept an inline struct by value.
+Free functions and ordinary methods may also return one by value. A parameter
 requires the same nominal record type. Copying preserves independent inline fields and the
 allocation identity of shared fields. A method may return a different record from its receiver.
 Writable-reference parameters for inline records remain deferred in the bootstrap compiler.

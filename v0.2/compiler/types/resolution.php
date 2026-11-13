@@ -21,7 +21,7 @@ final class Type_Resolution
 			return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);
 		}
 		$type = self::resolve($syntax, $allow_void);
-		if ($type !== null || $function->is_constructor()) return $type;
+		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
 		return self::record($syntax, $symbols, $function->namespace, $function, $dependencies);
 	}

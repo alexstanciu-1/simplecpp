@@ -11,7 +11,7 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 - Public/private instance and static fields and methods, typed literal member constants, and lexical declaring-type qualification. Methods share ordinary supported argument conversions, trailing by-value literal defaults, writable exact-type parameters and return handling. Methods returning their enclosing record can copy the receiver by value.
 - Plain field writes, the five arithmetic property compounds where admitted, and discarded prefix/postfix updates. Property updates also work in the final clause of a braced for loop. These operations preserve access checks and have native and incremental proofs.
 
-## Suggested core delivery order
+## Delivered core slices
 
 | Slice | Current boundary | Deliverable and acceptance proof |
 | --- | --- | --- |
@@ -19,6 +19,17 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 | 2. String instance fields | Implemented through the scalar field capability. String append and indexed byte writes use the ordinary typed operations. Static string properties share one definition across units. | Verify empty initialization, short and heap-backed nested copies, cross-file headers, destruction and incremental type edits. |
 | 3. Inline struct parameters and returns | Implemented for free functions and ordinary methods. Signatures watch the nominal record and expose its layout to cross-unit callers. | Resolve ordinary nominal value parameters and returns in free functions and methods, including a different record as the return type. Test cross-file copy-in/return, shared member identity, layout changes and missing-type recovery. Test a caller that only sees the record through a signature. |
 | 4. Typed literal instance-field defaults | Implemented with the shared scalar literal parser and typed-destination conversion. | Retain the initializer once on the declaration; validate even unused fields. Initialize each new value before the constructor body, and copy the current field value when copying a record. Test default edit/removal across units. |
+| 5. Inline record constructor parameters | Implemented for inline and shared construction. | Cross-file scalar copies, shared-child identity, nominal mismatch, layout edits, missing types and recovery. |
+
+## Proposed next slices
+
+| Order | Capability | Smallest useful proof |
+| --- | --- | --- |
+| 1 | Bare `this` in value contexts. Field/method access and direct return already work. | Inside an instance method, copy `$this` into a local and pass it to a by-value function. Test inline and shared receivers; both copy the payload. Preserve the static-method diagnostic. |
+| 2 | Remaining property compounds already admitted on locals, such as integer bitwise and shift compounds. | Compare local, instance and static writes under the same generated type rules. Test a checked failure and an RHS that replaces a shared receiver. |
+| 3 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
+
+The order is a proposal. Each slice can be reviewed and delivered independently. Constructor reference modes and writable inline-record parameters stay separate from by-value admission.
 
 ## Independent follow-ups
 
