@@ -28,11 +28,14 @@ def qualify(directory, compilers, flags):
                          'final_owner_release', 'ordered_literal_positions', 'ordered_reference_alias', 'ordered_late_reference',
                          'ref_owner_release', 'static_arguments', 'static_conversion_failure',
                          'inline_constructor_direct', 'inline_constructor_ordered', 'inline_constructor_failure',
-                         'shared_constructor_direct', 'shared_constructor_ordered', 'shared_constructor_failure'):
+                         'shared_constructor_direct', 'shared_constructor_ordered', 'shared_constructor_failure',
+                         'inline_method_arguments', 'inline_method_failure', 'shared_replace', 'shared_field_replace',
+                         'shared_empty', 'shared_field_empty', 'shared_checked', 'shared_field_checked',
+                         'temporary_lifetime', 'temporary_literals', 'temporary_receiver_failure', 'temporary_argument_failure'):
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []
-                exception = next((kind for kind in ('domain_error', 'out_of_range') if 'catch_' + kind in fixture), None)
+                exception = next((kind for kind in ('domain_error', 'out_of_range', 'runtime_error') if 'catch_' + kind in fixture), None)
                 if exception:
                     source = source.replace('int main()', 'int tested_entry()')
                     error = json.dumps(fixture['catch_' + exception])

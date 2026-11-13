@@ -58,6 +58,12 @@ ordered path, an argument involving a temporary record or owner keeps its
 statement boundary. Shared allocation starts inside the factory after argument
 evaluation succeeds.
 
+An instance method on stable inline storage receives that record place directly.
+A shared receiver retains its allocation and binds the checked payload or inline
+field. A temporary inline receiver binds the returned record once to a local
+`auto&&`, extending its lifetime through the method body. After receiver setup,
+all three forms use the same capture selection for explicit arguments.
+
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
 owns the generated inventory version. A checked operation can use direct operands

@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 62 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 65 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -491,6 +491,63 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 | $p Pair(7,number());                                   |                                                                                            |                                  |                                    |
 | $q=new Pair(7,number());                               |                                                                                            |                                  |                                    |
 +--------------------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------+------------------------------------+
+```
+
+## Inline method arguments
+
+```text
++-----------------------------------------------------+--------------------------------------+----------------------------------+----------------------------------------+
+| PHP-flavor pattern                                  | Lowered C++ code                     | Lowered C++ header code          | Generation and lowering                |
++=====================================================+======================================+==================================+========================================+
+| Given                                               | method_3_Acc_add(var_a_0, 3LL, 2LL); | .cpp includes                    | The inline local supplies the method’s |
+|     struct Acc {                                    |                                      | #include <scpp/core/scalars.hpp> | record reference. Both scalar literals |
+|         public int $n;                              |                                      | No unit header.                  | can initialize parameters directly.    |
+|         public function add(int $x,int $y=2):void { |                                      |                                  |                                        |
+|             $this->n=$x+$y;                         |                                      |                                  |                                        |
+|         }                                           |                                      |                                  |                                        |
+|     }                                               |                                      |                                  |                                        |
+|     $a Acc;                                         |                                      |                                  |                                        |
+| $a->add(3);                                         |                                      |                                  |                                        |
++-----------------------------------------------------+--------------------------------------+----------------------------------+----------------------------------------+
+```
+
+## Shared method arguments
+
+```text
++---------------------------------------------------+-------------------------------------------------------------+----------------------------------+--------------------------------------+
+| PHP-flavor pattern                                | Lowered C++ code                                            | Lowered C++ header code          | Generation and lowering              |
++===================================================+=============================================================+==================================+======================================+
+| Given                                             | ([&]() -> void {                                            | .cpp includes                    | The local owner keeps the allocation |
+|     struct Acc {                                  |     auto receiver_owner = var_a_0;                          | #include <scpp/core/scalars.hpp> | alive. Dereferencing it checks the   |
+|         public int $n;                            |     auto&& receiver_payload = *receiver_owner.operator->(); | #include <scpp/owner_access.hpp> | receiver before argument evaluation. |
+|         public function add(int $x,int $y):void { |     return method_3_Acc_add(receiver_payload, 3LL, 2LL);    | No unit header.                  | Both integer literals pass directly. |
+|             $this->n=$x+$y;                       | }());                                                       |                                  |                                      |
+|         }                                         |                                                             |                                  |                                      |
+|     }                                             |                                                             |                                  |                                      |
+|     $a=new Acc();                                 |                                                             |                                  |                                      |
+| $a->add(3,2);                                     |                                                             |                                  |                                      |
++---------------------------------------------------+-------------------------------------------------------------+----------------------------------+--------------------------------------+
+```
+
+## Temporary inline method receivers
+
+```text
++---------------------------------------------------+------------------------------------------------------------+----------------------------------+-------------------------------------+
+| PHP-flavor pattern                                | Lowered C++ code                                           | Lowered C++ header code          | Generation and lowering             |
++===================================================+============================================================+==================================+=====================================+
+| Given                                             | ([&]() -> void {                                           | .cpp includes                    | The binding evaluates the factory   |
+|     struct Point {                                |     auto&& receiver_payload = method_5_Point_make();       | #include <scpp/core/scalars.hpp> | once and keeps its returned record  |
+|         public int $n;                            |     return method_5_Point_add(receiver_payload, 3LL, 2LL); | No unit header.                  | alive through the method body. Both |
+|         public static function make():Point {     | }());                                                      |                                  | literals pass directly.             |
+|             $p Point;                             |                                                            |                                  |                                     |
+|             return $p;                            |                                                            |                                  |                                     |
+|         }                                         |                                                            |                                  |                                     |
+|         public function add(int $x,int $y):void { |                                                            |                                  |                                     |
+|             $this->n=$x+$y;                       |                                                            |                                  |                                     |
+|         }                                         |                                                            |                                  |                                     |
+|     }                                             |                                                            |                                  |                                     |
+| Point::make()->add(3,2);                          |                                                            |                                  |                                     |
++---------------------------------------------------+------------------------------------------------------------+----------------------------------+-------------------------------------+
 ```
 
 ## Functions, namespaces and project units

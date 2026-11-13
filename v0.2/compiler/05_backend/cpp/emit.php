@@ -994,16 +994,16 @@ CPP;
 		if ($method) {
 			$inline_storage = false;
 			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
-			if ($inline_storage && $function->parameters === []) {
-				return $name . '(' . $place . ')';
+			if (!$inline_storage) {
+				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
+				$place = 'receiver_payload';
 			}
-			$steps[] = 'auto&& receiver_payload = ' . $place . ';';
-			$arguments[] = 'receiver_payload';
+			$arguments[] = $place;
 		} elseif ($function->parameters === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
-		$direct = !$method;
+		$direct = $steps === [];
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
@@ -1031,34 +1031,28 @@ CPP;
 			// A prepared reference binds a stable named slot without reading its value.
 			if ($parameter->mode === passing_mode::reference) {
 				$has_reference = true;
-			} elseif (!$method && !self::inert_literal_argument($argument, $type, $conversion)) {
+			} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
 				$order_sensitive[$index] = true;
 				$inline_index = $type->cpp_trivial_value() && $this->record_expressions === $records_before ? $index : null;
 			}
 		}
 		if ($direct || (!$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
-			return $name . '(' . implode(', ', $direct_arguments) . ')';
+			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
 		// after its predecessors, unless its expression needs a record destruction boundary.
 		foreach ($function->parameters as $index => $parameter) {
 			$type = $parameter->type_def();
 			$operand = $direct_arguments[$index];
-			if (!$method && (!isset($order_sensitive[$index]) || $index === $inline_index)) {
+			if (!isset($order_sensitive[$index]) || $index === $inline_index) {
 				$arguments[] = $operand;
 				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 			$temporary = 'argument_' . $value->start . '_' . $index;
-			if ($parameter->mode === passing_mode::reference) {
-				$steps[] = $type->cpp_type() . ' &' . $temporary . ' = ' . $operand . ';';
-				$arguments[] = $temporary;
-			}
-			else {
-				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
-				$arguments[] = $type->cpp_trivial_value() ? $temporary
-					: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-			}
+			$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
+			$arguments[] = $type->cpp_trivial_value() ? $temporary
+				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)

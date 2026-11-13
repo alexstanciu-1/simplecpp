@@ -371,3 +371,47 @@ Three-flavor fixtures cover both forms with a proven byte literal, two calls
 that print their arguments, and a first conversion that fails before the second
 producer or constructor body can run. Existing constructor regressions exercise
 cross-unit edits, recovery, cleanup on exceptions and private constructor access.
+
+### Follow-up batch — arguments on inline instance receivers
+
+A method invoked on stable inline storage now passes the record place directly
+and uses ordinary argument capture selection. The receiver walk already
+recognizes locals, parameters, borrowed this and their inline fields. A
+prepared literal default and a proven byte literal need no statements. Two
+effectful scalar arguments capture the first converted result before evaluating
+the second. A failed conversion prevents the second call and method body.
+
+Shared allocations, fields reached through a shared allocation, and temporary
+records still require receiver setup. Existing native method tests cover owner
+replacement, empty receivers, mutation, and incremental/fresh recovery. The
+catalog includes a direct inline method call with an omitted scalar default.
+
+### Follow-up batch — arguments after a shared receiver check
+
+The receiver walk pins the nearest shared allocation, including the owner of
+an inline field, and resolves the receiver before evaluating explicit arguments.
+Those two statements remain in the ordered block. Once the receiver is stable,
+argument selection can pass literals and exact reference bindings directly and
+capture earlier effectful conversions. The existing record-expression lifetime
+guard still applies. Temporary inline receivers keep their previous argument
+setup.
+
+For each shared receiver form the fixtures check an empty handle before either
+argument prints, replacement of the caller's handle while the selected payload
+is updated, and checked narrowing before a later argument or the method body.
+The catalog includes the generated owner, payload and direct literal arguments.
+
+### Follow-up batch — temporary inline method receivers
+
+The receiver binding extends a returned record's lifetime until the method
+call completes. Once that binding exists, the ordinary argument rule applies
+to all three receiver forms. Exact references pass directly, as do inert
+literals. Earlier effectful conversions keep their captures. The emitter
+therefore has no receiver-specific switch for argument capture selection.
+
+The three-flavor fixture transfers the caller's last strong handle to the
+returned record. A weak handle locks during argument evaluation and in the
+method, then fails to lock in the following statement. Separate cases check
+literal arguments, a failure in the factory before any argument prints, and a
+first-argument narrowing failure after the factory returns. The catalog shows
+the receiver binding and literal arguments for a factory-returned inline record.

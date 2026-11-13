@@ -276,6 +276,87 @@ foreach (flavor::cases() as $flavor)
 	$fixtures[$flavor->name . '_static_conversion_failure'] = ['cpp' => $static_failure, 'stdout_hex' => bin2hex('300'),
 		'catch_out_of_range' => 'integer_cast_out_of_range'];
 
+	[$inline_record, $local_record, $receiver] = match ($flavor) {
+		flavor::php => ['struct Acc { public int $n; public function add(byte $a,int $b=2):void { $this->n=(int)$a+$b; echo "C"; } }',
+			'$r Acc;', '$r->'],
+		flavor::cpp => ['struct Acc { int n; void add(byte a,int b=2) { this->n=(int)a+b; echo "C"; } };', 'Acc r;', 'r->'],
+		flavor::js => ['struct Acc { n:int; add(a:byte,b:int=2):void { this.n=(int)a+b; echo "C"; } }', 'let r:Acc;', 'r.'],
+	};
+	$prefix = $inline_record . $mark . $local_record;
+	$inline_calls = $emit($prefix . "{$receiver}add(3); echo {$receiver}n; {$receiver}add(mark_int(4),mark_int(5)); echo {$receiver}n; return 8;");
+	verify(str_contains($inline_calls, 'method_3_Acc_add(var_r_0, static_cast<scpp::uint8>(3LL), 2LL);')
+		&& preg_match('/return method_3_Acc_add\(var_r_0, argument_\d+_0, mark_int_\(5LL\)\);/', $inline_calls) === 1
+		&& !str_contains($inline_calls, 'receiver_payload'), 'Inline method should retain only the first effectful argument');
+	$fixtures[$flavor->name . '_inline_method_arguments'] = ['cpp' => $inline_calls, 'stdout_hex' => bin2hex('C545C9')];
+	$failure = $emit($prefix . "{$receiver}add(mark_int(300),mark_int(5)); return 8;");
+	$fixtures[$flavor->name . '_inline_method_failure'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+
+	$holder = match ($flavor) {
+		flavor::php => 'struct Holder { public Acc $item; }',
+		flavor::cpp => 'struct Holder { Acc item; };',
+		flavor::js => 'struct Holder { item:Acc; }',
+	};
+	$member = $flavor === flavor::js ? '.' : '->';
+	$p = $var('p');
+	foreach (['shared' => 'Acc', 'shared_field' => 'Holder'] as $kind => $record_name) {
+		$field = $record_name === 'Acc' ? '' : $member . 'item';
+		$target = $p . $field . $member;
+		$owner_type = "shared<$record_name>";
+		$prefix = $inline_record . $holder . $mark;
+		$allocated = $decl('p', $owner_type, "new $record_name()");
+		$replace = $fn('replace_owner', $param($owner_type, 'p', true), 'int', "$p=new $record_name(); echo \"R\"; return 4;");
+		$source = $prefix . $replace . $allocated . $decl('original', $owner_type, $p)
+			. "{$target}add(3); {$target}add(5,replace_owner($p)); echo " . $var('original') . $field . $member . "n,{$target}n; return 8;";
+		$cpp = $emit($source);
+		verify(str_contains($cpp, 'auto receiver_owner = var_p_0;') && str_contains($cpp, 'auto&& receiver_payload = ')
+			&& str_contains($cpp, 'method_3_Acc_add(receiver_payload, static_cast<scpp::uint8>(3LL), 2LL)'), 'Shared receiver setup must survive direct argument lowering');
+		$fixtures[$flavor->name . '_' . $kind . '_replace'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('CRC90')];
+		$call = "{$target}add(mark_int(300),mark_int(5)); return 8;";
+		$empty = $emit($prefix . $decl('p', $owner_type, 'null') . $call);
+		$fixtures[$flavor->name . '_' . $kind . '_empty'] = ['cpp' => $empty, 'stdout_hex' => '',
+			'catch_runtime_error' => 'ownership_empty_access'];
+		$failure = $emit($prefix . $allocated . $call);
+		verify(preg_match('/return method_3_Acc_add\(receiver_payload, argument_\d+_0, mark_int_\(5LL\)\);/', $failure) === 1,
+			'Shared method must capture the checked first argument');
+		$fixtures[$flavor->name . '_' . $kind . '_checked'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+			'catch_out_of_range' => 'integer_cast_out_of_range'];
+	}
+
+	// The returned inline record owns the last strong handle after make clears the caller's slot.
+	[$temp_model, $make] = match ($flavor) {
+		flavor::php => ['struct Child { public int $n; } struct Temp { public shared<Child> $child; '
+			. 'public static function make(shared<Child> &$p):Temp { echo "R",$p->n; $t Temp; $t->child=$p; $p=null; return $t; } '
+			. 'public function useArgs(byte $a,int $b,weak<Child> &$w):void { if (lock($w)) { echo "M",(int)$a,$b; } } }', 'Temp::make'],
+		flavor::cpp => ['struct Child { int n; }; struct Temp { shared<Child> child; '
+			. 'static Temp make(shared<Child> &p) { echo "R",p->n; Temp t; t->child=p; p=null; return t; } '
+			. 'void useArgs(byte a,int b,weak<Child> &w) { if (lock(w)) { echo "M",(int)a,b; } } };', 'Temp::make'],
+		flavor::js => ['struct Child { n:int; } struct Temp { child:shared<Child>; '
+			. 'static make(&p:shared<Child>):Temp { echo "R",p.n; let t:Temp; t.child=p; p=null; return t; } '
+			. 'useArgs(a:byte,b:int,&w:weak<Child>):void { if (lock(w)) { echo "M",(int)a,b; } } }', 'Temp.make'],
+	};
+	$w = $var('w');
+	$inspect = $fn('inspect', $param('weak<Child>', 'w', true), 'int',
+		"if (lock($w)) { echo \"A\"; return 4; } return 0;");
+	$factory = "$make($p){$member}useArgs";
+	$setup = $temp_model . $inspect . $mark . $decl('p', 'shared<Child>', 'new Child()')
+		. $decl('w', 'weak<Child>', "weak($p)");
+	$after = "if (lock($w)) { return 9; } echo \"E\"; return 8;";
+	$cpp = $emit($setup . "$factory(inspect($w),mark_int(5),$w); $after");
+	verify(substr_count($cpp, 'auto&& receiver_payload = method_4_Temp_make(var_p_0);') === 1
+		&& preg_match('/return method_4_Temp_useArgs\(receiver_payload, argument_\d+_0, mark_int_\(5LL\), var_w_1\);/', $cpp) === 1,
+		'Temporary receiver must bind once and capture only the earlier conversion');
+	$fixtures[$flavor->name . '_temporary_lifetime'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R0A5M45E')];
+	$cpp = $emit($setup . "$factory(3,2,$w); $after");
+	verify(str_contains($cpp, 'method_4_Temp_useArgs(receiver_payload, static_cast<scpp::uint8>(3LL), 2LL, var_w_1)'),
+		'Temporary receiver should take literals directly');
+	$fixtures[$flavor->name . '_temporary_literals'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R0M32E')];
+	$call = "$factory(mark_int(300),mark_int(5),$w); return 8;";
+	$fixtures[$flavor->name . '_temporary_receiver_failure'] = ['cpp' => $emit($setup . "$p=null;" . $call),
+		'stdout_hex' => bin2hex('R'), 'catch_runtime_error' => 'ownership_empty_access'];
+	$fixtures[$flavor->name . '_temporary_argument_failure'] = ['cpp' => $emit($setup . $call),
+		'stdout_hex' => bin2hex('R0300'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
+
 	[$record, $inline_decl, $shared_decl] = match ($flavor) {
 		flavor::php => ['struct Pair { public function __construct(byte $a,int $b) { echo "C",(int)$a,$b; } }', '$p Pair', '$q=new Pair'],
 		flavor::cpp => ['struct Pair { Pair(byte a,int b) { echo "C",(int)a,b; } };', 'Pair p', 'auto q=new Pair'],
