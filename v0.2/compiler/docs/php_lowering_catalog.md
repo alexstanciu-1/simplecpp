@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 61 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 62 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -475,6 +475,22 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 |     $x int=8;                                                 |                                         |                                  |                                      |
 | Counter::advance($x,2);                                       |                                         |                                  |                                      |
 +---------------------------------------------------------------+-----------------------------------------+----------------------------------+--------------------------------------+
+```
+
+## Inline and shared construction
+
+```text
++--------------------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------+------------------------------------+
+| PHP-flavor pattern                                     | Lowered C++ code                                                                           | Lowered C++ header code          | Generation and lowering            |
++========================================================+============================================================================================+==================================+====================================+
+| Given                                                  | scpp_records::Pair var_p_0 = scpp_records::Pair(static_cast<scpp::uint8>(7LL), number_()); | .cpp includes                    | The byte conversion is proven.     |
+|     struct Pair {                                      | owner_Pair var_q_1 = owner_Pair::make(static_cast<scpp::uint8>(7LL), number_());           | #include <scpp/core/scalars.hpp> | Each call evaluates number once.   |
+|         public function __construct(byte $a,int $b) {} |                                                                                            | #include <scpp/owner_access.hpp> | The shared factory allocates after |
+|     }                                                  |                                                                                            | No unit header.                  | its parameters are initialized.    |
+|     function number():int { return 4; }                |                                                                                            |                                  |                                    |
+| $p Pair(7,number());                                   |                                                                                            |                                  |                                    |
+| $q=new Pair(7,number());                               |                                                                                            |                                  |                                    |
++--------------------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------+------------------------------------+
 ```
 
 ## Functions, namespaces and project units

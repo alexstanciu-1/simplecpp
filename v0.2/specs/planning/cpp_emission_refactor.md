@@ -356,3 +356,18 @@ receives the original local and the literal directly. For
 block evaluates and converts the first result before calling the second producer.
 The failure variant uses 300 and checks the range exception, the first
 producer's output, and the absence of second-producer and callee output.
+
+### Follow-up batch — inline and shared constructor arguments
+
+The existing argument selection handles construction of an inline record and
+the call to a shared record's allocation factory. Both use the prepared
+constructor parameter types and conversions. With two effectful scalar inputs,
+the first is evaluated and converted in a statement and the second is passed
+directly. A proven scalar literal needs no capture. The ordered path keeps
+nontrivial values and record lifetime boundaries. Allocation remains inside
+the shared factory.
+
+Three-flavor fixtures cover both forms with a proven byte literal, two calls
+that print their arguments, and a first conversion that fails before the second
+producer or constructor body can run. Existing constructor regressions exercise
+cross-unit edits, recovery, cleanup on exceptions and private constructor access.

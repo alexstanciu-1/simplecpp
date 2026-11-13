@@ -276,6 +276,25 @@ foreach (flavor::cases() as $flavor)
 	$fixtures[$flavor->name . '_static_conversion_failure'] = ['cpp' => $static_failure, 'stdout_hex' => bin2hex('300'),
 		'catch_out_of_range' => 'integer_cast_out_of_range'];
 
+	[$record, $inline_decl, $shared_decl] = match ($flavor) {
+		flavor::php => ['struct Pair { public function __construct(byte $a,int $b) { echo "C",(int)$a,$b; } }', '$p Pair', '$q=new Pair'],
+		flavor::cpp => ['struct Pair { Pair(byte a,int b) { echo "C",(int)a,b; } };', 'Pair p', 'auto q=new Pair'],
+		flavor::js => ['struct Pair { constructor(a:byte,b:int) { echo "C",(int)a,b; } }', 'let p:Pair', 'let q=new Pair'],
+	};
+	foreach (['inline' => [$inline_decl, 'scpp_records::Pair'], 'shared' => [$shared_decl, 'owner_Pair::make']] as $kind => [$construct, $symbol]) {
+		$prefix = $record . $mark;
+		$direct_ctor = $emit($prefix . "$construct(7,mark_int(3)); return 8;");
+		verify(str_contains($direct_ctor, "$symbol(static_cast<scpp::uint8>(7LL), mark_int_(3LL))"),
+			"Expected direct $kind construction with a proven literal");
+		$ordered_ctor = $emit($prefix . "$construct(mark_int(4),mark_int(5)); return 8;");
+		verify(preg_match('/return ' . preg_quote($symbol, '/') . '\(argument_\d+_0, mark_int_\(5LL\)\);/', $ordered_ctor) === 1,
+			"Expected one capture for ordered $kind construction");
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_direct'] = ['cpp' => $direct_ctor, 'stdout_hex' => bin2hex('3C73')];
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_ordered'] = ['cpp' => $ordered_ctor, 'stdout_hex' => bin2hex('45C45')];
+		$failure = $emit($prefix . "$construct(mark_int(300),mark_int(5)); return 8;");
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_failure'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+			'catch_out_of_range' => 'integer_cast_out_of_range'];
+	}
 	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
 		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
 	verify(preg_match('/return sum_\(argument_[0-9]+_0, change_int_\(var_x_0\)\);/', $ordered_calls) === 1

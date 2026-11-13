@@ -51,6 +51,13 @@ aliasing even if a sibling changes the stored value. Earlier by-value reads
 still capture their values when required. An argument involving a temporary
 owner retains its destruction boundary on the ordered reference-call path.
 
+Inline construction and shared allocation factories use the same ordered argument
+selection. A scalar literal with a proven conversion stays inline. Earlier effectful
+values are evaluated and converted before the final scalar is passed. On this
+ordered path, an argument involving a temporary record or owner keeps its
+statement boundary. Shared allocation starts inside the factory after argument
+evaluation succeeds.
+
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
 owns the generated inventory version. A checked operation can use direct operands
