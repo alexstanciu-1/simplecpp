@@ -487,3 +487,15 @@ also exercise a first failure that skips the count producer, a final failure
 after earlier effects, and a count read from a returned last owner. The latter
 keeps the scalar capture before adapter entry and observes an expired weak handle
 after the statement. The catalog checks the one-capture mutation example.
+
+### Scalar literals inside ordered runtime calls
+
+The runtime-call emitter retains the source positions of operands that can
+require snapshots. It emits captures in that order and leaves inert by-value
+scalar literals at their original call positions. The final-scalar lifetime
+check and the exact first-parameter cast for overloaded bindings still apply.
+
+The padding fixtures check a width literal between two string producers and a
+first failure that skips the padding producer. The PHP number-format fixture
+checks two leading literals and integer overload selection. The catalog shows
+`str_pad(text(),6,pad())` with two captures.

@@ -35,7 +35,8 @@ def qualify(directory, compilers, flags):
                          'local_call_addition', 'local_call_alias', 'local_call_failure',
                          'constant_compounds', 'mutating_compound_cast', 'checked_compound_cast',
                          'runtime_repeat_direct', 'runtime_repeat_mutation', 'runtime_repeat_failure', 'runtime_repeat_operand_failure',
-                         'runtime_ordered_first_failure', 'runtime_ordered_final_failure', 'runtime_ordered_owner'):
+                         'runtime_ordered_first_failure', 'runtime_ordered_final_failure', 'runtime_ordered_owner',
+                         'runtime_pad_literal', 'runtime_pad_failure', *(['runtime_format_literals'] if flavor == 'php' else [])):
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []

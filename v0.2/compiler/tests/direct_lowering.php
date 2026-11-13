@@ -104,6 +104,25 @@ foreach (flavor::cases() as $flavor)
 		'Final scalar producer must be in the adapter call after the string capture');
 	$fixtures[$flavor->name . '_runtime_ordered_final_failure'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LC'),
 		'catch_domain_error' => 'modulo_by_zero'];
+	$pad_call = match ($flavor) {
+		flavor::php => 'str_pad(label(),6,padding(),1)',
+		flavor::cpp => 'label().pad_end(6,padding())',
+		flavor::js => 'label().padEnd(6,padding())',
+	};
+	$padding = $fn('padding', '', 'string', 'echo "P"; return "-";');
+	$cpp = $emit($label . $padding . "echo $pad_call; return 8;");
+	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); const auto (argument_\d+_2) = padding_\(\); return \w+\(\1, 6LL, \2'
+		. ($flavor === flavor::php ? ', 1LL' : '') . '\);/', $cpp) === 1,
+		'Ordered padding must capture both producers and pass the width directly');
+	$fixtures[$flavor->name . '_runtime_pad_literal'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LPxy----')];
+	$fixtures[$flavor->name . '_runtime_pad_failure'] = ['cpp' => $emit($fail_label . $padding . "echo $pad_call; return 8;"),
+		'stdout_hex' => bin2hex('L'), 'catch_domain_error' => 'division_by_zero'];
+	if ($flavor === flavor::php) {
+		$format = $emit($label . $padding . 'echo number_format(1234,0,label(),padding()); return 8;');
+		verify(preg_match('/return number_format\(static_cast<scpp::int64>\(1234LL\), 0LL, argument_\d+_2, argument_\d+_3\);/', $format) === 1,
+			'Leading literals must stay inline and select the exact numeric overload');
+		$fixtures['php_runtime_format_literals'] = ['cpp' => $format, 'stdout_hex' => bin2hex('LP1-234')];
+	}
 	$bytes = $emit($string . $s . ' = ' . $s . ' ' . $concat . ' "!\0x"; echo ' . $s . ';'
 		. 'if (' . $s . ' === "hi!\0x") { echo 1; } if (' . $s . ' === "hi!\0y") { echo 2; } return 8;');
 	verify(str_contains($bytes, 'var_s_0 = (var_s_0 + scpp::string{"!\0x", 3});')

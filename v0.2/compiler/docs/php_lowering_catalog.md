@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 69 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 70 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -264,6 +264,15 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |     }                                 | }());                                                | No unit header.                  |                                     |
 |     $s string="old";                  |                                                      |                                  |                                     |
 | $t=str_repeat($s,change($s));         |                                                      |                                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| Given                                 | scpp::string var_s_0 = ([&]() {                      | .cpp includes                    | The two producers run once in       |
+|     function text():string {          |     const auto argument_24_0 = text_();              | #include <scpp/core/scalars.hpp> | source order. The width literal     |
+|         return "abc";                 |     const auto argument_24_2 = pad_();               | #include <scpp/php/string.hpp>   | passes directly to the adapter.     |
+|     }                                 |     return str_pad(argument_24_0, 6LL,               | #include <scpp/string.hpp>       |                                     |
+|     function pad():string {           |         argument_24_2);                              | No unit header.                  |                                     |
+|         return "-";                   | }());                                                |                                  |                                     |
+|     }                                 |                                                      |                                  |                                     |
+| $s=str_pad(text(),6,pad());           |                                                      |                                  |                                     |
 +---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
 ```
 

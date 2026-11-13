@@ -68,7 +68,9 @@ Runtime calls use their published exact parameter types and writable-reference
 mask to recognize nonthrowing scalar literal peers. A returned string can feed
 a const-reference parameter directly when only its evaluation is observable.
 When another argument can mutate a borrowed local, the ordered call captures
-its value before evaluating that argument. After these ordered captures, a final
+its value before evaluating that argument. Nonthrowing by-value scalar literals
+stay inline at every position, including an overload-selecting first argument
+with its exact native cast. After the ordered captures, a final
 by-value scalar initializes its parameter directly unless its operand involves a
 record or handle whose temporary may need to expire before adapter entry.
 The shared record-lifetime guard

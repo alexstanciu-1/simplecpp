@@ -904,7 +904,7 @@ CPP;
 				}
 				$arguments = [];
 				$direct = true;
-				$order_sensitive = 0;
+				$capture_indices = [];
 				$records_before = $this->record_expressions;
 				foreach ($operands as $index => $argument) {
 					$operand_records_before = $this->record_expressions;
@@ -916,24 +916,23 @@ CPP;
 					// and writable slots conservatively; only scalar literal peers are inert.
 					if ($function->is_reference($index) || !self::inert_literal_argument(
 						$argument, $function->parameters[$index], value_conversion::identity)) {
-						++$order_sensitive;
+						$capture_indices[] = $index;
 					}
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
 				}
 				$steps = [];
-				$direct = $direct || ($order_sensitive <= 1 && $this->record_expressions === $records_before);
+				$direct = $direct || (count($capture_indices) <= 1 && $this->record_expressions === $records_before);
 				if (!$direct && count($arguments) > 1) {
 					// Earlier arguments finish before the call. A final value scalar can
 					// initialize its parameter there unless its temporaries need to expire first.
-					$capture_count = count($arguments);
-					$last = $capture_count - 1;
-					if (!$function->is_reference($last) && $function->parameters[$last]->cpp_trivial_value()
-						&& $this->record_expressions === $operand_records_before) {
-						--$capture_count;
-					}
-					for ($index = 0; $index < $capture_count; ++$index) {
+					$last = count($arguments) - 1;
+					foreach ($capture_indices as $index) {
+						if ($index === $last && !$function->is_reference($index) && $function->parameters[$index]->cpp_trivial_value()
+							&& $this->record_expressions === $operand_records_before) {
+							break;
+						}
 						$operand = $arguments[$index];
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
 						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
