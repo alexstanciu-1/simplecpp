@@ -88,6 +88,57 @@ int main() {
     subprocess.run([exe], check=True)
 
 
+def boolean_fields(work, flavor):
+    app = work / ('bool-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'switch')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'nested.php').write_text('struct Panel { public SwitchState $state; }')
+    definition, setup, copy, original, copied = {
+        'php': ('struct SwitchState { public bool $enabled; }', '$p Panel;', '$q=$p;',
+                '$p->state->enabled', '$q->state->enabled'),
+        'cpp': ('struct SwitchState { public: bool enabled; };', 'Panel p;', 'auto q=p;',
+                'p->state->enabled', 'q->state->enabled'),
+        'js': ('struct SwitchState { public enabled:bool; }', 'let p:Panel;', 'let q=p;',
+               'p.state.enabled', 'q.state.enabled'),
+    }[flavor]
+    copy_test = (setup + 'if (' + original + ') { return 1; } ' + original + '=true;' + copy + copied +
+                 '=false; if (' + original + ' && !' + copied + ') { echo "copy"; } return 8;')
+    update = setup + original + '++; echo ' + original + '; return 8;'
+    model.write_text(definition)
+    output = work / ('bool-output-' + flavor)
+    with service(app, output) as resident:
+        for rev, (path, source, error, stdout) in enumerate([
+            (entry, copy_test, None, b'copy'),
+            (entry, setup + original + '=1; return 8;', 'conversion', None),
+            (model, definition.replace('bool', 'int'), None, b''),
+            (entry, update, None, b'1'),
+            (model, definition, 'Unsupported update type', None),
+            (model, definition.replace('bool', 'int'), None, b'1'),
+            (entry, 'return 8;', None, b''),
+            (model, definition.replace('public', 'private'), None, b''),
+            (entry, copy_test, 'private field', None),
+            (model, definition, None, b'copy'),
+        ]):
+            path.write_text(source)
+            os.utime(path, (1985000000 + rev,) * 2)
+            previous = artifacts(output)
+            current = invoke(resident)
+            fresh_out = work / f'bool-fresh-{flavor}-{rev}'
+            with service(app, fresh_out) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other.get('error'), (rev, current, other)
+                assert artifacts(output) == previous
+            else:
+                assert 'error' not in current and 'error' not in other, (rev, current, other)
+                assert artifacts(output) == artifacts(fresh_out)
+                build(output, work / ('bool-native-' + flavor), stdout)
+                build(fresh_out, work / f'bool-fresh-native-{flavor}-{rev}', stdout)
+        resident.stdin.close()
+
+
 def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
@@ -108,7 +159,7 @@ def prove(work, flavor):
         duplicate = PROGRAMS[flavor][0].replace('y', 'x')
         edits.extend([('duplicate-field', owner, duplicate, 'Duplicate struct field: x'),
                       ('invalid-type', owner, record.replace(' int ', ' float ', 1) if flavor != 'js'
-                       else record.replace(': int', ': float', 1), 'Struct fields require int or int64'),
+                       else record.replace(': int', ': float', 1), 'Unsupported instance field type: float'),
                       ('restore-layout', owner, record.replace('x', 'width'), None)])
         if flavor == 'php':
             edits.extend([('nominal-copy', entry, 'struct Other { public int $x; } $p Point; $q Other = $p; return 8;',
@@ -187,7 +238,7 @@ def nested(work, flavor):
         ('restore-mid', mid, bounds + marker, None),
         ('four-cycle', leaf, record('Position', width='Scene'), 'Recursive inline layout:'),
         ('recover', leaf, good, None),
-        ('missing-type', inner, '', 'inline struct: Point'),
+        ('missing-type', inner, '', 'Unsupported instance field type: Point'),
         ('re-add', inner, point, None),
         ('split-layouts', owner, scene + good, None),
         ('three-units', mid, bounds + marker + point, None),
@@ -625,6 +676,7 @@ if __name__ == '__main__':
         native_names(folder)
         shared_functions(folder)
         for language in PROGRAMS:
+            boolean_fields(folder, language)
             shared_fields(folder, language)
             empty_owners(folder, language)
             prove(folder, language)

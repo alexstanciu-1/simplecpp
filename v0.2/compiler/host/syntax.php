@@ -212,6 +212,10 @@ final class Syntax_Inspection
 					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];
 		}
+		if ($statement instanceof ast_property_update) {
+			return ['kind' => 'property_update', 'target' => self::expression($statement->target),
+				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
+		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'name' => self::name($statement, $statement->name,
 				$statement->start + ($statement->postfix ? 0 : 1)), 'operator' => $statement->operator->name,

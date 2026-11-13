@@ -90,6 +90,12 @@ abstract class type_definition
 		return false;
 	}
 
+	/** Declaration eligibility for scalar instance fields, supplied by generated type definitions. */
+	public function supports_instance_field(): bool
+	{
+		return false;
+	}
+
 	/** Output admission is separate from string conversion. */
 	public function supports_output(): bool
 	{

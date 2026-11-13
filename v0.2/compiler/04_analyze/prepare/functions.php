@@ -34,7 +34,9 @@ final class Function_Preparation
 							? $statement->initializer->initializer : $statement->initializer->value);
 					}
 					$statement->update->reset_preparation();
-					if ($statement->update instanceof ast_assignment_statement) {
+					if ($statement->update instanceof ast_property_update) {
+						self::expression($statement->update->target);
+					} elseif ($statement->update instanceof ast_assignment_statement) {
 						self::expression($statement->update->value);
 					}
 				}
@@ -70,7 +72,7 @@ final class Function_Preparation
 				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_storage_write)) {
 				$statement->reset_preparation();
 			}
-			if ($statement instanceof ast_property_compound) self::expression($statement->target);
+			if ($statement instanceof ast_property_compound || $statement instanceof ast_property_update) self::expression($statement->target);
 			if ($statement instanceof ast_local_declaration) {
 				self::expression($statement->initializer);
 			}

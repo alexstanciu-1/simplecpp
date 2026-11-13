@@ -191,6 +191,76 @@ def instance_compounds(work, flavor):
         resident.stdin.close()
 
 
+def updates(work, flavor):
+    app = work / ('updates-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'model')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    field, prop, sample, step, lexical, access, scope, sigil, setup, empty = {
+        'php': ('public int $x;', 'public static int $n=4;', 'public static byte $b=255; public static float $f=2.5;',
+                'public function step():void', 'self::', '->', '::', '$', '$q=new Box();', '$q shared<Box>;'),
+        'cpp': ('public: int x;', 'public: static int n=4;', 'static byte b=255; static float f=2.5;',
+                'public: void step()', 'Self::', '->', '::', '', 'auto q=new Box();', 'shared<Box> q;'),
+        'js': ('public x:int;', 'public static n:int=4;', 'static b:byte=255; static f:float=2.5;',
+               'public step():void', 'class.', '.', '.', '', 'let q=new Box();', 'let q:shared<Box>;'),
+    }[flavor]
+    (app / 'box.php').write_text('struct Box { public Point $p; }')
+    n = 'Point' + scope + sigil + 'n'
+    b = 'Point' + scope + sigil + 'b'
+    f = 'Point' + scope + sigil + 'f'
+    x = sigil+'q'+access+'p'+access+'x'
+    this_x = sigil+'this'+access+'x'
+    definition = ('struct Point { '+field+prop+sample+step+' { ++'+this_x+'; --'+lexical+sigil+'f; } }')
+    program = (setup+x+'++; '+sigil+'q'+access+'p'+access+'step(); echo '+x+'; --'+x+'; echo '+x+'; '
+               +n+'++; --'+n+'; echo '+n+'; ++'+b+'; echo (int)'+b+'; '+b+'--; echo (int)'+b+'; '
+               +'++'+f+'; if ('+f+'==2.5) { echo "F"; } return 8;')
+    i = sigil+'i'
+    init = {'php':'$i=0;', 'cpp':'int i=0;', 'js':'let i:int=0;'}[flavor]
+    def loop(update, read):
+        return ('for ('+init+i+'<4; '+update+') { echo '+read+'; '+i+'++; '
+                'if ('+i+'==2) { continue; } if ('+i+'==3) { break; } } echo '+read+';')
+    loops = setup + loop(x+'++', x) + loop('--'+n, '(int)'+n) + 'return 8;'
+    loop_output = b'01224322'
+    good = b'2140255F'
+    model.write_text(definition)
+    out = work / ('updates-out-'+flavor)
+    with service(app, out) as resident:
+        for rev,(path,text,error,expected) in enumerate([
+            (entry,program,None,good),
+            (model,definition.replace(prop,prop.replace('int','bool').replace('4','true')), 'Unsupported update type',None),
+            (model,definition,None,good),
+            (model,definition.replace(field,field.replace('public','private')), 'private field',None),
+            (model,definition,None,good), (entry,empty+x+'++; return 8;',None,None),
+            (entry,setup+'echo '+x+'++; return 8;', 'Expected',None), (entry,program,None,good),
+            (entry,loops,None,loop_output),
+            (model,definition.replace(prop,prop.replace('int','bool').replace('4','true')), 'Unsupported update type',None),
+            (model,definition,None,loop_output),
+        ]):
+            path.write_text(text)
+            os.utime(path,(1984000000+rev,)*2)
+            before = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'updates-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error','') and current['error']==other['error'], (rev,current,other)
+                assert before == artifacts(out)
+                continue
+            assert 'error' not in current and 'error' not in other, (rev,current,other)
+            assert artifacts(out)==artifacts(baseline)
+            for bundle in (out,baseline):
+                if expected is None:
+                    check_empty_access(bundle,work / f'empty-{bundle.name}-{rev}')
+                else:
+                    spelling = b').x++)' if expected == loop_output else b').x++;'
+                    assert any(spelling in line and b'[&]' not in line for unit in artifacts(bundle).values()
+                               for line in unit.splitlines())
+                    build(bundle,work / ('build-'+bundle.name),expected)
+        resident.stdin.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -202,4 +272,5 @@ if __name__ == '__main__':
             prove(work, flavor)
             compounds(work, flavor)
             instance_compounds(work, flavor)
+            updates(work, flavor)
             print(flavor, 'passed', flush=True)

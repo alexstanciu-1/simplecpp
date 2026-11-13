@@ -178,14 +178,16 @@ final class Parser
 			return $this->call_statement($value);
 		}
 		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		$member = $this->cursor->tokens->source->flavor === flavor::js ? token_kind::dot : token_kind::member;
-		if (($this->cursor->is($name_kind) && $this->cursor->next_is($member)) || $this->names->qualified_write() || $this->lexical_qualifier()) {
+		if ($this->property_statement_start()) {
 			$target = $this->primary();
 			if ($target instanceof ast_call_expression) {
 				return $this->call_statement($target);
 			}
 			if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable struct field');
+			}
+			if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
+				return $this->property_update($target->start, $target, $this->take_update_operator(), true);
 			}
 			$operator = $this->compound_operator();
 			if ($operator !== null) {
@@ -215,7 +217,7 @@ final class Parser
 			return $index === null ? new ast_append_statement($receiver, $value, $end)
 				: new ast_index_assignment($receiver, $index, $value, $end);
 		}
-		return $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $collector);
+		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
 
 	/** Parse only braced alternatives; each body gets its own lexical collector and shared storage IDs. */
@@ -291,7 +293,11 @@ final class Parser
 		$condition = $this->value();
 		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
 		if ($this->update_start()) {
-			$update = $this->update_statement(token_kind::rparen);
+			$update = $this->update_statement(token_kind::rparen, true);
+		} elseif ($this->property_statement_start()) {
+			$position = $this->cursor->position();
+			$target = $this->primary();
+			$update = $this->property_update($position, $target, $this->take_update_operator(), true, token_kind::rparen);
 		}
 		else {
 			$update_start = $this->cursor->position();
@@ -839,6 +845,35 @@ final class Parser
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
 
+	/** Distinguish member writes from declarations and simple local updates. */
+	private function property_statement_start(bool $prefix = false): bool
+	{
+		$flavor = $this->cursor->tokens->source->flavor;
+		return ($this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
+			&& $this->cursor->next_is($flavor === flavor::js ? token_kind::dot : token_kind::member))
+			|| $this->lexical_qualifier() || ($prefix
+				? $this->cursor->next_is(token_kind::scope) || $this->cursor->next_is(token_kind::backslash)
+					|| $this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::backslash)
+				: $this->names->qualified_write());
+	}
+
+	private function take_update_operator(): update_operator
+	{
+		$kind = $this->cursor->is(token_kind::increment) ? token_kind::increment : token_kind::decrement;
+		$this->cursor->take($kind, 'update operator');
+		return $kind === token_kind::increment ? update_operator::increment : update_operator::decrement;
+	}
+
+	private function property_update(int $start /** uint32 */, ast_expression $target, update_operator $operator, bool $postfix,
+		token_kind $terminator = token_kind::semicolon): ast_property_update
+	{
+		if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable property');
+		}
+		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
+		return new ast_property_update($start, $end, $target, $operator, $postfix);
+	}
+
 	/** Recognize discarded-value update syntax only at statement and header boundaries. */
 	private function update_start(): bool
 	{
@@ -846,23 +881,22 @@ final class Parser
 			|| $this->cursor->next_is(token_kind::increment) || $this->cursor->next_is(token_kind::decrement);
 	}
 
-	/** Parse one established simple-name update; expression-result use is deliberately not part of primary(). */
-	private function update_statement(token_kind $terminator): ast_update_statement
+	/** Parse local updates in statements or loop headers; allow property targets in statements and the final for clause. */
+	private function update_statement(token_kind $terminator, bool $allow_property = false): ast_update_statement
 	{
 		$cursor = $this->cursor;
 		$start = $cursor->position();
 		$postfix = !$cursor->is(token_kind::increment) && !$cursor->is(token_kind::decrement);
-		$kind = $cursor->tokens->tokens[$start + ($postfix ? 1 : 0)]->kind;
 		if (!$postfix) {
-			$cursor->take($kind, 'update operator');
+			$operator = $this->take_update_operator();
+			if ($allow_property && $this->property_statement_start(true)) {
+				return $this->property_update($start, $this->primary(), $operator, false, $terminator);
+			}
 		}
 		$name = $cursor->name($cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
-		if ($postfix) {
-			$cursor->take($kind, 'update operator');
-		}
+		if ($postfix) $operator = $this->take_update_operator();
 		$end = $cursor->take($terminator, $terminator->label()) + 1;
-		return new ast_update_statement($start, $end, $name,
-			$kind === token_kind::increment ? update_operator::increment : update_operator::decrement, $postfix);
+		return new ast_update_statement($start, $end, $name, $operator, $postfix);
 	}
 
 	/** Inspect only assignment spelling; the shared map does not authorize operand types. */

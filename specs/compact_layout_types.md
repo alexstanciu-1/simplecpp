@@ -248,9 +248,9 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
-The active PHP bootstrap compiler admits public integer fields, inline structs and
+The active PHP bootstrap compiler admits integer (`int`/`int64`) and boolean instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
-recursively. A shared field defaults to an empty, pointer-sized owner. Copying the
+recursively. A boolean field starts false; assignment and copying use ordinary boolean value semantics. A shared field defaults to an empty, pointer-sized owner. Copying the
 enclosing value copies each field: inline data is independent, and each copied
 nonempty owner retains the same allocation. Clearing a field releases just that
 ownership. Destruction of the final owner also destroys the owners in its payload.

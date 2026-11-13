@@ -1,15 +1,15 @@
 {
   "cases": {
     "bad_policy": {
-      "input_sha256": "3502a28649316b39f93b6d34af488447d06e1ac097a1363842b59527fe5fc97a",
+      "input_sha256": "e5771dfaac30feda1d8811d4d888633f862b4bd861907a983175721782f9ee32",
       "rejection_fragment": "Unsupported same_type"
     },
     "carrier_nested": {
-      "input_sha256": "e160912e9e4c79f4121b15ed8b419e772f6180b9208f157be409d163d68dfa4f",
+      "input_sha256": "6a634e4fcbe451a942a8693cdccc21c99afe3c9ac4fd19a38c2e8e80fd661e99",
       "rejection_fragment": "payload"
     },
     "carrier_policy": {
-      "input_sha256": "fc8dbe5e86a98174880fc84f217a0fcba5b33e8ef1e208b525046ccc4aedc516",
+      "input_sha256": "9dc1937fbc4d0dc0181dbc518aa8e9558e1f5a4da11700558cb84a90771b98f6",
       "rejection_fragment": "Unsupported carrier extraction policy"
     },
     "compiler": {
@@ -28,7 +28,7 @@
         "public/scpp/short_names.hpp": "88f4b9de7fe2428c012d13a56312cdf11adc3bf9cca822c3e154cb5e7fe0ea93",
         "src/runtime.cpp": "bacb2ad93223991d15e0e70d456d213e4968896b97707b755cc462c02be484e8"
       },
-      "input_sha256": "e1616e36a1a45b9f1ce6e1dea4dd313bdff087f6026c8798527eac1292ead0c0",
+      "input_sha256": "4eb7c87c6cad447efcdeef2bc69ab7a09f3af926dd6f86645dcd85e44b1d7d79",
       "prepared_model": "69d594455dd31ad92251f5380bd73b2df0cae9fc0ce51a9fd152f33364b0ff6d",
       "summary": "{\"artifacts\":13,\"status\":\"generated\"}"
     },
@@ -51,7 +51,7 @@
         "public/scpp/vectors.hpp": "e2be7df41c1a5419143ae4576dffac0915d88de74776a8ceed4f3c70c70aaedb",
         "src/runtime.cpp": "4b904b4c8e48db8b7c89f9123ff5de59139abbfdc38fd83ebfaa81dd7621987f"
       },
-      "input_sha256": "64da9ca27836c40f5bf6e4bce7a1747fe38d096cf78245cc9ec88f1f78936a51",
+      "input_sha256": "b16fc6f87a2b95b2593b20b4c644b82799da72c9219a0d5df92270d35542e0e9",
       "prepared_model": "e6f0a5e6342bb45859e20ae2f5303b7c8aec59c5f24bd20393baddbd951e9ac9",
       "summary": "{\"artifacts\":16,\"status\":\"generated\"}"
     },
@@ -74,7 +74,7 @@
         "public/scpp/owner_access.hpp": "dc9e28590e084b79147bebc3eb17c9a97b760ba53a1a011c1c9326aa82bdf3d3",
         "src/runtime.cpp": "777ef3111781b6c1125a428f4a547ea4ff865d43078c3c6bd0f52a1630fd112b"
       },
-      "input_sha256": "50e5d460e022670b4efd61904a63fd21bcb09a550b8be355aa17e8dbc3f0bf7a",
+      "input_sha256": "c6aab9ff93134e6fcc1f0442585ece48ad611f53417ffd7b4a3fb048d1a7200f",
       "prepared_model": "6574278f8b02f566c7c01bf81bd941d29f46c0defe6fe584a16dd8810cec6a2b",
       "summary": "{\"artifacts\":16,\"status\":\"generated\"}"
     },
@@ -97,16 +97,16 @@
         "public/scpp/vectors.hpp": "e2be7df41c1a5419143ae4576dffac0915d88de74776a8ceed4f3c70c70aaedb",
         "src/runtime.cpp": "4b904b4c8e48db8b7c89f9123ff5de59139abbfdc38fd83ebfaa81dd7621987f"
       },
-      "input_sha256": "58658077a94a69f25c12bb7cae659015350e4486a61b24b60a98300af26a52ab",
+      "input_sha256": "2e5fa07f51cbadf3b80ee0818fa4be49cc2ff8749ccf58eef9058faac0e0bc2c",
       "prepared_model": "6fdc0fc6194516090623f4a21be8f28fcb4cf4bd9ac43a6b91ebde12f5d517d1",
       "summary": "{\"artifacts\":16,\"status\":\"generated\"}"
     },
     "duplicate_operator": {
-      "input_sha256": "e809b9da05228e0af47118179d761731b8c5ab509fb63eedf7ba4e65f0154c89",
+      "input_sha256": "4f132b954196906c55366c4bcbbfdc7e824570564bf2d874e00a51d57874855e",
       "rejection_fragment": "Duplicate operator request"
     },
     "duplicate_type": {
-      "input_sha256": "77cbf77fe508f0cfd290d1ab19423d7360ba8a1d6f61f3ab3efb81e81f14849c",
+      "input_sha256": "86f37b908b82b631bce38d021fac0b75c5264533e1949a9c0cdbc3f178c5a0b4",
       "rejection_fragment": "Duplicate published type"
     },
     "explicit_carriers": {
@@ -128,60 +128,60 @@
         "public/scpp/vectors.hpp": "e2be7df41c1a5419143ae4576dffac0915d88de74776a8ceed4f3c70c70aaedb",
         "src/runtime.cpp": "4b904b4c8e48db8b7c89f9123ff5de59139abbfdc38fd83ebfaa81dd7621987f"
       },
-      "input_sha256": "acdbdfe9cda43e92e89f8f09186994e3cb58251a117385ed422578adf6a82bd6",
+      "input_sha256": "1fa50e02d709437499db3f4a6c61e5eae5b0e444f79102215bb2eeb9645e5313",
       "prepared_model": "6f4c5bca0ce9247c8784cd375b986ee6c2016ec044f7ab617d87fde057b6ec25",
       "summary": "{\"artifacts\":16,\"status\":\"generated\"}"
     },
     "header_collision": {
-      "input_sha256": "013e8028bd41c37a8a2592d838964a785c8bd1eb505f5967efe4fac7c09ea273",
+      "input_sha256": "9af9182ed5d5185c81346a7b8e896822173ff09f1d6a9116737759af2875fad5",
       "rejection_fragment": "Conflicting public headers"
     },
     "implicit_integer": {
-      "input_sha256": "a252225546bc209ada1696f0a0f9900508f26d5a38e7bd1b800366ed4b111cc8",
+      "input_sha256": "4e14ff664a2e2432acef211f5562d99f80bce41ee7c193826d9388c2bbf39296",
       "rejection_fragment": "Integer constructors must be explicit"
     },
     "json_depth": {
-      "input_sha256": "8e7c2eb96be82e0973c9f2a1a5b6d9ee49de16e25eb31dee064e9b7ff71dc006",
+      "input_sha256": "a52abf4b090669a3dfc56168320ef329516994761ec063698d9dadcdd07e0edf",
       "rejection_fragment": "nesting limit"
     },
     "json_duplicate_decoded_key": {
-      "input_sha256": "f42774a68cd2193cce44c184088f8eaa5353200637a1436278f2b37223bdecd9",
+      "input_sha256": "5dbd20ce813c20660b4e0beae6bcf7a531e07722f443aeeca2d019dfce389bd0",
       "rejection_fragment": "duplicate object key"
     },
     "json_huge_exponent": {
-      "input_sha256": "2371e23d247ac5f47f420653966339ec1c1887c7878923025b63a364172763c5",
+      "input_sha256": "ea737e61346ed891ee6db7132e6cf48000bcec322dc321188e62a083f60c8499",
       "rejection_fragment": "Unsupported metadata version"
     },
     "json_invalid_utf8": {
-      "input_sha256": "540948cc88ebb76f14274713dbdf9f451eb0e81b5cb3f6c615bf5463ee34fefd",
+      "input_sha256": "b02567c2f915e769d8c116164bedc347c2a48096b5dc92c60b0dc9e27e4f9307",
       "rejection_fragment": "UTF-8"
     },
     "json_leading_zero": {
-      "input_sha256": "b3791aede5fe491db9a49f3b7ead92c6e83c3b53f2de421f735ce976ada67e6c",
+      "input_sha256": "56504a4879063b908f5302f4aaf7fd662254035a481486ddb15ad2e15f3fcf53",
       "rejection_fragment": "byte"
     },
     "json_lone_surrogate": {
-      "input_sha256": "f7c6ad8c4b0847a377035e022055021f54ca0e20a74d6e1f48c9601d262739d2",
+      "input_sha256": "94322184a5b3c58841d43dc39fcf0acd2d9206b18c3ca5609f756abd903b176b",
       "rejection_fragment": "surrogate"
     },
     "json_trailing": {
-      "input_sha256": "bf0eba69b3584846e1cfc8ea9f6331730c3eac22c807b06b260f35aceb779e7f",
+      "input_sha256": "4f2582048c1a47931bffbe00fcacf0d7c3ea0c5981abffaa9d16a7d5bd20dbb7",
       "rejection_fragment": "trailing"
     },
     "json_trailing_comma": {
-      "input_sha256": "02271e6b094d8752e542703714e870adab5512c09f5bc0abadf6f66069d666de",
+      "input_sha256": "086c0ece4b8158dd4e959ef92c08304b97e097e6d9500d06b90c8f0ae06ec03b",
       "rejection_fragment": "byte"
     },
     "json_wrong_root": {
-      "input_sha256": "9a050341100ca2606162063bf365b6fc56e7522e53c092f870aba849feca9127",
+      "input_sha256": "19836128666dbc5f7dcc29aaa3dd71a140da4b3a347df373027c22d837935c2d",
       "rejection_fragment": "runtime publication: expected object"
     },
     "missing_native_execution": {
-      "input_sha256": "7435122332d9818a0492c33dab68559ef51266ccd7d656c372cf52b26277326b",
+      "input_sha256": "afb86143c9dfd148affe9c2d892b0fab14c4c2daac193119d2566db3d4bec4b7",
       "rejection_fragment": "Native bridge requires published same-type execution operator"
     },
     "namespace": {
-      "input_sha256": "f1bc5a5909d34563e268fce10ecbbb61aeb26109f0e967f1e5e6358a1d55e5cf",
+      "input_sha256": "8f56ab10fcd47428c62b709d8501bff63cf4383f80b4f5017c10ee0f4f772b14",
       "rejection_fragment": "Unsupported namespace"
     },
     "native_one_way": {
@@ -200,7 +200,7 @@
         "public/scpp/short_names.hpp": "d51d6e272c0cd64cb376cf69c89784f283357ef068a77c85bd464ce87ba32f6a",
         "src/runtime.cpp": "dcd5373f63983dc416d5278b831b1b6f19d193e97b651802af7ca7836af4df70"
       },
-      "input_sha256": "6d4d2454ae65359c25bd4ee1a27f9a2491bb16c2dba98a213ebeaac2a7a9a001",
+      "input_sha256": "9bcfc4d1932e82cb44abd424ff6159eb723264def05bd9b88f4742701ab9fdd9",
       "prepared_model": "2352c576e9594fb2edf5c499eb35fffd50724de62ceb61759c6a8db7c944fc01",
       "summary": "{\"artifacts\":13,\"status\":\"generated\"}"
     },
@@ -221,7 +221,7 @@
         "public/scpp/short_names.hpp": "0f50f0ccad4ba5582759fbfb24a762a609cfc5711549d8cea8aa02312c5bc5a2",
         "src/runtime.cpp": "851e0d617e2b72d3bc5dc4d1fd52471fb3359c1e1c51b6b37f83ce3e53934094"
       },
-      "input_sha256": "7e32d2eaf423c9a99e4f66ae961fb86b81b7245ef3f95523153aff03c5810ca0",
+      "input_sha256": "40959e49069b5a912159a25fe94f24ea74f4f9e8b77ede25a6c84d41dc3f31ce",
       "prepared_model": "8ad3b74e3745c5fea77c1f2f4a83ca62b225ceaa927e9a5d2b881573cdf785d6",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
@@ -241,12 +241,12 @@
         "public/scpp/short_names.hpp": "fb1527c571940ca4db0a3b53bd0efc4beddad1d40ecfbad28e70a1008add9c79",
         "src/runtime.cpp": "50f6f923c94076e9275c069553ea37625fbfbbcc1d42859abe6df0a12d114df4"
       },
-      "input_sha256": "4c42177b148ad73b61f5d466d01497d5036068d9def5b928c5fbe6ef1e54916d",
+      "input_sha256": "01c08733b627f8d5e9928fab43cbd88774d54847dd379503de2a08b8e5604597",
       "prepared_model": "cf0f09a4458a541555b1a4b75a1fd19da4cb12b278f1be0b11b2a7e2464458c6",
       "summary": "{\"artifacts\":13,\"status\":\"generated\"}"
     },
     "operand_count": {
-      "input_sha256": "713b0d27c9efed05a460b856a38d709c2a43633144445ddfa607993e04a382ea",
+      "input_sha256": "a15aa1a5f0985c5683ccf12d57be8567c33f200a262382dd12d81eb80343a5d2",
       "rejection_fragment": "Operator operand count"
     },
     "ownership": {
@@ -266,7 +266,7 @@
         "src/ownership.cpp": "adf3b51669f00d6419f22c26bdb47acb09289ba3d96c987a9b360d59891ca293",
         "src/runtime.cpp": "9ac423a9c673cb09beea911d214e1d46d776c8f59c29bdb46aa3909d4b4a2180"
       },
-      "input_sha256": "dcde22fa06cdd50679390c4e9d86ba172a8ffe248905e4477a22af219496f76f",
+      "input_sha256": "1efe4a3c8d98b0f96f3b7881a6cf96cba4b354e5e6c28b0f6df0fd455854acbc",
       "prepared_model": "79cf73e08ae2820791da345c7a43e16cd7f5fe1ce6165ac7568ca1e1f2e3be8d",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
@@ -287,24 +287,24 @@
         "src/ownership.cpp": "8a7fd60f9611ada451524d42c658667504085164cd1fa2941c7ddaf5a9c9d0df",
         "src/runtime.cpp": "9ac423a9c673cb09beea911d214e1d46d776c8f59c29bdb46aa3909d4b4a2180"
       },
-      "input_sha256": "b40cd3644a93a3e157db00ee22648339e759290827d19d74e20cdc5384b30b66",
+      "input_sha256": "4d917a308a70287a9ee506c63fa8f14619a8cf8c40b20eb0903586fed60e35fc",
       "prepared_model": "3bbaae50a64e36e88a18d5048ee3dbde6d7fa304f4ed00f9e60be00c15e6e92f",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
     "ownership_const_value": {
-      "input_sha256": "44c2718044287669ed498a22b068498c4a257cab22515e3ea62f08f496572b4f",
+      "input_sha256": "471b3488099fefdf0e295f74953bcb8f25efd9477817862e96df1d00b4b2a121",
       "rejection_fragment": "invalid or duplicate family"
     },
     "ownership_constructor": {
-      "input_sha256": "d566fb43dce018265681327c16ab43d1167e835039390e6da27db23be8efcbcc",
+      "input_sha256": "7ed5ff93b5ff681093cd2ae67c5c1c604ec62de5e484383dfb51534989aa9f98",
       "rejection_fragment": "constructor argument must be a published scalar"
     },
     "ownership_record_keyword": {
-      "input_sha256": "294db5c17d7f31ab80b478afad8517dfcaffbb2ec4d3d61c33e563b75ddeea56",
+      "input_sha256": "adf5a62050999b41b0857bc9f9a72c5be804c8138a6d6cb01213f702168efb6d",
       "rejection_fragment": "invalid or conflicting record name"
     },
     "ownership_throw_policy": {
-      "input_sha256": "e4ecef1680a3f798d611440d39601ea8248a76c3c47686c218278aae1e12691a",
+      "input_sha256": "213b7eb18c1bfaed077400ec503a15769f14f8d331b522b1e686c3ec4021db0e",
       "rejection_fragment": "unsupported special_members"
     },
     "ownership_unique_only": {
@@ -324,7 +324,7 @@
         "src/ownership.cpp": "00d4da11dd117c37c89e028e85ac384760a05c902432c5bc5eda006a9a109b9e",
         "src/runtime.cpp": "9ac423a9c673cb09beea911d214e1d46d776c8f59c29bdb46aa3909d4b4a2180"
       },
-      "input_sha256": "9095f242da08cf97bc22f68ecf7564e90e65234ef519ca66f3b68dafcc66f44c",
+      "input_sha256": "ca74a8e96d49e6d48ebeabe0dc1d023fc65dda372a6ae18f24248d35ec9658b6",
       "prepared_model": "93e23b6764aa4a627a907d0285e8619d7e31c69a11f1eb88a417bcb6a17fb222",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
@@ -345,12 +345,12 @@
         "src/ownership.cpp": "a02654a16d89dd01f980e37b0dc02c8ffd3ac62043bd5e268fdcbff6a916e61a",
         "src/runtime.cpp": "9ac423a9c673cb09beea911d214e1d46d776c8f59c29bdb46aa3909d4b4a2180"
       },
-      "input_sha256": "1f0fb3bfa5ce2dc7e329485017dff5019c083359dd6adf22e7b20dbbb6b95235",
+      "input_sha256": "c19b97ec52ef85c9237f47d6520c9515bc6a000dc170d91cd84dce073c1036ea",
       "prepared_model": "30b806b1e24e8a45b00e6e7f70a1ab6c315f8885268e34b8d72a59e335dd70b9",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
     "ownership_weak": {
-      "input_sha256": "8db3bf909c8710bd35add8f277e3aff100ea4fc66e03e1f67b9b87333aa021aa",
+      "input_sha256": "e780060e08573f4c2a1cc3c4715136bfe8131e67077775efa93bed306d98ea58",
       "rejection_fragment": "weak requires matching shared"
     },
     "runtime_mixed_only": {
@@ -369,7 +369,7 @@
         "public/scpp/short_names.hpp": "d51d6e272c0cd64cb376cf69c89784f283357ef068a77c85bd464ce87ba32f6a",
         "src/runtime.cpp": "dcd5373f63983dc416d5278b831b1b6f19d193e97b651802af7ca7836af4df70"
       },
-      "input_sha256": "f6e2f3528c617f744587361af4a2a82e40b63b2062760da64756dfb6b1720772",
+      "input_sha256": "db43bc493fb4c73a10dc301563696352d50461340023dad282aad587fb3a22e5",
       "prepared_model": "c32b77eda54e72c7271a9442bd802bfbc71d855e023fcebd764bf92cf2c6a803",
       "summary": "{\"artifacts\":13,\"status\":\"generated\"}"
     },
@@ -389,12 +389,12 @@
         "public/scpp/short_names.hpp": "d51d6e272c0cd64cb376cf69c89784f283357ef068a77c85bd464ce87ba32f6a",
         "src/runtime.cpp": "dcd5373f63983dc416d5278b831b1b6f19d193e97b651802af7ca7836af4df70"
       },
-      "input_sha256": "eb535d0cc34a08dfba6b0a60e1b6f64456f9df1f7af989820765b913be58bf31",
+      "input_sha256": "1d67f19041032e469f3ac94c87f3157e9c530cd15dc1f86cb3abfba1ddf0c4c5",
       "prepared_model": "76d2c85c69a6d4d40e744af8d947d877254d92aab7e244c5769ea98e67918c20",
       "summary": "{\"artifacts\":13,\"status\":\"generated\"}"
     },
     "signed_uint64": {
-      "input_sha256": "cb9cab751de77af6826d6deb4552667a0a6b5700e0e96251b00d62ee7bdb898c",
+      "input_sha256": "2a98f6337be318a57f103dc94c7f98bf6170ba7099d2558692d6d2e48546813a",
       "rejection_fragment": "Signed and uint64 arithmetic is not admitted"
     },
     "string_storage_only": {
@@ -414,32 +414,32 @@
         "public/scpp/string.hpp": "4a3fe23d0b17cf22e3ec71728f76904d4916fc68779e137503c82deb7899b10c",
         "src/runtime.cpp": "34c4408ad03749a1743430ab6500bb039c05485396c74e5e44a7d06526f79b4a"
       },
-      "input_sha256": "0cbc319caef2ae4c8e149fe9bf04c469f09a8fc279e86479fa86a0b41a8ab470",
+      "input_sha256": "b859ec27943fabdd579d79db97dc73f6ee4d20488a36b902c648f8f945420b6d",
       "prepared_model": "de4a04f3aeebc235fa31ec3402824fbceaf18df1d4ef248827864d9ff8da9eb1",
       "summary": "{\"artifacts\":14,\"status\":\"generated\"}"
     },
     "text_null": {
-      "input_sha256": "150834026362c4a2cb65255724d4440e6e8df56923ad4baba07da6ebeac5b6a0",
+      "input_sha256": "6e5182daab32522f0f4ba91f1a7555205e3446f6088e28d9ab52dfd80cbb6b39",
       "rejection_fragment": "Text cast requires"
     },
     "unknown_operator": {
-      "input_sha256": "d216d93bad0e14081adbbfca70f01bb017ac0a857c8e474ef0a8b4efc83cc167",
+      "input_sha256": "a5740a945a5231ce11a53d32ada19531ba315f1ede505c7950c37ba856d98964",
       "rejection_fragment": "Unregistered numeric operation"
     },
     "unknown_root": {
-      "input_sha256": "f735271bf4cffb3dcbb002cbb76c58e7250ca42f91ece71cbc73a531b06ed026",
+      "input_sha256": "b41d2565cf9c66b7f354839abfaf38dc451b2cca0486b1e20767a7618ae36fd1",
       "rejection_fragment": "unknown field typo"
     },
     "unknown_type": {
-      "input_sha256": "53c1ccd01eff86ba4a9fbff8c35e49e58734942a55afae6ced26b03ba1b61f4b",
+      "input_sha256": "25a88d5b7592ab4db40971fe6a1e69b8182425a805f03c015a9dfb78047ea00d",
       "rejection_fragment": "Unknown published integer type"
     },
     "unrequested_native": {
-      "input_sha256": "9637c6b247e1b5338f12a30684a2be914d71c83a4895bcd027a2974ad587887a",
+      "input_sha256": "642c9797736a4dfb224a5a967e82dfbbe6294ac894663fe0773b5fc419cdb82e",
       "rejection_fragment": "Unregistered native arithmetic input"
     },
     "unsafe_header": {
-      "input_sha256": "e229679912b55bc8b59c959c94fc866ce6c8ce0f6dbd9bae5e0c07beabcfeaf9",
+      "input_sha256": "a18eb34cc6ca32889c2bb7283d7b7a2c585089ae91a2165e730a9af8a897f6b6",
       "rejection_fragment": "Invalid public header path"
     },
     "values_only": {
@@ -457,7 +457,7 @@
         "public/scpp/short_names.hpp": "0a2b6d4743e049a22bbf8505f658c188705bce32ced3d00bee329190074b94c9",
         "src/runtime.cpp": "e7d2156d1f7f1d9c34aa4b3cddb62648388bb447dafb1bd12ff66a0ab4a60924"
       },
-      "input_sha256": "cbfab0c6cd02f814fd708db8ff81f3ca49195968ead7e87fe5553076dc94f729",
+      "input_sha256": "6237a8e1bd1b59f120b57ab7453a38679bc036efd65639fa11fa8de07a6c3d6c",
       "prepared_model": "d45f9b82f5422549b444cbf6da819bdcc62d30746f978e9b5a3736a39dc5fccb",
       "summary": "{\"artifacts\":12,\"status\":\"generated\"}"
     },
@@ -479,32 +479,32 @@
         "public/scpp/vectors.hpp": "3f4d556079ab13b60300d9239cb30d6cf848a6c6821bdd2b9bf54a2d3c0d7913",
         "src/runtime.cpp": "d85a5dbeacbfcf4ed639e064fca4d2ceef9b075cfbd5a982166a3412e534871a"
       },
-      "input_sha256": "1f41bee46f9af190be70f08b20c364c61241cb0186be9e0c637efab9c81102af",
+      "input_sha256": "c76db5d463f31c2949bba2e10c8bc6a06cbff240d06504e6538b5d5e9fca19cd",
       "prepared_model": "f17f43bcfe4c293875e338a8ac5199e916e47ac62ae76b3379f3ff368f208dfe",
       "summary": "{\"artifacts\":15,\"status\":\"generated\"}"
     },
     "vector_identity_cast": {
-      "input_sha256": "5863b2223071e15d279a08a91d4792d2aed862bf72514e34af751ac9cf1bec47",
+      "input_sha256": "a47baa4fa708a1ce35f159fc0c2bd14bd6c85df77ee02e783a7c1a2b54e692f0",
       "rejection_fragment": "Vector identity uses copy construction"
     },
     "vector_unpublished": {
-      "input_sha256": "a67113ed4eb92e9385c1b7a651b0c2a7e7f41ed9e023c44215886882fc0c9e69",
+      "input_sha256": "174b5022643651259532ffe25c3c09caf8eea14a75fa3e425eacd5ac5ee96a51",
       "rejection_fragment": "Vector requires supported published element type"
     },
     "version_decimal": {
-      "input_sha256": "800245d9208bdb929fe3f560b8c8feaf3fff24f081822d094d0b0276d20cd0e3",
+      "input_sha256": "ed4ea49c8e77a95c7b549823e36dcc72e5e98e4484cb5fcd0ce81494a482a376",
       "rejection_fragment": "Unsupported metadata version"
     },
     "version_string": {
-      "input_sha256": "3add1d092b877dcb2e0f170bf752121d93c40f832b9b239edcccc3fb7f9aca22",
+      "input_sha256": "25500aeab866de1e40160a306d8d83e7020cfafe130904bb919881b81f2cf655",
       "rejection_fragment": "Unsupported metadata version"
     },
     "wide_float": {
-      "input_sha256": "c555eec40df151288e7a9dfcf18aa83617d579db927b30c66883519f3325ad6a",
+      "input_sha256": "10a6d139c2df516ced9d72756c805311e00d92e9b64009b828d71aaed4821a5e",
       "rejection_fragment": "explicit"
     },
     "width_decimal": {
-      "input_sha256": "476789764de5eb5b1b0407866222fe76ec0bf1ee37b949ad426d6add2595651a",
+      "input_sha256": "be21d0c4df240fb5e30fd229e2a04d78f65854998653d3a1d77015a60754d4be",
       "rejection_fragment": "Unsupported integer width"
     }
   },

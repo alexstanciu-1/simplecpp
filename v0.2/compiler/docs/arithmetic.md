@@ -92,7 +92,12 @@ Each successful configuration has an atomic JSON record under
 the selected driver path, version and binary digest, the driver-selected C++ frontend,
 loaded Clang/LLVM implementation libraries, target, ordered flags, probe source,
 preprocessed source and probe driver revision. Changing an identity field triggers
-a fresh test. A matching record expires seven days after its successful run.
+a fresh test. Standard build configurations use a per-configuration index of file
+identities, sizes and nanosecond timestamps for the driver, frontend, loaded
+compiler libraries, probe and its included headers, explicit PCH and linker.
+An unchanged hit requires filesystem metadata checks only; it skips compiler
+invocations, preprocessing and binary hashing. Changes trigger full qualification.
+Unrecognized flags use the full fingerprint path. A matching record expires seven days after its successful run.
 A failed refresh stops the build and retry runs the probe again. The recorded
 traces describe these calls on that build configuration. The emitter consumes
 the source evaluation contract.

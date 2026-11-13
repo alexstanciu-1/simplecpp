@@ -88,9 +88,9 @@ final class struct_type_definition extends type_definition implements dependency
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 						'Inline field requires a zero-argument constructor: ' . $type->name);
 				}
-			} elseif ($type !== type_registry::integer() && !($type instanceof struct_handle_definition)) {
+			} elseif (!($type instanceof struct_handle_definition) && !$type?->supports_instance_field()) {
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
-					'Struct fields require int or int64, a shared or weak handle, or an inline struct: ' . $field->type_reference->spelling());
+					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
 			$field->settle_type($type);
 		}

@@ -71,11 +71,10 @@ final class Namespace_Syntax
 		$qualified = false;
 		while (($tokens[$i]->kind ?? null) === token_kind::identifier) {
 			$next = $tokens[++$i]->kind ?? null;
-			if ($next === token_kind::assign || ($qualified && $next !== null && binary_operator::compound($next) !== null)) return $qualified;
+			if ($qualified && self::write_operator($next)) return true;
 			if ($this->cursor->tokens->source->flavor === flavor::php && $next === token_kind::scope) {
 				$operator = $tokens[$i + 2]->kind ?? null;
-				return ($tokens[$i + 1]->kind ?? null) === token_kind::variable && $operator !== null
-					&& ($operator === token_kind::assign || binary_operator::compound($operator) !== null);
+				return ($tokens[$i + 1]->kind ?? null) === token_kind::variable && self::write_operator($operator);
 			}
 			if ($next !== $this->separator) return false;
 			$qualified = true;
@@ -134,5 +133,12 @@ final class Namespace_Syntax
 			$name .= '\\';
 		}
 		return $name;
+	}
+
+	/** STATIC METHODS */
+	private static function write_operator(?token_kind $kind): bool
+	{
+		return $kind !== null && ($kind === token_kind::assign || $kind === token_kind::increment
+			|| $kind === token_kind::decrement || binary_operator::compound($kind) !== null);
 	}
 }

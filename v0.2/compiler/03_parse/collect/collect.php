@@ -51,6 +51,10 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
+		if ($statement instanceof ast_property_update) {
+			$this->expression($statement->target);
+			return;
+		}
 		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement) || ($statement instanceof ast_update_statement)) {
 			return;
 		}
@@ -93,7 +97,9 @@ final class Body_Collection
 						? $statement->initializer->initializer : $statement->initializer->value);
 				}
 				$this->expression($statement->condition);
-				if ($statement->update instanceof ast_assignment_statement) {
+				if ($statement->update instanceof ast_property_update) {
+					$this->expression($statement->update->target);
+				} elseif ($statement->update instanceof ast_assignment_statement) {
 					$this->expression($statement->update->value);
 				}
 				return;
