@@ -185,7 +185,9 @@ Field capabilities do not automatically provide struct comparison or hashing
 operations. This capability rule does not expand the field types admitted by this
 specification or introduce implicit ownership transfer.
 
-`float` is not promoted by this spec in the current first slice.
+The bootstrap compiler admits `float` and `float64` as aliases for the same instance field type.
+Each field uses the native eight-byte `scpp::float64` representation and its target alignment.
+Value initialization produces positive zero. Record copies preserve signed zero and copy the field independently.
 
 ### 2.4 Initialization
 
@@ -248,7 +250,7 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
-The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`) and boolean instance fields, inline structs and
+The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean and float64 instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
 recursively. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
 incrementing 255 wraps to zero, while adding an int64 literal with `+=` checks the narrowed result

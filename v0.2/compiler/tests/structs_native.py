@@ -219,6 +219,84 @@ int main() {
         resident.stdin.close()
 
 
+def float_fields(work, flavor):
+    app = work / ('float-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'measurement')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'sensor.php').write_text('struct Sensor { public Measurement $reading; }')
+    record, setup, copy, field, other, negate = {
+        'php': ('struct Measurement { public float $amount; public function negative():void { $this->amount=-0.0; } }',
+                '$s Sensor;', '$c=$s;', '$s->reading->amount', '$c->reading->amount', '$s->reading->negative();'),
+        'cpp': ('struct Measurement { float amount; void negative() { this->amount=-0.0; } };',
+                'Sensor s;', 'auto c=s;', 's->reading->amount', 'c->reading->amount', 's->reading->negative();'),
+        'js': ('struct Measurement { amount:float; negative():void { this.amount=-0.0; } }',
+               'let s:Sensor;', 'let c=s;', 's.reading.amount', 'c.reading.amount', 's.reading.negative();'),
+    }[flavor]
+    copied = (setup + negate + copy + other + '=8.75;' + other + '+=2;'
+              + 'if (' + field + '==0.0 && ' + other + '==10.75) { echo "copy"; } return 8;')
+    # A separate minimal record lets the visibility-independent %= caller keep exactly the same source.
+    plain = record[:record.index(';') + 1] + ' }'
+    remainder = setup + field + '%=2; return 8;'
+    model.write_text(record)
+    out = work / ('float-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, stdout) in enumerate([
+            (entry, copied, None, b'copy'),
+            (model, record.replace('float', 'float64'), None, b'copy'),
+            (entry, setup + field + '=2; return 8;', 'conversion', None),
+            (model, plain.replace('float', 'int'), None, b''),
+            (entry, remainder, None, b''),
+            (model, plain, 'Unsupported compound', None),
+            (model, plain.replace('float', 'int'), None, b''),
+            (entry, 'return 8;', None, b''),
+            (model, record, None, b''),
+            (entry, copied, None, b'copy'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1987000000 + rev,) * 2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'float-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                result = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == result.get('error'), (rev, current, result)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in result, (rev, current, result)
+            assert artifacts(out) == artifacts(baseline)
+            build(out, work / ('float-native-' + flavor), stdout)
+            build(baseline, work / f'float-fresh-native-{flavor}-{rev}', stdout)
+            if rev in (0, 1):
+                native = work / f'layout-{flavor}-{rev}'
+                native.mkdir()
+                headers = [h for h in (out / 'units').glob('*.hpp')
+                           if 'struct Measurement {' in h.read_text() or 'method_11_Measurement_negative(' in h.read_text()]
+                probe = native / 'layout.cpp'
+                probe.write_text(''.join(f'#include "{h.resolve()}"\n' for h in headers) + """
+#include <cmath>
+#include <type_traits>
+int main() {
+    App::scpp_records::Measurement m{};
+    static_assert(std::is_same_v<decltype(m.amount), scpp::float64>);
+    static_assert(sizeof(m.amount) == 8 && alignof(decltype(m.amount)) == alignof(scpp::float64));
+    if (m.amount != 0.0 || std::signbit(m.amount)) return 1;
+    App::method_11_Measurement_negative(m);
+    auto copy = m;
+    if (copy.amount != 0.0 || !std::signbit(copy.amount)) return 2;
+    copy.amount = 1.0;
+    return m.amount != 0.0 || !std::signbit(m.amount);
+}
+""")
+                units = json.loads((out / 'manifest.json').read_text())['translation_units']
+                cmd = write_build(native, [probe, *(out / unit for unit in units if unit != 'entry.cpp')])
+                subprocess.run(cmd, cwd=native, check=True, capture_output=True)
+                subprocess.run([native / 'program'], check=True)
+        resident.stdin.close()
+
+
 def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
@@ -238,8 +316,8 @@ def prove(work, flavor):
         # Reject invalid layouts before lowering, including fields in an unused record.
         duplicate = PROGRAMS[flavor][0].replace('y', 'x')
         edits.extend([('duplicate-field', owner, duplicate, 'Duplicate struct field: x'),
-                      ('invalid-type', owner, record.replace(' int ', ' float ', 1) if flavor != 'js'
-                       else record.replace(': int', ': float', 1), 'Unsupported instance field type: float'),
+                      ('invalid-type', owner, record.replace(' int ', ' string ', 1) if flavor != 'js'
+                       else record.replace(': int', ': string', 1), 'Unsupported instance field type: string'),
                       ('restore-layout', owner, record.replace('x', 'width'), None)])
         if flavor == 'php':
             edits.extend([('nominal-copy', entry, 'struct Other { public int $x; } $p Point; $q Other = $p; return 8;',
@@ -756,6 +834,7 @@ if __name__ == '__main__':
         native_names(folder)
         shared_functions(folder)
         for language in PROGRAMS:
+            float_fields(folder, language)
             byte_fields(folder, language)
             boolean_fields(folder, language)
             shared_fields(folder, language)

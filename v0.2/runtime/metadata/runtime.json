@@ -856,7 +856,7 @@
       "float64": {
         "class": "float64",
         "literal_family": "floating",
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": false },
+        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
         "copy_semantics": "trivial",
         "source_names": ["float64"],
         "cpp_type": "double"
