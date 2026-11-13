@@ -25,6 +25,7 @@ final class Cpp_Headers
 			$header = hash('sha256', (string) $key) . '.hpp';
 			$lines = [];
 			$owners = [];
+			$record_headers = [];
 			$includes = [];
 			foreach ($file->published_declarations() as $node) {
 				if (!($node instanceof ast_function_declaration) && !($node instanceof ast_global_declaration) && !($node instanceof ast_struct_declaration)) {
@@ -44,17 +45,19 @@ final class Cpp_Headers
 				}
 				if ($node instanceof ast_function_declaration) {
 					if ($node->is_constructor()) continue;
-					if ($node->has_receiver() || $node->return_type_def() instanceof struct_type_definition) {
+					if ($node->has_receiver()) {
 						$type = $node->parent->definition;
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
-					if ($node->is_static && $node->return_type_def() instanceof struct_type_definition) {
-						$this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
-					}
-					foreach (Cpp_Emitter::signature_owners($node) as $owner) {
-						$owners[$owner->cpp_type()] = 'struct ' . $owner->cpp_type() . ';';
-						$this->publish_record($owner->payload->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
+					foreach (Cpp_Emitter::signature_records($node) as $type) {
+						if ($type instanceof struct_type_definition) {
+							$header_name = $this->publish_record($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
+							$record_headers[$header_name] = true;
+						} else {
+							$owners[$type->cpp_type()] = 'struct ' . $type->cpp_type() . ';';
+							$this->publish_record($type->payload->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
+						}
 					}
 				}
 				$lines[$node->symbol_key()] = $emitter->declaration($node, $includes);
@@ -70,6 +73,8 @@ final class Cpp_Headers
 			foreach ($includes as $include => $_) {
 				$text .= '#include <' . $include . ">\n";
 			}
+			ksort($record_headers, \SORT_STRING);
+			foreach ($record_headers as $record_header => $_) $text .= "#include \"$record_header\"\n";
 			$this->files['units/' . $header] = $text . Cpp_Emitter::namespace_body(
 				$program->session?->cpp_namespace ?? 'App', implode("\n", array_merge($owners, $lines)) . "\n");
 		}

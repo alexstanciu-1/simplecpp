@@ -273,7 +273,7 @@ CPP;
 			if ($function->is_constructor()) {
 				$owner = $function->parent->definition->shared;
 				$declarations[$owner->name] = $owner;
-				foreach (self::signature_owners($function) as $parameter_owner) $declarations[$parameter_owner->name] = $parameter_owner;
+				foreach (self::signature_records($function) as $parameter_owner) $declarations[$parameter_owner->name] = $parameter_owner;
 				$definitions[] = $this->allocation_factory($owner, $required_headers);
 			} else {
 				$declarations[$name] = $function;
@@ -293,10 +293,13 @@ CPP;
 		}
 		$prototypes = '';
 		$unit_headers = [];
-		// Calls and definitions need complete owner types even when no new-expression occurs in this unit.
+		// Calls and definitions need complete value and handle types even when only the signature names them.
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_function_declaration) {
-				foreach (self::signature_owners($function) as $type) $declarations[$type->name] = $type;
+				foreach (self::signature_records($function) as $type) {
+					if ($type instanceof struct_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+					else $declarations[$type->name] = $type;
+				}
 			}
 		}
 		foreach ($global_references as $property) {
@@ -919,9 +922,6 @@ CPP;
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			if ($function->is_static && $function->return_type_def() instanceof struct_type_definition) {
-				$declarations[$function->parent->symbol_key()] = $function->parent;
-			}
 			return $this->invocation($value, $function, $name, $function->return_type_def(), $global_references, $declarations, $required_headers);
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
@@ -1062,21 +1062,6 @@ CPP;
 			. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
 	}
 
-	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
-	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
-	{
-		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
-			return false;
-		}
-		return match ($conversion) {
-			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
-			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
-			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
-			default => false,
-		};
-	}
-
 	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */
 	private function constructor_forwards(ast_struct_declaration $record): string
 	{
@@ -1152,14 +1137,29 @@ CPP;
 	}
 
 	/** STATIC METHODS */
-	/** Shared types required by a function's native declaration and calls. @return \Generator<struct_handle_definition> */
-	public static function signature_owners(ast_function_declaration $function): \Generator
+	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
+	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
+	{
+		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
+			return false;
+		}
+		return match ($conversion) {
+			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
+			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
+			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
+			default => false,
+		};
+	}
+
+	/** Application record and handle types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition> */
+	public static function signature_records(ast_function_declaration $function): \Generator
 	{
 		$type = $function->return_type_def();
-		if ($type instanceof struct_handle_definition) yield $type;
+		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_handle_definition) yield $type;
+			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition) yield $type;
 		}
 	}
 

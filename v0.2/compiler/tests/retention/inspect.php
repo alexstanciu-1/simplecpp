@@ -77,7 +77,7 @@ final class Retention_Inspection
 	{
 		$classes = $this->graph($project);
 		$session = $project->session() ?? throw new \LogicException('Run the project before inspecting');
-		$live_bodies = new \SplObjectStorage();
+		$live_watchers = new \SplObjectStorage();
 		$live_declarations = new \SplObjectStorage();
 		foreach ($session->files() as $file) {
 			foreach ($file->published_declarations() as $declaration) {
@@ -85,7 +85,10 @@ final class Retention_Inspection
 			}
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
-					$live_bodies->attach($node->body());
+					$live_watchers->attach($node);
+					$live_watchers->attach($node->body());
+				} elseif ($node instanceof ast_struct_declaration) {
+					$live_watchers->attach($node->definition);
 				}
 			}
 		}
@@ -121,7 +124,7 @@ final class Retention_Inspection
 		}
 		foreach ($session->preparation_work->pending() as $bucket) {
 			foreach ($bucket as $body) {
-				if (!$live_bodies->contains($body)) {
+				if (!($body instanceof ast_function_body) || !$live_watchers->contains($body)) {
 					throw new \LogicException('Retired body remains in preparation queue');
 				}
 			}
@@ -135,7 +138,7 @@ final class Retention_Inspection
 				throw new \LogicException('Empty watcher reverse bucket');
 			}
 			$relations += count($targets[$watcher]);
-			$stale += $live_bodies->contains($watcher) ? 0 : 1;
+			$stale += $live_watchers->contains($watcher) ? 0 : 1;
 		}
 		/** @var \SplObjectStorage $observers */
 		$observers = self::field($session->dependency_watches, 'observers');

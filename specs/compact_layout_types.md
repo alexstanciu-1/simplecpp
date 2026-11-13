@@ -250,6 +250,11 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
+Free functions and ordinary methods may accept and return an inline struct by value. A parameter
+requires the same nominal record type. Copying preserves independent inline fields and the
+allocation identity of shared fields. A method may return a different record from its receiver.
+Writable-reference parameters for inline records remain deferred in the bootstrap compiler.
+
 The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean, float64 and string instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
 recursively. A written instance-field default must be a scalar literal accepted by the field's typed

@@ -209,14 +209,6 @@ abstract class type_definition
 		return false;
 	}
 
-	/** A literal or a plain storage read cannot modify a sibling's borrowed value. */
-	protected static function stable_cpp_operand(ast_expression $operand): bool
-	{
-		return ($operand instanceof ast_name_expression && $operand->declaration() instanceof ast_local_binding)
-			|| $operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
-			|| $operand instanceof ast_string_expression || $operand instanceof ast_keyword_expression;
-	}
-
 	/** Whether this lowering accepts the identity-converted operands directly, independently of result reorderability. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
@@ -411,6 +403,14 @@ abstract class type_definition
 	}
 
 	/** STATIC METHODS */
+	/** A literal or a plain storage read cannot modify a sibling's borrowed value. */
+	protected static function stable_cpp_operand(ast_expression $operand): bool
+	{
+		return ($operand instanceof ast_name_expression && $operand->declaration() instanceof ast_local_binding)
+			|| $operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
+			|| $operand instanceof ast_string_expression || $operand instanceof ast_keyword_expression;
+	}
+
 	protected static function checked_integer_operand(?ast_expression $syntax, string $value, string $parameter): string
 	{
 		if ($syntax instanceof ast_call_expression && $syntax->cardinality === null
