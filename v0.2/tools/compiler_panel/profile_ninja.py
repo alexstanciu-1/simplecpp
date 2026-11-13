@@ -4,9 +4,17 @@ import argparse
 import json
 from pathlib import Path
 import tempfile
+import time
 
-from native_build import write_build
+from native_build import qualified_ninja, write_build
 from profile_native import HERE, ROOT, invoke, stats
+
+
+def build(command, directory):
+    start = time.perf_counter()
+    with qualified_ninja(command, directory) as invocation:
+        _, log = invoke([invocation[0], '-C', directory, *invocation[1:]])
+    return (time.perf_counter() - start) * 1000, log
 
 
 def main():
@@ -41,22 +49,21 @@ def main():
                 directory = work / name
                 directory.mkdir()
                 command = write_build(directory, units, level, pch)
-                command = [command[0], '-C', directory, *command[1:]]
                 results[name] = {'sources':count, 'translation_units':len(units), 'optimization':level,
                                  'pch':pch, 'fresh_ms':[], 'recompile_ms':[], 'commands':list(map(str,command))}
                 configurations.append((name,directory,command))
                 # One unmeasured build warms filesystem caches for each configuration.
-                invoke(command)
+                build(command, directory)
         for sample in range(args.samples):
             order = configurations[sample % 6:] + configurations[:sample % 6]
             for name,directory,command in order:
                 invoke([command[0], '-C', directory, '-t', 'clean'])
-                ms, log = invoke(command)
+                ms, log = build(command, directory)
                 (directory / f'fresh-{sample}.log').write_bytes(log)
                 results[name]['fresh_ms'].append(ms)
                 for output in [*directory.glob('unit-*.o'), directory/'program']:
                     output.unlink()
-                ms, log = invoke(command)
+                ms, log = build(command, directory)
                 (directory / f'recompile-{sample}.log').write_bytes(log)
                 results[name]['recompile_ms'].append(ms)
                 if results[name]['pch']:
@@ -67,12 +74,12 @@ def main():
                 assert b'.debug_' not in sections
                 results[name]['bytes'] = (directory/'program').stat().st_size
         for name,directory,command in configurations:
-            _, log = invoke(command)
-            assert b'no work to do' in log
+            _, log = build(command, directory)
+            assert b'no work to do' in log or (results[name]['pch'] and b'probe cached:' in log)
             if results[name]['pch']:
                 header = directory/'runtime_pch.hpp'
                 header.write_text(header.read_text()+'// invalidation proof\n')
-                _, log = invoke(command)
+                _, log = build(command, directory)
                 assert b'-x c++-header' in log and b'-include-pch' in log
                 _, output = invoke([directory/'program'], expected=8)
                 assert output == b'Result: 8\n'

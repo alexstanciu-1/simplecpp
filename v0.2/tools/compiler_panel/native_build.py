@@ -1,12 +1,49 @@
 """Shared Ninja build graph for the local panel and native-build experiments."""
 from pathlib import Path
+from contextlib import contextmanager
 import hashlib
 import shlex
 import shutil
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 QUALIFICATION = Path(__file__).resolve().parents[1] / 'layout_probe/qualification.py'
+sys.path.insert(0, str(QUALIFICATION.parent))
+from qualification import qualify
+
+
+class NinjaCommand(list):
+    """Ninja argv plus the qualification inputs chosen by the graph writer."""
+    def __init__(self, ninja, qualification):
+        super().__init__([ninja, '-j', '4', '-v', '-f', 'build.ninja'])
+        self.qualification = qualification
+
+
+@contextmanager
+def qualified_ninja(command, work):
+    """Use an in-process hit. Cold, expired and PCH builds run the protected graph."""
+    if not isinstance(command, NinjaCommand) or command.qualification is None:
+        yield command
+        return
+    cxx, flags, cache, link_flags, probe_rule = command.qualification
+    graph = (Path(work) / 'build.ninja').read_text()
+    guard = 'build qualify-native: qualify force-qualification'
+    # Experiments may instrument the compilation rules. Require the original probe command and gate.
+    if probe_rule not in graph or guard not in graph.splitlines():
+        yield command
+        return
+    hit = qualify(cxx, flags, cache, link_flags, cached_only=True, build_dir=work)
+    if hit is None:
+        yield command
+        return
+    # Keep the saved graph protected. Only this launcher uses the temporary graph and only for this run.
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.ninja') as invocation:
+        invocation.write(graph.replace(guard + '\n', 'build qualify-native: phony\n', 1))
+        invocation.flush()
+        args = list(command)
+        args[args.index('-f') + 1] = invocation.name
+        yield args
 
 
 def ninja_path(path):
@@ -67,4 +104,6 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
     text = '\n'.join(lines) + '\n'
     if not graph.exists() or graph.read_text() != text:
         graph.write_text(text)
-    return [ninja, '-j', '4', '-v', '-f', 'build.ninja']
+    inputs = (cxx, list(map(str, common[1:])), library.parent / 'native-qualification',
+              ['--ld-path=' + mold], '\n'.join(lines[1:3]) + '\n')
+    return NinjaCommand(ninja, None if pch else inputs)

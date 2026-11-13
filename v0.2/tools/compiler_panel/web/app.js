@@ -46,6 +46,7 @@ function render(data){
     if(stage.php_peak_bytes!==undefined)content.append(node('p',`PHP live-memory delta: ${stage.memory_delta_bytes.toLocaleString()} B · cumulative peak: ${stage.php_peak_bytes.toLocaleString()} B`,'muted'));
     if(stage.diagnostics)pre(content,'Diagnostics',stage.diagnostics.join('\n'));
     if(stage.command)pre(content,'Command (argument list)',JSON.stringify(stage.command,null,2));
+    if(stage.qualification==='in-process cache hit'){content.append(node('p',`Qualification cache hit · launcher check ${stage.launcher_check_ms.toFixed(2)} ms · Ninja build/link ${stage.ninja_ms.toFixed(2)} ms`));}
     if(stage.pch_cache){content.append(node('p',`Runtime PCH: ${stage.pch_cache.status.toUpperCase()} · Ninja check/build/link ${stage.ninja_ms.toFixed(2)} ms · Clang validation ${stage.validate_pch?'on':'off'}`));pre(content,'PCH cache',JSON.stringify(stage.pch_cache,null,2));}
     if(stage.build_graph)pre(content,`Ninja graph · ${stage.jobs} jobs · ${stage.linker} · PCH ${stage.pch?'on':'off'}`,stage.build_graph);
     if(stage.executable_bytes!==undefined)content.append(node('p',`Executable: ${stage.executable_bytes.toLocaleString()} bytes (${(stage.executable_bytes/1024).toFixed(2)} KiB), unstripped`));

@@ -14,7 +14,7 @@ import time
 SAMPLE = Path(__file__).resolve().parent
 ROOT = SAMPLE.parents[1]
 sys.path.insert(0, str(ROOT / 'tools/compiler_panel'))
-from native_build import write_build
+from native_build import qualified_ninja, write_build
 
 PHP = r'''
 require $argv[1];
@@ -38,7 +38,8 @@ echo json_encode(['module_ms'=>($loaded-$start)/1e6, 'frontend_prepare_ms'=>($se
 
 def run(command, cwd=None, expected=0):
     start = time.perf_counter()
-    proc = subprocess.run(list(map(str, command)), cwd=cwd, capture_output=True, env={**os.environ, 'XDEBUG_MODE': 'off'}, timeout=120)
+    with qualified_ninja(command, cwd) as invocation:
+        proc = subprocess.run(list(map(str, invocation)), cwd=cwd, capture_output=True, env={**os.environ, 'XDEBUG_MODE': 'off'}, timeout=120)
     ms = (time.perf_counter() - start) * 1000
     if proc.returncode != expected:
         raise RuntimeError(proc.stdout.decode(errors='replace') + proc.stderr.decode(errors='replace'))

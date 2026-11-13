@@ -48,6 +48,10 @@ try:
         assert report['stages'][-2]['executable_bytes'] > 0
         assert len(report['stages']) == 9, report
         print('Panel compile/build/run passed:', flavor)
+    repeat = json.loads(request('/run', simple, allowed)[1])
+    native = repeat['stages'][-2]
+    assert repeat['ok'] and native['qualification'] == 'in-process cache hit', native
+    assert native['launcher_check_ms'] + native['ninja_ms'] <= native['ms']
     multi = {**simple,'files':[{'name':'main','flavor':'php','source':'ping(); return 8;'},
                               {'name':'support','flavor':'cpp','source':'void ping() { echo "support"; }'}]}
     report = json.loads(request('/run', multi, allowed)[1])
