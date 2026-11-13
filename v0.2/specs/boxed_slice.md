@@ -87,8 +87,9 @@ strings, including numeric spellings and embedded NUL. It does not implement sou
 numeric-string normalization. Source indexed operations use a separate adapter that shares canonical unsigned decimal
 classification with JSON. Decimal spellings through UINT32_MAX normalize to integers;
 integer keys above INT32_MAX then fail. Wider spellings, signed spellings, leading zeroes
-(except "0") and embedded NUL remain byte strings. Each keyed write validates its key
-before RHS evaluation. Typed hashes continue to use their declared key domain.
+(except "0") and embedded NUL remain byte strings. Each boxed keyed write validates its key and converts its RHS before the store.
+The two arguments follow native C++ evaluation order. If either fails, the store is
+skipped and effects already performed by either argument remain observable. Typed hashes continue to use their declared key domain.
 
 The storage contracts own failure behavior. Invalid kinds throw runtime errors,
 invalid integer keys throw out_of_range, append exhaustion throws overflow_error,

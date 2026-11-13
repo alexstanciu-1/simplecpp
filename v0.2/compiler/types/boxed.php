@@ -6,8 +6,6 @@ namespace scpp\compiler;
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
 abstract class boxed_type_definition extends type_definition implements indexed_collection_type, index_write_type
 {
-	use ordered_keyed_store;
-
 	public function prepare_key(ast_expression $key): void
 	{
 		$type = $key->type_def();
@@ -35,19 +33,15 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $this->cpp_type() . '::container()';
 	}
 
-	public function lower_cpp_key(ast_expression $syntax, string $key): string
-	{
-		return 'scpp::boxed_key(' . $key . ')';
-	}
-
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(' . $receiver . ').source_read(' . $this->lower_cpp_key($key, $index) . ')';
+		return $receiver . '.source_read(scpp::boxed_key(' . $index . '))';
 	}
 
-	public function lower_cpp_write(string $receiver, string $key, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
 	{
-		return '(' . $receiver . ').source_set(' . $key . ', ' . $value . ')';
+		$value = $this->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return $receiver . '.source_set(scpp::boxed_key(' . $key . '), ' . $value . ');';
 	}
 
 	public function supports_inferred_local(): bool

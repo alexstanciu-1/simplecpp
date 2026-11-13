@@ -38,12 +38,13 @@ int main() {
     result = success(run(binary))
     assert result.stdout == b'a\0b-9223372036854775808|9223372036854775807|0' and not result.stderr, result
     source.write_text('''#include <scpp/output.hpp>
+#include <scpp/string.hpp>
 #include <cstdio>
 #include <stdexcept>
 int main() {
     if (!std::freopen("/dev/full", "w", stdout)) return 2;
     if (std::setvbuf(stdout, nullptr, _IONBF, 0) != 0) return 3;
-    try { scpp::echo_bytes("x", 1); }
+    try { scpp::echo_string(scpp::string{"x", 1}); }
     catch (const std::runtime_error&) { return 0; }
     return 1;
 }

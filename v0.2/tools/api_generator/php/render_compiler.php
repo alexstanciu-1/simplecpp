@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 45,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 47,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -347,7 +347,8 @@ function compilerOutput(?array $selected): string {
     if ($selected === null) return '';
     $header = var_export($selected['header'], true);
     $symbol = var_export($selected['symbol'], true);
-    $expression = $selected['strategy'] === 'bytes' ? 'Cpp_Output::bytes($value, $operand, ' . $symbol . ')'
+    $expression = isset($selected['literal_symbol'])
+        ? 'Cpp_Output::string($value, $operand, ' . $symbol . ', ' . var_export($selected['literal_symbol'], true) . ')'
         : $symbol . " . '(' . \$operand . ');'";
     return "
 \t/** Generated output admission; does not authorize string conversion. */

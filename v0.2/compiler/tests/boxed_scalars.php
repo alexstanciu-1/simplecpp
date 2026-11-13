@@ -90,12 +90,37 @@ foreach (flavor::cases() as $flavor) {
 		$factory = "scpp::{$family}::from_integer";
 		foreach (['var_item_2', 'static_cast<scpp::int64>(((var_item_2 > var_key_1)) - ((var_item_2 < var_key_1)))',
 			'number_()', 'static_cast<scpp::int64>(var_small_3)'] as $argument) {
-			verify(str_contains($cpp, "const auto write_value = $factory($argument);"), "Unexpected $family factory argument: $argument");
+			verify(str_contains($cpp, "var_x_0.source_set(scpp::boxed_key(var_key_1), $factory($argument));"), "Unexpected $family factory argument: $argument");
 		}
-		verify(str_contains($cpp, 'const auto write_key = scpp::boxed_key(var_key_1);')
+		verify(!str_contains($cpp, 'write_key')
 			&& str_contains($cpp, '.source_read(scpp::boxed_key(var_key_1))')
-			&& str_contains($cpp, 'const auto write_value = var_y_4;'), 'Lost key validation or same-family binding');
+			&& str_contains($cpp, 'var_x_0.source_set(scpp::boxed_key(var_key_1), var_y_4);'), 'Lost key validation or same-family binding');
 		$fixtures[$flavor->name . '-' . $family . '-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('21!62557')];
+		$literals = $decl($family, 'x', '[]') . $index('x', '"k"') . ' = 8;'
+			. 'echo (int)' . $index('x', '"k"') . ';'
+			. $index('x', '0') . ' = 2.5; echo (int)' . $index('x', '0') . ';'
+			. $index('x', '0') . ' = true; echo (int)' . $index('x', '0') . ';'
+			. $index('x', '0') . ' = null;' . $decl('null', 'nil', $index('x', '0'))
+			. $index('x', '0') . ' = "text"; echo (string)' . $index('x', '0') . '; return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($literals));
+		verify(preg_match('/var_x_0\.source_set\(scpp::boxed_key\(scpp::string\{"k", 1\}\), scpp::' . $family . '::from_integer\(8L{0,2}\)\);/', $cpp) === 1,
+			'Expected a direct keyed store for a boxed integer literal');
+		verify(substr_count($cpp, 'var_x_0.source_set(scpp::boxed_key(') === 5, 'Expected direct boxed literal stores');
+		verify(str_contains($cpp, 'var_x_0.source_read(scpp::boxed_key(scpp::string{"k", 1}))')
+			&& str_contains($cpp, ", scpp::{$family}::from_string("), 'Missing string read or string boxing');
+		$fixtures[$flavor->name . '-' . $family . '-literal-store'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('821text')];
+
+		$parameter = match ($flavor) {
+			flavor::cpp => 'int &key', flavor::php => 'int &$key', flavor::js => '&key: int',
+		};
+		$mutate = ($flavor === flavor::cpp ? "int mutate($parameter)" : "function mutate($parameter): int")
+			. '{' . $key . ' = 2; return 7;}';
+		$mutation = $mutate . $decl($family, 'x', '[]') . $decl('int', 'key', '1')
+			. $index('x', '1') . ' = 0;' . $index('x', '2') . ' = 0;'
+			. $index('x', $key) . " = mutate($key); echo (int)" . $index('x', '1') . ', (int)' . $index('x', '2') . ", $key;"
+			. "$key = 1;" . $index('x', "mutate($key)") . " = $key; echo (int)" . $index('x', '7') . '; return 8;';
+		$fixtures[$flavor->name . '-' . $family . '-mutated-key'] = [
+			'cpp' => (new Cpp_Emitter())->emit($prepare($mutation)), 'stdout_hex' => array_map('bin2hex', ['7021', '7022', '0721', '0722'])];
 		$f = $var('f');
 		$casts = $function('float', 'fraction', 'return 6.75;') . $decl($family, 'x', '[]')
 			. $decl('float', 'f', '2.5') . $decl($family, 'y', '7')
@@ -115,15 +140,21 @@ foreach (flavor::cases() as $flavor) {
 		foreach (['true', '1.5', 'null', $x] as $key) {
 			rejects(fn() => $prepare($decl($family, 'x', '[]') . $index('x', $key) . ' = 1;'), 'key requires int or string');
 		}
-		$bad = $decl($family, 'x', 'null') . $index('x', '"2147483648"') . ' = (int)' . $x . '; return 8;';
-		$fixtures[$flavor->name . '-' . $family . '-key-first'] = [
-			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => '', 'catch_out_of_range' => 'packed_integer_key_limit'];
+		// Source catch is deferred. Observe the receiver at the failed store in the native fixture.
+		$bad = $decl($family, 'x', 'null') . $index('x', '"2147483648"') . ' = 8; return 91;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($bad));
+		$cpp = preg_replace('/^(\s*var_x_0\.source_set\([^\n]+;)$/m',
+			"\ttry {\n$1\n\t} catch (const std::out_of_range& e) { return var_x_0.kind() == scpp::boxed_kind::null"
+			. " && std::string_view(e.what()) == \"packed_integer_key_limit\" ? 8 : 92; }", $cpp, 1, $matches);
+		verify($matches === 1, 'Missing boxed store for failure observation');
+		$fixtures[$flavor->name . '-' . $family . '-invalid-key-no-store'] = [
+			'cpp' => "#include <stdexcept>\n#include <string_view>\n" . $cpp, 'stdout_hex' => ''];
 		foreach (['1', '2147483648'] as $key_text) {
 			$order = $function('string', 'key', 'echo "K"; return "' . $key_text . '";')
 				. $function('int', 'rhs', 'echo "R"; return 7;') . $decl($family, 'x', '[]')
 				. $index('x', 'key()') . ' = rhs(); echo (int)' . $index('x', '1') . '; return 8;';
 			$fixture = ['cpp' => (new Cpp_Emitter())->emit($prepare($order)),
-				'stdout_hex' => bin2hex($key_text === '1' ? 'KR7' : 'K')];
+				'stdout_hex' => array_map('bin2hex', $key_text === '1' ? ['KR7', 'RK7'] : ['K', 'RK'])];
 			if ($key_text !== '1') {
 				$fixture['catch_out_of_range'] = 'packed_integer_key_limit';
 			}
@@ -132,7 +163,7 @@ foreach (flavor::cases() as $flavor) {
 		$bad = $function('int', 'rhs', 'echo "!"; return 8;') . $decl($family, 'x', '[]')
 			. $index('x', '-1') . ' = rhs(); return 8;';
 		$fixtures[$flavor->name . '-' . $family . '-negative-key'] = [
-			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => '', 'catch_out_of_range' => true];
+			'cpp' => (new Cpp_Emitter())->emit($prepare($bad)), 'stdout_hex' => ['', bin2hex('!')], 'catch_out_of_range' => 'packed_integer_key_limit'];
 		$bad = $decl($family, 'x', '1') . $decl($family, 'y', $index('x', '0')) . 'return 8;';
 		$fixtures[$flavor->name . '-' . $family . '-scalar-read'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($bad)),
 			'stdout_hex' => '', 'catch_runtime_error' => 'boxed_expected_container'];

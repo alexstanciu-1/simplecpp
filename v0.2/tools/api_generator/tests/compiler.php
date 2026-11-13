@@ -669,14 +669,19 @@ $noOutputFiles = renderCompiler($noOutput, $facts);
 requireThat(!str_contains($noOutputFiles['types/int64.php'], 'function supports_output'), 'Removed output admission retained');
 $boundOutput = unserialize(serialize($metadata));
 $boundOutput->compiler->runtime_bindings->echo_int->symbol = 'scpp::test_echo';
+$boundOutput->compiler->runtime_bindings->echo_string->symbol = 'scpp::test_string_echo';
+$boundOutput->compiler->runtime_bindings->echo_bytes->symbol = 'scpp::test_literal_echo';
 $boundOutput->submodules->{'core.output'}->header = 'scpp/test_output.hpp';
 $boundOutputFiles = renderCompiler($boundOutput, $facts);
 requireThat(str_contains($boundOutputFiles['types/int64.php'], 'scpp::test_echo'), 'Output symbol ignored');
 requireThat(str_contains($boundOutputFiles['types/string.php'], 'scpp/test_output.hpp'), 'Output header ignored');
-foreach (['missing', 'operand', 'strategy', 'unsupported', 'symbol', 'header'] as $change) {
+requireThat(str_contains($boundOutputFiles['types/string.php'], 'scpp::test_string_echo')
+    && str_contains($boundOutputFiles['types/string.php'], 'scpp::test_literal_echo'), 'String output symbols ignored');
+foreach (['missing', 'literal', 'operand', 'strategy', 'unsupported', 'symbol', 'header'] as $change) {
     $bad = unserialize(serialize($metadata));
     match ($change) {
         'missing' => $bad->compiler->output->int64->binding = 'missing',
+        'literal' => $bad->compiler->output->string->literal_binding = 'echo_string',
         'operand' => $bad->compiler->runtime_bindings->echo_int->operand = 'string',
         'strategy' => $bad->compiler->runtime_bindings->echo_bytes->strategy = 'integer',
         'unsupported' => $bad->compiler->output->bool_t = (object)['strategy' => 'integer', 'binding' => 'echo_int'],

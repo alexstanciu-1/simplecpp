@@ -91,19 +91,19 @@ Publication supplies the member, parameter types, passing modes and provider. Pr
 ### First collection slice — vector read/append and typed hash read/write
 
 - Give the vector read and append handlers access to the prepared operand and its emitted C++ at the parameter boundary. For append, route the existing element conversion through that boundary exactly once. Preserve conversion-provider collection. For a read, apply the admitted index identity to the published count parameter.
-- Use the hash specialization’s key and value types independently. Bind an exact key directly on read. On write, finish evaluating and retaining the key before the RHS can change it, convert the value once, and call `set` only after both succeed. Account for the actual type captured by `const auto` when deciding where a required cast belongs.
+- Use the hash specialization’s key and value types independently. Bind an exact key directly on read. On write, pass both exact arguments to `set` in native argument order.
 - Limit the slice to existing source operations. Vector replacement is the regression baseline. String indexing and boxed indexing share compiler interfaces and retain their existing behavior. New collection methods, hash append, traversal and general sequencing changes belong to other work. [Typed collection feature plan](typed_collections.md)
 
 **Verification checklist for the first slice**
 
 - [x] Across cpp/php/js, inspect emitted C++ and run native cases for both vector specializations and all four `hash<V,K>` pairs. Cover exact local arguments, a target-native integer literal, an integer `<=>` result and arithmetic whose native type still needs a cast. Verify canonical overload selection with optional vector adapters disabled and with `long` and `long long` target facts.
 - [x] Verify valid vector reads and owned string results, negative and past-end read failures, and append conversions. A failed checked conversion or carrier extraction must leave the vector’s size and prior elements intact.
-- [x] Verify hash insert, replace, copied reads and a missing-key read that throws without inserting. Exercise strict key diagnostics, embedded NUL and distinct numeric-looking string keys. Verify that an RHS call changing the key local still writes under the original key, and that a failed RHS conversion neither inserts nor replaces. Check single evaluation with observable calls.
+- [x] Verify hash insert, replace, copied reads and a missing-key read that throws without inserting. Exercise strict key diagnostics, embedded NUL and distinct numeric-looking string keys. Verify that an RHS call changing the key local writes under a key allowed by native argument evaluation order, and that a failed RHS conversion neither inserts nor replaces. Check single evaluation with observable calls.
 - [x] Compile emitted units with relocated vector/hash providers and required conversion headers. Check fresh versus incremental output after an operand type change and recovery. Rerun vector replacement, string and boxed indexing regressions, then update the lowering catalog and verify both C++ columns against fresh emission. [Vector tests](../../compiler/tests/vector_operations.php) · [Hash tests](../../compiler/tests/hash_operations.php) · [Catalog check](../../compiler/tests/lowering_catalog.php)
 
 The typed slice is implemented. Preparation checks the append capability and the emitter
 supplies each original argument and its prepared conversion to the binding. Typed hash
-writes normalize before taking the key and value snapshots. No new retained analysis facts
+writes normalize the key and value at the two by-value parameter boundaries. No new retained analysis facts
 were needed.
 
 Native Clang fixtures passed for cpp/php/js on the host LP64 publication, including failed
@@ -125,15 +125,12 @@ the prepared provider graph and string adapters, including reduced publications.
 Both generated family bindings pass the prepared scalar expression to the shared exact-argument
 renderer for the factory parameter. It gives integer literals the target suffix, passes an
 exact local or an already-normalized comparison directly, and widens a byte for the integer
-factory. A same-family value uses the existing identity conversion. The key adapter takes an
-integer or string and completes range checking or string classification before the write
-evaluates its RHS. This slice adds no preparation facts.
+factory. A same-family value uses the existing identity conversion. Boxed writes pass the
+converted RHS and validated key directly to `source_set` in native C++ argument order.
 
 The cpp/php/js fixtures exercise both copy policies, null and missing-key reads, writes to
-null, scalar-receiver errors and rejected cross-family stores. A negative integer key suppresses
-an observable RHS call. For a key function returning the string `"1"`, the native fixtures
-observe one key call, one RHS call and the stored value. Returning `"2147483648"` instead
-produces only the key marker and the `packed_integer_key_limit` exception.
+null, scalar-receiver errors and rejected cross-family stores. A successful effectful write
+evaluates both arguments once. Invalid keys prevent the store, and the RHS may have run.
 Explicit conversions that already produce int64 pass straight to the factory, including
 checked float conversion and boxed extraction. An identity cast around an ordinary literal
 still needs the target's overload rules. The target test compiles these argument boundaries

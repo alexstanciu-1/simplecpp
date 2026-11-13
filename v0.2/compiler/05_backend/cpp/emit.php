@@ -243,7 +243,7 @@ CPP;
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
 			$type = $global->type_def();
-			$initializer = self::plain_integer_initializer($global->initializer, $global->initialization())
+			$initializer = self::plain_integer_literal($global->initializer, $global->initialization())
 				?? $type->lower_cpp_conversion($global->initialization(),
 					$global->initializer->type_def()->lower_cpp_literal($global->initializer));
 			$definitions[] = 'constinit ' . $type->cpp_type() . ' ' . self::global_name($global)
@@ -522,12 +522,14 @@ CPP;
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
-				$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
-					logical_root: $conversion === value_conversion::identity);
 				if ($conversion instanceof exit_conversion) {
-					$value = Cpp_Exit::expression($conversion, $value);
+					$value = self::plain_integer_literal($statement->value, $conversion)
+						?? Cpp_Exit::expression($conversion,
+							$this->value($statement->value, $global_references, $declarations, $required_headers));
 				}
 				else {
+					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
+						logical_root: $conversion === value_conversion::identity);
 					$type = $function->return_type_def();
 					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
@@ -650,7 +652,7 @@ CPP;
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
-			$literal = self::plain_integer_initializer($value, $conversion);
+			$literal = self::plain_integer_literal($value, $conversion);
 			if ($literal !== null) {
 				return $prefix . ' = ' . $literal;
 			}
@@ -1091,11 +1093,12 @@ CPP;
 		return $root === '' ? $body : "namespace $root {\n" . $body . "}\n";
 	}
 
-	/** Typed storage supplies the native type. Leave the signed minimum to the literal renderer. */
-	private static function plain_integer_initializer(ast_expression $value, int $conversion /** uint16 */): ?string
+	/** The typed destination supplies the native type. Leave the signed minimum to the literal renderer. */
+	private static function plain_integer_literal(ast_expression $value, int|exit_conversion $conversion /** uint16|exit_conversion */): ?string
 	{
 		if (!($value instanceof ast_integer_expression)
-			|| ($conversion !== value_conversion::identity && $conversion !== value_conversion::integer_proven)) {
+			|| ($conversion !== value_conversion::identity && $conversion !== value_conversion::integer_proven
+				&& $conversion !== exit_conversion::proven)) {
 			return null;
 		}
 		$integer = $value->integer();

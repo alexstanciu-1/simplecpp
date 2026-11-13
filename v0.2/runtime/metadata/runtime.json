@@ -977,7 +977,7 @@
     },
     "output": {
       "int64": { "strategy": "integer", "binding": "echo_int" },
-      "string": { "strategy": "bytes", "binding": "echo_bytes" }
+      "string": { "strategy": "string", "binding": "echo_string", "literal_binding": "echo_bytes" }
     },
     "entry": { "checked_binding": "entry_exit_checked" },
     "runtime_bindings": {
@@ -991,6 +991,12 @@
         "operand": "int64",
         "strategy": "integer",
         "symbol": "scpp::echo_int",
+        "declaration_group": "output"
+      },
+      "echo_string": {
+        "operand": "string",
+        "strategy": "string",
+        "symbol": "scpp::echo_string",
         "declaration_group": "output"
       },
       "echo_bytes": {

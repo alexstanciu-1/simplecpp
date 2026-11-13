@@ -13,6 +13,13 @@ This amendment supersedes the eager operand ordering and snapshot requirements
 in the earlier decisions below and in operator-specific descriptions. A backend
 may still sequence operands. Such sequencing describes that lowering only.
 
+## Typed hash and boxed keyed writes (2026-11-12)
+
+For a typed hash, `mixed`, or `dynamic` keyed write, native C++ call-argument order applies
+to the validated key and the converted RHS. A successful store evaluates each once.
+If either argument throws, the store does not run. Effects already performed by
+an argument remain observable. Source code cannot depend on which argument runs first.
+
 ## Earlier decisions
 
 Agreed 2026-10-10. This amendment defines eager binary operand sequencing for

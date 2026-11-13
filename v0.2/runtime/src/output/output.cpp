@@ -13,6 +13,13 @@ void echo_bytes(const char* data, ::size_t length)
     }
 }
 
+#ifdef SCPP_OUTPUT_HAS_STRING
+void echo_string(const string& value)
+{
+    echo_bytes(value.data(), static_cast<::size_t>(value.size()));
+}
+#endif
+
 void echo_int(::int64_t value)
 {
     char buffer[32];

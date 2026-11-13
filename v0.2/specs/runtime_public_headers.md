@@ -29,6 +29,10 @@ void scpp::echo_bytes(const char* data, ::size_t length);
 void scpp::echo_int(::int64_t value);
 ```
 
+When strings are published, the output header also forward-declares `scpp::string`
+and declares `void scpp::echo_string(const scpp::string&)`. Its compiled
+implementation borrows the string and writes its exact byte span through `echo_bytes`.
+
 The C scalar headers avoid pulling libc++ template helpers into the public include
 closure. The byte buffer is borrowed during the call; a zero length permits an empty buffer.
 Integers use locale-independent decimal formatting. Calls add no separator or newline.

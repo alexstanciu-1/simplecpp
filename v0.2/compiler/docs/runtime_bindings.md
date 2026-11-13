@@ -147,8 +147,9 @@ and ABI result `native_int`. This does not register another source type. The gen
 `bindings/entry.php` defines `Cpp_Entry_Binding::checked()` and `header()`; the generator
 validates the bounded signature and public symbol/header syntax before publication.
 
-`Cpp_Exit` still selects the already-prepared conversion: proven values use the same
-native cast, checked values call the generated spelling helper. The emitter gets the
+A proven integer literal at the root of an entry return uses its decoded decimal spelling.
+For other expressions, `Cpp_Exit` emits the native cast for proven values or the generated
+helper for checked values. The emitter gets the
 entry header from that helper even for proven returns, because it provides the existing
 `SCPP_REQUIRE_ENTRY_TARGET` assertion. Target assertion emission, `Exit_Preparation`,
 `entry_target`, diagnostics and the runtime range-checking implementation are unchanged.

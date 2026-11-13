@@ -59,8 +59,8 @@ A body edit changes stdout and only its owning translation unit. The chained-out
 
 ## Metadata-driven admission and ordered operands
 
-`compiler.output` declares integer and byte-string strategies, referencing `echo_int`
-and `echo_bytes` in the named runtime binding catalog. The generator validates active
+`compiler.output` declares integer and string strategies, referencing `echo_int`,
+`echo_string` and the literal binding `echo_bytes` in the named runtime binding catalog. The generator validates active
 type/strategy compatibility and binding signatures, and generates `supports_output()`,
 `output_headers()` and `lower_cpp_output()`. Unsupported types keep conservative base
 methods. No implicit conversion or `to_string` capability is introduced.
@@ -72,9 +72,8 @@ preserved. Each operand is prepared once and the complete statement must pass ad
 before any executable is emitted. No extra prepared facts are stored.
 
 Emission produces one output statement per operand, preserving print-before-next
-semantics. The handwritten `Cpp_Output::bytes()` strategy retains the literal-byte
-optimization and the scoped reference that keeps a returned string alive through both
-span queries. Integer output consumes native int64 directly. Headers use the existing
+semantics. String expressions bind directly to the compiled `echo_string(const string&)` helper.
+Literal output passes the decoded bytes and length directly to `echo_bytes`. Integer output consumes native int64 directly. Headers use the existing
 required-header index; the separate `uses_output` plumbing is removed.
 
 `tests/echo_chain.php` and `echo_chain_native.py` cover all three flavors: ordered

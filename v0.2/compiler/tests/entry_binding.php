@@ -57,10 +57,25 @@ foreach (flavor::cases() as $flavor) {
 	$function = static fn(string $type, string $value): string =>
 		($flavor === flavor::cpp ? "$type result()" : "function result(): $type") . '{ return ' . $value . '; }';
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('entry', $text, $flavor), new entry_target(31));
-	$fixtures[$flavor->name . '_proven'] = ['cpp' => (new Cpp_Emitter())->emit($prepare('return 8;')), 'stdout_hex' => ''];
+	$emitter = new Cpp_Emitter();
+	$literal = $emitter->emit($prepare('return 0008;'));
+	verify(str_contains($literal, "\treturn 8;") && !str_contains($literal, '#include <scpp/core/scalars.hpp>'),
+		'Proven entry literal should use plain decimal and only the entry header');
+	$fixtures[$flavor->name . '_proven'] = ['cpp' => $literal, 'stdout_hex' => ''];
+	foreach ([15, 31, 63] as $digits) {
+		$target = new entry_target($digits);
+		$maximum = $target->maximum;
+		$entry = (new Source_Frontend())->prepare(new source_file('maximum', "return $maximum;", $flavor), $target);
+		verify(str_contains($emitter->emit($entry), "\treturn $maximum;"), 'Target maximum should emit in plain decimal');
+	}
+	$sum = $emitter->emit($prepare('return 3 + 5;'));
+	verify(str_contains($sum, '(3LL + 5LL)'), 'Entry literal spelling leaked into nested arithmetic');
 	$checked = $prepare($function('int', '8') . 'return result();');
 	verify($checked->body()->statements[0]->conversion() === exit_conversion::checked, 'Unknown exit lost runtime check');
-	$fixtures[$flavor->name . '_checked'] = ['cpp' => (new Cpp_Emitter())->emit($checked), 'stdout_hex' => ''];
+	$cpp = $emitter->emit($checked);
+	verify(str_contains($cpp, 'return scpp::entry_exit_checked(result_());') && str_contains($cpp, 'return 8LL;'),
+		'Entry check and ordinary function return must use their prepared bindings');
+	$fixtures[$flavor->name . '_checked'] = ['cpp' => $cpp, 'stdout_hex' => ''];
 	foreach (['2147483648', '-2147483649'] as $outside) {
 		if ($outside === '2147483648') {
 			rejects(fn() => $prepare('return ' . $outside . ';'), 'Entry return is outside native int range');

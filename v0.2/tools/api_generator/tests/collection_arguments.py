@@ -55,13 +55,12 @@ def proof(work, native_facts, context):
         for flavor in ('cpp', 'php', 'js'):
             cpp = subprocess.check_output(['php', '-r', EMIT, boot, flavor, program(flavor)], text=True)
             for call in (f'.append(1{suffix})', f'.at(0{suffix})', '.at(var_j_3)',
-                         '.append((static_cast<scpp::int64>(true)))',
-                         '.set(write_key, write_value)'):
+                         '.append((static_cast<scpp::int64>(true)))'):
                 assert call in cpp, (target, flavor, call, cpp)
             arithmetic = '(var_i_2 + 1LL)'
             if native == 'long':
                 arithmetic = f'static_cast<scpp::int64>({arithmetic})'
-            assert f'const auto write_key = {arithmetic};' in cpp, (target, flavor, cpp)
+            assert f'.set({arithmetic}, ' in cpp, (target, flavor, cpp)
             for family in ('mixed', 'dynamic'):
                 for argument in ('1' + suffix, arithmetic):
                     assert f'scpp::{family}::from_integer({argument})' in cpp, (target, flavor, cpp)

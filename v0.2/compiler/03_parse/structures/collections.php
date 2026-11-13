@@ -83,7 +83,7 @@ final class ast_index_assignment extends ast_statement
 	/** PROPERTIES */
 	/** Native owning receiver name; preparation requires writable local storage. */
 	public readonly ast_name_expression $receiver;
-	/** Native owning key expression, evaluated before the assigned value. */
+	/** Native owning key expression. The receiver binding determines store argument ordering. */
 	public readonly ast_expression $index;
 	/** Native owning assigned expression. */
 	public readonly ast_expression $value;

@@ -28,7 +28,7 @@ For hash append, choose zero when there is no live nonnegative key, otherwise on
 
 ## Compiler and runtime ownership
 
-Use the validated runtime specialization and member plans to generate operation bindings on concrete collection types. Source preparation checks the receiver, exact key or index type, writable local for mutations, typed destination conversion and result type. Lower through the existing collection syntax nodes where applicable. In particular, keyed probes and removal must access the receiver and key directly: evaluating the throwing indexed read first would give the wrong behavior on absence. Preserve single evaluation. Existing hash writes retain key-before-RHS ordering. Vector replacement uses native argument ordering. Record provider requirements through the generated include queries. Coordinate edits to shared keyed syntax with the boxed workspace.
+Use the validated runtime specialization and member plans to generate operation bindings on concrete collection types. Source preparation checks the receiver, exact key or index type, writable local for mutations, typed destination conversion and result type. Lower through the existing collection syntax nodes where applicable. In particular, keyed probes and removal must access the receiver and key directly: evaluating the throwing indexed read first would give the wrong behavior on absence. Preserve single evaluation. Typed hash writes and vector replacement use native argument ordering. Record provider requirements through the generated include queries. Coordinate edits to shared keyed syntax with the boxed workspace.
 
 ## CT-01 verification checklist
 

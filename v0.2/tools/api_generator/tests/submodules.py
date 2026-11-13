@@ -229,7 +229,7 @@ def proof(work):
                 assert any(f'#include <{string_header}>' in text for text in headers)
                 if output_header != string_header:
                     assert all(f'#include <{output_header}>' not in text for text in headers)
-                body_units = [text for p, text in texts.items() if p.endswith('.cpp') and 'echo_bytes(' in text]
+                body_units = [text for p, text in texts.items() if p.endswith('.cpp') and 'echo_string(' in text]
                 assert len(body_units) == 1 and f'#include <{output_header}>' in body_units[0]
                 assert f'#include <{string_header}>' in body_units[0]
                 assert any('return 7LL;' in text and string_header not in text and output_header not in text for p, text in texts.items() if p.endswith('.cpp'))

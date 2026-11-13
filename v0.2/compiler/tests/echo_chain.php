@@ -56,7 +56,7 @@ foreach (flavor::cases() as $flavor) {
 		($flavor === flavor::cpp ? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('echo', $text, $flavor), new entry_target(31));
 	$text = $function('first', 'int', 'echo "F"; return 10;')
-		. $function('second', 'string', 'echo "S"; return "end";')
+		. $function('second', 'string', 'echo "S"; return "e\0nd";')
 		. 'echo "A\0", first(), second(), "\n"; return 8;';
 	$entry = $prepare($text);
 	$echo = $entry->body()->statements[0];
@@ -65,7 +65,8 @@ foreach (flavor::cases() as $flavor) {
 		verify($value->parent === $echo, 'Missing echo parent');
 	}
 	$before = serialize($entry);
-	$fixtures[$flavor->name . '_order'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex("A\0F10Send\n")];
+	$fixtures[$flavor->name . '_order'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex("A\0F10Se\0nd\n")];
+	verify(str_contains($fixtures[$flavor->name . '_order']['cpp'], 'scpp::echo_string(second_());'), 'Expected direct string output');
 	verify(serialize($entry) === $before, 'Output lowering mutated facts');
 	$failure = $function('bad', 'int', 'echo "B"; return 1 / 0;')
 		. $function('later', 'int', 'echo "L"; return 2;')
