@@ -24,11 +24,14 @@ Then read the owning spec for the task.
 - Architecture, runtime, and generator subsystem docs are subordinate to top-level semantic specs.
 - Implementation and tests are evidence, not the highest semantic authority.
 
-**v0.2 C++ evaluation order.** Emit direct C++ when the source permits either order and
+**v0.2 C++ evaluation order.** Choose lowering from the source evaluation contract,
+including when writing generators that emit lowering code. Emit direct C++ when the source permits either order and
 the native expression has defined behavior. Preserve single evaluation, required checks,
 short-circuiting, and ordered effects such as printing each `echo` item before evaluating
-the next. Tests should accept every order the source permits. A qualification trace
-describes only the tested expression and build. The build reruns the probe when the
+the next. Use a temporary only to preserve a required value, effect, or lifetime.
+Tests should accept every order the source permits. A probe that observes left-to-right
+evaluation does not authorize generated code to rely on that order. Its trace describes
+only the tested expression and build. The build reruns the probe when the
 compiler fingerprint, target, flags, or probe revision changes, or after seven days.
 [Evaluation contract](specs/expression_evaluation.md) · [Toolchain qualification](v0.2/compiler/docs/arithmetic.md#verification)
 
