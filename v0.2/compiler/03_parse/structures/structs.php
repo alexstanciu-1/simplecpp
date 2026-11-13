@@ -11,15 +11,20 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	/** PROPERTIES */
 	/** Native owning written field type. */
 	public readonly ast_type_reference $type_reference;
+	/** Native owning optional literal written on the field. */
+	public readonly ?ast_expression $initializer;
 	public readonly bool $is_private;
 
 	/** PREP FACTS */
+	/** Prepared fact: typed destination conversion for the written literal. */
+	public int $conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: canonical type once the immutable declaration layout has been validated. */
 	private ?type_definition $type_def = null;
 
 	/** CONSTRUCTOR */
 	/** Retain the written visibility and attach the field type to its declaration. */
-	public function __construct(string $name, ast_type_reference $type, int $start /** uint32 */, int $end /** uint32 */, bool $private)
+	public function __construct(string $name, ast_type_reference $type, int $start /** uint32 */, int $end /** uint32 */, bool $private,
+		?ast_expression $initializer = null)
 	{
 		parent::__construct($start, $end);
 		$this->is_private = $private;
@@ -27,6 +32,8 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 		$this->namespace = null;
 		$this->type_reference = $type;
 		$type->attach($this);
+		$this->initializer = $initializer;
+		$initializer?->attach($this);
 	}
 
 	/** METHODS */

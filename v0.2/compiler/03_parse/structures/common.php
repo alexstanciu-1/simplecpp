@@ -424,7 +424,7 @@ class ast_assignment_statement extends ast_storage_write
 	}
 }
 
-/** Numeric property compound, e.g. $p->x += 1; the target retains the selected field or static property. */
+/** Property compound, e.g. $p->x += 1; the target retains the selected field or static property. */
 final class ast_property_compound extends ast_assignment_statement
 {
 	public readonly ast_name_expression|ast_field_expression $target;

@@ -90,8 +90,13 @@ final class Struct_Syntax
 				$type = $parser->named_type();
 				$field = $c->name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			}
+			$initializer = null;
+			if ($c->is(token_kind::assign)) {
+				$c->take(token_kind::assign, '=');
+				$initializer = $parser->literal_initializer('Field initializer requires a literal');
+			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
-			$node = new ast_struct_field($field, $type, $field_start, $end, $private);
+			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
 				while ($tail->duplicate_element() !== null) $tail = $tail->duplicate_element();

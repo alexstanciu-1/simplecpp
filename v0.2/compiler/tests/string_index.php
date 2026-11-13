@@ -78,6 +78,19 @@ foreach (flavor::cases() as $flavor) {
 		'stdout_hex' => '', 'catch_out_of_range' => 'integer_cast_out_of_range'];
 	rejects(fn() => $prepare($local . "{$s}[] = 8; return 8;"), 'Append requires');
 
+	[$record, $field] = match ($flavor) {
+		flavor::php => ['struct Label { public string $text="a"; } $p Label;', '$p->text'],
+		flavor::cpp => ['struct Label { string text="a"; }; Label p;', 'p->text'],
+		flavor::js => ['struct Label { text:string="a"; } let p:Label;', 'p.text'],
+	};
+	rejects(fn() => $prepare($record . $field . '[0]=256;return 8;'), 'outside uint8 range');
+	foreach (['bounds' => ['1', '65', 'sequence_index_out_of_range'],
+		'byte' => ['0', 'bad()', 'integer_cast_out_of_range']] as $name => [$key, $value, $error]) {
+		$source = $function('int', 'bad', 'return 256;') . $record . $field . "[$key]=$value;return 8;";
+		$fixtures["{$flavor->name}-field-$name"] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
+			'stdout_hex' => '', 'catch_out_of_range' => $error];
+	}
+
 	$signature = match ($flavor) {
 		flavor::cpp => 'void consume(byte &v)', flavor::php => 'function consume(byte &$v): void',
 		flavor::js => 'function consume(&v: byte): void',

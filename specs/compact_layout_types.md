@@ -252,7 +252,11 @@ writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 
 The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean, float64 and string instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
-recursively. A string field starts empty. Its native storage is an ordinary `scpp::string`; record copying and destruction preserve string value semantics, including embedded NUL bytes. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
+recursively. A written instance-field default must be a scalar literal accepted by the field's typed
+destination conversion. Validate defaults even on unused records. Initialize each new inline or
+shared record before its constructor body; a record copy takes the current field values.
+A writable string field supports string append (PHP `.=`, C++/JS `+=`) and checked byte-index
+assignment with the same conversion and bounds rules as a local. A string field without a default starts empty. Its native storage is an ordinary `scpp::string`; record copying and destruction preserve string value semantics, including embedded NUL bytes. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
 incrementing 255 wraps to zero, while adding an int64 literal with `+=` checks the narrowed result
 before storing it. A shared field defaults to an empty, pointer-sized owner. Copying the
 enclosing value copies each field: inline data is independent, and each copied

@@ -81,8 +81,8 @@ final class ast_append_statement extends ast_statement
 final class ast_index_assignment extends ast_statement
 {
 	/** PROPERTIES */
-	/** Native owning receiver name; preparation requires writable local storage. */
-	public readonly ast_name_expression $receiver;
+	/** Native owning writable storage expression. */
+	public readonly ast_name_expression|ast_field_expression $receiver;
 	/** Native owning key expression. The receiver binding determines store argument ordering. */
 	public readonly ast_expression $index;
 	/** Native owning assigned expression. */
@@ -94,7 +94,7 @@ final class ast_index_assignment extends ast_statement
 
 	/** CONSTRUCTOR */
 	/** $end: exclusive token position after the semicolon. */
-	public function __construct(ast_name_expression $receiver, ast_expression $index, ast_expression $value, int $end /** uint32 */)
+	public function __construct(ast_name_expression|ast_field_expression $receiver, ast_expression $index, ast_expression $value, int $end /** uint32 */)
 	{
 		parent::__construct($receiver->start, $end);
 		$this->receiver = $receiver;

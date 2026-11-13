@@ -30,19 +30,7 @@ final class Constant_Syntax
 			$name = $cursor->name(token_kind::identifier);
 		}
 		$cursor->take(token_kind::assign, '=');
-		$literal_start = $cursor->position();
-		if (($cursor->is(token_kind::minus) || $cursor->is(token_kind::plus)) && $cursor->next_is(token_kind::integer)) {
-			$cursor->take($cursor->is(token_kind::minus) ? token_kind::minus : token_kind::plus, 'sign');
-			$cursor->take(token_kind::integer, 'integer literal');
-			$initializer = new ast_integer_expression($literal_start, $cursor->position());
-		}
-		else {
-			$initializer = $parser->assignment_value();
-		}
-		if (!($initializer instanceof ast_integer_expression) && !($initializer instanceof ast_float_expression)
-			&& !($initializer instanceof ast_keyword_expression) && !($initializer instanceof ast_string_expression)) {
-			throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Constant initializer requires a literal');
-		}
+		$initializer = $parser->literal_initializer('Constant initializer requires a literal');
 		$end = $cursor->take(token_kind::semicolon, '; (constant initializer must be a literal)') + 1;
 		return new ast_constant_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $private);
 	}
