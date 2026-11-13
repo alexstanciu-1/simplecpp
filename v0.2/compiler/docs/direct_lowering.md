@@ -43,7 +43,9 @@ expressions retain their operand snapshots.
   Expressions involving records or handles keep their full-expression boundary:
   a temporary owner can expire before the callee observes a weak handle.
 
-In multi-argument free calls, preparation guarantees that each reference
+Free functions and type-qualified static methods share the same argument
+lowering because neither evaluates an instance receiver. In these calls,
+preparation guarantees that each reference
 argument names exact, stable storage. Passing that name directly preserves
 aliasing even if a sibling changes the stored value. Earlier by-value reads
 still capture their values when required. An argument involving a temporary

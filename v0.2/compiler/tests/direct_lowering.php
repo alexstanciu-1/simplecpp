@@ -257,6 +257,25 @@ foreach (flavor::cases() as $flavor)
 	verify(preg_match('/return write_sum_\(argument_\d+_0, var_x_0, change_int_\(var_x_0\)\);/', $ref_calls) === 1
 		&& str_contains($ref_calls, 'write_pair_(var_x_0, var_x_0);'), 'Only the original by-value read requires capture');
 	$fixtures[$flavor->name . '_ordered_reference_alias'] = ['cpp' => $ref_calls, 'stdout_hex' => bin2hex('C105')];
+	$counter = match ($flavor) {
+		flavor::php => 'struct Counter { public static function advance(int &$x,int $b):void { $x+=$b; } '
+			. 'public static function accept(byte $a,int $b):void { echo "C",(int)$a,$b; } }',
+		flavor::cpp => 'struct Counter { static void advance(int &x,int b) { x+=b; } '
+			. 'static void accept(byte a,int b) { echo "C",(int)a,b; } };',
+		flavor::js => 'struct Counter { static advance(&x:int,b:int):void { x+=b; } '
+			. 'static accept(a:byte,b:int):void { echo "C",(int)a,b; } }',
+	};
+	$qualifier = $flavor === flavor::js ? 'Counter.' : 'Counter::';
+	$static_calls = $emit($counter . $mark . $decl('x', 'int', '8')
+		. "{$qualifier}advance($x,2); echo $x; {$qualifier}accept(mark_int(4),mark_int(5)); return 8;");
+	verify(str_contains($static_calls, 'method_7_Counter_advance(var_x_0, 2LL);')
+		&& preg_match('/return method_7_Counter_accept\(argument_\d+_0, mark_int_\(5LL\)\);/', $static_calls) === 1,
+		'Static calls must use direct reference binding and retain the first effectful conversion');
+	$fixtures[$flavor->name . '_static_arguments'] = ['cpp' => $static_calls, 'stdout_hex' => bin2hex('1045C45')];
+	$static_failure = $emit($counter . $mark . "{$qualifier}accept(mark_int(300),mark_int(5)); return 8;");
+	$fixtures[$flavor->name . '_static_conversion_failure'] = ['cpp' => $static_failure, 'stdout_hex' => bin2hex('300'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+
 	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
 		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
 	verify(preg_match('/return sum_\(argument_[0-9]+_0, change_int_\(var_x_0\)\);/', $ordered_calls) === 1

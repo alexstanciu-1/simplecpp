@@ -1004,7 +1004,7 @@ CPP;
 		}
 		$direct_arguments = [];
 		$direct = !$method;
-		$free_call = !($function->parent instanceof ast_struct_declaration);
+		$receiverless_call = $value instanceof ast_call_expression && !$method;
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
@@ -1032,12 +1032,12 @@ CPP;
 			// A prepared reference binds a stable named slot without reading its value.
 			if ($parameter->mode === passing_mode::reference) {
 				$has_reference = true;
-			} elseif ($free_call && !self::inert_literal_argument($argument, $type, $conversion)) {
+			} elseif ($receiverless_call && !self::inert_literal_argument($argument, $type, $conversion)) {
 				$order_sensitive[$index] = true;
 				$inline_index = $type->cpp_trivial_value() && $this->record_expressions === $records_before ? $index : null;
 			}
 		}
-		if ($direct || ($free_call && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($direct || ($receiverless_call && !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -1045,7 +1045,7 @@ CPP;
 		foreach ($function->parameters as $index => $parameter) {
 			$type = $parameter->type_def();
 			$operand = $direct_arguments[$index];
-			if ($free_call && (!isset($order_sensitive[$index]) || $index === $inline_index)) {
+			if ($receiverless_call && (!isset($order_sensitive[$index]) || $index === $inline_index)) {
 				$arguments[] = $operand;
 				continue;
 			}

@@ -345,3 +345,14 @@ Controls cover reference positions at the start, middle and end, two aliases,
 mutation through the callee, and a scalar field read that must release the last
 owner before the callee inspects a weak reference passed by reference. The
 generator, preparation and method receiver contracts are unchanged.
+
+### Follow-up batch — type-qualified static method calls
+
+Free functions and type-qualified static methods now share argument selection
+through the prepared call's receiver status. Construction expressions stay on
+their construction path. For `Counter::advance($x,2)` the emitted static method
+receives the original local and the literal directly. For
+`Counter::accept(mark(4),mark(5))` with a byte first parameter, the ordered
+block evaluates and converts the first result before calling the second producer.
+The failure variant uses 300 and checks the range exception, the first
+producer's output, and the absence of second-producer and callee output.
