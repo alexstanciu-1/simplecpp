@@ -1,0 +1,18 @@
+{
+  "name": "shared-route-50k",
+  "entry": "main.phs",
+  "sources": {
+    "models.phs": "php",
+    "main.phs": "php",
+    "district_01.phs": "php",
+    "district_02.phs": "php",
+    "district_03.phs": "php",
+    "district_04.phs": "php",
+    "district_05.phs": "php",
+    "district_06.phs": "php",
+    "district_07.phs": "php",
+    "district_08.phs": "php",
+    "district_09.phs": "php",
+    "district_10.phs": "php"
+  }
+}

@@ -1,0 +1,15 @@
+struct Coordinate {
+    public int $east;
+    public int $north;
+}
+
+struct Route {
+    public Coordinate $position;
+    public int $distance;
+    public int $toll;
+    public int $stops;
+}
+
+function start_route(): shared<Route> {
+    return new Route();
+}

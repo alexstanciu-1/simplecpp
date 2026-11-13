@@ -1,0 +1,159 @@
+function leg_030(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 8) % 11;
+    $north = ($load + 15) % 6;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 4) {
+        $route->toll = $route->toll + 3;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 3) % 97;
+}
+
+function leg_031(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 9) % 12;
+    $north = ($load + 16) % 7;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 5) {
+        $route->toll = $route->toll + 4;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 4) % 97;
+}
+
+function leg_032(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 10) % 13;
+    $north = ($load + 17) % 8;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 6) {
+        $route->toll = $route->toll + 1;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 5) % 97;
+}
+
+function leg_033(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 11) % 3;
+    $north = ($load + 18) % 9;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 7) {
+        $route->toll = $route->toll + 2;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 6) % 97;
+}
+
+function leg_034(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 12) % 4;
+    $north = ($load + 2) % 10;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 8) {
+        $route->toll = $route->toll + 3;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 7) % 97;
+}
+
+function leg_035(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 13) % 5;
+    $north = ($load + 3) % 4;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 9) {
+        $route->toll = $route->toll + 4;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 8) % 97;
+}
+
+function leg_036(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 14) % 6;
+    $north = ($load + 4) % 5;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 4) {
+        $route->toll = $route->toll + 1;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 0) % 97;
+}
+
+function leg_037(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 15) % 7;
+    $north = ($load + 5) % 6;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 5) {
+        $route->toll = $route->toll + 2;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 1) % 97;
+}
+
+function leg_038(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 16) % 8;
+    $north = ($load + 6) % 7;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 6) {
+        $route->toll = $route->toll + 3;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 2) % 97;
+}
+
+function leg_039(shared<Route> $route, int $load): int {
+    $position = $route->position;
+    $east = ($load + 17) % 9;
+    $north = ($load + 7) % 8;
+    $position->east = $position->east + $east;
+    $position->north = $position->north + $north;
+    $route->position = $position;
+    $length = $east + $north;
+    $route->distance = $route->distance + $length;
+    if ($length > 7) {
+        $route->toll = $route->toll + 4;
+    }
+    $route->stops = $route->stops + 1;
+    return ($load + $length + 3) % 97;
+}
