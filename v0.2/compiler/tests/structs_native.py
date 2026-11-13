@@ -139,6 +139,214 @@ def boolean_fields(work, flavor):
         resident.stdin.close()
 
 
+def byte_fields(work, flavor):
+    app = work / ('byte-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'meter')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'panel.php').write_text('struct Panel { public Meter $meter; }')
+    definition, setup, copy, field, other, call, loop = {
+        'php': ('struct Meter { public byte $level; public function bump():void { $this->level+=1; } }',
+                '$p Panel;', '$q=$p;', '$p->meter->level', '$q->meter->level', '$p->meter->bump();',
+                'for ($i=0; $i<255; $i++)'),
+        'cpp': ('struct Meter { byte level; void bump() { this->level+=1; } };',
+                'Panel p;', 'auto q=p;', 'p->meter->level', 'q->meter->level', 'p->meter->bump();',
+                'for (int i=0; i<255; i++)'),
+        'js': ('struct Meter { level:byte; bump():void { this.level+=1; } }',
+               'let p:Panel;', 'let q=p;', 'p.meter.level', 'q.meter.level', 'p.meter.bump();',
+               'for (let i:int=0; i<255; i++)'),
+    }[flavor]
+    copied = (setup + 'echo (int)' + field + ';' + field + '=(byte)255;' + copy + other + '++;'
+              + 'echo (int)' + field + ',"/",(int)' + other + '; return 8;')
+    bump = setup + loop + ' { ' + field + '++; } ' + call + 'echo (int)' + field + '; return 8;'
+    model.write_text(definition)
+    out = work / ('byte-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, stdout) in enumerate([
+            (entry, copied, None, b'0255/0'), (model, definition.replace('byte', 'uint8'), None, b'0255/0'),
+            (entry, setup + field + '=1; return 8;', 'conversion', None),
+            (model, definition, 'conversion', None), (entry, bump, None, None),
+            (model, definition.replace('byte', 'int'), None, b'256'),
+            (model, definition.replace('byte', 'uint8'), None, None), (entry, copied, None, b'0255/0'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1986000000 + rev,) * 2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            fresh_out = work / f'byte-fresh-{flavor}-{rev}'
+            with service(app, fresh_out) as fresh:
+                other_result = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other_result.get('error'), (rev, current, other_result)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in other_result, (rev, current, other_result)
+            assert artifacts(out) == artifacts(fresh_out)
+            for bundle in (out, fresh_out):
+                native = work / ('build-' + bundle.name)
+                if stdout is not None:
+                    build(bundle, native, stdout)
+                    continue
+                native = work / f'catch-{bundle.name}-{rev}'
+                native.mkdir()
+                harness = native / 'catch.cpp'
+                headers = [h for h in (bundle / 'units').glob('*.hpp')
+                           if 'struct Meter {' in h.read_text() or 'method_5_Meter_bump(' in h.read_text()]
+                harness.write_text(''.join(f'#include "{h.resolve()}"\n' for h in headers) + """
+#include <cstring>
+#include <stdexcept>
+namespace App { int scpp_entry_body(); }
+int main() {
+    try { App::scpp_entry_body(); return 1; }
+    catch (const std::out_of_range& e) {
+        if (std::strcmp(e.what(), "integer_cast_out_of_range")) return 1;
+    }
+    App::scpp_records::Meter meter{};
+    static_assert(sizeof(meter.level) == 1);
+    meter.level = 255;
+    try { App::method_5_Meter_bump(meter); }
+    catch (const std::out_of_range& e) {
+        return std::strcmp(e.what(), "integer_cast_out_of_range") || meter.level != 255;
+    }
+    return 1;
+}
+""")
+                units = json.loads((bundle / 'manifest.json').read_text())['translation_units']
+                command = write_build(native, [harness, *(bundle / unit for unit in units if unit != 'entry.cpp')])
+                subprocess.run(command, cwd=native, check=True, capture_output=True)
+                subprocess.run([native / 'program'], check=True)
+        resident.stdin.close()
+
+
+def float_fields(work, flavor):
+    app = work / ('float-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'measurement')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'sensor.php').write_text('struct Sensor { public Measurement $reading; }')
+    record, setup, copy, field, other, negate = {
+        'php': ('struct Measurement { public float $amount; public function negative():void { $this->amount=-0.0; } }',
+                '$s Sensor;', '$c=$s;', '$s->reading->amount', '$c->reading->amount', '$s->reading->negative();'),
+        'cpp': ('struct Measurement { float amount; void negative() { this->amount=-0.0; } };',
+                'Sensor s;', 'auto c=s;', 's->reading->amount', 'c->reading->amount', 's->reading->negative();'),
+        'js': ('struct Measurement { amount:float; negative():void { this.amount=-0.0; } }',
+               'let s:Sensor;', 'let c=s;', 's.reading.amount', 'c.reading.amount', 's.reading.negative();'),
+    }[flavor]
+    copied = (setup + negate + copy + other + '=8.75;' + other + '+=2;'
+              + 'if (' + field + '==0.0 && ' + other + '==10.75) { echo "copy"; } return 8;')
+    # A separate minimal record lets the visibility-independent %= caller keep exactly the same source.
+    plain = record[:record.index(';') + 1] + ' }'
+    remainder = setup + field + '%=2; return 8;'
+    model.write_text(record)
+    out = work / ('float-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, stdout) in enumerate([
+            (entry, copied, None, b'copy'),
+            (model, record.replace('float', 'float64'), None, b'copy'),
+            (entry, setup + field + '=2; return 8;', 'conversion', None),
+            (model, plain.replace('float', 'int'), None, b''),
+            (entry, remainder, None, b''),
+            (model, plain, 'Unsupported compound', None),
+            (model, plain.replace('float', 'int'), None, b''),
+            (entry, 'return 8;', None, b''),
+            (model, record, None, b''),
+            (entry, copied, None, b'copy'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1987000000 + rev,) * 2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'float-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                result = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == result.get('error'), (rev, current, result)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in result, (rev, current, result)
+            assert artifacts(out) == artifacts(baseline)
+            build(out, work / ('float-native-' + flavor), stdout)
+            build(baseline, work / f'float-fresh-native-{flavor}-{rev}', stdout)
+            if rev in (0, 1):
+                native = work / f'layout-{flavor}-{rev}'
+                native.mkdir()
+                headers = [h for h in (out / 'units').glob('*.hpp')
+                           if 'struct Measurement {' in h.read_text() or 'method_11_Measurement_negative(' in h.read_text()]
+                probe = native / 'layout.cpp'
+                probe.write_text(''.join(f'#include "{h.resolve()}"\n' for h in headers) + """
+#include <cmath>
+#include <type_traits>
+int main() {
+    App::scpp_records::Measurement m{};
+    static_assert(std::is_same_v<decltype(m.amount), scpp::float64>);
+    static_assert(sizeof(m.amount) == 8 && alignof(decltype(m.amount)) == alignof(scpp::float64));
+    if (m.amount != 0.0 || std::signbit(m.amount)) return 1;
+    App::method_11_Measurement_negative(m);
+    auto copy = m;
+    if (copy.amount != 0.0 || !std::signbit(copy.amount)) return 2;
+    copy.amount = 1.0;
+    return m.amount != 0.0 || !std::signbit(m.amount);
+}
+""")
+                units = json.loads((out / 'manifest.json').read_text())['translation_units']
+                cmd = write_build(native, [probe, *(out / unit for unit in units if unit != 'entry.cpp')])
+                subprocess.run(cmd, cwd=native, check=True, capture_output=True)
+                subprocess.run([native / 'program'], check=True)
+        resident.stdin.close()
+
+
+def string_fields(work, flavor):
+    app = work / ('string-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'label')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'envelope.php').write_text('struct Envelope { public Label $label; }')
+    record, declare, copy, access = {
+        'php': ('struct Label { public string $text; }', '$NAME Envelope;', '$COPY=$ORIGINAL;', '->'),
+        'cpp': ('struct Label { public: string text; };', 'Envelope NAME;', 'auto COPY=ORIGINAL;', '->'),
+        'js': ('struct Label { public text:string; }', 'let NAME:Envelope;', 'let COPY=ORIGINAL;', '.'),
+    }[flavor]
+    var = '$' if flavor == 'php' else ''
+    member = access + 'label' + access + 'text'
+    original, copied, survivor = [var + n + member for n in ('original', 'copied', 'survivor')]
+    heap_text = b'0123456789abcdefghijklmno\x00pqrstuvwxyz'
+    literal = '"' + heap_text.decode().replace('\0', r'\0') + '"'
+    source = (declare.replace('NAME', 'survivor') + 'if (true) { ' + declare.replace('NAME', 'original')
+              + original + r'="h\0i";' + 'if (' + survivor + '!="") { return 1; } '
+              + copy.replace('COPY', 'copied').replace('ORIGINAL', 'original') + original + '=' + literal + ';'
+              + 'echo ' + copied + ';' + var + 'copied=' + var + 'original;' + copied + '="changed";'
+              + 'echo ' + original + ';' + var + 'survivor=' + var + 'original; } echo ' + survivor + '; return 8;')
+    expected = b'h\0i' + heap_text * 2
+    entry.write_text(source)
+    out = work / ('string-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (declaration, error) in enumerate([
+            (record, None), (record.replace('string', 'int'), 'conversion from string to int64'), (record, None),
+            (record.replace('public', 'private'), 'private field'), (record, None),
+        ]):
+            model.write_text(declaration)
+            os.utime(model, (1988000000 + rev,) * 2)
+            before = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'string-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other.get('error'), (rev, current, other)
+                assert artifacts(out) == before
+                continue
+            assert 'error' not in current and 'error' not in other, (rev, current, other)
+            assert artifacts(out) == artifacts(baseline)
+            header, = [h for h in (out / 'units').glob('*.hpp') if 'struct Label {' in h.read_text()]
+            assert '#include <scpp/string.hpp>' in header.read_text()
+            build(out, work / ('string-native-' + flavor), expected)
+            build(baseline, work / f'string-fresh-native-{flavor}-{rev}', expected)
+        resident.stdin.close()
+
+
 def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
@@ -158,8 +366,8 @@ def prove(work, flavor):
         # Reject invalid layouts before lowering, including fields in an unused record.
         duplicate = PROGRAMS[flavor][0].replace('y', 'x')
         edits.extend([('duplicate-field', owner, duplicate, 'Duplicate struct field: x'),
-                      ('invalid-type', owner, record.replace(' int ', ' float ', 1) if flavor != 'js'
-                       else record.replace(': int', ': float', 1), 'Unsupported instance field type: float'),
+                      ('invalid-type', owner, record.replace(' int ', ' null ', 1) if flavor != 'js'
+                       else record.replace(': int', ': null', 1), 'Unsupported instance field type: null'),
                       ('restore-layout', owner, record.replace('x', 'width'), None)])
         if flavor == 'php':
             edits.extend([('nominal-copy', entry, 'struct Other { public int $x; } $p Point; $q Other = $p; return 8;',
@@ -676,6 +884,9 @@ if __name__ == '__main__':
         native_names(folder)
         shared_functions(folder)
         for language in PROGRAMS:
+            string_fields(folder, language)
+            float_fields(folder, language)
+            byte_fields(folder, language)
             boolean_fields(folder, language)
             shared_fields(folder, language)
             empty_owners(folder, language)

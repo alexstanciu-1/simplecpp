@@ -159,9 +159,17 @@ final class Preparation
 				else $statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			}
 			elseif ($statement instanceof ast_index_assignment) {
-				$this->value($statement->receiver);
-				if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
+				$binding = null;
+				$receiver = $statement->receiver;
+				if ($receiver instanceof ast_field_expression) {
+					$this->writable_property($receiver);
+				} else {
+					$this->value($receiver);
+					$binding = $receiver->declaration();
+					if (!($binding instanceof ast_local_binding)
+						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_struct_declaration)) {
+						throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
+					}
 				}
 				$type = $statement->receiver->type_def();
 				if (!($type instanceof index_write_type)) {
@@ -171,7 +179,7 @@ final class Preparation
 				$type->prepare_key($statement->index);
 				$this->value($statement->value);
 				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
-				$this->latest_writes[$statement->receiver->declaration()->storage_id()] = null;
+				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				$this->value($statement->receiver);

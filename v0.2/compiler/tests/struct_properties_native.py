@@ -261,6 +261,57 @@ def updates(work, flavor):
         resident.stdin.close()
 
 
+
+def string_properties(work, flavor):
+    """One reader, writer and record across units; compare every edit with a fresh compiler."""
+    app = work / ('strings-' + flavor)
+    app.mkdir()
+    entry = app / ('main.' + flavor)
+    model = app / ('model.' + flavor)
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    prop, common, ref, decl, copy, field, cat = {
+        'php': ('public string $text', 'public static string $sharedText', 'Label::$sharedText',
+                '$a Label;', '$b=$a;', '$V->text', '.='),
+        'cpp': ('string text', 'static string sharedText', 'Label::sharedText',
+                'Label a;', 'auto b=a;', 'V->text', '+='),
+        'js': ('text:string', 'static sharedText:string', 'Label.sharedText',
+               'let a:Label;', 'let b=a;', 'V.text', '+='),
+    }[flavor]
+    a, b = (field.replace('V', v) for v in ('a', 'b'))
+    # This extra unit only writes the static member; the entry reads its initial and updated values.
+    (app / 'writer.php').write_text('function publish():void { Label::$sharedText="published"; }')
+    # All fixtures also consume a PHP-authored record, exercising typed scalar and empty-owner defaults.
+    (app / 'defaults.php').write_text('struct Defaults { public bool $active=true; public byte $code=65; '
+        'public int $delta=-2; public float $ratio=1.5; public shared<Label> $link=null; } '
+        'function defaultsOK():bool { $d Defaults; return $d->active && $d->code==65 && $d->delta==-2 '
+        '&& $d->ratio==1.5 && $d->link==null; }')
+    entry.write_text('if (!defaultsOK()) { return 1; }' + decl + a + cat + a + ';' + copy + b + '[0]=65;' + b + cat + '"!";'
+                     + 'echo ' + a + ',"/",' + b + ',"/",' + ref + '; publish(); echo ' + ref + ';return 8;')
+    out = work / ('string-prop-out-' + flavor)
+    with service(app, out) as resident:
+        for rev, (literal, error) in enumerate([('"ready"', None), ('"other"', None),
+                                                ('123', 'conversion'), ('"ready"', None)]):
+            model.write_text('struct Label { ' + prop + '=' + literal + ';' + common + '="start"; }')
+            os.utime(model, (1989100000 + rev,) * 2)
+            before = artifacts(out)
+            result = invoke(resident)
+            baseline = work / f'string-prop-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in result.get('error', '') and result['error'] == other.get('error'), (result, other)
+                assert artifacts(out) == before
+                continue
+            assert 'error' not in result and 'error' not in other, (result, other)
+            assert artifacts(out) == artifacts(baseline)
+            text = literal.strip('"').encode() * 2
+            expected = text + b'/A' + text[1:] + b'!/startpublished'
+            build(out, work / ('string-prop-native-' + flavor), expected)
+            build(baseline, work / f'string-prop-fresh-native-{flavor}-{rev}', expected)
+        resident.stdin.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -269,6 +320,7 @@ if __name__ == '__main__':
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
         for flavor in ('php', 'cpp', 'js'):
+            string_properties(work, flavor)
             prove(work, flavor)
             compounds(work, flavor)
             instance_compounds(work, flavor)

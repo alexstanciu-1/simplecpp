@@ -48,7 +48,9 @@ final class Cpp_Emitter
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$type = $field->type_def();
 				$qualifier = ($type instanceof struct_type_definition || $type instanceof struct_handle_definition) && $this->root !== '' ? '::' . $this->root : '';
-				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . '{};';
+				$default = $field->initializer === null ? '{}' : ' = ' . $this->literal_initialization(
+					$type, $field->initializer, $field->conversion, $includes);
+				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
 			}
 			foreach ($node->static_properties as $property) {
 				$type = $property->type_def();
@@ -70,6 +72,17 @@ final class Cpp_Emitter
 			$includes[$header] = true;
 		}
 		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
+	}
+
+	/** Lower an approved declaration literal and collect its public header dependencies. @param bool[] $headers */
+	private function literal_initialization(type_definition $type, ast_expression $literal, int $conversion /** uint16 */,
+		array &$headers /** array<string,bool> */): string
+	{
+		foreach (array_merge($literal->type_def()->cpp_headers(), $type->conversion_headers($conversion)) as $header) {
+			$headers[$header] = true;
+		}
+		return self::plain_integer_literal($literal, $conversion)
+			?? $type->lower_cpp_conversion($conversion, $literal->type_def()->lower_cpp_literal($literal), $literal);
 	}
 
 	/** Pointer-sized owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
@@ -245,12 +258,11 @@ CPP;
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
 			$type = $global->type_def();
-			$initializer = self::plain_integer_literal($global->initializer, $global->initialization())
-				?? $type->lower_cpp_conversion($global->initialization(),
-					$global->initializer->type_def()->lower_cpp_literal($global->initializer));
-			$definitions[] = 'constinit ' . $type->cpp_type() . ' ' . self::global_name($global)
+			$initializer = $this->literal_initialization($type, $global->initializer, $global->initialization(), $required_headers);
+			$qualifier = $global->initializer instanceof ast_string_expression ? '' : 'constinit ';
+			$definitions[] = $qualifier . $type->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $initializer . ";\n";
-			foreach (array_merge($type->cpp_headers(), $type->conversion_headers($global->initialization())) as $header) {
+			foreach ($type->cpp_headers() as $header) {
 				$required_headers[$header] = true;
 			}
 		}
@@ -497,7 +509,10 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$steps = [];
+				$receiver = $statement->receiver instanceof ast_field_expression
+					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
+					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
@@ -505,7 +520,8 @@ CPP;
 				foreach ($destination->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$lines[] = "\t" . $type->lower_cpp_store($statement, $receiver, $key, $value);
+				$store = $type->lower_cpp_store($statement, $receiver, $key, $value);
+				$lines[] = "\t" . ($steps === [] ? $store : '{ ' . implode(' ', $steps) . ' ' . $store . ' }');
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				/** @var appendable_collection_type $type */

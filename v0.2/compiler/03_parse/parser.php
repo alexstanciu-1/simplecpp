@@ -179,12 +179,15 @@ final class Parser
 		}
 		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
 		if ($this->property_statement_start()) {
-			$target = $this->primary();
+			$target = $this->primary(field_target: true);
 			if ($target instanceof ast_call_expression) {
 				return $this->call_statement($target);
 			}
 			if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable struct field');
+			}
+			if ($this->cursor->is(token_kind::lbracket)) {
+				return $this->indexed_write($target);
 			}
 			if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
 				return $this->property_update($target->start, $target, $this->take_update_operator(), true);
@@ -192,8 +195,8 @@ final class Parser
 			$operator = $this->compound_operator();
 			if ($operator !== null) {
 				if (!in_array($operator, [binary_operator::add, binary_operator::subtract,
-					binary_operator::multiply, binary_operator::divide, binary_operator::remainder], true)) {
-					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected a numeric arithmetic compound');
+					binary_operator::multiply, binary_operator::divide, binary_operator::remainder, binary_operator::concatenate], true)) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unsupported property compound operator');
 				}
 				$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
 				$value = $this->assignment_value();
@@ -208,14 +211,7 @@ final class Parser
 			$start = $this->cursor->position();
 			$name = $this->cursor->name($name_kind);
 			$receiver = new ast_name_expression($name, $start, $start + 1);
-			$this->cursor->take(token_kind::lbracket, '[');
-			$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
-			$this->cursor->take(token_kind::rbracket, ']');
-			$this->cursor->take(token_kind::assign, '=');
-			$value = $this->assignment_value();
-			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-			return $index === null ? new ast_append_statement($receiver, $value, $end)
-				: new ast_index_assignment($receiver, $index, $value, $end);
+			return $this->indexed_write($receiver);
 		}
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
@@ -645,8 +641,43 @@ final class Parser
 		return $value;
 	}
 
+	/** Parse a scalar literal without allowing executable expressions in declarations. */
+	public function literal_initializer(string $diagnostic): ast_expression
+	{
+		$cursor = $this->cursor;
+		$literal_start = $cursor->position();
+		if (($cursor->is(token_kind::minus) || $cursor->is(token_kind::plus)) && $cursor->next_is(token_kind::integer)) {
+			$cursor->take($cursor->is(token_kind::minus) ? token_kind::minus : token_kind::plus, 'sign');
+			$cursor->take(token_kind::integer, 'integer literal');
+			$initializer = new ast_integer_expression($literal_start, $cursor->position());
+		}
+		else {
+			$initializer = $this->assignment_value();
+		}
+		if (type_registry::literal_type($initializer) === null) {
+			throw new diagnostic($cursor->tokens->source, $cursor->offset(), $diagnostic);
+		}
+		return $initializer;
+	}
+
+	/** Parse a keyed write on a writable place or a named collection append. */
+	private function indexed_write(ast_name_expression|ast_field_expression $receiver): ast_statement
+	{
+		if ($this->cursor->next_is(token_kind::rbracket) && !($receiver instanceof ast_name_expression && $receiver->end === $receiver->start + 1)) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Field write requires an index');
+		}
+		$this->cursor->take(token_kind::lbracket, '[');
+		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
+		$this->cursor->take(token_kind::rbracket, ']');
+		$this->cursor->take(token_kind::assign, '=');
+		$value = $this->assignment_value();
+		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		return $index === null ? new ast_append_statement($receiver, $value, $end)
+			: new ast_index_assignment($receiver, $index, $value, $end);
+	}
+
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
-	private function primary(): ast_expression
+	private function primary(bool $field_target = false): ast_expression
 	{
 		$value = $this->atom();
 		while (true) {
@@ -666,7 +697,7 @@ final class Parser
 					: $this->call_arguments($value->start, $name, token_kind::dot, $value);
 				continue;
 			}
-			if (!$this->cursor->is(token_kind::lbracket)) {
+			if ($field_target || !$this->cursor->is(token_kind::lbracket)) {
 				break;
 			}
 			$this->cursor->take(token_kind::lbracket, '[');

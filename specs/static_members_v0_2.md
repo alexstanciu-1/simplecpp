@@ -17,6 +17,7 @@ The declaration spellings are PHP `public const int LIMIT = 2;`, C++
 `static constexpr int LIMIT = 2;` and JS `const LIMIT: int = 2;`.
 
 Public static struct properties currently require an explicit type and scalar literal initializer.
+This includes string literals, whose bytes initialize one shared storage location in the declaring unit.
 PHP accepts `public static int $count = 2;`, C++ accepts `static int count = 2;`,
 and JS accepts `static count: int = 2;`. Read and assign through `Point::$count`,
 `Point::count` and `Point.count`, respectively. The bootstrap slice covers type-qualified

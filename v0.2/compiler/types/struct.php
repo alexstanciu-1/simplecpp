@@ -92,6 +92,11 @@ final class struct_type_definition extends type_definition implements dependency
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
+			if ($field->initializer !== null) {
+				$field->initializer->reset_preparation();
+				type_registry::prepare_literal($field->initializer);
+				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
+			}
 			$field->settle_type($type);
 		}
 		unset($active[$this->name]);

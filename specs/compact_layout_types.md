@@ -185,7 +185,9 @@ Field capabilities do not automatically provide struct comparison or hashing
 operations. This capability rule does not expand the field types admitted by this
 specification or introduce implicit ownership transfer.
 
-`float` is not promoted by this spec in the current first slice.
+The bootstrap compiler admits `float` and `float64` as aliases for the same instance field type.
+Each field uses the native eight-byte `scpp::float64` representation and its target alignment.
+Value initialization produces positive zero. Record copies preserve signed zero and copy the field independently.
 
 ### 2.4 Initialization
 
@@ -248,9 +250,15 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
-The active PHP bootstrap compiler admits integer (`int`/`int64`) and boolean instance fields, inline structs and
+The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean, float64 and string instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
-recursively. A boolean field starts false; assignment and copying use ordinary boolean value semantics. A shared field defaults to an empty, pointer-sized owner. Copying the
+recursively. A written instance-field default must be a scalar literal accepted by the field's typed
+destination conversion. Validate defaults even on unused records. Initialize each new inline or
+shared record before its constructor body; a record copy takes the current field values.
+A writable string field supports string append (PHP `.=`, C++/JS `+=`) and checked byte-index
+assignment with the same conversion and bounds rules as a local. A string field without a default starts empty. Its native storage is an ordinary `scpp::string`; record copying and destruction preserve string value semantics, including embedded NUL bytes. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
+incrementing 255 wraps to zero, while adding an int64 literal with `+=` checks the narrowed result
+before storing it. A shared field defaults to an empty, pointer-sized owner. Copying the
 enclosing value copies each field: inline data is independent, and each copied
 nonempty owner retains the same allocation. Clearing a field releases just that
 ownership. Destruction of the final owner also destroys the owners in its payload.
