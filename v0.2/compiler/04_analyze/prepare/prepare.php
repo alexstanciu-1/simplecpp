@@ -152,18 +152,7 @@ final class Preparation
 				$this->declaration($statement);
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
-				$root = $statement->target;
-				if ($root instanceof ast_name_expression) {
-					$this->static_destination($root);
-				} else {
-					$this->value($root);
-					$root = $root->receiver;
-					while ($root instanceof ast_field_expression) $root = $root->receiver;
-					if (!($root instanceof ast_this_expression)
-						&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
-						throw new diagnostic($statement->source(), $statement->byte_start(), 'Field assignment requires writable local storage');
-					}
-				}
+				$this->writable_property($statement->target);
 				$this->value($statement->value);
 				$type = $statement->target->type_def();
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
@@ -425,9 +414,30 @@ final class Preparation
 		return true;
 	}
 
+	/** Check writable instance paths and qualified static members for all property writes. */
+	private function writable_property(ast_name_expression|ast_field_expression $root): void
+	{
+		if ($root instanceof ast_name_expression) {
+			$this->static_destination($root);
+		} else {
+			$this->value($root);
+			$root = $root->receiver;
+			while ($root instanceof ast_field_expression) $root = $root->receiver;
+			if (!($root instanceof ast_this_expression)
+				&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
+				throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
+			}
+		}
+	}
+
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
 	private function write(ast_storage_write $statement): void
 	{
+		if ($statement instanceof ast_property_update) {
+			$this->writable_property($statement->target);
+			$statement->require_update_type($statement->target->type_def());
+			return;
+		}
 		$this->name_lookups++;
 		$local = $this->find_local($statement->name);
 		if ($local === null) {
@@ -440,9 +450,7 @@ final class Preparation
 		}
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
-			if (!$type->supports_update($statement->operator)) {
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'Unsupported update type: ' . $type->name);
-			}
+			$statement->require_update_type($type);
 			$statement->settle_update($local);
 			$this->latest_writes[$local->storage_id()] = null;
 			return;

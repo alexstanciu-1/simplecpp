@@ -651,6 +651,10 @@ CPP;
 		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
 			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
 		}
+		if ($statement instanceof ast_property_update) {
+			$target = $this->value($statement->target, $global_references, $declarations, $headers);
+			return $statement->target->type_def()->lower_cpp_update($statement->operator, $target, $statement->postfix);
+		}
 		if ($statement instanceof ast_update_statement) {
 			return $statement->local_def()->type_def()->lower_cpp_update($statement->operator,
 				$this->name($statement->local_def()), $statement->postfix);

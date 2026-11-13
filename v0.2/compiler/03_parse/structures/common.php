@@ -439,7 +439,7 @@ final class ast_property_compound extends ast_assignment_statement
 }
 
 /** Discarded-value update, e.g. ++i or i--; no operand copy or synthetic literal is retained. */
-final class ast_update_statement extends ast_storage_write
+class ast_update_statement extends ast_storage_write
 {
 	public readonly update_operator $operator;
 	public readonly bool $postfix;
@@ -453,8 +453,29 @@ final class ast_update_statement extends ast_storage_write
 		$this->postfix = $postfix;
 	}
 
+	public function require_update_type(type_definition $type): void
+	{
+		if (!$type->supports_update($this->operator)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Unsupported update type: ' . $type->name);
+		}
+	}
+
 	public function settle_update(ast_local_binding $local): void
 	{
 		$this->settle_binding($local);
+	}
+}
+
+/** A discarded numeric update with a writable property target, e.g. ++$p->x. */
+final class ast_property_update extends ast_update_statement
+{
+	public readonly ast_field_expression|ast_name_expression $target;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_field_expression|ast_name_expression $target,
+		update_operator $operator, bool $postfix)
+	{
+		parent::__construct($start, $end, $target instanceof ast_field_expression ? $target->field : $target->name, $operator, $postfix);
+		$this->target = $target;
+		$target->attach($this);
 	}
 }

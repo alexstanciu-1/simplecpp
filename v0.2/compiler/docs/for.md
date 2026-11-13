@@ -145,7 +145,10 @@ including incremental cases; this is not an isolated preparation-stage timing.
 Header write slots now accept the `ast_storage_write` base shared by assignments
 and `ast_update_statement`. Prefix/postfix increment/decrement therefore reuse the
 existing header storage scope and preparation order. They have no RHS expression
-to collect or reset. Native header emission calls the generated update handler
+to collect or reset. In the final update clause, a writable instance field or static
+property uses the statement-level property update node. Its target expression is
+collected and reset along with the condition. Normal iteration and `continue`
+execute this clause once; `break` skips it. Native header emission calls the generated update handler
 directly; it creates no temporary or lambda. Compound snapshot storage is allocated
 only for clauses requiring a prior destination read. Mixed
 assignment/compound/update headers and shadowing are covered by update native tests.

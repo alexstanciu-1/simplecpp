@@ -24,7 +24,10 @@ reads and plain statement writes with the existing global-storage type and assig
 Numeric static properties also accept statement `+=`, `-=`, `*=`, `/=` and `%=` wherever the ordinary
 numeric compound contract admits the operands. Both explicit and declaring-type qualifiers are supported.
 The compiler snapshots the property before evaluating the RHS and stores the result after checked write-back.
-Omitted initializers remain outside this slice.
+Prefix and postfix `++` and `--` are also supported as standalone statements and in the final update clause of a braced `for` loop on
+writable numeric instance and static properties, using the same type rules as
+local updates. For example, a static `byte` increments from 255 to 0 and
+decrements from 0 to 255. Omitted initializers remain outside this slice.
 
 Public static struct methods accept the same parameters, defaults, writable references
 and returns as ordinary struct methods. PHP and C++ call `Type::method(args)`; JS calls
