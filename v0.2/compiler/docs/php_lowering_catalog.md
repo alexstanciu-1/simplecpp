@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 57 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 66 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -96,6 +96,17 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $x = $a + $b * 2;        |                                                                                                               |                                  | sums directly, including nested sums.  |
 | $y = $a + $a;            |                                                                                                               |                                  |                                        |
 | $z = ($a+$a) + ($a+$a);  |                                                                                                               |                                  |                                        |
++--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                    | var_total_0 = (var_total_0 + line_(var_price_1, 3LL));                                                        | .cpp includes                    | The native integer addition reads the  |
+|     $total int=8;        |                                                                                                               | #include <scpp/core/scalars.hpp> | local once. The scalar value arguments |
+|     $price int=2;        |                                                                                                               | No unit header.                  | cannot mutate it, and the source call  |
+|     function line(       |                                                                                                               |                                  | is emitted once.                       |
+|         int $p,int $q    |                                                                                                               |                                  |                                        |
+|     ):int {              |                                                                                                               |                                  |                                        |
+|         return $p*$q;    |                                                                                                               |                                  |                                        |
+|     }                    |                                                                                                               |                                  |                                        |
+| $total = $total +        |                                                                                                               |                                  |                                        |
+|     line($price, 3);     |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    | scpp::int64 var_x_2 = scpp::int64_divide(var_a_0, var_b_1);                                                   | .cpp includes                    | Identity-converted operands use the    |
 |     $a int = 6;          | scpp::int64 var_y_3 = scpp::int64_remainder(var_a_0, var_b_1);                                                | #include <scpp/arithmetic.hpp>   | checked helpers in native call order.  |
@@ -417,6 +428,137 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 | $x = sum(number(), 2);                  |                                             |                                  |                                        |
 | $y = sum(2, number());                  |                                             |                                  |                                        |
 +-----------------------------------------+---------------------------------------------+----------------------------------+----------------------------------------+
+```
+
+## Ordered free calls
+
+```text
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| PHP-flavor pattern                    | Lowered C++ code                                  | Lowered C++ header code          | Generation and lowering           |
++=======================================+===================================================+==================================+===================================+
+| Given                                 | scpp::int64 var_y_1 = ([&]() -> scpp::int64 {     | .cpp includes                    | The first argument captures 8.    |
+|     function sum(int $a,int $b):int { |     scpp::int64 argument_43_0 = var_x_0;          | #include <scpp/core/scalars.hpp> | The final argument changes x to 9 |
+|         return $a+$b;                 |     return sum_(argument_43_0, change_(var_x_0)); | No unit header.                  | and supplies 2 directly to sum.   |
+|     }                                 | }());                                             |                                  |                                   |
+|     function change(int &$x):int {    |                                                   |                                  |                                   |
+|         $x=9;                         |                                                   |                                  |                                   |
+|         return 2;                     |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+|     $x int=8;                         |                                                   |                                  |                                   |
+| $y=sum($x,change($x));                |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| Given                                 | scpp::int64 var_x_0 = ([&]() -> scpp::int64 {     | .cpp includes                    | The literal needs no capture.     |
+|     function mark(int $v):int {       |     scpp::int64 argument_34_1 = mark_(2LL);       | #include <scpp/core/scalars.hpp> | The saved result of mark(2) keeps |
+|         return $v;                    |     return pick_(1LL, argument_34_1, mark_(3LL)); | No unit header.                  | both calls in source order.       |
+|     }                                 | }());                                             |                                  |                                   |
+|     function pick(int $a,int $b,      |                                                   |                                  |                                   |
+|         int $c):int {                 |                                                   |                                  |                                   |
+|         return $b;                    |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+| $x=pick(1,mark(2),mark(3));           |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| Given                                 | ([&]() -> void {                                  | .cpp includes                    | Only the value argument saves 8.  |
+|     function write_sum(int $a,        |     scpp::int64 argument_46_0 = var_x_0;          | #include <scpp/core/scalars.hpp> | The reference names the same slot |
+|         int &$x,int $b):void {        |     return write_sum_(argument_46_0, var_x_0,     | No unit header.                  | that change updates.              |
+|         $x=$a+$b;                     |         change_(var_x_0));                        |                                  |                                   |
+|     }                                 | }());                                             |                                  |                                   |
+|     function change(int &$x):int {    |                                                   |                                  |                                   |
+|         $x=90;                        |                                                   |                                  |                                   |
+|         return 2;                     |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+|     $x int=8;                         |                                                   |                                  |                                   |
+| write_sum($x,$x,change($x));          |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+```
+
+## Type-qualified static calls
+
+```text
++---------------------------------------------------------------+-----------------------------------------+----------------------------------+--------------------------------------+
+| PHP-flavor pattern                                            | Lowered C++ code                        | Lowered C++ header code          | Generation and lowering              |
++===============================================================+=========================================+==================================+======================================+
+| Given                                                         | method_7_Counter_advance(var_x_0, 2LL); | .cpp includes                    | The resolved static method takes the |
+|     struct Counter {                                          |                                         | #include <scpp/core/scalars.hpp> | original local by reference. The     |
+|         public static function advance(int &$x,int $b):void { |                                         | No unit header.                  | integer literal initializes its      |
+|             $x+=$b;                                           |                                         |                                  | by-value parameter directly.         |
+|         }                                                     |                                         |                                  |                                      |
+|     }                                                         |                                         |                                  |                                      |
+|     $x int=8;                                                 |                                         |                                  |                                      |
+| Counter::advance($x,2);                                       |                                         |                                  |                                      |
++---------------------------------------------------------------+-----------------------------------------+----------------------------------+--------------------------------------+
+```
+
+## Inline and shared construction
+
+```text
++--------------------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------+------------------------------------+
+| PHP-flavor pattern                                     | Lowered C++ code                                                                           | Lowered C++ header code          | Generation and lowering            |
++========================================================+============================================================================================+==================================+====================================+
+| Given                                                  | scpp_records::Pair var_p_0 = scpp_records::Pair(static_cast<scpp::uint8>(7LL), number_()); | .cpp includes                    | The byte conversion is proven.     |
+|     struct Pair {                                      | owner_Pair var_q_1 = owner_Pair::make(static_cast<scpp::uint8>(7LL), number_());           | #include <scpp/core/scalars.hpp> | Each call evaluates number once.   |
+|         public function __construct(byte $a,int $b) {} |                                                                                            | #include <scpp/owner_access.hpp> | The shared factory allocates after |
+|     }                                                  |                                                                                            | No unit header.                  | its parameters are initialized.    |
+|     function number():int { return 4; }                |                                                                                            |                                  |                                    |
+| $p Pair(7,number());                                   |                                                                                            |                                  |                                    |
+| $q=new Pair(7,number());                               |                                                                                            |                                  |                                    |
++--------------------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------+------------------------------------+
+```
+
+## Inline method arguments
+
+```text
++-----------------------------------------------------+--------------------------------------+----------------------------------+----------------------------------------+
+| PHP-flavor pattern                                  | Lowered C++ code                     | Lowered C++ header code          | Generation and lowering                |
++=====================================================+======================================+==================================+========================================+
+| Given                                               | method_3_Acc_add(var_a_0, 3LL, 2LL); | .cpp includes                    | The inline local supplies the method’s |
+|     struct Acc {                                    |                                      | #include <scpp/core/scalars.hpp> | record reference. Both scalar literals |
+|         public int $n;                              |                                      | No unit header.                  | can initialize parameters directly.    |
+|         public function add(int $x,int $y=2):void { |                                      |                                  |                                        |
+|             $this->n=$x+$y;                         |                                      |                                  |                                        |
+|         }                                           |                                      |                                  |                                        |
+|     }                                               |                                      |                                  |                                        |
+|     $a Acc;                                         |                                      |                                  |                                        |
+| $a->add(3);                                         |                                      |                                  |                                        |
++-----------------------------------------------------+--------------------------------------+----------------------------------+----------------------------------------+
+```
+
+## Shared method arguments
+
+```text
++---------------------------------------------------+-------------------------------------------------------------+----------------------------------+--------------------------------------+
+| PHP-flavor pattern                                | Lowered C++ code                                            | Lowered C++ header code          | Generation and lowering              |
++===================================================+=============================================================+==================================+======================================+
+| Given                                             | ([&]() -> void {                                            | .cpp includes                    | The local owner keeps the allocation |
+|     struct Acc {                                  |     auto receiver_owner = var_a_0;                          | #include <scpp/core/scalars.hpp> | alive. Dereferencing it checks the   |
+|         public int $n;                            |     auto&& receiver_payload = *receiver_owner.operator->(); | #include <scpp/owner_access.hpp> | receiver before argument evaluation. |
+|         public function add(int $x,int $y):void { |     return method_3_Acc_add(receiver_payload, 3LL, 2LL);    | No unit header.                  | Both integer literals pass directly. |
+|             $this->n=$x+$y;                       | }());                                                       |                                  |                                      |
+|         }                                         |                                                             |                                  |                                      |
+|     }                                             |                                                             |                                  |                                      |
+|     $a=new Acc();                                 |                                                             |                                  |                                      |
+| $a->add(3,2);                                     |                                                             |                                  |                                      |
++---------------------------------------------------+-------------------------------------------------------------+----------------------------------+--------------------------------------+
+```
+
+## Temporary inline method receivers
+
+```text
++---------------------------------------------------+------------------------------------------------------------+----------------------------------+-------------------------------------+
+| PHP-flavor pattern                                | Lowered C++ code                                           | Lowered C++ header code          | Generation and lowering             |
++===================================================+============================================================+==================================+=====================================+
+| Given                                             | ([&]() -> void {                                           | .cpp includes                    | The binding evaluates the factory   |
+|     struct Point {                                |     auto&& receiver_payload = method_5_Point_make();       | #include <scpp/core/scalars.hpp> | once and keeps its returned record  |
+|         public int $n;                            |     return method_5_Point_add(receiver_payload, 3LL, 2LL); | No unit header.                  | alive through the method body. Both |
+|         public static function make():Point {     | }());                                                      |                                  | literals pass directly.             |
+|             $p Point;                             |                                                            |                                  |                                     |
+|             return $p;                            |                                                            |                                  |                                     |
+|         }                                         |                                                            |                                  |                                     |
+|         public function add(int $x,int $y):void { |                                                            |                                  |                                     |
+|             $this->n=$x+$y;                       |                                                            |                                  |                                     |
+|         }                                         |                                                            |                                  |                                     |
+|     }                                             |                                                            |                                  |                                     |
+| Point::make()->add(3,2);                          |                                                            |                                  |                                     |
++---------------------------------------------------+------------------------------------------------------------+----------------------------------+-------------------------------------+
 ```
 
 ## Functions, namespaces and project units

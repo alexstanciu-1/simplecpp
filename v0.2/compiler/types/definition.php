@@ -411,6 +411,27 @@ abstract class type_definition
 			|| $operand instanceof ast_string_expression || $operand instanceof ast_keyword_expression;
 	}
 
+	/** A by-value source call on plain scalar reads cannot reach a sibling's ordinary local storage. */
+	protected static function independent_local_call(ast_expression $local, ast_expression $operand): bool
+	{
+		if (!($local instanceof ast_name_expression && $local->declaration() instanceof ast_local_declaration
+			&& $operand instanceof ast_call_expression && $operand->cardinality === null)) {
+			return false;
+		}
+		$function = $operand->function_def();
+		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_struct_declaration) {
+			return false;
+		}
+		foreach ($function->parameters as $index => $parameter) {
+			$argument = $operand->arguments[$index] ?? $parameter->default_value;
+			if ($parameter->mode !== passing_mode::value || !$parameter->type_def()->cpp_trivial_value()
+				|| !self::stable_cpp_operand($argument) || !$argument->type_def()->cpp_trivial_value()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	protected static function checked_integer_operand(?ast_expression $syntax, string $value, string $parameter): string
 	{
 		if ($syntax instanceof ast_call_expression && $syntax->cardinality === null

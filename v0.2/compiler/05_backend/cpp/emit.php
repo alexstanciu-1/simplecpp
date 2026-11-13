@@ -27,6 +27,8 @@ final class Cpp_Emitter
 	private readonly string $root;
 	/** Set while lowering a function that calls a generated flavor adapter. */
 	private ?string $adapter_flavor = null;
+	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
+	private int $record_expressions = 0;
 
 	/** CONSTRUCTOR */
 	public function __construct(?Cpp_Headers $headers = null, string $root = 'App')
@@ -730,7 +732,11 @@ CPP;
 		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false): string
 	{
 		$reorderable = false;
-		foreach ($value->type_def()->cpp_headers() as $header) {
+		$value_type = $value->type_def();
+		if ($value_type instanceof struct_handle_definition || $value_type instanceof struct_type_definition) {
+			++$this->record_expressions;
+		}
+		foreach ($value_type->cpp_headers() as $header) {
 			$required_headers[$header] = true;
 		}
 		if ($value instanceof ast_ownership_expression) {
@@ -1004,23 +1010,25 @@ CPP;
 		if ($method) {
 			$inline_storage = false;
 			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
-			if ($inline_storage && $function->parameters === []) {
-				return $name . '(' . $place . ')';
+			if (!$inline_storage) {
+				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
+				$place = 'receiver_payload';
 			}
-			$steps[] = 'auto&& receiver_payload = ' . $place . ';';
-			$arguments[] = 'receiver_payload';
+			$arguments[] = $place;
 		} elseif ($function->parameters === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
-		$direct = !$method;
-		$by_value_free_call = !($function->parent instanceof ast_struct_declaration);
-		$order_sensitive_arguments = 0;
+		$direct = $steps === [];
+		$has_reference = false;
+		$order_sensitive = [];
+		$inline_index = null;
 		foreach ($function->parameters as $index => $parameter) {
 			$argument = $value->arguments[$index] ?? $parameter->default_value;
 			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 			$type = $parameter->type_def();
 			$operand_safe = false;
+			$records_before = $this->record_expressions;
 			$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
 				logical_root: $conversion === value_conversion::identity);
 			foreach ($type->conversion_headers($conversion) as $header) {
@@ -1036,30 +1044,35 @@ CPP;
 			$direct_arguments[] = $operand;
 			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
 				&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
-			if ($by_value_free_call) {
-				if ($parameter->mode !== passing_mode::value) {
-					$by_value_free_call = false;
-				} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
-					++$order_sensitive_arguments;
-				}
+			// A prepared reference binds a stable named slot without reading its value.
+			if ($parameter->mode === passing_mode::reference) {
+				$has_reference = true;
+			} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
+				$order_sensitive[$index] = true;
+				$inline_index = $type->cpp_trivial_value() && $this->record_expressions === $records_before ? $index : null;
+			}
+		}
+		if ($direct || (!$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
+		}
+		// Literal peers cannot observe effects. The last remaining scalar can run in the call
+		// after its predecessors, unless its expression needs a record destruction boundary.
+		foreach ($function->parameters as $index => $parameter) {
+			$type = $parameter->type_def();
+			$operand = $direct_arguments[$index];
+			if (!isset($order_sensitive[$index]) || $index === $inline_index) {
+				$arguments[] = $operand;
+				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 			$temporary = 'argument_' . $value->start . '_' . $index;
-			if ($parameter->mode === passing_mode::reference) {
-				$steps[] = $type->cpp_type() . ' &' . $temporary . ' = ' . $operand . ';';
-				$arguments[] = $temporary;
-			}
-			else {
-				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
-				$arguments[] = $type->cpp_trivial_value() ? $temporary
-					: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-			}
+			$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
+			$arguments[] = $type->cpp_trivial_value() ? $temporary
+				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
-		if ($direct || ($by_value_free_call && $order_sensitive_arguments <= 1)) {
-			return $name . '(' . implode(', ', $direct_arguments) . ')';
-		}
-		return '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
-			. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
+		$call = $name . '(' . implode(', ', $arguments) . ')';
+		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
+			. ' return ' . $call . '; }())';
 	}
 
 	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */

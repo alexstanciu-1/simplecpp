@@ -296,3 +296,147 @@ checked narrowing with both a literal peer and an effectful peer. On Clang
 18.1.3 and GCC 13.3.0 all four fixture groups produced the expected effects
 and failures. The catalog now checks 57 examples. Selectively removing individual
 temporaries in calls that still need sequencing remains a separate batch.
+
+### Follow-up batch — final scalar in an ordered free call
+
+When a free call with by-value parameters requires an ordered block, the final
+trivial scalar initializes its parameter directly from its prepared expression
+and conversion. Earlier arguments keep their typed captures. In
+`sum($x, change($x))` the first argument captures the original value and the
+second call appears once inside `sum_`. An earlier conversion failure skips
+that final argument; a final conversion failure skips the callee.
+
+The lifetime of a temporary within the final expression can matter even if its
+result is scalar. The existing emission walk detects record and handle operands
+and conservatively retains their statement boundary on the ordered path.
+A regression transfers the last owner, reads its integer field and checks a
+weak reference inside the callee. The callee observes that the owner expired.
+
+The three flavors cover the mutating and ordered-call cases, both checked
+conversion failure positions and the weak-reference lifetime control. The
+catalog verifies 58 generated implementation and header excerpts.
+
+### Follow-up batch — literal positions in ordered free calls
+
+In a by-value free call, scalar literals with nonthrowing prepared conversions
+stay inline in any position. The emitter lowers every argument once, records
+the order-sensitive positions and renders capture statements only if the call
+needs sequencing. The last order-sensitive argument can initialize its parameter
+inside the call when its result is trivial and no record lifetime boundary is
+needed. Trailing literal defaults follow the same rule as explicit literals.
+
+Three-flavor fixtures check first and middle literal positions and an omitted
+proven byte default. Each example has two effectful arguments and emits one
+scalar capture. The native output checks argument order, values and call counts.
+Controls cover a late reference parameter, checked conversion failures and
+release of the last shared owner before the callee observes a weak reference
+even when a literal default follows the field read. The catalog checks 59
+examples against fresh compiler output.
+
+### Follow-up batch — exact reference arguments in ordered free calls
+
+Preparation already restricts mutable reference arguments to named locals and
+parameters of the exact storage type. The emitter passes those lvalues directly.
+By-value operands use the existing capture rule. For
+`write_sum($x,$x,change($x))`, only the first argument captures the original
+value. Two reference parameters can both name the same local without a wrapper.
+
+Controls cover reference positions at the start, middle and end, two aliases,
+mutation through the callee, and a scalar field read that must release the last
+owner before the callee inspects a weak reference passed by reference. The
+generator, preparation and method receiver contracts are unchanged.
+
+### Follow-up batch — type-qualified static method calls
+
+Free functions and type-qualified static methods now share argument selection
+through the prepared call's receiver status. Construction expressions stay on
+their construction path. For `Counter::advance($x,2)` the emitted static method
+receives the original local and the literal directly. For
+`Counter::accept(mark(4),mark(5))` with a byte first parameter, the ordered
+block evaluates and converts the first result before calling the second producer.
+The failure variant uses 300 and checks the range exception, the first
+producer's output, and the absence of second-producer and callee output.
+
+### Follow-up batch — inline and shared constructor arguments
+
+The existing argument selection handles construction of an inline record and
+the call to a shared record's allocation factory. Both use the prepared
+constructor parameter types and conversions. With two effectful scalar inputs,
+the first is evaluated and converted in a statement and the second is passed
+directly. A proven scalar literal needs no capture. The ordered path keeps
+nontrivial values and record lifetime boundaries. Allocation remains inside
+the shared factory.
+
+Three-flavor fixtures cover both forms with a proven byte literal, two calls
+that print their arguments, and a first conversion that fails before the second
+producer or constructor body can run. Existing constructor regressions exercise
+cross-unit edits, recovery, cleanup on exceptions and private constructor access.
+
+### Follow-up batch — arguments on inline instance receivers
+
+A method invoked on stable inline storage now passes the record place directly
+and uses ordinary argument capture selection. The receiver walk already
+recognizes locals, parameters, borrowed this and their inline fields. A
+prepared literal default and a proven byte literal need no statements. Two
+effectful scalar arguments capture the first converted result before evaluating
+the second. A failed conversion prevents the second call and method body.
+
+Shared allocations, fields reached through a shared allocation, and temporary
+records still require receiver setup. Existing native method tests cover owner
+replacement, empty receivers, mutation, and incremental/fresh recovery. The
+catalog includes a direct inline method call with an omitted scalar default.
+
+### Follow-up batch — arguments after a shared receiver check
+
+The receiver walk pins the nearest shared allocation, including the owner of
+an inline field, and resolves the receiver before evaluating explicit arguments.
+Those two statements remain in the ordered block. Once the receiver is stable,
+argument selection can pass literals and exact reference bindings directly and
+capture earlier effectful conversions. The existing record-expression lifetime
+guard still applies. Temporary inline receivers keep their previous argument
+setup.
+
+For each shared receiver form the fixtures check an empty handle before either
+argument prints, replacement of the caller's handle while the selected payload
+is updated, and checked narrowing before a later argument or the method body.
+The catalog includes the generated owner, payload and direct literal arguments.
+
+### Follow-up batch — temporary inline method receivers
+
+The receiver binding extends a returned record's lifetime until the method
+call completes. Once that binding exists, the ordinary argument rule applies
+to all three receiver forms. Exact references pass directly, as do inert
+literals. Earlier effectful conversions keep their captures. The emitter
+therefore has no receiver-specific switch for argument capture selection.
+
+The three-flavor fixture transfers the caller's last strong handle to the
+returned record. A weak handle locks during argument evaluation and in the
+method, then fails to lock in the following statement. Separate cases check
+literal arguments, a failure in the factory before any argument prints, and a
+first-argument narrowing failure after the factory returns. The catalog shows
+the receiver binding and literal arguments for a factory-returned inline record.
+
+### Native compile-time checkpoint
+
+The paired benchmark compares the audited baseline with the instance-receiver
+checkpoint. The selected candidate was eager integer addition of a plain local and
+a by-value scalar call. Runtime adapter calls remain a follow-up. The report
+records the full clean and one-unit native rebuild timings, dispersion, generated
+shape and the isolated candidate experiments. [Measurements and candidate selection](../../samples/capability-benchmarks/benchmark-2026-11-13-lowering.md)
+
+### Follow-up batch — eager integer addition with a by-value scalar call
+
+The generated native integer addition rule uses the existing identity conversions
+and ordinary-local binding. Either operand may be the local. The free-function
+operand accepts only by-value trivial scalar parameters supplied by plain scalar
+reads or literals (including defaults). Its own preparation, checked conversions
+and argument ordering still apply. The addition remains potentially effectful
+to enclosing consumers. There are no additional preparation facts or callee-body
+walks. Both direct and nested reference mutations retain the existing snapshots.
+
+Production emission on the medium billing project matches the timed experimental
+entry unit byte-for-byte (5,527 bytes, 48 direct additions, zero sequencing
+lambdas); all sibling translation units match too. Both native drivers printed
+`invoice: 10469` and exited with status 8. The mode-edit regression switches
+a foreign parameter from value to reference and back, comparing the caller
+with a fresh compilation at each step. [Catalog](../../compiler/docs/php_lowering_catalog.md)

@@ -24,11 +24,19 @@ def qualify(directory, compilers, flags):
             for case in ('call_divide', 'call_remainder', 'call_shift_left', 'call_shift_right', 'call_power',
                          'call_float_divide', 'call_argument_failure', 'division_by_zero', 'modulo_by_zero',
                          'local_xor', 'checked_literal', 'forward_reference', 'int64_divide', 'literal_peers',
-                         'ordered_call_peers', 'sole_checked_argument', 'conversion_order'):
+                         'ordered_call_peers', 'sole_checked_argument', 'conversion_order', 'ordered_final_conversion',
+                         'final_owner_release', 'ordered_literal_positions', 'ordered_reference_alias', 'ordered_late_reference',
+                         'ref_owner_release', 'static_arguments', 'static_conversion_failure',
+                         'inline_constructor_direct', 'inline_constructor_ordered', 'inline_constructor_failure',
+                         'shared_constructor_direct', 'shared_constructor_ordered', 'shared_constructor_failure',
+                         'inline_method_arguments', 'inline_method_failure', 'shared_replace', 'shared_field_replace',
+                         'shared_empty', 'shared_field_empty', 'shared_checked', 'shared_field_checked',
+                         'temporary_lifetime', 'temporary_literals', 'temporary_receiver_failure', 'temporary_argument_failure',
+                         'local_call_addition', 'local_call_alias', 'local_call_failure'):
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []
-                exception = next((kind for kind in ('domain_error', 'out_of_range') if 'catch_' + kind in fixture), None)
+                exception = next((kind for kind in ('domain_error', 'out_of_range', 'runtime_error') if 'catch_' + kind in fixture), None)
                 if exception:
                     source = source.replace('int main()', 'int tested_entry()')
                     error = json.dumps(fixture['catch_' + exception])

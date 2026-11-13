@@ -36,11 +36,46 @@ expressions retain their operand snapshots.
   be trivial and each surrounding literal must have a nonthrowing prepared
   scalar conversion. Defaults use their declaration conversion. A plain storage
   read still needs sequencing beside a call that could change that storage.
+  In an ordered by-value free call, inert scalar literals and defaults stay
+  inline in any position. After the earlier order-sensitive arguments have
+  been captured, the last order-sensitive scalar can initialize its parameter
+  directly, even when literal defaults follow it.
+  Expressions involving records or handles keep their full-expression boundary:
+  a temporary owner can expire before the callee observes a weak handle.
+
+Free functions and type-qualified static methods share the same argument
+lowering because neither evaluates an instance receiver. In these calls,
+preparation guarantees that each reference
+argument names exact, stable storage. Passing that name directly preserves
+aliasing even if a sibling changes the stored value. Earlier by-value reads
+still capture their values when required. An argument involving a temporary
+owner retains its destruction boundary on the ordered reference-call path.
+
+Inline construction and shared allocation factories use the same ordered argument
+selection. A scalar literal with a proven conversion stays inline. Earlier effectful
+values are evaluated and converted before the final scalar is passed. On this
+ordered path, an argument involving a temporary record or owner keeps its
+statement boundary. Shared allocation starts inside the factory after argument
+evaluation succeeds.
+
+An instance method on stable inline storage receives that record place directly.
+A shared receiver retains its allocation and binds the checked payload or inline
+field. A temporary inline receiver binds the returned record once to a local
+`auto&&`, extending its lifetime through the method body. After receiver setup,
+all three forms use the same capture selection for explicit arguments.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
 owns the generated inventory version. A checked operation can use direct operands
 and still report a potentially throwing result to its parent.
+
+Native integer addition can directly combine an ordinary local with a
+scalar-returning free-function call on either side. The operands use identity
+conversions at the addition boundary. Each call parameter must take a trivial
+scalar by value, and each explicit or default argument must be a scalar literal
+or a plain scalar storage read. Prepared parameter conversions still run, including
+checked narrowing. This permission applies to the addition itself; the result
+can still throw or have effects when used in an ordered parent.
 
 Generated native operations decide whether equal C++ operand spellings need snapshots.
 Safe arithmetic sums compose directly even when both subtrees spell the same sum.

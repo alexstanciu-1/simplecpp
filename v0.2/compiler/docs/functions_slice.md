@@ -177,8 +177,9 @@ always suppress constants to cover aliasing with other parameters.
 Earlier occurrence snapshots are immutable. Both paths remain linear in arguments,
 with constant-time lookup/invalidation per local.
 
-Lowering binds typed `T&` argument temporaries in source order and passes those as
-lvalues. Value arguments retain owning temporaries and moves. Signatures emit `T&`
+Free-function calls pass the prepared reference lvalue directly. Value arguments
+keep captures where a sibling can change a value or a temporary must be released
+before the call. Signatures emit `T&`
 for references; ordinary returns remain values. No runtime wrappers or metadata
 conversion changes are needed. The JS spelling `&name: T` is an explicit Simple C++
 flavor extension. Reference defaults and const references diagnose as unsupported.

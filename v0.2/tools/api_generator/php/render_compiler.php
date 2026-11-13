@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 52,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 53,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -581,7 +581,10 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             // These validated scalar strategies call a runtime helper with two value parameters.
             $valueHelpers[] = "binary_operator::$op";
         } elseif ($definitions[$identity]['strategy'] === 'integer') {
-            if ($operation['lowering'] === 'native_three_way') {
+            if ($op === 'add' && $operation['lowering'] === 'native' && compilerStrategyReorderable($safety, 'native')) {
+                $directCases[] = "binary_operator::$op => self::independent_local_call(\$expr->left, \$expr->right)"
+                    . "\n\t\t\t\t|| self::independent_local_call(\$expr->right, \$expr->left),";
+            } elseif ($operation['lowering'] === 'native_three_way') {
                 // This formula reads both operands twice. Only repeat plain, distinct storage reads.
                 $directCases[] = "binary_operator::$op => \$operands_safe && !\$same_spelling && \$expr->right->type_def() === \$this"
                     . "\n\t\t\t\t&& \$expr->left instanceof ast_name_expression && \$expr->left->declaration() instanceof ast_local_binding"

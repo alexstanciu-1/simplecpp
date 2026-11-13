@@ -106,7 +106,7 @@ foreach (flavor::cases() as $flavor)
 	$forward = $fn('forward', $param('int', 'x', true), 'void', "bump($x);");
 	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
 	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "forward($x); pair($x, 1); echo $x; return 8;");
-	verify(str_contains($cpp, 'bump_(var_x_0);') && str_contains($cpp, 'pair_(argument_'), 'Expected direct forwarding and ordered multi-argument binding');
+	verify(str_contains($cpp, 'bump_(var_x_0);') && str_contains($cpp, 'pair_(var_x_0, 1LL);'), 'Expected direct forwarding and exact reference binding');
 	$fixtures[$flavor->name . '_forward_reference'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('3')];
 	$change = $fn('change', $param('string', 's'), 'void', $s . ' = "changed"; echo ' . $s . ';');
 	$cpp = $emit($change . $string . "change($s); echo $s; return 8;");
@@ -231,9 +231,196 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($floating, 'scpp::float64_divide(var_a_0, var_b_1)'), 'Expected direct float division');
 	$change = $fn('change_int', $param('int', 'x', true), 'int', "$x = 90; echo \"C\"; return 2;");
 	$mark = $fn('mark_int', $param('int', 'v'), 'int', 'echo ' . $var('v') . '; return ' . $var('v') . ';');
+	$last_default = $fn('choose', $param('int', 'a') . ',' . $param('int', 'b') . ',' . $param('byte', 'c') . '=7',
+		'int', 'return ' . $var('a') . '+' . $var('b') . '+(int)' . $var('c') . ';');
+	$ordered_literals = $emit($three . $mark . $last_default
+		. 'echo three(255,mark_int(2),mark_int(3)), choose(mark_int(4),1,mark_int(5)), choose(mark_int(6),mark_int(7)); return 8;');
+	foreach (['three_\(static_cast<scpp::uint8>\(255LL\), argument_\d+_1, mark_int_\(3LL\)\)',
+		'choose_\(argument_\d+_0, 1LL, scpp::checked_int64_to_uint8\(mark_int_\(5LL\)\)\)',
+		'choose_\(argument_\d+_0, mark_int_\(7LL\), static_cast<scpp::uint8>\(7LL\)\)'] as $args) {
+		verify(preg_match('/return ' . $args . ';/', $ordered_literals) === 1, 'Expected direct literal peers in ordered call: ' . $args);
+	}
+	verify(preg_match_all('/scpp::int64 argument_\d+_\d+ =/', $ordered_literals) === 3, 'Expected one scalar capture per ordered call');
+	$late_ref = $fn('update_last', $param('int', 'a') . ',' . $param('int', 'b') . ',' . $param('int', 'x', true),
+		'void', "$x = " . $var('a') . '+' . $var('b') . ';');
+	$ref_cpp = $emit($late_ref . $mark . $decl('x', 'int', '0') . "update_last(1,mark_int(2),$x); echo $x; return 8;");
+	verify(str_contains($ref_cpp, 'update_last_(1LL, mark_int_(2LL), var_x_0);'), 'Expected direct final reference binding');
+	$fixtures[$flavor->name . '_ordered_late_reference'] = ['cpp' => $ref_cpp, 'stdout_hex' => bin2hex('23')];
+	$fixtures[$flavor->name . '_ordered_literal_positions'] = ['cpp' => $ordered_literals, 'stdout_hex' => bin2hex('2326045106720')];
+
+	$alias = $fn('write_pair', $param('int', 'a', true) . ',' . $param('int', 'b', true),
+		'void', "$a=4; $b=$b+1;");
+	$write = $fn('write_sum', $param('int', 'a') . ',' . $param('int', 'x', true) . ',' . $param('int', 'b'),
+		'void', "$x=$a+$b;");
+	$ref_calls = $emit($alias . $write . $change . $decl('x', 'int', '8')
+		. "write_sum($x,$x,change_int($x)); echo $x; write_pair($x,$x); echo $x; return 8;");
+	verify(preg_match('/return write_sum_\(argument_\d+_0, var_x_0, change_int_\(var_x_0\)\);/', $ref_calls) === 1
+		&& str_contains($ref_calls, 'write_pair_(var_x_0, var_x_0);'), 'Only the original by-value read requires capture');
+	$fixtures[$flavor->name . '_ordered_reference_alias'] = ['cpp' => $ref_calls, 'stdout_hex' => bin2hex('C105')];
+	$counter = match ($flavor) {
+		flavor::php => 'struct Counter { public static function advance(int &$x,int $b):void { $x+=$b; } '
+			. 'public static function accept(byte $a,int $b):void { echo "C",(int)$a,$b; } }',
+		flavor::cpp => 'struct Counter { static void advance(int &x,int b) { x+=b; } '
+			. 'static void accept(byte a,int b) { echo "C",(int)a,b; } };',
+		flavor::js => 'struct Counter { static advance(&x:int,b:int):void { x+=b; } '
+			. 'static accept(a:byte,b:int):void { echo "C",(int)a,b; } }',
+	};
+	$qualifier = $flavor === flavor::js ? 'Counter.' : 'Counter::';
+	$static_calls = $emit($counter . $mark . $decl('x', 'int', '8')
+		. "{$qualifier}advance($x,2); echo $x; {$qualifier}accept(mark_int(4),mark_int(5)); return 8;");
+	verify(str_contains($static_calls, 'method_7_Counter_advance(var_x_0, 2LL);')
+		&& preg_match('/return method_7_Counter_accept\(argument_\d+_0, mark_int_\(5LL\)\);/', $static_calls) === 1,
+		'Static calls must use direct reference binding and retain the first effectful conversion');
+	$fixtures[$flavor->name . '_static_arguments'] = ['cpp' => $static_calls, 'stdout_hex' => bin2hex('1045C45')];
+	$static_failure = $emit($counter . $mark . "{$qualifier}accept(mark_int(300),mark_int(5)); return 8;");
+	$fixtures[$flavor->name . '_static_conversion_failure'] = ['cpp' => $static_failure, 'stdout_hex' => bin2hex('300'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+
+	[$inline_record, $local_record, $receiver] = match ($flavor) {
+		flavor::php => ['struct Acc { public int $n; public function add(byte $a,int $b=2):void { $this->n=(int)$a+$b; echo "C"; } }',
+			'$r Acc;', '$r->'],
+		flavor::cpp => ['struct Acc { int n; void add(byte a,int b=2) { this->n=(int)a+b; echo "C"; } };', 'Acc r;', 'r->'],
+		flavor::js => ['struct Acc { n:int; add(a:byte,b:int=2):void { this.n=(int)a+b; echo "C"; } }', 'let r:Acc;', 'r.'],
+	};
+	$prefix = $inline_record . $mark . $local_record;
+	$inline_calls = $emit($prefix . "{$receiver}add(3); echo {$receiver}n; {$receiver}add(mark_int(4),mark_int(5)); echo {$receiver}n; return 8;");
+	verify(str_contains($inline_calls, 'method_3_Acc_add(var_r_0, static_cast<scpp::uint8>(3LL), 2LL);')
+		&& preg_match('/return method_3_Acc_add\(var_r_0, argument_\d+_0, mark_int_\(5LL\)\);/', $inline_calls) === 1
+		&& !str_contains($inline_calls, 'receiver_payload'), 'Inline method should retain only the first effectful argument');
+	$fixtures[$flavor->name . '_inline_method_arguments'] = ['cpp' => $inline_calls, 'stdout_hex' => bin2hex('C545C9')];
+	$failure = $emit($prefix . "{$receiver}add(mark_int(300),mark_int(5)); return 8;");
+	$fixtures[$flavor->name . '_inline_method_failure'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+
+	$holder = match ($flavor) {
+		flavor::php => 'struct Holder { public Acc $item; }',
+		flavor::cpp => 'struct Holder { Acc item; };',
+		flavor::js => 'struct Holder { item:Acc; }',
+	};
+	$member = $flavor === flavor::js ? '.' : '->';
+	$p = $var('p');
+	foreach (['shared' => 'Acc', 'shared_field' => 'Holder'] as $kind => $record_name) {
+		$field = $record_name === 'Acc' ? '' : $member . 'item';
+		$target = $p . $field . $member;
+		$owner_type = "shared<$record_name>";
+		$prefix = $inline_record . $holder . $mark;
+		$allocated = $decl('p', $owner_type, "new $record_name()");
+		$replace = $fn('replace_owner', $param($owner_type, 'p', true), 'int', "$p=new $record_name(); echo \"R\"; return 4;");
+		$source = $prefix . $replace . $allocated . $decl('original', $owner_type, $p)
+			. "{$target}add(3); {$target}add(5,replace_owner($p)); echo " . $var('original') . $field . $member . "n,{$target}n; return 8;";
+		$cpp = $emit($source);
+		verify(str_contains($cpp, 'auto receiver_owner = var_p_0;') && str_contains($cpp, 'auto&& receiver_payload = ')
+			&& str_contains($cpp, 'method_3_Acc_add(receiver_payload, static_cast<scpp::uint8>(3LL), 2LL)'), 'Shared receiver setup must survive direct argument lowering');
+		$fixtures[$flavor->name . '_' . $kind . '_replace'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('CRC90')];
+		$call = "{$target}add(mark_int(300),mark_int(5)); return 8;";
+		$empty = $emit($prefix . $decl('p', $owner_type, 'null') . $call);
+		$fixtures[$flavor->name . '_' . $kind . '_empty'] = ['cpp' => $empty, 'stdout_hex' => '',
+			'catch_runtime_error' => 'ownership_empty_access'];
+		$failure = $emit($prefix . $allocated . $call);
+		verify(preg_match('/return method_3_Acc_add\(receiver_payload, argument_\d+_0, mark_int_\(5LL\)\);/', $failure) === 1,
+			'Shared method must capture the checked first argument');
+		$fixtures[$flavor->name . '_' . $kind . '_checked'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+			'catch_out_of_range' => 'integer_cast_out_of_range'];
+	}
+
+	// The returned inline record owns the last strong handle after make clears the caller's slot.
+	[$temp_model, $make] = match ($flavor) {
+		flavor::php => ['struct Child { public int $n; } struct Temp { public shared<Child> $child; '
+			. 'public static function make(shared<Child> &$p):Temp { echo "R",$p->n; $t Temp; $t->child=$p; $p=null; return $t; } '
+			. 'public function useArgs(byte $a,int $b,weak<Child> &$w):void { if (lock($w)) { echo "M",(int)$a,$b; } } }', 'Temp::make'],
+		flavor::cpp => ['struct Child { int n; }; struct Temp { shared<Child> child; '
+			. 'static Temp make(shared<Child> &p) { echo "R",p->n; Temp t; t->child=p; p=null; return t; } '
+			. 'void useArgs(byte a,int b,weak<Child> &w) { if (lock(w)) { echo "M",(int)a,b; } } };', 'Temp::make'],
+		flavor::js => ['struct Child { n:int; } struct Temp { child:shared<Child>; '
+			. 'static make(&p:shared<Child>):Temp { echo "R",p.n; let t:Temp; t.child=p; p=null; return t; } '
+			. 'useArgs(a:byte,b:int,&w:weak<Child>):void { if (lock(w)) { echo "M",(int)a,b; } } }', 'Temp.make'],
+	};
+	$w = $var('w');
+	$inspect = $fn('inspect', $param('weak<Child>', 'w', true), 'int',
+		"if (lock($w)) { echo \"A\"; return 4; } return 0;");
+	$factory = "$make($p){$member}useArgs";
+	$setup = $temp_model . $inspect . $mark . $decl('p', 'shared<Child>', 'new Child()')
+		. $decl('w', 'weak<Child>', "weak($p)");
+	$after = "if (lock($w)) { return 9; } echo \"E\"; return 8;";
+	$cpp = $emit($setup . "$factory(inspect($w),mark_int(5),$w); $after");
+	verify(substr_count($cpp, 'auto&& receiver_payload = method_4_Temp_make(var_p_0);') === 1
+		&& preg_match('/return method_4_Temp_useArgs\(receiver_payload, argument_\d+_0, mark_int_\(5LL\), var_w_1\);/', $cpp) === 1,
+		'Temporary receiver must bind once and capture only the earlier conversion');
+	$fixtures[$flavor->name . '_temporary_lifetime'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R0A5M45E')];
+	$cpp = $emit($setup . "$factory(3,2,$w); $after");
+	verify(str_contains($cpp, 'method_4_Temp_useArgs(receiver_payload, static_cast<scpp::uint8>(3LL), 2LL, var_w_1)'),
+		'Temporary receiver should take literals directly');
+	$fixtures[$flavor->name . '_temporary_literals'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R0M32E')];
+	$call = "$factory(mark_int(300),mark_int(5),$w); return 8;";
+	$fixtures[$flavor->name . '_temporary_receiver_failure'] = ['cpp' => $emit($setup . "$p=null;" . $call),
+		'stdout_hex' => bin2hex('R'), 'catch_runtime_error' => 'ownership_empty_access'];
+	$fixtures[$flavor->name . '_temporary_argument_failure'] = ['cpp' => $emit($setup . $call),
+		'stdout_hex' => bin2hex('R0300'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
+
+	[$record, $inline_decl, $shared_decl] = match ($flavor) {
+		flavor::php => ['struct Pair { public function __construct(byte $a,int $b) { echo "C",(int)$a,$b; } }', '$p Pair', '$q=new Pair'],
+		flavor::cpp => ['struct Pair { Pair(byte a,int b) { echo "C",(int)a,b; } };', 'Pair p', 'auto q=new Pair'],
+		flavor::js => ['struct Pair { constructor(a:byte,b:int) { echo "C",(int)a,b; } }', 'let p:Pair', 'let q=new Pair'],
+	};
+	foreach (['inline' => [$inline_decl, 'scpp_records::Pair'], 'shared' => [$shared_decl, 'owner_Pair::make']] as $kind => [$construct, $symbol]) {
+		$prefix = $record . $mark;
+		$direct_ctor = $emit($prefix . "$construct(7,mark_int(3)); return 8;");
+		verify(str_contains($direct_ctor, "$symbol(static_cast<scpp::uint8>(7LL), mark_int_(3LL))"),
+			"Expected direct $kind construction with a proven literal");
+		$ordered_ctor = $emit($prefix . "$construct(mark_int(4),mark_int(5)); return 8;");
+		verify(preg_match('/return ' . preg_quote($symbol, '/') . '\(argument_\d+_0, mark_int_\(5LL\)\);/', $ordered_ctor) === 1,
+			"Expected one capture for ordered $kind construction");
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_direct'] = ['cpp' => $direct_ctor, 'stdout_hex' => bin2hex('3C73')];
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_ordered'] = ['cpp' => $ordered_ctor, 'stdout_hex' => bin2hex('45C45')];
+		$failure = $emit($prefix . "$construct(mark_int(300),mark_int(5)); return 8;");
+		$fixtures[$flavor->name . '_' . $kind . '_constructor_failure'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
+			'catch_out_of_range' => 'integer_cast_out_of_range'];
+	}
+	$line = $fn('line', $param('int', 'price') . ',' . $param('int', 'qty') . '=3', 'int',
+		'echo "L"; return ' . $var('price') . '*' . $var('qty') . ';');
+	$addition = $emit($line . $decl('x', 'int', '8') . $decl('price', 'int', '2')
+		. "$x = $x + line(" . $var('price') . ",3); echo $x; echo line($x) + $x; return 8;");
+	verify(str_contains($addition, 'var_x_0 = (var_x_0 + line_(var_price_1, 3LL));')
+		&& str_contains($addition, '(line_(var_x_0, 3LL) + var_x_0)'), 'Expected direct local and by-value call addition');
+	$fixtures[$flavor->name . '_local_call_addition'] = ['cpp' => $addition, 'stdout_hex' => bin2hex('L14L56')];
+	$aliases = $emit($line . $change . $decl('x', 'int', '8')
+		. "echo $x + change_int($x); $x=8; echo $x + line(change_int($x),3); return 8;");
+	verify(substr_count($aliases, 'const auto binary_left = var_x_0;') === 2, 'Lost a snapshot across direct or nested reference mutation');
+	$fixtures[$flavor->name . '_local_call_alias'] = ['cpp' => $aliases, 'stdout_hex' => bin2hex('C10CL14')];
+	$checked_line = $fn('checked_line', $param('byte', 'price'), 'int', 'echo "CALLEE"; return 1;');
+	$fail_add = $emit($checked_line . $decl('x', 'int', '8') . $decl('price', 'int', '0') . $var('price') . '+=300;'
+		. "echo $x + checked_line(" . $var('price') . '); return 8;');
+	verify(str_contains($fail_add, '(var_x_0 + checked_line_(scpp::checked_int64_to_uint8(static_cast<scpp::int64>(var_price_1))))'),
+		'Direct addition must keep checked parameter conversion');
+	$fixtures[$flavor->name . '_local_call_failure'] = ['cpp' => $fail_add, 'stdout_hex' => '', 'catch_out_of_range' => 'integer_cast_out_of_range'];
 	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
 		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
+	verify(preg_match('/return sum_\(argument_[0-9]+_0, change_int_\(var_x_0\)\);/', $ordered_calls) === 1
+		&& preg_match('/return sum_\(argument_[0-9]+_0, mark_int_\(5LL\)\);/', $ordered_calls) === 1
+		&& !preg_match('/argument_[0-9]+_1\b/', $ordered_calls), 'Expected only the first scalar argument to be captured');
 	$fixtures[$flavor->name . '_ordered_call_peers'] = ['cpp' => $ordered_calls, 'stdout_hex' => bin2hex('C10459')];
+	// Reading a scalar field must release the returned last owner before observe enters.
+	$point = match ($flavor) {
+		flavor::php => 'struct Point { public int $x; }',
+		flavor::cpp => 'struct Point { int x; };',
+		flavor::js => 'struct Point { x:int; }',
+	};
+	$member = $flavor === flavor::js ? '.' : '->';
+	$p = $var('p');
+	$owner_case = $point . $fn('transfer', $param('shared<Point>', 'p', true), 'shared<Point>',
+		$decl('saved', 'shared<Point>', $p) . "$p=null; return " . $var('saved') . ';')
+		. $fn('observe', $param('weak<Point>', 'w') . ',' . $param('int', 'v') . ',' . $param('int', 'tail') . '=0', 'int',
+			'if (lock(' . $var('w') . ')) { return 99; } return ' . $var('v') . ';')
+		. $decl('p', 'shared<Point>', 'new Point()') . "$p{$member}x=7; echo observe(weak($p),transfer($p){$member}x); return 8;";
+	$fixtures[$flavor->name . '_final_owner_release'] = ['cpp' => $emit($owner_case), 'stdout_hex' => bin2hex('7')];
+	// Even a sole value argument may need its own full-expression boundary beside a reference.
+	$ref_owner_case = $point . $fn('transfer', $param('shared<Point>', 'p', true), 'shared<Point>',
+		$decl('saved', 'shared<Point>', $p) . "$p=null; return " . $var('saved') . ';')
+		. $fn('observe_ref', $param('weak<Point>', 'w', true) . ',' . $param('int', 'v'), 'int',
+			'if (lock(' . $var('w') . ')) { return 99; } return ' . $var('v') . ';')
+		. $decl('p', 'shared<Point>', 'new Point()') . $decl('w', 'weak<Point>', "weak($p)")
+		. "$p{$member}x=7; echo observe_ref(" . $var('w') . ",transfer($p){$member}x); return 8;";
+	$fixtures[$flavor->name . '_ref_owner_release'] = ['cpp' => $emit($ref_owner_case), 'stdout_hex' => bin2hex('7')];
 	$code = $sum
 		. $fn('bump', $param('int', 'x', true), 'int', $var('x') . '=9; return 2;')
 		. $fn('pick', $param('string', 'a') . ',' . $param('string', 'b'), 'string', 'echo ' . $var('a') . '; return ' . $var('b') . ';')
@@ -262,6 +449,15 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($cpp, 'reject_byte_(scpp::checked_int64_to_uint8(outside_byte_()), 2LL)'),
 		'Only the checked argument can have effects');
 	$fixtures[$flavor->name . '_sole_checked_argument'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('B'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+	$checked_last = $fn('last_byte', $param('int', 'a') . ',' . $param('byte', 'b'), 'int', 'echo "CALLEE"; return 1;')
+		. $fn('first_mark', '', 'int', 'echo "A"; return 1;')
+		. $fn('outside_byte', '', 'int', 'echo "B"; return 300;')
+		. 'echo last_byte(first_mark(),outside_byte()); return 8;';
+	$cpp = $emit($checked_last);
+	verify(preg_match('/return last_byte_\(argument_[0-9]+_0, scpp::checked_int64_to_uint8\(outside_byte_\(\)\)\);/', $cpp) === 1,
+		'Final scalar should keep its checked conversion in the call');
+	$fixtures[$flavor->name . '_ordered_final_conversion'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('AB'),
 		'catch_out_of_range' => 'integer_cast_out_of_range'];
 	$fixtures[$flavor->name . '_conversion_order'] = ['cpp' => $emit($checked), 'stdout_hex' => bin2hex('B'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
 }
