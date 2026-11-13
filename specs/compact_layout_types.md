@@ -223,7 +223,7 @@ variables that share a payload still binds two independent slots. Fields and
 temporary expressions cannot bind to a writable owner reference.
 
 The bootstrap compiler supports local owners, by-value parameters and returns,
-and construction with required by-value arguments. Shared construction accepts
+and construction with by-value arguments and trailing literal defaults. Shared construction accepts
 namespace-qualified names. Struct imports remain a separate lookup feature.
 
 | Flavor | Inline local | Shared expression | Constructor inside the struct |
@@ -239,9 +239,9 @@ all use this access rule. For an embedded inline field, the accessing struct is
 the one declaring the field. Constructor parameters use ordinary
 function argument conversions and evaluation order. Its body may assign to
 fields of the fresh receiver. A typed declaration without parentheses and an
-inline struct field both require default construction: they call the zero-argument
-constructor when one is declared. A required-argument constructor makes either
-default use invalid. A shared field still starts empty. Copying an existing
+inline struct field both require a constructor callable with zero arguments when a constructor
+is declared. Every omitted parameter takes its prepared literal default. A required parameter
+makes either default use invalid. A shared field still starts empty. Copying an existing
 inline value uses memberwise copy and does not call the source constructor.
 If initialization throws, constructed fields and argument temporaries are
 destroyed; a failed shared construction also releases the allocation.

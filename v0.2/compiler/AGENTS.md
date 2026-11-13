@@ -185,6 +185,7 @@ Formatting-only work preserves behavior, APIs, ownership, literal contents and
 statement order. Keep current guidance and unresolved debt with their owners;
 do not append contradictory status sections or present historical proof counts
 as current requirements. Performance claims require relevant measurements.
+Implementation reports include lines added, changed and removed, separated by compiler, tests and documentation, plus short excerpts from the changed compiler source.
 End-to-end benchmarks must include the native Clang build and executable checks.
 Report Clang frontend, LLVM optimization/code generation, and linker work, alongside
 native and overall wall time. Record optimization, debug symbols, jobs, linker,

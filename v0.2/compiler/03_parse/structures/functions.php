@@ -396,6 +396,13 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		}
 	}
 
+	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
+	public function accepts_argument_count(int $supplied /** uint32 */): bool
+	{
+		return $supplied <= count($this->parameters)
+			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
+	}
+
 	public function is_constructor(): bool
 	{
 		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_struct_declaration;

@@ -200,7 +200,9 @@ Construction sites watch the signature and reuse the source-call arity and
 conversion binder and the C++ invocation emitter. Record layouts declare a native
 constructor; its body is defined once in the record's translation unit. The
 shared factory constructs the same payload inside the counted allocation. A
-struct without a declared constructor retains implicit default initialization.
+struct without a declared constructor retains implicit default initialization. When every parameter
+has a default, a native zero-argument constructor delegates to the authored constructor using the
+prepared literals. This also initializes embedded inline fields across translation units.
 
 ## Public struct methods
 

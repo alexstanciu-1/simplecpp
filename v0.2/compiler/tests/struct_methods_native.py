@@ -113,7 +113,7 @@ def prove(work, flavor):
         (model, expanded, 'Argument count mismatch', None),
         (model, expanded.replace(first+',', first+'=1,'), 'Required parameter follows optional parameter', None),
         (model, expanded.replace(second+')', second+'=side())'), 'Parameter defaults require literals', None),
-        (model, edited[:close]+constructor+edited[close:], 'Constructors require by-value parameters without defaults', None),
+        (model, edited[:close]+constructor+edited[close:], None, b'6:3'),
         (model, edited, None, b'6:3'),
     ])
     ref_method, ref_call, slot, ref_param, value_param, field_arg, wrong_arg = {
@@ -143,7 +143,7 @@ def prove(work, flavor):
         (entry, with_argument(field_arg), 'a named local or parameter', None),
         (entry, wrong_arg+with_argument('$b' if flavor == 'php' else 'b'), 'exact storage type', None),
         (entry, with_argument(slot), None, b'6:9'),
-        (model, ref_model[:close]+ref_constructor+ref_model[close:], 'Constructors require by-value parameters without defaults', None),
+        (model, ref_model[:close]+ref_constructor+ref_model[close:], 'Constructors require by-value parameters', None),
         (model, ref_model.replace(ref_param, ref_param+'=0'), 'Reference parameter defaults are deferred', None),
         (model, ref_model, None, b'6:9'),
     ])

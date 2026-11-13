@@ -134,6 +134,35 @@ def prove(work, flavor, memcheck):
         (record,public_zero,None,b''),(record,private_zero,denied,None),
         (app/'nested.php','struct Box { public shared<Point> $p; }',None,b''),
     ])
+    first, second = params.split(',')
+    def defaults(x, y):
+        return model.replace(params, first + x + ',' + second + y)
+    make_one = {'php':'$one Point(7);', 'cpp':'Point one(7);', 'js':'let one:Point(7);'}[flavor]
+    var, member = ('$' if flavor == 'php' else ''), ('.' if flavor == 'js' else '->')
+    def y(name):
+        return var + name + member + 'y'
+    bind = {'php':'$full=', 'cpp':'auto full=', 'js':'let full='}[flavor]
+    calls = (default + make_one + bind + 'new Point(7,4); echo ' + y('p') + ',' + y('one') + ',' + y('full')
+             + ',(new Point())' + member + 'y' + ',(new Point(7))' + member + 'y;')
+    nested = app/'nested.php'
+    edits.extend([
+        (record, defaults('=true', '=2'), None, b''),
+        (nested, 'struct Box { public Point $p; public shared<Point> $owner; }', None, b''),
+        (entry, calls + box + ' if (' + var+'b'+member+'owner != null) { return 1; } return 8;', None, b'2242212'),
+        (record, defaults('=true', '=9'), None, b'9949919'),
+        (record, model, 'Inline field requires', None),
+        (None, '', 'Inline field requires', None),
+        (record, defaults('=true', '=2'), None, b'2242212'),
+        (record, defaults('=1', ''), 'Required parameter follows optional parameter', None),
+        (record, defaults('=1', '=step(0)'), 'Parameter defaults require literals', None),
+        (record, defaults('=1', '="bad"'), 'conversion', None),
+        (record, defaults('=true', '=2'), None, b'2242212'),
+        (entry, make_one + 'echo ' + y('one') + ';return 8;', None, b'2'),
+        (nested, '', None, b'2'),
+        (record, defaults('', '=9'), None, b'9'),
+        (entry, default+'return 8;', 'Argument count mismatch', None),
+        (record, defaults('=1', '=9'), None, b''),
+    ])
     with service(app,out) as resident:
         for rev, (path, text, error, stdout) in enumerate(edits):
             if path is not None:

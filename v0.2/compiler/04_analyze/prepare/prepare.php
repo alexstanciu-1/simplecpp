@@ -899,9 +899,7 @@ final class Preparation
 		?string $initializing): array /** list<uint16> */
 	{
 		$supplied = count($call->arguments);
-		// Settled signatures have a trailing optional suffix: checking its first omitted slot is sufficient.
-		if (($supplied > count($function->parameters))
-			|| (isset($function->parameters[$supplied]) && ($function->parameters[$supplied]->default_value === null))) {
+		if (!$function->accepts_argument_count($supplied)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $function->name());
 		}
 		$conversions = [];

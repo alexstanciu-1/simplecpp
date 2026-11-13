@@ -7,7 +7,7 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 ## Working baseline
 
 - Nominal inline records, nested inline fields, shared and weak fields, recursive handle edges, memberwise copying, weak locking and checked empty-owner access.
-- One public or private constructor with required by-value parameters. Inline and shared construction use the ordinary argument binder. Access checks include implicit initialization of embedded fields. An empty shared field does not construct its payload.
+- One public or private constructor with by-value parameters and trailing literal defaults. Inline and shared construction use the ordinary argument binder. Access checks include implicit initialization of embedded fields. An empty shared field does not construct its payload.
 - Public/private instance and static fields and methods, typed literal member constants, and lexical declaring-type qualification. Methods share ordinary supported argument conversions, trailing by-value literal defaults, writable exact-type parameters and return handling. Methods returning their enclosing record can copy the receiver by value.
 - Plain field writes, the five arithmetic property compounds where admitted, and discarded prefix/postfix updates. Property updates also work in the final clause of a braced for loop. These operations preserve access checks and have native and incremental proofs.
 
@@ -25,7 +25,7 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 | Area | Remaining boundary |
 | --- | --- |
 | Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. Bare struct `this` currently works as a receiver or direct return; local copies and by-value arguments using bare `this` remain separate cases. |
-| Constructor and method argument coverage | Constructors accept required by-value parameters only. Evaluate trailing literal defaults first, including whether an all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
+| Constructor and method argument coverage | Constructors accept trailing literal defaults. An all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
 | Defaults and constants | Member constants and static property initializers are typed literals. Instance defaults from named constants would require watching the defining declaration. Inferred field types, nested defaults, and static properties with omitted initializers are distinct extensions. |
 | Property operations | Property compounds cover arithmetic and flavor-specific string concatenation; other locally admitted compound groups still need property coverage. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |
 | Field syntax and lookup | PHP instance declarations currently use type then variable; the alternative variable-then-type form from the broader spec is pending. Type imports and expression-qualified static access remain separate from existing explicit type names and lexical qualifiers. |

@@ -60,7 +60,9 @@ final class Cpp_Emitter
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
 				$params = $this->constructor_parameters($constructor, $includes);
-				$layout[] = "\t" . Cpp_Identifier::source($node->short_name) . '(' . $params . ');';
+				$name = Cpp_Identifier::source($node->short_name);
+				$layout[] = "\t" . $name . '(' . $params . ');';
+				if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
 			}
 			return $this->constructor_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
 				. " {\n" . implode("\n", $layout) . "\n};\n");
@@ -277,6 +279,16 @@ CPP;
 				$declarations[$owner->name] = $owner;
 				foreach (self::signature_records($function) as $parameter_owner) $declarations[$parameter_owner->name] = $parameter_owner;
 				$definitions[] = $this->allocation_factory($owner, $required_headers);
+				// Embedded fields use native {}. Keep the literal defaults in their defining unit.
+				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
+					$defaults = [];
+					foreach ($function->parameters as $parameter) {
+						$defaults[] = $this->literal_initialization($parameter->type_def(), $parameter->default_value,
+							$parameter->default_conversion(), $required_headers);
+					}
+					$name = Cpp_Identifier::source($function->parent->short_name);
+					$definitions[] = $owner->payload->cpp_type() . '::' . $name . '() : ' . $name . '(' . implode(', ', $defaults) . ") {}\n";
+				}
 			} else {
 				$declarations[$name] = $function;
 			}
@@ -750,9 +762,11 @@ CPP;
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression;
 			if ($shared) $declarations[$type->name] = $type;
-			if ($value->arguments === []) return $shared ? $type->cpp_type() . '::make()' : '{}';
+			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
-			$constructor = $record->declaration->methods['__construct'];
+			$constructor = $record->declaration->methods['__construct'] ?? null;
+			if ($constructor === null) return $type->cpp_type() . '::make()';
+			foreach (self::signature_records($constructor) as $owner) $declarations[$owner->name] = $owner;
 			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
 				$global_references, $declarations, $required_headers);
 		}

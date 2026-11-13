@@ -57,7 +57,7 @@ final class struct_type_definition extends type_definition implements dependency
 	}
 
 	/** Resolve children first; a repeated active declaration is an infinite by-value layout. @param bool[] $active */
-	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */): void
+	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */, ?preparation_work $work): void
 	{
 		if ($this->ready) return;
 		if (isset($active[$this->name])) {
@@ -81,10 +81,10 @@ final class struct_type_definition extends type_definition implements dependency
 			}
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($type instanceof self) {
-				$type->prepare_layout($symbols, $active);
+				$type->prepare_layout($symbols, $active, $work);
 				$constructor = $type->declaration->methods['__construct'] ?? null;
 				$constructor?->require_access($this->declaration, $field->type_reference);
-				if (($constructor->parameters ?? []) !== []) {
+				if ($constructor !== null && !$constructor->accepts_argument_count(0)) {
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 						'Inline field requires a zero-argument constructor: ' . $type->name);
 				}
@@ -101,6 +101,8 @@ final class struct_type_definition extends type_definition implements dependency
 		}
 		unset($active[$this->name]);
 		$this->ready = true;
+		// A declaration-only unit may emit dependent constructor or owner declarations.
+		$work?->change_source($this->source_key);
 	}
 
 	public function supports_inferred_local(): bool
