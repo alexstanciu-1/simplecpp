@@ -489,10 +489,15 @@ final class Preparation
 		if ($syntax instanceof ast_this_expression) {
 			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
 			$record = $this->owner->parent->parent;
-			$parent = $syntax->parent;
-			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax;
-			if (!($record instanceof ast_struct_declaration) || (!$is_receiver && !($parent instanceof ast_return_statement))) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires a field or method receiver, or a value return');
+			if (!($record instanceof ast_struct_declaration)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
+			}
+			if ($this->owner->parent->is_constructor()) {
+				$parent = $syntax->parent;
+				$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax;
+				if (!$is_receiver && !($parent instanceof ast_return_statement)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
+				}
 			}
 			$syntax->settle_receiver($record->definition);
 			return;

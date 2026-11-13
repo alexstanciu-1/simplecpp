@@ -20,14 +20,14 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 | 3. Inline struct parameters and returns | Implemented for free functions and ordinary methods. Signatures watch the nominal record and expose its layout to cross-unit callers. | Resolve ordinary nominal value parameters and returns in free functions and methods, including a different record as the return type. Test cross-file copy-in/return, shared member identity, layout changes and missing-type recovery. Test a caller that only sees the record through a signature. |
 | 4. Typed literal instance-field defaults | Implemented with the shared scalar literal parser and typed-destination conversion. | Retain the initializer once on the declaration; validate even unused fields. Initialize each new value before the constructor body, and copy the current field value when copying a record. Test default edit/removal across units. |
 | 5. Inline record constructor parameters | Implemented for inline and shared construction. | Cross-file scalar copies, shared-child identity, nominal mismatch, layout edits, missing types and recovery. |
+| 6. Bare `this` by value | Implemented in ordinary instance methods for local copies and by-value arguments. | Inline and shared receivers preserve independent scalar fields and shared-child identity. |
 
 ## Proposed next slices
 
 | Order | Capability | Smallest useful proof |
 | --- | --- | --- |
-| 1 | Bare `this` in value contexts. Field/method access and direct return already work. | Inside an instance method, copy `$this` into a local and pass it to a by-value function. Test inline and shared receivers; both copy the payload. Preserve the static-method diagnostic. |
-| 2 | Remaining property compounds already admitted on locals, such as integer bitwise and shift compounds. | Compare local, instance and static writes under the same generated type rules. Test a checked failure and an RHS that replaces a shared receiver. |
-| 3 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
+| 1 | Remaining property compounds already admitted on locals, such as integer bitwise and shift compounds. | Compare local, instance and static writes under the same generated type rules. Test a checked failure and an RHS that replaces a shared receiver. |
+| 2 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
 
 The order is a proposal. Each slice can be reviewed and delivered independently. Constructor reference modes and writable inline-record parameters stay separate from by-value admission.
 
@@ -35,7 +35,7 @@ The order is a proposal. Each slice can be reviewed and delivered independently.
 
 | Area | Remaining boundary |
 | --- | --- |
-| Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. Bare struct `this` currently works as a receiver or direct return; local copies and by-value arguments using bare `this` remain separate cases. |
+| Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. |
 | Constructor and method argument coverage | Constructors accept trailing literal defaults. An all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
 | Defaults and constants | Member constants and static property initializers are typed literals. Instance defaults from named constants would require watching the defining declaration. Inferred field types, nested defaults, and static properties with omitted initializers are distinct extensions. |
 | Property operations | Property compounds cover arithmetic and flavor-specific string concatenation; other locally admitted compound groups still need property coverage. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |

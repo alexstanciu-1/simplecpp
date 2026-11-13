@@ -213,7 +213,7 @@ The file declaration inventory indexes the same node for the callable pipeline.
 to that stable symbol, including when lookup fails.
 
 Methods use the ordinary function parameter and return nodes. Trailing by-value literal defaults are prepared on the parameter and supplied by the ordinary call binder. Writable method parameters use the same passing mode, exact-storage checks and write invalidation as writable function parameters.
-An `ast_this_expression` can be the receiver of a field read, field write or method call. As the direct operand of a value return, it has the enclosing record’s canonical value type. The ordinary C++ return copies the record from the borrowed receiver.
+An `ast_this_expression` can be the receiver of a field read, field write or method call. In an ordinary instance method its value type is the enclosing record. Local assignment, by-value parameter binding and return use ordinary memberwise copy semantics on the borrowed payload.
 The generated free function takes the exact record by mutable reference. The call
 selects the receiver before explicit arguments and retains its nearest enclosing
 shared allocation through the call, including exception unwinding.
