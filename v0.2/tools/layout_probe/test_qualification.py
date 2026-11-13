@@ -19,7 +19,9 @@ def check(directory, compiler):
         initial = json.loads(record.read_text())
         assert all(len(digest) == 64 for digest in initial['context']['components'].values())
         clock.return_value += q.WEEK - 1
-        assert q.qualify(compiler, flags, cache) == (key, traces, 'cached')
+        with patch.object(q, 'execute', side_effect=AssertionError('compiler invoked on cache hit')), \
+                patch.object(q, 'file_hash', side_effect=AssertionError('binary hashed on cache hit')):
+            assert q.qualify(compiler, flags, cache) == (key, traces, 'cached')
         assert json.loads(record.read_text()) == initial
 
         clock.return_value += 1
@@ -45,9 +47,9 @@ def check(directory, compiler):
         component = directory / 'implementation'
         component.write_text('revision one')
         with patch.object(q, 'compiler_components', side_effect=lambda *_: {str(component): q.file_hash(component)}):
-            first = q.qualify(compiler, flags, cache)[0]
+            first = q.qualify(compiler, flags, directory / 'component-cache')[0]
             component.write_text('revision two')
-            second, _, status = q.qualify(compiler, flags, cache)
+            second, _, status = q.qualify(compiler, flags, directory / 'component-cache')
             assert first != second and status == 'qualified'
 
         alternate, _, status = q.qualify(compiler, ['-std=c++23', '-O0'], cache)
@@ -61,6 +63,15 @@ def check(directory, compiler):
             first = q.qualify(compiler, flags, cache)[0]
             with copy.open('a') as stream:
                 stream.write('// revision\n')
+            second, _, status = q.qualify(compiler, flags, cache)
+            assert first != second and status == 'qualified'
+        # A transitive header edit invalidates the fast path even if the probe itself is unchanged.
+        header = directory / 'config.hpp'
+        header.write_text('#define QUALIFICATION_TEST_VALUE 1\n')
+        copy.write_text('#include "config.hpp"\nstatic_assert(QUALIFICATION_TEST_VALUE > 0);\n' + copy.read_text())
+        with patch.object(q, 'SOURCE', copy):
+            first = q.qualify(compiler, flags, cache)[0]
+            header.write_text('#define QUALIFICATION_TEST_VALUE 2\n')
             second, _, status = q.qualify(compiler, flags, cache)
             assert first != second and status == 'qualified'
         record.write_text('{}')
