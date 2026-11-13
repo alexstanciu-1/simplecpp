@@ -864,7 +864,7 @@
       "string": {
         "class": "string",
         "literal_family": "string",
-        "declarations": { "inferred_local": true, "global_storage": false, "instance_field": false },
+        "declarations": { "inferred_local": true, "global_storage": false, "instance_field": true },
         "copy_semantics": "nontrivial",
         "source_names": [
           "string"

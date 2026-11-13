@@ -297,6 +297,56 @@ int main() {
         resident.stdin.close()
 
 
+def string_fields(work, flavor):
+    app = work / ('string-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'label')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'envelope.php').write_text('struct Envelope { public Label $label; }')
+    record, declare, copy, access = {
+        'php': ('struct Label { public string $text; }', '$NAME Envelope;', '$COPY=$ORIGINAL;', '->'),
+        'cpp': ('struct Label { public: string text; };', 'Envelope NAME;', 'auto COPY=ORIGINAL;', '->'),
+        'js': ('struct Label { public text:string; }', 'let NAME:Envelope;', 'let COPY=ORIGINAL;', '.'),
+    }[flavor]
+    var = '$' if flavor == 'php' else ''
+    member = access + 'label' + access + 'text'
+    original, copied, survivor = [var + n + member for n in ('original', 'copied', 'survivor')]
+    heap_text = b'0123456789abcdefghijklmno\x00pqrstuvwxyz'
+    literal = '"' + heap_text.decode().replace('\0', r'\0') + '"'
+    source = (declare.replace('NAME', 'survivor') + 'if (true) { ' + declare.replace('NAME', 'original')
+              + original + r'="h\0i";' + 'if (' + survivor + '!="") { return 1; } '
+              + copy.replace('COPY', 'copied').replace('ORIGINAL', 'original') + original + '=' + literal + ';'
+              + 'echo ' + copied + ';' + var + 'copied=' + var + 'original;' + copied + '="changed";'
+              + 'echo ' + original + ';' + var + 'survivor=' + var + 'original; } echo ' + survivor + '; return 8;')
+    expected = b'h\0i' + heap_text * 2
+    entry.write_text(source)
+    out = work / ('string-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (declaration, error) in enumerate([
+            (record, None), (record.replace('string', 'int'), 'conversion from string to int64'), (record, None),
+            (record.replace('public', 'private'), 'private field'), (record, None),
+        ]):
+            model.write_text(declaration)
+            os.utime(model, (1988000000 + rev,) * 2)
+            before = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'string-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other.get('error'), (rev, current, other)
+                assert artifacts(out) == before
+                continue
+            assert 'error' not in current and 'error' not in other, (rev, current, other)
+            assert artifacts(out) == artifacts(baseline)
+            header, = [h for h in (out / 'units').glob('*.hpp') if 'struct Label {' in h.read_text()]
+            assert '#include <scpp/string.hpp>' in header.read_text()
+            build(out, work / ('string-native-' + flavor), expected)
+            build(baseline, work / f'string-fresh-native-{flavor}-{rev}', expected)
+        resident.stdin.close()
+
+
 def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
@@ -316,8 +366,8 @@ def prove(work, flavor):
         # Reject invalid layouts before lowering, including fields in an unused record.
         duplicate = PROGRAMS[flavor][0].replace('y', 'x')
         edits.extend([('duplicate-field', owner, duplicate, 'Duplicate struct field: x'),
-                      ('invalid-type', owner, record.replace(' int ', ' string ', 1) if flavor != 'js'
-                       else record.replace(': int', ': string', 1), 'Unsupported instance field type: string'),
+                      ('invalid-type', owner, record.replace(' int ', ' null ', 1) if flavor != 'js'
+                       else record.replace(': int', ': null', 1), 'Unsupported instance field type: null'),
                       ('restore-layout', owner, record.replace('x', 'width'), None)])
         if flavor == 'php':
             edits.extend([('nominal-copy', entry, 'struct Other { public int $x; } $p Point; $q Other = $p; return 8;',
@@ -834,6 +884,7 @@ if __name__ == '__main__':
         native_names(folder)
         shared_functions(folder)
         for language in PROGRAMS:
+            string_fields(folder, language)
             float_fields(folder, language)
             byte_fields(folder, language)
             boolean_fields(folder, language)

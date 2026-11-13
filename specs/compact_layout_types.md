@@ -250,9 +250,9 @@ For this first slice, PHP and C++ flavors use `->` for value-field reads and
 writes, and the JS flavor uses `.`. A value-field access lowers to native C++
 `p.x`. The receiver's resolved type determines its storage.
 
-The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean and float64 instance fields, inline structs and
+The active PHP bootstrap compiler admits integer (`int`/`int64` and `byte`/`uint8`), boolean, float64 and string instance fields, inline structs and
 `shared<T>` fields targeting a nominal struct. An inline field default-initializes
-recursively. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
+recursively. A string field starts empty. Its native storage is an ordinary `scpp::string`; record copying and destruction preserve string value semantics, including embedded NUL bytes. A boolean field starts false. A byte field starts at zero and uses ordinary uint8 value semantics:
 incrementing 255 wraps to zero, while adding an int64 literal with `+=` checks the narrowed result
 before storing it. A shared field defaults to an empty, pointer-sized owner. Copying the
 enclosing value copies each field: inline data is independent, and each copied
