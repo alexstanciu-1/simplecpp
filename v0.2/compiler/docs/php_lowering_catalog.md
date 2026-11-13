@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 67 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 69 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -243,6 +243,28 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $n = strlen($s);       |                                                                         | #include <scpp/string.hpp>       | signature and lowering emits the       |
 |                        |                                                                         | No unit header.                  | symbol and provider include.           |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+```
+
+### Runtime call arguments
+
+```text
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| PHP-flavor pattern                    | Lowered C++ code                                     | Lowered C++ header code          | Generation and lowering             |
++=======================================+======================================================+==================================+=====================================+
+| Given                                 | scpp::string var_s_0 = str_repeat(label_(), 2LL);    | .cpp includes                    | The adapter borrows the returned    |
+|     function label():string {         |                                                      | #include <scpp/core/scalars.hpp> | string through the call. The count  |
+|         return "xy";                  |                                                      | #include <scpp/php/string.hpp>   | literal passes by value.            |
+|     }                                 |                                                      | #include <scpp/string.hpp>       |                                     |
+| $s=str_repeat(label(),2);             |                                                      | No unit header.                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| Given                                 | scpp::string var_t_1 = ([&]() {                      | .cpp includes                    | The first argument saves the string |
+|     function change(string &$s):int { |     const auto argument_25_0 = var_s_0;              | #include <scpp/core/scalars.hpp> | before change updates the original. |
+|         $s="new";                     |     return str_repeat(argument_25_0,                 | #include <scpp/php/string.hpp>   | The scalar count passes directly.   |
+|         return 2;                     |         change_(var_s_0));                           | #include <scpp/string.hpp>       |                                     |
+|     }                                 | }());                                                | No unit header.                  |                                     |
+|     $s string="old";                  |                                                      |                                  |                                     |
+| $t=str_repeat($s,change($s));         |                                                      |                                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
 ```
 
 ## Control flow and entry

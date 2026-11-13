@@ -904,18 +904,37 @@ CPP;
 				}
 				$arguments = [];
 				$direct = true;
+				$order_sensitive = 0;
+				$records_before = $this->record_expressions;
 				foreach ($operands as $index => $argument) {
+					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
+					// Preparation requires exact runtime parameter types. Count borrowed values
+					// and writable slots conservatively; only scalar literal peers are inert.
+					if ($function->is_reference($index) || !self::inert_literal_argument(
+						$argument, $function->parameters[$index], value_conversion::identity)) {
+						++$order_sensitive;
+					}
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
 				}
 				$steps = [];
+				$direct = $direct || ($order_sensitive <= 1 && $this->record_expressions === $records_before);
 				if (!$direct && count($arguments) > 1) {
-					foreach ($arguments as $index => $operand) {
+					// Earlier arguments finish before the call. A final value scalar can
+					// initialize its parameter there unless its temporaries need to expire first.
+					$capture_count = count($arguments);
+					$last = $capture_count - 1;
+					if (!$function->is_reference($last) && $function->parameters[$last]->cpp_trivial_value()
+						&& $this->record_expressions === $operand_records_before) {
+						--$capture_count;
+					}
+					for ($index = 0; $index < $capture_count; ++$index) {
+						$operand = $arguments[$index];
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
 						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
 					}

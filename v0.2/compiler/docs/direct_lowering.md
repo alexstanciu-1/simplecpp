@@ -64,6 +64,16 @@ field. A temporary inline receiver binds the returned record once to a local
 `auto&&`, extending its lifetime through the method body. After receiver setup,
 all three forms use the same capture selection for explicit arguments.
 
+Runtime calls use their published exact parameter types and writable-reference
+mask to recognize nonthrowing scalar literal peers. A returned string can feed
+a const-reference parameter directly when only its evaluation is observable.
+When another argument can mutate a borrowed local, the ordered call captures
+its value before evaluating that argument. After these ordered captures, a final
+by-value scalar initializes its parameter directly unless its operand involves a
+record or handle whose temporary may need to expire before adapter entry.
+The shared record-lifetime guard
+also applies to this direct-call decision.
+
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
 owns the generated inventory version. A checked operation can use direct operands

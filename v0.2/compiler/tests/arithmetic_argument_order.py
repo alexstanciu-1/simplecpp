@@ -33,11 +33,13 @@ def qualify(directory, compilers, flags):
                          'shared_empty', 'shared_field_empty', 'shared_checked', 'shared_field_checked',
                          'temporary_lifetime', 'temporary_literals', 'temporary_receiver_failure', 'temporary_argument_failure',
                          'local_call_addition', 'local_call_alias', 'local_call_failure',
-                         'constant_compounds', 'mutating_compound_cast', 'checked_compound_cast'):
+                         'constant_compounds', 'mutating_compound_cast', 'checked_compound_cast',
+                         'runtime_repeat_direct', 'runtime_repeat_mutation', 'runtime_repeat_failure', 'runtime_repeat_operand_failure',
+                         'runtime_ordered_first_failure', 'runtime_ordered_final_failure', 'runtime_ordered_owner'):
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []
-                exception = next((kind for kind in ('domain_error', 'out_of_range', 'runtime_error') if 'catch_' + kind in fixture), None)
+                exception = next((kind for kind in ('domain_error', 'out_of_range', 'runtime_error', 'length_error') if 'catch_' + kind in fixture), None)
                 if exception:
                     source = source.replace('int main()', 'int tested_entry()')
                     error = json.dumps(fixture['catch_' + exception])

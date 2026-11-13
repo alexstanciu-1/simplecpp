@@ -456,3 +456,34 @@ flavor. Both full native builds printed `invoice: 10469` and exited with status 
 Regression fixtures cover the six native operators, mutation inside a checked
 cast, checked narrowing failure, and incremental imported-constant edits and
 recovery against fresh output. The catalog verifies 67 examples.
+
+### Runtime calls with scalar literal peers
+
+Runtime preparation already enforces exact argument types and validates writable
+reference slots against the published signature. The emitter uses the same
+nonthrowing scalar-literal test as source calls. When at most one operand is
+order-sensitive and no record/handle lifetime boundary is involved, the generated
+adapter call takes its operands directly. A borrowed local string counts as
+order-sensitive alongside a mutating count expression. The ordered path saves
+the string before evaluating the count.
+
+All 64 repeat sites in the call-heavy benchmark emit `str_repeat(label_(), 2LL)`.
+Regression fixtures cover each source flavor's spelling, a producer that prints
+once, count evaluation that changes the source string, a failing producer and a
+repeat-size failure after successful argument evaluation. The catalog includes
+both the direct call and the saved-string form.
+
+### Final by-value scalar in an ordered runtime call
+
+The ordered runtime path captures preceding operands before passing the final
+converted scalar expression to the adapter. The published writable-reference
+mask and destination's trivial-value classification determine eligibility.
+The emission walk compares its record/handle counter across the final operand
+to preserve its destruction boundary independently of preceding operands.
+
+For repeat with a mutating count producer, the emitted block retains the string
+snapshot and calls the producer once inside the adapter invocation. The fixtures
+also exercise a first failure that skips the count producer, a final failure
+after earlier effects, and a count read from a returned last owner. The latter
+keeps the scalar capture before adapter entry and observes an expired weak handle
+after the statement. The catalog checks the one-capture mutation example.
