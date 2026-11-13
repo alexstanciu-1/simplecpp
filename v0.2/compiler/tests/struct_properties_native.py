@@ -83,12 +83,17 @@ def compounds(work, flavor):
     # mutate() overwrites f while evaluating the RHS. The compound's original left operand is 8.0.
     (app / 'effect.php').write_text('function mutate():int { Gauge::$f=100.0; return 2; }')
     effect = float_ref+'+=mutate(); '+float_ref+'*=2; '+float_ref+'/=4; '+float_ref+'-=1; echo (int)'+float_ref+'; return 8;'
+    bit_source = ''.join(prop_ref + op + ';' for op in ('&=15', '|=16', '^=3', '<<=1', '>>=2')) + 'echo observe(); return 8;'
     out = work / ('compound-out-' + flavor)
+    narrowing = ('out_of_range', 'integer_cast_out_of_range')
     with service(app, out) as resident:
         for rev, (path, text, expected) in enumerate([
-            (model, record, b'2555'), (entry, source(6), None),
-            (model, record.replace('byte', 'int'), b'2566'), (model, record, None), (entry, source(5), b'2555'),
+            (model, record, b'2555'), (entry, source(6), narrowing),
+            (model, record.replace('byte', 'int'), b'2566'), (model, record, narrowing), (entry, source(5), b'2555'),
             (entry, effect, b'4'), (entry, float_ref+'%=2; return 8;', 'Unsupported compound'), (entry, effect, b'4'),
+            (entry, bit_source, b'12'), (entry, prop_ref+'|=256; return 8;', narrowing),
+            (entry, prop_ref+'<<=8; return 8;', ('domain_error','shift_count_out_of_range')),
+            (entry, bit_source, b'12'),
         ]):
             path.write_text(text)
             os.utime(path, (1982000000 + rev,) * 2)
@@ -106,12 +111,13 @@ def compounds(work, flavor):
             assert artifacts(out) == artifacts(baseline)
             for bundle in [out, baseline]:
                 native = work / ('build-' + bundle.name)
-                if expected is not None:
+                if isinstance(expected, bytes):
                     build(bundle, native, expected)
                     continue
                 native = work / f'catch-{bundle.name}-{rev}'
                 native.mkdir()
                 harness = native / 'catch.cpp'
+                exception, code = expected
                 harness.write_text("""
 #include <scpp/core/scalars.hpp>
 #include <stdexcept>
@@ -119,12 +125,12 @@ def compounds(work, flavor):
 namespace App { int scpp_entry_body(); scpp::int64 observe_(); }
 int main() {
     try { App::scpp_entry_body(); }
-    catch (const std::out_of_range& e) {
-        return std::strcmp(e.what(), "integer_cast_out_of_range") || App::observe_() != 250;
+    catch (const std::EXCEPTION& e) {
+        return std::strcmp(e.what(), "CODE") || App::observe_() != 250;
     }
     return 1;
 }
-""")
+""".replace("EXCEPTION", exception).replace("CODE", code))
                 units = json.loads((bundle / 'manifest.json').read_text())['translation_units']
                 cmd = write_build(native, [harness, *(bundle / unit for unit in units if unit != 'entry.cpp')])
                 subprocess.run(cmd, cwd=native, check=True, capture_output=True)
@@ -155,6 +161,8 @@ def instance_compounds(work, flavor):
     source = (shared+b+field+'+=1; '+b+field+'+=replaceBox('+b+'); echo '+q+field+','+b+field+'; '
               +b+field+'+=clearBox('+b+',weak('+b+')); '+inline
               +x+'+=9; '+x+'-=1; '+x+'*=3; '+x+'/=4; '+x+'%=5; echo '+x+'; return 8;')
+    bit_source = (shared + b+field+'=5; '+b+field+'<<=replaceBox('+b+'); echo '+q+field+',",",'+b+field+'; '
+                  + q+field+'&=15; '+q+field+'|=17; '+q+field+'^=5; '+q+field+'>>=1; echo '+q+field+'; return 8;')
     out = work / ('fields-out-' + flavor)
     model.write_text(definitions)
     entry.write_text(source)
@@ -163,6 +171,9 @@ def instance_compounds(work, flavor):
             (entry, source, None, b'R40L1'), (model, definitions.replace('public int $x', 'private int $x'), 'private field', None),
             (model, definitions, None, b'R40L1'), (entry, empty+b+field+'+=side(); return 8;', None, None),
             (entry, source, None, b'R40L1'),
+            (entry, bit_source, None, b'R40,014'), (model, definitions.replace('public int $x', 'private int $x'), 'private field', None),
+            (model, definitions, None, b'R40,014'), (entry, bit_source.replace('>>=1', '>>=true'), 'Unsupported compound', None),
+            (entry, bit_source, None, b'R40,014'),
         ]):
             path.write_text(text)
             os.utime(path, (1983000000+rev,)*2)
@@ -184,8 +195,9 @@ def instance_compounds(work, flavor):
                     check_empty_access(bundle, work / f'empty-{bundle.name}-{rev}')
                 else:
                     code = b'\n'.join(artifacts(bundle).values())
-                    assert any(b'.x += 1LL;' in line and b'->p' in line and b'compound_' not in line and b'[&]' not in line
-                               for line in code.splitlines())
+                    if expected == b'R40L1':
+                        assert any(b'.x += 1LL;' in line and b'->p' in line and b'compound_' not in line and b'[&]' not in line
+                                   for line in code.splitlines())
                     assert b'auto& compound_target = receiver_owner->p.x;' in code
                     build(bundle, native, expected)
         resident.stdin.close()

@@ -21,13 +21,13 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 | 4. Typed literal instance-field defaults | Implemented with the shared scalar literal parser and typed-destination conversion. | Retain the initializer once on the declaration; validate even unused fields. Initialize each new value before the constructor body, and copy the current field value when copying a record. Test default edit/removal across units. |
 | 5. Inline record constructor parameters | Implemented for inline and shared construction. | Cross-file scalar copies, shared-child identity, nominal mismatch, layout edits, missing types and recovery. |
 | 6. Bare `this` by value | Implemented in ordinary instance methods for local copies and by-value arguments. | Inline and shared receivers preserve independent scalar fields and shared-child identity. |
+| 7. Integer property compounds | Instance and static properties accept the five bitwise and shift assignments. | Checked failure, shared receiver replacement and incremental recovery across flavors. |
 
 ## Proposed next slices
 
 | Order | Capability | Smallest useful proof |
 | --- | --- | --- |
-| 1 | Remaining property compounds already admitted on locals, such as integer bitwise and shift compounds. | Compare local, instance and static writes under the same generated type rules. Test a checked failure and an RHS that replaces a shared receiver. |
-| 2 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
+| 1 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
 
 The order is a proposal. Each slice can be reviewed and delivered independently. Constructor reference modes and writable inline-record parameters stay separate from by-value admission.
 
@@ -38,7 +38,7 @@ The order is a proposal. Each slice can be reviewed and delivered independently.
 | Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. |
 | Constructor and method argument coverage | Constructors accept trailing literal defaults. An all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
 | Defaults and constants | Member constants and static property initializers are typed literals. Instance defaults from named constants would require watching the defining declaration. Inferred field types, nested defaults, and static properties with omitted initializers are distinct extensions. |
-| Property operations | Property compounds cover arithmetic and flavor-specific string concatenation; other locally admitted compound groups still need property coverage. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |
+| Property operations | Property compounds cover arithmetic, integer bitwise and shift operations, and flavor-specific string concatenation. Power compound assignment remains deferred for properties. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |
 | Field syntax and lookup | PHP instance declarations currently use type then variable; the alternative variable-then-type form from the broader spec is pending. Type imports and expression-qualified static access remain separate from existing explicit type names and lexical qualifiers. |
 | Containers and carriers | Vector/hash as fields, field-rooted keyed operations, application records as collection elements, and nullable/Result of an application record are different integrations. Coordinate with the collection owner. Shared/weak fields already work. |
 | Data records | Explicit data-record opt-in, keyed initialization, synthesized public-property inputs and property-backed constructor parameters. Keyed input must respect private construction and authored constructor invariants. |

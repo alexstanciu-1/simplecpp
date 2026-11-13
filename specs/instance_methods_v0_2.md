@@ -32,6 +32,7 @@ type. Methods can read and assign fields through `this`. A call checks the recei
 
 An instance method can initialize or assign an inline local from its receiver, pass it to a by-value parameter of its own record type, or return it by value. The spelling is `$this` (PHP) or `this` (C++/JS). Both inline and shared receivers produce an inline memberwise copy. Scalar fields copy independently and shared fields retain the same allocation.
 
+Integer instance fields also accept `&=`, `|=`, `^=`, `<<=` and `>>=` under the local bitwise and shift rules.
 Writable numeric instance fields support statement `+=`, `-=`, `*=`, `/=` and `%=`
 under the same arithmetic and write-back rules as locals. The selected field and
 its original value survive RHS effects: if an RHS call replaces the originating

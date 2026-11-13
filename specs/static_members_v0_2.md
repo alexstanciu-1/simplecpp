@@ -24,6 +24,7 @@ and JS accepts `static count: int = 2;`. Read and assign through `Point::$count`
 reads and plain statement writes with the existing global-storage type and assignment rules.
 Numeric static properties also accept statement `+=`, `-=`, `*=`, `/=` and `%=` wherever the ordinary
 numeric compound contract admits the operands. Both explicit and declaring-type qualifiers are supported.
+Integer static properties accept the same bitwise and shift compounds as integer locals, including checked shift counts and checked narrowing on write-back.
 The compiler snapshots the property before evaluating the RHS and stores the result after checked write-back.
 Prefix and postfix `++` and `--` are also supported as standalone statements and in the final update clause of a braced `for` loop on
 writable numeric instance and static properties, using the same type rules as
