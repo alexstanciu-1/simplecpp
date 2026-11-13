@@ -79,8 +79,8 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
         fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
-        $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage']);
-        foreach (['inferred_local', 'global_storage'] as $capability) {
+        $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage', 'instance_field']);
+        foreach (['inferred_local', 'global_storage', 'instance_field'] as $capability) {
             $declarations[$capability] = boolean(at(at($row, 'declarations'), $capability));
         }
         // Descriptive metadata only; source-member enforcement is deferred.

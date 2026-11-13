@@ -648,8 +648,9 @@ foreach (['missing', 'unknown', 'incompatible', 'unregistered_keywords', 'duplic
 $policy = unserialize(serialize($metadata));
 $policy->compiler->value_types->int64->declarations->inferred_local = false;
 $policy->compiler->value_types->int64->declarations->global_storage = false;
+$policy->compiler->value_types->int64->declarations->instance_field = false;
 $policyCode = renderCompiler($policy, $facts)['types/int64.php'];
-foreach (['inferred_local', 'global_storage'] as $capability) {
+foreach (['inferred_local', 'global_storage', 'instance_field'] as $capability) {
     requireThat(str_contains($policyCode, "function supports_$capability(): bool\n\t{\n\t\treturn false;"), 'Declaration metadata ignored');
     foreach (['missing', 'invalid'] as $change) {
         $bad = unserialize(serialize($metadata));
