@@ -78,7 +78,7 @@ final class Body_Collection
 			}
 			return;
 		}
-		elseif ($statement instanceof ast_static_compound) {
+		elseif ($statement instanceof ast_property_compound) {
 			$this->expression($statement->target);
 			$value = $statement->value;
 		}

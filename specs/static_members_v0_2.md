@@ -40,6 +40,12 @@ local named after the struct, including in a static body. Ordinary JS names keep
 their existing local-first lookup. The shorthand is scoped to member access in
 bodies; it introduces no general-purpose type alias.
 
+Static methods, properties and constants can be private. PHP and JS mark each
+declaration with `private`; C++ uses a `private:` section. A body owned by the
+declaring struct can use either the explicit type name or its declaring-type
+qualifier. External calls, property reads and writes, and constant reads reject
+during preparation, including from another struct in the same file.
+
 ## Qualification and calls
 
 `Type::method(args)` and `self::method(args)` select static methods. `self` denotes

@@ -230,7 +230,11 @@ namespace-qualified names. Struct imports remain a separate lookup feature.
 | C++ | `Point p(1, 2);` | `new Point(1, 2)` | `Point(int x, int y) { ... }` |
 | JS | `let p: Point(1, 2);` | `new Point(1, 2)` | `constructor(x: int, y: int) { ... }` |
 
-Each struct can declare one public constructor. Its parameters use ordinary
+Each struct can declare one constructor, public by default. A private constructor
+is callable by methods of its declaring struct, including static factories.
+Inline construction, shared construction and implicit zero-argument initialization
+all use this access rule. For an embedded inline field, the accessing struct is
+the one declaring the field. Constructor parameters use ordinary
 function argument conversions and evaluation order. Its body may assign to
 fields of the fresh receiver. A typed declaration without parentheses and an
 inline struct field both require default construction: they call the zero-argument

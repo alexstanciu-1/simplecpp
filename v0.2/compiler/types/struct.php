@@ -82,7 +82,9 @@ final class struct_type_definition extends type_definition implements dependency
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($type instanceof self) {
 				$type->prepare_layout($symbols, $active);
-				if (($type->declaration->methods['__construct']->parameters ?? []) !== []) {
+				$constructor = $type->declaration->methods['__construct'] ?? null;
+				$constructor?->require_access($this->declaration, $field->type_reference);
+				if (($constructor->parameters ?? []) !== []) {
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 						'Inline field requires a zero-argument constructor: ' . $type->name);
 				}

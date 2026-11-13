@@ -151,12 +151,7 @@ final class Preparation
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 			}
-			elseif ($statement instanceof ast_static_compound) {
-				$this->static_destination($statement->target);
-				$this->value($statement->value);
-				$statement->target->type_def()->prepare_compound($statement);
-			}
-			elseif ($statement instanceof ast_field_assignment) {
+			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
 				$root = $statement->target;
 				if ($root instanceof ast_name_expression) {
 					$this->static_destination($root);
@@ -170,7 +165,9 @@ final class Preparation
 					}
 				}
 				$this->value($statement->value);
-				$statement->conversion = $statement->target->type_def()->prepare_conversion($statement->value, conversion_context::assignment);
+				$type = $statement->target->type_def();
+				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
+				else $statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$this->value($statement->receiver);
@@ -413,6 +410,21 @@ final class Preparation
 		}
 	}
 
+	/** Watch missing and inaccessible members so visibility edits also recover an unchanged caller. */
+	private function bind_literal(ast_name_expression $syntax, symbol_entry $symbol): bool
+	{
+		$this->dependencies?->watch($symbol, $this->owner);
+		$member = $symbol->declaration();
+		if ($member === null) return false;
+		if ($member->is_private && $this->owner->parent->parent !== $member->parent) {
+			$kind = $member instanceof ast_constant_declaration ? 'constant' : 'static property';
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private ' . $kind . ' ' . $member->name());
+		}
+		if ($member instanceof ast_constant_declaration) $syntax->settle_constant($symbol);
+		else $syntax->settle_global($symbol);
+		return true;
+	}
+
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
 	private function write(ast_storage_write $statement): void
 	{
@@ -618,37 +630,21 @@ final class Preparation
 			if (!$syntax->constant_only) {
 				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
 				$symbol = $this->symbols->entry($key);
-				$this->dependencies?->watch($symbol, $this->owner);
-				if ($symbol->declaration() !== null) {
-					$syntax->settle_global($symbol);
-					return;
-				}
+				if ($this->bind_literal($syntax, $symbol)) return;
 				if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
 				}
 			}
 			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
 				$symbol = $this->symbols->entry($syntax->root()->constant_key($name));
-				$this->dependencies?->watch($symbol, $this->owner);
-				if ($symbol->declaration() !== null) {
-					$syntax->settle_constant($symbol);
-					return;
-				}
+				if ($this->bind_literal($syntax, $symbol)) return;
 				// C++ and JS share the namespace separator with type-qualified members.
 				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
 					$qualified = substr($name, 0, $last) . '::' . substr($name, $last + 1);
 					$property = $this->symbols->entry('var:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
-					$this->dependencies?->watch($property, $this->owner);
-					if ($property->declaration() !== null) {
-						$syntax->settle_global($property);
-						return;
-					}
+					if ($this->bind_literal($syntax, $property)) return;
 					$symbol = $this->symbols->entry($syntax->root()->constant_key($qualified));
-					$this->dependencies?->watch($symbol, $this->owner);
-					if ($symbol->declaration() !== null) {
-						$syntax->settle_constant($symbol);
-						return;
-					}
+					if ($this->bind_literal($syntax, $symbol)) return;
 					if ($this->symbols->resolve('class:' . Source_Names::resolve(substr($name, 0, $last), $this->owner->scope->namespace))
 						instanceof ast_struct_declaration) {
 						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown constant: ' . $qualified);
@@ -785,9 +781,6 @@ final class Preparation
 					$this->dependencies?->watch($symbol, $this->owner);
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
-					if ($method->is_private && $this->owner->parent->parent !== $method->parent) {
-						throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call private method ' . $method->name());
-					}
 					$this->source_call($call, $symbol, $method, $initializing);
 					return;
 				}
@@ -866,6 +859,7 @@ final class Preparation
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing): void
 	{
+		$function->require_access($this->owner->parent->parent, $call);
 		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing));
 	}
 
@@ -877,7 +871,10 @@ final class Preparation
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
-		if ($constructor !== null) $this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
+		if ($constructor !== null) {
+			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
+			$constructor->require_access($this->owner->parent->parent, $site);
+		}
 		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
 	}
 

@@ -578,18 +578,26 @@ CPP;
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
-		$static = $statement instanceof ast_static_compound;
-		$destination = $static ? $statement->target : $statement->local_def();
+		$property = $statement instanceof ast_property_compound;
+		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
-		$name = $static ? $this->value($destination, $global_references, $declarations, $headers) : $this->name($destination);
+		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
+			&& $statement->value->declaration() instanceof ast_local_declaration);
+		$steps = [];
+		if ($destination instanceof ast_field_expression && !$simple_rhs) {
+			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
+			$steps[] = 'auto& compound_target = ' . $place . ';';
+			$name = 'compound_target';
+		} else {
+			$name = $property ? $this->value($destination, $global_references, $declarations, $headers) : $this->name($destination);
+		}
 		$execution = $statement->execution_type();
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
-		if (($type === $execution) && ($destination instanceof ast_local_declaration)
+		if (($type === $execution) && ($destination instanceof ast_local_declaration || $destination instanceof ast_field_expression)
 			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
 			&& ($statement->write_back() === value_conversion::identity)
-			&& (($statement->value instanceof ast_integer_expression) || (($statement->value instanceof ast_name_expression)
-				&& ($statement->value->declaration() instanceof ast_local_declaration)))) {
+			&& $simple_rhs) {
 			$operator = $execution->cpp_compound_operator($statement->operator);
 			if ($operator !== null) {
 				return $name . ' ' . $operator . ' ' . $right;
@@ -604,7 +612,8 @@ CPP;
 		foreach ($execution->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}
-		$left = 'compound_previous';
+		$direct_field = $destination instanceof ast_field_expression && $simple_rhs;
+		$left = $direct_field ? $name : 'compound_previous';
 		if ($statement->left_conversion() !== value_conversion::identity) {
 			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
@@ -617,6 +626,12 @@ CPP;
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
 				$headers[$header] = true;
 			}
+		}
+		if ($direct_field) return $name . ' = ' . $result;
+		if ($steps !== []) {
+			$steps[] = 'const auto compound_previous = ' . $name . ';';
+			$steps[] = $name . ' = ' . $result . ';';
+			return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
 		}
 		$snapshot = 'compound_previous = ' . $name;
 		return $name . ' = ' . $result;
@@ -912,13 +927,13 @@ CPP;
 	}
 
 	/**
-	 * Select the payload before argument effects. Retain the nearest enclosing allocation for the entire call.
+	 * Select a receiver or writable field and retain its nearest enclosing allocation across operand effects.
 	 * @param ast_global_declaration[] $globals
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function method_receiver(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
+	private function retained_place(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
 		array &$steps /** list<string> */): string
 	{
@@ -931,11 +946,11 @@ CPP;
 		$operand = $this->value($base, $globals, $declarations, $headers);
 		if ($base->type_def() instanceof shared_struct_type_definition) {
 			$steps[] = 'auto receiver_owner = ' . $operand . ';';
-			$operand = '*receiver_owner.operator->()';
+			if ($fields === []) return '*receiver_owner.operator->()';
+			$operand = 'receiver_owner->' . array_pop($fields);
 		}
-		foreach (array_reverse($fields) as $field) $operand = '(' . $operand . ').' . $field;
-		$steps[] = 'auto&& receiver_payload = ' . $operand . ';';
-		return 'receiver_payload';
+		foreach (array_reverse($fields) as $field) $operand .= '.' . $field;
+		return $operand;
 	}
 
 	/**
@@ -952,7 +967,9 @@ CPP;
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
 		if ($method) {
-			$arguments[] = $this->method_receiver($value->receiver, $global_references, $declarations, $required_headers, $steps);
+			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps);
+			$steps[] = 'auto&& receiver_payload = ' . $place . ';';
+			$arguments[] = 'receiver_payload';
 		} elseif ($function->parameters === []) {
 			return $name . '()';
 		}

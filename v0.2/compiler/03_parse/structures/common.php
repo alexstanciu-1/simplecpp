@@ -424,23 +424,18 @@ class ast_assignment_statement extends ast_storage_write
 	}
 }
 
-/** Qualified numeric compound, e.g. Counter::$count += 1; its target owns the watched storage reference. */
-final class ast_static_compound extends ast_assignment_statement
+/** Numeric property compound, e.g. $p->x += 1; the target retains the selected field or static property. */
+final class ast_property_compound extends ast_assignment_statement
 {
-	public readonly ast_name_expression $target;
+	public readonly ast_name_expression|ast_field_expression $target;
 
-	public function __construct(ast_name_expression $target, ast_expression $value, binary_operator $operator, int $end /** uint32 */)
+	public function __construct(ast_name_expression|ast_field_expression $target, ast_expression $value, binary_operator $operator, int $end /** uint32 */)
 	{
-		parent::__construct($target->start, $end, $target->name, $value, assignment_intent::existing_binding, $operator);
+		parent::__construct($target->start, $end, $target instanceof ast_field_expression ? $target->field : $target->name, $value, assignment_intent::existing_binding, $operator);
 		$this->target = $target;
 		$target->attach($this);
 	}
 
-	public function reset_preparation(): void
-	{
-		parent::reset_preparation();
-		$this->target->reset_preparation();
-	}
 }
 
 /** Discarded-value update, e.g. ++i or i--; no operand copy or synthetic literal is retained. */

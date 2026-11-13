@@ -217,6 +217,10 @@ final class Syntax_Inspection
 				$statement->start + ($statement->postfix ? 0 : 1)), 'operator' => $statement->operator->name,
 				'postfix' => $statement->postfix, 'span' => self::span($statement)];
 		}
+		if ($statement instanceof ast_property_compound) {
+			return ['kind' => 'property_compound', 'target' => self::expression($statement->target),
+				'operator' => $statement->operator->name, 'value' => self::expression($statement->value), 'span' => self::span($statement)];
+		}
 		if ($statement instanceof ast_assignment_statement) {
 			return ['kind' => 'assignment', 'name' => self::name($statement, $statement->name, $statement instanceof ast_local_declaration ? $statement->name_position() : $statement->start),
 				'intent' => $statement->intent->name, 'operator' => $statement->operator?->name, 'value' => self::expression($statement->value),

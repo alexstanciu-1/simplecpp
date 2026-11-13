@@ -37,17 +37,14 @@ final class Struct_Syntax
 			}
 			if ($flavor === flavor::cpp) $private = $private_section;
 			$static = $c->keyword('static');
-			if ($private && ($static || $c->keyword('const'))) {
-				throw new diagnostic($c->tokens->source, $c->offset(), 'Private visibility requires an instance field or ordinary instance method');
-			}
 			if ($static && $flavor === flavor::cpp && $c->next_is(token_kind::identifier)
 				&& $c->tokens->text_at($c->position() + 1) === 'constexpr') {
-				$members[] = Constant_Syntax::read($parser);
+				$members[] = Constant_Syntax::read($parser, $private);
 				continue;
 			}
 			if ($static) $c->take_keyword('static');
 			if (!$static && $flavor !== flavor::cpp && $c->keyword('const')) {
-				$members[] = Constant_Syntax::read($parser);
+				$members[] = Constant_Syntax::read($parser, $private);
 				continue;
 			}
 			$constructor = match ($flavor) {
@@ -56,7 +53,6 @@ final class Struct_Syntax
 				flavor::js => $c->tokens->text_at($c->position()) === 'constructor' && $c->next_is(token_kind::lparen),
 			};
 			if ($constructor) {
-				if ($private) throw new diagnostic($c->tokens->source, $c->offset(), 'Private constructors are deferred');
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Constructor cannot be static');
 				if ($flavor === flavor::php) $c->take_keyword('function');
 				$at = $c->position();
@@ -69,7 +65,7 @@ final class Struct_Syntax
 				}
 				$void = new ast_type_reference($at, $at, 'void');
 				$method = new ast_function_declaration('__construct', $void, $field_start, $c->position(), false,
-					$parser->source_namespace(), $parameters);
+					$parser->source_namespace(), $parameters, private: $private);
 			} else {
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
 				$method = $js_method ? $parser->named_function_header(false, $static, $private)
@@ -83,7 +79,7 @@ final class Struct_Syntax
 				continue;
 			}
 			if ($static) {
-				$members[] = Global_Syntax::read($parser, true);
+				$members[] = Global_Syntax::read($parser, true, $private);
 				continue;
 			}
 			if ($flavor === flavor::js) {

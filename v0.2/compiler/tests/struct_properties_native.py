@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 
 from app_namespace_native import artifacts, invoke, service, write_build
-from structs_native import build
+from structs_native import build, check_empty_access
 
 
 def prove(work, flavor):
@@ -133,6 +133,64 @@ int main() {
         resident.stdin.close()
 
 
+def instance_compounds(work, flavor):
+    app = work / ('fields-' + flavor)
+    app.mkdir()
+    entry = app / ('main.' + flavor)
+    model = app / 'model.php'
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    definitions = ('struct Point { public int $x; } struct Box { public Point $p; } '
+                   'function replaceBox(shared<Box> &$b):int { $b->p->x=90; $b=new Box(); echo "R"; return 3; } '
+                   'function clearBox(shared<Box> &$b,weak<Box> $w):int { $b=null; '
+                   'if (lock($w)) { echo "L"; } return 2; } '
+                   'function side():int { echo "BAD"; return 1; }')
+    decl, access, shared, empty, inline = {
+        'php': ('$', '->', '$b=new Box(); $q=$b;', '$b shared<Box>;', '$v Point;'),
+        'cpp': ('', '->', 'auto b=new Box(); auto q=b;', 'shared<Box> b;', 'Point v;'),
+        'js': ('', '.', 'let b=new Box(); let q=b;', 'let b:shared<Box>;', 'let v:Point;'),
+    }[flavor]
+    b, q, v = [decl+n for n in ['b','q','v']]
+    field = access+'p'+access+'x'
+    x = v+access+'x'
+    source = (shared+b+field+'+=1; '+b+field+'+=replaceBox('+b+'); echo '+q+field+','+b+field+'; '
+              +b+field+'+=clearBox('+b+',weak('+b+')); '+inline
+              +x+'+=9; '+x+'-=1; '+x+'*=3; '+x+'/=4; '+x+'%=5; echo '+x+'; return 8;')
+    out = work / ('fields-out-' + flavor)
+    model.write_text(definitions)
+    entry.write_text(source)
+    with service(app, out) as resident:
+        for rev, (path, text, error, expected) in enumerate([
+            (entry, source, None, b'R40L1'), (model, definitions.replace('public int $x', 'private int $x'), 'private field', None),
+            (model, definitions, None, b'R40L1'), (entry, empty+b+field+'+=side(); return 8;', None, None),
+            (entry, source, None, b'R40L1'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1983000000+rev,)*2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'fields-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and other['error'] == current['error'], (current, other)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in other, (current, other)
+            assert artifacts(out) == artifacts(baseline)
+            for bundle in (out, baseline):
+                native = work / ('native-'+bundle.name)
+                if expected is None:
+                    check_empty_access(bundle, work / f'empty-{bundle.name}-{rev}')
+                else:
+                    code = b'\n'.join(artifacts(bundle).values())
+                    assert any(b'.x += 1LL;' in line and b'->p' in line and b'compound_' not in line and b'[&]' not in line
+                               for line in code.splitlines())
+                    assert b'auto& compound_target = receiver_owner->p.x;' in code
+                    build(bundle, native, expected)
+        resident.stdin.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -143,4 +201,5 @@ if __name__ == '__main__':
         for flavor in ('php', 'cpp', 'js'):
             prove(work, flavor)
             compounds(work, flavor)
+            instance_compounds(work, flavor)
             print(flavor, 'passed', flush=True)

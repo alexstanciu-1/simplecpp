@@ -150,8 +150,9 @@ final class Compilation_Inspection
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
-		$row = ($statement instanceof ast_static_compound
-			? ['kind' => 'static_compound', 'target' => $statement->target->declaration()->symbol_key()]
+		$row = ($statement instanceof ast_property_compound
+			? ($statement->target instanceof ast_field_expression ? ['kind' => 'field_compound', 'target' => self::value($statement->target)]
+				: ['kind' => 'static_compound', 'target' => $statement->target->declaration()->symbol_key()])
 			: ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id()]) + [
 			'conversion' => value_conversion::name($statement->conversion()), 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
@@ -196,6 +197,10 @@ final class Compilation_Inspection
 		if (($value instanceof ast_not_expression) || ($value instanceof ast_isset_expression)) {
 			$row['operator'] = $value instanceof ast_isset_expression ? 'isset' : 'logical_not';
 			$row['operand'] = self::value($value->operand);
+		}
+		if ($value instanceof ast_field_expression) {
+			$row['field'] = $value->field;
+			$row['receiver'] = self::value($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {
 			$row['receiver'] = self::value($value->receiver);

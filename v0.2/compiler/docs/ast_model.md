@@ -239,3 +239,9 @@ An instance field carries one visibility flag on its declaration. The shared fie
 lookup checks the caller's declaring struct before settling a read or write target.
 Changing visibility uses the existing struct replacement watch and preserves the
 field's position and type in the native layout.
+
+A private constructor uses the existing callable visibility flag. Preparation checks
+the caller's declaring struct at inline and shared construction sites. Layout
+preparation applies the same check to default-initialized inline fields, using
+the containing record as the caller. Copying a value and declaring an empty owner
+use their existing paths.

@@ -32,6 +32,13 @@ type. Methods can read and assign fields through `this`. A call checks the recei
 
 A method declaring its enclosing struct as its return type may return `$this` (PHP) or `this` (C++/JS). Both inline and shared receivers produce an inline memberwise copy. Scalar fields copy independently and shared fields retain the same allocation.
 
+Writable numeric instance fields support statement `+=`, `-=`, `*=`, `/=` and `%=`
+under the same arithmetic and write-back rules as locals. The selected field and
+its original value survive RHS effects: if an RHS call replaces the originating
+shared owner, the write finishes on the original object. An empty receiver fails
+before the RHS runs. A simple literal update can use native compound assignment
+where the type handler permits it.
+
 ## Fixed instance calls
 
 ### Shared class self values — 2026-10-23

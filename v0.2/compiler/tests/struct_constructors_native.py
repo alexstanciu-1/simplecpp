@@ -94,6 +94,46 @@ def prove(work, flavor, memcheck):
            (None, '', 'Inline field requires', None), (record, zero, None, b'78'), (entry, no_args, None, b'78'),
            (app / 'nested.php', '', None, b'78'), (record, model, 'Argument count mismatch', None),
            (entry, wrong, 'conversion', None), (entry, source, None, b'1231')]
+    ctor, inline, factory, copy_use = {
+        'php': ('public function __construct', '$value Point(4,5);',
+                'public static function at():shared<Point> { return new Point(2,3); } '
+                'public static function value():Point { $value Point(4,5); return $value; }',
+                '$v=Point::value(); $copy=$v; $copy->x=9; $p=Point::at(); echo $v->x,$copy->x,$p->x;'),
+        'cpp': ('public: Point(', 'Point value(4,5);',
+                'public: static shared<Point> at() { return new Point(2,3); } '
+                'static Point value() { Point v(4,5); return v; }',
+                'auto v=Point::value(); auto copy=v; copy->x=9; auto p=Point::at(); echo v->x,copy->x,p->x;'),
+        'js': ('public constructor', 'let value:Point(4,5);',
+               'public static at():shared<Point> { return new Point(2,3); } '
+               'public static value():Point { let v:Point(4,5); return v; }',
+               'let v=Point.value(); let copy=v; copy.x=9; let p=Point.at(); echo v.x,copy.x,p.x;'),
+    }[flavor]
+    def with_visibility(definition):
+        if flavor == 'cpp':
+            return definition.replace(' Point(', ' '+ctor, 1)
+        if flavor == 'js':
+            return definition.replace(' constructor(', ' '+ctor+'(', 1)
+        return definition
+    public = with_visibility(model)
+    close = public.rindex('}')
+    public = public[:close]+factory+public[close:]
+    private = public.replace(ctor, ctor.replace('public','private'), 1)
+    public_zero = with_visibility(zero)
+    private_zero = public_zero.replace(ctor, ctor.replace('public','private'), 1)
+    denied = 'Cannot call private constructor Point::__construct'
+    new_only = {'php':'$q=new Point(3,1);', 'cpp':'auto q=new Point(3,1);','js':'let q=new Point(3,1);'}[flavor]
+    edits.extend([
+        (record,public,None,b'1231'), (entry,new_only+'return 8;',None,b''),
+        (record,private,denied,None),(None,'',denied,None),(record,public,None,b''),
+        (entry,inline+'return 8;',None,b''),(record,private,denied,None),
+        (entry,copy_use+'return 8;',None,b'492'),(record,public,None,b'492'),
+        (entry,'return 8;',None,b''),(record,public_zero,None,b''),
+        (entry,default+'return 8;',None,b''),(record,private_zero,denied,None),
+        (entry,'return 8;',None,b''),
+        (app/'nested.php','struct Box { public Point $p; }',denied,None),
+        (record,public_zero,None,b''),(record,private_zero,denied,None),
+        (app/'nested.php','struct Box { public shared<Point> $p; }',None,b''),
+    ])
     with service(app,out) as resident:
         for rev, (path, text, error, stdout) in enumerate(edits):
             if path is not None:

@@ -189,13 +189,13 @@ final class Parser
 			}
 			$operator = $this->compound_operator();
 			if ($operator !== null) {
-				if (!($target instanceof ast_name_expression) || !in_array($operator, [binary_operator::add, binary_operator::subtract,
+				if (!in_array($operator, [binary_operator::add, binary_operator::subtract,
 					binary_operator::multiply, binary_operator::divide, binary_operator::remainder], true)) {
-					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected a static numeric arithmetic compound');
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected a numeric arithmetic compound');
 				}
 				$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
 				$value = $this->assignment_value();
-				return new ast_static_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
+				return new ast_property_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 			}
 			$this->cursor->take(token_kind::assign, '=');
 			$value = $this->assignment_value();
