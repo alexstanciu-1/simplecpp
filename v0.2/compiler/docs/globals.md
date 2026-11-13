@@ -8,7 +8,7 @@ PHP `global $value = 10;`, C++ `global auto value = 10;` and JS
 Explicit `int`/`int64`, `bool`, `null`, `byte` and `float`/`float64` destinations are supported.
 Initializers admit signed decimal integer/floating, boolean and null literals; omitted types infer
 the literal type. Written types authorize metadata-driven checked conversion.
-See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Direct writes remain deferred; exact-type reference parameters may mutate global storage.
+See [the scalar contract](../../../specs/compiler_scalars_v0_2.md). Direct namespace-global writes remain deferred. A global cannot supply a writable reference argument.
 
 ## Ownership and preparation
 
@@ -78,3 +78,12 @@ incremental AST reuse, changed initializer targets, removal/reactivation and typ
 `python3 -B v0.2/compiler/tests/namespaces_native.py --globals` compiles and executes
 the fixtures with separate Clang frontend/LLVM/linker traces. See
 [the retained global proof](global_slice_proof.md) for measurements.
+
+
+## Public static struct properties
+
+A struct indexes its static properties separately from its instance layout. Each property uses
+an `ast_global_declaration` owned by that struct, published under e.g. `var:Point::count`.
+Reads and plain writes observe this stable entry and use ordinary assignment conversion.
+The record declares the native static member and its declaring unit emits the single
+`constinit` definition. Constructing or copying a record does not initialize this storage again.

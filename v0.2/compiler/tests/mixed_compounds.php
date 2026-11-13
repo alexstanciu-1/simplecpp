@@ -89,7 +89,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	catch (LogicException) {
 	}
-	type_float64::instance()->prepare_compound($write, $entry->body()->statements[0]);
+	$write->prepare_local_compound($entry->body()->statements[0]);
 	$code = $decl('8.0');
 	foreach (['+=2', '-=4', '*=3', '/=2'] as $update) {
 		$code .= $x . $update . ';';

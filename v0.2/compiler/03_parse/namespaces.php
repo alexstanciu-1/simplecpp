@@ -49,6 +49,9 @@ final class Namespace_Syntax
 			if (($tokens[$index]->kind ?? null) === token_kind::lparen) {
 				return true;
 			}
+			if ($this->cursor->tokens->source->flavor === flavor::php && ($tokens[$index]->kind ?? null) === token_kind::scope) {
+				return ($tokens[$index + 1]->kind ?? null) === token_kind::identifier && ($tokens[$index + 2]->kind ?? null) === token_kind::lparen;
+			}
 			if (($tokens[$index]->kind ?? null) !== $this->separator) {
 				return false;
 			}
@@ -57,6 +60,28 @@ final class Namespace_Syntax
 		return (($tokens[$index]->kind ?? null) === token_kind::keyword)
 			&& ($this->cursor->tokens->text_at($index) === 'empty')
 			&& (($tokens[$index + 1]->kind ?? null) === token_kind::lparen);
+	}
+
+	/** Recognize a qualified plain assignment without consuming a qualified C++ declaration or call. */
+	public function qualified_write(): bool
+	{
+		$i = $this->cursor->position();
+		$tokens = $this->cursor->tokens->tokens;
+		if (($tokens[$i]->kind ?? null) === $this->root_marker) $i++;
+		$qualified = false;
+		while (($tokens[$i]->kind ?? null) === token_kind::identifier) {
+			$next = $tokens[++$i]->kind ?? null;
+			if ($next === token_kind::assign || ($qualified && $next !== null && binary_operator::compound($next) !== null)) return $qualified;
+			if ($this->cursor->tokens->source->flavor === flavor::php && $next === token_kind::scope) {
+				$operator = $tokens[$i + 2]->kind ?? null;
+				return ($tokens[$i + 1]->kind ?? null) === token_kind::variable && $operator !== null
+					&& ($operator === token_kind::assign || binary_operator::compound($operator) !== null);
+			}
+			if ($next !== $this->separator) return false;
+			$qualified = true;
+			$i++;
+		}
+		return false;
 	}
 
 	/** PHP qualifies the final variable token (test\$value); other flavors qualify ordinary identifiers. */
@@ -72,6 +97,11 @@ final class Namespace_Syntax
 		}
 		while ($this->cursor->is(token_kind::identifier)) {
 			$name .= $this->cursor->name(token_kind::identifier);
+			if ($this->cursor->is(token_kind::scope)) {
+				$this->cursor->take(token_kind::scope, '::');
+				$constant_only = !$this->cursor->is(token_kind::variable);
+				return $name . '::' . $this->cursor->name($constant_only ? token_kind::identifier : token_kind::variable);
+			}
 			if (!$this->cursor->is($this->separator)) {
 				$constant_only = true;
 				return $name;

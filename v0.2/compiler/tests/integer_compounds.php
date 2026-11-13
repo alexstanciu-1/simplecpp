@@ -96,7 +96,7 @@ foreach (flavor::cases() as $flavor)
 		}
 		verify($failed, 'Reset retained compound facts');
 	}
-	\scpp\compiler\type_uint8::instance()->prepare_compound($write, $entry->body()->statements[0]);
+	$write->prepare_local_compound($entry->body()->statements[0]);
 	verify((new Cpp_Emitter())->emit($entry) === $beforeReset, 'Reset/reprepare changed output');
 	$code = '';
 	$expected = '';

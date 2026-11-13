@@ -235,3 +235,66 @@ introduced. Four proof records cover copyable, immovable, over-aligned move-only
 throwing-move payloads. See [ownership_slice.md](../ownership_slice.md) for the current
 contract and measurements. Source normalization, inheritance/self protocols and
 compiler adaptation remain future work; the earlier checkpoint is historical.
+
+## Shared application structs and final release — 2026-11-12
+
+An earlier alternative for source-level shared structs used one pointer-wide native handle and an
+allocation header containing a 32-bit atomic strong count and an immutable 32-bit
+type ID. Verify the proposed eight-byte header and payload alignment on each target.
+The allocation factory knows the concrete payload. On the final release a common
+runtime helper can use the ID to index an array of destroy-and-free functions.
+
+Keep two dispatch experiments for later measurement. A fixed-stride row of
+executable jump slots could use the same dense IDs. Alternatively, a 32-bit
+code offset relative to a linker-defined base could identify the destruction
+routine directly. The latter changes the meaning of the stored word and needs
+target-specific code-address, range and module-lifetime guarantees.
+
+A typed release site can call the concrete destroy-and-free routine directly
+when the compiler proves the exact allocation type and allocation contract.
+All release paths still decrement the same count and destroy only on the last
+release. A common erased handle destructor needs access to the allocation's
+identity if it can perform that last release for different payload types.
+
+## Initial shared application struct layout — 2026-11-12
+
+Start with one typed allocation containing the inline payload followed by a
+non-atomic uint32 strong count initialized to one. Each owning variable carries
+a pointer to this allocation. On the measured x86-64 WSL target, two int64
+fields give Point a size of 16 bytes and alignment of 8. Its counted allocation
+occupies 24 bytes, including four bytes of tail padding.
+
+Threading debt: the initial implementation supports thread-confined ownership.
+Before admitting concurrent retain/release on the same allocation, settle the
+thread-transfer contract and counter synchronization. The atomic-versus-plain
+benchmark is a baseline for that decision.
+
+Zero-argument construction in all three flavors emits a concrete C++ owner in units
+that need its complete type. Default construction leaves the owner empty. The allocation factory initializes the payload and count
+together. The pointer-sized owner handles retain, transfer and final typed delete
+through C++ special members, including unwinding. A count that would overflow
+traps before modification. Body preparation resolves the payload through the
+existing watched struct lookup and retains its canonical shared type. Reference
+count operations need no AST nodes or lifetime-analysis pass.
+
+The application struct implementation now coallocates the payload with two plain
+uint32 counts. The weak count includes an internal hold from construction until
+the final strong release finishes destroying the payload. That ordering permits
+a payload to contain its own weak observer. The final weak release frees the
+allocation. Lock tests the strong count and retains only a live payload; these
+steps assume thread confinement. Strong and weak handles each store one pointer.
+
+## One record model and future class identity
+
+Keep a single record declaration and member pipeline in the bootstrap compiler.
+Today a struct value copies its fields, and copying a shared handle retains the same
+allocation. A struct method returning its own type copies the payload even when
+invoked through a shared handle.
+
+When class support is introduced, the existing class contract makes the bare class
+name an identity-bearing shared type. Assignment and by-value parameter passing
+retain that identity. An ordinary class method returning its own type via `$this`
+must retain the original owner, including when the caller subsequently clears its
+handle. Receiver lowering will need access to that owner for this operation.
+Fields, methods, constants and static members can continue to use the common record
+machinery. See the [instance-method contract](../../../specs/instance_methods_v0_2.md#shared-class-self-values--2026-10-23).

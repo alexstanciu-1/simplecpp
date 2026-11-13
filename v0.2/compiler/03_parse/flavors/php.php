@@ -19,9 +19,9 @@ final class Php_Grammar implements statement_grammar
 		return $parser->cursor->keyword('function');
 	}
 
-	public function function_header(Parser $parser): ast_function_declaration
+	public function function_header(Parser $parser, bool $static = false, bool $private = false): ast_function_declaration
 	{
-		return $parser->named_function_header();
+		return $parser->named_function_header(static: $static, private: $private);
 	}
 
 	/** First bare writes declare locals; prior body-local declarations make subsequent writes assignments. */

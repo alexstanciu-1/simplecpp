@@ -24,6 +24,14 @@ Direct integer literal initialization uses the normalized decimal value when pre
 
 Locals and parameters use their function-local storage ordinal (for example, `var_i_0`). Exported names encode source namespaces with `_ns_`. Functions have a trailing underscore (`Lib_ns_id_`), globals have a `var_` prefix, and global reads use `::`. An individual byte that could produce a reserved identifier or the namespace delimiter is escaped as `Z` plus two hex digits. A source `Z` is escaped the same way.
 
+Application struct and field identifiers preserve source spelling and case in C++.
+The backend groups structs in a generated record namespace inside the configured
+app namespace to keep names such as `point` and `owner_point` available even
+when the compiler also generates an ownership helper. A source namespace gets
+its own record namespace. Names reserved by the native target use a reversible
+escape. Inline values use `.`; a shared owner's inline `operator->()` returns
+the address of the payload in its allocation.
+
 The table excerpts omit the enclosing application namespace (`App` by default). The C++ examples omit `[[maybe_unused]]` for readability. The compiler still emits the attribute to suppress unused-variable warnings.
 
 ```text

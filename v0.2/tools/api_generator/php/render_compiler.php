@@ -824,14 +824,14 @@ function compilerPromotions(array $rows, array $definitions): string {
         if ($compoundOperators !== []) {
             $compoundCases = implode(', ', array_map(static fn(string $op): string => 'binary_operator::' . $op, $compoundOperators));
             $compounds .= "\t\tif (\$this->supports_compound(\$value->operator) && (\$value->value->type_def() === $rightClass::instance()) && match (\$value->operator) {\n"
-                . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\t\$value->settle_compound(\$local, $executionClass::instance(), value_conversion::$lc, value_conversion::$rc, value_conversion::$writeBack);\n\t\t\treturn;\n\t\t}\n";
+                . "\t\t\t$compoundCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n\t\t\t\$value->settle_compound($executionClass::instance(), value_conversion::$lc, value_conversion::$rc, value_conversion::$writeBack);\n\t\t\treturn;\n\t\t}\n";
         }
         $cases .= "\t\tif ((\$value->left->value_type() === \$this) && (\$value->right->value_type() === $rightClass::instance()) && match (\$value->operator) {\n"
             . "\t\t\t$operatorCases => true,\n\t\t\tdefault => false,\n\t\t}) {\n"
             . "\t\t\t\$value->settle_binary($resultClass::instance(), $executionClass::instance(), value_conversion::$lc, value_conversion::$rc);\n\t\t\treturn;\n\t\t}\n";
     }
     $compoundMethod = $compounds === '' ? '' : "\n\t/** Attach generated operand conversions, execution identity and checked result write-back. */\n"
-        . "\tpublic function prepare_compound(ast_assignment_statement \$value, ast_local_binding \$local): void\n\t{\n$compounds\t\tparent::prepare_compound(\$value, \$local);\n\t}\n";
+        . "\tpublic function prepare_compound(ast_assignment_statement \$value): void\n\t{\n$compounds\t\tparent::prepare_compound(\$value);\n\t}\n";
     if ($cases === '') return $compoundMethod;
     return $compoundMethod . "\n\t/** Metadata-authorized promotion; operands are already prepared and conversion behavior is reused. */\n"
         . "\tpublic function prepare_binary(ast_binary_expression \$value): void\n\t{\n$cases\t\tparent::prepare_binary(\$value);\n\t}\n";

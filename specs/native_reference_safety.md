@@ -57,6 +57,10 @@ shared_p<Box> box;
 auto& box_ref = box;
 ```
 
+For v0.2 writable call arguments the [function parameter contract](compiler_entry_v0_2.md#explicit-mutable-reference-parameters)
+narrows this boundary to named locals and parameters of the exact canonical type.
+Even a field of an inline local cannot be passed as a writable reference argument.
+
 ## v0.2 block-local aliases — 2026-10-06
 
 Native `=&` bindings may introduce locals inside conditional arms, loop bodies and

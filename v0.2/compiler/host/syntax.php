@@ -20,9 +20,6 @@ final class Syntax_Inspection
 		$functions = [];
 		foreach ($file->functions() as $function)
 		{
-			if ($function->is_private) {
-				continue;
-			}
 			$body = array_map(self::statement(...), $function->body()->statements);
 			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
@@ -33,8 +30,15 @@ final class Syntax_Inspection
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
+			if ($function->is_private) $functions[array_key_last($functions)]['visibility'] = 'private';
 		}
 		$result = ['namespace' => $file->scope->namespace, 'flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
+		foreach ($file->declaration_nodes as $node) {
+			if ($node instanceof ast_struct_declaration) {
+				$result['structs'][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_struct_field $field): string =>
+					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
+			}
+		}
 		$result['imports'] = array_map(static fn(ast_import $import): array => [
 			'kind' => $import->kind->name, 'target' => $import->target,
 			'local_name' => $import->local_name, 'span' => self::span($import),
@@ -81,6 +85,15 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
+		if ($expression instanceof ast_construction_expression) {
+			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
+			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
+			return $row;
+		}
+		if ($expression instanceof ast_field_expression) {
+			return ['kind' => 'field', 'receiver' => self::expression($expression->receiver), 'name' => $expression->field];
+		}
 		if ($expression instanceof ast_empty_collection_expression) {
 			return ['kind' => 'empty_collection'];
 		}
@@ -98,6 +111,9 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_unary_expression) {
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
+		}
+		if ($expression instanceof ast_ownership_expression) {
+			return ['kind' => $expression->lock ? 'lock' : 'weak', 'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
 		if (($expression instanceof ast_not_expression) || ($expression instanceof ast_isset_expression)) {
 			return ['kind' => $expression instanceof ast_isset_expression ? 'isset' : 'logical_not', 'operand' => self::expression($expression->operand),
@@ -176,6 +192,9 @@ final class Syntax_Inspection
 		if ($statement instanceof ast_return_statement) {
 			return ['kind' => 'return', 'value' => $statement->value === null ? null : self::expression($statement->value),
 				'span' => self::span($statement)];
+		}
+		if ($statement instanceof ast_field_assignment) {
+			return ['kind' => 'field_write', 'target' => self::expression($statement->target), 'value' => self::expression($statement->value)];
 		}
 		if ($statement instanceof ast_index_assignment) {
 			return ['kind' => 'keyed_write', 'receiver' => self::expression($statement->receiver),

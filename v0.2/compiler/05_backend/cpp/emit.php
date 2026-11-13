@@ -37,9 +37,30 @@ final class Cpp_Emitter
 
 	/** METHODS */
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
-	public function declaration(ast_function_declaration|ast_global_declaration $node,
+	public function declaration(ast_function_declaration|ast_global_declaration|ast_struct_declaration $node,
 		array &$includes /** array<string,bool> */): string
 	{
+		if ($node instanceof ast_struct_declaration) {
+			$layout = [];
+			foreach ($node->fields as $field) {
+				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
+				$type = $field->type_def();
+				$qualifier = ($type instanceof struct_type_definition || $type instanceof struct_handle_definition) && $this->root !== '' ? '::' . $this->root : '';
+				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . '{};';
+			}
+			foreach ($node->static_properties as $property) {
+				$type = $property->type_def();
+				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
+			}
+			if (isset($node->methods['__construct'])) {
+				$constructor = $node->methods['__construct'];
+				$params = $this->constructor_parameters($constructor, $includes);
+				$layout[] = "\t" . Cpp_Identifier::source($node->short_name) . '(' . $params . ');';
+			}
+			return $this->constructor_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+				. " {\n" . implode("\n", $layout) . "\n};\n");
+		}
 		if ($node instanceof ast_function_declaration) {
 			return $this->signature($node, $includes) . ';';
 		}
@@ -47,6 +68,143 @@ final class Cpp_Emitter
 			$includes[$header] = true;
 		}
 		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
+	}
+
+	/** Pointer-sized owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
+	public function owner_declaration(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	{
+		$payload = $type->payload;
+		$name = Cpp_Identifier::source($payload->declaration->short_name);
+		$forward = $this->constructor_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
+		$owner = $type->cpp_type();
+		$weak = $type->payload->weak->cpp_type();
+		$record = $payload->cpp_type();
+		$guard = $this->owner_guard($type) . '_DECL';
+		$params = $this->constructor_parameters($payload->declaration->methods['__construct'] ?? null, $includes);
+		return <<<CPP
+#ifndef $guard
+#define $guard
+{$forward}struct $owner {
+	struct allocation;
+	allocation* ptr{};
+	$owner() noexcept = default;
+	static $owner make($params);
+	explicit operator bool() const noexcept { return ptr != nullptr; }
+	$record* operator->() const;
+	$owner(const $owner& other) noexcept;
+	$owner($owner&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	$owner& operator=($owner other) noexcept {
+		auto* old = ptr;
+		ptr = other.ptr;
+		other.ptr = old;
+		return *this;
+	}
+	~$owner();
+};
+struct $weak {
+	{$owner}::allocation* ptr{};
+	$weak() noexcept = default;
+	explicit $weak(const $owner& owner) noexcept : ptr(owner.ptr) { retain(); }
+	$weak(const $weak& other) noexcept : ptr(other.ptr) { retain(); }
+	$weak($weak&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	$weak& operator=($weak other) noexcept {
+		auto* old = ptr;
+		ptr = other.ptr;
+		other.ptr = old;
+		return *this;
+	}
+	void retain() noexcept;
+	$owner lock() const noexcept;
+	~$weak();
+};
+#endif
+
+CPP;
+	}
+
+	/** Complete the typed allocation only after its inline payload layout is available. @param bool[] $includes */
+	public function owner_methods(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	{
+		$payload = $type->payload->cpp_type();
+		$owner = $type->cpp_type();
+		$weak = $type->payload->weak->cpp_type();
+		$guard = $this->owner_guard($type) . '_DEF';
+		$constructor = $type->payload->declaration->methods['__construct'] ?? null;
+		$params = $this->constructor_parameters($constructor, $includes);
+		$allocation_ctor = $constructor === null ? 'allocation() : value{} {}' : "allocation($params);";
+		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
+
+		return <<<CPP
+#ifndef $guard
+#define $guard
+struct {$owner}::allocation {
+	using payload_type = $payload;
+	union { payload_type value; };
+	__UINT32_TYPE__ count{1};
+	__UINT32_TYPE__ weak_count{1}; // Includes one hold until payload destruction completes.
+	$allocation_ctor
+	~allocation() {} // The last strong owner ends the active union member's lifetime.
+	void retain_strong() noexcept {
+		if (count == __UINT32_MAX__) __builtin_trap();
+		++count;
+	}
+	void release_weak() noexcept { if (--weak_count == 0) delete this; }
+};
+$factory
+inline $payload* {$owner}::operator->() const {
+	if (!ptr) ::scpp::throw_empty_owner();
+	return &ptr->value;
+}
+inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr) {
+	if (ptr) ptr->retain_strong();
+}
+inline {$owner}::~$owner() {
+	if (ptr && --ptr->count == 0) {
+		using payload_type = $payload;
+		ptr->value.~payload_type();
+		ptr->release_weak();
+	}
+}
+inline void {$weak}::retain() noexcept {
+	if (ptr) {
+		if (ptr->weak_count == __UINT32_MAX__) __builtin_trap();
+		++ptr->weak_count;
+	}
+}
+inline $owner {$weak}::lock() const noexcept {
+	$owner result;
+	if (ptr && ptr->count) {
+		ptr->retain_strong();
+		result.ptr = ptr;
+	}
+	return result;
+}
+inline {$weak}::~$weak() { if (ptr) ptr->release_weak(); }
+#endif
+
+CPP;
+	}
+
+	/** Define user-directed allocation once beside the payload constructor, where parameter types are complete. @param bool[] $headers */
+	private function allocation_factory(shared_struct_type_definition $type, array &$headers /** array<string,bool> */): string
+	{
+		$owner = $type->cpp_type();
+		$constructor = $type->payload->declaration->methods['__construct'] ?? null;
+		$params = $this->constructor_parameters($constructor, $headers);
+		$args = [];
+		foreach ($constructor?->parameters ?? [] as $parameter) {
+			$name = $this->name($parameter);
+			$args[] = $parameter->type_def()->cpp_trivial_value() ? $name : 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $name . ')';
+		}
+		$forward = implode(', ', $args);
+		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : value($forward) {}\n";
+		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tresult.ptr = new allocation($forward);\n\treturn result;\n}\n";
+	}
+
+	/** Public layouts and unit-local uses can independently request the same concrete owner. */
+	private function owner_guard(shared_struct_type_definition $type): string
+	{
+		return 'SCPP_OWNER_' . hash('sha256', $this->root . "\0" . $type->name);
 	}
 
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
@@ -94,13 +252,24 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 		}
+		foreach ($file->declaration_nodes as $node) {
+			if ($node instanceof ast_struct_declaration) $declarations[$node->symbol_key()] = $node;
+		}
 		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
-			$declarations[$name] = $function;
+			if ($function->is_constructor()) {
+				$owner = $function->parent->definition->shared;
+				$declarations[$owner->name] = $owner;
+				foreach (self::signature_owners($function) as $parameter_owner) $declarations[$parameter_owner->name] = $parameter_owner;
+				$definitions[] = $this->allocation_factory($owner, $required_headers);
+			} else {
+				$declarations[$name] = $function;
+			}
 			$this->adapter_flavor = null;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			$unit_flavor ??= $this->adapter_flavor;
+			if ($function->is_constructor()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
 				. "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
@@ -112,8 +281,28 @@ final class Cpp_Emitter
 		}
 		$prototypes = '';
 		$unit_headers = [];
-		ksort($declarations, \SORT_STRING);
+		// Calls and definitions need complete owner types even when no new-expression occurs in this unit.
 		foreach ($declarations as $function) {
+			if ($function instanceof ast_function_declaration) {
+				foreach (self::signature_owners($function) as $type) $declarations[$type->name] = $type;
+			}
+		}
+		foreach ($global_references as $property) {
+			if ($property->parent instanceof ast_struct_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
+		}
+		ksort($declarations, \SORT_STRING);
+		$records = [];
+		$layouts = '';
+		$owners = [];
+		foreach ($declarations as $function) {
+			if ($function instanceof struct_handle_definition) {
+				$owners[$function->payload->name] = $function->payload->shared;
+				continue;
+			}
+			if ($function instanceof ast_struct_declaration) {
+				$this->record_prototypes($function, $records, $unit_headers, $required_headers, $layouts, $owners);
+				continue;
+			}
 			$include = $this->headers?->declaration_header($function);
 			if ($include !== null) {
 				$unit_headers[$include] = true;
@@ -122,8 +311,24 @@ final class Cpp_Emitter
 				$prototypes .= $this->declaration($function, $required_headers) . "\n";
 			}
 		}
+		$owner_types = '';
+		$owner_methods = '';
+		$done = [];
+		while ($owners !== []) {
+			$pending = $owners;
+			$owners = [];
+			foreach ($pending as $key => $owner) {
+				if (isset($done[$key])) continue;
+				$done[$key] = true;
+				$this->record_prototypes($owner->payload->declaration, $records, $unit_headers, $required_headers, $layouts, $owners);
+				$owner_types .= $this->owner_declaration($owner, $required_headers);
+				$owner_methods .= $this->owner_methods($owner, $required_headers);
+				$required_headers['scpp/owner_access.hpp'] = true;
+			}
+		}
 		ksort($global_references, \SORT_STRING);
 		foreach ($global_references as $name => $global) {
+			if ($global->parent instanceof ast_struct_declaration) continue;
 			$include = $this->headers?->declaration_header($global);
 			if ($include !== null) {
 				$unit_headers[$include] = true;
@@ -152,7 +357,37 @@ final class Cpp_Emitter
 			$header .= '#include "' . $include . "\"\n";
 		}
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
-		return $header . self::namespace_body($this->root, $imports . $prototypes . implode("\n", $definitions));
+		return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+	}
+
+	/**
+	 * Emit private definitions once, with complete embedded types before their parents.
+	 * @param bool[] $seen
+	 * @param bool[] $unit_headers
+	 * @param shared_struct_type_definition[] $owners
+	 * @param bool[] $runtime_headers
+	 */
+	private function record_prototypes(ast_struct_declaration $record, array &$seen /** array<string,bool> */,
+		array &$unit_headers /** array<string,bool> */, array &$runtime_headers /** array<string,bool> */, string &$text,
+		array &$owners /** array<string,shared_struct_type_definition> */): void
+	{
+		$key = $record->symbol_key();
+		if (isset($seen[$key])) return;
+		$seen[$key] = true;
+		$header = $this->headers?->declaration_header($record);
+		if ($header !== null) {
+			$unit_headers[$header] = true;
+			return;
+		}
+		foreach ($record->fields as $field) {
+			$type = $field->type_def();
+			if ($type instanceof struct_type_definition) {
+				$this->record_prototypes($type->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
+			} elseif ($type instanceof struct_handle_definition) {
+				$owners[$type->payload->name] = $type->payload->shared;
+			}
+		}
+		$text .= $this->declaration($record, $runtime_headers) . "\n";
 	}
 
 	/**
@@ -250,6 +485,13 @@ final class Cpp_Emitter
 					$lines[] = "\t}";
 				}
 			}
+			elseif ($statement instanceof ast_field_assignment) {
+				$field = $this->value($statement->target, $global_references, $declarations, $required_headers);
+				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
+				$type = $statement->target->type_def();
+				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
+				$lines[] = "\t" . $field . ' = ' . $type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ';';
+			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
@@ -334,12 +576,14 @@ final class Cpp_Emitter
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
-		$type = $statement->local_def()->type_def();
+		$static = $statement instanceof ast_static_compound;
+		$destination = $static ? $statement->target : $statement->local_def();
+		$type = $destination->type_def();
+		$name = $static ? $this->value($destination, $global_references, $declarations, $headers) : $this->name($destination);
 		$execution = $statement->execution_type();
-		$name = $this->name($statement->local_def());
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
-		if (($type === $execution) && ($statement->local_def() instanceof ast_local_declaration)
+		if (($type === $execution) && ($destination instanceof ast_local_declaration)
 			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
 			&& ($statement->write_back() === value_conversion::identity)
 			&& (($statement->value instanceof ast_integer_expression) || (($statement->value instanceof ast_name_expression)
@@ -396,6 +640,10 @@ final class Cpp_Emitter
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
+			if ($type instanceof struct_type_definition) {
+				$declarations[$type->declaration->symbol_key()] = $type->declaration;
+			}
+			if ($type instanceof struct_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
 			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
@@ -443,6 +691,28 @@ final class Cpp_Emitter
 		$reorderable = false;
 		foreach ($value->type_def()->cpp_headers() as $header) {
 			$required_headers[$header] = true;
+		}
+		if ($value instanceof ast_ownership_expression) {
+			$type = $value->type_def();
+			$declarations[$type->name] = $type;
+			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers);
+			return $value->lock ? '(' . $operand . ').lock()' : $type->cpp_type() . '(' . $operand . ')';
+		}
+		if ($value instanceof ast_this_expression) return 'scpp_self';
+		if ($value instanceof ast_construction_expression) {
+			$type = $value->type_def();
+			$shared = $value instanceof ast_new_expression;
+			if ($shared) $declarations[$type->name] = $type;
+			if ($value->arguments === []) return $shared ? $type->cpp_type() . '::make()' : '{}';
+			$record = $shared ? $type->payload : $type;
+			$constructor = $record->declaration->methods['__construct'];
+			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
+				$global_references, $declarations, $required_headers);
+		}
+		if ($value instanceof ast_field_expression) {
+			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$access = $value->receiver->type_def() instanceof shared_struct_type_definition ? '->' : '.';
+			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if ($value instanceof ast_empty_collection_expression) {
 			/** @var indexed_collection_type $type */
@@ -602,50 +872,10 @@ final class Cpp_Emitter
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			if ($function->parameters === []) {
-				return $name . '()';
+			if ($function->is_static && $function->return_type_def() instanceof struct_type_definition) {
+				$declarations[$function->parent->symbol_key()] = $function->parent;
 			}
-			$steps = [];
-			$arguments = [];
-			$direct_arguments = [];
-			$direct = true;
-			foreach ($function->parameters as $index => $parameter) {
-				$argument = $value->arguments[$index] ?? $parameter->default_value;
-				$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
-				$type = $parameter->type_def();
-				$operand_safe = false;
-				$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
-					logical_root: $conversion === value_conversion::identity);
-				foreach ($type->conversion_headers($conversion) as $header) {
-					$required_headers[$header] = true;
-				}
-				if ($parameter->mode === passing_mode::value) {
-					$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
-				}
-				if (count($function->parameters) === 1 && ($parameter->mode === passing_mode::value
-					|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration))) {
-					return $name . '(' . $operand . ')';
-				}
-				$direct_arguments[] = $operand;
-				$direct = $direct && $operand_safe && $type->cpp_trivial_value()
-					&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
-				// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
-				$temporary = 'argument_' . $value->start . '_' . $index;
-				if ($parameter->mode === passing_mode::reference) {
-					$steps[] = $type->cpp_type() . ' &' . $temporary . ' = ' . $operand . ';';
-					$arguments[] = $temporary;
-				}
-				else {
-					$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
-					$arguments[] = $type->cpp_trivial_value() ? $temporary
-						: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
-				}
-			}
-			if ($direct) {
-				return $name . '(' . implode(', ', $direct_arguments) . ')';
-			}
-			return '([&]() -> ' . $function->return_type_def()->cpp_type() . ' { ' . implode(' ', $steps)
-				. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
+			return $this->invocation($value, $function, $name, $function->return_type_def(), $global_references, $declarations, $required_headers);
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
@@ -680,25 +910,144 @@ final class Cpp_Emitter
 	}
 
 	/**
+	 * Select the payload before argument effects. Retain the nearest enclosing allocation for the entire call.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param string[] $steps
+	 */
+	private function method_receiver(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
+		array &$steps /** list<string> */): string
+	{
+		$fields = [];
+		$base = $receiver;
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_struct_type_definition)) {
+			$fields[] = Cpp_Identifier::source($base->field);
+			$base = $base->receiver;
+		}
+		$operand = $this->value($base, $globals, $declarations, $headers);
+		if ($base->type_def() instanceof shared_struct_type_definition) {
+			$steps[] = 'auto receiver_owner = ' . $operand . ';';
+			$operand = '*receiver_owner.operator->()';
+		}
+		foreach (array_reverse($fields) as $field) $operand = '(' . $operand . ').' . $field;
+		$steps[] = 'auto&& receiver_payload = ' . $operand . ';';
+		return 'receiver_payload';
+	}
+
+	/**
+	 * Emit one prepared source invocation with the ordinary conversion and left-to-right argument rules.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $required_headers
+	 */
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration $function,
+		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
+	{
+		$steps = [];
+		$arguments = [];
+		$method = $value instanceof ast_call_expression && $function->has_receiver();
+		if ($method) {
+			$arguments[] = $this->method_receiver($value->receiver, $global_references, $declarations, $required_headers, $steps);
+		} elseif ($function->parameters === []) {
+			return $name . '()';
+		}
+		$direct_arguments = [];
+		$direct = !$method;
+		foreach ($function->parameters as $index => $parameter) {
+			$argument = $value->arguments[$index] ?? $parameter->default_value;
+			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
+			$type = $parameter->type_def();
+			$operand_safe = false;
+			$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
+				logical_root: $conversion === value_conversion::identity);
+			foreach ($type->conversion_headers($conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+			if ($parameter->mode === passing_mode::value) {
+				$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
+			}
+			if (!$method && count($function->parameters) === 1 && ($parameter->mode === passing_mode::value
+				|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration))) {
+				return $name . '(' . $operand . ')';
+			}
+			$direct_arguments[] = $operand;
+			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
+				&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
+			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
+			$temporary = 'argument_' . $value->start . '_' . $index;
+			if ($parameter->mode === passing_mode::reference) {
+				$steps[] = $type->cpp_type() . ' &' . $temporary . ' = ' . $operand . ';';
+				$arguments[] = $temporary;
+			}
+			else {
+				$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
+				$arguments[] = $type->cpp_trivial_value() ? $temporary
+					: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
+			}
+		}
+		if ($direct) {
+			return $name . '(' . implode(', ', $direct_arguments) . ')';
+		}
+		return '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
+			. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
+	}
+
+	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */
+	private function constructor_forwards(ast_struct_declaration $record): string
+	{
+		$forwards = [];
+		foreach ($record->methods['__construct']->parameters ?? [] as $parameter) {
+			$type = $parameter->type_def();
+			if ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+		}
+		return implode('', $forwards);
+	}
+
+	/** Format a native constructor declaration or allocation factory. @param bool[] $headers */
+	private function constructor_parameters(?ast_function_declaration $constructor, array &$headers /** array<string,bool> */): string
+	{
+		return $constructor === null ? '' : implode(', ', $this->parameters($constructor, $headers, false));
+	}
+
+	/**
 	 * Emit declarations from settled signatures, without looking inside foreign bodies.
 	 * @param bool[] $headers
 	 */
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
-		$parameters = [];
-		foreach ($function->return_type_def()->cpp_headers() as $header) {
-			$headers[$header] = true;
+		$parameters = $this->parameters($function, $headers, $short_types);
+		if ($function->is_constructor()) {
+			return $function->parent->definition->cpp_type() . '::' . Cpp_Identifier::source($function->parent->short_name)
+				. '(' . implode(', ', $parameters) . ')';
 		}
+		if ($function->has_receiver()) {
+			array_unshift($parameters, '[[maybe_unused]] ' . $function->parent->definition->cpp_type() . '& scpp_self');
+		}
+		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
+		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
+			. '(' . implode(', ', $parameters) . ')';
+	}
+
+	/** Share native parameter names, types, passing modes and includes. @param bool[] $headers @return string[] */
+	private function parameters(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types): array /** list<string> */
+	{
+		$parameters = [];
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($type, $short_types) . ' '
+			$native = $this->signature_type($type, $short_types);
+			if ($function->is_constructor() && $type instanceof struct_handle_definition) {
+				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
+			}
+			$parameters[] = '[[maybe_unused]] ' . $native . ' '
 				. ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
 		}
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
-			. '(' . implode(', ', $parameters) . ')';
+		return $parameters;
 	}
 
 	/** Public headers qualify runtime names; private adapter units may use provider-exported type names. */
@@ -721,6 +1070,17 @@ final class Cpp_Emitter
 	}
 
 	/** STATIC METHODS */
+	/** Shared types required by a function's native declaration and calls. @return \Generator<struct_handle_definition> */
+	public static function signature_owners(ast_function_declaration $function): \Generator
+	{
+		$type = $function->return_type_def();
+		if ($type instanceof struct_handle_definition) yield $type;
+		foreach ($function->parameters as $parameter) {
+			$type = $parameter->type_def();
+			if ($type instanceof struct_handle_definition) yield $type;
+		}
+	}
+
 	private static function imports(string $flavor): string
 	{
 		return "using namespace ::scpp::types;\nusing namespace ::scpp::$flavor;\n";
@@ -749,18 +1109,36 @@ final class Cpp_Emitter
 			static fn(array $match): string => 'Z' . bin2hex($match[0]), $name);
 	}
 
-	private static function qualified_name(ast_declaration_interface $declaration): string
+	public static function qualified_name(ast_declaration_interface $declaration): string
 	{
-		return implode('_ns_', array_map(self::name_component(...), explode('\\', $declaration->name())));
+		return self::qualified_path($declaration->name());
+	}
+
+	public static function qualified_path(string $name): string
+	{
+		return implode('_ns_', array_map(self::name_component(...), explode('\\', $name)));
+	}
+
+	private static function property_name(ast_global_declaration $property): string
+	{
+		// A C++ member with the record's own name conflicts with an explicit constructor.
+		return $property->short_name === $property->parent->short_name ? 'scpp_escape_static_self' : Cpp_Identifier::source($property->short_name);
 	}
 
 	public static function global_name(ast_global_declaration $declaration): string
 	{
+		if ($declaration->parent instanceof ast_struct_declaration) {
+			return $declaration->parent->definition->cpp_type() . '::' . self::property_name($declaration);
+		}
 		return 'var_' . self::qualified_name($declaration);
 	}
 
 	public static function function_name(ast_function_declaration $declaration): string
 	{
+		if ($declaration->parent instanceof ast_struct_declaration) {
+			$owner = self::qualified_name($declaration->parent);
+			return 'method_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
+		}
 		return self::qualified_name($declaration) . '_';
 	}
 }

@@ -315,7 +315,7 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
  * ```
  * PHP first writes become declarations during parsing; this node represents a write to an existing local.
  */
-final class ast_assignment_statement extends ast_storage_write
+class ast_assignment_statement extends ast_storage_write
 {
 	/** PROPERTIES */
 	/** Native owning; assignment expression child. */
@@ -358,14 +358,21 @@ final class ast_assignment_statement extends ast_storage_write
 		$this->conversion = $conversion;
 	}
 
+	/** Settle the calculation before publishing the local binding. */
+	public function prepare_local_compound(ast_local_binding $local): void
+	{
+		$local->type_def()->prepare_compound($this);
+		$this->settle_binding($local);
+	}
+
 	/** Attach calculation and write-back decisions without constructing synthetic expression nodes. */
-	public function settle_compound(ast_local_binding $local, type_definition $execution,
+	public function settle_compound(type_definition $execution,
 		int $left /** uint16 */, int $right /** uint16 */, int $write_back /** uint16 */): void
 	{
 		if ($this->operator === null) {
 			throw new \LogicException('Compound facts require an operator');
 		}
-		$this->settle_assignment($local, $right);
+		$this->conversion = $right;
 		$this->execution_type = $execution;
 		$this->left_conversion = $left;
 		$this->write_back = $write_back;
@@ -414,6 +421,25 @@ final class ast_assignment_statement extends ast_storage_write
 		$this->execution_type = null;
 		$this->left_conversion = value_conversion::identity;
 		$this->write_back = value_conversion::identity;
+	}
+}
+
+/** Qualified numeric compound, e.g. Counter::$count += 1; its target owns the watched storage reference. */
+final class ast_static_compound extends ast_assignment_statement
+{
+	public readonly ast_name_expression $target;
+
+	public function __construct(ast_name_expression $target, ast_expression $value, binary_operator $operator, int $end /** uint32 */)
+	{
+		parent::__construct($target->start, $end, $target->name, $value, assignment_intent::existing_binding, $operator);
+		$this->target = $target;
+		$target->attach($this);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->target->reset_preparation();
 	}
 }
 

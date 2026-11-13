@@ -35,7 +35,7 @@ Structure changes:
   conversion and result write-back conversion as protected prepared facts. The
   existing conversion property continues to describe RHS conversion. Accessors
   require compound readiness; reset clears the new facts with the existing binding.
-- `prepare_compound(statement, local): void` now settles those facts on the AST,
+- `prepare_compound(statement): void` now settles those facts on the AST,
   instead of returning only an RHS conversion. Ordinary assignment still follows
   its existing conversion path.
 - `conversion_context::compound_write_back` is appended with backing value 5.

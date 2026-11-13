@@ -6,6 +6,32 @@ and structs share declaration, parameter, return and visibility semantics; their
 storage/copy differences remain unchanged. Availability is tracked in the
 [CH10 checkpoint](../compiler/my-try/docs/catalog/10_objects.md#instance-methods--2026-10-07).
 
+## PHP bootstrap compiler coverage
+
+Public struct methods accept by-value parameters with optional trailing literal defaults and the return types supported by ordinary source functions, including `void`. Getter spellings in the three flavors follow.
+
+| Flavor | Declaration inside `Point` | Call |
+| --- | --- | --- |
+| PHP | `public function getX(): int { return $this->x; }` | `$p->getX()` |
+| C++ | `int getX() { return this->x; }` | `p->getX()` |
+| JS | `getX(): int { return this.x; }` | `p.getX()` |
+
+Instance methods default to public. PHP uses `private function getX(): int`,
+JS uses TypeScript-style `private getX(): int`, and C++ uses a `private:` section
+that lasts until the next access label or end of the struct. A private instance
+method is accessible within its declaring struct, including on another instance.
+A free function or another struct in the same file cannot call it.
+
+Instance fields follow the same visibility rule. PHP `private int $n;`, C++
+`private: int n;` and JS `private n:int;` restrict reads and writes to the
+declaring struct, including accesses on another instance. Default initialization,
+memberwise copying and native layout follow the ordinary field rules.
+
+Both inline and shared receivers select the same method by the record's nominal
+type. Methods can read and assign fields through `this`. A call checks the receiver before evaluating any explicit argument. When the receiver is shared, or is an inline field within a shared allocation, the call retains the selected allocation through argument evaluation and body execution. An inline receiver is updated in place. Defaults follow ordinary function conversion and omission rules. Writable reference parameters use the ordinary function binder. Each requires a named local or parameter of the exact storage type, and writes update that storage directly. Constructors still require by-value arguments for every parameter.
+
+A method declaring its enclosing struct as its return type may return `$this` (PHP) or `this` (C++/JS). Both inline and shared receivers produce an inline memberwise copy. Scalar fields copy independently and shared fields retain the same allocation.
+
 ## Fixed instance calls
 
 ### Shared class self values — 2026-10-23

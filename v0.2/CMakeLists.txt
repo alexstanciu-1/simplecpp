@@ -62,6 +62,7 @@ include(cmake/Json.cmake)
 scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication})
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
+  ${runtime_generated}/public/scpp/owner_access.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
@@ -98,7 +99,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/numeric/arithmetic.cpp)
+add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
 if(hash_publication_type STREQUAL "OBJECT")
   target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/hash.cpp)
 endif()
@@ -343,6 +344,13 @@ if(BUILD_TESTING)
   add_test(NAME compiler_string_index_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py --fixture string_index.php)
   add_test(NAME compiler_interpolation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/interpolation.php)
   add_test(NAME compiler_interpolation_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py --fixture interpolation.php)
+  add_test(NAME compiler_structs_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/structs_native.py)
+  add_test(NAME compiler_struct_constructors_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/struct_constructors_native.py)
+  add_test(NAME compiler_struct_methods_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/struct_methods_native.py)
+  add_test(NAME compiler_struct_constants_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/struct_constants_native.py)
+  add_test(NAME compiler_struct_properties_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/struct_properties_native.py)
+  add_test(NAME compiler_weak_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/weak_native.py)
+  add_test(NAME compiler_shared_references_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/shared_references_native.py)
   add_test(NAME compiler_app_namespace_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/app_namespace_native.py)
   add_test(NAME compiler_strlen COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strlen.php)
   add_test(NAME compiler_strlen_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py --fixture strlen.php)

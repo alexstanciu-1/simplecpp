@@ -115,6 +115,9 @@ final class Compilation_Inspection
 			elseif ($statement instanceof ast_return_statement) {
 				$statements[] = ['kind' => 'return', 'value' => null];
 			}
+			elseif ($statement instanceof ast_field_assignment) {
+				$statements[] = ['kind' => 'field_write', 'field' => $statement->target instanceof ast_name_expression ? $statement->target->name : $statement->target->field, 'value' => self::value($statement->value)];
+			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$statements[] = ['kind' => 'keyed_write', 'receiver' => self::value($statement->receiver),
 					'index' => self::value($statement->index), 'value' => self::value($statement->value),
@@ -147,7 +150,9 @@ final class Compilation_Inspection
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
-		$row = ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id(),
+		$row = ($statement instanceof ast_static_compound
+			? ['kind' => 'static_compound', 'target' => $statement->target->declaration()->symbol_key()]
+			: ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id()]) + [
 			'conversion' => value_conversion::name($statement->conversion()), 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
 		if ($statement->operator !== null) {
@@ -167,6 +172,9 @@ final class Compilation_Inspection
 	{
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		if ($value instanceof ast_construction_expression) {
+			$row['arguments'] = array_map(self::value(...), $value->arguments);
+		}
 		if ($value instanceof ast_interpolated_string) {
 			$row['parts'] = array_map(self::value(...), $value->parts);
 		}
@@ -179,6 +187,10 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_unary_expression) {
 			$row['operator'] = $value->operator->name;
+			$row['operand'] = self::value($value->operand);
+		}
+		if ($value instanceof ast_ownership_expression) {
+			$row['operator'] = $value->lock ? 'lock' : 'weak';
 			$row['operand'] = self::value($value->operand);
 		}
 		if (($value instanceof ast_not_expression) || ($value instanceof ast_isset_expression)) {

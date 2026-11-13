@@ -61,6 +61,10 @@ final class Body_Collection
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
+		elseif ($statement instanceof ast_field_assignment) {
+			$this->expression($statement->target);
+			$value = $statement->value;
+		}
 		elseif (($statement instanceof ast_append_statement) || ($statement instanceof ast_index_assignment)) {
 			$this->expression($statement->receiver);
 			if ($statement instanceof ast_index_assignment) {
@@ -73,6 +77,10 @@ final class Body_Collection
 				$this->expression($value);
 			}
 			return;
+		}
+		elseif ($statement instanceof ast_static_compound) {
+			$this->expression($statement->target);
+			$value = $statement->value;
 		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
 			|| ($statement instanceof ast_call_statement)) {
@@ -134,9 +142,12 @@ final class Body_Collection
 			}
 			return;
 		}
-		if (($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			$this->expression($value->operand);
+		}
+		if ($value instanceof ast_field_expression) {
+			$this->expression($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {
 			$this->expression($value->receiver);
@@ -146,8 +157,8 @@ final class Body_Collection
 			$this->expression($value->left);
 			$this->expression($value->right);
 		}
-		if ($value instanceof ast_call_expression) {
-			if ($value->receiver !== null) {
+		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
+			if ($value instanceof ast_call_expression && $value->receiver !== null) {
 				$this->expression($value->receiver);
 			}
 			foreach ($value->arguments as $argument) {

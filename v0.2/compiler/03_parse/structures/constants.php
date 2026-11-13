@@ -21,9 +21,15 @@ final readonly class runtime_integer_constant
 	}
 }
 
-/** Immutable namespace value, e.g. const int LIMIT = 8; published as const:LIMIT with AST-owned literal facts. */
+/** Immutable namespace or struct constant with AST-owned literal facts, e.g. Point::LIMIT. */
 final class ast_constant_declaration extends ast_literal_declaration
 {
+	public function name(): string
+	{
+		return ($this->parent ?? null) instanceof ast_struct_declaration
+			? $this->parent->name() . '::' . $this->short_name : parent::name();
+	}
+
 	public function symbol_key(): string
 	{
 		return 'const:' . $this->name();
@@ -32,7 +38,7 @@ final class ast_constant_declaration extends ast_literal_declaration
 	/** Return: declared-name token position for the flavor's required typed spelling. */
 	public function name_position(): int /** uint32 */
 	{
-		return $this->start + ($this->source()->flavor === flavor::js ? 1 : 2);
+		return $this->source()->flavor === flavor::js ? $this->start + 1 : $this->type_reference->end;
 	}
 
 	/** Scalar payload is derived from its initializer and approved conversion, never stored a second time. */

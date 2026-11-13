@@ -4,7 +4,8 @@
     "sources": [
         "generated/src/runtime.cpp",
         "src/output/output.cpp",
-        "src/entry/entry.cpp"
+        "src/entry/entry.cpp",
+        "src/ownership/owner_access.cpp"
     ],
     "modules": {
         "json": "json.module.json",

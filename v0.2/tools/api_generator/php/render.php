@@ -152,6 +152,8 @@ function render(array $plan): array {
     $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration'), 'system' => ['stddef.h', 'stdint.h']];
     $files['private/output_provider.hpp'] = BANNER . '#pragma once' . "\n"
         . includeHeader(providerHeader($plan['submodules'], $plan['submodules']['groups']['output']['provider']));
+    requireThat(!isset($files['public/scpp/owner_access.hpp']), 'The owner access header path is reserved');
+    $files['public/scpp/owner_access.hpp'] = BANNER . "#pragma once\nnamespace scpp { [[noreturn]] void throw_empty_owner(); }\n";
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');

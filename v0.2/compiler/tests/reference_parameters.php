@@ -76,7 +76,7 @@ foreach (flavor::cases() as $flavor)
 		. 'alias(' . $var('x') . ',' . $var('x') . ');'
 		. $decl('s', 'string', '"old"') . $decl('copy', 'string', 'text(' . $var('s') . ')')
 		. $var('s') . '="later"; echo ' . $var('copy') . '; echo ' . $var('s') . ';'
-		. 'global ' . $decl('g', 'int', '1') . 'forward(' . $var('g') . '); echo ' . $var('g') . ';'
+		. $decl('mutable', 'int', '1') . 'forward(' . $var('mutable') . '); echo ' . $var('mutable') . ';'
 		. 'optional(' . $var('x') . '); return ' . $var('x') . ';';
 	$entry = $prepare($code);
 	$parameter = $entry->file->functions()[0]->parameters[0];
@@ -100,6 +100,7 @@ foreach (flavor::cases() as $flavor)
 	}
 	$fixtures[$flavor->name . '_types'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($all_types . 'return 8;')), 'stdout_hex' => ''];
 	foreach ([
+		[$defs . 'global ' . $decl('g', 'int', '1') . 'change(' . $var('g') . '); return 8;', 'named local or parameter'],
 		[$defs . 'change(8); return 8;', 'stable variable storage'],
 		[$defs . $decl('x', 'int', '8') . 'change(change(' . $var('x') . ')); return 8;', 'stable variable storage'],
 		[$defs . $decl('x', 'byte', '8') . 'change(' . $var('x') . '); return 8;', 'exact storage type'],

@@ -200,13 +200,13 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name . '-replace'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($code)),
 		'stdout_hex' => bin2hex(implode('|', $expected))];
 	if ($flavor === flavor::php) {
-		$source = 'global $g int = 55; function subject(string &$key): string { $key = "z"; return "aa"; }'
+		$source = '$nul_count int = 55; function subject(string &$key): string { $key = "z"; return "aa"; }'
 			. 'function forward(int &$out): string { return str_replace("a","x","aa",$out); }'
 			. '$count int64 = 99; $key = "a"; echo str_replace($key,"X",subject($key),$count), $count, $key, "|";'
 			. 'echo str_replace("aa","aa","aaaaa",$count), $count, "|";'
 			. 'echo str_replace("","X","abc",$count), $count, "|";'
 			. '$count = 88; echo str_replace("z","X","abc",$count), $count, "|";'
-			. 'echo str_replace("\0","", "a\0b\0",$g), $g, "|";'
+			. 'echo str_replace("\0","", "a\0b\0",$nul_count), $nul_count, "|";'
 			. 'echo forward($count), $count, "|";'
 			. 'echo str_replace("a","aa","a",$count), $count; return 8;';
 		$fixtures['php-replace-count'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
@@ -218,6 +218,7 @@ foreach (flavor::cases() as $flavor) {
 			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'stable variable storage'],
 			['$x = 1;', '$x + 1', 'stable variable storage'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
 			['$b byte = 1;', '$b', 'exact storage type'],
+			['global $g int = 55;', '$g', 'named local or parameter'],
 		] as [$setup, $output, $message]) {
 			rejects(fn() => $prepare($setup . "echo str_replace(\"a\",\"b\",\"a\",$output); return 8;"), $message);
 		}

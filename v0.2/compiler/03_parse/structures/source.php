@@ -28,13 +28,13 @@ final class ast_file_node extends ast_node
 	 */
 	public readonly array $diagnostics /** list<diagnostic> */;
 	/**
-	 * Syntax inventory independent of live duplicate chains; native owning syntax inventory.
+	 * Source declaration inventory, including methods owned by their struct; independent of live duplicate chains.
 	 *
-	 * @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[]
+	 * @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[]
 	 */
-	public readonly array $declaration_nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration> */;
-	/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] Symbol key -> node; native non-owning first-reference index. */
-	public readonly array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration> */;
+	public readonly array $declaration_nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */;
+	/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] Symbol key -> node; native non-owning first-reference index. */
+	public readonly array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */;
 
 	/** @var ast_import[] Native owning import occurrences; repeats remain inspectable syntax. */
 	public readonly array $imports /** list<ast_import> */;
@@ -94,17 +94,18 @@ final class ast_file_node extends ast_node
 	 *
 	 * $declarations: first references.
 	 *
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $declarations
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $nodes
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $declarations
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $nodes
 	 * @param diagnostic[] $diagnostics
 	 * @param ast_import[] $imports
 	 */
-	public function complete(array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration> */,
-		array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration> */, array $diagnostics /** list<diagnostic> */ = [],
+	public function complete(array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */,
+		array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */, array $diagnostics /** list<diagnostic> */ = [],
 		array $imports /** list<ast_import> */ = []): void
 	{
 		foreach ($nodes as $declaration) {
-			if ($declaration->parent !== $this) {
+			if ($declaration->parent !== $this && !(($declaration instanceof ast_function_declaration || $declaration instanceof ast_literal_declaration)
+				&& $declaration->parent instanceof ast_struct_declaration && $declaration->parent->parent === $this)) {
 				throw new \LogicException('Invalid AST declaration ownership');
 			}
 			if ($declaration instanceof ast_function_declaration) {
@@ -134,7 +135,7 @@ final class ast_file_node extends ast_node
 	}
 
 	/**
-	 * Source-local public functions in syntax order, including invalid duplicates; never follows foreign chains.
+	 * Source-local explicit functions and methods in syntax order, including invalid duplicates; never follows foreign chains.
 	 *
 	 * @return ast_function_declaration[]
 	 */
@@ -142,7 +143,7 @@ final class ast_file_node extends ast_node
 	{
 		$functions = [];
 		foreach ($this->declaration_nodes as $node) {
-			if (($node instanceof ast_function_declaration) && (!$node->is_private)) {
+			if (($node instanceof ast_function_declaration) && (!$node->is_implicit_entry)) {
 				$functions[] = $node;
 			}
 		}
@@ -156,11 +157,11 @@ final class ast_file_node extends ast_node
 			static fn(ast_node $node): bool => $node instanceof ast_global_declaration));
 	}
 
-	/** @return (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] */
-	public function published_declarations(): array /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration> */
+	/** @return (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] */
+	public function published_declarations(): array /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */
 	{
 		return array_values(array_filter($this->declaration_nodes,
-			static fn(ast_node $node): bool => !($node instanceof ast_function_declaration) || (!$node->is_private)));
+			static fn(ast_node $node): bool => !($node instanceof ast_function_declaration) || (!$node->is_implicit_entry)));
 	}
 
 	/** Imports affect only complete unqualified names, never namespace prefixes or rooted paths. */

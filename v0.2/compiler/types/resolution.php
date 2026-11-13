@@ -6,6 +6,53 @@ namespace scpp\compiler;
 /** Resolve written types once at declaration/cast boundaries; generated registration owns available families and exports. */
 final class Type_Resolution
 {
+	/** Runtime types resolve directly. Application types register a body watch even when lookup fails. */
+	public static function local(ast_type_reference $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?type_definition
+	{
+		return self::named($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
+	}
+
+	/** Resolve runtime signature types directly; application owners subscribe to their nominal payload. */
+	public static function signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
+		?Dependency_Watches $dependencies, bool $allow_void = false): ?type_definition
+	{
+		// The method and its enclosing record belong to the same AST generation.
+		if ($syntax === $function->return_type_reference && $function->parent instanceof ast_struct_declaration
+			&& $syntax->first_child === null && Source_Names::resolve($syntax->name, $function->namespace) === $function->parent->name()) {
+			return $function->parent->definition;
+		}
+		if (!in_array($syntax->name, ['shared', 'weak'], true) || $syntax->first_child === null) return self::resolve($syntax, $allow_void);
+		$function->watch_signature($dependencies);
+		return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);
+	}
+
+	/** Both handle families require exactly one nominal struct payload. */
+	private static function handle(ast_type_reference $syntax, scope $symbols, ?string $namespace,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): struct_handle_definition
+	{
+		$child = $syntax->first_child;
+		if ($child->next_sibling === null) {
+			$payload = self::named($child, $symbols, $namespace, $watcher, $dependencies);
+			if ($payload instanceof struct_type_definition) return $syntax->name === 'weak' ? $payload->weak : $payload->shared;
+		}
+		throw new diagnostic($syntax->source(), $syntax->byte_start(), ucfirst($syntax->name) . ' type requires one struct payload: ' . $syntax->spelling());
+	}
+
+	/** Share canonical lookup and missing-symbol watches between local and inline field declarations. */
+	public static function named(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
+		?Dependency_Watches $dependencies): ?type_definition
+	{
+		if (in_array($syntax->name, ['shared', 'weak'], true) && $syntax->first_child !== null) {
+			return self::handle($syntax, $symbols, $namespace, $watcher, $dependencies);
+		}
+		$type = self::resolve($syntax);
+		if ($type !== null) return $type;
+		$entry = $symbols->entry('class:' . Source_Names::resolve($syntax->name, $namespace));
+		$dependencies?->watch($entry, $watcher);
+		$record = $entry->declaration();
+		return $record instanceof ast_struct_declaration ? $record->definition : null;
+	}
+
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */
 	public static function resolve(ast_type_reference $syntax, bool $allow_void = false): ?type_definition
 	{

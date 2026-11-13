@@ -171,8 +171,8 @@ paths contain no `$`. JS dotted paths must not bypass a visible local in the fir
 component: such member reads are currently unsupported; root qualification removes
 that ambiguity. A local remains unavailable in its own initializer.
 
-Direct global assignment syntax remains deferred. Explicit mutable reference parameters
-may bind and mutate whole global storage; see `compiler_entry_v0_2.md`.
+Direct global assignment syntax remains deferred. Globals are ineligible as writable
+reference arguments; see `compiler_entry_v0_2.md`.
 Their initializers are not constant facts at read sites: lowering reads storage and
 entry returns retain checked native-int conversion. Variable imports are deferred;
 `use` continues to import the supported function kind only. Configurable visibility

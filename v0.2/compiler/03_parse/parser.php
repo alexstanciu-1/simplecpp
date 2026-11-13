@@ -9,7 +9,7 @@ namespace scpp\compiler;
 interface statement_grammar {
 	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
 	public function function_start(Parser $parser): bool;
-	public function function_header(Parser $parser): ast_function_declaration;
+	public function function_header(Parser $parser, bool $static = false, bool $private = false): ast_function_declaration;
 }
 
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
@@ -20,7 +20,10 @@ final class Parser
 	public readonly Syntax_Cursor $cursor;
 	/** Native owning; flavor-specific syntax adapter shares the parser cursor. */
 	private readonly Namespace_Syntax $names;
+	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
+	private ?Body_Collection $lexical = null;
 	private bool $started = false;
+	private ?string $declaring_struct = null;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
 	/** Native non-owning; coordinator outlives parsing. */
@@ -56,6 +59,7 @@ final class Parser
 		$this->root = new ast_file_node($this->cursor->tokens, $namespace);
 		$body_start = $this->cursor->position();
 		$collector = new Body_Collection($this->root->scope);
+		$this->lexical = $collector;
 		$declarations = new Scope_Collection($this->root->scope);
 		$grammar = match ($this->cursor->tokens->source->flavor) {
 			flavor::cpp => new Cpp_Grammar(),
@@ -67,13 +71,22 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('global') || $this->cursor->keyword('const'))
-			{
-				$global = $this->cursor->keyword('const') ? Constant_Syntax::read($this) : Global_Syntax::read($this);
-				$global->attach($this->root);
-				$this->sink?->discovered($global);
-				$declarations->import($global);
-				$nodes[] = $global;
+			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct')) {
+				$members = [];
+				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
+					'struct' => Struct_Syntax::read($this, $grammar, $members),
+					'const' => Constant_Syntax::read($this),
+					'global' => Global_Syntax::read($this),
+				};
+				$node->attach($this->root);
+				$this->sink?->discovered($node);
+				$declarations->import($node);
+				$nodes[] = $node;
+				foreach ($members as $member) {
+					$this->sink?->discovered($member);
+					$declarations->import($member);
+					$nodes[] = $member;
+				}
 				continue;
 			}
 			if ($this->cursor->keyword('use')) {
@@ -110,7 +123,7 @@ final class Parser
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
-		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $heads */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $heads */
 		$heads = $declarations->publish_references()->heads();
 		if (isset($heads['func:main'])) {
 			$heads = ['func:main' => $heads['func:main']] + $heads;
@@ -162,10 +175,33 @@ final class Parser
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
-			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-			return new ast_call_statement($value->start, $end, $value);
+			return $this->call_statement($value);
 		}
 		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		$member = $this->cursor->tokens->source->flavor === flavor::js ? token_kind::dot : token_kind::member;
+		if (($this->cursor->is($name_kind) && $this->cursor->next_is($member)) || $this->names->qualified_write() || $this->lexical_qualifier()) {
+			$target = $this->primary();
+			if ($target instanceof ast_call_expression) {
+				return $this->call_statement($target);
+			}
+			if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable struct field');
+			}
+			$operator = $this->compound_operator();
+			if ($operator !== null) {
+				if (!($target instanceof ast_name_expression) || !in_array($operator, [binary_operator::add, binary_operator::subtract,
+					binary_operator::multiply, binary_operator::divide, binary_operator::remainder], true)) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected a static numeric arithmetic compound');
+				}
+				$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
+				$value = $this->assignment_value();
+				return new ast_static_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
+			}
+			$this->cursor->take(token_kind::assign, '=');
+			$value = $this->assignment_value();
+			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+			return new ast_field_assignment($target, $value, $end);
+		}
 		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::lbracket)) {
 			$start = $this->cursor->position();
 			$name = $this->cursor->name($name_kind);
@@ -224,6 +260,7 @@ final class Parser
 	{
 		$start = $this->cursor->take(token_kind::lbrace, $expected);
 		$child = $collector->child();
+		$this->lexical = $child;
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace)) {
 			if ($this->cursor->at_end()) {
@@ -234,6 +271,7 @@ final class Parser
 			$statements[] = $statement;
 		}
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		$this->lexical = $collector;
 		return $child->block($start, $end, $statements);
 	}
 
@@ -244,6 +282,7 @@ final class Parser
 		$this->cursor->take_keyword('for');
 		$this->cursor->take(token_kind::lparen, '(');
 		$header = $collector->child();
+		$this->lexical = $header;
 		$initializer = $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $header);
 		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_storage_write)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
@@ -261,6 +300,7 @@ final class Parser
 			$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
 		}
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
+		$this->lexical = $collector;
 		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
 	}
 
@@ -296,8 +336,18 @@ final class Parser
 				'Explicit main is not supported yet');
 		}
 		$this->sink?->discovered($function);
+		return $this->callable_body($grammar, $function);
+	}
+
+	/** Functions and methods share lexical collection, statement grammar and body ownership. */
+	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_struct = null): ast_function_declaration
+	{
+		$source = $this->cursor->tokens->source;
+		$this->declaring_struct = $declaring_struct;
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
+		$previous = $this->lexical;
 		$body_collector = new Body_Collection($this->root->scope, $function->parameters);
+		$this->lexical = $body_collector;
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace))
 		{
@@ -309,21 +359,23 @@ final class Parser
 			$statements[] = $statement;
 		}
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		$this->lexical = $previous;
+		$this->declaring_struct = null;
 		$function->complete_body($body_collector->body($body_start, $end, $statements));
 		return $function;
 	}
 
 	/** PHP and JS share the explicit function-keyword/colon-return header grammar. */
-	public function named_function_header(): ast_function_declaration
+	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false): ast_function_declaration
 	{
 		$start = $this->cursor->position();
-		$this->cursor->take_keyword('function');
+		if ($keyword) $this->cursor->take_keyword('function');
 		$name = $this->cursor->name(token_kind::identifier);
 		$parameters = $this->parameters();
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
 		$type = $this->return_type();
 		return new ast_function_declaration($name, $type,
-			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters);
+			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private);
 	}
 
 	public function source_namespace(): ?string
@@ -381,11 +433,23 @@ final class Parser
 		return passing_mode::value;
 	}
 
+	/** Finish a discarded ordinary or member call. */
+	private function call_statement(ast_call_expression $call): ast_call_statement
+	{
+		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		return new ast_call_statement($call->start, $end, $call);
+	}
+
 	/** Calls own ordinary value arguments; nested calls use the same parser and AST node. */
 	private function call(): ast_call_expression
 	{
 		$start = $this->cursor->position();
 		$name = $this->names->path(true, call: true);
+		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::scope)) {
+			$this->cursor->take(token_kind::scope, '::');
+			$name .= '::' . $this->cursor->name(token_kind::identifier);
+			return $this->call_arguments($start, $name, token_kind::scope, null);
+		}
 		$member = $this->cursor->tokens->source->flavor === flavor::js
 			&& !str_starts_with($name, '\\') && str_contains($name, '\\');
 		$receiver = null;
@@ -393,11 +457,18 @@ final class Parser
 			$prefix = substr($name, 0, strrpos($name, '\\'));
 			$receiver = new ast_name_expression($prefix, $start, $this->cursor->position() - 2, str_contains($prefix, '\\'));
 		}
-		return $this->call_arguments($start, $name, $member, $receiver);
+		return $this->call_arguments($start, $name, $member ? token_kind::dot : null, $receiver);
 	}
 
 	/** Parse the common argument list after a function path or member name. */
-	private function call_arguments(int $start /** uint32 */, string $name, bool $member, ?ast_expression $receiver): ast_call_expression
+	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver): ast_call_expression
+	{
+		$arguments = $this->arguments();
+		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver);
+	}
+
+	/** Parse ordinary or constructor arguments in source order. @return ast_expression[] */
+	private function arguments(): array /** list<ast_expression> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
@@ -412,7 +483,7 @@ final class Parser
 			}
 		}
 		$this->cursor->take(token_kind::rparen, ')');
-		return new ast_call_expression($start, $this->cursor->position(), $name, $member, $arguments, $receiver);
+		return $arguments;
 	}
 
 	public function return_type(): ast_type_reference
@@ -453,7 +524,7 @@ final class Parser
 		}
 		$word = $this->cursor->tokens->text_at($start);
 		if ($this->cursor->is(token_kind::keyword)
-			&& ((type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
+			&& (($word === 'weak') || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
 			$this->cursor->take_keyword($word);
 		}
 		else {
@@ -573,10 +644,20 @@ final class Parser
 	{
 		$value = $this->atom();
 		while (true) {
+			$flavor = $this->cursor->tokens->source->flavor;
+			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
+				$this->cursor->take(token_kind::member, '->');
+				$name = $this->cursor->name(token_kind::identifier);
+				$value = $this->cursor->is(token_kind::lparen) ? $this->call_arguments($value->start, $name, token_kind::member, $value)
+					: new ast_field_expression($value, $name, $this->cursor->position());
+				continue;
+			}
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
 				$this->cursor->take(token_kind::dot, '.');
 				$name = $this->cursor->name(token_kind::identifier);
-				$value = $this->call_arguments($value->start, $name, true, $value);
+				$value = $flavor === flavor::js && !$this->cursor->is(token_kind::lparen)
+					? new ast_field_expression($value, $name, $this->cursor->position())
+					: $this->call_arguments($value->start, $name, token_kind::dot, $value);
 				continue;
 			}
 			if (!$this->cursor->is(token_kind::lbracket)) {
@@ -590,9 +671,56 @@ final class Parser
 		return $value;
 	}
 
+	/** Recognize the declaring type only in qualifier position. */
+	private function lexical_qualifier(): bool
+	{
+		$c = $this->cursor;
+		$flavor = $c->tokens->source->flavor;
+		if (!$c->next_is($flavor === flavor::js ? token_kind::dot : token_kind::scope)) return false;
+		return $c->tokens->text_at($c->position()) === match ($flavor) {
+			flavor::php => 'self', flavor::cpp => 'Self', flavor::js => 'class',
+		};
+	}
+
+	/** Normalize directly to the declaring struct's member path, before any local or namespace lookup. */
+	private function lexical_member(): ast_expression
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		if ($this->declaring_struct === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body');
+		$flavor = $c->tokens->source->flavor;
+		$c->take($c->tokens->tokens[$start]->kind, 'declaring type');
+		$c->take($flavor === flavor::js ? token_kind::dot : token_kind::scope, 'member separator');
+		$variable = $flavor === flavor::php && $c->is(token_kind::variable);
+		$name = $this->declaring_struct . '::' . $c->name($variable ? token_kind::variable : token_kind::identifier);
+		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, token_kind::scope, null);
+		return new ast_name_expression($name, $start, $c->position(), constant_only: $flavor === flavor::php && !$variable);
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(): ast_expression
 	{
+		if ($this->lexical_qualifier()) return $this->lexical_member();
+		if ($this->cursor->keyword('new')) {
+			$start = $this->cursor->position();
+			$this->cursor->take_keyword('new');
+			$at = $this->cursor->position();
+			$name = $this->names->path(true);
+			$target = new ast_type_reference($at, $this->cursor->position(), $name);
+			$arguments = [];
+			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->arguments();
+			elseif ($this->cursor->tokens->source->flavor !== flavor::php) $this->cursor->take(token_kind::lparen, '( after the constructed type');
+			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments);
+		}
+		if ($this->cursor->keyword('weak') || $this->cursor->keyword('lock')) {
+			$start = $this->cursor->position();
+			$lock = $this->cursor->keyword('lock');
+			$this->cursor->take_keyword($lock ? 'lock' : 'weak');
+			$this->cursor->take(token_kind::lparen, '(');
+			$operand = $this->value();
+			$end = $this->cursor->take(token_kind::rparen, ')') + 1;
+			return new ast_ownership_expression($start, $end, $operand, $lock);
+		}
 		if (!$this->cursor->at_end() && ($this->cursor->tokens->text_at($this->cursor->position()) === 'isset')) {
 			$start = $this->cursor->position();
 			$this->cursor->take($this->cursor->tokens->tokens[$start]->kind, 'isset');
@@ -639,6 +767,19 @@ final class Parser
 			$this->cursor->take(token_kind::rparen, ')');
 			return $value;
 		}
+		if ($this->declaring_struct !== null && !$this->cursor->at_end()) {
+			$start = $this->cursor->position();
+			$self = $this->cursor->tokens->source->flavor === flavor::php ? '$this' : 'this';
+			if ($this->cursor->tokens->text_at($start) === $self) {
+				$this->cursor->take($this->cursor->tokens->tokens[$start]->kind, $self);
+				return new ast_this_expression($start, $start + 1);
+			}
+		}
+		if ($this->cursor->tokens->source->flavor === flavor::js && $this->cursor->is(token_kind::identifier)
+			&& $this->cursor->next_is(token_kind::dot) && $this->lexical?->has_local($this->cursor->tokens->text_at($this->cursor->position()))) {
+			$start = $this->cursor->position();
+			return new ast_name_expression($this->cursor->name(token_kind::identifier), $start, $start + 1);
+		}
 		if ($this->names->call_start()) {
 			return $this->call();
 		}
@@ -681,6 +822,17 @@ final class Parser
 	/** $start: token position. */
 	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference): ast_local_declaration
 	{
+		if ($type_reference !== null && $this->cursor->is(token_kind::lparen)) {
+			$at = $this->cursor->position();
+			$arguments = $this->arguments();
+			if ($arguments === []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Use a typed declaration without () for default initialization');
+			$end = $this->cursor->take(token_kind::semicolon, ';');
+			return new ast_local_declaration($start, $end + 1, $name, $type_reference, new ast_struct_default($at, $end, $arguments));
+		}
+		if ($type_reference !== null && $this->cursor->is(token_kind::semicolon)) {
+			$at = $this->cursor->take(token_kind::semicolon, ';');
+			return new ast_local_declaration($start, $at + 1, $name, $type_reference, new ast_struct_default($at, $at));
+		}
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;

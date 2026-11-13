@@ -13,19 +13,19 @@ final class Declaration_Diagnostics
 	/**
 	 * Completed bodies are available now; diagnostics never prevent parsing later declarations.
 	 *
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $nodes
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $nodes
 	 * @return diagnostic[]
 	 */
-	public static function file(array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration> */): array /** list<diagnostic> */
+	public static function file(array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */): array /** list<diagnostic> */
 	{
 		$errors = [];
-		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration)[] $first */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $first */
 		$first = [];
 		foreach ($nodes as $node)
 		{
 			$key = $node->symbol_key();
 			if (isset($first[$key])) {
-				$errors[] = self::duplicate($node, $first[$key], $node instanceof ast_constant_declaration ? 'constant' : ($node instanceof ast_global_declaration ? 'global' : 'function'));
+				$errors[] = self::duplicate($node, $first[$key], self::kind($node));
 			}
 			else {
 				$first[$key] = $node;
@@ -46,10 +46,10 @@ final class Declaration_Diagnostics
 	{
 		$errors = [];
 		foreach ($symbols->declarations as $head) {
-			/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration $head */
+			/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $head */
 			for ($node = $head->duplicate_element(); $node !== null; $node = $node->duplicate_element()) {
-				/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration $node */
-				$errors[] = self::duplicate($node, $head, $node instanceof ast_constant_declaration ? 'constant' : ($node instanceof ast_global_declaration ? 'global' : 'function'));
+				/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $node */
+				$errors[] = self::duplicate($node, $head, self::kind($node));
 			}
 		}
 		return $errors;
@@ -105,8 +105,21 @@ final class Declaration_Diagnostics
 		return self::ordered($errors);
 	}
 
-	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration $node,
-		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration $first, string $kind): diagnostic
+	/** Diagnostic label for a published declaration. */
+	private static function kind(ast_declaration_interface $node): string
+	{
+		return match (true) {
+			$node instanceof ast_struct_declaration => 'struct',
+			$node instanceof ast_function_declaration && $node->parent instanceof ast_struct_declaration => 'method',
+			$node instanceof ast_global_declaration && $node->parent instanceof ast_struct_declaration => 'static property',
+			$node instanceof ast_global_declaration => 'global',
+			$node instanceof ast_constant_declaration => 'constant',
+			default => 'function',
+		};
+	}
+
+	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $node,
+		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $first, string $kind): diagnostic
 	{
 		$source = $first->source();
 		$location = $source->location($first->root()->byte_at($first->name_position()));

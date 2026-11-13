@@ -151,6 +151,27 @@ final class Preparation
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 			}
+			elseif ($statement instanceof ast_static_compound) {
+				$this->static_destination($statement->target);
+				$this->value($statement->value);
+				$statement->target->type_def()->prepare_compound($statement);
+			}
+			elseif ($statement instanceof ast_field_assignment) {
+				$root = $statement->target;
+				if ($root instanceof ast_name_expression) {
+					$this->static_destination($root);
+				} else {
+					$this->value($root);
+					$root = $root->receiver;
+					while ($root instanceof ast_field_expression) $root = $root->receiver;
+					if (!($root instanceof ast_this_expression)
+						&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
+						throw new diagnostic($statement->source(), $statement->byte_start(), 'Field assignment requires writable local storage');
+					}
+				}
+				$this->value($statement->value);
+				$statement->conversion = $statement->target->type_def()->prepare_conversion($statement->value, conversion_context::assignment);
+			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$this->value($statement->receiver);
 				if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
@@ -346,13 +367,20 @@ final class Preparation
 		}
 		$type = null;
 		if ($declaration->type_reference !== null) {
-			$type = Type_Resolution::resolve($declaration->type_reference);
+			$type = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
 			if ($type === null) {
 				throw new diagnostic($source, $root->byte_at($declaration->type_position()),
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
 			}
 		}
-		if (($declaration->initializer instanceof ast_empty_collection_expression) && ($type instanceof indexed_collection_type)) {
+		if ($declaration->initializer instanceof ast_struct_default) {
+			if (!($type instanceof struct_type_definition) && !($type instanceof struct_handle_definition)) {
+				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
+			}
+			$this->expression_visits++;
+			$this->construction($declaration->initializer, $type, $name);
+		}
+		elseif (($declaration->initializer instanceof ast_empty_collection_expression) && ($type instanceof indexed_collection_type)) {
 			$this->expression_visits++;
 			$declaration->initializer->settle_collection($type);
 		}
@@ -372,6 +400,16 @@ final class Preparation
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
+		}
+	}
+
+	/** Resolve both forms of type-qualified writes through the ordinary watched name lookup. */
+	private function static_destination(ast_name_expression $target): void
+	{
+		$this->value($target);
+		$property = $target->declaration();
+		if (!($property instanceof ast_global_declaration) || !($property->parent instanceof ast_struct_declaration)) {
+			throw new diagnostic($target->source(), $target->byte_start(), 'Assignment requires a writable static property');
 		}
 	}
 
@@ -403,7 +441,7 @@ final class Preparation
 			$statement->settle_assignment($local, $conversion);
 		}
 		else {
-			$type->prepare_compound($statement, $local);
+			$statement->prepare_local_compound($local);
 		}
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}
@@ -414,6 +452,47 @@ final class Preparation
 		$this->expression_visits++;
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
+		}
+		if ($syntax instanceof ast_ownership_expression) {
+			$this->value($syntax->operand, $initializing);
+			$syntax->prepare();
+			return;
+		}
+		if ($syntax instanceof ast_this_expression) {
+			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
+			$record = $this->owner->parent->parent;
+			$parent = $syntax->parent;
+			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax;
+			if (!($record instanceof ast_struct_declaration) || (!$is_receiver && !($parent instanceof ast_return_statement))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires a field or method receiver, or a value return');
+			}
+			$syntax->settle_receiver($record->definition);
+			return;
+		}
+		if ($syntax instanceof ast_new_expression) {
+			$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			if (!($payload instanceof struct_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a struct: ' . $syntax->target->name);
+			}
+			$this->construction($syntax, $payload->shared, $initializing);
+			return;
+		}
+		if ($syntax instanceof ast_field_expression) {
+			$this->value($syntax->receiver, $initializing);
+			$type = $syntax->receiver->type_def();
+			if ($type instanceof shared_struct_type_definition) $type = $type->payload;
+			if (!($type instanceof struct_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice for type ' . $type->name);
+			}
+			$field = $type->declaration->fields[$syntax->field] ?? null;
+			if ($field === null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
+			}
+			if ($field->is_private && $this->owner->parent->parent !== $field->parent) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
+			}
+			$syntax->settle_field($field->type_def());
+			return;
 		}
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing);
@@ -479,6 +558,11 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if ($left instanceof shared_struct_type_definition || $right instanceof shared_struct_type_definition) {
+				$owner = $left instanceof shared_struct_type_definition ? $left : $right;
+				$owner->prepare_binary($syntax);
+				return;
+			}
 			$box = $left instanceof boxed_type_definition ? $left : $right;
 			if ($box instanceof boxed_type_definition) {
 				$box->prepare_binary($syntax);
@@ -539,6 +623,9 @@ final class Preparation
 					$syntax->settle_global($symbol);
 					return;
 				}
+				if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
+				}
 			}
 			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
 				$symbol = $this->symbols->entry($syntax->root()->constant_key($name));
@@ -546,6 +633,26 @@ final class Preparation
 				if ($symbol->declaration() !== null) {
 					$syntax->settle_constant($symbol);
 					return;
+				}
+				// C++ and JS share the namespace separator with type-qualified members.
+				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
+					$qualified = substr($name, 0, $last) . '::' . substr($name, $last + 1);
+					$property = $this->symbols->entry('var:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
+					$this->dependencies?->watch($property, $this->owner);
+					if ($property->declaration() !== null) {
+						$syntax->settle_global($property);
+						return;
+					}
+					$symbol = $this->symbols->entry($syntax->root()->constant_key($qualified));
+					$this->dependencies?->watch($symbol, $this->owner);
+					if ($symbol->declaration() !== null) {
+						$syntax->settle_constant($symbol);
+						return;
+					}
+					if ($this->symbols->resolve('class:' . Source_Names::resolve(substr($name, 0, $last), $this->owner->scope->namespace))
+						instanceof ast_struct_declaration) {
+						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown constant: ' . $qualified);
+					}
 				}
 				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
 					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));
@@ -567,19 +674,18 @@ final class Preparation
 	 */
 	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */): void
 	{
-		if (!($argument instanceof ast_name_expression)) {
-			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires stable variable storage');
-		}
-		$storage = $argument->declaration();
+		$storage = $argument instanceof ast_name_expression ? $argument->declaration() : null;
 		if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
+		}
+		if (!($storage instanceof ast_local_binding)) {
+			throw new diagnostic($argument->source(), $argument->byte_start(),
+				'Reference argument requires stable variable storage: a named local or parameter');
 		}
 		if ($argument->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
-		if ($storage instanceof ast_local_binding) {
-			$writes[] = $storage->storage_id();
-		}
+		$writes[] = $storage->storage_id();
 	}
 
 	/** Validate supplied runtime arguments against their generated signature. */
@@ -666,8 +772,28 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
-				$this->value($receiver);
+				$this->value($receiver, $initializing);
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
+				$record = $receiver->type_def();
+				if ($record instanceof shared_struct_type_definition) $record = $record->payload;
+				if ($record instanceof struct_type_definition) {
+					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
+						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
+					}
+					$method = $record->declaration->methods[$name] ?? null;
+					$symbol = $this->symbols->entry('method:' . $record->name . '::' . $name);
+					$this->dependencies?->watch($symbol, $this->owner);
+					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
+					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
+					if ($method->is_private && $this->owner->parent->parent !== $method->parent) {
+						throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call private method ' . $method->name());
+					}
+					$this->source_call($call, $symbol, $method, $initializing);
+					return;
+				}
+				if ($call->member_separator === token_kind::member) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Arrow method call requires a struct receiver');
+				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
 				$runtime = runtime_functions::resolve($key);
 				if ($runtime === null) {
@@ -679,11 +805,20 @@ final class Preparation
 		}
 		$this->name_lookups++;
 		$file = $call->root();
+		if ($call->member_separator === token_kind::scope) {
+			$this->static_call($call, $call->name, $initializing, true);
+			return;
+		}
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
 		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration)) {
+			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
+			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
+				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
+				if ($this->static_call($call, $qualified, $initializing, false)) return;
+			}
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null) {
 				$this->runtime_call($call, $runtime);
@@ -710,16 +845,56 @@ final class Preparation
 			$call->settle_cardinality($operation, $type);
 			return;
 		}
+		$this->source_call($call, $symbol, $function, $initializing);
+	}
+
+	/** Exact type-qualified calls require a method; ambiguous namespace paths may continue lookup. */
+	private function static_call(ast_call_expression $call, string $qualified, ?string $initializing, bool $required): bool
+	{
+		$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
+		$this->dependencies?->watch($symbol, $this->owner);
+		$method = $symbol->declaration();
+		if (!($method instanceof ast_function_declaration)) {
+			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
+			return false;
+		}
+		if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ' . $method->name());
+		$this->source_call($call, $symbol, $method, $initializing);
+		return true;
+	}
+
+	/** Shared positional admission, conversions and reference invalidation for source calls. */
+	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing): void
+	{
+		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing));
+	}
+
+	/** Inline and shared construction use the same published signature and argument checks. */
+	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
+	{
+		$payload = $type instanceof shared_struct_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
+		$constructor = $payload instanceof struct_type_definition ? ($payload->declaration->methods['__construct'] ?? null) : null;
+		if ($constructor === null && $site->arguments !== []) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
+		}
+		if ($constructor !== null) $this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
+		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
+	}
+
+	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
+	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration $function,
+		?string $initializing): array /** list<uint16> */
+	{
 		$supplied = count($call->arguments);
 		// Settled signatures have a trailing optional suffix: checking its first omitted slot is sufficient.
 		if (($supplied > count($function->parameters))
 			|| (isset($function->parameters[$supplied]) && ($function->parameters[$supplied]->default_value === null))) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $function->name());
 		}
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
-			$this->value($argument);
+			$this->value($argument, $initializing);
 			$parameter = $function->parameters[$index];
 			if ($parameter->type_def() instanceof hash_type_definition) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), 'Hash argument passing is deferred');
@@ -739,7 +914,7 @@ final class Preparation
 		foreach ($writes as $id) {
 			$this->latest_writes[$id] = null;
 		}
-		$call->settle_function($symbol, $conversions);
+		return $conversions;
 	}
 
 	/** Prevent C++ implicit scalar conversions from widening the supported echo/entry contracts. */

@@ -185,3 +185,57 @@ link command 56–58 ms. O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runti
 fresh instrumented application objects. Single verification samples, not a speedup
 claim. Reports: `/tmp/scpp-type-refs-defaults/results.json` and
 `/tmp/scpp-type-refs-casts/results.json`.
+
+## Struct construction
+
+All three parsers use `ast_new_expression` for shared construction and
+`ast_struct_default` for an inline declaration initializer. Their common
+`ast_construction_expression` owns the ordered argument expressions and their
+prepared conversion codes. The local declaration owns its written inline type;
+`new` owns its written payload type. The canonical prepared type leads back to
+the struct's method index, which owns the single `__construct` declaration.
+
+Constructor bodies use the function pipeline with an implicit void return.
+Construction sites watch the signature and reuse the source-call arity and
+conversion binder and the C++ invocation emitter. Record layouts declare a native
+constructor; its body is defined once in the record's translation unit. The
+shared factory constructs the same payload inside the counted allocation. A
+struct without a declared constructor retains implicit default initialization.
+
+## Public struct methods
+
+A struct owns its methods and indexes them by short name independently of fields.
+A method is an ordinary `ast_function_declaration` whose parent is the struct.
+The file declaration inventory indexes the same node for the callable pipeline.
+`method:Geometry\Point::getX` is its published identity. A method call subscribes
+to that stable symbol, including when lookup fails.
+
+Methods use the ordinary function parameter and return nodes. Trailing by-value literal defaults are prepared on the parameter and supplied by the ordinary call binder. Writable method parameters use the same passing mode, exact-storage checks and write invalidation as writable function parameters.
+An `ast_this_expression` can be the receiver of a field read, field write or method call. As the direct operand of a value return, it has the enclosing record’s canonical value type. The ordinary C++ return copies the record from the borrowed receiver.
+The generated free function takes the exact record by mutable reference. The call
+selects the receiver before explicit arguments and retains its nearest enclosing
+shared allocation through the call, including exception unwinding.
+A source method uses the same scope collection, signature preparation, body
+queue, return conversions and argument checking as a source function.
+
+
+Public static methods use the same declaration, short-name index, stable method
+symbol and call binder as instance methods. The declaration’s `is_static` flag is
+part of its incremental signature. A static call lowers directly to the generated
+function without evaluating, checking or retaining an instance receiver.
+
+The parser tracks the declaring struct's short name while parsing a callable body.
+PHP `self::`, C++ `Self::` and JS `class.` produce the same name and call AST
+nodes with an exact struct-member path. Preparation qualifies that path in the
+body's namespace and watches the ordinary published member entry. Source token
+spans preserve the author's spelling.
+
+Private instance methods retain their ordinary method identity and signature watch.
+The function declaration’s existing `is_private` flag records visibility; only
+`is_implicit_entry` excludes a callable from symbol publication. Preparation compares
+the caller’s declaring struct with the callee’s owner before binding arguments.
+
+An instance field carries one visibility flag on its declaration. The shared field
+lookup checks the caller's declaring struct before settling a read or write target.
+Changing visibility uses the existing struct replacement watch and preserves the
+field's position and type in the native layout.

@@ -25,7 +25,7 @@ final class Program_Preparation
 				if ($node instanceof ast_function_declaration) {
 					Function_Preparation::reset($node);
 				}
-				else {
+				elseif ($node instanceof ast_literal_declaration) {
 					$node->reset_preparation();
 				}
 			}
@@ -42,7 +42,16 @@ final class Program_Preparation
 			$path = (string) $path;
 			self::admit($file, $path === $entry_path);
 		}
-		Function_Preparation::declarations($symbols);
+		$dependencies = new Dependency_Watches();
+		foreach ($files as $key => $file) {
+			foreach ($file->declaration_nodes as $node) {
+				if ($node instanceof ast_function_declaration) {
+					$node->body()->bind_source_key((string) $key);
+				}
+			}
+		}
+		self::layouts($files, $symbols, $dependencies);
+		Function_Preparation::declarations($symbols, $dependencies);
 		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
 		foreach ($files as $file) {
@@ -51,16 +60,10 @@ final class Program_Preparation
 				$main->settle_return_type(type_registry::integer());
 			}
 		}
-		$dependencies = new Dependency_Watches();
 		if ($session !== null) {
 			$session->dependency_watches = $dependencies;
 		}
-		foreach ($files as $key => $file) {
-			foreach ($file->declaration_nodes as $node) {
-				if ($node instanceof ast_function_declaration) {
-					$node->body()->bind_source_key((string) $key);
-				}
-			}
+		foreach ($files as $file) {
 			Function_Preparation::bodies($file, $symbols, $dependencies);
 		}
 		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
@@ -69,6 +72,22 @@ final class Program_Preparation
 		}
 		$entry = new prepared_entry($files[$entry_path], $target);
 		return new prepared_program($entry_path, $files, $entry, $session, $dependencies);
+	}
+
+	/** Bind all owners before resolving field dependencies across source units. @param ast_file_node[] $files */
+	public static function layouts(array $files /** array<string,ast_file_node> */, scope $symbols, Dependency_Watches $dependencies): void
+	{
+		$layouts = [];
+		foreach ($files as $key => $file) {
+			foreach ($file->declaration_nodes as $record) {
+				if ($record instanceof ast_struct_declaration) {
+					$record->definition->bind_layout((string) $key, $symbols->entry($record->symbol_key()), $dependencies);
+					$layouts[] = $record->definition;
+				}
+			}
+		}
+		$active = [];
+		foreach ($layouts as $layout) $layout->prepare_layout($symbols, $active);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

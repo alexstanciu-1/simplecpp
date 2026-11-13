@@ -24,10 +24,10 @@ final class Symbol_Publication implements declaration_sink
 		if ($this->published) {
 			throw new \LogicException('Cannot notify a completed symbol publication');
 		}
-		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_literal_declaration)) {
-			throw new \LogicException('Only functions, constants and explicit globals are published by the current file grammar');
+		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_literal_declaration) && !($declaration instanceof ast_struct_declaration)) {
+			throw new \LogicException('Unsupported file declaration in symbol publication');
 		}
-		if (!($declaration instanceof ast_function_declaration) || (!$declaration->is_private)) {
+		if (!($declaration instanceof ast_function_declaration) || (!$declaration->is_implicit_entry)) {
 			$this->collection->import($declaration);
 		}
 	}
@@ -125,7 +125,10 @@ final class Symbol_Publication implements declaration_sink
 		foreach ($retired as $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
+					$node->retire_signature();
 					$dependencies->retire($node->body());
+				} elseif ($node instanceof ast_struct_declaration) {
+					$dependencies->forget($node->definition);
 				}
 			}
 		}
@@ -172,6 +175,10 @@ final class Symbol_Publication implements declaration_sink
 			if ($head->duplicate_element() !== null) {
 				$contracts[$key] = null;
 			}
+			elseif ($head instanceof ast_struct_declaration) {
+				// Prepared locals link to the canonical type on this AST. Refresh them on any declaration replacement.
+				$contracts[$key] = 'struct:' . spl_object_id($head);
+			}
 			elseif ($head instanceof ast_constant_declaration) {
 				$contracts[$key] = json_encode([$head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
@@ -180,7 +187,7 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->return_type_reference?->spelling(), array_map(
+				$contracts[$key] = json_encode([$head->is_private, $head->is_static, $head->return_type_reference?->spelling(), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
@@ -199,7 +206,10 @@ final class Symbol_Publication implements declaration_sink
 		foreach ($files as $file) {
 			foreach ($file->declaration_nodes as $function) {
 				if ($function instanceof ast_function_declaration) {
+					$watchers[] = $function;
 					$watchers[] = $function->body();
+				} elseif ($function instanceof ast_struct_declaration) {
+					$watchers[] = $function->definition;
 				}
 			}
 		}

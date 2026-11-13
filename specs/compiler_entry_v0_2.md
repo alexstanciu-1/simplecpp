@@ -265,11 +265,20 @@ JS:  function replace(&value: int): void { value = 12; }
 The JS spelling is a Simple C++ flavor extension, not JavaScript/TypeScript reference
 semantics. Calls use ordinary variable arguments, without call-site `&`.
 
-Supported targets are initialized locals, value/reference parameters and currently
-supported explicit globals. All current value types may be borrowed. The canonical
-storage type must match exactly (`int` and `int64` denote the same type); no conversion,
-copy-in/copy-out or temporary binding is allowed. Literals and ordinary call results
-are rejected. Whole string objects are eligible; interior storage is not admitted.
+A writable reference argument must name a local variable or a value/reference
+parameter of the exact canonical storage type (`int` and `int64` are aliases).
+This rule applies to source functions and runtime functions with writable output
+parameters in all three flavors. Explicit globals, constants, properties, indexed
+elements and temporaries are ineligible. Reference binding performs no conversion.
+
+A property reference would borrow the slot inside the containing object. For
+example, in `change($parent->start, $parent)`, the callee could clear or replace
+`$parent` while it still has access to the first argument. Releasing the last
+owner would destroy the slot. Silently retaining the old parent would instead
+let the callee write into an object that the caller has already replaced. The
+same rule covers inline structs, so eligibility never depends on analyzing the
+receiver path or the callee. Reading and assigning a property directly remain
+valid; use `$parent->start = makePoint();` to replace that field explicitly.
 
 Assignments through the parameter modify its target using ordinary assignment
 conversion rules. Forwarding preserves the same storage. Multiple parameters may
@@ -278,15 +287,13 @@ call. Value arguments retain their left-to-right snapshots. Return types still d
 values; returning a referenced string produces an owning value, not an escaping borrow.
 
 Preparation invalidates known local values after reference calls. Reference parameter
-reads are conservatively unknown even after assignment, since other references or
-globals may alias them. Earlier value snapshots remain valid. No callee-body analysis,
+reads are conservatively unknown even after assignment, since another reference parameter may alias them. Earlier value snapshots remain valid. No callee-body analysis,
 exclusive borrowing claim or general alias graph is required by this bounded slice.
 
 Passing mode participates in signature-change invalidation. Read-only references,
 reference parameter defaults, reference returns, local aliases, interior references,
 variadics and escaping captures remain deferred. Value-parameter defaults continue
-to work after required reference parameters. Global assignment syntax remains deferred,
-but mutation through an explicitly bound reference parameter is supported.
+to work after required reference parameters. Global assignment syntax remains deferred.
 
 ### Braced conditional bodies
 

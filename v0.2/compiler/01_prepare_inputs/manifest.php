@@ -77,16 +77,8 @@ final class Module_Loader
 		if (!is_string($value)) {
 			throw new \RuntimeException('cpp_namespace must be a C++ namespace path or null');
 		}
-		$keywords = ' alignas alignof and and_eq asm auto bitand bitor bool break case catch char char8_t char16_t char32_t'
-			. ' class compl concept const consteval constexpr constinit const_cast continue co_await co_return co_yield'
-			. ' decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto'
-			. ' if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected'
-			. ' public register reinterpret_cast requires return short signed sizeof static static_assert static_cast struct'
-			. ' switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void'
-			. ' volatile wchar_t while xor xor_eq std scpp main ';
 		foreach (explode('::', $value) as $part) {
-			if (!preg_match('/^[A-Za-z][A-Za-z0-9_]*$/D', $part) || str_contains($part, '__')
-				|| str_contains($keywords, ' ' . $part . ' ')) {
+			if (!Cpp_Identifier::portable($part) || in_array($part, ['std', 'scpp', 'main'], true)) {
 				throw new \RuntimeException('Invalid cpp_namespace component: ' . $part);
 			}
 		}

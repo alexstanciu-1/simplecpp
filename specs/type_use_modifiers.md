@@ -249,9 +249,10 @@ than compiler-supported direct nesting. No extra nested-wrapper support is promi
 ## v0.2 bounded owned construction — 2026-10-06
 
 Amended 2026-10-07: the original CH07 shared-by-default struct construction was
-temporary and is replaced by declaration-directed storage. `new Class()` produces
-a shared object; `new Struct()` produces a struct value. One construction path
-selects the exact payload identity and storage independently.
+temporary and was replaced by declaration-directed storage. The v0.2 PHP flavor
+now defines a typed local `$p Point;` as an inline value and uses bare
+`new Point()` or `new Point` for a `shared<Point>` allocation. Local owners support struct construction with required by-value arguments and exact-owner copies. See [struct initialization](compact_layout_types.md#24-initialization).
+The explicit ownership forms below describe later ownership work.
 
 | Source form | Class | Struct |
 | --- | --- | --- |

@@ -101,7 +101,8 @@ final class ast_call_expression extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly string $name;
-	public readonly bool $member_syntax;
+	/** Written member separator; JS dotted names may resolve to namespace functions. */
+	public readonly ?token_kind $member_separator;
 	/** Native owning receiver; a relative JS dotted path may instead resolve as a namespace call. */
 	public readonly ?ast_expression $receiver;
 	/** @var ast_expression[] Native owning arguments in source order. */
@@ -121,11 +122,11 @@ final class ast_call_expression extends ast_expression
 	 * @param ast_expression[] $arguments
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		bool $member_syntax, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null)
+		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null)
 	{
 		parent::__construct($start, $end);
 		$this->name = $name;
-		$this->member_syntax = $member_syntax;
+		$this->member_separator = $member_separator;
 		$this->receiver = $receiver;
 		$receiver?->attach($this);
 		$this->arguments = $arguments;
@@ -316,13 +317,14 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher
 {
-	use ast_declaration;
+	use ast_declaration { name as private namespace_name; }
 
 	/** PROPERTIES */
 	public readonly bool $is_private;
 	public readonly bool $is_implicit_entry;
+	public readonly bool $is_static;
 	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
 	public readonly ?ast_type_reference $return_type_reference;
 	/** @var ast_parameter_declaration[] Native owning signature syntax in positional order. */
@@ -331,6 +333,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public readonly int $header_end /** uint32 */;
 	/** Native owning; function syntax child. */
 	private ?ast_function_body $body = null;
+	/** Native non-owning coordinator for signatures that depend on application payload identities. */
+	private ?Dependency_Watches $signature_dependencies = null;
 
 	/** PREP FACTS */
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
@@ -346,11 +350,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 */
 	public function __construct(string $name, ?ast_type_reference $return_type_reference, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [])
+		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false)
 	{
+		$this->is_static = $static;
 		$this->short_name = $name;
 		$this->namespace = $namespace;
-		$this->is_private = $is_implicit_entry;
+		$this->is_private = $is_implicit_entry || $private;
 		$this->is_implicit_entry = $is_implicit_entry;
 		$this->return_type_reference = $return_type_reference;
 		$return_type_reference?->attach($this);
@@ -363,10 +368,28 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	}
 
 	/** METHODS */
+	/** Qualified callable identity for diagnostics and indexes; member names belong to their declaring struct. */
+	public function name(): string
+	{
+		return ($this->parent ?? null) instanceof ast_struct_declaration
+			? $this->parent->name() . '::' . $this->short_name : $this->namespace_name();
+	}
+
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{
+		if (($this->parent ?? null) instanceof ast_struct_declaration) return 'method:' . $this->name();
 		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
+	}
+
+	public function has_receiver(): bool
+	{
+		return $this->parent instanceof ast_struct_declaration && !$this->is_static;
+	}
+
+	public function is_constructor(): bool
+	{
+		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_struct_declaration;
 	}
 
 	/** Attach the completed body once and settle the function token boundary. */
@@ -403,6 +426,33 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->return_type_def = $type;
 	}
 
+	/** Forget outgoing watches and notify callers before replacing a nominal contract in the same batch as its payload. */
+	public function retire_signature(): void
+	{
+		if ($this->signature_dependencies === null) return;
+		$this->signature_dependencies->forget($this);
+		$this->signature_dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		$this->signature_dependencies = null;
+	}
+
+	public function watch_signature(?Dependency_Watches $dependencies): void
+	{
+		$this->signature_dependencies = $dependencies;
+	}
+
+	public function dependency_source_key(): string
+	{
+		return $this->body()->dependency_source_key();
+	}
+
+	/** A replaced payload changes the prepared function contract even when its written name stays the same. */
+	public function invalidate_dependencies(): void
+	{
+		$this->return_type_def = null;
+		$this->body()->invalidate_dependencies();
+		$this->signature_dependencies?->changed($this->root()->scope->parent->entry($this->symbol_key()));
+	}
+
 	public function return_type_ready(): bool
 	{
 		return $this->return_type_def !== null;
@@ -416,6 +466,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Return: token position. */
 	public function name_position(): int /** uint32 */
 	{
+		if ($this->is_constructor()) return $this->return_type_reference->start;
+		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_struct_declaration)
+			&& $this->root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
 			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
 	}

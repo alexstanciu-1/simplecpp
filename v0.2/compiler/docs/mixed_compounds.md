@@ -21,7 +21,7 @@ operator to be admitted by the promotion and arithmetic execution definitions,
 with destination = execution = result. Existing conversion permission and behavior
 are reused; binary promotion alone never grants compound permission.
 
-`type_definition::prepare_compound(ast_assignment_statement, ast_local_binding): void`
+`type_definition::prepare_compound(ast_assignment_statement): void`
 owns the preparation query. Its default preserves same-type admission/diagnostics.
 The generated float64 override admits the metadata-approved RHS and attaches the
 existing numeric_floating conversion with identity left/write-back conversions,

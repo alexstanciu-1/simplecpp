@@ -27,6 +27,7 @@ final class Cpp_Program
 			$header_path = 'units/' . hash('sha256', (string) $path) . '.hpp';
 			$header_changed = ($header_files[$header_path] ?? null) !== ($previous?->files[$header_path] ?? null);
 			if (!$header_changed && ($changed !== null) && !isset($changed[$path]) && ($prior_path !== null)
+				&& !$headers->record_visibility_changed($file, $previous)
 				&& (($path !== $program->entry_path) === ($path !== $previous->entry_path))) {
 				$bodies[$path] = $previous->files[$prior_path];
 				continue;

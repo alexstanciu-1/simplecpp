@@ -165,7 +165,7 @@ correctness builds, not performance averages; trace stages are nested/cumulative
 publication's signature contract and syntax/preparation inspection; no separate
 prepared parameter or reference-call object is introduced.
 
-Call preparation resolves arguments once, checks stable variable syntax and canonical
+Call preparation resolves arguments once, requires a named local or parameter and checks canonical
 type identity for references, and records identity in the existing positional boundary
 array. Generated conversions remain for value arguments and assignments. Only calls
 with references perform a second linear argument pass, after argument preparation,
@@ -173,7 +173,7 @@ to mark borrowed locals unknown in the existing `latest_writes` index. No per-ca
 alias collection, global local scan, callee-body walk or dependency graph is built.
 Null in that transient index means unknown; absence still selects the initializer.
 A subsequent ordinary-local assignment restores its facts. Reference parameter reads
-always suppress constants to cover aliasing with other parameters and globals.
+always suppress constants to cover aliasing with other parameters.
 Earlier occurrence snapshots are immutable. Both paths remain linear in arguments,
 with constant-time lookup/invalidation per local.
 
@@ -184,7 +184,7 @@ conversion changes are needed. The JS spelling `&name: T` is an explicit Simple 
 flavor extension. Reference defaults and const references diagnose as unsupported.
 
 `tests/reference_parameters.php` covers all current types/flavors, exact bindings,
-forwarding, value parameter isolation, globals, duplicate aliases, live reference vs
+forwarding, value parameter isolation, global rejection, duplicate aliases, live reference vs
 value-snapshot argument order, owning string returns, invalid temporaries/types,
 deferred reference defaults/const, preparation reset, lowering purity, and incremental
 mode changes/body-only/no-op reuse. Native fixtures execute these paths, including

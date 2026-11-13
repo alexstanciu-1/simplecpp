@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Invalidation target, currently a body; grouped bodies or source units may implement the same contract later. */
+/** Invalidation target for prepared bodies and inline struct layouts. */
 interface dependency_watcher {
 	/** Stable source identity for the lifetime of registered subscriptions; forget before changing ownership. */
 	public function dependency_source_key(): string;
@@ -101,14 +101,21 @@ final class Dependency_Watches
 		}
 	}
 
-	/** Deliver once per watcher, even when several observed symbols changed; callbacks only invalidate caches. */
+	/** Deliver once per watcher, including notifications relayed by embedded layouts. */
 	public function dispatch(): void
 	{
-		$pending = $this->pending;
-		$this->pending = new \SplObjectStorage();
-		foreach ($pending as $watcher) {
-			/** @var dependency_watcher $watcher */
-			$watcher->invalidate_dependencies();
+		if (count($this->pending) === 0) return;
+		$delivered = new \SplObjectStorage();
+		while (count($this->pending) !== 0) {
+			$pending = $this->pending;
+			$this->pending = new \SplObjectStorage();
+			foreach ($pending as $watcher) {
+				/** @var dependency_watcher $watcher */
+				if (!$delivered->offsetExists($watcher)) {
+					$delivered[$watcher] = null;
+					$watcher->invalidate_dependencies();
+				}
+			}
 		}
 	}
 

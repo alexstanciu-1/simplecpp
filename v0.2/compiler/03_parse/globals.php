@@ -7,16 +7,16 @@ namespace scpp\compiler;
 final class Global_Syntax
 {
 	/** Flavor spelling is normalized before creating one shared global-declaration node. */
-	public static function read(Parser $parser): ast_global_declaration
+	public static function read(Parser $parser, bool $static = false): ast_global_declaration
 	{
 		$cursor = $parser->cursor;
-		$start = $cursor->position();
-		$cursor->take_keyword('global');
+		$start = $cursor->position() - ($static ? 1 : 0);
+		if (!$static) $cursor->take_keyword('global');
 		$type = null;
 		switch ($cursor->tokens->source->flavor)
 		{
 			case flavor::cpp:
-				if ($cursor->keyword('auto')) {
+				if (!$static && $cursor->keyword('auto')) {
 					$cursor->take_keyword('auto');
 				}
 				else {
@@ -25,16 +25,17 @@ final class Global_Syntax
 				$name = $cursor->name(token_kind::identifier);
 				break;
 			case flavor::js:
-				$cursor->take_keyword('let');
+				if (!$static) $cursor->take_keyword('let');
 				$name = $cursor->name(token_kind::identifier);
-				if ($cursor->is(token_kind::colon)) {
+				if ($static || $cursor->is(token_kind::colon)) {
 					$cursor->take(token_kind::colon, ':');
 					$type = $parser->named_type();
 				}
 				break;
 			case flavor::php:
+				if ($static && !$cursor->is(token_kind::variable)) $type = $parser->named_type();
 				$name = $cursor->name(token_kind::variable);
-				if (!$cursor->is(token_kind::assign)) {
+				if ($type === null && ($static || !$cursor->is(token_kind::assign))) {
 					$type = $parser->named_type();
 				}
 				break;

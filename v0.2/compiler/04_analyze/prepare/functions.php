@@ -51,6 +51,12 @@ final class Function_Preparation
 				}
 				continue;
 			}
+			if ($statement instanceof ast_field_assignment) {
+				$statement->conversion = null;
+				self::expression($statement->target);
+				self::expression($statement->value);
+				continue;
+			}
 			if (($statement instanceof ast_append_statement) || ($statement instanceof ast_index_assignment)) {
 				$statement->reset_preparation();
 				self::expression($statement->receiver);
@@ -91,9 +97,12 @@ final class Function_Preparation
 			}
 			return;
 		}
-		if (($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
+		}
+		if ($value instanceof ast_field_expression) {
+			self::expression($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {
 			self::expression($value->receiver);
@@ -103,8 +112,8 @@ final class Function_Preparation
 			self::expression($value->left);
 			self::expression($value->right);
 		}
-		if ($value instanceof ast_call_expression) {
-			if ($value->receiver !== null) {
+		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
+			if ($value instanceof ast_call_expression && $value->receiver !== null) {
 				self::expression($value->receiver);
 			}
 			foreach ($value->arguments as $argument) {
@@ -114,7 +123,7 @@ final class Function_Preparation
 	}
 
 	/** Settle reset declarations before body work; callable recursion has no signature dependency cycle. */
-	public static function declarations(scope $symbols): scope
+	public static function declarations(scope $symbols, ?Dependency_Watches $dependencies = null): scope
 	{
 		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::published($symbols));
 		if ($errors !== []) {
@@ -129,7 +138,7 @@ final class Function_Preparation
 				continue;
 			}
 			$type = $declaration->return_type_reference === null ? null
-				: Type_Resolution::resolve($declaration->return_type_reference, true);
+				: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true);
 			if ($type === null) {
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
 					'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
@@ -137,7 +146,7 @@ final class Function_Preparation
 			$optional = false;
 			foreach ($declaration->parameters as $parameter) {
 				$parameter->reset_preparation();
-				$parameter_type = Type_Resolution::resolve($parameter->type_reference);
+				$parameter_type = Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies);
 				if ($parameter_type === null) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 				}

@@ -8,6 +8,38 @@ may occur once in each. Omitted visibility is public. Private members are access
 only in the declaring type's context, including its static methods and defaults.
 Duplicate/conflicting modifiers and unsupported combinations reject in preparation.
 
+## PHP bootstrap compiler coverage
+
+Public struct constants accept an explicit type and a literal initializer under the
+ordinary named-constant conversion rules. PHP and C++ read `Point::LIMIT`; JS reads
+`Point.LIMIT`. JS locals and parameters take precedence as field receivers.
+The declaration spellings are PHP `public const int LIMIT = 2;`, C++
+`static constexpr int LIMIT = 2;` and JS `const LIMIT: int = 2;`.
+
+Public static struct properties currently require an explicit type and scalar literal initializer.
+PHP accepts `public static int $count = 2;`, C++ accepts `static int count = 2;`,
+and JS accepts `static count: int = 2;`. Read and assign through `Point::$count`,
+`Point::count` and `Point.count`, respectively. The bootstrap slice covers type-qualified
+reads and plain statement writes with the existing global-storage type and assignment rules.
+Numeric static properties also accept statement `+=`, `-=`, `*=`, `/=` and `%=` wherever the ordinary
+numeric compound contract admits the operands. Both explicit and declaring-type qualifiers are supported.
+The compiler snapshots the property before evaluating the RHS and stores the result after checked write-back.
+Omitted initializers remain outside this slice.
+
+Public static struct methods accept the same parameters, defaults, writable references
+and returns as ordinary struct methods. PHP and C++ call `Type::method(args)`; JS calls
+`Type.method(args)`. In JS a visible local or parameter selects instance lookup first.
+Where a namespace function and a static method share the same written C++ or JS path,
+the existing namespace function takes precedence. A static method body has no `this` receiver.
+
+Inside a struct method or constructor, PHP `self::`, C++ `Self::` and JS `class.`
+qualify the declaring struct directly. They support static calls, constant reads
+and plain static property reads and writes. PHP preserves the property sigil
+(`self::$count`). These qualifiers take lexical precedence over a namespace or
+local named after the struct, including in a static body. Ordinary JS names keep
+their existing local-first lookup. The shorthand is scoped to member access in
+bodies; it introduces no general-purpose type alias.
+
 ## Qualification and calls
 
 `Type::method(args)` and `self::method(args)` select static methods. `self` denotes

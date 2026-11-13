@@ -83,6 +83,17 @@ extend lifetime. No standalone raw get/release/adopt/reset-pointer or native
 smart-pointer accessor is exposed. Null-sentinel constructors/assignment, inheritance
 conversions and ownership identity operators are not published yet; default construction and reset provide the empty state.
 
+For compiler-generated application struct owners, a typed local starts empty and
+`new Point()` uses the allocation factory in all three flavors. Source assignment from null
+clears the owner. Both equality spellings and both inequality spellings accept
+a shared owner and null in either order and test presence. The compiler lowers
+null tests without copying the owner. For same-type shared struct owners both
+equality operators compare allocation identity. The compiler also supports
+`weak<T>` fields, locals and function boundaries, `weak(owner)` and
+`lock(observer)`. Its application struct implementation is thread-confined. A checked read or write calls the compiled
+runtime error helper on empty access. The generated public declaration of that
+helper requires no standard library headers.
+
 Moves empty their source; self-copy and self-move preserve ownership. Last strong
 release destroys the payload exactly once. Weak owners retain only the control
 block; coallocated storage can remain reserved after payload destruction until

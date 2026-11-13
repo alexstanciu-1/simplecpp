@@ -118,9 +118,11 @@ storage rules.
 
 ### 2.2 Struct Members
 
-The first slice supports public instance fields only.
+The original compact-layout slice supported public instance fields only. The v0.2
+PHP bootstrap compiler also supports [private instance fields](instance_methods_v0_2.md#php-bootstrap-compiler-coverage)
+with the same layout and copy semantics.
 
-Rejected in current structs:
+Excluded from the original compact-layout slice:
 
 - methods
 - constants
@@ -187,14 +189,81 @@ specification or introduce implicit ownership transfer.
 
 ### 2.4 Initialization
 
-`new StructName()` constructs a struct value, including in inferred locals,
-typed destinations, arguments, and returns. It does not allocate a shared object
-or use the class construction helper. Conceptually, it lowers to `StructName{}`.
-Declaration-kind metadata determines this behavior for same-file, cross-file,
-qualified, and imported names alike. Ordinary `new ClassName()` retains shared
-object ownership.
+In the v0.2 PHP flavor, a typed local declaration such as `$p Point;` creates
+a default-initialized inline struct value. An ordinary `int` field without an
+initializer starts at zero and can be read immediately. Assignment such as
+`$q = $p;` copies the value using the field semantics above.
 
-Only no-argument struct construction is supported. Positional arguments, named
+All three flavors use `new Point()` for a shared allocation with result type
+`shared<Point>`. C++ and JS require the parentheses. PHP also accepts `new Point`.
+For example, `auto p = new Point();` (C++) and `let p = new Point();` (JS)
+both create a managed owner. The payload uses the same recursive default initialization as
+an inline value. Copying an owner keeps the same allocation alive. Rebinding a
+local releases its old ownership. The final strong owner destroys the payload. Its allocation is freed once every weak observer has also released it.
+A local declared `$p shared<Point>;` starts empty and allocates nothing.
+Assigning `null` releases that variable's ownership. An empty owner is false in
+conditions. For a shared struct owner and a null operand, `==` and `===` test
+absence, and `!=` and `!==` test presence, in either operand order. Each operand
+is evaluated once. For owners of the same canonical struct type, `==` and `===` both compare
+allocation identity, including equality of two empty owners. Both inequality
+operators give the inverse. Comparing different payload types is rejected. Reading or writing
+a field through an empty owner throws `std::runtime_error("ownership_empty_access")`.
+
+A by-value `shared<Point>` parameter owns its argument during the call. Writes
+to the payload are visible to the caller; rebinding the parameter affects its
+own handle. Returning an owner preserves the allocation across function exit.
+Parameter and return payloads must match the exact nominal struct type.
+A writable reference parameter such as `shared<Point> &$p` binds to a named
+local or parameter with that exact owner type. Binding and forwarding the
+reference do not retain the payload. Rebinding or clearing it changes the
+caller’s slot. Passing one slot twice aliases that slot; passing two owner
+variables that share a payload still binds two independent slots. Fields and
+temporary expressions cannot bind to a writable owner reference.
+
+The bootstrap compiler supports local owners, by-value parameters and returns,
+and construction with required by-value arguments. Shared construction accepts
+namespace-qualified names. Struct imports remain a separate lookup feature.
+
+| Flavor | Inline local | Shared expression | Constructor inside the struct |
+| --- | --- | --- | --- |
+| PHP | `$p Point(1, 2);` | `new Point(1, 2)` | `public function __construct(int $x, int $y) { ... }` |
+| C++ | `Point p(1, 2);` | `new Point(1, 2)` | `Point(int x, int y) { ... }` |
+| JS | `let p: Point(1, 2);` | `new Point(1, 2)` | `constructor(x: int, y: int) { ... }` |
+
+Each struct can declare one public constructor. Its parameters use ordinary
+function argument conversions and evaluation order. Its body may assign to
+fields of the fresh receiver. A typed declaration without parentheses and an
+inline struct field both require default construction: they call the zero-argument
+constructor when one is declared. A required-argument constructor makes either
+default use invalid. A shared field still starts empty. Copying an existing
+inline value uses memberwise copy and does not call the source constructor.
+If initialization throws, constructed fields and argument temporaries are
+destroyed; a failed shared construction also releases the allocation.
+
+For this first slice, PHP and C++ flavors use `->` for value-field reads and
+writes, and the JS flavor uses `.`. A value-field access lowers to native C++
+`p.x`. The receiver's resolved type determines its storage.
+
+The active PHP bootstrap compiler admits public integer fields, inline structs and
+`shared<T>` fields targeting a nominal struct. An inline field default-initializes
+recursively. A shared field defaults to an empty, pointer-sized owner. Copying the
+enclosing value copies each field: inline data is independent, and each copied
+nonempty owner retains the same allocation. Clearing a field releases just that
+ownership. Destruction of the final owner also destroys the owners in its payload.
+
+The inline layout graph must be acyclic, including across source units. A shared
+field needs the target's identity and may refer back to its containing struct,
+as in `struct Node { public shared<Node> $next; }`. A runtime cycle of strong
+references must be broken before reference counting can reclaim it. A field
+path rooted in a writable local uses the same assignment rules at every depth.
+
+| Source flavor | Declaration | Default-initialized local | Field write |
+| --- | --- | --- | --- |
+| PHP | `struct Point { public int $x; }` | `$p Point;` | `$p->x = 3;` |
+| C++ | `struct Point { int x; };` | `Point p;` | `p->x = 3;` |
+| JS | `struct Point { x: int; }` | `let p: Point;` | `p.x = 3;` |
+
+The earlier construction slice supports only no-argument struct construction. Positional arguments, named
 arguments, and argument unpacking must produce a source diagnostic, rather than
 selecting aggregate positional initialization or class construction. Custom
 constructors are not introduced by that original slice. The approved
@@ -204,8 +273,8 @@ with classes; its compiler implementation remains separately tracked in Chapter 
 The v0.2
 [record-storage amendment](type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06)
 additionally admits explicit shared/unique allocation at direct typed local
-initializers and weak observation of shared struct allocations. Bare `new Struct()`
-still creates a value; `value<Struct>` is rejected as redundant declaration storage.
+initializers and weak observation of shared struct allocations. The PHP allocation spelling follows the rule above.
+An explicit `value<Struct>` remains redundant declaration storage.
 
 Explicit struct field initializers lower to generated member initializers.
 Omitted initializers use the generated C++ default for the field type.

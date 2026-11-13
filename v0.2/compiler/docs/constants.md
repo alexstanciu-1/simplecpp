@@ -4,7 +4,7 @@ Doc Status: supporting
 
 The [namespace contract](../../../specs/namespaces_v0_2.md#php-first-typed-literal-constants--2026-11-04)
 defines the bounded slice. cpp/php use `const int LIMIT = 8;`; js uses
-`const LIMIT: int = 8;`. Constants live at file/namespace level, have required types,
+`const LIMIT: int = 8;`. Constants may belong to a file/namespace or struct, have required types,
 and accept literal initializers only. Current generated int64/bool/byte/null/float64/
 string definitions own admission, range checks, conversions and C++ representation.
 
@@ -33,8 +33,19 @@ PHP bare names read constants, dollar-prefixed names read storage. cpp/js value
 lookup checks visible locals, then exact global storage, then constants. Namespace
 and root paths retain exact resolution; imports affect unqualified names only.
 Mutable reference binding and assignment to constants reject during preparation.
-Parameter defaults, initializer references/operations, inferred/local/class constants
+Parameter defaults, initializer references/operations, inferred/local constants
 and text conversions remain deferred.
+
+## Public struct constants
+
+PHP `public const int LIMIT = 2;`, C++ `static constexpr int LIMIT = 2;` and JS
+`const LIMIT: int = 2;` inside `Point` publish the same identity, `const:Point::LIMIT`.
+The struct indexes constants separately from fields and methods. The file inventories
+the same declaration for ordinary publication, duplicate diagnostics and literal preparation.
+A qualified read uses the existing literal lowering and adds no instance storage.
+PHP distinguishes `Point::LIMIT` from a namespace path in the syntax. C++ and JS
+share separators with namespace paths and retain existing namespace value lookup.
+JS dotted reads rooted in a visible local or parameter use instance field lookup first.
 
 ## Incremental and lowering
 
