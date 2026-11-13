@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 57 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 60 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -417,6 +417,47 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 | $x = sum(number(), 2);                  |                                             |                                  |                                        |
 | $y = sum(2, number());                  |                                             |                                  |                                        |
 +-----------------------------------------+---------------------------------------------+----------------------------------+----------------------------------------+
+```
+
+## Ordered free calls
+
+```text
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| PHP-flavor pattern                    | Lowered C++ code                                  | Lowered C++ header code          | Generation and lowering           |
++=======================================+===================================================+==================================+===================================+
+| Given                                 | scpp::int64 var_y_1 = ([&]() -> scpp::int64 {     | .cpp includes                    | The first argument captures 8.    |
+|     function sum(int $a,int $b):int { |     scpp::int64 argument_43_0 = var_x_0;          | #include <scpp/core/scalars.hpp> | The final argument changes x to 9 |
+|         return $a+$b;                 |     return sum_(argument_43_0, change_(var_x_0)); | No unit header.                  | and supplies 2 directly to sum.   |
+|     }                                 | }());                                             |                                  |                                   |
+|     function change(int &$x):int {    |                                                   |                                  |                                   |
+|         $x=9;                         |                                                   |                                  |                                   |
+|         return 2;                     |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+|     $x int=8;                         |                                                   |                                  |                                   |
+| $y=sum($x,change($x));                |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| Given                                 | scpp::int64 var_x_0 = ([&]() -> scpp::int64 {     | .cpp includes                    | The literal needs no capture.     |
+|     function mark(int $v):int {       |     scpp::int64 argument_34_1 = mark_(2LL);       | #include <scpp/core/scalars.hpp> | The saved result of mark(2) keeps |
+|         return $v;                    |     return pick_(1LL, argument_34_1, mark_(3LL)); | No unit header.                  | both calls in source order.       |
+|     }                                 | }());                                             |                                  |                                   |
+|     function pick(int $a,int $b,      |                                                   |                                  |                                   |
+|         int $c):int {                 |                                                   |                                  |                                   |
+|         return $b;                    |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+| $x=pick(1,mark(2),mark(3));           |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
+| Given                                 | ([&]() -> void {                                  | .cpp includes                    | Only the value argument saves 8.  |
+|     function write_sum(int $a,        |     scpp::int64 argument_46_0 = var_x_0;          | #include <scpp/core/scalars.hpp> | The reference names the same slot |
+|         int &$x,int $b):void {        |     return write_sum_(argument_46_0, var_x_0,     | No unit header.                  | that change updates.              |
+|         $x=$a+$b;                     |         change_(var_x_0));                        |                                  |                                   |
+|     }                                 | }());                                             |                                  |                                   |
+|     function change(int &$x):int {    |                                                   |                                  |                                   |
+|         $x=90;                        |                                                   |                                  |                                   |
+|         return 2;                     |                                                   |                                  |                                   |
+|     }                                 |                                                   |                                  |                                   |
+|     $x int=8;                         |                                                   |                                  |                                   |
+| write_sum($x,$x,change($x));          |                                                   |                                  |                                   |
++---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
 ```
 
 ## Functions, namespaces and project units

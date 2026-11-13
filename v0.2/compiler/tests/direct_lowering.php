@@ -106,7 +106,7 @@ foreach (flavor::cases() as $flavor)
 	$forward = $fn('forward', $param('int', 'x', true), 'void', "bump($x);");
 	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
 	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "forward($x); pair($x, 1); echo $x; return 8;");
-	verify(str_contains($cpp, 'bump_(var_x_0);') && str_contains($cpp, 'pair_(argument_'), 'Expected direct forwarding and ordered multi-argument binding');
+	verify(str_contains($cpp, 'bump_(var_x_0);') && str_contains($cpp, 'pair_(var_x_0, 1LL);'), 'Expected direct forwarding and exact reference binding');
 	$fixtures[$flavor->name . '_forward_reference'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('3')];
 	$change = $fn('change', $param('string', 's'), 'void', $s . ' = "changed"; echo ' . $s . ';');
 	$cpp = $emit($change . $string . "change($s); echo $s; return 8;");
@@ -231,9 +231,60 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($floating, 'scpp::float64_divide(var_a_0, var_b_1)'), 'Expected direct float division');
 	$change = $fn('change_int', $param('int', 'x', true), 'int', "$x = 90; echo \"C\"; return 2;");
 	$mark = $fn('mark_int', $param('int', 'v'), 'int', 'echo ' . $var('v') . '; return ' . $var('v') . ';');
+	$last_default = $fn('choose', $param('int', 'a') . ',' . $param('int', 'b') . ',' . $param('byte', 'c') . '=7',
+		'int', 'return ' . $var('a') . '+' . $var('b') . '+(int)' . $var('c') . ';');
+	$ordered_literals = $emit($three . $mark . $last_default
+		. 'echo three(255,mark_int(2),mark_int(3)), choose(mark_int(4),1,mark_int(5)), choose(mark_int(6),mark_int(7)); return 8;');
+	foreach (['three_\(static_cast<scpp::uint8>\(255LL\), argument_\d+_1, mark_int_\(3LL\)\)',
+		'choose_\(argument_\d+_0, 1LL, scpp::checked_int64_to_uint8\(mark_int_\(5LL\)\)\)',
+		'choose_\(argument_\d+_0, mark_int_\(7LL\), static_cast<scpp::uint8>\(7LL\)\)'] as $args) {
+		verify(preg_match('/return ' . $args . ';/', $ordered_literals) === 1, 'Expected direct literal peers in ordered call: ' . $args);
+	}
+	verify(preg_match_all('/scpp::int64 argument_\d+_\d+ =/', $ordered_literals) === 3, 'Expected one scalar capture per ordered call');
+	$late_ref = $fn('update_last', $param('int', 'a') . ',' . $param('int', 'b') . ',' . $param('int', 'x', true),
+		'void', "$x = " . $var('a') . '+' . $var('b') . ';');
+	$ref_cpp = $emit($late_ref . $mark . $decl('x', 'int', '0') . "update_last(1,mark_int(2),$x); echo $x; return 8;");
+	verify(str_contains($ref_cpp, 'update_last_(1LL, mark_int_(2LL), var_x_0);'), 'Expected direct final reference binding');
+	$fixtures[$flavor->name . '_ordered_late_reference'] = ['cpp' => $ref_cpp, 'stdout_hex' => bin2hex('23')];
+	$fixtures[$flavor->name . '_ordered_literal_positions'] = ['cpp' => $ordered_literals, 'stdout_hex' => bin2hex('2326045106720')];
+
+	$alias = $fn('write_pair', $param('int', 'a', true) . ',' . $param('int', 'b', true),
+		'void', "$a=4; $b=$b+1;");
+	$write = $fn('write_sum', $param('int', 'a') . ',' . $param('int', 'x', true) . ',' . $param('int', 'b'),
+		'void', "$x=$a+$b;");
+	$ref_calls = $emit($alias . $write . $change . $decl('x', 'int', '8')
+		. "write_sum($x,$x,change_int($x)); echo $x; write_pair($x,$x); echo $x; return 8;");
+	verify(preg_match('/return write_sum_\(argument_\d+_0, var_x_0, change_int_\(var_x_0\)\);/', $ref_calls) === 1
+		&& str_contains($ref_calls, 'write_pair_(var_x_0, var_x_0);'), 'Only the original by-value read requires capture');
+	$fixtures[$flavor->name . '_ordered_reference_alias'] = ['cpp' => $ref_calls, 'stdout_hex' => bin2hex('C105')];
 	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
 		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
+	verify(preg_match('/return sum_\(argument_[0-9]+_0, change_int_\(var_x_0\)\);/', $ordered_calls) === 1
+		&& preg_match('/return sum_\(argument_[0-9]+_0, mark_int_\(5LL\)\);/', $ordered_calls) === 1
+		&& !preg_match('/argument_[0-9]+_1\b/', $ordered_calls), 'Expected only the first scalar argument to be captured');
 	$fixtures[$flavor->name . '_ordered_call_peers'] = ['cpp' => $ordered_calls, 'stdout_hex' => bin2hex('C10459')];
+	// Reading a scalar field must release the returned last owner before observe enters.
+	$point = match ($flavor) {
+		flavor::php => 'struct Point { public int $x; }',
+		flavor::cpp => 'struct Point { int x; };',
+		flavor::js => 'struct Point { x:int; }',
+	};
+	$member = $flavor === flavor::js ? '.' : '->';
+	$p = $var('p');
+	$owner_case = $point . $fn('transfer', $param('shared<Point>', 'p', true), 'shared<Point>',
+		$decl('saved', 'shared<Point>', $p) . "$p=null; return " . $var('saved') . ';')
+		. $fn('observe', $param('weak<Point>', 'w') . ',' . $param('int', 'v') . ',' . $param('int', 'tail') . '=0', 'int',
+			'if (lock(' . $var('w') . ')) { return 99; } return ' . $var('v') . ';')
+		. $decl('p', 'shared<Point>', 'new Point()') . "$p{$member}x=7; echo observe(weak($p),transfer($p){$member}x); return 8;";
+	$fixtures[$flavor->name . '_final_owner_release'] = ['cpp' => $emit($owner_case), 'stdout_hex' => bin2hex('7')];
+	// Even a sole value argument may need its own full-expression boundary beside a reference.
+	$ref_owner_case = $point . $fn('transfer', $param('shared<Point>', 'p', true), 'shared<Point>',
+		$decl('saved', 'shared<Point>', $p) . "$p=null; return " . $var('saved') . ';')
+		. $fn('observe_ref', $param('weak<Point>', 'w', true) . ',' . $param('int', 'v'), 'int',
+			'if (lock(' . $var('w') . ')) { return 99; } return ' . $var('v') . ';')
+		. $decl('p', 'shared<Point>', 'new Point()') . $decl('w', 'weak<Point>', "weak($p)")
+		. "$p{$member}x=7; echo observe_ref(" . $var('w') . ",transfer($p){$member}x); return 8;";
+	$fixtures[$flavor->name . '_ref_owner_release'] = ['cpp' => $emit($ref_owner_case), 'stdout_hex' => bin2hex('7')];
 	$code = $sum
 		. $fn('bump', $param('int', 'x', true), 'int', $var('x') . '=9; return 2;')
 		. $fn('pick', $param('string', 'a') . ',' . $param('string', 'b'), 'string', 'echo ' . $var('a') . '; return ' . $var('b') . ';')
@@ -262,6 +313,15 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($cpp, 'reject_byte_(scpp::checked_int64_to_uint8(outside_byte_()), 2LL)'),
 		'Only the checked argument can have effects');
 	$fixtures[$flavor->name . '_sole_checked_argument'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('B'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+	$checked_last = $fn('last_byte', $param('int', 'a') . ',' . $param('byte', 'b'), 'int', 'echo "CALLEE"; return 1;')
+		. $fn('first_mark', '', 'int', 'echo "A"; return 1;')
+		. $fn('outside_byte', '', 'int', 'echo "B"; return 300;')
+		. 'echo last_byte(first_mark(),outside_byte()); return 8;';
+	$cpp = $emit($checked_last);
+	verify(preg_match('/return last_byte_\(argument_[0-9]+_0, scpp::checked_int64_to_uint8\(outside_byte_\(\)\)\);/', $cpp) === 1,
+		'Final scalar should keep its checked conversion in the call');
+	$fixtures[$flavor->name . '_ordered_final_conversion'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('AB'),
 		'catch_out_of_range' => 'integer_cast_out_of_range'];
 	$fixtures[$flavor->name . '_conversion_order'] = ['cpp' => $emit($checked), 'stdout_hex' => bin2hex('B'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
 }

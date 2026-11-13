@@ -36,6 +36,18 @@ expressions retain their operand snapshots.
   be trivial and each surrounding literal must have a nonthrowing prepared
   scalar conversion. Defaults use their declaration conversion. A plain storage
   read still needs sequencing beside a call that could change that storage.
+  In an ordered by-value free call, inert scalar literals and defaults stay
+  inline in any position. After the earlier order-sensitive arguments have
+  been captured, the last order-sensitive scalar can initialize its parameter
+  directly, even when literal defaults follow it.
+  Expressions involving records or handles keep their full-expression boundary:
+  a temporary owner can expire before the callee observes a weak handle.
+
+In multi-argument free calls, preparation guarantees that each reference
+argument names exact, stable storage. Passing that name directly preserves
+aliasing even if a sibling changes the stored value. Earlier by-value reads
+still capture their values when required. An argument involving a temporary
+owner retains its destruction boundary on the ordered reference-call path.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)

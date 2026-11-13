@@ -296,3 +296,52 @@ checked narrowing with both a literal peer and an effectful peer. On Clang
 18.1.3 and GCC 13.3.0 all four fixture groups produced the expected effects
 and failures. The catalog now checks 57 examples. Selectively removing individual
 temporaries in calls that still need sequencing remains a separate batch.
+
+### Follow-up batch — final scalar in an ordered free call
+
+When a free call with by-value parameters requires an ordered block, the final
+trivial scalar initializes its parameter directly from its prepared expression
+and conversion. Earlier arguments keep their typed captures. In
+`sum($x, change($x))` the first argument captures the original value and the
+second call appears once inside `sum_`. An earlier conversion failure skips
+that final argument; a final conversion failure skips the callee.
+
+The lifetime of a temporary within the final expression can matter even if its
+result is scalar. The existing emission walk detects record and handle operands
+and conservatively retains their statement boundary on the ordered path.
+A regression transfers the last owner, reads its integer field and checks a
+weak reference inside the callee. The callee observes that the owner expired.
+
+The three flavors cover the mutating and ordered-call cases, both checked
+conversion failure positions and the weak-reference lifetime control. The
+catalog verifies 58 generated implementation and header excerpts.
+
+### Follow-up batch — literal positions in ordered free calls
+
+In a by-value free call, scalar literals with nonthrowing prepared conversions
+stay inline in any position. The emitter lowers every argument once, records
+the order-sensitive positions and renders capture statements only if the call
+needs sequencing. The last order-sensitive argument can initialize its parameter
+inside the call when its result is trivial and no record lifetime boundary is
+needed. Trailing literal defaults follow the same rule as explicit literals.
+
+Three-flavor fixtures check first and middle literal positions and an omitted
+proven byte default. Each example has two effectful arguments and emits one
+scalar capture. The native output checks argument order, values and call counts.
+Controls cover a late reference parameter, checked conversion failures and
+release of the last shared owner before the callee observes a weak reference
+even when a literal default follows the field read. The catalog checks 59
+examples against fresh compiler output.
+
+### Follow-up batch — exact reference arguments in ordered free calls
+
+Preparation already restricts mutable reference arguments to named locals and
+parameters of the exact storage type. The emitter passes those lvalues directly.
+By-value operands use the existing capture rule. For
+`write_sum($x,$x,change($x))`, only the first argument captures the original
+value. Two reference parameters can both name the same local without a wrapper.
+
+Controls cover reference positions at the start, middle and end, two aliases,
+mutation through the callee, and a scalar field read that must release the last
+owner before the callee inspects a weak reference passed by reference. The
+generator, preparation and method receiver contracts are unchanged.
