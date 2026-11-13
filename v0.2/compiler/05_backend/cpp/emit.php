@@ -614,10 +614,10 @@ CPP;
 		$conversion = $statement->conversion();
 		if (($type === $execution) && ($destination instanceof ast_local_binding || $destination instanceof ast_field_expression)
 			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
-			&& ($statement->write_back() === value_conversion::identity)
-			&& $simple_rhs) {
+			&& ($statement->write_back() === value_conversion::identity)) {
 			$operator = $execution->cpp_compound_operator($statement->operator);
-			if ($operator !== null) {
+			if ($operator !== null && ($simple_rhs || ($destination instanceof ast_local_binding
+				&& self::constant_compound_operand($statement->value)))) {
 				return $name . ' ' . $operator . ' ' . $right;
 			}
 		}
@@ -1075,21 +1075,6 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
-	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
-	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
-	{
-		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
-			return false;
-		}
-		return match ($conversion) {
-			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
-			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
-			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
-			default => false,
-		};
-	}
-
 	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */
 	private function constructor_forwards(ast_struct_declaration $record): string
 	{
@@ -1174,6 +1159,40 @@ CPP;
 			$type = $parameter->type_def();
 			if ($type instanceof struct_handle_definition) yield $type;
 		}
+	}
+
+	/** Follow only prepared casts of literal values and immutable constant declarations. */
+	private static function constant_compound_operand(ast_expression $value): bool
+	{
+		while ($value instanceof ast_cast_expression) {
+			if (!self::inert_scalar_conversion($value->type_def(), $value->conversion())) return false;
+			$value = $value->operand;
+		}
+		if ($value instanceof ast_name_expression) {
+			$constant = $value->declaration();
+			return $constant instanceof runtime_integer_constant || ($constant instanceof ast_constant_declaration
+				&& self::inert_literal_argument($constant->initializer, $constant->type_def(), $constant->initialization()));
+		}
+		return $value instanceof ast_integer_expression || $value instanceof ast_float_expression || $value instanceof ast_keyword_expression;
+	}
+
+	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
+	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
+	{
+		return ($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion);
+	}
+
+	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */
+	private static function inert_scalar_conversion(type_definition $type, int $conversion): bool
+	{
+		if (!$type->cpp_trivial_value()) return false;
+		return match ($conversion) {
+			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
+			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
+			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
+			default => false,
+		};
 	}
 
 	private static function imports(string $flavor): string

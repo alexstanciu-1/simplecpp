@@ -440,3 +440,19 @@ lambdas); all sibling translation units match too. Both native drivers printed
 `invoice: 10469` and exited with status 8. The mode-edit regression switches
 a foreign parameter from value to reference and back, comparing the caller
 with a fresh compilation at each step. [Catalog](../../compiler/docs/php_lowering_catalog.md)
+
+### Native integer compounds with constant operands
+
+For a local integer destination with identity execution and write-back, the
+generated native compound operator can take an immutable named scalar constant
+or a literal with a chain of proven scalar conversions. The emitter checks the
+prepared conversion of each cast and retains the original operand spelling.
+A checked cast or an operand rooted in a call stays on the snapshot path.
+Compound operators with checked arithmetic continue to use their helpers.
+
+In each of the 12 billing units, four named-constant and four cast-chain updates
+changed from old-value snapshots to native +=. This covers 32 updates per source
+flavor. Both full native builds printed `invoice: 10469` and exited with status 8.
+Regression fixtures cover the six native operators, mutation inside a checked
+cast, checked narrowing failure, and incremental imported-constant edits and
+recovery against fresh output. The catalog verifies 67 examples.

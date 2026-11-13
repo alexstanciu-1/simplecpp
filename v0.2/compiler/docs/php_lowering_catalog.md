@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 66 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 67 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -141,6 +141,12 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | Native logical operators retain lazy   |
 |     $b int = 2;          |                                                                                                               | No unit header.                  | RHS evaluation.                        |
 | $ok = !$a || ($a && $b); |                                                                                                               |                                  |                                        |
++--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                    | var_a_0 += 1LL;                                                                                               | .cpp includes                    | The constant is emitted as its value.  |
+|     const int EXTRA=1;   | var_a_0 += (static_cast<scpp::int64>((static_cast<scpp::uint8>(2LL))));                                       | #include <scpp/core/scalars.hpp> | Both literal casts are proven safe.    |
+|     $a int=6;            |                                                                                                               | No unit header.                  | The integer binding supplies +=.       |
+| $a += EXTRA;             |                                                                                                               |                                  |                                        |
+| $a += (int)(byte)2;      |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    |                                                                                                               | .cpp includes                    | The integer handler supplies native    |
 |     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | compound operators. For plain locals   |

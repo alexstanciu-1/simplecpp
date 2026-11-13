@@ -7,7 +7,7 @@ require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
 	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program,
-	Syntax_Inspection, Compilation_Inspection};
+	Syntax_Inspection, Compilation_Inspection, prepared_entry};
 
 function verify(bool $ok, string $message): void
 {
@@ -152,7 +152,7 @@ foreach (flavor::cases() as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, 'use const VALUE as READ; echo READ; return 8;');
+		file_put_contents($directory . '/main.' . $flavor->name, 'use const VALUE as READ; echo READ;' . $decl('x', 'int', '1') . $var('x') . '+=READ; return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
 		$compiler = new Project_Compiler();
 		$target = new entry_target(31);
@@ -166,6 +166,8 @@ foreach (flavor::cases() as $flavor)
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Value change did not invalidate reader');
 		verify($caller->main()->body()->statements[0]->values[0]->constant() === 888, 'Stale constant value');
+		verify(str_contains((new Cpp_Emitter())->emit(new prepared_entry($caller, $target)), 'var_x_0 += 888LL;'),
+			'Compound retained the previous imported constant');
 		file_put_contents($lib, $const('VALUE', 'bool', 'false'));
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Echo currently supports');
@@ -181,6 +183,11 @@ foreach (flavor::cases() as $flavor)
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Removal recovery');
 		verify(($session->scope->entry('const:VALUE') === $handle) && ($handle->declaration() !== null), 'Stable handle changed');
 		verify(($session->entry->entry->ast === $caller) && ($caller->tokens === $tokens), 'Caller syntax replaced');
+		$recovered = (new Cpp_Emitter())->emit(new prepared_entry($caller, $target));
+		$fresh = $compiler->frontend($directory);
+		Incremental_Preparation::prepare($fresh, $target);
+		verify(str_contains($recovered, 'var_x_0 += 88LL;') && $recovered === (new Cpp_Emitter())->emit(
+			new prepared_entry($fresh->entry->entry->ast, $target)), 'Recovered constant compound differs from fresh output');
 		file_put_contents($lib, $const('VALUE', 'int', '88') . $const('OTHER', 'int', '999'));
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Unrelated constant invalidated reader');
