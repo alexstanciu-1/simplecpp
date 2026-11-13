@@ -3,8 +3,10 @@ from pathlib import Path
 import hashlib
 import shlex
 import shutil
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+QUALIFICATION = Path(__file__).resolve().parents[1] / 'layout_probe/qualification.py'
 
 
 def ninja_path(path):
@@ -28,7 +30,11 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
     library = ROOT / 'build/clang/libscpp_runtime.a'
     common = [cxx, '-' + optimization, '-g0', '-std=c++23', '-stdlib=libc++', '-Wall', '-Wextra', '-Werror', '-I', include]
     flags = ' '.join(map(shell, common))
+    probe = [sys.executable, '-B', QUALIFICATION, '--cxx', cxx, '--cache', library.parent / 'native-qualification',
+             *['--flag=' + str(flag) for flag in common[1:]], '--link-flag=--ld-path=' + mold]
     lines = ['ninja_required_version = 1.10',
+             'rule qualify', '  command = ' + ' '.join(map(shell, probe)) + ' $probe_flags',
+             'build force-qualification: phony', 'build qualify-native: qualify force-qualification',
              'rule compile', f'  command = {flags} $pchflag -MD -MF $out.d -c $in -o $out',
              '  depfile = $out.d', '  deps = gcc',
              'rule pch', f'  command = {flags} -x c++-header -MD -MF $out.d $in -o $out',
@@ -39,16 +45,23 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
         text = '#include <scpp/output.hpp>\n#include <scpp/entry.hpp>\n'
         if not header.exists() or header.read_text() != text:
             header.write_text(text)
-        lines.append('build runtime.pch: pch runtime_pch.hpp')
+        lines.append('build runtime.pch: pch runtime_pch.hpp || qualify-native')
+    pch_path = str(cached_pch) if cached_pch is not None else 'runtime.pch'
+    pch_flags = ['-include-pch', pch_path]
+    if not validate_pch:
+        pch_flags += ['-Xclang', '-fno-validate-pch']
+    if pch and any(Path(unit).name != 'entry.cpp' for unit in units):
+        lines.extend([f'build qualify-pch: qualify force-qualification | {ninja_path(pch_path)}',
+                      '  probe_flags = ' + ' '.join(shell('--flag=' + flag) for flag in pch_flags)])
     objects = []
     for unit in units:
         obj = 'unit-' + hashlib.sha256(str(Path(unit).resolve()).encode()).hexdigest() + '.o'
         objects.append(obj)
         # The tiny entry adapter uses no runtime headers and does not benefit from this PCH.
         use_pch = pch and Path(unit).name != 'entry.cpp'
-        pch_path = str(cached_pch) if cached_pch is not None else 'runtime.pch'
-        lines.append(f'build {obj}: compile {ninja_path(Path(unit).resolve())}' + (' | ' + ninja_path(pch_path) if use_pch else ''))
-        lines.append('  pchflag = ' + ('-include-pch ' + shell(pch_path) + (' -Xclang -fno-validate-pch' if not validate_pch else '') if use_pch else ''))
+        dependency = f' | {ninja_path(pch_path)} || qualify-pch' if use_pch else ' || qualify-native'
+        lines.append(f'build {obj}: compile {ninja_path(Path(unit).resolve())}{dependency}')
+        lines.append('  pchflag = ' + (' '.join(map(shell, pch_flags)) if use_pch else ''))
     lines.extend([f'build program: link {" ".join(objects)} {ninja_path(library)}', 'default program'])
     graph = work / 'build.ninja'
     text = '\n'.join(lines) + '\n'

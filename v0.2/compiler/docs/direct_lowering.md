@@ -21,7 +21,7 @@ and less-than. Its runtime helpers still check the boxed payload.
   language has no volatile/atomic reads or concurrent unsynchronized global writes.
 - A binary subtree is safe only if both children are safe and the generated
   `cpp_binary_reorderable()` admits its lowering strategy. Current primitive native
-  comparisons and int64 `+ - *` qualify. Checked division/remainder may throw. Integer helpers take safe operands with identity conversions directly and still report the result as potentially throwing to the enclosing expression.
+  comparisons and int64 `+ - *` qualify. Checked division/remainder may throw. Integer division and remainder pass identity-converted operands directly to the by-value helper, including calls. Native argument order applies. The result remains potentially throwing in the enclosing expression.
 - Source calls always return false, even if their arguments permit direct spelling.
   No assumption is made about the callee's effects or exceptions.
 - A single reference parameter binds directly to a local declaration of the exact

@@ -55,7 +55,7 @@ operators without a runtime header. `/ %` call `scpp::int64_divide` and
 `scpp::int64_remainder`, declared in the generated `scpp/arithmetic.hpp`, whose only
 include is `<stdint.h>`. The compiled runtime source delegates to existing private
 scalar semantics, preserving their errors. Exception templates/headers do not enter
-application includes. A failure in a left subexpression suppresses later RHS work.
+application includes. For integer division and remainder, the helper takes identity-converted operands directly by value. Native C++ chooses the order of those arguments. The enclosing expression still treats the helper result as potentially throwing.
 
 ## Verification
 
@@ -72,6 +72,36 @@ application includes. A failure in a left subexpression suppresses later RHS wor
 - `../tests/arithmetic_runtime.py`: standalone public include, template-free closure
   and linked runtime behavior. Generator tests remove capabilities and reject
   unsupported policies. Existing comparison tests remain regression coverage.
+
+The `compiler_arithmetic_argument_order` CTest compiles emitted application units
+with the configured compiler at `-O2`. To compare installed compilers and record
+their traces, run `python3 -B v0.2/compiler/tests/arithmetic_argument_order.py`
+from the repository root. Repeat `--cxx` to select drivers and `--flag` to set
+compile flags. The probe links against the existing Clang/libc++ runtime archive.
+Acceptance checks both producer calls, their results, and the runtime exceptions.
+
+Native CMake builds run a standalone argument-order probe alongside the layout
+probe. Panel Ninja builds run it before compiling application units with their
+selected flags, including PCH flags where applicable. The probe can run before
+runtime publication because it exercises the private integer divide and remainder
+implementations directly. It checks results, zero-divisor exceptions and one read
+of each operand. Either argument order qualifies.
+
+Each successful configuration has an atomic JSON record under
+`build/clang/native-qualification/` for the default build. Its identity includes
+the selected driver path, version and binary digest, the driver-selected C++ frontend,
+loaded Clang/LLVM implementation libraries, target, ordered flags, probe source,
+preprocessed source and probe driver revision. Changing an identity field triggers
+a fresh test. A matching record expires seven days after its successful run.
+A failed refresh stops the build and retry runs the probe again. The recorded
+traces describe these calls on that build configuration. The emitter consumes
+the source evaluation contract.
+
+To qualify GCC independently on native Linux, run from the repository root:
+
+```sh
+python3 -B v0.2/tools/layout_probe/qualification.py --cxx g++ --flag=-std=c++23 --flag=-O2 --cache v0.2/build/clang/native-qualification
+```
 
 Commands:
 

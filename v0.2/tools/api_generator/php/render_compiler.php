@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 47,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 48,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -577,15 +577,18 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $reorderable[$guard][] = "binary_operator::$op";
         }
         if ($definitions[$identity]['strategy'] === 'integer') {
-            if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
+            if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder'], true)) {
+                // Both native parameters receive values once before the helper checks its divisor.
                 $directCases[] = "binary_operator::$op => true,";
+            } elseif (in_array($operation['lowering'], ['checked_shift', 'checked_power'], true)) {
+                $directCases[] = "binary_operator::$op => \$operands_safe,";
             } elseif ($operation['lowering'] === 'native_three_way') {
                 // This formula reads both operands twice. Only repeat plain, distinct storage reads.
-                $directCases[] = "binary_operator::$op => !\$same_spelling && \$expr->right->type_def() === \$this"
+                $directCases[] = "binary_operator::$op => \$operands_safe && !\$same_spelling && \$expr->right->type_def() === \$this"
                     . "\n\t\t\t\t&& \$expr->left instanceof ast_name_expression && \$expr->left->declaration() instanceof ast_local_binding"
                     . "\n\t\t\t\t&& \$expr->right instanceof ast_name_expression && \$expr->right->declaration() instanceof ast_local_binding,";
             } elseif ($op === 'not_identical' && isset($operation['identity_peers'])) {
-                $directCases[] = "binary_operator::$op => \$expr->right->value_type() === \$this && !\$same_spelling,";
+                $directCases[] = "binary_operator::$op => \$operands_safe && \$expr->right->value_type() === \$this && !\$same_spelling,";
             }
         } elseif ($definitions[$identity]['strategy'] === 'string'
             && ($operation['lowering'] === 'runtime_concat' || ($op === 'identical' && isset($operation['identity_peers'])))) {
@@ -646,11 +649,10 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $directMethod = '';
     if ($directCases !== []) {
         $casesText = implode("\n\t\t\t", $directCases);
-        $guard = $definitions[$identity]['strategy'] === 'integer' ? '$operands_safe && ' : '';
         $directMethod = "
 \tpublic function cpp_direct_binary(ast_binary_expression \$expr, bool \$operands_safe, bool \$same_spelling): bool
 \t{
-\t\treturn {$guard}match (\$expr->operator) {
+\t\treturn match (\$expr->operator) {
 \t\t\t$casesText
 \t\t\tdefault => false,
 \t\t};
