@@ -55,7 +55,7 @@ operators without a runtime header. `/ %` call `scpp::int64_divide` and
 `scpp::int64_remainder`, declared in the generated `scpp/arithmetic.hpp`, whose only
 include is `<stdint.h>`. The compiled runtime source delegates to existing private
 scalar semantics, preserving their errors. Exception templates/headers do not enter
-application includes. For integer division and remainder, the helper takes identity-converted operands directly by value. Native C++ chooses the order of those arguments. The enclosing expression still treats the helper result as potentially throwing.
+application includes. For integer division and remainder, the helper takes each prepared operand directly by value, including an admitted widening. Native C++ chooses the order of those arguments. The enclosing expression still treats the helper result as potentially throwing.
 
 ## Verification
 

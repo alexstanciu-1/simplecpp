@@ -153,11 +153,7 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
             $factories .= "\t\t\t'$source' => $factory,\n";
         }
         $pairs = [];
-        $directOps = [];
         foreach (boxedBinaryBindings($plan, $name) as $row) {
-            if ($name === 'dynamic' && $row['left'] === $name && $row['right'] === 'int64' && in_array($row['op'], ['add', 'less'], true)) {
-                $directOps[] = '$expr->operator === binary_operator::' . $row['op'];
-            }
             if ($row['left'] === $name) $pairs[$row['op']]['left'][] = "'{$row['right']}'";
             if ($row['right'] === $name) $pairs[$row['op']]['right'][] = "'{$row['left']}'";
         }
@@ -182,19 +178,8 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
                 : "(\$box_left ? {$admission['left']} : {$admission['right']})";
             $ops .= "\t\t\tbinary_operator::$op => $expression,\n";
         }
-        $directMethod = $directOps === [] ? '' : str_replace('@direct_ops@', implode(' || ', $directOps), <<<'PHP_CODE'
-	/** These helpers borrow the dynamic local; the integer literal cannot change its payload. */
-	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
-	{
-		return (@direct_ops@)
-			&& $expr->left instanceof ast_name_expression && $expr->left->type_def() === $this
-			&& $expr->left->declaration() instanceof ast_local_declaration
-			&& $expr->right instanceof ast_integer_expression && $expr->right->type_def() === type_int64::instance();
-	}
-PHP_CODE
-        ) . "\n\n";
         $code .= strtr(readFile(__DIR__ . '/../templates/compiler_boxed.php.tpl'), [
-            '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@direct_method@' => $directMethod, '@factories@' => $factories,
+            '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,
             '@targets@' => $destinations, '@sources@' => implode(', ', array_map(fn($s) => "'$s'", array_keys($input))),
         ]);
     }

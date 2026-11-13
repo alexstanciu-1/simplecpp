@@ -104,11 +104,11 @@ foreach (flavor::cases() as $flavor)
 			. 'echo left() ' . $operator . ' zero(); return 8;';
 		$fixtures[$flavor->name . '_' . $error] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
 			'stdout_hex' => array_map('bin2hex', ['LR', 'RL']), 'catch_domain_error' => $error];
-		// Regression for the current outer lowering: a failed checked call suppresses later().
-		$failure = $fn('later', '', 'int', 'echo "WRONG"; return 2;')
+		// Either sibling can start first; the checked failure must reach the caller.
+		$failure = $fn('later', '', 'int', 'echo "S"; return 2;')
 			. 'echo (1 ' . $operator . ' 0) + later(); return 8;';
 		$fixtures[$flavor->name . '_' . $error . '_left'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
-			'stdout_hex' => '', 'catch_domain_error' => $error];
+			'stdout_hex' => ['', bin2hex('S')], 'catch_domain_error' => $error];
 	}
 	$directory = sys_get_temp_dir() . '/scpp-arithmetic-' . bin2hex(random_bytes(8));
 	mkdir($directory);

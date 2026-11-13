@@ -155,3 +155,144 @@ The generated operation uses its native operator spelling to decide whether equa
 need warning protection. Safe nested sums compose directly. Self-comparisons and equal
 XOR operands keep their warning-safe snapshots. The cpp/php/js fixtures cover repeated
 nested sums, byte narrowing before widening and two calls returning successive counter values.
+
+## Native operand order audit at `f2221fa6a`
+
+The November eager-order amendment allows either operand to run first, including when one throws. It does not change the contract of a source call, compound update, lazy expression or output statement. The exact-build probe exercises integer divide and remainder call arguments. Its LR/RL trace cannot select a globally valid ordering for other expressions. [Evaluation contract](../../../specs/expression_evaluation.md) · [Agent guidance](../../../AGENTS.md)
+
+### Reproduced through the PHP-flavor frontend and C++ emitter
+
+| Source fragment | Current emission, abbreviated | Simplification and owner |
+| --- | --- | --- |
+| `$x = (8 / 2) + 1;` | Lambda with two snapshots around `int64_divide(8LL, 2LL) + 1LL` | The right literal has no effects and the parent consumes each value once. Emit the addition directly. Keep the divide classified as potentially throwing in an ordered context. The binary emitter currently uses the child reorderability flag to select the parent spelling. |
+| `$a / $b` with two float locals | Lambda, two scalar copies, then `float64_divide(binary_left, binary_right)` | Pass the two locals directly. The published helper takes two values and owns the zero check. |
+| `f() ** f()` with an int return | Lambda with one call per snapshot feeding `int64_power` | Emit `scpp::int64_power(f_(), f_())`. Each argument initializes a separate scalar parameter once. Either call can supply the first observed effect. The same reasoning applies to checked shifts with scalar value bindings. |
+| `($a xor $b)` with distinct bool locals | Lambda with two bool snapshots and a final inequality | Emit `(a != b)` for these operands. The eager logical branch owns the combine and the type handler owns truth conversion. Preserve grouping of numeric truth tests, single evaluation and warning-safe self-comparisons. |
+| `$a /= $b;` with two int locals | Block containing `compound_previous = a` then `a = int64_divide(compound_previous, b)` | Emit `a = scpp::int64_divide(a, b);`. The compound emitter already bypasses the temporary for a simple field and a simple RHS. Apply the old-value requirement to local storage as well. Preserve the snapshot when the RHS can change the destination. |
+| Forwarding a single exact reference parameter to `f($b)` | Lambda binds another C++ reference to the parameter before calling `f_` | Emit `f_(b)`. Preparation already admits exact named parameters and locals as stable reference arguments. The direct call shortcut tests the concrete local-declaration class. |
+
+Owners are [the emitter](../../compiler/05_backend/cpp/emit.php), [scalar operation generation](../../tools/api_generator/php/render_compiler.php), [boxed operation generation](../../tools/api_generator/php/boxed_dispatch.php) and [reference binding in preparation](../../compiler/04_analyze/prepare/prepare.php).
+
+### Boundaries inspected
+
+- For scalar binaries the generator distinguishes zero-checked integer division/remainder from shift/power and float division even though these helper parameters all receive values. The emitter also gates its direct-operation route on identity conversions. A prepared widening can stay attached to its argument without requiring a lambda. Preserve the actual parameter/result types, conversions, helper include and operator checks. Do not extend the scalar rule to borrowed references without examining value and lifetime semantics.
+- Native infix operators need their own check that the emitted C++ has defined evaluation. For the first pass a literal beside a checked scalar subtree is enough to demonstrate the distinction. Identical C++ spellings can require warning-safe grouping or names. Three-way formulas repeat their operands and need single-evaluation protection for calls.
+- String and boxed generators still recognize particular operand shapes. Two stable string locals and a boxed local plus a side-effect-free scalar are candidates for direct forms after checking the published signature. Aliasing a borrowed object across a sibling mutation can change what the helper observes. Shared-owner equality with an effectful null expression also has explicit sequencing in the owner-first branch. Preserve the null expression's effects and single evaluation when reviewing that case. [Struct type handler](../../compiler/types/struct.php)
+- Inline instance calls always construct a receiver binding and lambda, even for a zero-argument method on an inline local. That case can pass the local to the generated function directly. Shared receivers require closer inspection, including a method body that can release the last external owner. Effectful source function, constructor and runtime arguments retain their ordered boundaries. The current all-argument snapshot fallback may be narrowed when only one argument needs stabilizing. Treat copies, checked conversions and reference binding as separate requirements. [Instance method contract](../../../specs/instance_methods_v0_2.md)
+- Vector replacement, typed hash writes and mixed/dynamic keyed writes already put the key and value in the native call. Preserve exact argument conversion, boxing and runtime validation. A string byte write has a different contract requiring the key before the RHS. A primitive key and value could avoid temporary storage when the order cannot be observed. [String byte indexing](../../../specs/index_operator.md)
+- Ordered echo items, lazy RHS evaluation, ordered string appends, once-only carrier presence checks, and compound destination retention each have an independent reason for their current structure. The probe supplies no basis to remove them. Plain field assignment emits native assignment, whose RHS precedes its LHS. Recheck destination selection and failure timing before extending this shape to indexed shared receivers; preparation currently rejects such write roots.
+
+### Suggested implementation and verification order
+
+1. Batch scalar helpers whose binding consumes both operands by value once. Generate the direct-call decision from the validated lowering/binding strategy. Start with float division, shifts, power and proven scalar widenings. Keep the existing prepared types and conversions. Confirm each operand runs once on success, invalid divisors/counts retain their errors, and an argument failure skips the helper. Accept either permitted sibling trace.
+2. Separate permission to emit a direct eager expression from whether that expression may move in an ordered parent. Start with the checked subtree plus literal and distinct boolean locals above. Exercise nested precedence, warnings-as-errors, repeated calls and both orders allowed by the source. Keep short-circuit tests strict.
+3. Simplify stable compound destinations and exact reference forwarding. Cover reference parameters as well as locals, checked write-back, a mutating RHS and loop updates. Handle inline receivers separately with a retained-owner control case.
+4. Update expectations alongside each change. The direct-lowering tests pin snapshots for nested division, promotion and float division. Arithmetic tests require a failing left subtree of addition to suppress a sibling call; logical tests require one eager xor trace. Split combined fixtures so that source-call ordering and eager-operator ordering have independent oracles. Where both eager operands can fail, accept either permitted failure. Keep exact once-only and failure-before-mutation assertions where the language requires them. [Direct lowering tests](../../compiler/tests/direct_lowering.php) · [Arithmetic fixtures](../../compiler/tests/arithmetic.php) · [Logical fixtures](../../compiler/tests/logical.php)
+
+Verification should compare emitted C++ bytes, temporary declarations and lambda counts for fixed representative inputs across cpp/php/js. Measure native compile time separately on identical units, toolchain and flags before claiming a speedup.
+
+At the audited revision the first five table rows produced four immediately invoked lambdas and nine operand/old-value temporaries in each of cpp, php and js. The reference-forwarding example was separately emitted in PHP flavor. The ten selected CTests passed (direct lowering, logic, integer compounds, their native tests, argument order and the three native struct suites). Running `python3 -B v0.2/compiler/tests/arithmetic_argument_order.py --cxx clang++ --cxx g++` also passed. At `-O2`, Clang 18.1.3 observed LR and GCC 13.3.0 observed RL for integer divide/remainder on success and zero-divisor failure, across all three flavors.
+
+### Execution backlog
+
+- [x] Generate direct scalar value-helper calls for float division, shifts, power and admitted promotions. Check helpers, exact evaluation count, permitted failure traces and published includes.
+- [x] Emit checked scalar expressions beside integer literals directly where the native operation permits it. Simplify eager xor on distinct boolean locals. Check grouping, warnings and lazy parents.
+- [x] Remove redundant stable-local compound snapshots and forward stable exact reference parameters directly. Exercise checked write-back, loops, destination-changing calls and updates through forwarded references.
+- [x] Verify cpp/php/js emission and native behavior on Clang and GCC, refresh the lowering catalog, and record before/after bytes, lambdas and temporaries for the same inputs.
+
+Shared receivers, broader multi-argument calls and borrowed boxed/string bindings remain separate work.
+
+### Measured emission and native verification
+
+For each flavor, the five audit inputs used an entry target of 31, a trailing
+`return 8;` and the default LP64 publication. The nested addition uses 8, 2
+and 1. The xor locals are true and false, the compound and float division use
+6 and 2, and both power operands call the same function returning 2. Totals
+include the full five strings returned by `Cpp_Emitter::emit`.
+
+| Per flavor (cpp, php and js) | Audited baseline | Implemented |
+| --- | ---: | ---: |
+| Emitted C++ bytes | 2,562 | 2,051 |
+| Immediately invoked sequencing lambdas | 4 | 0 |
+| Named operand or previous-value temporaries | 9 | 0 |
+
+The dual-compiler regression compiled 13 generated cases per flavor on Clang
+18.1.3 and GCC 13.3.0 with `-O2 -Wall -Wextra -Werror`, using the existing
+Clang/libc++ runtime archive. The helper cases produced LR on Clang and RL on
+GCC. A remainder failure inside a shift argument preserved its error on both;
+the sibling ran on Clang and was skipped on GCC. Both also passed the grouped
+xor, checked subtree with literal, checked compound update and forwarded
+reference cases. This measures generated source size. A native compile-time
+comparison remains separate.
+
+All 26 focused lowerer and native CTests passed in the parallel rerun. Additional checks passed for generator publication, the 53 catalog rows, struct properties, boxed scalars, numeric families, integer promotion and the compiler argument-order runner. The expanded native direct-lowering test took 67 seconds under parallel load and 48 seconds alone; its CTest timeout is now 120 seconds.
+
+### Follow-up batch — zero-parameter methods on inline storage
+
+The existing receiver walk identifies whether a field path ends at an inline
+local, parameter or borrowed `this`. For a method declaring zero parameters,
+the C++ emitter passes that place directly to the method's record-reference
+parameter. A call with omitted defaults still follows argument lowering.
+Crossing a shared allocation still pins its owner. A method on a temporary
+inline record still binds the result once so it can pass a non-const lvalue.
+
+The method regression updates a local through `this`, an inline field and a
+field inside a shared owner, then calls a mutator on a temporary. All three
+source flavors must print `211`. The fixtures check the direct and retained C++
+spellings and compare incremental output with fresh compilation. A separate
+Clang/GCC check compiled and ran local, nested-inline and shared-field updates
+from each flavor at `-O2 -Wall -Wextra -Werror` and observed `111` in all six runs.
+
+### Follow-up batch — stable string operands
+
+Generated string handlers select direct C++ for the published concatenation
+and single-comparison strategies when each operand is a string literal or a
+named string local or parameter. This includes same-string strict comparisons.
+The RHS of concatenation is borrowed and the left parameter owns its copy.
+Comparison borrows both operands. Aliased parameters can therefore read the
+same storage directly. A call operand can change that storage, so it continues
+through the existing snapshot path. The three-way comparison formula and
+cross-type identity keep their existing lowering.
+
+The source-shape checks cover concatenation and all eight single comparisons
+in cpp/php/js. Native fixtures cover embedded NUL, equal storage, two references
+to one heap-backed string, and a sibling call that replaces the source string.
+Clang and GCC ran the string literal, alias and mutation cases in all three
+flavors with warnings as errors. The lowering catalog includes a verified
+two-local concatenation and ordering example.
+
+### Follow-up batch — stable mixed and dynamic operands
+
+Both generated boxed handlers use the prepared pair's published helper directly
+when each operand is a named local, parameter or literal. The same operand test
+serves string lowering. Boxed addition and the four ordering operators retain
+their runtime kind dispatch, including when the same box appears twice or its
+current payload is a container. A nested expression or call stays on the
+snapshot path. The emitter adds no preparation facts.
+
+All three flavors exercise box/box, box/scalar and scalar/box combinations.
+A sibling that replaces the box is called once. With the box on the left the
+addition uses its saved value; with the call on the left the addition reads
+the updated box. The dual-compiler check ran stable, mutating and invalid-kind
+fixtures for both families in all flavors (36 runs total). The catalog checks
+both C++ columns for 56 examples. The four original lots remain complete;
+their five-input size baseline is separate from this follow-up.
+
+### Follow-up batch — one order-sensitive argument in a free function call
+
+For free functions with by-value parameters, the ordinary argument loop counts
+arguments whose evaluation could matter to a sibling. A scalar literal with a
+trivial destination and a nonthrowing prepared scalar conversion needs no
+sequencing. The full conversion code is checked, so a checked narrowing or a
+carrier extraction cannot qualify as such a literal. At most one remaining
+argument can go directly into the call alongside those literals. A local read
+is counted because an effectful sibling may change its storage. The previous
+direct path still covers multiple independent, trivial identity operands.
+
+The three source flavors cover literal peers on either side, a call between
+a proven byte literal and an integer literal, and an omitted literal default.
+The controls exercise a mutating sibling, two calls with ordered output, and
+checked narrowing with both a literal peer and an effectful peer. On Clang
+18.1.3 and GCC 13.3.0 all four fixture groups produced the expected effects
+and failures. The catalog now checks 57 examples. Selectively removing individual
+temporaries in calls that still need sequencing remains a separate batch.

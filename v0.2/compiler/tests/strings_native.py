@@ -57,7 +57,11 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                     if exception == 'ValueError':
                         source = '#include <scpp/value_error.hpp>\n' + source
                         error_type = 'scpp::ValueError'
-                    check = '8' if expected is True else f'std::string_view(e.what()) == {json.dumps(expected)} ? 8 : 91'
+                    check = '8'
+                    if expected is not True:
+                        messages = expected if isinstance(expected, list) else [expected]
+                        matches = ' || '.join(f'std::string_view(e.what()) == {json.dumps(msg)}' for msg in messages)
+                        check = f'({matches}) ? 8 : 91'
                     source += (f'\nint main() {{ try {{ tested_entry(); }} catch (const {error_type}& e) {{ '
                                f'return {check}; }} return 90; }}\n')
             cpp.write_text(source)

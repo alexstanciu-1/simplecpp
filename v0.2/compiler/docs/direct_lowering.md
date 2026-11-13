@@ -11,9 +11,10 @@ The owning evaluation contract remains [expression evaluation](../../../specs/ex
 The emitter computes a temporary `reorderable` result alongside each expression's
 C++ text in its existing recursive traversal. It is an output parameter, not an
 AST fact or retained cache, and requires no second walk or callee-body inspection.
-The emitter uses this conservative fact to select compact spellings. The generated
-`type_dynamic` also admits a dynamic local with an integer literal for addition
-and less-than. Its runtime helpers still check the boxed payload.
+The emitter uses this conservative fact to select compact spellings. The generated mixed and dynamic handlers pass stable locals, parameters and literals
+directly to each admitted boxed binary helper. These helpers read boxed and string
+operands by reference and check payload kinds at runtime. Calls and other effectful
+expressions retain their operand snapshots.
 
 - Generated `cpp_trivial_value()` classifies native scalar copies as nonthrowing,
   nonallocating and free of user callbacks. Strings and unknown types default false.
@@ -21,15 +22,20 @@ and less-than. Its runtime helpers still check the boxed payload.
   language has no volatile/atomic reads or concurrent unsynchronized global writes.
 - A binary subtree is safe only if both children are safe and the generated
   `cpp_binary_reorderable()` admits its lowering strategy. Current primitive native
-  comparisons and int64 `+ - *` qualify. Checked division/remainder may throw. Integer division and remainder pass identity-converted operands directly to the by-value helper, including calls. Native argument order applies. The result remains potentially throwing in the enclosing expression.
+  comparisons and int64 `+ - *` qualify. Checked division/remainder may throw. The generated scalar value-helper query admits divide, remainder, shift and power. Each prepared conversion stays on its argument, including scalar widening. Native argument order applies. The result remains potentially throwing in the enclosing expression.
 - Source calls always return false, even if their arguments permit direct spelling.
   No assumption is made about the callee's effects or exceptions.
-- A single reference parameter binds directly to a local declaration of the exact
+- A single reference parameter binds directly to a named local or parameter of the exact
   type. Preparation checks writable storage. For a sole by-value parameter, the
   emitter applies the prepared conversion to the supplied argument or declaration
   default directly in the call. C++ initializes the parameter, including copying
   an lvalue string. Calls with multiple arguments can omit temporaries when all
   arguments are safe, trivial by-value values with identity conversions.
+  A free function with only by-value parameters also accepts a single
+  order-sensitive argument surrounded by scalar literals. The destination must
+  be trivial and each surrounding literal must have a nonthrowing prepared
+  scalar conversion. Defaults use their declaration conversion. A plain storage
+  read still needs sequencing beside a call that could change that storage.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)
@@ -55,7 +61,7 @@ subtotal = (price * 162LL) + quantity;
 ```
 
 `value + change(value)` keeps its ordered snapshots. Likewise `(1 / 0) + later()`
-keeps sequencing so the left failure suppresses the later call. A string argument
+currently evaluates the failing division first. Eager-order tests permit either sibling to start. An integer literal beside a checked subtree can feed a native single-use operator directly. Distinct boolean locals can feed eager xor as a grouped inequality. A string argument
 is copied before a subsequent reference argument can mutate its source.
 
 Sequencing wrappers stay in expression positions where the current lowering

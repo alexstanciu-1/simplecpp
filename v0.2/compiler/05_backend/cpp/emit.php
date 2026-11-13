@@ -598,7 +598,7 @@ CPP;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
 		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
-			&& $statement->value->declaration() instanceof ast_local_declaration);
+			&& $statement->value->declaration() instanceof ast_local_binding);
 		$steps = [];
 		if ($destination instanceof ast_field_expression && !$simple_rhs) {
 			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
@@ -610,7 +610,7 @@ CPP;
 		$execution = $statement->execution_type();
 		$right = $this->value($statement->value, $global_references, $declarations, $headers);
 		$conversion = $statement->conversion();
-		if (($type === $execution) && ($destination instanceof ast_local_declaration || $destination instanceof ast_field_expression)
+		if (($type === $execution) && ($destination instanceof ast_local_binding || $destination instanceof ast_field_expression)
 			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
 			&& ($statement->write_back() === value_conversion::identity)
 			&& $simple_rhs) {
@@ -628,8 +628,9 @@ CPP;
 		foreach ($execution->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}
-		$direct_field = $destination instanceof ast_field_expression && $simple_rhs;
-		$left = $direct_field ? $name : 'compound_previous';
+		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
+			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
+		$left = $direct_read ? $name : 'compound_previous';
 		if ($statement->left_conversion() !== value_conversion::identity) {
 			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
@@ -643,7 +644,7 @@ CPP;
 				$headers[$header] = true;
 			}
 		}
-		if ($direct_field) return $name . ' = ' . $result;
+		if ($direct_read) return $name . ' = ' . $result;
 		if ($steps !== []) {
 			$steps[] = 'const auto compound_previous = ' . $name . ';';
 			$steps[] = $name . ' = ' . $result . ';';
@@ -824,6 +825,12 @@ CPP;
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
 				if (!$value->operator->lazy()) {
+					if ($value->left instanceof ast_name_expression && $value->right instanceof ast_name_expression
+						&& $value->left->declaration() instanceof ast_local_binding && $value->right->declaration() instanceof ast_local_binding
+						&& $value->left->type_def() === type_bool::instance() && $value->right->type_def() === type_bool::instance()
+						&& $left !== $right) {
+						return '(' . $left . ' != ' . $right . ')';
+					}
 					return '([&]() -> bool { const bool logical_left = ' . $left
 						. '; const bool logical_right = ' . $right . '; return logical_left != logical_right; }())';
 				}
@@ -852,11 +859,14 @@ CPP;
 			}
 			$same_spelling = $left === $right;
 			$operands_safe = $left_safe && $right_safe;
-			$reorderable = $operands_safe && $type->cpp_binary_reorderable($value->operator, $same_spelling);
+			$native = $type->cpp_binary_reorderable($value->operator, $same_spelling);
+			$reorderable = $operands_safe && $native;
+			// An integer literal cannot observe a sibling's effects or failure.
+			$literal_peer = $value->left instanceof ast_integer_expression || $value->right instanceof ast_integer_expression;
 			// Direct spelling does not make a checked result reorderable in its parent.
-			if ($reorderable || ($value->left_conversion === value_conversion::identity
+			if ($reorderable || $type->cpp_value_helper($value->operator) || ($value->left_conversion === value_conversion::identity
 				&& $value->right_conversion === value_conversion::identity
-				&& $type->cpp_direct_binary($value, $operands_safe, $same_spelling))) {
+				&& (($literal_peer && $native) || $type->cpp_direct_binary($value, $operands_safe, $same_spelling)))) {
 				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
@@ -955,7 +965,7 @@ CPP;
 	 */
 	private function retained_place(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
-		array &$steps /** list<string> */): string
+		array &$steps /** list<string> */, ?bool &$inline_storage = null): string
 	{
 		$fields = [];
 		$base = $receiver;
@@ -963,6 +973,11 @@ CPP;
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
+		// Inline fields share the storage duration of their root. A temporary record
+		// still needs the named receiver binding for the non-const reference parameter.
+		$inline_storage = $base->type_def() instanceof struct_type_definition
+			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
+				&& $base->declaration() instanceof ast_local_binding));
 		$operand = $this->value($base, $globals, $declarations, $headers);
 		if ($base->type_def() instanceof shared_struct_type_definition) {
 			$steps[] = 'auto receiver_owner = ' . $operand . ';';
@@ -987,7 +1002,11 @@ CPP;
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
 		if ($method) {
-			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps);
+			$inline_storage = false;
+			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
+			if ($inline_storage && $function->parameters === []) {
+				return $name . '(' . $place . ')';
+			}
 			$steps[] = 'auto&& receiver_payload = ' . $place . ';';
 			$arguments[] = 'receiver_payload';
 		} elseif ($function->parameters === []) {
@@ -995,6 +1014,8 @@ CPP;
 		}
 		$direct_arguments = [];
 		$direct = !$method;
+		$by_value_free_call = !($function->parent instanceof ast_struct_declaration);
+		$order_sensitive_arguments = 0;
 		foreach ($function->parameters as $index => $parameter) {
 			$argument = $value->arguments[$index] ?? $parameter->default_value;
 			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
@@ -1008,13 +1029,20 @@ CPP;
 			if ($parameter->mode === passing_mode::value) {
 				$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
 			}
-			if (!$method && count($function->parameters) === 1 && ($parameter->mode === passing_mode::value
-				|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_declaration))) {
+			// Preparation already validated stable, exact storage for a reference parameter.
+			if (!$method && count($function->parameters) === 1) {
 				return $name . '(' . $operand . ')';
 			}
 			$direct_arguments[] = $operand;
 			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
 				&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
+			if ($by_value_free_call) {
+				if ($parameter->mode !== passing_mode::value) {
+					$by_value_free_call = false;
+				} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
+					++$order_sensitive_arguments;
+				}
+			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 			$temporary = 'argument_' . $value->start . '_' . $index;
 			if ($parameter->mode === passing_mode::reference) {
@@ -1027,11 +1055,26 @@ CPP;
 					: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 			}
 		}
-		if ($direct) {
+		if ($direct || ($by_value_free_call && $order_sensitive_arguments <= 1)) {
 			return $name . '(' . implode(', ', $direct_arguments) . ')';
 		}
 		return '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
 			. ' return ' . $name . '(' . implode(', ', $arguments) . '); }())';
+	}
+
+	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
+	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
+	{
+		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
+			return false;
+		}
+		return match ($conversion) {
+			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
+			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
+			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
+			default => false,
+		};
 	}
 
 	/** Handle parameters can name separate or recursive records. Their declarations suffice in signatures. */
