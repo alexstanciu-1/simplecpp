@@ -847,7 +847,7 @@
       "uint8": {
         "class": "uint8",
         "literal_family": null,
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": false },
+        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
         "copy_semantics": "trivial",
         "source_names": [
           "uint8"

@@ -139,6 +139,86 @@ def boolean_fields(work, flavor):
         resident.stdin.close()
 
 
+def byte_fields(work, flavor):
+    app = work / ('byte-' + flavor)
+    app.mkdir()
+    entry, model = [app / (name + '.' + flavor) for name in ('main', 'meter')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    (app / 'panel.php').write_text('struct Panel { public Meter $meter; }')
+    definition, setup, copy, field, other, call, loop = {
+        'php': ('struct Meter { public byte $level; public function bump():void { $this->level+=1; } }',
+                '$p Panel;', '$q=$p;', '$p->meter->level', '$q->meter->level', '$p->meter->bump();',
+                'for ($i=0; $i<255; $i++)'),
+        'cpp': ('struct Meter { byte level; void bump() { this->level+=1; } };',
+                'Panel p;', 'auto q=p;', 'p->meter->level', 'q->meter->level', 'p->meter->bump();',
+                'for (int i=0; i<255; i++)'),
+        'js': ('struct Meter { level:byte; bump():void { this.level+=1; } }',
+               'let p:Panel;', 'let q=p;', 'p.meter.level', 'q.meter.level', 'p.meter.bump();',
+               'for (let i:int=0; i<255; i++)'),
+    }[flavor]
+    copied = (setup + 'echo (int)' + field + ';' + field + '=(byte)255;' + copy + other + '++;'
+              + 'echo (int)' + field + ',"/",(int)' + other + '; return 8;')
+    bump = setup + loop + ' { ' + field + '++; } ' + call + 'echo (int)' + field + '; return 8;'
+    model.write_text(definition)
+    out = work / ('byte-output-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, stdout) in enumerate([
+            (entry, copied, None, b'0255/0'), (model, definition.replace('byte', 'uint8'), None, b'0255/0'),
+            (entry, setup + field + '=1; return 8;', 'conversion', None),
+            (model, definition, 'conversion', None), (entry, bump, None, None),
+            (model, definition.replace('byte', 'int'), None, b'256'),
+            (model, definition.replace('byte', 'uint8'), None, None), (entry, copied, None, b'0255/0'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1986000000 + rev,) * 2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            fresh_out = work / f'byte-fresh-{flavor}-{rev}'
+            with service(app, fresh_out) as fresh:
+                other_result = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other_result.get('error'), (rev, current, other_result)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in other_result, (rev, current, other_result)
+            assert artifacts(out) == artifacts(fresh_out)
+            for bundle in (out, fresh_out):
+                native = work / ('build-' + bundle.name)
+                if stdout is not None:
+                    build(bundle, native, stdout)
+                    continue
+                native = work / f'catch-{bundle.name}-{rev}'
+                native.mkdir()
+                harness = native / 'catch.cpp'
+                headers = [h for h in (bundle / 'units').glob('*.hpp')
+                           if 'struct Meter {' in h.read_text() or 'method_5_Meter_bump(' in h.read_text()]
+                harness.write_text(''.join(f'#include "{h.resolve()}"\n' for h in headers) + """
+#include <cstring>
+#include <stdexcept>
+namespace App { int scpp_entry_body(); }
+int main() {
+    try { App::scpp_entry_body(); return 1; }
+    catch (const std::out_of_range& e) {
+        if (std::strcmp(e.what(), "integer_cast_out_of_range")) return 1;
+    }
+    App::scpp_records::Meter meter{};
+    static_assert(sizeof(meter.level) == 1);
+    meter.level = 255;
+    try { App::method_5_Meter_bump(meter); }
+    catch (const std::out_of_range& e) {
+        return std::strcmp(e.what(), "integer_cast_out_of_range") || meter.level != 255;
+    }
+    return 1;
+}
+""")
+                units = json.loads((bundle / 'manifest.json').read_text())['translation_units']
+                command = write_build(native, [harness, *(bundle / unit for unit in units if unit != 'entry.cpp')])
+                subprocess.run(command, cwd=native, check=True, capture_output=True)
+                subprocess.run([native / 'program'], check=True)
+        resident.stdin.close()
+
+
 def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
@@ -676,6 +756,7 @@ if __name__ == '__main__':
         native_names(folder)
         shared_functions(folder)
         for language in PROGRAMS:
+            byte_fields(folder, language)
             boolean_fields(folder, language)
             shared_fields(folder, language)
             empty_owners(folder, language)
