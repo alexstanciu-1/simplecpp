@@ -34,13 +34,6 @@ function rejects(Closure $action, string $message): void
 	throw new RuntimeException('Expected rejection: ' . $message);
 }
 
-// Only the generated dynamic handler owns the direct-spelling exception.
-foreach ([scpp\compiler\type_dynamic::class => scpp\compiler\type_dynamic::class,
-	scpp\compiler\type_mixed::class => scpp\compiler\type_definition::class] as $type => $owner) {
-	$method = new ReflectionMethod($type, 'cpp_direct_binary');
-	verify($method->getDeclaringClass()->getName() === $owner, "$type direct binary lowering owner");
-}
-
 $fixtures = [];
 foreach (flavor::cases() as $flavor) {
 	$decl = static fn(string $type, string $name, string $value) => declaration($flavor, $type, $name, $value);
@@ -198,7 +191,7 @@ foreach (flavor::cases() as $flavor) {
 			. 'echo (int)' . $var('sum') . ', (int)' . $var('less') . "; $x = 1; if ($x < 3) { echo 1; } return 8;";
 		$cpp = (new Cpp_Emitter())->emit($prepare($literal));
 		foreach (['add' => '2LL', 'less' => '3LL'] as $op => $rhs) {
-			$args = $family === 'dynamic' ? "var_x_0, $rhs" : 'binary_left, binary_right';
+			$args = "var_x_0, $rhs";
 			verify(str_contains($cpp, "scpp::boxed_{$op}_{$family}_int64($args)"), 'Unexpected boxed literal operands');
 		}
 		$fixtures[$flavor->name . '-' . $family . '-literal'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('1001')];
@@ -223,11 +216,30 @@ foreach (flavor::cases() as $flavor) {
 			'stdout_hex' => '', 'catch_out_of_range' => true];
 		rejects(fn() => $prepare($decl($family, 'x', '1') . 'echo (int)(' . $x . ' + true);'), 'Unsupported boxed binary');
 		rejects(fn() => $prepare($decl($family, 'x', '1') . $decl($family === 'mixed' ? 'dynamic' : 'mixed', 'y', $x)), 'Unsupported boxed conversion');
-	}
-	foreach (["2 + $x", "$x + " . $var('n'), "$x + 2.0", "$x >= 3"] as $expression) {
-		$source = $decl('dynamic', 'x', '8') . $decl('int', 'n', '2') . $infer('probe', $expression);
-		$cpp = (new Cpp_Emitter())->emit($prepare($source . 'return 8;'));
-		verify(str_contains($cpp, 'const auto binary_left'), 'Unexpected direct boxed lowering for ' . $expression);
+		$stable = $decl($family, 'x', '3') . $decl($family, 'y', '4') . $decl('int', 'n', '2')
+			. "echo (int)($x + $y),(int)(2 + $x),(int)($x + " . $var('n') . "), (int)($x + $x);"
+			. "if ($x < $y && $x <= 3 && $y > 2.0 && $y >= $x) { echo 1; } return 8;";
+		$cpp = (new Cpp_Emitter())->emit($prepare($stable));
+		verify(!str_contains($cpp, 'binary_left') && str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1)"),
+			'Expected direct stable boxed calls');
+		$fixtures[$flavor->name . '-' . $family . '-stable'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('75561')];
+
+		$bad_pair = $decl($family, 'x', '1') . $decl($family, 'y', '[]') . $infer('sum', "$x + $y") . 'return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($bad_pair));
+		verify(str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1)"), 'Invalid payload must reach the direct helper');
+		$fixtures[$flavor->name . '-' . $family . '-bad-pair'] = ['cpp' => $cpp, 'stdout_hex' => '', 'catch_runtime_error' => 'boxed_scalar_kind'];
+
+		$replace = match ($flavor) {
+			flavor::cpp => "int replace($family &x)", flavor::php => 'function replace(' . $family . ' &$x): int',
+			flavor::js => "function replace(&x: $family): int",
+		};
+		$effects = $replace . " { $x = 20; echo \"R\"; return 2; }" . $decl($family, 'x', '8')
+			. "echo (int)($x + replace($x)), (int)$x; $x = 8; echo (int)(replace($x) + $x); return 8;";
+		$cpp = (new Cpp_Emitter())->emit($prepare($effects));
+		verify(str_contains($cpp, 'const auto binary_left = var_x_0; const auto binary_right = replace_(var_x_0);')
+			&& str_contains($cpp, 'const auto binary_left = replace_(var_x_0); const auto binary_right = var_x_0;'),
+			'Effectful boxed operands require snapshots');
+		$fixtures[$flavor->name . '-' . $family . '-mutating'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R1020R22')];
 	}
 	foreach ([false, true] as $containers) {
 		$directory = sys_get_temp_dir() . '/scpp-boxed-scalars-' . bin2hex(random_bytes(8));

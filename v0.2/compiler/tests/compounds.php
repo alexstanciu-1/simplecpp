@@ -77,7 +77,7 @@ foreach (flavor::cases() as $flavor)
 		$source = $decl('x', 'int', '10') . $decl('b', 'int', '3')
 			. "$x $operator $b; if ($x !== $expected) { return 9; } return 8;";
 		$cpp = (new Cpp_Emitter())->emit($prepare($source));
-		verify(str_contains($cpp, "scpp::$helper("), "$flavor->name $operator must call $helper");
+		verify(str_contains($cpp, "var_x_0 = scpp::{$helper}(var_x_0, var_b_1);"), "$flavor->name $operator must call $helper");
 		verify(str_contains($cpp, '#include <scpp/arithmetic.hpp>'), "$flavor->name $operator missing arithmetic header");
 		$fixtures[$flavor->name . '_' . $helper] = ['cpp' => $cpp, 'stdout_hex' => ''];
 	}

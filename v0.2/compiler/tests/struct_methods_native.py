@@ -307,6 +307,22 @@ def prove(work, flavor):
         (model, model_private, denied_field, None), (model, model_public, None, b'47'),
         (entry, pair_test+'return 8;', None, b'47'), (model, model_private, None, b'47'),
     ])
+    # A zero-parameter mutator must receive the original inline storage.
+    # Fold this control into the existing incremental/fresh revision sequence.
+    receiver_model = ('struct CounterValue { public int $n; public function bump():void { $this->n+=1; } '
+                      'public function twice():void { $this->bump(); $this->bump(); } '
+                      'public static function make():CounterValue { $c CounterValue; return $c; } } '
+                      'struct Wrapper { public CounterValue $counter; }')
+    receiver_setup = {'php': '$c CounterValue; $w Wrapper; $owner=new Wrapper();',
+                      'cpp': 'CounterValue c; Wrapper w; auto owner=new Wrapper();',
+                      'js': 'let c:CounterValue; let w:Wrapper; let owner=new Wrapper();'}[flavor]
+    c, w, owner = [var + n for n in ('c', 'w', 'owner')]
+    inner, shared = w + member + 'counter', owner + member + 'counter'
+    temporary = 'CounterValue.make()' if flavor == 'js' else 'CounterValue::make()'
+    receiver_calls = (receiver_setup + f'{c}{member}twice(); {inner}{member}bump(); {shared}{member}bump(); '
+                      f'{temporary}{member}bump(); echo {c}{member}n,{inner}{member}n,{shared}{member}n; return 8;')
+    receiver_file = app / 'receivers.php'
+    revisions.extend([(receiver_file, receiver_model, None, b'47'), (entry, receiver_calls, None, b'211')])
     with service(app, out) as resident:
         for rev, (path, text, error, stdout) in enumerate(revisions):
             if path:
@@ -324,6 +340,13 @@ def prove(work, flavor):
                 continue
             assert 'error' not in current and 'error' not in expected, (flavor, rev, current, expected)
             assert artifacts(out) == artifacts(baseline)
+            if text == receiver_calls:
+                code = b'\n'.join(artifacts(out).values())
+                assert b'method_12_CounterValue_twice(var_c_0);' in code
+                assert b'method_12_CounterValue_bump(var_w_1.counter);' in code
+                assert b'method_12_CounterValue_bump(scpp_self);' in code
+                assert b'auto receiver_owner = var_owner_2;' in code
+                assert b'auto&& receiver_payload = method_12_CounterValue_make();' in code
             if stdout is None:
                 check_empty_access(out, work / f'empty-{flavor}-{rev}')
             else:

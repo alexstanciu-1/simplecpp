@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 48,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 51,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
@@ -550,7 +550,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     $headers = [];
     $reorderable = [];
     $directCases = [];
-    $stringLiteralOps = [];
+    $valueHelpers = [];
+    $stringValueOps = [];
     foreach ($operations as $op => $operation) {
         $result = 'type_' . $definitions[$operation['result']]['class'];
         if (($operation['compound'] ?? $compoundEnabled) && $operation['result'] === $identity) {
@@ -576,13 +577,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $guard = in_array($operation['spelling'], ['==', '!=', '<', '<=', '>', '>=', '^'], true) ? '!$same_spelling' : 'true';
             $reorderable[$guard][] = "binary_operator::$op";
         }
-        if ($definitions[$identity]['strategy'] === 'integer') {
-            if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder'], true)) {
-                // Both native parameters receive values once before the helper checks its divisor.
-                $directCases[] = "binary_operator::$op => true,";
-            } elseif (in_array($operation['lowering'], ['checked_shift', 'checked_power'], true)) {
-                $directCases[] = "binary_operator::$op => \$operands_safe,";
-            } elseif ($operation['lowering'] === 'native_three_way') {
+        if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
+            // These validated scalar strategies call a runtime helper with two value parameters.
+            $valueHelpers[] = "binary_operator::$op";
+        } elseif ($definitions[$identity]['strategy'] === 'integer') {
+            if ($operation['lowering'] === 'native_three_way') {
                 // This formula reads both operands twice. Only repeat plain, distinct storage reads.
                 $directCases[] = "binary_operator::$op => \$operands_safe && !\$same_spelling && \$expr->right->type_def() === \$this"
                     . "\n\t\t\t\t&& \$expr->left instanceof ast_name_expression && \$expr->left->declaration() instanceof ast_local_binding"
@@ -591,8 +590,8 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
                 $directCases[] = "binary_operator::$op => \$operands_safe && \$expr->right->value_type() === \$this && !\$same_spelling,";
             }
         } elseif ($definitions[$identity]['strategy'] === 'string'
-            && ($operation['lowering'] === 'runtime_concat' || ($op === 'identical' && isset($operation['identity_peers'])))) {
-            $stringLiteralOps[] = "binary_operator::$op";
+            && in_array($operation['lowering'], ['runtime_concat', 'runtime_compare'], true)) {
+            $stringValueOps[] = "binary_operator::$op";
         }
         if ($operation['lowering'] === 'native') {
             $expression = "'(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')'";
@@ -640,22 +639,30 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
     foreach ($reorderable as $guard => $operators) {
         $safeCases .= "\t\t\t" . implode(', ', $operators) . " => $guard,\n";
     }
-    if ($stringLiteralOps !== []) {
-        $operators = implode(', ', $stringLiteralOps);
-        $directCases[] = "{$operators} => \$expr->left instanceof ast_name_expression"
-            . "\n\t\t\t\t&& \$expr->left->declaration() instanceof ast_local_declaration && \$expr->left->type_def() === \$this"
-            . "\n\t\t\t\t&& \$expr->right instanceof ast_string_expression,";
-    }
     $directMethod = '';
+    if ($stringValueOps !== []) {
+        $operators = implode(', ', $stringValueOps);
+        $directCases[] = "{$operators} => \$expr->left->type_def() === \$this && \$expr->right->type_def() === \$this"
+            . "\n\t\t\t\t&& self::stable_cpp_operand(\$expr->left) && self::stable_cpp_operand(\$expr->right),";
+    }
     if ($directCases !== []) {
         $casesText = implode("\n\t\t\t", $directCases);
-        $directMethod = "
+        $directMethod .= "
 \tpublic function cpp_direct_binary(ast_binary_expression \$expr, bool \$operands_safe, bool \$same_spelling): bool
 \t{
 \t\treturn match (\$expr->operator) {
 \t\t\t$casesText
 \t\t\tdefault => false,
 \t\t};
+\t}
+";
+    }
+    if ($valueHelpers !== []) {
+        $operators = implode(', ', $valueHelpers);
+        $directMethod .= "
+\tpublic function cpp_value_helper(binary_operator \$operator): bool
+\t{
+\t\treturn match (\$operator) { $operators => true, default => false };
 \t}
 ";
     }

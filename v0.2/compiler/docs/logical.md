@@ -96,10 +96,7 @@ handlers own type-dependent behavior, exactly as for short-circuit logical opera
 
 `binary_operator::logical()` identifies the shared condition-admission path;
 `lazy()` continues to identify only AND/OR. Xor uses the existing binary AST with
-a bool result, without new facts or preparation passes. Lowering emits ordered bool
-temporaries in a value-returning expression, preserving eager evaluation and failure
-order. This reuses the existing expression-local snapshot approach rather than
-expanding the deferred general execution-order machinery.
+a bool result, without new facts or preparation passes. Distinct boolean locals lower to a grouped C++ inequality. The general path evaluates each generated truth conversion once and compares the resulting booleans. Eager operands may run in either order.
 
 The parser's `assignment_value()` boundary rejects ungrouped outer xor in local,
 global and constant initializers and assignment RHSs. Parentheses already recurse

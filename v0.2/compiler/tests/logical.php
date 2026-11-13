@@ -182,17 +182,17 @@ foreach (flavor::cases() as $flavor)
 		. 'if (' . $var('number') . ' xor clear_xor(' . $var('number') . ')) { echo "S"; }'
 		. 'echo ' . $var('number') . '; return 8;';
 	$fixtures[$flavor->name . '_xor'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($xor_code)),
-		'stdout_hex' => bin2hex('LRTCS0')];
+		'stdout_hex' => array_map('bin2hex', ['LRTCS0', 'RLTCS0', 'LRTC0', 'RLTC0'])];
 
 	$failure_code = $fn('xor_fail_right', '', 'bool', 'return false xor (1 / 0);')
 		. $fn('xor_fail_left', '', 'bool', 'return (1 / 0) xor right_xor();')
-		. $fn('right_xor', '', 'bool', 'echo "UNREACHED"; return true;') . 'return 8;';
+		. $fn('right_xor', '', 'bool', 'echo "R"; return true;') . 'return 8;';
 	$failure_cpp = str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($failure_code)));
 	$failure_cpp .= "\n#include <stdexcept>\nint main() {\n";
 	foreach (['xor_fail_right', 'xor_fail_left'] as $name) {
 		$failure_cpp .= 'try { (void)::App::' . $name . '_(); return 90; } catch (const std::domain_error&) {}' . "\n";
 	}
-	$fixtures[$flavor->name . '_xor_failure'] = ['cpp' => $failure_cpp . "return 8; }\n", 'stdout_hex' => ''];
+	$fixtures[$flavor->name . '_xor_failure'] = ['cpp' => $failure_cpp . "return 8; }\n", 'stdout_hex' => ['', bin2hex('R')]];
 
 	$directory = sys_get_temp_dir() . '/scpp-logical-' . bin2hex(random_bytes(8));
 	mkdir($directory);

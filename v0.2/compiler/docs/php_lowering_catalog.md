@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 49 examples were emitted with the PHP frontend, compiled and linked with Clang against the generated runtime, and executed successfully with the expected entry exit code of 8. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 57 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -145,6 +145,54 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
+### Eager scalar operands and stable destinations
+
+```text
++-------------------------+-----------------------------------------------------------------+----------------------------------+-----------------------------------------+
+| PHP-flavor pattern      | Lowered C++ code                                                | Lowered C++ header code          | Generation and lowering                 |
++=========================+=================================================================+==================================+=========================================+
+| Given                   | scpp::int64 var_x_0 = (scpp::int64_divide(8LL, 2LL) + 1LL);     | .cpp includes                    | The generated binding takes two values. |
+|     function f(): int { | scpp::int64 var_y_1 = scpp::int64_power(f_(), f_());            | #include <scpp/arithmetic.hpp>   | Each call supplies one argument.        |
+|         return 2;       |                                                                 | #include <scpp/core/scalars.hpp> | The literal needs no sequencing.        |
+|     }                   |                                                                 | No unit header.                  |                                         |
+| $x = (8 / 2) + 1;       |                                                                 |                                  |                                         |
+| $y = f() ** f();        |                                                                 |                                  |                                         |
++-------------------------+-----------------------------------------------------------------+----------------------------------+-----------------------------------------+
+| Given                   | scpp::float64 var_x_2 = scpp::float64_divide(var_a_0, var_b_1); | .cpp includes                    | The helper owns the divisor check.      |
+|     $a float = 6.0;     |                                                                 | #include <scpp/arithmetic.hpp>   |                                         |
+|     $b float = 2.0;     |                                                                 | #include <scpp/core/scalars.hpp> |                                         |
+| $x = $a / $b;           |                                                                 | No unit header.                  |                                         |
++-------------------------+-----------------------------------------------------------------+----------------------------------+-----------------------------------------+
+| Given                   | scpp::bool_t var_x_2 = (var_a_0 != var_b_1);                    | .cpp includes                    | Distinct boolean locals already hold    |
+|     $a bool = true;     |                                                                 | #include <scpp/core/scalars.hpp> | the two truth values.                   |
+|     $b bool = false;    |                                                                 | No unit header.                  |                                         |
+| $x = ($a xor $b);       |                                                                 |                                  |                                         |
++-------------------------+-----------------------------------------------------------------+----------------------------------+-----------------------------------------+
+| Given                   | var_a_0 = scpp::int64_divide(var_a_0, var_b_1);                 | .cpp includes                    | Reading the RHS preserves the old       |
+|     $a int = 6;         |                                                                 | #include <scpp/arithmetic.hpp>   | destination. A mutating call can        |
+|     $b int = 2;         |                                                                 | #include <scpp/core/scalars.hpp> | require saving that value.              |
+| $a /= $b;               |                                                                 | No unit header.                  |                                         |
++-------------------------+-----------------------------------------------------------------+----------------------------------+-----------------------------------------+
+```
+
+### Zero-parameter instance methods
+
+```text
++---------------------------------------+-------------------------------+----------------------------------+---------------------------------------+
+| PHP-flavor pattern                    | Lowered C++ code              | Lowered C++ header code          | Generation and lowering               |
++=======================================+===============================+==================================+=======================================+
+| Given                                 | method_5_Point_bump(var_p_0); | .cpp includes                    | The method takes the inline record    |
+|     struct Point {                    |                               | #include <scpp/core/scalars.hpp> | by reference and updates it in place. |
+|         public int $x;                |                               | No unit header.                  |                                       |
+|         public function bump():void { |                               |                                  |                                       |
+|             $this->x+=1;              |                               |                                  |                                       |
+|         }                             |                               |                                  |                                       |
+|     }                                 |                               |                                  |                                       |
+|     $p Point;                         |                               |                                  |                                       |
+| $p->bump();                           |                               |                                  |                                       |
++---------------------------------------+-------------------------------+----------------------------------+---------------------------------------+
+```
+
 ## Strings and output
 
 ```text
@@ -160,6 +208,12 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |     $s string = "hi";  | scpp::bool_t var_ok_1 = ((var_s_0 == scpp::string{"hi!", 3}));          | #include <scpp/core/scalars.hpp> | runtime operators directly. The        |
 | $s = $s . "!";         |                                                                         | #include <scpp/string.hpp>       | literal carries its byte length.       |
 | $ok = $s === "hi!";    |                                                                         | No unit header.                  |                                        |
++------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                  | scpp::string var_s_2 = (var_a_0 + var_b_1);                             | .cpp includes                    | Concatenation takes its left operand   |
+|     $a string = "a";   | scpp::bool_t var_ok_3 = ((var_a_0 < var_b_1));                          | #include <scpp/core/scalars.hpp> | by value. Comparison reads both        |
+|     $b string = "b";   |                                                                         | #include <scpp/string.hpp>       | strings by reference. Neither sibling  |
+| $s = $a . $b;          |                                                                         | No unit header.                  | can mutate the other here.             |
+| $ok = $a < $b;         |                                                                         |                                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::echo_bytes("A", 1);                                               | .cpp includes                    | Output bindings select literal bytes,  |
 |     $n int = 8;        | scpp::echo_int(var_n_0);                                                | #include <scpp/core/scalars.hpp> | integer output and borrowed strings.   |
@@ -319,6 +373,12 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                                            |                                                                                                    | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
 |                                            |                                                                                                    | No unit header.                  |                                        |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | scpp::mixed var_sum_2 = scpp::boxed_add_mixed_mixed(var_x_0, var_y_1);                             | .cpp includes                    | The published helper checks the tags.  |
+|     $x mixed = 3;                          | scpp::bool_t var_before_3 = scpp::boxed_less_int64_mixed(2LL, var_x_0);                            | #include <scpp/core/scalars.hpp> | Both locals can be borrowed directly.  |
+|     $y mixed = 4;                          |                                                                                                    | #include <scpp/mixed.hpp>        | A literal can also precede a box.      |
+| $sum = $x + $y;                            |                                                                                                    | No unit header.                  |                                        |
+| $before = 2 < $x;                          |                                                                                                    |                                  |                                        |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                                      | scpp::dynamic var_y_1 = scpp::boxed_add_dynamic_int64(var_x_0, 2LL);                               | .cpp includes                    | The helpers read the dynamic local by  |
 |     $x dynamic = 8;                        | scpp::bool_t var_b_2 = scpp::boxed_less_dynamic_int64(var_x_0, 3LL);                               | #include <scpp/core/scalars.hpp> | reference and take the literal by      |
 | $y = $x + 2;                               |                                                                                                    | #include <scpp/dynamic.hpp>      | value. Runtime dispatch checks the     |
@@ -341,7 +401,31 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 
 Mixed and dynamic use the same argument lowering for their scalar factories. In the keyed write above, `8L` already has the factory’s `scpp::int64` parameter type on this target. An `int` local passes directly and a byte local needs widening. A checked float-to-integer conversion or explicit boxed-to-integer extraction already returns the factory parameter type. The runtime validates the key before the store. C++ chooses the order of key validation and RHS evaluation, so RHS effects may occur even when the key is invalid.
 
+## Free calls with scalar literal arguments
+
+```text
++-----------------------------------------+---------------------------------------------+----------------------------------+----------------------------------------+
+| PHP-flavor pattern                      | Lowered C++ code                            | Lowered C++ header code          | Generation and lowering                |
++=========================================+=============================================+==================================+========================================+
+| Given                                   | scpp::int64 var_x_0 = sum_(number_(), 2LL); | .cpp includes                    | The integer literal cannot observe the |
+|     function number(): int {            | scpp::int64 var_y_1 = sum_(2LL, number_()); | #include <scpp/core/scalars.hpp> | call or fail during parameter setup.   |
+|         return 4;                       |                                             | No unit header.                  | Each invocation evaluates number once. |
+|     }                                   |                                             |                                  |                                        |
+|     function sum(int $a, int $b): int { |                                             |                                  |                                        |
+|         return $a + $b;                 |                                             |                                  |                                        |
+|     }                                   |                                             |                                  |                                        |
+| $x = sum(number(), 2);                  |                                             |                                  |                                        |
+| $y = sum(2, number());                  |                                             |                                  |                                        |
++-----------------------------------------+---------------------------------------------+----------------------------------+----------------------------------------+
+```
+
 ## Functions, namespaces and project units
+
+The same single-reference call spelling applies inside a forwarding function. In
+`function forward(int &$x): void { bump($x); }`, the call emits
+`bump_(var_x_0);`. Preparation has already verified the parameter's storage type,
+and both functions refer to the caller's original variable.
+
 
 ```text
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+

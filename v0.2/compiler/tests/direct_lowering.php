@@ -61,6 +61,17 @@ foreach (flavor::cases() as $flavor)
 	verify(!str_contains($safe, '([&]()'), 'Trivial operands or identity arguments still wrapped');
 	verify(!str_contains($safe, '&&>('), 'Scalar identity arguments still moved');
 	verify(str_contains($safe, '(var_x_0 * 3LL)'), 'Original arithmetic grouping lost');
+	$number = $fn('number', '', 'int', 'echo "N"; return 4;');
+	$three = $fn('three', $param('byte', 'a') . ',' . $param('int', 'b') . ',' . $param('int', 'c'),
+		'int', 'return (int)' . $var('a') . ' + ' . $var('b') . ' + ' . $var('c') . ';');
+	$literal_calls = $emit($sum . $three . $number
+		. 'echo sum(number(),2), sum(2,number()), three(255,number(),1), sum(number()); return 8;');
+	foreach (['sum_(number_(), 2LL)', 'sum_(2LL, number_())', 'three_(static_cast<scpp::uint8>(255LL), number_(), 1LL)',
+		'sum_(number_(), 3LL)'] as $call) {
+		verify(str_contains($literal_calls, $call), 'Missing direct source call: ' . $call);
+	}
+	verify(!str_contains($literal_calls, 'argument_'), 'Scalar literal peer required temporary storage');
+	$fixtures[$flavor->name . '_literal_peers'] = ['cpp' => $literal_calls, 'stdout_hex' => bin2hex('N6N6N260N7')];
 	$s = $var('s');
 	$concat = $flavor === flavor::php ? '.' : '+';
 	$string = $decl('s', 'string', '"hi"');
@@ -70,11 +81,22 @@ foreach (flavor::cases() as $flavor)
 		&& str_contains($bytes, 'var_s_0 == scpp::string{"hi!\0x", 5}') && !str_contains($bytes, '([&]()'),
 		'String local and literal should use the direct runtime operators');
 	$fixtures[$flavor->name . '_string_literal'] = ['cpp' => $bytes, 'stdout_hex' => bin2hex("hi!\0x1")];
-	foreach (["$s === $s" => 'bool', '"hi" === ' . $s => 'bool', $s . ' !== "hi"' => 'bool',
-		$s . ' == "hi"' => 'bool', "$s $concat $s" => 'string'] as $expression => $result_type) {
-		$cpp = $emit($string . $decl('v', $result_type, $expression) . 'return 8;');
-		verify(str_contains($cpp, 'const auto binary_left'), 'Unexpected direct lowering for ' . $expression);
+	$peer = $var('peer');
+	$stable = $string . $decl('peer', 'string', '"hi"');
+	foreach (['===', '!==', '==', '!=', '<', '<=', '>', '>=', $concat] as $operator) {
+		$cpp = $emit($stable . $decl('v', $operator === $concat ? 'string' : 'bool', "$s $operator $peer") . 'return 8;');
+		verify(!str_contains($cpp, 'binary_left'), 'Unexpected string snapshots for ' . $operator);
 	}
+	$append = $fn('append_copy', $param('string', 's', true) . ',' . $param('string', 'peer', true),
+		'void', "$s = $s $concat $peer;");
+	$long = $decl('s', 'string', '"abcdefghijklmnopqrstuvw\0"');
+	$aliased = $emit($append . $long . 'if ("short" === ' . $s . ") { return 9; } append_copy($s,$s); if ($s !== $s) { return 9; } echo $s; return 8;");
+	verify(str_contains($aliased, 'var_s_0 = (var_s_0 + var_peer_1);'), 'Expected direct reference parameter operands');
+	$fixtures[$flavor->name . '_aliased_strings'] = ['cpp' => $aliased, 'stdout_hex' => bin2hex(str_repeat("abcdefghijklmnopqrstuvw\0", 2))];
+	$change_string = $fn('replace_text', $param('string', 's', true), 'string', "$s = \"new\"; return \"R\";");
+	$effectful = $emit($change_string . $string . "echo ($s $concat replace_text($s)), $s; return 8;");
+	verify(str_contains($effectful, 'const auto binary_left = var_s_0;'), 'Borrowed string lost its snapshot before a mutating RHS');
+	$fixtures[$flavor->name . '_string_mutation'] = ['cpp' => $effectful, 'stdout_hex' => bin2hex('hiRnew')];
 	$x = $var('x');
 	$bump = $fn('bump', $param('int', 'x', true), 'void', "$x++;");
 	$caller = $decl('x', 'int', '1') . "bump($x); echo $x; return 8;";
@@ -83,8 +105,9 @@ foreach (flavor::cases() as $flavor)
 	$fixtures[$flavor->name . '_reference_local'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2')];
 	$forward = $fn('forward', $param('int', 'x', true), 'void', "bump($x);");
 	$pair = $fn('pair', $param('int', 'x', true) . ', ' . $param('int', 'n'), 'void', "$x++;");
-	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "pair($x, 1); return 8;");
-	verify(str_contains($cpp, 'bump_(argument_') && str_contains($cpp, 'pair_(argument_'), 'Other reference call forms changed');
+	$cpp = $emit($bump . $forward . $pair . $decl('x', 'int', '1') . "forward($x); pair($x, 1); echo $x; return 8;");
+	verify(str_contains($cpp, 'bump_(var_x_0);') && str_contains($cpp, 'pair_(argument_'), 'Expected direct forwarding and ordered multi-argument binding');
+	$fixtures[$flavor->name . '_forward_reference'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('3')];
 	$change = $fn('change', $param('string', 's'), 'void', $s . ' = "changed"; echo ' . $s . ';');
 	$cpp = $emit($change . $string . "change($s); echo $s; return 8;");
 	verify(str_contains($cpp, 'change_(var_s_0);'), 'The by-value string parameter should make the copy');
@@ -102,14 +125,27 @@ foreach (flavor::cases() as $flavor)
 		$fixtures[$flavor->name . '_checked_parameter_' . $number] = $fixture;
 	}
 	$divide = $emit('echo (8 / 2) + 1; return 8;');
-	verify(str_contains($divide, 'const auto binary_left = scpp::int64_divide(8LL, 2LL);'), 'Nested checked division should feed the existing outer snapshot directly');
+	verify(str_contains($divide, '(scpp::int64_divide(8LL, 2LL) + 1LL)'), 'Nested checked division should feed the addition directly');
+	$fixtures[$flavor->name . '_checked_literal'] = ['cpp' => $divide, 'stdout_hex' => bin2hex('5')];
+	$xor = $emit($decl('a', 'bool', 'true') . $decl('b', 'bool', 'false')
+		. 'if (!(' . $var('a') . ' xor ' . $var('b') . ') || (false && (1 / 0))) { return 9; } return 8;');
+	verify(str_contains($xor, '!(var_a_0 != var_b_1)') && !str_contains($xor, 'logical_left'), 'Expected grouped direct xor');
+	$fixtures[$flavor->name . '_local_xor'] = ['cpp' => $xor, 'stdout_hex' => ''];
 	$producers = $fn('left', '', 'int', 'echo "L"; return 10;') . $fn('right', '', 'int', 'echo "R"; return 3;');
-	foreach (['/' => ['divide', '3'], '%' => ['remainder', '1']] as $operator => [$helper, $expected]) {
+	foreach (['/' => ['divide', '3'], '%' => ['remainder', '1'], '<<' => ['shift_left', '80'],
+		'>>' => ['shift_right', '1'], '**' => ['power', '1000']] as $operator => [$helper, $expected]) {
 		$cpp = $emit($producers . "echo left() $operator right(); return 8;");
 		verify(str_contains($cpp, "scpp::int64_{$helper}(left_(), right_())"), 'Expected direct by-value arithmetic helper');
 		$fixtures[$flavor->name . '_call_' . $helper] = ['cpp' => $cpp,
 			'stdout_hex' => array_map('bin2hex', ['LR' . $expected, 'RL' . $expected])];
 	}
+	$float_calls = $emit($producers . 'if (left() / (float)right() > 3.0) { echo 1; } return 8;');
+	verify(str_contains($float_calls, 'scpp::float64_divide(static_cast<scpp::float64>(left_()), (static_cast<scpp::float64>(right_())))'),
+		'Promoted floating divide should consume each argument directly');
+	$fixtures[$flavor->name . '_call_float_divide'] = ['cpp' => $float_calls, 'stdout_hex' => array_map('bin2hex', ['LR1', 'RL1'])];
+	$failure = $emit($producers . 'echo left() << (1 % 0); return 8;');
+	$fixtures[$flavor->name . '_call_argument_failure'] = ['cpp' => $failure,
+		'stdout_hex' => array_map('bin2hex', ['', 'L']), 'catch_domain_error' => 'modulo_by_zero'];
 	foreach (['int' => 'int64', 'byte' => 'uint8'] as $name => $native) {
 		$source = $decl('a', $name, '6') . $decl('b', $name, '2');
 		$source .= $decl('x', $name, $var('a') . '/' . $var('b')) . $decl('y', $name, $var('b') . '%' . $var('b'));
@@ -189,10 +225,15 @@ foreach (flavor::cases() as $flavor)
 		'Three-way comparison of calls must compare their snapshots');
 	$fixtures[$flavor->name . '_three_way_calls'] = ['cpp' => $calls, 'stdout_hex' => bin2hex('-111')];
 	$promoted = $emit($decl('a', 'byte', '6') . $decl('b', 'int', '2') . 'echo ' . $var('a') . '/' . $var('b') . '; return 8;');
-	verify(str_contains($promoted, 'scpp::int64_divide(binary_left, binary_right)'), 'Operand promotion lost its existing snapshots');
+	verify(str_contains($promoted, 'scpp::int64_divide(static_cast<scpp::int64>(var_a_0), var_b_1)'), 'Expected direct promoted division');
 	$floating = $emit($decl('a', 'float', '6.0') . $decl('b', 'float', '2.0')
 		. $decl('x', 'float', $var('a') . '/' . $var('b')) . 'return 8;');
-	verify(str_contains($floating, 'scpp::float64_divide(binary_left, binary_right)'), 'Floating division changed lowering');
+	verify(str_contains($floating, 'scpp::float64_divide(var_a_0, var_b_1)'), 'Expected direct float division');
+	$change = $fn('change_int', $param('int', 'x', true), 'int', "$x = 90; echo \"C\"; return 2;");
+	$mark = $fn('mark_int', $param('int', 'v'), 'int', 'echo ' . $var('v') . '; return ' . $var('v') . ';');
+	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
+		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
+	$fixtures[$flavor->name . '_ordered_call_peers'] = ['cpp' => $ordered_calls, 'stdout_hex' => bin2hex('C10459')];
 	$code = $sum
 		. $fn('bump', $param('int', 'x', true), 'int', $var('x') . '=9; return 2;')
 		. $fn('pick', $param('string', 'a') . ',' . $param('string', 'b'), 'string', 'echo ' . $var('a') . '; return ' . $var('b') . ';')
@@ -210,12 +251,19 @@ foreach (flavor::cases() as $flavor)
 	verify(str_contains($cpp, 'static_cast<scpp::string&&>'), 'String move/copy preservation lost');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('33459oldR2')];
 	$fixtures[$flavor->name . '_failure_order'] = ['cpp' => $emit('echo (1/0) + (1%0); return 8;'),
-		'stdout_hex' => '', 'catch_domain_error' => 'division_by_zero'];
+		'stdout_hex' => '', 'catch_domain_error' => ['division_by_zero', 'modulo_by_zero']];
 	$checked = $fn('accept_byte', $param('byte', 'a') . ',' . $param('int', 'b'), 'int', 'return 1;')
 		. $fn('bad', '', 'int', 'echo "B"; return 300;')
 		. $fn('later', '', 'int', 'echo "WRONG"; return 1;')
 		. 'echo accept_byte(bad(),later()); return 8;';
-	$fixtures[$flavor->name . '_conversion_order'] = ['cpp' => $emit($checked), 'stdout_hex' => bin2hex('B'), 'catch_out_of_range' => true];
+	$failing = $fn('reject_byte', $param('byte', 'a') . ',' . $param('int', 'b'), 'int', 'echo "CALLEE"; return 1;')
+		. $fn('outside_byte', '', 'int', 'echo "B"; return 300;') . 'echo reject_byte(outside_byte(),2); return 8;';
+	$cpp = $emit($failing);
+	verify(str_contains($cpp, 'reject_byte_(scpp::checked_int64_to_uint8(outside_byte_()), 2LL)'),
+		'Only the checked argument can have effects');
+	$fixtures[$flavor->name . '_sole_checked_argument'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('B'),
+		'catch_out_of_range' => 'integer_cast_out_of_range'];
+	$fixtures[$flavor->name . '_conversion_order'] = ['cpp' => $emit($checked), 'stdout_hex' => bin2hex('B'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
 }
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");

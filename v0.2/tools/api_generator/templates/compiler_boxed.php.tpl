@@ -39,7 +39,13 @@ final class type_@name@ extends boxed_type_definition
 		};
 	}
 
-@direct_method@	/** STATIC METHODS */
+	/** Each admitted pair calls a checked helper; its borrowed operands must survive sibling evaluation. */
+	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
+	{
+		return self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right);
+	}
+
+	/** STATIC METHODS */
 	public static function instance(): self
 	{
 		return self::$instance ??= new self('@name@');
