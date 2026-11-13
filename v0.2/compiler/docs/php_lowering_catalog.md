@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 65 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 66 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -96,6 +96,17 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $x = $a + $b * 2;        |                                                                                                               |                                  | sums directly, including nested sums.  |
 | $y = $a + $a;            |                                                                                                               |                                  |                                        |
 | $z = ($a+$a) + ($a+$a);  |                                                                                                               |                                  |                                        |
++--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                    | var_total_0 = (var_total_0 + line_(var_price_1, 3LL));                                                        | .cpp includes                    | The native integer addition reads the  |
+|     $total int=8;        |                                                                                                               | #include <scpp/core/scalars.hpp> | local once. The scalar value arguments |
+|     $price int=2;        |                                                                                                               | No unit header.                  | cannot mutate it, and the source call  |
+|     function line(       |                                                                                                               |                                  | is emitted once.                       |
+|         int $p,int $q    |                                                                                                               |                                  |                                        |
+|     ):int {              |                                                                                                               |                                  |                                        |
+|         return $p*$q;    |                                                                                                               |                                  |                                        |
+|     }                    |                                                                                                               |                                  |                                        |
+| $total = $total +        |                                                                                                               |                                  |                                        |
+|     line($price, 3);     |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    | scpp::int64 var_x_2 = scpp::int64_divide(var_a_0, var_b_1);                                                   | .cpp includes                    | Identity-converted operands use the    |
 |     $a int = 6;          | scpp::int64 var_y_3 = scpp::int64_remainder(var_a_0, var_b_1);                                                | #include <scpp/arithmetic.hpp>   | checked helpers in native call order.  |

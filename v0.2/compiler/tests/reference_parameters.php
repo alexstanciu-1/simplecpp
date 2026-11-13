@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
-	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program, passing_mode};
+	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program, passing_mode, compilation_session, prepared_entry, prepared_program};
 
 function verify(bool $ok, string $message): void
 {
@@ -168,6 +168,21 @@ foreach (flavor::cases() as $flavor)
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Invalid reference binding did not recover');
 		verify($session->entry->entry->ast === $literal_caller, 'Binding recovery reparsed caller');
+		// A parameter mode edit changes the caller's direct-addition proof.
+		file_put_contents($directory . '/main.' . $flavor->name,
+			$decl('x', 'int', '8') . 'return ' . $var('x') . '+f(' . $var('x') . ');');
+		$emit_caller = static fn(compilation_session $session): array => Cpp_Program::emit(new prepared_program(
+			$session->entry_key(), $session->files(), new prepared_entry($session->entry->entry->ast, $target), $session))->files;
+		foreach ([false, true, false] as $ref) {
+			file_put_contents($lib, $fn('f', [$p('v', 'int', $ref)], 'int', 'return 2;'));
+			$session = $compiler->frontend($directory, $session);
+			Incremental_Preparation::prepare($session, $target);
+			$files = $emit_caller($session);
+			$fresh = $compiler->frontend($directory);
+			Incremental_Preparation::prepare($fresh, $target);
+			verify($files === $emit_caller($fresh), 'Incremental addition differs from fresh output after mode edit');
+			verify(str_contains(implode("\n", $files), '(var_x_0 + f_(var_x_0))') === !$ref, 'Incorrect addition after parameter mode edit');
+		}
 	}
 	finally {
 		foreach (glob($directory . '/*') as $path) {

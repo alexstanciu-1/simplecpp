@@ -31,7 +31,8 @@ def qualify(directory, compilers, flags):
                          'shared_constructor_direct', 'shared_constructor_ordered', 'shared_constructor_failure',
                          'inline_method_arguments', 'inline_method_failure', 'shared_replace', 'shared_field_replace',
                          'shared_empty', 'shared_field_empty', 'shared_checked', 'shared_field_checked',
-                         'temporary_lifetime', 'temporary_literals', 'temporary_receiver_failure', 'temporary_argument_failure'):
+                         'temporary_lifetime', 'temporary_literals', 'temporary_receiver_failure', 'temporary_argument_failure',
+                         'local_call_addition', 'local_call_alias', 'local_call_failure'):
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []

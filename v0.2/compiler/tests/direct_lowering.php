@@ -376,6 +376,23 @@ foreach (flavor::cases() as $flavor)
 		$fixtures[$flavor->name . '_' . $kind . '_constructor_failure'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
 			'catch_out_of_range' => 'integer_cast_out_of_range'];
 	}
+	$line = $fn('line', $param('int', 'price') . ',' . $param('int', 'qty') . '=3', 'int',
+		'echo "L"; return ' . $var('price') . '*' . $var('qty') . ';');
+	$addition = $emit($line . $decl('x', 'int', '8') . $decl('price', 'int', '2')
+		. "$x = $x + line(" . $var('price') . ",3); echo $x; echo line($x) + $x; return 8;");
+	verify(str_contains($addition, 'var_x_0 = (var_x_0 + line_(var_price_1, 3LL));')
+		&& str_contains($addition, '(line_(var_x_0, 3LL) + var_x_0)'), 'Expected direct local and by-value call addition');
+	$fixtures[$flavor->name . '_local_call_addition'] = ['cpp' => $addition, 'stdout_hex' => bin2hex('L14L56')];
+	$aliases = $emit($line . $change . $decl('x', 'int', '8')
+		. "echo $x + change_int($x); $x=8; echo $x + line(change_int($x),3); return 8;");
+	verify(substr_count($aliases, 'const auto binary_left = var_x_0;') === 2, 'Lost a snapshot across direct or nested reference mutation');
+	$fixtures[$flavor->name . '_local_call_alias'] = ['cpp' => $aliases, 'stdout_hex' => bin2hex('C10CL14')];
+	$checked_line = $fn('checked_line', $param('byte', 'price'), 'int', 'echo "CALLEE"; return 1;');
+	$fail_add = $emit($checked_line . $decl('x', 'int', '8') . $decl('price', 'int', '0') . $var('price') . '+=300;'
+		. "echo $x + checked_line(" . $var('price') . '); return 8;');
+	verify(str_contains($fail_add, '(var_x_0 + checked_line_(scpp::checked_int64_to_uint8(static_cast<scpp::int64>(var_price_1))))'),
+		'Direct addition must keep checked parameter conversion');
+	$fixtures[$flavor->name . '_local_call_failure'] = ['cpp' => $fail_add, 'stdout_hex' => '', 'catch_out_of_range' => 'integer_cast_out_of_range'];
 	$ordered_calls = $emit($sum . $change . $mark . $decl('x', 'int', '8')
 		. "echo sum($x,change_int($x)), sum(mark_int(4),mark_int(5)); return 8;");
 	verify(preg_match('/return sum_\(argument_[0-9]+_0, change_int_\(var_x_0\)\);/', $ordered_calls) === 1

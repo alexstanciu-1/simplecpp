@@ -415,3 +415,28 @@ method, then fails to lock in the following statement. Separate cases check
 literal arguments, a failure in the factory before any argument prints, and a
 first-argument narrowing failure after the factory returns. The catalog shows
 the receiver binding and literal arguments for a factory-returned inline record.
+
+### Native compile-time checkpoint
+
+The paired benchmark compares the audited baseline with the instance-receiver
+checkpoint. The selected candidate was eager integer addition of a plain local and
+a by-value scalar call. Runtime adapter calls remain a follow-up. The report
+records the full clean and one-unit native rebuild timings, dispersion, generated
+shape and the isolated candidate experiments. [Measurements and candidate selection](../../samples/capability-benchmarks/benchmark-2026-11-13-lowering.md)
+
+### Follow-up batch — eager integer addition with a by-value scalar call
+
+The generated native integer addition rule uses the existing identity conversions
+and ordinary-local binding. Either operand may be the local. The free-function
+operand accepts only by-value trivial scalar parameters supplied by plain scalar
+reads or literals (including defaults). Its own preparation, checked conversions
+and argument ordering still apply. The addition remains potentially effectful
+to enclosing consumers. There are no additional preparation facts or callee-body
+walks. Both direct and nested reference mutations retain the existing snapshots.
+
+Production emission on the medium billing project matches the timed experimental
+entry unit byte-for-byte (5,527 bytes, 48 direct additions, zero sequencing
+lambdas); all sibling translation units match too. Both native drivers printed
+`invoice: 10469` and exited with status 8. The mode-edit regression switches
+a foreign parameter from value to reference and back, comparing the caller
+with a fresh compilation at each step. [Catalog](../../compiler/docs/php_lowering_catalog.md)
