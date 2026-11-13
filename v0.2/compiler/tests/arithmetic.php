@@ -103,7 +103,7 @@ foreach (flavor::cases() as $flavor)
 			. $fn('zero', '', 'int', 'echo "R"; return 0;')
 			. 'echo left() ' . $operator . ' zero(); return 8;';
 		$fixtures[$flavor->name . '_' . $error] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
-			'stdout_hex' => bin2hex('LR'), 'catch_domain_error' => $error];
+			'stdout_hex' => array_map('bin2hex', ['LR', 'RL']), 'catch_domain_error' => $error];
 		// Regression for the current outer lowering: a failed checked call suppresses later().
 		$failure = $fn('later', '', 'int', 'echo "WRONG"; return 2;')
 			. 'echo (1 ' . $operator . ' 0) + later(); return 8;';

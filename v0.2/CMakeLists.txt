@@ -47,6 +47,9 @@ add_custom_target(scpp_layout_facts
   COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/probe.py
     --cxx ${CMAKE_CXX_COMPILER} ${probe_flag_args} "--flag=--ld-path=${SCPP_MOLD_LINKER}"
     --cross-compiling ${CMAKE_CROSSCOMPILING} --out ${CMAKE_CURRENT_BINARY_DIR}/native-layout
+  COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/qualification.py
+    --cxx ${CMAKE_CXX_COMPILER} ${probe_flag_args} --flag=-std=c++23 "--link-flag=--ld-path=${SCPP_MOLD_LINKER}"
+    --cache ${CMAKE_CURRENT_BINARY_DIR}/native-qualification
   BYPRODUCTS ${native_facts} ${native_context}
   VERBATIM)
 set(generator_launcher ${CMAKE_CURRENT_BINARY_DIR}/scpp_api_generator)
@@ -316,6 +319,8 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_logical_native PROPERTIES TIMEOUT 60)
   add_test(NAME compiler_arithmetic_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/arithmetic_native.py)
   set_tests_properties(compiler_arithmetic_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_arithmetic_argument_order COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/arithmetic_argument_order.py --cxx ${CMAKE_CXX_COMPILER})
   add_test(NAME arithmetic_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/arithmetic_runtime.py)
   add_test(NAME compiler_comparisons COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/comparisons.php)
   add_test(NAME compiler_comparisons_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/comparisons_native.py)
@@ -421,6 +426,8 @@ if(BUILD_TESTING)
     --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/scalar-contract --emit
     --cxx ${CMAKE_CXX_COMPILER} --flag=-stdlib=libc++)
+  add_test(NAME native_qualification_cache COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/test_qualification.py --cxx ${CMAKE_CXX_COMPILER})
   add_test(NAME native_probe_contract COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/test_integration.py
     --generator ${api_tooling} --cxx ${CMAKE_CXX_COMPILER}

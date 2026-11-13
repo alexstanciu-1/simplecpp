@@ -103,6 +103,13 @@ foreach (flavor::cases() as $flavor)
 	}
 	$divide = $emit('echo (8 / 2) + 1; return 8;');
 	verify(str_contains($divide, 'const auto binary_left = scpp::int64_divide(8LL, 2LL);'), 'Nested checked division should feed the existing outer snapshot directly');
+	$producers = $fn('left', '', 'int', 'echo "L"; return 10;') . $fn('right', '', 'int', 'echo "R"; return 3;');
+	foreach (['/' => ['divide', '3'], '%' => ['remainder', '1']] as $operator => [$helper, $expected]) {
+		$cpp = $emit($producers . "echo left() $operator right(); return 8;");
+		verify(str_contains($cpp, "scpp::int64_{$helper}(left_(), right_())"), 'Expected direct by-value arithmetic helper');
+		$fixtures[$flavor->name . '_call_' . $helper] = ['cpp' => $cpp,
+			'stdout_hex' => array_map('bin2hex', ['LR' . $expected, 'RL' . $expected])];
+	}
 	foreach (['int' => 'int64', 'byte' => 'uint8'] as $name => $native) {
 		$source = $decl('a', $name, '6') . $decl('b', $name, '2');
 		$source .= $decl('x', $name, $var('a') . '/' . $var('b')) . $decl('y', $name, $var('b') . '%' . $var('b'));
