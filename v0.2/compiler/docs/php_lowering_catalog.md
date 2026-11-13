@@ -2,13 +2,13 @@
 
 Doc Status: supporting
 
-Review snapshot of the v0.2 compiler on `v0.2/develop-php`, including the working-tree vector replacement and native-argument changes. Examples use the default runtime publication on an LP64 target where `scpp::int64` is `long`. They describe current output, including redundant casts and temporaries.
+Review snapshot of the v0.2 compiler on `v0.2/develop-php`. Examples use the default runtime publication on an LP64 target where `scpp::int64` is `long`. They describe current output, including redundant casts and temporaries.
 
 Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::emit`. **Given** introduces indented setup lines. The C++ excerpt omits setup statements inside the entry body, except in the whole-unit example. The project rows show both the caller and the declaration owner. The only filename abbreviation is `lib.hpp` for the generated SHA-256 unit-header basename. Line breaks and indentation are normalized for the tables. Synthesized identifiers and literal spellings are preserved.
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 48 examples were emitted with the PHP frontend, compiled and linked with Clang against the generated runtime, and executed successfully with the expected entry exit code of 8. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 49 examples were emitted with the PHP frontend, compiled and linked with Clang against the generated runtime, and executed successfully with the expected entry exit code of 8. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -144,9 +144,9 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | PHP-flavor pattern     | Lowered C++ code                                                        | Lowered C++ header code          | Generation and lowering                |
 +========================+=========================================================================+==================================+========================================+
 | $s string = "a\0b";    | scpp::string var_s_0 = scpp::string{"a\0b", 3};                         | .cpp includes                    | The string export supplies the owning  |
-|                        |                                                                         | #include <scpp/core/scalars.hpp> | type. The literal renderer emits exact |
-|                        |                                                                         | #include <scpp/string.hpp>       | bytes and their length.                |
-|                        |                                                                         | No unit header.                  |                                        |
+|                        |                                                                         | #include <scpp/string.hpp>       | type. The literal renderer emits exact |
+|                        |                                                                         | No unit header.                  | bytes and their length.                |
+|                        |                                                                         |                                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | var_s_0 = (var_s_0 + scpp::string{"!", 1});                             | .cpp includes                    | The string local and literal feed the  |
 |     $s string = "hi";  | scpp::bool_t var_ok_1 = ((var_s_0 == scpp::string{"hi!", 3}));          | #include <scpp/core/scalars.hpp> | runtime operators directly. The        |
@@ -154,11 +154,10 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $ok = $s === "hi!";    |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::echo_bytes("A", 1);                                               | .cpp includes                    | Output bindings select literal bytes,  |
-|     $n int = 8;        | scpp::echo_int(var_n_0);                                                | #include <scpp/core/scalars.hpp> | integer output and a retained string   |
-|     $s string = "ok";  | {                                                                       | #include <scpp/output.hpp>       | reference for the data/size pair.      |
-| echo "A", $n, $s;      |     const auto& output_value = var_s_1;                                 | #include <scpp/string.hpp>       |                                        |
-|                        |     scpp::echo_bytes(output_value.data(), output_value.size());         | No unit header.                  |                                        |
-|                        | }                                                                       |                                  |                                        |
+|     $n int = 8;        | scpp::echo_int(var_n_0);                                                | #include <scpp/core/scalars.hpp> | integer output and borrowed strings.   |
+|     $s string = "ok";  | scpp::echo_string(var_s_1);                                             | #include <scpp/output.hpp>       |                                        |
+| echo "A", $n, $s;      |                                                                         | #include <scpp/string.hpp>       |                                        |
+|                        |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::int64 var_n_1 = scpp::str::byte_length(var_s_0);                  | .cpp includes                    | Runtime metadata publishes the unary   |
 |     $s string = "abc"; |                                                                         | #include <scpp/core/scalars.hpp> | function. Preparation resolves its     |
@@ -204,9 +203,9 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | }                                | }                                                         | #include <scpp/output.hpp>       | declaration, condition and update      |
 |                                  |                                                           | No unit header.                  | handlers.                              |
 +----------------------------------+-----------------------------------------------------------+----------------------------------+----------------------------------------+
-| return 8;                        | return static_cast<int>(8LL);                             | .cpp includes                    | Entry preparation proves the process   |
-|                                  |                                                           | #include <scpp/core/scalars.hpp> | exit range. The entry emitter supplies |
-|                                  |                                                           | No unit header.                  | the native int result.                 |
+| return 8;                        | return 8;                                                 | No unit header.                  | Entry preparation proves the process   |
+|                                  |                                                           |                                  | exit range. The entry emitter supplies |
+|                                  |                                                           |                                  | the native int result.                 |
 +----------------------------------+-----------------------------------------------------------+----------------------------------+----------------------------------------+
 | lib                              | return scpp::entry_exit_checked(number_());               | .cpp includes                    | An unknown source int return uses the  |
 | function number(): int {         |                                                           | #include <scpp/core/scalars.hpp> | selected target’s checked exit         |
@@ -225,9 +224,9 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | PHP-flavor pattern            | Lowered C++ code                                                                                | Lowered C++ header code          | Generation and lowering                |
 +===============================+=================================================================================================+==================================+========================================+
 | $v vector<int> = [];          | scpp::vector_int64 var_v_0 = scpp::vector_int64{};                                              | .cpp includes                    | Publication registers the concrete     |
-|                               |                                                                                                 | #include <scpp/core/scalars.hpp> | vector specialization. Its generated   |
-|                               |                                                                                                 | #include <scpp/vectors.hpp>      | handler emits the exported type and    |
-|                               |                                                                                                 | No unit header.                  | empty constructor.                     |
+|                               |                                                                                                 | #include <scpp/vectors.hpp>      | vector specialization. Its generated   |
+|                               |                                                                                                 | No unit header.                  | handler emits the exported type and    |
+|                               |                                                                                                 |                                  | empty constructor.                     |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                         | (var_v_0).append(8L);                                                                           | .cpp includes                    | Append and at use the published        |
 |     $v vector<int> = [];      | scpp::int64 var_x_1 = (var_v_0).at(0L);                                                         | #include <scpp/core/scalars.hpp> | parameter type to select the native    |
@@ -269,65 +268,70 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $b = empty($v);               |                                                                                                 | No unit header.                  | for shadowing functions.               |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | $h hash<int,string> = [];     | scpp::hash_int64_string var_h_0 = scpp::hash_int64_string{};                                    | .cpp includes                    | The generated specialization maps      |
-|                               |                                                                                                 | #include <scpp/core/scalars.hpp> | source hash<Value,Key> to a concrete   |
-|                               |                                                                                                 | #include <scpp/hashes.hpp>       | exported type.                         |
-|                               |                                                                                                 | No unit header.                  |                                        |
+|                               |                                                                                                 | #include <scpp/hashes.hpp>       | source hash<Value,Key> to a concrete   |
+|                               |                                                                                                 | No unit header.                  | exported type.                         |
+|                               |                                                                                                 |                                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                         | {                                                                                               | .cpp includes                    | The hash lowering snapshots the key    |
-|     $h hash<int,string> = []; |     const auto write_key = scpp::string{"k", 1};                                                | #include <scpp/core/scalars.hpp> | and converted value for set; the read  |
-| $h["k"] = 7;                  |     const auto write_value = 7L;                                                                | #include <scpp/hashes.hpp>       | calls the throwing value-copy          |
-| $x = $h["k"];                 |     (var_h_0).set(write_key, write_value);                                                      | #include <scpp/string.hpp>       | accessor.                              |
-|                               | }                                                                                               | No unit header.                  |                                        |
-|                               | scpp::int64 var_x_1 = (var_h_0).at(scpp::string{"k", 1});                                       |                                  |                                        |
+| Given                         | var_h_0.set(scpp::string{"k", 1}, 7L);                                                          | .cpp includes                    | The generated set binding takes the    |
+|     $h hash<int,string> = []; | scpp::int64 var_x_1 = var_h_0.at(scpp::string{"k", 1});                                         | #include <scpp/core/scalars.hpp> | typed key and value directly. The at   |
+| $h["k"] = 7;                  |                                                                                                 | #include <scpp/hashes.hpp>       | binding returns a copy and throws      |
+| $x = $h["k"];                 |                                                                                                 | #include <scpp/string.hpp>       | when the key is absent.                |
+|                               |                                                                                                 | No unit header.                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
 ## Carriers and boxed values
 
 ```text
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| PHP-flavor pattern                         | Lowered C++ code                                                                              | Lowered C++ header code          | Generation and lowering                |
-+============================================+===============================================================================================+==================================+========================================+
-| $a ?int = null;                            | scpp::nullable_int64 var_a_0 = ((void)(nullptr), scpp::nullable_int64{});                     | .cpp includes                    | Carrier publication supplies concrete  |
-| $b result<int> = 7;                        | scpp::result_int64 var_b_1 = scpp::result_int64{static_cast<scpp::int64>(7LL)};               | #include <scpp/carriers.hpp>     | state and payload types. Preparation   |
-|                                            |                                                                                               | #include <scpp/core/scalars.hpp> | selects empty versus value             |
-|                                            |                                                                                               | No unit header.                  | construction.                          |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | scpp::int64 var_x_1 = (var_a_0).value();                                                      | .cpp includes                    | Preparation approves payload           |
-|     $a nullable<int> = 8;                  |                                                                                               | #include <scpp/carriers.hpp>     | extraction; the generated carrier      |
-| $x int = $a;                               |                                                                                               | #include <scpp/core/scalars.hpp> | binding checks the value state.        |
-|                                            |                                                                                               | No unit header.                  |                                        |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | scpp::result_int64 var_b_1 = scpp::result_int64{static_cast<scpp::int64>((var_a_0).value())}; | .cpp includes                    | Preparation approves carrier           |
-|     $a nullable<int> = 8;                  |                                                                                               | #include <scpp/carriers.hpp>     | conversion. Lowering extracts the      |
-| $b result<int> = $a;                       |                                                                                               | #include <scpp/core/scalars.hpp> | checked payload and constructs the     |
-|                                            |                                                                                               | No unit header.                  | destination.                           |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $r result_or_false<bool> = false_sentinel; | scpp::result_or_false_bool_t var_r_0 = scpp::result_or_false_bool_t::from_false();            | .cpp includes                    | Only the payload state counts as       |
-| $b = isset($r);                            | scpp::bool_t var_b_1 = (var_r_0).has_value();                                                 | #include <scpp/carriers.hpp>     | present for this carrier. The compiler |
-|                                            |                                                                                               | #include <scpp/core/scalars.hpp> | emits its published value predicate    |
-|                                            |                                                                                               | No unit header.                  | directly, evaluating the operand once. |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(8L);                                          | .cpp includes                    | The mixed binding boxes the scalar and |
-| $y int = $x;                               | scpp::int64 var_y_1 = scpp::boxed_mixed_typed_destination_int64(var_x_0);                     | #include <scpp/core/scalars.hpp> | selects typed-destination extraction.  |
-|                                            |                                                                                               | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
-|                                            |                                                                                               | No unit header.                  |                                        |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | scpp::dynamic var_y_1 = scpp::boxed_add_dynamic_int64(var_x_0, 2LL);                          | .cpp includes                    | The helpers read the dynamic local by  |
-|     $x dynamic = 8;                        | scpp::bool_t var_b_2 = scpp::boxed_less_dynamic_int64(var_x_0, 3LL);                          | #include <scpp/core/scalars.hpp> | reference and take the literal by      |
-| $y = $x + 2;                               |                                                                                               | #include <scpp/dynamic.hpp>      | value. Runtime dispatch checks the     |
-| $b = $x < 3;                               |                                                                                               | No unit header.                  | stored payload kind.                   |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | {                                                                                             | .cpp includes                    | The boxed type constructs the runtime  |
-|     $x mixed = [];                         |     const auto write_key = scpp::boxed_key(scpp::string{"k", 1});                             | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
-| $x["k"] = 8;                               |     const auto write_value = scpp::mixed::from_integer(8L);                                   | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
-| $v = $x["k"];                              |     (var_x_0).source_set(write_key, write_value);                                             | #include <scpp/string.hpp>       |                                        |
-|                                            | }                                                                                             | No unit header.                  |                                        |
-|                                            | scpp::mixed var_v_1 = (var_x_0).source_read(scpp::boxed_key(scpp::string{"k", 1}));           |                                  |                                        |
-+--------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| PHP-flavor pattern                         | Lowered C++ code                                                                                   | Lowered C++ header code          | Generation and lowering                |
++============================================+====================================================================================================+==================================+========================================+
+| $a ?int = null;                            | scpp::nullable_int64 var_a_0 = ((void)(nullptr), scpp::nullable_int64{});                          | .cpp includes                    | Carrier publication supplies concrete  |
+| $b result<int> = 7;                        | scpp::result_int64 var_b_1 = scpp::result_int64{static_cast<scpp::int64>(7LL)};                    | #include <scpp/carriers.hpp>     | state and payload types. Preparation   |
+|                                            |                                                                                                    | #include <scpp/core/scalars.hpp> | selects empty versus value             |
+|                                            |                                                                                                    | No unit header.                  | construction.                          |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | scpp::int64 var_x_1 = (var_a_0).value();                                                           | .cpp includes                    | Preparation approves payload           |
+|     $a nullable<int> = 8;                  |                                                                                                    | #include <scpp/carriers.hpp>     | extraction; the generated carrier      |
+| $x int = $a;                               |                                                                                                    | #include <scpp/core/scalars.hpp> | binding checks the value state.        |
+|                                            |                                                                                                    | No unit header.                  |                                        |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | scpp::result_int64 var_b_1 = scpp::result_int64{static_cast<scpp::int64>((var_a_0).value())};      | .cpp includes                    | Preparation approves carrier           |
+|     $a nullable<int> = 8;                  |                                                                                                    | #include <scpp/carriers.hpp>     | conversion. Lowering extracts the      |
+| $b result<int> = $a;                       |                                                                                                    | #include <scpp/core/scalars.hpp> | checked payload and constructs the     |
+|                                            |                                                                                                    | No unit header.                  | destination.                           |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| $r result_or_false<bool> = false_sentinel; | scpp::result_or_false_bool_t var_r_0 = scpp::result_or_false_bool_t::from_false();                 | .cpp includes                    | Only the payload state counts as       |
+| $b = isset($r);                            | scpp::bool_t var_b_1 = (var_r_0).has_value();                                                      | #include <scpp/carriers.hpp>     | present for this carrier. The compiler |
+|                                            |                                                                                                    | #include <scpp/core/scalars.hpp> | emits its published value predicate    |
+|                                            |                                                                                                    | No unit header.                  | directly, evaluating the operand once. |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| $x mixed = 8;                              | scpp::mixed var_x_0 = scpp::mixed::from_integer(8L);                                               | .cpp includes                    | The mixed binding boxes the scalar and |
+| $y int = $x;                               | scpp::int64 var_y_1 = scpp::boxed_mixed_typed_destination_int64(var_x_0);                          | #include <scpp/core/scalars.hpp> | selects typed-destination extraction.  |
+|                                            |                                                                                                    | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
+|                                            |                                                                                                    | No unit header.                  |                                        |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | scpp::dynamic var_y_1 = scpp::boxed_add_dynamic_int64(var_x_0, 2LL);                               | .cpp includes                    | The helpers read the dynamic local by  |
+|     $x dynamic = 8;                        | scpp::bool_t var_b_2 = scpp::boxed_less_dynamic_int64(var_x_0, 3LL);                               | #include <scpp/core/scalars.hpp> | reference and take the literal by      |
+| $y = $x + 2;                               |                                                                                                    | #include <scpp/dynamic.hpp>      | value. Runtime dispatch checks the     |
+| $b = $x < 3;                               |                                                                                                    | No unit header.                  | stored payload kind.                   |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | var_x_0.source_set(scpp::boxed_key(scpp::string{"k", 1}), scpp::mixed::from_integer(8L));          | .cpp includes                    | The boxed type constructs the runtime  |
+|     $x mixed = [];                         | scpp::mixed var_v_1 = var_x_0.source_read(scpp::boxed_key(scpp::string{"k", 1}));                  | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
+| $x["k"] = 8;                               |                                                                                                    | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
+| $v = $x["k"];                              |                                                                                                    | #include <scpp/string.hpp>       |                                        |
+|                                            |                                                                                                    | No unit header.                  |                                        |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                                      | var_x_0.source_set(scpp::boxed_key(scpp::string{"k", 1}), scpp::dynamic::from_integer(number_())); | .cpp includes                    | C++ chooses the order of key checking  |
+|     $x dynamic = [];                       |                                                                                                    | #include <scpp/core/scalars.hpp> | and the call to number(). Both must    |
+|     function number(): int {               |                                                                                                    | #include <scpp/dynamic.hpp>      | succeed before source_set runs.        |
+|         return 8;                          |                                                                                                    | #include <scpp/string.hpp>       |                                        |
+|     }                                      |                                                                                                    | No unit header.                  |                                        |
+| $x["k"] = number();                        |                                                                                                    |                                  |                                        |
++--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
-Mixed and dynamic use the same argument lowering for their scalar factories. In the keyed write above, `8L` already has the factory’s `scpp::int64` parameter type on this target. An `int` local passes directly and a byte local needs widening. A checked float-to-integer conversion or explicit boxed-to-integer extraction already returns the factory parameter type. Both families validate the key before evaluating the value.
+Mixed and dynamic use the same argument lowering for their scalar factories. In the keyed write above, `8L` already has the factory’s `scpp::int64` parameter type on this target. An `int` local passes directly and a byte local needs widening. A checked float-to-integer conversion or explicit boxed-to-integer extraction already returns the factory parameter type. The runtime validates the key before the store. C++ chooses the order of key validation and RHS evaluation, so RHS effects may occur even when the key is invalid.
 
 ## Functions, namespaces and project units
 
@@ -358,17 +362,17 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 |                                          |                                                                     | void bump_(::scpp::int64 &var_x_0);              |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 | lib                                      | main                                                                | .cpp includes                                    | The caller resolves the explicit or    |
-| function greet(string $s = "hi"): void { | greet_(scpp::string{"hi", 2});                                      | #include <scpp/core/scalars.hpp>                 | default argument and applies the       |
-|     echo $s;                             | greet_(scpp::string{"hi", 2});                                      | #include <scpp/string.hpp>                       | prepared conversion. The parameter     |
-| }                                        | lib                                                                 | #include "lib.hpp"                               | takes the resulting string by value.   |
-| main                                     | void greet_(::scpp::string var_s_0)                                 | lib.cpp includes                                 |                                        |
-| greet();                                 | {                                                                   | #include <scpp/output.hpp>                       |                                        |
-| greet("hi");                             |     {                                                               | #include <scpp/string.hpp>                       |                                        |
-|                                          |         const auto& output_value = var_s_0;                         | #include "lib.hpp"                               |                                        |
-|                                          |         scpp::echo_bytes(output_value.data(), output_value.size()); | lib.hpp                                          |                                        |
-|                                          |     }                                                               | #pragma once                                     |                                        |
-|                                          | }                                                                   | #include <scpp/string.hpp>                       |                                        |
+| function greet(string $s = "hi"): void { | greet_(scpp::string{"hi", 2});                                      | #include <scpp/string.hpp>                       | default argument and applies the       |
+|     echo $s;                             | greet_(scpp::string{"hi", 2});                                      | #include "lib.hpp"                               | prepared conversion. The parameter     |
+| }                                        | lib                                                                 | lib.cpp includes                                 | takes the resulting string by value.   |
+| main                                     | void greet_(::scpp::string var_s_0)                                 | #include <scpp/output.hpp>                       |                                        |
+| greet();                                 | {                                                                   | #include <scpp/string.hpp>                       |                                        |
+| greet("hi");                             |     scpp::echo_string(var_s_0);                                     | #include "lib.hpp"                               |                                        |
+|                                          | }                                                                   | lib.hpp                                          |                                        |
+|                                          |                                                                     | #pragma once                                     |                                        |
+|                                          |                                                                     | #include <scpp/string.hpp>                       |                                        |
 |                                          |                                                                     | void greet_(::scpp::string var_s_0);             |                                        |
+|                                          |                                                                     |                                                  |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 | lib                                      | main                                                                | .cpp includes                                    | File-local import resolution selects   |
 | namespace Lib;                           | scpp::int64 var_x_0 = Lib_ns_id_(1LL);                              | #include <scpp/core/scalars.hpp>                 | the qualified declaration. Mangling    |
@@ -392,15 +396,15 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 |                                          |                                                                     | #include <scpp/core/scalars.hpp>                 |                                        |
 |                                          |                                                                     | extern ::scpp::int64 var_N;                      |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
-| Given                                    | void local_only_();                                                 | .cpp includes                                    | Same-unit calls use a private-to-unit  |
-|     function local_only(): void {        | void local_only_()                                                  | #include <scpp/core/scalars.hpp>                 | prototype in the .cpp. Header          |
-|         return;                          | {                                                                   | No unit header.                                  | publication requires an external       |
+| Given                                    | void local_only_();                                                 | No unit header.                                  | Same-unit calls use a private-to-unit  |
+|     function local_only(): void {        | void local_only_()                                                  |                                                  | prototype in the .cpp. Header          |
+|         return;                          | {                                                                   |                                                  | publication requires an external       |
 |     }                                    |     return;                                                         |                                                  | observer.                              |
 | local_only();                            | }                                                                   |                                                  |                                        |
 |                                          | int scpp_entry_body()                                               |                                                  |                                        |
 |                                          | {                                                                   |                                                  |                                        |
 |                                          |     local_only_();                                                  |                                                  |                                        |
-|                                          |     return static_cast<int>(8LL);                                   |                                                  |                                        |
+|                                          |     return 8;                                                       |                                                  |                                        |
 |                                          | }                                                                   |                                                  |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 ```

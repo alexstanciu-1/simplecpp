@@ -13,7 +13,8 @@ function declarationGroups(mixed $metadata): array {
     $contracts = [
         'string' => ['requires' => ['bool_t'], 'types' => ['string'], 'bindings' => []],
         'output' => ['requires' => [], 'types' => [], 'bindings' => [
-            ['operand' => 'int64', 'strategy' => 'integer'], ['operand' => 'string', 'strategy' => 'bytes']]],
+            ['operand' => 'int64', 'strategy' => 'integer'], ['operand' => 'string', 'strategy' => 'bytes'],
+            ['operand' => 'string', 'strategy' => 'string']]],
     ];
     $groups = [
         'scalar_core' => ['requires' => [],

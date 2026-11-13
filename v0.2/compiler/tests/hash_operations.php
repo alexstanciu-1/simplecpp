@@ -131,17 +131,23 @@ foreach (flavor::cases() as $flavor) {
 	$mutator = ($flavor === flavor::cpp ? "int mutate($parameter)" : "function mutate($parameter): int")
 		. '{' . $var('key') . ' = 2; echo "R"; return 7;}';
 	$order = $prepare($mutator . $decl('hash<int,int>', 'values', '[]') . $decl('int', 'key', '1')
-		. "$v" . '[' . $var('key') . '] = mutate(' . $var('key') . '); echo ' . "$v" . '[1]; return 8;');
-	$fixtures[$flavor->name . '-key-order'] = ['cpp' => (new Cpp_Emitter())->emit($order), 'stdout_hex' => bin2hex('R7')];
+		. $v . '[1] = 0;' . $v . '[2] = 0;' . $v . '[' . $var('key') . '] = mutate(' . $var('key') . ');'
+		. 'echo ' . $v . '[1], ' . $v . '[2], ' . $var('key') . '; return 8;');
+	$fixtures[$flavor->name . '-key-order'] = ['cpp' => (new Cpp_Emitter())->emit($order), 'stdout_hex' => array_map('bin2hex', ['R702', 'R072'])];
+
+	$effects = $function('string', 'key', 'echo "K"; return "01";') . $function('int', 'rhs', 'echo "R"; return 7;')
+		. $decl('hash<int,string>', 'values', '[]') . $v . '[key()] = rhs(); echo ' . $v . '["01"]; return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($effects));
+	verify(str_contains($cpp, 'var_values_0.set(key_(), rhs_());'), 'Expected a direct hash call with both producers');
+	$fixtures[$flavor->name . '-effectful-arguments'] = ['cpp' => $cpp, 'stdout_hex' => array_map('bin2hex', ['KR7', 'RK7'])];
 
 	$k = $var('key');
 	$item = $var('item');
 	$forms = $decl('hash<int,string>', 'values', '[]') . $decl('string', 'key', '"key"') . $decl('int', 'item', '2')
 		. $v . "[$k] = $item; echo " . $v . "[$k]; return 8;";
 	$cpp = (new Cpp_Emitter())->emit($prepare($forms));
-	verify(str_contains($cpp, 'const auto write_key = var_key_1; const auto write_value = var_item_2;')
-		&& str_contains($cpp, '.set(write_key, write_value)') && str_contains($cpp, '.at(var_key_1)'),
-		'Hash write must capture exact arguments and read must bind the string key directly');
+	verify(str_contains($cpp, 'var_values_0.set(var_key_1, var_item_2);') && str_contains($cpp, 'var_values_0.at(var_key_1)'),
+		'Hash read and write must pass exact arguments directly');
 	$fixtures[$flavor->name . '-exact-locals'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2')];
 
 	$h = $var('hash');
@@ -153,7 +159,7 @@ foreach (flavor::cases() as $flavor) {
 	$division = 'scpp::int64_divide(var_key_2, var_item_3)';
 	$remainder = 'scpp::int64_remainder(var_key_2, var_item_3)';
 	verify(str_contains($cpp, '#include <scpp/arithmetic.hpp>') && str_contains($cpp, ".append($division)")
-		&& str_contains($cpp, "const auto write_key = $remainder; const auto write_value = $division;")
+		&& str_contains($cpp, ".set($remainder, $division);")
 		&& str_contains($cpp, ".at($remainder)"), 'Collection arguments should use the exact checked helper result');
 	$fixtures[$flavor->name . '-checked-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('22')];
 
@@ -167,7 +173,7 @@ foreach (flavor::cases() as $flavor) {
 	// Test-only exception observation verifies conversion failure leaves the hash empty; source catch is deferred.
 	$atomic = (new Cpp_Emitter())->emit($prepare($function('float', 'huge', 'return 1e100;')
 		. $decl('hash<int,int>', 'values', '[]') . "$v" . '[0] = huge(); return 8;'));
-	$atomic = preg_replace('/(\t\{ const auto write_key = [^\n]+\n)/',
+	$atomic = preg_replace('/(\tvar_values_0\.set\([^\n]+\n)/',
 		"\ttry {\n$1\t} catch (const std::out_of_range&) { return var_values_0.size() == 0 ? 8 : 91; }\n\treturn 92;\n", $atomic, 1, $count);
 	verify($count === 1, 'Missing keyed write for atomicity observation');
 	$fixtures[$flavor->name . '-conversion-atomicity'] = ['cpp' => "#include <stdexcept>\n" . $atomic, 'stdout_hex' => ''];

@@ -39,12 +39,14 @@ final class @class@ extends hash_type_definition
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(' . $receiver . ').@index@(' . $this->lower_cpp_key($key, $index) . ')';
+		return $receiver . '.@index@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
-	public function lower_cpp_write(string $receiver, string $index, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
 	{
-		return '(' . $receiver . ').@set@(' . $index . ', ' . $value . ')';
+		$key = $this->lower_cpp_key($write->index, $key);
+		$value = $this->value_type->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return $receiver . '.@set@(' . $key . ', ' . $value . ');';
 	}
 
 @cardinality@

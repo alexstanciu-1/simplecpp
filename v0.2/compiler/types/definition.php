@@ -45,7 +45,7 @@ interface index_write_type
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string;
 }
 
-/** Hash and boxed stores preserve their established key-before-value snapshots. */
+/** Ordered stores snapshot the normalized key and converted value before invoking the runtime member. */
 trait ordered_keyed_store
 {
 	abstract public function write_type(): type_definition;

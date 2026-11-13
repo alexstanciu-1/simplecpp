@@ -32,7 +32,11 @@ rejects(fn() => $prepare(encode($m),$hashes));
 $p = decode($hashes,'publication'); unset($p->string);
 $p->hashes->specializations = [(object)['key'=>'int64','value'=>'int64']];
 $p->carriers->specializations = [(object)['family'=>'nullable','payload'=>'int64']];
-requireThat(count($prepare($metadata,encode($p))['hashes']['specializations']) === 1, 'Integer-only hash publication failed');
+$integerOnly = $prepare($metadata,encode($p));
+$integerOutput = render($integerOnly);
+requireThat(!str_contains($integerOutput['public/scpp/output.hpp'], 'echo_string')
+    && !str_contains($integerOutput['private/output_provider.hpp'], 'SCPP_OUTPUT_HAS_STRING'), 'Unavailable string output published');
+requireThat(count($integerOnly['hashes']['specializations']) === 1, 'Integer-only hash publication failed');
 
 $dt = $prepare($metadata,$datetime);
 requireThat(count($dt['datetime']['operations']) === 11, 'Datetime operations lost');

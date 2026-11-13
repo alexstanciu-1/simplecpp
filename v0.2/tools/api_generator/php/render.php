@@ -149,9 +149,14 @@ function render(array $plan): array {
     renderDatetime($plan, $files);
     renderJson($plan, $files);
     renderBoxed($plan, $files, $groups);
-    $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration'), 'system' => ['stddef.h', 'stdint.h']];
+    $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration', [
+        'string_output' => isset($plan['string']) ? "class string;\nvoid echo_string(const string& value);\n" : '',
+    ]), 'system' => ['stddef.h', 'stdint.h']];
     $files['private/output_provider.hpp'] = BANNER . '#pragma once' . "\n"
         . includeHeader(providerHeader($plan['submodules'], $plan['submodules']['groups']['output']['provider']));
+    if (isset($plan['string'])) {
+        $files['private/output_provider.hpp'] .= includeHeader($plan['string']['header']) . "#define SCPP_OUTPUT_HAS_STRING 1\n";
+    }
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');

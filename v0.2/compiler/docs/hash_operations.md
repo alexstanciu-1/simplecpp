@@ -40,11 +40,10 @@ packed approved value-conversion code as a prepared fact. Collection, preparatio
 inspection and emission visit those children through their existing traversal owners.
 Compiler inventory version is 24. No symbol, observer, work-queue or cleanup structures change.
 
-Lowering normalizes the key before its snapshot, evaluates and converts the RHS
-once, then passes both snapshots to the generated set binding. Reads pass an exact
-key directly to the const-reference parameter. This preserves key-before-RHS order and prevents
-failed conversion from inserting or replacing an entry. The receiver is a simple local
-name. This does not expand the deferred general expression-sequencing work.
+The generated hash binding passes the normalized key and converted RHS directly to
+`set(K, V)`. Both arguments must succeed before insertion or replacement. Native
+C++ chooses their evaluation order. Reads pass the exact key to `at(const K&)`,
+which returns a copy and throws on absence.
 
 ## Boundaries and verification
 

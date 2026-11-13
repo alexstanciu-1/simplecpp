@@ -4,4 +4,4 @@ namespace scpp {
 // Failures may throw. Formatting and IO implementation dependencies remain private.
 void echo_bytes(const char* data, ::size_t length);
 void echo_int(::int64_t value);
-}
+@string_output@}

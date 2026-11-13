@@ -184,22 +184,33 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     return $definitions;
 }
 
+/** Resolve one output symbol and its published header. */
+function compilerOutputBinding(mixed $compiler, string $bindingName, string $name, string $strategy): array {
+    $binding = at(at($compiler, 'runtime_bindings'), $bindingName);
+    fields($binding, ['operand', 'strategy', 'symbol', 'header']);
+    literals($binding, ['operand' => $name, 'strategy' => $strategy]);
+    $symbol = textValue(at($binding, 'symbol'));
+    $header = textValue(at($binding, 'header'));
+    requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid output binding symbol');
+    requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid output binding header');
+    return ['symbol' => $symbol, 'header' => $header];
+}
+
 /** Validate output admission and runtime bindings once, indexed by canonical type. */
 function compilerOutputPlan(mixed $compiler, array $definitions): array {
     $plan = [];
     foreach (object(at($compiler, 'output')) as $name => $row) {
         requireThat(isset($definitions[$name]), 'Output references inactive type');
-        fields($row, ['strategy', 'binding']);
+        fields($row, $name === 'string' ? ['strategy', 'binding', 'literal_binding'] : ['strategy', 'binding']);
         $strategy = textValue(at($row, 'strategy'));
-        requireThat(($strategy === 'integer' && $name === 'int64') || ($strategy === 'bytes' && $name === 'string'), 'Unsupported output strategy/type');
-        $binding = at(at($compiler, 'runtime_bindings'), textValue(at($row, 'binding')));
-        fields($binding, ['operand', 'strategy', 'symbol', 'header']);
-        literals($binding, ['operand' => $name, 'strategy' => $strategy]);
-        $symbol = textValue(at($binding, 'symbol'));
-        $header = textValue(at($binding, 'header'));
-        requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid output binding symbol');
-        requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid output binding header');
-        $plan[$name] = ['strategy' => $strategy, 'symbol' => $symbol, 'header' => $header];
+        requireThat(($strategy === 'integer' && $name === 'int64') || ($strategy === 'string' && $name === 'string'), 'Unsupported output strategy/type');
+        $value = compilerOutputBinding($compiler, textValue(at($row, 'binding')), $name, $strategy);
+        if ($strategy === 'string') {
+            $literal = compilerOutputBinding($compiler, textValue(at($row, 'literal_binding')), $name, 'bytes');
+            requireThat($literal['header'] === $value['header'], 'String and byte output require the output provider');
+            $value['literal_symbol'] = $literal['symbol'];
+        }
+        $plan[$name] = $value;
     }
     return $plan;
 }

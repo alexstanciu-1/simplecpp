@@ -50,7 +50,7 @@ normalized decimal spelling and handles the signed minimum without an overflowin
 positive literal. References retain their existing local binding identities.
 
 Echo and checked process-exit conversion still use the minimal runtime public APIs.
-Proven exit conversions remain native casts. Runtime wrapper APIs remain available
+Proven entry literals use plain decimal spelling. Other proven exit expressions use a native cast. Runtime wrapper APIs remain available
 for existing native consumers; this slice does not remove them or add arithmetic,
 new source cast syntax, operators, profiles or additional incremental machinery.
 The [core scalar extension](types.md) adds metadata-driven declaration conversions,
