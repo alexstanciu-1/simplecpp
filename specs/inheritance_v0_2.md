@@ -161,7 +161,14 @@ bodies. These rules apply equally to ordinary and template-prelowered output;
 runtime-template payloads in signatures do not imply generic virtual source methods.
 
 An implementation of an inherited virtual method remains virtual automatically.
-Optional `#[\Override]` asserts that such a target exists; reject it otherwise.
+The explicit override marker is mandatory in every source flavor when a method
+implements or replaces an inherited virtual/interface method. Reject both an
+unmarked overriding declaration and a marked declaration with no matching target.
+The PHP spelling is `#[\Override]`; frontend spellings normalize to the same
+written intent and common semantic check. This requirement does not make a
+nonvirtual method overridable or authorize otherwise forbidden method hiding.
+Inherited implementations used unchanged require no new marker. Constructors
+and compatible static redeclarations are not virtual overrides.
 The bounded contract permits shared-value variance as specified below; all other
 types, passing/reference modes, read-only qualification, variadic shape,
 optional-parameter positions and reference-return origin remain exact.

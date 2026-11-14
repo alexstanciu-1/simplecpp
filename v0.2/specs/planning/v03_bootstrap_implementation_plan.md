@@ -406,6 +406,91 @@ object passing does not require borrows: shared identity already supports object
 mutation. Explicit PHP-style reference parameters alias variable/handle storage;
 they are not a reason to introduce object borrowing now.
 
+### Proposed next slice — class inheritance and shared base views
+
+Doc Status: planning. The class-defaults slice is complete; this is a follow-up
+proposal, not implemented behavior. Settle the ownership representation before
+changing shared handles. Keep virtual methods and overrides out of this slice.
+
+Proof target:
+
+```php
+class Node { public int $start = 0; }
+class IntegerLiteral extends Node { public int $value = 0; }
+function start_of(Node $node): int { return $node->start; }
+$literal = new IntegerLiteral();
+echo start_of($literal);
+```
+
+Recommended representation for discussion: a typed view pointer plus a pointer
+to the shared control block. A single allocation owns the control block and concrete
+payload; derived/base handles retain that allocation and may have different typed
+view pointers. Concrete destruction belongs to the allocation's retained destroy
+operation, not the static type of the view. This costs a second pointer per handle;
+do not assume an exact-type allocation pointer can be reinterpreted as a base
+allocation. Compare a runtime-owned implementation with the current generated
+owner machinery before selecting the precise layout or destruction mechanism.
+No ABI framework is proposed.
+
+Weak views must retain the same control block and only expose their typed pointer
+after successfully obtaining strong ownership. An expired cached view pointer
+must never be dereferenced. Identity compares the allocation/control block, not
+an adjusted view address. Preserve the current thread-confined ownership contract;
+this slice does not add thread-safe counters.
+
+| Owner | Proposed bounded change |
+| --- | --- |
+| Parser / record AST | Reuse the single written base and existing declaration kind; no new member inventories. |
+| Declaration preparation | Admit single class-to-class inheritance, settle ancestry before consumers and preserve original field/constructor owners. Reject cycles and cross-kind bases. |
+| Conversion preparation | Prepare derived-to-base shared conversion using settled ancestry; compose with existing required/optional presence conversion. Keep downcasts and unrelated conversions rejected. |
+| Runtime ownership / C++ lowering | Preserve the control block and concrete destruction while C++ adjusts the typed view. Emit settled conversions without repeating ancestry searches. |
+| Incremental | Watch nominal ancestry and callable contracts through existing stable symbols. Base edits invalidate dependent conversions and cached callers, including when native spelling stays unchanged. |
+
+Verification checklist before completion:
+
+- [ ] Base field access and construction through a derived class in cpp/php/js.
+- [ ] Required/optional derived-to-base parameters, returns and assignments;
+  preserve relaxed shared fields, known-null rejection and runtime presence checks.
+- [ ] One allocation identity across views, alias mutation and exactly-once
+  concrete destruction after the final strong reference, regardless of view type.
+- [ ] Weak locking before/after expiry; copies and reassignment release the right
+  allocation; failure paths clean up on Clang/GCC with memory checking.
+- [ ] Reject unrelated conversion, downcasts, inheritance cycles and cross-kind
+  bases; no borrowed-object or implicit owning-this capability is introduced.
+- [ ] Edit/remove/restore base edges with unchanged callers; compare retained/fresh
+  diagnostics and C++, check no-op/unrelated reuse and rebuild native consumers.
+- [ ] Record handle size/allocation impact. Do not claim execution or compilation
+  speed improvements without measurements.
+
+### Mandatory override intent — agreed direction for the following slice
+
+When implementing/replacing an inherited virtual method, the source must explicitly
+mark `override` in all three flavors. Common semantic preparation rejects a missing
+marker, a marker without a matching target, final-method replacement, incompatible
+contracts and forbidden nonvirtual hiding. Native C++ `override` is emitted as an
+additional check; it does not replace our compiler's diagnostics or dependencies.
+The [owning inheritance spec](../../../specs/inheritance_v0_2.md#abstract-types-and-overriding)
+now records mandatory intent. C++ itself makes its marker optional; Simple C++ does not.
+
+Proposed source spellings, to settle when taking the virtual-method slice:
+
+| Flavor | Proposed method declaration |
+| --- | --- |
+| cpp | `int evaluate() override { ... }` |
+| php | `#[\Override] public function evaluate(): int { ... }` |
+| js | `override evaluate(): int { ... }` |
+
+Retain one written override flag on the common method declaration, not parallel
+flavor-specific semantic models. The original base contract remains its owner;
+preparation validates against that contract. Inheriting an implementation unchanged
+needs no new declaration/marker. Constructors and static redeclarations are not
+virtual overrides; this decision does not relax their existing rules.
+
+That later slice must test missing/spurious markers, valid overrides, final and
+signature violations, base-typed virtual dispatch and incremental recovery after
+base signature/virtual/final and derived marker edits in all flavors. Do not admit
+unmarked method replacement temporarily while introducing class inheritance.
+
 ## 4. Failures and cleanup — failed preparation and retry
 
 | Order | Group | Initial scope |
