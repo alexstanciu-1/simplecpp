@@ -3,6 +3,18 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Compile-time type operand, e.g. Kind::class; never a runtime string or value. */
+final class ast_type_marker extends ast_expression
+{
+	public readonly string $name;
+
+	public function __construct(string $name, int $start /** uint32 */, int $end /** uint32 */)
+	{
+		parent::__construct($start, $end);
+		$this->name = $name;
+	}
+}
+
 /** One owned named case; its literal AST owns the checked integer value, e.g. case Number = 300. */
 final class ast_enum_case extends ast_node implements ast_declaration_interface
 {

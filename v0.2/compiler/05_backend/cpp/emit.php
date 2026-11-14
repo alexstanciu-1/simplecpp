@@ -30,6 +30,9 @@ final class Cpp_Emitter
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 
+	/** @var enum_type_definition[] Private lowering requirements; no prepared AST mutation. */
+	private array $enum_constructions /** array<string,enum_type_definition> */ = [];
+
 	/** CONSTRUCTOR */
 	public function __construct(?Cpp_Headers $headers = null, string $root = 'App')
 	{
@@ -51,8 +54,12 @@ final class Cpp_Emitter
 				$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
 					. type_int64::instance()->lower_cpp_literal($case->initializer) . ',';
 			}
+			if ($this->needs_enum_construction($node)) {
+				foreach (type_int64::instance()->cpp_headers() as $header) $includes[$header] = true;
+			}
+			$helper = $this->needs_enum_construction($node) ? $type->cpp_type() . ' ' . $type->from_value_function()->symbol . '(scpp::int64 value);' . "\n" : '';
 			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
-				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n");
+				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
 		}
 		if ($node instanceof ast_struct_declaration) {
 			$layout = [];
@@ -87,6 +94,22 @@ final class Cpp_Emitter
 			$includes[$header] = true;
 		}
 		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
+	}
+
+	private function needs_enum_construction(ast_enum_declaration $enum): bool
+	{
+		return $this->headers?->needs_enum_construction($enum) ?? isset($this->enum_constructions[$enum->symbol_key()]);
+	}
+
+	/** Check membership in the original int64 domain before returning an exact nominal case. */
+	private function enum_construction(enum_type_definition $type): string
+	{
+		$lines = [];
+		foreach ($type->declaration->cases as $case) {
+			$lines[] = "\tcase " . type_int64::instance()->lower_cpp_literal($case->initializer) . ': return ' . $type->cpp_case($case) . ';';
+		}
+		return $type->cpp_type() . ' ' . $type->from_value_function()->symbol . "(scpp::int64 value) {\n\tswitch (value) {\n"
+			. implode("\n", $lines) . "\n\tdefault: throw std::runtime_error(\"Invalid value for enum helper\");\n\t}\n}\n";
 	}
 
 	/** Lower an approved declaration default and collect its public header dependencies. @param bool[] $headers */
@@ -269,6 +292,7 @@ CPP;
 	/** Assemble local definitions and deterministic forward declarations without a shared naming registry. */
 	private function unit(?prepared_entry $entry, ast_file_node $file, string $entry_name): string
 	{
+		$this->enum_constructions = [];
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -330,6 +354,12 @@ CPP;
 		}
 		foreach ($global_references as $property) {
 			if ($property->parent instanceof ast_struct_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
+		}
+		foreach ($file->declaration_nodes as $node) {
+			if ($node instanceof ast_enum_declaration && $this->needs_enum_construction($node)) {
+				$required_headers['stdexcept'] = true;
+				$definitions[] = $this->enum_construction($node->definition);
+			}
 		}
 		ksort($declarations, \SORT_STRING);
 		$records = [];
@@ -929,6 +959,10 @@ CPP;
 			}
 			$function = $value->function_def();
 			if ($function instanceof runtime_function) {
+				if (($value->arguments[0] ?? null) instanceof ast_type_marker) {
+					$type = $value->type_def();
+					$this->enum_constructions[$type->declaration->symbol_key()] = $type;
+				}
 				$required_headers[$function->header] = true;
 				$symbol = $function->symbol;
 				if ($function->adapter_flavor !== null) {
@@ -939,7 +973,14 @@ CPP;
 				}
 				$operands = $value->runtime_operands();
 				if (count($operands) === 1 && !$function->overloaded_first) {
-					return $symbol . '(' . $this->value($operands[0], $global_references, $declarations, $required_headers) . ')';
+					$operand = $this->value($operands[0], $global_references, $declarations, $required_headers);
+					$conversion = $value->conversion(0);
+					if ($conversion !== value_conversion::identity) {
+						$type = $function->parameters[0];
+						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+						$operand = $type->lower_cpp_conversion($conversion, $operand, $operands[0]);
+					}
+					return $symbol . '(' . $operand . ')';
 				}
 				$arguments = [];
 				$direct = true;

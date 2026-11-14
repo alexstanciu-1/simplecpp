@@ -174,14 +174,17 @@ final class ast_call_expression extends ast_expression
 	/** @return ast_expression[] Runtime operands in evaluation order, including a method receiver. */
 	public function runtime_operands(): array /** list<ast_expression> */
 	{
+		if ($this->function_symbol instanceof runtime_function && $this->function_symbol->name() === 'enum_from_value'
+			&& ($this->arguments[0] ?? null) instanceof ast_type_marker) return array_slice($this->arguments, 1);
 		return $this->receiver === null ? $this->arguments : [$this->receiver, ...$this->arguments];
 	}
 
-	public function settle_runtime(runtime_function $function): void
+	/** @param int[] $conversions Approved runtime operand conversions; empty denotes exact arguments. */
+	public function settle_runtime(runtime_function $function, array $conversions /** list<uint16> */ = []): void
 	{
 		$this->settle_value($function->return_type_def(), null);
 		$this->function_symbol = $function;
-		$this->conversions = [];
+		$this->conversions = $conversions;
 	}
 
 	public function function_def(): ast_function_declaration|runtime_function
@@ -195,8 +198,8 @@ final class ast_call_expression extends ast_expression
 	/** $index: argument ordinal. */
 	public function conversion(int $index /** uint32 */): int /** uint16 */
 	{
-		if ($this->function_symbol instanceof runtime_function && isset($this->arguments[$index])) {
-			return value_conversion::identity;
+		if ($this->function_symbol instanceof runtime_function && isset($this->function_symbol->parameters[$index])) {
+			return $this->conversions[$index] ?? value_conversion::identity;
 		}
 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
 	}

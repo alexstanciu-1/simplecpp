@@ -476,6 +476,7 @@ final class Preparation
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
+		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
@@ -839,6 +840,25 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			if ($builtin === 'enum_from_value') {
+				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
+				}
+				$marker = $call->arguments[0];
+				$entry = $this->symbols->entry($file->type_key($marker->name));
+				$this->dependencies?->watch($entry, $this->owner, dependency_use::enum_from_value->value);
+				$enum = $entry->declaration();
+				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), 'enum_from_value target must be an enum');
+				$argument = $call->arguments[1];
+				$this->value($argument, $initializing);
+				$input = $argument->type_def();
+				if (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires an integer');
+				}
+				$conversion = type_int64::instance()->prepare_conversion($argument, conversion_context::typed_destination);
+				$call->settle_runtime($enum->definition->from_value_function(), [$conversion]);
+				return;
+			}
 			if ($builtin === 'enum_value') {
 				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'enum_value requires one enum argument');
 				$argument = $call->arguments[0];

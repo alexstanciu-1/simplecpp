@@ -859,7 +859,9 @@ final class Parser
 			return new ast_keyword_expression($word, $start, $start + 1);
 		}
 		$constant_only = false;
-		$name = $this->names->variable_path($constant_only);
+		$type_marker = false;
+		$name = $this->names->variable_path($constant_only, $type_marker);
+		if ($type_marker) return new ast_type_marker($name, $start, $this->cursor->position());
 		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
 			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
 		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax, $constant_only);

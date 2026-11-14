@@ -17,6 +17,8 @@ final class enum_type_definition extends type_definition
 	private ?type_definition $storage = null;
 	/** Prepared fact: immutable enum_value signature, published at the declaration gate before body readers. */
 	private ?runtime_function $value_function = null;
+	/** Prepared fact: immutable checked-construction binding; shared across call sites. */
+	private ?runtime_function $from_value_function = null;
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_enum_declaration $declaration)
@@ -36,12 +38,14 @@ final class enum_type_definition extends type_definition
 		return $this->storage ?? throw new \LogicException('Enum storage is not prepared');
 	}
 
-	/** Publish canonical references and the immutable extraction signature after every case succeeds. */
+	/** Publish canonical references and immutable helper signatures after every case succeeds. */
 	public function settle(type_definition $backing, type_definition $storage): void
 	{
 		$this->backing = $backing;
 		$this->value_function = new runtime_function('enum_value', [$this], $backing,
 			'static_cast<' . $backing->cpp_type() . '>', $backing->cpp_headers()[0]);
+		$this->from_value_function = new runtime_function('enum_from_value', [type_int64::instance()], $this,
+			'scpp_enum_from_value_' . Cpp_Emitter::qualified_path($this->name), type_int64::instance()->cpp_headers()[0]);
 		$this->storage = $storage;
 	}
 
@@ -115,5 +119,10 @@ final class enum_type_definition extends type_definition
 	public function value_function(): runtime_function
 	{
 		return $this->value_function ?? throw new \LogicException('Enum value signature is not prepared');
+	}
+
+	public function from_value_function(): runtime_function
+	{
+		return $this->from_value_function ?? throw new \LogicException('Enum construction signature is not prepared');
 	}
 }

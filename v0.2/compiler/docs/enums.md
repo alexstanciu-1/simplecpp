@@ -22,8 +22,8 @@ imports reuse the existing file import index rather than adding a third index.
 It checks literals, uniqueness and range in one pass. Its temporary duplicate-value
 set and min/max accumulators are discarded. Compact storage selection uses the
 canonical generated integer definitions' limits. The ready definition retains
-source backing and storage references, plus one immutable `enum_value` callable
-binding shared by all calls. That binding is constructed before body readers,
+source backing and storage references, plus immutable `enum_value` and `enum_from_value` callable
+bindings shared by all calls. These bindings are constructed before body readers,
 not lazily mutated from a foreign body. No per-call enum preparation record exists.
 
 A failed declaration remains unready. A retry resets each literal before checking
@@ -83,8 +83,8 @@ backend is a cumulative trace interval, not an additional wall-time component.
 These are fixture timings, not an old/new performance comparison. Full artifacts:
 `/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
 
-Milestone 1.2 remains partial: string backing, enum methods,
-reverse construction and other broader enum contracts are subsequent slices.
+Milestone 1.2 remains partial: string backing, enum methods
+and other broader enum contracts are subsequent slices.
 
 ## Instance fields with explicit case defaults
 
@@ -218,3 +218,61 @@ One fresh build per flavor: O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt ru
 Compiler time excludes PHP startup; native wall includes Ninja and qualification.
 Clang/LLVM figures sum work across units. Artifacts are retained at
 `/tmp/scpp-enum-ctor-verified/{fixtures,results}.json` on the measured WSL machine.
+
+## Checked construction from integers
+
+`enum_from_value(Kind::class, input)` in PHP/C++ and
+`enum_from_value(Kind.class, input)` in JS resolve the first argument as a type
+marker. Imports and normal function shadowing remain in effect. The marker is
+syntax-only and cannot be evaluated as a value or passed to ordinary functions.
+
+All currently active integers fit int64. Preparation checks the generated integer
+representation contract and uses the existing generated typed-destination conversion
+to normalize the runtime operand to int64. It does not scan cases at each call,
+retain a second membership table, or evaluate the call as a constant. UInt64
+activation remains separate: this normalization is not a full-domain uint64 design.
+
+Each used enum gets one concrete, non-template checked-construction function in
+its owning C++ source unit. Its int64 switch returns named enum cases and throws
+`std::runtime_error("Invalid value for enum helper")` on a miss. Membership is
+checked before narrowing, so e.g. 257 cannot wrap to byte-backed case 1. Inputs
+are evaluated once. Headers contain only the declaration and required public
+scalar includes; `<stdexcept>` stays in the implementation.
+
+Structure changes:
+
+- `ast_type_marker` holds only the written type name in addition to inherited AST state.
+- `enum_type_definition` owns one additional immutable `runtime_function` binding,
+  created at the declaration gate. Calls reuse their existing binding/conversion slots.
+- `Dependency_Watches` attaches a small usage bitmask to its existing deduplicated
+  forward relation. Reverse indexing is unchanged. `watch` merges bits;
+  `has_use` queries them without exposing storage or reading foreign bodies.
+  Forgetting/replacing a watcher also removes its requirements.
+- Header planning and standalone emission keep temporary helper-use indexes.
+  Cross-unit helper use changes invalidate provider emission through header changes,
+  including when the enum remains externally visible for other reasons.
+
+`tests/enum_from_value.php` and `tests/enum_from_value_native.py` cover all three
+flavors, all active integer representations and boundaries, nominal results,
+imports/shadowing, single evaluation, no-wrap runtime failures, invalid input types,
+helper activation/removal, retained caller ASTs, backing-width edits, duplicates,
+type deletion, retries without edits and recovery against fresh emitted artifacts.
+Recovered artifacts are then built and executed. No-op preparation remains empty.
+
+2026-11-14 verification: 45 native fixtures passed, plus 13 focused regression
+suites (including native constructor defaults), and the compiler writing checks.
+The integer-width fixture timings below are one measured build per flavor, in ms.
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| php | 2.93 | 225.23 | 36.96 | 15.36 | 64.00 |
+| cpp | 3.46 | 239.46 | 41.10 | 13.73 | 67.00 |
+| js | 3.02 | 197.84 | 32.88 | 12.85 | 54.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime; fresh instrumented
+application objects. Native wall includes the cached toolchain-qualification
+process. Compiler time excludes PHP startup and starts from in-memory source.
+LLVM backend includes optimization/code generation; trace stages are not additive
+wall components. Throw-catching proof fixtures add `<string_view>` for message
+assertions and are not used as representative application build timings.
+Artifacts and complete timings: `/tmp/scpp-enum-from-value-verified/`.

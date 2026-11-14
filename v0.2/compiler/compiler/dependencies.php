@@ -12,6 +12,12 @@ interface dependency_watcher {
 	public function invalidate_dependencies(): void;
 }
 
+/** Optional emission requirements on an existing symbol/watch relation; native uint8 mask bits. */
+enum dependency_use: int
+{
+	case enum_from_value = 1;
+}
+
 /**
  * Session-owned dependency relations and batched invalidation, independent of function contracts and AST traversal.
  * Example: watch($symbol, $body); changed($symbol); dispatch() invalidates that body once per batch.
@@ -21,9 +27,9 @@ final class Dependency_Watches
 	/** PROPERTIES */
 	/**
 	 * Native non-owning symbols/watchers, grouped by stable source key. Owning buckets never escape this coordinator.
-	 * @var \SplObjectStorage<symbol_entry,\ArrayObject<string,\SplObjectStorage<dependency_watcher,null>>>
+	 * @var \SplObjectStorage<symbol_entry,\ArrayObject<string,\SplObjectStorage<dependency_watcher,int>>>
 	 */
-	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,null>>> */;
+	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,uint8>>> */;
 	/**
 	 * Native non-owning reverse index for watcher retirement and subscription replacement.
 	 * @var \SplObjectStorage<dependency_watcher,\SplObjectStorage<symbol_entry,null>>
@@ -45,7 +51,7 @@ final class Dependency_Watches
 
 	/** METHODS */
 	/** Register one identity pair; repeated reads of the same symbol do not allocate additional relations. */
-	public function watch(symbol_entry $symbol, dependency_watcher $watcher): void
+	public function watch(symbol_entry $symbol, dependency_watcher $watcher, int $uses /** uint8 */ = 0): void
 	{
 		$source_key = $watcher->dependency_source_key();
 		if ($source_key === '') {
@@ -61,8 +67,21 @@ final class Dependency_Watches
 		if (!$this->targets->offsetExists($watcher)) {
 			$this->targets[$watcher] = new \SplObjectStorage();
 		}
-		$groups[$source_key][$watcher] = null;
+		$group = $groups[$source_key];
+		$group[$watcher] = ($group->offsetExists($watcher) ? $group[$watcher] : 0) | $uses;
 		$this->targets[$watcher][$symbol] = null;
+	}
+
+	/** Query a requirement without exposing buckets or inspecting foreign executable ASTs. */
+	public function has_use(symbol_entry $symbol, dependency_use $use): bool
+	{
+		if (!$this->observers->offsetExists($symbol)) return false;
+		foreach ($this->observers[$symbol] as $group) {
+			foreach ($group as $watcher) {
+				if (($group[$watcher] & $use->value) !== 0) return true;
+			}
+		}
+		return false;
 	}
 
 	/** Remove all subscriptions and any queued notification before rebuilding or abandoning a watcher. */

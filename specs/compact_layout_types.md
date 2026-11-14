@@ -371,7 +371,7 @@ underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
 This bootstrap slice does not yet implement unit/string-backed enums, enum
-methods, enum globals, `enum_name`, reverse checked construction,
+methods, enum globals, `enum_name`,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
 
@@ -549,7 +549,8 @@ the result has the declared backing type, including full-width `uint64`. For pla
 Unit enum values are zero-based declaration ordinals; reordering cases changes
 those ordinals, so use explicit backing values for stable external encodings.
 
-`enum_from_value(Enum::class, value)` returns that exact enum type or throws if
+`enum_from_value(Enum::class, value)` (PHP/C++) or
+`enum_from_value(Enum.class, value)` (JS) returns that exact enum type or throws if
 the integer does not identify a declared case. Its first argument is a compile-time
 type marker resolved through ordinary type lookup, including imports; it is not
 a runtime string or reflection object. The second argument may have any supported

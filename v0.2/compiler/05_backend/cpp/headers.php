@@ -15,11 +15,22 @@ final class Cpp_Headers
 	/** @var string[] Relative artifact path to generated header text. */
 	private array $files /** array<string,string> */ = [];
 
+	/** @var bool[] Ephemeral lowering requirements from completed watch relations. */
+	private array $enum_constructions /** array<string,bool> */ = [];
+
 	/** CONSTRUCTOR */
 	/** Plan native declarations from completed watchers; header text is independent of source iteration order. */
 	public function __construct(prepared_program $program)
 	{
-		$emitter = new Cpp_Emitter(root: $program->session?->cpp_namespace ?? 'App');
+		foreach ($program->files as $file) {
+			foreach ($file->declaration_nodes as $node) {
+				if ($node instanceof ast_enum_declaration && $program->dependencies->has_use(
+					$file->scope->parent->entry($node->symbol_key()), dependency_use::enum_from_value)) {
+					$this->enum_constructions[$node->symbol_key()] = true;
+				}
+			}
+		}
+		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App');
 		foreach ($program->files as $key => $file) {
 			$source_key = (string) $key;
 			$header = hash('sha256', (string) $key) . '.hpp';
@@ -88,6 +99,11 @@ final class Cpp_Headers
 	}
 
 	/** METHODS */
+	public function needs_enum_construction(ast_enum_declaration $enum): bool
+	{
+		return isset($this->enum_constructions[$enum->symbol_key()]);
+	}
+
 	/** Publish one nominal enum header for signatures and foreign case references. */
 	private function publish_enum(ast_enum_declaration $enum, Cpp_Emitter $emitter, string $root): string
 	{
@@ -166,12 +182,13 @@ final class Cpp_Headers
 		return $path;
 	}
 
-	/** Was an application type moved between its source's private C++ and a published header? */
+	/** Did type visibility or the published enum helper contract change for this source? */
 	public function type_visibility_changed(ast_file_node $file, cpp_program_output $previous): bool
 	{
 		foreach ($file->declaration_nodes as $record) {
 			if (!($record instanceof ast_type_declaration)) continue;
 			$header = $record instanceof ast_enum_declaration ? hash('sha256', 'enum:' . $record->symbol_key()) . '.hpp' : self::record_header($record);
+			if ($record instanceof ast_enum_declaration && ($this->files['units/' . $header] ?? null) !== ($previous->files['units/' . $header] ?? null)) return true;
 			if (isset($this->declarations[$record->symbol_key()]) !== isset($previous->files['units/' . $header])) {
 				return true;
 			}

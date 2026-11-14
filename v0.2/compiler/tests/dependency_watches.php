@@ -106,3 +106,10 @@ verify($local_peer->notifications === 1 && $local->notifications === 0, 'Grouped
 $watches->forget($local_peer);
 verify($watches->observer_count($a) === 0, 'Final bucket retained');
 echo "Grouped source membership, external-use queries and bucket removal passed\n";
+
+// Optional helper usage shares the existing relation and retires with its observer.
+$watches->watch($a, $local, scpp\compiler\dependency_use::enum_from_value->value);
+$watches->watch($a, $local);
+verify($watches->has_use($a, scpp\compiler\dependency_use::enum_from_value), 'Ordinary watch erased usage');
+$watches->forget($local);
+verify(!$watches->has_use($a, scpp\compiler\dependency_use::enum_from_value), 'Retired observer retained usage');

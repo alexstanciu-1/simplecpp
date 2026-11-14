@@ -30,8 +30,8 @@ Do not block this proof on every optional width, populated collection literals o
 named literal cases, compact/exact storage, same-enum equality, typed calls and
 `enum_value`, with incremental recovery. Enum instance fields with explicit case
 defaults and function/method/constructor enum parameter defaults are also implemented.
-String backing, enum methods and checked reverse construction
-remain; 1.2 is not complete.
+Checked integer reverse construction is also implemented, reusing generated integer conversions.
+String backing and enum methods remain; 1.2 is not complete.
 
 ## 2. Readable selection and lookup — a tokenizer path
 

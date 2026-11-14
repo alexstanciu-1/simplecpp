@@ -89,6 +89,7 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
