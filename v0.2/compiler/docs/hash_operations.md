@@ -48,7 +48,7 @@ which returns a copy and throws on absence.
 ## Boundaries and verification
 
 Nonempty literals, inferred empty collections, hash append, indexed compound/update
-operations, reference parameters, traversal and nested
+operations, traversal and nested
 containers remain deferred. Runtime storage algorithms and public ABI are unchanged.
 
 `tests/hash_operations.php` checks all four pairs, strict keys, converted values, NUL
@@ -90,3 +90,6 @@ copies, assignment, by-value parameters and returns. Inferred locals retain the 
 specialization. Runtime copies own independent backing storage; no element traversal or
 copy facts are added during preparation. Empty brackets still require an explicit typed
 initializer. See [common value passing](value_passing.md).
+
+Writable parameters use the [common exact-type reference binder](collection_references.md);
+only named locals and parameters can bind.

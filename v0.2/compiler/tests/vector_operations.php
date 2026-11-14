@@ -87,8 +87,7 @@ foreach (flavor::cases() as $flavor) {
 			flavor::js => $reference . 'argument: vector<int>',
 		};
 		$signature = ($flavor === flavor::cpp ? "void consume($parameter)" : "function consume($parameter): void") . '{return;}';
-		if ($reference === '&') rejects(fn() => $prepare($signature . $decl('vector<int>', 'values', '[]') . "consume($v); return 8;"), 'Writable collection parameters are deferred');
-		else $prepare($signature . $decl('vector<int>', 'values', '[]') . "consume($v); return 8;");
+		$prepare($signature . $decl('vector<int>', 'values', '[]') . "consume($v); return 8;");
 	}
 	foreach (['empty' => '', 'negative' => "$v" . '[] = 8;', 'end' => "$v" . '[] = 8;'] as $case => $append) {
 		$index = $case === 'negative' ? '-1' : ($case === 'end' ? '1' : '0');

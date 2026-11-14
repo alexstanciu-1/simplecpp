@@ -42,7 +42,7 @@ leaves the element values and count intact. Local vector initialization/copy and
 accept the same canonical specialization, including vector<int>/vector<int64> aliases.
 Copies have independent elements/cardinality; string elements retain their existing
 value semantics. Self-assignment is harmless. By-value arguments and returns use the common value path.
-Reference arguments, populated literals,
+Exact-type named locals/parameters also support writable reference arguments. Populated literals,
 iteration and other methods remain deferred.
 
 Source `count(values)` returns the published count type and `empty(values)` returns bool.
@@ -128,7 +128,8 @@ existing runtime implements independent vector storage and exception-safe copy/s
 assignment. C++ templates remain private to the prebuilt runtime.
 
 By-value arguments and returns are supported through the common binder and conversion path.
-Field storage, reference parameters and cross-element conversions remain deferred.
+Field storage and cross-element conversions remain deferred. Writable references use the
+[common reference binder](collection_references.md).
 Application-defined element types still need their own specialization path.
 
 Verification: `tests/vector_copies.php` and `tests/vector_copies_native.py` cover all

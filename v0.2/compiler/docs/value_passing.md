@@ -18,8 +18,9 @@ strings preserve value semantics; structs copy members; shared/dynamic copies pr
 identity; weak copies do not extend payload lifetime; carriers copy state and payload.
 This does not imply recursively cloning shared elements.
 
-Writable vector/hash references remain rejected at signature preparation, even in uncalled
-functions. Existing scalar/owner reference behavior is unchanged. Fields/globals, default
+Writable vector/hash parameters now use the existing exact-type named-local/parameter
+reference binder. See [collection references](collection_references.md). Existing scalar/owner
+reference behavior is unchanged. Fields/globals, default
 arguments, unavailable runtime specializations, unique/borrow and new collection literals
 are outside this change. Empty brackets still require an explicitly typed local initializer.
 

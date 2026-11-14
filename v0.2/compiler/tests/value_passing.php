@@ -102,7 +102,7 @@ foreach (flavor::cases() as $flavor) {
 		$name = $flavor->name . '_' . preg_replace('/[^a-z]+/', '_', $type);
 		$fixtures[$name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($bytes . '|' . $changed . '|' . $changed), 'compiler_ms' => (hrtime(true)-$start)/1e6];
 		$reference = str_replace($param($type, 'x'), $flavor === flavor::js ? '&x:' . $type : $type . ' &' . $v('x'), $function('void', 'bad', $param($type, 'x'), 'return;'));
-		rejects(fn() => $prepare($reference . 'return 8;'), 'Writable collection parameters are deferred');
+		$prepare($reference . 'return 8;');
 		$directory = sys_get_temp_dir() . '/scpp-value-passing-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
 			$path = $directory . '/library.' . $flavor->name;
