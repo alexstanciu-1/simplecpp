@@ -20,7 +20,7 @@ This does not imply recursively cloning shared elements.
 
 Writable vector/hash parameters now use the existing exact-type named-local/parameter
 reference binder. See [collection references](collection_references.md). Existing scalar/owner
-reference behavior is unchanged. Fields/globals, default
+reference behavior is unchanged. Instance fields are covered by [collection fields](collection_fields.md). Globals, default
 arguments, unavailable runtime specializations, unique/borrow and new collection literals
 are outside this change. Empty brackets still require an explicitly typed local initializer.
 

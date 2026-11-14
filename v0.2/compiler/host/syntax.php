@@ -232,8 +232,8 @@ final class Syntax_Inspection
 				$statement->start + ($statement->postfix ? 0 : 1)), 'operator' => $statement->operator->name,
 				'postfix' => $statement->postfix, 'span' => self::span($statement)];
 		}
-		if ($statement instanceof ast_property_compound) {
-			return ['kind' => 'property_compound', 'target' => self::expression($statement->target),
+		if ($statement instanceof ast_property_compound || $statement instanceof ast_index_compound) {
+			return ['kind' => $statement instanceof ast_index_compound ? 'indexed_compound' : 'property_compound', 'target' => self::expression($statement->target),
 				'operator' => $statement->operator->name, 'value' => self::expression($statement->value), 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_assignment_statement) {

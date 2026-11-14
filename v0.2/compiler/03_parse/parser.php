@@ -175,7 +175,8 @@ final class Parser
 		}
 		if ($this->names->call_start() || ($this->cursor->tokens->source->flavor === flavor::cpp
 			&& $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
-			$value = $this->primary();
+			$value = $this->primary(field_target: true);
+			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -690,15 +691,23 @@ final class Parser
 		return $initializer;
 	}
 
-	/** Parse a keyed write on a writable place or a named collection append. */
-	private function indexed_write(ast_name_expression|ast_field_expression $receiver): ast_statement
+	/** Parse a keyed write or append on a named local or field; preparation checks writability. */
+	private function indexed_write(ast_expression $receiver): ast_statement
 	{
-		if ($this->cursor->next_is(token_kind::rbracket) && !($receiver instanceof ast_name_expression && $receiver->end === $receiver->start + 1)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Field write requires an index');
-		}
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
-		$this->cursor->take(token_kind::rbracket, ']');
+		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+		$operator = $this->compound_operator();
+		if ($operator !== null) {
+			if ($index === null) throw new diagnostic($receiver->source(), $this->cursor->offset(), 'Indexed compound requires a key');
+			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
+			$value = $this->assignment_value();
+			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
+				$this->cursor->take(token_kind::semicolon, ';') + 1);
+		}
+		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression)) {
+			throw new diagnostic($receiver->source(), $this->cursor->offset(), 'Indexed assignment requires named or field storage');
+		}
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;

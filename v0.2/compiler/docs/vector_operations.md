@@ -128,7 +128,8 @@ existing runtime implements independent vector storage and exception-safe copy/s
 assignment. C++ templates remain private to the prebuilt runtime.
 
 By-value arguments and returns are supported through the common binder and conversion path.
-Field storage and cross-element conversions remain deferred. Writable references use the
+Instance fields now default to empty and use existing value copying/mutation; see
+[collection fields](collection_fields.md). Cross-element conversions remain deferred. Writable references use the
 [common reference binder](collection_references.md).
 Application-defined element types still need their own specialization path.
 
@@ -161,3 +162,6 @@ generation; trace work is not additive wall time. These are single-run fixture
 measurements, not flavor performance comparisons. Artifacts and traces:
 `/tmp/scpp-vector-copies-verified/`; compiler measurement run:
 `/tmp/scpp-vector-copy-timings.json`.
+
+Indexed arithmetic/bitwise/shift/power and string compounds reuse element rules; see
+[indexed compounds](indexed_compounds.md).

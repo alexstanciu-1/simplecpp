@@ -157,10 +157,11 @@ final class Compilation_Inspection
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
-		$row = ($statement instanceof ast_property_compound
+		$row = ($statement instanceof ast_index_compound ? ['kind' => 'indexed_compound', 'target' => self::value($statement->target)]
+			: ($statement instanceof ast_property_compound
 			? ($statement->target instanceof ast_field_expression ? ['kind' => 'field_compound', 'target' => self::value($statement->target)]
 				: ['kind' => 'static_compound', 'target' => $statement->target->declaration()->symbol_key()])
-			: ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id()]) + [
+			: ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id()])) + [
 			'conversion' => value_conversion::name($statement->conversion()), 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
 		if ($statement->operator !== null) {

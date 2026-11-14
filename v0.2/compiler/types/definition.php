@@ -45,6 +45,12 @@ interface index_write_type
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string;
 }
 
+/** Read/modify/write collections replace an approved element value without exposing an element reference. */
+interface compound_collection_type extends indexed_collection_type, index_write_type
+{
+	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string;
+}
+
 /** Ordered stores snapshot the normalized key and converted value before invoking the runtime member. */
 trait ordered_keyed_store
 {
