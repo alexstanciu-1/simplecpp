@@ -21,14 +21,9 @@ abstract class hash_type_definition extends type_definition implements indexed_c
 	}
 
 	/** METHODS */
-	/** Only an explicitly typed local can construct a hash from empty brackets. */
-	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	public function supports_inferred_local(): bool
 	{
-		if (($value instanceof ast_empty_collection_expression) && ($value->type_def() === $this)
-			&& ($context === conversion_context::typed_destination)) {
-			return value_conversion::identity;
-		}
-		throw new diagnostic($value->source(), $value->byte_start(), 'Hash value operations are deferred');
+		return true;
 	}
 
 	public function write_type(): type_definition

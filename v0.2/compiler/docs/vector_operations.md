@@ -41,8 +41,8 @@ The published `set` member checks bounds before replacing the slot. Failure
 leaves the element values and count intact. Local vector initialization/copy and assignment
 accept the same canonical specialization, including vector<int>/vector<int64> aliases.
 Copies have independent elements/cardinality; string elements retain their existing
-value semantics. Self-assignment is harmless. Function arguments
-(including reference arguments), returns, populated literals,
+value semantics. Self-assignment is harmless. By-value arguments and returns use the common value path.
+Reference arguments, populated literals,
 iteration and other methods remain deferred.
 
 Source `count(values)` returns the published count type and `empty(values)` returns bool.
@@ -119,16 +119,16 @@ remain valid local initializers and can now also be assigned to an existing loca
 Empty `[]` construction still requires an explicitly typed initializer; this slice
 does not introduce `values = []` or populated vector literals.
 
-The canonical `vector_type_definition` owns this admission: one type-identity test
-and local destination/context checks return the existing identity conversion. There
+The canonical definition inherits common same-type admission: one type-identity test
+returns the existing identity conversion, without syntax-parent checks. There
 is no element walk, alias graph, copied layout or content cache during preparation.
 No AST properties, preparation records, generated types or runtime ABI changes were
 needed. The common emitter already emits native copy construction/assignment; the
 existing runtime implements independent vector storage and exception-safe copy/swap
 assignment. C++ templates remain private to the prebuilt runtime.
 
-Function arguments, returns, field storage, explicit vector casts and cross-element
-conversions remain deferred. A local boundary does not authorize these other contexts.
+By-value arguments and returns are supported through the common binder and conversion path.
+Field storage, reference parameters and cross-element conversions remain deferred.
 Application-defined element types still need their own specialization path.
 
 Verification: `tests/vector_copies.php` and `tests/vector_copies_native.py` cover all

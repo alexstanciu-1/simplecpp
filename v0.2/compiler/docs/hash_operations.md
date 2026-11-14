@@ -48,7 +48,7 @@ which returns a copy and throws on absence.
 ## Boundaries and verification
 
 Nonempty literals, inferred empty collections, hash append, indexed compound/update
-operations, vector keyed writes, hash copying/arguments/returns, traversal and nested
+operations, reference parameters, traversal and nested
 containers remain deferred. Runtime storage algorithms and public ABI are unchanged.
 
 `tests/hash_operations.php` checks all four pairs, strict keys, converted values, NUL
@@ -82,3 +82,11 @@ objects. These are single observations, not flavor performance comparisons. Some
 validation processes were active during this run. Trace totals are distinct from wall
 time. PHP fixture generation including incremental/fresh checks took 136.27 ms.
 Raw results: `/tmp/scpp-hash-operations-native-final/results.json`.
+
+## Value boundaries
+
+Published hash specializations inherit the common same-type conversion rule for local
+copies, assignment, by-value parameters and returns. Inferred locals retain the canonical
+specialization. Runtime copies own independent backing storage; no element traversal or
+copy facts are added during preparation. Empty brackets still require an explicit typed
+initializer. See [common value passing](value_passing.md).

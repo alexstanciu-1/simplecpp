@@ -93,7 +93,7 @@ foreach (flavor::cases() as $flavor) {
 		$fixtures[$flavor->name . '_' . $element] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected($first_bytes)), 'compiler_ms' => $compiler_ms];
 		$returning = ($flavor === flavor::cpp ? $type . ' unsupported()' : 'function unsupported():' . $type)
 			. '{' . $decl($type, 'a', '[]') . 'return ' . $a . ';}return 8;';
-		rejects(fn() => $prepare($returning), 'Vector value operations are deferred');
+		$prepare($returning);
 		$directory = sys_get_temp_dir() . '/scpp-vector-copy-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
 			$entry_path = $directory . '/main.' . $flavor->name; $provider = $directory . '/value.' . $flavor->name;
@@ -118,7 +118,7 @@ foreach (flavor::cases() as $flavor) {
 			remove_tree($directory);
 		}
 	}
-	rejects(fn() => $prepare($decl('vector<int>','a','[]') . $decl('vector<string>','b','[]') . $var('b') . '=' . $var('a') . ';return 8;'), 'Vector value operations are deferred');
+	rejects(fn() => $prepare($decl('vector<int>','a','[]') . $decl('vector<string>','b','[]') . $var('b') . '=' . $var('a') . ';return 8;'), 'conversion');
 }
 if (isset($argv[1])) file_put_contents($argv[1],json_encode($fixtures,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT));
 echo "Vector local copies: independence, assignment and incremental/fresh recovery passed\n";

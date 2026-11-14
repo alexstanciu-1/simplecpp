@@ -153,6 +153,10 @@ final class Function_Preparation
 				if ($parameter_type === null) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 				}
+				if ($parameter->mode === passing_mode::reference
+					&& ($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition)) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable collection parameters are deferred');
+				}
 				if ($parameter_type instanceof struct_type_definition && $parameter->mode === passing_mode::reference) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 				}

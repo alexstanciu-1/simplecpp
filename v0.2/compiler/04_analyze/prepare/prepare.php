@@ -946,12 +946,6 @@ final class Preparation
 		foreach ($call->arguments as $index => $argument) {
 			$this->value($argument, $initializing);
 			$parameter = $function->parameters[$index];
-			if ($parameter->type_def() instanceof hash_type_definition) {
-				throw new diagnostic($argument->source(), $argument->byte_start(), 'Hash argument passing is deferred');
-			}
-			if ($parameter->type_def() instanceof vector_type_definition) {
-				throw new diagnostic($argument->source(), $argument->byte_start(), 'Vector argument passing is deferred');
-			}
 			if ($parameter->mode === passing_mode::reference) {
 				$this->bind_reference($argument, $parameter->type_def(), $writes);
 				$conversions[] = value_conversion::identity;
