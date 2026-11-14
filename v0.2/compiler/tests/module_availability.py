@@ -1,4 +1,4 @@
-"""Isolated generated optional-byte fixture proves module gates without activating production widths."""
+"""Isolated optional-byte fixture proves module gates independently of production numeric widths."""
 import json
 import os
 from pathlib import Path

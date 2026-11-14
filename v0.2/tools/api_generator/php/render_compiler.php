@@ -89,7 +89,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             ]);
             continue;
         }
-        $limits = ($definition['strategy'] === 'integer' && !$types[$identity]['signed'] && $types[$identity]['bits'] < 64) ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
+        $limits = '';
+        if ($definition['strategy'] === 'integer') {
+            $type = $types[$identity];
+            requireThat($type['signed'] || $type['bits'] < 64, 'Unsigned 64-bit compiler facts remain deferred');
+            $maximum = decimalPredecessor(decimalPowerOfTwo(digits($type)));
+            $minimum = $type['signed'] ? '(-' . $maximum . ' - 1)' : '0';
+            $limits = "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** $identity */ = $minimum;\n\tpublic const int MAXIMUM /** $identity */ = $maximum;\n\n";
+        }
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
         $literalMethods = $definition['literal_family'] === 'floating'
             ? strtr(readFile(__DIR__ . '/../templates/scalars/floating_literal_methods.php.tpl'), [
@@ -618,6 +625,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
         }
         if ($operation['lowering'] === 'native') {
             $expression = "'(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')'";
+            // Narrow unsigned multiplication must not overflow C++'s promoted signed int.
+            if ($op === 'multiply' && $definitions[$identity]['strategy'] === 'integer'
+                && !$types[$identity]['signed'] && $types[$identity]['bits'] < 32) {
+                $expression = "'(static_cast<__UINT64_TYPE__>(' . \$left . ') * ' . \$right . ')'";
+            }
             if ($definitions[$identity]['strategy'] === 'integer' && $types[$identity]['bits'] < 64 && $operation['result'] === $identity) {
                 $expression = "'static_cast<" . $definitions[$identity]['cpp'] . ">(' . " . $expression . " . ')'";
             }

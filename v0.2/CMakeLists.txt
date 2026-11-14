@@ -118,7 +118,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
       -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -274,6 +274,9 @@ if(BUILD_TESTING)
   add_test(NAME compiler_family_conversions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/family_conversions.php)
   add_test(NAME compiler_family_conversions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/family_conversions_native.py)
   set_tests_properties(compiler_family_conversions compiler_family_conversions_native PROPERTIES TIMEOUT 60)
+  add_test(NAME compiler_optional_integers COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/optional_integers.php)
+  add_test(NAME compiler_optional_integers_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/optional_integers_native.py)
+  set_tests_properties(compiler_optional_integers compiler_optional_integers_native PROPERTIES TIMEOUT 120)
   add_test(NAME compiler_integer_compounds COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_compounds.php)
   add_test(NAME compiler_integer_compounds_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_compounds_native.py)
   set_tests_properties(compiler_integer_compounds compiler_integer_compounds_native PROPERTIES TIMEOUT 60)

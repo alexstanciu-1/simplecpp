@@ -24,7 +24,7 @@ function artifacts(string $directory): array /** array<string,string> */
 
 verify(type_registry::required_module('byte') === 'test-numeric', 'Missing generated alias membership');
 verify(type_registry::required_module('uint8') === 'test-numeric', 'Missing canonical membership');
-verify(type_registry::resolve('uint32') === null, 'Optional widths activated');
+verify(type_registry::required_module('uint32') === 'runtime-numeric', 'Optional width lost its module gate');
 $runtime = $argv[2] . '/runtime';
 mkdir($runtime);
 file_put_contents($runtime . '/module.json', json_encode(['name' => 'runtime', 'type' => 'c++', 'modules' => ['numeric' => 'numeric.json']]));

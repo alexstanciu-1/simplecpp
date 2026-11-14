@@ -123,6 +123,8 @@ function compilerIntegerOperations(mixed $metadata, object $compiler, array $def
     }
     foreach ($integers as $left => $l) foreach ($integers as $right => $r) {
         if ($left === $right) continue;
+        // Different unsigned widths require uint64, deliberately unavailable in this bootstrap slice.
+        if (!$l['signed'] && !$r['signed'] && !isset($integers[$policy->different_unsigned])) continue;
         $execution = integerExecution($l, $r, $policy);
         // All currently active pairs have a lossless common domain. Wider exact comparisons need their own lowering.
         requireThat($execution !== null || $comparisons === [], 'Active integer comparison pair needs exact mixed-domain lowering');
@@ -154,6 +156,8 @@ function compilerThreeWayPromotions(mixed $metadata, object $compiler, array $de
         $lk = $definitions[$left]['strategy'];
         $rk = $definitions[$right]['strategy'];
         if (!in_array($lk, ['integer', 'floating'], true) || !in_array($rk, ['integer', 'floating'], true)) continue;
+        if ($lk === 'integer' && $rk === 'integer' && !$types[$left]['signed'] && !$types[$right]['signed']
+            && !isset($definitions[$policy->different_unsigned])) continue;
         $execution = $lk === 'floating' ? $left : ($rk === 'floating' ? $right : integerExecution($types[$left], $types[$right], $policy));
         requireThat($execution !== null && isset($members[$execution]), 'Three-way execution domain unavailable');
         if ($lk === 'integer' && $rk === 'integer') {

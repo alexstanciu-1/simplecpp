@@ -309,3 +309,54 @@ Generated checked dispatch selects the named runtime helper by that canonical id
 Missing or unsupported checked-source identity is an internal error, never an implicit
 int64 fallback. This adds no retained AST facts and changes no preparation or admission.
 Optional integer-width activation remains a separate slice.
+
+### Optional integer widths
+
+Select the existing runtime through `"dependencies": {"runtime": {"modules": ["numeric"]}}`
+in the application module manifest to enable `int8`, `int16`, `int32`, `uint16` and
+`uint32`. Their shared generated definitions are registered at compiler boot, while
+the immutable session availability context gates source resolution. Core int/int64 and
+byte/uint8 remain available without this selection. uint64 remains unavailable.
+
+Generated handlers reuse integer family conversions, arithmetic, comparisons, unary,
+updates, truthiness, bitwise operations and checked shifts. Signed narrowing uses the
+same generated minimum/maximum check as unsigned narrowing. Same-type operations retain
+their representation; admitted mixed integer operations execute in int64. Different
+unsigned widths temporarily have no arithmetic, ordinary comparison or spaceship
+promotion (including compound forms), since the agreed result/execution type is uint64.
+Explicit checked conversions, canonical strict identity and independent shift counts
+do not require that common-domain promotion and retain their existing rules.
+
+No AST fields, prepared records, dependency indexes or preparation traversal changed.
+Each new definition is one canonical shared object. Scalar values remain PHP integers;
+conversion codes and compound execution-type facts are unchanged. Literal identity and
+range remain int64. Generated lowerings select native aliases and named runtime helpers.
+Narrow unsigned multiplication explicitly avoids signed C++ integer-promotion overflow.
+
+The runtime publication includes these concrete aliases and conversions; its generated
+arithmetic helper bodies reuse the existing private algorithms. Applications include
+only their required public providers. Rebuild the runtime when changing its publication.
+
+Verification: `compiler_optional_integers` and `compiler_optional_integers_native`
+exercise all three flavors, representation boundaries, conversion source dispatch,
+numeric promotion identities, compounds, module isolation, failed retries and
+incremental/fresh recovery. Optional widths do not add new collection specializations,
+boxed kinds, direct echo bindings, or a power-operator contract.
+
+
+Measured numeric-matrix native builds (single sample per flavor, 2026-11-14):
+O2/g0, Ninja8, mold, libc++, no PCH/LTO, fresh instrumented application objects,
+prebuilt runtime. Frontend and LLVM are trace measurements; linker is the Ninja
+link-command duration. They are not additive end-to-end wall measurements.
+
+| Flavor | Native wall ms | Clang frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| PHP | 302.45 | 69.52 | 69.64 | 57 |
+| C++ | 304.76 | 79.35 | 70.37 | 53 |
+| JS | 298.83 | 66.83 | 66.76 | 56 |
+
+PHP fixture generation took 302.65 ms for the full test workload, including diagnostics
+and repeated incremental/fresh compilations; it is not a single-source compiler timing.
+All 57 native fixtures passed, and the unsigned multiplication matrix also passed
+UBSan (expected program exit 8). No performance comparison with an earlier identical
+fixture is claimed.

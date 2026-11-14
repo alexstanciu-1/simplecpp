@@ -19,6 +19,13 @@ function conversion_row(object $metadata, string $from, string $to): object {
 $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
+// Keep the legacy core matrix fixture deliberately core-only; optional activation has its own proofs.
+foreach ($metadata->compiler->modules->{'runtime-numeric'}->types as $identity) {
+    unset($metadata->compiler->value_types->$identity, $metadata->compiler->three_way->types->$identity);
+    $metadata->compiler->strict_identity->types = array_values(array_diff($metadata->compiler->strict_identity->types, [$identity]));
+}
+unset($metadata->compiler->modules->{'runtime-numeric'});
+$metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
 // The target, rather than the PHP host or ordinary LL carrier, selects exact overload literals.

@@ -143,6 +143,19 @@ function render(array $plan): array {
         $short .= includeHeader($plan['boxed']['header']);
         foreach ($plan['boxed']['families'] as $family) $short .= "using scpp::{$family['name']};\n";
     }
+    // Concrete optional-width helpers reuse the private integer algorithms; no app templates.
+    $integerHelpers = '';
+    foreach ($plan['types'] as $type) {
+        if ($type['bits'] >= 64 || $type['name'] === 'uint8') continue;
+        $name = $type['name'];
+        $cpp = $type['representation'];
+        foreach (['divide', 'remainder', 'shift_left', 'shift_right'] as $operation) {
+            $right = str_starts_with($operation, 'shift_') ? '::int64_t' : $cpp;
+            $signature = "$cpp {$name}_$operation($cpp left, $right right)";
+            $integerHelpers .= $signature . ";\n";
+            $d .= $signature . " { return detail::integer_$operation(left, right); }\n";
+        }
+    }
     $files += ['public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
     renderOwnership($plan, $files);
     renderHashes($plan, $files, $groups);
@@ -162,7 +175,7 @@ function render(array $plan): array {
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
-    $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration');
+    $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";

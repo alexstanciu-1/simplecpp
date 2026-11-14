@@ -65,3 +65,11 @@ promotion/conversion rules in a separate slice. Uint64 upper-range conversions u
 the unavailable result where exact host evaluation is absent, retaining native checks.
 Do not weaken source-required constant-expression contexts merely by marking a fact
 unknown; review such contexts when enabling the type.
+
+## Optional-width activation boundary
+
+The host-representable widths are enabled through runtime-numeric. Different unsigned
+representations still require uint64 under the agreed promotion policy. The user selected
+temporary rejection of common-domain operations between those widths rather than changing
+the table or activating uint64 in the same slice. Remove that omission when uint64 execution,
+checked conversions, exact comparisons and shift transport are implemented and verified.

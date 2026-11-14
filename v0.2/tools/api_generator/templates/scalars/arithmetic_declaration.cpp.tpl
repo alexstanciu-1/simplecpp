@@ -13,7 +13,7 @@ namespace scpp {
 ::int64_t int64_shift_right(::int64_t left, ::int64_t count);
 ::uint8_t uint8_shift_left(::uint8_t left, ::int64_t count);
 ::uint8_t uint8_shift_right(::uint8_t left, ::int64_t count);
-// Binary64 division rejects both signs of zero; other results follow native IEEE arithmetic.
+@optional_helpers@// Binary64 division rejects both signs of zero; other results follow native IEEE arithmetic.
 double float64_divide(double left, double right);
 // Three-way floating comparison rejects unordered NaN operands.
 ::int64_t float64_compare(double left, double right);

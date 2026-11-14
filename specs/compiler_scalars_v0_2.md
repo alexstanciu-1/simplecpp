@@ -665,3 +665,18 @@ A statically known null is rejected during preparation. A boxed null or containe
 raises `boxed_scalar_kind` at execution. Formatting requires an explicit cast.
 Echo admission and formatting are independent. This amendment supersedes older
 cast examples that render true as `1` and false as an empty string.
+
+## Optional integer activation — 2026-11-14
+
+Selecting the runtime's numeric module enables int8, int16, int32, uint16 and uint32.
+Core int/int64 and byte/uint8 remain available by default. Integer literal identity
+and range remain int64; typed destinations use the existing checked conversion rules.
+Ordinary assignment remains same-canonical-type-only.
+
+Until uint64 is activated, operations requiring a common integer domain between
+different unsigned widths are rejected: arithmetic, binary bitwise operations,
+ordinary comparisons, spaceship and their compound forms. The agreed promotion table
+itself is unchanged. Same-width unsigned operations and admitted signed/unsigned
+pairs below 64 bits keep that table. Explicit conversions, strict canonical identity
+and shifts (whose count is checked independently) retain their separate contracts.
+This is a temporary bootstrap restriction, not a change to uint64's eventual semantics.

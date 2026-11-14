@@ -273,7 +273,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
             'boolean_integer' => $sourceKind === 'boolean' && $targetKind === 'integer',
             'integer_boolean' => $sourceKind === 'integer' && $targetKind === 'boolean',
             'checked_integer' => $sourceKind === 'integer' && $targetKind === 'integer'
-                && !$types[$to]['signed'] && $types[$to]['bits'] < 64,
+                && ($types[$to]['signed'] || $types[$to]['bits'] < 64),
             'integer_widen' => $sourceKind === 'integer' && $targetKind === 'integer'
                 && fits($types[$to], $types[$from]['signed'], digits($types[$from])),
             'numeric_floating' => in_array($sourceKind, ['integer', 'boolean'], true) && $targetKind === 'floating',
@@ -367,7 +367,7 @@ function compilerStrategyReorderable(array $safety, string $strategy): bool {
 
 /** Resolve value-comparison mechanics for independently admitted ordinary or identity operators. */
 function compilerComparisonStrategy(mixed $compiler, array $definitions, string $name, array $operators, ?string $binding, array $stringOperations): array {
-    requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
+    requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating', 'boolean', 'string', 'null'], true), 'Unsupported compiler comparison type');
     $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, $binding, 'bool_t', true) : null;
     $storage = $name === 'string' ? $definitions[$name]['storage'] : null;
     requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
@@ -390,7 +390,7 @@ function compilerComparisonStrategy(mixed $compiler, array $definitions, string 
 function compilerComparisonPlan(mixed $compiler, array $definitions, array $stringOperations): array {
     $plan = [];
     foreach (object(at($compiler, 'comparisons')) as $name => $row) {
-        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
+        requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating', 'boolean', 'string', 'null'], true), 'Unsupported compiler comparison type');
         fields($row, ['operand', 'result', 'lowering', 'operators', 'result_binding']);
         literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => $name === 'string' ? 'runtime_compare' : 'native']);
         $binding = $name === 'string' ? textValue(at($row, 'result_binding')) : null;
