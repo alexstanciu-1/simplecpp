@@ -440,3 +440,86 @@ lambdas); all sibling translation units match too. Both native drivers printed
 `invoice: 10469` and exited with status 8. The mode-edit regression switches
 a foreign parameter from value to reference and back, comparing the caller
 with a fresh compilation at each step. [Catalog](../../compiler/docs/php_lowering_catalog.md)
+
+### Native integer compounds with constant operands
+
+For a local integer destination with identity execution and write-back, the
+generated native compound operator can take an immutable named scalar constant
+or a literal with a chain of proven scalar conversions. The emitter checks the
+prepared conversion of each cast and retains the original operand spelling.
+A checked cast or an operand rooted in a call stays on the snapshot path.
+Compound operators with checked arithmetic continue to use their helpers.
+
+In each of the 12 billing units, four named-constant and four cast-chain updates
+changed from old-value snapshots to native +=. This covers 32 updates per source
+flavor. Both full native builds printed `invoice: 10469` and exited with status 8.
+Regression fixtures cover the six native operators, mutation inside a checked
+cast, checked narrowing failure, and incremental imported-constant edits and
+recovery against fresh output. The catalog verifies 67 examples.
+
+### Runtime calls with scalar literal peers
+
+Runtime preparation already enforces exact argument types and validates writable
+reference slots against the published signature. The emitter uses the same
+nonthrowing scalar-literal test as source calls. When at most one operand is
+order-sensitive and no record/handle lifetime boundary is involved, the generated
+adapter call takes its operands directly. A borrowed local string counts as
+order-sensitive alongside a mutating count expression. The ordered path saves
+the string before evaluating the count.
+
+All 64 repeat sites in the call-heavy benchmark emit `str_repeat(label_(), 2LL)`.
+Regression fixtures cover each source flavor's spelling, a producer that prints
+once, count evaluation that changes the source string, a failing producer and a
+repeat-size failure after successful argument evaluation. The catalog includes
+both the direct call and the saved-string form.
+
+### Final by-value scalar in an ordered runtime call
+
+The ordered runtime path captures preceding operands before passing the final
+converted scalar expression to the adapter. The published writable-reference
+mask and destination's trivial-value classification determine eligibility.
+The emission walk compares its record/handle counter across the final operand
+to preserve its destruction boundary independently of preceding operands.
+
+For repeat with a mutating count producer, the emitted block retains the string
+snapshot and calls the producer once inside the adapter invocation. The fixtures
+also exercise a first failure that skips the count producer, a final failure
+after earlier effects, and a count read from a returned last owner. The latter
+keeps the scalar capture before adapter entry and observes an expired weak handle
+after the statement. The catalog checks the one-capture mutation example.
+
+### Scalar literals inside ordered runtime calls
+
+The runtime-call emitter retains the source positions of operands that can
+require snapshots. It emits captures in that order and leaves inert by-value
+scalar literals at their original call positions. The final-scalar lifetime
+check and the exact first-parameter cast for overloaded bindings still apply.
+
+The padding fixtures check a width literal between two string producers and a
+first failure that skips the padding producer. The PHP number-format fixture
+checks two leading literals and integer overload selection. The width stays inline in the catalog’s padding example.
+
+### Direct writable references in ordered runtime calls
+
+Preparation restricts each published writable reference to exact named local or
+parameter storage. Runtime-call lowering omits that position from its captures
+and passes the lvalue to the adapter. Other operands retain their value and
+lifetime checks. The PHP four-argument replacement adapter is the current
+published example. Its regression saves the search string before a sibling
+changes it, observes the replacement count in the original local, and verifies
+that a failing subject leaves a forwarded count at its initial value.
+
+### Final returned strings in ordered runtime calls
+
+The generator publishes the const-reference slots used in each native adapter
+signature, including overloads. After earlier snapshots, a final string-returning
+call can bind its result directly to that parameter. The full expression keeps
+the string alive through the adapter call. Nested record or handle expressions
+retain the existing lifetime boundary.
+
+The padding fixtures cover an owning string containing a NUL followed by another
+byte, a nested string adapter, and failures in either producer. The emitter selects the last order-sensitive operand even when scalar literals or
+writable references follow it. Capture eligibility and the record lifetime check
+use that operand’s own facts. Windowed substring counts exercise two trailing
+literals in all three flavors. PHP replacement covers a trailing writable count,
+including the count observed by the caller after a failing subject.

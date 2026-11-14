@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 66 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 71 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -142,6 +142,12 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |     $b int = 2;          |                                                                                                               | No unit header.                  | RHS evaluation.                        |
 | $ok = !$a || ($a && $b); |                                                                                                               |                                  |                                        |
 +--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| Given                    | var_a_0 += 1LL;                                                                                               | .cpp includes                    | The constant is emitted as its value.  |
+|     const int EXTRA=1;   | var_a_0 += (static_cast<scpp::int64>((static_cast<scpp::uint8>(2LL))));                                       | #include <scpp/core/scalars.hpp> | Both literal casts are proven safe.    |
+|     $a int=6;            |                                                                                                               | No unit header.                  | The integer binding supplies +=.       |
+| $a += EXTRA;             |                                                                                                               |                                  |                                        |
+| $a += (int)(byte)2;      |                                                                                                               |                                  |                                        |
++--------------------------+---------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                    |                                                                                                               | .cpp includes                    | The integer handler supplies native    |
 |     $a int = 6;          |                                                                                                               | #include <scpp/core/scalars.hpp> | compound operators. For plain locals   |
 |     $b int = 2;          |                                                                                                               | No unit header.                  | with identity conversions, the emitter |
@@ -237,6 +243,48 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | $n = strlen($s);       |                                                                         | #include <scpp/string.hpp>       | signature and lowering emits the       |
 |                        |                                                                         | No unit header.                  | symbol and provider include.           |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+```
+
+### Runtime call arguments
+
+```text
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| PHP-flavor pattern                    | Lowered C++ code                                     | Lowered C++ header code          | Generation and lowering             |
++=======================================+======================================================+==================================+=====================================+
+| Given                                 | scpp::string var_s_0 = str_repeat(label_(), 2LL);    | .cpp includes                    | The adapter borrows the returned    |
+|     function label():string {         |                                                      | #include <scpp/core/scalars.hpp> | string through the call. The count  |
+|         return "xy";                  |                                                      | #include <scpp/php/string.hpp>   | literal passes by value.            |
+|     }                                 |                                                      | #include <scpp/string.hpp>       |                                     |
+| $s=str_repeat(label(),2);             |                                                      | No unit header.                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| Given                                 | scpp::string var_t_1 = ([&]() {                      | .cpp includes                    | The first argument saves the string |
+|     function change(string &$s):int { |     const auto argument_25_0 = var_s_0;              | #include <scpp/core/scalars.hpp> | before change updates the original. |
+|         $s="new";                     |     return str_repeat(argument_25_0,                 | #include <scpp/php/string.hpp>   | The scalar count passes directly.   |
+|         return 2;                     |         change_(var_s_0));                           | #include <scpp/string.hpp>       |                                     |
+|     }                                 | }());                                                | No unit header.                  |                                     |
+|     $s string="old";                  |                                                      |                                  |                                     |
+| $t=str_repeat($s,change($s));         |                                                      |                                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| Given                                 | scpp::string var_s_0 = ([&]() {                      | .cpp includes                    | The first call finishes before the  |
+|     function text():string {          |     const auto argument_24_0 = text_();              | #include <scpp/core/scalars.hpp> | adapter borrows the final returned  |
+|         return "abc";                 |     return str_pad(argument_24_0, 6LL, pad_(), 1LL); | #include <scpp/php/string.hpp>   | string. Its bytes remain live       |
+|     }                                 | }());                                                | #include <scpp/string.hpp>       | through the call.                   |
+|     function pad():string {           |                                                      | No unit header.                  |                                     |
+|         return "-";                   |                                                      |                                  |                                     |
+|     }                                 |                                                      |                                  |                                     |
+| $s=str_pad(text(),6,pad(),1);         |                                                      |                                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
+| Given                                 | scpp::string var_s_2 = ([&]() {                      | .cpp includes                    | The search string is saved before   |
+|     function subject(string &$key):   |     const auto argument_30_0 = var_key_1;            | #include <scpp/core/scalars.hpp> | subject changes it. The adapter     |
+|         string {                      |     const auto argument_30_1 = scpp::string{"X", 1}; | #include <scpp/php/string.hpp>   | writes the count into the named     |
+|         $key="z";                     |     return str_replace(argument_30_0, argument_30_1, | #include <scpp/string.hpp>       | local directly.                     |
+|         return "aa";                  |         subject_(var_key_1), var_n_0);               | No unit header.                  |                                     |
+|     }                                 | }());                                                |                                  |                                     |
+|     $n int=99;                        |                                                      |                                  |                                     |
+|     $key string="a";                  |                                                      |                                  |                                     |
+| $s=str_replace($key,"X",              |                                                      |                                  |                                     |
+|     subject($key),$n);                |                                                      |                                  |                                     |
++---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
 ```
 
 ## Control flow and entry

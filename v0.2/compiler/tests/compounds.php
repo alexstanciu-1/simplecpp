@@ -71,6 +71,19 @@ foreach (flavor::cases() as $flavor)
 			"Expected native $operator in the statement and both for clauses");
 		$fixtures[$flavor->name . '_plain_' . $operation] = ['cpp' => $plain_cpp, 'stdout_hex' => bin2hex($output)];
 	}
+	$constant = $flavor === flavor::js ? 'const EXTRA: int = 1;' : 'const int EXTRA = 1;';
+	$constant_updates = $constant . $decl('x', 'int', '3');
+	foreach (['+=', '-=', '*=', '&=', '|=', '^='] as $operator) {
+		$constant_updates .= "$x $operator EXTRA; $x $operator (int)(byte)2; echo $x, \",\";";
+	}
+	$cpp = (new Cpp_Emitter())->emit($prepare($constant_updates . 'return 8;'));
+	foreach (['+=', '-=', '*=', '&=', '|=', '^='] as $operator) {
+		verify(str_contains($cpp, "var_x_0 $operator 1LL;") && str_contains($cpp,
+			"var_x_0 $operator (static_cast<scpp::int64>((static_cast<scpp::uint8>(2LL))));"),
+			"Expected native $operator with a constant and a proven cast chain");
+	}
+	verify(!str_contains($cpp, 'compound_previous'), 'Unexpected constant operand snapshot');
+	$fixtures[$flavor->name . '_constant_compounds'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('6,3,6,0,3,0,')];
 	// Isolate each operator so another helper cannot supply its include.
 	foreach (['/=' => ['int64_divide', 3], '%=' => ['int64_remainder', 1], '<<=' => ['int64_shift_left', 80],
 		'>>=' => ['int64_shift_right', 1], '**=' => ['int64_power', 1000]] as $operator => [$helper, $expected]) {
@@ -90,6 +103,15 @@ foreach (flavor::cases() as $flavor)
 		flavor::cpp => 'int &v',
 		flavor::js => '&v: int',
 	};
+	$mutating_cast = $fn('change', $ref, 'int', $var('v') . '=100; echo "R"; return 2;')
+		. $decl('x', 'int', '10') . "$x += (int)(byte)change($x); echo $x; return 8;";
+	$cpp = (new Cpp_Emitter())->emit($prepare($mutating_cast));
+	verify(str_contains($cpp, 'const auto compound_previous = var_x_0;') && str_contains($cpp, 'scpp::checked_int64_to_uint8('),
+		'Cast of a mutating call needs the original LHS and checked narrowing');
+	$fixtures[$flavor->name . '_mutating_compound_cast'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R12')];
+	$failure = str_replace('return 2;', 'return 300;', $mutating_cast);
+	$fixtures[$flavor->name . '_checked_compound_cast'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
+		'stdout_hex' => bin2hex('R'), 'catch_out_of_range' => 'integer_cast_out_of_range'];
 	// change writes 100 and returns 3. Each call must run once, after saving 10.
 	$bitwise = $fn('change', $ref, 'int', $var('v') . '=100; echo "R"; return 3;')
 		. $decl('x', 'int', '10') . $decl('b', 'int', '3');

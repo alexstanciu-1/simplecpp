@@ -43,8 +43,9 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         foreach ($binding['overloads'] as $arity => $variants) {
                             foreach ($variants as $types) {
                                 $parameters = $arguments = [];
+                                $constRefs = stringAdapterConstReferenceMask($types);
                                 foreach ($types as $i => $type) {
-                                    $parameters[] = ($type === 'string' ? 'const ::scpp::string&' : "::scpp::$type") . " arg$i";
+                                    $parameters[] = (($constRefs & (1 << $i)) ? "const ::scpp::$type&" : "::scpp::$type") . " arg$i";
                                     $arguments[] = "arg$i";
                                 }
                                 if ($arity === 1) $arguments[] = '0';
@@ -57,12 +58,11 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     $parameters = [];
                     $arguments = [];
                     $types = stringAdapterOrder($adapter['parameters'] ?? $binding['parameters'], $adapter);
+                    $constRefs = stringAdapterConstReferenceMask($types);
                     foreach ($types as $i => $type) {
                         $arguments[] = $arg = "arg$i";
-                        $cppType = match ($type) {
-                            'string', 'vector<string>' => 'const ::scpp::' . $plan['source_types']->{$type} . '&',
-                            default => "::scpp::$type",
-                        };
+                        $cppType = ($constRefs & (1 << $i))
+                            ? 'const ::scpp::' . $plan['source_types']->{$type} . '&' : "::scpp::$type";
                         if (in_array($i, $adapter['reference_parameters'] ?? [], true)) $cppType .= '&';
                         $parameters[] = "$cppType $arg";
                     }

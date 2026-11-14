@@ -783,6 +783,15 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     $plan['ownership'] = ['header' => $header, 'handle_binding' => 'std_smart_pointer_inline', 'handle_empty_access' => 'std::runtime_error:ownership_empty_access', 'weak_lock_failure' => 'empty_shared', 'handle_copy_allocation' => 'none', 'weak_condition' => 'not_published', 'handle_payload_access' => 'checked_borrow_no_implicit_extraction', 'records' => $records];
 }
 
+/** Native const-reference slots in adapter call order. */
+function stringAdapterConstReferenceMask(array $types): int {
+    $mask = 0;
+    foreach ($types as $i => $type) {
+        if ($type === 'string' || $type === 'vector<string>') $mask |= 1 << $i;
+    }
+    return $mask;
+}
+
 function stringAdapterOrder(array $arguments, array $adapter): array {
     if (isset($adapter['swap_first_two'])) {
         [$arguments[0], $arguments[1]] = [$arguments[1], $arguments[0]];

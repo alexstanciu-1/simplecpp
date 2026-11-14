@@ -628,10 +628,10 @@ CPP;
 		$conversion = $statement->conversion();
 		if (($type === $execution) && ($destination instanceof ast_local_binding || $destination instanceof ast_field_expression)
 			&& ($conversion === value_conversion::identity) && ($statement->left_conversion() === value_conversion::identity)
-			&& ($statement->write_back() === value_conversion::identity)
-			&& $simple_rhs) {
+			&& ($statement->write_back() === value_conversion::identity)) {
 			$operator = $execution->cpp_compound_operator($statement->operator);
-			if ($operator !== null) {
+			if ($operator !== null && ($simple_rhs || ($destination instanceof ast_local_binding
+				&& self::constant_compound_operand($statement->value)))) {
 				return $name . ' ' . $operator . ' ' . $right;
 			}
 		}
@@ -920,20 +920,37 @@ CPP;
 				}
 				$arguments = [];
 				$direct = true;
+				$capture_indices = [];
+				$inline_index = null;
+				$records_before = $this->record_expressions;
 				foreach ($operands as $index => $argument) {
+					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
+					// A prepared writable reference names stable storage; binding it does not read its value.
+					if (!$function->is_reference($index) && !self::inert_literal_argument(
+						$argument, $function->parameters[$index], value_conversion::identity)) {
+						$capture_indices[] = $index;
+						// Only the last order-sensitive operand can execute after the earlier captures.
+						$type = $function->parameters[$index];
+						$can_bind = $type->cpp_trivial_value() || ($function->is_const_reference($index)
+							&& $type instanceof type_string && $argument instanceof ast_call_expression);
+						$inline_index = $can_bind && $this->record_expressions === $operand_records_before ? $index : null;
+					}
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
 				}
 				$steps = [];
+				$direct = $direct || (count($capture_indices) <= 1 && $this->record_expressions === $records_before);
 				if (!$direct && count($arguments) > 1) {
-					foreach ($arguments as $index => $operand) {
+					foreach ($capture_indices as $index) {
+						if ($index === $inline_index) break;
+						$operand = $arguments[$index];
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
-						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
+						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
 				$call = $symbol . '(' . implode(', ', $arguments) . ')';
@@ -1182,21 +1199,6 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
-	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
-	{
-		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
-			return false;
-		}
-		return match ($conversion) {
-			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
-			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
-			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
-			default => false,
-		};
-	}
-
 	/** Application record and handle types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition> */
 	public static function signature_records(ast_function_declaration $function): \Generator
 	{
@@ -1206,6 +1208,40 @@ CPP;
 			$type = $parameter->type_def();
 			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition) yield $type;
 		}
+	}
+
+	/** Follow only prepared casts of literal values and immutable constant declarations. */
+	private static function constant_compound_operand(ast_expression $value): bool
+	{
+		while ($value instanceof ast_cast_expression) {
+			if (!self::inert_scalar_conversion($value->type_def(), $value->conversion())) return false;
+			$value = $value->operand;
+		}
+		if ($value instanceof ast_name_expression) {
+			$constant = $value->declaration();
+			return $constant instanceof runtime_integer_constant || ($constant instanceof ast_constant_declaration
+				&& self::inert_literal_argument($constant->initializer, $constant->type_def(), $constant->initialization()));
+		}
+		return $value instanceof ast_integer_expression || $value instanceof ast_float_expression || $value instanceof ast_keyword_expression;
+	}
+
+	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
+	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
+	{
+		return ($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion);
+	}
+
+	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */
+	private static function inert_scalar_conversion(type_definition $type, int $conversion): bool
+	{
+		if (!$type->cpp_trivial_value()) return false;
+		return match ($conversion) {
+			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
+			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
+			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
+			default => false,
+		};
 	}
 
 	private static function imports(string $flavor): string

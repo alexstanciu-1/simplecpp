@@ -189,23 +189,25 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                         foreach ($variants as $input => $types) {
                             if (!isset($runtimeTypes[$input])) continue;
                             $params = array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
+                            $constRefs = stringAdapterConstReferenceMask($types);
                             $byType[] = 'type_' . $runtimeTypes[$input] . "::class => new runtime_function('$name', ["
-                                . implode(', ', $params) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor', overloaded_first: true)";
+                                . implode(', ', $params) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor', overloaded_first: true, const_reference_mask: $constRefs)";
                         }
                         $rows[] = "$argumentCount => [" . implode(', ', $byType) . ']';
                     }
                     $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows) . ']),';
                     continue;
                 }
-                $arguments = isset($adapter['parameters'])
-                    ? array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $adapter['parameters'])
-                    : stringAdapterOrder($parameters, $adapter);
+                $types = stringAdapterOrder($adapter['parameters'] ?? $binding['parameters'], $adapter);
+                $arguments = array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
                 $adapterResult = $adapter['result'] ?? $result;
                 $requiredCount = $adapter['required_parameters'] ?? $binding['required_parameters'] ?? null;
                 $required = $requiredCount === null ? '' : ', ' . $requiredCount;
                 if (isset($adapter['reference_parameters'])) {
                     $required .= ', reference_mask: ' . array_sum(array_map(static fn($i) => 1 << $i, $adapter['reference_parameters']));
                 }
+                $constRefs = stringAdapterConstReferenceMask($types);
+                if ($constRefs) $required .= ', const_reference_mask: ' . $constRefs;
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
                     . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }
@@ -233,7 +235,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 53,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 54,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
