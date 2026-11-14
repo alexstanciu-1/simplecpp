@@ -12,18 +12,18 @@ final class Type_Resolution
 		return self::named($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
 	}
 
-	/** Resolve runtime signature types directly; application owners subscribe to their nominal payload. */
+	/** Resolve runtime signature types directly; callables watch the nominal records named in their signatures. */
 	public static function signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
 		?Dependency_Watches $dependencies, bool $allow_void = false): ?type_definition
 	{
-		// The method and its enclosing record belong to the same AST generation.
-		if ($syntax === $function->return_type_reference && $function->parent instanceof ast_struct_declaration
-			&& $syntax->first_child === null && Source_Names::resolve($syntax->name, $function->namespace) === $function->parent->name()) {
-			return $function->parent->definition;
+		if (in_array($syntax->name, ['shared', 'weak'], true) && $syntax->first_child !== null) {
+			$function->watch_signature($dependencies);
+			return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);
 		}
-		if (!in_array($syntax->name, ['shared', 'weak'], true) || $syntax->first_child === null) return self::resolve($syntax, $allow_void);
+		$type = self::resolve($syntax, $allow_void);
+		if ($type !== null || $function->is_constructor()) return $type;
 		$function->watch_signature($dependencies);
-		return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);
+		return self::record($syntax, $symbols, $function->namespace, $function, $dependencies);
 	}
 
 	/** Both handle families require exactly one nominal struct payload. */
@@ -47,6 +47,13 @@ final class Type_Resolution
 		}
 		$type = self::resolve($syntax);
 		if ($type !== null) return $type;
+		return self::record($syntax, $symbols, $namespace, $watcher, $dependencies);
+	}
+
+	/** Subscribe to the stable nominal key, including a missing declaration that may be added later. */
+	private static function record(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
+		?Dependency_Watches $dependencies): ?struct_type_definition
+	{
 		$entry = $symbols->entry('class:' . Source_Names::resolve($syntax->name, $namespace));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();

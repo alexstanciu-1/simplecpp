@@ -1,5 +1,6 @@
 """PCH reuse, dependency invalidation, missing artifacts and failed-build recovery in an isolated runtime tree."""
 from pathlib import Path
+import json
 import shutil
 import tempfile
 
@@ -13,6 +14,32 @@ with tempfile.TemporaryDirectory(prefix='scpp-pch-proof-') as directory:
     (root/'build/clang').mkdir(parents=True)
     (root/'build/clang/libscpp_runtime.a').symlink_to(native_build.ROOT/'build/clang/libscpp_runtime.a')
     native_build.ROOT = root
+    # The no-PCH launcher revalidates each invocation; an ordinary Ninja call remains independently protected.
+    app = root/'no-pch'
+    app.mkdir()
+    source = app/'entry.cpp'
+    source.write_text('int main(){return 8;}')
+    cmd = native_build.write_build(app, [source])
+    def run_native(launcher):
+        if launcher:
+            with native_build.qualified_ninja(cmd, app) as args:
+                result = process(args, app, 60)
+        else:
+            result = process(cmd, app, 60)
+        assert result['exit_code'] == 0, result
+        return result['stdout']
+    assert 'probe qualified:' in run_native(True)
+    assert 'no work to do' in run_native(True)
+    assert 'probe cached:' in run_native(False)
+    index, = (root/'build/clang/native-qualification').glob('inputs-*.json')
+    record = index.parent/(json.loads(index.read_text())['key']+'.json')
+    for launcher in (True, False):
+        saved = json.loads(record.read_text())
+        saved['tested_at'] = 0
+        record.write_text(json.dumps(saved))
+        assert 'probe qualified:' in run_native(launcher)
+        assert json.loads(record.read_text())['tested_at'] > 0
+    assert process([app/'program'], app, 3)['exit_code'] == 8
     cache = root/'cache'
     counter = 0
     def prepare(level='O2', validate=True):

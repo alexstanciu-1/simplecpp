@@ -102,6 +102,11 @@ A failed refresh stops the build and retry runs the probe again. The recorded
 traces describe these calls on that build configuration. The emitter consumes
 the source evaluation contract.
 
+The no-PCH panel and Python benchmark launchers check the same cache in process before each native
+invocation. A verified hit skips the Ninja qualification edge for that invocation. On a miss,
+expiry or busy cache lock, Ninja runs the regular checker. Standalone Ninja and PCH builds use
+the saved, protected graph. Native wall timing includes the launcher check.
+
 To qualify GCC independently on native Linux, run from the repository root:
 
 ```sh

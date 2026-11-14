@@ -12,6 +12,7 @@ import time
 SAMPLE = Path(__file__).resolve().parent
 sys.path.insert(0, str(SAMPLE.parents[1] / 'compiler/tests'))
 from app_namespace_native import invoke, service, write_build
+from native_build import qualified_ninja
 
 
 def direct_access(text):
@@ -37,7 +38,8 @@ def native_build(work, units, expected):
     graph = work / 'build.ninja'
     graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))
     start = time.perf_counter()
-    subprocess.run(command, cwd=work, check=True, stdout=subprocess.DEVNULL)
+    with qualified_ninja(command, work) as invocation:
+        subprocess.run(invocation, cwd=work, check=True, stdout=subprocess.DEVNULL)
     wall = (time.perf_counter() - start) * 1000
     exe = work / 'program'
     run = subprocess.run([exe], capture_output=True)

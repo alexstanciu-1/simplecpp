@@ -355,6 +355,73 @@ def prove(work, flavor):
         resident.stdin.close()
 
 
+def value_signatures(work, flavor):
+    app = work / ('values-' + flavor)
+    app.mkdir()
+    model, api, entry = [app / (n + '.' + flavor) for n in ('record', 'transform', 'main')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    param, byref, var, access, local, inferred, method, function, ctor = {
+        'php': ('Packet $p', 'Packet &$p', '$', '->', '$NAME TYPE;', '$NAME=EXPR;',
+                'public function shift(ARG): Packet', 'function NAME(ARG): Packet', 'new Cell()'),
+        'cpp': ('Packet p', 'Packet &p', '', '->', 'TYPE NAME;', 'auto NAME=EXPR;',
+                'Packet shift(ARG)', 'Packet NAME(ARG)', 'new Cell()'),
+        'js': ('p:Packet', '&p:Packet', '', '.', 'let NAME:TYPE;', 'let NAME=EXPR;',
+               'shift(ARG):Packet', 'function NAME(ARG):Packet', 'new Cell()'),
+    }[flavor]
+    field, edge = {'php': ('public int $x', 'public shared<Cell> $child'),
+                   'cpp': ('int x', 'shared<Cell> child'), 'js': ('x:int', 'child:shared<Cell>')}[flavor]
+    extra = {'php': 'public string $label;', 'cpp': 'string label;', 'js': 'label:string;'}[flavor]
+    record = 'struct Cell { ' + field + '; } struct Packet { ' + field + '=3; ' + edge + '; }'
+    def declare(name, typ):
+        return local.replace('NAME', name).replace('TYPE', typ)
+    def bind(name, expression):
+        return inferred.replace('NAME', name).replace('EXPR', expression)
+    p = var + 'p'
+    x, child = access + 'x', access + 'child'
+    make = (function.replace('NAME', 'makePacket').replace('ARG', '') + '{' + declare('p', 'Packet')
+            + p + child + '=' + ctor + ';return ' + p + ';}')
+    shift = method.replace('ARG', param) + '{' + p + x + '+=1;' + p + child + x + '=9;return ' + p + ';}'
+    transform = (function.replace('NAME', 'shifted').replace('ARG', param) + '{' + declare('worker', 'Worker')
+                 + p + x + '+=1;return ' + var + 'worker' + access + 'shift(' + p + ');}')
+    api.write_text(make + transform)
+    methods = app / ('worker.' + flavor)
+    methods.write_text('struct Worker {' + shift + '}')
+    # The entry never names Packet or Cell. Their types arrive only through callable signatures.
+    q = var + 'q'
+    entry.write_text(bind('p', 'makePacket()') + bind('q', 'shifted(' + p + ')')
+                     + 'echo ' + p + x + ',' + q + x + ',' + p + child + x + ';'
+                     + 'if (' + p + child + ' === ' + q + child + ') { return 8; } return 1;')
+    out = work / ('values-out-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, stdout) in enumerate([
+            (model, record, None, b'359'),
+            (model, record.replace('=3;', '=6;' + extra), None, b'689'),
+            (api, make + transform.replace('shift(' + p + ')', 'shift(' + var + 'worker)'), 'conversion from Worker to Packet', None),
+            (api, make + transform, None, b'689'),
+            (model, record.split('struct Packet')[0], 'type: Packet', None),
+            (model, record, None, b'359'),
+            (methods, 'struct Worker {' + shift.replace(param, byref) + '}', 'Writable inline struct parameters', None),
+            (methods, 'struct Worker {' + shift + '}', None, b'359'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1989200000 + rev,) * 2)
+            previous = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'values-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other.get('error'), (rev, current, other)
+                assert artifacts(out) == previous
+                continue
+            assert 'error' not in current and 'error' not in other, (rev, current, other)
+            assert artifacts(out) == artifacts(baseline)
+            build(out, work / ('values-native-' + flavor), stdout)
+            build(baseline, work / f'values-fresh-native-{flavor}-{rev}', stdout)
+        resident.stdin.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -363,5 +430,6 @@ if __name__ == '__main__':
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
         for flavor in ('php', 'cpp', 'js'):
+            value_signatures(work, flavor)
             prove(work, flavor)
             print(flavor, 'passed', flush=True)

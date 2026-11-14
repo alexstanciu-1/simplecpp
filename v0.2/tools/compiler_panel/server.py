@@ -15,7 +15,7 @@ import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from native_build import write_build
+from native_build import qualified_ninja, write_build
 from pch_cache import runtime_pch
 from contextlib import nullcontext
 
@@ -111,7 +111,11 @@ def compile_report(data, php, cache_root=None):
                                   data.get('optimization', 'O2'), use_pch,
                                   validate_pch=data.get('validate_pch', True))
             graph = (build_dir / 'build.ninja').read_text()
-            build = process(command, build_dir, 60)
+            qualification_start = time.perf_counter()
+            with qualified_ninja(command, build_dir) as invocation:
+                qualification_ms = (time.perf_counter() - qualification_start) * 1000
+                cached_in_process = invocation is not command
+                build = process(invocation, build_dir, 60)
             ninja_ms = build['ms']
             if cache_report is not None:
                 cache_report['success'] = build['exit_code'] == 0 and not build['timed_out']
@@ -121,6 +125,8 @@ def compile_report(data, php, cache_root=None):
         report['stages'].append({'name': 'Native build · -' + data.get('optimization', 'O2'), 'status': 'ok' if build['exit_code'] == 0 else 'error',
                                  'command': list(map(str, command)), 'build_graph': graph,
                                  'pch': use_pch, 'pch_cache': cache_report, 'ninja_ms': ninja_ms,
+                                 'qualification': 'in-process cache hit' if cached_in_process else 'Ninja',
+                                 'launcher_check_ms': qualification_ms,
                                  'validate_pch': data.get('validate_pch', True),
                                  'jobs': 4, 'linker': 'mold', **build})
         report['ok'] = build['exit_code'] == 0

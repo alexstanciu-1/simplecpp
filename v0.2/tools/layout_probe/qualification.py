@@ -66,7 +66,7 @@ def valid_traces(traces):
         trace in ('LR', 'RL') for trace in traces.values())
 
 
-def qualify(compiler_name, flags, cache, link_flags=()):
+def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, build_dir=None):
     compiler = Path(shutil.which(compiler_name) or compiler_name).absolute()
     # Common Ninja/CMake invocations use absolute inputs and can share a record across build dirs.
     options = [*flags, *link_flags]
@@ -98,12 +98,20 @@ def qualify(compiler_name, flags, cache, link_flags=()):
     relative |= any(not os.path.isabs(item) for k, v in env.items() if k not in ('CCC_OVERRIDE_OPTIONS', 'LD_PRELOAD')
                     for item in v.split(os.pathsep))
     fast &= not (env.get('LD_PRELOAD') or env.get('CCC_OVERRIDE_OPTIONS'))
+    # Relative searches must be interpreted from Ninja's working directory on refresh.
+    if cached_only and relative and build_dir is not None and Path.cwd() != Path(build_dir).resolve():
+        return None
     request = [str(compiler), str(SOURCE), options, len(flags), env, os.getcwd() if relative else None]
     slot = sha(json.dumps(request, sort_keys=True).encode())
     cache.mkdir(parents=True, exist_ok=True)
     index = cache / ('inputs-' + slot + '.json')
     with (cache / (slot + '.lock')).open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | (fcntl.LOCK_NB if cached_only else 0))
+        except BlockingIOError:
+            if cached_only:
+                return None
+            raise
         try:
             cached = json.loads(index.read_bytes())
             saved = json.loads((cache / (cached['key'] + '.json')).read_bytes())
@@ -114,6 +122,8 @@ def qualify(compiler_name, flags, cache, link_flags=()):
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             pass
 
+        if cached_only:
+            return None
         with tempfile.TemporaryDirectory(dir=cache) as temporary:
             depfile = Path(temporary) / 'probe.d'
             preprocessed = execute([compiler, *flags, '-E', '-P', '-MD', '-MF', depfile, '-MT', 'probe', SOURCE]).stdout

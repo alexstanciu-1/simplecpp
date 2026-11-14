@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service, write_build
+from native_build import qualified_ninja
 
 
 PROGRAMS = {
@@ -26,7 +27,8 @@ def build(output, native, expected=b'003,8'):
     command[2] = '8'
     graph = native / 'build.ninja'
     graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))
-    subprocess.run(command, cwd=native, check=True, capture_output=True)
+    with qualified_ninja(command, native) as invocation:
+        subprocess.run(invocation, cwd=native, check=True, capture_output=True)
     run = subprocess.run([native / 'program'], capture_output=True)
     assert (run.returncode, run.stdout, run.stderr) == (8, expected, b''), run
 

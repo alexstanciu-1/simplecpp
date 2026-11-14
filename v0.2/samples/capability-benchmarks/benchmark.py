@@ -16,13 +16,14 @@ import time
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT / 'tools/compiler_panel'))
-from native_build import write_build
+from native_build import qualified_ninja, write_build
 
 
 def run(command, cwd=None, expected=0):
     start = time.perf_counter()
-    result = subprocess.run(list(map(str, command)), cwd=cwd, capture_output=True,
-                            env={**os.environ, 'XDEBUG_MODE': 'off'}, timeout=180)
+    with qualified_ninja(command, cwd) as invocation:
+        result = subprocess.run(list(map(str, invocation)), cwd=cwd, capture_output=True,
+                                env={**os.environ, 'XDEBUG_MODE': 'off'}, timeout=180)
     elapsed = (time.perf_counter() - start) * 1000
     if result.returncode != expected:
         raise RuntimeError(f'{command}: exit {result.returncode}\n' + result.stdout.decode(errors='replace') + result.stderr.decode(errors='replace'))

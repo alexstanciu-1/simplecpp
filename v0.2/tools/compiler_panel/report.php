@@ -103,7 +103,7 @@ try {
 		if (!is_dir(dirname($destination))) { mkdir(dirname($destination), 0700, true); }
 		file_put_contents($destination, $text);
 	}
-	$result = ['ok' => true, 'stages' => $report->stages, 'units' => array_keys($output->files)];
+	$result = ['ok' => true, 'stages' => $report->stages, 'units' => $output->translation_units()];
 } catch (Throwable $error) {
 	$result = ['ok' => false, 'stages' => $report->stages, 'error' => $error->getMessage()];
 }
