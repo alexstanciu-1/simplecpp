@@ -83,5 +83,52 @@ backend is a cumulative trace interval, not an additional wall-time component.
 These are fixture timings, not an old/new performance comparison. Full artifacts:
 `/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
 
-Milestone 1.2 remains partial: string backing, enum methods, fields/defaults,
+Milestone 1.2 remains partial: string backing, enum methods, parameter defaults,
 reverse construction and other broader enum contracts are subsequent slices.
+
+## Instance fields with explicit case defaults
+
+Enum fields reuse `ast_struct_field.initializer` and `ast_name_expression`'s
+resolved declaration link. No AST classes, retained properties or separate default
+tables were added. The field's existing conversion code is identity. The canonical
+enum definition now advertises instance-field support.
+
+`Enum_Preparation::reference` shares case lookup between body expressions and field
+defaults. During layout preparation, a struct definition watches the enum symbol
+through the existing `Dependency_Watches` owner. Watching both the written type and
+case is deduplicated for that watcher. Successful unchanged layouts skip the walk;
+enum replacement invalidates the record and its dependent bodies through existing
+layout notification. Missing cases retain watches for retry and recovery.
+
+Preparation resolves the default once per changed layout, without copying its
+integer value or scanning cases at each construction. Lowering emits the resolved
+case name directly. The existing type-prototype traversal and record header planner
+now include enum field dependencies before the containing record. Generated record
+copying and shared ownership need no new runtime machinery.
+
+Verification uses `tests/enum_fields.php` and `tests/enum_fields_native.py`: all
+three flavors, private single-unit emission, cross-unit headers, inline copies,
+shared aliases, nested fields, changed defaults, compact width/signedness changes,
+missing-case failures and retries, wrong-type defaults/writes, and fresh-output
+equivalence. Unchanged caller/record ASTs are retained, unrelated bodies are reused,
+and no-op preparation is empty. Static enum storage and enum parameter defaults
+remain deferred.
+
+The field slice passed 21 native fixtures plus the existing enum and property
+regressions. Constructor proofs observe the default before the body and verify
+that copies do not rerun construction. Enum deletion/restoration and repeated
+failures recover to fresh artifacts. Affecting edits prepared two bodies and
+reused the unrelated third; no-op runs prepared none.
+
+2026-11-14 WSL field fixture timings, milliseconds (four sources plus native entry):
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 4.19 | 197.43 | 20.81 | 29.82 | 55 |
+| C++ | 4.77 | 239.67 | 26.70 | 33.02 | 56 |
+| JS | 4.30 | 183.76 | 18.77 | 26.97 | 56 |
+
+One fresh build per flavor, O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt runtime.
+Compiler timing includes source loading and bundle writing, excluding PHP startup.
+Clang/LLVM figures are summed work across units; native wall includes Ninja and
+qualification checks. Artifacts: `/tmp/scpp-enum-fields-verified/{fixtures,results}.json`.

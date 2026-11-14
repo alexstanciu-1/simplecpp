@@ -93,7 +93,7 @@ final class Struct_Syntax
 			$initializer = null;
 			if ($c->is(token_kind::assign)) {
 				$c->take(token_kind::assign, '=');
-				$initializer = $parser->literal_initializer('Field initializer requires a literal');
+				$initializer = $parser->literal_initializer('Field initializer requires a literal or enum case', allow_case: true);
 			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
 			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer);

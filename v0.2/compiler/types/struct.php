@@ -92,9 +92,16 @@ final class struct_type_definition extends type_definition implements dependency
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
+			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression)) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');
+			}
 			if ($field->initializer !== null) {
 				$field->initializer->reset_preparation();
-				type_registry::prepare_literal($field->initializer);
+				if ($type instanceof enum_type_definition) {
+					if (!Enum_Preparation::reference($field->initializer, $symbols, $this, $this->dependencies)) {
+						throw new diagnostic($field->source(), $field->initializer->byte_start(), 'Enum field default requires an enum case');
+					}
+				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
 			}
 			$field->settle_type($type);

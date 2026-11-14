@@ -644,8 +644,8 @@ final class Parser
 		return $value;
 	}
 
-	/** Parse a scalar literal without allowing executable expressions in declarations. */
-	public function literal_initializer(string $diagnostic): ast_expression
+	/** Parse a declaration literal, optionally retaining a name for an enum field default. */
+	public function literal_initializer(string $diagnostic, bool $allow_case = false): ast_expression
 	{
 		$cursor = $this->cursor;
 		$literal_start = $cursor->position();
@@ -657,7 +657,7 @@ final class Parser
 		else {
 			$initializer = $this->assignment_value();
 		}
-		if (type_registry::literal_type($initializer) === null) {
+		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression)) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), $diagnostic);
 		}
 		return $initializer;

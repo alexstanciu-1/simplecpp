@@ -11,12 +11,12 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	/** PROPERTIES */
 	/** Native owning written field type. */
 	public readonly ast_type_reference $type_reference;
-	/** Native owning optional literal written on the field. */
+	/** Native owning optional literal or enum-case default written on the field. */
 	public readonly ?ast_expression $initializer;
 	public readonly bool $is_private;
 
 	/** PREP FACTS */
-	/** Prepared fact: typed destination conversion for the written literal. */
+	/** Prepared fact: typed destination conversion for the written literal or enum case. */
 	public int $conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: canonical type once the immutable declaration layout has been validated. */
 	private ?type_definition $type_def = null;

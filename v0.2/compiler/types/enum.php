@@ -55,6 +55,17 @@ final class enum_type_definition extends type_definition
 		return true;
 	}
 
+	public function supports_instance_field(): bool
+	{
+		return true;
+	}
+
+	/** Emit the already-resolved case without backing-value lookup or conversion. */
+	public function cpp_case(ast_enum_case $case): string
+	{
+		return $this->cpp_type() . '::' . Cpp_Identifier::source($case->short_name);
+	}
+
 	public function cpp_trivial_value(): bool
 	{
 		return true;

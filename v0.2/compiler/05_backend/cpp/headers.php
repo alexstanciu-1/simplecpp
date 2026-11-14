@@ -149,6 +149,8 @@ final class Cpp_Headers
 			if ($type instanceof struct_handle_definition) {
 				$owners[$type->payload->name] ??= $emitter->owner_declaration($type->payload->shared, $includes);
 				$needs_methods = true;
+			} elseif ($type instanceof enum_type_definition) {
+				$children[$this->publish_enum($type->declaration, $emitter, $root)] = true;
 			} elseif ($type instanceof struct_type_definition) {
 				$child = $this->publish_layout($type->declaration, $emitter, $root);
 				$children[$child] = true;

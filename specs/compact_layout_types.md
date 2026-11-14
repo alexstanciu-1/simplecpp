@@ -371,9 +371,33 @@ underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
 This bootstrap slice does not yet implement unit/string-backed enums, enum
-methods, enum fields/globals/defaults, `enum_name`, reverse checked construction,
+methods, enum globals/parameter defaults, `enum_name`, reverse checked construction,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
+
+#### Enum instance fields in the PHP bootstrap compiler
+
+Instance fields may use an enum type with an explicit case default of that exact
+nominal type. The default is required even when a constructor later writes the field;
+there is no implicit zero or first-case initialization.
+
+| Flavor | Example inside a struct |
+| --- | --- |
+| PHP | `public Kind $kind = Kind::First;` |
+| C++ | `Kind kind = Kind::First;` |
+| JS | `kind: Kind = Kind.First;` |
+
+The declared type and case resolve in the struct's source context, including plain
+type imports. Integer literals, another enum's cases and executable expressions are
+not enum field defaults. Every default is checked even if the struct is unused.
+New inline and shared instances initialize the field before the constructor body.
+Nested inline records use their own defaults. Copying a record takes the current
+enum field value, without rerunning its default; subsequent edits to either copy
+are independent. Shared-owner copies still refer to the same record.
+
+Field reads and assignments use the existing access rules and exact enum identity.
+This does not enable enum arithmetic, numeric assignment, enum static properties,
+enum globals or enum parameter defaults.
 
 ### 3.1 v0.2 equality and selection
 

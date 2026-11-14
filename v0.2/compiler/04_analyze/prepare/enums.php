@@ -48,4 +48,26 @@ final class Enum_Preparation
 		}
 		$enum->definition->settle($backing, $storage);
 	}
+
+	/** Observe the enum's stable identity even for a missing case or removed declaration. */
+	public static function reference(ast_name_expression $syntax, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): bool
+	{
+		if ($syntax->source()->flavor === flavor::php && !$syntax->constant_only) return false;
+		$name = $syntax->name;
+		$separator = strrpos($name, '::');
+		$width = 2;
+		if ($separator === false && $syntax->source()->flavor !== flavor::php) {
+			$separator = strrpos($name, '\\');
+			$width = 1;
+		}
+		if ($separator === false) return false;
+		$symbol = $symbols->entry($syntax->root()->type_key(substr($name, 0, $separator)));
+		$dependencies?->watch($symbol, $watcher);
+		$enum = $symbol->declaration();
+		if (!($enum instanceof ast_enum_declaration)) return false;
+		$case = $enum->cases[substr($name, $separator + $width)] ?? null;
+		if ($case === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown enum case: ' . $name);
+		$syntax->settle_enum_case($case);
+		return true;
+	}
 }
