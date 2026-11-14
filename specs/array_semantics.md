@@ -610,9 +610,20 @@ not stable element identities. No interior element reference survives RHS execut
 Validation precedes mutable descent/COW; allocation failures are not transactional.
 
 This shared protocol applies to vector/hash and mixed/dynamic tables. Numeric boxed
-updates preserve the old leaf's stored-kind checks. Compound append, indexed
+updates preserve the old leaf's stored-kind checks. Compound append, value-producing indexed
 increment/decrement, fixed-width compound arithmetic and native element aliases
 remain deferred. Ordinary assignment's creation policy is unchanged.
+
+### Discarded indexed increment/decrement — 2026-11-14
+
+For currently supported typed vector/hash elements whose scalar type admits numeric
+updates, standalone prefix/postfix `++` and `--` evaluate the receiver and key once,
+retain any containing shared owner, read the existing element, apply the ordinary scalar
+update rule and store the updated value. Missing keys, invalid indexes and empty owners
+throw without insertion. No interior element reference escapes. Key-expression effects
+precede the element read, and remain if a later check fails. Prefix/postfix results are
+discarded; value-producing updates and indexed updates in for headers remain deferred.
+This does not activate additional collection specializations or scalar types.
 
 ## 13. Wording convention
 

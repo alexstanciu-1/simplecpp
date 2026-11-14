@@ -777,14 +777,8 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		$place = $this->retained_place($target->receiver, $globals, $declarations, $headers, $steps);
-		$steps[] = 'auto&& compound_collection = ' . $place . ';';
-		$key = $this->value($target->index, $globals, $declarations, $headers);
-		if (!($target->index instanceof ast_integer_expression)) {
-			$steps[] = 'const auto compound_key = ' . $key . ';';
-			$key = 'compound_key';
-		}
-		/** @var compound_collection_type $collection */
+		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
 		$steps[] = 'const auto compound_previous = ' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
 		$right = $this->value($statement->value, $globals, $declarations, $headers);
@@ -795,6 +789,47 @@ CPP;
 		$steps[] = 'const auto compound_result = ' . $result . ';';
 		$steps[] = '(void)' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
 		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'compound_result');
+		return '{ ' . implode(' ', $steps) . ' }';
+	}
+
+	/**
+	 * Share owner retention and single key evaluation for indexed compounds and updates.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param string[] $steps
+	 */
+	private function indexed_place(ast_index_expression $target, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
+		array &$steps /** list<string> */): string
+	{
+		$place = $this->retained_place($target->receiver, $globals, $declarations, $headers, $steps);
+		$steps[] = 'auto&& compound_collection = ' . $place . ';';
+		$key = $this->value($target->index, $globals, $declarations, $headers);
+		if (!($target->index instanceof ast_integer_expression)) {
+			$steps[] = 'const auto compound_key = ' . $key . ';';
+			$key = 'compound_key';
+		}
+		return $key;
+	}
+
+	/**
+	 * Apply generated updates to a copied element, then store it; no element address escapes.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function indexed_update(ast_index_update $statement, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$target = $statement->target;
+		$steps = [];
+		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		/** @var indexed_mutation_type $collection */
+		$collection = $target->receiver->type_def();
+		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$steps[] = $target->type_def()->lower_cpp_update($statement->operator, 'updated_element', $statement->postfix) . ';';
+		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'updated_element');
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
@@ -811,6 +846,9 @@ CPP;
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
 			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
+		}
+		if ($statement instanceof ast_index_update) {
+			return $this->indexed_update($statement, $global_references, $declarations, $headers);
 		}
 		if ($statement instanceof ast_property_update) {
 			$target = $this->value($statement->target, $global_references, $declarations, $headers);

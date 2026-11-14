@@ -17,7 +17,7 @@ The indexed target owns a general receiver expression and key. This includes a f
 selected from a function-returned owner, nested struct fields, ordinary local/parameter
 collections and temporary returned collections (whose mutation is discarded). Private
 field access still follows ordinary expression resolution. String byte indexing and boxed
-container compounds, indexed updates and nested indexed mutation paths remain outside
+container compounds and nested indexed mutation paths remain outside
 this slice; published nested collection specializations are not available.
 
 Follow the existing-element contract in ../../../specs/array_semantics.md: evaluate the
@@ -31,7 +31,7 @@ existence using the existing generated read binding, avoiding a new runtime ABI.
 
 Structures: ast_index_compound extends the existing compound statement and owns one
 ast_index_expression target. Its receiver remains ast_expression. Existing compound
-conversion/execution/write-back facts are reused. compound_collection_type exposes a
+conversion/execution/write-back facts are reused. indexed_mutation_type exposes a
 prepared-value replacement binding; vector/hash generator templates use the same setter
 binding as ordinary assignment. Shared compound_result emission handles local, property
 and indexed operation conversions. No symbol/observer/queue or runtime structures change.
@@ -68,3 +68,5 @@ measured stages, excluding PHP startup and fixture setup; it is not separate CLI
 Native wall includes direct-Ninja qualification overhead. Trace components do not sum to
 wall time. Fixture medians are not controlled flavor-performance comparisons. Raw sources,
 outputs, logs and traces: `/tmp/scpp-indexed-compounds-proof/`.
+
+Discarded-result indexed increment/decrement reuses the target path; see [indexed updates](indexed_updates.md).

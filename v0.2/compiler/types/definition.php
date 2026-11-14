@@ -46,7 +46,7 @@ interface index_write_type
 }
 
 /** Read/modify/write collections replace an approved element value without exposing an element reference. */
-interface compound_collection_type extends indexed_collection_type, index_write_type
+interface indexed_mutation_type extends indexed_collection_type, index_write_type
 {
 	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string;
 }

@@ -165,3 +165,5 @@ measurements, not flavor performance comparisons. Artifacts and traces:
 
 Indexed arithmetic/bitwise/shift/power and string compounds reuse element rules; see
 [indexed compounds](indexed_compounds.md).
+
+Discarded numeric indexed updates use generated element rules; see [indexed updates](indexed_updates.md).

@@ -72,7 +72,7 @@ final class Function_Preparation
 				|| ($statement instanceof ast_return_statement) || ($statement instanceof ast_storage_write)) {
 				$statement->reset_preparation();
 			}
-			if ($statement instanceof ast_property_compound || $statement instanceof ast_index_compound || $statement instanceof ast_property_update) self::expression($statement->target);
+			if ($statement instanceof ast_property_compound || $statement instanceof ast_index_compound || $statement instanceof ast_property_update || $statement instanceof ast_index_update) self::expression($statement->target);
 			if ($statement instanceof ast_local_declaration) {
 				self::expression($statement->initializer);
 			}

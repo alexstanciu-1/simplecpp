@@ -136,3 +136,19 @@ final class ast_index_compound extends ast_assignment_statement
 		$target->attach($this);
 	}
 }
+
+/** Discarded indexed update, e.g. factory()->items[key()]++; shares generated numeric update admission. */
+final class ast_index_update extends ast_update_statement
+{
+	/** Native owning indexed target; receiver and key are evaluated once. */
+	public readonly ast_index_expression $target;
+
+	/** $start/$end: token positions including the update operator and statement delimiter. */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_index_expression $target,
+		update_operator $operator, bool $postfix)
+	{
+		parent::__construct($start, $end, '', $operator, $postfix);
+		$this->target = $target;
+		$target->attach($this);
+	}
+}

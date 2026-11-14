@@ -217,8 +217,8 @@ final class Syntax_Inspection
 					$statement->type_position()),
 				'initializer' => self::expression($statement->initializer), 'span' => self::span($statement)];
 		}
-		if ($statement instanceof ast_property_update) {
-			return ['kind' => 'property_update', 'target' => self::expression($statement->target),
+		if ($statement instanceof ast_property_update || $statement instanceof ast_index_update) {
+			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::expression($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
 		if ($statement instanceof ast_update_statement) {
