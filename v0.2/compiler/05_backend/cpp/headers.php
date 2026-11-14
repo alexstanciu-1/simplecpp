@@ -15,8 +15,8 @@ final class Cpp_Headers
 	/** @var string[] Relative artifact path to generated header text. */
 	private array $files /** array<string,string> */ = [];
 
-	/** @var bool[] Ephemeral lowering requirements from completed watch relations. */
-	private array $enum_constructions /** array<string,bool> */ = [];
+	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
+	private array $enum_helpers /** array<string,uint8> */ = [];
 
 	/** CONSTRUCTOR */
 	/** Plan native declarations from completed watchers; header text is independent of source iteration order. */
@@ -24,9 +24,13 @@ final class Cpp_Headers
 	{
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
-				if ($node instanceof ast_enum_declaration && $program->dependencies->has_use(
-					$file->scope->parent->entry($node->symbol_key()), dependency_use::enum_from_value)) {
-					$this->enum_constructions[$node->symbol_key()] = true;
+				if (!($node instanceof ast_enum_declaration)) continue;
+				$symbol = $file->scope->parent->entry($node->symbol_key());
+				foreach (dependency_use::cases() as $use) {
+					if ($program->dependencies->has_use($symbol, $use)) {
+						$key = $node->symbol_key();
+						$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
+					}
 				}
 			}
 		}
@@ -99,9 +103,9 @@ final class Cpp_Headers
 	}
 
 	/** METHODS */
-	public function needs_enum_construction(ast_enum_declaration $enum): bool
+	public function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
 	{
-		return isset($this->enum_constructions[$enum->symbol_key()]);
+		return (($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0;
 	}
 
 	/** Publish one nominal enum header for signatures and foreign case references. */

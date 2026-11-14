@@ -19,6 +19,8 @@ final class enum_type_definition extends type_definition
 	private ?runtime_function $value_function = null;
 	/** Prepared fact: immutable checked-construction binding; shared across call sites. */
 	private ?runtime_function $from_value_function = null;
+	/** Prepared fact: immutable case-name binding; shared across call sites. */
+	private ?runtime_function $name_function = null;
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_enum_declaration $declaration)
@@ -43,9 +45,13 @@ final class enum_type_definition extends type_definition
 	{
 		$this->backing = $backing;
 		$this->value_function = new runtime_function('enum_value', [$this], $backing,
-			'static_cast<' . $backing->cpp_type() . '>', $backing->cpp_headers()[0]);
-		$this->from_value_function = new runtime_function('enum_from_value', [type_int64::instance()], $this,
-			'scpp_enum_from_value_' . Cpp_Emitter::qualified_path($this->name), type_int64::instance()->cpp_headers()[0]);
+			$backing === type_string::instance() ? 'scpp_enum_value_' . Cpp_Emitter::qualified_path($this->name)
+				: 'static_cast<' . $backing->cpp_type() . '>', $backing->cpp_headers()[0]);
+		$input = $backing === type_string::instance() ? $backing : type_int64::instance();
+		$this->from_value_function = new runtime_function('enum_from_value', [$input], $this,
+			'scpp_enum_from_value_' . Cpp_Emitter::qualified_path($this->name), $input->cpp_headers()[0]);
+		$this->name_function = new runtime_function('enum_name', [$this], type_string::instance(),
+			'scpp_enum_name_' . Cpp_Emitter::qualified_path($this->name), type_string::instance()->cpp_headers()[0]);
 		$this->storage = $storage;
 	}
 
@@ -124,5 +130,14 @@ final class enum_type_definition extends type_definition
 	public function from_value_function(): runtime_function
 	{
 		return $this->from_value_function ?? throw new \LogicException('Enum construction signature is not prepared');
+	}
+	/** Select a concrete helper without allocating a call-site signature. */
+	public function helper_function(dependency_use $use): runtime_function
+	{
+		return match ($use) {
+			dependency_use::enum_from_value => $this->from_value_function(),
+			dependency_use::enum_value => $this->value_function(),
+			dependency_use::enum_name => $this->name_function ?? throw new \LogicException('Enum name signature is not prepared'),
+		};
 	}
 }

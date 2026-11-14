@@ -153,7 +153,7 @@ foreach (flavor::cases() as $flavor) {
 		$enum('Bad', 'uint16', ['Bad' => -1]) => 'outside uint16',
 		$enum('Bad', 'int8', ['Bad' => -129]) => 'outside int8',
 		$enum('Bad', 'uint64', ['Bad' => 1]) => 'available integer',
-		$enum('Bad', 'string', ['Bad' => '"a"']) => 'integer literal',
+		$enum('Bad', 'int', ['Bad' => '"a"']) => 'integer literals',
 		$enum('Bad', null, []) => 'at least one case',
 		$enum('Bad', null, ['A' => '0x10', 'B' => '16']) => 'Duplicate enum value',
 		$enum('Bad', null, ['A' => '-0', 'B' => '+0']) => 'Duplicate enum value',

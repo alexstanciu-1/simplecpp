@@ -16,6 +16,8 @@ interface dependency_watcher {
 enum dependency_use: int
 {
 	case enum_from_value = 1;
+	case enum_name = 2;
+	case enum_value = 4;
 }
 
 /**

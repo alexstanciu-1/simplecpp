@@ -29,9 +29,9 @@ final class Enum_Syntax
 			if ($flavor === flavor::php) $c->take_keyword('case');
 			$case_name = $c->name(token_kind::identifier);
 			$c->take(token_kind::assign, '= (explicit enum value)');
-			$value = $parser->literal_initializer('Enum case requires an integer literal');
-			if (!($value instanceof ast_integer_expression)) {
-				throw new diagnostic($c->tokens->source, $c->tokens->tokens[$value->start]->offset, 'Enum case requires an integer literal');
+			$value = $parser->literal_initializer('Enum case requires an integer literal or string literal');
+			if (!($value instanceof ast_integer_expression) && !($value instanceof ast_string_expression)) {
+				throw new diagnostic($c->tokens->source, $c->tokens->tokens[$value->start]->offset, 'Enum case requires an integer literal or string literal');
 			}
 			$end = $c->position();
 			if ($flavor === flavor::php) $end = $c->take(token_kind::semicolon, ';') + 1;

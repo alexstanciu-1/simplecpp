@@ -30,8 +30,8 @@ final class Cpp_Emitter
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 
-	/** @var enum_type_definition[] Private lowering requirements; no prepared AST mutation. */
-	private array $enum_constructions /** array<string,enum_type_definition> */ = [];
+	/** @var int[] Private lowering requirements; no prepared AST mutation. */
+	private array $enum_helpers /** array<string,uint8> */ = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(?Cpp_Headers $headers = null, string $root = 'App')
@@ -50,14 +50,18 @@ final class Cpp_Emitter
 			$storage = $type->storage();
 			foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
 			$lines = [];
+			$ordinal = 0;
 			foreach ($node->cases as $case) {
 				$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
-					. type_int64::instance()->lower_cpp_literal($case->initializer) . ',';
+					. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 			}
-			if ($this->needs_enum_construction($node)) {
-				foreach (type_int64::instance()->cpp_headers() as $header) $includes[$header] = true;
+			$helper = '';
+			foreach (dependency_use::cases() as $use) {
+				if (!$this->needs_enum_helper($node, $use)) continue;
+				$binding = $type->helper_function($use);
+				$includes[$binding->header] = true;
+				$helper .= $this->enum_helper_signature($binding) . ";\n";
 			}
-			$helper = $this->needs_enum_construction($node) ? $type->cpp_type() . ' ' . $type->from_value_function()->symbol . '(scpp::int64 value);' . "\n" : '';
 			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
 				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
 		}
@@ -96,20 +100,42 @@ final class Cpp_Emitter
 		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
 	}
 
-	private function needs_enum_construction(ast_enum_declaration $enum): bool
+	private function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
 	{
-		return $this->headers?->needs_enum_construction($enum) ?? isset($this->enum_constructions[$enum->symbol_key()]);
+		return $this->headers?->needs_enum_helper($enum, $use)
+			?? ((($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0);
 	}
 
-	/** Check membership in the original int64 domain before returning an exact nominal case. */
-	private function enum_construction(enum_type_definition $type): string
+	/** Both concrete enum helpers have one runtime operand and no templates. */
+	private function enum_helper_signature(runtime_function $binding): string
+	{
+		return $binding->return_type_def()->cpp_type() . ' ' . $binding->symbol . '(' . $binding->parameters[0]->cpp_type() . ' value)';
+	}
+
+	/** Emit from the single owning case inventory; preparation never builds another lookup table. */
+	private function enum_helper(enum_type_definition $type, dependency_use $use): string
 	{
 		$lines = [];
+		$string_lookup = $use === dependency_use::enum_from_value && $type->backing() === type_string::instance();
 		foreach ($type->declaration->cases as $case) {
-			$lines[] = "\tcase " . type_int64::instance()->lower_cpp_literal($case->initializer) . ': return ' . $type->cpp_case($case) . ';';
+			if ($string_lookup) {
+				$literal = type_string::instance()->lower_cpp_literal($case->initializer);
+				$comparison = type_string::instance()->lower_cpp_binary(binary_operator::equal, 'value', $literal, type_string::instance());
+				$lines[] = "\tif (" . $comparison . ') return ' . $type->cpp_case($case) . ';';
+				continue;
+			}
+			$match = $use === dependency_use::enum_from_value ? type_int64::instance()->lower_cpp_literal($case->initializer) : $type->cpp_case($case);
+			$result = match ($use) {
+				dependency_use::enum_name => type_string::instance()->cpp_type() . '{' . Cpp_String_Literals::bytes($case->short_name) . ', ' . strlen($case->short_name) . '}',
+				dependency_use::enum_value => type_string::instance()->lower_cpp_literal($case->initializer),
+				dependency_use::enum_from_value => $type->cpp_case($case),
+			};
+			$lines[] = "\tcase " . $match . ': return ' . $result . ';';
 		}
-		return $type->cpp_type() . ' ' . $type->from_value_function()->symbol . "(scpp::int64 value) {\n\tswitch (value) {\n"
-			. implode("\n", $lines) . "\n\tdefault: throw std::runtime_error(\"Invalid value for enum helper\");\n\t}\n}\n";
+		$body = implode("\n", $lines);
+		$failure = 'throw std::runtime_error("Invalid value for enum helper");';
+		$body = $string_lookup ? $body . "\n\t" . $failure : "\tswitch (value) {\n" . $body . "\n\tdefault: " . $failure . "\n\t}";
+		return $this->enum_helper_signature($type->helper_function($use)) . " {\n" . $body . "\n}\n";
 	}
 
 	/** Lower an approved declaration default and collect its public header dependencies. @param bool[] $headers */
@@ -292,7 +318,7 @@ CPP;
 	/** Assemble local definitions and deterministic forward declarations without a shared naming registry. */
 	private function unit(?prepared_entry $entry, ast_file_node $file, string $entry_name): string
 	{
-		$this->enum_constructions = [];
+		$this->enum_helpers = [];
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -356,9 +382,12 @@ CPP;
 			if ($property->parent instanceof ast_struct_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
 		}
 		foreach ($file->declaration_nodes as $node) {
-			if ($node instanceof ast_enum_declaration && $this->needs_enum_construction($node)) {
+			if (!($node instanceof ast_enum_declaration)) continue;
+			foreach (dependency_use::cases() as $use) {
+				if (!$this->needs_enum_helper($node, $use)) continue;
 				$required_headers['stdexcept'] = true;
-				$definitions[] = $this->enum_construction($node->definition);
+				$required_headers[$node->definition->helper_function($use)->header] = true;
+				$definitions[] = $this->enum_helper($node->definition, $use);
 			}
 		}
 		ksort($declarations, \SORT_STRING);
@@ -959,9 +988,16 @@ CPP;
 			}
 			$function = $value->function_def();
 			if ($function instanceof runtime_function) {
-				if (($value->arguments[0] ?? null) instanceof ast_type_marker) {
-					$type = $value->type_def();
-					$this->enum_constructions[$type->declaration->symbol_key()] = $type;
+				$use = match ($function->name()) {
+					'enum_from_value' => dependency_use::enum_from_value,
+					'enum_name' => dependency_use::enum_name,
+					'enum_value' => $value->type_def() === type_string::instance() ? dependency_use::enum_value : null,
+					default => null,
+				};
+				if ($use !== null) {
+					$type = $use === dependency_use::enum_from_value ? $value->type_def() : $value->arguments[0]->type_def();
+					$key = $type->declaration->symbol_key();
+					$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
 				}
 				$required_headers[$function->header] = true;
 				$symbol = $function->symbol;

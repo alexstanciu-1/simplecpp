@@ -12,8 +12,8 @@ final class Enum_Preparation
 		if ($enum->definition->prepared()) return;
 		$written = $enum->backing;
 		$backing = $written === null ? type_int64::instance() : Type_Resolution::resolve($written);
-		if ($backing === null || !defined($backing::class . '::MINIMUM') || !defined($backing::class . '::MAXIMUM')) {
-			throw new diagnostic($enum->source(), $enum->byte_start(), 'Enum backing requires an available integer type');
+		if ($backing !== type_string::instance() && ($backing === null || !defined($backing::class . '::MINIMUM') || !defined($backing::class . '::MAXIMUM'))) {
+			throw new diagnostic($enum->source(), $enum->byte_start(), 'Enum backing requires an available integer type or string');
 		}
 		if ($enum->cases === []) throw new diagnostic($enum->source(), $enum->byte_start(), 'Enum requires at least one case');
 		$seen = [];
@@ -24,18 +24,31 @@ final class Enum_Preparation
 				throw new diagnostic($case->source(), $case->duplicate_element()->byte_start(), 'Duplicate enum case: ' . $case->short_name);
 			}
 			$case->initializer->reset_preparation();
-			type_int64::instance()->prepare_literal($case->initializer);
-			$value = $case->initializer->constant();
-			if ($value < $backing::MINIMUM || $value > $backing::MAXIMUM) {
-				throw new diagnostic($case->source(), $case->byte_start(), 'Enum value is outside ' . $backing->name . ' range');
+			if ($backing === type_string::instance()) {
+				if (!($case->initializer instanceof ast_string_expression)) {
+					throw new diagnostic($case->source(), $case->byte_start(), 'String-backed enum requires string literals');
+				}
+				$backing->prepare_literal($case->initializer);
+				$key = "\0" . $case->initializer->bytes();
+				$value = count($seen);
+			} else {
+				if (!($case->initializer instanceof ast_integer_expression)) {
+					throw new diagnostic($case->source(), $case->byte_start(), 'Integer-backed enum requires integer literals');
+				}
+				type_int64::instance()->prepare_literal($case->initializer);
+				$value = $case->initializer->constant();
+				if ($value < $backing::MINIMUM || $value > $backing::MAXIMUM) {
+					throw new diagnostic($case->source(), $case->byte_start(), 'Enum value is outside ' . $backing->name . ' range');
+				}
+				$key = $value;
 			}
-			if (isset($seen[$value])) throw new diagnostic($case->source(), $case->byte_start(), 'Duplicate enum value: ' . $value);
-			$seen[$value] = true;
+			if (isset($seen[$key])) throw new diagnostic($case->source(), $case->byte_start(), 'Duplicate enum value: ' . ($backing === type_string::instance() ? $case->short_name : $value));
+			$seen[$key] = true;
 			$minimum = min($minimum, $value);
 			$maximum = max($maximum, $value);
 		}
 		$storage = $backing;
-		if ($written === null || $written->name === 'int') {
+		if ($backing === type_string::instance() || $written === null || $written->name === 'int') {
 			// Select from value extrema, never case count. All source values fit the int64 literal contract.
 			$names = $minimum < 0 ? ['int8', 'int16', 'int32', 'int64'] : ['uint8', 'uint16', 'uint32', 'int64'];
 			foreach ($names as $name) {

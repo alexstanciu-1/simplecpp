@@ -1,4 +1,4 @@
-# Integer-backed enums
+# Backed enums
 
 Doc Status: supporting
 
@@ -83,8 +83,7 @@ backend is a cumulative trace interval, not an additional wall-time component.
 These are fixture timings, not an old/new performance comparison. Full artifacts:
 `/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
 
-Milestone 1.2 remains partial: string backing, enum methods
-and other broader enum contracts are subsequent slices.
+Milestone 1.2 remains partial: enum methods and broader enum contracts are subsequent slices.
 
 ## Instance fields with explicit case defaults
 
@@ -276,3 +275,56 @@ LLVM backend includes optimization/code generation; trace stages are not additiv
 wall components. Throw-catching proof fixtures add `<string_view>` for message
 assertions and are not used as representative application build timings.
 Artifacts and complete timings: `/tmp/scpp-enum-from-value-verified/`.
+
+## Case names and string-backed enums
+
+`enum_name` uses the existing unary runtime-call path, watches the enum and emits
+one used helper in its owning `.cpp`. It returns original unqualified case spelling,
+evaluates its operand once and throws for an invalid value introduced by native code.
+The compiler does not fold calls or scan cases during call preparation.
+
+String backing adds no tag property or second retained case table. `ast_enum_case`'s
+initializer accepts an integer or string literal; the existing literal owns checked
+values/decoded bytes. Declaration preparation validates uniqueness once using a
+temporary byte-key set. Emission assigns compact ordinal tags in case order.
+`enum_value` maps tags to bytes, and `enum_from_value` uses byte-exact comparisons
+through the existing generated string lowering. Reverse lookup is currently linear
+and uses ordinary string literals; lookup-table optimization is deferred.
+
+The previous construction-only helper index is now a small usage mask for construction,
+name and string-value helpers. The same watch relation, retirement logic, header-change
+tracking and private emission maps serve all three. Integer `enum_value` stays a direct
+cast. Enum definitions add one immutable name-call binding; no new expression class or
+per-call preparation record is required.
+
+Proofs: `tests/enum_name.php`, `tests/enum_strings.php` and their `_native.py` runners.
+They cover names longer than inline string storage, exact NUL/UTF-8 backing bytes,
+empty strings, distinct numeric-looking strings, invalid native values, checked misses,
+wrong types, single evaluation, shadowing, ordinary struct field/parameter/constructor
+defaults, renames, backing edits, deletion, duplicate values, retry without edits and
+recovery matching fresh native artifacts. Existing integer helper tests remain regression
+coverage. UInt64 and enum methods remain separate work.
+
+2026-11-14 verification: 24 name fixtures, 30 string-backed fixtures (including
+257-case/two-byte storage), 45 integer-helper native regressions and 12 focused
+compiler suites passed. Writing checks passed for 193 PHP files.
+
+Single-run fixture timings in milliseconds:
+
+| Fixture/flavor | Compiler | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Name/php | 0.97 | 176.42 | 14.42 | 9.31 | 54.00 |
+| Name/cpp | 1.47 | 195.62 | 15.34 | 11.90 | 60.00 |
+| Name/js | 0.93 | 176.13 | 14.55 | 9.31 | 55.00 |
+| String backing/php | 1.26 | 185.18 | 15.18 | 18.39 | 54.00 |
+| String backing/cpp | 1.80 | 187.36 | 15.49 | 18.69 | 57.00 |
+| String backing/js | 1.28 | 189.35 | 15.65 | 19.04 | 54.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime and fresh instrumented
+application objects. Native wall includes cached qualification; compiler timing
+excludes PHP startup and starts from in-memory source. LLVM backend includes
+optimization and code generation; trace totals are not additive wall components.
+Full artifacts: `/tmp/scpp-enum-name-complete/`, `/tmp/scpp-enum-strings-complete/`,
+`/tmp/scpp-enum-numeric-regression/`. Enum methods are paused for discussion: their
+shared callable-owner refactor must preserve enum identity without introducing
+instance fields or object allocation.

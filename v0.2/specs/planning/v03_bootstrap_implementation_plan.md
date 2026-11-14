@@ -31,7 +31,8 @@ named literal cases, compact/exact storage, same-enum equality, typed calls and
 `enum_value`, with incremental recovery. Enum instance fields with explicit case
 defaults and function/method/constructor enum parameter defaults are also implemented.
 Checked integer reverse construction is also implemented, reusing generated integer conversions.
-String backing and enum methods remain; 1.2 is not complete.
+`enum_name` and byte-exact string backing/helpers are implemented using compact ordinal storage.
+Enum methods remain; 1.2 is not complete.
 
 ## 2. Readable selection and lookup — a tokenizer path
 

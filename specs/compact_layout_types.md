@@ -370,10 +370,30 @@ The native representation is a scoped C++ `enum class`, with the selected
 underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
-This bootstrap slice does not yet implement unit/string-backed enums, enum
-methods, enum globals, `enum_name`,
+This bootstrap slice does not yet implement unit enums, enum methods, enum globals,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
+
+#### String-backed enums in the PHP bootstrap compiler
+
+An explicit `: string` backing accepts string literal cases in all three flavors.
+PHP uses `case Name = "bytes";`; C++/JS use `Name = "bytes"` comma-separated entries.
+Backing values are unique decoded byte sequences. Empty strings, embedded NUL and
+UTF-8 bytes are supported; no numeric coercion or Unicode normalization occurs.
+For example `"0"` and `"00"` are distinct values. Mixed integer/string cases reject.
+
+The compiler stores a nominal compact integer tag, assigned in declaration order,
+not a string object. It chooses the smallest available tag representation that
+covers every ordinal. Tags are an implementation detail, not an exposed numeric
+backing or stable serialization format. Equality and copying preserve nominal
+identity. Existing explicit case field/parameter defaults apply unchanged.
+
+`enum_value(value)` returns the original string bytes. `enum_name(value)` returns
+the case name, independently of its backing bytes. For this backing,
+`enum_from_value(Enum::class, string)` (JS: `Enum.class`) checks byte-exact membership
+and returns the nominal case or throws. Only string inputs are admitted; other scalar,
+boxed and nullable inputs require a separate boundary. No implicit enum/string
+conversion or reflection API is introduced.
 
 #### Enum instance fields in the PHP bootstrap compiler
 
@@ -527,7 +547,8 @@ the default, but an invalid default still makes the declaration invalid.
 
 The compiler-provided `enum_name(value)` accepts exactly one enum argument and
 returns its original, unqualified case name as a `string`, preserving spelling and
-case. Unit enums, int-backed enums and fixed-integer-backed enums are supported.
+case. The helper contract covers unit, int-backed, fixed-integer-backed and string-backed enums;
+the bootstrap currently implements the integer and string-backed forms.
 The argument is evaluated exactly once. Wrong arity and non-enum arguments are
 preparation errors; no string/integer coercion selects an enum implicitly.
 
@@ -541,9 +562,10 @@ native code throws at runtime rather than inventing a case name.
 This helper does not enable numeric conversion, PHP enum reflection methods,
 implicit enum defaults or user-defined generic functions.
 
-### 3.5 v0.2 explicit numeric enum helpers
+### 3.5 v0.2 explicit backing-value enum helpers
 
-`enum_value(value)` accepts one enum value. For explicitly fixed-backed enums,
+`enum_value(value)` accepts one enum value. String-backed enums follow the byte
+contract above. For explicitly fixed-backed integer enums,
 the result has the declared backing type, including full-width `uint64`. For plain
 `int`-backed and unit enums it is `int`, independently of compact storage selection.
 Unit enum values are zero-based declaration ordinals; reordering cases changes
@@ -551,18 +573,19 @@ those ordinals, so use explicit backing values for stable external encodings.
 
 `enum_from_value(Enum::class, value)` (PHP/C++) or
 `enum_from_value(Enum.class, value)` (JS) returns that exact enum type or throws if
-the integer does not identify a declared case. Its first argument is a compile-time
+the input does not identify a declared case. Its first argument is a compile-time
 type marker resolved through ordinary type lookup, including imports; it is not
-a runtime string or reflection object. The second argument may have any supported
-integer width/signedness. Comparison preserves the original mathematical value:
+a runtime string or reflection object. Integer-backed enums accept any supported
+integer width/signedness; string-backed enums require a string as specified above.
+Integer comparison preserves the original mathematical value:
 out-of-range values must not truncate or wrap into a valid case. Checking exact
 membership before any narrowing also establishes representability.
 
 Both helpers evaluate their runtime argument once and follow ordinary callable
 lookup/shadowing, like `enum_name`. Wrong arity, non-enum targets, missing type
-markers and noninteger reverse-conversion inputs reject during preparation.
-Float, bool, string, mixed and dynamic inputs require an explicit prior integer
-boundary; these helpers do not introduce implicit coercion. Well-typed integer
+markers and inputs of the wrong backing family reject during preparation.
+For integer backing, float, bool, string, mixed and dynamic inputs require an
+explicit prior integer boundary; these helpers do not introduce implicit coercion. Well-typed backing
 inputs without a matching case throw at runtime; this slice adds no constant-call
 evaluation. No nullable/Result alternative, general reflection or implicit
 enum/integer conversion is introduced.

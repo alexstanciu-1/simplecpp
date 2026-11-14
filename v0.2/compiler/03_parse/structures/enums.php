@@ -15,14 +15,14 @@ final class ast_type_marker extends ast_expression
 	}
 }
 
-/** One owned named case; its literal AST owns the checked integer value, e.g. case Number = 300. */
+/** One owned named case; its literal AST owns the checked backing value, e.g. case Number = 300. */
 final class ast_enum_case extends ast_node implements ast_declaration_interface
 {
 	use ast_declaration;
 
-	public readonly ast_integer_expression $initializer;
+	public readonly ast_integer_expression|ast_string_expression $initializer;
 
-	public function __construct(string $name, ast_integer_expression $initializer, int $start /** uint32 */, int $end /** uint32 */)
+	public function __construct(string $name, ast_integer_expression|ast_string_expression $initializer, int $start /** uint32 */, int $end /** uint32 */)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -37,7 +37,7 @@ final class ast_enum_case extends ast_node implements ast_declaration_interface
 	}
 }
 
-/** Nominal integer enum; cases are owned here, never published as namespace constants. */
+/** Nominal backed enum; cases are owned here, never published as namespace constants. */
 final class ast_enum_declaration extends ast_node implements ast_type_declaration
 {
 	use ast_declaration;

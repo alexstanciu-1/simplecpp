@@ -852,21 +852,25 @@ final class Preparation
 				$argument = $call->arguments[1];
 				$this->value($argument, $initializing);
 				$input = $argument->type_def();
-				if (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
+				if ($enum->definition->backing() === type_string::instance()) {
+					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires a string');
+				} elseif (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
 					throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires an integer');
 				}
-				$conversion = type_int64::instance()->prepare_conversion($argument, conversion_context::typed_destination);
+				$conversion = $enum->definition->from_value_function()->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
 				$call->settle_runtime($enum->definition->from_value_function(), [$conversion]);
 				return;
 			}
-			if ($builtin === 'enum_value') {
-				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'enum_value requires one enum argument');
+			if ($builtin === 'enum_value' || $builtin === 'enum_name') {
+				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires one enum argument');
 				$argument = $call->arguments[0];
 				$this->value($argument, $initializing);
 				$type = $argument->type_def();
-				if (!($type instanceof enum_type_definition)) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_value requires an enum');
-				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
-				$call->settle_runtime($type->value_function());
+				if (!($type instanceof enum_type_definition)) throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an enum');
+				$use = $builtin === 'enum_name' ? dependency_use::enum_name
+					: ($type->backing() === type_string::instance() ? dependency_use::enum_value : null);
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner, $use?->value ?? 0);
+				$call->settle_runtime($use === null ? $type->value_function() : $type->helper_function($use));
 				return;
 			}
 			$operation = match ($builtin) {
