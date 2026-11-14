@@ -38,7 +38,10 @@ including owned string copies preserving embedded NUL bytes. An indexed read can
 bind a mutable reference. Both writes require existing writable local storage.
 Replacement emits each argument once in a direct native call. C++ chooses their evaluation order.
 The published `set` member checks bounds before replacing the slot. Failure
-leaves the element values and count intact. Ordinary vector assignment/copy, function arguments
+leaves the element values and count intact. Local vector initialization/copy and assignment
+accept the same canonical specialization, including vector<int>/vector<int64> aliases.
+Copies have independent elements/cardinality; string elements retain their existing
+value semantics. Self-assignment is harmless. Function arguments
 (including reference arguments), returns, populated literals,
 iteration and other methods remain deferred.
 
@@ -106,3 +109,54 @@ Raw results: `/tmp/scpp-vector-operations-native-final/results.json`.
 
 The vector provider proof also passes relocated/shared headers, specialization
 retirement/re-addition, strict filtering and template-free public closure checks.
+
+## Local copying and assignment
+
+Explicitly typed or inferred local declarations may copy an existing vector of the
+same specialization. Ordinary assignment replaces the destination value with a copy.
+Empty vectors and empty-vector copies follow the same rule. Runtime-produced vectors
+remain valid local initializers and can now also be assigned to an existing local.
+Empty `[]` construction still requires an explicitly typed initializer; this slice
+does not introduce `values = []` or populated vector literals.
+
+The canonical `vector_type_definition` owns this admission: one type-identity test
+and local destination/context checks return the existing identity conversion. There
+is no element walk, alias graph, copied layout or content cache during preparation.
+No AST properties, preparation records, generated types or runtime ABI changes were
+needed. The common emitter already emits native copy construction/assignment; the
+existing runtime implements independent vector storage and exception-safe copy/swap
+assignment. C++ templates remain private to the prebuilt runtime.
+
+Function arguments, returns, field storage, explicit vector casts and cross-element
+conversions remain deferred. A local boundary does not authorize these other contexts.
+Application-defined element types still need their own specialization path.
+
+Verification: `tests/vector_copies.php` and `tests/vector_copies_native.py` cover all
+three flavors, int/int64 aliases, inferred/typed copies, overwritten destinations,
+self-assignment, empty copying/assignment, independent append/replacement and
+heap-backed strings containing NUL. Incremental tests retain caller ASTs through
+provider edits, wrong return types, deletion, retries without edits and recovery;
+successful emitted artifacts match fresh compilation and are built and executed.
+No-op runs prepare zero bodies. Prepared facts are unchanged by emission.
+
+2026-11-14 local-copy verification: 24 native fixtures, nine regression suites
+(including native vector operations/type proofs and the runtime consumer) and style
+checks passed. Base-fixture timings, milliseconds:
+
+| Element/flavor | Compiler | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| int/php | 1.15 | 212.82 | 18.23 | 12.60 | 61.00 |
+| int/cpp | 1.83 | 233.80 | 22.55 | 20.45 | 67.00 |
+| int/js | 1.30 | 211.30 | 17.52 | 12.72 | 72.00 |
+| string/php | 1.10 | 179.99 | 13.84 | 13.99 | 56.00 |
+| string/cpp | 1.08 | 182.78 | 14.13 | 14.10 | 54.00 |
+| string/js | 1.10 | 342.10 | 23.07 | 20.66 | 77.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime; fresh instrumented app
+objects. Native wall includes cached toolchain qualification. Compiler timings were
+measured separately for identical generated base fixtures, excluding PHP startup,
+serialization/purity assertions and native work. LLVM includes optimization and code
+generation; trace work is not additive wall time. These are single-run fixture
+measurements, not flavor performance comparisons. Artifacts and traces:
+`/tmp/scpp-vector-copies-verified/`; compiler measurement run:
+`/tmp/scpp-vector-copy-timings.json`.

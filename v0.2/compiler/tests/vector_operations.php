@@ -71,7 +71,7 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[false] = 2;', 'Vector index requires int64'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[0] = 1;', 'conversion'],
-		[$decl('vector<int>', 'values', '[]') . $decl('vector<int>', 'copy', $v), 'Vector value operations are deferred'],
+		[$decl('vector<int>', 'values', '[]') . $decl('vector<string>', 'copy', $v), 'Vector value operations are deferred'],
 		['echo [];', 'explicitly typed local initializer'],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);
