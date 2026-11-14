@@ -83,7 +83,7 @@ backend is a cumulative trace interval, not an additional wall-time component.
 These are fixture timings, not an old/new performance comparison. Full artifacts:
 `/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
 
-Milestone 1.2 remains partial: string backing, enum methods, parameter defaults,
+Milestone 1.2 remains partial: string backing, enum methods, constructor defaults,
 reverse construction and other broader enum contracts are subsequent slices.
 
 ## Instance fields with explicit case defaults
@@ -111,8 +111,8 @@ three flavors, private single-unit emission, cross-unit headers, inline copies,
 shared aliases, nested fields, changed defaults, compact width/signedness changes,
 missing-case failures and retries, wrong-type defaults/writes, and fresh-output
 equivalence. Unchanged caller/record ASTs are retained, unrelated bodies are reused,
-and no-op preparation is empty. Static enum storage and enum parameter defaults
-remain deferred.
+and no-op preparation is empty. Static enum storage remains deferred; ordinary
+parameter defaults use the following slice.
 
 The field slice passed 21 native fixtures plus the existing enum and property
 regressions. Constructor proofs observe the default before the body and verify
@@ -132,3 +132,50 @@ One fresh build per flavor, O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt ru
 Compiler timing includes source loading and bundle writing, excluding PHP startup.
 Clang/LLVM figures are summed work across units; native wall includes Ninja and
 qualification checks. Artifacts: `/tmp/scpp-enum-fields-verified/{fixtures,results}.json`.
+
+## Function and method parameter defaults
+
+Ordinary functions and instance/static methods accept trailing exact-enum case
+defaults. Constructors and reference defaults remain rejected. The existing parser
+already retains the default expression; no parser, binder or lowering changes are
+needed. No AST classes, properties, indexes or conversion records are added.
+
+`Function_Preparation::declarations` resolves a case through
+`Enum_Preparation::reference` with the callable as watcher. It then uses the existing
+typed-destination conversion and `settle_default` path. The enum case link lives on
+the parameter's existing name expression; the existing conversion is identity.
+This happens once per invalidated signature, not per call. Resolution uses the
+declaration's file namespace/imports even when the caller has a same-named enum.
+
+Omitted arguments reuse the prepared parameter expression in the common emitter;
+explicit arguments retain ordinary binding. Native calls receive the case constant
+directly, without runtime lookup or default wrappers. Existing signature watches
+propagate enum changes to callable observers. This keeps the current conservative
+invalidation policy, including explicit callers, rather than adding omission-specific
+watch tables. Unchanged signatures skip preparation and no-op runs prepare no bodies.
+
+`tests/enum_defaults.php` and `tests/enum_defaults_native.py` cover all three flavors:
+functions, inline/shared instance receivers, static methods, multiple trailing
+defaults, omitted/explicit arguments, declaration-scope imports and rooted case
+names, changed defaults and backing values/width, case deletion, repeated failed
+retries and recovery against fresh artifacts. Constructor/reference defaults,
+wrong enum cases, integer/null/computed defaults and required-after-optional
+parameters are rejected before native compilation.
+
+Verification passed 15 native fixtures and five regression suites (enum fields,
+enum defaults, scalar parameter defaults and their native proof, and struct methods).
+An enum-only edit prepared five affected bodies and reused three; a changed callable
+source prepared seven and reused the unrelated body. No-op runs prepared none.
+
+2026-11-14 WSL timings for the four-source fixture plus native entry, milliseconds:
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 7.79 | 201.23 | 32.91 | 52.93 | 56 |
+| C++ | 7.43 | 217.49 | 30.14 | 57.09 | 68 |
+| JS | 5.45 | 192.56 | 24.31 | 43.88 | 61 |
+
+One fresh build per flavor: O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt runtime.
+Compiler time includes reading and writing source artifacts but excludes PHP startup.
+Clang/LLVM times sum work across translation units; native wall includes Ninja and
+qualification checks. Artifacts: `/tmp/scpp-enum-defaults-verified/{fixtures,results}.json`.

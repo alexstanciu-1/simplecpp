@@ -371,7 +371,7 @@ underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
 This bootstrap slice does not yet implement unit/string-backed enums, enum
-methods, enum globals/parameter defaults, `enum_name`, reverse checked construction,
+methods, enum globals/constructor defaults, `enum_name`, reverse checked construction,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
 
@@ -396,8 +396,8 @@ enum field value, without rerunning its default; subsequent edits to either copy
 are independent. Shared-owner copies still refer to the same record.
 
 Field reads and assignments use the existing access rules and exact enum identity.
-This does not enable enum arithmetic, numeric assignment, enum static properties,
-enum globals or enum parameter defaults.
+This does not enable enum arithmetic, numeric assignment, enum static properties
+or enum globals. Ordinary parameter defaults are covered below.
 
 ### 3.1 v0.2 equality and selection
 
@@ -501,6 +501,20 @@ as enum parameter defaults. Existing optional-parameter ordering rules apply;
 reference-parameter defaults remain deferred. This does not establish an implicit
 enum default: local enum storage still requires explicit initialization, without
 silently choosing zero or the first declared case.
+
+The active PHP bootstrap compiler implements these defaults for functions and
+ordinary instance/static struct methods in all three flavors:
+
+| Flavor | Function signature |
+| --- | --- |
+| PHP | `function pick(Kind $kind = Kind::First): Kind` |
+| C++ | `Kind pick(Kind kind = Kind::First)` |
+| JS | `function pick(kind: Kind = Kind.First): Kind` |
+
+Enum constructor defaults remain deferred; previously supported scalar constructor
+defaults are unchanged. The default is checked when its signature is prepared,
+including unused functions/methods. Calls with an explicit argument do not select
+the default, but an invalid default still makes the declaration invalid.
 
 ### 3.4 v0.2 enum case names
 

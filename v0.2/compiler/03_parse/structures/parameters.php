@@ -13,7 +13,7 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	public readonly ast_type_reference $type_reference;
 	public readonly passing_mode $mode;
 	public readonly int $id /** uint32 */;
-	/** Owned literal syntax; null means a required parameter. */
+	/** Owned literal or enum-case syntax; null means a required parameter. */
 	public readonly ?ast_expression $default_value;
 
 	/** PREP FACTS */

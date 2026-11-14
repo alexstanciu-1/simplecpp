@@ -29,8 +29,9 @@ Do not block this proof on every optional width, populated collection literals o
 1.2 status: the [first integer-enum slice](../../compiler/docs/enums.md) supplies
 named literal cases, compact/exact storage, same-enum equality, typed calls and
 `enum_value`, with incremental recovery. Enum instance fields with explicit case
-defaults are also implemented. String backing, enum methods, parameter defaults
-and checked reverse construction remain; 1.2 is not complete.
+defaults and ordinary function/method enum parameter defaults are also implemented.
+String backing, enum methods, constructor defaults and checked reverse construction
+remain; 1.2 is not complete.
 
 ## 2. Readable selection and lookup — a tokenizer path
 

@@ -162,11 +162,21 @@ final class Function_Preparation
 					if ($parameter->mode === passing_mode::reference) {
 						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
 					}
-					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
-						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
-						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+					if ($parameter_type instanceof enum_type_definition) {
+						if ($declaration->is_constructor()) {
+							throw new diagnostic($default->source(), $default->byte_start(), 'Enum constructor defaults are deferred');
+						}
+						if (!($default instanceof ast_name_expression)
+							|| !Enum_Preparation::reference($default, $symbols, $declaration, $dependencies)) {
+							throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
+						}
+					} else {
+						if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
+							|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
+							throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+						}
+						type_registry::prepare_literal($default);
 					}
-					type_registry::prepare_literal($default);
 					$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
 					$optional = true;
 				}
