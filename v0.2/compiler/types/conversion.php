@@ -3,6 +3,12 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Conversion evaluation did not produce a scalar fact; this singleton is never stored in the AST. Native uint8. */
+enum constant_evaluation: int
+{
+	case unavailable = 0;
+}
+
 /** Source boundary authorizing a conversion; operator promotion is authorized separately by its metadata row. Native uint8. */
 enum conversion_context: int
 {

@@ -392,7 +392,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
             $prepare[] = "\t\tif ($condition) {\n\t\t\treturn $code;\n\t\t}";
             $binding = $row['binding'];
             $lower[] = "\t\t\t$code => '{$binding['symbol']}(static_cast<{$binding['source_cpp']}>(' . \$value . '))',";
-            $constants[] = "\t\t\t$code => null,";
+            $constants[] = "\t\t\t$code => constant_evaluation::unavailable,";
             $headerCases[] = "\t\t\t$code => [" . var_export($binding['header'], true) . '],';
             continue;
         }
@@ -493,7 +493,7 @@ $lower
 	}
 
 	/** Preserve unknown values; convert known payloads using the selected operation only. */
-	public function convert_scalar_constant(int \$conversion /** uint16 */, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int \$conversion /** uint16 */, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		return match (\$conversion) {
 $constants

@@ -240,14 +240,14 @@ abstract class ast_expression extends ast_node
 	}
 
 	/** Set occurrence facts once; $known preserves null as a value independently of readiness. */
-	protected function settle_value(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */, bool $known = false): void
+	protected function settle_value(type_definition $type, int|float|bool|null|constant_evaluation $constant /** int64|float64|bool|null|constant_evaluation */, bool $known = false): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Expression is already prepared');
 		}
 		$this->type_def = $type;
-		$this->constant = $constant;
-		$this->constant_known = $known || ($constant !== null);
+		$this->constant = $constant === constant_evaluation::unavailable ? null : $constant;
+		$this->constant_known = $constant !== constant_evaluation::unavailable && ($known || ($constant !== null));
 	}
 
 	public function reset_preparation(): void

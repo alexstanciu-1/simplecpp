@@ -244,15 +244,15 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	}
 
 	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
-	public function settle_type(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */,
+	public function settle_type(type_definition $type, int|float|bool|null|constant_evaluation $constant /** int64|float64|bool|null|constant_evaluation */,
 		bool $known = false, int $conversion /** uint16 */ = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Local type is already settled');
 		}
 		$this->type_def = $type;
-		$this->constant = $constant;
-		$this->constant_known = $known || ($constant !== null);
+		$this->constant = $constant === constant_evaluation::unavailable ? null : $constant;
+		$this->constant_known = $constant !== constant_evaluation::unavailable && ($known || ($constant !== null));
 		$this->initialization = $conversion;
 	}
 
@@ -404,14 +404,15 @@ class ast_assignment_statement extends ast_storage_write
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
 		$type = $this->local_def()->type_def();
-		return $this->operator === null ? $type->convert_constant($this->conversion(), $this->value->constant()) : null;
+		$value = $this->operator === null ? $type->evaluate_constant($this->conversion(), $this->value) : constant_evaluation::unavailable;
+		return $value === constant_evaluation::unavailable ? null : $value;
 	}
 
 	public function constant_known(): bool
 	{
 		$this->local_def();
-		return ($this->operator === null) && !($this->local_def()->type_def() instanceof carrier_type_definition)
-			&& !($this->local_def()->type_def() instanceof boxed_type_definition) && $this->value->constant_known();
+		return $this->operator === null
+			&& $this->local_def()->type_def()->evaluate_constant($this->conversion(), $this->value) !== constant_evaluation::unavailable;
 	}
 
 	public function reset_preparation(): void

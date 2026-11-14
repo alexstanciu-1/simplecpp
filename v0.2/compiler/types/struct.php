@@ -235,7 +235,7 @@ final class shared_struct_type_definition extends struct_handle_definition
 		return $syntax instanceof ast_keyword_expression ? $empty : '((void)(' . $value . '), ' . $empty . ')';
 	}
 
-	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		return $conversion === value_conversion::empty_owner ? null : parent::convert_scalar_constant($conversion, $value);
 	}

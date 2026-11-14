@@ -94,7 +94,8 @@ byte-for-byte with the default metadata, including the inventory version.
 - `lower_cpp_binary()` emits the approved operation.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
 - `prepare_conversion(value, context)` selects a packed `value_conversion` integer at a destination boundary.
-- `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
+- `evaluate_constant(conversion, expression)` preserves source unknownness and derives the converted fact.
+- `convert_constant(conversion, value)` converts a supplied payload or returns `constant_evaluation::unavailable`.
 - `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
 - `cpp_type()` and `lower_cpp_literal()` consume settled source facts.
 - `lower_cpp_conversion(conversion, expression)` emits the approved operation, without resolving types again.
@@ -280,3 +281,17 @@ No AST fields, conversion codes or runtime ABI change. Lowering emits the existi
 Malformed prefixes/digits and int64 overflow reject; typed byte destinations still reject values outside 0..255.
 The native radix proof covers boundaries, leading zeros, power precedence and incremental errors/retry/recovery
 against fresh emitted artifacts in PHP, C++ and JS flavors.
+
+## Unavailable constant evaluation
+
+Conversion evaluation can return the singleton `constant_evaluation::unavailable` when no scalar
+fact is available. A known input does not guarantee an evaluable output. Generated text conversions,
+boxed/carrier boundaries and future limited host evaluations use this outcome instead of known null.
+`type_definition::evaluate_constant()` first checks source knownness, then invokes conversion evaluation.
+Casts, local declarations, named constants and plain assignments use that common boundary.
+
+The enum is transient. AST payloads stay `int|float|bool|null`; settlement normalizes unavailable
+into null with `constant_known=false`. Known null, false and zero retain their identity and knownness.
+References preserve those facts and normal preparation reset clears them. No result object is allocated,
+no symbol dependencies change, and uint64 activation remains separate. See the
+[uint64 bootstrap debt](../../specs/planning/uint64_constant_evaluation_debt.md).

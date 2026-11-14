@@ -389,8 +389,7 @@ final class Preparation
 			}
 		}
 		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
-		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
-			$declaration->initializer->constant_known() && !($type instanceof carrier_type_definition) && !($type instanceof boxed_type_definition), $conversion);
+		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;

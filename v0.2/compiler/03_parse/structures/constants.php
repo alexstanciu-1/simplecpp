@@ -44,11 +44,12 @@ final class ast_constant_declaration extends ast_literal_declaration
 	/** Scalar payload is derived from its initializer and approved conversion, never stored a second time. */
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
-		return $this->type_def()->convert_constant($this->initialization(), $this->initializer->constant());
+		$value = $this->type_def()->evaluate_constant($this->initialization(), $this->initializer);
+		return $value === constant_evaluation::unavailable ? null : $value;
 	}
 
 	public function constant_known(): bool
 	{
-		return !($this->type_def() instanceof boxed_type_definition) && $this->initializer->constant_known();
+		return $this->type_def()->evaluate_constant($this->initialization(), $this->initializer) !== constant_evaluation::unavailable;
 	}
 }
