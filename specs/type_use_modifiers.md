@@ -25,28 +25,27 @@ strengthen optional to required, composed with admitted ancestry. Reverse direct
 reject; an override bridge never inserts a potentially failing absence check.
 ### Temporary required-field storage exception — 2026-10-25
 
-For the compiler bootstrap milestone, required nominal shared-object instance and
-static fields may begin with empty backing storage, either with no initializer or
-with an explicit literal `null` field initializer. This is a temporary field-storage
-exception, tracked by CH15-REQUIRED-FIELD-INIT-01, not a conversion from null to a
-required object value. It also applies to such fields in struct owners and to
-inherited fields; it does not make struct payloads or enums nullable/defaultable.
+For the compiler bootstrap milestone, nominal shared-object **instance** fields
+have a relaxed absence contract, including fields written without `?`. They may
+start empty (without an initializer or with literal `null`), receive an object,
+and later be reset to null. This applies in class and struct owners and to
+inherited instance fields. Reads and copies do not introduce presence checks or
+field initialization analysis. Existing shared dereference guards remain.
 
-The declared type remains required and distinct from its nullable form. Ordinary
-later null assignments, required arguments/returns and invariant references retain
-their existing checks. An empty field initializer supplies no callable parameter
-default: authored set: inputs and public synthesized data inputs remain required
-unless they have an independently valid value default. Non-public fields may keep
-empty initial storage without becoming synthesized public inputs.
+Written type syntax is retained. Preparation treats these field values as
+potentially empty; passing or returning one through a required function boundary
+checks presence. Required and optional function contracts remain distinct, and
+a null parameter default still requires an optional parameter. The exception
+does not broaden ordinary local values, inline struct payloads or enums.
 
-Using an uninitialized required field is invalid; the temporary rule relies on the
-author to assign before use and does not provide field definite-assignment analysis
-or PHP-style read checks on every copy. Existing shared dereference guards remain,
-but are not a proof that every premature use is diagnosed. No valid object or dummy
-registry identity is manufactured. The C++ backend uses the existing empty handle
-representation in ordinary and prelowered output. Required-local definite assignment
-is unchanged. Review/retire this exception under the named CH15 debt after the
-bootstrap milestone.
+Static fields retain the earlier initialization-only exception: empty backing
+storage or a literal null initializer does not authorize later null assignments
+to a required static field. Authored callable inputs retain their own contracts;
+an empty field initializer does not supply a required parameter default.
+
+This temporary policy supersedes the initialization-only restriction for instance
+fields. Track its eventual review under CH15-REQUIRED-FIELD-INIT-01. No valid
+object or dummy identity is manufactured for empty storage.
 
 Remaining ownership/cleanup consumers and the presence guarantees of registered
 runtime APIs remain blocking NULL-01/OWN-01 work. The execution ledger records

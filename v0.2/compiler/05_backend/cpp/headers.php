@@ -50,7 +50,7 @@ final class Cpp_Headers
 				if (!$program->dependencies->has_external_observers($symbol, $source_key)) {
 					continue;
 				}
-				if ($node instanceof ast_global_declaration && $node->parent instanceof ast_struct_declaration) {
+				if ($node instanceof ast_global_declaration && $node->parent instanceof ast_record_declaration) {
 					$this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
 					continue;
 				}
@@ -58,13 +58,13 @@ final class Cpp_Headers
 					$this->publish_enum($node, $emitter, $program->session?->cpp_namespace ?? 'App');
 					continue;
 				}
-				if ($node instanceof ast_struct_declaration) {
+				if ($node instanceof ast_record_declaration) {
 					$this->publish_record($node, $emitter, $program->session?->cpp_namespace ?? 'App');
 					continue;
 				}
 				if ($node instanceof ast_function_declaration) {
 					if ($node->is_constructor()) continue;
-					if ($node->has_receiver() && $node->parent instanceof ast_struct_declaration) {
+					if ($node->has_receiver() && $node->parent instanceof ast_record_declaration) {
 						$type = $node->parent->definition;
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
@@ -72,7 +72,7 @@ final class Cpp_Headers
 					foreach (Cpp_Emitter::signature_application_types($node) as $type) {
 						if ($type instanceof enum_type_definition) {
 							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
-						} elseif ($type instanceof struct_type_definition) {
+						} elseif ($type instanceof record_type_definition) {
 							$header_name = $this->publish_record($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
 							$record_headers[$header_name] = true;
 						} else {
@@ -123,7 +123,7 @@ final class Cpp_Headers
 	}
 
 	/** Publish the complete public type. A shared edge can lead back to a header already in progress. */
-	private function publish_record(ast_struct_declaration $record, Cpp_Emitter $emitter, string $root): string
+	private function publish_record(ast_record_declaration $record, Cpp_Emitter $emitter, string $root): string
 	{
 		$key = $record->symbol_key();
 		if (isset($this->declarations[$key])) return $this->declarations[$key];
@@ -138,11 +138,11 @@ final class Cpp_Headers
 		$headers = [];
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof struct_handle_definition) {
+			if ($type instanceof record_handle_definition) {
 				$methods[$type->payload->name] ??= $emitter->owner_methods($type->payload->shared, $headers);
 				$type = $type->payload;
 			}
-			if ($type instanceof struct_type_definition) {
+			if ($type instanceof record_type_definition) {
 				$child = $this->publish_record($type->declaration, $emitter, $root);
 				if ($child !== $header) $includes[$child] = true;
 			}
@@ -158,7 +158,7 @@ final class Cpp_Headers
 	}
 
 	/** Inline edges require complete field layouts; shared fields require only the pointer-sized owner declaration. */
-	private function publish_layout(ast_struct_declaration $record, Cpp_Emitter $emitter, string $root): string
+	private function publish_layout(ast_record_declaration $record, Cpp_Emitter $emitter, string $root): string
 	{
 		$header = self::record_header($record);
 		$layout = hash('sha256', "layout\0" . $record->symbol_key()) . '.hpp';
@@ -176,12 +176,12 @@ final class Cpp_Headers
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof struct_handle_definition) {
+			if ($type instanceof record_handle_definition) {
 				$owners[$type->payload->name] ??= $emitter->owner_declaration($type->payload->shared, $includes);
 				$needs_methods = true;
 			} elseif ($type instanceof enum_type_definition) {
 				$children[$this->publish_enum($type->declaration, $emitter, $root)] = true;
-			} elseif ($type instanceof struct_type_definition) {
+			} elseif ($type instanceof record_type_definition) {
 				$child = $this->publish_layout($type->declaration, $emitter, $root);
 				$children[$child] = true;
 				$needs_methods = $needs_methods || $child !== self::record_header($type->declaration);
@@ -222,7 +222,7 @@ final class Cpp_Headers
 	}
 
 	/** STATIC METHODS */
-	private static function record_header(ast_struct_declaration $record): string
+	private static function record_header(ast_record_declaration $record): string
 	{
 		return hash('sha256', "struct\0" . $record->symbol_key()) . '.hpp';
 	}

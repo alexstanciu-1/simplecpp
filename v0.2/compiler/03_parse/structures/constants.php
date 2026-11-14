@@ -26,7 +26,7 @@ final class ast_constant_declaration extends ast_literal_declaration
 {
 	public function name(): string
 	{
-		return ($this->parent ?? null) instanceof ast_struct_declaration
+		return ($this->parent ?? null) instanceof ast_record_declaration
 			? $this->parent->name() . '::' . $this->short_name : parent::name();
 	}
 

@@ -402,7 +402,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Enforce lexical access for a call or an implicit inline-field initialization. */
 	public function require_access(ast_node $context, ast_node $site): void
 	{
-		if ($this->is_protected && (!($context instanceof ast_struct_declaration)
+		if ($this->is_protected && (!($context instanceof ast_record_declaration)
 			|| !$context->definition->derives_from($this->parent->definition))) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call protected constructor ' . $this->name());
 		}
@@ -421,7 +421,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 
 	public function is_constructor(): bool
 	{
-		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_struct_declaration;
+		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_record_declaration;
 	}
 
 	/** Attach the completed body once and settle the function token boundary. */

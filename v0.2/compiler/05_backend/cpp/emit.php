@@ -67,13 +67,13 @@ final class Cpp_Emitter
 			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
 				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
 		}
-		if ($node instanceof ast_struct_declaration) {
+		if ($node instanceof ast_record_declaration) {
 			$layout = [];
 			$base = $node->definition->base();
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$type = $field->type_def();
-				$qualifier = ($type instanceof struct_type_definition || $type instanceof struct_handle_definition || $type instanceof enum_type_definition) && $this->root !== '' ? '::' . $this->root : '';
+				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition) && $this->root !== '' ? '::' . $this->root : '';
 				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 					$type, $field->initializer, $field->conversion, $includes);
 				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
@@ -157,7 +157,7 @@ final class Cpp_Emitter
 	}
 
 	/** Pointer-sized owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
-	public function owner_declaration(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	public function owner_declaration(shared_record_type_definition $type, array &$includes /** array<string,bool> */): string
 	{
 		$payload = $type->payload;
 		$name = Cpp_Identifier::source($payload->declaration->short_name);
@@ -167,6 +167,7 @@ final class Cpp_Emitter
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
+		$presence = $payload->declaration->kind === record_kind::class_type ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
 #define $guard
@@ -175,7 +176,7 @@ final class Cpp_Emitter
 	allocation* ptr{};
 	$owner() noexcept = default;
 	static $owner make($params);
-	explicit operator bool() const noexcept { return ptr != nullptr; }
+$presence	explicit operator bool() const noexcept { return ptr != nullptr; }
 	$record* operator->() const;
 	$owner(const $owner& other) noexcept;
 	$owner($owner&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
@@ -209,7 +210,7 @@ CPP;
 	}
 
 	/** Complete the typed allocation only after its inline payload layout is available. @param bool[] $includes */
-	public function owner_methods(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	public function owner_methods(shared_record_type_definition $type, array &$includes /** array<string,bool> */): string
 	{
 		$payload = $type->payload->cpp_type();
 		$owner = $type->cpp_type();
@@ -219,6 +220,8 @@ CPP;
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : value{} {}' : "allocation($params);";
 		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
+		$presence = $type->payload->declaration->kind === record_kind::class_type
+			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
 		return <<<CPP
 #ifndef $guard
@@ -241,6 +244,7 @@ inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
 	return &ptr->value;
 }
+$presence
 inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr) {
 	if (ptr) ptr->retain_strong();
 }
@@ -272,7 +276,7 @@ CPP;
 	}
 
 	/** Define user-directed allocation in the payload source, where parameter types are complete. @param bool[] $headers */
-	private function allocation_factory(shared_struct_type_definition $type, array &$headers /** array<string,bool> */): string
+	private function allocation_factory(shared_record_type_definition $type, array &$headers /** array<string,bool> */): string
 	{
 		$owner = $type->cpp_type();
 		$constructor = $type->payload->constructor();
@@ -289,9 +293,9 @@ CPP;
 	}
 
 	/** Public layouts and unit-local uses can independently request the same concrete owner. */
-	private function owner_guard(shared_struct_type_definition $type): string
+	private function owner_guard(shared_record_type_definition $type): string
 	{
-		return 'SCPP_OWNER_' . hash('sha256', $this->root . "\0" . $type->name);
+		return 'SCPP_OWNER_' . hash('sha256', $this->root . "\0" . $type->payload->name);
 	}
 
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
@@ -342,7 +346,7 @@ CPP;
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
-			if (!($node instanceof ast_struct_declaration)) continue;
+			if (!($node instanceof ast_record_declaration)) continue;
 			$constructor = $node->definition->constructor();
 			if ($constructor !== null) {
 				// Each payload's source owns its factory, including inherited constructor contracts.
@@ -402,7 +406,7 @@ CPP;
 			}
 		}
 		foreach ($global_references as $property) {
-			if ($property->parent instanceof ast_struct_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
+			if ($property->parent instanceof ast_record_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
@@ -423,11 +427,11 @@ CPP;
 		}
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_enum_declaration) continue;
-			if ($function instanceof struct_handle_definition) {
+			if ($function instanceof record_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
 			}
-			if ($function instanceof ast_struct_declaration) {
+			if ($function instanceof ast_record_declaration) {
 				$this->type_prototypes($function, $records, $unit_headers, $required_headers, $layouts, $owners);
 				continue;
 			}
@@ -456,7 +460,7 @@ CPP;
 		}
 		ksort($global_references, \SORT_STRING);
 		foreach ($global_references as $name => $global) {
-			if ($global->parent instanceof ast_struct_declaration) continue;
+			if ($global->parent instanceof ast_record_declaration) continue;
 			$include = $this->headers?->declaration_header($global);
 			if ($include !== null) {
 				$unit_headers[$include] = true;
@@ -492,12 +496,12 @@ CPP;
 	 * Emit private definitions once, with complete embedded types before their parents.
 	 * @param bool[] $seen
 	 * @param bool[] $unit_headers
-	 * @param shared_struct_type_definition[] $owners
+	 * @param shared_record_type_definition[] $owners
 	 * @param bool[] $runtime_headers
 	 */
 	private function type_prototypes(ast_type_declaration $record, array &$seen /** array<string,bool> */,
 		array &$unit_headers /** array<string,bool> */, array &$runtime_headers /** array<string,bool> */, string &$text,
-		array &$owners /** array<string,shared_struct_type_definition> */): void
+		array &$owners /** array<string,shared_record_type_definition> */): void
 	{
 		$key = $record->symbol_key();
 		if (isset($seen[$key])) return;
@@ -516,9 +520,9 @@ CPP;
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) {
+			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) {
 				$this->type_prototypes($type->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
-			} elseif ($type instanceof struct_handle_definition) {
+			} elseif ($type instanceof record_handle_definition) {
 				$owners[$type->payload->name] = $type->payload->shared;
 			}
 		}
@@ -849,10 +853,10 @@ CPP;
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
-			if ($type instanceof struct_type_definition) {
+			if ($type instanceof record_type_definition) {
 				$declarations[$type->declaration->symbol_key()] = $type->declaration;
 			}
-			if ($type instanceof struct_handle_definition) $declarations[$type->name] = $type;
+			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
 			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
@@ -900,7 +904,7 @@ CPP;
 		$reorderable = false;
 		$value_type = $value->type_def();
 		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
-		if ($value_type instanceof struct_handle_definition || $value_type instanceof struct_type_definition) {
+		if ($value_type instanceof record_handle_definition || $value_type instanceof record_type_definition) {
 			++$this->record_expressions;
 		}
 		foreach ($value_type->cpp_headers() as $header) {
@@ -927,7 +931,7 @@ CPP;
 		}
 		if ($value instanceof ast_field_expression) {
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
-			$access = $value->receiver->type_def() instanceof shared_struct_type_definition ? '->' : '.';
+			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if ($value instanceof ast_empty_collection_expression) {
@@ -1182,17 +1186,17 @@ CPP;
 	{
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_struct_type_definition)) {
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
 		// Inline fields share the storage duration of their root. A temporary record
 		// still needs the named receiver binding for the non-const reference parameter.
-		$inline_storage = $base->type_def() instanceof struct_type_definition
+		$inline_storage = $base->type_def() instanceof record_type_definition
 			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
 				&& $base->declaration() instanceof ast_local_binding));
 		$operand = $this->value($base, $globals, $declarations, $headers);
-		if ($base->type_def() instanceof shared_struct_type_definition) {
+		if ($base->type_def() instanceof shared_record_type_definition) {
 			$steps[] = 'auto receiver_owner = ' . $operand . ';';
 			if ($fields === []) return '*receiver_owner.operator->()';
 			$operand = 'receiver_owner->' . array_pop($fields);
@@ -1293,11 +1297,11 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
-	/** Calls and definitions use complete record types. @param (ast_declaration_interface|struct_handle_definition)[] $declarations */
+	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
 		foreach (self::signature_application_types($function) as $type) {
-			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}
 	}
@@ -1311,7 +1315,7 @@ CPP;
 	private function base_initializer(ast_base_initialization $site, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
-		/** @var struct_type_definition $base */
+		/** @var record_type_definition $base */
 		$base = $site->type_def();
 		$constructor = $base->constructor();
 		$arguments = [];
@@ -1331,7 +1335,7 @@ CPP;
 	}
 
 	/** Parameter types need only forward declarations in the native payload and owner declarations. */
-	private function constructor_forwards(ast_struct_declaration $record): string
+	private function constructor_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
@@ -1339,9 +1343,9 @@ CPP;
 			if ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
 					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
-			} elseif ($type instanceof struct_type_definition) {
+			} elseif ($type instanceof record_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
-			} elseif ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 		}
 		return implode('', $forwards);
 	}
@@ -1380,7 +1384,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if ($function->is_constructor() && ($type instanceof struct_handle_definition || $type instanceof struct_type_definition)) {
+			if ($function->is_constructor() && ($type instanceof record_handle_definition || $type instanceof record_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -1418,15 +1422,15 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Application types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition|enum_type_definition> */
+	/** Application types named by a callable signature. @return \Generator<record_handle_definition|record_type_definition|enum_type_definition> */
 	public static function signature_application_types(ast_function_declaration $function): \Generator
 	{
 		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
 		$type = $function->return_type_def();
-		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
+		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
+			if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 		}
 	}
 
@@ -1511,7 +1515,7 @@ CPP;
 
 	public static function global_name(ast_global_declaration $declaration): string
 	{
-		if ($declaration->parent instanceof ast_struct_declaration) {
+		if ($declaration->parent instanceof ast_record_declaration) {
 			return $declaration->parent->definition->cpp_type() . '::' . self::property_name($declaration);
 		}
 		return 'var_' . self::qualified_name($declaration);
@@ -1519,7 +1523,7 @@ CPP;
 
 	public static function function_name(ast_function_declaration $declaration): string
 	{
-		if ($declaration->parent instanceof ast_struct_declaration) {
+		if ($declaration->parent instanceof ast_record_declaration) {
 			$owner = self::qualified_name($declaration->parent);
 			return 'method_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
 		}

@@ -181,7 +181,7 @@ final class Preparation
 					$this->value($receiver);
 					$binding = $receiver->declaration();
 					if (!($binding instanceof ast_local_binding)
-						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_struct_declaration)) {
+						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_record_declaration)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
 					}
 				}
@@ -386,8 +386,11 @@ final class Preparation
 			}
 		}
 		if ($declaration->initializer instanceof ast_struct_default) {
-			if (!($type instanceof struct_type_definition) && !($type instanceof struct_handle_definition)) {
+			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition)) {
 				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
+			}
+			if ($type instanceof shared_record_type_definition && $type->required) {
+				throw new diagnostic($source, $declaration->byte_start(), 'Required class locals need an initializer in this slice');
 			}
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
@@ -419,7 +422,7 @@ final class Preparation
 	{
 		$this->value($target);
 		$property = $target->declaration();
-		if (!($property instanceof ast_global_declaration) || !($property->parent instanceof ast_struct_declaration)) {
+		if (!($property instanceof ast_global_declaration) || !($property->parent instanceof ast_record_declaration)) {
 			throw new diagnostic($target->source(), $target->byte_start(), 'Assignment requires a writable static property');
 		}
 	}
@@ -518,6 +521,12 @@ final class Preparation
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 				}
 			}
+			if ($record instanceof ast_record_declaration && $record->kind === record_kind::class_type) {
+				$parent = $syntax->parent;
+				if (!(($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
+				}
+			}
 			// Receiver facts depend on the current layout, including inherited types and access.
 			$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
 			$syntax->settle_receiver($record->definition);
@@ -525,17 +534,18 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_new_expression) {
 			$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
-			if (!($payload instanceof struct_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a struct: ' . $syntax->target->name);
+			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
+			if (!($payload instanceof record_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a record: ' . $syntax->target->name);
 			}
-			$this->construction($syntax, $payload->shared, $initializing);
+			$this->construction($syntax, $payload->required, $initializing);
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
-			if ($type instanceof shared_struct_type_definition) $type = $type->payload;
-			if (!($type instanceof struct_type_definition)) {
+			if ($type instanceof shared_record_type_definition) $type = $type->payload;
+			if (!($type instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice for type ' . $type->name);
 			}
 			$field = $type->field($syntax->field);
@@ -546,7 +556,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
 			}
 			$context = $this->owner->parent->parent;
-			if ($field->is_protected && (!($context instanceof ast_struct_declaration)
+			if ($field->is_protected && (!($context instanceof ast_record_declaration)
 				|| !$context->definition->derives_from($field->parent->definition)
 				|| !$type->derives_from($context->definition))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
@@ -618,8 +628,8 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
-			if ($left instanceof shared_struct_type_definition || $right instanceof shared_struct_type_definition) {
-				$owner = $left instanceof shared_struct_type_definition ? $left : $right;
+			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
+				$owner = $left instanceof shared_record_type_definition ? $left : $right;
 				$owner->prepare_binary($syntax);
 				return;
 			}
@@ -695,7 +705,7 @@ final class Preparation
 					$symbol = $this->symbols->entry($syntax->root()->constant_key($qualified));
 					if ($this->bind_literal($syntax, $symbol)) return;
 					if ($this->symbols->resolve('class:' . Source_Names::resolve(substr($name, 0, $last), $this->owner->scope->namespace))
-						instanceof ast_struct_declaration) {
+						instanceof ast_record_declaration) {
 						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown constant: ' . $qualified);
 					}
 				}
@@ -820,8 +830,8 @@ final class Preparation
 				$this->value($receiver, $initializing);
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$record = $receiver->type_def();
-				if ($record instanceof shared_struct_type_definition) $record = $record->payload;
-				if ($record instanceof struct_type_definition || $record instanceof enum_type_definition) {
+				if ($record instanceof shared_record_type_definition) $record = $record->payload;
+				if ($record instanceof record_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
@@ -948,8 +958,8 @@ final class Preparation
 	/** Inline and shared construction use the same published signature and argument checks. */
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
-		$payload = $type instanceof shared_struct_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		$constructor = $payload instanceof struct_type_definition ? $payload->constructor() : null;
+		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
+		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}

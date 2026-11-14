@@ -3,8 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Written record storage default; native uint8. */
+enum record_kind: int
+{
+	case structure = 0;
+	case class_type = 1;
+}
+
 /** One instance field in the record layout, e.g. private int $x; */
-final class ast_struct_field extends ast_node implements ast_declaration_interface
+final class ast_instance_field extends ast_node implements ast_declaration_interface
 {
 	use ast_declaration;
 
@@ -56,32 +63,33 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	}
 }
 
-/** Source-owned value type and ordered field index, e.g. struct Point { public int $x; }. */
-final class ast_struct_declaration extends ast_node implements ast_method_owner
+/** Source-owned class or struct, with one nominal payload and original member owners. */
+final class ast_record_declaration extends ast_node implements ast_method_owner
 {
 	use ast_declaration;
 	use ast_methods;
 
 	/** PROPERTIES */
-	/** @var ast_struct_field[] Fields in layout order, indexed by spelling. */
-	public readonly array $fields /** array<string,ast_struct_field> */;
+	/** @var ast_instance_field[] Fields in layout order, indexed by spelling. */
+	public readonly array $fields /** array<string,ast_instance_field> */;
 	/** @var ast_constant_declaration[] Public constants indexed independently of fields and methods. */
 	public readonly array $constants /** array<string,ast_constant_declaration> */;
 	/** @var ast_global_declaration[] Static properties share one storage location per declaring type. */
 	public readonly array $static_properties /** array<string,ast_global_declaration> */;
 	/** Native owning canonical type for this declaration generation. */
-	public readonly struct_type_definition $definition;
+	public readonly record_type_definition $definition;
+	public readonly record_kind $kind;
 	/** Native owning optional written base, independent of resolution success. */
 	public readonly ?ast_type_reference $base_reference;
 
 	/** CONSTRUCTOR */
 	/**
-	 * @param ast_struct_field[] $fields
+	 * @param ast_instance_field[] $fields
 	 * @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members All occurrences in source order before duplicate publication.
 	 */
-	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_struct_field> */,
+	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_instance_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null)
+		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -106,13 +114,14 @@ final class ast_struct_declaration extends ast_node implements ast_method_owner
 		}
 		$this->base_reference = $base_reference;
 		$base_reference?->attach($this);
-		$this->definition = new struct_type_definition($this);
+		$this->kind = $kind;
+		$this->definition = new record_type_definition($this);
 	}
 
 	/** METHODS */
 	public function type_definition(): type_definition
 	{
-		return $this->definition;
+		return $this->definition->default_type();
 	}
 
 	public function symbol_key(): string
@@ -247,7 +256,7 @@ final class ast_ownership_expression extends ast_expression
 	public function prepare(): void
 	{
 		$type = $this->operand->type_def();
-		if ($this->lock ? !($type instanceof weak_struct_type_definition) : !($type instanceof shared_struct_type_definition)) {
+		if ($this->lock ? !($type instanceof weak_record_type_definition) : !($type instanceof shared_record_type_definition)) {
 			throw new diagnostic($this->source(), $this->byte_start(), $this->lock ? 'lock() requires weak<T>' : 'weak() requires shared<T>');
 		}
 		$this->settle_value($this->lock ? $type->payload->shared : $type->payload->weak, null);
@@ -257,7 +266,7 @@ final class ast_ownership_expression extends ast_expression
 /** Instance receiver occurrence: a borrowed struct payload or a copied enum value, e.g. $this. */
 final class ast_this_expression extends ast_expression
 {
-	public function settle_receiver(struct_type_definition|enum_type_definition $record): void
+	public function settle_receiver(record_type_definition|enum_type_definition $record): void
 	{
 		$this->settle_value($record, null);
 	}

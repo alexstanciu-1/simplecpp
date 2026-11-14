@@ -433,7 +433,7 @@ abstract class type_definition
 			return false;
 		}
 		$function = $operand->function_def();
-		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_struct_declaration) {
+		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_record_declaration) {
 			return false;
 		}
 		foreach ($function->parameters as $index => $parameter) {

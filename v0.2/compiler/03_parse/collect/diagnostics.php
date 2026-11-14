@@ -109,10 +109,10 @@ final class Declaration_Diagnostics
 	private static function kind(ast_declaration_interface $node): string
 	{
 		return match (true) {
-			$node instanceof ast_struct_declaration => 'struct',
+			$node instanceof ast_record_declaration => 'struct',
 			$node instanceof ast_enum_declaration => 'enum',
-			$node instanceof ast_function_declaration && $node->parent instanceof ast_struct_declaration => 'method',
-			$node instanceof ast_global_declaration && $node->parent instanceof ast_struct_declaration => 'static property',
+			$node instanceof ast_function_declaration && $node->parent instanceof ast_record_declaration => 'method',
+			$node instanceof ast_global_declaration && $node->parent instanceof ast_record_declaration => 'static property',
 			$node instanceof ast_global_declaration => 'global',
 			$node instanceof ast_constant_declaration => 'constant',
 			default => 'function',

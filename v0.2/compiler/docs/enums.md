@@ -88,7 +88,7 @@ Unit enums, globals/static storage and broader enum contracts remain separate.
 
 ## Instance fields with explicit case defaults
 
-Enum fields reuse `ast_struct_field.initializer` and `ast_name_expression`'s
+Enum fields reuse `ast_instance_field.initializer` and `ast_name_expression`'s
 resolved declaration link. No AST classes, retained properties or separate default
 tables were added. The field's existing conversion code is identity. The canonical
 enum definition now advertises instance-field support.

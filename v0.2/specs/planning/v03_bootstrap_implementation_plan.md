@@ -57,7 +57,7 @@ Discuss inheritance, handles and interfaces together before implementing this mi
 | Order | Group | Initial scope |
 | --- | --- | --- |
 | 3.1 | Base storage and inheritance | One base, derived fields, inherited access, protected access and construction. No multiple class inheritance. |
-| 3.2 | Behavior through base references | Virtual/abstract methods, overrides, parent calls and derived-to-base shared handles. Preserve destruction and allocation identity. |
+| 3.2 | Object contracts, then behavior through base views | First class/shared defaults and explicit function nullability with the temporary relaxed property rule below; then ownership-preserving shared upcasts; then virtual/abstract methods and overrides. Preserve destruction and allocation identity. |
 | 3.3 | Type tests and narrowing | Subtype tests, then interface-capability tests. Keep exact concrete type identity distinct. |
 | 3.4 | Interfaces | Interface-typed parameters/references and multiple capabilities using the dispatch model. |
 | 3.5 | Non-owning AST links | Define validity of parent links and retained-generation references. Reuse weak handles where suitable; discuss borrow/reference machinery where needed. |
@@ -237,6 +237,174 @@ collections; non-owning parent/generation lifetimes; write-once attachment; trai
 reflection; explicit deletion; custom dispatch; ownership-layout redesign and
 optimization campaigns. Plan those against the agreed native-C++/runtime division
 above, but do not implement them as part of this first extends slice.
+
+
+### Next slice — class defaults and object nullability boundaries
+
+Doc Status: planning. Agreed direction after the first extends slice; not an
+implementation claim. Establish these contracts before generalizing shared base
+views. Object borrowing is deferred and is not a prerequisite for this slice.
+
+#### Agreed defaults and temporary property rule
+
+- A bare class type `Node` uses shared object storage by default. Copies share
+  object identity; they do not copy the payload. A bare struct type uses inline
+  value storage and the existing memberwise copy rules. The keywords do not adopt
+  C++'s merely visibility-based distinction.
+- Keep nullability explicit at function/method parameter and return boundaries:
+  `Node` requires an object; `?Node` accepts absence. Known null rejects for a
+  required boundary; a potentially empty value requires a presence check before
+  the callee body or return boundary completes. Optional boundaries accept null
+  without inventing an object. Required-to-optional adaptation preserves identity.
+- Temporarily relax **shared-object instance properties**, including properties
+  declared inside either classes or structs. `public Node $left;` starts empty,
+  accepts `= null`, and accepts later assignments of `null`, despite having no `?`.
+  This is not restricted to construction or initialization.
+- Do not introduce property initialization/definite-assignment analysis, additional
+  presence checks on property reads/copies/writes, or constructor-completion
+  validation for those properties. Preserve ordinary member type/access checks
+  and the runtime's existing empty-handle dereference guard; this relaxation does
+  not authorize undefined native dereferences.
+- Passing such a property to a required parameter or returning it as required
+  still uses the function-boundary presence check. Its written `Node` annotation
+  is not proof that its current value is present. `?Node` remains meaningful for
+  explicitly nullable interfaces even though these properties temporarily share
+  the same empty-storage permission.
+
+Examples of the agreed property policy (proposed class support, not current
+compiler coverage):
+
+```php
+class Addition {
+    public Node $left;
+}
+
+struct Node_holder {
+    public Node $left;
+}
+```
+
+Both `left` properties may remain empty and may later be reset to null. This rule
+concerns shared-object storage, not nullable inline struct payloads, scalars or
+containers. Static-property policy is not expanded by this instance-property
+slice. Do not broaden required local/value contracts by implication.
+
+This decision deliberately supersedes the **initialization-only** restriction in
+[type-use modifiers](../../../specs/type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25)
+for the planned instance-property slice. The owning normative contract must be
+updated alongside implementation; this planning note is not semantic authority.
+Do not silently restore the old later-null-assignment rejection or stronger
+property validation while implementing the agreed exception.
+
+#### Bounded implementation scope and owners
+
+The next slice admits class declarations with shared-by-default type uses and
+exact-concrete construction, assignment, instance properties and callable
+parameters/returns. Reuse existing field/method/constructor machinery and the
+current exact-type ownership mechanism. Preserve existing struct behavior and
+explicit shared struct handles. Class inheritance/upcasts are not prerequisites
+for this proof; no control-block/view redesign or two-pointer representation is
+selected here.
+
+| Stage / owner | Work in this slice |
+| --- | --- |
+| Parsing / collection | Retain class versus struct declaration kind and written nullability in the common model. Reuse nominal publication and member ownership; do not create a separate class-only compiler pipeline. |
+| Type/signature preparation | Resolve nominal payload identity separately from default storage and required/optional value contracts. Keep required and optional class uses distinct even if their C++ storage is identical. Reuse existing conversion/binding owners. |
+| Property preparation | Record the relaxed property contract locally. Property reads remain potentially empty; do not mark all occurrences of the canonical class type nullable or infer presence from its spelling. No property initialization dataflow analysis is required. |
+| Boundary preparation | Decide required versus optional parameter/default/return admission and prepare any necessary presence conversion. A null default requires an optional parameter. A reference to handle storage remains distinct from borrowing the object. |
+| Lowering / ownership | Consume prepared storage/conversion facts, reuse exact-type allocation/destruction and native payload layouts, and emit checks only at required function boundaries or existing guarded dereferences. No emitter-owned nullability inference or new shared ownership ABI. |
+
+A plain class parameter receives a shared handle by value; object mutation is
+visible through aliases, while rebinding the parameter does not replace the
+caller's handle. Existing explicit reference-parameter rules concern caller
+storage and must not become implicit borrowed-object parameters. General object
+reference-parameter extensions are outside this slice.
+
+#### Incremental contract and verification checklist
+
+Use stable nominal/signature symbols and the existing dependency owner. Consumers
+must observe declaration kind/default storage, property contract, and callable
+nullability/default changes. A cached body must not retain an old requiredness or
+presence-conversion decision after a signature edit. Keep `this` record watches
+and original member ownership from the extends review fixes. Semantic
+re-preparation, source re-emission and native rebuilding are separate concerns;
+unchanged emitted text does not prove cached semantic facts are current.
+
+- [x] Run equivalent proofs in cpp/php/js on Clang and GCC.
+- [x] Prove bare class copies/arguments preserve object identity and mutation;
+  parameter rebinding leaves the caller unchanged. Struct copies remain values.
+- [x] Exercise an uninitialized and explicitly null shared-object property in
+  both a class and a struct; allow null reset after a non-null assignment.
+  Confirm no extra property presence checks or initialization analysis are emitted.
+- [x] Required parameters/returns reject known null; optional parameters/returns
+  and optional null defaults accept it. Empty property values fail required
+  function boundaries before the callee body executes; populated values pass
+  without payload copies or duplicate evaluation.
+- [x] Empty property dereference retains the existing runtime failure behavior;
+  resetting a property releases its ownership normally. Verify alias lifetime,
+  exact-type weak expiry and cleanup without introducing owning parent cycles.
+- [x] Edit class/struct declaration kind, callable required/optional annotations,
+  defaults and property types with unchanged consumers. Compare diagnostics and
+  generated output with fresh compilation through errors, retries and recovery.
+- [x] Verify watch replacement after a property target/signature changes. No-op
+  compilation prepares/emits nothing; unrelated bodies and sources remain reused.
+- [x] Check cross-unit declarations/includes and native rebuilds after storage
+  or signature changes; retain one factory definition per concrete payload.
+- [x] Update the owning nullability contract and implementation documentation,
+  explicitly retaining this temporary relaxed property policy.
+
+#### Implementation and proof
+
+Implemented the common `ast_record_declaration` / `ast_instance_field` model with
+one immutable declaration-kind enum. The nominal payload owns the optional and
+required class identities; structs reuse their existing shared identity. There
+are no new per-expression flags, field initialization indexes or preparation
+traversals. Existing member ownership, layout preparation and signature watches
+remain authoritative. Failed nullable signature lookups register their watch owner
+before resolution so recovery/retirement also works after failure.
+
+`classes_native.py --memcheck` exercises cpp/php/js with Clang and GCC: shared
+mutation versus parameter rebinding, struct value copies, constructors/methods,
+all four empty property forms, null reset, optional defaults, required argument
+and return failures, single evaluation, weak expiry and Valgrind cleanup. It
+compares fresh and retained output/diagnostics after kind, property target,
+nullability/default and missing-type edits, including retries. Generated checks
+are asserted at boundaries and absent from ordinary field assignment/reset bodies.
+No-op and unrelated-source reuse are asserted. CTest registers the repeatable proof.
+
+The existing extends, constructor, weak, enum-method and failure-cleanup proofs
+also pass. The general retained/fresh suite covers 100 revisions and 24 fresh
+checkpoints per flavor. This establishes functional reuse, not a measured compiler
+speedup or native parallel preparation proof.
+
+Review follow-up closes the remaining gaps: the repeatable class suite now recovers
+by adding/deleting/restoring the missing provider with signatures and callers
+unchanged. Successful return-contract edits (`?Class` ↔ `Class`) assert that the
+unchanged caller adds/removes its presence conversion, matches fresh output and
+runs correctly. Source `weak()`/`lock()` exercises optional typing, live identity,
+retention, expiry and a required argument failure before callee execution. The
+nullable resolver reuses its resolved element in the common specialization lookup;
+it no longer repeats runtime element resolution. Existing carrier type/value
+proofs cover that path. No new caches or preparation passes were introduced.
+
+Coverage limits remain explicit: required class locals need an initializer until
+definite-assignment support lands; obtaining an owning `$this` value is deferred
+(field/method receiver use works). Static-property policy is not broadened by this
+instance-property exception. See [implementation details](../../compiler/docs/classes.md).
+
+#### Follow-up boundaries
+
+After this slice, discuss ownership-preserving shared derived/base views, then
+native virtual/abstract behavior. Upcasts must preserve allocation identity and
+concrete destruction, but their representation is still undecided. The existing
+struct extends implementation is not authorization for cross-type shared handles.
+
+Defer `ref Node`, `Node*`, borrowed object parameters, stored/returned borrows,
+new unique/value overrides, interfaces, virtual overrides, shared upcasts,
+downcasts, parent/generation lifetime rules and cycle management. Ordinary PHP-like
+object passing does not require borrows: shared identity already supports object
+mutation. Explicit PHP-style reference parameters alias variable/handle storage;
+they are not a reason to introduce object borrowing now.
 
 ## 4. Failures and cleanup — failed preparation and retry
 

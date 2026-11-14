@@ -3,16 +3,17 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Parse struct members and preserve their declaration order and visibility. */
-final class Struct_Syntax
+/** Parse record members and preserve their declaration order and visibility. */
+final class Record_Syntax
 {
 	/** Parse members in source order. @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members */
-	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_struct_declaration
+	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration
 	{
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
 		$start = $c->position();
-		$c->take_keyword('struct');
+		$kind = $c->keyword('class') ? record_kind::class_type : record_kind::structure;
+		$c->take_keyword($kind === record_kind::class_type ? 'class' : 'struct');
 		$name = $c->name(token_kind::identifier);
 		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void') {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
@@ -114,7 +115,7 @@ final class Struct_Syntax
 				$initializer = $parser->literal_initializer('Field initializer requires a literal or enum case', allow_case: true);
 			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
-			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer, $protected);
+			$node = new ast_instance_field($field, $type, $field_start, $end, $private, $initializer, $protected);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
 				while ($tail->duplicate_element() !== null) $tail = $tail->duplicate_element();
@@ -125,6 +126,6 @@ final class Struct_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base);
+		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind);
 	}
 }

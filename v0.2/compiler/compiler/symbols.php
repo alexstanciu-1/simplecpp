@@ -127,7 +127,7 @@ final class Symbol_Publication implements declaration_sink
 				if ($node instanceof ast_function_declaration) {
 					$node->retire_signature();
 					$dependencies->retire($node->body());
-				} elseif ($node instanceof ast_struct_declaration) {
+				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
 				}
 			}
@@ -208,7 +208,7 @@ final class Symbol_Publication implements declaration_sink
 				if ($function instanceof ast_function_declaration) {
 					$watchers[] = $function;
 					$watchers[] = $function->body();
-				} elseif ($function instanceof ast_struct_declaration) {
+				} elseif ($function instanceof ast_record_declaration) {
 					$watchers[] = $function->definition;
 				}
 			}

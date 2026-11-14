@@ -247,3 +247,11 @@ the caller's declaring struct at inline and shared construction sites. Layout
 preparation applies the same check to default-initialized inline fields, using
 the containing record as the caller. Copying a value and declaring an empty owner
 use their existing paths.
+
+## Common record declarations
+
+Classes and structs share `ast_record_declaration` and `ast_instance_field`. The
+immutable declaration kind chooses default storage through the nominal payload's
+canonical type definitions; it does not duplicate layout/member indexes. Written
+field syntax stays distinct from the effective prepared field contract. See
+[class defaults and object boundaries](classes.md).
