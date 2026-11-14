@@ -166,7 +166,7 @@ final class Preparation
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$this->value($statement->target);
-				if (!($receiver->type_def() instanceof compound_collection_type)) {
+				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a vector or hash');
 				}
 				$this->value($statement->value);
@@ -461,6 +461,14 @@ final class Preparation
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
 	private function write(ast_storage_write $statement): void
 	{
+		if ($statement instanceof ast_index_update) {
+			$this->value($statement->target);
+			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a vector or hash');
+			}
+			$statement->require_update_type($statement->target->type_def());
+			return;
+		}
 		if ($statement instanceof ast_property_update) {
 			$this->writable_property($statement->target);
 			$statement->require_update_type($statement->target->type_def());

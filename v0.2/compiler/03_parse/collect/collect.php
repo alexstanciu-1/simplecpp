@@ -51,7 +51,7 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
-		if ($statement instanceof ast_property_update) {
+		if ($statement instanceof ast_property_update || $statement instanceof ast_index_update) {
 			$this->expression($statement->target);
 			return;
 		}

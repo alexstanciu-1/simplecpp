@@ -47,7 +47,7 @@ which returns a copy and throws on absence.
 
 ## Boundaries and verification
 
-Nonempty literals, inferred empty collections, hash append, indexed updates, traversal and nested
+Nonempty literals, inferred empty collections, hash append, traversal and nested
 containers remain deferred. Runtime storage algorithms and public ABI are unchanged.
 
 `tests/hash_operations.php` checks all four pairs, strict keys, converted values, NUL
@@ -97,3 +97,5 @@ Instance fields default to empty and reuse value copying and keyed writes; see
 [collection fields](collection_fields.md).
 
 Indexed compounds reuse generated element operations; see [indexed compounds](indexed_compounds.md).
+
+Discarded numeric indexed updates use generated element rules; see [indexed updates](indexed_updates.md).

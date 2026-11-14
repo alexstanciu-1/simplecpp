@@ -149,8 +149,8 @@ final class Compilation_Inspection
 			return ['kind' => 'local', 'id' => $statement->id,
 				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
 		}
-		if ($statement instanceof ast_property_update) {
-			return ['kind' => 'property_update', 'target' => self::value($statement->target),
+		if ($statement instanceof ast_property_update || $statement instanceof ast_index_update) {
+			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::value($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
 		if ($statement instanceof ast_update_statement) {
