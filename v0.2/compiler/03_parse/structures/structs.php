@@ -55,7 +55,7 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 }
 
 /** Source-owned value type and ordered field index, e.g. struct Point { public int $x; }. */
-final class ast_struct_declaration extends ast_node implements ast_declaration_interface
+final class ast_struct_declaration extends ast_node implements ast_type_declaration
 {
 	use ast_declaration;
 
@@ -104,6 +104,11 @@ final class ast_struct_declaration extends ast_node implements ast_declaration_i
 	}
 
 	/** METHODS */
+	public function type_definition(): type_definition
+	{
+		return $this->definition;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'class:' . $this->name();

@@ -11,6 +11,10 @@ bool/null use the existing metadata identities bool_t/null_t internally. Instanc
 are shared definitions, never occurrence-specific records. `type_void` remains a
 small handwritten non-value definition.
 
+Application [integer enums](enums.md) have one AST-owned nominal definition,
+with separate source backing and compact storage references. They share application
+type publication with structs; they are not generated runtime scalar identities.
+
 The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
 The [byte/uint8 identity migration](byte_alias.md), integer operation groups and [active numeric family conversions](family_conversions.md) are implemented.
 

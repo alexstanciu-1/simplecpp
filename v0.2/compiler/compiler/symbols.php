@@ -24,7 +24,7 @@ final class Symbol_Publication implements declaration_sink
 		if ($this->published) {
 			throw new \LogicException('Cannot notify a completed symbol publication');
 		}
-		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_literal_declaration) && !($declaration instanceof ast_struct_declaration)) {
+		if (!($declaration instanceof ast_function_declaration) && !($declaration instanceof ast_literal_declaration) && !($declaration instanceof ast_type_declaration)) {
 			throw new \LogicException('Unsupported file declaration in symbol publication');
 		}
 		if (!($declaration instanceof ast_function_declaration) || (!$declaration->is_implicit_entry)) {
@@ -175,9 +175,9 @@ final class Symbol_Publication implements declaration_sink
 			if ($head->duplicate_element() !== null) {
 				$contracts[$key] = null;
 			}
-			elseif ($head instanceof ast_struct_declaration) {
+			elseif ($head instanceof ast_type_declaration) {
 				// Prepared locals link to the canonical type on this AST. Refresh them on any declaration replacement.
-				$contracts[$key] = 'struct:' . spl_object_id($head);
+				$contracts[$key] = 'type:' . spl_object_id($head);
 			}
 			elseif ($head instanceof ast_constant_declaration) {
 				$contracts[$key] = json_encode([$head->is_private, $head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);

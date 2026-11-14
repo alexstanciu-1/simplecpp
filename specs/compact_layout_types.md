@@ -325,6 +325,56 @@ Generated C++ enum storage must match the source backing exactly. For example,
 
 Unit enums and existing int-backed behavior continue under their current rules.
 
+### 3.0 PHP bootstrap compiler: integer enums
+
+The active `v0.2/compiler/` accepts the following common nominal enum model:
+
+| Flavor | Declaration | Case reference |
+| --- | --- | --- |
+| PHP | `enum Kind { case First = 1; case Large = 300; }` | `Kind::Large` |
+| C++ | `enum Kind { First = 1, Large = 300 };` | `Kind::Large` |
+| JS | `enum Kind { First = 1, Large = 300 }` | `Kind.Large` |
+
+Every case needs an integer literal, optionally signed; decimal, `0x` and `0o`
+spellings follow the ordinary literal rules. Empty enums, duplicate case names
+and duplicate numeric values are errors. An enum occupies the same nominal type
+namespace as a struct; conflicting declarations are errors. Namespace-qualified
+references and plain `use` imports select that exact type.
+
+Omitted backing means an integer-backed enum, not a unit enum. Omitted backing
+and explicit `: int` expose `int64` through `enum_value` and select the smallest
+native representation that covers **both the minimum and maximum case values**.
+The number of cases does not determine storage:
+
+- `{1, 300}` needs `uint16`; `{1, 65536}` needs `uint32`.
+- `{-1, 200}` needs `int16`; `{-1, 2147483648}` needs `int64`.
+- Nonnegative ranges use `uint8`, `uint16`, `uint32`, then `int64` in this slice;
+  negative ranges use `int8`, `int16`, `int32`, then `int64`.
+
+A written fixed backing (`: int64`, `: uint8`, `: byte`, `: int8`, `: int16`,
+`: int32`, `: uint16`, `: uint32`) is exact, even when the values could fit a
+smaller representation. Its availability follows the runtime module rules;
+implicit compact storage does not require activating source numeric widths.
+For example `enum Kind : uint8` lowers with backing `scpp::uint8`. Values outside
+the chosen fixed backing are errors. Source values remain limited to signed
+int64 literals; uint64 backing and its larger constant domain are deferred.
+
+Enums support initialized locals, inference from a case/value, same-type copies,
+by-value callable parameters and returns, and the equality rules below.
+`enum_value(value)` returns the declared fixed backing, or `int64` for omitted
+backing/`: int`. It extracts the numeric value explicitly; ordinary assignment
+does not convert enums to integers or integers to enums. Enum truthiness and
+arithmetic are rejected. Case values are immutable.
+
+The native representation is a scoped C++ `enum class`, with the selected
+underlying scalar alias and no wrapper allocation. The source keyword is still
+`enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
+
+This bootstrap slice does not yet implement unit/string-backed enums, enum
+methods, enum fields/globals/defaults, `enum_name`, reverse checked construction,
+nullable/result enum payloads or the selection forms described by the broader
+language contract below.
+
 ### 3.1 v0.2 equality and selection
 
 Enum equality (`==`, `===`) and inequality (`!=`, `!==`) require operands of the

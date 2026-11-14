@@ -23,7 +23,7 @@ final class Type_Resolution
 		$type = self::resolve($syntax, $allow_void);
 		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
-		return self::record($syntax, $symbols, $function->namespace, $function, $dependencies);
+		return self::application($syntax, $symbols, $function, $dependencies);
 	}
 
 	/** Both handle families require exactly one nominal struct payload. */
@@ -47,17 +47,17 @@ final class Type_Resolution
 		}
 		$type = self::resolve($syntax);
 		if ($type !== null) return $type;
-		return self::record($syntax, $symbols, $namespace, $watcher, $dependencies);
+		return self::application($syntax, $symbols, $watcher, $dependencies);
 	}
 
 	/** Subscribe to the stable nominal key, including a missing declaration that may be added later. */
-	private static function record(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
-		?Dependency_Watches $dependencies): ?struct_type_definition
+	private static function application(ast_type_reference $syntax, scope $symbols, dependency_watcher $watcher,
+		?Dependency_Watches $dependencies): ?type_definition
 	{
-		$entry = $symbols->entry('class:' . Source_Names::resolve($syntax->name, $namespace));
+		$entry = $symbols->entry($syntax->root()->type_key($syntax->name));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
-		return $record instanceof ast_struct_declaration ? $record->definition : null;
+		return $record instanceof ast_type_declaration ? $record->type_definition() : null;
 	}
 
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */

@@ -172,7 +172,8 @@ trait ast_declaration
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
 			|| (get_class($duplicate_element) !== get_class($this)
-				&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
+					&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))
+					&& !(($this instanceof ast_type_declaration) && ($duplicate_element instanceof ast_type_declaration))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
 		$this->duplicate_element = $duplicate_element;
@@ -332,4 +333,11 @@ enum update_operator: int
 {
 	case increment = 1;
 	case decrement = 2;
+}
+
+
+/** A published nominal application type; struct layout and enum cases keep their distinct owners. */
+interface ast_type_declaration extends ast_declaration_interface
+{
+	public function type_definition(): type_definition;
 }

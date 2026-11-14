@@ -37,18 +37,24 @@ final class Import_Preparation
 		$kinds = match ($import->kind) {
 			import_kind::function_only => ['func'],
 			import_kind::constant_only => ['const'],
-			import_kind::symbol => ['func', 'const'],
+			import_kind::symbol => ['func', 'const', 'class'],
 		};
 		foreach ($kinds as $kind) {
 			$key = $kind . ':' . $import->target;
 			if ($symbols->resolve($key) === null && ($kind === 'func'
 				? runtime_functions::free($key, $file->source()->flavor) === null
-				: ($file->source()->flavor !== flavor::php || runtime_constants::integer($key) === null))) {
+				: ($kind !== 'const' || $file->source()->flavor !== flavor::php || runtime_constants::integer($key) === null))) {
 				continue;
 			}
 			$found = true;
-			$label = $kind === 'func' ? 'function' : 'constant';
-			$resolved = $kind === 'func' ? $file->function_key($import->local_name) : $file->constant_key($import->local_name);
+			$label = match ($kind) {
+				'func' => 'function', 'class' => 'type', default => 'constant',
+			};
+			$resolved = match ($kind) {
+				'func' => $file->function_key($import->local_name),
+				'class' => $file->type_key($import->local_name),
+				default => $file->constant_key($import->local_name),
+			};
 			if ($resolved !== $key) {
 				return 'Conflicting ' . $label . ' import: ' . $import->local_name;
 			}

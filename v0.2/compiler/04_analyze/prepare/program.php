@@ -81,6 +81,7 @@ final class Program_Preparation
 		$layouts = [];
 		foreach ($files as $key => $file) {
 			foreach ($file->declaration_nodes as $record) {
+				if ($record instanceof ast_enum_declaration) Enum_Preparation::declaration($record);
 				if ($record instanceof ast_struct_declaration) {
 					$record->definition->bind_layout((string) $key, $symbols->entry($record->symbol_key()), $dependencies);
 					$layouts[] = $record->definition;

@@ -87,7 +87,7 @@ class ast_name_expression extends ast_expression
 	 * Prepared fact: local AST identity, stable source symbol or runtime constant; null until prepared.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_binding|symbol_entry|runtime_integer_constant|null $binding = null;
+	protected ast_local_binding|symbol_entry|runtime_integer_constant|ast_enum_case|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -112,6 +112,13 @@ class ast_name_expression extends ast_expression
 		$current = $write ?? $local;
 		$this->settle_value($local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
 		$this->binding = $local;
+	}
+
+	/** Case reads retain only the owned case link; nominal identity is never a scalar constant fact. */
+	public function settle_enum_case(ast_enum_case $case): void
+	{
+		$this->binding = $case;
+		$this->settle_value($case->parent->definition, null);
 	}
 
 	/** Global storage is mutable in intent; its initializer is not a constant fact at a read occurrence. */
@@ -144,9 +151,9 @@ class ast_name_expression extends ast_expression
 	}
 
 	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant
+	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant|ast_enum_case
 	{
-		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant) {
+		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof ast_enum_case) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();

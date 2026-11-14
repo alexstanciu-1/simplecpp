@@ -647,6 +647,7 @@ final class Preparation
 				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
+			if ($this->enum_case($syntax)) return;
 			if (!$syntax->constant_only) {
 				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
 				$symbol = $this->symbols->entry($key);
@@ -682,6 +683,28 @@ final class Preparation
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Observe the enum's stable identity even for a missing case or removed declaration. */
+	private function enum_case(ast_name_expression $syntax): bool
+	{
+		if ($syntax->source()->flavor === flavor::php && !$syntax->constant_only) return false;
+		$name = $syntax->name;
+		$separator = strrpos($name, '::');
+		$width = 2;
+		if ($separator === false && $syntax->source()->flavor !== flavor::php) {
+			$separator = strrpos($name, '\\');
+			$width = 1;
+		}
+		if ($separator === false) return false;
+		$symbol = $this->symbols->entry($syntax->root()->type_key(substr($name, 0, $separator)));
+		$this->dependencies?->watch($symbol, $this->owner);
+		$enum = $symbol->declaration();
+		if (!($enum instanceof ast_enum_declaration)) return false;
+		$case = $enum->cases[substr($name, $separator + $width)] ?? null;
+		if ($case === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown enum case: ' . $name);
+		$syntax->settle_enum_case($case);
+		return true;
 	}
 
 	/**
@@ -838,6 +861,16 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			if ($builtin === 'enum_value') {
+				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'enum_value requires one enum argument');
+				$argument = $call->arguments[0];
+				$this->value($argument, $initializing);
+				$type = $argument->type_def();
+				if (!($type instanceof enum_type_definition)) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_value requires an enum');
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+				$call->settle_runtime($type->value_function());
+				return;
+			}
 			$operation = match ($builtin) {
 				'count' => collection_cardinality::count,
 				'empty' => collection_cardinality::empty,

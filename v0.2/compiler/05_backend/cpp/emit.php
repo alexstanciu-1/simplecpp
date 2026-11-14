@@ -39,9 +39,21 @@ final class Cpp_Emitter
 
 	/** METHODS */
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
-	public function declaration(ast_function_declaration|ast_global_declaration|ast_struct_declaration $node,
+	public function declaration(ast_function_declaration|ast_global_declaration|ast_type_declaration $node,
 		array &$includes /** array<string,bool> */): string
 	{
+		if ($node instanceof ast_enum_declaration) {
+			$type = $node->definition;
+			$storage = $type->storage();
+			foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
+			$lines = [];
+			foreach ($node->cases as $case) {
+				$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
+					. type_int64::instance()->lower_cpp_literal($case->initializer) . ',';
+			}
+			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
+				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n");
+		}
 		if ($node instanceof ast_struct_declaration) {
 			$layout = [];
 			foreach ($node->fields as $field) {
@@ -271,7 +283,7 @@ CPP;
 			}
 		}
 		foreach ($file->declaration_nodes as $node) {
-			if ($node instanceof ast_struct_declaration) $declarations[$node->symbol_key()] = $node;
+			if ($node instanceof ast_type_declaration) $declarations[$node->symbol_key()] = $node;
 		}
 		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
@@ -322,7 +334,14 @@ CPP;
 		$records = [];
 		$layouts = '';
 		$owners = [];
+		foreach ($declarations as $node) {
+			if (!($node instanceof ast_enum_declaration)) continue;
+			$header = $this->headers?->declaration_header($node);
+			if ($header !== null) $unit_headers[$header] = true;
+			else $layouts .= $this->declaration($node, $required_headers) . "\n";
+		}
 		foreach ($declarations as $function) {
+			if ($function instanceof ast_enum_declaration) continue;
 			if ($function instanceof struct_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
@@ -744,6 +763,7 @@ CPP;
 	{
 		$reorderable = false;
 		$value_type = $value->type_def();
+		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
 		if ($value_type instanceof struct_handle_definition || $value_type instanceof struct_type_definition) {
 			++$this->record_expressions;
 		}
@@ -968,6 +988,9 @@ CPP;
 		if ($value instanceof ast_name_expression) {
 			$reorderable = $value->type_def()->cpp_trivial_value();
 			$declaration = $value->declaration();
+			if ($declaration instanceof ast_enum_case) {
+				return $declaration->parent->definition->cpp_type() . '::' . Cpp_Identifier::source($declaration->short_name);
+			}
 			if ($declaration instanceof runtime_integer_constant) {
 				return $declaration->value . 'LL';
 			}
@@ -1109,8 +1132,8 @@ CPP;
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|struct_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
-		foreach (self::signature_records($function) as $type) {
-			if ($type instanceof struct_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+		foreach (self::signature_application_types($function) as $type) {
+			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}
 	}
@@ -1121,7 +1144,10 @@ CPP;
 		$forwards = [];
 		foreach ($record->methods['__construct']->parameters ?? [] as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_type_definition) {
+			if ($type instanceof enum_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
+					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
+			} elseif ($type instanceof struct_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
 			} elseif ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 		}
@@ -1199,14 +1225,14 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Application record and handle types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition> */
-	public static function signature_records(ast_function_declaration $function): \Generator
+	/** Application types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition|enum_type_definition> */
+	public static function signature_application_types(ast_function_declaration $function): \Generator
 	{
 		$type = $function->return_type_def();
-		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition) yield $type;
+		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition) yield $type;
+			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
 		}
 	}
 

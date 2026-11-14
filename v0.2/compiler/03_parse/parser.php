@@ -74,10 +74,11 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct')) {
+			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
 					'struct' => Struct_Syntax::read($this, $grammar, $members),
+					'enum' => Enum_Syntax::read($this),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
 				};
@@ -126,7 +127,7 @@ final class Parser
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
-		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $heads */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $heads */
 		$heads = $declarations->publish_references()->heads();
 		if (isset($heads['func:main'])) {
 			$heads = ['func:main' => $heads['func:main']] + $heads;
