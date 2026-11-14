@@ -7,11 +7,11 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 ## Working baseline
 
 - Nominal inline records, nested inline fields, shared and weak fields, recursive handle edges, memberwise copying, weak locking and checked empty-owner access.
-- One public or private constructor with required by-value parameters. Inline and shared construction use the ordinary argument binder. Access checks include implicit initialization of embedded fields. An empty shared field does not construct its payload.
+- One public or private constructor with by-value parameters and trailing literal defaults. Inline and shared construction use the ordinary argument binder. Access checks include implicit initialization of embedded fields. An empty shared field does not construct its payload.
 - Public/private instance and static fields and methods, typed literal member constants, and lexical declaring-type qualification. Methods share ordinary supported argument conversions, trailing by-value literal defaults, writable exact-type parameters and return handling. Methods returning their enclosing record can copy the receiver by value.
 - Plain field writes, the five arithmetic property compounds where admitted, and discarded prefix/postfix updates. Property updates also work in the final clause of a braced for loop. These operations preserve access checks and have native and incremental proofs.
 
-## Suggested core delivery order
+## Delivered core slices
 
 | Slice | Current boundary | Deliverable and acceptance proof |
 | --- | --- | --- |
@@ -19,15 +19,26 @@ Inventory as of 2026-11-13, scoped to records before inheritance. Priorities are
 | 2. String instance fields | Implemented through the scalar field capability. String append and indexed byte writes use the ordinary typed operations. Static string properties share one definition across units. | Verify empty initialization, short and heap-backed nested copies, cross-file headers, destruction and incremental type edits. |
 | 3. Inline struct parameters and returns | Implemented for free functions and ordinary methods. Signatures watch the nominal record and expose its layout to cross-unit callers. | Resolve ordinary nominal value parameters and returns in free functions and methods, including a different record as the return type. Test cross-file copy-in/return, shared member identity, layout changes and missing-type recovery. Test a caller that only sees the record through a signature. |
 | 4. Typed literal instance-field defaults | Implemented with the shared scalar literal parser and typed-destination conversion. | Retain the initializer once on the declaration; validate even unused fields. Initialize each new value before the constructor body, and copy the current field value when copying a record. Test default edit/removal across units. |
+| 5. Inline record constructor parameters | Implemented for inline and shared construction. | Cross-file scalar copies, shared-child identity, nominal mismatch, layout edits, missing types and recovery. |
+| 6. Bare `this` by value | Implemented in ordinary instance methods for local copies and by-value arguments. | Inline and shared receivers preserve independent scalar fields and shared-child identity. |
+| 7. Integer property compounds | Instance and static properties accept the five bitwise and shift assignments. | Checked failure, shared receiver replacement and incremental recovery across flavors. |
+
+## Proposed next slices
+
+| Order | Capability | Smallest useful proof |
+| --- | --- | --- |
+| 1 | Named constants as typed field defaults, starting with one qualified member constant. | Edit, remove and restore the constant across files. Fresh and incremental construction should agree, even when an enclosing record embeds the field. |
+
+The order is a proposal. Each slice can be reviewed and delivered independently. Constructor reference modes and writable inline-record parameters stay separate from by-value admission.
 
 ## Independent follow-ups
 
 | Area | Remaining boundary |
 | --- | --- |
-| Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. Bare struct `this` currently works as a receiver or direct return; local copies and by-value arguments using bare `this` remain separate cases. |
-| Constructor and method argument coverage | Constructors accept required by-value parameters only. Evaluate trailing literal defaults first, including whether an all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
+| Other uses of an inline value | Exact-type writable record parameters should use the ordinary named-local/parameter binder when enabled. |
+| Constructor and method argument coverage | Constructors accept trailing literal defaults. An all-default constructor satisfies embedded default initialization. Reference modes for constructors require a separate decision. Read-only references, reference returns, variadics, named arguments and overloads belong with their common callable contracts. |
 | Defaults and constants | Member constants and static property initializers are typed literals. Instance defaults from named constants would require watching the defining declaration. Inferred field types, nested defaults, and static properties with omitted initializers are distinct extensions. |
-| Property operations | Property compounds cover arithmetic and flavor-specific string concatenation; other locally admitted compound groups still need property coverage. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |
+| Property operations | Property compounds cover arithmetic, integer bitwise and shift operations, and flavor-specific string concatenation. Power compound assignment remains deferred for properties. Updates and compounds are discarded-value operations. Expression-valued prefix/postfix, compound results and additional property forms in for headers need distinct tests. |
 | Field syntax and lookup | PHP instance declarations currently use type then variable; the alternative variable-then-type form from the broader spec is pending. Type imports and expression-qualified static access remain separate from existing explicit type names and lexical qualifiers. |
 | Containers and carriers | Vector/hash as fields, field-rooted keyed operations, application records as collection elements, and nullable/Result of an application record are different integrations. Coordinate with the collection owner. Shared/weak fields already work. |
 | Data records | Explicit data-record opt-in, keyed initialization, synthesized public-property inputs and property-backed constructor parameters. Keyed input must respect private construction and authored constructor invariants. |

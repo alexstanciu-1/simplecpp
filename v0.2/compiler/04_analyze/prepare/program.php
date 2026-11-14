@@ -75,7 +75,8 @@ final class Program_Preparation
 	}
 
 	/** Bind all owners before resolving field dependencies across source units. @param ast_file_node[] $files */
-	public static function layouts(array $files /** array<string,ast_file_node> */, scope $symbols, Dependency_Watches $dependencies): void
+	public static function layouts(array $files /** array<string,ast_file_node> */, scope $symbols, Dependency_Watches $dependencies,
+		?preparation_work $work = null): void
 	{
 		$layouts = [];
 		foreach ($files as $key => $file) {
@@ -87,7 +88,7 @@ final class Program_Preparation
 			}
 		}
 		$active = [];
-		foreach ($layouts as $layout) $layout->prepare_layout($symbols, $active);
+		foreach ($layouts as $layout) $layout->prepare_layout($symbols, $active, $work);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

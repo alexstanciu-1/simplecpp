@@ -194,8 +194,7 @@ final class Parser
 			}
 			$operator = $this->compound_operator();
 			if ($operator !== null) {
-				if (!in_array($operator, [binary_operator::add, binary_operator::subtract,
-					binary_operator::multiply, binary_operator::divide, binary_operator::remainder, binary_operator::concatenate], true)) {
+				if ($operator === binary_operator::power) {
 					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unsupported property compound operator');
 				}
 				$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');

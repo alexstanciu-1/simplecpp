@@ -113,7 +113,7 @@ def prove(work, flavor):
         (model, expanded, 'Argument count mismatch', None),
         (model, expanded.replace(first+',', first+'=1,'), 'Required parameter follows optional parameter', None),
         (model, expanded.replace(second+')', second+'=side())'), 'Parameter defaults require literals', None),
-        (model, edited[:close]+constructor+edited[close:], 'Constructors require by-value parameters without defaults', None),
+        (model, edited[:close]+constructor+edited[close:], None, b'6:3'),
         (model, edited, None, b'6:3'),
     ])
     ref_method, ref_call, slot, ref_param, value_param, field_arg, wrong_arg = {
@@ -143,7 +143,7 @@ def prove(work, flavor):
         (entry, with_argument(field_arg), 'a named local or parameter', None),
         (entry, wrong_arg+with_argument('$b' if flavor == 'php' else 'b'), 'exact storage type', None),
         (entry, with_argument(slot), None, b'6:9'),
-        (model, ref_model[:close]+ref_constructor+ref_model[close:], 'Constructors require by-value parameters without defaults', None),
+        (model, ref_model[:close]+ref_constructor+ref_model[close:], 'Constructors require by-value parameters', None),
         (model, ref_model.replace(ref_param, ref_param+'=0'), 'Reference parameter defaults are deferred', None),
         (model, ref_model, None, b'6:9'),
     ])
@@ -355,6 +355,61 @@ def prove(work, flavor):
         resident.stdin.close()
 
 
+def bare_this(work, flavor):
+    app = work / ('this-' + flavor)
+    app.mkdir()
+    entry, record, helper = [app / (name + '.' + flavor) for name in ('main', 'pair', 'helper')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    var, member = ('$' if flavor == 'php' else ''), ('.' if flavor == 'js' else '->')
+    fields, method, mutate, local, bind, param = {
+        'php': ('public int $x; public shared<Cell> $child;', 'public function test():int',
+                'function mutate(Pair $arg):int', '$i Pair;', '', 'Pair $arg'),
+        'cpp': ('int x; shared<Cell> child;', 'int test()', 'int mutate(Pair arg)', 'Pair i;', 'auto ', 'Pair arg'),
+        'js': ('x:int; child:shared<Cell>;', 'test():int', 'function mutate(arg:Pair):int', 'let i:Pair;', 'let ', 'arg:Pair'),
+    }[flavor]
+    this, copy, arg = [var + n for n in ('this','copied','arg')]
+    x, child = member + 'x', member + 'child'
+    body = (bind + copy + '=' + this + ';' + copy + x + '=7;echo ' + this + x + ',' + copy + x + ';'
+            + copy + '=' + this + ';echo ' + copy + x + ';'
+            + 'if (' + copy + child + ' !== ' + this + child + ') { return 0; }return mutate(' + this + ');')
+    cell_field = {'php':'public int $x;', 'cpp':'int x;', 'js':'x:int;'}[flavor]
+    model = 'struct Cell {' + cell_field + '} struct Pair {' + fields + method + '{' + body + '}}'
+    record.write_text(model)
+    function = mutate + '{' + arg + x + '=8;' + arg + child + x + '=9;return ' + arg + x + ';}'
+    source = local + bind + var + 's=new Pair();'
+    for receiver in (var+'i',var+'s'):
+        source += (receiver + x + '=3;' + receiver + child + '=new Cell();echo ' + receiver + member + 'test(),'
+                   + receiver + x + ',' + receiver + child + x + ';')
+    entry.write_text(source + 'return 8;')
+    expected = b'373839' * 2
+    static = {'php':'public static function test():int', 'js':'static test():int', 'cpp':'static int test()'}[flavor]
+    out = work / ('this-out-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error) in enumerate([
+            (helper, function, None), (helper, mutate.replace(param, param.replace('Pair','Cell')) + '{return 8;}', 'conversion from Pair to Cell'),
+            (helper, mutate.replace('Pair', 'shared<Pair>') + '{return 8;}', 'conversion from Pair to shared<Pair>'),
+            (helper, function, None), (record, model.replace(method,static), 'Static method has no this receiver'),
+            (record, model, None), (helper, '', 'Unknown function: mutate'), (helper, function, None),
+        ]):
+            path.write_text(text)
+            os.utime(path,(1992000000+rev,)*2)
+            before = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'this-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error','') and current['error'] == other.get('error'), (rev,current,other)
+                assert before == artifacts(out)
+                continue
+            assert 'error' not in current and 'error' not in other, (rev,current,other)
+            assert artifacts(out) == artifacts(baseline)
+            build(out, work / ('this-native-' + flavor), expected)
+            build(baseline, work / f'this-fresh-native-{flavor}-{rev}', expected)
+        resident.stdin.close()
+
+
 def value_signatures(work, flavor):
     app = work / ('values-' + flavor)
     app.mkdir()
@@ -430,6 +485,7 @@ if __name__ == '__main__':
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
         for flavor in ('php', 'cpp', 'js'):
+            bare_this(work, flavor)
             value_signatures(work, flavor)
             prove(work, flavor)
             print(flavor, 'passed', flush=True)

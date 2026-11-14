@@ -59,8 +59,8 @@ final class Struct_Syntax
 				$c->name(token_kind::identifier);
 				$parameters = $parser->parameters();
 				foreach ($parameters as $parameter) {
-					if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
-						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors require by-value parameters without defaults');
+					if ($parameter->mode !== passing_mode::value) {
+						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors require by-value parameters');
 					}
 				}
 				$void = new ast_type_reference($at, $at, 'void');

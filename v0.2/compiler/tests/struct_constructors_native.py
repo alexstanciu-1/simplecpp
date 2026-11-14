@@ -134,6 +134,35 @@ def prove(work, flavor, memcheck):
         (record,public_zero,None,b''),(record,private_zero,denied,None),
         (app/'nested.php','struct Box { public shared<Point> $p; }',None,b''),
     ])
+    first, second = params.split(',')
+    def defaults(x, y):
+        return model.replace(params, first + x + ',' + second + y)
+    make_one = {'php':'$one Point(7);', 'cpp':'Point one(7);', 'js':'let one:Point(7);'}[flavor]
+    var, member = ('$' if flavor == 'php' else ''), ('.' if flavor == 'js' else '->')
+    def y(name):
+        return var + name + member + 'y'
+    bind = {'php':'$full=', 'cpp':'auto full=', 'js':'let full='}[flavor]
+    calls = (default + make_one + bind + 'new Point(7,4); echo ' + y('p') + ',' + y('one') + ',' + y('full')
+             + ',(new Point())' + member + 'y' + ',(new Point(7))' + member + 'y;')
+    nested = app/'nested.php'
+    edits.extend([
+        (record, defaults('=true', '=2'), None, b''),
+        (nested, 'struct Box { public Point $p; public shared<Point> $owner; }', None, b''),
+        (entry, calls + box + ' if (' + var+'b'+member+'owner != null) { return 1; } return 8;', None, b'2242212'),
+        (record, defaults('=true', '=9'), None, b'9949919'),
+        (record, model, 'Inline field requires', None),
+        (None, '', 'Inline field requires', None),
+        (record, defaults('=true', '=2'), None, b'2242212'),
+        (record, defaults('=1', ''), 'Required parameter follows optional parameter', None),
+        (record, defaults('=1', '=step(0)'), 'Parameter defaults require literals', None),
+        (record, defaults('=1', '="bad"'), 'conversion', None),
+        (record, defaults('=true', '=2'), None, b'2242212'),
+        (entry, make_one + 'echo ' + y('one') + ';return 8;', None, b'2'),
+        (nested, '', None, b'2'),
+        (record, defaults('', '=9'), None, b'9'),
+        (entry, default+'return 8;', 'Argument count mismatch', None),
+        (record, defaults('=1', '=9'), None, b''),
+    ])
     with service(app,out) as resident:
         for rev, (path, text, error, stdout) in enumerate(edits):
             if path is not None:
@@ -158,6 +187,77 @@ def prove(work, flavor, memcheck):
         resident.stdin.close()
 
 
+def record_arguments(work, flavor):
+    app = work / ('record-args-' + flavor)
+    app.mkdir()
+    model, segment, entry = [app / (name + '.' + flavor) for name in ('point', 'segment', 'main')]
+    (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
+    var = '$' if flavor == 'php' else ''
+    member = '.' if flavor == 'js' else '->'
+    def typed(name, typ):
+        return name + ':' + typ if flavor == 'js' else typ + ' ' + var + name
+    def field(name, typ):
+        return ('public ' if flavor == 'php' else '') + typed(name, typ)
+    def local(name, typ):
+        return {'php': '$' + name + ' ' + typ, 'cpp': typ + ' ' + name, 'js': 'let ' + name + ':' + typ}[flavor]
+    def ctor(name):
+        return {'php': 'public function __construct', 'cpp': name, 'js': 'constructor'}[flavor]
+    point = 'struct Cell {} struct Point {' + field('x','int') + '=3;' + field('child','shared<Cell>') + ';}'
+    start, end, s, h = [var + n for n in ('a','b','s','h')]
+    sig = typed('a','Point') + ', ' + typed('b','Point')
+    body = (start + member + 'x+=1;' + var + 'this' + member + 'first=' + start + ';'
+            + var + 'this' + member + 'last=' + end + ';')
+    record = ('struct Segment {' + field('first','Point') + ';' + field('last','Point') + ';'
+              + ctor('Segment') + '(' + sig + '){' + body + '}}')
+    args = '(' + start + ',' + end + ')'
+    heap = ('$h=' if flavor == 'php' else ('let h=' if flavor == 'js' else 'auto h='))
+    src = (local('a','Point') + ';' + local('b','Point') + ';' + start + member + 'child=new Cell();'
+           + end + member + 'x=7;' + local('s','Segment') + args + ';' + heap + 'new Segment' + args + ';'
+           + 'echo ' + start + member + 'x;' + start + member + 'x=0;' + end + member + 'x=0;')
+    for receiver in (s,h):
+        src += ('echo ' + receiver + member + 'first' + member + 'x,' + receiver + member + 'last' + member
+                + 'x; if (' + start + member + 'child !== ' + receiver + member + 'first' + member + 'child) {return 1;}')
+    src += 'return 8;'
+    entry.write_text(src)
+    segment.write_text(record)
+    # These parameters occur only in signatures, including mutually referring and self-taking constructors.
+    (app/'edges.php').write_text('struct Left { public function __construct(Right $r) {} } '
+        'struct Right { public function __construct(Left $l) {} } '
+        'struct Same { public function __construct(Same $s) {} } '
+        'function copySame(Same $s):Same { $v Same($s); return $v; } '
+        'function ownSame(Same $s):shared<Same> { return new Same($s); }')
+    out = work / ('record-out-' + flavor)
+    with service(app, out) as resident:
+        for rev, (path, text, error, expected) in enumerate([
+            (model, point, None, b'34747'),
+            (model, point.replace('=3;', '=5;' + field('label','string') + ';'), None, b'56767'),
+            (segment, record.replace(sig, sig.replace('Point', 'Missing', 1)), 'parameter type: Missing', None),
+            (segment, record, None, b'56767'),
+            (model, point.split('struct Point')[0], 'Point', None),
+            (model, point, None, b'34747'),
+            (entry, local('other','Cell') + ';' + src.replace(args, '(' + var + 'other,' + end + ')', 1),
+             'conversion from Cell to Point', None),
+            (entry, src, None, b'34747'),
+        ]):
+            path.write_text(text)
+            os.utime(path, (1991000000 + rev,) * 2)
+            before = artifacts(out)
+            current = invoke(resident)
+            baseline = work / f'record-fresh-{flavor}-{rev}'
+            with service(app, baseline) as fresh:
+                other = invoke(fresh)
+                fresh.stdin.close()
+            if error:
+                assert error in current.get('error', '') and current['error'] == other.get('error'), (rev,current,other)
+                assert artifacts(out) == before
+                continue
+            assert 'error' not in current and 'error' not in other, (rev,current,other)
+            assert artifacts(out) == artifacts(baseline)
+            build(out, work / ('record-native-' + flavor), expected)
+            build(baseline, work / f'record-fresh-native-{flavor}-{rev}', expected)
+        resident.stdin.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--memcheck',action='store_true')
@@ -167,5 +267,6 @@ if __name__ == '__main__':
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
         for flavor in ['php', 'cpp', 'js']:
+            record_arguments(work, flavor)
             prove(work, flavor, args.memcheck)
             print(flavor, 'passed',flush=True)

@@ -25,7 +25,7 @@ final class Incremental_Preparation
 		foreach ($files as $path => $file) {
 			Program_Preparation::admit($file, $path === $session->entry_key());
 		}
-		Program_Preparation::layouts($files, $symbols, $session->dependency_watches);
+		Program_Preparation::layouts($files, $symbols, $session->dependency_watches, $session->preparation_work);
 		Function_Preparation::declarations($symbols, $session->dependency_watches);
 		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
