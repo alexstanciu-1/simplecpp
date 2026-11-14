@@ -810,6 +810,7 @@
     },
     "integer_literals": {
       "radix": 10,
+      "prefixes": {"0x": 16, "0o": 8},
       "overflow": "reject",
       "cpp_suffix": "LL"
     },

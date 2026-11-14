@@ -780,6 +780,12 @@ final class Parser
 				token_kind::tilde => unary_operator::bit_not,
 			};
 			$operand = $this->value(binary_operator::power->precedence());
+			// A direct signed prefixed literal is checked as one value, including the signed minimum.
+			if ($kind !== token_kind::tilde && $operand instanceof ast_integer_expression
+				&& $operand->start === $start + 1 && $operand->end === $this->cursor->position()
+				&& preg_match('/^0[xXoO]/', $this->cursor->tokens->text_at($operand->start)) === 1) {
+				return new ast_integer_expression($start, $operand->end);
+			}
 			return new ast_unary_expression($start, $this->cursor->position(), $operator, $operand);
 		}
 		if ($this->cursor->is(token_kind::bang)) {

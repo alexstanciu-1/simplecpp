@@ -79,6 +79,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 default => throw new \RuntimeException('Unsupported native signed integer literal type'),
             };
             $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
+                '@radix_cases@' => implode(', ', array_map(static fn(string $prefix, int $radix): string => var_export($prefix, true) . ' => ' . $radix, array_keys(object($compiler->integer_literals->prefixes)), array_values(object($compiler->integer_literals->prefixes)))),
                 '@native_suffix@' => var_export($nativeSuffix, true),
                 '@native_minimum@' => var_export('(-' . $definition['maximum'] . $nativeSuffix . ' - 1' . $nativeSuffix . ')', true),
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],

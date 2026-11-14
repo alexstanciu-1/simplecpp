@@ -121,7 +121,8 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
             $type = $types[$identity];
             requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
             $policy = at($compiler, 'integer_literals');
-            fields($policy, ['radix', 'overflow', 'cpp_suffix']);
+            fields($policy, ['radix', 'prefixes', 'overflow', 'cpp_suffix']);
+            requireThat(object(at($policy, 'prefixes')) === ['0o' => 8, '0x' => 16], 'Unsupported compiler integer prefixes');
             requireThat(unsigned(at($policy, 'radix')) === 10, 'Unsupported compiler integer radix');
             requireThat(textValue(at($policy, 'overflow')) === 'reject', 'Unsupported compiler integer overflow policy');
             $suffix = textValue(at($policy, 'cpp_suffix'));

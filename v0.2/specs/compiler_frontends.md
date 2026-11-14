@@ -293,3 +293,12 @@ longest-match `++`/`--` retain update syntax. Existing signed floating literals
 and cast lookahead are preserved. Generated type handlers admit only int/int64
 for general unary signs. See [the scalar contract](../../specs/compiler_scalars_v0_2.md)
 and [implementation/proofs](../compiler/docs/unary.md).
+
+## Prefixed integer literal slice
+
+All flavors accept hexadecimal `0x`/`0X` and octal `0o`/`0O`, with at least one valid digit.
+Unprefixed leading-zero literals remain decimal. These spellings produce int64 values, not inferred
+unsigned or narrow representations. Direct signed prefixed literals admit the full signed int64 range,
+including its minimum, while exponentiation retains its existing precedence over unary signs.
+Malformed digits and out-of-range values produce source diagnostics. Written destinations reuse generated
+checked conversions. Binary prefixes, separators and suffixes remain deferred.

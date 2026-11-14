@@ -50,7 +50,7 @@ has type float64, and `2 < x` has type bool. See the [boxed runtime API](../../s
 - `compiler.strict_identity`, `compiler.three_way`, `compiler.power`, `compiler.concatenation`: bounded scalar groups with explicit identity, promotion, runtime and flavor policies.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
-- `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
+- `compiler.integer_literals`: decimal plus hexadecimal `0x` and octal `0o` prefixes, checked overflow and signed literal suffix policy.
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
 - `compiler.conversion_families`: family algorithms and allowed contexts, expanded into transient concrete rows during generation.
@@ -264,3 +264,19 @@ additive wall-time components.
 
 The [integer family slice](integer_promotion.md) derives active int64/uint8 arithmetic
 and comparisons from grouped metadata and the shared runtime promotion policy.
+
+## Prefixed integer literals
+
+All three flavors accept `0x`/`0X` hexadecimal and `0o`/`0O` octal literals.
+They retain canonical int64 identity and use existing generated checked conversions at typed destinations.
+Leading-zero unprefixed literals stay decimal (`0755` is 755, `08` is 8).
+No binary prefixes, digit separators, suffixes or unsigned literal inference are introduced.
+
+The tokenizer owns digit grammar and numeric error locations. Metadata declares the prefix radices,
+and the generated int64 handler decodes with negative checked accumulation so signed minimum is exact.
+The existing decimal fast path stays unchanged. A direct signed prefixed token is retained as one
+ast_integer_expression, including `-0x8000000000000000`; power still binds before unary minus.
+No AST fields, conversion codes or runtime ABI change. Lowering emits the existing decimal C++ literals.
+Malformed prefixes/digits and int64 overflow reject; typed byte destinations still reject values outside 0..255.
+The native radix proof covers boundaries, leading zeros, power precedence and incremental errors/retry/recovery
+against fresh emitted artifacts in PHP, C++ and JS flavors.
