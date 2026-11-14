@@ -163,9 +163,6 @@ final class Function_Preparation
 						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
 					}
 					if ($parameter_type instanceof enum_type_definition) {
-						if ($declaration->is_constructor()) {
-							throw new diagnostic($default->source(), $default->byte_start(), 'Enum constructor defaults are deferred');
-						}
 						if (!($default instanceof ast_name_expression)
 							|| !Enum_Preparation::reference($default, $symbols, $declaration, $dependencies)) {
 							throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');

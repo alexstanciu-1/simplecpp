@@ -83,11 +83,6 @@ foreach (flavor::cases() as $flavor) {
 	$reference = match ($flavor) {
 		flavor::php => str_replace('$k', '&$k', $p), flavor::cpp => str_replace(' k', ' &k', $p), flavor::js => '&' . $p,
 	};
-	$constructor = match ($flavor) {
-		flavor::php => 'public function __construct(' . $p . '){}',
-		flavor::cpp => 'Owner(' . $p . '){}', flavor::js => 'constructor(' . $p . '){}',
-	};
-	rejects(fn() => $prepare($base . 'struct Owner {' . $constructor . '}'), 'Enum constructor defaults are deferred');
 	rejects(fn() => $prepare($base . $function('f', $reference, 'Kind', 'return ' . $var('k') . ';')), 'Reference parameter defaults');
 	rejects(fn() => $prepare($base . $other . $function('f', $parameter('k', 'Other' . $case . 'First'), 'Kind',
 		'return ' . $var('k') . ';')), 'conversion');

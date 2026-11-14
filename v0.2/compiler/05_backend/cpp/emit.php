@@ -294,7 +294,7 @@ CPP;
 				$declarations[$owner->name] = $owner;
 				$this->collect_signature_types($function, $declarations);
 				$definitions[] = $this->allocation_factory($owner, $required_headers);
-				// Embedded fields use native {}. Keep the literal defaults in their defining unit.
+				// Embedded fields use native {}. Keep the prepared defaults in their defining unit.
 				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
 					$defaults = [];
 					foreach ($function->parameters as $parameter) {

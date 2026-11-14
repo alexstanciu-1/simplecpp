@@ -371,7 +371,7 @@ underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
 This bootstrap slice does not yet implement unit/string-backed enums, enum
-methods, enum globals/constructor defaults, `enum_name`, reverse checked construction,
+methods, enum globals, `enum_name`, reverse checked construction,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
 
@@ -511,8 +511,15 @@ ordinary instance/static struct methods in all three flavors:
 | C++ | `Kind pick(Kind kind = Kind::First)` |
 | JS | `function pick(kind: Kind = Kind.First): Kind` |
 
-Enum constructor defaults remain deferred; previously supported scalar constructor
-defaults are unchanged. The default is checked when its signature is prepared,
+Constructors also accept these trailing by-value enum case defaults. Inline and
+shared construction use the same default argument path. A constructor with defaults
+for every parameter can initialize a nested inline field without explicit arguments;
+its generated zero-argument entry delegates using the prepared defaults. Written
+field defaults run before the constructor body, and copying a record preserves its
+current field values without rerunning construction. Existing scalar constructor
+defaults and the constructor's by-value parameter restriction are unchanged.
+
+The default is checked when its signature is prepared,
 including unused functions/methods. Calls with an explicit argument do not select
 the default, but an invalid default still makes the declaration invalid.
 
