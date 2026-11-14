@@ -497,5 +497,29 @@ check and the exact first-parameter cast for overloaded bindings still apply.
 
 The padding fixtures check a width literal between two string producers and a
 first failure that skips the padding producer. The PHP number-format fixture
-checks two leading literals and integer overload selection. The catalog shows
-`str_pad(text(),6,pad())` with two captures.
+checks two leading literals and integer overload selection. The width stays inline in the catalog’s padding example.
+
+### Direct writable references in ordered runtime calls
+
+Preparation restricts each published writable reference to exact named local or
+parameter storage. Runtime-call lowering omits that position from its captures
+and passes the lvalue to the adapter. Other operands retain their value and
+lifetime checks. The PHP four-argument replacement adapter is the current
+published example. Its regression saves the search string before a sibling
+changes it, observes the replacement count in the original local, and verifies
+that a failing subject leaves a forwarded count at its initial value.
+
+### Final returned strings in ordered runtime calls
+
+The generator publishes the const-reference slots used in each native adapter
+signature, including overloads. After earlier snapshots, a final string-returning
+call can bind its result directly to that parameter. The full expression keeps
+the string alive through the adapter call. Nested record or handle expressions
+retain the existing lifetime boundary.
+
+The padding fixtures cover an owning string containing a NUL followed by another
+byte, a nested string adapter, and failures in either producer. The emitter selects the last order-sensitive operand even when scalar literals or
+writable references follow it. Capture eligibility and the record lifetime check
+use that operand’s own facts. Windowed substring counts exercise two trailing
+literals in all three flavors. PHP replacement covers a trailing writable count,
+including the count observed by the caller after a failing subject.

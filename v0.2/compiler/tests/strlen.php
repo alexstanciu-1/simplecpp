@@ -209,8 +209,32 @@ foreach (flavor::cases() as $flavor) {
 			. 'echo str_replace("\0","", "a\0b\0",$nul_count), $nul_count, "|";'
 			. 'echo forward($count), $count, "|";'
 			. 'echo str_replace("a","aa","a",$count), $count; return 8;';
-		$fixtures['php-replace-count'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
-			'stdout_hex' => bin2hex('XX2z|aaaaa2|abc0|abc0|ab2|xx2|aa1')];
+		$cpp = (new Cpp_Emitter())->emit($prepare($source));
+		verify(preg_match('/const auto (argument_\d+_0) = (var_key_\d+); const auto (argument_\d+_1) = [^;]+; '
+			. 'return str_replace\(\1, \3, subject_\(\2\), var_count_\d+\);/', $cpp) === 1,
+			'Expected a saved search string and direct writable count slot');
+		$fixtures['php-replace-count'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('XX2z|aaaaa2|abc0|abc0|ab2|xx2|aa1')];
+
+		$failure = 'function subject():string { echo "S"; echo 1/0; return "aa"; }'
+			. 'function attempt(int &$n):void { echo str_replace("a","x",subject(),$n); } return 8;';
+		$cpp = (new Cpp_Emitter())->emit($prepare($failure));
+		verify(preg_match('/return str_replace\(argument_\d+_0, argument_\d+_1, subject_\(\), var_n_0\);/', $cpp) === 1,
+			'Expected direct forwarding of the writable count parameter');
+		// Observe caller storage after unwinding out of the generated wrapper.
+		$cpp = str_replace('int main()', 'int unused_entry()', $cpp) . <<<'CPP'
+
+#include <stdexcept>
+#include <string_view>
+int main() {
+	scpp::int64 count = 99;
+	try { App::attempt_(count); }
+	catch (const std::domain_error& error) {
+		return count == 99 && std::string_view(error.what()) == "division_by_zero" ? 8 : 91;
+	}
+	return 92;
+}
+CPP;
+		$fixtures['php-replace-count-failure'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('S')];
 		$source = '$n = 0; str_replace("a","",str_repeat("a",300),$n); $b byte = $n; return 8;';
 		$fixtures['php-replace-count-range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'catch_out_of_range' => true, 'stdout_hex' => ''];

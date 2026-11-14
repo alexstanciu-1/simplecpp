@@ -64,17 +64,19 @@ field. A temporary inline receiver binds the returned record once to a local
 `auto&&`, extending its lifetime through the method body. After receiver setup,
 all three forms use the same capture selection for explicit arguments.
 
-Runtime calls use their published exact parameter types and writable-reference
-mask to recognize nonthrowing scalar literal peers. A returned string can feed
+Runtime calls use their published exact parameter types and generated reference
+modes to select captures. Writable references pass their prepared, exact local
+or parameter directly. Binding that storage does not read its value. A returned string can feed
 a const-reference parameter directly when only its evaluation is observable.
 When another argument can mutate a borrowed local, the ordered call captures
 its value before evaluating that argument. Nonthrowing by-value scalar literals
 stay inline at every position, including an overload-selecting first argument
-with its exact native cast. After the ordered captures, a final
-by-value scalar initializes its parameter directly unless its operand involves a
-record or handle whose temporary may need to expire before adapter entry.
-The shared record-lifetime guard
-also applies to this direct-call decision.
+with its exact native cast. After earlier captures, the last order-sensitive operand can initialize a
+by-value scalar parameter or bind a returned string to a published const-reference
+parameter. Trailing inert scalar literals and writable references keep their call
+positions and do not require an extra snapshot. The string survives through adapter
+return. Both forms retain the capture when nested record or handle temporaries
+may need to expire before adapter entry.
 
 The generator derives the type-specific direct-spelling rules from validated
 operation plans. Its [compiler renderer](../../tools/api_generator/php/render_compiler.php)

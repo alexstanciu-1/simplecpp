@@ -19,11 +19,13 @@ final readonly class runtime_function
 	public int $required_parameters /** uint32 */;
 	/** One bit per mutable reference argument in the generated signature. */
 	private int $reference_mask /** uint32 */;
+	private int $const_reference_mask /** uint32 */;
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0)
 	{
+		$this->const_reference_mask = $const_reference_mask;
 		$this->reference_mask = $reference_mask;
 		$this->overloaded_first = $overloaded_first;
 		$this->source_name = $name;
@@ -39,6 +41,11 @@ final readonly class runtime_function
 	public function is_reference(int $index /** uint32 */): bool
 	{
 		return ($this->reference_mask & (1 << $index)) !== 0;
+	}
+
+	public function is_const_reference(int $index /** uint32 */): bool
+	{
+		return ($this->const_reference_mask & (1 << $index)) !== 0;
 	}
 
 	public function name(): string

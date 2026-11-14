@@ -905,6 +905,7 @@ CPP;
 				$arguments = [];
 				$direct = true;
 				$capture_indices = [];
+				$inline_index = null;
 				$records_before = $this->record_expressions;
 				foreach ($operands as $index => $argument) {
 					$operand_records_before = $this->record_expressions;
@@ -912,11 +913,15 @@ CPP;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
-					// Preparation requires exact runtime parameter types. Count borrowed values
-					// and writable slots conservatively; only scalar literal peers are inert.
-					if ($function->is_reference($index) || !self::inert_literal_argument(
+					// A prepared writable reference names stable storage; binding it does not read its value.
+					if (!$function->is_reference($index) && !self::inert_literal_argument(
 						$argument, $function->parameters[$index], value_conversion::identity)) {
 						$capture_indices[] = $index;
+						// Only the last order-sensitive operand can execute after the earlier captures.
+						$type = $function->parameters[$index];
+						$can_bind = $type->cpp_trivial_value() || ($function->is_const_reference($index)
+							&& $type instanceof type_string && $argument instanceof ast_call_expression);
+						$inline_index = $can_bind && $this->record_expressions === $operand_records_before ? $index : null;
 					}
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
@@ -925,17 +930,11 @@ CPP;
 				$steps = [];
 				$direct = $direct || (count($capture_indices) <= 1 && $this->record_expressions === $records_before);
 				if (!$direct && count($arguments) > 1) {
-					// Earlier arguments finish before the call. A final value scalar can
-					// initialize its parameter there unless its temporaries need to expire first.
-					$last = count($arguments) - 1;
 					foreach ($capture_indices as $index) {
-						if ($index === $last && !$function->is_reference($index) && $function->parameters[$index]->cpp_trivial_value()
-							&& $this->record_expressions === $operand_records_before) {
-							break;
-						}
+						if ($index === $inline_index) break;
 						$operand = $arguments[$index];
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
-						$steps[] = ($function->is_reference($index) ? 'auto& ' : 'const auto ') . $arguments[$index] . ' = ' . $operand . ';';
+						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
 				$call = $symbol . '(' . implode(', ', $arguments) . ')';

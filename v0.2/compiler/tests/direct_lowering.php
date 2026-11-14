@@ -104,22 +104,58 @@ foreach (flavor::cases() as $flavor)
 		'Final scalar producer must be in the adapter call after the string capture');
 	$fixtures[$flavor->name . '_runtime_ordered_final_failure'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LC'),
 		'catch_domain_error' => 'modulo_by_zero'];
-	$pad_call = match ($flavor) {
-		flavor::php => 'str_pad(label(),6,padding(),1)',
-		flavor::cpp => 'label().pad_end(6,padding())',
-		flavor::js => 'label().padEnd(6,padding())',
+	$pad = static fn(int $width, string $padding, bool $explicit_side = false): string => match ($flavor) {
+		flavor::php => "str_pad(label(),$width,$padding" . ($explicit_side ? ',1)' : ')'),
+		flavor::cpp => "label().pad_end($width,$padding)",
+		flavor::js => "label().padEnd($width,$padding)",
 	};
+	$pad_call = $pad(6, 'padding()', true);
 	$padding = $fn('padding', '', 'string', 'echo "P"; return "-";');
 	$cpp = $emit($label . $padding . "echo $pad_call; return 8;");
-	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); const auto (argument_\d+_2) = padding_\(\); return \w+\(\1, 6LL, \2'
-		. ($flavor === flavor::php ? ', 1LL' : '') . '\);/', $cpp) === 1,
-		'Ordered padding must capture both producers and pass the width directly');
+	$side = $flavor === flavor::php ? ', 1LL' : '';
+	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); return \w+\(\1, 6LL, padding_\(\)' . $side . '\);/', $cpp) === 1,
+		'A trailing side literal leaves the padding producer inline');
 	$fixtures[$flavor->name . '_runtime_pad_literal'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LPxy----')];
 	$fixtures[$flavor->name . '_runtime_pad_failure'] = ['cpp' => $emit($fail_label . $padding . "echo $pad_call; return 8;"),
 		'stdout_hex' => bin2hex('L'), 'catch_domain_error' => 'division_by_zero'];
+	$final_pad = $pad(27, 'padding()');
+	$long_padding = $fn('padding', '', 'string', 'echo "P"; return "abcdefghijklmnopqrstuvw\0Z";');
+	$cpp = $emit($label . $long_padding . "echo $final_pad; return 8;");
+	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); return \w+\(\1, 27LL, padding_\(\)\);/', $cpp) === 1,
+		'Final returned string must bind directly to the adapter after the earlier snapshot');
+	$fixtures[$flavor->name . '_runtime_pad_bytes'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("LPxyabcdefghijklmnopqrstuvw\0Z")];
+	$nested = $emit($label . $padding . 'echo ' . $pad(6, $repeat_call('padding()', '2')) . '; return 8;');
+	verify(preg_match('/return \w+\(argument_\d+_0, 6LL, ' . $repeat_symbol . '\(padding_\(\), 2LL\)\);/', $nested) === 1,
+		'A final adapter returning an owning string can also bind directly');
+	$fixtures[$flavor->name . '_runtime_pad_nested'] = ['cpp' => $nested, 'stdout_hex' => bin2hex('LPxy----')];
+	$bad_padding = $fn('padding', '', 'string', 'echo "P"; echo 1%0; return "-";');
+	$fixtures[$flavor->name . '_runtime_pad_final_failure'] = ['cpp' => $emit($label . $bad_padding . "echo $final_pad; return 8;"),
+		'stdout_hex' => bin2hex('LP'), 'catch_domain_error' => 'modulo_by_zero'];
+	$fixtures[$flavor->name . '_runtime_pad_first_failure'] = ['cpp' => $emit($fail_label . $bad_padding . "echo $final_pad; return 8;"),
+		'stdout_hex' => bin2hex('L'), 'catch_domain_error' => 'division_by_zero'];
+	// All three count adapters accept an offset and length after the borrowed needle.
+	$count_window = static fn(string $needle, string $offset = '0'): string => match ($flavor) {
+		flavor::php => "substr_count(label(),$needle,$offset,2)",
+		flavor::cpp => "label().count_matches($needle,$offset,2)",
+		flavor::js => "label().countMatches($needle,$offset,2)",
+	};
+	$offset = $fn('offset', '', 'int', 'echo "O"; return 0;');
+	$cpp = $emit($label . $offset . 'echo ' . $count_window('"x"', 'offset()') . '; return 8;');
+	verify(preg_match('/return \w+\(argument_\d+_0, argument_\d+_1, offset_\(\), 2LL\);/', $cpp) === 1,
+		'The last scalar producer can initialize its parameter before a trailing length literal');
+	$fixtures[$flavor->name . '_runtime_window_scalar'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LO1')];
+	$window = 'echo ' . $count_window('padding()') . '; return 8;';
+	$cpp = $emit($label . $long_padding . $window);
+	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); return \w+\(\1, padding_\(\), 0LL, 2LL\);/', $cpp) === 1,
+		'Keep the subject snapshot and pass the last producer directly before both literals');
+	$fixtures[$flavor->name . '_runtime_window'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LP0')];
+	$fixtures[$flavor->name . '_runtime_window_first_failure'] = ['cpp' => $emit($fail_label . $bad_padding . $window),
+		'stdout_hex' => bin2hex('L'), 'catch_domain_error' => 'division_by_zero'];
+	$fixtures[$flavor->name . '_runtime_window_last_failure'] = ['cpp' => $emit($label . $bad_padding . $window),
+		'stdout_hex' => bin2hex('LP'), 'catch_domain_error' => 'modulo_by_zero'];
 	if ($flavor === flavor::php) {
 		$format = $emit($label . $padding . 'echo number_format(1234,0,label(),padding()); return 8;');
-		verify(preg_match('/return number_format\(static_cast<scpp::int64>\(1234LL\), 0LL, argument_\d+_2, argument_\d+_3\);/', $format) === 1,
+		verify(preg_match('/return number_format\(static_cast<scpp::int64>\(1234LL\), 0LL, argument_\d+_2, padding_\(\)\);/', $format) === 1,
 			'Leading literals must stay inline and select the exact numeric overload');
 		$fixtures['php_runtime_format_literals'] = ['cpp' => $format, 'stdout_hex' => bin2hex('LP1-234')];
 	}
@@ -469,6 +505,12 @@ foreach (flavor::cases() as $flavor)
 	verify(preg_match('/const auto (argument_\d+_1) = \(transfer_\(var_p_0\)\)->x; return ' . $repeat_symbol . '\(argument_\d+_0, \1\);/', $owner_count) === 1,
 		'Final field read must release its temporary owner before adapter entry');
 	$fixtures[$flavor->name . '_runtime_ordered_owner'] = ['cpp' => $owner_count, 'stdout_hex' => bin2hex('Lxyxy')];
+	$owner_window = $emit($point . $transfer . $label . $fn('padding', $param('int', 'n'), 'string', 'echo "P"; return "-";')
+		. $decl('p', 'shared<Point>', 'new Point()') . $decl('w', 'weak<Point>', "weak($p)")
+		. "$p{$member}x=2; echo " . $count_window("padding(transfer($p){$member}x)") . '; if (lock(' . $var('w') . ')) { return 9; } return 8;');
+	verify(preg_match('/const auto (argument_\d+_1) = padding_\(.*transfer_\(var_p_0\).*\); return \w+\(argument_\d+_0, \1, 0LL, 2LL\);/', $owner_window) === 1,
+		'Keep the final string capture when a nested record temporary needs a full-expression boundary');
+	$fixtures[$flavor->name . '_runtime_window_owner'] = ['cpp' => $owner_window, 'stdout_hex' => bin2hex('LP0')];
 	// Even a sole value argument may need its own full-expression boundary beside a reference.
 	$ref_owner_case = $point . $fn('transfer', $param('shared<Point>', 'p', true), 'shared<Point>',
 		$decl('saved', 'shared<Point>', $p) . "$p=null; return " . $var('saved') . ';')
