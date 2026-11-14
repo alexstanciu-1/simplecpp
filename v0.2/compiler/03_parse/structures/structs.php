@@ -55,15 +55,14 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 }
 
 /** Source-owned value type and ordered field index, e.g. struct Point { public int $x; }. */
-final class ast_struct_declaration extends ast_node implements ast_type_declaration
+final class ast_struct_declaration extends ast_node implements ast_method_owner
 {
 	use ast_declaration;
+	use ast_methods;
 
 	/** PROPERTIES */
 	/** @var ast_struct_field[] Fields in layout order, indexed by spelling. */
 	public readonly array $fields /** array<string,ast_struct_field> */;
-	/** @var ast_function_declaration[] First public method by source spelling. */
-	public readonly array $methods /** array<string,ast_function_declaration> */;
 	/** @var ast_constant_declaration[] Public constants indexed independently of fields and methods. */
 	public readonly array $constants /** array<string,ast_constant_declaration> */;
 	/** @var ast_global_declaration[] Static properties share one storage location per declaring type. */
@@ -248,10 +247,10 @@ final class ast_ownership_expression extends ast_expression
 	}
 }
 
-/** Borrowed payload at a method's receiver occurrence, e.g. $this in $this->x. */
+/** Instance receiver occurrence: a borrowed struct payload or a copied enum value, e.g. $this. */
 final class ast_this_expression extends ast_expression
 {
-	public function settle_receiver(struct_type_definition $record): void
+	public function settle_receiver(struct_type_definition|enum_type_definition $record): void
 	{
 		$this->settle_value($record, null);
 	}

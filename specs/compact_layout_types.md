@@ -370,7 +370,7 @@ The native representation is a scoped C++ `enum class`, with the selected
 underlying scalar alias and no wrapper allocation. The source keyword is still
 `enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
 
-This bootstrap slice does not yet implement unit enums, enum methods, enum globals,
+This bootstrap slice does not yet implement unit enums or enum globals,
 nullable/result enum payloads or the selection forms described by the broader
 language contract below.
 
@@ -394,6 +394,32 @@ the case name, independently of its backing bytes. For this backing,
 and returns the nominal case or throws. Only string inputs are admitted; other scalar,
 boxed and nullable inputs require a separate boundary. No implicit enum/string
 conversion or reflection API is introduced.
+
+#### Public instance enum methods
+
+Integer- and string-backed enums may declare public instance methods. PHP uses
+`public function label(): string { return enum_name($this); }`; C++ uses
+`string label() { return enum_name(this); }`; JS uses
+`label(): string { return enum_name(this); }`. C++/JS may terminate the case list
+with a semicolon before method declarations. PHP cases retain their semicolons.
+Calls use `->` in PHP/C++ and `.` in JS, as with struct instance methods.
+
+Methods reuse ordinary function parameter/return rules, generated conversions,
+trailing defaults and exact-type named writable reference arguments. `this` is a
+by-value copy of the selected enum case, not an object or writable reference to
+the caller's slot. Returning/copying it preserves nominal identity. Replacing the
+caller's enum through a reference parameter does not change the selected receiver.
+The selected receiver is preserved before effectful argument evaluation. The
+existing declaring-type spellings `self::` (PHP), `Self::` (C++) and `class.` (JS)
+resolve enum cases in the declaring enum. Calls on another same-typed value and
+calls through `this` use the normal method lookup.
+
+Enums do not acquire instance fields, constructors, object identity or allocation.
+Static/private/protected enum methods and enum interface/inheritance contracts are
+not part of this slice. Public method names occupy the method index, independently
+of the case-name index. Erroneous duplicate methods use normal declaration
+publication and duplicate diagnostics. Type-qualified instance calls without a
+receiver reject.
 
 #### Enum instance fields in the PHP bootstrap compiler
 

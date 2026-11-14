@@ -1140,7 +1140,12 @@ CPP;
 		$steps = [];
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
-		if ($method) {
+		if ($method && $function->parent instanceof ast_enum_declaration) {
+			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
+			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			if ($function->parameters === []) return $name . '(' . $receiver . ')';
+			$arguments[] = $receiver;
+		} elseif ($method) {
 			$inline_storage = false;
 			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
 			if (!$inline_storage) {
@@ -1185,6 +1190,11 @@ CPP;
 				$order_sensitive[$index] = true;
 				$inline_index = $type->cpp_trivial_value() && $this->record_expressions === $records_before ? $index : null;
 			}
+		}
+		if ($method && $function->parent instanceof ast_enum_declaration && !$direct && $order_sensitive !== []) {
+			$steps[] = 'const auto enum_receiver = ' . $arguments[0] . ';';
+			$arguments[0] = 'enum_receiver';
+			$direct = false;
 		}
 		if ($direct || (!$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
@@ -1253,7 +1263,8 @@ CPP;
 				. '(' . implode(', ', $parameters) . ')';
 		}
 		if ($function->has_receiver()) {
-			array_unshift($parameters, '[[maybe_unused]] ' . $function->parent->definition->cpp_type() . '& scpp_self');
+			array_unshift($parameters, '[[maybe_unused]] ' . $function->parent->definition->cpp_type()
+				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
 		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
@@ -1308,6 +1319,7 @@ CPP;
 	/** Application types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition|enum_type_definition> */
 	public static function signature_application_types(ast_function_declaration $function): \Generator
 	{
+		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
 		$type = $function->return_type_def();
 		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {

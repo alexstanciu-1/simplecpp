@@ -64,7 +64,7 @@ final class Cpp_Headers
 				}
 				if ($node instanceof ast_function_declaration) {
 					if ($node->is_constructor()) continue;
-					if ($node->has_receiver()) {
+					if ($node->has_receiver() && $node->parent instanceof ast_struct_declaration) {
 						$type = $node->parent->definition;
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");

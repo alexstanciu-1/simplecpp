@@ -83,7 +83,8 @@ backend is a cumulative trace interval, not an additional wall-time component.
 These are fixture timings, not an old/new performance comparison. Full artifacts:
 `/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
 
-Milestone 1.2 remains partial: enum methods and broader enum contracts are subsequent slices.
+The bounded milestone 1.2 scope now includes integer/string backing and public instance methods.
+Unit enums, globals/static storage and broader enum contracts remain separate.
 
 ## Instance fields with explicit case defaults
 
@@ -303,7 +304,7 @@ empty strings, distinct numeric-looking strings, invalid native values, checked 
 wrong types, single evaluation, shadowing, ordinary struct field/parameter/constructor
 defaults, renames, backing edits, deletion, duplicate values, retry without edits and
 recovery matching fresh native artifacts. Existing integer helper tests remain regression
-coverage. UInt64 and enum methods remain separate work.
+coverage. UInt64 remains separate; public instance methods are covered below.
 
 2026-11-14 verification: 24 name fixtures, 30 string-backed fixtures (including
 257-case/two-byte storage), 45 integer-helper native regressions and 12 focused
@@ -325,6 +326,54 @@ application objects. Native wall includes cached qualification; compiler timing
 excludes PHP startup and starts from in-memory source. LLVM backend includes
 optimization and code generation; trace totals are not additive wall components.
 Full artifacts: `/tmp/scpp-enum-name-complete/`, `/tmp/scpp-enum-strings-complete/`,
-`/tmp/scpp-enum-numeric-regression/`. Enum methods are paused for discussion: their
-shared callable-owner refactor must preserve enum identity without introducing
-instance fields or object allocation.
+`/tmp/scpp-enum-numeric-regression/`. The following method slice preserves enum identity without introducing instance
+fields or object allocation.
+
+## Public instance methods
+
+Structs and enums now implement `ast_method_owner`, with the same `ast_methods`
+name index and lookup. Enum methods are ordinary `ast_function_declaration` nodes
+in the existing source inventory, parented to their enum. The index references
+those nodes, never copies bodies/signatures. Duplicate publication, body queues,
+watch retirement and argument/default/reference binding reuse existing paths.
+No new method-expression node or preparation record is added.
+
+Parser context is named `declaring_type`, reflecting both owners. The enum parser
+calls the existing grammar/header/body readers. `this` accepts a struct or enum
+definition; struct field handling remains struct-specific. Methods publish ordinary
+`method:QualifiedEnum::name` keys and watch the same stable signatures as structs.
+
+Lowering emits ordinary functions with the enum receiver passed by value. Struct
+receivers retain their existing borrowed-reference representation. Enum signatures
+publish their owning enum header when used across files. Simple enum calls remain
+direct C++; a receiver snapshot is used when non-direct argument evaluation can
+change the selected source value. The ordinary invocation path handles remaining
+arguments. There are no per-case method objects, wrappers or virtual dispatch.
+
+`tests/enum_methods.php` and its native runner cover all flavors, integer/string
+receivers, `this` returns, inter-method calls, declaring-type case lookup, defaults,
+reference write-back and receiver replacement during argument evaluation. Cross-file
+default edits, missing methods, duplicates, repeated failures, recovery and no-op runs
+are compared with fresh artifacts while retaining the caller AST. Static/private
+methods and receiver-less instance calls reject. Fields, constructors and interfaces
+remain outside the enum method slice.
+
+2026-11-14 method verification: 21 native enum fixtures, 15 focused PHP compiler
+suites and the native struct method/constructor/constant suites passed. Style checks
+passed for 194 compiler PHP files. Method regression execution took 86.4 seconds;
+this is suite time, not one application build.
+
+Single-run base-fixture timings, milliseconds:
+
+| Flavor | Compiler | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| php | 1.10 | 185.67 | 14.98 | 10.93 | 61.00 |
+| cpp | 1.65 | 228.11 | 18.68 | 16.01 | 70.00 |
+| js | 1.28 | 292.91 | 20.45 | 25.66 | 75.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime; fresh instrumented
+application objects. Native wall includes cached toolchain qualification. Compiler
+time starts with in-memory source and excludes PHP startup. LLVM includes optimization
+and code generation; trace totals are not additive wall components. These are single
+measurements, not evidence of a flavor-specific performance difference. Full output
+and traces: `/tmp/scpp-enum-methods-verified/`.

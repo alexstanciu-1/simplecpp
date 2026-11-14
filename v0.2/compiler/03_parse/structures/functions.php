@@ -378,23 +378,23 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	}
 
 	/** METHODS */
-	/** Qualified callable identity for diagnostics and indexes; member names belong to their declaring struct. */
+	/** Qualified callable identity for diagnostics and indexes; member names belong to their declaring type. */
 	public function name(): string
 	{
-		return ($this->parent ?? null) instanceof ast_struct_declaration
+		return ($this->parent ?? null) instanceof ast_method_owner
 			? $this->parent->name() . '::' . $this->short_name : $this->namespace_name();
 	}
 
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{
-		if (($this->parent ?? null) instanceof ast_struct_declaration) return 'method:' . $this->name();
+		if (($this->parent ?? null) instanceof ast_method_owner) return 'method:' . $this->name();
 		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
 	}
 
 	public function has_receiver(): bool
 	{
-		return $this->parent instanceof ast_struct_declaration && !$this->is_static;
+		return $this->parent instanceof ast_method_owner && !$this->is_static;
 	}
 
 	/** Enforce lexical access for a call or an implicit inline-field initialization. */
@@ -493,7 +493,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function name_position(): int /** uint32 */
 	{
 		if ($this->is_constructor()) return $this->return_type_reference->start;
-		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_struct_declaration)
+		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
 			&& $this->root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
 			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);

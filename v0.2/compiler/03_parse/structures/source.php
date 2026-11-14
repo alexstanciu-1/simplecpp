@@ -108,7 +108,7 @@ final class ast_file_node extends ast_node
 	{
 		foreach ($nodes as $declaration) {
 			if ($declaration->parent !== $this && !(($declaration instanceof ast_function_declaration || $declaration instanceof ast_literal_declaration)
-				&& $declaration->parent instanceof ast_struct_declaration && $declaration->parent->parent === $this)) {
+				&& $declaration->parent instanceof ast_method_owner && $declaration->parent->parent === $this)) {
 				throw new \LogicException('Invalid AST declaration ownership');
 			}
 			if ($declaration instanceof ast_function_declaration) {

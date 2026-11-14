@@ -23,7 +23,7 @@ final class Parser
 	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
 	private ?Body_Collection $lexical = null;
 	private bool $started = false;
-	private ?string $declaring_struct = null;
+	private ?string $declaring_type = null;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
 	/** Native non-owning; coordinator outlives parsing. */
@@ -78,7 +78,7 @@ final class Parser
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
 					'struct' => Struct_Syntax::read($this, $grammar, $members),
-					'enum' => Enum_Syntax::read($this),
+					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
 				};
@@ -345,10 +345,10 @@ final class Parser
 	}
 
 	/** Functions and methods share lexical collection, statement grammar and body ownership. */
-	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_struct = null): ast_function_declaration
+	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type = null): ast_function_declaration
 	{
 		$source = $this->cursor->tokens->source;
-		$this->declaring_struct = $declaring_struct;
+		$this->declaring_type = $declaring_type;
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
 		$previous = $this->lexical;
 		$body_collector = new Body_Collection($this->root->scope, $function->parameters);
@@ -365,7 +365,7 @@ final class Parser
 		}
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
 		$this->lexical = $previous;
-		$this->declaring_struct = null;
+		$this->declaring_type = null;
 		$function->complete_body($body_collector->body($body_start, $end, $statements));
 		return $function;
 	}
@@ -722,17 +722,17 @@ final class Parser
 		};
 	}
 
-	/** Normalize directly to the declaring struct's member path, before any local or namespace lookup. */
+	/** Normalize directly to the declaring type's member path, before any local or namespace lookup. */
 	private function lexical_member(): ast_expression
 	{
 		$c = $this->cursor;
 		$start = $c->position();
-		if ($this->declaring_struct === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body');
+		if ($this->declaring_type === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body or enum method body');
 		$flavor = $c->tokens->source->flavor;
 		$c->take($c->tokens->tokens[$start]->kind, 'declaring type');
 		$c->take($flavor === flavor::js ? token_kind::dot : token_kind::scope, 'member separator');
 		$variable = $flavor === flavor::php && $c->is(token_kind::variable);
-		$name = $this->declaring_struct . '::' . $c->name($variable ? token_kind::variable : token_kind::identifier);
+		$name = $this->declaring_type . '::' . $c->name($variable ? token_kind::variable : token_kind::identifier);
 		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, token_kind::scope, null);
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $flavor === flavor::php && !$variable);
 	}
@@ -813,7 +813,7 @@ final class Parser
 			$this->cursor->take(token_kind::rparen, ')');
 			return $value;
 		}
-		if ($this->declaring_struct !== null && !$this->cursor->at_end()) {
+		if ($this->declaring_type !== null && !$this->cursor->at_end()) {
 			$start = $this->cursor->position();
 			$self = $this->cursor->tokens->source->flavor === flavor::php ? '$this' : 'this';
 			if ($this->cursor->tokens->text_at($start) === $self) {

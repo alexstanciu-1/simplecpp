@@ -38,9 +38,10 @@ final class ast_enum_case extends ast_node implements ast_declaration_interface
 }
 
 /** Nominal backed enum; cases are owned here, never published as namespace constants. */
-final class ast_enum_declaration extends ast_node implements ast_type_declaration
+final class ast_enum_declaration extends ast_node implements ast_method_owner
 {
 	use ast_declaration;
+	use ast_methods;
 
 	/** PROPERTIES */
 	public readonly ?ast_type_reference $backing;
@@ -49,13 +50,19 @@ final class ast_enum_declaration extends ast_node implements ast_type_declaratio
 	public readonly enum_type_definition $definition;
 
 	/** CONSTRUCTOR */
-	/** @param ast_enum_case[] $cases */
+	/** @param ast_enum_case[] $cases @param ast_function_declaration[] $members */
 	public function __construct(string $name, ?string $namespace, ?ast_type_reference $backing,
-		array $cases /** array<string,ast_enum_case> */, int $start /** uint32 */, int $end /** uint32 */)
+		array $cases /** array<string,ast_enum_case> */, int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration> */ = [])
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
 		$this->namespace = $namespace;
+		$methods = [];
+		foreach ($members as $method) {
+			$method->attach($this);
+			$methods[$method->short_name] ??= $method;
+		}
+		$this->methods = $methods;
 		$this->backing = $backing;
 		$backing?->attach($this);
 		$this->cases = $cases;

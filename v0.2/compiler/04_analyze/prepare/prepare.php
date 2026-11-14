@@ -489,7 +489,7 @@ final class Preparation
 		if ($syntax instanceof ast_this_expression) {
 			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
 			$record = $this->owner->parent->parent;
-			if (!($record instanceof ast_struct_declaration)) {
+			if (!($record instanceof ast_method_owner)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
 			}
 			if ($this->owner->parent->is_constructor()) {
@@ -794,11 +794,11 @@ final class Preparation
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$record = $receiver->type_def();
 				if ($record instanceof shared_struct_type_definition) $record = $record->payload;
-				if ($record instanceof struct_type_definition) {
+				if ($record instanceof struct_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
-					$method = $record->declaration->methods[$name] ?? null;
+					$method = $record->declaration->method($name);
 					$symbol = $this->symbols->entry('method:' . $record->name . '::' . $name);
 					$this->dependencies?->watch($symbol, $this->owner);
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);

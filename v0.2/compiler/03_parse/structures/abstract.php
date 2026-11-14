@@ -341,3 +341,21 @@ interface ast_type_declaration extends ast_declaration_interface
 {
 	public function type_definition(): type_definition;
 }
+
+/** A nominal declaration owning methods; instance storage remains specific to the defining type. */
+interface ast_method_owner extends ast_type_declaration
+{
+	public function method(string $name): ?ast_function_declaration;
+}
+
+/** One name index of method heads; duplicate occurrences remain in the declaring scope's chain. */
+trait ast_methods
+{
+	/** @var ast_function_declaration[] Native non-owning method index into the source declaration inventory. */
+	public readonly array $methods /** array<string,ast_function_declaration> */;
+
+	public function method(string $name): ?ast_function_declaration
+	{
+		return $this->methods[$name] ?? null;
+	}
+}

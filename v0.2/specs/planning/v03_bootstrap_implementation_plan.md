@@ -32,7 +32,9 @@ named literal cases, compact/exact storage, same-enum equality, typed calls and
 defaults and function/method/constructor enum parameter defaults are also implemented.
 Checked integer reverse construction is also implemented, reusing generated integer conversions.
 `enum_name` and byte-exact string backing/helpers are implemented using compact ordinal storage.
-Enum methods remain; 1.2 is not complete.
+Public instance enum methods now reuse the function binder and common method ownership.
+The bounded 1.2 scope is implemented; unit enums, uint64 backing, static/private enum
+methods, reflection and broader enum integration remain separate follow-ups.
 
 ## 2. Readable selection and lookup — a tokenizer path
 
