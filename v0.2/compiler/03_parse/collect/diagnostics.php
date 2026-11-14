@@ -13,13 +13,13 @@ final class Declaration_Diagnostics
 	/**
 	 * Completed bodies are available now; diagnostics never prevent parsing later declarations.
 	 *
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $nodes
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $nodes
 	 * @return diagnostic[]
 	 */
-	public static function file(array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */): array /** list<diagnostic> */
+	public static function file(array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */): array /** list<diagnostic> */
 	{
 		$errors = [];
-		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $first */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $first */
 		$first = [];
 		foreach ($nodes as $node)
 		{
@@ -46,9 +46,9 @@ final class Declaration_Diagnostics
 	{
 		$errors = [];
 		foreach ($symbols->declarations as $head) {
-			/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $head */
+			/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $head */
 			for ($node = $head->duplicate_element(); $node !== null; $node = $node->duplicate_element()) {
-				/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $node */
+				/** @var ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $node */
 				$errors[] = self::duplicate($node, $head, self::kind($node));
 			}
 		}
@@ -110,6 +110,7 @@ final class Declaration_Diagnostics
 	{
 		return match (true) {
 			$node instanceof ast_struct_declaration => 'struct',
+			$node instanceof ast_enum_declaration => 'enum',
 			$node instanceof ast_function_declaration && $node->parent instanceof ast_struct_declaration => 'method',
 			$node instanceof ast_global_declaration && $node->parent instanceof ast_struct_declaration => 'static property',
 			$node instanceof ast_global_declaration => 'global',
@@ -118,8 +119,8 @@ final class Declaration_Diagnostics
 		};
 	}
 
-	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $node,
-		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration $first, string $kind): diagnostic
+	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $node,
+		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $first, string $kind): diagnostic
 	{
 		$source = $first->source();
 		$location = $source->location($first->root()->byte_at($first->name_position()));

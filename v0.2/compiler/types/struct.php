@@ -105,9 +105,16 @@ final class struct_type_definition extends type_definition implements dependency
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
+			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression)) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');
+			}
 			if ($field->initializer !== null) {
 				$field->initializer->reset_preparation();
-				type_registry::prepare_literal($field->initializer);
+				if ($type instanceof enum_type_definition) {
+					if (!Enum_Preparation::reference($field->initializer, $symbols, $this, $this->dependencies)) {
+						throw new diagnostic($field->source(), $field->initializer->byte_start(), 'Enum field default requires an enum case');
+					}
+				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
 			}
 			$field->settle_type($type);
@@ -183,9 +190,9 @@ final class struct_type_definition extends type_definition implements dependency
 	}
 
 	/** Snapshot a field value before overwriting storage that might own its containing allocation. */
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		$value = parent::lower_scalar_conversion($conversion, $value, $syntax);
+		$value = parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		if ($syntax instanceof ast_field_expression && ($syntax->parent instanceof ast_field_assignment
 			|| $syntax->parent instanceof ast_assignment_statement)) {
 			for ($field = $syntax; $field instanceof ast_field_expression; $field = $field->receiver) {
@@ -300,14 +307,14 @@ final class shared_struct_type_definition extends struct_handle_definition
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		if ($conversion !== value_conversion::empty_owner) return parent::lower_scalar_conversion($conversion, $value, $syntax);
+		if ($conversion !== value_conversion::empty_owner) return parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		$empty = $this->cpp_type() . '{}';
 		return $syntax instanceof ast_keyword_expression ? $empty : '((void)(' . $value . '), ' . $empty . ')';
 	}
 
-	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		return $conversion === value_conversion::empty_owner ? null : parent::convert_scalar_constant($conversion, $value);
 	}

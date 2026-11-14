@@ -21,6 +21,8 @@ final class compilation_session
 	public readonly module $entry;
 	/** Native namespace root selected for this application. Empty selects global emission. */
 	public readonly string $cpp_namespace;
+	/** Native shared-owning immutable type export selection for this application. */
+	public readonly type_availability $type_availability;
 	/**
 	 * Previous frontend generation owns replaced/removed roots; unchanged roots may be shared.
 	 * Native shared-owning; retains prior syntax generations.
@@ -47,6 +49,7 @@ final class compilation_session
 		$this->dependency_watches = new Dependency_Watches();
 		$this->preparation_work = new preparation_work();
 		$this->modules = $modules;
+		$this->type_availability = new type_availability(array_values(array_map(static fn(module $module): string => $module->name, $modules)));
 		$this->entry = $entry;
 		$this->cpp_namespace = $cpp_namespace;
 	}

@@ -15,11 +15,26 @@ final class Cpp_Headers
 	/** @var string[] Relative artifact path to generated header text. */
 	private array $files /** array<string,string> */ = [];
 
+	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
+	private array $enum_helpers /** array<string,uint8> */ = [];
+
 	/** CONSTRUCTOR */
 	/** Plan native declarations from completed watchers; header text is independent of source iteration order. */
 	public function __construct(prepared_program $program)
 	{
-		$emitter = new Cpp_Emitter(root: $program->session?->cpp_namespace ?? 'App');
+		foreach ($program->files as $file) {
+			foreach ($file->declaration_nodes as $node) {
+				if (!($node instanceof ast_enum_declaration)) continue;
+				$symbol = $file->scope->parent->entry($node->symbol_key());
+				foreach (dependency_use::cases() as $use) {
+					if ($program->dependencies->has_use($symbol, $use)) {
+						$key = $node->symbol_key();
+						$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
+					}
+				}
+			}
+		}
+		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App');
 		foreach ($program->files as $key => $file) {
 			$source_key = (string) $key;
 			$header = hash('sha256', (string) $key) . '.hpp';
@@ -28,7 +43,7 @@ final class Cpp_Headers
 			$record_headers = [];
 			$includes = [];
 			foreach ($file->published_declarations() as $node) {
-				if (!($node instanceof ast_function_declaration) && !($node instanceof ast_global_declaration) && !($node instanceof ast_struct_declaration)) {
+				if (!($node instanceof ast_function_declaration) && !($node instanceof ast_global_declaration) && !($node instanceof ast_type_declaration)) {
 					continue;
 				}
 				$symbol = $file->scope->parent->entry($node->symbol_key());
@@ -39,19 +54,25 @@ final class Cpp_Headers
 					$this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
 					continue;
 				}
+				if ($node instanceof ast_enum_declaration) {
+					$this->publish_enum($node, $emitter, $program->session?->cpp_namespace ?? 'App');
+					continue;
+				}
 				if ($node instanceof ast_struct_declaration) {
 					$this->publish_record($node, $emitter, $program->session?->cpp_namespace ?? 'App');
 					continue;
 				}
 				if ($node instanceof ast_function_declaration) {
 					if ($node->is_constructor()) continue;
-					if ($node->has_receiver()) {
+					if ($node->has_receiver() && $node->parent instanceof ast_struct_declaration) {
 						$type = $node->parent->definition;
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
-					foreach (Cpp_Emitter::signature_records($node) as $type) {
-						if ($type instanceof struct_type_definition) {
+					foreach (Cpp_Emitter::signature_application_types($node) as $type) {
+						if ($type instanceof enum_type_definition) {
+							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
+						} elseif ($type instanceof struct_type_definition) {
 							$header_name = $this->publish_record($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
 							$record_headers[$header_name] = true;
 						} else {
@@ -82,6 +103,25 @@ final class Cpp_Headers
 	}
 
 	/** METHODS */
+	public function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
+	{
+		return (($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0;
+	}
+
+	/** Publish one nominal enum header for signatures and foreign case references. */
+	private function publish_enum(ast_enum_declaration $enum, Cpp_Emitter $emitter, string $root): string
+	{
+		$key = $enum->symbol_key();
+		if (isset($this->declarations[$key])) return $this->declarations[$key];
+		$header = $this->declarations[$key] = hash('sha256', 'enum:' . $key) . '.hpp';
+		$includes = [];
+		$definition = $emitter->declaration($enum, $includes);
+		$text = "// Generated enum declaration.\n#pragma once\n";
+		foreach ($includes as $include => $_) $text .= "#include <$include>\n";
+		$this->files['units/' . $header] = $text . Cpp_Emitter::namespace_body($root, $definition);
+		return $header;
+	}
+
 	/** Publish the complete public type. A shared edge can lead back to a header already in progress. */
 	private function publish_record(ast_struct_declaration $record, Cpp_Emitter $emitter, string $root): string
 	{
@@ -139,6 +179,8 @@ final class Cpp_Headers
 			if ($type instanceof struct_handle_definition) {
 				$owners[$type->payload->name] ??= $emitter->owner_declaration($type->payload->shared, $includes);
 				$needs_methods = true;
+			} elseif ($type instanceof enum_type_definition) {
+				$children[$this->publish_enum($type->declaration, $emitter, $root)] = true;
 			} elseif ($type instanceof struct_type_definition) {
 				$child = $this->publish_layout($type->declaration, $emitter, $root);
 				$children[$child] = true;
@@ -154,12 +196,14 @@ final class Cpp_Headers
 		return $path;
 	}
 
-	/** Was a record definition moved between its source's private C++ and a published header? */
-	public function record_visibility_changed(ast_file_node $file, cpp_program_output $previous): bool
+	/** Did type visibility or the published enum helper contract change for this source? */
+	public function type_visibility_changed(ast_file_node $file, cpp_program_output $previous): bool
 	{
 		foreach ($file->declaration_nodes as $record) {
-			if ($record instanceof ast_struct_declaration
-				&& (isset($this->declarations[$record->symbol_key()]) !== isset($previous->files['units/' . self::record_header($record)]))) {
+			if (!($record instanceof ast_type_declaration)) continue;
+			$header = $record instanceof ast_enum_declaration ? hash('sha256', 'enum:' . $record->symbol_key()) . '.hpp' : self::record_header($record);
+			if ($record instanceof ast_enum_declaration && ($this->files['units/' . $header] ?? null) !== ($previous->files['units/' . $header] ?? null)) return true;
+			if (isset($this->declarations[$record->symbol_key()]) !== isset($previous->files['units/' . $header])) {
 				return true;
 			}
 		}

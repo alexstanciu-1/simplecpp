@@ -11,13 +11,13 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	/** PROPERTIES */
 	/** Native owning written field type. */
 	public readonly ast_type_reference $type_reference;
-	/** Native owning optional literal written on the field. */
+	/** Native owning optional literal or enum-case default written on the field. */
 	public readonly ?ast_expression $initializer;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
 
 	/** PREP FACTS */
-	/** Prepared fact: typed destination conversion for the written literal. */
+	/** Prepared fact: typed destination conversion for the written literal or enum case. */
 	public int $conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: canonical type once the immutable declaration layout has been validated. */
 	private ?type_definition $type_def = null;
@@ -57,15 +57,14 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 }
 
 /** Source-owned value type and ordered field index, e.g. struct Point { public int $x; }. */
-final class ast_struct_declaration extends ast_node implements ast_declaration_interface
+final class ast_struct_declaration extends ast_node implements ast_method_owner
 {
 	use ast_declaration;
+	use ast_methods;
 
 	/** PROPERTIES */
 	/** @var ast_struct_field[] Fields in layout order, indexed by spelling. */
 	public readonly array $fields /** array<string,ast_struct_field> */;
-	/** @var ast_function_declaration[] First public method by source spelling. */
-	public readonly array $methods /** array<string,ast_function_declaration> */;
 	/** @var ast_constant_declaration[] Public constants indexed independently of fields and methods. */
 	public readonly array $constants /** array<string,ast_constant_declaration> */;
 	/** @var ast_global_declaration[] Static properties share one storage location per declaring type. */
@@ -111,6 +110,11 @@ final class ast_struct_declaration extends ast_node implements ast_declaration_i
 	}
 
 	/** METHODS */
+	public function type_definition(): type_definition
+	{
+		return $this->definition;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'class:' . $this->name();
@@ -250,10 +254,10 @@ final class ast_ownership_expression extends ast_expression
 	}
 }
 
-/** Borrowed payload at a method's receiver occurrence, e.g. $this in $this->x. */
+/** Instance receiver occurrence: a borrowed struct payload or a copied enum value, e.g. $this. */
 final class ast_this_expression extends ast_expression
 {
-	public function settle_receiver(struct_type_definition $record): void
+	public function settle_receiver(struct_type_definition|enum_type_definition $record): void
 	{
 		$this->settle_value($record, null);
 	}

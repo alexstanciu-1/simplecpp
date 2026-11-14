@@ -7,7 +7,8 @@ Doc Status: supporting
 All three flavors parse generic type arguments into `ast_type_reference` using
 `first_child` and `next_sibling`. Type resolution admits published `vector<T>` specializations. The subsequent
 [first value-operation slice](vector_operations.md) adds typed empty construction,
-append and indexed reads. General methods, casts and vector copies remain deferred.
+append and indexed reads. Same-specialization local copying and assignment are also supported.
+General methods, casts, parameter passing, returns and fields remain deferred.
 An unused vector-typed parameter can also be emitted for export/header proofs.
 
 The generator CLI receives metadata, runtime publication and native facts. It prepares
@@ -19,8 +20,7 @@ The compiler never reads runtime JSON while preparing an application.
 The default publication provides `vector<int64>` and `vector<string>`.
 `vector<int>` resolves to the same canonical singleton as `vector<int64>`.
 A supported scalar element alone does not create a vector export: for example,
-`vector<byte>` is unavailable in that default publication. Optional runtime widths
-also do not activate additional compiler scalar types.
+`vector<byte>` is unavailable in that default publication. Activating optional scalar widths does not create additional vector exports.
 
 ## Structures and processing
 

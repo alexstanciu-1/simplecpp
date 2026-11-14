@@ -66,7 +66,7 @@ foreach (flavor::cases() as $flavor) {
 	}
 	$prepare = static fn(string $text) => $frontend->prepare(new source_file('vector-operations', $text, $flavor), new entry_target(31));
 	$variable = $flavor === flavor::php ? '$value' : 'value';
-	rejects(fn() => $prepare(signature($flavor, 'vector<int>', 'vector<int>', 'return ' . $variable . ';') . 'return 8;'), 'Vector value operations are deferred');
+	$prepare(signature($flavor, 'vector<int>', 'vector<int>', 'return ' . $variable . ';') . 'return 8;');
 
 	$directory = sys_get_temp_dir() . '/scpp-vector-types-' . bin2hex(random_bytes(8));
 	mkdir($directory);

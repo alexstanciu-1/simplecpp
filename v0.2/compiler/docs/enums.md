@@ -1,0 +1,379 @@
+# Backed enums
+
+Doc Status: supporting
+
+The [compact-layout contract](../../../specs/compact_layout_types.md#30-php-bootstrap-compiler-integer-enums)
+owns source behavior. PHP uses `case Name = literal;`; C++ and JS use comma-separated
+`Name = literal` entries. C++ emits `enum class` with an explicit underlying alias.
+
+## Ownership and preparation
+
+`ast_enum_declaration` owns its optional backing reference, one case-name index
+and one `enum_type_definition`. `ast_enum_case` owns its integer literal; the
+literal holds the checked value. Duplicate names use `duplicate_element` on the
+declaring enum's chain. There is no second retained case/value table.
+
+The new `ast_type_declaration` interface is shared with structs. Publication and
+type lookup use the existing `class:qualified_name` symbol keys. Struct/enum
+duplicates share that namespace and produce ordinary diagnostics. Plain type
+imports reuse the existing file import index rather than adding a third index.
+
+`Enum_Preparation` runs at the declaration gate, before signatures and bodies.
+It checks literals, uniqueness and range in one pass. Its temporary duplicate-value
+set and min/max accumulators are discarded. Compact storage selection uses the
+canonical generated integer definitions' limits. The ready definition retains
+source backing and storage references, plus immutable `enum_value` and `enum_from_value` callable
+bindings shared by all calls. These bindings are constructed before body readers,
+not lazily mutated from a foreign body. No per-call enum preparation record exists.
+
+A failed declaration remains unready. A retry resets each literal before checking
+it again, so partial validation does not cause double-settlement errors.
+Successfully prepared unchanged declarations skip the case walk.
+
+Case expressions use the existing name-expression binding slot, extended to
+reference `ast_enum_case`. Their type is the nominal enum, not its underlying
+integer. They do not copy a numeric constant fact. `enum_value` uses the existing
+runtime-call binding and lowers to `static_cast<backing>(value)`; no runtime helper,
+table lookup or generated scalar conversion matrix is added.
+
+## Incremental behavior and emission
+
+Case references and signatures watch the stable enum symbol. Replacement, deletion
+or a missing case invalidates affected bodies/signatures through existing watches.
+Recovered builds reuse unchanged caller tokens/AST and match fresh native artifacts.
+No-op runs prepare zero bodies. Enum preparation adds no cross-unit traversal.
+
+Private enums remain in their source unit's C++. Foreign observers and callable
+signatures use one published enum header. Existing header visibility tracking now
+covers both enums and structs. Constructor prototypes use fixed-backed opaque enum
+declarations, while ordinary methods/functions share the existing signature path.
+
+## Verification
+
+```sh
+XDEBUG_MODE=off php v0.2/compiler/tests/enums.php
+XDEBUG_MODE=off python3 -B v0.2/compiler/tests/enums_native.py --output /tmp/scpp-enums-proof
+python3 -B v0.2/compiler/tools/check_style.py
+```
+
+The proofs cover all three flavors, extrema-based `sizeof`, exact fixed backings,
+module gates, radix literals, nominal copying/equality, callable arguments/returns,
+constructor arguments, helper shadowing, duplicate names/values, imports and
+incremental value/width changes, case deletion, whole-type deletion, repeated
+failure without edits, recovery and fresh-output equivalence. Native fixtures
+check output and exit status and retain Clang stage timing JSON.
+
+2026-11-14 WSL proof: 27 native fixtures passed; optional-integer, struct,
+constructor, method, namespace and import regression suites also passed.
+Header visibility removal/re-addition matches fresh emission without reparsing
+the unchanged enum provider. Writing checks passed for 187 compiler PHP files.
+
+Main range/copy/call fixture, one measured build per flavor, milliseconds:
+
+| Flavor | Compiler frontend/prepare/emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 5.14 | 186.32 | 11.16 | 9.46 | 58 |
+| C++ | 5.22 | 183.41 | 11.00 | 7.66 | 64 |
+| JS | 3.70 | 212.37 | 12.11 | 8.73 | 72 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime, fresh instrumented
+application objects. Compiler time uses in-memory source and excludes PHP startup
+and test assertions. Native wall includes the Ninja/toolchain-check path; LLVM
+backend is a cumulative trace interval, not an additional wall-time component.
+These are fixture timings, not an old/new performance comparison. Full artifacts:
+`/tmp/scpp-enums-complete/{fixtures,results}.json` on the measured WSL machine.
+
+The bounded milestone 1.2 scope now includes integer/string backing and public instance methods.
+Unit enums, globals/static storage and broader enum contracts remain separate.
+
+## Instance fields with explicit case defaults
+
+Enum fields reuse `ast_struct_field.initializer` and `ast_name_expression`'s
+resolved declaration link. No AST classes, retained properties or separate default
+tables were added. The field's existing conversion code is identity. The canonical
+enum definition now advertises instance-field support.
+
+`Enum_Preparation::reference` shares case lookup between body expressions and field
+defaults. During layout preparation, a struct definition watches the enum symbol
+through the existing `Dependency_Watches` owner. Watching both the written type and
+case is deduplicated for that watcher. Successful unchanged layouts skip the walk;
+enum replacement invalidates the record and its dependent bodies through existing
+layout notification. Missing cases retain watches for retry and recovery.
+
+Preparation resolves the default once per changed layout, without copying its
+integer value or scanning cases at each construction. Lowering emits the resolved
+case name directly. The existing type-prototype traversal and record header planner
+now include enum field dependencies before the containing record. Generated record
+copying and shared ownership need no new runtime machinery.
+
+Verification uses `tests/enum_fields.php` and `tests/enum_fields_native.py`: all
+three flavors, private single-unit emission, cross-unit headers, inline copies,
+shared aliases, nested fields, changed defaults, compact width/signedness changes,
+missing-case failures and retries, wrong-type defaults/writes, and fresh-output
+equivalence. Unchanged caller/record ASTs are retained, unrelated bodies are reused,
+and no-op preparation is empty. Static enum storage remains deferred; ordinary
+parameter defaults use the following slice.
+
+The field slice passed 21 native fixtures plus the existing enum and property
+regressions. Constructor proofs observe the default before the body and verify
+that copies do not rerun construction. Enum deletion/restoration and repeated
+failures recover to fresh artifacts. Affecting edits prepared two bodies and
+reused the unrelated third; no-op runs prepared none.
+
+2026-11-14 WSL field fixture timings, milliseconds (four sources plus native entry):
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 4.19 | 197.43 | 20.81 | 29.82 | 55 |
+| C++ | 4.77 | 239.67 | 26.70 | 33.02 | 56 |
+| JS | 4.30 | 183.76 | 18.77 | 26.97 | 56 |
+
+One fresh build per flavor, O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt runtime.
+Compiler timing includes source loading and bundle writing, excluding PHP startup.
+Clang/LLVM figures are summed work across units; native wall includes Ninja and
+qualification checks. Artifacts: `/tmp/scpp-enum-fields-verified/{fixtures,results}.json`.
+
+## Function and method parameter defaults
+
+Ordinary functions, instance/static methods and constructors accept trailing exact-enum
+case defaults. Reference defaults remain rejected. The existing parser
+already retains the default expression; no parser, binder or lowering changes are
+needed. No AST classes, properties, indexes or conversion records are added.
+
+`Function_Preparation::declarations` resolves a case through
+`Enum_Preparation::reference` with the callable as watcher. It then uses the existing
+typed-destination conversion and `settle_default` path. The enum case link lives on
+the parameter's existing name expression; the existing conversion is identity.
+This happens once per invalidated signature, not per call. Resolution uses the
+declaration's file namespace/imports even when the caller has a same-named enum.
+
+Omitted arguments reuse the prepared parameter expression in the common emitter;
+explicit arguments retain ordinary binding. Native calls receive the case constant
+directly, without runtime lookup or default wrappers. Existing signature watches
+propagate enum changes to callable observers. This keeps the current conservative
+invalidation policy, including explicit callers, rather than adding omission-specific
+watch tables. Unchanged signatures skip preparation and no-op runs prepare no bodies.
+
+`tests/enum_defaults.php` and `tests/enum_defaults_native.py` cover all three flavors:
+functions, inline/shared instance receivers, static methods, multiple trailing
+defaults, omitted/explicit arguments, declaration-scope imports and rooted case
+names, changed defaults and backing values/width, case deletion, repeated failed
+retries and recovery against fresh artifacts. Reference defaults,
+wrong enum cases, integer/null/computed defaults and required-after-optional
+parameters are rejected before native compilation.
+
+Verification passed 15 native fixtures and five regression suites (enum fields,
+enum defaults, scalar parameter defaults and their native proof, and struct methods).
+An enum-only edit prepared five affected bodies and reused three; a changed callable
+source prepared seven and reused the unrelated body. No-op runs prepared none.
+
+2026-11-14 WSL timings for the four-source fixture plus native entry, milliseconds:
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 7.79 | 201.23 | 32.91 | 52.93 | 56 |
+| C++ | 7.43 | 217.49 | 30.14 | 57.09 | 68 |
+| JS | 5.45 | 192.56 | 24.31 | 43.88 | 61 |
+
+One fresh build per flavor: O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt runtime.
+Compiler time includes reading and writing source artifacts but excludes PHP startup.
+Clang/LLVM times sum work across translation units; native wall includes Ninja and
+qualification checks. Artifacts: `/tmp/scpp-enum-defaults-verified/{fixtures,results}.json`.
+
+## Constructor parameter defaults
+
+Constructor admission now uses the same enum-default path without its previous
+explicit rejection. No new structures, properties, watches, conversion records or
+preparation traversals are introduced. Defaults settle once per invalidated
+signature and omitted arguments reuse the existing case expression.
+
+Both inline and shared construction use the ordinary constructor argument binder.
+The existing native zero-argument delegating constructor handles all-default
+signatures for nested inline fields. Its `declaration_initialization` path already
+emits enum cases; no additional lowering strategy or runtime wrapper is needed.
+Only the obsolete admission rejection was removed from executable compiler code.
+
+`tests/enum_constructor_defaults.php` and its native runner verify all three flavors:
+omitted, partial and explicit argument lists, mixed scalar/enum defaults, inline and
+shared construction, two-level nested fields, record copying and constructor-body
+overrides of field defaults. Cross-file default edits, backing-width/signedness
+changes, missing cases, repeated failures without edits and recovery match fresh
+artifacts. Unchanged caller/provider ASTs are reused where applicable; unrelated
+bodies remain prepared and no-op runs prepare none. Integer/null/computed defaults,
+wrong-enum cases and reference constructor parameters remain rejected.
+
+Verification passed 15 native fixtures, five regression suites and writing checks
+for 190 compiler PHP files. Affecting edits prepared the constructor and caller
+while reusing the unrelated body; no-op runs prepared zero bodies.
+
+2026-11-14 WSL timings for four source units plus native entry, milliseconds:
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | 5.26 | 244.50 | 30.72 | 45.17 | 59 |
+| C++ | 8.36 | 238.26 | 31.17 | 52.07 | 64 |
+| JS | 5.62 | 226.46 | 28.96 | 47.55 | 58 |
+
+One fresh build per flavor: O2/g0, Ninja8, mold, libc++, no PCH/LTO, prebuilt runtime.
+Compiler time excludes PHP startup; native wall includes Ninja and qualification.
+Clang/LLVM figures sum work across units. Artifacts are retained at
+`/tmp/scpp-enum-ctor-verified/{fixtures,results}.json` on the measured WSL machine.
+
+## Checked construction from integers
+
+`enum_from_value(Kind::class, input)` in PHP/C++ and
+`enum_from_value(Kind.class, input)` in JS resolve the first argument as a type
+marker. Imports and normal function shadowing remain in effect. The marker is
+syntax-only and cannot be evaluated as a value or passed to ordinary functions.
+
+All currently active integers fit int64. Preparation checks the generated integer
+representation contract and uses the existing generated typed-destination conversion
+to normalize the runtime operand to int64. It does not scan cases at each call,
+retain a second membership table, or evaluate the call as a constant. UInt64
+activation remains separate: this normalization is not a full-domain uint64 design.
+
+Each used enum gets one concrete, non-template checked-construction function in
+its owning C++ source unit. Its int64 switch returns named enum cases and throws
+`std::runtime_error("Invalid value for enum helper")` on a miss. Membership is
+checked before narrowing, so e.g. 257 cannot wrap to byte-backed case 1. Inputs
+are evaluated once. Headers contain only the declaration and required public
+scalar includes; `<stdexcept>` stays in the implementation.
+
+Structure changes:
+
+- `ast_type_marker` holds only the written type name in addition to inherited AST state.
+- `enum_type_definition` owns one additional immutable `runtime_function` binding,
+  created at the declaration gate. Calls reuse their existing binding/conversion slots.
+- `Dependency_Watches` attaches a small usage bitmask to its existing deduplicated
+  forward relation. Reverse indexing is unchanged. `watch` merges bits;
+  `has_use` queries them without exposing storage or reading foreign bodies.
+  Forgetting/replacing a watcher also removes its requirements.
+- Header planning and standalone emission keep temporary helper-use indexes.
+  Cross-unit helper use changes invalidate provider emission through header changes,
+  including when the enum remains externally visible for other reasons.
+
+`tests/enum_from_value.php` and `tests/enum_from_value_native.py` cover all three
+flavors, all active integer representations and boundaries, nominal results,
+imports/shadowing, single evaluation, no-wrap runtime failures, invalid input types,
+helper activation/removal, retained caller ASTs, backing-width edits, duplicates,
+type deletion, retries without edits and recovery against fresh emitted artifacts.
+Recovered artifacts are then built and executed. No-op preparation remains empty.
+
+2026-11-14 verification: 45 native fixtures passed, plus 13 focused regression
+suites (including native constructor defaults), and the compiler writing checks.
+The integer-width fixture timings below are one measured build per flavor, in ms.
+
+| Flavor | Compiler through emission | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| php | 2.93 | 225.23 | 36.96 | 15.36 | 64.00 |
+| cpp | 3.46 | 239.46 | 41.10 | 13.73 | 67.00 |
+| js | 3.02 | 197.84 | 32.88 | 12.85 | 54.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime; fresh instrumented
+application objects. Native wall includes the cached toolchain-qualification
+process. Compiler time excludes PHP startup and starts from in-memory source.
+LLVM backend includes optimization/code generation; trace stages are not additive
+wall components. Throw-catching proof fixtures add `<string_view>` for message
+assertions and are not used as representative application build timings.
+Artifacts and complete timings: `/tmp/scpp-enum-from-value-verified/`.
+
+## Case names and string-backed enums
+
+`enum_name` uses the existing unary runtime-call path, watches the enum and emits
+one used helper in its owning `.cpp`. It returns original unqualified case spelling,
+evaluates its operand once and throws for an invalid value introduced by native code.
+The compiler does not fold calls or scan cases during call preparation.
+
+String backing adds no tag property or second retained case table. `ast_enum_case`'s
+initializer accepts an integer or string literal; the existing literal owns checked
+values/decoded bytes. Declaration preparation validates uniqueness once using a
+temporary byte-key set. Emission assigns compact ordinal tags in case order.
+`enum_value` maps tags to bytes, and `enum_from_value` uses byte-exact comparisons
+through the existing generated string lowering. Reverse lookup is currently linear
+and uses ordinary string literals; lookup-table optimization is deferred.
+
+The previous construction-only helper index is now a small usage mask for construction,
+name and string-value helpers. The same watch relation, retirement logic, header-change
+tracking and private emission maps serve all three. Integer `enum_value` stays a direct
+cast. Enum definitions add one immutable name-call binding; no new expression class or
+per-call preparation record is required.
+
+Proofs: `tests/enum_name.php`, `tests/enum_strings.php` and their `_native.py` runners.
+They cover names longer than inline string storage, exact NUL/UTF-8 backing bytes,
+empty strings, distinct numeric-looking strings, invalid native values, checked misses,
+wrong types, single evaluation, shadowing, ordinary struct field/parameter/constructor
+defaults, renames, backing edits, deletion, duplicate values, retry without edits and
+recovery matching fresh native artifacts. Existing integer helper tests remain regression
+coverage. UInt64 remains separate; public instance methods are covered below.
+
+2026-11-14 verification: 24 name fixtures, 30 string-backed fixtures (including
+257-case/two-byte storage), 45 integer-helper native regressions and 12 focused
+compiler suites passed. Writing checks passed for 193 PHP files.
+
+Single-run fixture timings in milliseconds:
+
+| Fixture/flavor | Compiler | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Name/php | 0.97 | 176.42 | 14.42 | 9.31 | 54.00 |
+| Name/cpp | 1.47 | 195.62 | 15.34 | 11.90 | 60.00 |
+| Name/js | 0.93 | 176.13 | 14.55 | 9.31 | 55.00 |
+| String backing/php | 1.26 | 185.18 | 15.18 | 18.39 | 54.00 |
+| String backing/cpp | 1.80 | 187.36 | 15.49 | 18.69 | 57.00 |
+| String backing/js | 1.28 | 189.35 | 15.65 | 19.04 | 54.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime and fresh instrumented
+application objects. Native wall includes cached qualification; compiler timing
+excludes PHP startup and starts from in-memory source. LLVM backend includes
+optimization and code generation; trace totals are not additive wall components.
+Full artifacts: `/tmp/scpp-enum-name-complete/`, `/tmp/scpp-enum-strings-complete/`,
+`/tmp/scpp-enum-numeric-regression/`. The following method slice preserves enum identity without introducing instance
+fields or object allocation.
+
+## Public instance methods
+
+Structs and enums now implement `ast_method_owner`, with the same `ast_methods`
+name index and lookup. Enum methods are ordinary `ast_function_declaration` nodes
+in the existing source inventory, parented to their enum. The index references
+those nodes, never copies bodies/signatures. Duplicate publication, body queues,
+watch retirement and argument/default/reference binding reuse existing paths.
+No new method-expression node or preparation record is added.
+
+Parser context is named `declaring_type`, reflecting both owners. The enum parser
+calls the existing grammar/header/body readers. `this` accepts a struct or enum
+definition; struct field handling remains struct-specific. Methods publish ordinary
+`method:QualifiedEnum::name` keys and watch the same stable signatures as structs.
+
+Lowering emits ordinary functions with the enum receiver passed by value. Struct
+receivers retain their existing borrowed-reference representation. Enum signatures
+publish their owning enum header when used across files. Simple enum calls remain
+direct C++; a receiver snapshot is used when non-direct argument evaluation can
+change the selected source value. The ordinary invocation path handles remaining
+arguments. There are no per-case method objects, wrappers or virtual dispatch.
+
+`tests/enum_methods.php` and its native runner cover all flavors, integer/string
+receivers, `this` returns, inter-method calls, declaring-type case lookup, defaults,
+reference write-back and receiver replacement during argument evaluation. Cross-file
+default edits, missing methods, duplicates, repeated failures, recovery and no-op runs
+are compared with fresh artifacts while retaining the caller AST. Static/private
+methods and receiver-less instance calls reject. Fields, constructors and interfaces
+remain outside the enum method slice.
+
+2026-11-14 method verification: 21 native enum fixtures, 15 focused PHP compiler
+suites and the native struct method/constructor/constant suites passed. Style checks
+passed for 194 compiler PHP files. Method regression execution took 86.4 seconds;
+this is suite time, not one application build.
+
+Single-run base-fixture timings, milliseconds:
+
+| Flavor | Compiler | Native wall | Clang frontend | LLVM backend | Link command |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| php | 1.10 | 185.67 | 14.98 | 10.93 | 61.00 |
+| cpp | 1.65 | 228.11 | 18.68 | 16.01 | 70.00 |
+| js | 1.28 | 292.91 | 20.45 | 25.66 | 75.00 |
+
+O2/g0, libc++, mold, Ninja8, no PCH/LTO, prebuilt runtime; fresh instrumented
+application objects. Native wall includes cached toolchain qualification. Compiler
+time starts with in-memory source and excludes PHP startup. LLVM includes optimization
+and code generation; trace totals are not additive wall components. These are single
+measurements, not evidence of a flavor-specific performance difference. Full output
+and traces: `/tmp/scpp-enum-methods-verified/`.

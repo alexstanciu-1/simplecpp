@@ -11,6 +11,10 @@ bool/null use the existing metadata identities bool_t/null_t internally. Instanc
 are shared definitions, never occurrence-specific records. `type_void` remains a
 small handwritten non-value definition.
 
+Application [integer enums](enums.md) have one AST-owned nominal definition,
+with separate source backing and compact storage references. They share application
+type publication with structs; they are not generated runtime scalar identities.
+
 The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
 The [byte/uint8 identity migration](byte_alias.md), integer operation groups and [active numeric family conversions](family_conversions.md) are implemented.
 
@@ -50,7 +54,7 @@ has type float64, and `2 < x` has type bool. See the [boxed runtime API](../../s
 - `compiler.strict_identity`, `compiler.three_way`, `compiler.power`, `compiler.concatenation`: bounded scalar groups with explicit identity, promotion, runtime and flavor policies.
 - `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
   See [comparisons](comparisons.md) for ownership and sequencing.
-- `compiler.integer_literals`: decimal, checked overflow and signed literal suffix policy.
+- `compiler.integer_literals`: decimal plus hexadecimal `0x` and octal `0o` prefixes, checked overflow and signed literal suffix policy.
 - `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
   underflow and nearest/ties-even rounding.
 - `compiler.conversion_families`: family algorithms and allowed contexts, expanded into transient concrete rows during generation.
@@ -94,7 +98,8 @@ byte-for-byte with the default metadata, including the inventory version.
 - `lower_cpp_binary()` emits the approved operation.
 - `prepare_literal()` validates a literal and attaches its value/type to the AST.
 - `prepare_conversion(value, context)` selects a packed `value_conversion` integer at a destination boundary.
-- `convert_constant(conversion, value)` derives a converted constant payload without changing the operand.
+- `evaluate_constant(conversion, expression)` preserves source unknownness and derives the converted fact.
+- `convert_constant(conversion, value)` converts a supplied payload or returns `constant_evaluation::unavailable`.
 - `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
 - `cpp_type()` and `lower_cpp_literal()` consume settled source facts.
 - `lower_cpp_conversion(conversion, expression)` emits the approved operation, without resolving types again.
@@ -264,3 +269,98 @@ additive wall-time components.
 
 The [integer family slice](integer_promotion.md) derives active int64/uint8 arithmetic
 and comparisons from grouped metadata and the shared runtime promotion policy.
+
+## Prefixed integer literals
+
+All three flavors accept `0x`/`0X` hexadecimal and `0o`/`0O` octal literals.
+They retain canonical int64 identity and use existing generated checked conversions at typed destinations.
+Leading-zero unprefixed literals stay decimal (`0755` is 755, `08` is 8).
+No binary prefixes, digit separators, suffixes or unsigned literal inference are introduced.
+
+The tokenizer owns digit grammar and numeric error locations. Metadata declares the prefix radices,
+and the generated int64 handler decodes with negative checked accumulation so signed minimum is exact.
+The existing decimal fast path stays unchanged. A direct signed prefixed token is retained as one
+ast_integer_expression, including `-0x8000000000000000`; power still binds before unary minus.
+No AST fields, conversion codes or runtime ABI change. Lowering emits the existing decimal C++ literals.
+Malformed prefixes/digits and int64 overflow reject; typed byte destinations still reject values outside 0..255.
+The native radix proof covers boundaries, leading zeros, power precedence and incremental errors/retry/recovery
+against fresh emitted artifacts in PHP, C++ and JS flavors.
+
+## Unavailable constant evaluation
+
+Conversion evaluation can return the singleton `constant_evaluation::unavailable` when no scalar
+fact is available. A known input does not guarantee an evaluable output. Generated text conversions,
+boxed/carrier boundaries and future limited host evaluations use this outcome instead of known null.
+`type_definition::evaluate_constant()` first checks source knownness, then invokes conversion evaluation.
+Casts, local declarations, named constants and plain assignments use that common boundary.
+
+The enum is transient. AST payloads stay `int|float|bool|null`; settlement normalizes unavailable
+into null with `constant_known=false`. Known null, false and zero retain their identity and knownness.
+References preserve those facts and normal preparation reset clears them. No result object is allocated,
+no symbol dependencies change, and uint64 activation remains separate. See the
+[uint64 bootstrap debt](../../specs/planning/uint64_constant_evaluation_debt.md).
+
+
+### Source identity during conversion lowering
+
+Checked conversion codes remain compact and independent of the source representation.
+Lowering reads the existing expression type; synthesized compound operands pass the
+existing destination or execution type through the optional `source_type` argument.
+Carrier extraction replaces that identity with its payload type before scalar lowering,
+including when the destination wraps the converted payload again.
+
+Generated checked dispatch selects the named runtime helper by that canonical identity.
+Missing or unsupported checked-source identity is an internal error, never an implicit
+int64 fallback. This adds no retained AST facts and changes no preparation or admission.
+Optional integer-width activation remains a separate slice.
+
+### Optional integer widths
+
+Select the existing runtime through `"dependencies": {"runtime": {"modules": ["numeric"]}}`
+in the application module manifest to enable `int8`, `int16`, `int32`, `uint16` and
+`uint32`. Their shared generated definitions are registered at compiler boot, while
+the immutable session availability context gates source resolution. Core int/int64 and
+byte/uint8 remain available without this selection. uint64 remains unavailable.
+
+Generated handlers reuse integer family conversions, arithmetic, comparisons, unary,
+updates, truthiness, bitwise operations and checked shifts. Signed narrowing uses the
+same generated minimum/maximum check as unsigned narrowing. Same-type operations retain
+their representation; admitted mixed integer operations execute in int64. Different
+unsigned widths temporarily have no arithmetic, ordinary comparison or spaceship
+promotion (including compound forms), since the agreed result/execution type is uint64.
+Explicit checked conversions, canonical strict identity and independent shift counts
+do not require that common-domain promotion and retain their existing rules.
+
+No AST fields, prepared records, dependency indexes or preparation traversal changed.
+Each new definition is one canonical shared object. Scalar values remain PHP integers;
+conversion codes and compound execution-type facts are unchanged. Literal identity and
+range remain int64. Generated lowerings select native aliases and named runtime helpers.
+Narrow unsigned multiplication explicitly avoids signed C++ integer-promotion overflow.
+
+The runtime publication includes these concrete aliases and conversions; its generated
+arithmetic helper bodies reuse the existing private algorithms. Applications include
+only their required public providers. Rebuild the runtime when changing its publication.
+
+Verification: `compiler_optional_integers` and `compiler_optional_integers_native`
+exercise all three flavors, representation boundaries, conversion source dispatch,
+numeric promotion identities, compounds, module isolation, failed retries and
+incremental/fresh recovery. Optional widths do not add new collection specializations,
+boxed kinds, direct echo bindings, or a power-operator contract.
+
+
+Measured numeric-matrix native builds (single sample per flavor, 2026-11-14):
+O2/g0, Ninja8, mold, libc++, no PCH/LTO, fresh instrumented application objects,
+prebuilt runtime. Frontend and LLVM are trace measurements; linker is the Ninja
+link-command duration. They are not additive end-to-end wall measurements.
+
+| Flavor | Native wall ms | Clang frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| PHP | 302.45 | 69.52 | 69.64 | 57 |
+| C++ | 304.76 | 79.35 | 70.37 | 53 |
+| JS | 298.83 | 66.83 | 66.76 | 56 |
+
+PHP fixture generation took 302.65 ms for the full test workload, including diagnostics
+and repeated incremental/fresh compilations; it is not a single-source compiler timing.
+All 57 native fixtures passed, and the unsigned multiplication matrix also passed
+UBSan (expected program exit 8). No performance comparison with an earlier identical
+fixture is claimed.

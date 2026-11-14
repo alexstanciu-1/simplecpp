@@ -84,10 +84,10 @@ final class Namespace_Syntax
 	}
 
 	/** PHP qualifies the final variable token (test\$value); other flavors qualify ordinary identifiers. */
-	public function variable_path(bool &$constant_only = false): string
+	public function variable_path(bool &$constant_only = false, bool &$type_marker = false): string
 	{
 		if ($this->cursor->tokens->source->flavor !== flavor::php) {
-			return $this->path(true);
+			return $this->path(true, type_marker: $type_marker, allow_type_marker: true);
 		}
 		$name = '';
 		if ($this->cursor->is($this->root_marker)) {
@@ -98,6 +98,11 @@ final class Namespace_Syntax
 			$name .= $this->cursor->name(token_kind::identifier);
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
+				if ($this->cursor->keyword('class')) {
+					$this->cursor->take_keyword('class');
+					$type_marker = true;
+					return $name;
+				}
 				$constant_only = !$this->cursor->is(token_kind::variable);
 				return $name . '::' . $this->cursor->name($constant_only ? token_kind::identifier : token_kind::variable);
 			}
@@ -112,7 +117,7 @@ final class Namespace_Syntax
 	}
 
 	/** Normalize only admitted name-path syntax; JS value/member ambiguity is checked by body preparation. */
-	public function path(bool $allow_root, bool $allow_group = false, bool $call = false): string
+	public function path(bool $allow_root, bool $allow_group = false, bool $call = false, bool &$type_marker = false, bool $allow_type_marker = false): string
 	{
 		$rooted = ($allow_root) && $this->cursor->is($this->root_marker);
 		if ($rooted) {
@@ -128,6 +133,11 @@ final class Namespace_Syntax
 			}
 			$this->cursor->take($this->separator, 'namespace separator');
 			if ($allow_group && $this->cursor->is(token_kind::lbrace)) {
+				break;
+			}
+			if ($allow_type_marker && $this->cursor->keyword('class')) {
+				$this->cursor->take_keyword('class');
+				$type_marker = true;
 				break;
 			}
 			$name .= '\\';

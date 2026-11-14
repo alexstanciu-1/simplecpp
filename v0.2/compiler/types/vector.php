@@ -5,40 +5,22 @@ namespace scpp\compiler;
 
 /**
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
- * Copying, argument passing, returns and other vector value operations remain deferred.
+ * Copies and by-value calls use the common conversion path; field storage remains deferred.
  */
 abstract class vector_type_definition extends type_definition implements appendable_collection_type, indexed_collection_type, index_write_type, counted_collection_type
 {
-	/** PROPERTIES */
 	/** Native non-owning canonical element definition, shared by all occurrences. */
 	public readonly type_definition $element_type;
 
-	/** CONSTRUCTOR */
 	protected function __construct(string $name, type_definition $element)
 	{
 		parent::__construct($name);
 		$this->element_type = $element;
 	}
 
-	/** METHODS */
 	public function supports_inferred_local(): bool
 	{
 		return true;
-	}
-
-	/** Empty construction and owning runtime results can initialize a local with the same specialization. */
-	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
-	{
-		if (($value instanceof ast_empty_collection_expression) && ($value->type_def() === $this)
-			&& ($context === conversion_context::typed_destination)) {
-			return value_conversion::identity;
-		}
-		if ($value instanceof ast_call_expression && $value->parent instanceof ast_local_declaration
-			&& $value->type_def() === $this && $value->function_def() instanceof runtime_function
-			&& in_array($context, [conversion_context::typed_destination, conversion_context::inference], true)) {
-			return value_conversion::identity;
-		}
-		throw new diagnostic($value->source(), $value->byte_start(), 'Vector value operations are deferred');
 	}
 
 	public function write_type(): type_definition

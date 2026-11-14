@@ -79,6 +79,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 default => throw new \RuntimeException('Unsupported native signed integer literal type'),
             };
             $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalars/signed_integer.php.tpl'), [
+                '@radix_cases@' => implode(', ', array_map(static fn(string $prefix, int $radix): string => var_export($prefix, true) . ' => ' . $radix, array_keys(object($compiler->integer_literals->prefixes)), array_values(object($compiler->integer_literals->prefixes)))),
                 '@native_suffix@' => var_export($nativeSuffix, true),
                 '@native_minimum@' => var_export('(-' . $definition['maximum'] . $nativeSuffix . ' - 1' . $nativeSuffix . ')', true),
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
@@ -88,7 +89,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             ]);
             continue;
         }
-        $limits = ($definition['strategy'] === 'integer' && !$types[$identity]['signed'] && $types[$identity]['bits'] < 64) ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
+        $limits = '';
+        if ($definition['strategy'] === 'integer') {
+            $type = $types[$identity];
+            requireThat($type['signed'] || $type['bits'] < 64, 'Unsigned 64-bit compiler facts remain deferred');
+            $maximum = decimalPredecessor(decimalPowerOfTwo(digits($type)));
+            $minimum = $type['signed'] ? '(-' . $maximum . ' - 1)' : '0';
+            $limits = "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** $identity */ = $minimum;\n\tpublic const int MAXIMUM /** $identity */ = $maximum;\n\n";
+        }
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
         $literalMethods = $definition['literal_family'] === 'floating'
             ? strtr(readFile(__DIR__ . '/../templates/scalars/floating_literal_methods.php.tpl'), [
@@ -227,7 +235,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['php_integer_constants'] ?? [] as $name => $value) {
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }
+    $moduleCases = [];
+    foreach ($definitions as $definition) {
+        if ($definition['required_module'] === null) continue;
+        $aliases = implode(', ', array_map(static fn(string $name): string => var_export($name, true), $definition['aliases']));
+        $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
@@ -377,6 +392,7 @@ function compilerOutput(?array $selected): string {
 function compilerConversions(array $conversions, array $definitions, string $target): string {
     $prepare = [];
     $lower = [];
+    $checkedLower = [];
     $constants = [];
     $headerCases = [];
     foreach ($conversions as $row) {
@@ -391,7 +407,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
             $prepare[] = "\t\tif ($condition) {\n\t\t\treturn $code;\n\t\t}";
             $binding = $row['binding'];
             $lower[] = "\t\t\t$code => '{$binding['symbol']}(static_cast<{$binding['source_cpp']}>(' . \$value . '))',";
-            $constants[] = "\t\t\t$code => null,";
+            $constants[] = "\t\t\t$code => constant_evaluation::unavailable,";
             $headerCases[] = "\t\t\t$code => [" . var_export($binding['header'], true) . '],';
             continue;
         }
@@ -434,7 +450,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
 			return value_conversion::floating_integer_checked;
 CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '{$symbol}(' . \$value . ')',";
+            $checkedLower['floating_integer_checked'][$from] = "'{$symbol}(' . \$value . ')'";
         } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
@@ -447,7 +463,7 @@ CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
 			return value_conversion::integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::integer_checked => '{$symbol}(' . self::checked_integer_operand(\$syntax, \$value, '{$sourceCpp}') . ')',";
+            $checkedLower['integer_checked'][$from] = "'{$symbol}(' . self::checked_integer_operand(\$syntax, \$value, '{$sourceCpp}') . ')'";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
             $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
@@ -456,6 +472,15 @@ CODE;
         $prepare[] = "\t\t}";
     }
     if ($prepare === []) return '';
+    foreach ($checkedLower as $operation => $sources) {
+        $arms = [];
+        foreach ($sources as $source => $expression) {
+            $class = $definitions[$source]['class'];
+            $arms[] = "\t\t\t\ttype_$class::instance() => $expression,";
+        }
+        $lower[] = "\t\t\tvalue_conversion::$operation => match (\$source_type ?? \$syntax?->value_type()) {\n"
+            . implode("\n", $arms) . "\n\t\t\t\tdefault => throw new \\LogicException('Checked conversion requires its prepared source type'),\n\t\t\t},";
+    }
     $prepare = implode("\n", $prepare);
     $lower = implode("\n", array_unique($lower));
     $constants = implode("\n", array_unique($constants));
@@ -483,16 +508,16 @@ $prepare
 	}
 
 	/** Render an approved boundary without repeating source-type resolution or changing facts. */
-	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value, ?ast_expression \$syntax = null): string
+	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value, ?ast_expression \$syntax = null, ?type_definition \$source_type = null): string
 	{
 		return match (\$conversion) {
 $lower
-			default => parent::lower_scalar_conversion(\$conversion, \$value),
+			default => parent::lower_scalar_conversion(\$conversion, \$value, \$syntax, \$source_type),
 		};
 	}
 
 	/** Preserve unknown values; convert known payloads using the selected operation only. */
-	public function convert_scalar_constant(int \$conversion /** uint16 */, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int \$conversion /** uint16 */, int|float|bool|null \$value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		return match (\$conversion) {
 $constants
@@ -600,6 +625,11 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
         }
         if ($operation['lowering'] === 'native') {
             $expression = "'(' . \$left . ' " . $operation['spelling'] . " ' . \$right . ')'";
+            // Narrow unsigned multiplication must not overflow C++'s promoted signed int.
+            if ($op === 'multiply' && $definitions[$identity]['strategy'] === 'integer'
+                && !$types[$identity]['signed'] && $types[$identity]['bits'] < 32) {
+                $expression = "'(static_cast<__UINT64_TYPE__>(' . \$left . ') * ' . \$right . ')'";
+            }
             if ($definitions[$identity]['strategy'] === 'integer' && $types[$identity]['bits'] < 64 && $operation['result'] === $identity) {
                 $expression = "'static_cast<" . $definitions[$identity]['cpp'] . ">(' . " . $expression . " . ')'";
             }

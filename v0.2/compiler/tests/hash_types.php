@@ -55,13 +55,13 @@ foreach (flavor::cases() as $flavor) {
 			verify($syntax->first_child->next_sibling->next_sibling === null, 'Unexpected argument');
 			$returning = str_replace('void', "hash<$value,$key>", signature($flavor, "hash<$value,$key>"));
 			$returning = str_replace('return;', 'return ' . ($flavor === flavor::php ? '$value' : 'value') . ';', $returning);
-			rejects(fn() => $frontend->prepare(new source_file('hash-values', $returning . 'return 8;', $flavor), new entry_target(31)), 'Hash value operations are deferred');
+			$frontend->prepare(new source_file('hash-values', $returning . 'return 8;', $flavor), new entry_target(31));
 		}
 	}
 	$forward = str_replace('inspect', 'forward', signature($flavor, 'hash<int,string>'));
 	$forward = str_replace('return;', 'inspect(' . ($flavor === flavor::php ? '$value' : 'value') . '); return;', $forward);
-	rejects(fn() => $frontend->prepare(new source_file('hash-calls', signature($flavor, 'hash<int,string>')
-		. $forward . 'return 8;', $flavor), new entry_target(31)), 'Hash argument passing is deferred');
+	$frontend->prepare(new source_file('hash-calls', signature($flavor, 'hash<int,string>')
+		. $forward . 'return 8;', $flavor), new entry_target(31));
 	foreach (['hash' => 'two arguments', 'hash<int>' => 'two arguments', 'hash<int,string,bool>' => 'two arguments',
 		'hash<byte,string>' => 'Unavailable runtime specialization', 'hash<int,bool>' => 'Unavailable runtime specialization',
 		'hash<string,Missing>' => 'Unknown or unsupported type', 'hash<vector<int>,string>' => 'Unavailable runtime specialization',

@@ -23,7 +23,7 @@ final class Type_Resolution
 		$type = self::resolve($syntax, $allow_void);
 		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
-		return self::record($syntax, $symbols, $function->namespace, $function, $dependencies);
+		return self::application($syntax, $symbols, $function, $dependencies);
 	}
 
 	/** Both handle families require exactly one nominal struct payload. */
@@ -47,17 +47,17 @@ final class Type_Resolution
 		}
 		$type = self::resolve($syntax);
 		if ($type !== null) return $type;
-		return self::record($syntax, $symbols, $namespace, $watcher, $dependencies);
+		return self::application($syntax, $symbols, $watcher, $dependencies);
 	}
 
 	/** Subscribe to the stable nominal key, including a missing declaration that may be added later. */
-	private static function record(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
-		?Dependency_Watches $dependencies): ?struct_type_definition
+	private static function application(ast_type_reference $syntax, scope $symbols, dependency_watcher $watcher,
+		?Dependency_Watches $dependencies): ?type_definition
 	{
-		$entry = $symbols->entry('class:' . Source_Names::resolve($syntax->name, $namespace));
+		$entry = $symbols->entry($syntax->root()->type_key($syntax->name));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
-		return $record instanceof ast_struct_declaration ? $record->definition : null;
+		return $record instanceof ast_type_declaration ? $record->type_definition() : null;
 	}
 
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */
@@ -69,7 +69,12 @@ final class Type_Resolution
 			if ($child !== null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type does not accept arguments: ' . $syntax->name);
 			}
-			return ($allow_void && $syntax->name === 'void') ? type_void::instance() : type_registry::resolve($syntax->name);
+			$type = ($allow_void && $syntax->name === 'void') ? type_void::instance() : type_registry::resolve($syntax->name);
+			$module = type_registry::required_module($syntax->name);
+			if ($type !== null && $module !== null && !$syntax->root()->type_availability->allows($module)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type ' . $syntax->name . ' requires module ' . $module);
+			}
+			return $type;
 		}
 		// Current families have one or two arguments; walk the chain once without an intermediate collection.
 		$second = $child?->next_sibling;

@@ -71,7 +71,7 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[false] = 2;', 'Vector index requires int64'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[0] = 1;', 'conversion'],
-		[$decl('vector<int>', 'values', '[]') . $decl('vector<int>', 'copy', $v), 'Vector value operations are deferred'],
+		[$decl('vector<int>', 'values', '[]') . $decl('vector<string>', 'copy', $v), 'conversion'],
 		['echo [];', 'explicitly typed local initializer'],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);
@@ -87,7 +87,7 @@ foreach (flavor::cases() as $flavor) {
 			flavor::js => $reference . 'argument: vector<int>',
 		};
 		$signature = ($flavor === flavor::cpp ? "void consume($parameter)" : "function consume($parameter): void") . '{return;}';
-		rejects(fn() => $prepare($signature . $decl('vector<int>', 'values', '[]') . "consume($v); return 8;"), 'Vector argument passing is deferred');
+		$prepare($signature . $decl('vector<int>', 'values', '[]') . "consume($v); return 8;");
 	}
 	foreach (['empty' => '', 'negative' => "$v" . '[] = 8;', 'end' => "$v" . '[] = 8;'] as $case => $append) {
 		$index = $case === 'negative' ? '-1' : ($case === 'end' ? '1' : '0');

@@ -15,6 +15,9 @@ final class Incremental_Frontend
 		if (($candidate === $previous) || ($candidate->scope !== null) || ($candidate->previous !== null)) {
 			throw new \LogicException('Incremental frontend requires a fresh candidate session');
 		}
+		if ($previous !== null && !$candidate->type_availability->same_as($previous->type_availability)) {
+			throw new \LogicException('Module availability changed; a full frontend rebuild is required');
+		}
 		$old = [];
 		foreach ($previous?->entry->sources ?? [] as $unit) {
 			$old[$unit->module->root . '/' . $unit->path] = $unit;
@@ -54,7 +57,7 @@ final class Incremental_Frontend
 					$unit->ast = $prior->ast;
 				}
 				else {
-					$unit->ast = $frontend->collect(Program_Loader::load($unit));
+					$unit->ast = $frontend->collect(Program_Loader::load($unit), availability: $candidate->type_availability);
 					$changed[$candidate->source_key($unit)] = $unit->ast;
 					if ($prior?->ast !== null) {
 						$retired[] = $prior->ast;

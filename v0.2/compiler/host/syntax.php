@@ -35,6 +35,10 @@ final class Syntax_Inspection
 		}
 		$result = ['namespace' => $file->scope->namespace, 'flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
 		foreach ($file->declaration_nodes as $node) {
+			if ($node instanceof ast_enum_declaration) {
+				$result['enums'][] = ['name' => $node->name(), 'backing' => $node->backing?->spelling(),
+					'cases' => array_map(static fn(ast_enum_case $case): string => $case->initializer->source_text(), $node->cases)];
+			}
 			if ($node instanceof ast_struct_declaration) {
 				$result['structs'][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_struct_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
@@ -87,6 +91,7 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_base_initialization) {
 			return ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),

@@ -19,6 +19,13 @@ function conversion_row(object $metadata, string $from, string $to): object {
 $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
+// Keep the legacy core matrix fixture deliberately core-only; optional activation has its own proofs.
+foreach ($metadata->compiler->modules->{'runtime-numeric'}->types as $identity) {
+    unset($metadata->compiler->value_types->$identity, $metadata->compiler->three_way->types->$identity);
+    $metadata->compiler->strict_identity->types = array_values(array_diff($metadata->compiler->strict_identity->types, [$identity]));
+}
+unset($metadata->compiler->modules->{'runtime-numeric'});
+$metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
 // The target, rather than the PHP host or ordinary LL carrier, selects exact overload literals.
@@ -1177,3 +1184,26 @@ foreach (['operand', 'result', 'binding', 'safety'] as $change) {
 // An operation may need both its storage and extraction headers; no match arm may hide either.
 $headers = \scpp\compiler\type_string::instance()->binary_headers(\scpp\compiler\binary_operator::identical);
 requireThat(in_array('scpp/string.hpp', $headers, true) && in_array('scpp/core/scalars.hpp', $headers, true), 'Binary header union lost a binding');
+
+// Distinct checked sources share a compact operation code, not a runtime helper.
+$checked = $plan['int64:uint8'];
+$second = $checked;
+$second['from'] = 'uint32';
+$second['binding']['symbol'] = 'scpp::checked_uint32_to_uint8';
+$second['binding']['source_cpp'] = 'scpp::uint32';
+$testDefinitions = $definitions;
+$testDefinitions['uint32'] = ['class' => 'uint32'];
+$dispatch = compilerConversions([$checked, $second], $testDefinitions, 'uint8');
+requireThat(substr_count($dispatch, 'value_conversion::integer_checked => match') === 1,
+    'Checked lowering duplicated the operation arm');
+foreach (['int64', 'uint32'] as $source) {
+    requireThat(str_contains($dispatch, "type_$source::instance() => 'scpp::checked_{$source}_to_uint8("),
+        'Checked lowering lost source-specific binding');
+}
+try {
+    \scpp\compiler\type_uint8::instance()->lower_cpp_conversion(
+        \scpp\compiler\value_conversion::integer_checked, 'value');
+    throw new \RuntimeException('Checked lowering accepted missing source identity');
+} catch (\LogicException $expected) {
+    requireThat(str_contains($expected->getMessage(), 'source type'), 'Unexpected checked-source error');
+}

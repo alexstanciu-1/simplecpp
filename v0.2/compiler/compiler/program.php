@@ -38,7 +38,7 @@ final class Program_Frontend
 		try
 		{
 			foreach ($units as $unit) {
-				$unit->ast = $frontend->collect($load($unit), $publication);
+				$unit->ast = $frontend->collect($load($unit), $publication, $session->type_availability);
 			}
 			$files = $session->files();
 			return Program_Preparation::prepare($session->entry_key(), $files, $target,

@@ -18,6 +18,8 @@ final class ast_file_node extends ast_node
 	/** PROPERTIES */
 	/** Native shared-owning; retained token generation. */
 	public readonly token_list $tokens;
+	/** Native shared-owning immutable context; retained roots never point to a mutable session. */
+	public readonly type_availability $type_availability;
 	/** Native owning; file reference scope. */
 	public readonly scope $scope;
 	/**
@@ -30,11 +32,11 @@ final class ast_file_node extends ast_node
 	/**
 	 * Source declaration inventory, including methods owned by their struct; independent of live duplicate chains.
 	 *
-	 * @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[]
+	 * @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[]
 	 */
-	public readonly array $declaration_nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */;
-	/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] Symbol key -> node; native non-owning first-reference index. */
-	public readonly array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */;
+	public readonly array $declaration_nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */;
+	/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] Symbol key -> node; native non-owning first-reference index. */
+	public readonly array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */;
 
 	/** @var ast_import[] Native owning import occurrences; repeats remain inspectable syntax. */
 	public readonly array $imports /** list<ast_import> */;
@@ -50,11 +52,12 @@ final class ast_file_node extends ast_node
 	private bool $prepared = false;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens, ?string $namespace = null)
+	public function __construct(token_list $tokens, ?string $namespace = null, type_availability $availability = new type_availability())
 	{
 		parent::__construct(0, count($tokens->tokens));
 		$this->parent = null;
 		$this->tokens = $tokens;
+		$this->type_availability = $availability;
 		$this->scope = new scope(null, $namespace);
 	}
 
@@ -94,18 +97,18 @@ final class ast_file_node extends ast_node
 	 *
 	 * $declarations: first references.
 	 *
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $declarations
-	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $nodes
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $declarations
+	 * @param (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $nodes
 	 * @param diagnostic[] $diagnostics
 	 * @param ast_import[] $imports
 	 */
-	public function complete(array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */,
-		array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */, array $diagnostics /** list<diagnostic> */ = [],
+	public function complete(array $declarations /** array<string,ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */,
+		array $nodes /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */, array $diagnostics /** list<diagnostic> */ = [],
 		array $imports /** list<ast_import> */ = []): void
 	{
 		foreach ($nodes as $declaration) {
 			if ($declaration->parent !== $this && !(($declaration instanceof ast_function_declaration || $declaration instanceof ast_literal_declaration)
-				&& $declaration->parent instanceof ast_struct_declaration && $declaration->parent->parent === $this)) {
+				&& $declaration->parent instanceof ast_method_owner && $declaration->parent->parent === $this)) {
 				throw new \LogicException('Invalid AST declaration ownership');
 			}
 			if ($declaration instanceof ast_function_declaration) {
@@ -157,8 +160,8 @@ final class ast_file_node extends ast_node
 			static fn(ast_node $node): bool => $node instanceof ast_global_declaration));
 	}
 
-	/** @return (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] */
-	public function published_declarations(): array /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration> */
+	/** @return (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] */
+	public function published_declarations(): array /** list<ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration> */
 	{
 		return array_values(array_filter($this->declaration_nodes,
 			static fn(ast_node $node): bool => !($node instanceof ast_function_declaration) || (!$node->is_implicit_entry)));
@@ -190,6 +193,14 @@ final class ast_file_node extends ast_node
 	{
 		return !isset($this->constant_imports[$name]) && !str_contains($name, '\\')
 			? 'const:' . $name : $this->constant_key($name);
+	}
+
+	/** Plain imports bind complete type names; no prefix aliasing or duplicate retained index. */
+	public function type_key(string $name): string
+	{
+		$import = $this->function_imports[$name] ?? null;
+		return 'class:' . (($import?->kind === import_kind::symbol) ? $import->target
+			: Source_Names::resolve($name, $this->scope->namespace));
 	}
 
 	public function constant_key(string $name): string

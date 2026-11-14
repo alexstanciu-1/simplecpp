@@ -172,7 +172,8 @@ trait ast_declaration
 	{
 		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
 			|| (get_class($duplicate_element) !== get_class($this)
-				&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
+					&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))
+					&& !(($this instanceof ast_type_declaration) && ($duplicate_element instanceof ast_type_declaration))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
 		$this->duplicate_element = $duplicate_element;
@@ -240,14 +241,14 @@ abstract class ast_expression extends ast_node
 	}
 
 	/** Set occurrence facts once; $known preserves null as a value independently of readiness. */
-	protected function settle_value(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */, bool $known = false): void
+	protected function settle_value(type_definition $type, int|float|bool|null|constant_evaluation $constant /** int64|float64|bool|null|constant_evaluation */, bool $known = false): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Expression is already prepared');
 		}
 		$this->type_def = $type;
-		$this->constant = $constant;
-		$this->constant_known = $known || ($constant !== null);
+		$this->constant = $constant === constant_evaluation::unavailable ? null : $constant;
+		$this->constant_known = $constant !== constant_evaluation::unavailable && ($known || ($constant !== null));
 	}
 
 	public function reset_preparation(): void
@@ -332,4 +333,29 @@ enum update_operator: int
 {
 	case increment = 1;
 	case decrement = 2;
+}
+
+
+/** A published nominal application type; struct layout and enum cases keep their distinct owners. */
+interface ast_type_declaration extends ast_declaration_interface
+{
+	public function type_definition(): type_definition;
+}
+
+/** A nominal declaration owning methods; instance storage remains specific to the defining type. */
+interface ast_method_owner extends ast_type_declaration
+{
+	public function method(string $name): ?ast_function_declaration;
+}
+
+/** One name index of method heads; duplicate occurrences remain in the declaring scope's chain. */
+trait ast_methods
+{
+	/** @var ast_function_declaration[] Native non-owning method index into the source declaration inventory. */
+	public readonly array $methods /** array<string,ast_function_declaration> */;
+
+	public function method(string $name): ?ast_function_declaration
+	{
+		return $this->methods[$name] ?? null;
+	}
 }

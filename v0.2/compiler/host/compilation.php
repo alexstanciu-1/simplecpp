@@ -239,12 +239,12 @@ final class Compilation_Inspection
 		return $row;
 	}
 	/** Preserve scalar identities and exact numeric values in the JSON inspection view. */
-	private static function scalar(int|float|bool|null $value /** int64|float64|bool|null */): string|bool|null
+	private static function scalar(int|float|bool|null|constant_evaluation $value /** int64|float64|bool|null|constant_evaluation */): string|bool|null
 	{
 		if (is_float($value)) {
 			return type_float64::instance()->cpp_constant($value);
 		}
-		return is_int($value) ? (string) $value : $value;
+		return $value === constant_evaluation::unavailable ? null : (is_int($value) ? (string) $value : $value);
 	}
 
 }

@@ -87,7 +87,7 @@ class ast_name_expression extends ast_expression
 	 * Prepared fact: local AST identity, stable source symbol or runtime constant; null until prepared.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_binding|symbol_entry|runtime_integer_constant|null $binding = null;
+	protected ast_local_binding|symbol_entry|runtime_integer_constant|ast_enum_case|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -112,6 +112,13 @@ class ast_name_expression extends ast_expression
 		$current = $write ?? $local;
 		$this->settle_value($local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
 		$this->binding = $local;
+	}
+
+	/** Case reads retain only the owned case link; nominal identity is never a scalar constant fact. */
+	public function settle_enum_case(ast_enum_case $case): void
+	{
+		$this->binding = $case;
+		$this->settle_value($case->parent->definition, null);
 	}
 
 	/** Global storage is mutable in intent; its initializer is not a constant fact at a read occurrence. */
@@ -144,9 +151,9 @@ class ast_name_expression extends ast_expression
 	}
 
 	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant
+	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant|ast_enum_case
 	{
-		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant) {
+		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof ast_enum_case) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();
@@ -244,15 +251,15 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	}
 
 	/** Attach the approved initialization facts after source preparation and conversion checks succeed. */
-	public function settle_type(type_definition $type, int|float|bool|null $constant /** int64|float64|bool|null */,
+	public function settle_type(type_definition $type, int|float|bool|null|constant_evaluation $constant /** int64|float64|bool|null|constant_evaluation */,
 		bool $known = false, int $conversion /** uint16 */ = value_conversion::identity): void
 	{
 		if ($this->type_def !== null) {
 			throw new \LogicException('Local type is already settled');
 		}
 		$this->type_def = $type;
-		$this->constant = $constant;
-		$this->constant_known = $known || ($constant !== null);
+		$this->constant = $constant === constant_evaluation::unavailable ? null : $constant;
+		$this->constant_known = $constant !== constant_evaluation::unavailable && ($known || ($constant !== null));
 		$this->initialization = $conversion;
 	}
 
@@ -404,14 +411,15 @@ class ast_assignment_statement extends ast_storage_write
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */
 	{
 		$type = $this->local_def()->type_def();
-		return $this->operator === null ? $type->convert_constant($this->conversion(), $this->value->constant()) : null;
+		$value = $this->operator === null ? $type->evaluate_constant($this->conversion(), $this->value) : constant_evaluation::unavailable;
+		return $value === constant_evaluation::unavailable ? null : $value;
 	}
 
 	public function constant_known(): bool
 	{
 		$this->local_def();
-		return ($this->operator === null) && !($this->local_def()->type_def() instanceof carrier_type_definition)
-			&& !($this->local_def()->type_def() instanceof boxed_type_definition) && $this->value->constant_known();
+		return $this->operator === null
+			&& $this->local_def()->type_def()->evaluate_constant($this->conversion(), $this->value) !== constant_evaluation::unavailable;
 	}
 
 	public function reset_preparation(): void

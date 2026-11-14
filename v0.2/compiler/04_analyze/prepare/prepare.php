@@ -394,8 +394,7 @@ final class Preparation
 			}
 		}
 		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
-		$declaration->settle_type($type, $type->convert_constant($conversion, $declaration->initializer->constant()),
-			$declaration->initializer->constant_known() && !($type instanceof carrier_type_definition) && !($type instanceof boxed_type_definition), $conversion);
+		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
@@ -482,6 +481,7 @@ final class Preparation
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
+		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
@@ -495,7 +495,7 @@ final class Preparation
 			if ($this->initializing_base) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Current instance is unavailable during base initialization');
 			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
 			$record = $this->owner->parent->parent;
-			if (!($record instanceof ast_struct_declaration)) {
+			if (!($record instanceof ast_method_owner)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
 			}
 			if ($this->owner->parent->is_constructor()) {
@@ -662,6 +662,7 @@ final class Preparation
 				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
+			if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return;
 			if (!$syntax->constant_only) {
 				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
 				$symbol = $this->symbols->entry($key);
@@ -807,11 +808,11 @@ final class Preparation
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$record = $receiver->type_def();
 				if ($record instanceof shared_struct_type_definition) $record = $record->payload;
-				if ($record instanceof struct_type_definition) {
+				if ($record instanceof struct_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
-					$method = $record->declaration->methods[$name] ?? null;
+					$method = $record->declaration->method($name);
 					$symbol = $this->symbols->entry('method:' . $record->name . '::' . $name);
 					$this->dependencies?->watch($symbol, $this->owner);
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
@@ -853,6 +854,39 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			if ($builtin === 'enum_from_value') {
+				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
+				}
+				$marker = $call->arguments[0];
+				$entry = $this->symbols->entry($file->type_key($marker->name));
+				$this->dependencies?->watch($entry, $this->owner, dependency_use::enum_from_value->value);
+				$enum = $entry->declaration();
+				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), 'enum_from_value target must be an enum');
+				$argument = $call->arguments[1];
+				$this->value($argument, $initializing);
+				$input = $argument->type_def();
+				if ($enum->definition->backing() === type_string::instance()) {
+					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires a string');
+				} elseif (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires an integer');
+				}
+				$conversion = $enum->definition->from_value_function()->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
+				$call->settle_runtime($enum->definition->from_value_function(), [$conversion]);
+				return;
+			}
+			if ($builtin === 'enum_value' || $builtin === 'enum_name') {
+				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires one enum argument');
+				$argument = $call->arguments[0];
+				$this->value($argument, $initializing);
+				$type = $argument->type_def();
+				if (!($type instanceof enum_type_definition)) throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an enum');
+				$use = $builtin === 'enum_name' ? dependency_use::enum_name
+					: ($type->backing() === type_string::instance() ? dependency_use::enum_value : null);
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner, $use?->value ?? 0);
+				$call->settle_runtime($use === null ? $type->value_function() : $type->helper_function($use));
+				return;
+			}
 			$operation = match ($builtin) {
 				'count' => collection_cardinality::count,
 				'empty' => collection_cardinality::empty,
@@ -948,12 +982,6 @@ final class Preparation
 		foreach ($call->arguments as $index => $argument) {
 			$this->value($argument, $initializing);
 			$parameter = $function->parameters[$index];
-			if ($parameter->type_def() instanceof hash_type_definition) {
-				throw new diagnostic($argument->source(), $argument->byte_start(), 'Hash argument passing is deferred');
-			}
-			if ($parameter->type_def() instanceof vector_type_definition) {
-				throw new diagnostic($argument->source(), $argument->byte_start(), 'Vector argument passing is deferred');
-			}
 			if ($parameter->mode === passing_mode::reference) {
 				$this->bind_reference($argument, $parameter->type_def(), $writes);
 				$conversions[] = value_conversion::identity;

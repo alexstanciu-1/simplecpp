@@ -17,7 +17,10 @@ final class Project_Compiler
 	public function frontend(string $path, ?compilation_session $previous = null, ?string $output_directory = null): compilation_session
 	{
 		$candidate = (new Module_Loader($this->runtime))->load($path, $output_directory);
-		return (new Incremental_Frontend())->collect($candidate, $previous);
+		$selection_changed = $previous !== null && !$candidate->type_availability->same_as($previous->type_availability);
+		$result = (new Incremental_Frontend())->collect($candidate, $selection_changed ? null : $previous);
+		if ($selection_changed) $previous->is_current = false;
+		return $result;
 	}
 
 	/**

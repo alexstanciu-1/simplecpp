@@ -50,22 +50,24 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     $sources = fields(at($metadata, 'source_types'), ['int', 'bool', 'null', 'float']);
     requireThat(($sources['int'] ?? null) === 'int64' && isset($types[$sources['int']]), 'Compiler int requires int64 metadata');
     $active = [];
+    $always = [];
     $membership = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
         $members = names(at($row, 'types'), 'Duplicate compiler module type');
         foreach ($members as $identity) {
-            requireThat(!isset($membership[$identity]), 'Duplicate compiler module ownership: ' . $identity);
-            $membership[$identity] = $module;
+            requireThat(!array_key_exists($identity, $membership), 'Duplicate compiler module ownership: ' . $identity);
+            $membership[$identity] = boolean(at($row, 'always_available')) ? null : $module;
+            $active[$identity] = true;
         }
         if (boolean(at($row, 'always_available'))) {
             requireThat($module === 'default-runtime', 'Only the default runtime is supported in this compiler slice');
-            foreach ($members as $identity) $active[$identity] = true;
+            foreach ($members as $identity) $always[$identity] = true;
         }
     }
     // Required roles are consumed by existing AST/literal handlers and boot-time generated class references.
     foreach (array_merge(array_values($sources), names(at($metadata, 'core_integers')), [textValue(at(at($metadata, 'string'), 'type'))]) as $required) {
-        requireThat(isset($active[$required]), 'Required compiler type missing from default runtime: ' . $required);
+        requireThat(isset($always[$required]), 'Required compiler type missing from default runtime: ' . $required);
     }
     $rows = object(at($compiler, 'value_types'));
     foreach ($active as $identity => $_) requireThat(isset($rows[$identity]), 'Missing active compiler type definition: ' . $identity);
@@ -121,7 +123,8 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
             $type = $types[$identity];
             requireThat($type['signed'] && $type['bits'] === 64, 'Compiler slice requires signed int64');
             $policy = at($compiler, 'integer_literals');
-            fields($policy, ['radix', 'overflow', 'cpp_suffix']);
+            fields($policy, ['radix', 'prefixes', 'overflow', 'cpp_suffix']);
+            requireThat(object(at($policy, 'prefixes')) === ['0o' => 8, '0x' => 16], 'Unsupported compiler integer prefixes');
             requireThat(unsigned(at($policy, 'radix')) === 10, 'Unsupported compiler integer radix');
             requireThat(textValue(at($policy, 'overflow')) === 'reject', 'Unsupported compiler integer overflow policy');
             $suffix = textValue(at($policy, 'cpp_suffix'));
@@ -175,6 +178,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     }
     $providers ??= submodulePlan($metadata);
     foreach ($definitions as $identity => &$definition) {
+        $definition['required_module'] = $membership[$identity];
         if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating', 'null'], true)) continue;
         $export = typeExport($providers, $identity);
         $definition['cpp'] = $export['symbol'];
@@ -269,7 +273,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
             'boolean_integer' => $sourceKind === 'boolean' && $targetKind === 'integer',
             'integer_boolean' => $sourceKind === 'integer' && $targetKind === 'boolean',
             'checked_integer' => $sourceKind === 'integer' && $targetKind === 'integer'
-                && !$types[$to]['signed'] && $types[$to]['bits'] < 64,
+                && ($types[$to]['signed'] || $types[$to]['bits'] < 64),
             'integer_widen' => $sourceKind === 'integer' && $targetKind === 'integer'
                 && fits($types[$to], $types[$from]['signed'], digits($types[$from])),
             'numeric_floating' => in_array($sourceKind, ['integer', 'boolean'], true) && $targetKind === 'floating',
@@ -363,7 +367,7 @@ function compilerStrategyReorderable(array $safety, string $strategy): bool {
 
 /** Resolve value-comparison mechanics for independently admitted ordinary or identity operators. */
 function compilerComparisonStrategy(mixed $compiler, array $definitions, string $name, array $operators, ?string $binding, array $stringOperations): array {
-    requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
+    requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating', 'boolean', 'string', 'null'], true), 'Unsupported compiler comparison type');
     $resultBinding = $name === 'string' ? compilerTypeBinding($compiler, $binding, 'bool_t', true) : null;
     $storage = $name === 'string' ? $definitions[$name]['storage'] : null;
     requireThat(isset($definitions['bool_t']), 'Comparison result must be active');
@@ -386,7 +390,7 @@ function compilerComparisonStrategy(mixed $compiler, array $definitions, string 
 function compilerComparisonPlan(mixed $compiler, array $definitions, array $stringOperations): array {
     $plan = [];
     foreach (object(at($compiler, 'comparisons')) as $name => $row) {
-        requireThat(isset($definitions[$name]) && in_array($name, ['int64', 'float64', 'bool_t', 'uint8', 'string', 'null_t'], true), 'Unsupported compiler comparison type');
+        requireThat(isset($definitions[$name]) && in_array($definitions[$name]['strategy'], ['integer', 'floating', 'boolean', 'string', 'null'], true), 'Unsupported compiler comparison type');
         fields($row, ['operand', 'result', 'lowering', 'operators', 'result_binding']);
         literals($row, ['operand' => 'same_type', 'result' => 'bool_t', 'lowering' => $name === 'string' ? 'runtime_compare' : 'native']);
         $binding = $name === 'string' ? textValue(at($row, 'result_binding')) : null;

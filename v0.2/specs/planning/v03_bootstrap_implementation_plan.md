@@ -26,6 +26,16 @@ Proof: translate the token representation and source-location lookup. Construct,
 
 Do not block this proof on every optional width, populated collection literals or full PHP readonly behavior. Start the host/runtime binding inventory alongside this work.
 
+1.2 status: the [first integer-enum slice](../../compiler/docs/enums.md) supplies
+named literal cases, compact/exact storage, same-enum equality, typed calls and
+`enum_value`, with incremental recovery. Enum instance fields with explicit case
+defaults and function/method/constructor enum parameter defaults are also implemented.
+Checked integer reverse construction is also implemented, reusing generated integer conversions.
+`enum_name` and byte-exact string backing/helpers are implemented using compact ordinal storage.
+Public instance enum methods now reuse the function binder and common method ownership.
+The bounded 1.2 scope is implemented; unit enums, uint64 backing, static/private enum
+methods, reflection and broader enum integration remain separate follow-ups.
+
 ## 2. Readable selection and lookup — a tokenizer path
 
 | Order | Group | Initial scope |

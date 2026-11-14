@@ -23,18 +23,21 @@ final class Parser
 	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
 	private ?Body_Collection $lexical = null;
 	private bool $started = false;
-	private ?string $declaring_struct = null;
+	private ?string $declaring_type = null;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
 	/** Native non-owning; coordinator outlives parsing. */
 	private ?declaration_sink $sink;
+	/** Native shared-owning context passed unchanged to the file root. */
+	private readonly type_availability $availability;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens, ?declaration_sink $sink = null)
+	public function __construct(token_list $tokens, ?declaration_sink $sink = null, type_availability $availability = new type_availability())
 	{
 		$this->cursor = new Syntax_Cursor($tokens);
 		$this->names = new Namespace_Syntax($this->cursor);
 		$this->sink = $sink;
+		$this->availability = $availability;
 	}
 
 	/** METHODS */
@@ -56,7 +59,7 @@ final class Parser
 			}
 			$this->cursor->take($delimiter, $braced ? '{' : ';');
 		}
-		$this->root = new ast_file_node($this->cursor->tokens, $namespace);
+		$this->root = new ast_file_node($this->cursor->tokens, $namespace, $this->availability);
 		$body_start = $this->cursor->position();
 		$collector = new Body_Collection($this->root->scope);
 		$this->lexical = $collector;
@@ -71,10 +74,11 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct')) {
+			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
 					'struct' => Struct_Syntax::read($this, $grammar, $members),
+					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
 				};
@@ -123,7 +127,7 @@ final class Parser
 			$declarations->import($main);
 			array_unshift($nodes, $main);
 		}
-		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_struct_declaration)[] $heads */
+		/** @var (ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration)[] $heads */
 		$heads = $declarations->publish_references()->heads();
 		if (isset($heads['func:main'])) {
 			$heads = ['func:main' => $heads['func:main']] + $heads;
@@ -341,10 +345,10 @@ final class Parser
 	}
 
 	/** Functions and methods share lexical collection, statement grammar and body ownership. */
-	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_struct = null, bool $derived_constructor = false): ast_function_declaration
+	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type = null, bool $derived_constructor = false): ast_function_declaration
 	{
 		$source = $this->cursor->tokens->source;
-		$this->declaring_struct = $declaring_struct;
+		$this->declaring_type = $declaring_type;
 		$base = null;
 		if ($derived_constructor && $source->flavor === flavor::cpp && $this->cursor->is(token_kind::colon)) {
 			$start = $this->cursor->take(token_kind::colon, ':');
@@ -388,7 +392,7 @@ final class Parser
 		}
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
 		$this->lexical = $previous;
-		$this->declaring_struct = null;
+		$this->declaring_type = null;
 		$function->complete_body($body_collector->body($body_start, $end, $statements));
 		return $function;
 	}
@@ -667,8 +671,8 @@ final class Parser
 		return $value;
 	}
 
-	/** Parse a scalar literal without allowing executable expressions in declarations. */
-	public function literal_initializer(string $diagnostic): ast_expression
+	/** Parse a declaration literal, optionally retaining a name for an enum field default. */
+	public function literal_initializer(string $diagnostic, bool $allow_case = false): ast_expression
 	{
 		$cursor = $this->cursor;
 		$literal_start = $cursor->position();
@@ -680,7 +684,7 @@ final class Parser
 		else {
 			$initializer = $this->assignment_value();
 		}
-		if (type_registry::literal_type($initializer) === null) {
+		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression)) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), $diagnostic);
 		}
 		return $initializer;
@@ -745,17 +749,17 @@ final class Parser
 		};
 	}
 
-	/** Normalize directly to the declaring struct's member path, before any local or namespace lookup. */
+	/** Normalize directly to the declaring type's member path, before any local or namespace lookup. */
 	private function lexical_member(): ast_expression
 	{
 		$c = $this->cursor;
 		$start = $c->position();
-		if ($this->declaring_struct === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body');
+		if ($this->declaring_type === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body or enum method body');
 		$flavor = $c->tokens->source->flavor;
 		$c->take($c->tokens->tokens[$start]->kind, 'declaring type');
 		$c->take($flavor === flavor::js ? token_kind::dot : token_kind::scope, 'member separator');
 		$variable = $flavor === flavor::php && $c->is(token_kind::variable);
-		$name = $this->declaring_struct . '::' . $c->name($variable ? token_kind::variable : token_kind::identifier);
+		$name = $this->declaring_type . '::' . $c->name($variable ? token_kind::variable : token_kind::identifier);
 		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, token_kind::scope, null);
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $flavor === flavor::php && !$variable);
 	}
@@ -807,6 +811,12 @@ final class Parser
 				token_kind::tilde => unary_operator::bit_not,
 			};
 			$operand = $this->value(binary_operator::power->precedence());
+			// A direct signed prefixed literal is checked as one value, including the signed minimum.
+			if ($kind !== token_kind::tilde && $operand instanceof ast_integer_expression
+				&& $operand->start === $start + 1 && $operand->end === $this->cursor->position()
+				&& preg_match('/^0[xXoO]/', $this->cursor->tokens->text_at($operand->start)) === 1) {
+				return new ast_integer_expression($start, $operand->end);
+			}
 			return new ast_unary_expression($start, $this->cursor->position(), $operator, $operand);
 		}
 		if ($this->cursor->is(token_kind::bang)) {
@@ -830,7 +840,7 @@ final class Parser
 			$this->cursor->take(token_kind::rparen, ')');
 			return $value;
 		}
-		if ($this->declaring_struct !== null && !$this->cursor->at_end()) {
+		if ($this->declaring_type !== null && !$this->cursor->at_end()) {
 			$start = $this->cursor->position();
 			$self = $this->cursor->tokens->source->flavor === flavor::php ? '$this' : 'this';
 			if ($this->cursor->tokens->text_at($start) === $self) {
@@ -876,7 +886,9 @@ final class Parser
 			return new ast_keyword_expression($word, $start, $start + 1);
 		}
 		$constant_only = false;
-		$name = $this->names->variable_path($constant_only);
+		$type_marker = false;
+		$name = $this->names->variable_path($constant_only, $type_marker);
+		if ($type_marker) return new ast_type_marker($name, $start, $this->cursor->position());
 		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
 			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
 		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax, $constant_only);

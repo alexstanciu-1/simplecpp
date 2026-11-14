@@ -806,10 +806,21 @@
           "float64",
           "string"
         ]
+      },
+      "runtime-numeric": {
+        "always_available": false,
+        "types": [
+          "int8",
+          "int16",
+          "int32",
+          "uint16",
+          "uint32"
+        ]
       }
     },
     "integer_literals": {
       "radix": 10,
+      "prefixes": {"0x": 16, "0o": 8},
       "overflow": "reject",
       "cpp_suffix": "LL"
     },
@@ -817,14 +828,24 @@
       "int64": {
         "class": "int64",
         "literal_family": "integer",
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
         "copy_semantics": "trivial",
-        "source_names": ["int64"]
+        "source_names": [
+          "int64"
+        ]
       },
       "null_t": {
         "class": "null",
         "literal_family": "keyword",
-        "declarations": { "inferred_local": false, "global_storage": true, "instance_field": false },
+        "declarations": {
+          "inferred_local": false,
+          "global_storage": true,
+          "instance_field": false
+        },
         "copy_semantics": "trivial",
         "source_names": [],
         "cpp_type": "decltype(nullptr)",
@@ -835,7 +856,11 @@
       "bool_t": {
         "class": "bool",
         "literal_family": "keyword",
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
         "copy_semantics": "trivial",
         "source_names": [],
         "cpp_type": "bool",
@@ -847,7 +872,11 @@
       "uint8": {
         "class": "uint8",
         "literal_family": null,
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
         "copy_semantics": "trivial",
         "source_names": [
           "uint8"
@@ -856,21 +885,98 @@
       "float64": {
         "class": "float64",
         "literal_family": "floating",
-        "declarations": { "inferred_local": true, "global_storage": true, "instance_field": true },
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
         "copy_semantics": "trivial",
-        "source_names": ["float64"],
+        "source_names": [
+          "float64"
+        ],
         "cpp_type": "double"
       },
       "string": {
         "class": "string",
         "literal_family": "string",
-        "declarations": { "inferred_local": true, "global_storage": false, "instance_field": true },
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": false,
+          "instance_field": true
+        },
         "copy_semantics": "nontrivial",
         "source_names": [
           "string"
         ],
         "storage_binding": "string_storage",
-        "member_visibility": { "data": "compiler_internal" }
+        "member_visibility": {
+          "data": "compiler_internal"
+        }
+      },
+      "int8": {
+        "class": "int8",
+        "literal_family": null,
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
+        "copy_semantics": "trivial",
+        "source_names": [
+          "int8"
+        ]
+      },
+      "int16": {
+        "class": "int16",
+        "literal_family": null,
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
+        "copy_semantics": "trivial",
+        "source_names": [
+          "int16"
+        ]
+      },
+      "int32": {
+        "class": "int32",
+        "literal_family": null,
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
+        "copy_semantics": "trivial",
+        "source_names": [
+          "int32"
+        ]
+      },
+      "uint16": {
+        "class": "uint16",
+        "literal_family": null,
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
+        "copy_semantics": "trivial",
+        "source_names": [
+          "uint16"
+        ]
+      },
+      "uint32": {
+        "class": "uint32",
+        "literal_family": null,
+        "declarations": {
+          "inferred_local": true,
+          "global_storage": true,
+          "instance_field": true
+        },
+        "copy_semantics": "trivial",
+        "source_names": [
+          "uint32"
+        ]
       }
     },
     "conversion_families": {
@@ -1020,12 +1126,18 @@
         "header": "scpp/arithmetic.hpp"
       },
       "int64_power": {
-        "operand": "int64", "result": "int64", "strategy": "checked_power",
-        "symbol": "scpp::int64_power", "header": "scpp/arithmetic.hpp"
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "checked_power",
+        "symbol": "scpp::int64_power",
+        "header": "scpp/arithmetic.hpp"
       },
       "float64_compare": {
-        "operand": "float64", "result": "int64", "strategy": "checked_three_way",
-        "symbol": "scpp::float64_compare", "header": "scpp/arithmetic.hpp"
+        "operand": "float64",
+        "result": "int64",
+        "strategy": "checked_three_way",
+        "symbol": "scpp::float64_compare",
+        "header": "scpp/arithmetic.hpp"
       },
       "float64_divide": {
         "operand": "float64",
@@ -1090,6 +1202,156 @@
         "strategy": "checked_shift",
         "symbol": "scpp::uint8_shift_right",
         "header": "scpp/arithmetic.hpp"
+      },
+      "int8_divide": {
+        "operand": "int8",
+        "result": "int8",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int8_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int8_remainder": {
+        "operand": "int8",
+        "result": "int8",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::int8_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int8_shift_left": {
+        "operand": "int8",
+        "count": "int64",
+        "result": "int8",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int8_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int8_shift_right": {
+        "operand": "int8",
+        "count": "int64",
+        "result": "int8",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int8_shift_right",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int16_divide": {
+        "operand": "int16",
+        "result": "int16",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int16_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int16_remainder": {
+        "operand": "int16",
+        "result": "int16",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::int16_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int16_shift_left": {
+        "operand": "int16",
+        "count": "int64",
+        "result": "int16",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int16_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int16_shift_right": {
+        "operand": "int16",
+        "count": "int64",
+        "result": "int16",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int16_shift_right",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int32_divide": {
+        "operand": "int32",
+        "result": "int32",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int32_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int32_remainder": {
+        "operand": "int32",
+        "result": "int32",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::int32_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int32_shift_left": {
+        "operand": "int32",
+        "count": "int64",
+        "result": "int32",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int32_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int32_shift_right": {
+        "operand": "int32",
+        "count": "int64",
+        "result": "int32",
+        "strategy": "checked_shift",
+        "symbol": "scpp::int32_shift_right",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint16_divide": {
+        "operand": "uint16",
+        "result": "uint16",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::uint16_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint16_remainder": {
+        "operand": "uint16",
+        "result": "uint16",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::uint16_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint16_shift_left": {
+        "operand": "uint16",
+        "count": "int64",
+        "result": "uint16",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint16_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint16_shift_right": {
+        "operand": "uint16",
+        "count": "int64",
+        "result": "uint16",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint16_shift_right",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint32_divide": {
+        "operand": "uint32",
+        "result": "uint32",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::uint32_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint32_remainder": {
+        "operand": "uint32",
+        "result": "uint32",
+        "strategy": "zero_checked_remainder",
+        "symbol": "scpp::uint32_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint32_shift_left": {
+        "operand": "uint32",
+        "count": "int64",
+        "result": "uint32",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint32_shift_left",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "uint32_shift_right": {
+        "operand": "uint32",
+        "count": "int64",
+        "result": "uint32",
+        "strategy": "checked_shift",
+        "symbol": "scpp::uint32_shift_right",
+        "header": "scpp/arithmetic.hpp"
       }
     },
     "integer_operators": {
@@ -1112,7 +1374,12 @@
       "compounds": {
         "types": [
           "int64",
-          "uint8"
+          "uint8",
+          "int8",
+          "int16",
+          "int32",
+          "uint16",
+          "uint32"
         ],
         "write_back": "checked"
       },
@@ -1124,6 +1391,26 @@
         "uint8": {
           "divide": "uint8_divide",
           "remainder": "uint8_remainder"
+        },
+        "int8": {
+          "divide": "int8_divide",
+          "remainder": "int8_remainder"
+        },
+        "int16": {
+          "divide": "int16_divide",
+          "remainder": "int16_remainder"
+        },
+        "int32": {
+          "divide": "int32_divide",
+          "remainder": "int32_remainder"
+        },
+        "uint16": {
+          "divide": "uint16_divide",
+          "remainder": "uint16_remainder"
+        },
+        "uint32": {
+          "divide": "uint32_divide",
+          "remainder": "uint32_remainder"
         }
       },
       "unary": [
@@ -1155,6 +1442,26 @@
           "uint8": {
             "shift_left": "uint8_shift_left",
             "shift_right": "uint8_shift_right"
+          },
+          "int8": {
+            "shift_left": "int8_shift_left",
+            "shift_right": "int8_shift_right"
+          },
+          "int16": {
+            "shift_left": "int16_shift_left",
+            "shift_right": "int16_shift_right"
+          },
+          "int32": {
+            "shift_left": "int32_shift_left",
+            "shift_right": "int32_shift_right"
+          },
+          "uint16": {
+            "shift_left": "uint16_shift_left",
+            "shift_right": "uint16_shift_right"
+          },
+          "uint32": {
+            "shift_left": "uint32_shift_left",
+            "shift_right": "uint32_shift_right"
           }
         }
       }
@@ -1216,13 +1523,18 @@
       "mixed_promotion": "floating_operand",
       "types": {
         "int64": { "lowering": "native_three_way" },
+        "int8": { "lowering": "native_three_way" },
+        "int16": { "lowering": "native_three_way" },
+        "int32": { "lowering": "native_three_way" },
+        "uint16": { "lowering": "native_three_way" },
+        "uint32": { "lowering": "native_three_way" },
         "uint8": { "lowering": "native_three_way" },
         "float64": { "lowering": "checked_three_way", "binding": "float64_compare" },
         "string": { "lowering": "string_three_way", "result_binding": "scalar_bool" }
       }
     },
     "strict_identity": {
-      "types": ["null_t", "bool_t", "int64", "uint8", "float64", "string"],
+      "types": ["null_t", "bool_t", "int64", "uint8", "float64", "string", "int8", "int16", "int32", "uint16", "uint32"],
       "same_type": "value_equality",
       "different_type": "unequal",
       "result_binding": "scalar_bool"

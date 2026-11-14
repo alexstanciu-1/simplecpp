@@ -40,7 +40,26 @@ final class type_@name@ extends type_definition
 	{
 		$tokens = $syntax->root()->tokens;
 		$negative = $tokens->tokens[$syntax->start]->kind === token_kind::minus;
-		$decimal = ltrim($tokens->text_at($syntax->end - 1), '0');
+		$text = $tokens->text_at($syntax->end - 1);
+		if (strlen($text) >= 2 && $text[0] === '0' && str_contains('xXoO', $text[1])) {
+			$radix = match (strtolower(substr($text, 0, 2))) { @radix_cases@ };
+			// Accumulate negatively so the signed minimum never needs a positive host representation.
+			$limit = $negative ? self::MINIMUM : -self::MAXIMUM;
+			$quotient = intdiv($limit, $radix);
+			$remainder = -($limit % $radix);
+			$value = 0;
+			$length = strlen($text);
+			for ($index = 2; $index < $length; ++$index) {
+				$digit = ord($text[$index]);
+				$digit = $digit <= 57 ? $digit - 48 : ($digit | 32) - 87;
+				if ($value < $quotient || ($value === $quotient && $digit > $remainder)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Integer literal is outside @name@ range');
+				}
+				$value = $value * $radix - $digit;
+			}
+			return $negative ? $value : -$value;
+		}
+		$decimal = ltrim($text, '0');
 		$limit = $negative ? '@magnitude@' : '@maximum@';
 		if ((strlen($decimal) > strlen($limit))
 			|| ((strlen($decimal) === strlen($limit)) && (strcmp($decimal, $limit) > 0))) {

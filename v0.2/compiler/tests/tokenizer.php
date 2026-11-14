@@ -57,7 +57,7 @@ $list = scan($text);
 check(($list->text_at(0) === "'a\\'b'") && ($list->text_at(1) === "\"é\0\""), 'Lossless quoted bytes');
 foreach ([['$', flavor::php, 0], ['$1', flavor::php, 0], ['$a', flavor::cpp, 0],
 		['#[A]', flavor::js, 0], ['# x', flavor::cpp, 0], ['1e+', flavor::php, 0],
-		['12abc', flavor::php, 0], ['0x12', flavor::cpp, 0], ['1.2.3', flavor::js, 0],
+		['12abc', flavor::php, 0], ['0x1g', flavor::cpp, 0], ['1.2.3', flavor::js, 0],
 		["ok;\n/*", flavor::php, 4], ["'unfinished", flavor::php, 0], ["\0", flavor::js, 0],
 		["\xff", flavor::php, 0]] as [$text, $flavor, $offset])
 {

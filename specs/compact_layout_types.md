@@ -325,6 +325,126 @@ Generated C++ enum storage must match the source backing exactly. For example,
 
 Unit enums and existing int-backed behavior continue under their current rules.
 
+### 3.0 PHP bootstrap compiler: integer enums
+
+The active `v0.2/compiler/` accepts the following common nominal enum model:
+
+| Flavor | Declaration | Case reference |
+| --- | --- | --- |
+| PHP | `enum Kind { case First = 1; case Large = 300; }` | `Kind::Large` |
+| C++ | `enum Kind { First = 1, Large = 300 };` | `Kind::Large` |
+| JS | `enum Kind { First = 1, Large = 300 }` | `Kind.Large` |
+
+Every case needs an integer literal, optionally signed; decimal, `0x` and `0o`
+spellings follow the ordinary literal rules. Empty enums, duplicate case names
+and duplicate numeric values are errors. An enum occupies the same nominal type
+namespace as a struct; conflicting declarations are errors. Namespace-qualified
+references and plain `use` imports select that exact type.
+
+Omitted backing means an integer-backed enum, not a unit enum. Omitted backing
+and explicit `: int` expose `int64` through `enum_value` and select the smallest
+native representation that covers **both the minimum and maximum case values**.
+The number of cases does not determine storage:
+
+- `{1, 300}` needs `uint16`; `{1, 65536}` needs `uint32`.
+- `{-1, 200}` needs `int16`; `{-1, 2147483648}` needs `int64`.
+- Nonnegative ranges use `uint8`, `uint16`, `uint32`, then `int64` in this slice;
+  negative ranges use `int8`, `int16`, `int32`, then `int64`.
+
+A written fixed backing (`: int64`, `: uint8`, `: byte`, `: int8`, `: int16`,
+`: int32`, `: uint16`, `: uint32`) is exact, even when the values could fit a
+smaller representation. Its availability follows the runtime module rules;
+implicit compact storage does not require activating source numeric widths.
+For example `enum Kind : uint8` lowers with backing `scpp::uint8`. Values outside
+the chosen fixed backing are errors. Source values remain limited to signed
+int64 literals; uint64 backing and its larger constant domain are deferred.
+
+Enums support initialized locals, inference from a case/value, same-type copies,
+by-value callable parameters and returns, and the equality rules below.
+`enum_value(value)` returns the declared fixed backing, or `int64` for omitted
+backing/`: int`. It extracts the numeric value explicitly; ordinary assignment
+does not convert enums to integers or integers to enums. Enum truthiness and
+arithmetic are rejected. Case values are immutable.
+
+The native representation is a scoped C++ `enum class`, with the selected
+underlying scalar alias and no wrapper allocation. The source keyword is still
+`enum`. Scoping prevents case-name leakage and unwanted native integer coercion.
+
+This bootstrap slice does not yet implement unit enums or enum globals,
+nullable/result enum payloads or the selection forms described by the broader
+language contract below.
+
+#### String-backed enums in the PHP bootstrap compiler
+
+An explicit `: string` backing accepts string literal cases in all three flavors.
+PHP uses `case Name = "bytes";`; C++/JS use `Name = "bytes"` comma-separated entries.
+Backing values are unique decoded byte sequences. Empty strings, embedded NUL and
+UTF-8 bytes are supported; no numeric coercion or Unicode normalization occurs.
+For example `"0"` and `"00"` are distinct values. Mixed integer/string cases reject.
+
+The compiler stores a nominal compact integer tag, assigned in declaration order,
+not a string object. It chooses the smallest available tag representation that
+covers every ordinal. Tags are an implementation detail, not an exposed numeric
+backing or stable serialization format. Equality and copying preserve nominal
+identity. Existing explicit case field/parameter defaults apply unchanged.
+
+`enum_value(value)` returns the original string bytes. `enum_name(value)` returns
+the case name, independently of its backing bytes. For this backing,
+`enum_from_value(Enum::class, string)` (JS: `Enum.class`) checks byte-exact membership
+and returns the nominal case or throws. Only string inputs are admitted; other scalar,
+boxed and nullable inputs require a separate boundary. No implicit enum/string
+conversion or reflection API is introduced.
+
+#### Public instance enum methods
+
+Integer- and string-backed enums may declare public instance methods. PHP uses
+`public function label(): string { return enum_name($this); }`; C++ uses
+`string label() { return enum_name(this); }`; JS uses
+`label(): string { return enum_name(this); }`. C++/JS may terminate the case list
+with a semicolon before method declarations. PHP cases retain their semicolons.
+Calls use `->` in PHP/C++ and `.` in JS, as with struct instance methods.
+
+Methods reuse ordinary function parameter/return rules, generated conversions,
+trailing defaults and exact-type named writable reference arguments. `this` is a
+by-value copy of the selected enum case, not an object or writable reference to
+the caller's slot. Returning/copying it preserves nominal identity. Replacing the
+caller's enum through a reference parameter does not change the selected receiver.
+The selected receiver is preserved before effectful argument evaluation. The
+existing declaring-type spellings `self::` (PHP), `Self::` (C++) and `class.` (JS)
+resolve enum cases in the declaring enum. Calls on another same-typed value and
+calls through `this` use the normal method lookup.
+
+Enums do not acquire instance fields, constructors, object identity or allocation.
+Static/private/protected enum methods and enum interface/inheritance contracts are
+not part of this slice. Public method names occupy the method index, independently
+of the case-name index. Erroneous duplicate methods use normal declaration
+publication and duplicate diagnostics. Type-qualified instance calls without a
+receiver reject.
+
+#### Enum instance fields in the PHP bootstrap compiler
+
+Instance fields may use an enum type with an explicit case default of that exact
+nominal type. The default is required even when a constructor later writes the field;
+there is no implicit zero or first-case initialization.
+
+| Flavor | Example inside a struct |
+| --- | --- |
+| PHP | `public Kind $kind = Kind::First;` |
+| C++ | `Kind kind = Kind::First;` |
+| JS | `kind: Kind = Kind.First;` |
+
+The declared type and case resolve in the struct's source context, including plain
+type imports. Integer literals, another enum's cases and executable expressions are
+not enum field defaults. Every default is checked even if the struct is unused.
+New inline and shared instances initialize the field before the constructor body.
+Nested inline records use their own defaults. Copying a record takes the current
+enum field value, without rerunning its default; subsequent edits to either copy
+are independent. Shared-owner copies still refer to the same record.
+
+Field reads and assignments use the existing access rules and exact enum identity.
+This does not enable enum arithmetic, numeric assignment, enum static properties
+or enum globals. Ordinary parameter defaults are covered below.
+
 ### 3.1 v0.2 equality and selection
 
 Enum equality (`==`, `===`) and inequality (`!=`, `!==`) require operands of the
@@ -428,11 +548,33 @@ reference-parameter defaults remain deferred. This does not establish an implici
 enum default: local enum storage still requires explicit initialization, without
 silently choosing zero or the first declared case.
 
+The active PHP bootstrap compiler implements these defaults for functions and
+ordinary instance/static struct methods in all three flavors:
+
+| Flavor | Function signature |
+| --- | --- |
+| PHP | `function pick(Kind $kind = Kind::First): Kind` |
+| C++ | `Kind pick(Kind kind = Kind::First)` |
+| JS | `function pick(kind: Kind = Kind.First): Kind` |
+
+Constructors also accept these trailing by-value enum case defaults. Inline and
+shared construction use the same default argument path. A constructor with defaults
+for every parameter can initialize a nested inline field without explicit arguments;
+its generated zero-argument entry delegates using the prepared defaults. Written
+field defaults run before the constructor body, and copying a record preserves its
+current field values without rerunning construction. Existing scalar constructor
+defaults and the constructor's by-value parameter restriction are unchanged.
+
+The default is checked when its signature is prepared,
+including unused functions/methods. Calls with an explicit argument do not select
+the default, but an invalid default still makes the declaration invalid.
+
 ### 3.4 v0.2 enum case names
 
 The compiler-provided `enum_name(value)` accepts exactly one enum argument and
 returns its original, unqualified case name as a `string`, preserving spelling and
-case. Unit enums, int-backed enums and fixed-integer-backed enums are supported.
+case. The helper contract covers unit, int-backed, fixed-integer-backed and string-backed enums;
+the bootstrap currently implements the integer and string-backed forms.
 The argument is evaluated exactly once. Wrong arity and non-enum arguments are
 preparation errors; no string/integer coercion selects an enum implicitly.
 
@@ -446,27 +588,30 @@ native code throws at runtime rather than inventing a case name.
 This helper does not enable numeric conversion, PHP enum reflection methods,
 implicit enum defaults or user-defined generic functions.
 
-### 3.5 v0.2 explicit numeric enum helpers
+### 3.5 v0.2 explicit backing-value enum helpers
 
-`enum_value(value)` accepts one enum value. For explicitly fixed-backed enums,
+`enum_value(value)` accepts one enum value. String-backed enums follow the byte
+contract above. For explicitly fixed-backed integer enums,
 the result has the declared backing type, including full-width `uint64`. For plain
 `int`-backed and unit enums it is `int`, independently of compact storage selection.
 Unit enum values are zero-based declaration ordinals; reordering cases changes
 those ordinals, so use explicit backing values for stable external encodings.
 
-`enum_from_value(Enum::class, value)` returns that exact enum type or throws if
-the integer does not identify a declared case. Its first argument is a compile-time
+`enum_from_value(Enum::class, value)` (PHP/C++) or
+`enum_from_value(Enum.class, value)` (JS) returns that exact enum type or throws if
+the input does not identify a declared case. Its first argument is a compile-time
 type marker resolved through ordinary type lookup, including imports; it is not
-a runtime string or reflection object. The second argument may have any supported
-integer width/signedness. Comparison preserves the original mathematical value:
+a runtime string or reflection object. Integer-backed enums accept any supported
+integer width/signedness; string-backed enums require a string as specified above.
+Integer comparison preserves the original mathematical value:
 out-of-range values must not truncate or wrap into a valid case. Checking exact
 membership before any narrowing also establishes representability.
 
 Both helpers evaluate their runtime argument once and follow ordinary callable
 lookup/shadowing, like `enum_name`. Wrong arity, non-enum targets, missing type
-markers and noninteger reverse-conversion inputs reject during preparation.
-Float, bool, string, mixed and dynamic inputs require an explicit prior integer
-boundary; these helpers do not introduce implicit coercion. Well-typed integer
+markers and inputs of the wrong backing family reject during preparation.
+For integer backing, float, bool, string, mixed and dynamic inputs require an
+explicit prior integer boundary; these helpers do not introduce implicit coercion. Well-typed backing
 inputs without a matching case throw at runtime; this slice adds no constant-call
 evaluation. No nullable/Result alternative, general reflection or implicit
 enum/integer conversion is introduced.

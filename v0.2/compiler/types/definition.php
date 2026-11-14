@@ -306,9 +306,9 @@ abstract class type_definition
 	}
 
 	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
-	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		$source = $syntax?->type_def();
+		$source = $source_type ?? $syntax?->type_def();
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
 			return $this->box_cpp($syntax, $value);
 		}
@@ -325,6 +325,7 @@ abstract class type_definition
 				throw new \LogicException('Checked extraction requires its source carrier type');
 			}
 			$value = $source->lower_cpp_extract($value);
+			$source = $source->payload_type;
 			$syntax = null;
 		}
 		if ($this instanceof carrier_type_definition) {
@@ -338,21 +339,28 @@ abstract class type_definition
 				return '((void)(' . $value . '), ' . $this->cpp_type() . '{})';
 			}
 			if (($conversion & value_conversion::WRAP) !== 0) {
-				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
+				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source);
 				return $this->cpp_type() . '{static_cast<' . $this->payload_type->cpp_type() . '>(' . $value . ')}';
 			}
 		}
-		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
+		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source);
 	}
 
 	/** Carrier states are not scalar constant facts; do not confuse absent values with known scalar null. */
-	final public function convert_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	final public function convert_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		if (($this instanceof boxed_type_definition) || ($conversion >= value_conversion::unbox_explicit && $conversion <= value_conversion::unbox_assignment)
 			|| ($this instanceof carrier_type_definition) || (($conversion & value_conversion::EXTRACT) !== 0)) {
-			return null;
+			return constant_evaluation::unavailable;
 		}
 		return $this->convert_scalar_constant($conversion, $value);
+	}
+
+	/** Evaluate only a known source fact; conversion handlers may explicitly decline evaluation. */
+	final public function evaluate_constant(int $conversion /** uint16 */, ast_expression $source): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
+	{
+		return $source->constant_known() ? $this->convert_constant($conversion, $source->constant())
+			: constant_evaluation::unavailable;
 	}
 
 	/** @return string[] Includes for the prepared payload conversion and destination carrier. */
@@ -377,14 +385,14 @@ abstract class type_definition
 			. $value->value_type()->name . ' to ' . $this->name);
 	}
 
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Conversion does not belong to this destination type');
 	}
 
 	/** Convert only an already-checked constant; null also carries an unknown payload beside its known flag. */
-	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null /** int64|float64|bool|null */
+	public function convert_scalar_constant(int $conversion /** uint16 */, int|float|bool|null $value /** int64|float64|bool|null */): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Constant conversion does not belong to this destination type');
