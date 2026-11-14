@@ -182,9 +182,13 @@ final class Preparation
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
-				$this->value($statement->receiver);
-				if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
+				if ($statement->receiver instanceof ast_field_expression) {
+					$this->writable_property($statement->receiver);
+				} else {
+					$this->value($statement->receiver);
+					if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
+						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
+					}
 				}
 				$type = $statement->receiver->type_def();
 				if (!($type instanceof appendable_collection_type)) {

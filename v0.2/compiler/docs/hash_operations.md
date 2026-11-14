@@ -93,3 +93,6 @@ initializer. See [common value passing](value_passing.md).
 
 Writable parameters use the [common exact-type reference binder](collection_references.md);
 only named locals and parameters can bind.
+
+Instance fields default to empty and reuse value copying and keyed writes; see
+[collection fields](collection_fields.md).

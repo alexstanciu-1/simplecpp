@@ -26,6 +26,11 @@ abstract class hash_type_definition extends type_definition implements indexed_c
 		return true;
 	}
 
+	public function supports_instance_field(): bool
+	{
+		return true;
+	}
+
 	public function write_type(): type_definition
 	{
 		return $this->value_type;

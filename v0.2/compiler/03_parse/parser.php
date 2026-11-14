@@ -663,12 +663,9 @@ final class Parser
 		return $initializer;
 	}
 
-	/** Parse a keyed write on a writable place or a named collection append. */
+	/** Parse a keyed write or append on a named local or field; preparation checks writability. */
 	private function indexed_write(ast_name_expression|ast_field_expression $receiver): ast_statement
 	{
-		if ($this->cursor->next_is(token_kind::rbracket) && !($receiver instanceof ast_name_expression && $receiver->end === $receiver->start + 1)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Field write requires an index');
-		}
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$this->cursor->take(token_kind::rbracket, ']');

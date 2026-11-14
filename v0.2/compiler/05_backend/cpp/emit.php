@@ -621,13 +621,17 @@ CPP;
 			elseif ($statement instanceof ast_append_statement) {
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
-				$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$steps = [];
+				$receiver = $statement->receiver instanceof ast_field_expression
+					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
+					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$conversion = $statement->conversion();
 				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$lines[] = "\t" . $type->lower_cpp_append($statement, $receiver, $value) . ';';
+				$append = $type->lower_cpp_append($statement, $receiver, $value) . ';';
+				$lines[] = "\t" . ($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
