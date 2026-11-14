@@ -1167,21 +1167,6 @@ CPP;
 	}
 
 	/** STATIC METHODS */
-	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
-	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
-	{
-		if (!($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) || !$type->cpp_trivial_value()) {
-			return false;
-		}
-		return match ($conversion) {
-			value_conversion::identity, value_conversion::boolean_integer, value_conversion::integer_boolean,
-			value_conversion::integer_widen, value_conversion::integer_proven, value_conversion::numeric_floating,
-			value_conversion::floating_boolean, value_conversion::floating_integer_proven => true,
-			default => false,
-		};
-	}
-
 	/** Application record and handle types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition> */
 	public static function signature_records(ast_function_declaration $function): \Generator
 	{
