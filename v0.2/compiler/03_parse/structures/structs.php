@@ -14,6 +14,7 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	/** Native owning optional literal written on the field. */
 	public readonly ?ast_expression $initializer;
 	public readonly bool $is_private;
+	public readonly bool $is_protected;
 
 	/** PREP FACTS */
 	/** Prepared fact: typed destination conversion for the written literal. */
@@ -24,10 +25,11 @@ final class ast_struct_field extends ast_node implements ast_declaration_interfa
 	/** CONSTRUCTOR */
 	/** Retain the written visibility and attach the field type to its declaration. */
 	public function __construct(string $name, ast_type_reference $type, int $start /** uint32 */, int $end /** uint32 */, bool $private,
-		?ast_expression $initializer = null)
+		?ast_expression $initializer = null, bool $protected = false)
 	{
 		parent::__construct($start, $end);
 		$this->is_private = $private;
+		$this->is_protected = $protected;
 		$this->short_name = $name;
 		$this->namespace = null;
 		$this->type_reference = $type;
@@ -70,6 +72,8 @@ final class ast_struct_declaration extends ast_node implements ast_declaration_i
 	public readonly array $static_properties /** array<string,ast_global_declaration> */;
 	/** Native owning canonical type for this declaration generation. */
 	public readonly struct_type_definition $definition;
+	/** Native owning optional written base, independent of resolution success. */
+	public readonly ?ast_type_reference $base_reference;
 
 	/** CONSTRUCTOR */
 	/**
@@ -77,7 +81,8 @@ final class ast_struct_declaration extends ast_node implements ast_declaration_i
 	 * @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members All occurrences in source order before duplicate publication.
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_struct_field> */,
-		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [])
+		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
+		?ast_type_reference $base_reference = null)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -100,6 +105,8 @@ final class ast_struct_declaration extends ast_node implements ast_declaration_i
 				$node->attach($this);
 			}
 		}
+		$this->base_reference = $base_reference;
+		$base_reference?->attach($this);
 		$this->definition = new struct_type_definition($this);
 	}
 
@@ -249,5 +256,36 @@ final class ast_this_expression extends ast_expression
 	public function settle_receiver(struct_type_definition $record): void
 	{
 		$this->settle_value($record, null);
+	}
+}
+
+/** Constructor-only base initialization; omitted syntax means default base initialization. */
+final class ast_base_initialization extends ast_construction_expression
+{
+	public readonly bool $explicit;
+	/** Native owning C++ initializer target; PHP/JS select parent implicitly. */
+	public readonly ?ast_type_reference $target;
+
+	/** @param ast_expression[] $arguments */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arguments /** list<ast_expression> */,
+		bool $explicit, ?ast_type_reference $target = null)
+	{
+		parent::__construct($start, $end, $arguments);
+		$this->explicit = $explicit;
+		$this->target = $target;
+		$target?->attach($this);
+	}
+}
+
+/** First constructor statement retained for collection/preparation, emitted as a base initializer. */
+final class ast_base_statement extends ast_statement
+{
+	public readonly ast_base_initialization $value;
+
+	public function __construct(ast_base_initialization $value)
+	{
+		parent::__construct($value->start, $value->end);
+		$this->value = $value;
+		$value->attach($this);
 	}
 }

@@ -87,7 +87,7 @@ final class Body_Collection
 			$value = $statement->value;
 		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
-			|| ($statement instanceof ast_call_statement)) {
+			|| ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 			$value = $statement->value;
 		}
 		elseif ($statement instanceof ast_loop_statement) {

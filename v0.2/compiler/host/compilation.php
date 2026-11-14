@@ -127,6 +127,9 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'append', 'receiver' => self::value($statement->receiver),
 					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
+			elseif ($statement instanceof ast_base_statement) {
+				$statements[] = ['kind' => 'base_initialization', 'value' => self::value($statement->value)];
+			}
 			elseif ($statement instanceof ast_call_statement) {
 				$statements[] = ['kind' => 'call', 'target' => $statement->value->target_name(),
 					'return_type' => $statement->value->type_def()->name,

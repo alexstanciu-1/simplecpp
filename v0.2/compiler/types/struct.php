@@ -19,8 +19,10 @@ final class struct_type_definition extends type_definition implements dependency
 	private string $source_key = '';
 
 	/** PREP FACTS */
-	/** Prepared fact: all field names and types have been validated. */
+	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
+	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
+	private ?self $base_type = null;
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_struct_declaration $declaration)
@@ -38,6 +40,7 @@ final class struct_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->ready = false;
+		$this->base_type = null;
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
 		$this->dependencies = $dependencies;
@@ -53,6 +56,7 @@ final class struct_type_definition extends type_definition implements dependency
 	{
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
+		$this->base_type = null;
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
@@ -72,6 +76,15 @@ final class struct_type_definition extends type_definition implements dependency
 		}
 		$active[$this->name] = true;
 		$this->dependencies->forget($this);
+		$this->base_type = null;
+		if ($this->declaration->base_reference !== null) {
+			$written = $this->declaration->base_reference;
+			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			if (!($base instanceof self)) throw new diagnostic($written->source(), $written->byte_start(), 'Base must be a struct');
+			$base->prepare_layout($symbols, $active, $work);
+			$this->base_type = $base;
+			$this->validate_inherited_members();
+		}
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Duplicate struct property: ' . $this->name . '::' . $field->short_name);
@@ -82,7 +95,7 @@ final class struct_type_definition extends type_definition implements dependency
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($type instanceof self) {
 				$type->prepare_layout($symbols, $active, $work);
-				$constructor = $type->declaration->methods['__construct'] ?? null;
+				$constructor = $type->constructor();
 				$constructor?->require_access($this->declaration, $field->type_reference);
 				if ($constructor !== null && !$constructor->accepts_argument_count(0)) {
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
@@ -103,6 +116,65 @@ final class struct_type_definition extends type_definition implements dependency
 		$this->ready = true;
 		// A declaration-only unit may emit dependent constructor or owner declarations.
 		$work?->change_source($this->source_key);
+	}
+
+	public function base(): ?self
+	{
+		return $this->base_type;
+	}
+
+	/** The effective constructor remains owned by its original declaration. */
+	public function constructor(): ?ast_function_declaration
+	{
+		return $this->declaration->methods['__construct'] ?? $this->base_type?->constructor();
+	}
+
+	/** Nearest instance-field declaration; access checks never retry a hidden base field. */
+	public function field(string $name): ?ast_struct_field
+	{
+		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
+	}
+
+	/** Settled single-base relation; equality includes the type itself. */
+	public function derives_from(self $ancestor): bool
+	{
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			if ($type === $ancestor) return true;
+		}
+		return false;
+	}
+
+	/** Keep inherited declarations at their owner and reject unsupported hiding. */
+	private function validate_inherited_members(): void
+	{
+		foreach ($this->declaration->fields as $field) {
+			$inherited = $this->base_type->field($field->short_name);
+			if ($inherited !== null && !($inherited->is_private && $field->is_private)) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Inherited field redeclaration: ' . $field->short_name);
+			}
+		}
+		for ($base = $this->base_type; $base !== null; $base = $base->base_type) {
+			foreach ($this->declaration->methods as $name => $method) {
+				if ($name !== '__construct' && isset($base->declaration->methods[$name])) {
+					throw new diagnostic($method->source(), $method->byte_start(), 'Inherited method redeclaration is deferred: ' . $name);
+				}
+			}
+			foreach ($this->declaration->static_properties as $name => $property) {
+				if (isset($base->declaration->static_properties[$name]) || isset($base->declaration->fields[$name])) {
+					throw new diagnostic($property->source(), $property->byte_start(), 'Inherited property redeclaration: ' . $name);
+				}
+			}
+			foreach ($this->declaration->fields as $name => $field) {
+				if (isset($base->declaration->static_properties[$name])) {
+					throw new diagnostic($field->source(), $field->byte_start(), 'Inherited property redeclaration: ' . $name);
+				}
+			}
+			foreach ($this->declaration->constants as $name => $constant) {
+				if (isset($base->declaration->constants[$name])) {
+					throw new diagnostic($constant->source(), $constant->byte_start(), 'Inherited constant redeclaration: ' . $name);
+				}
+			}
+		}
 	}
 
 	public function supports_inferred_local(): bool

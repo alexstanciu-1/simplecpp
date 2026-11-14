@@ -31,12 +31,14 @@ final class Syntax_Inspection
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
 			if ($function->is_private) $functions[array_key_last($functions)]['visibility'] = 'private';
+			if ($function->is_protected) $functions[array_key_last($functions)]['visibility'] = 'protected';
 		}
 		$result = ['namespace' => $file->scope->namespace, 'flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
 		foreach ($file->declaration_nodes as $node) {
 			if ($node instanceof ast_struct_declaration) {
 				$result['structs'][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_struct_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
+				if ($node->base_reference !== null) $result['structs'][array_key_last($result['structs'])]['base'] = $node->base_reference->spelling();
 			}
 		}
 		$result['imports'] = array_map(static fn(ast_import $import): array => [
@@ -86,6 +88,10 @@ final class Syntax_Inspection
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
+		if ($expression instanceof ast_base_initialization) {
+			return ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
+				'arguments' => array_map(self::expression(...), $expression->arguments)];
+		}
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
@@ -203,7 +209,7 @@ final class Syntax_Inspection
 		if ($statement instanceof ast_append_statement) {
 			return ['kind' => 'append', 'receiver' => self::expression($statement->receiver), 'value' => self::expression($statement->value)];
 		}
-		if ($statement instanceof ast_call_statement) {
+		if ($statement instanceof ast_call_statement || $statement instanceof ast_base_statement) {
 			return self::expression($statement->value) + ['statement_span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_local_declaration) {

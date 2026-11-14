@@ -330,6 +330,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 
 	/** PROPERTIES */
 	public readonly bool $is_private;
+	public readonly bool $is_protected;
 	public readonly bool $is_implicit_entry;
 	public readonly bool $is_static;
 	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
@@ -357,9 +358,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 */
 	public function __construct(string $name, ?ast_type_reference $return_type_reference, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false)
+		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false, bool $protected = false)
 	{
 		$this->is_static = $static;
+		$this->is_protected = $protected;
 		$this->short_name = $name;
 		$this->namespace = $namespace;
 		$this->is_private = $is_implicit_entry || $private;
@@ -397,6 +399,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Enforce lexical access for a call or an implicit inline-field initialization. */
 	public function require_access(ast_node $context, ast_node $site): void
 	{
+		if ($this->is_protected && (!($context instanceof ast_struct_declaration)
+			|| !$context->definition->derives_from($this->parent->definition))) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call protected constructor ' . $this->name());
+		}
 		if ($this->is_private && $context !== $this->parent) {
 			$kind = $this->is_constructor() ? 'constructor' : 'method';
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call private ' . $kind . ' ' . $this->name());

@@ -44,6 +44,8 @@ final class Preparation
 	private int $name_lookups /** uint32 */ = 0;
 	/** Active loop bodies within this function; reset before each preparation. */
 	private int $loop_depth /** uint32 */ = 0;
+	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
+	private bool $initializing_base = false;
 	/** Native non-owning context for this body's variable lookup and dependency registration. */
 	private scope $symbols;
 	/** Native non-owning owner of the facts being prepared. */
@@ -133,7 +135,10 @@ final class Preparation
 					: 'Statements after unconditional control transfer are not supported');
 			}
 			$next = statement_completion::fallthrough;
-			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+			if ($statement instanceof ast_base_statement) {
+				$this->base_initialization($statement->value);
+			}
+			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
 				if ($this->loop_depth === 0) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop');
 				}
@@ -487,6 +492,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_this_expression) {
+			if ($this->initializing_base) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Current instance is unavailable during base initialization');
 			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
 			$record = $this->owner->parent->parent;
 			if (!($record instanceof ast_struct_declaration)) {
@@ -499,6 +505,8 @@ final class Preparation
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 				}
 			}
+			// Receiver facts depend on the current layout, including inherited types and access.
+			$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
 			$syntax->settle_receiver($record->definition);
 			return;
 		}
@@ -517,12 +525,18 @@ final class Preparation
 			if (!($type instanceof struct_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice for type ' . $type->name);
 			}
-			$field = $type->declaration->fields[$syntax->field] ?? null;
+			$field = $type->field($syntax->field);
 			if ($field === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
 			}
 			if ($field->is_private && $this->owner->parent->parent !== $field->parent) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
+			}
+			$context = $this->owner->parent->parent;
+			if ($field->is_protected && (!($context instanceof ast_struct_declaration)
+				|| !$context->definition->derives_from($field->parent->definition)
+				|| !$type->derives_from($context->definition))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$syntax->settle_field($field->type_def());
 			return;
@@ -888,7 +902,7 @@ final class Preparation
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_struct_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		$constructor = $payload instanceof struct_type_definition ? ($payload->declaration->methods['__construct'] ?? null) : null;
+		$constructor = $payload instanceof struct_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
@@ -897,6 +911,28 @@ final class Preparation
 			$constructor->require_access($this->owner->parent->parent, $site);
 		}
 		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
+	}
+
+	/** Base arguments use the ordinary call boundary, before the current instance becomes available. */
+	private function base_initialization(ast_base_initialization $site): void
+	{
+		$record = $this->owner->parent->parent;
+		$base = $record->definition->base();
+		$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
+		if ($base === null) throw new diagnostic($site->source(), $site->byte_start(), 'Base initialization requires a base');
+		if ($site->target !== null) {
+			$target = Type_Resolution::named($site->target, $this->symbols, $record->namespace, $this->owner, $this->dependencies);
+			if ($target !== $base) throw new diagnostic($site->source(), $site->byte_start(), 'Initializer must select the immediate base');
+		}
+		if ($site->explicit && $base->constructor() === null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Explicit parent call requires an authored base constructor');
+		}
+		$this->initializing_base = true;
+		try {
+			$this->construction($site, $base, null);
+		} finally {
+			$this->initializing_base = false;
+		}
 	}
 
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */

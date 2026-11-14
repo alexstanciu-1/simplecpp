@@ -90,6 +90,10 @@ final class Cpp_Headers
 		$header = $this->declarations[$key] = self::record_header($record);
 		$layout = $this->publish_layout($record, $emitter, $root);
 		$includes = [$layout => true];
+		if ($record->definition->base() !== null) {
+			$base_header = $this->publish_record($record->definition->base()->declaration, $emitter, $root);
+			$includes[$base_header] = true;
+		}
 		$methods = [];
 		$headers = [];
 		foreach ($record->fields as $field) {
@@ -124,6 +128,12 @@ final class Cpp_Headers
 		$owners = [];
 		$needs_methods = false;
 		$includes = [];
+		if ($record->definition->base() !== null) {
+			$base = $record->definition->base()->declaration;
+			$base_layout = $this->publish_layout($base, $emitter, $root);
+			$children[$base_layout] = true;
+			$needs_methods = $base_layout !== self::record_header($base);
+		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
 			if ($type instanceof struct_handle_definition) {

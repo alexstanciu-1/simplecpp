@@ -17,26 +17,43 @@ final class Struct_Syntax
 		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void') {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
 		}
+		$base = null;
+		if ($flavor === flavor::cpp ? $c->is(token_kind::colon) : $c->keyword('extends')) {
+			if ($flavor === flavor::cpp) {
+				$c->take(token_kind::colon, ':');
+				if ($c->keyword('public')) $c->take_keyword('public');
+			} else $c->take_keyword('extends');
+			$base = $parser->named_type();
+		}
 		$c->take(token_kind::lbrace, '{');
 		$fields = [];
 		$private_section = false;
+		$protected_section = false;
 		while (!$c->is(token_kind::rbrace)) {
 			$field_start = $c->position();
-			// JS permits private as an ordinary identifier; recognize a modifier only before a member.
-			$js_private = $flavor === flavor::js && $c->is(token_kind::identifier)
+			// JS visibility spellings are contextual identifiers; recognize them only before a member.
+			$js_visibility = $flavor === flavor::js && $c->is(token_kind::identifier)
 				&& ($c->next_is(token_kind::identifier) || $c->next_is(token_kind::keyword))
-				&& $c->tokens->text_at($field_start) === 'private';
-			$private = $js_private || $c->keyword('private');
-			if ($private || $c->keyword('public')) {
-				$c->take($js_private ? token_kind::identifier : token_kind::keyword, $private ? 'private' : 'public');
+				&& in_array($c->tokens->text_at($field_start), ['private', 'protected'], true);
+			$protected = $c->keyword('protected') || ($js_visibility && $c->tokens->text_at($field_start) === 'protected');
+			$private = $c->keyword('private') || ($js_visibility && !$protected);
+			if ($private || $protected || $c->keyword('public')) {
+				$c->take($js_visibility ? token_kind::identifier : token_kind::keyword, 'visibility');
 				if ($flavor === flavor::cpp) {
 					$c->take(token_kind::colon, ':');
 					$private_section = $private;
+					$protected_section = $protected;
 					continue;
 				}
 			}
-			if ($flavor === flavor::cpp) $private = $private_section;
+			if ($flavor === flavor::cpp) {
+				$private = $private_section;
+				$protected = $protected_section;
+			}
 			$static = $c->keyword('static');
+			if ($protected && ($static || $c->keyword('const'))) {
+				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
+			}
 			if ($static && $flavor === flavor::cpp && $c->next_is(token_kind::identifier)
 				&& $c->tokens->text_at($c->position() + 1) === 'constexpr') {
 				$members[] = Constant_Syntax::read($parser, $private);
@@ -65,7 +82,7 @@ final class Struct_Syntax
 				}
 				$void = new ast_type_reference($at, $at, 'void');
 				$method = new ast_function_declaration('__construct', $void, $field_start, $c->position(), false,
-					$parser->source_namespace(), $parameters, private: $private);
+					$parser->source_namespace(), $parameters, private: $private, protected: $protected);
 			} else {
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
 				$method = $js_method ? $parser->named_function_header(false, $static, $private)
@@ -75,7 +92,8 @@ final class Struct_Syntax
 				}
 			}
 			if ($method !== null) {
-				$members[] = $parser->callable_body($grammar, $method, $name);
+				if ($protected && !$constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected ordinary methods are deferred');
+				$members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
 				continue;
 			}
 			if ($static) {
@@ -96,7 +114,7 @@ final class Struct_Syntax
 				$initializer = $parser->literal_initializer('Field initializer requires a literal');
 			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
-			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer);
+			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer, $protected);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
 				while ($tail->duplicate_element() !== null) $tail = $tail->duplicate_element();
@@ -107,6 +125,6 @@ final class Struct_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members);
+		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base);
 	}
 }

@@ -27,6 +27,8 @@ final class Cpp_Emitter
 	private readonly string $root;
 	/** Set while lowering a function that calls a generated flavor adapter. */
 	private ?string $adapter_flavor = null;
+	/** Initializer expressions cannot use imports declared inside the constructor body. */
+	private bool $qualified_adapters = false;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 
@@ -44,6 +46,7 @@ final class Cpp_Emitter
 	{
 		if ($node instanceof ast_struct_declaration) {
 			$layout = [];
+			$base = $node->definition->base();
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$type = $field->type_def();
@@ -65,8 +68,11 @@ final class Cpp_Emitter
 				$layout[] = "\t" . $name . '(' . $params . ');';
 				if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
 			}
+			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
+				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
+			}
 			return $this->constructor_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-				. " {\n" . implode("\n", $layout) . "\n};\n");
+				. ($base === null ? '' : ' : public ' . $base->cpp_type()) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
 			return $this->signature($node, $includes) . ';';
@@ -98,7 +104,7 @@ final class Cpp_Emitter
 		$weak = $type->payload->weak->cpp_type();
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
-		$params = $this->constructor_parameters($payload->declaration->methods['__construct'] ?? null, $includes);
+		$params = $this->constructor_parameters($payload->constructor(), $includes);
 		return <<<CPP
 #ifndef $guard
 #define $guard
@@ -147,7 +153,7 @@ CPP;
 		$owner = $type->cpp_type();
 		$weak = $type->payload->weak->cpp_type();
 		$guard = $this->owner_guard($type) . '_DEF';
-		$constructor = $type->payload->declaration->methods['__construct'] ?? null;
+		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : value{} {}' : "allocation($params);";
 		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
@@ -203,11 +209,11 @@ inline {$weak}::~$weak() { if (ptr) ptr->release_weak(); }
 CPP;
 	}
 
-	/** Define user-directed allocation once beside the payload constructor, where parameter types are complete. @param bool[] $headers */
+	/** Define user-directed allocation in the payload source, where parameter types are complete. @param bool[] $headers */
 	private function allocation_factory(shared_struct_type_definition $type, array &$headers /** array<string,bool> */): string
 	{
 		$owner = $type->cpp_type();
-		$constructor = $type->payload->declaration->methods['__construct'] ?? null;
+		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $headers);
 		$args = [];
 		foreach ($constructor?->parameters ?? [] as $parameter) {
@@ -271,16 +277,22 @@ CPP;
 			}
 		}
 		foreach ($file->declaration_nodes as $node) {
-			if ($node instanceof ast_struct_declaration) $declarations[$node->symbol_key()] = $node;
+			if (!($node instanceof ast_struct_declaration)) continue;
+			$declarations[$node->symbol_key()] = $node;
+			$constructor = $node->definition->constructor();
+			if ($constructor !== null) {
+				// Each payload's source owns its factory, including inherited constructor contracts.
+				$owner = $node->definition->shared;
+				$declarations[$owner->name] = $owner;
+				$this->collect_signature_types($constructor, $declarations);
+				$definitions[] = $this->allocation_factory($owner, $required_headers);
+			}
 		}
 		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
 			$name = self::function_name($function);
 			if ($function->is_constructor()) {
 				$owner = $function->parent->definition->shared;
-				$declarations[$owner->name] = $owner;
-				$this->collect_signature_types($function, $declarations);
-				$definitions[] = $this->allocation_factory($owner, $required_headers);
 				// Embedded fields use native {}. Keep the literal defaults in their defining unit.
 				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
 					$defaults = [];
@@ -296,10 +308,20 @@ CPP;
 			}
 			$this->adapter_flavor = null;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
-			$unit_flavor ??= $this->adapter_flavor;
 			if ($function->is_constructor()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			$base_initializer = '';
+			$first = $function->body()->statements[0] ?? null;
+			if ($first instanceof ast_base_statement) {
+				$this->qualified_adapters = true;
+				try {
+					$base_initializer = $this->base_initializer($first->value, $global_references, $declarations, $required_headers);
+				} finally {
+					$this->qualified_adapters = false;
+				}
+			}
+			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
-				. "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$this->adapter_flavor = null;
@@ -407,6 +429,9 @@ CPP;
 			$unit_headers[$header] = true;
 			return;
 		}
+		if ($record->definition->base() !== null) {
+			$this->record_prototypes($record->definition->base()->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
+		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
 			if ($type instanceof struct_type_definition) {
@@ -468,6 +493,7 @@ CPP;
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_base_statement) continue;
 			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
 				$lines[] = "\t" . ($statement instanceof ast_break_statement ? 'break;' : 'continue;');
 			}
@@ -763,7 +789,7 @@ CPP;
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
-			$constructor = $record->declaration->methods['__construct'] ?? null;
+			$constructor = $record->constructor();
 			if ($constructor === null) return $type->cpp_type() . '::make()';
 			$this->collect_signature_types($constructor, $declarations);
 			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
@@ -912,7 +938,7 @@ CPP;
 					$this->adapter_flavor = $function->adapter_flavor;
 					$short = substr($symbol, strrpos($symbol, '::') + 2);
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
-					$symbol = in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+					$symbol = $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
 				if (count($operands) === 1 && !$function->overloaded_first) {
@@ -1115,11 +1141,39 @@ CPP;
 		}
 	}
 
+	/**
+	 * Braced base initialization sequences converted arguments without a temporary base payload.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function base_initializer(ast_base_initialization $site, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		/** @var struct_type_definition $base */
+		$base = $site->type_def();
+		$constructor = $base->constructor();
+		$arguments = [];
+		if ($constructor !== null) {
+			$this->collect_signature_types($constructor, $declarations);
+			if (self::self_value_constructor($constructor)) $arguments[] = '0';
+			foreach ($constructor->parameters as $index => $parameter) {
+				$argument = $site->arguments[$index] ?? $parameter->default_value;
+				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
+				$type = $parameter->type_def();
+				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
+				$value = $this->value($argument, $globals, $declarations, $headers);
+				$arguments[] = $type->lower_cpp_conversion($conversion, $value, $argument);
+			}
+		}
+		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
+	}
+
 	/** Parameter types need only forward declarations in the native payload and owner declarations. */
 	private function constructor_forwards(ast_struct_declaration $record): string
 	{
 		$forwards = [];
-		foreach ($record->methods['__construct']->parameters ?? [] as $parameter) {
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
 			$type = $parameter->type_def();
 			if ($type instanceof struct_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
