@@ -385,6 +385,7 @@ function compilerOutput(?array $selected): string {
 function compilerConversions(array $conversions, array $definitions, string $target): string {
     $prepare = [];
     $lower = [];
+    $checkedLower = [];
     $constants = [];
     $headerCases = [];
     foreach ($conversions as $row) {
@@ -442,7 +443,7 @@ function compilerConversions(array $conversions, array $definitions, string $tar
 			return value_conversion::floating_integer_checked;
 CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
             $lower[] = "\t\t\tvalue_conversion::floating_integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::floating_integer_checked => '{$symbol}(' . \$value . ')',";
+            $checkedLower['floating_integer_checked'][$from] = "'{$symbol}(' . \$value . ')'";
         } elseif ($operation === 'checked_integer') {
             $prepare[] = <<<'CODE'
 			if ($value->constant_known()) {
@@ -455,7 +456,7 @@ CODE, ['@lower@' => $lowerBound, '@upper@' => $bound]);
 			return value_conversion::integer_checked;
 CODE;
             $lower[] = "\t\t\tvalue_conversion::integer_proven => 'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')',";
-            $lower[] = "\t\t\tvalue_conversion::integer_checked => '{$symbol}(' . self::checked_integer_operand(\$syntax, \$value, '{$sourceCpp}') . ')',";
+            $checkedLower['integer_checked'][$from] = "'{$symbol}(' . self::checked_integer_operand(\$syntax, \$value, '{$sourceCpp}') . ')'";
         } else {
             $prepare[] = "\t\t\treturn value_conversion::$operation;";
             $expression = in_array($operation, ['integer_boolean', 'floating_boolean'], true) ? "'(' . \$value . ' != 0)'" : "'static_cast<' . \$this->cpp_type() . '>(' . \$value . ')'";
@@ -464,6 +465,15 @@ CODE;
         $prepare[] = "\t\t}";
     }
     if ($prepare === []) return '';
+    foreach ($checkedLower as $operation => $sources) {
+        $arms = [];
+        foreach ($sources as $source => $expression) {
+            $class = $definitions[$source]['class'];
+            $arms[] = "\t\t\t\ttype_$class::instance() => $expression,";
+        }
+        $lower[] = "\t\t\tvalue_conversion::$operation => match (\$source_type ?? \$syntax?->value_type()) {\n"
+            . implode("\n", $arms) . "\n\t\t\t\tdefault => throw new \\LogicException('Checked conversion requires its prepared source type'),\n\t\t\t},";
+    }
     $prepare = implode("\n", $prepare);
     $lower = implode("\n", array_unique($lower));
     $constants = implode("\n", array_unique($constants));
@@ -491,11 +501,11 @@ $prepare
 	}
 
 	/** Render an approved boundary without repeating source-type resolution or changing facts. */
-	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value, ?ast_expression \$syntax = null): string
+	public function lower_scalar_conversion(int \$conversion /** uint16 */, string \$value, ?ast_expression \$syntax = null, ?type_definition \$source_type = null): string
 	{
 		return match (\$conversion) {
 $lower
-			default => parent::lower_scalar_conversion(\$conversion, \$value),
+			default => parent::lower_scalar_conversion(\$conversion, \$value, \$syntax, \$source_type),
 		};
 	}
 

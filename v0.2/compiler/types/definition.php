@@ -306,9 +306,9 @@ abstract class type_definition
 	}
 
 	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
-	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		$source = $syntax?->type_def();
+		$source = $source_type ?? $syntax?->type_def();
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
 			return $this->box_cpp($syntax, $value);
 		}
@@ -325,6 +325,7 @@ abstract class type_definition
 				throw new \LogicException('Checked extraction requires its source carrier type');
 			}
 			$value = $source->lower_cpp_extract($value);
+			$source = $source->payload_type;
 			$syntax = null;
 		}
 		if ($this instanceof carrier_type_definition) {
@@ -338,11 +339,11 @@ abstract class type_definition
 				return '((void)(' . $value . '), ' . $this->cpp_type() . '{})';
 			}
 			if (($conversion & value_conversion::WRAP) !== 0) {
-				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
+				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source);
 				return $this->cpp_type() . '{static_cast<' . $this->payload_type->cpp_type() . '>(' . $value . ')}';
 			}
 		}
-		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax);
+		return $this->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source);
 	}
 
 	/** Carrier states are not scalar constant facts; do not confuse absent values with known scalar null. */
@@ -384,7 +385,7 @@ abstract class type_definition
 			. $value->value_type()->name . ' to ' . $this->name);
 	}
 
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
 		return $conversion === value_conversion::identity ? $value
 			: throw new \LogicException('Conversion does not belong to this destination type');

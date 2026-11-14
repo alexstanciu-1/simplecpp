@@ -295,3 +295,17 @@ into null with `constant_known=false`. Known null, false and zero retain their i
 References preserve those facts and normal preparation reset clears them. No result object is allocated,
 no symbol dependencies change, and uint64 activation remains separate. See the
 [uint64 bootstrap debt](../../specs/planning/uint64_constant_evaluation_debt.md).
+
+
+### Source identity during conversion lowering
+
+Checked conversion codes remain compact and independent of the source representation.
+Lowering reads the existing expression type; synthesized compound operands pass the
+existing destination or execution type through the optional `source_type` argument.
+Carrier extraction replaces that identity with its payload type before scalar lowering,
+including when the destination wraps the converted payload again.
+
+Generated checked dispatch selects the named runtime helper by that canonical identity.
+Missing or unsupported checked-source identity is an internal error, never an implicit
+int64 fallback. This adds no retained AST facts and changes no preparation or admission.
+Optional integer-width activation remains a separate slice.

@@ -111,9 +111,9 @@ final class struct_type_definition extends type_definition implements dependency
 	}
 
 	/** Snapshot a field value before overwriting storage that might own its containing allocation. */
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		$value = parent::lower_scalar_conversion($conversion, $value, $syntax);
+		$value = parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		if ($syntax instanceof ast_field_expression && ($syntax->parent instanceof ast_field_assignment
 			|| $syntax->parent instanceof ast_assignment_statement)) {
 			for ($field = $syntax; $field instanceof ast_field_expression; $field = $field->receiver) {
@@ -228,9 +228,9 @@ final class shared_struct_type_definition extends struct_handle_definition
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
-	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null): string
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		if ($conversion !== value_conversion::empty_owner) return parent::lower_scalar_conversion($conversion, $value, $syntax);
+		if ($conversion !== value_conversion::empty_owner) return parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		$empty = $this->cpp_type() . '{}';
 		return $syntax instanceof ast_keyword_expression ? $empty : '((void)(' . $value . '), ' . $empty . ')';
 	}

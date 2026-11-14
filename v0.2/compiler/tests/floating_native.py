@@ -71,7 +71,7 @@ def prove(work):
             'stdout': result.stdout, 'exit': result.returncode, 'literal_bits_verified': len(fixture['bits'])}
     expression = success(run(['php', '-r',
         'require $argv[1]; echo scpp\\compiler\\type_int64::instance()->lower_cpp_conversion('
-        'scpp\\compiler\\value_conversion::floating_integer_checked, "next_value(input)");',
+        'scpp\\compiler\\value_conversion::floating_integer_checked, "next_value(input)", source_type: scpp\\compiler\\type_float64::instance());',
         ROOT / 'compiler/boot.php'])).stdout
     boolean = success(run(['php', '-r',
         'require $argv[1]; echo scpp\\compiler\\type_bool::instance()->lower_cpp_conversion('

@@ -648,14 +648,14 @@ CPP;
 			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
 		$left = $direct_read ? $name : 'compound_previous';
 		if ($statement->left_conversion() !== value_conversion::identity) {
-			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left);
+			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left, source_type: $type);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
 				$headers[$header] = true;
 			}
 		}
 		$result = $execution->lower_cpp_binary($statement->operator, $left, $right, $execution);
 		if ($statement->write_back() !== value_conversion::identity) {
-			$result = $type->lower_cpp_conversion($statement->write_back(), $result);
+			$result = $type->lower_cpp_conversion($statement->write_back(), $result, source_type: $execution);
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
 				$headers[$header] = true;
 			}
