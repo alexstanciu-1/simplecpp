@@ -770,7 +770,13 @@ final class Preparation
 				$this->value($argument);
 			}
 			$type = $runtime->parameters[$index];
-			if ($runtime->is_reference($index)) {
+			if ($index === 0 && $runtime->mutable_receiver_method) {
+				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
+				if ($argument instanceof ast_name_expression) {
+					$this->bind_reference($argument, $type, $writes);
+				}
+			}
+			elseif ($runtime->is_reference($index)) {
 				$this->bind_reference($argument, $type, $writes);
 			}
 			elseif ($argument->type_def() !== $type) {
@@ -841,13 +847,19 @@ final class Preparation
 					$this->source_call($call, $symbol, $method, $initializing);
 					return;
 				}
-				if ($call->member_separator === token_kind::member) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'Arrow method call requires a struct receiver');
-				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
 				$runtime = runtime_functions::resolve($key);
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
+				}
+				if ($runtime instanceof runtime_function && $runtime->mutable_receiver_method) {
+					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
+					if ($call->member_separator !== $expected) {
+						throw new diagnostic($call->source(), $call->byte_start(), 'Collection methods use -> in PHP/C++ and . in JS');
+					}
+				}
+				elseif ($call->member_separator === token_kind::member) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Arrow method call requires a struct or collection receiver');
 				}
 				$this->runtime_call($call, $runtime);
 				return;

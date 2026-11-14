@@ -39,3 +39,18 @@ helpers when their existing runtime operations support them.
 
 Bindings use the existing public `scpp/lang/php.hpp` provider header. This source
 contract does not authorize indexed mutation extensions or legacy fixture changes.
+
+## v0.2 collection method surface
+
+For the active v0.2 compiler, collection clearing uses `values->clear()` in PHP/C++
+and `values.clear()` in JS, consistently for vector and hash. The historical free
+helper spellings above do not introduce additional v0.2 aliases. Clear takes no
+arguments and returns void; vectors destroy elements but retain capacity, while hash
+capacity policy remains unspecified. Both support subsequent insertion.
+
+Receivers may be writable locals/parameters, accessible fields, or expressions
+returning these collections or their containing structs/owners. A temporary remains
+alive through the call; modifying a temporary value does not modify its source copy.
+This does not authorize binding arbitrary properties to writable reference parameters.
+An empty shared owner fails using the normal checked access. Field visibility applies.
+See [compiler binding and verification](../../v0.2/compiler/docs/collection_methods.md).

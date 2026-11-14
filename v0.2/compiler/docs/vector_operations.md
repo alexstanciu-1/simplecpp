@@ -2,6 +2,9 @@
 
 Doc Status: supporting
 
+Generated `clear()` methods, including expression receivers, are described in
+[collection methods](collection_methods.md).
+
 ## Source boundary
 
 Published vector specializations support explicitly typed empty local construction,

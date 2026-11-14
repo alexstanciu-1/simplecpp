@@ -506,6 +506,25 @@ Current rules:
 If the target is not array/hash compatible and is not the null-state `mixed` bootstrap case:
 - throw or reject according to the lowering/runtime boundary involved
 
+## v0.2 typed collection removal methods
+
+Typed vectors and hashes expose `remove(key)` as a method: PHP/C++ `->remove(key)`
+and JS `.remove(key)`. The result is bool: true only when an element was removed.
+Vector indexes must be canonical int/int64; hash keys must exactly match the declared
+key type, including byte-exact string keys. There are no new implicit key conversions.
+
+Vector removal shifts later elements left, preserves their order and retains capacity.
+Negative indexes, indexes at or beyond size, and removal from an empty vector return
+false without mutation. Hash removal preserves all remaining key identities; an absent
+key returns false. Empty receivers are not materialized by unsuccessful removal.
+Copies remain independent, and normal destruction releases the removed element.
+
+Receivers support the same expression paths as `clear()`. Resolve the receiver once
+before the key argument; keep the selected shared allocation alive through that argument
+and the removal. Empty shared owners fail before the key runs. Argument failures prevent
+removal, without undoing earlier argument effects. This does not grant property references
+or change the separate `unset(...)` syntax and its historical vector restriction.
+
 ## 10. `unset($a[k])`
 
 ### v0.2 keyed removal

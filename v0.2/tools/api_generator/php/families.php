@@ -425,6 +425,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         $add('size', $count, [], false, 'checked_count');
         $add('empty', 'bool_t', [], false, 'none');
         $add('clear', 'void', [], true, 'none');
+        $add('remove', 'bool_t', [$count], true, 'erase_shift_missing_false');
         $indices = $nativeIndex ? [$count, 'int']:[$count];
         $values = $native === 'none' ? [$element]:[$element, $native];
         foreach($indices as $index) {

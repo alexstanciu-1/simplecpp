@@ -82,7 +82,9 @@ def proof(work):
         if kind == 'missing': m['vector']['provider'] = 'missing'
         if kind == 'legacy_header': p['vectors']['header'] = 'scpp/wrong.hpp'
         if kind == 'cycle': m['submodules']['core.scalars']['requires'] = ['core.vectors']
-        if kind == 'unpublished': m['submodules']['core.vectors']['requires'] = ['numeric.scalars']
+        if kind == 'unpublished':
+            m['submodules']['core.unpublished'] = {'module': 'core', 'header': 'scpp/unpublished.hpp', 'requires': []}
+            m['submodules']['core.vectors']['requires'] = ['core.unpublished']
         if kind == 'duplicate': p['vectors']['specializations'].append(p['vectors']['specializations'][0])
         emit(m, p, 1)
         assert snapshot() == original, kind
@@ -130,8 +132,13 @@ def proof(work):
         if variant != 'default': assert not (output / 'public/scpp/vectors.hpp').exists()
         run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
         after = {p.name: p.read_bytes() for p in compiler.rglob('*.php')}
-        assert {k: v for k, v in after.items() if k != 'vectors.php'} == {k: v for k, v in compiler_before.items() if k != 'vectors.php'}, 'Scalar compiler output changed'
+        assert {k: v for k, v in after.items() if k not in ('vectors.php', 'registry.php')} == {k: v for k, v in compiler_before.items() if k not in ('vectors.php', 'registry.php')}, 'Scalar compiler output changed'
         assert binding() == ['vector<int64>', 'scpp::vector_int64', [header], observations], 'Compiler ignored runtime export placement'
+        normalized = b''.join(line.replace(header.encode(), b'scpp/vectors.hpp') if b'new runtime_function' in line and b'type_vector_' in line else line
+                              for line in after['registry.php'].splitlines(keepends=True))
+        assert normalized == compiler_before['registry.php'], 'Method bindings ignored provider relocation or unrelated registry output changed'
+        for method in ('clear', 'remove'):
+            assert f"'{method}', '{header}', mutable_receiver_method: true".encode() in after['registry.php']
         for flavor in ('cpp', 'php', 'js'):
             adapter = output / f'public/scpp/{flavor}/string_vectors.hpp'
             assert f'#include "{header}"' in adapter.read_text()

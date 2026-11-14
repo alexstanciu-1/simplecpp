@@ -1120,6 +1120,28 @@ CPP;
 					$symbol = $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
+				if ($function->mutable_receiver_method) {
+					$arguments = [];
+					$direct = true;
+					foreach ($value->arguments as $index => $argument) {
+						$safe = false;
+						$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+						$arguments[] = $function->parameters[$index + 1]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand);
+						$direct = $direct && ($safe || $argument instanceof ast_string_expression
+							|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
+					}
+					$steps = [];
+					$receiver = $direct
+						? $this->value($operands[0], $global_references, $declarations, $required_headers)
+						: $this->retained_place($operands[0], $global_references, $declarations, $required_headers, $steps);
+					if ($steps !== []) {
+						// Retain the selected shared allocation if argument evaluation can replace its owner.
+						$steps[] = 'auto&& method_receiver = ' . $receiver . ';';
+						$receiver = 'method_receiver';
+					}
+					$call = '(' . $receiver . ').' . $symbol . '(' . implode(', ', $arguments) . ')';
+					return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+				}
 				if (count($operands) === 1 && !$function->overloaded_first) {
 					$operand = $this->value($operands[0], $global_references, $declarations, $required_headers);
 					$conversion = $value->conversion(0);

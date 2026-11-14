@@ -76,9 +76,12 @@ unaffected scalar definitions remain byte-identical.
 | append(element value) | Append an owned value; move the argument into storage |
 | at(count index) const | Check bounds and return a value copy |
 | set(count index, element value) | Check bounds and move the value into the existing slot |
-| clear() | Destroy elements and release storage |
+| clear() | Destroy elements and retain capacity |
+| remove(count index) | Remove the indexed element and shift the suffix left; return bool_t indicating removal |
 
-Negative and beyond-end indices throw std::out_of_range before unsigned conversion.
+For at/set, negative and beyond-end indices throw std::out_of_range before unsigned conversion.
+For remove, every negative or beyond-end index returns false without mutation or allocation.
+Successful removal preserves the order of remaining elements and retains capacity.
 at exposes no reference, pointer, iterator or interior lifetime protocol. Modifying
 its returned string cannot change the vector. Copies own independent elements. Moves
 leave an empty reusable source; self-copy/self-move are supported. Copy assignment

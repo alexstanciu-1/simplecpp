@@ -23,6 +23,9 @@ Source `count(h)` and `empty(h)` observe the number of live keys through the
 published `size()` and `empty()` members. Replacing an existing key preserves its
 count. Presence of a zero or empty-string value still makes the hash nonempty.
 
+Generated `clear()` methods, including expression receivers, are described in
+[collection methods](collection_methods.md).
+
 ## Owners and structures
 
 Runtime metadata declares empty construction, strict keys, copied reads and the set/at

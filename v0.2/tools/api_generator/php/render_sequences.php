@@ -395,6 +395,7 @@ function renderVectors(array $plan): array {
             $d .= "void $n::set($index index, $value value) { set($a, $b); }\n";
         }
         $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
+        $h .= scalarInputFences($plan, 'remove', [[$count]]);
         $h .= scalarInputFences($plan, 'append', array_map(static fn(string $type): array => [$type], $values));
         $h .= scalarInputFences($plan, 'set', $sets);
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::vector_access;\n};\n";
