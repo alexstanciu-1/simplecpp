@@ -121,3 +121,18 @@ final class ast_index_assignment extends ast_statement
 		$this->conversion = null;
 	}
 }
+
+/** Indexed compound, e.g. factory()->items[key()] += rhs(); reuses compound facts on one indexed target. */
+final class ast_index_compound extends ast_assignment_statement
+{
+	/** Native owning indexed target; its receiver is any prepared collection expression. */
+	public readonly ast_index_expression $target;
+
+	/** $end: exclusive token position after the semicolon. */
+	public function __construct(ast_index_expression $target, ast_expression $value, binary_operator $operator, int $end /** uint32 */)
+	{
+		parent::__construct($target->start, $end, '', $value, assignment_intent::existing_binding, $operator);
+		$this->target = $target;
+		$target->attach($this);
+	}
+}

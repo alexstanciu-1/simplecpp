@@ -162,3 +162,6 @@ generation; trace work is not additive wall time. These are single-run fixture
 measurements, not flavor performance comparisons. Artifacts and traces:
 `/tmp/scpp-vector-copies-verified/`; compiler measurement run:
 `/tmp/scpp-vector-copy-timings.json`.
+
+Indexed arithmetic/bitwise/shift/power and string compounds reuse element rules; see
+[indexed compounds](indexed_compounds.md).

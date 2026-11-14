@@ -49,8 +49,13 @@ final class @class@ extends vector_type_definition
 
 	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value): string
 	{
-		$index = @count@::instance()->lower_cpp_exact_argument($write->index, value_conversion::identity, $index);
 		$value = @element@::instance()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		return $this->lower_cpp_replace($write->index, $receiver, $index, $value);
+	}
+
+	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
+	{
+		$index = @count@::instance()->lower_cpp_exact_argument($key, value_conversion::identity, $index);
 		return $receiver . '.@set@(' . $index . ', ' . $value . ');';
 	}
 

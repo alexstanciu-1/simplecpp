@@ -695,6 +695,7 @@ CPP;
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
+		if ($statement instanceof ast_index_compound) return $this->indexed_compound($statement, $global_references, $declarations, $headers);
 		$property = $statement instanceof ast_property_compound;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
@@ -720,6 +721,26 @@ CPP;
 				return $name . ' ' . $operator . ' ' . $right;
 			}
 		}
+		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
+			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
+		$left = $direct_read ? $name : 'compound_previous';
+		$result = $this->compound_result($statement, $type, $left, $right, $headers);
+		if ($direct_read) return $name . ' = ' . $result;
+		if ($steps !== []) {
+			$steps[] = 'const auto compound_previous = ' . $name . ';';
+			$steps[] = $name . ' = ' . $result . ';';
+			return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
+		}
+		$snapshot = 'compound_previous = ' . $name;
+		return $name . ' = ' . $result;
+	}
+
+	/** Lower the settled operation and checked write-back identically for locals, properties and indexed elements. @param bool[] $headers */
+	private function compound_result(ast_assignment_statement $statement, type_definition $type, string $left, string $right,
+		array &$headers /** array<string,bool> */): string
+	{
+		$execution = $statement->execution_type();
+		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
 			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value);
 			foreach ($execution->conversion_headers($conversion) as $header) {
@@ -729,9 +750,6 @@ CPP;
 		foreach ($execution->binary_headers($statement->operator) as $header) {
 			$headers[$header] = true;
 		}
-		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
-			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
-		$left = $direct_read ? $name : 'compound_previous';
 		if ($statement->left_conversion() !== value_conversion::identity) {
 			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left, source_type: $type);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
@@ -745,14 +763,39 @@ CPP;
 				$headers[$header] = true;
 			}
 		}
-		if ($direct_read) return $name . ' = ' . $result;
-		if ($steps !== []) {
-			$steps[] = 'const auto compound_previous = ' . $name . ';';
-			$steps[] = $name . ' = ' . $result . ';';
-			return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
+		return $result;
+	}
+
+	/**
+	 * Snapshot the selected collection/key/value, never an element address across a potentially mutating RHS.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function indexed_compound(ast_index_compound $statement, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$target = $statement->target;
+		$steps = [];
+		$place = $this->retained_place($target->receiver, $globals, $declarations, $headers, $steps);
+		$steps[] = 'auto&& compound_collection = ' . $place . ';';
+		$key = $this->value($target->index, $globals, $declarations, $headers);
+		if (!($target->index instanceof ast_integer_expression)) {
+			$steps[] = 'const auto compound_key = ' . $key . ';';
+			$key = 'compound_key';
 		}
-		$snapshot = 'compound_previous = ' . $name;
-		return $name . ' = ' . $result;
+		/** @var compound_collection_type $collection */
+		$collection = $target->receiver->type_def();
+		$steps[] = 'const auto compound_previous = ' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$right = $this->value($statement->value, $globals, $declarations, $headers);
+		$result = $this->compound_result($statement, $target->type_def(), 'compound_previous', $right, $headers);
+		// Runtime setters enforce exact C++ representations, including native literal/arithmetic result spellings.
+		$result = 'static_cast<' . $target->type_def()->cpp_type() . '>(' . $result . ')';
+		// Existing-element compounds must not recreate a key removed by RHS replacement.
+		$steps[] = 'const auto compound_result = ' . $result . ';';
+		$steps[] = '(void)' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'compound_result');
+		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
 	/**

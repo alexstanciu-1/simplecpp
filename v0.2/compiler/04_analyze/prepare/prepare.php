@@ -158,6 +158,15 @@ final class Preparation
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
 				else $statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			}
+			elseif ($statement instanceof ast_index_compound) {
+				$receiver = $statement->target->receiver;
+				$this->value($statement->target);
+				if (!($receiver->type_def() instanceof compound_collection_type)) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a vector or hash');
+				}
+				$this->value($statement->value);
+				$statement->target->type_def()->prepare_compound($statement);
+			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;
 				$receiver = $statement->receiver;

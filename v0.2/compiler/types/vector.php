@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
  * Copies and by-value calls use the common conversion path; instance fields default to empty.
  */
-abstract class vector_type_definition extends type_definition implements appendable_collection_type, indexed_collection_type, index_write_type, counted_collection_type
+abstract class vector_type_definition extends type_definition implements appendable_collection_type, compound_collection_type, counted_collection_type
 {
 	/** PROPERTIES */
 	/** Native non-owning canonical element definition, shared by all occurrences. */
