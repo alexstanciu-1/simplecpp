@@ -7,7 +7,7 @@ Scope: v0.2 boxed runtime publication and the supported source bindings.
 
 `runtime/metadata/runtime.json` registers the optional `boxed` family policy.
 `tools/api_generator/php/boxed.php` prepares its demand and dependencies;
-`php/render_boxed.php` and `templates/boxed_*.cpp.tpl` render the prepared family.
+`php/render_boxed.php` and `templates/boxed/boxed_*.cpp.tpl` render the prepared family.
 The sole production generator remains PHP. Storage semantics remain in
 [private mixed](mixed_storage.md), [private dynamic](dynamic_storage.md) and
 [packed storage](packed_storage.md), not in emission.

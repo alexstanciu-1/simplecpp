@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
     output = generated / 'prepared.json'
     for label, path in [('metadata', runtime_json), ('publication', publication),
                         ('php_source', root / 'tools/api_generator/php/render.php'),
-                        ('cpp_template', root / 'tools/api_generator/templates/vector_storage.cpp.tpl')]:
+                        ('cpp_template', root / 'tools/api_generator/templates/collections/vector_storage.cpp.tpl')]:
         before = output.stat().st_mtime_ns
         with path.open('a') as stream:
             stream.write('\n// rebuild probe\n' if path.suffix in ('.php', '.tpl') else '\n')

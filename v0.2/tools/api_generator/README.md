@@ -40,7 +40,9 @@ is also the rendering input, avoiding a second serialization model.
 - `php/render_compiler.php`: compiler-generation entry point, planning orchestration and PHP emission;
   loads both planning files so callers keep the same entry point.
 - Other `php/render*.php`: runtime rendering from prepared facts.
-- `templates/*.cpp.tpl`: readable C++ fragments with named `@placeholder@` slots.
+- `templates/{scalars,strings,collections,carriers,boxed,ownership,errors,core}/`: C++ and compiler-PHP fragments grouped by their owning area, with named `@placeholder@` slots.
+  Existing filenames are retained. Renderer calls use explicit folder-relative paths.
+  CMake recursively tracks both `.cpp.tpl` and `.php.tpl` files for regeneration.
   These retain the existing output spelling; no Rust source is a build input.
 
 Runtime semantics remain in `runtime/src/` and the family contracts in `specs/`.

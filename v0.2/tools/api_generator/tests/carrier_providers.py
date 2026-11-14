@@ -87,6 +87,9 @@ def proof(work):
         assert (compiler / 'types/carriers.php').read_bytes() == stable
 
     absent = copy.deepcopy(publication); absent.pop('carriers'); absent.pop('hashes', None)
+    # Retire functions whose core or PHP adapter result needs a carrier as well.
+    absent['string']['functions'] = [name for name in absent['string']['functions']
+        if name not in ('hex2bin', 'strpos', 'stripos', 'strrpos', 'strripos')]
     removed = emit(metadata, absent)
     assert 'nullable_int64' not in removed['submodules']['type_exports']
     assert not (runtime / 'public/scpp/carriers.hpp').exists()

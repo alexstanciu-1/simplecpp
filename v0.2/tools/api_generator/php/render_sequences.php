@@ -2,13 +2,13 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 function lifecycle(string $n): array {
-    return [template('lifecycle_declaration', ['n' => $n]), template('lifecycle_definition', ['n' => $n])];
+    return [template('core/lifecycle_declaration', ['n' => $n]), template('core/lifecycle_definition', ['n' => $n])];
 }
 
 function stringAdapterOverload(string $flavor, array $adapter, string $result, array $parameters, string $symbol, array $arguments): string {
     $args = implode(', ', $arguments);
     $body = isset($adapter['body'])
-        ? rtrim(template($adapter['body'], ['symbol' => $symbol, 'result' => $result, 'args' => $args]))
+        ? rtrim(template('strings/' . $adapter['body'], ['symbol' => $symbol, 'result' => $result, 'args' => $args]))
         : "{ return ::$symbol($args); }";
     return "namespace scpp::$flavor {\ninline ::scpp::$result {$adapter['name']}(" . implode(', ', $parameters) . ") $body\n}\n";
 }
@@ -139,9 +139,9 @@ function renderString(array $plan): array {
     $s = $plan['string'];
     $n = $s['name'];
     $count = $s['count_representation'];
-    $lh = template('lifecycle_declaration', ['n' => $n]);
+    $lh = template('core/lifecycle_declaration', ['n' => $n]);
     $vars = compact('n', 'count', 'lh') + ['inline_capacity' => $s['inline_capacity']];
-    $h = template('string_declaration', $vars);
+    $h = template('strings/string_declaration', $vars);
     $inputs = [];
     foreach ($plan['conversions'] as $conversion) {
         if ($conversion['target'] === $n) $inputs[] = scalarNativeIdentity($plan, $conversion['source']);
@@ -149,7 +149,7 @@ function renderString(array $plan): array {
     foreach (NATIVES as $native) {
         if (!in_array($native, $inputs, true)) $h .= "    explicit $n($native) = delete;\n";
     }
-    $h .= template('int128_fences', ['name' => $n]);
+    $h .= template('scalars/int128_fences', ['name' => $n]);
     foreach($plan['conversions'] as $c) {
         if($c['target'] === $n) {
             $h .= "    explicit $n(" . scalarInput($c['source']) . " value);\n";
@@ -159,11 +159,11 @@ function renderString(array $plan): array {
     if ($read) $h .= "    {$read['result']} {$read['name']}({$read['key']} index) const;\n";
     $write = $plan['string_index_write'] ?? null;
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
-    $h .= template('string_methods_declaration', $vars);
+    $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
     $vars['classic_storage'] = array_intersect($classic, ['format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
-        ? template('string_classic_storage', ['n' => $n]) : '';
-    $d = template('string_storage', $vars) . template('string_methods_definition', $vars);
+        ? template('strings/string_classic_storage', ['n' => $n]) : '';
+    $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
     if ($read) {
         $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
             . "    const auto bytes = detail::string_access::read(*this);\n"
@@ -192,7 +192,7 @@ function renderString(array $plan): array {
             : "char buffer[128]; const auto size = detail::format_decimal_into(value, buffer); return string{buffer, static_cast<$count>(size)};";
         $d .= "namespace str { $signature { $body } }\n";
     }
-    if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('string_compare_views');
+    if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('strings/string_compare_views');
     $comparisonSymbols = [];
     $windowPositionEmitted = false;
     $searchPolicyEmitted = false;
@@ -205,13 +205,13 @@ function renderString(array $plan): array {
         if (in_array($function['implementation'], ['find', 'rfind'], true)) {
             if (!$searchPolicyEmitted) {
                 $h .= "namespace str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n";
-                $d .= template('string_search_position');
+                $d .= template('strings/string_search_position');
                 $searchPolicyEmitted = true;
             }
             $args = 'const string& subject, const string& needle';
             $method = $function['implementation'];
             $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset, search_policy policy); }\n";
-            $d .= template('string_search', ['name' => $name, 'args' => $args, 'fold' => isset($function['ascii_fold']) ? 'true' : 'false',
+            $d .= template('strings/string_search', ['name' => $name, 'args' => $args, 'fold' => isset($function['ascii_fold']) ? 'true' : 'false',
                 'reverse' => $method === 'rfind' ? 'true' : 'false']);
             continue;
         }
@@ -220,7 +220,7 @@ function renderString(array $plan): array {
             if (!isset($padSymbols[$name])) {
                 $signature = "string $name(const string& subject, int64 width, const string& fill, int64 side, bool reject_empty)";
                 $h .= "namespace str { $signature; }\n";
-                $d .= template('string_pad', ['signature' => $signature]);
+                $d .= template('strings/string_pad', ['signature' => $signature]);
                 $padSymbols[$name] = true;
             }
             continue;
@@ -230,25 +230,25 @@ function renderString(array $plan): array {
             $args = 'const string& subject, const string& search, const string& replacement, replace_mode mode';
             if (!isset($replaceSymbols[$name])) {
                 $h .= "namespace str { string $name($args); }\n";
-                $d .= template('string_replace', ['name' => $name, 'args' => $args]);
+                $d .= template('strings/string_replace', ['name' => $name, 'args' => $args]);
                 $replaceSymbols[$name] = false;
             }
             if (isset($function['adapters']['php']['reference_parameters']) && !$replaceSymbols[$name]) {
                 $h .= "namespace str { string $name($args, int64& count); }\n";
-                $d .= template('string_replace_count', ['name' => $name, 'args' => $args]);
+                $d .= template('strings/string_replace_count', ['name' => $name, 'args' => $args]);
                 $replaceSymbols[$name] = true;
             }
             continue;
         }
         if (!$windowPositionEmitted && in_array($function['implementation'], ['slice_bytes', 'replace_window'], true)) {
-            $d .= template('string_byte_position');
+            $d .= template('strings/string_byte_position');
             $windowPositionEmitted = true;
         }
         if ($function['implementation'] === 'format_number') {
             foreach ($function['overloads'][1] as $input => $_) {
                 $h .= "namespace str { string $name($input value, int64 decimals, const string& point, const string& group); }\n";
             }
-            $d .= template('string_number_format', ['name' => $name]);
+            $d .= template('strings/string_number_format', ['name' => $name]);
             continue;
         }
         if (in_array($function['implementation'], ['compare_bytes', 'compare_prefix'], true)) {
@@ -257,7 +257,7 @@ function renderString(array $plan): array {
                 $limit = $bounded ? 'int64 limit, ' : '';
                 $signature = "int64 $name(const string& left, const string& right, {$limit}bool_t insensitive)";
                 $h .= "namespace str { $signature; }\n";
-                $d .= $bounded ? template('string_compare_prefix', ['signature' => $signature])
+                $d .= $bounded ? template('strings/string_compare_prefix', ['signature' => $signature])
                     : "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
                     . " detail::string_access::read(right), insensitive); } }\n";
                 $comparisonSymbols[$name] = true;
@@ -267,19 +267,19 @@ function renderString(array $plan): array {
         if ($function['implementation'] === 'compare_window') {
             $args = 'const string& subject, const string& other, int64 offset';
             $h .= "namespace str { int64 $name($args); int64 $name($args, int64 length, bool_t insensitive = false); }\n";
-            $d .= template('string_compare_window', ['name' => $name, 'args' => $args]);
+            $d .= template('strings/string_compare_window', ['name' => $name, 'args' => $args]);
             continue;
         }
         if ($function['implementation'] === 'replace_window') {
             $signature = "string $name(const string& subject, const string& replacement, int64 offset, int64 length)";
             $h .= "namespace str { $signature; }\n";
-            $d .= template('string_replace_window', ['signature' => $signature]);
+            $d .= template('strings/string_replace_window', ['signature' => $signature]);
             continue;
         }
         if ($function['implementation'] === 'slice_bytes') {
             $signature = "string $name(const string& value, int64 start, int64 bound, slice_bound mode)";
             $h .= "namespace str { enum class slice_bound { to_end, length, exclusive_end }; $signature; }\n";
-            $d .= template('string_slice', ['signature' => $signature]);
+            $d .= template('strings/string_slice', ['signature' => $signature]);
             continue;
         }
         if ($function['implementation'] === 'trim_bytes') {
@@ -290,7 +290,7 @@ function renderString(array $plan): array {
                 $signature = "string $name(const string& value, trim_side side, trim_set set)";
                 $masked = "string $name(const string& value, const string& mask, trim_side side)";
                 $h .= "namespace str { $signature; $masked; }\n";
-                $d .= template('string_trim', ['signature' => $signature, 'masked' => $masked, 'count' => $count]);
+                $d .= template('strings/string_trim', ['signature' => $signature, 'masked' => $masked, 'count' => $count]);
                 $trimSymbols[$name] = true;
             }
             continue;
@@ -305,13 +305,13 @@ function renderString(array $plan): array {
             if (isset($function['result_header'])) $h .= "class $result;\n";
             $signature = "$result $name(" . implode(', ', $parameters) . ')';
             $h .= "namespace str { $signature; }\n";
-            $d .= template($function['implementation'], ['signature' => $signature, 'result' => $result]);
+            $d .= template('strings/' . $function['implementation'], ['signature' => $signature, 'result' => $result]);
         } elseif ($function['implementation'] === 'byte_length') {
             $h .= "namespace str { inline $signature { return value.size(); } }\n";
         } elseif ($function['implementation'] === 'count_matches') {
             $args = "const string& value, const string& other";
             $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset); int64 $name($args, int64 offset, int64 length); }\n";
-            $d .= template('string_count_matches', ['name' => $name, 'args' => $args]);
+            $d .= template('strings/string_count_matches', ['name' => $name, 'args' => $args]);
         } elseif ($function['implementation'] === 'checked_single_byte') {
             $h .= "namespace str { $signature; }\n";
             $d .= "namespace str { $signature {\n"
@@ -338,11 +338,11 @@ function renderVectors(array $plan): array {
     $d = '';
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
-        $d .= template('vector_storage', ['n' => $v['name'], 'e' => $v['element']]);
+        $d .= template('collections/vector_storage', ['n' => $v['name'], 'e' => $v['element']]);
     }
     $d .= "namespace detail { struct vector_access {\n";
     foreach($plan['vectors'] as $v) {
-        $d .= template('vector_access', ['n' => $v['name'], 'e' => $v['element']]);
+        $d .= template('collections/vector_access', ['n' => $v['name'], 'e' => $v['element']]);
     }
     $d .= "}; }\n";
     foreach($plan['vectors'] as $v) {
@@ -367,10 +367,10 @@ function renderVectors(array $plan): array {
                 $expression = "$binding($expression)";
             }
             if ($e === 'string') $expression = "string{static_cast<$sourceElement>(item)}";
-            $d .= template('vector_cast', $vars + ['src' => $src, 'conversion' => $expression]);
+            $d .= template('collections/vector_cast', $vars + ['src' => $src, 'conversion' => $expression]);
         }
-        $h .= template('vector_methods_declaration', $vars);
-        $d .= template('vector_methods_definition', $vars);
+        $h .= template('collections/vector_methods_declaration', $vars);
+        $d .= template('collections/vector_methods_definition', $vars);
         $indices = [$count];
         $values = [$e];
         if ($v['native_index'] && scalarNativeIdentity($plan, $count) !== 'int') {
@@ -401,7 +401,7 @@ function renderVectors(array $plan): array {
         foreach($v['operations'] as $op) {
             $sig = "bool_t operator{$op['symbol']}(const $n& left, const $n& right)";
             $h .= "$sig;\n";
-            $d .= template('vector_comparison', $vars + ['sig' => $sig, 'negate' => $op['operation'] === 'equal' ? '':'!']);
+            $d .= template('collections/vector_comparison', $vars + ['sig' => $sig, 'negate' => $op['operation'] === 'equal' ? '':'!']);
         }
     }
     foreach ($plan['string_functions'] ?? [] as $binding) {
@@ -418,7 +418,7 @@ function renderVectors(array $plan): array {
             $vars['name'] = $name;
             $h .= "namespace str { enum class split_policy { remainder, cap }; {$vars['limited']}; }\n";
         }
-        $d .= template($binding['implementation'], $vars);
+        $d .= template('collections/' . $binding['implementation'], $vars);
     }
     return [$h . "}\n", $d];
 }
@@ -435,8 +435,8 @@ function renderCarriers(array $plan): array {
     $h .= "namespace scpp {\n";
     $d = '';
     if(isset($plan['error'])) {
-        $h .= template('error_declaration', ['fences' => scalarInputFences($plan, 'error_t', [['string', 'int64'], ['string', 'int64', 'string']], true)]);
-        $d .= template('error_definition');
+        $h .= template('errors/error_declaration', ['fences' => scalarInputFences($plan, 'error_t', [['string', 'int64'], ['string', 'int64', 'string']], true)]);
+        $d .= template('errors/error_definition');
     }
     foreach($plan['carriers'] as $c) {
         $n = $c['name'];
@@ -448,8 +448,8 @@ function renderCarriers(array $plan): array {
         $constructors = [[$p]];
         if ($nullable) $constructors[] = ['null_t'];
         if ($result) $constructors[] = ['error_t'];
-        $h .= template('carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
-        $d .= template('carrier_storage', $vars) . template('carrier_value_definition', $vars) . ' ';
+        $h .= template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
+        $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
         if($result) {
             $d .= "if (!storage_) return $p{}; ";
         }
@@ -460,18 +460,18 @@ function renderCarriers(array $plan): array {
         }
         if($result) {
             $h .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
-            $d .= template('carrier_error_definition', $vars);
+            $d .= template('carriers/carrier_error_definition', $vars);
         }
         else {
             $h .= "    void reset() noexcept;\n";
             $d .= "void $n::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
             if(!$nullable) {
                 $h .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
-                $d .= template('carrier_false_definition', $vars);
+                $d .= template('carriers/carrier_false_definition', $vars);
             }
             if($c['family'] === 'result_or_bool') {
                 $h .= "    static $n from_true();\n    bool_t is_true() const noexcept;\n";
-                $d .= template('carrier_true_definition', $vars);
+                $d .= template('carriers/carrier_true_definition', $vars);
             }
         }
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";

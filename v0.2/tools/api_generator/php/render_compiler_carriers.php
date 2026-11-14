@@ -40,7 +40,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         $presenceExpression = $hasTrueState
             ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
             : "'(' . \$value . ').{$valuePresence}()'";
-        $code .= strtr(readFile(__DIR__ . '/../templates/carrier_type.php.tpl'), [
+        $code .= strtr(readFile(__DIR__ . '/../templates/carriers/carrier_type.php.tpl'), [
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
             '@presence@' => $valuePresence,

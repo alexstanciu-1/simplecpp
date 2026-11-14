@@ -24,7 +24,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         requireThat($at !== null && $at['result'] === $hash['value'] && !$at['mutates']
             && $at['missing'] === 'throw_out_of_range', 'Compiler hash requires checked value-copy read binding');
         $export = typeExport($runtime['submodules'], $hash['name']);
-        $code .= strtr(readFile(__DIR__ . '/../templates/hash_type.php.tpl'), [
+        $code .= strtr(readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl'), [
             '@set@' => $set['name'], '@index@' => $at['name'],
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
             '@class@' => $class, '@family@' => var_export($hash['source_family'], true),

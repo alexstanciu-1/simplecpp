@@ -24,6 +24,7 @@ if(NOT php_supported EQUAL 0)
   message(FATAL_ERROR "v0.2 tools require 64-bit PHP 8.5+; set PHP_EXECUTABLE to a supported PHP binary")
 endif()
 set(php_generator_source ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/generate.php)
+# Track PHP renderers and both template languages recursively across the owning-area folders.
 file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/php/*.php
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl

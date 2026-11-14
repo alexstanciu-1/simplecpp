@@ -27,7 +27,7 @@ function compilerCardinalityMethods(array $methods, string $count, array $defini
         $bindings[$name === 'size' ? '@count_type@' : '@empty_type@'] = 'type_' . $definitions[$result]['class'];
     }
     requireThat(isset($bindings['@size@'], $bindings['@empty@']), 'Missing collection cardinality binding');
-    return strtr(readFile(__DIR__ . '/../templates/collection_cardinality.php.tpl'), $bindings);
+    return strtr(readFile(__DIR__ . '/../templates/collections/collection_cardinality.php.tpl'), $bindings);
 }
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
@@ -78,7 +78,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 'int' => '', 'long' => 'L', 'long long' => 'LL',
                 default => throw new \RuntimeException('Unsupported native signed integer literal type'),
             };
-            $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/signed_integer.php.tpl'), [
+            $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalars/signed_integer.php.tpl'), [
                 '@native_suffix@' => var_export($nativeSuffix, true),
                 '@native_minimum@' => var_export('(-' . $definition['maximum'] . $nativeSuffix . ' - 1' . $nativeSuffix . ')', true),
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
@@ -91,11 +91,11 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $limits = ($definition['strategy'] === 'integer' && !$types[$identity]['signed'] && $types[$identity]['bits'] < 64) ? "\t/** CONSTANTS */\n\tpublic const int MINIMUM /** uint8 */ = 0;\n\tpublic const int MAXIMUM /** uint8 */ = " . decimalPredecessor(decimalPowerOfTwo($types[$identity]['bits'])) . ";\n\n" : '';
         $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
         $literalMethods = $definition['literal_family'] === 'floating'
-            ? strtr(readFile(__DIR__ . '/../templates/floating_literal_methods.php.tpl'), [
+            ? strtr(readFile(__DIR__ . '/../templates/scalars/floating_literal_methods.php.tpl'), [
                 '@minimum_exponent@' => (string)(2 - $facts['double']['max_exponent']),
                 '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
             ]) : compilerLiteralMethods($definition);
-        if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
+        if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/strings/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $indexInterface = '';
         if ($identity === 'string' && isset($runtime['string_index_read'])) {
             $read = $runtime['string_index_read'];
@@ -108,7 +108,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $write = $runtime['string_index_write'];
             requireThat(isset($definitions[$write['key']], $definitions[$write['value']]), 'Compiler string store requires key and byte types');
             $indexInterface .= $indexInterface === '' ? ' implements index_write_type' : ', index_write_type';
-            $methods .= "\n" . strtr(readFile(__DIR__ . '/../templates/string_index_write.php.tpl'), [
+            $methods .= "\n" . strtr(readFile(__DIR__ . '/../templates/strings/string_index_write.php.tpl'), [
                 '@key@' => 'type_' . $definitions[$write['key']]['class'], '@value@' => 'type_' . $definitions[$write['value']]['class'],
                 '@method@' => $write['name'],
             ]);
@@ -116,7 +116,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';
-        $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalar_type.php.tpl'), [
+        $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalars/scalar_type.php.tpl'), [
             '@name@' => $identity, '@class@' => $definition['class'], '@limits@' => $limits, '@index_interface@' => $indexInterface,
             '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
             '@constructor_checks@' => $hostChecks, '@literal_methods@' => $literalMethods, '@conversion_methods@' => $methods,
@@ -227,7 +227,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['php_integer_constants'] ?? [] as $name => $value) {
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }
-    $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
+    $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
@@ -251,7 +251,7 @@ function compilerEntryBinding(mixed $compiler): string {
     $header = textValue(at($binding, 'header'));
     requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid entry binding symbol');
     requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid entry binding header');
-    return strtr(readFile(__DIR__ . '/../templates/entry_binding.php.tpl'), [
+    return strtr(readFile(__DIR__ . '/../templates/core/entry_binding.php.tpl'), [
         '@symbol@' => var_export($symbol, true), '@header@' => var_export($header, true),
     ]);
 }

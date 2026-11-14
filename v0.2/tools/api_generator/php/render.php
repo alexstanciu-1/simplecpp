@@ -95,7 +95,7 @@ function render(array $plan): array {
     renderSequences($plan, $files, $d, $groups);
     renderCheckedConversions($plan, $groups, $d);
     renderScalarGroups($plan, $groups);
-    if (hasValue($plan, 'float64')) $d .= template('float_assertions');
+    if (hasValue($plan, 'float64')) $d .= template('scalars/float_assertions');
     foreach ($plan['conversions'] as $conversion) {
         if ($conversion['target'] !== 'string') continue;
         $source = $conversion['source'];
@@ -108,7 +108,7 @@ function render(array $plan): array {
     foreach($plan['types'] as $t) {
         $n = $t['name'];
         $rep = $t['representation'];
-        $d .= template('integer_assertions', compact('n', 'rep') + ['digits' => digits($t)]);
+        $d .= template('scalars/integer_assertions', compact('n', 'rep') + ['digits' => digits($t)]);
     }
     $operators = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . "namespace scpp {\n";
     // Builtin scalar aliases use native operators. Checked source operations are emitted by the compiler.
@@ -149,7 +149,7 @@ function render(array $plan): array {
     renderDatetime($plan, $files);
     renderJson($plan, $files);
     renderBoxed($plan, $files, $groups);
-    $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('output_declaration', [
+    $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('core/output_declaration', [
         'string_output' => isset($plan['string']) ? "class string;\nvoid echo_string(const string& value);\n" : '',
     ]), 'system' => ['stddef.h', 'stdint.h']];
     $files['private/output_provider.hpp'] = BANNER . '#pragma once' . "\n"
@@ -160,9 +160,9 @@ function render(array $plan): array {
     requireThat(!isset($files['public/scpp/owner_access.hpp']), 'The owner access header path is reserved');
     $files['public/scpp/owner_access.hpp'] = BANNER . "#pragma once\nnamespace scpp { [[noreturn]] void throw_empty_owner(); }\n";
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
-    $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
+    $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
-    $files['public/scpp/arithmetic.hpp'] = BANNER . template('arithmetic_declaration');
+    $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration');
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
