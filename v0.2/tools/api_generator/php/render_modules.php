@@ -16,10 +16,10 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $nullable = 'nullable_' . $v;
         [$lh, $ld] = lifecycle($n);
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh', 'ld') + ['policy' => $k === 'int64' ? 'integer_hash_key':'string_hash_key'];
-        $h .= template('hash_declaration', $vars);
+        $h .= template('collections/hash_declaration', $vars);
         foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
         $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
-        $d .= template('hash_storage', $vars) . template('hash_methods_definition', $vars);
+        $d .= template('collections/hash_storage', $vars) . template('collections/hash_methods_definition', $vars);
         if($k === 'int64') {
             $h .= "    $k append($v value);\n" . scalarInputFences($plan, 'append', [[$v]]);
             $d .= "$k $n::append($v value) { if (!storage_) storage_ = new storage; return storage_->table.append(std::move(value)); }\n";
@@ -142,21 +142,21 @@ function renderOwnership(array $plan, array &$files): void {
             $align = $s['alignment'];
             $get = fn(string $obj):string => "detail::ownership_access::get<$native>($obj)";
             $vars = compact('n', 'native', 'shared', 'size', 'align', 't') + ['this' => $get('*this'), 'other' => $get('other'), 'copy_spec' => $family === 'unique' ? ' = delete':' noexcept'];
-            $h .= template('owner_declaration', $vars);
-            $d .= template('owner_lifetime_definition', $vars);
+            $h .= template('ownership/owner_declaration', $vars);
+            $d .= template('ownership/owner_lifetime_definition', $vars);
             if($family !== 'unique') {
-                $d .= template('owner_copy_definition', $vars);
+                $d .= template('ownership/owner_copy_definition', $vars);
             }
             $thisAccess = $get('*this');
             $other = $get('other');
             $d .= "void $n::reset() noexcept { $thisAccess.reset(); }\nvoid $n::swap($n& other) noexcept { $thisAccess.swap($other); }\n";
             if($family === 'weak') {
                 $h .= "    explicit $n(const $shared& owner) noexcept;\n    $shared lock() const noexcept;\n";
-                $d .= template('owner_weak_definition', $vars + ['strong' => "detail::ownership_access::get<std::shared_ptr<$t>>"]);
+                $d .= template('ownership/owner_weak_definition', $vars + ['strong' => "detail::ownership_access::get<std::shared_ptr<$t>>"]);
             }
             else {
                 $h .= "    bool_t has_value() const noexcept;\n    explicit operator bool() const noexcept;\n    $t& operator*() const;\n    $t* operator->() const;\n";
-                $d .= template('owner_access_definition', $vars);
+                $d .= template('ownership/owner_access_definition', $vars);
                 foreach($r['constructors'] as $args) {
                     $params = constructorArguments($args, false);
                     $values = constructorArguments($args, true);

@@ -118,7 +118,7 @@ Priority here means value for the next refactor—not a claim that current behav
 
    - [`compilerBinary()`](/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/tools/api_generator/php/render_compiler.php:397) constructs helper names as `scpp::{identity}_{operator}` and supplies `scpp/arithmetic.hpp`.
    - Conversion generation hardcodes checked-conversion expressions and headers in [`compilerConversions()`](/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/tools/api_generator/php/render_compiler.php:260).
-   - The string template embeds [`scpp/string.hpp`](/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/tools/api_generator/templates/string_literal_methods.php.tpl:20).
+   - The string template embeds [`scpp/string.hpp`](../../tools/api_generator/templates/strings/string_literal_methods.php.tpl).
    - A fixed type list determines [`cpp_trivial_value()`](/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/tools/api_generator/php/render_compiler.php:138).
    - Native binary lowering is classified as reorderable by its selected strategy.
 
@@ -199,7 +199,7 @@ Priority here means value for the next refactor—not a claim that current behav
 
 7. **P3 — Literal registration is only partly metadata-driven.**
 
-   [`type_registry.php.tpl`](/home/alexv/__AI/simple_cpp/simple_cpp_02/v0.2/tools/api_generator/templates/type_registry.php.tpl:35) hardcodes AST-family mappings for integer, float and string literals. The floating accessor is fixed to `type_float64`; other parts of registration are generated.
+   [`type_registry.php.tpl`](../../tools/api_generator/templates/core/type_registry.php.tpl) hardcodes AST-family mappings for integer, float and string literals. The floating accessor is fixed to `type_float64`; other parts of registration are generated.
 
    **Proposed addition:** a literal-family identifier associated with the canonical type:
 

@@ -40,7 +40,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             . "    $n source_read(const boxed_text_key& key) const;\n"
             . "    void source_set(int64 key, const $n& value) { set(key, value); }\n"
             . "    void source_set(const boxed_text_key& key, const $n& value);\n" : '';
-        $decl = template('boxed_declaration', $vars + ['fences' => $sourceMembers . $fences]);
+        $decl = template('boxed/boxed_declaration', $vars + ['fences' => $sourceMembers . $fences]);
         if ($split) {
             $provider = typeExport($plan['submodules'], $n)['provider'];
             $h .= includeHeader(providerHeader($plan['submodules'], $provider));
@@ -53,7 +53,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         } else {
             $h .= $decl;
         }
-        $d .= template('boxed_definition', $vars);
+        $d .= template('boxed/boxed_definition', $vars);
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";

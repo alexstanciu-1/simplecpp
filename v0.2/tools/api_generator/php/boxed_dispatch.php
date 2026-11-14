@@ -178,7 +178,7 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
                 : "(\$box_left ? {$admission['left']} : {$admission['right']})";
             $ops .= "\t\t\tbinary_operator::$op => $expression,\n";
         }
-        $code .= strtr(readFile(__DIR__ . '/../templates/compiler_boxed.php.tpl'), [
+        $code .= strtr(readFile(__DIR__ . '/../templates/boxed/compiler_boxed.php.tpl'), [
             '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,
             '@targets@' => $destinations, '@sources@' => implode(', ', array_map(fn($s) => "'$s'", array_keys($input))),
         ]);

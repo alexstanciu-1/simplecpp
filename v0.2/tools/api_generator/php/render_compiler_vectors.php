@@ -4,7 +4,7 @@ namespace Scpp\Api;
 
 /** The checked sequence read has one preparation and member-call shape for strings and vectors. */
 function compilerIndexRead(string $receiver, string $count, string $element, string $method): string {
-    return strtr(readFile(__DIR__ . '/../templates/index_read.php.tpl'), [
+    return strtr(readFile(__DIR__ . '/../templates/collections/index_read.php.tpl'), [
         '@receiver@' => $receiver, '@count@' => $count, '@element@' => $element, '@index@' => $method,
     ]);
 }
@@ -36,7 +36,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             && $index['result_category'] === 'value', 'Compiler vector requires value-copy index binding');
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
-        $code .= strtr(readFile(__DIR__ . '/../templates/vector_type.php.tpl'), [
+        $code .= strtr(readFile(__DIR__ . '/../templates/collections/vector_type.php.tpl'), [
             '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
