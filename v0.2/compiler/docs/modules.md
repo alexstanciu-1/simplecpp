@@ -131,3 +131,28 @@ XDEBUG_MODE=off php v0.2/compiler/tests/manifests.php
 XDEBUG_MODE=off python3 -B v0.2/compiler/tests/incremental.py
 XDEBUG_MODE=off python3 -B v0.2/compiler/tests/manifests_native.py
 ```
+
+## Type export availability context
+
+Each compilation_session derives an immutable type_availability membership index from the selected
+module names. The coordinator passes it through frontend collection and parsing to each ast_file_node.
+Retained roots hold the immutable context directly, not a mutable session backlink. Standalone frontend
+calls default to an empty optional-module selection. Always-available types need no selected module.
+
+The generated registry exposes required_module(name) for scalar aliases and canonical names, using
+compiler.modules membership metadata. Type_Resolution checks it at the common written-type boundary,
+including signatures, fields, casts and generic arguments. Parser recognition still knows generated type
+spellings; it does not grant source availability. No process-global activation state is introduced.
+
+Generation knows definitions independently from application selection. This infrastructure does not
+activate optional integer widths or change current type admission. Generated collection/boxed families
+retain their existing publication behavior; this slice does not retrofit module gates to every runtime API.
+
+A changed selected module set makes Project_Compiler start a fresh frontend generation. Direct users of
+Incremental_Frontend must likewise request a full rebuild on selection changes; stale-context reuse is
+rejected. Unchanged selections retain existing AST and preparation reuse. Failed collection leaves the
+previous session current; successful new publication retires it even if subsequent preparation fails.
+
+The module-availability test generates an isolated optional-byte fixture and checks aliases, independent
+contexts, all-flavor declaration boundaries, module removal/re-addition, unchanged reuse and recovery
+against fresh emitted artifacts. Production metadata and generated types remain unchanged in availability.

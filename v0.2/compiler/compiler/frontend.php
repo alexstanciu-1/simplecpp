@@ -26,9 +26,9 @@ final class Source_Frontend
 		return $this->collect($source);
 	}
 
-	public function collect(source_file $source, ?declaration_sink $sink = null): ast_file_node
+	public function collect(source_file $source, ?declaration_sink $sink = null, type_availability $availability = new type_availability()): ast_file_node
 	{
-		return (new Parser($this->scan($source), $sink))->parse();
+		return (new Parser($this->scan($source), $sink, $availability))->parse();
 	}
 
 	public function collect_file(string $path, flavor $flavor, ?declaration_sink $sink = null): ast_file_node

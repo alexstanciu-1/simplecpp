@@ -69,7 +69,12 @@ final class Type_Resolution
 			if ($child !== null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type does not accept arguments: ' . $syntax->name);
 			}
-			return ($allow_void && $syntax->name === 'void') ? type_void::instance() : type_registry::resolve($syntax->name);
+			$type = ($allow_void && $syntax->name === 'void') ? type_void::instance() : type_registry::resolve($syntax->name);
+			$module = type_registry::required_module($syntax->name);
+			if ($type !== null && $module !== null && !$syntax->root()->type_availability->allows($module)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type ' . $syntax->name . ' requires module ' . $module);
+			}
+			return $type;
 		}
 		// Current families have one or two arguments; walk the chain once without an intermediate collection.
 		$second = $child?->next_sibling;

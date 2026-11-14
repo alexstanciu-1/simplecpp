@@ -18,6 +18,8 @@ final class ast_file_node extends ast_node
 	/** PROPERTIES */
 	/** Native shared-owning; retained token generation. */
 	public readonly token_list $tokens;
+	/** Native shared-owning immutable context; retained roots never point to a mutable session. */
+	public readonly type_availability $type_availability;
 	/** Native owning; file reference scope. */
 	public readonly scope $scope;
 	/**
@@ -50,11 +52,12 @@ final class ast_file_node extends ast_node
 	private bool $prepared = false;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens, ?string $namespace = null)
+	public function __construct(token_list $tokens, ?string $namespace = null, type_availability $availability = new type_availability())
 	{
 		parent::__construct(0, count($tokens->tokens));
 		$this->parent = null;
 		$this->tokens = $tokens;
+		$this->type_availability = $availability;
 		$this->scope = new scope(null, $namespace);
 	}
 

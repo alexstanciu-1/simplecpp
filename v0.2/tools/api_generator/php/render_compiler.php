@@ -228,7 +228,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['php_integer_constants'] ?? [] as $name => $value) {
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }
+    $moduleCases = [];
+    foreach ($definitions as $definition) {
+        if ($definition['required_module'] === null) continue;
+        $aliases = implode(', ', array_map(static fn(string $name): string => var_export($name, true), $definition['aliases']));
+        $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/type_registry.php.tpl'), [
+        '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',

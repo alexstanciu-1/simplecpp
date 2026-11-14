@@ -28,13 +28,16 @@ final class Parser
 	private ast_file_node $root;
 	/** Native non-owning; coordinator outlives parsing. */
 	private ?declaration_sink $sink;
+	/** Native shared-owning context passed unchanged to the file root. */
+	private readonly type_availability $availability;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens, ?declaration_sink $sink = null)
+	public function __construct(token_list $tokens, ?declaration_sink $sink = null, type_availability $availability = new type_availability())
 	{
 		$this->cursor = new Syntax_Cursor($tokens);
 		$this->names = new Namespace_Syntax($this->cursor);
 		$this->sink = $sink;
+		$this->availability = $availability;
 	}
 
 	/** METHODS */
@@ -56,7 +59,7 @@ final class Parser
 			}
 			$this->cursor->take($delimiter, $braced ? '{' : ';');
 		}
-		$this->root = new ast_file_node($this->cursor->tokens, $namespace);
+		$this->root = new ast_file_node($this->cursor->tokens, $namespace, $this->availability);
 		$body_start = $this->cursor->position();
 		$collector = new Body_Collection($this->root->scope);
 		$this->lexical = $collector;

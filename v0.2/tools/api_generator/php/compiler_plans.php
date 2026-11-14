@@ -50,22 +50,24 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     $sources = fields(at($metadata, 'source_types'), ['int', 'bool', 'null', 'float']);
     requireThat(($sources['int'] ?? null) === 'int64' && isset($types[$sources['int']]), 'Compiler int requires int64 metadata');
     $active = [];
+    $always = [];
     $membership = [];
     foreach (object(at($compiler, 'modules')) as $module => $row) {
         fields($row, ['always_available', 'types']);
         $members = names(at($row, 'types'), 'Duplicate compiler module type');
         foreach ($members as $identity) {
-            requireThat(!isset($membership[$identity]), 'Duplicate compiler module ownership: ' . $identity);
-            $membership[$identity] = $module;
+            requireThat(!array_key_exists($identity, $membership), 'Duplicate compiler module ownership: ' . $identity);
+            $membership[$identity] = boolean(at($row, 'always_available')) ? null : $module;
+            $active[$identity] = true;
         }
         if (boolean(at($row, 'always_available'))) {
             requireThat($module === 'default-runtime', 'Only the default runtime is supported in this compiler slice');
-            foreach ($members as $identity) $active[$identity] = true;
+            foreach ($members as $identity) $always[$identity] = true;
         }
     }
     // Required roles are consumed by existing AST/literal handlers and boot-time generated class references.
     foreach (array_merge(array_values($sources), names(at($metadata, 'core_integers')), [textValue(at(at($metadata, 'string'), 'type'))]) as $required) {
-        requireThat(isset($active[$required]), 'Required compiler type missing from default runtime: ' . $required);
+        requireThat(isset($always[$required]), 'Required compiler type missing from default runtime: ' . $required);
     }
     $rows = object(at($compiler, 'value_types'));
     foreach ($active as $identity => $_) requireThat(isset($rows[$identity]), 'Missing active compiler type definition: ' . $identity);
@@ -176,6 +178,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     }
     $providers ??= submodulePlan($metadata);
     foreach ($definitions as $identity => &$definition) {
+        $definition['required_module'] = $membership[$identity];
         if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating', 'null'], true)) continue;
         $export = typeExport($providers, $identity);
         $definition['cpp'] = $export['symbol'];

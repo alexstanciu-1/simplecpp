@@ -6,7 +6,7 @@ require_once __DIR__ . '/vectors.php';
 require_once __DIR__ . '/carriers.php';
 require_once __DIR__ . '/hashes.php';
 @boxed_require@
-// Generated from the always-available default-runtime module. Do not edit.
+// Generated from runtime compiler module metadata. Do not edit.
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
@@ -16,6 +16,15 @@ final class type_registry
 		return match ($name) {
 @cpp_type_aliases@
 			default => false,
+		};
+	}
+
+	/** Optional module owner of a known scalar name; null keeps default and unregistered names unchanged. */
+	public static function required_module(string $name): ?string
+	{
+		return match ($name) {
+@module_cases@
+			default => null,
 		};
 	}
 
