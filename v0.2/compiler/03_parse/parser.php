@@ -346,15 +346,42 @@ final class Parser
 	}
 
 	/** Functions and methods share lexical collection, statement grammar and body ownership. */
-	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type = null): ast_function_declaration
+	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type = null, bool $derived_constructor = false): ast_function_declaration
 	{
 		$source = $this->cursor->tokens->source;
 		$this->declaring_type = $declaring_type;
+		$base = null;
+		if ($derived_constructor && $source->flavor === flavor::cpp && $this->cursor->is(token_kind::colon)) {
+			$start = $this->cursor->take(token_kind::colon, ':');
+			$target = $this->named_type();
+			$arguments = $this->arguments();
+			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target);
+		}
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
 		$previous = $this->lexical;
 		$body_collector = new Body_Collection($this->root->scope, $function->parameters);
 		$this->lexical = $body_collector;
 		$statements = [];
+		if ($derived_constructor) {
+			$c = $this->cursor;
+			$start = $c->position();
+			$spelling = $c->tokens->text_at($start);
+			if (($source->flavor === flavor::php && $spelling === 'parent')
+				|| ($source->flavor === flavor::js && $spelling === 'super')) {
+				$c->name(token_kind::identifier);
+				if ($source->flavor === flavor::php) {
+					$c->take(token_kind::scope, '::');
+					if ($c->name(token_kind::identifier) !== '__construct') throw new diagnostic($source, $c->offset(), 'Expected parent constructor');
+				}
+				$args = $this->arguments();
+				$end = $c->take(token_kind::semicolon, ';') + 1;
+				$base = new ast_base_initialization($start, $end, $args, true);
+			}
+			$base ??= new ast_base_initialization($start, $start, [], false);
+			$statement = new ast_base_statement($base);
+			$body_collector->statement($statement, 0);
+			$statements[] = $statement;
+		}
 		while (!$this->cursor->is(token_kind::rbrace))
 		{
 			if ($this->cursor->at_end()) {

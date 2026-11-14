@@ -67,6 +67,177 @@ Proof: one base node, two concrete expressions, child attachment and a base-type
 
 Do not translate every PHP object reference into an owning shared handle. Ownership cycles and generation lifetimes must be addressed explicitly.
 
+### Agreed implementation direction — 2026-11-14
+
+Use native C++ inheritance and virtual dispatch for the C++ backend. Do not build a
+custom vtable, object-layout engine or general ABI framework for this milestone.
+This is a planning decision, not implementation or a new source-language contract.
+
+- **Compiler / static analysis:** resolve bases and interfaces; check inheritance
+  cycles, visibility, construction, abstract obligations, overrides and admitted
+  handle conversions. Prepare these facts before emission. Emit source-oriented
+  diagnostics rather than relying on native compiler errors as semantic validation.
+- **C++ backend / native compiler:** lower the accepted hierarchy to native base
+  classes, virtual methods and abstract interface classes. Let C++ perform layout,
+  dispatch, base/interface pointer adjustment and base/member destruction. Use a
+  virtual destructor for polymorphic bases/interfaces; do not add source-level
+  explicit delete as part of this work. Preserve source mappings for debugging.
+- **Runtime ownership:** retain/release, weak observation, concrete payload
+  destruction and allocation release belong to the ownership mechanism. Native
+  dispatch does not determine which source links own objects or how long a
+  generation must remain alive.
+
+An upcast changes the accessible view, not the owned allocation. Converting a
+shared Concrete to a shared Base/interface must preserve one control block,
+reference counts, complete-object destruction and allocation identity. Copies
+retain that owner; moves transfer it; absent handles remain absent. A base/interface
+view can have an adjusted address, so view-address equality alone must not become
+allocation identity. Never construct a second independent owner from an adjusted
+raw pointer. Weak locking must preserve both the owner and the applicable view.
+
+Current implementation evidence: application-record shared/weak handles are
+exact-type generated owners in `compiler/05_backend/cpp/emit.php` (`owner_methods`).
+Their allocation embeds the payload and strong/weak counts; final release directly
+invokes the statically known payload destructor. There is no generic concrete
+payload destruction callback in this path today. This differs from the published
+runtime ownership wrappers. Generalizing application ownership requires an explicit
+runtime/generator ownership design, not a reinterpret-cast between typed allocation
+structures or extra semantic decisions embedded in the C++ emitter. Decide the
+control/view representation before implementation; no two-pointer layout or extra
+allocation is mandated by this note. Review any wider ownership relocation first.
+
+### First extends slice — base storage, inherited fields and construction
+
+Scope: the bounded base-storage part of 3.1. The first proof does not require
+virtual methods, abstract classes, base-typed owning links or shared-handle upcasts.
+Those belong to the subsequent polymorphic AST slice, not prerequisites hidden in
+this one. Source spelling must follow the active flavor/record contracts; this
+planning note does not introduce a new class-versus-struct ownership default.
+
+| Compiler stage | Responsibility in this slice |
+| --- | --- |
+| Tokenizing | Recognize the flavor's base-declaration syntax (`extends` where applicable), retaining normal keyword/source-position handling. |
+| Parsing | Store one optional owned written base-type reference on the record declaration. Preserve its spelling and source location even when resolution fails. Do not infer the base or copy inherited members into syntax. |
+| Declaration collection / resolution | Use existing namespace/import and declaration lookup to resolve the base. Store one non-owning resolved-base definition reference, separate from the written syntax. Register dependencies through the established incremental owner. |
+| Preparation | Validate an admissible single base and acyclic hierarchy; resolve inherited field lookup and visibility, field-name conflicts, base construction and argument conversions. Diagnose unsupported/invalid forms before emission. Prepare reusable facts rather than repeating semantic work in the emitter. |
+| Lowering | Emit native single inheritance, the derived type's own fields, prepared inherited accesses and base-before-derived constructor initialization. Reuse published names and include dependencies. Let C++ implement base layout and destruction; do not introduce custom layout or dispatch. |
+
+Start inherited lookup by checking the current declaration and following its
+resolved base through the existing member-resolution owner. Do not add a flattened
+inherited-members index unless evidence warrants it and invalidation is defined.
+Use existing dependency tracking for base edits rather than an independently owned
+reverse index. Written base syntax is owned; resolved bases and lookup results are
+non-owning references with explicit publication/invalidation boundaries.
+
+Preparation remains bounded but is not merely index population: STAN must detect
+invalid inheritance without requiring C++ emission/compilation. Lowering consumes
+the settled relationship and construction plan. The exact field-conflict and base-
+constructor source rules must be checked against their owning contracts before
+implementation; this note does not silently adopt all PHP or C++ behavior.
+
+Proof: a concrete Node record with a small source-range field, and two concrete
+records such as IntegerLiteral and Addition extending it. Give each derived record
+its own scalar fields. Construct and use each through its exact concrete type,
+read inherited public fields and access protected base fields from derived code.
+Exercise supported base-constructor arguments/defaults and prove base-before-
+derived initialization. Addition need not own polymorphic children yet; the complete
+AST tree and base-typed operation remain the later milestone proof.
+
+Implementation status: the first single-base **struct** slice is implemented.
+See [the compiler support boundary](../../compiler/docs/inheritance.md) and
+[the repeatable native proof](../../compiler/tests/extends_native.py).
+The written base is owned syntax; the resolved base is a non-owning canonical
+layout dependency. Inherited fields/constructors retain their declaring owner.
+The emitter uses native inheritance and braced base initialization, with existing
+exact-type ownership and split-header publication. Production runtime storage is
+unchanged. Ordinary inherited-method/static-member lookup and protected ordinary
+methods/static members remain follow-up work alongside the polymorphic slice.
+
+Verification checklist:
+
+- [x] Execute the same bounded proof across cpp/php/js on Clang and GCC.
+- [x] Verify inherited storage and derived fields are independent and initialized
+  correctly; inherited access does not duplicate or copy the base payload.
+- [x] Verify base construction, applicable defaults/conversions and failure cleanup
+  follow the source contract. A failed base construction must not run the derived
+  constructor body or leak already-created resources.
+- [x] Reject unknown/invalid bases, cycles, unsupported multiple bases, inaccessible
+  fields and invalid constructor arguments before emission (grammar rejects
+  multiple bases; preparation checks semantic errors). Apply the owning
+  field-conflict rule rather than relying on native C++ rejection.
+- [x] Keep virtual overrides, abstract declarations and derived-to-base shared
+  conversions outside this slice; do not accidentally admit them through C++.
+- [x] Preserve existing exact-type inline/shared/weak behavior, including copies,
+  alias mutation, absence, destruction and weak expiry where currently supported.
+  Use native destruction instrumentation if source destructors are unavailable.
+- [x] Incremental base/member/constructor edits, failed resolution and recovery
+  match fresh output; replace stale resolved references and inherited lookup facts.
+- [x] Verify declaration ordering, include selection and cross-unit base lookup
+  through existing owners, without emitter-specific semantic decisions.
+
+Verified with `XDEBUG_MODE=off python3 -B v0.2/compiler/tests/extends_native.py
+--memcheck`: cpp/php/js passed on Clang and GCC. The native tests cover explicit
+and implicit base initialization, inherited constructor contracts/defaults,
+protected receivers/constructor visibility, private/private field-name reuse, checked
+conversion failure before later arguments/body, namespace and split-header
+publication with default or disabled application namespaces, inline copies, shared
+alias mutation and weak expiry. Qualified adapter calls remain visible in native
+base initializers outside constructor-body imports. Generated code
+passed ASan/UBSan; separate Valgrind runs reported all heap blocks freed. The
+unchanged runtime archives were compiled with the matching native compiler and
+standard library, without sanitizer instrumentation.
+
+Retained/fresh tests include base removal/cycles, field conflicts, constructor
+signature/default/access edits and error retries/recovery. Equal-size edits
+explicitly advance filesystem timestamps under the existing mtime/size policy;
+unchanged child sources retain their timestamps. CLI parse/prepare inspection
+recognizes the new relationship and base-initialization nodes in all flavors.
+Existing constructor, weak-owner and static-property native suites passed all
+three flavors; AST ownership/location checks and compiler writing checks passed.
+The broader `tests/cli.py` suite has an existing diagnostic-text expectation
+failure at line 46, reproduced against an isolated HEAD compiler using the same
+unchanged generated bindings. It is not an extends regression and remains outside
+this slice. No execution-speed or compilation-speed claim is made.
+
+Review fixes verified before commit:
+
+- `this` now subscribes its prepared body to the declaring record's stable symbol.
+  The existing layout chain propagates inherited field type/access changes to
+  ordinary methods; no inherited-member index or separate invalidation engine
+  was introduced.
+- Allocation factories for effective authored constructor contracts are emitted
+  once in each payload's source, with complete signature types collected there.
+  Locally authored and inherited constructors share that publication path. The
+  inline inherited-factory special case was removed; empty shared/weak consumers
+  and resource-bearing record headers require only declarations.
+- `extends_regressions.py`, invoked by `extends_native.py`, covers a three-level
+  hierarchy, field type/access/removal errors, actual base-file deletion, repeated
+  errors, recovery, changing the selected base and retiring the old subscription.
+  Retained output/diagnostics match fresh compilation. A no-op prepares/emits
+  nothing; an unrelated function remains reused and its source is not emitted.
+- Constructor publication tests cover empty shared/weak handles, handles stored
+  in another record, inherited record/shared-handle parameters, actual calls,
+  parameter-type edits and restoration. Each derived factory has one `.cpp`
+  definition. Native compilation/execution passes on Clang and GCC in all three
+  flavors, including each successful incremental recovery.
+
+Verification after the fixes: the full extends suite with `--memcheck` passed
+cpp/php/js on Clang and GCC (including ASan/UBSan and Valgrind cleanup checks).
+The expanded factory-signature edit matrix passed separately for all six
+flavor/compiler combinations. Existing constructor and weak-owner native suites
+passed all three flavors; compiler writing checks and `git diff --check` passed.
+The previously recorded baseline CLI diagnostic-text failure remains unrelated.
+Virtual overrides and shared-handle upcasts remain deferred.
+
+Deferred: virtual/abstract methods and overrides; base/interface shared-handle
+upcasts and cross-type identity operations; interface declarations and multiple
+capabilities; base-value slicing conversions; downcasts/type tests; parent method
+calls beyond base construction; multiple class inheritance; polymorphic child
+collections; non-owning parent/generation lifetimes; write-once attachment; traits;
+reflection; explicit deletion; custom dispatch; ownership-layout redesign and
+optimization campaigns. Plan those against the agreed native-C++/runtime division
+above, but do not implement them as part of this first extends slice.
+
 ## 4. Failures and cleanup — failed preparation and retry
 
 | Order | Group | Initial scope |

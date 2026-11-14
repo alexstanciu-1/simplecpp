@@ -82,7 +82,7 @@ final class Function_Preparation
 				}
 			}
 			elseif (($statement instanceof ast_return_statement)
-				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement)) {
+				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 				if ($statement->value !== null) {
 					self::expression($statement->value);
 				}
