@@ -86,7 +86,7 @@ The bounded application-vector slice now resolves `vector<Record>` for local sto
 struct elements use value copies and class elements use their ordinary shared ownership.
 Empty construction, append, checked indexing/replacement and copying are implemented;
 application-vector writable references and traversal remain deferred. See
-[application vectors](../compiler/docs/application_vectors.md). Application-defined hash values now follow the same local/by-value path with strict published int/string keys; see [application hashes](../compiler/docs/application_hashes.md).
+[application vectors](../compiler/docs/application_vectors.md). Application-defined hash values now follow the same local/by-value path with strict published int/string keys; see [application hashes](../compiler/docs/application_hashes.md). Both application-defined collection families support value/key foreach, including inside yield producers, without default-constructing their elements.
 Application vector/hash instance fields initialize empty and reuse their copy and mutation paths; recursive concrete field dependencies remain deferred.
 Every closing angle consumes one token. Shift expressions consume two byte-adjacent
 angles and produce one AST operation; whitespace/comments between angles prevent

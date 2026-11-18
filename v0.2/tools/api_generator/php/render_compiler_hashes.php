@@ -41,10 +41,11 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         if (!isset($applicationCases[$key])) {
             $app = 'application_hash_' . $definitions[$hash['key']]['class'] . '_type';
             $applicationCases[$key] = "\t\tif (\$family === " . var_export($family, true) . " && \$second === $key::instance()) return new $app(\$element);\n";
-            $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']);
-            $recipe['append'] = ''; // Application append and traversal stay separate slices.
+            $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
+            $recipe['append'] = ''; // Application append stays a separate slice.
             $code .= strtr($template, array_replace($bindings, [
-                '@class@' => $app, '@interfaces@' => ' implements application_collection_type', '@iteration@' => '',
+                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, iterable_type',
+                '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
                 '@identity@' => "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$value)\n\t{\n\t\tparent::__construct(" . var_export($family, true) . " . '<' . \$value->name . ',' . $key::instance()->name . '>', \$value, $key::instance());\n\t\t\$this->native_name = 'scpp_hash_' . hash('sha256', \$value::class . ':' . \$value->name . ':' . \$this->key_type->name);\n\t}\n",
                 '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $runtime['hashes']['count_type'])['provider']), true),

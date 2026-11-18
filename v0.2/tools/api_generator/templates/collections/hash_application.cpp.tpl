@@ -1,6 +1,7 @@
 using ::scpp::bool_t;
 class @n@ final {
 public:
+@section_output_declaration@
 @section_declaration@
 private:
     struct storage;
@@ -9,3 +10,4 @@ private:
 @section_storage@
 @section_lifecycle@
 @section_definition@
+@section_output_definition@

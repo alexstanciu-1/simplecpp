@@ -5,8 +5,9 @@
 }
 @inline@bool_t @n@::@next_method@(@count@& position, @count@ limit, @count@& key, @e@& value) const {
     if (position < 0 || limit < 0) throw std::out_of_range("iteration_bounds");
-    if (position >= limit || !storage_ || static_cast<unsigned long long>(position) >= storage_->size()) return false;
-    auto selected = (*storage_)[static_cast<std::size_t>(position)];
+    const auto* item = storage_ ? storage_->iteration_select(position, limit) : nullptr;
+    if (!item) return false;
+    auto selected = *item;
     const auto selected_key = position;
     ++position;
     key = selected_key;

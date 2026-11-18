@@ -7,7 +7,9 @@
     "storage": ["collections/hash_table"],
     "lifecycle": ["core/concrete_owner_lifecycle"],
     "declaration": ["core/lifecycle_declaration", "collections/hash_value_methods_declaration"],
-    "definition": ["collections/hash_methods_definition"]
+    "definition": ["collections/hash_methods_definition"],
+    "output_declaration": ["collections/hash_iteration_output", "core/iteration_output", "collections/hash_output_declaration"],
+    "output_definition": ["collections/hash_output_iteration"]
   },
   "application": "collections/hash_application",
   "support": ["hash/concrete_index.hpp"],

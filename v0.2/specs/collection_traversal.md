@@ -84,3 +84,13 @@ wall 159.042 ms: compile wall 88.102 ms, frontend 31.613 ms, LLVM backend 15.006
 link wall 68.691 ms. Medians are independent, so components need not sum exactly.
 This is a native protocol fixture, not a compiler foreach or traversal-throughput
 benchmark; there is no PHP compilation stage in these measurements.
+
+## Construction-aware application outputs
+
+Application-defined element traversal does not require default construction of an element.
+The generated concrete output slot starts empty. Advancement selects and copies the value
+(and requested key) before publishing the output and committing position. A throwing copy
+leaves the previous output, key and position unchanged. No element-storage pointer escapes
+the advance call. Exhaustion leaves outputs unchanged. Existing bounds, holes, mutation
+and receiver-lifetime rules apply equally to reference outputs and construction-aware slots.
+The slot owns its copied value through normal loop completion and suspended-cursor cleanup.

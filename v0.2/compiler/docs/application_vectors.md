@@ -62,8 +62,7 @@ templates, source-template parsing or compiler-generated templates are introduce
 ## Boundaries and proofs
 
 Application-vector writable references, nested collections, explicit
-shared/weak element spellings, enums and foreach remain separate slices. References and
-fields receive preparation diagnostics rather than incomplete native output. Existing runtime specializations retain their current capabilities.
+shared/weak element spellings and enums remain separate slices. Unsupported references receive preparation diagnostics rather than incomplete native output. Existing runtime specializations retain their current capabilities.
 
 `application_vectors_native.py` verifies Clang and GCC in all flavors, including
 required constructors, heap-backed string copies, class/shared-field identity, growth,
@@ -90,3 +89,10 @@ member signatures qualify the concrete type with the configured application name
 methods, independent copies, shared identity, cross-file signature/element edits, deletion,
 retry and recovery against fresh builds in all three flavors with Clang and GCC. It also
 checks no-op reuse and configured/disabled application namespaces, and records stage timings.
+
+## Application-defined traversal
+
+Value/keyed foreach uses the common traversal protocol, including inside yield producers.
+Required element constructors are supported: the concrete recipe provides an initially
+empty output slot and copy-constructs the selected element only after a successful advance.
+See [foreach output storage](foreach.md#construction-aware-output-storage).

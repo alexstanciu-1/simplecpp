@@ -23,6 +23,10 @@ struct @n@::storage {
     ~storage() { clear(); @buffer@::vector_deallocate(data, alignof(element_type)); }
     std::size_t size() const noexcept { return count; }
     bool empty() const noexcept { return count == 0; }
+    const element_type* iteration_select(@count@ position, @count@ limit) const noexcept {
+        return position < limit && static_cast<unsigned long long>(position) < count
+            ? &(*this)[static_cast<std::size_t>(position)] : nullptr;
+    }
     element_type& operator[](std::size_t index) noexcept { return *reinterpret_cast<element_type*>(data + index * sizeof(element_type)); }
     const element_type& operator[](std::size_t index) const noexcept { return *reinterpret_cast<const element_type*>(data + index * sizeof(element_type)); }
     const element_type& front() const noexcept { return (*this)[0]; }

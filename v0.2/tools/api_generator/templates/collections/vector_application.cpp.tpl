@@ -2,6 +2,7 @@ using ::scpp::bool_t;
 namespace detail { struct @access_name@; }
 class @n@ final {
 public:
+@section_output_declaration@
 @section_declaration@
 private:
 struct storage;
@@ -13,3 +14,4 @@ namespace detail { struct @access_name@ {
 @section_access@
 }; }
 @section_definition@
+@section_output_definition@

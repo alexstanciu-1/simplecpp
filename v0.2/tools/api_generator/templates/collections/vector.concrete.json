@@ -6,7 +6,9 @@
     "storage": ["collections/vector_storage"],
     "access": ["collections/vector_access"],
     "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration"],
-    "definition": ["core/concrete_owner_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"]
+    "definition": ["core/concrete_owner_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"],
+    "output_declaration": ["collections/vector_iteration_output", "core/iteration_output", "collections/vector_output_declaration"],
+    "output_definition": ["collections/vector_output_iteration"]
   },
   "application": "collections/vector_application",
   "support": ["sequence/vector_buffer.hpp"]
