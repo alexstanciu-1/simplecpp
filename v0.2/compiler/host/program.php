@@ -7,6 +7,24 @@ namespace scpp\compiler;
 final class Program_Command
 {
 	/**
+	 * Emit and build in this PHP process; source-only project/program commands retain their existing contract.
+	 * @param string[] $arguments
+	 */
+	public static function build(array $arguments /** list<string> */): int /** int32 */
+	{
+		if (count($arguments) !== 7) {
+			fwrite(\STDERR, "Usage: php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json>\n");
+			return 2;
+		}
+		require_once __DIR__ . '/native_build.php';
+		$config = Native_Build::configuration($arguments[6]);
+		$report = (new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4]);
+		$report['native'] = Native_Build::run($arguments[4], $arguments[5], $config);
+		self::report($report);
+		return $report['native']['exit_code'] === 0 ? 0 : 1;
+	}
+
+	/**
 	 * Load an on-disk module graph and emit compiler units plus external native inputs.
 	 *
 	 * Return: process exit status.

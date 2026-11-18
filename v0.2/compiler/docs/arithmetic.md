@@ -95,12 +95,18 @@ preprocessed source and probe driver revision. Changing an identity field trigge
 a fresh test. Standard build configurations use a per-configuration index of file
 identities, sizes and nanosecond timestamps for the driver, frontend, loaded
 compiler libraries, probe and its included headers, explicit PCH and linker.
-An unchanged hit requires filesystem metadata checks only; it skips compiler
+Cache schema 2 binds the complete tracked-input snapshot to the context key;
+partial or legacy indexes require refresh in both Python and PHP. An unchanged hit
+requires filesystem metadata checks and record-integrity hashing only; it skips compiler
 invocations, preprocessing and binary hashing. Changes trigger full qualification.
 Unrecognized flags use the full fingerprint path. A matching record expires seven days after its successful run.
 A failed refresh stops the build and retry runs the probe again. The recorded
 traces describe these calls on that build configuration. The emitter consumes
 the source evaluation contract.
+
+The [PHP native-build host](native_build.md) also checks qualification in-process. Its
+accepted bootstrap limitation is whole-second stat timestamps; the compiled compiler
+should restore nanosecond checks. The standalone Python checker retains nanosecond precision.
 
 The no-PCH panel and Python benchmark launchers check the same cache in process before each native
 invocation. A verified hit skips the Ninja qualification edge for that invocation. On a miss,

@@ -43,6 +43,18 @@ def check(directory, compiler):
         assert q.qualify(compiler, flags, cache)[2] == 'qualified'
         assert json.loads(record.read_text())['tested_at'] == now + q.WEEK
 
+        # The entire snapshot is bound to the versioned record, not merely checked when present.
+        index = cache / ('inputs-' + initial['context']['request'] + '.json')
+        original_index = json.loads(index.read_text())
+        dropped = dict(original_index['inputs'])
+        dropped.pop(next(iter(dropped)))
+        with patch.object(q, 'execute', side_effect=AssertionError('probe invoked by cached-only validation')):
+            for inputs in ({str(directory/'missing'): None}, dropped, {}):
+                index.write_text(json.dumps({**original_index, 'inputs': inputs}))
+                assert q.qualify(compiler, flags, cache, cached_only=True) is None
+            index.write_text(json.dumps(original_index))
+            assert q.qualify(compiler, flags, cache, cached_only=True)[0] == key
+
         # Exercise an implementation binary changing behind identical driver/version strings.
         component = directory / 'implementation'
         component.write_text('revision one')
