@@ -328,3 +328,7 @@ local-only declarations stay in their `.cpp`, and Ninja tracks header consumers 
 
 The [class interface slice](docs/interfaces.md) adds shared capability views, mandatory
 override checks and inherited implementation bridges with incremental verification.
+
+Bounded integer/enum selection uses [match expressions](docs/match.md), with a
+native switch and lazy results. Literal `match(true)` uses ordered boolean conditions
+and early returns. Neither form retains a label index or branch-fact tree.

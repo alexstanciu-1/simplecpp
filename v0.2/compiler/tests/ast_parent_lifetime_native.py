@@ -18,13 +18,18 @@ ROOT=Path(__file__).resolve().parents[2]
 def sources(flavor):
     s,evaluate,klass,method,interface,implementation=forms(flavor)
     v,a,fn=s['v'],s['access'],s['function']
-    node=klass('Node',s['field']('parent','weak<Node>')+s['field']('start','int','0')+evaluate('virtual',v+'this'+a+'start'))
-    addition=klass('Addition',s['field']('left','Node')+s['field']('right','Node')+
-        evaluate('override',v+'this'+a+'left'+a+'evaluate(0) + '+v+'this'+a+'right'+a+'evaluate(0)'),'Node')
-    snapshot=klass('Snapshot',s['field']('stamp','int','0')+s['field']('text','string','"source"'))
+    params={'cpp':'int begin,int end','php':'int $begin,int $end','js':'begin:int,end:int'}[flavor]
+    range_method=method('setRange',f'{v}this{a}start={v}begin;{v}this{a}end={v}end;',result='void',params=params)
+    node=klass('Node',s['field']('parent','weak<Node>')+s['field']('start','int','0')+
+        s['field']('end','int','0')+s['field']('value','int','0')+range_method+evaluate('virtual',v+'this'+a+'value'))
+    addition=implementation('Addition',s['field']('left','Node')+s['field']('right','Node')+
+        evaluate('override',v+'this'+a+'left'+a+'evaluate(0) + '+v+'this'+a+'right'+a+'evaluate(0)'),'Node',('Evaluable',))
+    snapshot=klass('Snapshot',s['field']('stamp','int','0')+s['field']('text','string','"1+2+3"'))
     root=klass('Root',s['field']('snapshot','Snapshot'),'Addition')
     literal=klass('Literal','','Node')
-    api=fn('getParent','?Node',[('n','Node')],f'return lock({v}n{a}parent);')
+    marker='Evaluable'+('.class' if flavor=='js' else '::class')
+    api=fn('capability','int',[('n','Node')],f'if ({v}n instanceof Evaluable) {{'+s['infer']('cap',f'object_cast({v}n,{marker})')+f'return {v}cap{a}evaluate();}} return -1;')
+    api+=fn('getParent','?Node',[('n','Node')],f'return lock({v}n{a}parent);')
     api+=fn('bindParent','void',[('child','Node'),('parent','Node')],f'{v}child{a}parent=weak({v}parent);')
     api+=fn('attach','void',[('parent','Addition'),('left','Node'),('right','Node')],
         f'{v}parent{a}left={v}left;{v}parent{a}right={v}right;bindParent({v}left,{v}parent);bindParent({v}right,{v}parent);')
@@ -36,11 +41,13 @@ def sources(flavor):
     body=''
     for name,type_name in [('root','Root'),('inner','Addition'),('one','Literal'),('two','Literal'),('three','Literal'),('source','Snapshot')]:
         body+=s['infer'](name,'new '+type_name+'()')
-    body+=f'{v}root{a}start={v}stamp;{v}inner{a}start=10;{v}one{a}start=1;{v}two{a}start=2;{v}three{a}start=3;'
+    body+=f'{v}one{a}value=1;{v}two{a}value=2;{v}three{a}value=3;'
+    for name,begin,end in [('root',0,5),('inner',0,3),('one',0,1),('two',2,3),('three',4,5)]:
+        body+=f'{v}{name}{a}setRange({begin},{end});'
     body+=f'{v}source{a}stamp={v}stamp;{v}root{a}snapshot={v}source;attach({v}inner,{v}one,{v}two);attach({v}root,{v}inner,{v}three);return {v}root;'
     api+=fn('makeTree','Root',[('stamp','int')],body)
-    return {'node':node,'addition':addition,'literal':literal,'snapshot':snapshot,'root':root,'api':api,
-        'main':'echo read(makeTree(100));return 8;','idle':fn('idle','int',[],'return 7;')}
+    return {'contract':interface('Evaluable'),'node':node,'addition':addition,'literal':literal,'snapshot':snapshot,'root':root,'api':api,
+        'main':'echo read(makeTree(100)),capability(asNode(makeTree(100)));return 8;','idle':fn('idle','int',[],'return 7;')}
 
 
 def native_lifetime(work, flavor, out, libraries, memcheck):
@@ -62,7 +69,9 @@ int main() {
   assert(read_(asNode_(unchanged))==6 && !getParent_(asNode_(unchanged)));
   auto before=retained_child.ptr->count;
   auto parent=getParent_(retained_child);
-  assert(parent.ptr==old_reader.ptr && parent->start==200);
+  assert(parent.ptr==old_reader.ptr && parent->start==0 && parent->end==5);
+  assert(capability_(parent)==6 && capability_(retained_child)==-1);
+  assert(retained_child->start==4 && retained_child->end==5);
   parent={};assert(retained_child.ptr->count==before);
   current=makeTree_(300);
   assert(current.ptr!=old_reader.ptr && reused.ptr==unchanged.ptr);
@@ -72,8 +81,12 @@ int main() {
   auto locked_inner=getParent_(grandchild);
   assert(locked_inner.ptr==inner.ptr);
   assert(getParent_(locked_inner).ptr==old_reader.ptr);
+  assert(locked_inner->start==0 && locked_inner->end==3);
+  assert(grandchild->start==0 && grandchild->end==1);
+  assert(sourceOf_(current)->stamp==300 && sourceOf_(old_reader)->stamp==200);
+  assert(capability_(asNode_(current))==6 && capability_(asNode_(old_reader))==6);
   // Source attachment creates live backlinks before the unpublished candidate fails.
-  auto surviving_child=owner_Node::make();surviving_child->start=4;
+  auto surviving_child=owner_Node::make();surviving_child->value=4;
   auto surviving_observer=weak_Node(surviving_child);
   auto current_identity=current.ptr;auto reused_identity=reused.ptr;
   weak_Addition abandoned;
@@ -122,14 +135,14 @@ int main() {
 def prove(work, flavor, libraries, memcheck):
     src=sources(flavor);app,out=work/flavor,work/(flavor+'-out');write_app(app,flavor,src)
     s,evaluate,klass,*_=forms(flavor)
-    body=src['node'].replace('return '+s['v']+'this'+s['access']+'start;', 'return '+s['v']+'this'+s['access']+'start + 1;')
+    body=src['node'].replace('return '+s['v']+'this'+s['access']+'value;', 'return '+s['v']+'this'+s['access']+'value + 1;')
     assert body!=src['node']
     layout=src['node'].replace(s['field']('start','int','0'),s['field']('start','int','0')+s['field']('padding','int','7'))
-    steps=[(None,None,None,b'6','initial'),(None,None,None,b'6','noop'),
-        ('node',body,None,b'9','body'),('node',src['node'],None,b'6','body'),
-        ('node',layout,None,b'6','layout'),('node',src['node'],None,b'6','layout'),
+    steps=[(None,None,None,b'66','initial'),(None,None,None,b'66','noop'),
+        ('node',body,None,b'99','body'),('node',src['node'],None,b'66','body'),
+        ('node',layout,None,b'66','layout'),('node',src['node'],None,b'66','layout'),
         ('literal',None,'requires a record',None,'invalid'),(None,None,'requires a record',None,'invalid'),
-        ('literal',src['literal'],None,b'6','recover'),(None,None,None,b'6','noop')]
+        ('literal',src['literal'],None,b'66','recover'),(None,None,None,b'66','noop')]
     resident=service(app,out)
     try:
         for i,(name,text,error,expected,kind) in enumerate(steps):

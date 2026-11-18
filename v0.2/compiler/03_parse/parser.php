@@ -846,6 +846,31 @@ final class Parser
 			return $this->call_arguments($start, $name, $separator, null, true);
 		}
 		if ($this->lexical_qualifier()) return $this->lexical_member();
+		if ($c->keyword('match')) {
+			$start = $c->position();
+			$c->take_keyword('match');
+			$c->take(token_kind::lparen, '(');
+			$subject = $this->value();
+			$c->take(token_kind::rparen, ')');
+			$c->take(token_kind::lbrace, '{');
+			$arms = [];
+			while (!$c->is(token_kind::rbrace)) {
+				$arm_start = $c->position();
+				$label = null;
+				if ($c->keyword('default')) $c->take_keyword('default');
+				elseif (!ast_match_expression::is_condition_subject($subject)
+					&& ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)) {
+					$label = $this->literal_initializer('Match label requires an integer literal', true);
+				} else $label = $this->value();
+				$c->take(token_kind::arrow, '=>');
+				$result = $this->value();
+				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());
+				if (!$c->is(token_kind::comma)) break;
+				$c->take(token_kind::comma, ',');
+			}
+			$c->take(token_kind::rbrace, '}');
+			return new ast_match_expression($subject, $arms, $start, $c->position());
+		}
 		if ($this->cursor->keyword('new')) {
 			$start = $this->cursor->position();
 			$this->cursor->take_keyword('new');

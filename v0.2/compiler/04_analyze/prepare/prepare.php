@@ -587,6 +587,16 @@ final class Preparation
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}
 
+	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
+	private function match_result(ast_match_arm $arm, ?type_definition &$result, ?string $initializing): void
+	{
+		$this->value($arm->result, $initializing);
+		$type = $arm->result->type_def();
+		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match arm requires a supported value result');
+		if ($result !== null && $result !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match result types must be identical');
+		$result = $type;
+	}
+
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
@@ -594,6 +604,41 @@ final class Preparation
 		$this->expression_visits++;
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
+		}
+		if ($syntax instanceof ast_match_expression) {
+			$this->value($syntax->subject, $initializing);
+			$type = $syntax->subject->type_def();
+			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
+			if (!$conditional && !($type instanceof enum_type_definition) && !(defined($type::class . '::MINIMUM') && defined($type::class . '::MAXIMUM'))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires an integer or enum, or literal true');
+			}
+			$seen = [];
+			$default = null;
+			$result = null;
+			foreach ($syntax->arms as $arm) {
+				if ($arm->label === null) {
+					if ($default !== null) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match default');
+					$default = $arm;
+					continue;
+				}
+				$this->value($arm->label, $initializing);
+				if ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
+				if (!$conditional) {
+					$binding = $arm->label instanceof ast_name_expression ? $arm->label->declaration() : null;
+					if ($type instanceof enum_type_definition && $binding instanceof ast_enum_case) $key = $binding->short_name;
+					elseif (($arm->label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)
+						&& is_int($arm->label->constant())) $key = $arm->label->constant();
+					else throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label requires an integer literal, named constant or enum case');
+					if (isset($seen[$key])) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match label');
+					$seen[$key] = true;
+				}
+				$this->match_result($arm, $result, $initializing);
+			}
+			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
+			// Fallback runs after conditions, even when written first. Preserve reference-call invalidation.
+			$this->match_result($default, $result, $initializing);
+			$syntax->settle_match($result);
+			return;
 		}
 		if ($syntax instanceof ast_object_access_expression) {
 			$this->value($syntax->operand, $initializing);

@@ -203,6 +203,10 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_match_expression) {
+			$row['subject'] = self::value($value->subject);
+			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::value($arm->label), 'result' => self::value($arm->result)], $value->arms);
+		}
 		if ($value instanceof ast_object_access_expression) {
 			$row['operator'] = $value->test ? 'instanceof' : 'object_cast';
 			$row['target'] = $value->target->spelling();

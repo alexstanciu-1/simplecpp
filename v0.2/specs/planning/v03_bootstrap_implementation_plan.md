@@ -86,6 +86,71 @@ Proof: tokenize representative input through a translated path and compare token
 
 Keep ternary, switch, assignment expressions and general destructuring outside the critical path unless actual translation demonstrates a need. Isolated uses may have clear alternatives, while extensive enum maps warrant a direct language facility.
 
+### 2.1 First match slice — implemented, verification recorded below
+
+The [bounded language contract](../../../specs/match_v0_2.md) and
+[compiler note](../../compiler/docs/match.md) own the completed behavior.
+All flavors use `match (subject) { label => result, default => fallback }`.
+
+- Integer and backed-enum subjects; exact-type literal/named-constant/case labels.
+- One subject evaluation and lazy selected result; one mandatory default.
+- Identical canonical arm result types; ordinary enclosing conversions remain.
+- Native switch, directly in identity-return position; expression wrapper otherwise.
+- AST owns only subject and syntax arms. Temporary duplicate checks disappear
+  after preparation; no persistent maps, secondary prepared tree or global cache.
+- Existing symbol watches track labels, result calls and enum contracts. Reset and
+  collection traverse every arm; unchanged caller bodies/native objects remain reusable.
+
+Verification: `compiler/tests/match_native.py` covers cpp/php/js with Clang and GCC:
+
+- Integer limits, byte labels, integer/string-backed enums, default anywhere,
+  nested matches and both return/initializer lowering paths.
+- Single subject evaluation, selected-only effects, checked failure, surrounding
+  short-circuiting, string value copies and embedded NUL preservation.
+- Missing/duplicate defaults, duplicate labels/constant aliases, invalid subjects,
+  dynamic labels and inconsistent result types.
+- Arm edits, label constant edits/deletion/restoration, enum case removal/recovery,
+  repeated failure, fresh-output equivalence and no-op preparation/emission/native reuse.
+- Native caller object reuse after a function-body-only edit.
+
+First-slice deferrals (condition follow-up below): `match(true)`, plain string/float subjects, computed or grouped labels,
+exhaustiveness, implicit common result types, void/generator/reference results,
+ternary/switch syntax and the 2.2–2.5 collection/tokenizer work. This slice does not
+change section 1 work owned by the other workspace or claim compile-time gains.
+
+### 2.1 Ordered match conditions — implemented
+
+Extend the existing match syntax with literal `match(true)`. Boolean conditions run
+in source order until the first true condition; only its result runs. Default remains
+mandatory and runs last if no condition succeeds, even when written first. All result
+types must agree exactly. Repeated conditions are permitted; skipped arms are still
+semantically checked. General boolean subjects and truthiness coercion are deferred.
+
+Ownership and cost: derive the mode from immutable subject syntax; add no AST fields,
+branch maps, retained indexes or preparation pass. Prepare fallback after conditions
+so reference-call invalidation reaches its conversions. Lower through existing bool
+condition handlers to early-return `if` statements; reuse the existing match wrapper
+only in expression contexts. This does not change eager operand-order contracts.
+
+Verification completed with `match_conditions.php`, `match_conditions_native.py`
+and the original `match_native.py`; related logical, constants, incremental frontend
+and compiler style checks also pass.
+
+Verification checklist:
+
+- [x] Ordered conditions, first match, repeated conditions, default anywhere and only default.
+- [x] Skipped side effects/failures, condition/result failure, nested selections and short-circuit surroundings.
+- [x] Default conversion remains checked after a false condition mutates a local by reference.
+- [x] Exact bool conditions/result types; missing/duplicate defaults; invalid skipped arms.
+- [x] AST ownership, one visit per expression, pure emission and reset/reprepare equivalence.
+- [x] Predicate signature edits, constant/result edits, deletion/retry/recovery against fresh artifacts.
+- [x] No-op preparation/emission/native reuse and unchanged caller objects after body-only edits.
+- [x] cpp/php/js on Clang and GCC; original integer/enum match regression remains green.
+
+Deferred: general boolean subjects, string/float matching, computed integer/enum labels,
+label grouping, exhaustiveness and common-result inference. Section 2.2–2.5 work,
+other-workspace collection changes and new runtime APIs remain outside this slice.
+
 ## 3. Object relationships — a small AST family
 
 Discuss inheritance, handles and interfaces together before implementing this milestone.
@@ -1418,6 +1483,41 @@ Review verification closes both lifetime coverage gaps:
 
 Only the test fixture and documentation change for these review fixes; no compiler,
 runtime ownership, retained structures or deferred features are added.
+
+### Small AST integration proof — ordinary application policies
+
+The follow-up decision keeps ordinary weak-reference semantics: weak fields are
+assignable observers, and expiry does not introduce attachment state. Any attach-once,
+cycle or range validation required by the compiler's own AST belongs in that AST's
+application methods. Do not introduce specialized language semantics, hidden readiness
+flags or a new preparation pass for this example. Earlier deferred attachment/range
+items do not authorize such a compiler feature.
+
+The existing lifetime fixture now combines these capabilities in one executable family:
+
+- Construct 1+2+3 as nested Addition/Literal nodes, with owning children and weak parents.
+- Keep numerical values separate from source offsets; use ordinary inherited setRange
+  calls to assign [start,end) spans for literals, the inner expression and the root.
+- Evaluate through a Node handle and through Evaluable after instanceof/object_cast;
+  verify a literal does not expose that capability.
+- Reuse an unchanged tree, replace another source tree and retain an old reader.
+  Check original parent identity, old ranges and separate source-snapshot identity/data.
+- Repeat lifetime checks after layout edits and deletion/recovery; verify real compiler
+  no-op reuse, body-only rebuilds and native layout dependencies against fresh output.
+
+Verification uses ast_parent_lifetime_native.py --memcheck across cpp/php/js on Clang
+and GCC. This is an integration test extension, not a compiler/runtime implementation.
+It adds no AST fields to the compiler, generation manager or ownership feature.
+
+Milestone 3 assessment: the bounded small-family integration proof exercises the
+implemented inheritance, shared views, virtual dispatch, interfaces, checked capability
+access and weak-parent/root-lifetime behavior together. Basic staged construction and
+range assignment work as ordinary application code. No additional language feature was
+required by this example. Actual compiler-AST translation and any declaration-specific
+composition policy remain separate work, not a claim of full bootstrap completion.
+Broader protected-method support, exact-type queries, interface inheritance/diamonds,
+struct implementers, inherited-final satisfaction, class finality, unique, borrows and
+native threading remain deferred; none is required to complete this bounded example.
 
 ## 4. Failures and cleanup — failed preparation and retry
 

@@ -161,6 +161,14 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_match_expression) {
+			$this->expression($value->subject);
+			foreach ($value->arms as $arm) {
+				if ($arm->label !== null) $this->expression($arm->label);
+				$this->expression($arm->result);
+			}
+			return;
+		}
 		if ($value instanceof ast_interpolated_string) {
 			foreach ($value->parts as $part) {
 				$this->expression($part);
