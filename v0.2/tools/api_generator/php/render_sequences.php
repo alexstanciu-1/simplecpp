@@ -340,8 +340,8 @@ function renderVectors(array $plan): array {
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
         $element = new RuntimeConcreteType($plan, $v['element']);
-        $instances[$v['name']] = concreteTemplate('collections/vector', ['e' => $element],
-            ['n' => $v['name'], 'count' => $v['count_type']] + $v['traversal'], 'scpp');
+        $instances[$v['name']] = concreteTemplate(vectorConcreteRecipe($v), ['e' => $element],
+            ['n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
         $d .= $instances[$v['name']]['storage'];
     }
     $d .= "namespace detail { struct vector_access {\n";
@@ -353,7 +353,7 @@ function renderVectors(array $plan): array {
         $n = $v['name'];
         $e = $v['element'];
         $count = $v['count_type'];
-        $vars = compact('n', 'e', 'count') + $v['traversal'];
+        $vars = compact('n', 'e', 'count') + ['access' => 'detail::vector_access'] + $v['traversal'];
         $h .= "class $n final {\npublic:\n" . $instances[$n]['declaration'];
         $d .= $instances[$n]['definition'];
         foreach($v['casts_from'] as $c) {

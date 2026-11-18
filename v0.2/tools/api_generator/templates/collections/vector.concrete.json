@@ -6,6 +6,6 @@
     "storage": ["collections/vector_storage"],
     "access": ["collections/vector_access"],
     "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration"],
-    "definition": ["collections/vector_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"]
+    "definition": ["core/concrete_owner_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"]
   }
 }

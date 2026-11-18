@@ -10,8 +10,11 @@ connected through [published hash identities](../compiler/docs/hash_types.md); s
 `runtime/metadata/runtime.json` owns the optional hash binding/policy record.
 `tools/api_generator/php/families.php` prepares concrete requested identities and methods;
 `tools/api_generator/php/render_modules.php` emits declarations and wiring from that plan.
-`runtime/src/hash/typed_hash.hpp` owns the reviewed private table algorithms.
-`hash_index.hpp` owns shared index primitives used by typed and packed storage.
+`tools/api_generator/templates/collections/hash.concrete.json` selects the concrete
+storage recipe. Its key/value providers implement the common `ConcreteType` interface.
+`runtime/src/hash/concrete_index.hpp` declares the type-independent index boundary;
+`concrete_index_impl.hpp` defines it once in the generated runtime hash translation unit.
+`hash_index.hpp` retains shared index primitives used by concrete and packed storage.
 
 A publication requests `hashes: {specializations: [{value: "int64", key: "string"}]}`.
 The metadata provider owns the header; an optional legacy header must agree with it. The name is `hash_VALUE_KEY`, matching source
@@ -65,7 +68,7 @@ stable visitation under mutation. No compaction or traversal subscriptions are a
 ## Reuse and failure boundary
 
 Donor: runtime/include/scpp/support/hash_t.hpp at 0c230e0bc. Reuse includes control
-bytes/fingerprints, linear probing, deleted buckets, separate key/value/live arrays,
+bytes/fingerprints, linear probing, deleted buckets, live-slot tracking,
 load-based rehash/growth and uint8/uint16/uint32 physical entry indexes. The packed
 heterogeneous algorithm, key pool, boxed wrappers and traversal subscriptions are
 not imported. No replacement standard hash table is used.
@@ -76,13 +79,17 @@ physical-entry limits reject with std::length_error before integer truncation or
 capacity wrap. These guards retain the donor's choices within its representable
 storage domain; this is not unlimited-capacity storage.
 
-The donor's sequential multi-array append lacked allocation rollback. The local
-adaptation rolls back uncommitted appended slots; a replacement index is published
-only after successful preparation. set/append allocation or argument-copy failure
+The concrete recipe owns raw, aligned entry storage and a live-byte array. Each live
+entry contains its key and value; erased positions contain no constructed objects.
+Removal destroys the entry without invoking either type's default constructor. Growth
+moves only live entries and preserves holes; copying constructs only live entries.
+
+Allocation and replacement-index construction finish before a new entry is committed.
+A replacement index is published only after successful preparation. set/append allocation or argument-copy failure
 leaves logical membership, values and order unchanged, though private capacities or
-an empty storage owner may remain allocated. Admitted key/value default and move
-operations are statically required to be nonthrowing. Replacement and removal use
-those operations. Copy failures do not change the original or assignment destination.
+an empty storage owner may remain allocated. Admitted key/value move construction,
+move assignment and destruction are statically required to be nonthrowing; copying may
+throw. Default construction is not required. Copy failures do not change the original or assignment destination.
 No collection-wide transaction copy is performed on each insertion.
 
 ## Proof obligations

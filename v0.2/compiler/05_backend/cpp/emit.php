@@ -35,6 +35,8 @@ final class Cpp_Emitter
 	private int $record_expressions = 0;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
+	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
+	private Cpp_Concrete_Vectors $concrete_vectors;
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -52,6 +54,7 @@ final class Cpp_Emitter
 		$this->root = $root;
 		$this->generator_layouts = $generator_layouts;
 		$this->inline_adapters = new Cpp_Adapters($root);
+		$this->concrete_vectors = new Cpp_Concrete_Vectors($root);
 	}
 
 	/** METHODS */
@@ -65,7 +68,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		return $this->inline_adapters->files();
+		return $this->inline_adapters->files() + $this->concrete_vectors->files();
 	}
 
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
@@ -384,6 +387,7 @@ CPP;
 	{
 		$this->enum_helpers = [];
 		$this->inline_adapters = new Cpp_Adapters($this->root);
+		$this->concrete_vectors = new Cpp_Concrete_Vectors($this->root);
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -463,7 +467,7 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
-		foreach ($this->inline_adapters->dependencies() as $type) {
+		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_vectors->dependencies()] as $type) {
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
@@ -565,7 +569,7 @@ CPP;
 		if ($adapter_files === []) {
 			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
 		}
-		$text = $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		$text = $header . self::namespace_body($this->root, $this->concrete_vectors->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
 		foreach ($adapter_files as $path => $body) {
 			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
 		}
@@ -826,7 +830,7 @@ CPP;
 				foreach ($destination->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$store = $type->lower_cpp_store($statement, $receiver, $key, $value);
+				$store = $type->lower_cpp_store($statement, $receiver, $key, $value, $this->inline_adapters);
 				$lines[] = "\t" . ($steps === [] ? $store : '{ ' . implode(' ', $steps) . ' ' . $store . ' }');
 			}
 			elseif ($statement instanceof ast_append_statement) {
@@ -841,7 +845,7 @@ CPP;
 				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$append = $type->lower_cpp_append($statement, $receiver, $value) . ';';
+				$append = $type->lower_cpp_append($statement, $receiver, $value, $this->inline_adapters) . ';';
 				$lines[] = "\t" . ($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
@@ -1103,6 +1107,7 @@ CPP;
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
+			if ($type instanceof application_vector_type) $this->concrete_vectors->request($type);
 			if ($type instanceof record_type_definition) {
 				$declarations[$type->declaration->symbol_key()] = $type->declaration;
 			}
@@ -1595,7 +1600,8 @@ CPP;
 	{
 		foreach (($this->headers?->declaration_header($function) !== null
 			? self::signature_application_types($function) : $this->application_types($function)) as $type) {
-			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			if ($type instanceof application_vector_type) $this->concrete_vectors->request($type);
+			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}
 	}
@@ -1659,7 +1665,9 @@ CPP;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
-			if ($type instanceof enum_type_definition) {
+			if ($type instanceof application_vector_type) {
+				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
 					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
 			} elseif ($type instanceof record_type_definition) {
@@ -1699,7 +1707,7 @@ CPP;
 	/** Payload member declarations live inside scpp_records; qualify application signature types. */
 	private function member_type(type_definition $type): string
 	{
-		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)
+		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof application_vector_type)
 			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
 
@@ -1754,7 +1762,7 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Application types named by a callable signature. @return \Generator<record_handle_definition|record_type_definition|enum_type_definition> */
+	/** Application types named by a callable signature. @return \Generator<type_definition> */
 	public static function signature_application_types(ast_function_declaration $function): \Generator
 	{
 		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
@@ -1764,11 +1772,21 @@ CPP;
 				if ($output instanceof record_handle_definition || $output instanceof record_type_definition || $output instanceof enum_type_definition) yield $output;
 			}
 		}
-		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
+		yield from self::signature_type_dependencies($type);
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
+			yield from self::signature_type_dependencies($type);
 		}
+	}
+
+	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
+	private static function signature_type_dependencies(type_definition $type): \Generator
+	{
+		if ($type instanceof application_vector_type) {
+			yield $type;
+			$type = $type->element_type;
+		}
+		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 	}
 
 	/** Follow only prepared casts of literal values and immutable constant declarations. */

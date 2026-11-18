@@ -4,7 +4,7 @@ Doc Status: supporting
 The API generator owns a reusable template-to-concrete path in `php/concrete.php`.
 This is generator-time substitution of resolved native types, not a C++ template
 parser or a second semantic compiler. Vector storage is its first production client;
-application-defined element resolution remains separate work.
+application-defined element resolution remains owned by the compiler.
 
 ## Contract
 
@@ -51,8 +51,10 @@ A future compiler adapter can implement this same type interface for application
 types without changing the recipe engine. Compiler-produced templates from generic
 source declarations are a separate, deferred feature. They would supply resolved
 structure and explicit substitution points, not blind source-text replacement.
-Neither feature is implemented in this slice. The independent test type provider
-proves the interface boundary without exposing a metadata plan or an AST.
+The compiler now supplies this interface for the bounded
+[application-vector slice](../../compiler/docs/application_vectors.md). Compiler-generated
+templates remain deferred. The independent test type provider also proves the interface
+boundary without exposing a metadata plan or an AST.
 
 ## First client: vector
 
@@ -84,6 +86,39 @@ instruments both generated runtime and proofs with Clang ASan/UBSan.
 
 Provider exports, strict inputs, casts, copies and mutation/traversal regressions
 remain independent proofs. Compiler AST, retained facts and preparation are unchanged.
-Application-defined elements and their constructor binding are deferred. In
-particular, traversal output initialization must be reviewed before admitting
-elements without a default constructor through the language frontend.
+Application vector values now reuse this recipe with existing record constructor
+binding; capacity itself requires no default constructor. Traversal output initialization
+still needs review before enabling foreach for application elements.
+
+## Concrete hash runtime prerequisite
+
+The `collections/hash` recipe now consumes key/value `ConcreteType` providers and
+emits aligned entry storage with explicit live-slot lifetimes. It requires copying,
+nonthrowing moves and destruction, but no default constructor. Erased physical slots
+remain holes; neither growth nor copying constructs objects in them. Vector and hash
+reuse `core/concrete_owner_lifecycle` for their pointer-sized public owners.
+
+The existing control-byte/probing/index-width algorithm stays compiled once behind
+`concrete_hash_index`. The generated storage performs concrete key equality and owns
+entries; the index knows only hashes, physical positions and buckets. Its uint8/uint16/uint32 bucket buffers are type-independent; hashing helpers stay
+compiled in the runtime library. Public hash declarations and strict input fences
+are unchanged. The old private `typed_hash` template has been removed, and its storage
+proof now instantiates the same production recipe with independent test type providers.
+
+This is runtime/generator groundwork only. Application hash activation, shared compiler
+publication, nullable application-value `find()`, and application collection fields are
+still separate slices. Current runtime publication remains int64/string keys and values.
+
+Validation (2026-11-18): existing hash consumer/boundary/freshness, provider, compiler
+collection and traversal proofs pass. The recipe proof covers non-default-constructible,
+over-aligned values, every throwing-copy prefix, holes, collision growth and cleanup under
+Clang/GCC; Clang ASan/UBSan/leak checks pass. Allocation-failure and 66,000-entry churn
+proofs now instantiate the production recipe, including 8/16/32-bit index transitions.
+
+An alternating five-run O2/g0 libc++ churn/copy comparison against the prior committed
+storage measured 25.68 ms median (25.62–26.80 ms), versus 21.25 ms (21.11–21.31 ms)
+for concrete storage; allocation counts were 2,604 versus 2,580. This measures that workload
+only, not general hash throughput. Fresh hash-operation native builds measured 200–209 ms
+wall, frontend 26–27 ms, LLVM backend 17–19 ms, link 57–61 ms (Ninja8/mold, O2/g0,
+no PCH/LTO, prebuilt runtime). PHP fixture generation including incremental proofs was
+159 ms for the suite; this is not one compilation's frontend cost.

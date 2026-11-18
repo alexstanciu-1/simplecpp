@@ -19,8 +19,12 @@ target_compile_features(hash_proof_runtime PUBLIC cxx_std_23)
 add_executable(hash_consumer_test consumer.cpp)
 target_link_libraries(hash_consumer_test PRIVATE hash_proof_runtime)
 add_test(NAME hash_consumer COMMAND hash_consumer_test)
-add_executable(hash_storage_test storage.cpp)
-target_include_directories(hash_storage_test PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/hash)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/concrete_storage.hpp
+  COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/concrete_storage.php ${CMAKE_CURRENT_BINARY_DIR}/concrete_storage.hpp
+  DEPENDS ${api_tooling} ${CMAKE_CURRENT_SOURCE_DIR}/concrete_storage.php
+  VERBATIM)
+add_executable(hash_storage_test storage.cpp ${CMAKE_CURRENT_BINARY_DIR}/concrete_storage.hpp)
+target_include_directories(hash_storage_test PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/hash ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_features(hash_storage_test PRIVATE cxx_std_23)
 add_test(NAME hash_storage COMMAND hash_storage_test)
 add_test(NAME hash_freshness COMMAND ${generator_launcher} ${runtime_metadata} ${hash_publication} ${hash_generated} --check)

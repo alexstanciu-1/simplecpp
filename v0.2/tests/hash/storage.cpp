@@ -1,4 +1,4 @@
-#include "typed_hash.hpp"
+#include "concrete_storage.hpp"
 #include "allocation_probe.hpp"
 #include <algorithm>
 #include <chrono>
@@ -8,10 +8,14 @@
 
 static void require(bool ok) { if (!ok) throw std::runtime_error("hash storage proof failed"); }
 using integer = std::int64_t;
-using policy = scpp::detail::integer_hash_key<integer>;
-using table = scpp::detail::typed_hash<integer, integer, policy>;
-struct collisions : policy { static std::uint64_t hash(const integer&) noexcept { return 7; } };
-using collision_table = scpp::detail::typed_hash<integer, integer, collisions>;
+using table = IntegerTable::storage;
+using collision_table = CollisionTable::storage;
+
+// Test-only callback adapter; the production concrete API uses copied traversal outputs.
+template<class Table, class Visitor> void visit_entries(const Table& table, Visitor visitor) {
+    integer position = 0, key = 0, value = 0;
+    while (table.iteration_next(position, static_cast<integer>(table.physical_size()), value, &key)) visitor(key, value);
+}
 
 static void compare_trace() {
     collision_table actual;
@@ -32,7 +36,7 @@ static void compare_trace() {
         }
         require(actual.size() == expected.size());
         std::size_t position = 0;
-        actual.visit_entries([&](const auto& k, const auto& v) {
+        visit_entries(actual, [&](const auto& k, const auto& v) {
             require(position < order.size() && k == order[position++]);
             require(v == expected.at(k));
         });
@@ -55,7 +59,7 @@ static void churn() {
         require(values.find(integer{i+100})[0] == i);
     }
     int expected = 65984;
-    values.visit_entries([&](const auto& k, const auto& v) { require(k == expected+100 && v == expected); ++expected; });
+    visit_entries(values, [&](const auto& k, const auto& v) { require(k == expected+100 && v == expected); ++expected; });
     require(expected == 66000);
     table copy(values);
     require(copy.size() == 16 && copy.index_bytes() == 4);
@@ -106,7 +110,7 @@ static void failures() {
         }
         require(succeeded);
     }
-    using strings = scpp::detail::typed_hash<std::string, integer, policy>;
+    using strings = StringTable::storage;
     strings source; source.set(integer{1},std::string(256,'a'));
     bool succeeded = false;
     for (int fail = 0; fail < 16; ++fail) {
@@ -127,5 +131,5 @@ int main() {
     const auto before=allocation_probe::calls;
     churn();
     const auto micros=std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()-start).count();
-    std::printf("typed hash: 66000-entry churn + copy proof: %lld us, %zu allocations\n",static_cast<long long>(micros),allocation_probe::calls-before);
+    std::printf("concrete hash: 66000-entry churn + copy proof: %lld us, %zu allocations\n",static_cast<long long>(micros),allocation_probe::calls-before);
 }

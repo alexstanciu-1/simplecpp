@@ -43,9 +43,9 @@ final class @class@ extends hash_type_definition implements iterable_type
 		return $receiver . '.@index@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
 	{
-		$value = $this->value_type->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		$value = $this->value_type->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		return $this->lower_cpp_replace($write->index, $receiver, $key, $value);
 	}
 

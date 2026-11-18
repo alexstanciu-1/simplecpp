@@ -1,4 +1,5 @@
 #include "vector_buffer.hpp"
+#include "concrete_index_impl.hpp"
 #include <cassert>
 #include <cstdint>
 @pair@
@@ -30,6 +31,8 @@ private:
     friend struct detail::vector_access;
 };
 @implementation@
+struct ProbeHash { struct storage; };
+@hash@
 }
 int main() {
     Pair pair{3, 4.5}; assert(pair.first == 3 && pair.second == 4.5);
@@ -63,6 +66,34 @@ int main() {
         Probe output{999}; scpp::int64 position = 0, key = -1;
         assert(moved.iteration_next(position, moved.iteration_limit(), key, output) && output.value == 1 && key == 0);
         moved.clear(); assert(!moved.iteration_next(position, 129, key, output) && output.value == 1);
+    }
+    assert(Probe::live == 0);
+    {
+        scpp::ProbeHash::storage values;
+        const auto authored = Probe::authored;
+        for (int i = 0; i < 300; ++i) values.set(i, Probe{i});
+        for (int i = 0; i < 300; i += 2) assert(values.remove(i));
+        assert(Probe::authored == authored + 300 && Probe::live == 150);
+        assert(values.physical_size() == 300 && values.index_bytes() == 2);
+        for (int prefix = 0; prefix < 150; ++prefix) {
+            Probe::copy_budget = prefix;
+            try { scpp::ProbeHash::storage copy(values); assert(false); } catch (int code) { assert(code == 42); }
+            assert(Probe::live == 150 && values.size() == 150);
+        }
+        Probe::copy_budget = -1;
+        scpp::ProbeHash::storage copy(values);
+        assert(Probe::live == 300 && copy.physical_size() == 300);
+        copy.set(1, Probe{777}); assert(values.find(1)->value == 1 && copy.find(1)->value == 777);
+        copy.set(0, Probe{999}); assert(copy.physical_size() == 301);
+        copy.clear(); assert(Probe::live == 150);
+        for (int i = 300; i < 600; ++i) values.set(i, Probe{i});
+        assert(values.size() == 450 && values.find(599)->value == 599);
+        Probe output{999}; scpp::int64 position = 0, key = -1;
+        Probe::copy_budget = 0;
+        try { values.iteration_next(position, 600, output, &key); assert(false); } catch (int) {}
+        assert(position == 0 && key == -1 && output.value == 999);
+        Probe::copy_budget = -1;
+        assert(values.iteration_next(position, 600, output, &key) && key == 1 && output.value == 1);
     }
     assert(Probe::live == 0);
     const auto limit = scpp::detail::vector_capacity_limit(sizeof(Probe));

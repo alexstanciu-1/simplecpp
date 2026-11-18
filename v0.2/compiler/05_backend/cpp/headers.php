@@ -74,7 +74,9 @@ final class Cpp_Headers
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
 					foreach ($emitter->application_types($node) as $type) {
-						if ($type instanceof enum_type_definition) {
+						if ($type instanceof application_vector_type) {
+							$owners[$type->cpp_type()] = 'class ' . $type->cpp_type() . ';';
+						} elseif ($type instanceof enum_type_definition) {
 							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
 						} elseif ($type instanceof record_type_definition) {
 							$header_name = $this->publish_record($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');

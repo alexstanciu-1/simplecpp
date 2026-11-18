@@ -19,6 +19,8 @@ final class record_type_definition extends type_definition implements dependency
 	private ?Dependency_Watches $dependencies = null;
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
+	/** Native owning lazily created specialization; element links back non-owningly to this declaration generation. */
+	private ?vector_type_definition $vector = null;
 
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
@@ -49,6 +51,12 @@ final class record_type_definition extends type_definition implements dependency
 	public function default_type(): type_definition
 	{
 		return $this->declaration->kind !== record_kind::structure ? $this->required : $this;
+	}
+
+	/** One canonical vector for the record's default value storage; no session-global cache retains retired ASTs. */
+	public function vector_type(): vector_type_definition
+	{
+		return $this->vector ??= new application_vector_type($this->default_type());
 	}
 
 	/** Bind the declaration to this publication before following any forward field references. */

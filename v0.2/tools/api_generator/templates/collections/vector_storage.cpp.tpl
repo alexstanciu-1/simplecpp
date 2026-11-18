@@ -6,7 +6,7 @@ struct @n@::storage {
 
     storage() noexcept = default;
     storage(const storage& other) {
-        data = detail::vector_allocate(other.count, sizeof(element_type), alignof(element_type));
+        data = @buffer@::vector_allocate(other.count, sizeof(element_type), alignof(element_type));
         capacity = other.count;
         try {
             while (count < other.count) {
@@ -15,12 +15,12 @@ struct @n@::storage {
             }
         } catch (...) {
             clear();
-            detail::vector_deallocate(data, alignof(element_type));
+            @buffer@::vector_deallocate(data, alignof(element_type));
             throw;
         }
     }
     storage& operator=(const storage&) = delete;
-    ~storage() { clear(); detail::vector_deallocate(data, alignof(element_type)); }
+    ~storage() { clear(); @buffer@::vector_deallocate(data, alignof(element_type)); }
     std::size_t size() const noexcept { return count; }
     bool empty() const noexcept { return count == 0; }
     element_type& operator[](std::size_t index) noexcept { return *reinterpret_cast<element_type*>(data + index * sizeof(element_type)); }
@@ -29,13 +29,13 @@ struct @n@::storage {
     void clear() noexcept { while (count != 0) (*this)[--count].~element_type(); }
     void reserve(std::size_t required) {
         if (required <= capacity) return;
-        const auto next_capacity = detail::vector_growth(capacity, required, sizeof(element_type));
-        auto* next = detail::vector_allocate(next_capacity, sizeof(element_type), alignof(element_type));
+        const auto next_capacity = @buffer@::vector_growth(capacity, required, sizeof(element_type));
+        auto* next = @buffer@::vector_allocate(next_capacity, sizeof(element_type), alignof(element_type));
         for (std::size_t i = 0; i < count; ++i) {
             ::new (next + i * sizeof(element_type)) element_type(static_cast<element_type&&>((*this)[i]));
             (*this)[i].~element_type();
         }
-        detail::vector_deallocate(data, alignof(element_type));
+        @buffer@::vector_deallocate(data, alignof(element_type));
         data = next;
         capacity = next_capacity;
     }

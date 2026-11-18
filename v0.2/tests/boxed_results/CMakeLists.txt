@@ -15,7 +15,8 @@ add_library(boxed_result_proof_runtime STATIC ${boxed_result_generated}/src/runt
 add_dependencies(boxed_result_proof_runtime boxed_result_publication)
 target_include_directories(boxed_result_proof_runtime PUBLIC ${boxed_result_generated}/public
   PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/numeric ${PROJECT_SOURCE_DIR}/runtime/src/sequence
-    ${PROJECT_SOURCE_DIR}/runtime/src/boxed ${PROJECT_SOURCE_DIR}/runtime/src/ownership)
+    ${PROJECT_SOURCE_DIR}/runtime/src/boxed ${PROJECT_SOURCE_DIR}/runtime/src/ownership
+    ${PROJECT_SOURCE_DIR}/runtime/src/hash)
 target_link_libraries(boxed_result_proof_runtime PRIVATE scpp_boxed_storage)
 target_compile_features(boxed_result_proof_runtime PUBLIC cxx_std_23)
 add_executable(boxed_result_consumer_test consumer.cpp)
