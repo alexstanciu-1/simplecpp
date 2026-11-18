@@ -113,10 +113,43 @@ Verification: `compiler/tests/match_native.py` covers cpp/php/js with Clang and 
   repeated failure, fresh-output equivalence and no-op preparation/emission/native reuse.
 - Native caller object reuse after a function-body-only edit.
 
-Deferred: `match(true)`, plain string/float subjects, computed or grouped labels,
+First-slice deferrals (condition follow-up below): `match(true)`, plain string/float subjects, computed or grouped labels,
 exhaustiveness, implicit common result types, void/generator/reference results,
 ternary/switch syntax and the 2.2–2.5 collection/tokenizer work. This slice does not
 change section 1 work owned by the other workspace or claim compile-time gains.
+
+### 2.1 Ordered match conditions — implemented
+
+Extend the existing match syntax with literal `match(true)`. Boolean conditions run
+in source order until the first true condition; only its result runs. Default remains
+mandatory and runs last if no condition succeeds, even when written first. All result
+types must agree exactly. Repeated conditions are permitted; skipped arms are still
+semantically checked. General boolean subjects and truthiness coercion are deferred.
+
+Ownership and cost: derive the mode from immutable subject syntax; add no AST fields,
+branch maps, retained indexes or preparation pass. Prepare fallback after conditions
+so reference-call invalidation reaches its conversions. Lower through existing bool
+condition handlers to early-return `if` statements; reuse the existing match wrapper
+only in expression contexts. This does not change eager operand-order contracts.
+
+Verification completed with `match_conditions.php`, `match_conditions_native.py`
+and the original `match_native.py`; related logical, constants, incremental frontend
+and compiler style checks also pass.
+
+Verification checklist:
+
+- [x] Ordered conditions, first match, repeated conditions, default anywhere and only default.
+- [x] Skipped side effects/failures, condition/result failure, nested selections and short-circuit surroundings.
+- [x] Default conversion remains checked after a false condition mutates a local by reference.
+- [x] Exact bool conditions/result types; missing/duplicate defaults; invalid skipped arms.
+- [x] AST ownership, one visit per expression, pure emission and reset/reprepare equivalence.
+- [x] Predicate signature edits, constant/result edits, deletion/retry/recovery against fresh artifacts.
+- [x] No-op preparation/emission/native reuse and unchanged caller objects after body-only edits.
+- [x] cpp/php/js on Clang and GCC; original integer/enum match regression remains green.
+
+Deferred: general boolean subjects, string/float matching, computed integer/enum labels,
+label grouping, exhaustiveness and common-result inference. Section 2.2–2.5 work,
+other-workspace collection changes and new runtime APIs remain outside this slice.
 
 ## 3. Object relationships — a small AST family
 

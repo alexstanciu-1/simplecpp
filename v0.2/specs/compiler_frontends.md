@@ -430,4 +430,5 @@ All three flavors admit `match (subject) { label => result, default => result }`
 See the [language contract](../../specs/match_v0_2.md) and
 [compiler ownership/lowering](../compiler/docs/match.md). Integer/enum subjects,
 constant labels, one required default and exact result types form the first slice.
-Boolean conditions and broader selection forms remain deferred.
+Literal `match(true)` additionally admits ordered boolean conditions and lazy results.
+General boolean subjects and broader selection forms remain deferred.

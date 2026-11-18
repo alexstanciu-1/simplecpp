@@ -329,4 +329,5 @@ The [class interface slice](docs/interfaces.md) adds shared capability views, ma
 override checks and inherited implementation bridges with incremental verification.
 
 Bounded integer/enum selection uses [match expressions](docs/match.md), with a
-native switch, lazy results and no retained label index.
+native switch and lazy results. Literal `match(true)` uses ordered boolean conditions
+and early returns. Neither form retains a label index or branch-fact tree.

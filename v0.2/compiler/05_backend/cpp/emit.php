@@ -855,7 +855,7 @@ CPP;
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
 				if ($statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
-					$lines[] = "\t" . $this->match_switch($statement->value, $global_references, $declarations, $required_headers);
+					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
 					continue;
 				}
 				if ($conversion instanceof exit_conversion) {
@@ -1064,9 +1064,22 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
-	private function match_switch(ast_match_expression $match, array &$globals /** array<string,ast_global_declaration> */,
+	private function match_selection(ast_match_expression $match, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
+		if (ast_match_expression::is_condition_subject($match->subject)) {
+			$code = '';
+			$default = null;
+			foreach ($match->arms as $arm) {
+				if ($arm->label === null) {
+					$default = $arm;
+					continue;
+				}
+				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { return '
+					. $this->value($arm->result, $globals, $declarations, $headers) . '; } ';
+			}
+			return $code . 'return ' . $this->value($default->result, $globals, $declarations, $headers) . ';';
+		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
 			if ($arm->label === null) $code .= 'default: ';
@@ -1176,7 +1189,7 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($value instanceof ast_match_expression) {
-			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_switch($value, $global_references, $declarations, $required_headers) . ' }())';
+			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_selection($value, $global_references, $declarations, $required_headers) . ' }())';
 		}
 		if ($value instanceof ast_object_access_expression) {
 			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers);

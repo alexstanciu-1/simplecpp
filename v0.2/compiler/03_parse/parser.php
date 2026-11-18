@@ -858,7 +858,10 @@ final class Parser
 				$arm_start = $c->position();
 				$label = null;
 				if ($c->keyword('default')) $c->take_keyword('default');
-				else $label = $this->literal_initializer('Match label requires an integer literal, named constant or enum case', true);
+				elseif (!ast_match_expression::is_condition_subject($subject)
+					&& ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)) {
+					$label = $this->literal_initializer('Match label requires an integer literal', true);
+				} else $label = $this->value();
 				$c->take(token_kind::arrow, '=>');
 				$result = $this->value();
 				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());

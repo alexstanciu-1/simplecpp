@@ -11,11 +11,11 @@ the declaration-literal parser. Collection and preparation reset traverse all
 children through the existing source-local paths.
 
 Preparation resolves subject, labels and results once. A temporary label set and
-one default flag diagnose duplicates. Named constants and enum cases record the
+one temporary default-arm reference diagnose duplicates. Named constants and enum cases record the
 ordinary symbol dependencies. The result retains only the canonical value type;
 it does not claim a constant result or cheap/reorderable evaluation.
 
-C++ lowering emits a native switch. An identity-converted function return emits
+Integer/enum C++ lowering emits a native switch. An identity-converted function return emits
 that switch directly. Other expression contexts use an immediately invoked lambda
 with an explicit value return type. Each case returns, so there is no fallthrough.
 The switch performs single subject evaluation and preserves lazy arm selection.
@@ -32,3 +32,31 @@ errors, signed boundaries, integer and string-backed enum cases, selected checks
 string copies/embedded NUL, nesting, invalid programs and retained-versus-fresh
 recovery. Its persistent Ninja builds check unchanged caller/native object reuse.
 This does not establish a compile-time speedup or native parallel safety.
+
+## Ordered condition slice
+
+Literal `true` selects conditions through `ast_match_expression::is_condition_subject`.
+This derives the mode from immutable syntax, not a new retained field or a propagated
+value. The parser admits ordinary condition expressions. Preparation requires exact
+bool labels, with no duplicate-condition set entries; it still checks all results.
+
+The fallback is prepared last even if written first. Calls in conditions can invalidate
+local constant facts through reference parameters, and those invalidations must reach
+the fallback's conversions. Earlier results are prepared immediately after their
+condition. This reuses conservative invalidation without copying branch maps or adding
+another preparation pass. As with logical expressions, revisit this model if conditional
+expressions acquire fact-producing assignment effects.
+
+`match_selection` emits successive `if (condition) { return result; }` statements and
+a final fallback return. An identity-return context needs no match wrapper; value
+contexts retain the existing explicit-result lambda. Conditions reuse generated bool
+condition lowering. Existing wrappers inside a condition or result remain governed by
+those expressions' own lowering contracts.
+
+`tests/match_conditions_native.py` covers ordered effects, repeated conditions, default
+placement, skipped failures, checked fallback conversion after reference mutation,
+string copies/NUL, nesting and surrounding short-circuiting. It checks predicate
+signature edits, deletion/restoration, result/constant edits, repeated failed preparation,
+fresh equivalence, caller/native reuse and no-op behavior in cpp/php/js on Clang/GCC.
+`tests/match_conditions.php` checks AST ownership, single-visit preparation, inspection,
+emission purity and reset/reprepare equivalence.

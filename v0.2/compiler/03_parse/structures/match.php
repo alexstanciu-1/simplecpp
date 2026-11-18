@@ -41,4 +41,10 @@ final class ast_match_expression extends ast_expression
 	{
 		$this->settle_value($type, null);
 	}
+
+	/** Literal true selects ordered conditions; do not infer this mode from mutable value facts. */
+	public static function is_condition_subject(ast_expression $subject): bool
+	{
+		return $subject instanceof ast_keyword_expression && $subject->word === 'true';
+	}
 }

@@ -92,7 +92,7 @@ def prove(work, flavor, libraries):
     finally:resident.stdin.close();resident.wait()
     invalid=[('match(1){LABEL=>2,ALIAS=>3,default=>4}','Duplicate match label'),('match(1){1=>2}','default arm'),('match(1){default=>2,default=>3}','Duplicate match default'),
              ('match(1){1=>2,1=>3,default=>4}','Duplicate match label'),
-             ('match(1){true=>2,default=>3}','label type'),('match(true){default=>1}','integer or enum'),
+             ('match(1){true=>2,default=>3}','label type'),('match(false){default=>1}','integer or enum'),
              ('match(1.0){default=>1}','integer or enum'),('match(1){subject()=>2,default=>3}','literal, named constant'),
              ('match(1){1=>2,default=>"x"}','result types'),('match(1){}','default arm')]
     for i,(expr,error) in enumerate(invalid):
