@@ -164,6 +164,7 @@ final class Parser
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
 		}
+		if ($this->cursor->keyword('yield')) return $this->yield_statement();
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
 		}
@@ -550,6 +551,22 @@ final class Parser
 	public function return_type(): ast_type_reference
 	{
 		return $this->type_reference(false, true);
+	}
+
+	/** Explicit outputs only; delegation and implicit keys are separate slices. */
+	private function yield_statement(): ast_yield_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('yield');
+		$first = $this->value();
+		$key = null;
+		if ($this->cursor->is(token_kind::arrow)) {
+			$this->cursor->take(token_kind::arrow, '=>');
+			$key = $first;
+			$first = $this->value();
+		}
+		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		return new ast_yield_statement($start, $end, $first, $key);
 	}
 
 	/** All flavors share return syntax; analysis distinguishes void bodies from the integer entry. */

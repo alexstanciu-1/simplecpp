@@ -1,0 +1,61 @@
+# Synchronous yield producers
+
+Doc Status: normative
+
+## Bounded v0.2 contract
+
+A free function declaring `Iterator<Value>` or `Iterator<Value,Key>` returns a
+function-specific, move-only concrete cursor. The return annotation declares the
+producer's outputs; it is not interface-erased storage. The signature alone marks
+the producer, including an empty body. PHP/C++/JS share `yield value;` and
+`yield key => value;`, with each flavor's normal variable/type syntax.
+
+Calling the producer evaluates/binds ordinary by-value arguments immediately and
+captures them using their normal value semantics. Body execution is lazy: the first
+advance executes until yield, bare return, implicit completion or exception.
+A subsequent advance resumes after the previous yield. No source function silently
+yields into its caller. Calling another producer without traversing it creates and
+destroys an unstarted cursor.
+
+Outputs use existing generated typed-destination conversions. Keyed producers must
+supply explicit keys at every yield; value-only producers must not supply keys.
+No automatic keys, key normalization, uniqueness or ordering contract is introduced.
+The underlying next contract is value-first, matching Iterator<Value,Key>.
+
+Foreach borrows the cursor and evaluates its receiver once. Breaking leaves it
+suspended; another foreach resumes it. Value-only foreach can discard a keyed
+producer's key. Each successful advance provides ordinary owned output values.
+Completion stays completed. Unhandled exceptions close the cursor and propagate;
+a later advance returns false. Failed conversion does not publish the next output.
+
+Captured parameters are released on completion, exception or cursor destruction,
+including abandonment before the first advance. A final yield still suspends: cleanup
+at normal completion occurs when the consumer advances again and observes completion.
+Generated native cursors are move-constructible, not copyable; moved-from cursors are
+closed. The initial source slice permits inferred local initialization from a producer
+call and direct foreach over a producer result. Explicit transfer of named cursors,
+assignment/replacement, cursor parameters and forwarding returns are deferred.
+User-authored Iterator structs remain copyable and retain their existing semantics.
+
+## First implementation boundary
+
+Producer bodies admit straight-line yield, echo, ordinary call statements and bare
+return. Parameters are by value; existing literal defaults use the ordinary binder.
+Local declarations, assignments, branches/loops and exception-handling regions inside
+producers are deferred, even if a particular instance would not span suspension.
+Methods, references, yield expressions receiving sent values, yield from, asynchronous
+waiting and suspended-local lifetime analysis are separate slices.
+
+Inline-struct outputs remain deferred alongside inline-struct reference parameters.
+They need output-storage lifetime handling that does not add an observable default
+construction before the first yield. This does not prohibit capturing structs by
+value or yielding supported shared handles. Source diagnostics enforce the boundary
+before C++ emission.
+
+## Implementation direction
+
+Generate concrete C++ cursor layouts, factories and next bodies, without C++ coroutine
+or cursor template machinery. Reuse the metadata-defined Iterator identity and
+existing type conversions. Parameters/layout belong to the function's signature;
+resume-state numbering and statement segmentation belong to private lowering.
+See [implementation and verification](../v0.2/compiler/docs/yield.md).

@@ -111,7 +111,8 @@ final class Preparation
 		$this->name_lookups = 0;
 		$this->loop_depth = 0;
 		$completion = $this->sequence($syntax, $source, $target, $function);
-		if (($target === null) && ($completion !== statement_completion::returns) && ($function->return_type_def() !== type_void::instance())) {
+		if (($target === null) && ($completion !== statement_completion::returns) && ($function->return_type_def() !== type_void::instance())
+			&& !($function->return_type_def() instanceof generator_type_definition)) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
 		}
 		if (($target !== null) && ($completion !== statement_completion::returns)) {
@@ -125,6 +126,7 @@ final class Preparation
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
 		?entry_target $target, ast_function_declaration $function): int /** uint8 */
 	{
+		$generator = $function->return_type_def();
 		$completion = statement_completion::fallthrough;
 		foreach ($syntax as $statement)
 		{
@@ -134,8 +136,28 @@ final class Preparation
 					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
 					: 'Statements after unconditional control transfer are not supported');
 			}
+			if ($generator instanceof generator_type_definition
+				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
+					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports straight-line yields, echo, calls and bare return only');
+			}
 			$next = statement_completion::fallthrough;
-			if ($statement instanceof ast_base_statement) {
+			if ($statement instanceof ast_yield_statement) {
+				if (!($generator instanceof generator_type_definition)) {
+					throw new diagnostic($source, $statement->byte_start(), 'Yield requires an Iterator return contract');
+				}
+				if (($statement->key === null) !== ($generator->iteration_key_type() === null)) {
+					throw new diagnostic($source, $statement->byte_start(), 'Yield key must match the Iterator contract');
+				}
+				if ($statement->key !== null) {
+					$this->value($statement->key);
+					$statement->key_conversion = $generator->iteration_key_type()->prepare_conversion($statement->key, conversion_context::typed_destination);
+				}
+				$this->value($statement->value);
+				$statement->conversion = $generator->iteration_value_type()->prepare_conversion($statement->value, conversion_context::typed_destination);
+				$this->forget_values();
+			}
+			elseif ($statement instanceof ast_base_statement) {
 				$this->base_initialization($statement->value);
 			}
 			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
@@ -234,7 +256,7 @@ final class Preparation
 			{
 				if ($target === null) {
 					$return_type = $function->return_type_def();
-					if ($return_type === type_void::instance()) {
+					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
 						if ($statement->value !== null) {
 							throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
 						}

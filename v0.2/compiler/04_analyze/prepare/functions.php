@@ -26,6 +26,12 @@ final class Function_Preparation
 	{
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_yield_statement) {
+				$statement->conversion = $statement->key_conversion = null;
+				self::expression($statement->value);
+				if ($statement->key !== null) self::expression($statement->key);
+				continue;
+			}
 			if ($statement instanceof ast_foreach_statement) {
 				$statement->destination = null;
 				$statement->conversion = null;
@@ -162,6 +168,9 @@ final class Function_Preparation
 			}
 			$optional = false;
 			foreach ($declaration->parameters as $parameter) {
+				if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
+				}
 				$parameter->reset_preparation();
 				$parameter_type = Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies);
 				if ($parameter_type === null) {

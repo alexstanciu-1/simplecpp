@@ -203,6 +203,10 @@ final class Syntax_Inspection
 					'body' => array_map(self::statement(...), $arm->body->statements)], $statement->arms)];
 		}
 
+		if ($statement instanceof ast_yield_statement) {
+			return ['kind' => 'yield', 'value' => self::expression($statement->value),
+				'key' => $statement->key === null ? null : self::expression($statement->key), 'span' => self::span($statement)];
+		}
 		if ($statement instanceof ast_echo_statement) {
 			return ['kind' => 'echo', 'values' => array_map(self::expression(...), $statement->values), 'span' => self::span($statement)];
 		}

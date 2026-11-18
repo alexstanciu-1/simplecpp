@@ -253,7 +253,9 @@ not a promised incoming-state channel. Existing loop destinations are updated on
 after a successful advance. The producer needs no known length or end. A keyed
 iterator also supports value-only foreach; its key is produced into discarded storage.
 Keys need not be unique or monotonic and no lookup/index is built from them.
-Inherited/multiple capability contracts and yield remain deferred.
+Inherited/multiple capability contracts remain deferred.
+[Yield producers](generators_v0_2.md) reuse the same traversal capability with concrete
+move-only generated cursors; this does not change user-authored struct copy behavior.
 See [implementation and proofs](../v0.2/compiler/docs/iterator.md).
 
 ## Interface implementation

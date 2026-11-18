@@ -16,6 +16,25 @@ final class Type_Resolution
 	public static function signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
 		?Dependency_Watches $dependencies, bool $allow_void = false): ?type_definition
 	{
+		if ($allow_void && $syntax->name === Iterator_Contract::NAME) {
+			if ($function->parent instanceof ast_method_owner) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Yield producers must be free functions');
+			}
+			$first = $syntax->first_child;
+			$second = $first?->next_sibling;
+			if ($first === null || $second?->next_sibling !== null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Expected Iterator<Value> or Iterator<Value,Key>');
+			}
+			$element = self::signature($first, $symbols, $function, $dependencies);
+			$key = $second === null ? null : self::signature($second, $symbols, $function, $dependencies);
+			if ($element === null || ($second !== null && $key === null)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown yield output type');
+			}
+			if ($element instanceof struct_type_definition || $key instanceof struct_type_definition) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Inline struct yield outputs are deferred with inline struct reference parameters');
+			}
+			return new generator_type_definition($function, $element, $key);
+		}
 		if (in_array($syntax->name, ['shared', 'weak'], true) && $syntax->first_child !== null) {
 			$function->watch_signature($dependencies);
 			return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);

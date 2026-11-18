@@ -15,7 +15,7 @@ All flavors accept `struct Counter implements Iterator<int>`. PHP uses
 uses `next(&value:int):bool`. This is Simple C++'s compiler-known protocol, not PHP's
 standard-library Iterator signature. `Iterator` is reserved as a source type name.
 The current contract requires a locally declared method. General interface declarations,
-interface-typed storage, multiple/inherited contracts and yield remain
+interface-typed storage and multiple/inherited contracts remain
 deferred; this feature does not enable virtual dispatch.
 
 ```php
@@ -82,6 +82,9 @@ method's stable symbol. Invalidating a type clears its method link. Ordinary sig
 preparation handles parameter restrictions (including currently deferred inline-struct
 reference parameters). Existing source arguments still use the ordinary binder;
 compiler-created output storage binds directly to the already checked exact signature.
+
+[Yield producers](yield.md) now reuse this consumption protocol with concrete move-only
+cursors. That ownership rule is separate from copyable user-authored Iterator structs.
 
 ## Common consumption protocol
 

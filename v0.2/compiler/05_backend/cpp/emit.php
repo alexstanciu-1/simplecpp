@@ -21,6 +21,8 @@ final class Cpp_Exit
  */
 final class Cpp_Emitter
 {
+	use Cpp_Generator;
+
 	/** PROPERTIES */
 	/** Native non-owning; null keeps standalone single-file emission self-contained. */
 	private readonly ?Cpp_Headers $headers;
@@ -98,7 +100,8 @@ final class Cpp_Emitter
 				. ($base === null ? '' : ' : public ' . $base->cpp_type()) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
-			return $this->signature($node, $includes) . ';';
+			return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
+				. $this->signature($node, $includes) . ';';
 		}
 		foreach ($node->type_def()->cpp_headers() as $header) {
 			$includes[$header] = true;
@@ -371,6 +374,11 @@ CPP;
 				$declarations[$name] = $function;
 			}
 			$this->adapter_flavor = null;
+			if ($function->return_type_def() instanceof generator_type_definition) {
+				$definitions[] = $this->generator_definition($function->return_type_def(), $declarations, $global_references, $required_headers);
+				$unit_flavor ??= $this->adapter_flavor;
+				continue;
+			}
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			if ($function->is_constructor()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
@@ -562,10 +570,12 @@ CPP;
 	 * @param ast_global_declaration[] $global_references
 	 * @param bool[] $required_headers
 	 * @return string[]
+	 * @param ast_statement[]|null $selected Optional transient subset for concrete resume segments.
 	 */
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null): array /** list<string> */
+		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null,
+		?array $selected /** list<ast_statement>|null */ = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
@@ -573,7 +583,7 @@ CPP;
 			$function = $body->parent;
 		}
 		$lines = [];
-		foreach ($body->statements as $statement)
+		foreach ($selected ?? $body->statements as $statement)
 		{
 			if ($statement instanceof ast_base_statement) continue;
 			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
@@ -582,6 +592,7 @@ CPP;
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
 				$type = $source_type->iteration();
+				if ($source_type instanceof generator_type_definition) $declarations[self::function_name($source_type->function)] = $source_type->function;
 				foreach ([$source_type, $statement->value->type_def(), $statement->destination->type_def(), $statement->key?->type_def()] as $used) {
 					if ($used !== null) foreach ($used->cpp_headers() as $header) $required_headers[$header] = true;
 				}
@@ -1526,6 +1537,11 @@ CPP;
 	{
 		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
 		$type = $function->return_type_def();
+		if ($type instanceof generator_type_definition) {
+			foreach ([$type->iteration_value_type(), $type->iteration_key_type()] as $output) {
+				if ($output instanceof struct_handle_definition || $output instanceof struct_type_definition || $output instanceof enum_type_definition) yield $output;
+			}
+		}
 		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();

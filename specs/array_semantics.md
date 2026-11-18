@@ -93,7 +93,7 @@ Concurrent mutation and by-reference foreach remain deferred. Native callers mus
 obey wrapper lifetime and distinct cursor/output requirements. The runtime primitives and bounded source foreach integration are implemented.
 Custom traversal uses synchronous next calls without a captured extent;
 see the Iterator contract above. Keyed loops require Iterator<T,K>; value-only loops
-accept either contract. Yield remains deferred.
+accept either contract. [Yield producers](generators_v0_2.md) reuse this protocol.
 See [native traversal protocol](../v0.2/specs/collection_traversal.md).
 
 ## 2. Core model
