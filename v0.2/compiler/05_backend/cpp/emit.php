@@ -580,8 +580,9 @@ CPP;
 				$lines[] = "\t" . ($statement instanceof ast_break_statement ? 'break;' : 'continue;');
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
-				$type = $statement->source_value->type_def();
-				foreach ([$type, $statement->value->type_def(), $statement->destination->type_def(), $statement->key?->type_def()] as $used) {
+				$source_type = $statement->source_value->type_def();
+				$type = $source_type->iteration();
+				foreach ([$source_type, $statement->value->type_def(), $statement->destination->type_def(), $statement->key?->type_def()] as $used) {
 					if ($used !== null) foreach ($used->cpp_headers() as $header) $required_headers[$header] = true;
 				}
 				$steps = [];
@@ -589,20 +590,27 @@ CPP;
 				$lines[] = "\t{";
 				foreach ($steps as $step) $lines[] = "\t" . $step;
 				$lines[] = "\tauto&& iteration_source = " . $receiver . ';';
-				$lines[] = "\tconst auto iteration_limit = " . $type->lower_cpp_iteration_limit('iteration_source') . ';';
-				$lines[] = "\tscpp::int64 iteration_position = 0;";
 				$destination = $statement->destination;
-				$direct = $statement->conversion === value_conversion::identity;
+				$method = $type->iteration_method();
+				$direct = $statement->conversion === value_conversion::identity
+					&& ($method === null || $destination === $statement->value);
 				$output = $direct ? $this->name($destination) : 'iteration_value';
 				if (!$direct || $destination === $statement->value) {
 					$lines[] = "\t" . $statement->value->type_def()->cpp_type() . ' ' . $output . '{};';
 				}
 				$key = $statement->key === null ? null : $this->name($statement->key);
 				if ($key !== null) $lines[] = "\t" . $statement->key->type_def()->cpp_type() . ' ' . $key . '{};';
-				if ($key !== null) $lines[] = "\t" . $type->lower_cpp_iteration_state();
-				$lines[] = "\twhile (" . $type->lower_cpp_iteration_next('iteration_source', 'iteration_position', 'iteration_limit', $output, $key) . ') {';
+				$lines[] = "\t" . $type->lower_cpp_iteration_state('iteration_source', $key !== null);
+				if ($method !== null) {
+					$name = self::function_name($method);
+					$declarations[$name] = $method;
+					$next = $name . '(iteration_source, ' . $output . ')';
+				} else $next = $type->lower_cpp_iteration_next('iteration_source', $output, $key);
+				$lines[] = "\twhile (" . $next . ') {';
 				if (!$direct) {
-					$converted = $destination->type_def()->lower_cpp_conversion($statement->conversion, $output, $statement->value);
+					$operand = $method !== null && $statement->conversion === value_conversion::identity
+						? 'static_cast<' . $statement->value->type_def()->cpp_type() . '&&>(' . $output . ')' : $output;
+					$converted = $destination->type_def()->lower_cpp_conversion($statement->conversion, $operand, $statement->value);
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function) as $line) $lines[] = "\t" . $line;

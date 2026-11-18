@@ -3,6 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 require_once __DIR__ . '/vectors.php';
+require_once __DIR__ . '/interfaces.php';
 require_once __DIR__ . '/carriers.php';
 require_once __DIR__ . '/hashes.php';
 @boxed_require@

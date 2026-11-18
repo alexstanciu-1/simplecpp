@@ -6,12 +6,12 @@ namespace scpp\compiler;
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
-	public function lower_cpp_iteration_state(): string;
+	public function iteration_method(): ?ast_function_declaration;
+	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string;
 	public function iteration_value_type(): type_definition;
 	public function iteration_key_type(): ?type_definition;
-	public function lower_cpp_iteration_limit(string $receiver): string;
 	/** $key is null for value-only traversal; boxed implementations decode normalized key transport. */
-	public function lower_cpp_iteration_next(string $receiver, string $position, string $limit, string $value, ?string $key): string;
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string;
 }
 
 /** Unary observations on a published collection. Native uint8. */
@@ -80,6 +80,7 @@ trait ordered_keyed_store
 /** Shared semantic type contract; canonical definitions own type-specific behavior, never occurrence facts. */
 abstract class type_definition
 {
+
 	/** PROPERTIES */
 	public readonly string $name;
 
@@ -90,6 +91,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Optional settled traversal capability; ordinary types are not iterable. */
+	public function iteration(): ?iterable_type
+	{
+		return $this instanceof iterable_type ? $this : null;
+	}
+
 	/** Definitions are canonical shared identities, not copyable per-expression records. */
 	final protected function __clone(): void
 	{

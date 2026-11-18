@@ -9,19 +9,19 @@
 		return @key@;
 	}
 
-	public function lower_cpp_iteration_state(): string
+	public function iteration_method(): ?ast_function_declaration
 	{
-		return @state@;
+		return null;
 	}
 
-	public function lower_cpp_iteration_limit(string $receiver): string
+	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string
 	{
-		return '(' . $receiver . ').@limit@()';
+		return 'const auto iteration_limit = (' . $receiver . ').@limit@(); scpp::int64 iteration_position = 0; ' . ($keyed ? @state@ : '');
 	}
 
-	public function lower_cpp_iteration_next(string $receiver, string $position, string $limit, string $value, ?string $key): string
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string
 	{
-		$prefix = '(' . $receiver . ').@next@(' . $position . ', ' . $limit . ', ';
+		$prefix = '(' . $receiver . ').@next@(' . 'iteration_position, iteration_limit, ';
 		if ($key === null) return $prefix . $value . ')';
 		return $prefix . @arguments@ . ')'@publish@;
 	}

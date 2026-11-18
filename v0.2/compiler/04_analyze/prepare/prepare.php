@@ -321,8 +321,9 @@ final class Preparation
 		ast_function_declaration $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
-		$type = $statement->source_value->type_def();
-		if (!($type instanceof iterable_type)) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		$type = $statement->source_value->type_def()->iteration();
+		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		if (($method = $type->iteration_method()) !== null) $this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		$destination = $this->find_local($statement->value->short_name);
 		$statement->value->settle_type($type->iteration_value_type());
 		$statement->destination = $destination ?? $statement->value;
@@ -334,7 +335,7 @@ final class Preparation
 			if ($destination === null) $this->local_frames[count($this->local_frames) - 1][$statement->value->short_name] = $statement->value;
 			if ($statement->key !== null) {
 				$key_type = $type->iteration_key_type();
-				if ($key_type === null) throw new diagnostic($source, $statement->key->byte_start(), 'Foreach keys require the mixed runtime provider');
+				if ($key_type === null) throw new diagnostic($source, $statement->key->byte_start(), 'Foreach key binding is unavailable for this traversal');
 				$statement->key->settle_type($key_type);
 				$this->local_frames[count($this->local_frames) - 1][$statement->key->short_name] = $statement->key;
 			}

@@ -42,6 +42,7 @@ final class Syntax_Inspection
 			if ($node instanceof ast_struct_declaration) {
 				$result['structs'][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_struct_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
+				if ($node->interface_reference !== null) $result['structs'][array_key_last($result['structs'])]['implements'] = $node->interface_reference->spelling();
 				if ($node->base_reference !== null) $result['structs'][array_key_last($result['structs'])]['base'] = $node->base_reference->spelling();
 			}
 		}

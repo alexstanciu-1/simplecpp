@@ -39,6 +39,8 @@ Simple C++ traversal syntax, not JavaScript for-of compatibility.
 
 The bounded `foreach ($source as $value)` and `foreach ($source as $key => $value)`
 forms accept registered vector, hash, mixed-table and dynamic-container sources.
+The value-only form also accepts structs implementing the compiler-known
+[Iterator<T> contract](inheritance_v0_2.md#compiler-known-traversal-capability).
 Evaluate the source expression once before binding either variable; retain it for
 the loop lifetime, including temporary function results. Vector keys are `int` and
 values are T; hash<V,K> keys are K and values are V. Mixed iteration values are mixed;
@@ -89,7 +91,8 @@ semantics. Break, return and exceptions use ordinary scoped cleanup.
 
 Concurrent mutation and by-reference foreach remain deferred. Native callers must
 obey wrapper lifetime and distinct cursor/output requirements. The runtime primitives and bounded source foreach integration are implemented.
-Custom traversal and yield remain separate slices.
+Value-only custom traversal uses synchronous next calls without a captured extent;
+see the Iterator contract above. Keyed custom traversal and yield remain deferred.
 See [native traversal protocol](../v0.2/specs/collection_traversal.md).
 
 ## 2. Core model

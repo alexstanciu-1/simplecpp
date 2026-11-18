@@ -141,8 +141,13 @@ final class Function_Preparation
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
+		/** @var struct_type_definition[] $iterators */
+		$iterators = [];
 		foreach ($symbols->declarations as $declaration)
 		{
+			if ($declaration instanceof ast_struct_declaration && $declaration->interface_reference !== null) {
+				$iterators[] = $declaration->definition;
+			}
 			if (!($declaration instanceof ast_function_declaration)) {
 				continue;
 			}
@@ -192,6 +197,7 @@ final class Function_Preparation
 			}
 			$declaration->settle_return_type($type);
 		}
+		foreach ($iterators as $iterator) $iterator->prepare_iterator($symbols);
 		return $symbols;
 	}
 

@@ -14,7 +14,7 @@ final class Enum_Syntax
 		$flavor = $c->tokens->source->flavor;
 		$c->take_keyword('enum');
 		$name = $c->name(token_kind::identifier);
-		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void') {
+		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void' || $name === Iterator_Contract::NAME) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Reserved type name: ' . $name);
 		}
 		$backing = null;

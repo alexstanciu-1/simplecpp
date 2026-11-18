@@ -14,7 +14,7 @@ final class Struct_Syntax
 		$start = $c->position();
 		$c->take_keyword('struct');
 		$name = $c->name(token_kind::identifier);
-		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void') {
+		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void' || $name === Iterator_Contract::NAME) {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
 		}
 		$base = null;
@@ -24,6 +24,11 @@ final class Struct_Syntax
 				if ($c->keyword('public')) $c->take_keyword('public');
 			} else $c->take_keyword('extends');
 			$base = $parser->named_type();
+		}
+		$interface = null;
+		if ($c->keyword('implements')) {
+			$c->take_keyword('implements');
+			$interface = $parser->named_type();
 		}
 		$c->take(token_kind::lbrace, '{');
 		$fields = [];
@@ -125,6 +130,6 @@ final class Struct_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base);
+		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $interface);
 	}
 }

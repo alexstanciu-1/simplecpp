@@ -73,6 +73,8 @@ final class ast_struct_declaration extends ast_node implements ast_method_owner
 	public readonly struct_type_definition $definition;
 	/** Native owning optional written base, independent of resolution success. */
 	public readonly ?ast_type_reference $base_reference;
+	/** Native owning written compiler-interface application; general interface lists remain deferred. */
+	public readonly ?ast_type_reference $interface_reference;
 
 	/** CONSTRUCTOR */
 	/**
@@ -81,7 +83,7 @@ final class ast_struct_declaration extends ast_node implements ast_method_owner
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_struct_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null)
+		?ast_type_reference $base_reference = null, ?ast_type_reference $interface_reference = null)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -104,6 +106,8 @@ final class ast_struct_declaration extends ast_node implements ast_method_owner
 				$node->attach($this);
 			}
 		}
+		$this->interface_reference = $interface_reference;
+		$interface_reference?->attach($this);
 		$this->base_reference = $base_reference;
 		$base_reference?->attach($this);
 		$this->definition = new struct_type_definition($this);

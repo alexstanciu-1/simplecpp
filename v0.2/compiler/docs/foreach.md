@@ -7,9 +7,9 @@ the [native protocol](../../specs/collection_traversal.md) owns storage safety.
 
 PHP uses `foreach ($items as $key => $value) { ... }`; C++ and JS use
 `foreach (items as key => value) { ... }`. The key is optional. Braces are required.
-Reference bindings, destructuring, nullable unwrapping, custom traversal and yield
-are deferred. Scalar/null boxed sources throw, including on a later advance after
-replacement. Statically noniterable sources are preparation errors.
+Reference bindings, destructuring, nullable unwrapping, keyed custom traversal and yield
+are deferred. Value-only [Iterator<T> structs](iterator.md) are supported. Scalar/null
+boxed sources throw, including on a later advance after replacement. Statically noniterable sources are preparation errors.
 
 ## Owners and facts
 
@@ -27,7 +27,7 @@ The key is fresh in the header scope; a visible local/parameter value is reused,
 otherwise the value is inferred in that scope. New names do not escape. Zero entries
 leave an existing destination unchanged. The body has its usual child scope.
 
-Preparation resolves the source once, queries its generated `iterable_type` capability,
+Preparation resolves the source once, queries its optional `iterable_type` capability,
 settles bindings and ordinary assignment conversion, then visits the body once.
 It uses the current loop-depth/completion rules and conservative write-cache barriers.
 There is no fixed-point computation, collection scan or additional dependency table.
@@ -44,9 +44,11 @@ value-only dynamic traversal; keyed traversal receives an explicit provider diag
 
 The emitter evaluates the source once. A named wrapper is borrowed, a temporary's
 lifetime is extended, and the existing retained-place helper keeps the nearest shared
-field owner alive. It captures the initial physical limit and uses native while.
-Identity assignments write directly into the destination through iteration_next,
-avoiding a second element copy. Only a conversion requires a separate selected value.
+field owner alive. Generated collection bindings capture the initial physical limit;
+custom Iterator methods need no extent. Both use native while.
+For built-in collections, identity assignments write directly into the destination
+through iteration_next, avoiding a second element copy. Conversion requires a separate
+selected value. Custom methods stage existing destinations until next returns true.
 Boxed keyed traversal decodes native integer/text transport through generated code;
 value-only traversal creates no key transport. No lambda or runtime dispatch is added.
 

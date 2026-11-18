@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Nominal identity of an application-defined inline struct. Whole-value copies use memberwise assignment. */
-final class struct_type_definition extends type_definition implements dependency_watcher
+final class struct_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
@@ -23,6 +23,8 @@ final class struct_type_definition extends type_definition implements dependency
 	private bool $ready = false;
 	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
 	private ?self $base_type = null;
+	/** Prepared fact: non-owning validated traversal method; null for absent or invalidated contract. */
+	private ?ast_function_declaration $iterator = null;
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_struct_declaration $declaration)
@@ -41,6 +43,7 @@ final class struct_type_definition extends type_definition implements dependency
 		$this->dependencies?->forget($this);
 		$this->ready = false;
 		$this->base_type = null;
+		$this->iterator = null;
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
 		$this->dependencies = $dependencies;
@@ -57,6 +60,7 @@ final class struct_type_definition extends type_definition implements dependency
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
 		$this->base_type = null;
+		$this->iterator = null;
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
@@ -77,6 +81,7 @@ final class struct_type_definition extends type_definition implements dependency
 		$active[$this->name] = true;
 		$this->dependencies->forget($this);
 		$this->base_type = null;
+		$this->iterator = null;
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
@@ -123,6 +128,54 @@ final class struct_type_definition extends type_definition implements dependency
 		$this->ready = true;
 		// A declaration-only unit may emit dependent constructor or owner declarations.
 		$work?->change_source($this->source_key);
+	}
+
+	/** Check once after ordinary signature preparation; all bodies consume the settled method. */
+	public function prepare_iterator(scope $symbols): void
+	{
+		$written = $this->declaration->interface_reference;
+		if ($written === null || $this->iterator !== null) return;
+		$argument = $written->first_child;
+		if ($written->name !== Iterator_Contract::NAME || $argument === null || $argument->next_sibling !== null) {
+			throw new diagnostic($written->source(), $written->byte_start(), 'Expected Iterator<T> contract');
+		}
+		$element = Type_Resolution::named($argument, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+		$method = $this->declaration->methods[Iterator_Contract::METHOD] ?? null;
+		if ($element === null || $method === null || !Iterator_Contract::validate($method, $element)) {
+			throw new diagnostic($written->source(), $written->byte_start(), 'Iterator requires public instance ' . Iterator_Contract::METHOD . '(T &value): bool');
+		}
+		$this->dependencies?->watch($symbols->entry($method->symbol_key()), $this);
+		$this->iterator = $method;
+	}
+
+	public function iteration(): ?iterable_type
+	{
+		return $this->iterator === null ? null : $this;
+	}
+
+	public function iteration_method(): ?ast_function_declaration
+	{
+		return $this->iterator;
+	}
+
+	public function iteration_value_type(): type_definition
+	{
+		return $this->iterator->parameters[0]->type_def();
+	}
+
+	public function iteration_key_type(): ?type_definition
+	{
+		return null;
+	}
+
+	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string
+	{
+		return '';
+	}
+
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string
+	{
+		throw new \LogicException('Source traversal calls are emitted through their method declaration');
 	}
 
 	public function base(): ?self
@@ -253,6 +306,12 @@ final class shared_struct_type_definition extends struct_handle_definition
 	public function __construct(struct_type_definition $payload)
 	{
 		parent::__construct('shared', $payload);
+	}
+
+	/** Borrow the payload's settled traversal while the emitter retains this shared allocation. */
+	public function iteration(): ?iterable_type
+	{
+		return $this->payload->iteration();
 	}
 
 	/** A condition observes ownership without retaining the allocation. */

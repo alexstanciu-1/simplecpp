@@ -37,7 +37,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
+    fields($compiler, ['interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power']);
     $safety = compilerLoweringSafety($compiler);
     $definitions = compilerTypePlan($metadata, $facts, $types, $providers);
     if ($runtime !== null) {
@@ -49,6 +49,20 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata->compiler = $compiler;
     $families = compilerLiteralFamilies($definitions);
     $files = [];
+    $interface = $metadata->compiler->interfaces->iterator ?? null;
+    if ($interface !== null) {
+        fields($metadata->compiler->interfaces, ['iterator']);
+        fields($interface, ['name', 'type_parameters', 'method', 'result', 'parameter', 'visibility', 'receiver']);
+        fields($interface->parameter, ['type_argument', 'mode']);
+        requireThat($interface->type_parameters === 1 && $interface->result === 'bool_t'
+            && $interface->parameter->type_argument === 0 && $interface->parameter->mode === 'reference'
+            && $interface->visibility === 'public' && $interface->receiver === 'mutable_reference', 'Unsupported Iterator contract');
+        requireThat(preg_match('/^[A-Za-z_][A-Za-z_0-9]*$/D', $interface->name) === 1
+            && preg_match('/^[A-Za-z_][A-Za-z_0-9]*$/D', $interface->method) === 1, 'Invalid interface identifier');
+    }
+    $files['types/interfaces.php'] = strtr(readFile(__DIR__ . '/../templates/collections/iterator_contract.php.tpl'), [
+        '@name@' => var_export($interface?->name, true), '@method@' => var_export($interface?->method, true),
+    ]);
     $conversions = compilerConversionPlan($metadata, $definitions, $types, $facts, $runtime['explicit_formatters'] ?? []);
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));

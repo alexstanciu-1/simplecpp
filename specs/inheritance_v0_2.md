@@ -236,6 +236,23 @@ implementation; static methods need no receiver. Arguments and reference-return
 contracts reuse ordinary method-call admission. `parent` outside a member context
 or without a concrete base is rejected. This is not late-bound `static::` dispatch.
 
+## Compiler-known traversal capability
+
+The active v0.2 PHP compiler recognizes metadata-defined `Iterator<T>` on structs
+using `implements Iterator<T>` in all three flavors. This is a compile-time
+capability, separate from the general runtime-interface rules below: it adds no
+virtual dispatch, interface object or interface-typed storage. The bounded slice
+requires a local public nonstatic `next(T &value): bool`, with one required writable
+reference output and exact canonical parameter/result types. Existing parameter
+admission restrictions still apply. Copies retain ordinary struct semantics;
+foreach borrows the selected instance and resumes its current progress.
+
+True produces one value; false ends the loop; exceptions propagate. The output is
+not a promised incoming-state channel. Existing loop destinations are updated only
+after a successful advance. The producer needs no known length or end. Keyed custom
+traversal, inherited/multiple capability contracts and yield remain deferred.
+See [implementation and proofs](../v0.2/compiler/docs/iterator.md).
+
 ## Interface implementation
 
 Interfaces may extend multiple interfaces; classes and structs may implement multiple

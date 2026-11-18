@@ -795,6 +795,14 @@
     ]
   },
   "compiler": {
+    "interfaces": {
+      "iterator": {
+        "name": "Iterator", "type_parameters": 1,
+        "method": "next", "result": "bool_t",
+        "parameter": { "type_argument": 0, "mode": "reference" },
+        "visibility": "public", "receiver": "mutable_reference"
+      }
+    },
     "modules": {
       "default-runtime": {
         "always_available": true,
