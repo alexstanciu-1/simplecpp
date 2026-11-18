@@ -1120,7 +1120,7 @@ CPP;
 					$symbol = $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
-				if ($function->mutable_receiver_method) {
+				if ($function->receiver_method) {
 					$arguments = [];
 					$direct = true;
 					foreach ($value->arguments as $index => $argument) {

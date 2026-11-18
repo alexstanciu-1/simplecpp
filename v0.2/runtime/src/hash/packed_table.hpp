@@ -4,6 +4,7 @@
 #include "hash_index.hpp"
 #include "packed_key.hpp"
 #include <utility>
+#include <algorithm>
 namespace scpp::detail {
 template<class Value> class packed_table final {
     static_assert(std::is_nothrow_default_constructible_v<Value>);
@@ -320,6 +321,20 @@ public:
             auto code = is_packed() ? static_cast<std::uint32_t>(i) : std::get<native_keys_t>(keys_)[i];
             if (code != TOMBSTONE_KEY) visitor(code, values_[i]);
         }
+    }
+    // Reload packed/associative mode on every call; mutation may have changed the representation.
+    bool iteration_next(std::int64_t& position, std::int64_t limit, Value& value, std::uint32_t* key = nullptr) const {
+        if (position < 0 || limit < 0) throw std::out_of_range("iteration_bounds");
+        auto next = static_cast<std::uint64_t>(position);
+        const auto end = std::min(static_cast<std::uint64_t>(limit), static_cast<std::uint64_t>(values_.size()));
+        const auto* keys = std::get_if<native_keys_t>(&keys_);
+        while (next < end && keys && (*keys)[next] == TOMBSTONE_KEY) ++next;
+        if (next >= end) { position = static_cast<std::int64_t>(next); return false; }
+        Value selected = values_[next];
+        if (key) *key = keys ? (*keys)[next] : static_cast<std::uint32_t>(next);
+        position = static_cast<std::int64_t>(next + 1);
+        value = std::move(selected);
+        return true;
     }
     std::size_t physical_size() const noexcept { return values_.size(); }
     std::size_t key_capacity() const noexcept { return is_packed() ? 0 : std::get<native_keys_t>(keys_).capacity(); }

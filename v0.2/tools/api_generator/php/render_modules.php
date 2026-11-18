@@ -15,11 +15,11 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $count = $hashes['count_type'];
         $nullable = 'nullable_' . $v;
         [$lh, $ld] = lifecycle($n);
-        $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh', 'ld') + ['policy' => $k === 'int64' ? 'integer_hash_key':'string_hash_key'];
+        $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh', 'ld') + $hash['traversal'] + ['policy' => $k === 'int64' ? 'integer_hash_key':'string_hash_key'];
         $h .= template('collections/hash_declaration', $vars);
         foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
         $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
-        $d .= template('collections/hash_storage', $vars) . template('collections/hash_methods_definition', $vars);
+        $d .= template('collections/hash_storage', $vars) . template('collections/hash_methods_definition', $vars) . template('collections/hash_iteration', $vars);
         if($k === 'int64') {
             $h .= "    $k append($v value);\n" . scalarInputFences($plan, 'append', [[$v]]);
             $d .= "$k $n::append($v value) { if (!storage_) storage_ = new storage; return storage_->table.append(std::move(value)); }\n";

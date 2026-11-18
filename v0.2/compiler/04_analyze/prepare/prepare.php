@@ -770,9 +770,9 @@ final class Preparation
 				$this->value($argument);
 			}
 			$type = $runtime->parameters[$index];
-			if ($index === 0 && $runtime->mutable_receiver_method) {
+			if ($index === 0 && $runtime->receiver_method) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
-				if ($argument instanceof ast_name_expression) {
+				if ($runtime->is_reference(0) && $argument instanceof ast_name_expression) {
 					$this->bind_reference($argument, $type, $writes);
 				}
 			}
@@ -852,7 +852,7 @@ final class Preparation
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
-				if ($runtime instanceof runtime_function && $runtime->mutable_receiver_method) {
+				if ($runtime instanceof runtime_function && $runtime->receiver_method) {
 					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Collection methods use -> in PHP/C++ and . in JS');

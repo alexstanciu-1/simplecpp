@@ -4,6 +4,13 @@ namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
 require_once __DIR__ . '/json.php';
 
+/** Internal native traversal ABI shared by the supported concrete collection families. */
+function collectionTraversalPlan(): array {
+    return ['limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
+        'mode' => 'borrow_live_wrapper_physical', 'visibility' => 'compiler_internal',
+        'value_copy' => 'ordinary_copy', 'mutation' => 'reload_without_preservation'];
+}
+
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
     foreach (['scalar_core', 'scalar_numeric'] as $group) {
@@ -426,6 +433,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         $add('empty', 'bool_t', [], false, 'none');
         $add('clear', 'void', [], true, 'none');
         $add('remove', 'bool_t', [$count], true, 'erase_shift_missing_false');
+        $add('has', 'bool_t', [$count], false, 'index_presence');
         $indices = $nativeIndex ? [$count, 'int']:[$count];
         $values = $native === 'none' ? [$element]:[$element, $native];
         foreach($indices as $index) {
@@ -437,7 +445,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         foreach($values as $value) {
             $add('append', 'void', [$value], true, $value === $element ? 'move_value':'explicit_element_then_append');
         }
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'private_std_vector', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => []];
+        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'private_std_vector', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan()];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);
@@ -610,7 +618,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_typed_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => 'deferred_RT-DEBT-01'];
+        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_typed_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => collectionTraversalPlan()];
     }
     requireThat($hashes !== [], 'Empty hash publication');
     ksort($hashes, SORT_STRING);

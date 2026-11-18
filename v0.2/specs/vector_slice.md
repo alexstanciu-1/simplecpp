@@ -73,6 +73,7 @@ unaffected scalar definitions remain byte-identical.
 | --- | --- |
 | size() | Return count type, checked for representability |
 | empty() | Return bool_t |
+| has(count index) const | Return bool_t indicating index presence, without copying an element or allocating |
 | append(element value) | Append an owned value; move the argument into storage |
 | at(count index) const | Check bounds and return a value copy |
 | set(count index, element value) | Check bounds and move the value into the existing slot |
@@ -80,7 +81,7 @@ unaffected scalar definitions remain byte-identical.
 | remove(count index) | Remove the indexed element and shift the suffix left; return bool_t indicating removal |
 
 For at/set, negative and beyond-end indices throw std::out_of_range before unsigned conversion.
-For remove, every negative or beyond-end index returns false without mutation or allocation.
+For has/remove, every negative or beyond-end index returns false without mutation or allocation.
 Successful removal preserves the order of remaining elements and retains capacity.
 at exposes no reference, pointer, iterator or interior lifetime protocol. Modifying
 its returned string cannot change the vector. Copies own independent elements. Moves
@@ -183,3 +184,9 @@ separately compiled runtime object reused at link. These are single verification
 samples taken while other native work was running, not comparative performance
 claims. Runtime compilation is excluded from the application figures. Raw proof
 and trace files are retained in `/tmp/scpp-vector-provider-proof/`.
+
+## Native traversal
+
+Concrete vectors expose the [common traversal protocol](collection_traversal.md).
+It borrows the live wrapper and copies one element at a time; no cursor allocation,
+collection snapshot or per-wrapper state is added. Compiler foreach remains separate.

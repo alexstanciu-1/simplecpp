@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-Vector and hash expose `clear()` and `remove(key)`. PHP and C++ use `->`;
+Vector and hash expose `clear()`, `remove(key)` and `has(key)`. PHP and C++ use `->`;
 JS uses `.`. This is a Simple C++ API, not a promise of PHP/JS standard-library compatibility.
 There is no new `list_clear` or free-function synonym.
 
@@ -34,14 +34,15 @@ Empty shared receivers throw through the existing checked owner access.
 
 The API generator consumes each published specialization's validated method plan and
 provider export. It registers a canonical `runtime_function` for clear, with the
-collection as operand zero and `mutable_receiver_method = true`. This flag describes the
-native mutable member binding; it is not a new intrinsic or an additional per-call
+collection as operand zero and `receiver_method = true`. Existing reference masks
+distinguish mutable from const receivers. This flag describes the
+native member binding; it is not a new intrinsic or an additional per-call
 prepared record. Canonical argument/result types come from the validated method plan.
 
 Existing `ast_call_expression` stores the receiver and arguments. Preparation resolves
 the generated binding by flavor, canonical type and name; checks arity and syntax;
-and reuses receiver preparation for field visibility. Named receivers use the existing
-mutable-reference validation/invalidation. Expression temporaries are permitted:
+and reuses receiver preparation for field visibility. Mutable named receivers use the existing
+mutable-reference validation/invalidation; read-only receivers do not invalidate facts. Expression temporaries are permitted:
 clearing a temporary collection has no effect on another collection's copy.
 Ordinary reference arguments still require exact-type named locals/parameters.
 
@@ -97,7 +98,7 @@ evaluating the argument. This temporary preserves lifetime, not an additional op
 ordering policy. Empty owners throw before key evaluation. An inline temporary lasts
 through the native member-call full expression.
 
-No new retained fields were added for removal. `runtime_function.mutable_receiver_method`
+No new retained fields were added for removal. `runtime_function.receiver_method`
 now describes zero/argument-bearing methods instead of just zero-argument members.
 Preparation continues using the existing call path; it does not scan unrelated bodies.
 
@@ -121,3 +122,37 @@ actually unpublished node rather than numeric.scalars, which is published by def
 Same build settings as above; medians across six main fixtures per flavor, not a
 before/after comparison with the smaller clear fixtures. Native ranges: PHP 224–259 ms,
 C++ 226–247 ms, JS 216–246 ms. Raw artifacts: `/tmp/scpp-collection-remove-final/`.
+
+## Presence queries
+
+`has(index)` checks vector bounds and `has(key)` probes the hash. Both return bool;
+absence is false, including negative and extreme vector indexes. Stored zero or an
+empty string still counts as present. No element copy or collection allocation occurs.
+
+The former `mutable_receiver_method` flag is now `receiver_method`. Existing mutable
+and const reference masks describe operand zero; no extra field or per-call fact is
+needed. Generator validation checks the published method's argument/result types and
+mutability. The existing preparation loop checks exact argument types and skips mutable
+binding/invalidation for has. Its argument may still call another function that mutates
+storage, so the existing lowering lifetime protection applies equally to read-only calls.
+
+`collection_has.php` and its native harness test all six specializations in all three
+flavors, zero/empty-string payloads, NUL keys, extreme indexes, repeated probes, fields,
+expression receivers, shared owner replacement, empty-owner ordering, type/arity/private
+access diagnostics, and incremental edits/deletion/recovery against fresh compilation.
+The native storage proof calls const receivers and counts allocations/releases to check
+that empty probes do not allocate and populated probes do not copy heap-backed values.
+
+Presence verification (2026-11-14): all 54 native fixtures and focused regressions passed.
+Medians across the six main fixtures per flavor, with the same O2/g0, Ninja8, mold,
+no-PCH/LTO, prebuilt-runtime and fresh-object settings used above:
+
+| Flavor | PHP prepare/emit/inspection (ms) | Native wall (ms) | Clang frontend (ms) | LLVM backend (ms) | Optimizer (ms) | Codegen (ms) | Link command (ms) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| PHP | 4.68 | 236.63 | 30.40 | 50.58 | 21.76 | 26.35 | 57.00 |
+| C++ | 4.53 | 235.24 | 29.33 | 48.81 | 21.52 | 25.81 | 55.50 |
+| JS | 4.64 | 234.96 | 29.97 | 51.05 | 21.60 | 26.77 | 55.50 |
+
+Combined measured PHP/native work medians: 241.44/240.20/239.68 ms; this excludes fixture
+setup and executable launch. LLVM subcomponents overlap their parent totals. Raw results
+and generated programs: `/tmp/scpp-collection-has-proof/` (temporary).

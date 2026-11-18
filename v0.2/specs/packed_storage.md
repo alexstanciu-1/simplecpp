@@ -62,7 +62,7 @@ The CMake target `scpp_packed_storage` compiles the private pool; the test targe
 includes private headers directly. No generated declaration, metadata registration,
 public template, mixed/dynamic wrapper or compiler change is introduced. Private
 visitation is for internal use with no structural mutation during a visit.
-Source traversal preservation stays RT-DEBT-01.
+Native iteration_next reloads live storage through the [common protocol](collection_traversal.md); compiler foreach stays RT-DEBT-01.
 
 `tests/packed` proves bounds, append/deletion, cross-translation-unit identities,
 byte/NUL keys, pool exhaustion with small limits, allocation failures, ownership,

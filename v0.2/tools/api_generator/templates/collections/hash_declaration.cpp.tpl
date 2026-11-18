@@ -8,3 +8,7 @@ public:
     void set(@k@ key, @v@ value);
     bool_t remove(const @k@& key);
     void clear() noexcept;
+    // Compiler traversal API: physical positions, not live entry count.
+    @count@ @limit_method@() const;
+    bool_t @next_method@(@count@& position, @count@ limit, @v@& value) const;
+    bool_t @next_method@(@count@& position, @count@ limit, @k@& key, @v@& value) const;

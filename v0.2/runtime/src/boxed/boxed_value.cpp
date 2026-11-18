@@ -142,6 +142,18 @@ bool boxed_value<Family>::is_packed_container() const {
     if (!t) throw std::runtime_error("boxed_expected_container");
     return t->is_packed();
 }
+template<boxed_family Family>
+std::int64_t boxed_value<Family>::iteration_limit() const {
+    const auto* t = read_table();
+    if (!t) throw std::runtime_error("boxed_expected_container");
+    return static_cast<std::int64_t>(t->physical_size());
+}
+template<boxed_family Family>
+bool boxed_value<Family>::iteration_next(std::int64_t& position, std::int64_t limit, boxed_value& value, std::uint32_t* key) const {
+    const auto* t = read_table();
+    if (!t) throw std::runtime_error("boxed_expected_container");
+    return t->iteration_next(position, limit, value, key);
+}
 template class boxed_value<boxed_family::mixed>;
 template class boxed_value<boxed_family::dynamic>;
 } // namespace scpp::detail

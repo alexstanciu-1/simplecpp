@@ -64,7 +64,10 @@ def proof(work):
         header = plan['submodules']['nodes'][provider]['header']
         assert json.loads(run(['php', runner, compiler])) == ['hash<int64,string>', 'scpp::hash_int64_string', [header], observations]
         after = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
-        assert {k:v for k,v in before.items() if k != 'hashes.php'} == {k:v for k,v in after.items() if k != 'hashes.php'}
+        assert {k:v for k,v in before.items() if k not in ('hashes.php', 'registry.php')} == {k:v for k,v in after.items() if k not in ('hashes.php', 'registry.php')}
+        normalized = b''.join(line.replace(header.encode(), b'scpp/hashes.hpp') if b'new runtime_function' in line and b'type_hash_' in line else line
+                              for line in after['registry.php'].splitlines(keepends=True))
+        assert normalized == before['registry.php'], 'Unexpected registry changes beyond method provider relocation'
         assert not (runtime / 'public/scpp/hashes.hpp').exists()
         consumer = work / 'consumer.cpp'
         consumer.write_text(f'#include <{header}>\nvoid f(scpp::hash_int64_string, scpp::hash_string_int64, scpp::hash_int64_int64, scpp::hash_string_string) {{}}\n')

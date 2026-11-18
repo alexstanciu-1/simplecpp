@@ -116,7 +116,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     f = copy.deepcopy(facts); f['boxed']['mixed']['size'] += f['boxed']['mixed']['alignment']
     wrong, _ = run(metadata, publication, f)
     command = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(wrong/'out/public')]
-    command += ['-I'+str(a.source/'runtime/src'/directory) for directory in ['numeric', 'boxed', 'ownership']]
+    command += ['-I'+str(a.source/'runtime/src'/directory) for directory in ['numeric', 'boxed', 'hash', 'ownership']]
     result = subprocess.run(command+[str(wrong/'out/src/boxed.cpp')], capture_output=True, text=True, timeout=60)
     assert result.returncode != 0 and 'static assertion failed' in result.stderr
     print('boxed publication passed:', serial, 'cases')

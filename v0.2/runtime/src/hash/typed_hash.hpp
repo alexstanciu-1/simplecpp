@@ -3,6 +3,7 @@
 // Typed table; index primitives are shared with the private packed engine.
 #include "hash_index.hpp"
 #include <cstdint>
+#include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <stdexcept>
@@ -36,7 +37,7 @@ template<class Key> struct string_hash_key {
 };
 
 // Private storage owner. Public generated methods copy reads and own mutation.
-// See v0.2/specs/hash_slice.md. Traversal preservation is deferred as RT-DEBT-01.
+// See v0.2/specs/hash_slice.md. Traversal reloads live storage without preservation.
 template<class T_VALUE, class T_KEY, class KeyOps>
 class typed_hash final {
     static_assert(std::is_nothrow_default_constructible_v<T_VALUE> && std::is_nothrow_default_constructible_v<T_KEY>);
@@ -306,6 +307,22 @@ public:
     template<class Visitor> void visit_entries(Visitor&& visitor) const {
         for (std::size_t i = 0; i < keys_.size(); ++i)
             if (live_[i]) visitor(keys_[i], values_[i]);
+    }
+    // Copy one entry; never keep a slot reference across caller code. Outputs commit after all copies succeed.
+    bool iteration_next(std::int64_t& position, std::int64_t limit, T_VALUE& value, T_KEY* key = nullptr) const {
+        if (position < 0 || limit < 0) throw std::out_of_range("iteration_bounds");
+        auto next = static_cast<std::uint64_t>(position);
+        const auto end = std::min(static_cast<std::uint64_t>(limit), static_cast<std::uint64_t>(values_.size()));
+        while (next < end && !live_[next]) ++next;
+        if (next >= end) { position = static_cast<std::int64_t>(next); return false; }
+        T_VALUE selected_value = values_[next];
+        if (key) {
+            T_KEY selected_key = keys_[next];
+            *key = std::move(selected_key);
+        }
+        position = static_cast<std::int64_t>(next + 1);
+        value = std::move(selected_value);
+        return true;
     }
     std::size_t physical_size() const noexcept { return values_.size(); }
     unsigned index_bytes() const noexcept {

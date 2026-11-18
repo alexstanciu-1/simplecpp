@@ -9,3 +9,6 @@ bool_t @n@::remove(@count@ index) {
     storage_->values.erase(storage_->values.begin() + index);
     return true;
 }
+bool_t @n@::has(@count@ index) const noexcept {
+    return index >= 0 && storage_ && static_cast<unsigned long long>(index) < storage_->values.size();
+}

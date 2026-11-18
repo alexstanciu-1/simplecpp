@@ -63,40 +63,30 @@ an iteration body alone cannot satisfy a required return because the source can 
 
 ### Mutation during value iteration
 
-For vector, hash, mixed tables and dynamic containers, traversal starts live. Each
-body receives a value copy at its turn. Updating an existing value before its turn
-is visible until the traversal is preserved. The first logical structural mutation
-(insertion, successful removal, changed-size resize, clear of a nonempty source) or
-replacement/move of the iterated binding preserves each affected traversal's
-remaining shallow key/value entries **before** committing the change. Consumed
-entries are not replayed and newly inserted entries are not visited by that traversal.
-Later writes do not change its preserved values. Shared objects within copied values
-keep their ordinary identity; preservation is not a deep clone.
+For v0.2 vector, hash, mixed tables and dynamic containers, traversal borrows the
+live source wrapper and captures its initial physical extent. Each advance reloads
+current storage, checks current bounds, skips deleted slots and copies the current
+key/value before entering the body. It retains no element pointer across body code.
+There is no collection snapshot or mutation-preservation subscription.
 
-Each nested traversal has its own position. A traversal started after a mutation
-sees the changed source. Missing-key removal, same-size resize and capacity changes
-alone do not preserve traversal. COW detachment alone is also nonstructural: a mixed
-traversal follows its original binding through detachment, while independent mixed
-copies remain independent. Dynamic aliases share structural changes; replacing a
-separate alias rebinds only that alias. These rules also apply to mutations through
-ordinary reference parameters and calls.
+Mutation during traversal has no stable visitation guarantee: shifting, deletion,
+clear, replacement and packed/associative transitions may change which entries are
+visited. The captured physical limit bounds traversal; growth does not extend it.
+Memory safety and normal runtime errors are required, not a preserved sequence.
+Mixed keeps ordinary copy-on-write; dynamic keeps shared-table semantics. Traversal
+must not itself introduce another table owner. Scalar/null replacement of a boxed
+source throws on the next advance, including when its previous limit was exhausted.
 
-All affected traversals must finish preservation preparation before the mutation
-commits. If preservation allocation or copying fails, the mutation remains
-uncommitted and the traversals remain live and valid; already evaluated source
-expressions are not rolled back. This does not strengthen the exception guarantees
-of a mutation that fails later, after preservation succeeds.
+The source expression is evaluated once. The caller keeps its wrapper and any
+containing owner alive until traversal ends; retaining only a raw reference to a
+field of an otherwise released owner is insufficient. Each nested traversal owns
+its own integer position and limit. Copied elements keep their normal value/shared
+semantics. Break, return and exceptions use ordinary scoped cleanup.
 
-The source expression is evaluated once. Temporary and field-source owners remain
-alive for traversal. Source destruction cannot leave a dangling traversal; remaining
-storage is retained without throwing from destruction. Normal exhaustion, break,
-continue, return and exceptions release traversal state through ordinary cleanup.
-No collection-wide entry snapshot is taken at loop entry.
-
-This contract covers source-visible operations through the registered container
-owners, not arbitrary native code mutating exposed storage. Reference foreach,
-escaping element references, concurrent mutation and collection-callback iteration
-policies remain separate; by-reference foreach stays rejected.
+Concurrent mutation and by-reference foreach remain deferred. Native callers must
+obey wrapper lifetime and distinct cursor/output requirements. The runtime primitives
+are implemented first; source foreach integration is a separate compiler slice.
+See [native traversal protocol](../v0.2/specs/collection_traversal.md).
 
 ## 2. Core model
 
@@ -505,6 +495,20 @@ Current rules:
 
 If the target is not array/hash compatible and is not the null-state `mixed` bootstrap case:
 - throw or reject according to the lowering/runtime boundary involved
+
+## v0.2 typed collection presence methods
+
+Typed vectors and hashes expose `has(key)`: PHP/C++ `->has(key)`, JS `.has(key)`.
+It returns bool indicating presence, independent of the stored value's truthiness.
+Vector indexes must be canonical int/int64; hash keys must exactly match their declared
+type. String keys use all bytes, including embedded NUL. Negative or beyond-end vector
+indexes and absent hash keys return false. A probe neither copies the element nor
+mutates or materializes the collection's storage.
+
+Expression receivers follow the same receiver-before-key and shared-allocation lifetime
+rules as the removal methods below. An empty shared owner still throws before evaluating
+the key. Key-expression effects are allowed and are not undone; the query itself is
+read-only. This adds no `isset` syntax or value-search semantics.
 
 ## v0.2 typed collection removal methods
 

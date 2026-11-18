@@ -15,9 +15,9 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             . "int64 boxed_key(int64 key);\nboxed_text_key boxed_key(string key);\n}\n";
         $h = BANNER . "#pragma once\n";
     }
-    $d = BANNER . includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";
+    $d = BANNER . includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . includeHeader('packed_key.hpp') . "namespace scpp {\n";
     if ($split) {
-        $d = str_replace("namespace scpp {\n", includeHeader('source_key.hpp') . includeHeader('packed_key.hpp') . implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
+        $d = str_replace("namespace scpp {\n", includeHeader('source_key.hpp') . implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
         $d .= "int64 boxed_key(int64 key) { return detail::packed_key::integer(key); }\n"
             . "boxed_text_key boxed_key(string key) {\n"
             . "    const auto index = detail::source_key_index({key.data(), static_cast<std::size_t>(key.size())});\n"
@@ -28,7 +28,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         $n = $family['name']; $native = $family['native'];
         $get = fn(string $value): string => "detail::ownership_access::get<$native>($value)";
         $peer = $n === 'mixed' ? 'dynamic' : 'mixed';
-        $vars = $family + ['count' => $plan['string']['count_representation'], 'n' => $n, 'conversion' => $box['scalar_conversions'] ? "    static $n from_{$peer}_scalar(const $peer& value);\n" : '',
+        $vars = $family + $family['traversal'] + ['count' => $plan['string']['count_representation'], 'n' => $n, 'conversion' => $box['scalar_conversions'] ? "    static $n from_{$peer}_scalar(const $peer& value);\n" : '',
             'self' => $get('*this'), 'other' => $get('other'), 'result' => $get('result'), 'value' => $get('value')];
         $fences = '';
         foreach (['from_boolean' => 'bool_t', 'from_integer' => 'int64', 'from_floating' => 'float64'] as $method => $input) {
@@ -53,7 +53,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         } else {
             $h .= $decl;
         }
-        $d .= template('boxed/boxed_definition', $vars);
+        $d .= template('boxed/boxed_definition', $vars) . template('boxed/boxed_iteration', $vars);
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";

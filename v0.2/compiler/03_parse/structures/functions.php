@@ -16,8 +16,8 @@ final readonly class runtime_function
 	public ?string $adapter_flavor;
 	/** Emit the exact native first argument type when it selects a C++ overload. */
 	public bool $overloaded_first;
-	/** Native mutable member binding; operand zero is the receiver, never a by-value copy. */
-	public bool $mutable_receiver_method;
+	/** Native member binding; operand zero is the receiver, with mutability in the reference masks. */
+	public bool $receiver_method;
 	public int $required_parameters /** uint32 */;
 	/** One bit per mutable reference argument in the generated signature. */
 	private int $reference_mask /** uint32 */;
@@ -25,9 +25,9 @@ final readonly class runtime_function
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $mutable_receiver_method = false)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false)
 	{
-		$this->mutable_receiver_method = $mutable_receiver_method;
+		$this->receiver_method = $receiver_method;
 		$this->const_reference_mask = $const_reference_mask;
 		$this->reference_mask = $reference_mask;
 		$this->overloaded_first = $overloaded_first;

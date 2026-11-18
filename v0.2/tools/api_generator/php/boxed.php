@@ -30,6 +30,7 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         requireThat(isset($facts['boxed'][$family]), 'Boxed requires measured native layout');
         $families[] = ['name' => $family, 'native' => 'detail::'.$family.'_value',
             'copy' => $family === 'mixed' ? 'cow' : 'shared_container_identity',
+            'traversal' => collectionTraversalPlan(),
             'null_write' => $family === 'mixed' ? 'bootstrap' : 'reject'] + $facts['boxed'][$family];
     }
     if (boolean($p->scalar_dispatch ?? false)) {
@@ -40,6 +41,6 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'scalar_conversions' => $convert, 'integer_keys' => [0, 2147483647],
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss',
         'operations' => ['from_boolean', 'from_integer', 'from_floating', 'from_string', 'container', 'kind',
-            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'is_packed_container', 'clean'],
+            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'is_packed_container', 'clean', 'iteration_limit', 'iteration_next'],
         'build' => ['generated_sources' => ['src/boxed.cpp'], 'requires' => 'scpp_boxed_storage']];
 }

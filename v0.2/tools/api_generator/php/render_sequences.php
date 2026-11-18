@@ -350,7 +350,7 @@ function renderVectors(array $plan): array {
         $e = $v['element'];
         $count = $v['count_type'];
         [$lh, $ld] = lifecycle($n);
-        $vars = compact('n', 'e', 'count');
+        $vars = compact('n', 'e', 'count') + $v['traversal'];
         $h .= "class $n final {\npublic:\n$lh";
         $d .= $ld;
         foreach($v['casts_from'] as $c) {
@@ -370,7 +370,7 @@ function renderVectors(array $plan): array {
             $d .= template('collections/vector_cast', $vars + ['src' => $src, 'conversion' => $expression]);
         }
         $h .= template('collections/vector_methods_declaration', $vars);
-        $d .= template('collections/vector_methods_definition', $vars);
+        $d .= template('collections/vector_methods_definition', $vars) . template('collections/vector_iteration', $vars);
         $indices = [$count];
         $values = [$e];
         if ($v['native_index'] && scalarNativeIdentity($plan, $count) !== 'int') {
@@ -396,6 +396,7 @@ function renderVectors(array $plan): array {
         }
         $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
         $h .= scalarInputFences($plan, 'remove', [[$count]]);
+        $h .= scalarInputFences($plan, 'has', [[$count]], false, ' const');
         $h .= scalarInputFences($plan, 'append', array_map(static fn(string $type): array => [$type], $values));
         $h .= scalarInputFences($plan, 'set', $sets);
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::vector_access;\n};\n";

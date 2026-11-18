@@ -137,8 +137,9 @@ def proof(work):
         normalized = b''.join(line.replace(header.encode(), b'scpp/vectors.hpp') if b'new runtime_function' in line and b'type_vector_' in line else line
                               for line in after['registry.php'].splitlines(keepends=True))
         assert normalized == compiler_before['registry.php'], 'Method bindings ignored provider relocation or unrelated registry output changed'
-        for method in ('clear', 'remove'):
-            assert f"'{method}', '{header}', mutable_receiver_method: true".encode() in after['registry.php']
+        for method in ('clear', 'remove', 'has'):
+            refs, const_refs = (0, 1) if method == 'has' else (1, 0)
+            assert f"'{method}', '{header}', reference_mask: {refs}, const_reference_mask: {const_refs}, receiver_method: true".encode() in after['registry.php']
         for flavor in ('cpp', 'php', 'js'):
             adapter = output / f'public/scpp/{flavor}/string_vectors.hpp'
             assert f'#include "{header}"' in adapter.read_text()

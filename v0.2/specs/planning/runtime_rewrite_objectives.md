@@ -147,23 +147,13 @@ separate work; the private module adapter does not settle RT-DEBT-01.
 
 ## Explicit debt: RT-DEBT-01 — traversal and mutation preservation
 
-Status: deferred by user decision, 2026-10-29.
-Revisit trigger: compiler integration of collection traversal.
+Status: revised by user decision, 2026-11-18; runtime primitives implemented.
+Remaining debt: compiler foreach binding, retained source-wrapper lifetime and lowering.
 
-The existing language contract requires traversal to start live, then preserve
-remaining shallow entries before structural mutation or binding replacement.
-It also requires independent nested positions, preservation-failure rollback and
-safe source lifetime. That contract remains recorded; this batch does not implement
-it or claim complete collection-contract support.
-
-Do not add traversal subscriptions, preservation snapshots or cursor-driven
-lifecycle changes now. Do not substitute iterator invalidation or eager snapshots
-as a new source contract. Existing vector nonthrowing moves/clear and the shared
-lifecycle emitter need no traversal-driven refactor in this batch.
-
-When the compiler is available, assess each case: what it can prove or lower safely,
-what remains data-dependent, and what minimal runtime support is necessary.
-Compiler elimination of some machinery is a possibility, not an established proof
-for all cases. Any remaining unsupported cases must remain explicit rather than
-silently receiving different behavior. Public traversal design, mutation semantics
-integration and associated lifecycle/failure proofs are deferred together.
+The previous mutation-preservation proposal is superseded by the approved live
+wrapper/physical-position protocol. It performs no remaining-entry snapshots or
+subscriptions and promises memory safety, not stable visitation under mutation.
+See [the current runtime contract](../collection_traversal.md) and
+[language semantics](../../../specs/array_semantics.md#mutation-during-value-iteration).
+Concurrent mutation and by-reference iteration remain deferred. The compiler must
+keep field-source owners alive; runtime bounds checks cannot repair a dangling wrapper.

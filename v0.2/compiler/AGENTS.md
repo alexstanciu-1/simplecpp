@@ -7,6 +7,14 @@ required reading, read [README.md](README.md), [code_style.md](docs/code_style.m
 the [AST ownership decisions](docs/ast_model.md), and the contract owning the change. The [frontend contract](../specs/compiler_frontends.md)
 records the current language-flavor and parser boundaries.
 
+## Daily deferred-review reminder
+
+At the first active compiler-work interaction each day (Europe/Bucharest), check the
+[last-reminded date and type-knowledge debt](../specs/planning/compiler_type_knowledge_debt.md).
+Briefly remind the user once per day to revisit handwritten type knowledge versus metadata
+when they are at the desk; update that date after reminding. Do not block current work or
+start the deferred refactor without agreement. This is not an out-of-chat scheduled alert.
+
 ## Always preserve: incremental and native multithreading
 
 - Design new features for incremental reuse: unchanged tokens/ASTs remain shared;

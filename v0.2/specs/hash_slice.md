@@ -3,7 +3,7 @@
 Doc Status: normative
 Scope: bounded v0.2 native runtime/API generation. Compiler type resolution is now
 connected through [published hash identities](../compiler/docs/hash_types.md); source
-[empty construction and keyed operations](../compiler/docs/hash_operations.md) are supported; public traversal remains deferred.
+[empty construction and keyed operations](../compiler/docs/hash_operations.md) are supported; native traversal uses the [common protocol](collection_traversal.md); compiler foreach remains deferred.
 
 ## Owners and publication
 
@@ -59,9 +59,8 @@ INT64_MAX rejects append with std::overflow_error before changing membership.
 Removing it permits append based on the new maximum. clear() restarts at zero.
 
 Replacement retains entry position. Removal preserves other key identities and
-positions. Reinserted keys occupy new physical positions at the end. Order remains
-an internal invariant, proved with private fixtures; no public traversal contract
-is claimed. Source-visible mutation-preserving traversal stays RT-DEBT-01.
+positions. Reinserted keys occupy new physical positions at the end. Native traversal visits live physical slots, skipping holes, without promising
+stable visitation under mutation. No compaction or traversal subscriptions are added.
 
 ## Reuse and failure boundary
 

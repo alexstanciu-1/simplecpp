@@ -186,14 +186,20 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $export = typeExport($runtime['submodules'], $collection['name']);
         $header = providerHeader($runtime['submodules'], $export['provider']);
         foreach ($collection['methods'] as $method) {
-            if (!in_array($method['name'], ['clear', 'remove'], true)) continue;
+            if (!in_array($method['name'], ['clear', 'remove', 'has'], true)) continue;
             $name = $method['name'];
             $argumentTypes = $name === 'clear' ? [] : [$collection['count_type'] ?? $collection['key']];
             $writtenTypes = array_map(static fn($type) => str_replace(['const ', '&'], '', $type), $method['arguments']);
             $result = $name === 'clear' ? 'void' : 'bool_t';
+            $mutates = ($method['receiver'] ?? null) === 'mutable_reference' || ($method['mutates'] ?? false);
             requireThat($writtenTypes === $argumentTypes && $method['result'] === $result
-                && (($method['receiver'] ?? null) === 'mutable_reference' || ($method['mutates'] ?? false)),
-                "Compiler $name requires its canonical mutable method signature");
+                && $mutates === ($name !== 'has'),
+                "Compiler $name requires its canonical method signature");
+            $referenceMask = $mutates ? 1 : 0;
+            $constReferenceMask = $mutates ? 0 : 1;
+            foreach ($method['arguments'] as $index => $argument) {
+                if (str_starts_with($argument, 'const ') && str_ends_with($argument, '&')) $constReferenceMask |= 1 << ($index + 1);
+            }
             if ($name === 'remove' && isset($collection['element'])) {
                 requireThat($method['adaptation'] === 'erase_shift_missing_false', 'Vector removal must shift and return false on absence');
             }
@@ -205,7 +211,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $resultClass = $result === 'void' ? 'void' : $definitions[$result]['class'];
             $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
             $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => \$bindings['$source:$name'] ??= new runtime_function('$name', ["
-                . implode(', ', $parameters) . "], type_$resultClass::instance(), '$name', '$header', mutable_receiver_method: true),";
+                . implode(', ', $parameters) . "], type_$resultClass::instance(), '$name', '$header', reference_mask: $referenceMask, const_reference_mask: $constReferenceMask, receiver_method: true),";
         }
     }
 

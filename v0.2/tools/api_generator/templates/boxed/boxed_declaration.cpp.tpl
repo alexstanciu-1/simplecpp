@@ -28,6 +28,10 @@ public:
     int64 container_size() const;
     bool_t is_packed_container() const;
     void clean() noexcept;
+    // Compiler traversal API; key_index == -1 selects key_text. No table owner is retained.
+    int64 @limit_method@() const;
+    bool_t @next_method@(int64& position, int64 limit, @n@& value) const;
+    bool_t @next_method@(int64& position, int64 limit, int64& key_index, string& key_text, @n@& value) const;
 @conversion@@fences@private:
     friend struct detail::ownership_access;
     alignas(@alignment@) unsigned char storage_[@size@];

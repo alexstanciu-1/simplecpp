@@ -55,5 +55,7 @@ public:
     bool remove(std::string_view key);
     std::size_t container_size() const;
     bool is_packed_container() const;
+    std::int64_t iteration_limit() const;
+    bool iteration_next(std::int64_t& position, std::int64_t limit, boxed_value& value, std::uint32_t* key = nullptr) const;
 };
 } // namespace scpp::detail
