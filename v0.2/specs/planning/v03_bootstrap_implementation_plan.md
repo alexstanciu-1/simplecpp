@@ -25,7 +25,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
 | 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
-| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls and checked shared-class casts/instanceof implemented | General interfaces, broader narrowing and non-owning AST lifetime contracts remain |
+| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, and the first class-interface slice implemented | Broader interface relationships and non-owning AST lifetime contracts remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
@@ -1107,6 +1107,156 @@ These checks prove the sequential implementation and generated native behavior;
 they do not claim cross-thread ownership safety or a preparation-speed improvement.
 The earlier nominal replacement limitation remains: unchanged emitted callers/native
 objects do not imply zero caller preparation after every declaration edit.
+
+### Interface capability tests and checked casts — implemented
+
+Implemented and verified 2026-11-18. This remains a planning-status record of scope
+and evidence, not semantic authority.
+This advances 3.3 using the first interface slice. The
+[checked shared-object contract](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
+owns semantics; this section bounds implementation and verification.
+
+PHP-flavor example:
+
+```php
+function inspect(Node $node): int {
+    if ($node instanceof HasStart) {
+        $capability = object_cast($node, HasStart::class);
+        return $capability->start();
+    }
+    return 0;
+}
+```
+
+The example requires an already polymorphic Node contract. A descendant can implement
+HasStart without making Node itself implement that interface. The test does not change
+Node's static type; the explicit cast supplies the required interface view.
+
+#### Bounded behavior and existing owners
+
+- Extend the existing instanceof and object_cast operations to class-to-interface,
+  interface-to-class and interface-to-interface relationships. Retain same-type and
+  proven upward paths. Use existing static target spellings and namespace/import lookup
+  in cpp/php/js; introduce no new syntax or implicit narrowing at typed boundaries.
+- Follow semantic relationship admission: two interfaces need no known common
+  implementer; a class can overlap an interface through a descendant. Class finality
+  is not implemented in this checkout; by agreement it remains deferred and final-class
+  syntax stays rejected. Finality-aware overlap admission will follow that prerequisite.
+  Preserve rejection of
+  unrelated class pairs and require existing source polymorphism for runtime checks.
+  Never add virtual members solely to enable a test/cast.
+- instanceof evaluates once and returns false for absence or mismatch. object_cast
+  evaluates once and returns a required target handle, or raises invalid_object_cast
+  for absence/mismatch. Testing does not remove the subsequent checked cast or authorize
+  reference rebinding. Keep source evaluation and short-circuit contracts unchanged.
+- Preparation owns admission and dependencies; lowering consumes settled facts. Reuse
+  existing expression nodes, type resolution, ancestry queries and prepared cast facts.
+  Do not add another relationship registry, flattened implementer inventory, synthetic
+  method/body, or whole-program descendant scan. Reuse readiness and invalidation rather
+  than repeating relationship analysis per emission or native adapter invocation.
+- Reuse the concrete inline adapter engine, demand identities and existing native RTTI
+  patterns. Emit only demanded source/target/operation pairs. Proven views use existing
+  pointer adjustment/presence paths; runtime narrowing/cross-casts use native dynamic_cast.
+  Keep throwing casts and boolean tests distinct. No general ABI, source templates,
+  custom type tags or vtable implementation.
+
+#### Ownership and incremental boundaries
+
+- Every successful view retains the original allocation identity, control block and
+  concrete destruction callback, even when interface pointer addresses differ. No
+  payload copy, new object allocation or second control block. Preserve alias mutation.
+- Reuse the existing by-value cast adapter: copies retain a named source, temporaries
+  can transfer their hold, success transfers that hold into the adjusted target view,
+  and failure releases the temporary hold. Do not consume a named source handle.
+- Reuse the boolean test adapter's const-reference mode; retain operand lifetime through
+  the call without a lasting owning result. This native adapter mode does not introduce
+  a source borrowing feature. Preserve weak observation and final concrete cleanup.
+- Watch source/target declarations and the ancestry, implements edges and
+  polymorphism consulted for admission, including unresolved targets needed for recovery.
+  Runtime-only implementer changes need correct layout/header publication; they must not
+  require a global implementer index or observing every possible descendant at a call site.
+- Keep watches and pending work through failure; acknowledge only successful preparation
+  and publication. Reused sources retain adapter demand. Retire a fragment only after
+  its last consumer disappears, using existing generation cleanup after readers finish.
+- Distinguish prepared-body reuse, emitted-unit reuse and native object reuse. Preserve
+  unchanged caller output where applicable, but do not promise zero reanalysis after
+  nominal declaration replacement. Native depfiles must rebuild affected layout consumers.
+  Keep RTTI flags within existing qualification/build-cache identity.
+
+#### Verification checklist — cpp/php/js on Clang and GCC
+
+- [x] Class/interface casts and tests in both directions; interface cross-cast success
+      and runtime mismatch, including two interfaces with no known common implementer.
+      Exercise inherited implementations and two adjusted views of one concrete object.
+- [x] Same-type/proven upward paths, deeper descendants, required/optional operands,
+      false tests on absence, invalid_object_cast on absence/mismatch, and required
+      result typing. Verify target lookup, negation precedence and short-circuit behavior.
+- [x] Reject unsupported final-class syntax, unrelated class pairs and
+      nonpolymorphic runtime checks. Preserve diagnostics for inline values, bare null,
+      weak/unique operands, dynamic target names and deferred struct targets.
+- [x] Effectful and temporary operands execute once. Named handles remain usable;
+      allocation identity, adjusted views, alias mutation and weak locks stay correct.
+      Verify failed-cast cleanup, last-owner release and exactly-once concrete destruction
+      with native memory/lifetime checks.
+- [x] Inspect concrete generated adapters for no payload copy/new object allocation,
+      correct signatures, include/error-provider selection and deduplicated demand.
+      Compile/run both project and standalone output; check incompatible RTTI-disabled
+      configurations through existing toolchain validation.
+- [x] Edit/remove/restore implements edges, ancestry, target declarations and
+      source polymorphism. Repeat invalid builds, preserve last successful publication,
+      and compare recovered diagnostics, artifacts and native behavior with fresh builds.
+- [x] Change a runtime implementer's capability without editing the caller; verify the
+      new runtime result and required native header rebuilds with unchanged caller C++.
+      Exercise a header-only layout edit affecting adjusted interface views.
+- [x] Two sources demand one adapter: retain it when one consumer changes/disappears,
+      retire it after the last use, and recreate it on restoration. Verify manifests,
+      on-disk fragments, cached surviving consumers and source deletion/re-addition.
+- [x] No-op preparation/emission/native builds do no work. Unrelated units and native
+      objects stay reused through affecting edits. Run existing class-cast, interface,
+      adapter and failure-recovery regressions; review retained fields and traversal
+      ownership to keep structures light and preparation bounded.
+
+Deferred: class finality and finality-aware overlap checks; interface inheritance/diamonds; struct implementers and struct casts;
+inherited-final interface satisfaction; unique, weak-handle casts and source borrows;
+automatic flow narrowing, cast-check elimination, non-owning parent-link contracts,
+traits, broader callable variance and native threading. No runtime ownership redesign
+or preparation-speed claim is authorized. If existing owners cannot support the bounded
+slice without a wider refactor, report that boundary before expanding implementation.
+
+Implementation evidence: Object_Access_Preparation now admits class/interface and
+interface/interface overlap using the existing record kind and ancestry queries.
+No AST fields, retained indexes, preparation passes or runtime ownership machinery
+were added. The concrete adapter bodies are unchanged; native RTTI already supplies
+the required cross-cast pointer adjustment and existing adapters transfer the hold.
+
+Verification: interface_access_native.py covers all three flavors on Clang and GCC,
+including Valgrind, project/standalone output, RTTI rejection, interface namespace/import
+targets, absent/mismatching objects and no implicit narrowing. Persistent builds prove
+capability changes with unchanged caller output, layout-driven native rebuilding,
+invalid retries/recovery, source deletion/restoration and last-use adapter retirement.
+The class object-access, interface, inline-adapter and failure-cleanup regressions also
+pass. Their existing ancestry and qualification-flag cases complement the new tests.
+Class-finality checks were explicitly deferred after inspection showed that record
+finality is not represented or parsed; unsupported final-class syntax stays rejected.
+No timing or native threading claim is made from these functional checks.
+
+Review verification closes the remaining adapter-publication gaps:
+
+- [x] With unchanged source/target names, edit Node's implements edge to switch both
+      object_cast and instanceof between runtime-checked and proven-upcast adapters,
+      then restore the runtime path. Compare every successful publication with fresh
+      output and execute the cast result through its interface on Clang and GCC.
+- [x] Two source units share both adapter patterns. Remove one unit's demands while
+      reusing the surviving consumer, delete the final consumer, and restore both.
+      Assert exact cast/test adapter counts and native-object reuse for cached consumers;
+      no-op runs after retirement and restoration prepare/emit/rebuild nothing.
+- [x] At each successful incremental publication, manifest headers are unique and
+      exactly match live .hpp files and the fresh build's header inventory. Retired
+      adapter fragments are absent from both disk and manifest; restoration republishes
+      them. Apply these checks to the original capability-edit suite as well.
+
+These review fixes add tests and planning evidence only. The compiler, ownership
+implementation and deferred boundaries are unchanged.
 
 ## 4. Failures and cleanup — failed preparation and retry
 

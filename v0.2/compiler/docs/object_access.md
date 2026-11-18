@@ -1,9 +1,9 @@
-# Checked shared-class access
+# Checked shared-object access
 
 Doc Status: supporting
 
 Semantics belong to [checked object access](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests);
-the implemented spellings and bounded class-only scope are in the
+the implemented spellings and bounded class/interface scope are in the
 [frontend contract](../../specs/compiler_frontends.md#checked-shared-class-access).
 
 `ast_object_access_expression` owns the operand and written target reference. Common
@@ -13,7 +13,13 @@ runtime type check is needed. It watches both ancestry chains, including inherit
 polymorphism. No descendant inventory or foreign executable bodies are retained.
 Invalidation clears the occurrence facts through the existing body owner.
 
-`Cpp_Object_Access` expands two concrete adapter patterns. A downward operation uses
+Interface overlap reuses the same admission owner: unrelated classes still reject,
+but class/interface and interface/interface pairs can overlap without a known
+implementer. Class finality remains unavailable and its syntax rejected. Existing
+record watches observe implements edits and inherited source polymorphism; no new
+retained fields or implementer index is needed.
+
+`Cpp_Object_Access` expands two concrete adapter patterns. A downward or cross-cast operation uses
 `dynamic_cast<Target*>(source.view)`; same-type/upward views use ordinary pointer
 conversion. A cast takes one shared handle by value, keeping the allocation alive during
 the check. It transfers that temporary hold into the result and clears the local
@@ -51,6 +57,15 @@ from the repository root. It checks cpp/php/js on Clang and GCC, including:
 
 As before, replacing nominal declaration ASTs can invalidate callers' preparation even
 when their emitted bytes and native objects remain unchanged. These tests do not claim
-zero caller reanalysis for such edits or native parallel-preparation safety. Interfaces,
-struct casts, abstract declarations, unique, borrows, weak casts and automatic narrowing
-remain deferred. No performance improvement is claimed without measurements.
+zero caller reanalysis for such edits or native parallel-preparation safety. Interface
+inheritance, class finality, struct casts, unique, borrows, weak casts and automatic
+narrowing remain deferred. No performance improvement is claimed without measurements.
+
+The interface extension is verified with
+`XDEBUG_MODE=off python3 -B v0.2/compiler/tests/interface_access_native.py --memcheck`.
+It covers class/interface views in both directions, independent interface cross-casts,
+absent/mismatching handles, shared control-block identity, adjusted pointers, weak expiry,
+temporary transfer and failed-cast cleanup. Retained tests add/remove a runtime
+implementer's capability without editing the callers, change source layouts and
+polymorphism, delete/restore targets and consumers, and verify fresh equivalence,
+adapter retirement, no-op reuse and native depfile rebuilding on both toolchains.
