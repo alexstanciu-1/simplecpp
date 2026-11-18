@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 The [language contract](../../../specs/generators_v0_2.md) owns semantics. This is the
-bounded concrete-cursor implementation, including suspended locals, conditionals and while/do-while/for loops.
+bounded concrete-cursor implementation, including suspended locals, conditionals and while/do-while/for/foreach loops.
 
 ```php
 function numbers(int $start): Iterator<int> {
@@ -137,8 +137,8 @@ destination locals if moving fails. Existing value-type move/copy contracts appl
 
 Layout planning visits declarations in lexical order, including conditional arms;
 it does not add preparation work or retained caches. Reusing these transient layout
-plans for unchanged producers can be considered if measurement warrants it. Suspended foreach,
-nested cursor locals and liveness-based slot reduction remain deferred.
+plans for unchanged producers can be considered if measurement warrants it.
+Nested cursor locals and liveness-based slot reduction remain deferred.
 
 ## Conditional suspension
 
@@ -186,3 +186,58 @@ Tests include empty loops, do-while's first iteration, nested loops, break/conti
 after yield, for-init/update side effects, repeated owning body-local construction,
 header-owner survival across continue, early exit, movement, abandonment and failure.
 Cross-file for/do/while edits and invalid bodies recover to fresh emitted artifacts.
+
+## Suspended foreach
+
+Ordinary and suspended foreach use the same `iterable_type` emission protocol:
+`lower_cpp_iteration_storage`, `lower_cpp_iteration_initialize` and
+`lower_cpp_iteration_next`. Storage is separate from initialization so the same
+metadata-generated traversal can use stack state or prefixed cursor-frame members.
+There is no handwritten collection-family dispatch or runtime ABI change.
+
+Each suspended foreach contributes one concrete frame resource to the existing
+lexical slot inventory: optional retained receiver, required output/key storage,
+and generated traversal state. Its live flag participates in ordinary cursor move,
+close and reverse cleanup. `cpp_resume_context.scopes` can also reference a foreach
+header resource, so continue keeps it while exit destroys it. Custom Iterator output
+staging still protects an existing destination when next returns false.
+
+Preparation reuses the normal foreach binding, conversion and method-watch path.
+It adds only receiver-boundary and nested-cursor checks; no new AST node, retained
+fact, copied statement list or preparation pass is introduced. Lowering recomputes
+borrowed frame access rather than storing self-pointers. Source-owned layout
+publication includes custom receiver types before the header join.
+
+`tests/yield_foreach.php` verifies all four collection families, custom value/keyed
+Iterator, temporaries, shared fields, mutation, nested foreach and checked failures.
+Collection and custom-Iterator cross-file edits, invalid bodies/contracts, deletion,
+retry without edits and recovery are compared with fresh artifacts. No-op runs
+prepare zero bodies and unchanged callers retain their AST.
+
+Verification: 117 focused native fixtures, 135 ordinary foreach regressions,
+147 existing yield regressions; 48 ASan/UBSan/leak cases using the instrumented
+runtime. These cover cursor relocation, abandonment, retained shared-field lifetime,
+mutation, keyed boxed traversal and failure cleanup. Iterator metadata generation
+and rejection, generated-output freshness and compiler style checks also pass.
+Nested generated cursors, delegation and concurrent mutation remain deferred.
+
+Focused measurements (2026-11-18, milliseconds): native columns are medians of
+three fresh application builds after the regression runs; PHP is one observed
+read/tokenize/parse/prepare plus emission measurement, excluding the test's
+serialization purity check. O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime.
+These test builds use direct Ninja qualification, not the panel's in-process path.
+Native wall includes process/build orchestration and qualification overhead; it
+excludes the PHP compiler. Clang traces instrument frontend/backend work and the
+link column is the Ninja link-command duration. They do not sum to wall time.
+
+| Fixture | PHP compiler | Native wall | Frontend | LLVM backend | Link | Native range |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| C++ vector | 1.286 | 216.88 | 26.80 | 20.00 | 64 | 213.58–236.47 |
+| PHP vector | 0.654 | 215.73 | 26.47 | 18.71 | 65 | 214.24–228.14 |
+| JS vector | 1.021 | 222.81 | 26.84 | 19.28 | 68 | 219.00–225.08 |
+| C++ custom Iterator | 1.722 | 212.20 | 19.39 | 19.06 | 63 | 200.14–236.27 |
+| PHP custom Iterator | 1.321 | 206.01 | 19.49 | 17.61 | 63 | 205.82–236.31 |
+| JS custom Iterator | 1.830 | 205.31 | 19.10 | 17.43 | 60 | 203.96–205.58 |
+
+Raw local results: `v0.2/build/yield-foreach-final/results.json` and
+`v0.2/build/yield-foreach-timing-{0,1,2}/results.json` (generated test artifacts).

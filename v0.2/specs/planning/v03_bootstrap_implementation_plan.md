@@ -12,6 +12,37 @@ Use existing metadata, type handlers, argument binding, collection machinery and
 
 Numbers give the proposed implementation order within each milestone. They are discussion-sized groups, not single batch implementation requests. Reassess the next group after each executable proof. Language readiness and runtime/host readiness are separate tracks. Inventory host dependencies during milestone 1, even though their integration is milestone 7.
 
+## Status checkpoint — 2026-11-18
+
+The original language audit remains a dated baseline, not a current feature checklist.
+This checkpoint separates implemented language support from translated-compiler proofs.
+
+| Group | Current status | Remaining boundary |
+| --- | --- | --- |
+| 1.1 Integer representations/literals | Hexadecimal/octal literals and five optional integer widths implemented | uint64 and operations requiring its promotion remain deferred; unavailable constant-evaluation outcome exists |
+| 1.2 Backed enums | Bounded scope implemented, including string backing and public instance methods | Broader enum integration is separate |
+| 1.3 Application-defined collection elements | Common copying, value/reference calls, returns and fields work for published specializations | Application-defined specialization path, beginning with vector<Token>, remains pending |
+| 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
+| 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
+| 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
+| 3 AST relationships | First single-base storage/fields/construction slice implemented | Polymorphism, general interfaces, narrowing and non-owning AST lifetime contracts remain |
+| 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
+| 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
+
+Synchronous yield additionally supports locals, branches, while/do-while/for and
+foreach over collections/custom Iterator, with retained receivers and cleanup.
+Nested generated cursors, delegation and producer methods remain deferred. This
+is sufficient to pause yield expansion for the current bootstrap focus; see the
+[yield backlog](yield_completion_backlog.md) for the remaining independent slices.
+
+Next proposed discussion: 1.3, starting with an application-defined value record
+in vector. Preserve the common collection protocols, metadata ownership, light
+retained facts and single-pass preparation. Do not imply authorization for a broad
+collection implementation or runtime redesign. Then address bounded readonly fields
+and execute the token/source-location proof. No complete translated token/source
+milestone or native compiler bootstrap is claimed by this checkpoint. PHP incremental
+recovery is already implemented; milestone 6 concerns translating that model faithfully.
+
 ## 1. Typed data foundation — tokens and source snapshots
 
 | Order | Group | Initial scope |

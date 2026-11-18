@@ -7,11 +7,12 @@ namespace scpp\compiler;
 interface iterable_type
 {
 	public function iteration_method(): ?ast_function_declaration;
-	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string;
+	public function lower_cpp_iteration_storage(bool $keyed): string;
+	public function lower_cpp_iteration_initialize(string $receiver, string $prefix = ''): string;
 	public function iteration_value_type(): type_definition;
 	public function iteration_key_type(): ?type_definition;
 	/** $key is null for value-only traversal; boxed implementations decode normalized key transport. */
-	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string;
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
 /** Unary observations on a published collection. Native uint8. */

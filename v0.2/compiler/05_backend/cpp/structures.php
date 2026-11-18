@@ -77,8 +77,8 @@ final class cpp_resume_context
 {
 	public int $state /** uint32 */ = 0;
 	public int $loop_id /** uint32 */ = 0;
-	/** @var ast_statement_block[] Lexical scopes currently being emitted. */
-	public array $scopes /** list<ast_statement_block> */ = [];
+	/** @var (ast_statement_block|ast_foreach_statement)[] Lexical scopes and suspended traversal resources. */
+	public array $scopes /** list<ast_statement_block|ast_foreach_statement> */ = [];
 	/** @var array[] Nearest loop supplies the scopes to leave and an optional for-update label. */
 	public array $loops /** list<array{depth:int,update:?string}> */ = [];
 }

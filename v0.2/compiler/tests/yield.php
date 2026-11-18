@@ -347,7 +347,7 @@ CPP;
 	rejects(fn() => $prepare($model . $local('cursor', 'numbers(1)') . $local('copy', $v('cursor')) . 'return 8;'), 'move-only');
 	rejects(fn() => $prepare($signature('numbers', 'int') . '{yield 1;return 8;}return 8;'), 'Yield requires');
 	rejects(fn() => $prepare(str_replace('yield 2;', 'yield "a"=>2;', $model) . $main), 'Yield key');
-	rejects(fn() => $prepare(str_replace('yield 2;', 'foreach (numbers(1) as ' . $v('other') . ') {yield 2;}', $model) . $main), 'Yield slice');
+	rejects(fn() => $prepare(str_replace('yield 2;', 'foreach (numbers(1) as ' . $v('other') . ') {yield 2;}', $model) . $main), 'Nested cursor');
 	rejects(fn() => $prepare(str_replace('yield 2;', $local('temporary', 'numbers(2)') . 'yield 2;', $model) . $main), 'Nested cursor');
 	rejects(fn() => $prepare(str_replace('return;', 'return 8;', $model) . $main), 'cannot return a value');
 	rejects(fn() => $prepare($record . $signature('record_values', 'Iterator<Point>', 'Point') . '{yield ' . $v('x') . ';}return 8;'), 'Inline struct yield outputs');

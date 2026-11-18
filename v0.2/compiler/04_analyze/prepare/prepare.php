@@ -140,7 +140,7 @@ final class Preparation
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
 					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
 					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
-					|| $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
+					|| $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 					|| $statement instanceof ast_break_statement || $statement instanceof ast_continue_statement)) {
 				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, loops, yields, echo, calls and bare return only');
 			}
@@ -351,6 +351,17 @@ final class Preparation
 		$this->value($statement->source_value);
 		$type = $statement->source_value->type_def()->iteration();
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		if ($function->return_type_def() instanceof generator_type_definition) {
+			$receiver = $statement->source_value;
+			if ($receiver->type_def() instanceof generator_type_definition) {
+				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
+			}
+			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
+			if (!(($receiver instanceof ast_name_expression && $receiver->declaration() instanceof ast_local_binding)
+				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
+				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
+			}
+		}
 		if (($method = $type->iteration_method()) !== null) $this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		$destination = $this->find_local($statement->value->short_name);
 		$statement->value->settle_type($type->iteration_value_type());

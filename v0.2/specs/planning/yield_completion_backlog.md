@@ -35,10 +35,12 @@ is a separate contract and implementation effort.
 
 ## Current progress
 
-Slices 1 and 2 implemented (verification recorded in compiler yield notes): shared
+Slices 1, 2 and 3 implemented (verification recorded in compiler yield notes): shared
 statement traversal and scope-exit cleanup, while/do-while/for with suspension and
-transfers. No general basic-block IR. Slices 3 onward remain pending; accepted
-receiver/delegation rules do not imply their implementation.
+transfers, plus suspended foreach over collections and custom Iterator. Receiver
+ownership, frame relocation and cleanup reuse the existing traversal protocol.
+No general basic-block IR. Slices 4 onward remain pending; accepted delegation rules
+do not imply their implementation.
 
 ## Ordered implementation slices
 
@@ -67,7 +69,7 @@ AST reuse, selective preparation/emission and native object rebuilding.
 
 ### Q1 — Suspended foreach receiver lifetime
 
-Status: accepted by the user on 2026-11-18; implementation pending.
+Status: accepted and implemented on 2026-11-18 (collections and custom Iterator).
 
 The source is evaluated once. Support these receiver forms:
 

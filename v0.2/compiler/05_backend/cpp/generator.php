@@ -72,16 +72,22 @@ trait Cpp_Generator
 		$moves = [];
 		$flags = [];
 		foreach ($this->generator_bindings($type->function->body()) as $local) {
-			$local_type = $local->type_def();
-			$id = $local->storage_id();
-			$native = $local_type->cpp_type();
-			$slot = 'local_' . $id;
-			$slots[] = "using {$slot}_type = $native; struct {$slot}_slot { union { {$slot}_type value; }; {$slot}_slot() {} ~{$slot}_slot() {} }; {$slot}_slot $slot;";
+			if ($local instanceof ast_foreach_statement) {
+				$id = 'iteration_' . $local->start;
+				$slot = $id;
+				$declaration = $this->generator_iteration_layout($local, $headers, $types);
+			} else {
+				$local_type = $local->type_def();
+				$id = $local->storage_id();
+				$slot = 'local_' . $id;
+				$declaration = "using {$slot}_type = " . $local_type->cpp_type() . ';';
+				foreach ($local_type->cpp_headers() as $header) $headers[$header] = true;
+				if ($local_type instanceof struct_type_definition || $local_type instanceof struct_handle_definition || $local_type instanceof enum_type_definition) $types[] = $local_type;
+			}
+			$slots[] = "$declaration struct {$slot}_slot { union { {$slot}_type value; }; {$slot}_slot() {} ~{$slot}_slot() {} }; {$slot}_slot $slot;";
 			$flags[] = "bool live_$id = false;";
 			$cleanup[] = $this->generator_destroy($local);
 			$moves[] = "if (other.live_$id) { new (&$slot.value) {$slot}_type(static_cast<{$slot}_type&&>(other.$slot.value)); live_$id = true; }";
-			foreach ($local_type->cpp_headers() as $header) $headers[$header] = true;
-			if ($local_type instanceof struct_type_definition || $local_type instanceof struct_handle_definition || $local_type instanceof enum_type_definition) $types[] = $local_type;
 		}
 		$flags = implode("\n", $flags);
 		$slots = implode("\n", $slots);
@@ -141,7 +147,11 @@ CPP;
 		}
 		$resume = new cpp_resume_context();
 		foreach ($this->generator_bindings($function->body()) as $local) {
-			$this->generator_locals[$local->storage_id()] = 'local_' . $local->storage_id() . '.value';
+			if ($local instanceof ast_foreach_statement) {
+				$prefix = 'iteration_' . $local->start . '.value.';
+				if ($local->destination === $local->value) $this->generator_locals[$local->value->storage_id()] = $prefix . 'output';
+				if ($local->key !== null) $this->generator_locals[$local->key->storage_id()] = $prefix . 'key';
+			} else $this->generator_locals[$local->storage_id()] = 'local_' . $local->storage_id() . '.value';
 		}
 		try {
 			$body = implode("\n", $this->statements($function->body(), $declarations, $globals, $headers, $function, $resume));
@@ -157,13 +167,16 @@ CPP;
 			. "if (state == ~0u) return false;\ntry {\n" . $body . "\n} catch (...) { close(); throw; }\n}\n";
 	}
 
-	/** Visit declarations in lexical order without retaining another local inventory. @return \Generator<ast_local_declaration> */
+	/** Visit declarations in lexical order without retaining another local inventory. @return \Generator<ast_local_declaration|ast_foreach_statement> */
 	private function generator_bindings(ast_statement_block $block): \Generator
 	{
 		foreach ($block->statements as $statement) {
 			if ($statement instanceof ast_local_declaration) yield $statement;
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) yield from $this->generator_bindings($arm->body);
+			} elseif ($statement instanceof ast_foreach_statement) {
+				yield $statement;
+				yield from $this->generator_bindings($statement->body);
 			} elseif ($statement instanceof ast_loop_statement) {
 				if ($statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) yield $statement->initializer;
 				yield from $this->generator_bindings($statement->body);
@@ -172,10 +185,11 @@ CPP;
 	}
 
 	/** Both lexical exits and cursor close use the same idempotent local destruction. */
-	private function generator_destroy(ast_local_declaration $local): string
+	private function generator_destroy(ast_local_declaration|ast_foreach_statement $local): string
 	{
-		$id = $local->storage_id();
-		return "if (live_$id) { live_$id = false; local_$id.value.~local_{$id}_type(); }";
+		$id = $local instanceof ast_foreach_statement ? 'iteration_' . $local->start : $local->storage_id();
+		$slot = $local instanceof ast_foreach_statement ? $id : 'local_' . $id;
+		return "if (live_$id) { live_$id = false; $slot.value.~{$slot}_type(); }";
 	}
 
 	/** Destroy scopes exited by a transfer; normal lexical exit uses this same path. */
@@ -183,9 +197,71 @@ CPP;
 	{
 		$text = '';
 		for ($index = count($resume->scopes) - 1; $index >= $depth; --$index) {
-			foreach (array_reverse($resume->scopes[$index]->locals) as $local) $text .= $this->generator_destroy($local) . "\n";
+			$scope = $resume->scopes[$index];
+			if ($scope instanceof ast_foreach_statement) $text .= $this->generator_destroy($scope) . "\n";
+			else foreach (array_reverse($scope->locals) as $local) $text .= $this->generator_destroy($local) . "\n";
 		}
 		return $text;
+	}
+
+	/** Capture the nearest shared owner or an owned temporary; named frame storage is addressed directly. */
+	private function generator_iteration_capture(ast_expression $source): ?ast_expression
+	{
+		while ($source instanceof ast_field_expression && !($source->type_def() instanceof shared_struct_type_definition)) $source = $source->receiver;
+		return $source instanceof ast_name_expression && !($source->type_def() instanceof shared_struct_type_definition) ? null : $source;
+	}
+
+	/** Decide output staging once from the existing conversion and method contract. */
+	private function iteration_direct(ast_foreach_statement $statement): bool
+	{
+		return $statement->conversion === value_conversion::identity
+			&& ($statement->source_value->type_def()->iteration()->iteration_method() === null || $statement->destination === $statement->value);
+	}
+
+	/** @param bool[] $headers @param type_definition[] $types */
+	private function generator_iteration_layout(ast_foreach_statement $statement, array &$headers /** array<string,bool> */,
+		array &$types /** list<type_definition> */): string
+	{
+		$source_type = $statement->source_value->type_def();
+		$type = $source_type->iteration();
+		$capture = $this->generator_iteration_capture($statement->source_value);
+		$fields = $capture === null ? '' : $capture->type_def()->cpp_type() . ' receiver;';
+		if (!$this->iteration_direct($statement) || $statement->destination === $statement->value) $fields .= $type->iteration_value_type()->cpp_type() . ' output{};';
+		$key_type = $statement->key?->type_def() ?? ($type->iteration_method() !== null ? $type->iteration_key_type() : null);
+		if ($key_type !== null) $fields .= $key_type->cpp_type() . ' key{};';
+		$fields .= $type->lower_cpp_iteration_storage($statement->key !== null);
+		foreach ([$source_type, $capture?->type_def(), $type->iteration_value_type(), $key_type] as $used) {
+			if ($used === null) continue;
+			foreach ($used->cpp_headers() as $header) $headers[$header] = true;
+			if ($used instanceof struct_type_definition || $used instanceof struct_handle_definition || $used instanceof enum_type_definition) $types[] = $used;
+		}
+		return 'struct iteration_' . $statement->start . '_type { ' . $fields . ' };';
+	}
+
+	/** Rebuild receiver access from its current frame; never retain a pointer into a movable cursor.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 */
+	private function generator_iteration_receiver(ast_foreach_statement $statement, string $prefix,
+		array &$globals /** array<string,ast_global_declaration> */, array &$declarations /** array<string,ast_function_declaration> */,
+		array &$headers /** array<string,bool> */): string
+	{
+		$capture = $this->generator_iteration_capture($statement->source_value);
+		if ($capture === null) return $this->value($statement->source_value, $globals, $declarations, $headers);
+		$fields = [];
+		$source = $statement->source_value;
+		while ($source !== $capture) {
+			$fields[] = Cpp_Identifier::source($source->field);
+			$source = $source->receiver;
+		}
+		$receiver = $prefix . 'receiver';
+		if ($capture->type_def() instanceof shared_struct_type_definition) {
+			if ($fields === []) return '*' . $receiver . '.operator->()';
+			$receiver .= '->' . array_pop($fields);
+		}
+		foreach (array_reverse($fields) as $field) $receiver .= '.' . $field;
+		return $receiver;
 	}
 
 	/**

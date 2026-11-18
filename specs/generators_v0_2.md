@@ -40,7 +40,7 @@ User-authored Iterator structs remain copyable and retain their existing semanti
 ## Current implementation boundary
 
 Producer bodies admit local declarations, local storage writes (including existing
-compounds/updates), braced `if/elseif/else`, `while`, `do-while`, `for`, yield, echo, ordinary call statements and
+compounds/updates), braced `if/elseif/else`, `while`, `do-while`, `for`, `foreach`, yield, echo, ordinary call statements and
 bare return. Parameters are by value; existing literal defaults use the ordinary binder.
 Nested conditionals use ordinary generated truthiness. Conditions execute when reached;
 resuming after a yield does not repeat a condition or reselect its arm.
@@ -58,8 +58,23 @@ constructed anew when their declarations execute again. Break/continue clean sco
 they exit; for-continue then executes the update. For-header locals survive iterations
 and are destroyed when the loop exits. Return and exceptions close the entire cursor.
 
-Foreach inside producers, nested cursor locals and exception-handling regions remain
-deferred.
+Foreach inside producers supports vector, hash, mixed, dynamic and custom Iterator
+structs, including keyed traversal. Receiver selection and traversal initialization
+execute once; receiver lifetime, traversal state and outputs survive each yield.
+Named producer locals and captured parameters are borrowed from cursor-owned storage.
+Temporary receivers are owned until loop exit. Shared receivers and shared-field
+paths retain the selected shared owner. Replacing the original owner does not destroy
+the retained receiver. Borrowed inline field paths are re-addressed from their frame;
+no reference into a moved-from cursor is retained.
+
+The initial receiver subset consists of these local/parameter, call or construction
+roots and field paths. Collection-element/interior roots and global roots are rejected.
+Mutation retains the ordinary bounded traversal contract, without snapshots or stable
+visitation guarantees. Concurrent mutation remains deferred. Loop exit, return,
+exception and abandonment release active traversal resources; continue retains them.
+Nested foreach over supported collections/custom iterators is allowed. Traversing
+another generated cursor inside a producer, nested cursor locals and
+exception-handling regions remain deferred.
 Methods, references, yield expressions receiving sent values, yield from, asynchronous
 waiting and optimizing suspended-local liveness are separate slices.
 

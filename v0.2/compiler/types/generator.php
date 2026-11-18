@@ -57,14 +57,19 @@ final class generator_type_definition extends type_definition implements iterabl
 		return $this->key;
 	}
 
-	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string
+	public function lower_cpp_iteration_storage(bool $keyed): string
 	{
 		return $this->key !== null && !$keyed ? $this->key->cpp_type() . ' iteration_key{};' : '';
 	}
 
-	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string
+	public function lower_cpp_iteration_initialize(string $receiver, string $prefix = ''): string
 	{
-		return '(' . $receiver . ').next(' . $value . ($this->key === null ? '' : ', ' . ($key ?? 'iteration_key')) . ')';
+		return '';
+	}
+
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string
+	{
+		return '(' . $receiver . ').next(' . $value . ($this->key === null ? '' : ', ' . ($key ?? $prefix . 'iteration_key')) . ')';
 	}
 
 	/** @return string[] Output storage also covers a discarded key's required native headers. */

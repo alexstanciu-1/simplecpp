@@ -616,33 +616,45 @@ CPP;
 				foreach ([$source_type, $statement->value->type_def(), $statement->destination->type_def(), $statement->key?->type_def()] as $used) {
 					if ($used !== null) foreach ($used->cpp_headers() as $header) $required_headers[$header] = true;
 				}
-				$steps = [];
-				$receiver = $this->retained_place($statement->source_value, $global_references, $declarations, $required_headers, $steps);
+				$prefix = '';
+				$iteration_source = 'iteration_source';
 				$lines[] = "\t{";
-				foreach ($steps as $step) $lines[] = "\t" . $step;
-				$lines[] = "\tauto&& iteration_source = " . $receiver . ';';
+				if ($resume !== null) {
+					$slot = 'iteration_' . $statement->start;
+					$prefix = $slot . '.value.';
+					$capture = $this->generator_iteration_capture($statement->source_value);
+					$initial = $capture === null ? '' : $this->value($capture, $global_references, $declarations, $required_headers);
+					$lines[] = "{ new (&$slot.value) {$slot}_type{ $initial }; live_$slot = true; }";
+					$iteration_source = $this->generator_iteration_receiver($statement, $prefix, $global_references, $declarations, $required_headers);
+					$resume->scopes[] = $statement;
+				} else {
+					$steps = [];
+					$receiver = $this->retained_place($statement->source_value, $global_references, $declarations, $required_headers, $steps);
+					foreach ($steps as $step) $lines[] = "\t" . $step;
+					$lines[] = "\tauto&& iteration_source = " . $receiver . ';';
+				}
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
-				$direct = $statement->conversion === value_conversion::identity
-					&& ($method === null || $destination === $statement->value);
-				$output = $direct ? $this->name($destination) : 'iteration_value';
-				if (!$direct || $destination === $statement->value) {
+				$direct = $this->iteration_direct($statement);
+				$output = $direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output');
+				if ($resume === null && (!$direct || $destination === $statement->value)) {
 					$lines[] = "\t" . $statement->value->type_def()->cpp_type() . ' ' . $output . '{};';
 				}
 				$key = $statement->key === null ? null : $this->name($statement->key);
-				if ($key !== null) $lines[] = "\t" . $statement->key->type_def()->cpp_type() . ' ' . $key . '{};';
-				$lines[] = "\t" . $type->lower_cpp_iteration_state('iteration_source', $key !== null);
+				if ($resume === null && $key !== null) $lines[] = "\t" . $statement->key->type_def()->cpp_type() . ' ' . $key . '{};';
+				$lines[] = ($resume === null ? $type->lower_cpp_iteration_storage($key !== null) : '')
+					. $type->lower_cpp_iteration_initialize($iteration_source, $prefix);
 				if ($method !== null) {
 					$name = self::function_name($method);
 					$declarations[$name] = $method;
 					if ($key === null && $type->iteration_key_type() !== null) {
-						$key = 'iteration_key';
+						$key = $resume === null ? 'iteration_key' : $prefix . 'key';
 						$key_type = $type->iteration_key_type();
 						foreach ($key_type->cpp_headers() as $header) $required_headers[$header] = true;
-						$lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
+						if ($resume === null) $lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
 					}
-					$next = $name . '(iteration_source, ' . $output . ($key === null ? '' : ', ' . $key) . ')';
-				} else $next = $type->lower_cpp_iteration_next('iteration_source', $output, $key);
+					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
+				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
 				if (!$direct) {
 					$operand = $method !== null && $statement->conversion === value_conversion::identity
@@ -650,8 +662,15 @@ CPP;
 					$converted = $destination->type_def()->lower_cpp_conversion($statement->conversion, $operand, $statement->value);
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
+				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => null];
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
-				$lines[] = "\t}\n\t}";
+				$lines[] = "\t}";
+				if ($resume !== null) {
+					array_pop($resume->loops);
+					$lines[] = $this->generator_cleanup($resume, count($resume->scopes) - 1);
+					array_pop($resume->scopes);
+				}
+				$lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
@@ -807,7 +826,7 @@ CPP;
 
 	private function name(ast_local_binding $binding): string
 	{
-		return ($binding instanceof ast_local_declaration ? ($this->generator_locals[$binding->storage_id()] ?? null) : null)
+		return ($this->generator_locals[$binding->storage_id()] ?? null)
 			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
 	}
 

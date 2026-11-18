@@ -52,9 +52,9 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
 /** Bind the common traversal protocol from a validated runtime publication row. */
 function compilerTraversalMethods(array $plan, string $value, string $key, bool $boxed = false): string {
     requireThat($plan['mode'] === 'borrow_live_wrapper_physical' && $plan['visibility'] === 'compiler_internal', 'Unsupported compiler traversal protocol');
-    $state = $boxed ? 'scpp::int64 iteration_key_index; scpp::string iteration_key_text;' : '';
-    $arguments = $boxed ? "'iteration_key_index, iteration_key_text, ' . \$value" : "\$key . ', ' . \$value";
-    $publish = $boxed ? " . ' && ((' . \$key . ' = iteration_key_index < 0 ? scpp::mixed::from_string(iteration_key_text) : scpp::mixed::from_integer(iteration_key_index)), true)'" : '';
+    $state = $boxed ? 'scpp::int64 iteration_key_index{}; scpp::string iteration_key_text{};' : '';
+    $arguments = $boxed ? "\$prefix . 'iteration_key_index, ' . \$prefix . 'iteration_key_text, ' . \$value" : "\$key . ', ' . \$value";
+    $publish = $boxed ? " . ' && ((' . \$key . ' = ' . \$prefix . 'iteration_key_index < 0 ? scpp::mixed::from_string(' . \$prefix . 'iteration_key_text) : scpp::mixed::from_integer(' . \$prefix . 'iteration_key_index)), true)'" : '';
     return strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],

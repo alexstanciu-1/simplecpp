@@ -14,14 +14,19 @@
 		return null;
 	}
 
-	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string
+	public function lower_cpp_iteration_storage(bool $keyed): string
 	{
-		return 'const auto iteration_limit = (' . $receiver . ').@limit@(); scpp::int64 iteration_position = 0; ' . ($keyed ? @state@ : '');
+		return 'scpp::int64 iteration_limit{}; scpp::int64 iteration_position{}; ' . ($keyed ? @state@ : '');
 	}
 
-	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string
+	public function lower_cpp_iteration_initialize(string $receiver, string $prefix = ''): string
 	{
-		$prefix = '(' . $receiver . ').@next@(' . 'iteration_position, iteration_limit, ';
-		if ($key === null) return $prefix . $value . ')';
-		return $prefix . @arguments@ . ')'@publish@;
+		return $prefix . 'iteration_limit = (' . $receiver . ').@limit@(); ' . $prefix . 'iteration_position = 0;';
+	}
+
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string
+	{
+		$call = '(' . $receiver . ').@next@(' . $prefix . 'iteration_position, ' . $prefix . 'iteration_limit, ';
+		if ($key === null) return $call . $value . ')';
+		return $call . @arguments@ . ')'@publish@;
 	}

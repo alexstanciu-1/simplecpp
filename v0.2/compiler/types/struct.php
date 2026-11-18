@@ -170,12 +170,17 @@ final class struct_type_definition extends type_definition implements dependency
 		return ($this->iterator->parameters[1] ?? null)?->type_def();
 	}
 
-	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string
+	public function lower_cpp_iteration_storage(bool $keyed): string
 	{
 		return '';
 	}
 
-	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key): string
+	public function lower_cpp_iteration_initialize(string $receiver, string $prefix = ''): string
+	{
+		return '';
+	}
+
+	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string
 	{
 		throw new \LogicException('Source traversal calls are emitted through their method declaration');
 	}
