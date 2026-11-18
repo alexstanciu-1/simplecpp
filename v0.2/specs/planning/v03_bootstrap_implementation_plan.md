@@ -24,7 +24,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Application-collection writable references, traversal and broader element families remain |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
-| 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
+| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Application-value optional lookup, lazy fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
@@ -174,6 +174,35 @@ Verification checklist:
 Deferred: `hash_find` and application nullable carriers, new removal/clear spellings,
 coalescing, nullable payload publication, boxed families, and broader application
 collection methods/traversal. Existing implementations are not reclassified as missing.
+
+### 2.2 Published optional lookup — runtime hashes, implemented
+
+`hash_find(h, key)` reuses the published `find(const Key&) -> nullable<Value>` binding
+for the four runtime int/string hashes. Absence is empty, present zero/empty string is
+a value, and success returns an owned copy. Indexed reads remain throwing. Generated
+`key_lookup_type` supplies the existing runtime-call protocol; no new AST field,
+preparation pass or backend operation is added.
+
+Application lookup remains deferred. Optional inline structs need a value carrier;
+nullable class handles alone would conflate a missing key with a present empty handle.
+Do not synthesize application carriers or expand the runtime ownership model here.
+
+Verification passed in `hash_find_native.py`, shared `hash_contains.php`, the
+`hash_contains_native.py` regression and generator/provider/member checks.
+
+Verification checklist:
+
+- [x] Four runtime hashes across cpp/php/js on Clang/GCC; missing/present zero/empty text.
+- [x] NUL/numeric-looking keys, strict key types and no insertion on miss.
+- [x] Copied string payload survives overwrite/clear and source owner destruction.
+- [x] Single evaluation, temporary/field receivers, owner retention/expiry and failure order.
+- [x] Indexed miss still throws; result uses the published nullable identity and headers.
+- [x] Canonical binding reuse, single-pass preparation, pure emission and reset/reprepare.
+- [x] Body/signature/layout edits, deletion/retry/recovery against fresh artifacts; no-op and native caller reuse.
+- [x] Function/import precedence, constant aliases, unsupported application lookup and provider relocation/retirement.
+
+Deferred: application nullable values, nullable payload publication, boxed/nested
+lookup, coalescing/coalescing assignment and new removal/clear syntax.
 
 ## 3. Object relationships — a small AST family
 

@@ -4,6 +4,7 @@ final class @class@ extends hash_type_definition@interfaces@
 {
 	/** Immutable canonical binding, shared by occurrences; its type references are non-owning. */
 	private readonly runtime_function $presence_binding;
+@lookup_property@
 @identity@
 	/** METHODS */
 @iteration@
@@ -53,6 +54,7 @@ final class @class@ extends hash_type_definition@interfaces@
 		return $receiver . '.@set@(' . $index . ', ' . $value . ');';
 	}
 
+@lookup@
 @cardinality@
 @factory@
 }

@@ -1039,13 +1039,18 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
-			if ($builtin === 'hash_contains') {
-				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), 'hash_contains requires a collection and key');
+			if ($builtin === 'hash_contains' || $builtin === 'hash_find') {
+				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
 				$receiver = $call->arguments[0];
 				$this->value($receiver, $initializing);
 				$type = $receiver->type_def();
-				if (!($type instanceof key_presence_type)) throw new diagnostic($receiver->source(), $receiver->byte_start(), 'hash_contains requires a key-presence collection');
-				$this->runtime_call($call, $type->presence_function(), $receiver);
+				$binding = match ($builtin) {
+					'hash_contains' => $type instanceof key_presence_type ? $type->presence_function() : null,
+					'hash_find' => $type instanceof key_lookup_type ? $type->lookup_function() : null,
+				};
+				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), $builtin === 'hash_contains'
+					? 'hash_contains requires a key-presence collection' : 'hash_find requires a collection with published optional lookup');
+				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}
 			if ($builtin === 'enum_from_value') {

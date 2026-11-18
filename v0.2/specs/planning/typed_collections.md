@@ -114,6 +114,7 @@ existence and does not inspect payload null state. It uses the shared generated
 key-presence binding for runtime and application hashes. See the current
 [collection method note](../../compiler/docs/collection_methods.md#shared-hash-key-presence-capability)
 and [bootstrap checklist](v03_bootstrap_implementation_plan.md#22-first-key-presence-slice--implemented).
-`hash_find` remains deferred, especially its application-value absence representation.
+`hash_find` now has a bounded runtime-hash slice using the published nullable result.
+Application-value lookup remains deferred pending its absence representation.
 The original CT-01 table above is historical scope; current member clear/remove/has
 support is documented in the collection method note.

@@ -48,6 +48,12 @@ interface key_presence_type
 	public function presence_function(): runtime_function;
 }
 
+/** Published copied lookup with an explicit absence carrier; no implicit carrier synthesis. */
+interface key_lookup_type
+{
+	public function lookup_function(): runtime_function;
+}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
 interface index_read_type
 {

@@ -186,3 +186,29 @@ empty-owner/key failures, native-inserted empty shared payloads, function preced
 imports, and incremental body/layout/deletion/error recovery in all three flavors on
 Clang/GCC. The hash provider fixture also checks the binding's relocated header and
 publication retirement/restoration. These are correctness proofs, not performance claims.
+
+## Copied optional lookup
+
+`hash_find(collection, key)` selects `key_lookup_type::lookup_function()` through the
+same preparation path as key presence. Only published runtime hashes implement this
+capability. The generator validates the existing const `find` method, its
+`empty_nullable` missing policy and an actually published nullable carrier for exactly
+the value type. It initializes one immutable binding per canonical hash; application
+hashes receive no lookup binding or extra storage slot.
+
+Native output uses `.find(key)` through the existing member-call lowering and shared
+argument rules. No new AST field, backend branch, nullable construction recipe or
+runtime storage change is needed. Results use ordinary carrier preparation, presence,
+extraction and include selection. Source calls shadow the builtin through the existing
+watched function key.
+
+The shared `hash_contains.php` protocol proof now covers both bindings and rejects
+bool/float/byte coercion into int keys. `hash_find_native.py` covers all four runtime
+hashes in cpp/php/js on Clang/GCC: missing versus present zero/empty text, NUL and
+numeric-looking keys, owned string copies surviving overwrite/clear, temporary/field
+receivers, owner expiry, key/owner failures and unchanged throwing indexed reads.
+It also checks body/return-signature/layout edits, deletion/retry/recovery, fresh-output
+equivalence, no-op/native caller reuse, source-function precedence, imports and explicit
+rejection of application-value lookup. Provider relocation/retirement verifies both
+binding headers and the nullable result identity. Application optional values and
+coalescing remain separate slices.

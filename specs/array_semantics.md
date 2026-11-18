@@ -537,6 +537,26 @@ fall back to this builtin when its target is missing. A constant alias does not 
 the function namespace. Vectors and boxed collections are outside this free-helper
 slice. `isset` remains null-sensitive and is not an alias for key existence.
 
+### Copied optional hash lookup
+
+`hash_find(collection, key)` is available for published runtime hashes whose API
+already publishes a nullable result for their value type. It evaluates the receiver
+and key once under the same exact-key and receiver-lifetime rules as `hash_contains`.
+It performs one lookup, returning an empty nullable on absence or an owned payload
+copy on presence. Missing lookup does not insert or throw; key evaluation, allocation
+and payload-copy failures still propagate. Present zero and empty text remain present.
+
+The returned copy survives replacement, removal or destruction of the hash. Existing
+nullable presence/extraction rules apply; this helper neither unwraps the result nor
+weakens empty-extraction checks. Indexed `collection[key]` continues to throw on a miss.
+Function declaration/import precedence is the same as for `hash_contains`.
+
+The first slice covers the four published int/string key/value combinations. There is
+no implicit application nullable-carrier generation: application structs/classes,
+boxed values, nested collections and nullable-valued hashes remain outside this helper's
+current admission. Application lookup must separately preserve absence versus a present
+empty shared handle; it must not be approximated with an empty handle alone.
+
 ## v0.2 typed collection removal methods
 
 Typed vectors and hashes expose `remove(key)` as a method: PHP/C++ `->remove(key)`
