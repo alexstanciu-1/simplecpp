@@ -16,7 +16,7 @@ $text = "#pragma once\n#include \"concrete_index_impl.hpp\"\n#include <new>\n#in
 foreach (['IntegerTable' => ['std::int64_t', '::scpp::detail::hash_integer(key)'],
     'CollisionTable' => ['std::int64_t', '7'], 'StringTable' => ['std::string', '::scpp::detail::hash_integer(key)']] as $name => [$value, $hash]) {
     $parts = \Scpp\Api\concreteTemplate('collections/hash', ['k' => new HashProbeType('std::int64_t'), 'v' => new HashProbeType($value)], [
-        'n' => $name, 'inline' => '', 'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
+        'n' => $name, 'inline' => '', 'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate', 'count' => 'std::int64_t',
         'hash' => $hash, 'equal' => 'left == right', 'append' => \Scpp\Api\template('collections/hash_append', []),
     ]);
     $text .= "struct $name { struct storage; };\n" . $parts['storage'];

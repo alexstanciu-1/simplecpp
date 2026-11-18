@@ -52,7 +52,7 @@ if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|sw
     throw new RuntimeException('Concrete vector depends on a template algorithm');
 }
 $hash = concreteTemplate('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
-    'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate',
+    'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
     'hash' => '(void(key), 7)', 'equal' => 'left == right', 'append' => \Scpp\Api\template('collections/hash_append', []),
 ]);
 if (preg_match('/\btemplate\s*</', implode('', $hash)) || str_contains($hash['storage'], 'std::vector')) throw new RuntimeException('Concrete hash depends on templates');

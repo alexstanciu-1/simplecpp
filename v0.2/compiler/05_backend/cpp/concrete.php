@@ -6,16 +6,16 @@ namespace scpp\compiler;
 require_once __DIR__ . '/../../../tools/api_generator/php/input.php';
 require_once __DIR__ . '/../../../tools/api_generator/php/render.php';
 
-/** Transient adapter over a settled application value; the recipe sees no AST or symbol table. */
+/** Transient adapter over a settled type; the recipe sees no AST or symbol table. */
 final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
 {
 	/** PROPERTIES */
 	/** Native non-owning prepared type; lifetime is bounded by private lowering. */
-	private record_type_definition|shared_record_type_definition $type;
+	private type_definition $type;
 	private string $root;
 
 	/** CONSTRUCTOR */
-	public function __construct(record_type_definition|shared_record_type_definition $type, string $root)
+	public function __construct(type_definition $type, string $root)
 	{
 		$this->type = $type;
 		$this->root = $root;
@@ -30,6 +30,7 @@ final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
 	/** Application declarations are emitted inside the same root namespace as the concrete recipe. */
 	public function cppType(string $namespace): string
 	{
+		if (str_starts_with($this->type->cpp_type(), 'scpp::')) return '::' . $this->type->cpp_type();
 		return ($namespace === $this->root ? '' : '::' . ($this->root === '' ? '' : $this->root . '::')) . $this->type->cpp_type();
 	}
 
@@ -41,17 +42,18 @@ final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
 
 	public function supports(string $requirement): ?bool
 	{
+		if (!($this->type instanceof record_type_definition) && !($this->type instanceof record_handle_definition)) return null;
 		return in_array($requirement, ['copy_constructible', 'nothrow_move_constructible', 'nothrow_move_assignable', 'nothrow_destructible'], true)
 			? true : null;
 	}
 }
 
 /** Source-private concrete demand, merged and retired through the existing adapter artifact lifecycle. */
-final class Cpp_Concrete_Vectors
+final class Cpp_Concrete_Collections
 {
 	/** PROPERTIES */
-	/** @var application_vector_type[] Native non-owning, only specializations used by this source emission. */
-	private array $types /** array<string,application_vector_type> */ = [];
+	/** @var application_collection_type[] Native non-owning, only specializations used by this source emission. */
+	private array $types /** array<string,application_collection_type> */ = [];
 	private readonly string $root;
 
 	/** CONSTRUCTOR */
@@ -61,7 +63,7 @@ final class Cpp_Concrete_Vectors
 	}
 
 	/** METHODS */
-	public function request(application_vector_type $type): void
+	public function request(application_collection_type $type): void
 	{
 		$this->types[$type->cpp_type()] = $type;
 	}
@@ -78,7 +80,7 @@ final class Cpp_Concrete_Vectors
 	/** @return \Generator<type_definition> Existing declaration planning supplies complete element types first. */
 	public function dependencies(): \Generator
 	{
-		foreach ($this->types as $type) yield $type->element_type;
+		foreach ($this->types as $type) yield from $type->concrete_types();
 	}
 
 	/** Guarded concrete definitions follow complete dependencies, just like existing inline adapters. @return string[] */
@@ -89,21 +91,18 @@ final class Cpp_Concrete_Vectors
 		foreach ($this->types as $name => $type) {
 			$key = hash('sha256', $this->root . "\0" . $name);
 			$guard = 'SCPP_CONCRETE_' . strtoupper($key);
-			$access = 'vector_access_' . $key;
-			$element = new cpp_concrete_type($type->element_type, $this->root);
-			$parts = \Scpp\Api\concreteTemplate($type::concrete_recipe(), ['e' => $element],
-				['n' => $name, 'inline' => 'inline ', 'access' => 'detail::' . $access, 'buffer' => '::scpp::detail']
-				+ $type::recipe_arguments(), $this->root);
-			$header = "// Concrete application vector; include after complete element declarations.\n#ifndef $guard\n#define $guard\n";
-			foreach (array_unique(array_merge($type->cpp_headers(), $element->headers())) as $include) $header .= '#include <' . $include . ">\n";
-			// Reuse the same untyped helper source; generated output owns no independent allocation algorithm.
-			$helper = \Scpp\Api\readFile(__DIR__ . '/../../../runtime/src/sequence/vector_buffer.hpp');
-			$header .= "#ifndef SCPP_CONCRETE_VECTOR_BUFFER\n#define SCPP_CONCRETE_VECTOR_BUFFER\n"
-				. str_replace('#pragma once', '', $helper) . "\n#endif\n";
-			$declaration = "using ::scpp::bool_t;\nnamespace detail { struct $access; }\nclass $name final {\npublic:\n"
-				. $parts['declaration'] . "private:\nstruct storage;\nstorage* storage_ = nullptr;\nfriend struct detail::$access;\n};\n";
-			$implementation = $parts['storage'] . "namespace detail { struct $access {\n" . $parts['access'] . "}; }\n" . $parts['definition'];
-			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $declaration . $implementation) . "\n#endif\n";
+			$arguments = [];
+			$includes = $type->cpp_headers();
+			foreach ($type->concrete_types() as $parameter => $argument) {
+				$arguments[$parameter] = new cpp_concrete_type($argument, $this->root);
+				$includes = array_merge($includes, $argument->cpp_headers());
+			}
+			$values = ['n' => $name, 'inline' => 'inline '] + $type->recipe_arguments();
+			$body = \Scpp\Api\concreteApplication($type::concrete_recipe(), $arguments, $values, $this->root);
+			$header = "// Concrete application collection; include after complete element declarations.\n#ifndef $guard\n#define $guard\n";
+			foreach (array_unique($includes) as $include) $header .= '#include <' . $include . ">\n";
+			$header .= \Scpp\Api\concreteSupport($type::concrete_recipe());
+			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $body) . "\n#endif\n";
 		}
 		return $files;
 	}

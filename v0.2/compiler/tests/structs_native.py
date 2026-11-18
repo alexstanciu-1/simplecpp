@@ -377,7 +377,7 @@ def prove(work, flavor):
                           ('allocation', entry, '$p = new Point(); echo $p->width,$p->y; $q shared<Point> = $p; '
                            '$q->width=3; $p=$p; echo $p->width,","; $p=new Point; $p->width=8; echo $p->width; '
                            'if ($q->width != 3) { return 1; } return 8;', None),
-                          ('missing-payload', owner, '', 'Shared construction requires a struct'),
+                          ('missing-payload', owner, '', 'Shared construction requires a record'),
                           ('restore-payload', owner, record.replace('x', 'width'), None),
                           ('constructor-args', entry, '$p = new Point(1, 2); return 8;', 'zero-argument'),
                           ('recover-allocation', entry, body.replace('x', 'width'), None)])
@@ -575,7 +575,7 @@ def direct_construction(work):
         edits += [(path, short.replace(inferred, typed), None),
                   (path, original.replace('Point()', 'Point(1)'), 'zero-argument'),
                   (path, original.replace('Point()', 'Point'), None if flavor == 'php' else '( after the constructed type'),
-                  (path, original.replace('Point()', 'Missing()'), 'Shared construction requires a struct'),
+                  (path, original.replace('Point()', 'Missing()'), 'Shared construction requires a record'),
                   (path, original, None)]
     with service(app, out) as resident:
         for rev, (path, text, error) in enumerate(edits):

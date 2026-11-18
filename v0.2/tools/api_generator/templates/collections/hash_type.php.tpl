@@ -1,17 +1,8 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition implements iterable_type
+final class @class@ extends hash_type_definition@interfaces@
 {
-	/** STATIC PROPERTIES */
-	private static ?self $instance = null;
-
-	/** CONSTRUCTOR */
-	private function __construct()
-	{
-		parent::__construct(@family@ . '<' . @value@::instance()->name . ',' . @key@::instance()->name . '>',
-			@value@::instance(), @key@::instance());
-	}
-
+@identity@
 	/** METHODS */
 @iteration@
 	public function cpp_type(): string
@@ -28,14 +19,14 @@ final class @class@ extends hash_type_definition implements iterable_type
 	/** Strict keys are identities, not bool/float/text coercion boundaries. */
 	public function prepare_key(ast_expression $key): void
 	{
-		if ($key->type_def() !== @key@::instance()) {
-			throw new diagnostic($key->source(), $key->byte_start(), 'Hash key requires ' . @key@::instance()->name);
+		if ($key->type_def() !== @key@) {
+			throw new diagnostic($key->source(), $key->byte_start(), 'Hash key requires ' . @key@->name);
 		}
 	}
 
 	public function lower_cpp_empty(): string
 	{
-		return @cpp@ . '{}';
+		return $this->cpp_type() . '{}';
 	}
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
@@ -56,9 +47,5 @@ final class @class@ extends hash_type_definition implements iterable_type
 	}
 
 @cardinality@
-	/** STATIC METHODS */
-	public static function instance(): self
-	{
-		return self::$instance ??= new self();
-	}
+@factory@
 }

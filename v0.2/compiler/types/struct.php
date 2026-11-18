@@ -19,8 +19,11 @@ final class record_type_definition extends type_definition implements dependency
 	private ?Dependency_Watches $dependencies = null;
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
-	/** Native owning lazily created specialization; element links back non-owningly to this declaration generation. */
-	private ?vector_type_definition $vector = null;
+	/**
+	 * Native owning canonical collection specializations; elements link back non-owningly to this declaration generation.
+	 * @var type_definition[]
+	 */
+	private array $collections /** array<string,type_definition> */ = [];
 
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
@@ -53,10 +56,14 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->declaration->kind !== record_kind::structure ? $this->required : $this;
 	}
 
-	/** One canonical vector for the record's default value storage; no session-global cache retains retired ASTs. */
-	public function vector_type(): vector_type_definition
+	/** Cache only supported identities for this declaration generation; no global cache retains retired ASTs. */
+	public function collection_type(string $family, ?type_definition $key): ?type_definition
 	{
-		return $this->vector ??= new application_vector_type($this->default_type());
+		$identity = $family . ':' . ($key?->name ?? '');
+		if (isset($this->collections[$identity])) return $this->collections[$identity];
+		$type = type_registry::application_collection($family, $this->default_type(), $key);
+		if ($type !== null) $this->collections[$identity] = $type;
+		return $type;
 	}
 
 	/** Bind the declaration to this publication before following any forward field references. */
@@ -93,8 +100,8 @@ final class record_type_definition extends type_definition implements dependency
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
-	/** Resolve children first; a repeated active declaration is an infinite by-value layout. @param bool[] $active */
-	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */, ?preparation_work $work): void
+	/** Resolve children first; diagnose inline cycles and the deferred recursive concrete-field boundary. @param bool[] $active */
+	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */, ?preparation_work $work, bool $concrete_field = false): void
 	{
 		if ($this->ready) return;
 		if (isset($active[$this->name])) {
@@ -105,9 +112,9 @@ final class record_type_definition extends type_definition implements dependency
 			$cycle = array_merge(array_slice($cycle, $index), array_slice($cycle, 0, $index));
 			$node = $symbols->resolve('class:' . $cycle[0]);
 			$cycle[] = $cycle[0];
-			throw new diagnostic($node->source(), $node->byte_start(), 'Recursive inline layout: ' . implode(' -> ', $cycle));
+			throw new diagnostic($node->source(), $node->byte_start(), ((in_array(true, $active, true) || $concrete_field) ? 'Recursive concrete collection fields are deferred: ' : 'Recursive inline layout: ') . implode(' -> ', $cycle));
 		}
-		$active[$this->name] = true;
+		$active[$this->name] = $concrete_field;
 		$this->dependencies->forget($this);
 		$this->base_type = null;
 		$this->iterator = null;
@@ -161,6 +168,12 @@ final class record_type_definition extends type_definition implements dependency
 			} elseif (!($type instanceof record_handle_definition) && !$type?->supports_instance_field()) {
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
+			}
+			if ($type instanceof application_collection_type) {
+				foreach ($type->concrete_types() as $argument) {
+					$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
+					if ($record instanceof self) $record->prepare_layout($symbols, $active, $work, true);
+				}
 			}
 			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression)) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');

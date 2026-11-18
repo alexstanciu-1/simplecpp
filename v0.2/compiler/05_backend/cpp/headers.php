@@ -19,9 +19,10 @@ final class Cpp_Headers
 	private array $enum_helpers /** array<string,uint8> */ = [];
 
 	/** CONSTRUCTOR */
-	/** Plan native declarations from completed watchers and source-owned layouts. @param cpp_generator_layout[] $layouts */
-	public function __construct(prepared_program $program, array $layouts /** array<string,cpp_generator_layout> */ = [])
+	/** Plan completed declarations; null creates an empty standalone planner. @param cpp_generator_layout[] $layouts */
+	public function __construct(?prepared_program $program = null, array $layouts /** array<string,cpp_generator_layout> */ = [])
 	{
+		if ($program === null) return;
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if (!($node instanceof ast_enum_declaration)) continue;
@@ -35,6 +36,7 @@ final class Cpp_Headers
 			}
 		}
 		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App', $layouts);
+		foreach ($program->files as $file) $this->publish_fields($file, $emitter, $program->session?->cpp_namespace ?? 'App');
 		foreach ($program->files as $key => $file) {
 			$source_key = (string) $key;
 			$header = hash('sha256', (string) $key) . '.hpp';
@@ -74,7 +76,7 @@ final class Cpp_Headers
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
 					foreach ($emitter->application_types($node) as $type) {
-						if ($type instanceof application_vector_type) {
+						if ($type instanceof application_collection_type) {
 							$owners[$type->cpp_type()] = 'class ' . $type->cpp_type() . ';';
 						} elseif ($type instanceof enum_type_definition) {
 							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
@@ -194,7 +196,9 @@ final class Cpp_Headers
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof record_handle_definition) {
+			if ($type instanceof application_collection_type) {
+				$children[$this->publish_collection($type, $emitter, $root)] = true;
+			} elseif ($type instanceof record_handle_definition) {
 				$owners[$type->payload->name] ??= $emitter->owner_declaration($type->payload->shared, $includes);
 				$needs_methods = true;
 			} elseif ($type instanceof enum_type_definition) {
@@ -212,6 +216,47 @@ final class Cpp_Headers
 		$path = $needs_methods ? $layout : $header;
 		$this->files['units/' . $path] = $text . Cpp_Emitter::namespace_body($root, implode('', $owners) . $definition . "\n");
 		return $path;
+	}
+
+	/** Publish a concrete field dependency after complete element declarations; reuse the source recipe artifacts. */
+	private function publish_collection(application_collection_type $type, Cpp_Emitter $emitter, string $root): string
+	{
+		$header = hash('sha256', "collection-field\0" . $root . "\0" . $type->cpp_type()) . '.hpp';
+		if (isset($this->files['units/' . $header])) return $header;
+		$text = "#pragma once\n";
+		foreach ($type->concrete_types() as $argument) {
+			$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
+			if (!($record instanceof record_type_definition)) continue;
+			$dependency = $this->publish_record($record->declaration, $emitter, $root);
+			$text .= '#include "' . $dependency . "\"\n";
+			if ($argument instanceof record_handle_definition) {
+				$includes = [];
+				$owner = $emitter->owner_declaration($record->shared, $includes) . $emitter->owner_methods($record->shared, $includes);
+				foreach ($includes as $include => $_) $text .= "#include <$include>\n";
+				$text .= Cpp_Emitter::namespace_body($root, $owner);
+			}
+		}
+		$concrete = new Cpp_Concrete_Collections($root);
+		$concrete->request($type);
+		foreach ($concrete->files() as $path => $body) {
+			$this->files[$path] = $body;
+			$text .= '#include "' . basename($path) . "\"\n";
+		}
+		$this->files['units/' . $header] = $text;
+		return $header;
+	}
+
+	/** Source-private records need a header when a concrete field must precede their layout. */
+	public function publish_fields(ast_file_node $file, Cpp_Emitter $emitter, string $root): void
+	{
+		foreach ($file->declaration_nodes as $node) {
+			if (!($node instanceof ast_record_declaration)) continue;
+			foreach ($node->fields as $field) {
+				if (!($field->type_def() instanceof application_collection_type)) continue;
+				$this->publish_record($node, $emitter, $root);
+				break;
+			}
+		}
 	}
 
 	/** Did type visibility or the published enum helper contract change for this source? */

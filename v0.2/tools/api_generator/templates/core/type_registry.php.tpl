@@ -47,6 +47,12 @@ final class type_registry
 	}
 
 	/** Select a published canonical specialization; no descriptor lookup or per-use allocation. */
+	/** Create a supported application collection; the nominal declaration owns canonicalization. */
+	public static function application_collection(string $family, type_definition $element, ?type_definition $second): ?type_definition
+	{
+@application_specializations@		return null;
+	}
+
 	public static function specialize(string $family, type_definition $element, ?type_definition $second = null): ?type_definition
 	{
 @specializations@		return null;

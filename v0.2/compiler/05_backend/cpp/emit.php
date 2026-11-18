@@ -36,7 +36,7 @@ final class Cpp_Emitter
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
-	private Cpp_Concrete_Vectors $concrete_vectors;
+	private Cpp_Concrete_Collections $concrete_collections;
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -54,7 +54,7 @@ final class Cpp_Emitter
 		$this->root = $root;
 		$this->generator_layouts = $generator_layouts;
 		$this->inline_adapters = new Cpp_Adapters($root);
-		$this->concrete_vectors = new Cpp_Concrete_Vectors($root);
+		$this->concrete_collections = new Cpp_Concrete_Collections($root);
 	}
 
 	/** METHODS */
@@ -68,7 +68,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		return $this->inline_adapters->files() + $this->concrete_vectors->files();
+		return $this->inline_adapters->files() + $this->concrete_collections->files();
 	}
 
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
@@ -101,7 +101,7 @@ final class Cpp_Emitter
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$type = $field->type_def();
-				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition) && $this->root !== '' ? '::' . $this->root : '';
+				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 					$type, $field->initializer, $field->conversion, $includes);
 				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
@@ -376,9 +376,19 @@ CPP;
 		return $this->unit(null, $file, '');
 	}
 
+	/** Render the selected entry, sharing concrete field publication with project builds. */
 	private function render(prepared_entry $program, string $function): string
 	{
 		$program->require_prepared();
+		if ($this->headers === null) {
+			$headers = new Cpp_Headers();
+			$headers->publish_fields($program->file, $this, $this->root);
+			if ($headers->files() !== []) {
+				$emitter = new self($headers, $this->root, $this->generator_layouts);
+				$text = $emitter->unit($program, $program->file, $function);
+				return self::inline_headers($text, $headers->files() + $emitter->adapter_files());
+			}
+		}
 		return $this->unit($program, $program->file, $function);
 	}
 
@@ -387,7 +397,7 @@ CPP;
 	{
 		$this->enum_helpers = [];
 		$this->inline_adapters = new Cpp_Adapters($this->root);
-		$this->concrete_vectors = new Cpp_Concrete_Vectors($this->root);
+		$this->concrete_collections = new Cpp_Concrete_Collections($this->root);
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -467,7 +477,7 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
-		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_vectors->dependencies()] as $type) {
+		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies()] as $type) {
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
@@ -569,7 +579,7 @@ CPP;
 		if ($adapter_files === []) {
 			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
 		}
-		$text = $header . self::namespace_body($this->root, $this->concrete_vectors->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
 		foreach ($adapter_files as $path => $body) {
 			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
 		}
@@ -1081,7 +1091,7 @@ CPP;
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
-			if ($type instanceof application_vector_type) $this->concrete_vectors->request($type);
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 			if ($type instanceof record_type_definition) {
 				$declarations[$type->declaration->symbol_key()] = $type->declaration;
 			}
@@ -1571,7 +1581,7 @@ CPP;
 	{
 		foreach (($this->headers?->declaration_header($function) !== null
 			? self::signature_application_types($function) : $this->application_types($function)) as $type) {
-			if ($type instanceof application_vector_type) $this->concrete_vectors->request($type);
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}
@@ -1636,7 +1646,7 @@ CPP;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
-			if ($type instanceof application_vector_type) {
+			if ($type instanceof application_collection_type) {
 				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
 			} elseif ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
@@ -1678,7 +1688,7 @@ CPP;
 	/** Payload member declarations live inside scpp_records; qualify application signature types. */
 	private function member_type(type_definition $type): string
 	{
-		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof application_vector_type)
+		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type)
 			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
 
@@ -1721,6 +1731,22 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** Standalone inspection uses the same publication plan, embedding each generated header once. @param string[] $files */
+	private static function inline_headers(string $text, array $files /** array<string,string> */): string
+	{
+		$seen = [];
+		$expand = static function (string $body) use (&$expand, &$seen, $files): string {
+			return preg_replace_callback('/^#include "([a-f0-9]{64}\.hpp)"$/m', static function (array $match) use (&$expand, &$seen, $files): string {
+				$path = 'units/' . $match[1];
+				if (!isset($files[$path])) throw new \LogicException('Missing standalone header: ' . $path);
+				if (isset($seen[$path])) return '';
+				$seen[$path] = true;
+				return $expand(str_replace("#pragma once\n", '', $files[$path]));
+			}, $body);
+		};
+		return $expand($text);
+	}
+
 	/** A virtual slot has the same native member name throughout its inheritance chain. */
 	private static function virtual_name(ast_function_declaration $method): string
 	{
@@ -1753,9 +1779,10 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
-		if ($type instanceof application_vector_type) {
+		if ($type instanceof application_collection_type) {
 			yield $type;
-			$type = $type->element_type;
+			foreach ($type->concrete_types() as $argument) yield from self::signature_type_dependencies($argument);
+			return;
 		}
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 	}

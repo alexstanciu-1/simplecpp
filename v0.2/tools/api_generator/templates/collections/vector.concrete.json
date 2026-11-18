@@ -7,5 +7,7 @@
     "access": ["collections/vector_access"],
     "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration"],
     "definition": ["core/concrete_owner_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"]
-  }
+  },
+  "application": "collections/vector_application",
+  "support": ["sequence/vector_buffer.hpp"]
 }

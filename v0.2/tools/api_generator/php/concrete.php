@@ -5,9 +5,7 @@ require_once __DIR__ . '/concrete_type.php';
 
 /** Instantiate a generator-owned recipe from already resolved native types, without interpreting C++ templates. */
 function concreteTemplate(string $name, array $types, array $values, string $namespace = ''): array {
-    static $recipes = [];
-    $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments']);
+    $recipe = concreteRecipe($name);
     $parameters = object(at($recipe, 'parameters'));
     requireThat(array_diff_key($types, $parameters) === [] && array_diff_key($parameters, $types) === [], "Concrete type arguments differ from $name parameters");
     $contracts = '';
@@ -46,4 +44,40 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
         foreach (listValue($fragments) as $fragment) $result[$section] .= template(textValue($fragment), $values);
     }
     return $result;
+}
+
+/** Read immutable generator-owned recipe data once; callers supply only settled type contracts. */
+function concreteRecipe(string $name): mixed {
+    static $recipes = [];
+    $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes']);
+    return $recipe;
+}
+
+/** Package a concrete application definition without family-specific compiler assembly. */
+function concreteApplication(string $name, array $types, array $values, string $namespace): string {
+    $recipe = concreteRecipe($name);
+    $parts = concreteTemplate($name, $types, $values, $namespace);
+    foreach ($parts as $section => $text) $values['section_' . $section] = $text;
+    return template(textValue(at($recipe, 'application')), $values);
+}
+
+/** Reuse runtime helper declarations/source without exposing private include paths to applications. */
+function concreteSupport(string $name): string {
+    $text = '';
+    foreach (listValue(concreteRecipe($name)->includes ?? []) as $header) $text .= includeHeader(concreteSupportPath($header));
+    foreach (listValue(at(concreteRecipe($name), 'support')) as $path) {
+        $path = concreteSupportPath($path);
+        $guard = 'SCPP_CONCRETE_SUPPORT_' . strtoupper(hash('sha256', $path));
+        $source = readFile(__DIR__ . '/../../../runtime/src/' . $path);
+        $text .= "#ifndef $guard\n#define $guard\n" . str_replace('#pragma once', '', $source) . "\n#endif\n";
+    }
+    return $text;
+}
+
+/** Generator-owned support paths are relative runtime sources or standard headers, not public provider paths. */
+function concreteSupportPath(mixed $value): string {
+    $path = textValue($value);
+    requireThat(preg_match('~^[a-z][a-z0-9_/]*(?:\.hpp)?$~D', $path) === 1, 'Invalid concrete support path');
+    return $path;
 }

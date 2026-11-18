@@ -11,7 +11,7 @@ from extends_native import build, runtime, source_edit
 from inline_adapters_native import incremental_native_build
 
 
-def prove(work, flavor, libraries):
+def prove(work, flavor, libraries, collection='vector'):
     s = fixture(flavor)
     v, access, fn, infer = s['v'], s['access'], s['function'], s['infer']
     def method(name, result, params, body):
@@ -35,9 +35,15 @@ def prove(work, flavor, libraries):
     main += infer('c',f'{v}w{access}update({v}p{access}copy({v}a))') + infer('r',v+'c[0]')
     main += f'echo {v}r{access}x,":";' + empty('owners','Node') + infer('n','new Node()')+f'{v}owners[]={v}n;'
     main += infer('owners2',f'{v}w{access}owners({v}owners)')+f'echo {v}n{access}x; return 8;'
+    def source(text):
+        if collection == 'vector':return text
+        key = collection.split('-')[1]
+        text=text.replace('vector<Point>',f'hash<Point,{key}>').replace('vector<Node>',f'hash<Node,{key}>')
+        index='"item"' if key=='string' else '0'
+        return text.replace('[0]', '['+index+']').replace('[]=', '['+index+']=')
     app, out = work/flavor, work/(flavor+'-out'); app.mkdir()
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in {'point':point,'node':node,'worker':worker,'api':api,'main':main}.items():source_edit(app/(name+'.'+flavor),text)
+    for name,text in {'point':point,'node':node,'worker':worker,'api':api,'main':main}.items():source_edit(app/(name+'.'+flavor),source(text))
     expected=b'7:9:9:13'
     edits=[(None,None,expected), (None,None,expected),
            ('api',api.replace('x=9','x=11'),b'7:11:9:13'), ('api',api,expected),
@@ -49,15 +55,20 @@ def prove(work, flavor, libraries):
            ('point',point.replace(s['field']('x','int','7'),s['field']('x','int','7')+s['field']('text','string','"long enough heap-backed payload"')),expected),
            ('point',point,expected), ('namespace','acme::nested',expected), ('namespace',None,expected),
            ('namespace','App',expected)]
+    if collection != 'vector':
+        edits += [('main',main.replace('[0]','[false]'),None),('main',main,expected),('retire',None,b'')]
     proc=service(app,out);timings=[]
     try:
         for rev,(name,text,wanted) in enumerate(edits):
             before=artifacts(out)
-            if name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
+            if name=='retire':
+                for source_name in ['point','node','worker','api']:(app/(source_name+'.'+flavor)).unlink()
+                source_edit(app/('main.'+flavor),'return 8;')
+            elif name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
             elif name:
                 path=app/(name+'.'+flavor)
                 if text is None:path.unlink()
-                else:source_edit(path,text)
+                else:source_edit(path,source(text))
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)
             try:clean=invoke(fresh)
             finally:fresh.stdin.close();fresh.wait()
@@ -66,6 +77,7 @@ def prove(work, flavor, libraries):
                 assert artifacts(out)==before
                 continue
             assert 'error' not in got and 'error' not in clean,(flavor,rev,got,clean)
+            if name=='retire':assert not any(b'// Concrete application collection;' in t for t in artifacts(out).values())
             assert artifacts(out)==artifacts(fresh_out),(flavor,rev,'fresh artifacts differ')
             for cc,lib in libraries.items():
                 changed=incremental_native_build(out,work/(flavor+'-native-'+cc),cc,lib,wanted)
@@ -73,7 +85,7 @@ def prove(work, flavor, libraries):
                 if rev in [0,8,10,12,14]:build(fresh_out,work/(flavor+'-fresh-native-'+cc),cc,lib,wanted)
             timings.append({'revision':rev,'php_ms':got['php_ms'],'prepared':got['preparation']['prepared']})
             if rev==0:timings[-1].update(measure(out,work/(flavor+'-timing'),wanted))
-            print(flavor,rev,'application vector signatures passed',flush=True)
+            print(collection,flavor,rev,'application collection signatures passed',flush=True)
     finally:proc.stdin.close();proc.wait()
     (work/(flavor+'-timings.json')).write_text(json.dumps(timings,indent=2)+'\n')
 

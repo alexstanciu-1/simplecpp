@@ -131,9 +131,10 @@ final class Type_Resolution
 		}
 		$element = self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
-		if ($syntax->name === 'vector' && class_exists(application_vector_type::class)) {
-			$record = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
-			if ($record instanceof record_type_definition && $second === null) return $record->vector_type();
+		$record = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
+		if ($record instanceof record_type_definition) {
+			$type = $record->collection_type($syntax->name, $key);
+			if ($type !== null) return $type;
 		}
 		return self::specialize($syntax, $element, $key);
 	}

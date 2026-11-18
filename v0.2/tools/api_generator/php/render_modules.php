@@ -16,17 +16,13 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $nullable = 'nullable_' . $v;
         $lh = template('core/lifecycle_declaration', ['n' => $n]);
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => ''];
+        $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
         $h .= template('collections/hash_declaration', $vars);
         foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
         $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
 
-        $parts = concreteTemplate(hashConcreteRecipe($hash), ['k' => new RuntimeConcreteType($plan, $k), 'v' => new RuntimeConcreteType($plan, $v)], array_diff_key($vars, ['k' => true, 'v' => true]) + [
-            'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate',
-            'hash' => $k === 'int64' ? 'detail::hash_integer(key)' : 'detail::hash_string_bytes(key.data(), static_cast<std::size_t>(key.size()))',
-            'equal' => $k === 'int64' ? 'left == right' : 'left.size() == right.size() && (left.size() == 0 || std::memcmp(left.data(), right.data(), static_cast<std::size_t>(left.size())) == 0)',
-            'append' => $k === 'int64' ? template('collections/hash_append', []) : '',
-        ], 'scpp');
-        $d .= $parts['storage'] . $parts['lifecycle'] . template('collections/hash_methods_definition', $vars) . template('collections/hash_iteration', $vars);
+        $parts = concreteTemplate(hashConcreteRecipe($hash), ['k' => new RuntimeConcreteType($plan, $k), 'v' => new RuntimeConcreteType($plan, $v)], array_diff_key($vars, ['k' => true, 'v' => true]) + hashConcreteArguments($hash, $count), 'scpp');
+        $d .= $parts['storage'] . $parts['lifecycle'] . $parts['definition'] . template('collections/hash_lookup_definition', $vars) . template('collections/hash_iteration', $vars);
         if($k === 'int64') {
             $h .= "    $k append($v value);\n" . scalarInputFences($plan, 'append', [[$v]]);
             $d .= "$k $n::append($v value) { if (!storage_) storage_ = new storage; return storage_->append(std::move(value)); }\n";

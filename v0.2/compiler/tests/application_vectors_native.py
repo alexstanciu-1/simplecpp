@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def vector_files(output):
-    return {p: text for p, text in artifacts(output).items() if b'// Concrete application vector;' in text}
+    return {p: text for p, text in artifacts(output).items() if b'// Concrete application collection;' in text and b'scpp_vector_' in text}
 
 
 def prove(work, flavor, libraries, memcheck):
@@ -70,7 +70,7 @@ def prove(work, flavor, libraries, memcheck):
     signature=signature.replace('$items','&$items') if flavor=='php' else signature.replace('items:', '&items:') if flavor=='js' else signature.replace(' items',' &items')
     field=s['record']('Rejected',s['field']('items','vector<Point>'))
     edits += [('use',use+signature,None,'deferred'), ('use',use,b'7:9:11:101:13',None),
-              ('use',use+field,None,'field'), ('use',use,b'7:9:11:101:13',None)]
+              ('use',use+field,b'7:9:11:101:13',None), ('use',use,b'7:9:11:101:13',None)]
     other_present=False
     measurements=[]
     resident=service(app,out)

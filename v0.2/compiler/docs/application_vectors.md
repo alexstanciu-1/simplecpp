@@ -23,8 +23,8 @@ $copy[0] = $q; // $points still contains x = 7.
 ## Ownership and preparation
 
 Type arguments resolve through the ordinary application lookup and stable symbol
-watches. Each record definition lazily owns one canonical vector of its default
-value type. This follows the existing declaration-generation lifetime rather than
+watches. Each record definition lazily owns canonical collection specializations of its default
+value type, keyed by collection family and canonical key type. This follows the existing declaration-generation lifetime rather than
 adding a session-global registry that could retain obsolete ASTs. The specialization
 retains its non-owning element link and deterministic native name; it copies no field,
 method, constructor or AST data. Unchanged source and prepared facts remain reusable.
@@ -46,6 +46,9 @@ and inline definition prefix; runtime output remains unchanged.
 Concrete definitions are guarded application-owned headers, included after complete
 element declarations through the existing source adapter mechanism. This first slice
 uses inline definitions rather than introducing another native publication queue.
+The shared `Cpp_Concrete_Collections` publisher consumes generated
+`application_collection_type` contracts for vector and hash. Recipe-owned application
+assembly and helper declarations keep family details outside the publisher.
 Cross-source demand deduplicates by stable identity and the App namespace. Existing
 source-adapter retention, depfiles and manifest cleanup handle reuse and removal.
 Separately compiled specialization bodies are a future build optimization.
@@ -58,7 +61,7 @@ templates, source-template parsing or compiler-generated templates are introduce
 
 ## Boundaries and proofs
 
-Application-vector writable references, instance fields, nested collections, explicit
+Application-vector writable references, nested collections, explicit
 shared/weak element spellings, enums and foreach remain separate slices. References and
 fields receive preparation diagnostics rather than incomplete native output. Existing runtime specializations retain their current capabilities.
 

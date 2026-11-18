@@ -1,13 +1,6 @@
 class @n@ final {
 public:
-@lh@    @count@ size() const;
-    bool_t empty() const noexcept;
-    bool_t has(const @k@& key) const;
-    @v@ at(const @k@& key) const;
-    @nullable@ find(const @k@& key) const;
-    void set(@k@ key, @v@ value);
-    bool_t remove(const @k@& key);
-    void clear() noexcept;
+@lh@@methods@    @nullable@ find(const @k@& key) const;
     // Compiler traversal API: physical positions, not live entry count.
     @count@ @limit_method@() const;
     bool_t @next_method@(@count@& position, @count@ limit, @v@& value) const;

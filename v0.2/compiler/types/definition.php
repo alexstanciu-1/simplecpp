@@ -3,6 +3,19 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Generated concrete collection contract; canonical arguments serve layout planning, recipe data serves private lowering. */
+interface application_collection_type
+{
+	public static function concrete_recipe(): string;
+	/** @return type_definition[] Native non-owning canonical recipe arguments. */
+	public function concrete_types(): array;
+	/** @return string[] Transient recipe substitutions, not retained preparation facts. */
+	public function recipe_arguments(): array;
+	public function cpp_type(): string;
+	/** @return string[] */
+	public function cpp_headers(): array;
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {

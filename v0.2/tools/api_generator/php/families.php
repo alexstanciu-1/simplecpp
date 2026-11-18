@@ -581,6 +581,16 @@ function hashConcreteRecipe(array $hash): string {
     requireThat($hash['storage'] === 'private_ordered_concrete_swiss', 'Unsupported hash concrete storage');
     return 'collections/hash';
 }
+/** Key operations are selected once from the bounded strict-key policy, independently of the value provider. */
+function hashConcreteArguments(array $hash, string $count): array {
+    return [
+        'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
+        'count' => '::scpp::' . $count,
+        'hash' => $hash['key'] === 'int64' ? '::scpp::detail::hash_integer(key)' : '::scpp::detail::hash_string_bytes(key.data(), static_cast<std::size_t>(key.size()))',
+        'equal' => $hash['key'] === 'int64' ? 'left == right' : 'left.size() == right.size() && (left.size() == 0 || ::memcmp(left.data(), right.data(), static_cast<std::size_t>(left.size())) == 0)',
+        'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
+    ];
+}
 function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'hash', 'hashes', 'Hash');
     if($m === null) {

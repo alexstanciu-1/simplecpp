@@ -122,3 +122,16 @@ only, not general hash throughput. Fresh hash-operation native builds measured 2
 wall, frontend 26–27 ms, LLVM backend 17–19 ms, link 57–61 ms (Ninja8/mold, O2/g0,
 no PCH/LTO, prebuilt runtime). PHP fixture generation including incremental proofs was
 159 ms for the suite; this is not one compilation's frontend cost.
+
+## Shared application collection publication
+
+Recipes may declare an `application` assembly template, standard `includes` and
+runtime-relative `support` source paths. `concreteApplication()` supplies the already
+expanded fragments under `section_*` substitutions; `concreteSupport()` guards reused
+helper source/declarations. Neither interprets C++ nor inspects compiler ASTs. Runtime
+publication continues to select the required fragments directly.
+
+Application hash/vector providers expose the same compiler interface and publication
+path. Hash key policy arguments are planned once for both runtime and compiler generation;
+application hash omits nullable lookup and iteration exposure for the bounded first slice.
+The common method fragments prevent runtime/application wrapper behavior from diverging.

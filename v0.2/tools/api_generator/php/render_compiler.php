@@ -155,7 +155,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $literalCases[] = "\t\t\t" . var_export($word, true) . ' => type_' . $definition['class'] . '::instance(),';
         }
     }
-    [$vectorCode, $vectorCases, $vectorFamily] = compilerVectorTypes($metadata, $runtime, $definitions);
+    [$vectorCode, $vectorCases, $vectorFamily, $applicationVectors] = compilerVectorTypes($metadata, $runtime, $definitions);
     $files['types/vectors.php'] = $vectorCode;
     [$carrierCode, $carrierCases, $carrierLiterals] = compilerCarrierTypes($runtime, $definitions);
     $files['types/carriers.php'] = $carrierCode;
@@ -173,7 +173,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $arity[] = "\t\t\t$name => 1,";
         $specializations .= "\t\tif (\$family === $name) {\n\t\t\treturn match (\$element) {\n$matches\n\t\t\t\tdefault => null,\n\t\t\t};\n\t\t}\n";
     }
-    [$hashCode, $hashCases, $hashFamily] = compilerHashTypes($metadata, $runtime, $definitions);
+    [$hashCode, $hashCases, $hashFamily, $applicationHashes] = compilerHashTypes($metadata, $runtime, $definitions);
     $files['types/hashes.php'] = $hashCode;
     if ($hashFamily !== null) {
         $name = var_export($hashFamily, true);
@@ -299,7 +299,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
-        '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations,
+        '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);

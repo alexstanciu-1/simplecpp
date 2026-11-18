@@ -17,6 +17,7 @@ for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
 See [application vectors](docs/application_vectors.md) for local record/class elements through the common concrete recipe.
+- [Application-defined hash values and shared concrete publication](docs/application_hashes.md).
 See [direct scalar lowering](docs/direct_lowering.md) for conservative wrapper removal without preparation changes.
 See [int64 arithmetic](docs/arithmetic.md) for binary operations and their runtime boundary.
 See [logical expressions](docs/logical.md) for generated truthiness and native short-circuit lowering.

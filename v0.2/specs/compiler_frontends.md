@@ -85,8 +85,9 @@ that syntax alone does not make nested container specializations available.
 The bounded application-vector slice now resolves `vector<Record>` for local storage and by-value function/method signatures:
 struct elements use value copies and class elements use their ordinary shared ownership.
 Empty construction, append, checked indexing/replacement and copying are implemented;
-application-vector writable references, fields and traversal remain deferred. See
-[application vectors](../compiler/docs/application_vectors.md).
+application-vector writable references and traversal remain deferred. See
+[application vectors](../compiler/docs/application_vectors.md). Application-defined hash values now follow the same local/by-value path with strict published int/string keys; see [application hashes](../compiler/docs/application_hashes.md).
+Application vector/hash instance fields initialize empty and reuse their copy and mutation paths; recursive concrete field dependencies remain deferred.
 Every closing angle consumes one token. Shift expressions consume two byte-adjacent
 angles and produce one AST operation; whitespace/comments between angles prevent
 combination. Tokens are never rewritten or marked ignored. <<= and >>= retain their

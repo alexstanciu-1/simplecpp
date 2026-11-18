@@ -55,15 +55,16 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
             $recipe = ['count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
             $code .= strtr($template, array_replace($bindings, [
-                '@class@' => 'application_vector_type', '@interfaces@' => '', '@identity@' => $identity,
+                '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type', '@identity@' => $identity,
                 '@iteration@' => '', '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true),
-                '@factory@' => "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic static function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . ";\n\t}\n\tpublic function supports_instance_field(): bool { return false; }",
+                '@factory@' => "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . " + ['buffer' => '::scpp::detail', 'access_name' => 'access_' . \$this->native_name, 'access' => 'detail::access_' . \$this->native_name];\n\t}\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['e' => \$this->element_type]; }",
             ]));
         }
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }
-    return [$code, implode("\n", $cases), $family];
+    $applicationCase = $application ? "\t\tif (\$family === " . var_export($family, true) . " && \$second === null) return new application_vector_type(\$element);\n" : '';
+    return [$code, implode("\n", $cases), $family, $applicationCase];
 }
 
 /** Bind the common traversal protocol from a validated runtime publication row. */
