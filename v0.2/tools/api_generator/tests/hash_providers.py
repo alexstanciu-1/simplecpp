@@ -30,12 +30,12 @@ def proof(work):
     runtime, compiler = work / 'runtime', work / 'compiler'
     runner = work / 'resolve.php'
     runner.write_text('<?php\n' + ''.join('require ' + repr(str(ROOT / 'compiler/types' / (name + '.php'))) + ';\n'
-        for name in ['conversion', 'definition', 'vector', 'carrier', 'hash', 'boxed'])
+        for name in ['conversion', 'definition', 'runtime', 'vector', 'carrier', 'hash', 'boxed'])
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $name) require $argv[1].'/types/'.$name.'.php';\n"
         + "$t=\\scpp\\compiler\\type_registry::specialize('hash',\\scpp\\compiler\\type_registry::integer(),\\scpp\\compiler\\type_registry::string());\n"
         + "$queries = []; if ($t !== null) foreach (\\scpp\\compiler\\collection_cardinality::cases() as $op) {\n"
         + "    $queries[] = [$t->cardinality_result($op)->name, $t->lower_cpp_cardinality($op, 'receiver')]; }\n"
-        + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers(), $queries]);\n")
+        + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers(), $queries, [$t->presence_function()->symbol,$t->presence_function()->header,$t->presence_function()->return_type_def()->name]]);\n")
 
     def emit(m, p, expected=0):
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(p))
@@ -62,7 +62,7 @@ def proof(work):
         plan = emit(m, publication)
         provider = plan['submodules']['type_exports']['hash_int64_string']['provider']
         header = plan['submodules']['nodes'][provider]['header']
-        assert json.loads(run(['php', runner, compiler])) == ['hash<int64,string>', 'scpp::hash_int64_string', [header], observations]
+        assert json.loads(run(['php', runner, compiler])) == ['hash<int64,string>', 'scpp::hash_int64_string', [header], observations, ['has', header, 'bool_t']]
         after = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
         assert {k:v for k,v in before.items() if k not in ('hashes.php', 'registry.php')} == {k:v for k,v in after.items() if k not in ('hashes.php', 'registry.php')}
         normalized = b''.join(line.replace(header.encode(), b'scpp/hashes.hpp') if b'new runtime_function' in line and b'type_hash_' in line else line

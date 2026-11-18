@@ -42,6 +42,12 @@ interface counted_collection_type
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string;
 }
 
+/** Published key existence query, independent of payload representation or null state. */
+interface key_presence_type
+{
+	public function presence_function(): runtime_function;
+}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
 interface index_read_type
 {

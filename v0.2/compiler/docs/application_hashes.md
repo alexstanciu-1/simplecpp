@@ -55,7 +55,9 @@ Key/value argument arrays exist only transiently during lowering, not on AST occ
 
 Application collection writable references, foreach, nested collection values,
 explicit shared/weak value spellings, enum values and application-defined keys remain
-separate slices. Nullable-returning `find()` is deferred rather than generating a new
+separate slices. `hash_contains(collection, key)` is supported through the generated key-presence
+capability and existing native member binding. It needs no nullable payload carrier.
+Nullable-returning `find()` is deferred rather than generating a new
 application carrier implicitly. Runtime-specialization behavior remains unchanged.
 
 `application_hashes_native.py` reuses the vector by-value signature/recovery harness

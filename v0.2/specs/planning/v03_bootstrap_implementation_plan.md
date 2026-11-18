@@ -151,6 +151,30 @@ Deferred: general boolean subjects, string/float matching, computed integer/enum
 label grouping, exhaustiveness and common-result inference. Section 2.2–2.5 work,
 other-workspace collection changes and new runtime APIs remain outside this slice.
 
+### 2.2 First key-presence slice — implemented
+
+Use `hash_contains(collection, key)` for key existence, independently of payload
+truthiness/null state. `isset` remains null-sensitive. Existing runtime hash methods
+already supply `has`; this slice connects one generated capability for runtime and
+application hashes through the same immutable runtime-call binding. Native code uses
+`receiver.has(key)`, with ordinary strict-key argument lowering and receiver lifetime
+protection. No new AST state, lookup carrier, runtime storage or preparation pass.
+
+Verification checklist:
+
+- [x] All four runtime hashes plus struct/shared-class values with both key types across cpp/php/js on Clang/GCC.
+- [x] Missing keys never insert; present zero/empty strings, NUL and numeric-looking keys retain identity.
+- [x] Single evaluation, temporary/field receivers, owner replacement/expiry, empty-owner and key failures.
+- [x] Key presence remains true for a native-inserted empty shared payload; source insertion rules unchanged.
+- [x] Strict key/arity/capability diagnostics; declared function precedence, missing imports and constant aliases.
+- [x] Canonical binding reuse, const modes, one preparation per operand, pure lowering and reset/reprepare.
+- [x] Body/layout edits, declaration deletion, invalid shadowing, recovery against fresh output and native caller reuse.
+- [x] Provider relocation/retirement plus existing collection member regressions.
+
+Deferred: `hash_find` and application nullable carriers, new removal/clear spellings,
+coalescing, nullable payload publication, boxed families, and broader application
+collection methods/traversal. Existing implementations are not reclassified as missing.
+
 ## 3. Object relationships — a small AST family
 
 Discuss inheritance, handles and interfaces together before implementing this milestone.

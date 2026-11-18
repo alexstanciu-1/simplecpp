@@ -4,7 +4,8 @@ Doc Status: supporting
 
 Vector and hash expose `clear()`, `remove(key)` and `has(key)`. PHP and C++ use `->`;
 JS uses `.`. This is a Simple C++ API, not a promise of PHP/JS standard-library compatibility.
-There is no new `list_clear` or free-function synonym.
+There is no new `list_clear`. Hash key presence also has the free spelling
+`hash_contains(collection, key)` described below.
 
 ```text
 // PHP
@@ -156,3 +157,32 @@ no-PCH/LTO, prebuilt-runtime and fresh-object settings used above:
 Combined measured PHP/native work medians: 241.44/240.20/239.68 ms; this excludes fixture
 setup and executable launch. LLVM subcomponents overlap their parent totals. Raw results
 and generated programs: `/tmp/scpp-collection-has-proof/` (temporary).
+
+## Shared hash key-presence capability
+
+`key_presence_type` exposes an immutable `runtime_function` for `hash_contains`.
+The hash generator validates the published `has(const Key&) -> bool_t` signature,
+const receiver and provider, then constructs one binding per canonical runtime or
+application hash type. Its references to canonical types are non-owning in the native
+model. Neither AST fields nor per-call signature objects are added.
+
+Preparation selects this capability after ordinary function/import resolution. It
+passes the already-prepared receiver to the existing runtime-call checker, which
+validates exact key types. Lowering uses the common native-member path: operand zero
+is the receiver whether source syntax is a method or a free call. Key arguments reuse
+exact-argument lowering; existing shared-owner retention protects field receivers.
+
+The immutable runtime signature classes now live in `types/runtime.php`, separate from
+AST declarations, so standalone generator/provider consumers can construct bindings.
+No new runtime API or nullable application carrier is introduced. Existing member
+syntax retains its current admission; this slice adds the free helper for both hash
+families, not general application collection methods.
+
+`hash_contains.php` checks canonical binding reuse, const modes, preparation visits,
+emission purity and reset/reprepare equivalence. `hash_contains_native.py` covers
+runtime/application hashes and both key types, missing/present zero/empty values,
+NUL/numeric-looking keys, field and temporary receivers, owner replacement and expiry,
+empty-owner/key failures, native-inserted empty shared payloads, function precedence,
+imports, and incremental body/layout/deletion/error recovery in all three flavors on
+Clang/GCC. The hash provider fixture also checks the binding's relocated header and
+publication retirement/restoration. These are correctness proofs, not performance claims.

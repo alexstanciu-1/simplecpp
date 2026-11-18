@@ -2,9 +2,16 @@
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
 final class @class@ extends hash_type_definition@interfaces@
 {
+	/** Immutable canonical binding, shared by occurrences; its type references are non-owning. */
+	private readonly runtime_function $presence_binding;
 @identity@
 	/** METHODS */
 @iteration@
+	public function presence_function(): runtime_function
+	{
+		return $this->presence_binding;
+	}
+
 	public function cpp_type(): string
 	{
 		return @cpp@;

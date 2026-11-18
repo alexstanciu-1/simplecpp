@@ -1385,7 +1385,7 @@ CPP;
 				if ($function->receiver_method) {
 					$arguments = [];
 					$direct = true;
-					foreach ($value->arguments as $index => $argument) {
+					foreach (array_slice($operands, 1) as $index => $argument) {
 						$safe = false;
 						$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 						$arguments[] = $function->parameters[$index + 1]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand);

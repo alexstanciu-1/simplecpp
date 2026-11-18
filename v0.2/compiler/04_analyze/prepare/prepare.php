@@ -887,10 +887,10 @@ final class Preparation
 	}
 
 	/** Validate supplied runtime arguments against their generated signature. */
-	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime): void
+	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
 		$operands = $call->runtime_operands();
-		$prepared = $call->receiver;
+		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
 			$variants = $runtime->by_arity[count($operands)] ?? null;
 			if ($variants === null) {
@@ -1039,6 +1039,15 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			if ($builtin === 'hash_contains') {
+				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), 'hash_contains requires a collection and key');
+				$receiver = $call->arguments[0];
+				$this->value($receiver, $initializing);
+				$type = $receiver->type_def();
+				if (!($type instanceof key_presence_type)) throw new diagnostic($receiver->source(), $receiver->byte_start(), 'hash_contains requires a key-presence collection');
+				$this->runtime_call($call, $type->presence_function(), $receiver);
+				return;
+			}
 			if ($builtin === 'enum_from_value') {
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');

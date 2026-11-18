@@ -518,6 +518,25 @@ rules as the removal methods below. An empty shared owner still throws before ev
 the key. Key-expression effects are allowed and are not undone; the query itself is
 read-only. This adds no `isset` syntax or value-search semantics.
 
+### Free key-presence query
+
+`hash_contains(collection, key)` returns bool for key existence on a published
+runtime or application-defined hash. Keys must have the hash's exact canonical key
+type. It does not coerce keys, read/copy the value, insert missing entries or require
+a nullable value carrier. Present zero, empty text and empty shared-handle payloads
+count as present. Source insertion/conversion rules remain unchanged.
+
+The receiver is evaluated once before the key; an inaccessible/empty shared owner
+fails before key evaluation. The key is evaluated once, and its effects or exceptions
+are preserved. A selected shared allocation stays alive through the query even if
+key evaluation replaces its original owner. The query itself is read-only.
+
+This free spelling is available in cpp/php/js through the ordinary function fallback:
+a declared source function takes precedence, and an explicit function import does not
+fall back to this builtin when its target is missing. A constant alias does not shadow
+the function namespace. Vectors and boxed collections are outside this free-helper
+slice. `isset` remains null-sensitive and is not an alias for key existence.
+
 ## v0.2 typed collection removal methods
 
 Typed vectors and hashes expose `remove(key)` as a method: PHP/C++ `->remove(key)`
