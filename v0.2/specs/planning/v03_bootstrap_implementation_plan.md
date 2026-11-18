@@ -25,7 +25,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
 | 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
-| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, and the first class-interface slice implemented | Broader interface relationships and non-owning AST lifetime contracts remain |
+| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
@@ -1257,6 +1257,167 @@ Review verification closes the remaining adapter-publication gaps:
 
 These review fixes add tests and planning evidence only. The compiler, ownership
 implementation and deferred boundaries are unchanged.
+
+### Weak parent links and retained source-tree lifetimes — first proof implemented
+
+Implemented and verified 2026-11-18. This remains a planning-status record of
+bounded scope and evidence.
+This is the first bounded proof for 3.5, using existing shared/weak handles and
+explicit root retention. It does not complete staged initialization from 3.6 or
+translate the full incremental compiler. The current
+[AST ownership model](../../compiler/docs/ast_model.md),
+[generation cleanup](../../compiler/docs/generation_cleanup.md) and
+[failure cleanup](../../compiler/docs/failure_cleanup.md) remain the implementation
+owners; this planning note does not introduce new language semantics.
+
+#### Small executable family and scope
+
+Use a Node base, Literal and Addition children, and one source root per tree.
+Addition has fixed owning child slots; do not require application-defined vectors,
+a new arena or a general node registry for this proof. Each node has one weak parent
+slot. Attach children explicitly after constructing the owning handles, using an
+external construction/attachment function rather than adding an owning-this feature.
+Use an existing class-to-Node shared upcast before weak(Node) construction where
+needed; do not introduce weak-handle covariance as a hidden prerequisite.
+
+Model two source slots and a retained reader using ordinary owning root handles.
+A new simulated generation reuses an unchanged source root and replaces an edited
+source root. This demonstrates native lifetime behavior; it is distinct from the
+PHP compiler's real incremental preparation/emission tests below. Do not create a
+second production generation manager merely to represent the test sequence.
+
+#### Ownership and validity contract
+
+| Link / holder | Ownership and validity |
+| --- | --- |
+| Source root and parent to children | Strong ownership of the tree. No owning child-to-parent backlink. |
+| Child to parent | Existing weak<Node> observation. Lock returns an optional owning Node; empty/expired links cannot be dereferenced. |
+| Active compilation or reader to source root | Strong root hold for the complete operation that needs ancestry/source context. Hold only the relevant roots, not every historical session. |
+| Diagnostic to source snapshot | Retain the source data required for reporting; do not pin the entire AST merely to preserve diagnostic text. |
+| Cross-source semantic lookup | Preserve existing stable-symbol identities and watches; do not replace them with owning links to old declarations. |
+
+- The root's parent is empty. The fixture attaches each non-root once to its owning
+  parent and forms no strong ownership cycle. Compiler-enforced write-once attachment,
+  general cycle validation and delayed-attachment syntax remain separate 3.6 work;
+  this slice must not claim that an ordinary writable field enforces those rules.
+- A child kept alive independently does not keep its ancestors alive. After the last
+  root/parent owner is released, locking that child's parent may return empty even
+  though the child itself is still usable. Ancestor/source queries require a retained
+  root or explicit handling of expiry; they must never follow a saved expired pointer.
+- A successful lock keeps that parent alive for the locked handle's lifetime. It does
+  not promise that all ancestors remain alive. Reader-owned root retention supplies
+  the stronger guarantee required for a complete parent walk.
+- Reuse unchanged source trees intact: preserve node identity, parent links and source
+  snapshot identity. Parent links describe syntax ownership, not the compilation
+  session; never reparent reused nodes to the latest session.
+- An edited source creates a distinct tree. Old and new trees coexist while an old
+  reader retains its root. Releasing the old reader permits old-tree destruction after
+  other explicit owners finish; current roots and reused trees stay alive.
+- Object lifetime is not semantic freshness. Holding an old tree does not freeze stable
+  symbol entries, validate stale prepared facts or make an old emission handle current.
+  Preserve existing invalidation and stale-handle rules; historical semantic snapshots
+  are not introduced by this proof.
+- Existing weak observers retain allocation storage after payload destruction until
+  the last observer is released. Verify payload lifetime separately from allocation
+  release. Do not claim that weak links are zero-cost, that expiry immediately frees
+  storage, or that this establishes the eventual cheapest native AST representation.
+
+#### Owners and preparation budget
+
+Use existing weak field storage, weak()/lock(), shared views, parameter binding and
+optional-result checking. First verify their admission in this exact fixture. If a
+missing capability is discovered, report the bounded prerequisite rather than silently
+adding a new ownership family or a broad type/lowering refactor.
+
+Runtime ownership remains responsible for counts, locking, expiry and concrete
+cleanup. AST construction owns the syntax links; the operation/coordinator owns root
+retention. Existing Generation_Cleanup remains the production retirement gate after
+readers finish, including failure paths. Do not scatter cleanup into AST traversal or
+acknowledge pending preparation/emission work merely to release old roots.
+
+No new per-node generation ID, strong root backlink, flattened ancestry index,
+copy of an entire tree on reuse, descendant scan or prepared lifetime registry.
+Do not add a preparation pass to implement runtime lifetime behavior. No new borrow
+checker, scheduler, locking policy or native threading machinery is authorized.
+The current PHP compiler's ordinary parent references and GC policy are not migrated
+as part of the native source-language proof.
+
+#### Verification checklist — cpp/php/js on Clang and GCC
+
+Native AST lifetime proof:
+
+- [x] Construct the small tree, attach weak parent links, lock and walk parents while
+      holding the root. Verify root absence, original allocation identity, inherited
+      field access and a base-typed operation. No payload copy on weak construction/lock.
+- [x] Keep a child after releasing its root. Verify the parent payload expires, the
+      child survives, and locking the expired link returns empty without invalid access.
+- [x] Retain a successful parent lock across release of other owners; it keeps that
+      parent alive until released. Separately prove root retention keeps the full walk
+      valid, including source context.
+- [x] Reuse one source root across simulated generations while replacing another.
+      Check unchanged node/parent identity, distinct edited trees and a retained old
+      reader's valid parent walk. Release that reader and verify old-tree cleanup.
+- [x] Drop a partially constructed candidate without publishing it; the retained
+      current roots remain usable. Exercise success and failure cleanup through existing
+      supported mechanisms/native harnesses without introducing source exception syntax.
+- [x] Verify weak expiry, final payload destruction and eventual allocation release
+      after weak observers disappear. Run repeated replacement/release cycles with native
+      memory checks; no leaks, double destruction or use-after-free.
+
+Actual compiler incremental verification for the fixture:
+
+- [x] No-op builds reuse preparation, emitted source and native objects. An unrelated
+      source stays reused through affecting edits; preserve the documented limitation
+      that unchanged C++ does not imply zero reanalysis after nominal replacement.
+- [x] Change a method body and a node layout separately. Verify body-only reuse where
+      supported and native depfile rebuilds for layout changes, including unchanged
+      emitted consumers. Compare generated artifacts and native behavior with fresh builds.
+- [x] Delete/restore a required node/source declaration, repeat invalid compilation,
+      and recover. Preserve pending work, current valid caches and existing publication
+      guarantees; compare diagnostics and recovered output with fresh compilation.
+- [x] Run existing weak/shared ownership, generation-retirement and failure-cleanup
+      regressions. Where the fixture demands existing shared-view adapters, check cached
+      demand, retirement/restoration and manifest inventory through existing test helpers.
+- [x] Review retained fields and ownership boundaries before declaring completion.
+      Functional/native checks prove the bounded lifetime contract, not native parallel
+      safety, full compiler translation or a preparation-speed improvement.
+
+Deferred: raw/non-owning borrows, stored or returned borrow semantics, unique ownership,
+weak upcasts/downcasts, arenas and generation-wide allocators, per-node lifetime tags,
+write-once attachment enforcement, settling ranges, traits/general composition, historical
+semantic snapshots, native concurrency and performance-driven replacement of weak links.
+Interface inheritance, struct implementers and class finality remain outside this slice.
+
+Evidence: [weak AST parent lifetime proof](../../compiler/docs/ast_parent_lifetimes.md)
+and ast_parent_lifetime_native.py --memcheck. Existing weak fields and locking admitted
+the fixture without compiler/runtime changes, new AST facts or preparation passes.
+The source fixture owns construction/attachment and base-typed operations; a native
+harness models retained readers, source-slot replacement and candidate failure. These
+simulated generations are explicitly separate from the resident compiler's real
+incremental source-edit checks. Neither is a full native compiler translation.
+
+All three flavors pass Clang/GCC execution and Valgrind. Real incremental checks cover
+no-op reuse, body-only edits, layout-dependent native rebuilding with unchanged emitted
+callers, required-source deletion, repeated invalid builds and fresh-equivalent recovery.
+Existing weak/shared, inline-adapter, retained-generation and failure-cleanup suites
+cover the reused ownership, adapter retirement and cleanup boundaries. Production PHP
+parent references and collection policy remain unchanged. The older weak regression
+now expects the current related-shared-types diagnostic for an invalid comparison;
+retained and fresh compilation still reject it identically. Milestone 3.6 staged attachment
+and range settling remain pending; this proof does not enforce single attachment.
+
+Review verification closes both lifetime coverage gaps:
+
+- [x] Recompile and execute the complete parent-locking, expiry and retained-root probe
+      after adding/removing a node layout field and after required-source deletion and
+      recovery. Run these gates across cpp/php/js on Clang/GCC, including Valgrind.
+- [x] Attach children to an unpublished candidate using the source attachment helper.
+      Prove that a retained child locks the live candidate before failure and sees an
+      expired parent afterward, while the child survives and both current/reused root
+      identities and behavior stay unchanged. Release the child and verify its expiry.
+
+Only the test fixture and documentation change for these review fixes; no compiler,
+runtime ownership, retained structures or deferred features are added.
 
 ## 4. Failures and cleanup — failed preparation and retry
 
