@@ -604,7 +604,13 @@ CPP;
 				if ($method !== null) {
 					$name = self::function_name($method);
 					$declarations[$name] = $method;
-					$next = $name . '(iteration_source, ' . $output . ')';
+					if ($key === null && $type->iteration_key_type() !== null) {
+						$key = 'iteration_key';
+						$key_type = $type->iteration_key_type();
+						foreach ($key_type->cpp_headers() as $header) $required_headers[$header] = true;
+						$lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
+					}
+					$next = $name . '(iteration_source, ' . $output . ($key === null ? '' : ', ' . $key) . ')';
 				} else $next = $type->lower_cpp_iteration_next('iteration_source', $output, $key);
 				$lines[] = "\twhile (" . $next . ') {';
 				if (!$direct) {

@@ -242,15 +242,18 @@ The active v0.2 PHP compiler recognizes metadata-defined `Iterator<T>` on struct
 using `implements Iterator<T>` in all three flavors. This is a compile-time
 capability, separate from the general runtime-interface rules below: it adds no
 virtual dispatch, interface object or interface-typed storage. The bounded slice
-requires a local public nonstatic `next(T &value): bool`, with one required writable
-reference output and exact canonical parameter/result types. Existing parameter
+requires a local public nonstatic `next(T &value): bool`. The keyed form
+`Iterator<T,K>` requires `next(T &value, K &key): bool`, in value-first order.
+Outputs are required writable references with exact canonical parameter/result types. Existing parameter
 admission restrictions still apply. Copies retain ordinary struct semantics;
 foreach borrows the selected instance and resumes its current progress.
 
 True produces one value; false ends the loop; exceptions propagate. The output is
 not a promised incoming-state channel. Existing loop destinations are updated only
-after a successful advance. The producer needs no known length or end. Keyed custom
-traversal, inherited/multiple capability contracts and yield remain deferred.
+after a successful advance. The producer needs no known length or end. A keyed
+iterator also supports value-only foreach; its key is produced into discarded storage.
+Keys need not be unique or monotonic and no lookup/index is built from them.
+Inherited/multiple capability contracts and yield remain deferred.
 See [implementation and proofs](../v0.2/compiler/docs/iterator.md).
 
 ## Interface implementation

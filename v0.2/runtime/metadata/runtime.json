@@ -797,7 +797,7 @@
   "compiler": {
     "interfaces": {
       "iterator": {
-        "name": "Iterator", "type_parameters": 1,
+        "name": "Iterator", "type_parameters": 1, "optional_key_parameter": { "type_argument": 1, "mode": "reference" },
         "method": "next", "result": "bool_t",
         "parameter": { "type_argument": 0, "mode": "reference" },
         "visibility": "public", "receiver": "mutable_reference"

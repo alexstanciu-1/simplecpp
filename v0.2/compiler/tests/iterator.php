@@ -83,6 +83,37 @@ foreach (flavor::cases() as $flavor) {
 	verify(serialize($entry) === $before, 'Lowering changed preparation');
 	verify(!str_contains($cpp, 'iteration_limit') && !str_contains($cpp, '[&]'), 'Custom traversal acquired collection bounds or a lambda');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('0123012'), 'compiler_ms' => (hrtime(true) - $start) / 1e6];
+	$key_signature = match ($flavor) {
+		flavor::php => 'public function next(int &$value,string &$key):bool',
+		flavor::cpp => 'bool next(int &value,string &key)',
+		flavor::js => 'next(&value:int,&key:string):bool',
+	};
+	$key_model = str_replace(['Iterator<int>', $signature, 'return true;'],
+		['Iterator<int,string>', $key_signature, $v('key') . '="key";return true;'], $model);
+	$key_loop = 'foreach (' . $v('cursor') . ' as ' . $v('key') . '=>' . $v('value') . ') {'
+		. 'echo ' . $v('key') . ',":" ,' . $v('value') . ';}';
+	$integer_keys = str_replace(['Iterator<int,string>', $key_signature, $v('key') . '="key";'],
+		['Iterator<int,int>', str_replace('string', 'int', $key_signature), $v('key') . '=' . $field . '-2;'], $key_model);
+	foreach (['keyed' => [$key_model, $decl('cursor') . $key_loop, 'key:0key:1key:2'],
+		'key_discard' => [$key_model, $main, '0123012'],
+		'key_shared' => [$key_model, match ($flavor) {
+			flavor::php => '$cursor=new Counter();', flavor::cpp => 'shared<Counter> cursor=new Counter();',
+			flavor::js => 'let cursor:shared<Counter> = new Counter();',
+		} . str_replace('echo ', $v('cursor') . '=null;echo ', $key_loop), 'key:0key:1key:2'],
+		'key_false' => [str_replace($body, $v('value') . '=99;' . $v('key') . '="ignored";return false;',
+			str_replace(['Iterator<int>', $signature], ['Iterator<int,string>', $key_signature], $model)),
+			$decl('cursor') . match ($flavor) {
+				flavor::php => '$value int=77;', flavor::cpp => 'int value=77;', flavor::js => 'let value:int=77;',
+			} . $key_loop . $echo, '77'],
+	] as $case => [$source, $application, $expected]) {
+		$case_start = hrtime(true);
+		$entry = $prepare($source . $application . ($case === 'key_discard' ? '' : 'return 8;'));
+		$fixtures[$flavor->name . '_' . $case] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex($expected),
+			'compiler_ms' => (hrtime(true) - $case_start) / 1e6];
+	}
+	rejects(fn() => $prepare(str_replace('Iterator<int,string>', 'Iterator<int,string,int>', $key_model) . $main), 'Iterator<T>');
+	rejects(fn() => $prepare(str_replace('Iterator<int,string>', 'Iterator<int,int>', $key_model) . $main), 'Iterator requires');
+	rejects(fn() => $prepare(str_replace('&' . $v('key'), $v('key'), $key_model) . $main), 'Iterator requires');
 	$string_model = str_replace(['Iterator<int>', $signature, $v('value') . '=' . $field . ';'],
 		['Iterator<string>', str_replace('int', 'string', $signature), $v('value') . '="payload";'], $model);
 	$string_entry = $prepare($string_model . $decl('cursor') . $loop('cursor', $echo) . 'return 8;');
@@ -112,7 +143,7 @@ foreach (flavor::cases() as $flavor) {
 	$entry = $prepare($model . $decl('cursor') . $loop('cursor', $echo . 'if (' . $v('value') . '<2) {continue;}') . 'return 8;');
 	$fixtures[$flavor->name . '_continue'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex('012')];
 	rejects(fn() => $prepare(str_replace(' implements Iterator<int>', '', $model) . $main), 'iterable');
-	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<int,string>', $model) . $main), 'Iterator<T>');
+	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<int,string>', $model) . $main), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<string>', $model) . $main), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace('&', '', $model) . $main), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace('next(', 'wrong(', $model) . $main), 'Iterator requires');
@@ -136,10 +167,10 @@ foreach (flavor::cases() as $flavor) {
 		file_put_contents($directory . '/main.' . $flavor->name, $main);
 		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => ['main.' . $flavor->name, basename($provider)]]));
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp = time(); $caller = null;
-		foreach ([$model, str_replace('>=3', '>=2', $model), $bad, str_replace(' implements Iterator<int>', '', $model), '', $model] as $step => $text) {
+		foreach ([$model, str_replace('>=3', '>=2', $model), $bad, str_replace(' implements Iterator<int>', '', $model), '', $model, $key_model, str_replace('Iterator<int,string>', 'Iterator<int,int>', $key_model), $key_model, $model] as $step => $text) {
 			file_put_contents($provider, $text); touch($provider, ++$stamp);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
-			if ($step >= 2 && $step <= 4) {
+			if (($step >= 2 && $step <= 4) || $step === 7) {
 				rejects(fn() => $project->run(), ''); rejects(fn() => $project->run(), ''); rejects(fn() => $fresh->run(), ''); continue;
 			}
 			$project->run(); $fresh->run(); $caller ??= $project->session()->entry->entry->ast;
@@ -147,6 +178,23 @@ foreach (flavor::cases() as $flavor) {
 			$files = artifacts($directory . '/out'); verify($files === artifacts($directory . '/fresh'), 'Fresh build differs');
 			$fixtures[$flavor->name . '_edit_' . $step] = ['files' => $files, 'stdout_hex' => bin2hex($step === 1 ? '01201' : '0123012')];
 			verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
+		}
+		$key_main = $decl('cursor') . $key_loop . 'return 8;';
+		file_put_contents($directory . '/main.' . $flavor->name, $key_main);
+		touch($directory . '/main.' . $flavor->name, ++$stamp); $caller = null;
+		foreach ([$key_model, str_replace('"key"', '"changed"', $key_model), $model, '', $key_model, $integer_keys, $key_model] as $step => $text) {
+			file_put_contents($provider, $text); touch($provider, ++$stamp);
+			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
+			if ($step === 2 || $step === 3) {
+				rejects(fn() => $project->run(), ''); rejects(fn() => $project->run(), ''); rejects(fn() => $fresh->run(), ''); continue;
+			}
+			$project->run(); $fresh->run(); $caller ??= $project->session()->entry->entry->ast;
+			verify($caller === $project->session()->entry->entry->ast, 'Keyed caller reparsed');
+			$files = artifacts($directory . '/out'); verify($files === artifacts($directory . '/fresh'), 'Keyed fresh build differs');
+			$prefix = $step === 1 ? 'changed' : 'key';
+			$fixtures[$flavor->name . '_key_edit_' . $step] = ['files' => $files,
+				'stdout_hex' => bin2hex($step === 5 ? '-1:00:11:2' : $prefix . ':0' . $prefix . ':1' . $prefix . ':2')];
+			verify($project->run()['preparation']['prepared'] === 0, 'Keyed no-op prepared bodies');
 		}
 	} finally {
 		remove_tree($directory);

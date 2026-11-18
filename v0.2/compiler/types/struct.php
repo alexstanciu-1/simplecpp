@@ -136,13 +136,15 @@ final class struct_type_definition extends type_definition implements dependency
 		$written = $this->declaration->interface_reference;
 		if ($written === null || $this->iterator !== null) return;
 		$argument = $written->first_child;
-		if ($written->name !== Iterator_Contract::NAME || $argument === null || $argument->next_sibling !== null) {
-			throw new diagnostic($written->source(), $written->byte_start(), 'Expected Iterator<T> contract');
+		$key_argument = $argument?->next_sibling;
+		if ($written->name !== Iterator_Contract::NAME || $argument === null || $key_argument?->next_sibling !== null) {
+			throw new diagnostic($written->source(), $written->byte_start(), 'Expected Iterator<T> or Iterator<T,K> contract');
 		}
 		$element = Type_Resolution::named($argument, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+		$key = $key_argument === null ? null : Type_Resolution::named($key_argument, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 		$method = $this->declaration->methods[Iterator_Contract::METHOD] ?? null;
-		if ($element === null || $method === null || !Iterator_Contract::validate($method, $element)) {
-			throw new diagnostic($written->source(), $written->byte_start(), 'Iterator requires public instance ' . Iterator_Contract::METHOD . '(T &value): bool');
+		if ($element === null || ($key_argument !== null && $key === null) || $method === null || !Iterator_Contract::validate($method, $element, $key)) {
+			throw new diagnostic($written->source(), $written->byte_start(), 'Iterator requires public instance ' . Iterator_Contract::METHOD . '(T &value' . ($key_argument === null ? '' : ', K &key') . '): bool');
 		}
 		$this->dependencies?->watch($symbols->entry($method->symbol_key()), $this);
 		$this->iterator = $method;
@@ -165,7 +167,7 @@ final class struct_type_definition extends type_definition implements dependency
 
 	public function iteration_key_type(): ?type_definition
 	{
-		return null;
+		return ($this->iterator->parameters[1] ?? null)?->type_def();
 	}
 
 	public function lower_cpp_iteration_state(string $receiver, bool $keyed): string

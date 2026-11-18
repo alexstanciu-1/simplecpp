@@ -3,8 +3,10 @@
 Doc Status: supporting
 
 `runtime/metadata/runtime.json` owns `compiler.interfaces.iterator`: the source name,
-method name, one type argument, public mutable instance receiver, bool result and one
-required exact-type reference output. The generator validates this bounded contract
+method name, one required type argument and an optional key argument, public mutable
+instance receiver, bool result and required exact-type reference outputs. The metadata
+`optional_key_parameter` maps type argument 1 to the second writable output.
+The generator validates this bounded contract
 and emits `types/interfaces.php`. Names are emitted directly; no descriptor parsing,
 method-name search or interface allocation occurs while preparing a loop.
 
@@ -13,7 +15,7 @@ All flavors accept `struct Counter implements Iterator<int>`. PHP uses
 uses `next(&value:int):bool`. This is Simple C++'s compiler-known protocol, not PHP's
 standard-library Iterator signature. `Iterator` is reserved as a source type name.
 The current contract requires a locally declared method. General interface declarations,
-interface-typed storage, multiple/inherited contracts, keyed traversal and yield remain
+interface-typed storage, multiple/inherited contracts and yield remain
 deferred; this feature does not enable virtual dispatch.
 
 ```php
@@ -29,6 +31,29 @@ struct Counter implements Iterator<int> {
 $cursor Counter;
 foreach ($cursor as $value) { echo $value; }
 ```
+
+The keyed form is `Iterator<Value,Key>` with value-first outputs:
+
+```php
+struct Records implements Iterator<string,int> {
+    public int $position = 0;
+    public function next(string &$value, int &$key): bool {
+        if ($this->position >= 3) { return false; }
+        $value = "record";
+        $key = $this->position;
+        $this->position++;
+        return true;
+    }
+}
+$records Records;
+foreach ($records as $key => $value) { echo $key, ":", $value; }
+```
+
+Value-only foreach also accepts keyed iterators and provides temporary key storage.
+The key is a fresh loop-local binding; only successful calls expose a key/value pair
+inside the body. Keys are produced values, without uniqueness, ordering or lookup
+requirements. No new AST fields, key-type cache or watcher index is retained: the
+existing type-reference sibling and method parameter supply the optional key.
 
 An iterator need not know an end. Each call produces an item and returns true,
 returns false to finish this traversal, or throws. The output parameter is for
@@ -73,7 +98,7 @@ write-back moves the temporary instead of adding an unnecessary value copy.
 `tests/iterator.php` and `iterator_native.py` cover all flavors: copied and resumed
 state, exhaustion, continue, string values, body-fed producers, shared-owner release,
 and next writing output before false. Invalid modes/types/arity/access/static/return
-contracts and keyed loops reject. Incremental edits, marker removal, deletion,
+contracts reject; keyed loops require the second type argument and output. Incremental edits, marker removal, deletion,
 repeated failures and recovery match fresh native artifacts while preserving caller
 ASTs. `tools/api_generator/tests/iterator_contract.py` verifies renamed metadata
 changes only the generated contract file, and malformed contracts reject.
@@ -96,3 +121,26 @@ incremental/fresh checks took 178.73 ms.
 | JS | 1.469 | 178.088 | 8.298 | 8.273 | 61 |
 
 Local artifacts and traces: `v0.2/build/iterator-proof/` and `v0.2/build/iterator-builtin-regression/`.
+
+### Keyed contract verification
+
+The keyed extension passed 63 native fixtures across all three flavors, including
+value-only consumption, duplicate string keys, negative integer keys, shared receiver
+release, false-output protection, copy/resume and cross-file incremental recovery.
+Contract arity changes and successful string-to-int key changes reuse the caller AST;
+invalid contracts, marker deletion and restoration agree with fresh compilation.
+No-op runs prepare zero bodies. Existing built-in foreach and metadata checks pass.
+No retained fields or indexes were added by this extension.
+
+Single keyed-fixture runs below use the same native build settings described above.
+PHP timings are from a separate compiler-only fixture run; the native test suite's
+PHP fixture generation (including all incremental/fresh checks) took 393.26 ms.
+These are observations under current machine load, not a before/after comparison.
+
+| Flavor | PHP compiler ms | Native wall ms | Frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| C++ | 1.483 | 213.885 | 11.850 | 11.984 | 71 |
+| PHP | 0.820 | 216.120 | 11.210 | 11.340 | 71 |
+| JS | 1.535 | 309.702 | 18.021 | 20.277 | 97 |
+
+Native artifacts/traces: `v0.2/build/keyed-iterator-final/`.

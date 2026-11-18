@@ -35,6 +35,10 @@ def proof(work):
         bad = copy.deepcopy(metadata)
         bad['compiler']['interfaces']['iterator'][field] = value
         emit(bad, False)
+    for field, value in [('type_argument', 0), ('mode', 'value')]:
+        bad = copy.deepcopy(metadata)
+        bad['compiler']['interfaces']['iterator']['optional_key_parameter'][field] = value
+        emit(bad, False)
     print('Iterator metadata generation and rejection passed')
 
 

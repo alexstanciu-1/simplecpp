@@ -7,8 +7,8 @@ the [native protocol](../../specs/collection_traversal.md) owns storage safety.
 
 PHP uses `foreach ($items as $key => $value) { ... }`; C++ and JS use
 `foreach (items as key => value) { ... }`. The key is optional. Braces are required.
-Reference bindings, destructuring, nullable unwrapping, keyed custom traversal and yield
-are deferred. Value-only [Iterator<T> structs](iterator.md) are supported. Scalar/null
+Reference bindings, destructuring, nullable unwrapping and yield are deferred.
+[Iterator<T> and Iterator<T,K> structs](iterator.md) support custom traversal. Scalar/null
 boxed sources throw, including on a later advance after replacement. Statically noniterable sources are preparation errors.
 
 ## Owners and facts
