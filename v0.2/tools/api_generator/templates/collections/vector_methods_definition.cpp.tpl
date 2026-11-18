@@ -1,14 +1,20 @@
-@count@ @n@::size() const { return @count@{detail::checked_integer_cast<long long>(detail::vector_access::read(*this).size())}; }
-bool_t @n@::empty() const noexcept { return bool_t{detail::vector_access::read(*this).empty()}; }
-void @n@::clear() noexcept { if (storage_) storage_->values.clear(); }
-void @n@::append(@e@ value) { if (!storage_) storage_ = new storage; storage_->values.push_back(std::move(value)); }
-@e@ @n@::at(@count@ index) const { const auto& values = detail::vector_access::read(*this); return values[detail::sequence_index(index, values.size())]; }
-void @n@::set(@count@ index, @e@ value) { const auto offset = detail::sequence_index(index, detail::vector_access::read(*this).size()); storage_->values[offset] = std::move(value); }
+@count@ @n@::size() const { return static_cast<@count@>(detail::vector_access::read(*this).size()); }
+bool_t @n@::empty() const noexcept { return detail::vector_access::read(*this).empty(); }
+void @n@::clear() noexcept { if (storage_) storage_->clear(); }
+void @n@::append(@e@ value) {
+    if (storage_) { storage_->append(static_cast<@e@&&>(value)); return; }
+    auto* fresh = new storage;
+    try { fresh->append(static_cast<@e@&&>(value)); }
+    catch (...) { delete fresh; throw; }
+    storage_ = fresh;
+}
+@e@ @n@::at(@count@ index) const { const auto& values = detail::vector_access::read(*this); return values[detail::vector_index(index, values.size())]; }
+void @n@::set(@count@ index, @e@ value) { const auto offset = detail::vector_index(index, detail::vector_access::read(*this).size()); (*storage_)[offset] = static_cast<@e@&&>(value); }
 bool_t @n@::remove(@count@ index) {
-    if (index < 0 || !storage_ || static_cast<unsigned long long>(index) >= storage_->values.size()) return false;
-    storage_->values.erase(storage_->values.begin() + index);
+    if (!has(index)) return false;
+    storage_->remove(static_cast<std::size_t>(index));
     return true;
 }
 bool_t @n@::has(@count@ index) const noexcept {
-    return index >= 0 && storage_ && static_cast<unsigned long long>(index) < storage_->values.size();
+    return index >= 0 && storage_ && static_cast<unsigned long long>(index) < storage_->size();
 }

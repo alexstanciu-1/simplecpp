@@ -1,0 +1,11 @@
+{
+  "parameters": {
+    "e": {"alias": "element_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]}
+  },
+  "fragments": {
+    "storage": ["collections/vector_storage"],
+    "access": ["collections/vector_access"],
+    "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration"],
+    "definition": ["collections/vector_lifecycle", "collections/vector_methods_definition", "collections/vector_iteration"]
+  }
+}

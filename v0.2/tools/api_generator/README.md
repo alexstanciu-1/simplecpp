@@ -270,6 +270,10 @@ interpretation or provider-graph traversal during application compilation.
 
 ### Vector specialization exports
 
+Concrete storage uses the reusable [template recipe engine](concrete_templates.md).
+Vector is the first client; the engine accepts resolved type arguments and renders
+named fragments without introducing C++ templates or frontend type resolution.
+
 Validated vector publication requests register concrete type exports in the runtime
 plan. `vector.provider` selects placement; the shared provider finalizer and assembler
 own dependency validation and includes. An optional publication header must agree.

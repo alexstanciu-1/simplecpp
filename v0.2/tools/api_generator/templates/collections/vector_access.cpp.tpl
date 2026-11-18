@@ -1,1 +1,1 @@
-    static const std::vector<@e@>& read(const @n@& value) noexcept { static const std::vector<@e@> empty; return value.storage_ ? value.storage_->values : empty; }
+    static const @n@::storage& read(const @n@& value) noexcept { static const @n@::storage empty; return value.storage_ ? *value.storage_ : empty; }

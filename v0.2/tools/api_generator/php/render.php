@@ -6,6 +6,7 @@ require_once __DIR__ . '/render_boxed.php';
 require_once __DIR__ . '/render_json.php';
 require_once __DIR__ . '/render_conversions.php';
 require_once __DIR__ . '/scalar_abi.php';
+require_once __DIR__ . '/concrete.php';
 
 const BANNER = "// Generated from reviewed runtime metadata. Do not edit.\n";
 const NATIVES = ['int', 'unsigned int', 'long', 'unsigned long', 'long long', 'unsigned long long', 'short', 'unsigned short', 'bool', 'char', 'signed char', 'unsigned char', 'wchar_t', 'char8_t', 'char16_t', 'char32_t', 'float', 'double', 'long double'];
@@ -80,7 +81,7 @@ function render(array $plan): array {
         $d .= includeHeader($plan['string']['header']) . includeHeader('sequence_semantics.hpp');
     }
     if(isset($plan['vectors_header'])) {
-        $d .= includeHeader($plan['vectors_header']) . includeHeader('sequence_semantics.hpp') . "#include <vector>\n#include <algorithm>\n";
+        $d .= includeHeader($plan['vectors_header']) . includeHeader('vector_buffer.hpp');
     }
     if(isset($plan['carriers_header'])) {
         $d .= includeHeader($plan['carriers_header']) . includeHeader('carrier_semantics.hpp');

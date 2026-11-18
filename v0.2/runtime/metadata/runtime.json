@@ -658,7 +658,7 @@
   "vector": {
     "provider": "core.vectors",
     "source_type": "vector",
-    "storage": "private_std_vector",
+    "storage": "concrete_buffer",
     "count_type": "int64",
     "read": "value_copy",
     "mutation": "explicit_set",

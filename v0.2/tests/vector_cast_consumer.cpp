@@ -22,6 +22,10 @@ template<class V, class T> concept const_index = requires(const V& value, T inde
 static_assert(native_value<vector_int32> && native_value<vector_float64>);
 static_assert(!const_index<vector_int64, double> && !const_index<vector_float64, bool>);
 int main() {
+    vector_uint8 bytes; bytes.append(255);
+    require(bytes.at(0) == 255);
+    fails<std::out_of_range>([&] { bytes.append(256); });
+    require(bytes.size() == 1);
     vector_float64 native_floats;
     native_floats.append(7); native_floats.set(0, 9);
     require(native_floats.at(0) == 9.0);

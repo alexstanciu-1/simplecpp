@@ -351,7 +351,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         return;
     }
     fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations']);
-    literals($m, ['source_type' => 'vector', 'storage' => 'private_std_vector', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
+    literals($m, ['source_type' => 'vector', 'storage' => 'concrete_buffer', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'Vector count requires signed integer type');
     $families = names(at($m, 'element_families'), 'Duplicate vector element family');
@@ -445,7 +445,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         foreach($values as $value) {
             $add('append', 'void', [$value], true, $value === $element ? 'move_value':'explicit_element_then_append');
         }
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'private_std_vector', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan()];
+        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan()];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);

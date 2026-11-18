@@ -2,9 +2,11 @@ file(REMOVE_RECURSE "${WORK}")
 file(MAKE_DIRECTORY "${WORK}")
 file(READ "${PUBLICATION}" publication)
 string(JSON publication REMOVE "${publication}" carriers)
+string(JSON publication SET "${publication}" types 2 "\"uint8\"")
 # Mix strict core-only members with int32 alias deduplication and floating native adapters.
 # Additional element families exercise explicit conversions in both directions.
 string(JSON publication SET "${publication}" vectors specializations [=[[
+  {"element":"uint8","native_index":true,"native_value":"int","operations":[],"casts_from":[]},
   {"element":"int32","native_index":true,"native_value":"int","operations":["equal","not_equal"],"casts_from":["vector_int64","vector_string"]},
   {"element":"int64","native_index":false,"native_value":"none","operations":["equal","not_equal"],"casts_from":["vector_int32","vector_string"]},
   {"element":"string","native_index":false,"native_value":"none","operations":["equal","not_equal"],"casts_from":["vector_int64","vector_float64","vector_bool_t"]},

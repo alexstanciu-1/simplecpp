@@ -336,23 +336,26 @@ function renderString(array $plan): array {
 function renderVectors(array $plan): array {
     $h = "namespace scpp {\nnamespace detail { struct vector_access; }\n";
     $d = '';
+    $instances = [];
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
-        $d .= template('collections/vector_storage', ['n' => $v['name'], 'e' => $v['element']]);
+        $element = new RuntimeConcreteType($plan, $v['element']);
+        $instances[$v['name']] = concreteTemplate('collections/vector', ['e' => $element],
+            ['n' => $v['name'], 'count' => $v['count_type']] + $v['traversal'], 'scpp');
+        $d .= $instances[$v['name']]['storage'];
     }
     $d .= "namespace detail { struct vector_access {\n";
     foreach($plan['vectors'] as $v) {
-        $d .= template('collections/vector_access', ['n' => $v['name'], 'e' => $v['element']]);
+        $d .= $instances[$v['name']]['access'];
     }
     $d .= "}; }\n";
     foreach($plan['vectors'] as $v) {
         $n = $v['name'];
         $e = $v['element'];
         $count = $v['count_type'];
-        [$lh, $ld] = lifecycle($n);
         $vars = compact('n', 'e', 'count') + $v['traversal'];
-        $h .= "class $n final {\npublic:\n$lh";
-        $d .= $ld;
+        $h .= "class $n final {\npublic:\n" . $instances[$n]['declaration'];
+        $d .= $instances[$n]['definition'];
         foreach($v['casts_from'] as $c) {
             $src = $c['source'];
             $h .= "    explicit $n(const $src&);\n";
@@ -369,20 +372,18 @@ function renderVectors(array $plan): array {
             if ($e === 'string') $expression = "string{static_cast<$sourceElement>(item)}";
             $d .= template('collections/vector_cast', $vars + ['src' => $src, 'conversion' => $expression]);
         }
-        $h .= template('collections/vector_methods_declaration', $vars);
-        $d .= template('collections/vector_methods_definition', $vars) . template('collections/vector_iteration', $vars);
         $indices = [$count];
         $values = [$e];
         if ($v['native_index'] && scalarNativeIdentity($plan, $count) !== 'int') {
             $indices[] = 'int';
             $h .= "    $e at(int index) const;\n";
-            $d .= "$e $n::at(int index) const { return at(detail::checked_integer_cast<$count>(index)); }\n";
+            $d .= "$e $n::at(int index) const { return at(static_cast<$count>(index)); }\n";
         }
         $native = $v['native_value'];
         if ($native !== '' && scalarNativeIdentity($plan, $e) !== $native) {
             $values[] = $native;
             $h .= "    void append($native value);\n";
-            $conversion = nativeScalarConversion($plan, $e, $native, 'value');
+            $conversion = concreteNativeScalarConversion($plan, $e, $native, 'value');
             $d .= "void $n::append($native value) { append($conversion); }\n";
         }
         $sets = [];
@@ -390,8 +391,8 @@ function renderVectors(array $plan): array {
             $sets[] = [$index, $value];
             if ($index === $count && $value === $e) continue;
             $h .= "    void set($index index, $value value);\n";
-            $a = $index === $count ? 'index' : "detail::checked_integer_cast<$count>(index)";
-            $b = $value === $e ? 'std::move(value)' : nativeScalarConversion($plan, $e, $value, 'value');
+            $a = $index === $count ? 'index' : "static_cast<$count>(index)";
+            $b = $value === $e ? "static_cast<$e&&>(value)" : concreteNativeScalarConversion($plan, $e, $value, 'value');
             $d .= "void $n::set($index index, $value value) { set($a, $b); }\n";
         }
         $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
@@ -403,7 +404,7 @@ function renderVectors(array $plan): array {
         foreach($v['operations'] as $op) {
             $sig = "bool_t operator{$op['symbol']}(const $n& left, const $n& right)";
             $h .= "$sig;\n";
-            $d .= template('collections/vector_comparison', $vars + ['sig' => $sig, 'negate' => $op['operation'] === 'equal' ? '':'!']);
+            $d .= template('collections/vector_comparison', $vars + ['sig' => $sig, 'equal' => $op['operation'] === 'equal', 'different' => $op['operation'] !== 'equal']);
         }
     }
     foreach ($plan['string_functions'] ?? [] as $binding) {

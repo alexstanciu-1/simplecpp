@@ -28,7 +28,8 @@ set(php_generator_source ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/generat
 file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/php/*.php
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl
-  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl)
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.concrete.json)
 list(APPEND generator_sources ${php_generator_source})
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
 configure_file(tools/api_generator/tooling.py.in ${api_tooling} @ONLY)
@@ -545,6 +546,7 @@ if(BUILD_TESTING)
   add_test(NAME carrier_consumer COMMAND carrier_consumer_test)
   add_test(NAME runtime_demo COMMAND scpp_runtime_demo)
   set_tests_properties(runtime_demo PROPERTIES PASS_REGULAR_EXPRESSION "Ada: 21; ratio=7")
+  add_test(NAME concrete_templates COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/concrete.py)
   add_executable(vector_consumer_test tests/vector_consumer.cpp)
   target_link_libraries(vector_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME vector_consumer COMMAND vector_consumer_test)

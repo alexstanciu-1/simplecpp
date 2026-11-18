@@ -1,0 +1,1 @@
+{"parameters":{"left":{"alias":"left_type","requires":["copy_constructible"]},"right":{"alias":"right_type","requires":["nothrow_move_constructible"]}},"fragments":{"declaration":["../tests/fixtures/pair"]}}
