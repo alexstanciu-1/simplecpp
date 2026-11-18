@@ -14,6 +14,11 @@ final class @class@ extends carrier_type_definition
 		return @empty@;
 	}
 
+	public function supports_coalescing(): bool
+	{
+		return @coalesce@;
+	}
+
 	public function implicit_extraction(): bool
 	{
 		return @implicit@;

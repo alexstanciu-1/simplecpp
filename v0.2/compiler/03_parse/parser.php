@@ -652,6 +652,7 @@ final class Parser
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			$operator = match ($kind) {
 				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
+				token_kind::coalesce => binary_operator::coalesce,
 				token_kind::logical_and => binary_operator::logical_and,
 				token_kind::logical_or => binary_operator::logical_or,
 				token_kind::plus => binary_operator::add,
@@ -687,7 +688,7 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
-			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + ($operator === binary_operator::power ? 0 : 1)));
+			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1)));
 		}
 		return $left;
 	}

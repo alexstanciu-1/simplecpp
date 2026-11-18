@@ -1,6 +1,22 @@
 # Conditional / Coalesce Runtime Matrix
 Doc Status: normative
 
+## v0.2 conditional nullable-local assignment — 2026-11-18
+
+Statement-form `$n ??= fallback;` accepts an existing declared local whose type
+is a published runtime nullable carrier. It tests presence once. A present value,
+including zero, false or empty string, leaves storage unchanged and skips fallback.
+When absent, it evaluates fallback once and applies ordinary assignment conversion
+before storing. Both the fallback and its conversion are checked during preparation.
+An explicit checked cast stays inside the selected branch.
+
+Null and same-carrier fallbacks retain ordinary assignment behavior; they can leave
+the destination empty. There is no new implicit float-to-int conversion. A failed
+fallback or conversion performs no final store; any earlier fallback effects remain.
+If fallback modifies the same local, successful completion still stores its result.
+This statement does not yield a value. Parameters, globals, properties, indexed
+places, for-header writes and application/shared carriers remain outside this slice.
+
 ## v0.2 homogeneous scalar wrapper coalescing — 2026-10-20
 
 For canonical `T` equal to `int`, `float`, `bool` or `string`, homogeneous pairs

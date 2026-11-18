@@ -4,7 +4,8 @@ Doc Status: supporting
 
 Vector and hash expose `clear()`, `remove(key)` and `has(key)`. PHP and C++ use `->`;
 JS uses `.`. This is a Simple C++ API, not a promise of PHP/JS standard-library compatibility.
-There is no new `list_clear` or free-function synonym.
+There is no new `list_clear`. Hash key presence also has the free spelling
+`hash_contains(collection, key)` described below.
 
 ```text
 // PHP
@@ -162,4 +163,59 @@ and generated programs: `/tmp/scpp-collection-has-proof/` (temporary).
 Mixed/dynamic expose has/remove through the same runtime receiver-call binder. Their
 generated overload set selects exact int64/string key type at operand one and calls
 normalized source bindings. Count/empty use the existing cardinality interface. See
-[boxed coverage and semantics](boxed_collection_coverage.md); clear remains separate.
+[boxed coverage and semantics](boxed_collection_coverage.md).
+
+## Shared hash key-presence capability
+
+`key_presence_type` exposes an immutable `runtime_function` for `hash_contains`.
+The hash generator validates the published `has(const Key&) -> bool_t` signature,
+const receiver and provider, then constructs one binding per canonical runtime or
+application hash type. Its references to canonical types are non-owning in the native
+model. Neither AST fields nor per-call signature objects are added.
+
+Preparation selects this capability after ordinary function/import resolution. It
+passes the already-prepared receiver to the existing runtime-call checker, which
+validates exact key types. Lowering uses the common native-member path: operand zero
+is the receiver whether source syntax is a method or a free call. Key arguments reuse
+exact-argument lowering; existing shared-owner retention protects field receivers.
+
+The immutable runtime signature classes now live in `types/runtime.php`, separate from
+AST declarations, so standalone generator/provider consumers can construct bindings.
+No new runtime API or nullable application carrier is introduced. Existing member
+syntax retains its current admission; this slice adds the free helper for both hash
+families, not general application collection methods.
+
+`hash_contains.php` checks canonical binding reuse, const modes, preparation visits,
+emission purity and reset/reprepare equivalence. `hash_contains_native.py` covers
+runtime/application hashes and both key types, missing/present zero/empty values,
+NUL/numeric-looking keys, field and temporary receivers, owner replacement and expiry,
+empty-owner/key failures, native-inserted empty shared payloads, function precedence,
+imports, and incremental body/layout/deletion/error recovery in all three flavors on
+Clang/GCC. The hash provider fixture also checks the binding's relocated header and
+publication retirement/restoration. These are correctness proofs, not performance claims.
+
+## Copied optional lookup
+
+`hash_find(collection, key)` selects `key_lookup_type::lookup_function()` through the
+same preparation path as key presence. Only published runtime hashes implement this
+capability. The generator validates the existing const `find` method, its
+`empty_nullable` missing policy and an actually published nullable carrier for exactly
+the value type. It initializes one immutable binding per canonical hash; application
+hashes receive no lookup binding or extra storage slot.
+
+Native output uses `.find(key)` through the existing member-call lowering and shared
+argument rules. No new AST field, backend branch, nullable construction recipe or
+runtime storage change is needed. Results use ordinary carrier preparation, presence,
+extraction and include selection. Source calls shadow the builtin through the existing
+watched function key.
+
+The shared `hash_contains.php` protocol proof now covers both bindings and rejects
+bool/float/byte coercion into int keys. `hash_find_native.py` covers all four runtime
+hashes in cpp/php/js on Clang/GCC: missing versus present zero/empty text, NUL and
+numeric-looking keys, owned string copies surviving overwrite/clear, temporary/field
+receivers, owner expiry, key/owner failures and unchanged throwing indexed reads.
+It also checks body/return-signature/layout edits, deletion/retry/recovery, fresh-output
+equivalence, no-op/native caller reuse, source-function precedence, imports and explicit
+rejection of application-value lookup. Provider relocation/retirement verifies both
+binding headers and the nullable result identity. Application optional values and
+coalescing remain separate slices.

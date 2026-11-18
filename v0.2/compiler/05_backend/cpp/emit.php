@@ -877,7 +877,11 @@ CPP;
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
-				$lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
+				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
+					/** @var carrier_type_definition $type */
+					$type = $statement->local_def()->type_def();
+					$lines[] = "\tif (!(" . $type->lower_cpp_presence($this->name($statement->local_def())) . ')) { ' . $write . '; }';
+				} else $lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
@@ -1131,7 +1135,7 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
 		$snapshot = null;
-		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
+		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
 			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
 		}
 		if ($statement instanceof ast_index_update) {
@@ -1316,6 +1320,16 @@ CPP;
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
 		if ($value instanceof ast_binary_expression) {
+			if ($value->operator === binary_operator::coalesce) {
+				/** @var carrier_type_definition $carrier */
+				$carrier = $value->left->type_def();
+				$steps = [];
+				$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
+				$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+				return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . implode(' ', $steps) . ' const auto& coalesce_value = ' . $left
+					. '; if (' . $carrier->lower_cpp_presence('coalesce_value') . ') { return '
+					. $carrier->lower_cpp_extract('coalesce_value') . '; } return ' . $right . '; }())';
+			}
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
@@ -1402,7 +1416,7 @@ CPP;
 				if ($function->receiver_method) {
 					$arguments = [];
 					$direct = true;
-					foreach ($value->arguments as $index => $argument) {
+					foreach (array_slice($operands, 1) as $index => $argument) {
 						$safe = false;
 						$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 						$arguments[] = $function->parameters[$index + 1]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand);

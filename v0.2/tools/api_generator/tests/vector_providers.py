@@ -54,6 +54,7 @@ def proof(work):
     runner = work / 'resolve.php'
     runner.write_text("<?php\nrequire " + repr(str(ROOT / 'compiler/types/conversion.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/definition.php')) + ";\n"
+        + "require " + repr(str(ROOT / 'compiler/types/runtime.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/vector.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/carrier.php')) + ";\n"
         + "require " + repr(str(ROOT / 'compiler/types/hash.php')) + ";\n"

@@ -169,7 +169,7 @@ final class Compilation_Inspection
 			: ['kind' => 'assignment', 'id' => $statement->local_def()->storage_id()])) + [
 			'conversion' => value_conversion::name($statement->conversion()), 'operator' => $statement->operator?->name,
 			'value' => self::value($statement->value)];
-		if ($statement->operator !== null) {
+		if ($statement->calculates_value()) {
 			$row['execution_type'] = $statement->execution_type()->name;
 			$row['left_conversion'] = value_conversion::name($statement->left_conversion());
 			$row['write_back'] = value_conversion::name($statement->write_back());

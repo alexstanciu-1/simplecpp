@@ -9,6 +9,7 @@ final class Tokenizer
 	/** CONSTANTS */
 	private const PUNCTUATION /** list<token_kind> */ = [
 		token_kind::ellipsis,
+		token_kind::coalesce_assign,
 		token_kind::power_assign,
 		token_kind::left_assign,
 		token_kind::right_assign,

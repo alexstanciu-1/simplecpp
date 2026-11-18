@@ -577,7 +577,15 @@ final class Preparation
 			return;
 		}
 		$this->value($statement->value);
-		if ($statement->operator === null) {
+		if ($statement->operator === binary_operator::coalesce) {
+			if (!($local instanceof ast_local_declaration) || $statement->parent instanceof ast_for_statement) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a plain local statement');
+			}
+			if (!($type instanceof carrier_type_definition) || !$type->supports_coalescing()) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a published nullable carrier');
+			}
+		}
+		if (!$statement->calculates_value()) {
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			$statement->settle_assignment($local, $conversion);
 		}
@@ -763,6 +771,17 @@ final class Preparation
 			$this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			$this->value($syntax->right, $initializing);
+			if ($syntax->operator === binary_operator::coalesce) {
+				$carrier = $syntax->left->type_def();
+				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier');
+				}
+				if ($syntax->right->type_def() !== $carrier->payload_type) {
+					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
+				}
+				$syntax->settle_binary($carrier->payload_type);
+				return;
+			}
 			if ($syntax->operator->logical()) {
 				$syntax->left->type_def()->prepare_condition($syntax->left);
 				$syntax->right->type_def()->prepare_condition($syntax->right);
@@ -887,10 +906,10 @@ final class Preparation
 	}
 
 	/** Validate supplied runtime arguments against their generated signature. */
-	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime): void
+	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
 		$operands = $call->runtime_operands();
-		$prepared = $call->receiver;
+		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
 			$variants = $runtime->by_arity[count($operands)] ?? null;
 			if ($variants === null) {
@@ -1040,6 +1059,20 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
+			if ($builtin === 'hash_contains' || $builtin === 'hash_find') {
+				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
+				$receiver = $call->arguments[0];
+				$this->value($receiver, $initializing);
+				$type = $receiver->type_def();
+				$binding = match ($builtin) {
+					'hash_contains' => $type instanceof key_presence_type ? $type->presence_function() : null,
+					'hash_find' => $type instanceof key_lookup_type ? $type->lookup_function() : null,
+				};
+				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), $builtin === 'hash_contains'
+					? 'hash_contains requires a key-presence collection' : 'hash_find requires a collection with published optional lookup');
+				$this->runtime_call($call, $binding, $receiver);
+				return;
+			}
 			if ($builtin === 'enum_from_value') {
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');

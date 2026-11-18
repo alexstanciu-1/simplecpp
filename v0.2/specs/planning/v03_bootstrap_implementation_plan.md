@@ -24,7 +24,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Writable collection parameters implemented; broader element families remain |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
-| 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
+| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
@@ -150,6 +150,115 @@ Verification checklist:
 Deferred: general boolean subjects, string/float matching, computed integer/enum labels,
 label grouping, exhaustiveness and common-result inference. Section 2.2–2.5 work,
 other-workspace collection changes and new runtime APIs remain outside this slice.
+
+### 2.2 First key-presence slice — implemented
+
+Use `hash_contains(collection, key)` for key existence, independently of payload
+truthiness/null state. `isset` remains null-sensitive. Existing runtime hash methods
+already supply `has`; this slice connects one generated capability for runtime and
+application hashes through the same immutable runtime-call binding. Native code uses
+`receiver.has(key)`, with ordinary strict-key argument lowering and receiver lifetime
+protection. No new AST state, lookup carrier, runtime storage or preparation pass.
+
+Verification checklist:
+
+- [x] All four runtime hashes plus struct/shared-class values with both key types across cpp/php/js on Clang/GCC.
+- [x] Missing keys never insert; present zero/empty strings, NUL and numeric-looking keys retain identity.
+- [x] Single evaluation, temporary/field receivers, owner replacement/expiry, empty-owner and key failures.
+- [x] Key presence remains true for a native-inserted empty shared payload; source insertion rules unchanged.
+- [x] Strict key/arity/capability diagnostics; declared function precedence, missing imports and constant aliases.
+- [x] Canonical binding reuse, const modes, one preparation per operand, pure lowering and reset/reprepare.
+- [x] Body/layout edits, declaration deletion, invalid shadowing, recovery against fresh output and native caller reuse.
+- [x] Provider relocation/retirement plus existing collection member regressions.
+
+Deferred: `hash_find` and application nullable carriers, new removal/clear spellings,
+coalescing, nullable payload publication, boxed families, and broader application
+collection methods/traversal. Existing implementations are not reclassified as missing.
+
+### 2.2 Published optional lookup — runtime hashes, implemented
+
+`hash_find(h, key)` reuses the published `find(const Key&) -> nullable<Value>` binding
+for the four runtime int/string hashes. Absence is empty, present zero/empty string is
+a value, and success returns an owned copy. Indexed reads remain throwing. Generated
+`key_lookup_type` supplies the existing runtime-call protocol; no new AST field,
+preparation pass or backend operation is added.
+
+Application lookup remains deferred. Optional inline structs need a value carrier;
+nullable class handles alone would conflate a missing key with a present empty handle.
+Do not synthesize application carriers or expand the runtime ownership model here.
+
+Verification passed in `hash_find_native.py`, shared `hash_contains.php`, the
+`hash_contains_native.py` regression and generator/provider/member checks.
+
+Verification checklist:
+
+- [x] Four runtime hashes across cpp/php/js on Clang/GCC; missing/present zero/empty text.
+- [x] NUL/numeric-looking keys, strict key types and no insertion on miss.
+- [x] Copied string payload survives overwrite/clear and source owner destruction.
+- [x] Single evaluation, temporary/field receivers, owner retention/expiry and failure order.
+- [x] Indexed miss still throws; result uses the published nullable identity and headers.
+- [x] Canonical binding reuse, single-pass preparation, pure emission and reset/reprepare.
+- [x] Body/signature/layout edits, deletion/retry/recovery against fresh artifacts; no-op and native caller reuse.
+- [x] Function/import precedence, constant aliases, unsupported application lookup and provider relocation/retirement.
+
+Deferred: application nullable values, nullable payload publication, boxed/nested
+lookup and new removal/clear syntax. Coalescing and local conditional assignment follow below.
+
+### 2.3 Lazy fallback — first published nullable slice implemented
+
+`nullable<T> ?? T` uses the published carrier's presence/extraction and requires
+an exact payload fallback. Zero, false and empty string select the present value.
+The left executes once; the fallback executes only for absence. Both branches
+are validated. Right association permits `a ?? b ?? fallback`.
+
+Reuse binary AST ownership and existing result facts; no new fields, indexes or
+preparation pass. Carrier admission belongs to generated metadata code, while
+preparation validates the join and lowering preserves lazy selection and value
+copies. See [implementation notes](../../compiler/docs/coalesce.md).
+
+Verification completed:
+
+- [x] cpp/php/js on Clang/GCC, precedence and surrounding short circuit.
+- [x] Single evaluation, skipped fallback/failure, left and selected-right failures.
+- [x] Present zero/false/empty text; NUL string ownership and vector copy independence.
+- [x] Conditional reference mutation invalidates facts before checked conversion.
+- [x] Single-pass preparation, syntax ownership, pure emission and reset/reprepare.
+- [x] Body/signature edits, repeated failure, deletion/restoration and fresh equivalence.
+- [x] Native caller reuse and no-op builds; generator/provider regressions.
+
+Deferred for `??`: application/shared carriers, nullable RHS results, homogeneous
+wrapper fallback extraction, result/sentinel families, bare-null/nonnullable left
+operands and widening joins. This is a compiler availability slice, not a change
+to the broader normative conditional matrix.
+
+### 2.3 Conditional assignment — declared nullable locals, implemented
+
+Implemented statement-form `$n ??= fallback;` using generated presence and ordinary
+assignment conversion. Present zero/false/empty text remain unchanged; absent locals
+select the fallback once. Null/same-carrier RHS assignments use existing semantics.
+Checked casts stay lazy and a failed conversion performs no final store. Earlier
+RHS effects remain, including changes to the destination itself.
+
+Reuses the assignment AST and conversion facts. The syntactic `calculates_value()`
+query distinguishes eager compound calculations from conditional writes. No new
+AST fields, indexes, preparation passes or generated capability are needed. Emits a
+plain presence-guarded C++ `if`, with no lambda or snapshot.
+
+Verification checklist:
+
+- [x] cpp/php/js on Clang/GCC; skipped and selected calls, single evaluation.
+- [x] Present zero/false/empty string; null and same-carrier assignments.
+- [x] Checked conversion failures and success; conditional reference invalidation.
+- [x] Destination-mutating fallback and independent NUL string/vector copies.
+- [x] Token boundaries, AST ownership, one preparation visit, pure emission and reset.
+- [x] Body/signature edits, repeated failures, deletion/restoration and fresh equivalence.
+- [x] Native caller reuse, no-op builds and bounded-scope rejection.
+
+Deferred: parameters, global/property/indexed destinations, for-header writes,
+assignment expressions, application/shared carriers and new implicit conversions.
+
+Verification passed: the two coalescing-assignment tests and seven existing
+coalescing/logical/compound/loop tests (9/9), plus tokenizer, parser and style checks.
 
 ## 3. Object relationships — a small AST family
 

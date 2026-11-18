@@ -4,10 +4,18 @@ final class @class@ extends hash_type_definition@interfaces@
 {
 	/** @var array<string,runtime_function|null> Canonical signatures cached on this type, never on each call. */
 	private array $runtime_methods = [];
+	/** Immutable canonical binding, shared by occurrences; its type references are non-owning. */
+	private readonly runtime_function $presence_binding;
+@lookup_property@
 @identity@
 	/** METHODS */
 @iteration@
 @methods@
+	public function presence_function(): runtime_function
+	{
+		return $this->presence_binding;
+	}
+
 	public function cpp_type(): string
 	{
 		return @cpp@;
@@ -50,6 +58,7 @@ final class @class@ extends hash_type_definition@interfaces@
 	}
 
 @append_method@
+@lookup@
 @cardinality@
 @factory@
 }

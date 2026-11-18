@@ -48,6 +48,11 @@ def proof(work):
     for carrier in default['carriers']:
         assert default['submodules']['type_exports'][carrier['name']]['provider'] == 'core.carriers'
     assert default['submodules']['type_exports']['error_t']['symbol'] == 'scpp::error_t'
+    capability = work / 'capability.php'
+    capability.write_text(runner.read_text().split('echo json_encode')[0]
+        + "$r=\\scpp\\compiler\\type_registry::specialize('result',\\scpp\\compiler\\type_registry::integer());\n"
+        + "if (!$t->supports_coalescing() || $r->supports_coalescing()) throw new RuntimeException('Carrier capability mismatch');\n")
+    run(['php', capability, compiler])
     before = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
     for variant in ('relocated', 'shared_vector'):
         m = copy.deepcopy(metadata)

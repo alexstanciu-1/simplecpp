@@ -365,6 +365,12 @@ class ast_assignment_statement extends ast_storage_write
 		$this->conversion = $conversion;
 	}
 
+	/** Conditional writes select a branch; only eager compounds have calculation facts. */
+	public function calculates_value(): bool
+	{
+		return $this->operator !== null && $this->operator !== binary_operator::coalesce;
+	}
+
 	/** Settle the calculation before publishing the local binding. */
 	public function prepare_local_compound(ast_local_binding $local): void
 	{

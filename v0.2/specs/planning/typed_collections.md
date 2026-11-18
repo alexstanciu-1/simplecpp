@@ -106,3 +106,15 @@ The native build and compiler style check passed.
 3. **CT-04** is a separate foreach discussion after the other collection work. Traversal order and mutation during traversal belong to that contract. CT-01 verification observes values and membership by explicit index or key.
 
 Mixed/dynamic compiler and container work continues in `simple_cpp_02`. Hash probe, find, removal and append, and both clear operations remain deferred.
+
+## Key-presence follow-up
+
+The selected free spelling is `hash_contains(h, k)`, not `isset(h[k])`: it tests key
+existence and does not inspect payload null state. It uses the shared generated
+key-presence binding for runtime and application hashes. See the current
+[collection method note](../../compiler/docs/collection_methods.md#shared-hash-key-presence-capability)
+and [bootstrap checklist](v03_bootstrap_implementation_plan.md#22-first-key-presence-slice--implemented).
+`hash_find` now has a bounded runtime-hash slice using the published nullable result.
+Application-value lookup remains deferred pending its absence representation.
+The original CT-01 table above is historical scope; current member clear/remove/has
+support is documented in the collection method note.
