@@ -24,8 +24,8 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $parts = concreteTemplate(hashConcreteRecipe($hash), ['k' => new RuntimeConcreteType($plan, $k), 'v' => new RuntimeConcreteType($plan, $v)], array_diff_key($vars, ['k' => true, 'v' => true]) + hashConcreteArguments($hash, $count), 'scpp');
         $d .= $parts['storage'] . $parts['lifecycle'] . $parts['definition'] . template('collections/hash_lookup_definition', $vars) . template('collections/hash_iteration', $vars);
         if($k === 'int64') {
-            $h .= "    $k append($v value);\n" . scalarInputFences($plan, 'append', [[$v]]);
-            $d .= "$k $n::append($v value) { if (!storage_) storage_ = new storage; return storage_->append(std::move(value)); }\n";
+            $h .= $parts['append_declaration'] . scalarInputFences($plan, 'append', [[$v]]);
+            $d .= $parts['append_definition'];
         }
         $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
     }

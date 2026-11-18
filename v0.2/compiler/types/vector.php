@@ -9,6 +9,8 @@ namespace scpp\compiler;
  */
 abstract class vector_type_definition extends type_definition implements appendable_collection_type, indexed_mutation_type, counted_collection_type
 {
+	use checked_indexed_mutation;
+
 	/** PROPERTIES */
 	/** Native non-owning canonical element definition, shared by all occurrences. */
 	public readonly type_definition $element_type;

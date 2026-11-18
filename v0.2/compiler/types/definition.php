@@ -75,7 +75,19 @@ interface index_write_type
 /** Read/modify/write collections replace an approved element value without exposing an element reference. */
 interface indexed_mutation_type extends indexed_collection_type, index_write_type
 {
+	public function lower_cpp_mutation_read(ast_expression $key, string $receiver, string $index): string;
 	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string;
+}
+
+/** Collections whose normal read already rejects missing elements reuse that check for mutations. */
+trait checked_indexed_mutation
+{
+	abstract public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
+
+	public function lower_cpp_mutation_read(ast_expression $key, string $receiver, string $index): string
+	{
+		return $this->lower_cpp_index($key, $receiver, $index);
+	}
 }
 
 /** Ordered stores snapshot the normalized key and converted value before invoking the runtime member. */
@@ -107,6 +119,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Generated native member signature on this canonical type, independent of concrete publication location. */
+	public function runtime_method(string $name): runtime_function|runtime_overloads|null
+	{
+		return null;
+	}
+
 	/** Optional settled traversal capability; ordinary types are not iterable. */
 	public function iteration(): ?iterable_type
 	{
@@ -139,6 +157,12 @@ abstract class type_definition
 	public function supports_instance_field(): bool
 	{
 		return false;
+	}
+
+	/** Static storage admission is independent from instance initialization. */
+	public function supports_static_property(): bool
+	{
+		return $this->supports_instance_field();
 	}
 
 	/** Output admission is separate from string conversion. */
@@ -216,6 +240,12 @@ abstract class type_definition
 	public function lower_cpp_binary(binary_operator $operator, string $left, string $right, type_definition $right_type, bool $typed_initializer = false): string
 	{
 		throw new \LogicException('Binary lowering unavailable for type: ' . $this->name);
+	}
+
+	/** Compound execution consumes settled conversions; a type can also select a flavor-specific binding. */
+	public function lower_prepared_compound(ast_assignment_statement $site, string $left, string $right): string
+	{
+		return $this->lower_cpp_binary($site->operator, $left, $right, $this);
 	}
 
 	/** Consume the original prepared operand types when selecting the native binding. */

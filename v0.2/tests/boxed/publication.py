@@ -94,6 +94,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     for field, value in [('alignment', 3), ('size', 0)]:
         f = copy.deepcopy(facts); f['boxed']['mixed'][field] = value
         run(metadata, publication, f, accepted=False)
+    for field, value in [('count_method', 'size'), ('key_types', ['bool_t']), ('methods', {'has': 'has', 'remove': 'source_remove'})]:
+        m = copy.deepcopy(metadata); m['boxed']['source_collection'][field] = value
+        run(m, publication, accepted=False)
     # Source-enabled families must publish, compile and execute independently.
     for family, absent in [('mixed', 'dynamic'), ('dynamic', 'mixed')]:
         pub = json.loads((a.source/'runtime/metadata/publication.json').read_text())
@@ -105,11 +108,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
         assert absent not in header.read_text()
         (one/'consumer.cpp').write_text(f'#include <scpp/{family}.hpp>\n'
             f'int main() {{ auto v = scpp::{family}::from_integer(scpp::int64{{8}}); '
-            f'return scpp::boxed_add_{family}_int64(v, 2).get_integer() == 10 ? 0 : 1; }}\n')
+            f'if (scpp::boxed_add_{family}_int64(v, 2).get_integer() != 10) return 1; '
+            f'auto c = scpp::{family}::container(); c.set(scpp::int64{{1}}, v); '
+            f'if (c.container_size()!=1 || !c.source_has(scpp::string{{"1",1}})) return 2; '
+            f'return c.source_remove(scpp::string{{"1",1}}) && c.container_size()==0 ? 0 : 3; }}\n')
         cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-I'+str(one/'out/public')]
         cmd += ['-I'+str(a.source/'runtime/src'/d) for d in ['numeric', 'sequence', 'boxed', 'hash', 'ownership']]
         cmd += [one/'consumer.cpp', one/'out/src/runtime.cpp', one/'out/src/boxed.cpp']
-        cmd += [a.source/'runtime/src'/f for f in ['boxed/boxed_value.cpp', 'boxed/boxed_conversion.cpp', 'hash/packed_key.cpp']]
+        cmd += [a.source/'runtime/src'/f for f in ['boxed/boxed_value.cpp', 'boxed/boxed_conversion.cpp', 'hash/packed_key.cpp', 'numeric/arithmetic.cpp']]
         subprocess.run([*cmd, '-o', one/'consumer'], check=True)
         subprocess.run([one/'consumer'], check=True)
     # Structurally valid but wrong facts must fail the generated ABI assertions.

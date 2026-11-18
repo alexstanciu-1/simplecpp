@@ -774,7 +774,14 @@
     "integer_keys": "nonnegative_int31",
     "string_keys": "classified_bytes",
     "read": "same_family_null_on_miss",
-    "conversion": "explicit_scalar_only"
+    "conversion": "explicit_scalar_only",
+    "source_collection": {
+      "count_method": "container_size",
+      "append_method": "append",
+      "instance_field_default": "null",
+      "key_types": ["int64", "string"],
+      "methods": {"has": "source_has", "remove": "source_remove", "clear": "clear"}
+    }
   },
   "json": {
     "binding": "native_json",

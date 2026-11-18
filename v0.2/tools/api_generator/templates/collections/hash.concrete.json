@@ -9,7 +9,9 @@
     "declaration": ["core/lifecycle_declaration", "collections/hash_value_methods_declaration"],
     "definition": ["collections/hash_methods_definition"],
     "output_declaration": ["collections/hash_iteration_output", "core/iteration_output", "collections/hash_output_declaration"],
-    "output_definition": ["collections/hash_output_iteration"]
+    "output_definition": ["collections/hash_output_iteration"],
+    "append_declaration": [{"template": "collections/hash_append_declaration", "when": "enable_append"}],
+    "append_definition": [{"template": "collections/hash_append_definition", "when": "enable_append"}]
   },
   "application": "collections/hash_application",
   "support": ["hash/concrete_index.hpp"],

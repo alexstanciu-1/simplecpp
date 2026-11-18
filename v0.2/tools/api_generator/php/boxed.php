@@ -6,10 +6,18 @@ require_once __DIR__ . '/boxed_dispatch.php';
 function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'boxed', 'boxed', 'Boxed');
     if ($m === null) return;
-    fields($m, ['binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion']);
+    fields($m, ['binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion', 'source_collection']);
     literals($m, ['binding' => 'private_inline_boxed', 'integer_keys' => 'nonnegative_int31',
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss', 'conversion' => 'explicit_scalar_only']);
     requireThat(names(at($m, 'families'), 'Duplicate boxed policy') === ['dynamic', 'mixed'], 'Unsupported boxed families');
+    $source = at($m, 'source_collection');
+    fields($source, ['count_method', 'append_method', 'instance_field_default', 'key_types', 'methods']);
+    literals($source, ['count_method' => 'container_size', 'append_method' => 'append', 'instance_field_default' => 'null']);
+    requireThat(names(at($source, 'key_types')) === ['int64', 'string'], 'Unsupported boxed source keys');
+    fields($source->methods, ['has', 'remove', 'clear']);
+    literals($source->methods, ['has' => 'source_has', 'remove' => 'source_remove', 'clear' => 'clear']);
+    $sourceCollection = ['count_method' => $source->count_method, 'append_method' => $source->append_method, 'instance_field_default' => $source->instance_field_default, 'key_types' => names($source->key_types),
+        'methods' => (array) $source->methods];
     if (!property_exists($publication, 'boxed')) return;
     $p = $publication->boxed;
     fields($p, ['header', 'families', 'scalar_conversions', 'scalar_dispatch']);
@@ -30,7 +38,7 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         requireThat(isset($facts['boxed'][$family]), 'Boxed requires measured native layout');
         $families[] = ['name' => $family, 'native' => 'detail::'.$family.'_value',
             'copy' => $family === 'mixed' ? 'cow' : 'shared_container_identity',
-            'traversal' => collectionTraversalPlan(),
+            'traversal' => collectionTraversalPlan(), 'source_collection' => $sourceCollection,
             'null_write' => $family === 'mixed' ? 'bootstrap' : 'reject'] + $facts['boxed'][$family];
     }
     if (boolean($p->scalar_dispatch ?? false)) {
@@ -41,6 +49,6 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'scalar_conversions' => $convert, 'integer_keys' => [0, 2147483647],
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss',
         'operations' => ['from_boolean', 'from_integer', 'from_floating', 'from_string', 'container', 'kind',
-            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'is_packed_container', 'clean', 'iteration_limit', 'iteration_next'],
+            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'is_packed_container', 'clean', 'clear', 'iteration_limit', 'iteration_next'],
         'build' => ['generated_sources' => ['src/boxed.cpp'], 'requires' => 'scpp_boxed_storage']];
 }

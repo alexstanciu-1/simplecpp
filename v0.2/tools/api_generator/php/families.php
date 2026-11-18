@@ -588,6 +588,7 @@ function hashConcreteArguments(array $hash, string $count): array {
         'count' => '::scpp::' . $count,
         'hash' => $hash['key'] === 'int64' ? '::scpp::detail::hash_integer(key)' : '::scpp::detail::hash_string_bytes(key.data(), static_cast<std::size_t>(key.size()))',
         'equal' => $hash['key'] === 'int64' ? 'left == right' : 'left.size() == right.size() && (left.size() == 0 || ::memcmp(left.data(), right.data(), static_cast<std::size_t>(left.size())) == 0)',
+        'enable_append' => $hash['key'] === 'int64' ? '1' : '',
         'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
     ];
 }

@@ -194,40 +194,39 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     $runtimeCases = [];
-    // Concrete member bindings consume publication plans, not a second list of runtime specializations.
+    // Published aliases delegate to the same canonical type-owned signatures as application concrete types.
     foreach (array_merge($runtime['vectors'] ?? [], $runtime['hashes']['specializations'] ?? []) as $collection) {
         $elements = isset($collection['element']) ? [$collection['element']] : [$collection['value'], $collection['key']];
         foreach ($elements as $element) if (!isset($definitions[$element])) continue 2;
         $source = $collection['source_type'] ?? ($collection['source_family'] . '<' . implode(',', $elements) . '>');
-        $export = typeExport($runtime['submodules'], $collection['name']);
-        $header = providerHeader($runtime['submodules'], $export['provider']);
         foreach ($collection['methods'] as $method) {
-            if (!in_array($method['name'], ['clear', 'remove', 'has'], true)) continue;
             $name = $method['name'];
-            $argumentTypes = $name === 'clear' ? [] : [$collection['count_type'] ?? $collection['key']];
-            $writtenTypes = array_map(static fn($type) => str_replace(['const ', '&'], '', $type), $method['arguments']);
-            $result = $name === 'clear' ? 'void' : 'bool_t';
-            $mutates = ($method['receiver'] ?? null) === 'mutable_reference' || ($method['mutates'] ?? false);
-            requireThat($writtenTypes === $argumentTypes && $method['result'] === $result
-                && $mutates === ($name !== 'has'),
-                "Compiler $name requires its canonical method signature");
-            $referenceMask = $mutates ? 1 : 0;
-            $constReferenceMask = $mutates ? 0 : 1;
-            foreach ($method['arguments'] as $index => $argument) {
-                if (str_starts_with($argument, 'const ') && str_ends_with($argument, '&')) $constReferenceMask |= 1 << ($index + 1);
-            }
-            if ($name === 'remove' && isset($collection['element'])) {
-                requireThat($method['adaptation'] === 'erase_shift_missing_false', 'Vector removal must shift and return false on absence');
-            }
-            $parameters = ['type_' . $collection['name'] . '::instance()'];
-            foreach ($argumentTypes as $type) {
-                requireThat(isset($definitions[$type]), 'Collection method argument type is unavailable');
-                $parameters[] = 'type_' . $definitions[$type]['class'] . '::instance()';
-            }
-            $resultClass = $result === 'void' ? 'void' : $definitions[$result]['class'];
+            if (!in_array($name, ['clear', 'remove', 'has'], true)) continue;
             $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
-            $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => \$bindings['$source:$name'] ??= new runtime_function('$name', ["
-                . implode(', ', $parameters) . "], type_$resultClass::instance(), '$name', '$header', reference_mask: $referenceMask, const_reference_mask: $constReferenceMask, receiver_method: true),";
+            $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => type_{$collection['name']}::instance()->runtime_method('$name'),";
+        }
+    }
+
+    foreach ($runtime['boxed']['families'] ?? [] as $family) {
+        if (!isset($runtime['boxed_dispatch'])) continue;
+        $source = $family['name'];
+        $header = providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $source)['provider']);
+        foreach ($family['source_collection']['methods'] as $name => $binding) {
+            if ($name === 'clear') {
+                $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
+                $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => \$bindings['$source:$name'] ??= new runtime_function('$name', [type_$source::instance()], type_void::instance(), '$binding', '$header', reference_mask: 1, receiver_method: true),";
+                continue;
+            }
+            $variants = [];
+            foreach ($family['source_collection']['key_types'] as $keyType) {
+                $keyClass = $definitions[$keyType]['class'];
+                $referenceMask = $name === 'remove' ? 1 : 0;
+                $constMask = $name === 'has' ? 1 : 0;
+                if ($keyType === 'string') $constMask |= 2;
+                $variants[] = "type_$keyClass::class => new runtime_function('$name', [type_$source::instance(), type_$keyClass::instance()], type_bool::instance(), '$binding', '$header', reference_mask: $referenceMask, const_reference_mask: $constMask, receiver_method: true)";
+            }
+            $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
+            $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => \$bindings['$source:$name'] ??= new runtime_overloads([2 => [" . implode(', ', $variants) . "]], argument_index: 1, receiver_method: true),";
         }
     }
 

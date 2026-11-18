@@ -41,7 +41,17 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
     $result = [];
     foreach (object(at($recipe, 'fragments')) as $section => $fragments) {
         $result[$section] = '';
-        foreach (listValue($fragments) as $fragment) $result[$section] .= template(textValue($fragment), $values);
+        foreach (listValue($fragments) as $fragment) {
+            if (is_object($fragment)) {
+                fields($fragment, ['template', 'when']);
+                $condition = textValue(at($fragment, 'when'));
+                requireThat(array_key_exists($condition, $values), 'Unknown concrete fragment condition');
+                requireThat(in_array($values[$condition], ['', '1'], true), 'Concrete fragment condition must be empty or 1');
+                if ($values[$condition] === '') continue;
+                $fragment = at($fragment, 'template');
+            }
+            $result[$section] .= template(textValue($fragment), $values);
+        }
     }
     return $result;
 }

@@ -135,3 +135,10 @@ Application hash/vector providers expose the same compiler interface and publica
 path. Hash key policy arguments are planned once for both runtime and compiler generation;
 application hash omits nullable lookup and iteration exposure for the bounded first slice.
 The common method fragments prevent runtime/application wrapper behavior from diverging.
+
+### Conditional fragments
+
+A fragment can be a template name or `{ "template": "...", "when": "flag" }`.
+The caller supplies the named flag as `"1"` (include) or `""` (omit); missing or other
+values are rejected. This permits the same hash recipe to emit append only for its
+integer-key contract, without a second application-specific method implementation.

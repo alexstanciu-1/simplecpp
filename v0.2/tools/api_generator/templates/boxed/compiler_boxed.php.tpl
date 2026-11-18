@@ -1,8 +1,24 @@
 
 /** Published @name@ scalar box and its generated admission and lowering bindings. */
-final class type_@name@ extends boxed_type_definition implements iterable_type
+final class type_@name@ extends boxed_type_definition implements iterable_type, counted_collection_type, appendable_collection_type
 {
 @iteration@
+@append_method@
+	public function supports_instance_field(): bool { return @field_admission@; }
+
+	public function supports_static_property(): bool { return false; }
+
+	public function cardinality_result(collection_cardinality $operation): type_definition
+	{
+		return $operation === collection_cardinality::count ? type_int64::instance() : type_bool::instance();
+	}
+
+	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string
+	{
+		$count = '(' . $receiver . ').@count_method@()';
+		return $operation === collection_cardinality::count ? $count : '(' . $count . ' == 0)';
+	}
+
 	/** STATIC PROPERTIES */
 	private static ?self $instance = null;
 
@@ -38,6 +54,33 @@ final class type_@name@ extends boxed_type_definition implements iterable_type
 		return match ($operator) {
 @ops@			default => false,
 		};
+	}
+
+	public function binary_result(binary_operator $operator, type_definition $right): ?type_definition
+	{
+		return $this->admits_pair($operator, $right, true) ? $this->boxed_result($operator) : null;
+	}
+
+	protected function boxed_result(binary_operator $operator): ?type_definition
+	{
+		return match ($operator) {
+@results@			default => null,
+		};
+	}
+
+	public function supports_compound(binary_operator $operator): bool
+	{
+		return match ($operator) { @compounds@ => true, default => false };
+	}
+
+	public function supports_update(update_operator $operator): bool
+	{
+		return match ($operator) { @updates@ => true, default => false };
+	}
+
+	protected function flavor_mask(ast_node $site): int /** uint8 */
+	{
+		return match ($site->source()->flavor) { @flavor_mask@ };
 	}
 
 	/** Each admitted pair calls a checked helper; its borrowed operands must survive sibling evaluation. */

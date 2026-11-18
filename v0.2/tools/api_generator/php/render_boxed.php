@@ -38,8 +38,16 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         $fences .= scalarInputFences($plan, 'set', [['int64', $n], ['const string&', $n]]);
         $sourceMembers = $split ? "    $n source_read(int64 key) const { return read(key); }\n"
             . "    $n source_read(const boxed_text_key& key) const;\n"
+            . "    $n source_require(int64 key) const;\n"
+            . "    $n source_require(const boxed_text_key& key) const;\n"
             . "    void source_set(int64 key, const $n& value) { set(key, value); }\n"
             . "    void source_set(const boxed_text_key& key, const $n& value);\n" : '';
+        if ($split) foreach ($family['source_collection']['methods'] as $operation => $binding) {
+            if ($operation === 'clear') continue;
+            $const = $operation === 'has' ? ' const' : '';
+            $sourceMembers .= "    bool_t $binding(int64 key)$const { return $operation(boxed_key(key)); }\n"
+                . "    bool_t $binding(const string& key)$const { auto normalized = boxed_key(key); return normalized.index < 0 ? $operation(normalized.text) : $operation(normalized.index); }\n";
+        }
         $decl = template('boxed/boxed_declaration', $vars + ['fences' => $sourceMembers . $fences]);
         if ($split) {
             $provider = typeExport($plan['submodules'], $n)['provider'];
@@ -57,6 +65,10 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";
+            if ($split && $key === 'int64') {
+                $d .= "$n $n::source_require(int64 key) const { $n result; $result = $self.require(key); return result; }\n";
+                $d .= "$n $n::source_require(const boxed_text_key& key) const { $n result; $result = key.index < 0 ? $self.require(std::string_view{key.text.data(), static_cast<std::size_t>(key.text.size())}) : $self.require(key.index); return result; }\n";
+            }
             $d .= "bool_t $n::has(const $key& key) const { return bool_t{{$self}.contains($expression)}; }\n";
             $parameter = $key === 'int64' ? 'int64' : 'const string&';
             $d .= "void $n::set($parameter key, $n value) { $self.set($expression, std::move($value)); }\n";

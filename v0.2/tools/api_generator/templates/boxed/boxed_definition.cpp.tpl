@@ -26,3 +26,4 @@ int64 @n@::append(@n@ value) { return int64{static_cast<long long>(@self@.append
 int64 @n@::container_size() const { return int64{detail::checked_integer_cast<long long>(@self@.container_size())}; }
 bool_t @n@::is_packed_container() const { return bool_t{@self@.is_packed_container()}; }
 void @n@::clean() noexcept { @self@.clean(); }
+void @n@::clear() { @self@.clear(); }

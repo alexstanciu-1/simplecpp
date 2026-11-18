@@ -9,6 +9,38 @@ function compilerIndexRead(string $receiver, string $count, string $element, str
     ]);
 }
 
+/** Generate one method contract for both prepublished and application concrete collection identities. */
+function compilerCollectionMethods(array $collection, array $definitions): string {
+    $bindings = [];
+    foreach ($collection['methods'] as $method) {
+        $name = $method['name'];
+        if (!in_array($name, ['clear', 'remove', 'has'], true)) continue;
+        $argumentTypes = $name === 'clear' ? [] : [$collection['count_type'] ?? $collection['key']];
+        $writtenTypes = array_map(static fn($type) => str_replace(['const ', '&'], '', $type), $method['arguments']);
+        $result = $name === 'clear' ? 'void' : 'bool_t';
+        $mutates = ($method['receiver'] ?? null) === 'mutable_reference' || ($method['mutates'] ?? false);
+        requireThat($writtenTypes === $argumentTypes && $method['result'] === $result && $mutates === ($name !== 'has'),
+            "Compiler $name requires its canonical method signature");
+        if ($name === 'remove' && isset($collection['element'])) {
+            requireThat($method['adaptation'] === 'erase_shift_missing_false', 'Vector removal must shift and return false on absence');
+        }
+        $referenceMask = $mutates ? 1 : 0;
+        $constMask = $mutates ? 0 : 1;
+        foreach ($method['arguments'] as $index => $argument) {
+            if (str_starts_with($argument, 'const ') && str_ends_with($argument, '&')) $constMask |= 1 << ($index + 1);
+        }
+        $parameters = ['$this'];
+        foreach ($argumentTypes as $type) {
+            requireThat(isset($definitions[$type]), 'Collection method argument type is unavailable');
+            $parameters[] = 'type_' . $definitions[$type]['class'] . '::instance()';
+        }
+        $class = $result === 'void' ? 'void' : $definitions[$result]['class'];
+        $bindings[] = "\t\t\t'$name' => \$this->runtime_methods[\$name] ??= new runtime_function('$name', [" . implode(', ', $parameters)
+            . "], type_$class::instance(), '$name', \$this->cpp_headers()[0], reference_mask: $referenceMask, const_reference_mask: $constMask, receiver_method: true),";
+    }
+    return strtr(readFile(__DIR__ . '/../templates/collections/compiler_methods.php.tpl'), ['@bindings@' => implode("\n", $bindings)]);
+}
+
 /** Emit concrete identities and bounded member handlers from validated runtime specializations. */
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
@@ -39,6 +71,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
         $bindings = [
             '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),
+            '@methods@' => compilerCollectionMethods($vector, $definitions),
             '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),

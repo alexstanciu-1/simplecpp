@@ -198,7 +198,7 @@ final class Preparation
 				$receiver = $statement->target->receiver;
 				$this->value($statement->target);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
-					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a vector or hash');
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
 				$this->value($statement->value);
 				$statement->target->type_def()->prepare_compound($statement);
@@ -549,7 +549,7 @@ final class Preparation
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a vector or hash');
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
 			}
 			$statement->require_update_type($statement->target->type_def());
 			return;
@@ -896,14 +896,15 @@ final class Preparation
 			if ($variants === null) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			}
-			$first = $operands[0];
-			if ($first !== $prepared) {
-				$this->value($first);
-				$prepared = $first;
+			$selection_index = $runtime->argument_index;
+			$selected = $operands[$selection_index];
+			if ($selected !== $prepared) {
+				$this->value($selected);
+				$prepared = $selected;
 			}
-			$runtime = $variants[$first->type_def()::class] ?? null;
+			$runtime = $variants[$selected->type_def()::class] ?? null;
 			if ($runtime === null) {
-				throw new diagnostic($first->source(), $first->byte_start(), 'Unsupported first argument type for ' . $call->name);
+				throw new diagnostic($selected->source(), $selected->byte_start(), ($selection_index === 0 ? 'Unsupported first argument type for ' : 'Unsupported argument type for ') . $call->name);
 			}
 		}
 		elseif (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
@@ -911,7 +912,7 @@ final class Preparation
 		}
 		$writes = [];
 		foreach ($operands as $index => $argument) {
-			if ($argument !== $prepared) {
+			if ($argument !== $prepared && $argument !== $call->receiver) {
 				$this->value($argument);
 			}
 			$type = $runtime->parameters[$index];
@@ -1000,11 +1001,11 @@ final class Preparation
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
-				$runtime = runtime_functions::resolve($key);
+				$runtime = $receiver->type_def()->runtime_method($name) ?? runtime_functions::resolve($key);
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
-				if ($runtime instanceof runtime_function && $runtime->receiver_method) {
+				if ($runtime->receiver_method) {
 					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Collection methods use -> in PHP/C++ and . in JS');

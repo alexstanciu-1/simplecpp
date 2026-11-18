@@ -57,6 +57,16 @@ std::string boxed_value<Family>::get_string() const {
 template<boxed_family Family>
 void boxed_value<Family>::clean() noexcept { value_ = std::monostate{}; }
 template<boxed_family Family>
+void boxed_value<Family>::clear() {
+    if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
+    auto& storage = std::get<std::shared_ptr<table>>(value_);
+    if constexpr (Family == boxed_family::mixed) {
+        // Discarding a shared value needs a new empty table, not a clone of every old element.
+        if (storage.use_count() > 1) { storage = std::make_shared<table>(); return; }
+    }
+    storage->clear();
+}
+template<boxed_family Family>
 const typename boxed_value<Family>::table* boxed_value<Family>::read_table() const {
     if (type() == kind::null) return nullptr;
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
@@ -84,6 +94,21 @@ template<class Operation> auto boxed_value<Family>::mutate(Operation operation) 
         if (prepared) value_ = std::move(prepared);
         return value;
     }
+}
+template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::require(std::int64_t key) const {
+    (void)packed_key::integer(key);
+    auto* t = read_table();
+    auto* value = t ? t->find(key) : nullptr;
+    if (!value) throw std::out_of_range("boxed_missing_key");
+    return *value;
+}
+template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::require(std::string_view key) const {
+    auto* t = read_table();
+    auto* value = t ? t->find(key) : nullptr;
+    if (!value) throw std::out_of_range("boxed_missing_key");
+    return *value;
 }
 template<boxed_family Family>
 boxed_value<Family> boxed_value<Family>::read(std::int64_t key) const {

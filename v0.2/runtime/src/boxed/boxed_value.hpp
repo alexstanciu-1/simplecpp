@@ -43,7 +43,10 @@ public:
     double get_floating() const;
     std::string get_string() const;
     void clean() noexcept;
+    void clear();
 
+    boxed_value require(std::int64_t key) const;
+    boxed_value require(std::string_view key) const;
     boxed_value read(std::int64_t key) const;
     boxed_value read(std::string_view key) const;
     bool contains(std::int64_t key) const;

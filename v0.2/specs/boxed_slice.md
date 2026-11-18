@@ -116,3 +116,44 @@ flavors. Keys have static type int64 or string. A read returns a same-family val
 writes use ordinary same-family copies or scalar boxing. Append, boxed key expressions,
 populated literals, nested writes and explicit family crossing remain deferred.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
+
+## Source cardinality and keyed methods
+
+All three flavors support `count(box)`, `empty(box)`, and receiver methods `has(key)`
+and `remove(key)` for mixed/dynamic. PHP/C++ spell receiver access `->`; JS uses `.`.
+Count returns int64; empty is the same checked container count compared with zero,
+not general scalar truthiness. Both throw `boxed_expected_container` for null or scalar
+receivers. Has/remove return bool; null and missing keys return false, while other
+scalar receivers throw `boxed_expected_container`. A stored null value is present.
+
+Key arguments must have exact static int64 or string type. They use the same source
+normalization and range checks as indexing, including numeric strings and embedded NUL.
+Invalid keys fail before removal. Removal preserves mixed copy independence and affects
+all aliases of a dynamic container; a missing removal does not create a container.
+Expression receivers are supported without new ownership rules.
+
+Metadata `boxed.source_collection` declares the count binding, source key domains and
+normalized method bindings. Generated source_has/source_remove adapt keys before invoking
+the existing classified-key API; the native has/remove contracts remain unchanged. The
+compiler consumes generated signatures and existing cardinality/argument protocols.
+`clear()` requires a container and leaves it empty. Mixed copies remain independent;
+dynamic aliases observe the same cleared table. It differs from `clean()`, which resets
+one binding to null. Clearing may release capacity. Active traversals remain memory-safe;
+there is no snapshot or concurrent-mutation guarantee.
+
+Source append uses the existing native next-key policy. Mixed null can become a container;
+dynamic null rejects. Keys remain bounded by INT32_MAX; exhaustion throws before storing.
+
+Instance fields admit mixed/dynamic and default to null. To initialize a container in a
+constructor, create a typed empty local and assign it to the field. Direct contextual `[]`
+assignment and bracket field defaults remain separate syntax work. Copies retain the usual
+mixed value semantics and dynamic shared identity. Static boxed properties remain deferred.
+
+Indexed compounds and discarded increment/decrement require an existing key. Missing keys
+throw `boxed_missing_key`; a present null still fails scalar operator admission. The old
+value is copied, the scalar operation is selected from existing metadata using its actual
+kind, and write-back validates presence after RHS effects. No raw element reference escapes.
+Arithmetic results retain the boxed family; ordering returns bool. String compounds use
+PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
+shift and power guards remain in effect. Nested indexing remains deferred. These additions
+introduce no public object layout or additional boxed kinds.

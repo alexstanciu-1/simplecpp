@@ -62,16 +62,21 @@ final readonly class runtime_function
 	}
 }
 
-/** Published runtime signatures selected by supplied arity and exact first argument type, e.g. number_format. */
+/** Published runtime signatures selected by arity and one exact operand type: number_format or boxed has/remove. */
 final readonly class runtime_overloads
 {
 	/** @var array<int,array<class-string<type_definition>,runtime_function>> */
 	public array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */;
+	/** Operand selecting the overload; receiver methods count the receiver as operand zero. */
+	public int $argument_index /** uint32 */;
+	public bool $receiver_method;
 
 	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity */
-	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */)
+	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */, int $argument_index /** uint32 */ = 0, bool $receiver_method = false)
 	{
 		$this->by_arity = $by_arity;
+		$this->argument_index = $argument_index;
+		$this->receiver_method = $receiver_method;
 	}
 }
 

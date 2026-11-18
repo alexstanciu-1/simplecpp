@@ -30,3 +30,8 @@ add_test(NAME boxed_boundary COMMAND ${CMAKE_COMMAND}
 add_test(NAME boxed_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py
   --generator ${api_tooling} --source ${PROJECT_SOURCE_DIR} --facts ${native_facts}
   --context ${native_context} --cxx ${CMAKE_CXX_COMPILER})
+
+add_executable(boxed_clear_lifetime_test clear_lifetime.cpp)
+target_include_directories(boxed_clear_lifetime_test PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/boxed)
+target_link_libraries(boxed_clear_lifetime_test PRIVATE scpp_boxed_storage)
+add_test(NAME boxed_clear_lifetime COMMAND boxed_clear_lifetime_test)

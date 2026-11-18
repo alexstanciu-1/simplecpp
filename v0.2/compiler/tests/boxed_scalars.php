@@ -192,7 +192,7 @@ foreach (flavor::cases() as $flavor) {
 		$cpp = (new Cpp_Emitter())->emit($prepare($literal));
 		foreach (['add' => '2LL', 'less' => '3LL'] as $op => $rhs) {
 			$args = "var_x_0, $rhs";
-			verify(str_contains($cpp, "scpp::boxed_{$op}_{$family}_int64($args)"), 'Unexpected boxed literal operands');
+			verify(str_contains($cpp, "scpp::boxed_{$op}_{$family}_int64($args, "), 'Unexpected boxed literal operands');
 		}
 		$fixtures[$flavor->name . '-' . $family . '-literal'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('1001')];
 		$param = match ($flavor) {
@@ -220,13 +220,13 @@ foreach (flavor::cases() as $flavor) {
 			. "echo (int)($x + $y),(int)(2 + $x),(int)($x + " . $var('n') . "), (int)($x + $x);"
 			. "if ($x < $y && $x <= 3 && $y > 2.0 && $y >= $x) { echo 1; } return 8;";
 		$cpp = (new Cpp_Emitter())->emit($prepare($stable));
-		verify(!str_contains($cpp, 'binary_left') && str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1)"),
+		verify(!str_contains($cpp, 'binary_left') && str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1, "),
 			'Expected direct stable boxed calls');
 		$fixtures[$flavor->name . '-' . $family . '-stable'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('75561')];
 
 		$bad_pair = $decl($family, 'x', '1') . $decl($family, 'y', '[]') . $infer('sum', "$x + $y") . 'return 8;';
 		$cpp = (new Cpp_Emitter())->emit($prepare($bad_pair));
-		verify(str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1)"), 'Invalid payload must reach the direct helper');
+		verify(str_contains($cpp, "boxed_add_{$family}_{$family}(var_x_0, var_y_1, "), 'Invalid payload must reach the direct helper');
 		$fixtures[$flavor->name . '-' . $family . '-bad-pair'] = ['cpp' => $cpp, 'stdout_hex' => '', 'catch_runtime_error' => 'boxed_scalar_kind'];
 
 		$replace = match ($flavor) {

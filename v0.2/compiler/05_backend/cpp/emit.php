@@ -1008,7 +1008,7 @@ CPP;
 				$headers[$header] = true;
 			}
 		}
-		$result = $execution->lower_cpp_binary($statement->operator, $left, $right, $execution);
+		$result = $execution->lower_prepared_compound($statement, $left, $right);
 		if ($statement->write_back() !== value_conversion::identity) {
 			$result = $this->conversion($type, $statement->write_back(), $result, source_type: $execution);
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
@@ -1032,14 +1032,14 @@ CPP;
 		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$steps[] = 'const auto compound_previous = ' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$steps[] = 'const auto compound_previous = ' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
 		$right = $this->value($statement->value, $globals, $declarations, $headers);
 		$result = $this->compound_result($statement, $target->type_def(), 'compound_previous', $right, $headers);
 		// Runtime setters enforce exact C++ representations, including native literal/arithmetic result spellings.
 		$result = 'static_cast<' . $target->type_def()->cpp_type() . '>(' . $result . ')';
 		// Existing-element compounds must not recreate a key removed by RHS replacement.
 		$steps[] = 'const auto compound_result = ' . $result . ';';
-		$steps[] = '(void)' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$steps[] = '(void)' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
 		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'compound_result');
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
@@ -1079,7 +1079,7 @@ CPP;
 		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_index($target->index, 'compound_collection', $key) . ';';
+		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
 		$steps[] = $target->type_def()->lower_cpp_update($statement->operator, 'updated_element', $statement->postfix) . ';';
 		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'updated_element');
 		return '{ ' . implode(' ', $steps) . ' }';

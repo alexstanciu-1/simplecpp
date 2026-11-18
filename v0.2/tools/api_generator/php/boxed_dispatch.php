@@ -5,7 +5,7 @@ require_once __DIR__ . '/compiler_families.php';
 require_once __DIR__ . '/compiler_plans.php';
 require_once __DIR__ . '/submodules.php';
 
-/** Project the existing scalar plans onto the published box tags and the first five boxed operators. */
+/** Project the existing scalar plans onto the published box tags and the supported boxed operator groups. */
 function boxedScalarPlan(object $metadata, array $facts, array $providers, array $formatters): array {
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
@@ -38,20 +38,31 @@ function boxedScalarPlan(object $metadata, array $facts, array $providers, array
         $casts[$row['to']][$row['from']] = ['contexts' => $row['contexts'], 'function' => $binding['symbol'] ?? null];
     }
     $pairs = [];
-    foreach (['add', 'less', 'less_equal', 'greater', 'greater_equal'] as $op) {
+    foreach (['add', 'subtract', 'multiply', 'divide', 'remainder', 'power', 'bit_and', 'bit_or', 'bit_xor', 'shift_left', 'shift_right', 'concatenate', 'less', 'less_equal', 'greater', 'greater_equal'] as $op) {
         foreach ($defs as $l => $_) foreach ($defs as $r => $_right) {
             $execution = $l === $r ? $l : null;
             foreach ($promotions[$l] ?? [] as $row) {
                 if ($row['right'] === $r && in_array($op, $row['operators'], true)) $execution = $row['execution'];
             }
+            if (in_array($r, $binary[$l][$op]['counts'] ?? [], true)) $execution = $l;
             $decision = $binary[$execution][$op] ?? null;
-            // String concatenation has a separate bounded spelling/contract from numeric addition.
-            if ($decision === null || $decision['lowering'] === 'runtime_concat') continue;
-            requireThat(in_array($decision['lowering'], ['native', 'runtime_compare'], true), 'Unsupported boxed scalar execution strategy');
-            $pairs[$op][$l][$r] = [$execution, $decision['spelling'], $decision['result']];
+            if ($decision === null || !isset($kinds[$decision['result']])) continue;
+            requireThat(in_array($decision['lowering'], ['native', 'runtime_compare', 'runtime_concat',
+                'zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true), 'Unsupported boxed scalar execution strategy');
+            if (isset($decision['binding']['header'])) $headers[$decision['binding']['header']] = true;
+            $pairs[$op][$l][$r] = ['execution' => $execution, 'compound' => $decision['compound'] ?? ($compiler->arithmetic->$execution->compound ?? false)] + $decision;
         }
     }
-    return compact('kinds', 'cpp', 'casts', 'pairs') + ['headers' => array_keys($headers)];
+    $updates = compilerUpdatePlan($compiler, $defs);
+    return compact('kinds', 'cpp', 'casts', 'pairs', 'updates') + ['headers' => array_keys($headers)];
+}
+
+
+/** Flavor masks are a generated ABI detail; source admission continues to use the normal flavor enum. */
+function boxedFlavorMask(array $flavors): int {
+    $mask = 0;
+    foreach ($flavors as $flavor) $mask |= ['php' => 1, 'cpp' => 2, 'js' => 4][$flavor];
+    return $mask;
 }
 
 /** Generate a total runtime kind guard; every rejected kind exits before the receiving assignment. */
@@ -80,21 +91,29 @@ function boxedBinaryBindings(array $plan, string $family): array {
                 $inner = [];
                 foreach ($rs as $r => $rtag) {
                     if (!isset($rows[$l][$r])) continue;
-                    [$execution, $spelling, $result] = $rows[$l][$r];
+                    $decision = $rows[$l][$r];
+                    $execution = $decision['execution'];
+                    $result = $decision['result'];
+                    $spelling = $decision['spelling'] ?? '';
                     $a = $ltag === null ? 'a' : boxedPayload('a', $ltag);
                     $b = $rtag === null ? 'b' : boxedPayload('b', $rtag);
                     $cpp = $plan['cpp'][$execution];
                     if ($l !== $execution) $a = "static_cast<$cpp>($a)";
-                    if ($r !== $execution) $b = "static_cast<$cpp>($b)";
-                    $expr = "($a $spelling $b)";
-                    if ($op === 'add') $expr = $family . '::from_' . $plan['kinds'][$result] . "($expr)";
-                    $inner[$rtag ?? 'plain'] = "return $expr;";
+                    if ($r !== $execution && !isset($decision['counts'])) $b = "static_cast<$cpp>($b)";
+                    $expr = isset($decision['binding']['symbol'])
+                        ? $decision['binding']['symbol'] . "($a, $b)" : "($a $spelling $b)";
+                    if (!in_array($op, ['less', 'less_equal', 'greater', 'greater_equal'], true)) {
+                        $expr = $family . '::from_' . $plan['kinds'][$result] . "($expr)";
+                    }
+                    $guard = isset($decision['flavors'])
+                        ? 'if (!(flavor_mask & ' . boxedFlavorMask($decision['flavors']) . ')) throw std::runtime_error("boxed_scalar_kind"); ' : '';
+                    $inner[$rtag ?? 'plain'] = $guard . "return $expr;";
                 }
                 if ($inner) $outer[$ltag ?? 'plain'] = $right === $family ? boxedSwitch('b', $inner) : $inner['plain'];
             }
             if (!$outer) continue;
             $bindings[] = ['op' => $op, 'left' => $left, 'right' => $right,
-                'name' => "boxed_{$op}_{$left}_$right", 'result' => $op === 'add' ? $family : 'bool',
+                'name' => "boxed_{$op}_{$left}_$right", 'result' => in_array($op, ['less', 'less_equal', 'greater', 'greater_equal'], true) ? 'bool' : $family,
                 'body' => $left === $family ? boxedSwitch('a', $outer) : $outer['plain']];
         }
     }
@@ -105,7 +124,7 @@ function renderBoxedDispatch(array $plan, string $family): array {
     $api = '';
     $impl = '';
     $emit = static function (string $signature, string $body) use (&$api, &$impl): void {
-        $api .= "$signature;\n";
+        $api .= str_replace("unsigned flavor_mask)", "unsigned flavor_mask = 0)", $signature) . ";\n";
         $impl .= "$signature {\n$body\n}\n";
     };
     foreach ($plan['cpp'] as $id => $cpp) {
@@ -127,7 +146,15 @@ function renderBoxedDispatch(array $plan, string $family): array {
         $param = static function (string $id) use ($family, $plan): string {
             return $id === $family || $id === 'string' ? "const $id&" : $plan['cpp'][$id];
         };
-        $emit($row['result'] . ' ' . $row['name'] . '(' . $param($row['left']) . ' a, ' . $param($row['right']) . ' b)', $row['body']);
+        $emit($row['result'] . ' ' . $row['name'] . '(' . $param($row['left']) . ' a, ' . $param($row['right']) . ' b, unsigned flavor_mask)', "(void)flavor_mask;\n" . $row['body']);
+    }
+    foreach (['increment' => '++', 'decrement' => '--'] as $op => $spelling) {
+        $branches = [];
+        foreach ($plan['kinds'] as $id => $tag) {
+            if (!in_array($op, $plan['updates'][$id] ?? [], true)) continue;
+            $branches[$tag] = "{ auto value = " . boxedPayload('v', $tag) . "; $spelling value; return $family::from_$tag(value); }";
+        }
+        if ($branches) $emit("$family boxed_{$op}_$family(const $family& v)", boxedSwitch('v', $branches));
     }
     return [$api, $impl];
 }
@@ -154,7 +181,9 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
             $factories .= "\t\t\t'$source' => $factory,\n";
         }
         $pairs = [];
+        $results = [];
         foreach (boxedBinaryBindings($plan, $name) as $row) {
+            $results[$row['op']] = $row['result'] === $name ? '$this' : 'type_bool::instance()';
             if ($row['left'] === $name) $pairs[$row['op']]['left'][] = "'{$row['right']}'";
             if ($row['right'] === $name) $pairs[$row['op']]['right'][] = "'{$row['left']}'";
         }
@@ -179,7 +208,21 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
                 : "(\$box_left ? {$admission['left']} : {$admission['right']})";
             $ops .= "\t\t\tbinary_operator::$op => $expression,\n";
         }
+        $updateCases = [];
+        foreach ($plan['kinds'] as $id => $_) foreach ($plan['updates'][$id] ?? [] as $op) $updateCases[$op] = 'update_operator::' . $op;
+        $compounds = [];
+        foreach ($plan['pairs'] as $op => $lefts) foreach ($lefts as $l => $rights) foreach ($rights as $r => $decision) {
+            if ($decision['compound'] && isset($plan['kinds'][$l], $plan['kinds'][$r])) $compounds[$op] = 'binary_operator::' . $op;
+        }
+        $resultCode = '';
+        foreach ($results as $op => $result) $resultCode .= "\t\t\tbinary_operator::$op => $result,\n";
+        $flavorCode = '';
+        foreach (['php', 'cpp', 'js'] as $flavor) $flavorCode .= "flavor::$flavor => " . boxedFlavorMask([$flavor]) . ', ';
         $code .= strtr(readFile(__DIR__ . '/../templates/boxed/compiler_boxed.php.tpl'), [
+            '@compounds@' => implode(', ', $compounds), '@updates@' => implode(', ', $updateCases), '@results@' => $resultCode, '@flavor_mask@' => $flavorCode,
+            '@field_admission@' => $family['source_collection']['instance_field_default'] === 'null' ? 'true' : 'false',
+            '@append_method@' => strtr(readFile(__DIR__ . '/../templates/collections/compiler_append.php.tpl'), ['@append@' => $family['source_collection']['append_method']]),
+            '@count_method@' => $family['source_collection']['count_method'],
             '@iteration@' => compilerTraversalMethods($family['traversal'], 'self::instance()', isset($runtime['submodules']['type_exports']['mixed']) ? 'type_mixed::instance()' : 'null', true),
             '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,
             '@targets@' => $destinations, '@sources@' => implode(', ', array_map(fn($s) => "'$s'", array_keys($input))),

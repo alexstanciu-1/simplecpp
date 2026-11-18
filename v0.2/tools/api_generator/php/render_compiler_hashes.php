@@ -26,13 +26,15 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             && $at['missing'] === 'throw_out_of_range', 'Compiler hash requires checked value-copy read binding');
         $export = typeExport($runtime['submodules'], $hash['name']);
         $bindings = [
+            '@append_method@' => compilerHashAppend($hash),
             '@set@' => $set['name'], '@index@' => $at['name'],
             '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()'),
+            '@methods@' => compilerCollectionMethods($hash, $definitions),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
             '@class@' => $class,
             '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
-            '@interfaces@' => ' implements iterable_type',
+            '@interfaces@' => ' implements iterable_type' . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n\t}\n",
             '@factory@' => "\tpublic static function instance(): self { return self::\$instance ??= new self(); }",
         ];
@@ -42,9 +44,8 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             $app = 'application_hash_' . $definitions[$hash['key']]['class'] . '_type';
             $applicationCases[$key] = "\t\tif (\$family === " . var_export($family, true) . " && \$second === $key::instance()) return new $app(\$element);\n";
             $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
-            $recipe['append'] = ''; // Application append stays a separate slice.
             $code .= strtr($template, array_replace($bindings, [
-                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, iterable_type',
+                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, iterable_type' . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
                 '@identity@' => "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$value)\n\t{\n\t\tparent::__construct(" . var_export($family, true) . " . '<' . \$value->name . ',' . $key::instance()->name . '>', \$value, $key::instance());\n\t\t\$this->native_name = 'scpp_hash_' . hash('sha256', \$value::class . ':' . \$value->name . ':' . \$this->key_type->name);\n\t}\n",
                 '@cpp@' => '$this->native_name',
@@ -55,4 +56,15 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $cases[] = "\t\t\tif ((\$element === $value::instance()) && (\$second === $key::instance())) return $class::instance();";
     }
     return [$code, implode("\n", $cases), $family, implode('', $applicationCases)];
+}
+
+/** Generate append only when the published method plan provides the integer-key operation. */
+function compilerHashAppend(array $hash): string {
+    foreach ($hash['methods'] as $method) {
+        if ($method['name'] !== 'append') continue;
+        requireThat($hash['key'] === 'int64' && $method['arguments'] === [$hash['value']] && $method['result'] === 'int64' && $method['mutates'], 'Invalid hash append contract');
+        return strtr(readFile(__DIR__ . '/../templates/collections/compiler_append.php.tpl'), ['@append@' => $method['name']]);
+    }
+    requireThat($hash['key'] !== 'int64', 'Missing integer hash append');
+    return '';
 }

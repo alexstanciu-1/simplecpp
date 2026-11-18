@@ -43,9 +43,9 @@ def prove(work,flavor):
             'indexed compound':init+f'{v}items["a"]+=2;return 8;',
             'indexed update':init+f'{v}items["a"]++;return 8;',
             'count':init+f'echo count({v}items);return 8;',
-            'empty':init+f'echo empty({v}items);return 8;',
+            'empty':init+f'if (empty({v}items)) {{return 1;}}return 8;',
             'clear':init+f'{v}items{a}clear();return 8;',
-            'has':init+f'echo {v}items{a}has("a");return 8;',
+            'has':init+f'if ({v}items{a}has("a")) {{return 8;}}return 1;',
             'remove':init+f'{v}items{a}remove("a");return 8;',
             'instance field':s['record']('Holder',s['field']('items',family))+s['local']('holder','Holder')+'return 8;',
             'nested indexing':init+f'{v}items["a"][0]=8;return 8;',
@@ -58,7 +58,7 @@ def prove(work,flavor):
             try:result=invoke(proc)
             finally:proc.stdin.close();proc.wait()
             accepted='error' not in result
-            assert accepted==(feature=='keyed foreach'),(flavor,family,feature,result)
+            assert accepted==(feature in ['keyed foreach','count','empty','has','remove','clear','append','instance field','indexed compound','indexed update']),(flavor,family,feature,result)
             rows[family][feature]='accepted' if accepted else result['error'].split(': ',1)[-1]
     return rows
 

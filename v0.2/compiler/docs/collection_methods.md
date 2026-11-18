@@ -156,3 +156,10 @@ no-PCH/LTO, prebuilt-runtime and fresh-object settings used above:
 Combined measured PHP/native work medians: 241.44/240.20/239.68 ms; this excludes fixture
 setup and executable launch. LLVM subcomponents overlap their parent totals. Raw results
 and generated programs: `/tmp/scpp-collection-has-proof/` (temporary).
+
+## Boxed keyed methods
+
+Mixed/dynamic expose has/remove through the same runtime receiver-call binder. Their
+generated overload set selects exact int64/string key type at operand one and calls
+normalized source bindings. Count/empty use the existing cardinality interface. See
+[boxed coverage and semantics](boxed_collection_coverage.md); clear remains separate.
