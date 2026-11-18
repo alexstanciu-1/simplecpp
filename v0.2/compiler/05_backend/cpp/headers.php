@@ -19,8 +19,8 @@ final class Cpp_Headers
 	private array $enum_helpers /** array<string,uint8> */ = [];
 
 	/** CONSTRUCTOR */
-	/** Plan native declarations from completed watchers; header text is independent of source iteration order. */
-	public function __construct(prepared_program $program)
+	/** Plan native declarations from completed watchers and source-owned layouts. @param cpp_generator_layout[] $layouts */
+	public function __construct(prepared_program $program, array $layouts /** array<string,cpp_generator_layout> */ = [])
 	{
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
@@ -34,7 +34,7 @@ final class Cpp_Headers
 				}
 			}
 		}
-		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App');
+		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App', $layouts);
 		foreach ($program->files as $key => $file) {
 			$source_key = (string) $key;
 			$header = hash('sha256', (string) $key) . '.hpp';
@@ -69,7 +69,7 @@ final class Cpp_Headers
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
-					foreach (Cpp_Emitter::signature_application_types($node) as $type) {
+					foreach ($emitter->application_types($node) as $type) {
 						if ($type instanceof enum_type_definition) {
 							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
 						} elseif ($type instanceof struct_type_definition) {
@@ -77,7 +77,13 @@ final class Cpp_Headers
 							$record_headers[$header_name] = true;
 						} else {
 							$owners[$type->cpp_type()] = 'struct ' . $type->cpp_type() . ';';
-							$this->publish_record($type->payload->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
+							$record_header = $this->publish_record($type->payload->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
+							if ($node->return_type_def() instanceof generator_type_definition) {
+								$record_headers[$record_header] = true;
+								$includes['scpp/owner_access.hpp'] = true;
+								$owners[$type->cpp_type()] = $emitter->owner_declaration($type->payload->shared, $includes)
+									. $emitter->owner_methods($type->payload->shared, $includes);
+							}
 						}
 					}
 				}

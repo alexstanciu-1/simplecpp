@@ -138,8 +138,10 @@ final class Preparation
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
-					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement)) {
-				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports straight-line yields, echo, calls and bare return only');
+					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
+					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
+					|| $statement instanceof ast_if_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, yields, echo, calls and bare return only');
 			}
 			$next = statement_completion::fallthrough;
 			if ($statement instanceof ast_yield_statement) {
@@ -180,6 +182,9 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
+				if ($generator instanceof generator_type_definition && $statement->type_def() instanceof generator_type_definition) {
+					throw new diagnostic($source, $statement->byte_start(), 'Nested cursor locals are deferred');
+				}
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
 				$this->writable_property($statement->target);

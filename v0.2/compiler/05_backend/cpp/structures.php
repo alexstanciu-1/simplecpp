@@ -53,3 +53,21 @@ final readonly class cpp_program_output
 		return array_values(array_filter(array_keys($this->files), static fn(string $path): bool => str_ends_with($path, '.hpp')));
 	}
 }
+
+/** Source-owned cursor layout published after private lowering; no executable AST retained. */
+final readonly class cpp_generator_layout
+{
+	public string $text;
+	/** @var bool[] Required public headers. */
+	public array $headers /** array<string,bool> */;
+	/** @var type_definition[] Non-owning application type dependencies. */
+	public array $types /** list<type_definition> */;
+
+	/** @param bool[] $headers @param type_definition[] $types */
+	public function __construct(string $text, array $headers /** array<string,bool> */, array $types /** list<type_definition> */)
+	{
+		$this->text = $text;
+		$this->headers = $headers;
+		$this->types = $types;
+	}
+}

@@ -14,7 +14,7 @@ args.output.mkdir(parents=True, exist_ok=True)
 fixtures = json.loads(args.fixtures.read_text())
 results = {}
 for flavor in ('cpp', 'php', 'js'):
-    for case in ('string', 'capture', 'checked_cleanup', 'abandon_started', 'abandon_unstarted'):
+    for case in ('string', 'capture', 'checked_cleanup', 'abandon_started', 'abandon_unstarted', 'local_string', 'local_owner', 'local_failure', 'branch_string', 'branch_owner', 'branch_failure'):
         name = flavor + '_' + case
         fixture = fixtures[name]
         source = args.output / (name + '.cpp')

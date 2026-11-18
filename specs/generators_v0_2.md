@@ -37,14 +37,24 @@ call and direct foreach over a producer result. Explicit transfer of named curso
 assignment/replacement, cursor parameters and forwarding returns are deferred.
 User-authored Iterator structs remain copyable and retain their existing semantics.
 
-## First implementation boundary
+## Current implementation boundary
 
-Producer bodies admit straight-line yield, echo, ordinary call statements and bare
-return. Parameters are by value; existing literal defaults use the ordinary binder.
-Local declarations, assignments, branches/loops and exception-handling regions inside
-producers are deferred, even if a particular instance would not span suspension.
+Producer bodies admit local declarations, local storage writes (including existing
+compounds/updates), braced `if/elseif/else`, yield, echo, ordinary call statements and
+bare return. Parameters are by value; existing literal defaults use the ordinary binder.
+Nested conditionals use ordinary generated truthiness. Conditions execute when reached;
+resuming after a yield does not repeat a condition or reselect its arm.
+
+A local is constructed when its declaration executes, remains alive across suspension,
+and is destroyed at lexical scope exit. Completion, an unhandled exception or abandonment
+destroys all still-active locals in reverse construction order, then captured parameters.
+Unselected arms and unreached declarations do not construct values. Bare return closes
+the cursor even inside a conditional arm.
+
+Loops, nested cursor locals and exception-handling regions inside producers remain
+deferred.
 Methods, references, yield expressions receiving sent values, yield from, asynchronous
-waiting and suspended-local lifetime analysis are separate slices.
+waiting and optimizing suspended-local liveness are separate slices.
 
 Inline-struct outputs remain deferred alongside inline-struct reference parameters.
 They need output-storage lifetime handling that does not add an observable default
@@ -56,6 +66,7 @@ before C++ emission.
 
 Generate concrete C++ cursor layouts, factories and next bodies, without C++ coroutine
 or cursor template machinery. Reuse the metadata-defined Iterator identity and
-existing type conversions. Parameters/layout belong to the function's signature;
+existing type conversions. Output/capture types belong to the function's signature; source-owned lowering
+adds concrete slots for prepared locals and publishes their layout after the join;
 resume-state numbering and statement segmentation belong to private lowering.
 See [implementation and verification](../v0.2/compiler/docs/yield.md).

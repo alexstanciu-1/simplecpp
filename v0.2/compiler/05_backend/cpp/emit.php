@@ -37,11 +37,18 @@ final class Cpp_Emitter
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
 
+	/** @var cpp_generator_layout[] Source-owned layouts available after the lowering join. */
+	private array $generator_layouts /** array<string,cpp_generator_layout> */;
+	/** @var string[] Local storage names during one producer resume-body emission. */
+	private array $generator_locals /** array<uint32,string> */ = [];
+
 	/** CONSTRUCTOR */
-	public function __construct(?Cpp_Headers $headers = null, string $root = 'App')
+	/** @param cpp_generator_layout[] $generator_layouts */
+	public function __construct(?Cpp_Headers $headers = null, string $root = 'App', array $generator_layouts /** array<string,cpp_generator_layout> */ = [])
 	{
 		$this->headers = $headers;
 		$this->root = $root;
+		$this->generator_layouts = $generator_layouts;
 	}
 
 	/** METHODS */
@@ -763,7 +770,8 @@ CPP;
 
 	private function name(ast_local_binding $binding): string
 	{
-		return 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
+		return ($binding instanceof ast_local_declaration ? ($this->generator_locals[$binding->storage_id()] ?? null) : null)
+			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
 	}
 
 	/**
@@ -953,7 +961,7 @@ CPP;
 			}
 			$literal = self::plain_integer_literal($value, $conversion);
 			if ($literal !== null) {
-				return $prefix . ' = ' . $literal;
+				return $this->binding_initialization($statement, $prefix, $literal);
 			}
 		}
 		else {
@@ -972,7 +980,17 @@ CPP;
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
-		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand, $value);
+		return $this->binding_initialization($statement, $prefix, $type->lower_cpp_conversion($conversion, $operand, $value));
+	}
+
+	/** A suspended declaration starts its lifetime only after its checked initializer succeeds. */
+	private function binding_initialization(ast_local_declaration|ast_storage_write $statement, string $prefix, string $value): string
+	{
+		if ($statement instanceof ast_local_declaration && isset($this->generator_locals[$statement->storage_id()])) {
+			$id = $statement->storage_id();
+			return 'new (&local_' . $id . '.value) local_' . $id . '_type(' . $value . '); live_' . $id . ' = true';
+		}
+		return $prefix . ' = ' . $value;
 	}
 
 	/**
@@ -1410,7 +1428,8 @@ CPP;
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|struct_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
-		foreach (self::signature_application_types($function) as $type) {
+		foreach (($this->headers?->declaration_header($function) !== null
+			? self::signature_application_types($function) : $this->application_types($function)) as $type) {
 			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}

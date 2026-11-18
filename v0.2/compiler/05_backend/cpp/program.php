@@ -19,7 +19,11 @@ final class Cpp_Program
 		if ($previous?->cpp_namespace !== $root) {
 			$changed = null;
 		}
-		$headers = new Cpp_Headers($program);
+		$layouts = [];
+		foreach ($program->files as $file) {
+			$layouts += (new Cpp_Emitter(null, $root))->generator_plans($file);
+		}
+		$headers = new Cpp_Headers($program, $layouts);
 		$header_files = $headers->files();
 		$emitted = [];
 		foreach ($program->files as $path => $file) {
@@ -34,8 +38,8 @@ final class Cpp_Program
 			}
 			$emitted[] = (string) $path;
 			$bodies[$path] = (string) $path === $program->entry_path
-				? (new Cpp_Emitter($headers, $root))->entry_body($program->entry)
-				: (new Cpp_Emitter($headers, $root))->source_definitions($file);
+				? (new Cpp_Emitter($headers, $root, $layouts))->entry_body($program->entry)
+				: (new Cpp_Emitter($headers, $root, $layouts))->source_definitions($file);
 		}
 		$output = self::assemble($program->entry_path, $bodies, $root);
 		$native = [];
