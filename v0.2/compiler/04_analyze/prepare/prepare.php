@@ -595,6 +595,40 @@ final class Preparation
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
 		}
+		if ($syntax instanceof ast_match_expression) {
+			$this->value($syntax->subject, $initializing);
+			$type = $syntax->subject->type_def();
+			if (!($type instanceof enum_type_definition) && !(defined($type::class . '::MINIMUM') && defined($type::class . '::MAXIMUM'))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires an integer or enum');
+			}
+			$seen = [];
+			$default = false;
+			$result = null;
+			foreach ($syntax->arms as $arm) {
+				if ($arm->label === null) {
+					if ($default) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match default');
+					$default = true;
+				} else {
+					$this->value($arm->label, $initializing);
+					if ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
+					$binding = $arm->label instanceof ast_name_expression ? $arm->label->declaration() : null;
+					if ($type instanceof enum_type_definition && $binding instanceof ast_enum_case) $key = $binding->short_name;
+					elseif (($arm->label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)
+						&& is_int($arm->label->constant())) $key = $arm->label->constant();
+					else throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label requires an integer literal, named constant or enum case');
+					if (isset($seen[$key])) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match label');
+					$seen[$key] = true;
+				}
+				$this->value($arm->result, $initializing);
+				$arm_type = $arm->result->type_def();
+				if (!$arm_type->supports_inferred_local() || $arm_type instanceof generator_type_definition) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match arm requires a supported value result');
+				if ($result !== null && $result !== $arm_type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match result types must be identical');
+				$result = $arm_type;
+			}
+			if (!$default) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
+			$syntax->settle_match($result);
+			return;
+		}
 		if ($syntax instanceof ast_object_access_expression) {
 			$this->value($syntax->operand, $initializing);
 			Object_Access_Preparation::prepare($syntax, $this->symbols, $this->owner, $this->dependencies);

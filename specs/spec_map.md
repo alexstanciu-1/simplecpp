@@ -83,6 +83,7 @@ The authority stack for the current project is:
    - `specs/count_empty_isset_contract.md`
    - `specs/output_v0_2.md` (ordered echo statements and bounded output admission)
    - `specs/expression_evaluation.md` (v0.2 ordered eager binary values and conversions)
+   - `specs/match_v0_2.md` (bounded lazy integer/enum selection and exact arm types)
    - `specs/conditional_statements_v0_2.md` (conditional bodies, nearest-if binding and branch scopes)
    - `specs/generators_v0_2.md` (synchronous concrete yield producers and bounded suspension)
    - `specs/loop_statements_v0_2.md` (braced while/do-while, lexical scope, evaluation and completion)

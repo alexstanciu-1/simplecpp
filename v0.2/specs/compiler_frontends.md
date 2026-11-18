@@ -418,3 +418,11 @@ inherited-final satisfaction, variance and broader reference returns remain defe
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).
+
+## Bounded match expressions
+
+All three flavors admit `match (subject) { label => result, default => result }`.
+See the [language contract](../../specs/match_v0_2.md) and
+[compiler ownership/lowering](../compiler/docs/match.md). Integer/enum subjects,
+constant labels, one required default and exact result types form the first slice.
+Boolean conditions and broader selection forms remain deferred.

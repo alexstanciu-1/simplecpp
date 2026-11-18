@@ -8,7 +8,12 @@ records the scope. Existing class/shared storage, weak fields, weak()/lock(), sh
 upcasts and virtual dispatch suffice; compiler and runtime structures are unchanged.
 
 The source fixture defines Node, Literal, Addition and Root, plus an independently
-owned source snapshot. Addition owns two child slots. Node observes its parent through
+owned source snapshot. It constructs 1+2+3 with separate literal values and half-open
+source ranges. The ordinary inherited setRange method assigns start/end fields;
+attachment and range handling introduce no special language semantics. Addition
+implements Evaluable, so the same tree is evaluated through a Node handle and through
+a capability test followed by a checked interface cast. Literal takes the negative
+capability path. Addition owns two child slots. Node observes its parent through
 weak<Node>. External attachment passes the parent through an existing shared Node view
 before creating the weak observer, so weak covariance and owning-this are unnecessary.
 Attachment is a fixture convention, not compiler-enforced single assignment.
@@ -47,6 +52,6 @@ XDEBUG_MODE=off python3 -B v0.2/compiler/tests/ast_parent_lifetime_native.py --m
 ```
 
 The harness checks cpp/php/js on Clang and GCC. Production PHP parent references and
-GC policy are unchanged. Raw borrows, weak conversions, arenas, unique, write-once
-attachment enforcement, range settling, historical semantic snapshots and native
+GC policy are unchanged. Raw borrows, weak conversions, arenas, unique, compiler-enforced write-once
+attachment/range semantics, historical semantic snapshots and native
 threading remain deferred. This proof makes no performance-improvement claim.

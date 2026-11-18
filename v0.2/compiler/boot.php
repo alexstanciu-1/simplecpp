@@ -20,6 +20,7 @@ require_once __DIR__ . '/03_parse/structures/abstract.php';
 require_once __DIR__ . '/03_parse/structures/types.php';
 require_once __DIR__ . '/03_parse/structures/structs.php';
 require_once __DIR__ . '/03_parse/structures/object_access.php';
+require_once __DIR__ . '/03_parse/structures/match.php';
 require_once __DIR__ . '/03_parse/structures/enums.php';
 require_once __DIR__ . '/03_parse/structures/imports.php';
 require_once __DIR__ . '/03_parse/structures/source.php';
