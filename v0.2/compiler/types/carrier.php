@@ -20,6 +20,8 @@ abstract class carrier_type_definition extends type_definition
 	/** METHODS */
 	/** Metadata-generated alternate-state admission and checked extraction binding. */
 	abstract public function accepts_empty(): bool;
+	/** Generated admission for a value-or-empty carrier; other alternate states are not fallback. */
+	abstract public function supports_coalescing(): bool;
 	abstract public function sentinel_factory(string $state): ?string;
 	abstract public function implicit_extraction(): bool;
 	abstract public function lower_cpp_extract(string $value): string;

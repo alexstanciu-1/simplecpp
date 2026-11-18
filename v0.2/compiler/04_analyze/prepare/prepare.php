@@ -763,6 +763,17 @@ final class Preparation
 			$this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			$this->value($syntax->right, $initializing);
+			if ($syntax->operator === binary_operator::coalesce) {
+				$carrier = $syntax->left->type_def();
+				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier');
+				}
+				if ($syntax->right->type_def() !== $carrier->payload_type) {
+					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
+				}
+				$syntax->settle_binary($carrier->payload_type);
+				return;
+			}
 			if ($syntax->operator->logical()) {
 				$syntax->left->type_def()->prepare_condition($syntax->left);
 				$syntax->right->type_def()->prepare_condition($syntax->right);

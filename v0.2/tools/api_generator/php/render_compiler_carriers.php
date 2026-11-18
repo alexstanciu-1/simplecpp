@@ -45,6 +45,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             '@presence_expression@' => $presenceExpression,
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
+            '@coalesce@' => $carrier['family'] === 'nullable' && count($carrier['states']) === 2 && array_key_exists('value', $carrier['states']) && array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@empty@' => array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@implicit@' => $carrier['extraction'] === 'implicit_checked_one_layer_value_copy' ? 'true' : 'false',
             '@access@' => $carrier['payload_access'],

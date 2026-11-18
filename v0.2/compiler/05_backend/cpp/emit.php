@@ -1299,6 +1299,16 @@ CPP;
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
 		if ($value instanceof ast_binary_expression) {
+			if ($value->operator === binary_operator::coalesce) {
+				/** @var carrier_type_definition $carrier */
+				$carrier = $value->left->type_def();
+				$steps = [];
+				$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
+				$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+				return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . implode(' ', $steps) . ' const auto& coalesce_value = ' . $left
+					. '; if (' . $carrier->lower_cpp_presence('coalesce_value') . ') { return '
+					. $carrier->lower_cpp_extract('coalesce_value') . '; } return ' . $right . '; }())';
+			}
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);

@@ -24,7 +24,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Application-collection writable references, traversal and broader element families remain |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
-| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Application-value optional lookup, lazy fallback, populated tables and tokenizer bindings remain |
+| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
@@ -202,7 +202,34 @@ Verification checklist:
 - [x] Function/import precedence, constant aliases, unsupported application lookup and provider relocation/retirement.
 
 Deferred: application nullable values, nullable payload publication, boxed/nested
-lookup, coalescing/coalescing assignment and new removal/clear syntax.
+lookup, coalescing assignment and new removal/clear syntax. Coalescing follows below.
+
+### 2.3 Lazy fallback — first published nullable slice implemented
+
+`nullable<T> ?? T` uses the published carrier's presence/extraction and requires
+an exact payload fallback. Zero, false and empty string select the present value.
+The left executes once; the fallback executes only for absence. Both branches
+are validated. Right association permits `a ?? b ?? fallback`.
+
+Reuse binary AST ownership and existing result facts; no new fields, indexes or
+preparation pass. Carrier admission belongs to generated metadata code, while
+preparation validates the join and lowering preserves lazy selection and value
+copies. See [implementation notes](../../compiler/docs/coalesce.md).
+
+Verification completed:
+
+- [x] cpp/php/js on Clang/GCC, precedence and surrounding short circuit.
+- [x] Single evaluation, skipped fallback/failure, left and selected-right failures.
+- [x] Present zero/false/empty text; NUL string ownership and vector copy independence.
+- [x] Conditional reference mutation invalidates facts before checked conversion.
+- [x] Single-pass preparation, syntax ownership, pure emission and reset/reprepare.
+- [x] Body/signature edits, repeated failure, deletion/restoration and fresh equivalence.
+- [x] Native caller reuse and no-op builds; generator/provider regressions.
+
+Deferred: `??=`, application/shared carriers, nullable RHS results, homogeneous
+wrapper fallback extraction, result/sentinel families, bare-null/nonnullable left
+operands and widening joins. This is a compiler availability slice, not a change
+to the broader normative conditional matrix.
 
 ## 3. Object relationships — a small AST family
 

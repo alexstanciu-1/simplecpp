@@ -77,6 +77,14 @@ Logical `!`, `&&` and `||` reuse generated condition truthiness in all flavors.
 Prefix `!` binds above arithmetic; `&&` binds below equality and above `||`.
 Each operand independently admits bool, int64, float or string; the result is bool.
 See [logical expressions](../compiler/docs/logical.md) for short-circuit and incremental boundaries.
+
+The current compiler supports `nullable<T> ?? T` for published runtime nullable
+carriers, with an exact canonical payload fallback. It evaluates the left once
+and evaluates the fallback only when absent. Both branches are prepared; zero,
+false and empty string are present values. `??` associates right and binds below
+`||` but above `xor`. Broader wrapper pairs in the conditional matrix, application
+carriers and `??=` remain deferred here. See [coalescing](../compiler/docs/coalesce.md).
+
 There is no member access, general string expressions, PHP tags/HTML
 modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded [three-flavor grammar](../../specs/string_interpolation.md#active-v02-flavors).
 

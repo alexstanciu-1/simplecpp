@@ -30,6 +30,7 @@ enum binary_operator: int
 	case not_identical = 22;
 	case compare = 23;
 	case power = 24;
+	case coalesce = 25;
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
@@ -62,23 +63,24 @@ enum binary_operator: int
 		return ($this === self::logical_and) || ($this === self::logical_or);
 	}
 
-	/** Higher levels bind more tightly; power alone associates right. */
+	/** Higher levels bind more tightly; power and coalesce associate right. */
 	public function precedence(): int /** uint8 */
 	{
 		return match ($this) {
 			self::logical_xor => 0,
-			self::logical_or => 1,
-			self::logical_and => 2,
-			self::bit_or => 3,
-			self::bit_xor => 4,
-			self::bit_and => 5,
-			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 6,
-			self::less, self::less_equal, self::greater, self::greater_equal => 7,
-			self::concatenate => 8,
-			self::shift_left, self::shift_right => 9,
-			self::add, self::subtract => 10,
-			self::multiply, self::divide, self::remainder => 11,
-			self::power => 12,
+			self::coalesce => 1,
+			self::logical_or => 2,
+			self::logical_and => 3,
+			self::bit_or => 4,
+			self::bit_xor => 5,
+			self::bit_and => 6,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 7,
+			self::less, self::less_equal, self::greater, self::greater_equal => 8,
+			self::concatenate => 9,
+			self::shift_left, self::shift_right => 10,
+			self::add, self::subtract => 11,
+			self::multiply, self::divide, self::remainder => 12,
+			self::power => 13,
 		};
 	}
 }
@@ -87,7 +89,7 @@ enum binary_operator: int
 final class ast_binary_expression extends ast_expression
 {
 	/** PROPERTIES */
-	/** Native owning left operand; lazy operators test its truthiness before deciding whether to evaluate the RHS. */
+	/** Native owning left operand; lazy operators test its truthiness or presence before deciding whether to evaluate the RHS. */
 	public readonly ast_expression $left;
 	/** Native owning right operand. */
 	public readonly ast_expression $right;
