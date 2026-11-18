@@ -53,7 +53,7 @@ Key/value argument arrays exist only transiently during lowering, not on AST occ
 
 ## Boundaries and verification
 
-Application collection writable references, nested collection values,
+Nested collection values,
 explicit shared/weak value spellings, enum values and application-defined keys remain
 separate slices. `hash_contains(collection, key)` is supported through the generated key-presence
 capability and existing native member binding. It needs no nullable payload carrier.
