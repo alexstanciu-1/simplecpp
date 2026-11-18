@@ -3,6 +3,17 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
+interface iterable_type
+{
+	public function lower_cpp_iteration_state(): string;
+	public function iteration_value_type(): type_definition;
+	public function iteration_key_type(): ?type_definition;
+	public function lower_cpp_iteration_limit(string $receiver): string;
+	/** $key is null for value-only traversal; boxed implementations decode normalized key transport. */
+	public function lower_cpp_iteration_next(string $receiver, string $position, string $limit, string $value, ?string $key): string;
+}
+
 /** Unary observations on a published collection. Native uint8. */
 enum collection_cardinality: int
 {

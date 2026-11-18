@@ -189,4 +189,4 @@ and trace files are retained in `/tmp/scpp-vector-provider-proof/`.
 
 Concrete vectors expose the [common traversal protocol](collection_traversal.md).
 It borrows the live wrapper and copies one element at a time; no cursor allocation,
-collection snapshot or per-wrapper state is added. Compiler foreach remains separate.
+collection snapshot or per-wrapper state is added. The [compiler foreach slice](../compiler/docs/foreach.md) consumes these bindings.

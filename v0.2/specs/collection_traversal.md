@@ -1,7 +1,7 @@
 # Native collection traversal
 
 Doc Status: normative
-Scope: v0.2 runtime/generator primitives. Compiler foreach integration is deferred.
+Scope: v0.2 runtime/generator primitives. The [compiler foreach slice](../compiler/docs/foreach.md) consumes this protocol.
 
 ## Protocol
 

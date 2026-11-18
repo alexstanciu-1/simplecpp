@@ -4,8 +4,9 @@ Doc Status: supporting
 
 The [loop contract](../../../specs/loop_statements_v0_2.md) owns semantics.
 Bare [break/continue](transfers.md) target the nearest loop. Numbered/labelled transfers,
-foreach, unbraced loops, constant-condition pruning and precise loop value analysis
+unbraced loops, constant-condition pruning and precise loop value analysis
 remain deferred. No additional truthiness types or runtime APIs are introduced.
+The [foreach slice](foreach.md) consumes generated collection traversal bindings.
 The [bounded for slice](for.md) adds one initializer, condition and assignment update.
 
 ## Structure and ownership

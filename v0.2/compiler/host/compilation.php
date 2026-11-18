@@ -86,6 +86,11 @@ final class Compilation_Inspection
 			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
 				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'];
 			}
+			elseif ($statement instanceof ast_foreach_statement) {
+				$statements[] = ['kind' => 'foreach', 'source' => self::value($statement->source_value),
+					'key' => $statement->key?->short_name, 'value' => $statement->value->short_name,
+					'body' => self::body($statement->body)];
+			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];

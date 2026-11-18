@@ -1,7 +1,8 @@
 
 /** Published @name@ scalar box and its generated admission and lowering bindings. */
-final class type_@name@ extends boxed_type_definition
+final class type_@name@ extends boxed_type_definition implements iterable_type
 {
+@iteration@
 	/** STATIC PROPERTIES */
 	private static ?self $instance = null;
 

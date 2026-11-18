@@ -33,6 +33,10 @@ Reference safety remains governed by `specs/native_reference_safety.md` and `spe
 
 ## v0.2 value iteration
 
+All three flavors use the bounded `foreach (source as value)` and key/value forms;
+PHP variable names keep their `$` prefix, while C++/JS use bare names. This is the
+Simple C++ traversal syntax, not JavaScript for-of compatibility.
+
 The bounded `foreach ($source as $value)` and `foreach ($source as $key => $value)`
 forms accept registered vector, hash, mixed-table and dynamic-container sources.
 Evaluate the source expression once before binding either variable; retain it for
@@ -41,7 +45,7 @@ values are T; hash<V,K> keys are K and values are V. Mixed iteration values are 
 dynamic iteration values are dynamic. Both retain the established int/string key
 domain (represented by scalar mixed keys). This follows the approved
 [separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
-whose runtime/compiler migration is still pending. Vectors visit index order, hashes/tables
+whose traversal bindings use the same value-copy contract. Vectors visit index order, hashes/tables
 visit their established entry order. Each selected value uses its ordinary copy
 semantics; no native reference to an element is exposed.
 
@@ -84,8 +88,8 @@ its own integer position and limit. Copied elements keep their normal value/shar
 semantics. Break, return and exceptions use ordinary scoped cleanup.
 
 Concurrent mutation and by-reference foreach remain deferred. Native callers must
-obey wrapper lifetime and distinct cursor/output requirements. The runtime primitives
-are implemented first; source foreach integration is a separate compiler slice.
+obey wrapper lifetime and distinct cursor/output requirements. The runtime primitives and bounded source foreach integration are implemented.
+Custom traversal and yield remain separate slices.
 See [native traversal protocol](../v0.2/specs/collection_traversal.md).
 
 ## 2. Core model

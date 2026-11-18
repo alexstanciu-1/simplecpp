@@ -26,6 +26,15 @@ final class Function_Preparation
 	{
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_foreach_statement) {
+				$statement->destination = null;
+				$statement->conversion = null;
+				$statement->key?->reset_preparation();
+				$statement->value->reset_preparation();
+				self::expression($statement->source_value);
+				self::reset_block($statement->body);
+				continue;
+			}
 			if ($statement instanceof ast_loop_statement) {
 				if ($statement instanceof ast_for_statement) {
 					$statement->initializer->reset_preparation();

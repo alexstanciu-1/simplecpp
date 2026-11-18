@@ -37,6 +37,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
         $code .= strtr(readFile(__DIR__ . '/../templates/collections/vector_type.php.tpl'), [
+            '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),
             '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
@@ -46,4 +47,17 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }
     return [$code, implode("\n", $cases), $family];
+}
+
+/** Bind the common traversal protocol from a validated runtime publication row. */
+function compilerTraversalMethods(array $plan, string $value, string $key, bool $boxed = false): string {
+    requireThat($plan['mode'] === 'borrow_live_wrapper_physical' && $plan['visibility'] === 'compiler_internal', 'Unsupported compiler traversal protocol');
+    $state = $boxed ? 'scpp::int64 iteration_key_index; scpp::string iteration_key_text;' : '';
+    $arguments = $boxed ? "'iteration_key_index, iteration_key_text, ' . \$value" : "\$key . ', ' . \$value";
+    $publish = $boxed ? " . ' && ((' . \$key . ' = iteration_key_index < 0 ? scpp::mixed::from_string(iteration_key_text) : scpp::mixed::from_integer(iteration_key_index)), true)'" : '';
+    return strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
+        '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
+        '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],
+        '@arguments@' => $arguments, '@publish@' => $publish,
+    ]);
 }

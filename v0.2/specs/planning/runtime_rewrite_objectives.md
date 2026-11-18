@@ -148,7 +148,8 @@ separate work; the private module adapter does not settle RT-DEBT-01.
 ## Explicit debt: RT-DEBT-01 — traversal and mutation preservation
 
 Status: revised by user decision, 2026-11-18; runtime primitives implemented.
-Remaining debt: compiler foreach binding, retained source-wrapper lifetime and lowering.
+Bounded compiler foreach binding and retained source-wrapper lifetime are implemented.
+Remaining work: custom traversal and yield, with their own agreed contracts.
 
 The previous mutation-preservation proposal is superseded by the approved live
 wrapper/physical-position protocol. It performs no remaining-entry snapshots or

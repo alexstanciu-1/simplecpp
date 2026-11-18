@@ -26,6 +26,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $export = typeExport($runtime['submodules'], $hash['name']);
         $code .= strtr(readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl'), [
             '@set@' => $set['name'], '@index@' => $at['name'],
+            '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()'),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
             '@class@' => $class, '@family@' => var_export($hash['source_family'], true),
             '@value@' => $value, '@key@' => $key, '@cpp@' => var_export($export['symbol'], true),

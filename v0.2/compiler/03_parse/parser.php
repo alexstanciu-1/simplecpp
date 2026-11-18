@@ -147,6 +147,7 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->keyword('foreach')) return $this->foreach_loop($grammar, $collector);
 		if ($this->cursor->keyword('for')) {
 			return $this->for_loop($grammar, $collector);
 		}
@@ -275,6 +276,33 @@ final class Parser
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
 		$this->lexical = $collector;
 		return $child->block($start, $end, $statements);
+	}
+
+	/** All flavors normalize a bounded foreach header to the same produced bindings. */
+	private function foreach_loop(statement_grammar $grammar, Body_Collection $collector): ast_foreach_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('foreach');
+		$this->cursor->take(token_kind::lparen, '(');
+		$source = $this->value();
+		$this->cursor->take_keyword('as');
+		$kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		$first_pos = $this->cursor->position();
+		$first = $this->cursor->name($kind);
+		$header = $collector->child();
+		$key = null;
+		if ($this->cursor->is(token_kind::arrow)) {
+			$this->cursor->take(token_kind::arrow, '=>');
+			$key = $header->iteration_binding($first, $first_pos, true);
+			$first_pos = $this->cursor->position();
+			$first = $this->cursor->name($kind);
+			if ($first === $key->short_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Foreach key and value must have different names');
+		}
+		$value = $header->iteration_binding($first, $first_pos, !$collector->has_local($first));
+		$this->cursor->take(token_kind::rparen, ')');
+		$body = $this->braced_block($grammar, $header, '{ (braced foreach body)');
+		$this->lexical = $collector;
+		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
 	}
 
 	/** Parse one initializer, condition and assignment update in a header-local scope. */

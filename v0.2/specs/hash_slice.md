@@ -3,7 +3,7 @@
 Doc Status: normative
 Scope: bounded v0.2 native runtime/API generation. Compiler type resolution is now
 connected through [published hash identities](../compiler/docs/hash_types.md); source
-[empty construction and keyed operations](../compiler/docs/hash_operations.md) are supported; native traversal uses the [common protocol](collection_traversal.md); compiler foreach remains deferred.
+[empty construction and keyed operations](../compiler/docs/hash_operations.md) are supported; native traversal uses the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it.
 
 ## Owners and publication
 

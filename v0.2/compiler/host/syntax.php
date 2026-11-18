@@ -180,6 +180,11 @@ final class Syntax_Inspection
 		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
 			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
 		}
+		if ($statement instanceof ast_foreach_statement) {
+			return ['kind' => 'foreach', 'span' => self::span($statement), 'source' => self::expression($statement->source_value),
+				'key' => $statement->key?->short_name, 'value' => $statement->value->short_name,
+				'body' => array_map(self::statement(...), $statement->body->statements)];
+		}
 		if ($statement instanceof ast_loop_statement) {
 			$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),

@@ -1,6 +1,6 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition
+final class @class@ extends hash_type_definition implements iterable_type
 {
 	/** STATIC PROPERTIES */
 	private static ?self $instance = null;
@@ -13,6 +13,7 @@ final class @class@ extends hash_type_definition
 	}
 
 	/** METHODS */
+@iteration@
 	public function cpp_type(): string
 	{
 		return @cpp@;

@@ -90,6 +90,9 @@ final class Body_Collection
 			|| ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 			$value = $statement->value;
 		}
+		elseif ($statement instanceof ast_foreach_statement) {
+			$value = $statement->source_value;
+		}
 		elseif ($statement instanceof ast_loop_statement) {
 			if ($statement instanceof ast_for_statement) {
 				if (!($statement->initializer instanceof ast_update_statement)) {
@@ -120,6 +123,17 @@ final class Body_Collection
 		if ($value !== null) {
 			$this->expression($value);
 		}
+	}
+
+	/** Collect a produced header name without inventing an initializer or scanning its body. */
+	public function iteration_binding(string $name, int $start /** uint32 */, bool $declare): ast_iteration_binding
+	{
+		$binding = new ast_iteration_binding($name, $start, $this->storage_owner->next_id++);
+		if ($declare) {
+			$this->declarations->declare($binding);
+			$this->local_names[$name] = $binding;
+		}
+		return $binding;
 	}
 
 	public function child(): Body_Collection

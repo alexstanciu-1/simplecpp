@@ -115,4 +115,4 @@ Typed local `[]`, single-level indexed reads and keyed writes are available in a
 flavors. Keys have static type int64 or string. A read returns a same-family value and
 writes use ordinary same-family copies or scalar boxing. Append, boxed key expressions,
 populated literals, nested writes and explicit family crossing remain deferred.
-Native traversal follows the [common protocol](collection_traversal.md); compiler foreach remains RT-DEBT-01. See [validation](boxed_slice_validation.md).
+Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).

@@ -1,6 +1,6 @@
 
 /** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
-final class @class@ extends vector_type_definition
+final class @class@ extends vector_type_definition implements iterable_type
 {
 	/** STATIC PROPERTIES */
 	private static ?self $instance = null;
@@ -12,6 +12,7 @@ final class @class@ extends vector_type_definition
 	}
 
 	/** METHODS */
+@iteration@
 	public function cpp_type(): string
 	{
 		return @cpp@;

@@ -144,6 +144,9 @@ final class Preparation
 				}
 				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
 			}
+			elseif ($statement instanceof ast_foreach_statement) {
+				$next = $this->foreach_loop($statement, $source, $target, $function);
+			}
 			elseif ($statement instanceof ast_for_statement) {
 				$next = $this->for_loop($statement, $source, $target, $function);
 			}
@@ -311,6 +314,45 @@ final class Preparation
 	{
 		$this->value($condition);
 		$condition->type_def()->prepare_condition($condition);
+	}
+
+	/** Resolve produced types and ordinary assignments once; no iteration-dependent analysis or snapshots. */
+	private function foreach_loop(ast_foreach_statement $statement, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): int /** uint8 */
+	{
+		$this->value($statement->source_value);
+		$type = $statement->source_value->type_def();
+		if (!($type instanceof iterable_type)) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		$destination = $this->find_local($statement->value->short_name);
+		$statement->value->settle_type($type->iteration_value_type());
+		$statement->destination = $destination ?? $statement->value;
+		$statement->conversion = $statement->destination->type_def()->prepare_conversion($statement->value,
+			$destination === null ? conversion_context::inference : conversion_context::assignment);
+		$this->forget_values();
+		$this->local_frames[] = [];
+		try {
+			if ($destination === null) $this->local_frames[count($this->local_frames) - 1][$statement->value->short_name] = $statement->value;
+			if ($statement->key !== null) {
+				$key_type = $type->iteration_key_type();
+				if ($key_type === null) throw new diagnostic($source, $statement->key->byte_start(), 'Foreach keys require the mixed runtime provider');
+				$statement->key->settle_type($key_type);
+				$this->local_frames[count($this->local_frames) - 1][$statement->key->short_name] = $statement->key;
+			}
+			$this->local_frames[] = [];
+			$this->loop_depth++;
+			try {
+				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
+			}
+			finally {
+				$this->loop_depth--;
+				array_pop($this->local_frames);
+			}
+		}
+		finally {
+			array_pop($this->local_frames);
+		}
+		$this->forget_values();
+		return ($completion & statement_completion::returns) | statement_completion::fallthrough;
 	}
 
 	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
