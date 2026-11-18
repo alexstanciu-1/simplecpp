@@ -577,12 +577,12 @@ CPP;
 	 * @param ast_global_declaration[] $global_references
 	 * @param bool[] $required_headers
 	 * @return string[]
-	 * @param ast_statement[]|null $selected Optional transient subset for concrete resume segments.
+	 * Producer context is private lowering state; ordinary functions retain native automatic cleanup.
 	 */
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null,
-		?array $selected /** list<ast_statement>|null */ = null): array /** list<string> */
+		?cpp_resume_context $resume = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
@@ -590,11 +590,24 @@ CPP;
 			$function = $body->parent;
 		}
 		$lines = [];
-		foreach ($selected ?? $body->statements as $statement)
+		if ($resume !== null) $resume->scopes[] = $body;
+		foreach ($body->statements as $statement)
 		{
 			if ($statement instanceof ast_base_statement) continue;
-			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
-				$lines[] = "\t" . ($statement instanceof ast_break_statement ? 'break;' : 'continue;');
+			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
+				|| $statement instanceof ast_yield_statement);
+			if ($leaf) $lines[] = '{';
+			if ($statement instanceof ast_yield_statement) {
+				$lines[] = $this->generator_yield($statement, $function->return_type_def(), $resume, $declarations, $global_references, $required_headers);
+			}
+			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+				$transfer = $statement instanceof ast_break_statement ? 'break;' : 'continue;';
+				if ($resume !== null) {
+					$loop = $resume->loops[array_key_last($resume->loops)];
+					$lines[] = $this->generator_cleanup($resume, $loop['depth']);
+					if ($statement instanceof ast_continue_statement && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
+				}
+				$lines[] = "\t" . $transfer;
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
@@ -637,34 +650,53 @@ CPP;
 					$converted = $destination->type_def()->lower_cpp_conversion($statement->conversion, $operand, $statement->value);
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
-				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function) as $line) $lines[] = "\t" . $line;
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
 				$lines[] = "\t}\n\t}";
 			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
 				$update_snapshot = null;
+				$update_label = null;
 				if ($statement instanceof ast_for_statement) {
 					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers, $init_snapshot);
-					if ($init_snapshot !== null) {
+					if ($resume !== null) {
+						$lines[] = $init_snapshot === null ? "{ $initializer; }" : "{ const auto $init_snapshot; $initializer; }";
+						$initializer = '';
+					}
+					elseif ($init_snapshot !== null) {
 						$lines[] = "\t{ const auto " . $init_snapshot . '; ' . $initializer . '; }';
 						$initializer = '';
 					}
 					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers, $update_snapshot);
-					if ($update_snapshot !== null) {
+					if ($resume === null && $update_snapshot !== null) {
 						$lines[] = "\t{ " . $statement->update->local_def()->type_def()->cpp_type() . ' compound_previous;';
 						$update = '(' . $update_snapshot . ', ' . $update . ')';
 					}
-					$lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
+					if ($resume !== null) {
+						$update_label = 'loop_update_' . ++$resume->loop_id;
+						$lines[] = "\twhile ($condition) {";
+					} else $lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
 				}
 				else {
 					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
-				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function) as $line) {
+				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => $update_label];
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
 					$lines[] = "\t" . $line;
 				}
+				if ($resume !== null) {
+					array_pop($resume->loops);
+					if ($update_label !== null) {
+						$lines[] = "goto $update_label;\n$update_label:;";
+						$lines[] = $update_snapshot === null ? "{ $update; }" : "{ const auto $update_snapshot; $update; }";
+					}
+				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
-				if ($update_snapshot !== null) {
+				if ($resume !== null && $statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) {
+					$lines[] = $this->generator_destroy($statement->initializer);
+				}
+				if ($resume === null && $update_snapshot !== null) {
 					$lines[] = "\t}";
 				}
 			}
@@ -676,7 +708,7 @@ CPP;
 							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
 					}
 					$lines[] = "\t" . $head . ' {';
-					foreach ($this->statements($arm->body, $declarations, $global_references, $required_headers, $function) as $line) {
+					foreach ($this->statements($arm->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
 						$lines[] = "\t" . $line;
 					}
 					$lines[] = "\t}";
@@ -756,7 +788,7 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
-				$lines[] = "\treturn;";
+				$lines[] = $resume === null ? "\treturn;" : "close(); return false;";
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
@@ -764,6 +796,11 @@ CPP;
 			else {
 				throw new \LogicException('Unhandled prepared statement');
 			}
+			if ($leaf) $lines[] = '}';
+		}
+		if ($resume !== null) {
+			$lines[] = $this->generator_cleanup($resume, count($resume->scopes) - 1);
+			array_pop($resume->scopes);
 		}
 		return $lines;
 	}

@@ -40,7 +40,7 @@ User-authored Iterator structs remain copyable and retain their existing semanti
 ## Current implementation boundary
 
 Producer bodies admit local declarations, local storage writes (including existing
-compounds/updates), braced `if/elseif/else`, yield, echo, ordinary call statements and
+compounds/updates), braced `if/elseif/else`, `while`, `do-while`, `for`, yield, echo, ordinary call statements and
 bare return. Parameters are by value; existing literal defaults use the ordinary binder.
 Nested conditionals use ordinary generated truthiness. Conditions execute when reached;
 resuming after a yield does not repeat a condition or reselect its arm.
@@ -51,7 +51,14 @@ destroys all still-active locals in reverse construction order, then captured pa
 Unselected arms and unreached declarations do not construct values. Bare return closes
 the cursor even inside a conditional arm.
 
-Loops, nested cursor locals and exception-handling regions inside producers remain
+While/do-while/for use their ordinary conditions, updates and lexical scopes.
+Suspension resumes inside the current iteration, without repeating initialization or
+its already-evaluated condition. Body locals are destroyed at iteration end and
+constructed anew when their declarations execute again. Break/continue clean scopes
+they exit; for-continue then executes the update. For-header locals survive iterations
+and are destroyed when the loop exits. Return and exceptions close the entire cursor.
+
+Foreach inside producers, nested cursor locals and exception-handling regions remain
 deferred.
 Methods, references, yield expressions receiving sent values, yield from, asynchronous
 waiting and optimizing suspended-local liveness are separate slices.

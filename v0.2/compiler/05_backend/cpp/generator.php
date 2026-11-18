@@ -139,17 +139,17 @@ CPP;
 			$values[] = 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $local . ')';
 			$aliases[] = '[[maybe_unused]] auto& ' . $local . ' = storage.' . $local . ';';
 		}
-		$state = 0;
+		$resume = new cpp_resume_context();
 		foreach ($this->generator_bindings($function->body()) as $local) {
 			$this->generator_locals[$local->storage_id()] = 'local_' . $local->storage_id() . '.value';
 		}
 		try {
-			$body = $this->generator_sequence($function->body(), $type, $state, $declarations, $globals, $headers);
+			$body = implode("\n", $this->statements($function->body(), $declarations, $globals, $headers, $function, $resume));
 		} finally {
 			$this->generator_locals = [];
 		}
 		$dispatch = "switch (state) {\ncase 0: break;\n";
-		for ($resume = 1; $resume <= $state; ++$resume) $dispatch .= "case $resume: goto resume_$resume;\n";
+		for ($state = 1; $state <= $resume->state; ++$state) $dispatch .= "case $state: goto resume_$state;\n";
 		$dispatch .= "default: return false;\n}\n";
 		$body = implode("\n", $aliases) . "\n" . $dispatch . $body . "close(); return false;\n";
 		$factory = $this->signature($function, $headers) . ' { return ' . $name . '(' . implode(', ', $values) . "); }\n";
@@ -164,6 +164,9 @@ CPP;
 			if ($statement instanceof ast_local_declaration) yield $statement;
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) yield from $this->generator_bindings($arm->body);
+			} elseif ($statement instanceof ast_loop_statement) {
+				if ($statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) yield $statement->initializer;
+				yield from $this->generator_bindings($statement->body);
 			}
 		}
 	}
@@ -175,52 +178,41 @@ CPP;
 		return "if (live_$id) { live_$id = false; local_$id.value.~local_{$id}_type(); }";
 	}
 
+	/** Destroy scopes exited by a transfer; normal lexical exit uses this same path. */
+	private function generator_cleanup(cpp_resume_context $resume, int $depth /** uint32 */): string
+	{
+		$text = '';
+		for ($index = count($resume->scopes) - 1; $index >= $depth; --$index) {
+			foreach (array_reverse($resume->scopes[$index]->locals) as $local) $text .= $this->generator_destroy($local) . "\n";
+		}
+		return $text;
+	}
+
 	/**
-	 * Native blocks preserve branching; resume labels skip already-executed conditions and declarations.
-	 * Every ordinary statement owns its native temporaries, so dispatch never jumps over an active initializer.
+	 * Output temporaries end before the resume label; no automatic initialization is crossed.
 	 * @param ast_function_declaration[] $declarations
 	 * @param ast_global_declaration[] $globals
 	 * @param bool[] $headers
 	 */
-	private function generator_sequence(ast_statement_block $block, generator_type_definition $type, int &$state /** uint32 */,
+	private function generator_yield(ast_yield_statement $statement, generator_type_definition $type, cpp_resume_context $resume,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$globals /** array<string,ast_global_declaration> */,
 		array &$headers /** array<string,bool> */): string
 	{
-		$body = '';
-		foreach ($block->statements as $statement) {
-			if ($statement instanceof ast_if_statement) {
-				foreach ($statement->arms as $index => $arm) {
-					$head = $index === 0 ? 'if' : 'else';
-					if ($arm->condition !== null) {
-						$head = ($index === 0 ? 'if' : 'else if') . ' ('
-							. $this->condition($arm->condition, $globals, $declarations, $headers) . ')';
-					}
-					$body .= $head . " {\n" . $this->generator_sequence($arm->body, $type, $state, $declarations, $globals, $headers) . "}\n";
-				}
-			} elseif ($statement instanceof ast_yield_statement) {
-				$body .= "{\n";
-				if ($statement->key !== null) {
-					$key_type = $type->iteration_key_type();
-					$key = $this->value($statement->key, $globals, $declarations, $headers);
-					foreach ($key_type->conversion_headers($statement->key_conversion) as $header) $headers[$header] = true;
-					$body .= $key_type->cpp_type() . ' next_key = ' . $key_type->lower_cpp_conversion($statement->key_conversion, $key, $statement->key) . ";\n";
-				}
-				$value_type = $type->iteration_value_type();
-				$value = $this->value($statement->value, $globals, $declarations, $headers);
-				foreach ($value_type->conversion_headers($statement->conversion) as $header) $headers[$header] = true;
-				$body .= $value_type->cpp_type() . ' next_value = ' . $value_type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ";\n";
-				$body .= 'yield_value = static_cast<' . $value_type->cpp_type() . "&&>(next_value);\n";
-				if ($statement->key !== null) $body .= 'yield_key = static_cast<' . $key_type->cpp_type() . "&&>(next_key);\n";
-				++$state;
-				$body .= "state = $state; return true;\n}\nresume_$state:;\n";
-			} elseif ($statement instanceof ast_return_statement) {
-				$body .= "close(); return false;\n";
-			} else {
-				$body .= "{\n" . implode("\n", $this->statements($block, $declarations, $globals, $headers, $type->function, [$statement])) . "\n}\n";
-			}
+		$body = "{\n";
+		if ($statement->key !== null) {
+			$key_type = $type->iteration_key_type();
+			$key = $this->value($statement->key, $globals, $declarations, $headers);
+			foreach ($key_type->conversion_headers($statement->key_conversion) as $header) $headers[$header] = true;
+			$body .= $key_type->cpp_type() . ' next_key = ' . $key_type->lower_cpp_conversion($statement->key_conversion, $key, $statement->key) . ";\n";
 		}
-		foreach (array_reverse($block->locals) as $local) $body .= $this->generator_destroy($local) . "\n";
+		$value_type = $type->iteration_value_type();
+		$value = $this->value($statement->value, $globals, $declarations, $headers);
+		foreach ($value_type->conversion_headers($statement->conversion) as $header) $headers[$header] = true;
+		$body .= $value_type->cpp_type() . ' next_value = ' . $value_type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ";\n";
+		$body .= 'yield_value = static_cast<' . $value_type->cpp_type() . "&&>(next_value);\n";
+		if ($statement->key !== null) $body .= 'yield_key = static_cast<' . $key_type->cpp_type() . "&&>(next_key);\n";
+		$state = ++$resume->state;
+		$body .= "state = $state; return true;\n}\nresume_$state:;\n";
 		return $body;
 	}
-
 }

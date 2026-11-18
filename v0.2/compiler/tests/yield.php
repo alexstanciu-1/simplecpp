@@ -261,10 +261,93 @@ CPP;
 	rejects(fn() => $prepare($signature('bad_scope', 'Iterator<int>') . '{if(true){'
 		. $local('n', '1') . '}yield ' . $v('n') . ';}return 8;'), '');
 
+	$for_init = rtrim($local('i', '0'), ';');
+	$for_head = 'for (' . $for_init . ';' . $v('i') . '<' . $v('x') . ';' . $v('i') . '++)';
+	$while_body = $local('i', '0') . 'while (' . $v('i') . '<' . $v('x') . ') {'
+		. $v('i') . '++;' . $local('n', $v('i')) . 'if (' . $v('i') . '==2){continue;}'
+		. 'yield ' . $v('n') . ';if (' . $v('i') . '==3){break;}}';
+	$do_body = $local('i', '0') . 'do {' . $local('n', $v('i')) . 'yield ' . $v('n') . ';'
+		. $v('i') . '++;if (' . $v('i') . '<2){continue;}break;}while (' . $v('i') . '<' . $v('x') . ');';
+	$for_body = $for_head . '{' . $local('s', '"abcdefghijklmnopqrstuvwxyz0123456789"')
+		. 'yield ' . $v('i') . ';if (' . $v('i') . '==1){continue;}if (' . $v('i') . '==3){break;}yield 9;}';
+	$nested_body = $for_head . '{for (' . rtrim($local('j', '0'), ';') . ';' . $v('j') . '<3;' . $v('j') . '++) {'
+		. 'if (' . $v('j') . '==0){yield ' . $v('i') . '*10+' . $v('j') . ';continue;}yield 99;break;}'
+		. 'if (' . $v('i') . '==0){continue;}break;}';
+	foreach (['while' => [$while_body, 5, '13'], 'do' => [$do_body, 5, '01'],
+		'for' => [$for_body, 5, '091293'], 'nested' => [$nested_body, 5, '0991099'],
+		'while_empty' => [$while_body, 0, ''], 'for_empty' => [$for_body, 0, ''], 'do_once' => [$do_body, 0, '0']] as $case => [$code, $input, $expected]) {
+		$start = hrtime(true);
+		$entry = $prepare($signature('numbers', 'Iterator<int>') . '{' . $code . '}' . $loop('numbers(' . $input . ')', $echo) . 'return 8;');
+		$cpp = (new Cpp_Emitter())->emit($entry);
+		$fixtures[$flavor->name . '_loop_' . $case] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected), 'compiler_ms' => (hrtime(true) - $start) / 1e6];
+	}
+	$step = $signature('step', 'int') . '{echo "u";return ' . $v('x') . ';}';
+	$effects = $signature('numbers', 'Iterator<int>') . '{for (' . rtrim($local('i', 'step(0)'), ';')
+		. ';' . $v('i') . '<2;' . $v('i') . '+=step(1)){yield ' . $v('i') . ';continue;}}';
+	$entry = $prepare($step . $effects . $loop('numbers(0)', $echo) . 'return 8;');
+	$fixtures[$flavor->name . '_loop_effects'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex('u0u1u')];
+
+	$owned_loop = $signature('owned', 'Iterator<weak<Point>>') . '{' . $for_head . '{'
+		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');'
+		. 'if (' . $v('i') . '==0){continue;}if (' . $v('i') . '==1){break;}}yield weak(new Point());}return 8;';
+	$entry = $prepare($record . $owned_loop);
+	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp .= <<<'CPP'
+int main() {
+    App::weak_Point first, second, end;
+    {
+        auto original = App::owned_(3);
+        if (!original.next(first) || !first.lock()) return 1;
+        auto cursor = static_cast<App::owned_cursor&&>(original);
+        if (!cursor.next(second) || first.lock() || !second.lock()) return 2;
+        if (!cursor.next(end) || second.lock() || end.lock() || cursor.next(end)) return 3;
+    }
+    {
+        auto cursor = App::owned_(3);
+        if (!cursor.next(first)) return 4;
+    }
+    if (first.lock()) return 5;
+    return 8;
+}
+CPP;
+	$fixtures[$flavor->name . '_loop_owner'] = ['cpp' => $cpp, 'stdout_hex' => ''];
+	$entry = $prepare($record . str_replace('if (' . $v('i') . '==0){continue;}', $bad_local, $owned_loop));
+	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp .= <<<'CPP'
+int main() {
+    App::weak_Point first;
+    auto cursor = App::owned_(300);
+    if (!cursor.next(first) || !first.lock()) return 1;
+    bool caught = false;
+    try { cursor.next(first); } catch (...) { caught = true; }
+    if (!caught || first.lock() || cursor.next(first)) return 2;
+    return 8;
+}
+CPP;
+	$fixtures[$flavor->name . '_loop_failure'] = ['cpp' => $cpp, 'stdout_hex' => ''];
+
+	$header_owner = $signature('owned', 'Iterator<weak<Point>>') . '{for (' . rtrim($local('p', 'new Point()'), ';')
+		. ';' . $v('x') . '>0;' . $v('x') . '--){yield weak(' . $v('p') . ');'
+		. 'if (' . $v('x') . '==2){continue;}break;}yield weak(new Point());}return 8;';
+	$entry = $prepare($record . $header_owner);
+	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp .= <<<'CPP'
+int main() {
+    App::weak_Point first, second, end;
+    auto cursor = App::owned_(2);
+    if (!cursor.next(first) || !first.lock()) return 1;
+    if (!cursor.next(second) || !second.lock() || first.ptr != second.ptr) return 2;
+    if (!cursor.next(end) || first.lock() || second.lock() || end.lock()) return 3;
+    if (cursor.next(end)) return 4;
+    return 8;
+}
+CPP;
+	$fixtures[$flavor->name . '_loop_header_owner'] = ['cpp' => $cpp, 'stdout_hex' => ''];
+
 	rejects(fn() => $prepare($model . $local('cursor', 'numbers(1)') . $local('copy', $v('cursor')) . 'return 8;'), 'move-only');
 	rejects(fn() => $prepare($signature('numbers', 'int') . '{yield 1;return 8;}return 8;'), 'Yield requires');
 	rejects(fn() => $prepare(str_replace('yield 2;', 'yield "a"=>2;', $model) . $main), 'Yield key');
-	rejects(fn() => $prepare(str_replace('yield 2;', 'while (true) {yield 2;}', $model) . $main), 'Yield slice');
+	rejects(fn() => $prepare(str_replace('yield 2;', 'foreach (numbers(1) as ' . $v('other') . ') {yield 2;}', $model) . $main), 'Yield slice');
 	rejects(fn() => $prepare(str_replace('yield 2;', $local('temporary', 'numbers(2)') . 'yield 2;', $model) . $main), 'Nested cursor');
 	rejects(fn() => $prepare(str_replace('return;', 'return 8;', $model) . $main), 'cannot return a value');
 	rejects(fn() => $prepare($record . $signature('record_values', 'Iterator<Point>', 'Point') . '{yield ' . $v('x') . ';}return 8;'), 'Inline struct yield outputs');
@@ -290,10 +373,14 @@ CPP;
 			str_replace('yield 2;', 'if (' . $v('x') . '>0) {' . $local('n', '2') . 'yield ' . $v('n') . ';}else {yield 4;}', $model),
 			str_replace('yield 2;', 'if (false) {yield "bad";}else {yield 2;}', $model),
 			str_replace('yield 2;', 'if (false) {yield 4;}else {' . $local('n', '"heap abcdefghijklmnopqrstuvwxyz"') . 'yield 2;}', $model),
-			'', $model] as $step => $source) {
+			'', $model,
+			str_replace('yield 2;', $for_head . '{yield 2;}', $model),
+			str_replace('yield 2;', 'do {yield 2;}while(false);', $model),
+			str_replace('yield 2;', 'while(true){yield missing();break;}', $model),
+			str_replace('yield 2;', 'while(true){yield 2;break;}', $model), $model] as $step => $source) {
 			file_put_contents($provider, $source); touch($provider, ++$stamp);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
-			if (in_array($step, [2, 3, 13, 15], true)) {
+			if (in_array($step, [2, 3, 13, 15, 19], true)) {
 				rejects(fn() => $project->run(), ''); rejects(fn() => $project->run(), ''); rejects(fn() => $fresh->run(), ''); continue;
 			}
 			$project->run(); $fresh->run(); $caller ??= $project->session()->entry->entry->ast;

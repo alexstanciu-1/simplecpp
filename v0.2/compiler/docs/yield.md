@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 The [language contract](../../../specs/generators_v0_2.md) owns semantics. This is the
-bounded concrete-cursor implementation, including suspended locals and conditionals.
+bounded concrete-cursor implementation, including suspended locals, conditionals and while/do-while/for loops.
 
 ```php
 function numbers(int $start): Iterator<int> {
@@ -35,7 +35,8 @@ Keyed spelling: `Iterator<int,string>` with `yield "first" => value;` in all fla
 - Body preparation visits each statement once, verifies this bounded statement set,
   and calls existing generated typed-destination conversions. No liveness solver,
   copied prepared body or per-loop descriptor is retained.
-- Cpp_Generator owns layout/factory/resume emission. State numbers and temporary
+- Cpp_Generator owns layout/factory/resume emission. The ordinary statement emitter
+  owns the shared statement/control-flow traversal. State numbers and temporary
   statement selections are local to lowering. It reuses the emitter's expression,
   declaration/write, echo/call and signature paths, without synthetic AST parents.
 - `cpp_generator_layout` is an ephemeral backend publication record: emitted layout
@@ -95,21 +96,29 @@ metadata generator or user-authored Iterator copy contract changed.
 
 ## Native and compiler observations
 
-102 native fixtures passed across the three flavors; 33 ASan/UBSan/leak cases passed.
-Representative nested-conditional fixture, single runs, milliseconds. O2/g0, libc++,
-Ninja8, mold, no PCH/LTO, prebuilt runtime; fresh app objects. Native wall includes
-direct Ninja qualification overhead. PHP prepare/emission is measured in the same
-fixture-generation process. These are correctness-run observations, not a repeated
-performance comparison; frontend/backend/link timings do not sum to native wall.
+147 native yield fixtures passed across the three flavors (144 in the instrumented
+suite plus three owning for-header consumers); 45 ASan/UBSan/leak cases passed.
+The ordinary-for native regression suite also passed 18 fixtures. Existing loop,
+foreach, Iterator and function PHP proofs and writing checks passed.
 
-| Flavor | PHP prepare/emit | Native wall | Clang frontend | LLVM backend | Link |
-|---|---:|---:|---:|---:|---:|
-| cpp | 0.898 | 232.111 | 24.248 | 21.357 | 62 |
-| php | 0.779 | 231.646 | 20.551 | 19.921 | 64 |
-| js | 0.683 | 251.481 | 25.919 | 25.347 | 59 |
+Nested-loop fixture: three sequential fresh native builds per flavor, median and
+range in milliseconds. O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime.
+Native wall includes direct Ninja qualification overhead. PHP prepare/emission is
+one earlier compiler measurement; the timing rerun uses saved emitted fixtures.
+The wide native ranges are observations, not evidence of a flavor-specific cost.
+Trace stages and wall time are distinct measurements.
 
-Total PHP fixture generation, including incremental/fresh checks: 344.20 ms.
-Artifacts/traces: `v0.2/build/yield-branches/`; sanitizer results: `/tmp/scpp-yield-branches-safety/`.
+| Flavor | PHP prepare/emit | Native median | Native range | Frontend | LLVM backend | Link |
+|---|---:|---:|---:|---:|---:|---:|
+| cpp | 0.739 | 273.736 | 245.1–350.1 | 21.834 | 24.158 | 100 |
+| php | 1.338 | 364.725 | 321.0–519.5 | 24.588 | 26.492 | 103 |
+| js | 0.740 | 367.624 | 259.2–399.4 | 34.373 | 23.152 | 105 |
+
+Artifacts/traces: `v0.2/build/yield-loops-final/`, `v0.2/build/yield-loops-timing/`;
+additional header-owner fixtures: `/tmp/yield-loops-extra.json` and
+`/tmp/{cpp,php,js}_loop_header_owner.cpp`; sanitizer results:
+`/tmp/scpp-yield-loops-final-safety/`. Full PHP fixture generation including
+incremental/fresh checks took 617.76 ms in the instrumented run.
 
 ## Suspended local storage
 
@@ -128,7 +137,7 @@ destination locals if moving fails. Existing value-type move/copy contracts appl
 
 Layout planning visits declarations in lexical order, including conditional arms;
 it does not add preparation work or retained caches. Reusing these transient layout
-plans for unchanged producers can be considered if measurement warrants it. Loops,
+plans for unchanged producers can be considered if measurement warrants it. Suspended foreach,
 nested cursor locals and liveness-based slot reduction remain deferred.
 
 ## Conditional suspension
@@ -143,10 +152,37 @@ its own native temporary scope, so a resume jump crosses no automatic initializa
 Normal block exit destroys only that block's active locals, in reverse order. Close
 uses the same flag-clearing destruction helper across the complete lexical inventory;
 mutually exclusive arms contribute inactive slots. Moves transfer only active slots.
-This is sufficient for the admitted acyclic control flow; loops require their own slice.
+The same flags are reused after loop-body cleanup; a new iteration starts a new local lifetime.
 
 Conditional checks cover all arms, nested suspension, keyed heap-string outputs,
 condition side effects (evaluated once), outer-local writes, early return, scope-exit
 cleanup, sparse initialized-slot moves, abandonment and checked failures. Cross-file
 branch edits, an invalid unselected arm, deletion and recovery match fresh artifacts;
 unchanged callers retain their AST and no-op runs prepare zero bodies.
+
+## Completion planning
+
+The [synchronous yield backlog](../../specs/planning/yield_completion_backlog.md)
+records ordered remaining slices and discussion gates. It is planning, not an
+extension of the implemented language contract.
+
+## Loops and shared traversal
+
+`Cpp_Emitter::statements` now owns ordinary and producer statement traversal; the
+separate generator sequence walker is removed. `cpp_resume_context` is temporary
+lowering state: resume numbering, label numbering, non-owning lexical scope links
+and loop cleanup boundaries/update targets. No AST node, type fact or preparation
+cache was added. Existing loop preparation visits each region once.
+
+While/do-while remain native loops. A producer for initializer executes once before
+a native while; continue cleans exited lexical scopes and jumps to its update label.
+The update uses the ordinary binding/snapshot emitter. Normal functions retain their
+existing native for shape and RAII. Persistent for-header locals are included in the
+frame inventory and destroyed on loop exit; body locals are cleaned on each iteration.
+Normal lexical exit and transfers share `generator_cleanup`; return, exceptions and
+abandonment use cursor close. Yield itself does not clean active locals.
+
+Tests include empty loops, do-while's first iteration, nested loops, break/continue
+after yield, for-init/update side effects, repeated owning body-local construction,
+header-owner survival across continue, early exit, movement, abandonment and failure.
+Cross-file for/do/while edits and invalid bodies recover to fresh emitted artifacts.

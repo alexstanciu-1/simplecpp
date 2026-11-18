@@ -140,8 +140,9 @@ final class Preparation
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
 					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
 					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
-					|| $statement instanceof ast_if_statement)) {
-				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, yields, echo, calls and bare return only');
+					|| $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
+					|| $statement instanceof ast_break_statement || $statement instanceof ast_continue_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, loops, yields, echo, calls and bare return only');
 			}
 			$next = statement_completion::fallthrough;
 			if ($statement instanceof ast_yield_statement) {
@@ -392,6 +393,9 @@ final class Preparation
 			$this->statement_visits++;
 			if ($statement->initializer instanceof ast_local_declaration) {
 				$this->declaration($statement->initializer);
+				if ($function->return_type_def() instanceof generator_type_definition && $statement->initializer->type_def() instanceof generator_type_definition) {
+					throw new diagnostic($source, $statement->initializer->byte_start(), 'Nested cursor locals are deferred');
+				}
 			}
 			else {
 				$this->write($statement->initializer);
