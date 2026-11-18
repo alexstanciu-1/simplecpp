@@ -54,8 +54,9 @@ function boundaries, optional defaults and exact weak locking are covered.
 spelling. Explicit shared struct behavior remains unchanged.
 
 Class inheritance and derived-to-base shared views are now covered by the
-[shared base-view slice](shared_upcasts.md). Virtuals, borrows, new value/unique
-overrides and general object-reference parameter extensions remain deferred. Required class
+[shared base-view slice](shared_upcasts.md). Concrete virtual methods and mandatory
+overrides are covered by the [virtual-method slice](virtual_methods.md). Borrows,
+new value/unique modes and general object-reference parameter extensions remain deferred. Required class
 locals currently require an initializer: the normative definite-assignment feature
 is not implemented by this slice. `$this` may be a field/method receiver, but obtaining
 an owning `$this` value is deferred until its ownership binding is defined.

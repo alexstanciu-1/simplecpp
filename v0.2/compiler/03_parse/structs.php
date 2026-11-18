@@ -32,6 +32,8 @@ final class Record_Syntax
 		$protected_section = false;
 		while (!$c->is(token_kind::rbrace)) {
 			$field_start = $c->position();
+			$modifiers = [];
+			self::modifiers($c, $modifiers, true);
 			// JS visibility spellings are contextual identifiers; recognize them only before a member.
 			$js_visibility = $flavor === flavor::js && $c->is(token_kind::identifier)
 				&& ($c->next_is(token_kind::identifier) || $c->next_is(token_kind::keyword))
@@ -51,6 +53,7 @@ final class Record_Syntax
 				$private = $private_section;
 				$protected = $protected_section;
 			}
+			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
 			if ($protected && ($static || $c->keyword('const'))) {
 				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
@@ -61,6 +64,7 @@ final class Record_Syntax
 				continue;
 			}
 			if ($static) $c->take_keyword('static');
+			self::modifiers($c, $modifiers, false);
 			if (!$static && $flavor !== flavor::cpp && $c->keyword('const')) {
 				$members[] = Constant_Syntax::read($parser, $private);
 				continue;
@@ -93,10 +97,16 @@ final class Record_Syntax
 				}
 			}
 			if ($method !== null) {
+				if ($flavor === flavor::cpp) self::modifiers($c, $modifiers, false);
+				$method->is_virtual = isset($modifiers['virtual']);
+				$method->is_override = isset($modifiers['override']);
+				$method->is_final = isset($modifiers['final']);
+				$method->modifier_start = $modifiers === [] ? null : min($modifiers);
 				if ($protected && !$constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected ordinary methods are deferred');
 				$members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
 				continue;
 			}
+			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
 			if ($static) {
 				$members[] = Global_Syntax::read($parser, true, $private);
 				continue;
@@ -128,4 +138,27 @@ final class Record_Syntax
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
 		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind);
 	}
+	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
+	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
+	{
+		while (true) {
+			$at = $c->position();
+			if ($attributes && $c->is(token_kind::attribute)) {
+				$c->take(token_kind::attribute, '#[');
+				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
+				$name = $c->name(token_kind::identifier);
+				if (!in_array($name, ['Virtual', 'Override'], true)) throw new diagnostic($c->tokens->source, $c->offset(), 'Unsupported method attribute');
+				if ($c->is(token_kind::lparen)) throw new diagnostic($c->tokens->source, $c->offset(), 'Method attributes take no arguments');
+				$c->take(token_kind::rbracket, ']');
+				$name = strtolower($name);
+			} else {
+				$name = $c->tokens->text_at($at);
+				if (!in_array($name, ['virtual', 'override', 'final'], true)) return;
+				$c->take($c->is(token_kind::keyword) ? token_kind::keyword : token_kind::identifier, $name);
+			}
+			if (isset($modifiers[$name])) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Duplicate method modifier: ' . $name);
+			$modifiers[$name] = $at;
+		}
+	}
+
 }

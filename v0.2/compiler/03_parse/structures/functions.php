@@ -336,6 +336,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public readonly bool $is_protected;
 	public readonly bool $is_implicit_entry;
 	public readonly bool $is_static;
+	/** Written method intent, populated by Record_Syntax before publication. */
+	public bool $is_virtual = false;
+	public bool $is_override = false;
+	public bool $is_final = false;
+	/** First method modifier token, null for unmarked declarations. */
+	public ?int $modifier_start /** uint32|null */ = null;
 	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
 	public readonly ?ast_type_reference $return_type_reference;
 	/** @var ast_parameter_declaration[] Native owning signature syntax in positional order. */
@@ -348,6 +354,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	private ?Dependency_Watches $signature_dependencies = null;
 
 	/** PREP FACTS */
+	/** Prepared fact: inherited callable contract validated after signature settlement. */
+	public bool $method_contract_ready = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
 
@@ -392,6 +400,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		if (($this->parent ?? null) instanceof ast_method_owner) return 'method:' . $this->name();
 		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
+	}
+
+	/** Written virtual intent is validated before emission; inherited overrides stay virtual. */
+	public function has_virtual_dispatch(): bool
+	{
+		return $this->is_virtual || $this->is_override;
 	}
 
 	public function has_receiver(): bool
@@ -444,6 +458,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function reset_preparation(): void
 	{
 		$this->return_type_def = null;
+		$this->method_contract_ready = false;
 		foreach ($this->parameters as $parameter) {
 			$parameter->reset_preparation();
 		}
@@ -481,6 +496,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function invalidate_dependencies(): void
 	{
 		$this->return_type_def = null;
+		$this->method_contract_ready = false;
 		$this->body()->invalidate_dependencies();
 		$this->signature_dependencies?->changed($this->root()->scope->parent->entry($this->symbol_key()));
 	}

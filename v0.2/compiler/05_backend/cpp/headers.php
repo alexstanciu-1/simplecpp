@@ -64,6 +64,10 @@ final class Cpp_Headers
 				}
 				if ($node instanceof ast_function_declaration) {
 					if ($node->is_constructor()) continue;
+					if ($node->has_virtual_dispatch()) {
+						$this->declarations[$node->symbol_key()] = $this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
+						continue;
+					}
 					if ($node->has_receiver() && $node->parent instanceof ast_record_declaration) {
 						$type = $node->parent->definition;
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),

@@ -157,6 +157,25 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
 	}
 
+	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
+	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
+	{
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
+			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
+			$dependencies?->watch($symbol, $watcher);
+			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
+		}
+		return null;
+	}
+
+	/** Native layout follows validated written virtual contracts, including inherited ones. */
+	public function polymorphic(): bool
+	{
+		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
+		return $this->base_type?->polymorphic() ?? false;
+	}
+
 	/** Settled single-base relation; equality includes the type itself. */
 	public function derives_from(self $ancestor): bool
 	{
@@ -176,11 +195,6 @@ final class record_type_definition extends type_definition implements dependency
 			}
 		}
 		for ($base = $this->base_type; $base !== null; $base = $base->base_type) {
-			foreach ($this->declaration->methods as $name => $method) {
-				if ($name !== '__construct' && isset($base->declaration->methods[$name])) {
-					throw new diagnostic($method->source(), $method->byte_start(), 'Inherited method redeclaration is deferred: ' . $name);
-				}
-			}
 			foreach ($this->declaration->static_properties as $name => $property) {
 				if (isset($base->declaration->static_properties[$name]) || isset($base->declaration->fields[$name])) {
 					throw new diagnostic($property->source(), $property->byte_start(), 'Inherited property redeclaration: ' . $name);

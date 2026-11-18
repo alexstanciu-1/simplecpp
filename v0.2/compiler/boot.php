@@ -80,6 +80,7 @@ require_once __DIR__ . '/types/void.php';
 require_once __DIR__ . '/04_analyze/prepare/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/prepare.php';
 require_once __DIR__ . '/04_analyze/prepare/functions.php';
+require_once __DIR__ . '/04_analyze/prepare/methods.php';
 require_once __DIR__ . '/04_analyze/prepare/imports.php';
 require_once __DIR__ . '/05_backend/cpp/headers.php';
 require_once __DIR__ . '/generated/bindings/entry.php';

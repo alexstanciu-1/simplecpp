@@ -150,6 +150,15 @@ inside an explicitly abstract type. It establishes a virtual contract. Every con
 descendant must implement all inherited abstract obligations. An abstract intermediate
 may leave obligations unimplemented or redeclare a virtual method abstract.
 
+The PHP flavor accepts `virtual function` and `override function` declaration
+modifiers as alternatives to `#[\Virtual]` and `#[\Override]`. With explicit
+visibility, examples are `public virtual function evaluate(): int { ... }` and
+`public override function evaluate(): int { ... }`. These are Simple C++ spellings,
+not standard PHP syntax. Attributes and modifiers normalize to the same intent;
+repeating an intent, including an attribute plus its equivalent modifier, is invalid.
+The bounded attribute forms have no argument list. The cpp flavor uses a leading
+`virtual` or trailing `override`; the js flavor uses leading `virtual` / `override`.
+
 A zero-argument `#[\Virtual]` marker on a public/protected concrete instance method
 establishes a new virtual contract with a default body. A descendant may inherit that
 body unchanged. It must not be static, private, abstract or final, and must not be a

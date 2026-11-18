@@ -140,6 +140,7 @@ final class Function_Preparation
 			if ($declaration->return_type_ready()) {
 				continue;
 			}
+			$dependencies?->forget($declaration);
 			$type = $declaration->return_type_reference === null ? null
 				: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true);
 			if ($type === null) {
@@ -182,6 +183,9 @@ final class Function_Preparation
 				}
 			}
 			$declaration->settle_return_type($type);
+		}
+		foreach ($symbols->declarations as $declaration) {
+			if ($declaration instanceof ast_function_declaration) Method_Preparation::contract($declaration, $symbols, $dependencies);
 		}
 		return $symbols;
 	}

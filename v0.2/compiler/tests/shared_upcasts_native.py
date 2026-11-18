@@ -146,7 +146,7 @@ def prove(work, flavor, libraries, memcheck):
         ('alternate', s['alternate'].replace(relation + 'Node', relation + 'Other'), 'Unsupported explicit conversion'),
         ('alternate', s['alternate'], None), ('literal', s['literal'], None),
         ('leaf', s['klass']('Leaf', s['replacement_method'], 'Literal'),
-         'Inherited method redeclaration is deferred'), ('leaf', s['leaf'], None)]
+         'Nonvirtual method hiding is forbidden'), ('leaf', s['leaf'], None)]
     resident = service(app, output)
     try:
         for revision, (name, text, error) in enumerate(edits):

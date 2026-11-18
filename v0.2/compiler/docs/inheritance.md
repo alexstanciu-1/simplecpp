@@ -54,11 +54,12 @@ its allocation factory once and collects complete parameter types. This applies
 equally to authored and inherited constructors. Empty shared/weak handle users
 need only factory declarations; they do not emit inherited factory definitions.
 
-Deferred: inherited ordinary-method/static-member lookup, protected ordinary
+Outside this original slice: inherited ordinary-method/static-member lookup, protected ordinary
 methods/static members, virtual/abstract declarations and overrides, interfaces,
 base-value slicing and explicit parent method calls beyond construction. The
 separate [class slice](classes.md) adds class defaults, and [shared base views](shared_upcasts.md)
-adds class inheritance/upcasts. Explicit shared-struct upcasts and authored
+adds class inheritance/upcasts. The subsequent [virtual-method slice](virtual_methods.md)
+implements public inherited lookup and concrete virtual class methods with mandatory overrides. Explicit shared-struct upcasts and authored
 destructor syntax remain deferred.
 
 Verification:

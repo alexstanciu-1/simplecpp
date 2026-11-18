@@ -187,7 +187,7 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->is_private, $head->is_static, $head->return_type_reference?->spelling(), array_map(
+				$contracts[$key] = json_encode([$head->is_private, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->return_type_reference?->spelling(), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}

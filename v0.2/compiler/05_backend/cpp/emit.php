@@ -99,6 +99,24 @@ final class Cpp_Emitter
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
 			}
+			if ($node->definition->polymorphic()) {
+				$name = Cpp_Identifier::source($node->short_name);
+				$layout[] = "\tvirtual ~$name() noexcept = default;";
+				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
+				$layout[] = "\t$name(const $name&) = default;";
+				$layout[] = "\t$name($name&&) = default;";
+				$layout[] = "\t$name& operator=(const $name&) = default;";
+				$layout[] = "\t$name& operator=($name&&) = default;";
+			}
+			foreach ($node->methods as $method) {
+				if (!$method->has_virtual_dispatch()) continue;
+				$type = $method->return_type_def();
+				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+				$result = $this->member_type($type);
+				$layout[] = "\t" . ($method->is_virtual ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
+					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ';';
+			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
 				$params = $this->constructor_parameters($constructor, $includes);
@@ -110,11 +128,11 @@ final class Cpp_Emitter
 			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
-			return $this->constructor_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
 				. ($base === null ? '' : ' : public ' . $base->cpp_type()) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
-			return $this->signature($node, $includes) . ';';
+			return $node->has_virtual_dispatch() ? '' : $this->signature($node, $includes) . ';';
 		}
 		foreach ($node->type_def()->cpp_headers() as $header) {
 			$includes[$header] = true;
@@ -178,7 +196,7 @@ final class Cpp_Emitter
 		$includes['scpp/owner_access.hpp'] = true;
 		$payload = $type->payload;
 		$name = Cpp_Identifier::source($payload->declaration->short_name);
-		$forward = $this->constructor_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
+		$forward = $this->record_signature_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
 		$owner = $type->cpp_type();
 		$weak = $type->payload->weak->cpp_type();
 		$record = $payload->cpp_type();
@@ -391,7 +409,7 @@ CPP;
 			}
 			$this->adapter_flavor = null;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
-			if ($function->is_constructor()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			if ($function->is_constructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
 			if ($first instanceof ast_base_statement) {
@@ -1296,7 +1314,8 @@ CPP;
 				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
 				$place = 'receiver_payload';
 			}
-			$arguments[] = $place;
+			if ($function->has_virtual_dispatch()) $name = '(' . $place . ').' . self::virtual_name($function);
+			else $arguments[] = $place;
 		} elseif ($function->parameters === []) {
 			return $name . '()';
 		}
@@ -1401,11 +1420,16 @@ CPP;
 	}
 
 	/** Parameter types need only forward declarations in the native payload and owner declarations. */
-	private function constructor_forwards(ast_record_declaration $record): string
+	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
-		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
-			$type = $parameter->type_def();
+		$types = [];
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
+		foreach ($record->methods as $method) {
+			if (!$method->has_virtual_dispatch()) continue;
+			foreach (self::signature_application_types($method) as $type) $types[] = $type;
+		}
+		foreach ($types as $type) {
 			if ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
 					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
@@ -1434,13 +1458,20 @@ CPP;
 			return $function->parent->definition->cpp_type() . '::' . Cpp_Identifier::source($function->parent->short_name)
 				. '(' . implode(', ', $parameters) . ')';
 		}
-		if ($function->has_receiver()) {
+		if ($function->has_receiver() && !$function->has_virtual_dispatch()) {
 			array_unshift($parameters, '[[maybe_unused]] ' . $function->parent->definition->cpp_type()
 				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
+		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
 			. '(' . implode(', ', $parameters) . ')';
+	}
+
+	/** Payload member declarations live inside scpp_records; qualify application signature types. */
+	private function member_type(type_definition $type): string
+	{
+		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)
+			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
 
 	/** Share native parameter names, types, passing modes and includes. @param bool[] $headers @return string[] */
@@ -1450,7 +1481,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if ($function->is_constructor() && ($type instanceof record_handle_definition || $type instanceof record_type_definition)) {
+			if (($function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -1482,6 +1513,12 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** A virtual slot has the same native member name throughout its inheritance chain. */
+	private static function virtual_name(ast_function_declaration $method): string
+	{
+		return 'scpp_virtual_' . self::name_component($method->short_name);
+	}
+
 	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */
 	private static function self_value_constructor(ast_function_declaration $constructor): bool
 	{

@@ -48,6 +48,7 @@ final class Cpp_Grammar implements statement_grammar
 			if ($tokens[$position]->kind === token_kind::lparen) ++$depth;
 			elseif ($tokens[$position]->kind === token_kind::rparen) --$depth;
 		}
+		while (isset($tokens[$position]) && in_array($cursor->tokens->text_at($position), ['override', 'final'], true)) ++$position;
 		return ($tokens[$position]->kind ?? null) === token_kind::lbrace;
 	}
 

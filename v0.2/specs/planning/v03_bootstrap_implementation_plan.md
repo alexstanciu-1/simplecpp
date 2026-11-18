@@ -528,34 +528,140 @@ virtual dispatch, arbitrary template parsing and new adapter patterns. Native
 reference/move parameter spelling is engine vocabulary, not source feature admission.
 No compile-time or execution-speed improvement is claimed without measurements.
 
-### Mandatory override intent — agreed direction for the following slice
+### Concrete virtual methods and mandatory override intent — implemented
 
-When implementing/replacing an inherited virtual method, the source must explicitly
-mark `override` in all three flavors. Common semantic preparation rejects a missing
-marker, a marker without a matching target, final-method replacement, incompatible
-contracts and forbidden nonvirtual hiding. Native C++ `override` is emitted as an
-additional check; it does not replace our compiler's diagnostics or dependencies.
+Add public concrete instance virtual methods, inherited method lookup and exact-contract
+explicit overrides for the small class AST family. A base method may supply a default
+implementation; descendants may inherit it unchanged or explicitly override it.
+Include final-method protection. Ordinary unmarked methods remain nonvirtual, and
+nonvirtual hiding stays rejected. This records the completed bounded slice; the normative inheritance contract
+remains the semantic authority.
+
 The [owning inheritance spec](../../../specs/inheritance_v0_2.md#abstract-types-and-overriding)
-now records mandatory intent. C++ itself makes its marker optional; Simple C++ does not.
+requires explicit override intent in every flavor. Reject missing/spurious markers,
+final-method replacement and incompatible contracts in common preparation; emit native
+C++ `override` as an additional check. C++ itself makes its marker optional; Simple C++
+does not. Inheriting an implementation unchanged needs no declaration or marker.
 
-Proposed source spellings, to settle when taking the virtual-method slice:
+Agreed PHP-flavor spelling additions: support both zero-argument attributes
+`#[\Virtual]` / `#[\Override]` and declaration modifiers `virtual function` /
+`override function`. For example, these pairs express the same intent:
 
-| Flavor | Proposed method declaration |
+```php
+#[\Virtual]
+public function evaluate(): int { return 0; }
+
+public virtual function evaluate(): int { return 0; }
+
+#[\Override]
+public function evaluate(): int { return $this->value; }
+
+public override function evaluate(): int { return $this->value; }
+```
+
+These are alternative declarations, not four methods in one class. The modifiers
+are Simple C++ PHP-flavor syntax, not a claim of standard PHP compatibility. Normalize
+attributes and modifiers to one common written intent, with source locations for
+errors. Reject duplicate intent (including attribute plus equivalent modifier),
+conflicting Virtual/Override intent, and attribute arguments. The owning inheritance contract records the modifier aliases. No second semantic
+path or general attribute engine was introduced.
+
+| Flavor | New virtual contract | Replacement of inherited virtual contract |
+| --- | --- | --- |
+| cpp | `virtual int evaluate() { ... }` | `int evaluate() override { ... }` |
+| php | `#[\Virtual] public function evaluate(): int { ... }` or `public virtual function evaluate(): int { ... }` | `#[\Override] public function evaluate(): int { ... }` or `public override function evaluate(): int { ... }` |
+| js | `virtual evaluate(): int { ... }` | `override evaluate(): int { ... }` |
+
+Virtual establishes a new contract; Override replaces an inherited one. Repeating
+Virtual on an inherited contract is invalid. Constructors, static/private methods
+and lifecycle declarations are not admitted as virtual/override methods here.
+Final implementations reject further overrides. Keep parameter and return types,
+passing modes, nullability and optional-parameter positions exact in this slice;
+parameter names and default values may differ. Defaults and conversions come from
+the statically selected declaration, never the runtime implementation. Reject
+unsupported variance/reference-return cases explicitly until their later slices.
+
+Example proof: Node.evaluate returns 0; IntegerLiteral.evaluate overrides it and
+returns its value. A function taking bare Node receives an IntegerLiteral through
+the existing shared-view adapter and dispatches evaluate to the derived body.
+An intermediate descendant without a declaration inherits the implementation.
+
+| Owner / stage | Bounded responsibility |
 | --- | --- |
-| cpp | `int evaluate() override { ... }` |
-| php | `#[\Override] public function evaluate(): int { ... }` |
-| js | `override evaluate(): int { ... }` |
+| Tokens / parsers | Recognize the flavor spellings and retain virtual/override/final intent on the common method declaration. No flavor-specific semantic models. |
+| Declaration collection | Keep only locally authored methods in their declaring inventory/index; retain existing duplicate handling. No flattened inherited-method copies. |
+| Declaration preparation | Settle base relationships and callable contracts before dependent bodies. Resolve inherited lookup with original declaring ownership; validate override compatibility, markers and finality. |
+| Prepared relationships | Cache method-contract completion on the declaration and retain existing symbol watches. Resolve inherited contracts during validation without caching foreign AST pointers; invalidation clears completion. |
+| C++ lowering | Consume settled contracts and emit native inheritance, virtual/override/final declarations and ordinary virtual calls. No repeated ancestry inference or handwritten vtable mechanism. |
+| Runtime ownership | Preserve the existing control block, typed view, concrete destroy callback, strong/weak identity and presence checks. No new handle or allocation for dispatch. |
 
-Retain one written override flag on the common method declaration, not parallel
-flavor-specific semantic models. The original base contract remains its owner;
-preparation validates against that contract. Inheriting an implementation unchanged
-needs no new declaration/marker. Constructors and static redeclarations are not
-virtual overrides; this decision does not relax their existing rules.
+Native polymorphic payloads acquire native virtual dispatch state; handles retain
+their existing representation. The inheritance contract also requires virtual
+destruction for virtual hierarchies, including an implicit public nonthrowing
+virtual destructor when none is authored. Preserve existing copy/move behavior:
+adding a destructor must not silently suppress moves. The allocation's concrete
+callback still owns destruction; virtual dispatch does not transfer that ownership.
+Preserve receiver lifetime across argument evaluation, single evaluation, required
+presence checks and the existing source evaluation contract.
 
-That later slice must test missing/spurious markers, valid overrides, final and
-signature violations, base-typed virtual dispatch and incremental recovery after
-base signature/virtual/final and derived marker edits in all flavors. Do not admit
-unmarked method replacement temporarily while introducing class inheritance.
+Incremental contract: separate implementation bodies from callable/layout contracts.
+Calls observe their statically selected declaration, not every possible derived body.
+Lookup must observe traversed ancestry and missing nearer declarations so adding an
+override invalidates prior inherited lookup. Use existing stable symbol/dependency
+owners; no parallel registry of implementations on every call site.
+
+| Edit | Required invalidation / reuse |
+| --- | --- |
+| Override body only | Reprepare/reemit the owning implementation as needed; unchanged caller C++ and native objects remain reusable. |
+| Base signature, access, virtual/final status | Revalidate affected overrides and calls; republish changed native contracts. |
+| Method insertion/removal or base-edge change | Revisit affected inherited lookup, including previously absent methods and selected inherited defaults. |
+| Override removal/restoration | Fall back to inherited implementation, then restore derived dispatch. Update declarations and rebuild dependent native objects through header dependencies. |
+| Invalid edit, unchanged retry, recovery | Preserve pending watches/work and last successful output; recovery must match a fresh compilation without stale method links. |
+
+Verification checklist (cpp/php/js, native Clang and GCC):
+
+- [x] Base-typed dispatch, unchanged inherited implementation and three-level overriding.
+- [x] Both PHP attribute and modifier forms normalize equivalently, including edits
+  switching spellings; verify missing/spurious, duplicate and conflicting markers.
+- [x] Reject signature/mode/nullability mismatches, final replacement, nonvirtual
+  hiding and unsupported method categories. Check statically selected defaults.
+- [x] Shared allocation identity, alias mutation, weak expiry and exactly-once
+  concrete cleanup remain correct; null checks and receiver lifetime survive dispatch.
+- [x] Verify implicit virtual destruction and preserved copy/move behavior; record
+  payload/handle size effects without claiming an unmeasured performance improvement.
+- [x] Cross-file edits to base contracts, ancestry, derived markers and method
+  insertion/deletion/restoration; repeat errors and compare recovery diagnostics,
+  generated artifacts and native behavior with fresh compilation.
+- [x] Persistent Ninja builds prove no-op reuse and body-only caller-object reuse;
+  contract/layout changes rebuild required native consumers via depfiles even when
+  their emitted C++ text is unchanged. Include an unrelated source that stays reused.
+- [x] Review regression: a class named `scpp` with virtual/override integer-returning
+  methods compiles and runs in project and standalone output. Member return spelling
+  reuses the existing signature qualification rule (`::scpp::int64`).
+- [x] Review regression: add/remove an unused base field while caller C++ bytes and
+  timestamps remain unchanged. Changed native headers rebuild both the base-typed
+  caller and allocating caller through depfiles; the unrelated object stays reused.
+  Compare every revision with fresh emission and run both native builds.
+- [x] Retain concrete-adapter demand/reuse/removal coverage through method edits;
+  successful deletion must retire obsolete artifacts and restoration recreate demand.
+
+Deferred: abstract methods/types, interfaces, unique ownership, borrows, callable
+variance, reference-return virtual methods, protected virtual methods, explicit
+parent-method calls, authored destructors, downcasts and struct virtual support.
+Do not broaden static redeclaration or final-type support as a side effect.
+
+Implementation evidence: [virtual-method ownership and verification](../../compiler/docs/virtual_methods.md).
+`virtual_methods_native.py --memcheck` covers persistent native builds and
+retained/fresh recovery in all three flavors on Clang/GCC. The existing class,
+extends and shared-upcast proofs also pass. Shared/weak handles remain 16 bytes,
+control blocks 24 bytes; the tested allocation grows from 48 to 56 bytes with a
+polymorphic payload. These are storage observations, not timing claims.
+
+Incremental limitation: existing nominal AST replacement can still invalidate
+caller preparation/emission after an implementation-body edit. The tests prove
+unchanged caller C++ bytes, file timestamps and native object reuse, not zero
+caller reanalysis. No-op builds reuse all these stages. A broader nominal-identity
+refactor remains outside this slice.
 
 ## 4. Failures and cleanup — failed preparation and retry
 

@@ -843,9 +843,11 @@ final class Preparation
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
-					$method = $record->declaration->method($name);
-					$symbol = $this->symbols->entry('method:' . $record->name . '::' . $name);
-					$this->dependencies?->watch($symbol, $this->owner);
+					$symbol = $record instanceof record_type_definition
+						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies)
+						: $this->symbols->entry('method:' . $record->name . '::' . $name);
+					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
+					$method = $symbol?->declaration();
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
 					$this->source_call($call, $symbol, $method, $initializing);

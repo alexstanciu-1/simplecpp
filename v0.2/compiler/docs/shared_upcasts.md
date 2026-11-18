@@ -5,10 +5,10 @@ Doc Status: supporting
 Bare classes retain shared-by-default source semantics. Bare structs remain
 inline values; explicit `shared<Struct>` still uses shared ownership. This slice
 adds class-to-class single inheritance and implicit shared derived-to-base
-conversions. Explicit shared-struct upcasts, downcasts, interfaces, virtuals,
-borrows and owning `$this` values remain deferred. Inherited ordinary-method
-lookup remains deferred; methods on an explicitly base-typed view work normally.
-Method replacement is rejected until the mandatory-override slice implements it.
+conversions. Explicit shared-struct upcasts, downcasts, interfaces, borrows and
+owning `$this` values remain deferred. The [virtual-method slice](virtual_methods.md)
+adds inherited method lookup and explicitly marked virtual replacements.
+Nonvirtual method hiding remains rejected.
 
 ```php
 class Node { public int $start = 0; }
@@ -52,8 +52,8 @@ uses that view after expiry. Counters remain thread-confined.
 The concrete allocation inherits the runtime control and contains the payload
 in a union. Last-strong destruction ends the payload lifetime; deleting the
 allocation does not destroy it twice. C++ allocation/constructor unwinding handles
-failed construction before an owner is published. No virtual payload destructor
-or payload vtable is required for this ownership mechanism.
+failed construction before an owner is published. This ownership mechanism itself requires no virtual payload destructor or vtable.
+Virtual method hierarchies acquire both through their separate dispatch contract.
 
 `scpp/owner_access.hpp` publishes the control through the runtime API generator's
 ownership template. Its include closure has no standard-library dependencies.
@@ -65,7 +65,7 @@ Verification: `XDEBUG_MODE=off python3 -B v0.2/compiler/tests/shared_upcasts_nat
 The suite covers all three flavors on Clang/GCC, isolated runtime headers,
 constructor failures, concrete destruction, weak lifetime, nullability and
 retained/fresh equivalence across ancestry edits/removal/recovery. It also rejects
-cross-kind bases, cycles, downcasts, unrelated conversions and method replacement.
+cross-kind bases, cycles, downcasts, unrelated conversions and nonvirtual method hiding.
 On the tested 64-bit targets, handles and weak handles are 16 bytes each, the
 control is 24 bytes and the fixture Leaf allocation is 48 bytes. Upcasts allocate
 nothing; no performance timing claim is made.
