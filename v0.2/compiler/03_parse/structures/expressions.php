@@ -36,6 +36,7 @@ enum binary_operator: int
 	public static function compound(token_kind $token): ?self
 	{
 		return match ($token) {
+			token_kind::coalesce_assign => self::coalesce,
 			token_kind::power_assign => self::power,
 			token_kind::plus_assign => self::add,
 			token_kind::concat_assign => self::concatenate,

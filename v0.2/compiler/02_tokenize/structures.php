@@ -74,6 +74,7 @@ enum token_kind: int /** uint8 */
 	case assign = 61;
 	case keyword = 62;
 	case template_string = 63;
+	case coalesce_assign = 64;
 
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
@@ -103,6 +104,7 @@ enum token_kind: int /** uint8 */
 				self::member => '->',
 				self::scope => '::',
 				self::coalesce => '??',
+				self::coalesce_assign => '??=',
 				self::logical_and => '&&',
 				self::logical_or => '||',
 				self::increment => '++',

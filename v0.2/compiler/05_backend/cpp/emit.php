@@ -877,7 +877,11 @@ CPP;
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
-				$lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
+				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
+					/** @var carrier_type_definition $type */
+					$type = $statement->local_def()->type_def();
+					$lines[] = "\tif (!(" . $type->lower_cpp_presence($this->name($statement->local_def())) . ')) { ' . $write . '; }';
+				} else $lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
@@ -1131,7 +1135,7 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
 	{
 		$snapshot = null;
-		if (($statement instanceof ast_assignment_statement) && ($statement->operator !== null)) {
+		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
 			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
 		}
 		if ($statement instanceof ast_index_update) {

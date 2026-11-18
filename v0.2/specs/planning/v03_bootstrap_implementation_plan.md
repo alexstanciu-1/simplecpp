@@ -24,7 +24,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Writable collection parameters implemented; broader element families remain |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
-| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
+| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
@@ -202,7 +202,7 @@ Verification checklist:
 - [x] Function/import precedence, constant aliases, unsupported application lookup and provider relocation/retirement.
 
 Deferred: application nullable values, nullable payload publication, boxed/nested
-lookup, coalescing assignment and new removal/clear syntax. Coalescing follows below.
+lookup and new removal/clear syntax. Coalescing and local conditional assignment follow below.
 
 ### 2.3 Lazy fallback — first published nullable slice implemented
 
@@ -226,10 +226,39 @@ Verification completed:
 - [x] Body/signature edits, repeated failure, deletion/restoration and fresh equivalence.
 - [x] Native caller reuse and no-op builds; generator/provider regressions.
 
-Deferred: `??=`, application/shared carriers, nullable RHS results, homogeneous
+Deferred for `??`: application/shared carriers, nullable RHS results, homogeneous
 wrapper fallback extraction, result/sentinel families, bare-null/nonnullable left
 operands and widening joins. This is a compiler availability slice, not a change
 to the broader normative conditional matrix.
+
+### 2.3 Conditional assignment — declared nullable locals, implemented
+
+Implemented statement-form `$n ??= fallback;` using generated presence and ordinary
+assignment conversion. Present zero/false/empty text remain unchanged; absent locals
+select the fallback once. Null/same-carrier RHS assignments use existing semantics.
+Checked casts stay lazy and a failed conversion performs no final store. Earlier
+RHS effects remain, including changes to the destination itself.
+
+Reuses the assignment AST and conversion facts. The syntactic `calculates_value()`
+query distinguishes eager compound calculations from conditional writes. No new
+AST fields, indexes, preparation passes or generated capability are needed. Emits a
+plain presence-guarded C++ `if`, with no lambda or snapshot.
+
+Verification checklist:
+
+- [x] cpp/php/js on Clang/GCC; skipped and selected calls, single evaluation.
+- [x] Present zero/false/empty string; null and same-carrier assignments.
+- [x] Checked conversion failures and success; conditional reference invalidation.
+- [x] Destination-mutating fallback and independent NUL string/vector copies.
+- [x] Token boundaries, AST ownership, one preparation visit, pure emission and reset.
+- [x] Body/signature edits, repeated failures, deletion/restoration and fresh equivalence.
+- [x] Native caller reuse, no-op builds and bounded-scope rejection.
+
+Deferred: parameters, global/property/indexed destinations, for-header writes,
+assignment expressions, application/shared carriers and new implicit conversions.
+
+Verification passed: the two coalescing-assignment tests and seven existing
+coalescing/logical/compound/loop tests (9/9), plus tokenizer, parser and style checks.
 
 ## 3. Object relationships — a small AST family
 

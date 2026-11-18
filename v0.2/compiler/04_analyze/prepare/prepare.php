@@ -577,7 +577,15 @@ final class Preparation
 			return;
 		}
 		$this->value($statement->value);
-		if ($statement->operator === null) {
+		if ($statement->operator === binary_operator::coalesce) {
+			if (!($local instanceof ast_local_declaration) || $statement->parent instanceof ast_for_statement) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a plain local statement');
+			}
+			if (!($type instanceof carrier_type_definition) || !$type->supports_coalescing()) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a published nullable carrier');
+			}
+		}
+		if (!$statement->calculates_value()) {
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			$statement->settle_assignment($local, $conversion);
 		}
