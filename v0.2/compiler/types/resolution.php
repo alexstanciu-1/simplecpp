@@ -55,7 +55,7 @@ final class Type_Resolution
 		$child = $syntax->first_child;
 		if ($child->next_sibling === null) {
 			$payload = self::named($child, $symbols, $namespace, $watcher, $dependencies);
-			if ($payload instanceof shared_record_type_definition && $payload->payload->declaration->kind === record_kind::class_type) {
+			if ($payload instanceof shared_record_type_definition && $payload->payload->declaration->kind !== record_kind::structure) {
 				if ($syntax->name === 'shared') throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Classes already use shared storage');
 				if (!$payload->required) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Weak target requires a bare record type');
 				$payload = $payload->payload;

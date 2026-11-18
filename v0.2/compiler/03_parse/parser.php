@@ -74,10 +74,10 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			if ($this->cursor->keyword('interface') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'abstract', 'struct', 'class' => Record_Syntax::read($this, $grammar, $members),
+					'abstract', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),

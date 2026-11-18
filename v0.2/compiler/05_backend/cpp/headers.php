@@ -144,6 +144,9 @@ final class Cpp_Headers
 			$base_header = $this->publish_record($record->definition->base()->declaration, $emitter, $root);
 			$includes[$base_header] = true;
 		}
+		foreach ($record->definition->interfaces() as $interface) {
+			$includes[$this->publish_record($interface->declaration, $emitter, $root)] = true;
+		}
 		$methods = [];
 		$headers = [];
 		foreach ($record->fields as $field) {
@@ -183,6 +186,9 @@ final class Cpp_Headers
 			$base_layout = $this->publish_layout($base, $emitter, $root);
 			$children[$base_layout] = true;
 			$needs_methods = $base_layout !== self::record_header($base);
+		}
+		foreach ($record->definition->interfaces() as $interface) {
+			$children[$this->publish_layout($interface->declaration, $emitter, $root)] = true;
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();

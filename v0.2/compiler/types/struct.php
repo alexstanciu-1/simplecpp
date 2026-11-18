@@ -11,7 +11,7 @@ final class record_type_definition extends type_definition implements dependency
 	public readonly ast_record_declaration $declaration;
 	/** Canonical shared identity published alongside the value identity before body preparation. */
 	public readonly shared_record_type_definition $shared;
-	/** Required class value; structs reuse their explicit shared identity without another allocation. */
+	/** Required class/interface value; structs reuse their explicit shared identity without another allocation. */
 	public readonly shared_record_type_definition $required;
 	public readonly weak_record_type_definition $weak;
 
@@ -23,12 +23,16 @@ final class record_type_definition extends type_definition implements dependency
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
-	/** Prepared fact: abstract obligations checked after signatures; cleared with nominal layout invalidation. */
-	public bool $abstract_contract_ready = false;
+	/** Prepared fact: abstract/interface obligations checked after signatures; cleared with nominal layout invalidation. */
+	public bool $method_contract_ready = false;
 	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
 	private ?self $base_type = null;
 	/** Prepared fact: non-owning validated traversal method; null for absent or invalidated contract. */
 	private ?ast_function_declaration $iterator = null;
+	/** Prepared fact: non-owning direct interface edges, owned by this declaration generation. @var record_type_definition[] */
+	private array $interfaces /** list<record_type_definition> */ = [];
+	/** Prepared fact: native non-owning forwarding targets; original methods remain at their declaring owner. @var ast_function_declaration[] */
+	public array $interface_forwards /** array<string,ast_function_declaration> */ = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_record_declaration $declaration)
@@ -36,15 +40,15 @@ final class record_type_definition extends type_definition implements dependency
 		parent::__construct($declaration->name());
 		$this->declaration = $declaration;
 		$this->shared = new shared_record_type_definition($this);
-		$this->required = $declaration->kind === record_kind::class_type ? new shared_record_type_definition($this, true) : $this->shared;
+		$this->required = $declaration->kind !== record_kind::structure ? new shared_record_type_definition($this, true) : $this->shared;
 		$this->weak = new weak_record_type_definition($this);
 	}
 
 	/** METHODS */
-	/** Bare classes use required shared values; bare structs retain inline values. */
+	/** Bare classes/interfaces use required shared values; bare structs retain inline values. */
 	public function default_type(): type_definition
 	{
-		return $this->declaration->kind === record_kind::class_type ? $this->required : $this;
+		return $this->declaration->kind !== record_kind::structure ? $this->required : $this;
 	}
 
 	/** Bind the declaration to this publication before following any forward field references. */
@@ -53,9 +57,11 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->ready = false;
-		$this->abstract_contract_ready = false;
+		$this->method_contract_ready = false;
 		$this->base_type = null;
 		$this->iterator = null;
+		$this->interfaces = [];
+		$this->interface_forwards = [];
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
 		$this->dependencies = $dependencies;
@@ -71,9 +77,11 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
-		$this->abstract_contract_ready = false;
+		$this->method_contract_ready = false;
 		$this->base_type = null;
 		$this->iterator = null;
+		$this->interfaces = [];
+		$this->interface_forwards = [];
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
@@ -95,17 +103,34 @@ final class record_type_definition extends type_definition implements dependency
 		$this->dependencies->forget($this);
 		$this->base_type = null;
 		$this->iterator = null;
+		$this->interfaces = [];
+		$this->interface_forwards = [];
+		$interface_references = $this->declaration->interface_references;
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($base instanceof shared_record_type_definition && $base->required) $base = $base->payload;
-			if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
-				throw new diagnostic($written->source(), $written->byte_start(),
-					$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
+			if ($base instanceof self && $base->declaration->kind === record_kind::interface_type && $written->source()->flavor === flavor::cpp) {
+				array_unshift($interface_references, $written);
+			} else {
+				if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
+					throw new diagnostic($written->source(), $written->byte_start(),
+						$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
+				}
+				$base->prepare_layout($symbols, $active, $work);
+				$this->base_type = $base;
+				$this->validate_inherited_members();
 			}
-			$base->prepare_layout($symbols, $active, $work);
-			$this->base_type = $base;
-			$this->validate_inherited_members();
+		}
+		foreach ($interface_references as $written) {
+			if ($written->name === Iterator_Contract::NAME) continue;
+			if ($this->declaration->kind !== record_kind::class_type) throw new diagnostic($written->source(), $written->byte_start(), 'Only classes implement interfaces in this slice');
+			$type = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			if (!($type instanceof shared_record_type_definition) || !$type->required || $type->payload->declaration->kind !== record_kind::interface_type) throw new diagnostic($written->source(), $written->byte_start(), 'Implemented type must be an interface');
+			$interface = $type->payload;
+			if (in_array($interface, $this->interfaces, true)) throw new diagnostic($written->source(), $written->byte_start(), 'Duplicate implemented interface');
+			$interface->prepare_layout($symbols, $active, $work);
+			$this->interfaces[] = $interface;
 		}
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
@@ -152,8 +177,14 @@ final class record_type_definition extends type_definition implements dependency
 	/** Check once after ordinary signature preparation; all bodies consume the settled method. */
 	public function prepare_iterator(scope $symbols): void
 	{
-		$written = $this->declaration->interface_reference;
-		if ($written === null || $this->iterator !== null) return;
+		if ($this->iterator !== null) return;
+		$written = null;
+		foreach ($this->declaration->interface_references as $reference) {
+			if ($reference->name !== Iterator_Contract::NAME) continue;
+			if ($written !== null) throw new diagnostic($reference->source(), $reference->byte_start(), 'Duplicate Iterator contract');
+			$written = $reference;
+		}
+		if ($written === null) return;
 		if ($this->declaration->kind !== record_kind::structure) {
 			throw new diagnostic($written->source(), $written->byte_start(), 'Class Iterator implementations are deferred');
 		}
@@ -208,6 +239,32 @@ final class record_type_definition extends type_definition implements dependency
 		throw new \LogicException('Source traversal calls are emitted through their method declaration');
 	}
 
+	/** Direct settled edges; interfaces currently have no interface parents. @return record_type_definition[] */
+	public function interfaces(): array /** list<record_type_definition> */
+	{
+		return $this->interfaces;
+	}
+
+	/** Read original contracts through settled edges; the temporary result is not a retained member index. @return ast_function_declaration[] */
+	public function interface_requirements(?string $name = null): array /** list<ast_function_declaration> */
+	{
+		$requirements = [];
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			foreach ($type->interfaces as $interface) {
+				if ($name === null) {
+					foreach ($interface->declaration->methods as $method) $requirements[] = $method;
+				} elseif (isset($interface->declaration->methods[$name])) $requirements[] = $interface->declaration->methods[$name];
+			}
+		}
+		return $requirements;
+	}
+
+	/** A prepared interface slot can add dispatch to an inherited ordinary implementation. */
+	public function interface_dispatch(string $name): bool
+	{
+		return isset($this->interface_forwards[$name]) || ($this->base_type?->interface_dispatch($name) ?? false);
+	}
+
 	public function base(): ?self
 	{
 		return $this->base_type;
@@ -234,12 +291,18 @@ final class record_type_definition extends type_definition implements dependency
 			$dependencies?->watch($symbol, $watcher);
 			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
 		}
+		foreach ($this->interface_requirements($name) as $method) {
+			$symbol = $symbols->entry($method->symbol_key());
+			$dependencies?->watch($symbol, $watcher);
+			return $symbol;
+		}
 		return null;
 	}
 
 	/** Native layout follows validated written virtual contracts, including inherited ones. */
 	public function polymorphic(): bool
 	{
+		if ($this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
 		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
 		return $this->base_type?->polymorphic() ?? false;
 	}
@@ -248,7 +311,7 @@ final class record_type_definition extends type_definition implements dependency
 	public function derives_from(self $ancestor): bool
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {
-			if ($type === $ancestor) return true;
+			if ($type === $ancestor || in_array($ancestor, $type->interfaces, true)) return true;
 		}
 		return false;
 	}
@@ -355,7 +418,7 @@ final class shared_record_type_definition extends record_handle_definition
 	public function __construct(record_type_definition $payload, bool $required = false)
 	{
 		$this->required = $required;
-		$name = $payload->declaration->kind === record_kind::class_type ? ($required ? '' : '?') . $payload->name : null;
+		$name = $payload->declaration->kind !== record_kind::structure ? ($required ? '' : '?') . $payload->name : null;
 		parent::__construct('shared', $payload, $name);
 	}
 
@@ -412,11 +475,11 @@ final class shared_record_type_definition extends record_handle_definition
 			|| ($expr->left instanceof ast_name_expression && $expr->right instanceof ast_name_expression);
 	}
 
-	/** Exact struct owners stay exact; class views admit only settled derived-to-base ancestry. */
+	/** Struct owners stay exact; object views admit settled base and interface edges. */
 	private function admits_view(self $source): bool
 	{
-		return $source->payload === $this->payload || ($source->payload->declaration->kind === record_kind::class_type
-			&& $this->payload->declaration->kind === record_kind::class_type && $source->payload->derives_from($this->payload));
+		return $source->payload === $this->payload || ($source->payload->declaration->kind !== record_kind::structure
+			&& $this->payload->declaration->kind !== record_kind::structure && $source->payload->derives_from($this->payload));
 	}
 
 	/** Same-payload contracts share storage; required destinations check potentially empty owners. */

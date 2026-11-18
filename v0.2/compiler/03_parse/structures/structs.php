@@ -8,6 +8,7 @@ enum record_kind: int
 {
 	case structure = 0;
 	case class_type = 1;
+	case interface_type = 2;
 }
 
 /** One instance field in the record layout, e.g. private int $x; */
@@ -82,18 +83,18 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	public readonly bool $is_abstract;
 	/** Native owning optional written base, independent of resolution success. */
 	public readonly ?ast_type_reference $base_reference;
-	/** Native owning written compiler-interface application; general interface lists remain deferred. */
-	public readonly ?ast_type_reference $interface_reference;
+	/** Native owning written interface edges; valid multiplicity, independent of the single record base. @var ast_type_reference[] */
+	public readonly array $interface_references /** list<ast_type_reference> */;
 
 	/** CONSTRUCTOR */
 	/**
+	 * @param ast_type_reference[] $interface_references
 	 * @param ast_instance_field[] $fields
 	 * @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members All occurrences in source order before duplicate publication.
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_instance_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false,
-		?ast_type_reference $interface_reference = null)
+		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false, array $interface_references /** list<ast_type_reference> */ = [])
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -116,10 +117,10 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 				$node->attach($this);
 			}
 		}
-		$this->interface_reference = $interface_reference;
-		$interface_reference?->attach($this);
 		$this->base_reference = $base_reference;
 		$base_reference?->attach($this);
+		$this->interface_references = $interface_references;
+		foreach ($interface_references as $reference) $reference->attach($this);
 		$this->kind = $kind;
 		$this->is_abstract = $abstract;
 		$this->definition = new record_type_definition($this);

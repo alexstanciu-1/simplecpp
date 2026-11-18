@@ -126,6 +126,11 @@ final class Cpp_Emitter
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
 					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 			}
+			foreach ($node->definition->interface_forwards as $method) {
+				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+				$layout[] = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override;';
+			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
 				$params = $this->constructor_parameters($constructor, $includes);
@@ -137,8 +142,10 @@ final class Cpp_Emitter
 			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
+			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
+			foreach ($node->definition->interfaces() as $interface) $bases[] = 'public virtual ' . $interface->cpp_type();
 			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-				. ($base === null ? '' : ' : public ' . $base->cpp_type()) . " {\n" . implode("\n", $layout) . "\n};\n");
+				. ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
 			if ($node->has_virtual_dispatch()) return '';
@@ -214,7 +221,7 @@ final class Cpp_Emitter
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
 		$factory_declaration = $payload->declaration->is_abstract ? '' : "\tstatic $owner make($params);\n";
-		$presence = $payload->declaration->kind === record_kind::class_type ? "\tstatic $owner require($owner value);\n" : '';
+		$presence = $payload->declaration->kind !== record_kind::structure ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
 #define $guard
@@ -274,7 +281,7 @@ CPP;
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
 		$factory = $constructor === null && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
-		$presence = $type->payload->declaration->kind === record_kind::class_type
+		$presence = $type->payload->declaration->kind !== record_kind::structure
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
 		$allocation = $type->payload->declaration->is_abstract ? '' : <<<CPP
@@ -395,6 +402,11 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			foreach ($node->definition->interface_forwards as $method) {
+				$declarations[self::function_name($method)] = $method;
+				$this->collect_signature_types($method, $declarations);
+				$definitions[] = $this->interface_forward($node, $method, $required_headers);
+			}
 			$constructor = $node->definition->constructor();
 			if ($constructor !== null && !$node->is_abstract) {
 				// Each payload's source owns its factory, including inherited constructor contracts.
@@ -585,6 +597,9 @@ CPP;
 		}
 		if ($record->definition->base() !== null) {
 			$this->type_prototypes($record->definition->base()->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
+		}
+		foreach ($record->definition->interfaces() as $interface) {
+			$this->type_prototypes($interface->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
@@ -1477,7 +1492,7 @@ CPP;
 				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
 				$place = 'receiver_payload';
 			}
-			if ($function->has_virtual_dispatch()) $name = '(' . $place . ').'
+			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
 		} elseif ($function->parameters === []) {
@@ -1565,6 +1580,7 @@ CPP;
 	private function base_initializer(ast_base_initialization $site, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
+		if ($site->type_def() === type_void::instance()) return '';
 		/** @var record_type_definition $base */
 		$base = $site->type_def();
 		$constructor = $base->constructor();
@@ -1584,14 +1600,33 @@ CPP;
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
 	}
 
+	/** Emit only a settled bridge; forward values by move and references unchanged, without visiting the source body. @param bool[] $headers */
+	private function interface_forward(ast_record_declaration $record, ast_function_declaration $method, array &$headers /** array<string,bool> */): string
+	{
+		$arguments = [];
+		foreach ($method->parameters as $parameter) {
+			$value = $this->name($parameter);
+			$arguments[] = $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
+				: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
+		}
+		if ($method->has_virtual_dispatch()) $target = 'this->' . $method->parent->definition->cpp_type() . '::' . self::virtual_name($method);
+		else {
+			$target = self::function_name($method);
+			array_unshift($arguments, '*this');
+		}
+		foreach ($method->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
+		return $this->member_type($method->return_type_def()) . ' ' . $record->definition->cpp_type() . '::' . self::virtual_name($method)
+			. '(' . implode(', ', $this->parameters($method, $headers, false, true)) . ') { return ' . $target . '(' . implode(', ', $arguments) . "); }\n";
+	}
+
 	/** Parameter types need only forward declarations in the native payload and owner declarations. */
 	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
 		$types = [];
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
-		foreach ($record->methods as $method) {
-			if (!$method->has_virtual_dispatch()) continue;
+		foreach (array_merge($record->methods, $record->definition->interface_forwards) as $method) {
+			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
@@ -1640,13 +1675,13 @@ CPP;
 	}
 
 	/** Share native parameter names, types, passing modes and includes. @param bool[] $headers @return string[] */
-	private function parameters(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types): array /** list<string> */
+	private function parameters(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types, bool $member = false): array /** list<string> */
 	{
 		$parameters = [];
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if (($function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
+			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '

@@ -151,7 +151,7 @@ final class Function_Preparation
 		$iterators = [];
 		foreach ($symbols->declarations as $declaration)
 		{
-			if ($declaration instanceof ast_record_declaration && $declaration->interface_reference !== null) {
+			if ($declaration instanceof ast_record_declaration && $declaration->interface_references !== []) {
 				$iterators[] = $declaration->definition;
 			}
 			if (!($declaration instanceof ast_function_declaration)) {
@@ -211,7 +211,7 @@ final class Function_Preparation
 			if ($declaration instanceof ast_function_declaration) Method_Preparation::contract($declaration, $symbols, $dependencies);
 		}
 		foreach ($symbols->declarations as $declaration) {
-			if ($declaration instanceof ast_record_declaration) Method_Preparation::record_contract($declaration->definition);
+			if ($declaration instanceof ast_record_declaration) Method_Preparation::record_contract($declaration->definition, $symbols, $dependencies);
 		}
 		foreach ($iterators as $iterator) $iterator->prepare_iterator($symbols);
 		return $symbols;

@@ -380,6 +380,38 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Interfaces, abstract structs, protected-method expansion, callable variance,
-unique ownership and borrows remain deferred. See the
+Abstract structs, protected-method expansion, callable variance,
+unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
+
+## Class interfaces
+
+The first interface slice admits public bodyless instance contracts and class
+implementers in all flavors. Bare interface types use shared storage; function
+nullability is explicit and shared properties retain the relaxed empty-storage rule.
+Interfaces cannot be constructed.
+
+| Flavor | Interface declaration | Implementing class |
+| --- | --- | --- |
+| PHP | `interface Readable { public function read(): int; }` | `class Leaf extends Node implements Readable { public override function read(): int { return 8; } }` |
+| JS | `interface Readable { read(): int; }` | `class Leaf extends Node implements Readable { override read(): int { return 8; } }` |
+| C++ | `interface Readable { int read(); };` | `class Leaf : public Node, public Readable { int read() override { return 8; } };` |
+
+The concrete base is optional. C++ places it first when present; the remaining colon
+edges are interfaces. PHP/JS use a comma-separated implements list. Multiple independent
+interfaces may have compatible same-name requirements. Signature compatibility remains
+exact in this slice, including modes/nullability/optional positions; default values
+and parameter names may differ. The static callable determines defaults.
+
+Every locally authored implementation needs the existing Override marker, including
+PHP `#[\Override]`. An unchanged compatible inherited public method fulfills an
+interface without redeclaration. The compiler may emit a native forwarding member;
+it does not change the original base method's dispatch policy or source identity.
+Abstract implementers may retain outstanding obligations; concrete types must fulfill
+them. Nonvirtual source hiding restrictions still apply.
+
+Interface inheritance/diamonds, interface type tests/casts, struct implementers,
+inherited-final satisfaction, variance and broader reference returns remain deferred.
+Interface fields, constants, static methods, constructors, destructors and method
+bodies are not admitted. Unique, borrows and threading are outside this slice.
+See [implementation and verification](../compiler/docs/interfaces.md).

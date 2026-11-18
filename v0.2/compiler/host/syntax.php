@@ -40,10 +40,16 @@ final class Syntax_Inspection
 					'cases' => array_map(static fn(ast_enum_case $case): string => $case->initializer->source_text(), $node->cases)];
 			}
 			if ($node instanceof ast_record_declaration) {
-				$category = $node->kind === record_kind::class_type ? 'classes' : 'structs';
+				$category = match ($node->kind) {
+					record_kind::class_type => 'classes',
+					record_kind::interface_type => 'interfaces',
+					default => 'structs',
+				};
 				$result[$category][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_instance_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
-				if ($node->interface_reference !== null) $result[$category][array_key_last($result[$category])]['implements'] = $node->interface_reference->spelling();
+				if ($node->interface_references !== []) $result[$category][array_key_last($result[$category])]['implements'] = array_map(
+					static fn(ast_type_reference $type): string => $type->spelling(), $node->interface_references);
+				if (count($node->interface_references) === 1) $result[$category][array_key_last($result[$category])]['implements'] = $node->interface_references[0]->spelling();
 				if ($node->base_reference !== null) $result[$category][array_key_last($result[$category])]['base'] = $node->base_reference->spelling();
 			}
 		}

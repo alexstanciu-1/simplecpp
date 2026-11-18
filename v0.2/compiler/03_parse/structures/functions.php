@@ -123,6 +123,8 @@ final class ast_call_expression extends ast_expression
 	/** PREP FACTS */
 	/** Prepared fact: fixed ancestor implementation on the current instance; false before preparation/reset. */
 	public private(set) bool $ancestor_dispatch = false;
+	/** Prepared fact: receiver selects an interface slot although the original implementation is nonvirtual. */
+	public bool $interface_dispatch = false;
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
@@ -213,11 +215,13 @@ final class ast_call_expression extends ast_expression
 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
 	}
 
+	/** Clear invocation binding, dispatch and conversions together after invalidation. */
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
 		$this->function_symbol = null;
 		$this->ancestor_dispatch = false;
+		$this->interface_dispatch = false;
 		$this->cardinality = null;
 		$this->conversions = [];
 	}
