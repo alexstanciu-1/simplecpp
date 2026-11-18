@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Concrete shared-class cast/test patterns; admission is already settled and ownership stays with the existing control block. */
+/** Concrete shared-object cast/test patterns; admission is already settled and ownership stays with the existing control block. */
 final class Cpp_Object_Access
 {
 	/** Casts transfer an owning parameter; tests only inspect a handle whose argument lifetime covers the call. */

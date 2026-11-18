@@ -312,7 +312,7 @@ checked conversions. Binary prefixes, separators and suffixes remain deferred.
 
 The bounded implementation of
 [checked object access](../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
-admits class operands and targets only; interfaces and struct targets remain deferred.
+admits class and interface operands/targets; struct targets remain deferred.
 
 | Intent | C++ flavor | PHP flavor | JS flavor |
 | --- | --- | --- | --- |
@@ -328,10 +328,13 @@ wrapper. `instanceof` binds more tightly than logical negation and comparison:
 intent explicit. Tests do not narrow the variable's static type.
 
 Common preparation admits same-type/upward relationships and polymorphic downward
-relationships. Required and optional shared operands are accepted; bare null, inline
+relationships, including class/interface and interface/interface cross-casts. Two
+interfaces need no known common implementer; a class can gain an interface through
+a descendant. Class finality is not implemented: final-class syntax remains rejected
+and finality-aware overlap checks are deferred. Required and optional shared operands are accepted; bare null, inline
 values, unrelated records and weak/unique handles are rejected. A successful cast
-returns the required target class. Absence/mismatch throws `invalid_object_cast`;
-`instanceof` returns false. Native RTTI must be enabled for downward operations.
+returns the required target class/interface view. Absence/mismatch throws `invalid_object_cast`;
+`instanceof` returns false. Native RTTI must be enabled for downward operations and cross-casts.
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.
 

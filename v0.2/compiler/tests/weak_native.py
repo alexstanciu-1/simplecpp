@@ -133,7 +133,7 @@ def prove(work, flavor, memcheck):
     edits = [(entry, source, None), (entry, source.replace(f'acquire({w})', f'lock({p})'), 'lock() requires weak<T>'),
              (entry, source.replace(f'acquire({w})', f'weak({w})'), 'weak() requires shared<T>'),
              (entry, source.replace(f'if (!{held}', f'if (!{w}'), 'Unsupported condition type'),
-             (entry, source.replace(f'{p} !== {held}', f'{p} !== {c}'), 'same shared type'),
+             (entry, source.replace(f'{p} !== {held}', f'{p} !== {c}'), 'Shared owners require equality against null or related shared types'),
              (entry, source, None), (child, child_text.replace('weak<Parent>', 'weak<Missing>'), 'Weak type requires'),
              (None, '', 'Weak type requires'), (child, child_text, None)]
     with service(app, out) as resident:

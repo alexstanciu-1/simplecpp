@@ -66,7 +66,10 @@ removal/restoration with unrelated native-object reuse. Standalone forwarding ta
 have one declaration in the common inventory. It also checks standalone emission and
 native namespace qualification with a record named `scpp`.
 
-Deferred: interface inheritance/diamonds, interface type tests/downcasts/cross-casts,
+Interface capability tests and checked casts now reuse the
+[shared-object access path](object_access.md), preserving control blocks and adjusted views.
+
+Deferred: interface inheritance/diamonds,
 struct implementers, inherited-final satisfaction, variance and broader reference
 returns, interface data/static/default members, traits, unique, borrows and native
 threading. Unsupported inherited-final satisfaction is diagnosed as deferred, not
