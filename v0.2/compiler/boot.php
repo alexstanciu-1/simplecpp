@@ -90,6 +90,7 @@ require_once __DIR__ . '/05_backend/cpp/headers.php';
 require_once __DIR__ . '/generated/bindings/entry.php';
 require_once __DIR__ . '/05_backend/cpp/generator.php';
 require_once __DIR__ . '/05_backend/cpp/adapters.php';
+require_once __DIR__ . '/05_backend/cpp/concrete.php';
 require_once __DIR__ . '/05_backend/cpp/object_access.php';
 require_once __DIR__ . '/05_backend/cpp/emit.php';
 require_once __DIR__ . '/05_backend/cpp/strings.php';

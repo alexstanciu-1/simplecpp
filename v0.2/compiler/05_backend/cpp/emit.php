@@ -35,6 +35,8 @@ final class Cpp_Emitter
 	private int $record_expressions = 0;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
+	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
+	private Cpp_Concrete_Vectors $concrete_vectors;
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -52,6 +54,7 @@ final class Cpp_Emitter
 		$this->root = $root;
 		$this->generator_layouts = $generator_layouts;
 		$this->inline_adapters = new Cpp_Adapters($root);
+		$this->concrete_vectors = new Cpp_Concrete_Vectors($root);
 	}
 
 	/** METHODS */
@@ -65,7 +68,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		return $this->inline_adapters->files();
+		return $this->inline_adapters->files() + $this->concrete_vectors->files();
 	}
 
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
@@ -384,6 +387,7 @@ CPP;
 	{
 		$this->enum_helpers = [];
 		$this->inline_adapters = new Cpp_Adapters($this->root);
+		$this->concrete_vectors = new Cpp_Concrete_Vectors($this->root);
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -463,7 +467,7 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
-		foreach ($this->inline_adapters->dependencies() as $type) {
+		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_vectors->dependencies()] as $type) {
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
@@ -826,7 +830,7 @@ CPP;
 				foreach ($destination->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$store = $type->lower_cpp_store($statement, $receiver, $key, $value);
+				$store = $type->lower_cpp_store($statement, $receiver, $key, $value, $this->inline_adapters);
 				$lines[] = "\t" . ($steps === [] ? $store : '{ ' . implode(' ', $steps) . ' ' . $store . ' }');
 			}
 			elseif ($statement instanceof ast_append_statement) {
@@ -841,7 +845,7 @@ CPP;
 				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
 					$required_headers[$header] = true;
 				}
-				$append = $type->lower_cpp_append($statement, $receiver, $value) . ';';
+				$append = $type->lower_cpp_append($statement, $receiver, $value, $this->inline_adapters) . ';';
 				$lines[] = "\t" . ($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
@@ -1077,6 +1081,7 @@ CPP;
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
+			if ($type instanceof application_vector_type) $this->concrete_vectors->request($type);
 			if ($type instanceof record_type_definition) {
 				$declarations[$type->declaration->symbol_key()] = $type->declaration;
 			}

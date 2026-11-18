@@ -13,6 +13,7 @@ function compilerIndexRead(string $receiver, string $count, string $element, str
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
+    $application = false;
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
     foreach ($runtime['vectors'] ?? [] as $vector) {
         $element = $vector['element'];
@@ -36,14 +37,30 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             && $index['result_category'] === 'value', 'Compiler vector requires value-copy index binding');
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
-        $code .= strtr(readFile(__DIR__ . '/../templates/collections/vector_type.php.tpl'), [
+        $bindings = [
             '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),
             '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
-            '@element@' => $elementClass, '@cpp@' => var_export($export['symbol'], true),
+            '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
             '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
-        ]);
+            '@interfaces@' => ' implements iterable_type',
+            '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n\t}\n",
+            '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",
+        ];
+        $template = readFile(__DIR__ . '/../templates/collections/vector_type.php.tpl');
+        $code .= strtr($template, $bindings);
+        if (!$application) {
+            $application = true;
+            $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
+            $recipe = ['count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
+            $code .= strtr($template, array_replace($bindings, [
+                '@class@' => 'application_vector_type', '@interfaces@' => '', '@identity@' => $identity,
+                '@iteration@' => '', '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
+                '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true),
+                '@factory@' => "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic static function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . ";\n\t}\n\tpublic function supports_instance_field(): bool { return false; }",
+            ]));
+        }
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }
     return [$code, implode("\n", $cases), $family];

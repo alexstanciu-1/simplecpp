@@ -38,9 +38,9 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_read(scpp::boxed_key(' . $index . '))';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
 	{
-		$value = $this->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		$value = $this->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		return $receiver . '.source_set(scpp::boxed_key(' . $key . '), ' . $value . ');';
 	}
 

@@ -345,6 +345,12 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'inline_22_private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'inline_capacity' => 22, 'empty_state' => 'inline', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
 }
 
+/** One storage-to-recipe selection shared by runtime and application compiler generation. */
+function vectorConcreteRecipe(array $vector): string {
+    requireThat($vector['storage'] === 'concrete_buffer', 'Unsupported vector concrete storage');
+    return 'collections/vector';
+}
+
 function prepareVectors(mixed $metadata, mixed $publication, array $registry, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'vector', 'vectors', 'Vector');
     if ($m === null) {

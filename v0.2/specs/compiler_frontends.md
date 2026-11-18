@@ -80,8 +80,13 @@ See [logical expressions](../compiler/docs/logical.md) for short-circuit and inc
 There is no member access, general string expressions, PHP tags/HTML
 modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded [three-flavor grammar](../../specs/string_interpolation.md#active-v02-flavors).
 
-Planned type syntax will preserve nested type arguments, including vector<vector<int>>.
-This is syntax admission, not container construction, type lookup or generic lowering.
+Type-reference syntax preserves nested arguments, including vector<vector<int>>;
+that syntax alone does not make nested container specializations available.
+The bounded application-vector slice now resolves `vector<Record>` for local storage:
+struct elements use value copies and class elements use their ordinary shared ownership.
+Empty construction, append, checked indexing/replacement and copying are implemented;
+application-vector signatures, fields and traversal remain deferred. See
+[application vectors](../compiler/docs/application_vectors.md).
 Every closing angle consumes one token. Shift expressions consume two byte-adjacent
 angles and produce one AST operation; whitespace/comments between angles prevent
 combination. Tokens are never rewritten or marked ignored. <<= and >>= retain their

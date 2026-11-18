@@ -42,7 +42,11 @@ final class Type_Resolution
 		if ($syntax->name === 'nullable') $function->watch_signature($dependencies);
 		$optional = self::optional_type($syntax, $symbols, $function->namespace, $function, $dependencies);
 		if ($optional !== null) return $optional;
-		$type = self::resolve($syntax, $allow_void);
+		if ($syntax->first_child !== null) $function->watch_signature($dependencies);
+		$type = self::resolve($syntax, $allow_void, $symbols, $function->namespace, $function, $dependencies);
+		if ($type instanceof application_vector_type) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Application vector parameters and returns are deferred');
+		}
 		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
 		return self::application($syntax, $symbols, $function, $dependencies);
@@ -74,7 +78,7 @@ final class Type_Resolution
 		}
 		$optional = self::optional_type($syntax, $symbols, $namespace, $watcher, $dependencies);
 		if ($optional !== null) return $optional;
-		$type = self::resolve($syntax);
+		$type = self::resolve($syntax, false, $symbols, $namespace, $watcher, $dependencies);
 		if ($type !== null) return $type;
 		return self::application($syntax, $symbols, $watcher, $dependencies);
 	}
@@ -105,7 +109,8 @@ final class Type_Resolution
 	}
 
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */
-	public static function resolve(ast_type_reference $syntax, bool $allow_void = false): ?type_definition
+	public static function resolve(ast_type_reference $syntax, bool $allow_void = false, ?scope $symbols = null,
+		?string $namespace = null, ?dependency_watcher $watcher = null, ?Dependency_Watches $dependencies = null): ?type_definition
 	{
 		$arity = type_registry::generic_arity($syntax->name);
 		$child = $syntax->first_child;
@@ -127,8 +132,12 @@ final class Type_Resolution
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				'Type requires exactly ' . ($arity === 1 ? 'one argument: ' : 'two arguments: ') . $syntax->name);
 		}
-		$element = self::argument($child);
-		$key = $second === null ? null : self::argument($second);
+		$element = self::argument($child, $symbols, $namespace, $watcher, $dependencies);
+		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
+		if ($syntax->name === 'vector' && class_exists(application_vector_type::class)) {
+			$record = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
+			if ($record instanceof record_type_definition && $second === null) return $record->vector_type();
+		}
 		return self::specialize($syntax, $element, $key);
 	}
 
@@ -142,9 +151,11 @@ final class Type_Resolution
 		return $type;
 	}
 	/** Resolve each written argument once and retain its own diagnostic location. */
-	private static function argument(ast_type_reference $syntax): type_definition
+	private static function argument(ast_type_reference $syntax, ?scope $symbols, ?string $namespace,
+		?dependency_watcher $watcher, ?Dependency_Watches $dependencies): type_definition
 	{
-		return self::resolve($syntax) ?? throw new diagnostic($syntax->source(), $syntax->byte_start(),
+		return ($symbols !== null && $watcher !== null
+			? self::named($syntax, $symbols, $namespace, $watcher, $dependencies) : self::resolve($syntax)) ?? throw new diagnostic($syntax->source(), $syntax->byte_start(),
 			'Unknown or unsupported type: ' . $syntax->spelling());
 	}
 

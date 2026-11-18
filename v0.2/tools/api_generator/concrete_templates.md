@@ -4,7 +4,7 @@ Doc Status: supporting
 The API generator owns a reusable template-to-concrete path in `php/concrete.php`.
 This is generator-time substitution of resolved native types, not a C++ template
 parser or a second semantic compiler. Vector storage is its first production client;
-application-defined element resolution remains separate work.
+application-defined element resolution remains owned by the compiler.
 
 ## Contract
 
@@ -51,8 +51,10 @@ A future compiler adapter can implement this same type interface for application
 types without changing the recipe engine. Compiler-produced templates from generic
 source declarations are a separate, deferred feature. They would supply resolved
 structure and explicit substitution points, not blind source-text replacement.
-Neither feature is implemented in this slice. The independent test type provider
-proves the interface boundary without exposing a metadata plan or an AST.
+The compiler now supplies this interface for the bounded
+[application-vector slice](../../compiler/docs/application_vectors.md). Compiler-generated
+templates remain deferred. The independent test type provider also proves the interface
+boundary without exposing a metadata plan or an AST.
 
 ## First client: vector
 
@@ -84,6 +86,6 @@ instruments both generated runtime and proofs with Clang ASan/UBSan.
 
 Provider exports, strict inputs, casts, copies and mutation/traversal regressions
 remain independent proofs. Compiler AST, retained facts and preparation are unchanged.
-Application-defined elements and their constructor binding are deferred. In
-particular, traversal output initialization must be reviewed before admitting
-elements without a default constructor through the language frontend.
+Application vector values now reuse this recipe with existing record constructor
+binding; capacity itself requires no default constructor. Traversal output initialization
+still needs review before enabling foreach for application elements.

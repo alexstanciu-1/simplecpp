@@ -46,7 +46,7 @@ interface indexed_collection_type extends index_read_type
 interface appendable_collection_type
 {
 	public function write_type(): type_definition;
-	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value): string;
+	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
@@ -54,7 +54,7 @@ interface index_write_type
 {
 	public function prepare_key(ast_expression $key): void;
 	public function write_type(): type_definition;
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string;
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 
 /** Read/modify/write collections replace an approved element value without exposing an element reference. */
@@ -70,9 +70,9 @@ trait ordered_keyed_store
 	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
 	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
 	{
-		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; const auto write_value = ' . $value . '; '
 			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
 	}
@@ -325,9 +325,9 @@ abstract class type_definition
 	}
 
 	/** Lower a prepared operand for an overload requiring this exact native representation. */
-	public function lower_cpp_exact_argument(ast_expression $syntax, int $conversion /** uint16 */, string $operand): string
+	public function lower_cpp_exact_argument(ast_expression $syntax, int $conversion /** uint16 */, string $operand, ?Cpp_Adapters $adapters = null): string
 	{
-		return $this->lower_cpp_conversion($conversion, $operand, $syntax);
+		return $this->lower_cpp_conversion($conversion, $operand, $syntax, adapters: $adapters);
 	}
 
 	/** A concrete adapter request for an already-prepared conversion; ordinary conversions need none. */

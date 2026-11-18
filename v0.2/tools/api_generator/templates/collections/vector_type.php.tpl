@@ -1,16 +1,8 @@
 
 /** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
-final class @class@ extends vector_type_definition implements iterable_type
+final class @class@ extends vector_type_definition@interfaces@
 {
-	/** STATIC PROPERTIES */
-	private static ?self $instance = null;
-
-	/** CONSTRUCTOR */
-	private function __construct()
-	{
-		parent::__construct(@name@, @element@::instance());
-	}
-
+@identity@
 	/** METHODS */
 @iteration@
 	public function cpp_type(): string
@@ -33,12 +25,12 @@ final class @class@ extends vector_type_definition implements iterable_type
 
 	public function lower_cpp_empty(): string
 	{
-		return @cpp@ . '{}';
+		return $this->cpp_type() . '{}';
 	}
 
-	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value): string
+	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string
 	{
-		$value = @element@::instance()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		$value = @element@->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		return '(' . $receiver . ').@append@(' . $value . ')';
 	}
 
@@ -48,9 +40,9 @@ final class @class@ extends vector_type_definition implements iterable_type
 		return '(' . $receiver . ').@index@(' . $index . ')';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value, ?Cpp_Adapters $adapters = null): string
 	{
-		$value = @element@::instance()->lower_cpp_exact_argument($write->value, $write->conversion(), $value);
+		$value = @element@->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		return $this->lower_cpp_replace($write->index, $receiver, $index, $value);
 	}
 
@@ -61,9 +53,5 @@ final class @class@ extends vector_type_definition implements iterable_type
 	}
 
 @cardinality@
-	/** STATIC METHODS */
-	public static function instance(): self
-	{
-		return self::$instance ??= new self();
-	}
+@factory@
 }
