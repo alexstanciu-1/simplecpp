@@ -19,6 +19,8 @@ interface application_collection_type
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
+	/** Null uses an existing value; otherwise the generated native slot constructs from a selected element. */
+	public function iteration_output_type(): ?string;
 	public function iteration_method(): ?ast_function_declaration;
 	public function lower_cpp_iteration_storage(bool $keyed): string;
 	public function lower_cpp_iteration_initialize(string $receiver, string $prefix = ''): string;
@@ -121,6 +123,11 @@ abstract class type_definition
 	public function iteration(): ?iterable_type
 	{
 		return $this instanceof iterable_type ? $this : null;
+	}
+
+	public function iteration_output_type(): ?string
+	{
+		return null;
 	}
 
 	/** Definitions are canonical shared identities, not copyable per-expression records. */

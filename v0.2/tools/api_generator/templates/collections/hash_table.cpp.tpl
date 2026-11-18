@@ -122,16 +122,21 @@ struct @n@::storage {
     std::size_t size() const noexcept { return live_size; }
     std::size_t physical_size() const noexcept { return used; }
     unsigned index_bytes() const noexcept { return index.index_bytes(); }
-    bool iteration_next(std::int64_t& position, std::int64_t limit, value_type& value, key_type* key = nullptr) const {
-        if (position < 0 || limit < 0) throw std::out_of_range("iteration_bounds");
+    const entry* iteration_select(std::int64_t& position, std::int64_t limit) const noexcept {
         auto next = static_cast<std::uint64_t>(position);
         const auto end = static_cast<std::uint64_t>(limit) < used ? static_cast<std::uint64_t>(limit) : used;
         while (next < end && !live[next]) ++next;
-        if (next >= end) { position = static_cast<std::int64_t>(next); return false; }
-        value_type selected = at_slot(next).value;
-        if (key) { key_type selected_key = at_slot(next).key; *key = static_cast<key_type&&>(selected_key); }
+        position = static_cast<std::int64_t>(next);
+        return next < end ? &at_slot(next) : nullptr;
+    }
+    bool iteration_next(std::int64_t& position, std::int64_t limit, value_type& value, key_type* key = nullptr) const {
+        auto selected_position = position;
+        const auto* item = iteration_select(selected_position, limit);
+        if (!item) { position = selected_position; return false; }
+        value_type selected = item->value;
+        if (key) { key_type selected_key = item->key; *key = static_cast<key_type&&>(selected_key); }
         value = static_cast<value_type&&>(selected);
-        position = static_cast<std::int64_t>(next + 1);
+        position = selected_position + 1;
         return true;
     }
 @append@

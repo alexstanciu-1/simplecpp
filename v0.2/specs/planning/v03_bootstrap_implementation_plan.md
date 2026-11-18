@@ -21,8 +21,8 @@ This checkpoint separates implemented language support from translated-compiler 
 | --- | --- | --- |
 | 1.1 Integer representations/literals | Hexadecimal/octal literals and five optional integer widths implemented | uint64 and operations requiring its promotion remain deferred; unavailable constant-evaluation outcome exists |
 | 1.2 Backed enums | Bounded scope implemented, including string backing and public instance methods | Broader enum integration is separate |
-| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Application-collection writable references, traversal and broader element families remain |
-| 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
+| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes now support local construction, indexing, copying, empty instance fields and by-value calls via shared concrete publication (vector also appends) | Application-collection writable references and broader element families remain |
+| 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
@@ -40,7 +40,7 @@ Nested generated cursors, delegation and producer methods remain deferred. This
 is sufficient to pause yield expansion for the current bootstrap focus; see the
 [yield backlog](yield_completion_backlog.md) for the remaining independent slices.
 
-Next proposed discussion: extend 1.3 to application-defined vector/hash traversal.
+Next proposed discussion: remaining application-collection references or the bounded readonly/token proof.
 Preserve the common collection protocols, metadata ownership, light
 retained facts and single-pass preparation. Do not imply authorization for a broad
 collection implementation or runtime redesign. Then address bounded readonly fields
@@ -1663,7 +1663,7 @@ These are not rejected. Review the actual use before deciding whether a bounded 
 
 ## Next discussion and verification policy
 
-Group 1.3 now has application-defined vector/hash storage and by-value signatures through shared concrete publication; fields and traversal are the next collection slices, followed by bounded 1.5 readonly initialization and the token/source-snapshot proof. Groups 1.1 and 1.2 have reached their agreed bounded scope. Coordinate collection ownership before implementation. Continue AST relationships against the updated milestone-3 status rather than repeating landed slices. Tokenizer work can proceed independently where its prerequisites are available.
+Group 1.3 now has application-defined vector/hash storage and by-value signatures through shared concrete publication; empty instance fields and traversal are implemented; remaining collection references precede bounded 1.5 readonly initialization and the token/source-snapshot proof. Groups 1.1 and 1.2 have reached their agreed bounded scope. Coordinate collection ownership before implementation. Continue AST relationships against the updated milestone-3 status rather than repeating landed slices. Tokenizer work can proceed independently where its prerequisites are available.
 
 Open decision: confirm a readable native-oriented translation with deliberate local adaptations, rather than near-verbatim PHP. This determines which traits, unions, closures and collection behaviors are mandatory. Writing this plan does not settle that question.
 

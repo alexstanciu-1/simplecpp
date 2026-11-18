@@ -53,7 +53,7 @@ Key/value argument arrays exist only transiently during lowering, not on AST occ
 
 ## Boundaries and verification
 
-Application collection writable references, foreach, nested collection values,
+Application collection writable references, nested collection values,
 explicit shared/weak value spellings, enum values and application-defined keys remain
 separate slices. `hash_contains(collection, key)` is supported through the generated key-presence
 capability and existing native member binding. It needs no nullable payload carrier.
@@ -139,3 +139,10 @@ No-op PHP requests measured 2.41–2.76 ms with zero prepared bodies and native 
 These fixtures differ from the earlier signature-only fixtures, so this is not a
 before/after performance comparison. Raw field results are under
 `/tmp/app-collection-fields-final/` and `/tmp/app-collection-fields-timings/`.
+
+## Application-defined traversal
+
+Value/keyed foreach uses the common traversal protocol, including inside yield producers.
+Required element constructors are supported: the concrete recipe provides an initially
+empty output slot and copy-constructs the selected element only after a successful advance.
+See [foreach output storage](foreach.md#construction-aware-output-storage).

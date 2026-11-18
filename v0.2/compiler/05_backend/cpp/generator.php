@@ -82,7 +82,7 @@ trait Cpp_Generator
 				$slot = 'local_' . $id;
 				$declaration = "using {$slot}_type = " . $local_type->cpp_type() . ';';
 				foreach ($local_type->cpp_headers() as $header) $headers[$header] = true;
-				if ($local_type instanceof record_type_definition || $local_type instanceof record_handle_definition || $local_type instanceof enum_type_definition) $types[] = $local_type;
+				if ($local_type instanceof record_type_definition || $local_type instanceof record_handle_definition || $local_type instanceof enum_type_definition || $local_type instanceof application_collection_type) $types[] = $local_type;
 			}
 			$slots[] = "$declaration struct {$slot}_slot { union { {$slot}_type value; }; {$slot}_slot() {} ~{$slot}_slot() {} }; {$slot}_slot $slot;";
 			$flags[] = "bool live_$id = false;";
@@ -149,7 +149,7 @@ CPP;
 		foreach ($this->generator_bindings($function->body()) as $local) {
 			if ($local instanceof ast_foreach_statement) {
 				$prefix = 'iteration_' . $local->start . '.value.';
-				if ($local->destination === $local->value) $this->generator_locals[$local->value->storage_id()] = $prefix . 'output';
+				if ($local->destination === $local->value) $this->generator_locals[$local->value->storage_id()] = $prefix . 'output' . ($local->source_value->type_def()->iteration()->iteration_output_type() === null ? '' : '.value');
 				if ($local->key !== null) $this->generator_locals[$local->key->storage_id()] = $prefix . 'key';
 			} else $this->generator_locals[$local->storage_id()] = 'local_' . $local->storage_id() . '.value';
 		}
@@ -226,14 +226,15 @@ CPP;
 		$type = $source_type->iteration();
 		$capture = $this->generator_iteration_capture($statement->source_value);
 		$fields = $capture === null ? '' : $capture->type_def()->cpp_type() . ' receiver;';
-		if (!$this->iteration_direct($statement) || $statement->destination === $statement->value) $fields .= $type->iteration_value_type()->cpp_type() . ' output{};';
+		if ($type->iteration_output_type() !== null) $fields .= $type->iteration_output_type() . ' output{};';
+		elseif (!$this->iteration_direct($statement) || $statement->destination === $statement->value) $fields .= $type->iteration_value_type()->cpp_type() . ' output{};';
 		$key_type = $statement->key?->type_def() ?? ($type->iteration_method() !== null ? $type->iteration_key_type() : null);
 		if ($key_type !== null) $fields .= $key_type->cpp_type() . ' key{};';
 		$fields .= $type->lower_cpp_iteration_storage($statement->key !== null);
 		foreach ([$source_type, $capture?->type_def(), $type->iteration_value_type(), $key_type] as $used) {
 			if ($used === null) continue;
 			foreach ($used->cpp_headers() as $header) $headers[$header] = true;
-			if ($used instanceof record_type_definition || $used instanceof record_handle_definition || $used instanceof enum_type_definition) $types[] = $used;
+			if ($used instanceof record_type_definition || $used instanceof record_handle_definition || $used instanceof enum_type_definition || $used instanceof application_collection_type) $types[] = $used;
 		}
 		return 'struct iteration_' . $statement->start . '_type { ' . $fields . ' };';
 	}

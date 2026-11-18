@@ -96,6 +96,56 @@ int main() {
         assert(values.iteration_next(position, 600, output, &key) && key == 1 && output.value == 1);
     }
     assert(Probe::live == 0);
+    {
+        ProbeVector values;
+        ProbeVector::iteration_output output;
+        const auto authored = Probe::authored;
+        scpp::int64 position = 0, key = -1;
+        assert(!output.active && !values.iteration_next(position, 0, output));
+        assert(Probe::authored == authored);
+        values.append(Probe{5}); values.append(Probe{6});
+        Probe::copy_budget = 0;
+        try { values.iteration_next(position, 2, output); assert(false); } catch (int code) { assert(code == 42); }
+        assert(position == 0 && !output.active && Probe::live == 2);
+        Probe::copy_budget = -1;
+        assert(values.iteration_next(position, 2, key, output) && key == 0 && output.value.value == 5);
+        Probe::copy_budget = 0;
+        try { values.iteration_next(position, 2, key, output); assert(false); } catch (int) {}
+        assert(position == 1 && key == 0 && output.value.value == 5);
+        Probe::copy_budget = -1;
+        for (int i = 0; i < 100; ++i) values.append(Probe{i});
+        assert(values.iteration_next(position, 2, output) && output.value.value == 6);
+        assert(!values.iteration_next(position, 2, output));
+        values.clear(); assert(output.value.value == 6 && Probe::live == 1);
+        auto moved = static_cast<ProbeVector::iteration_output&&>(output);
+        assert(moved.active && moved.value.value == 6);
+        position = -1;
+        try { values.iteration_next(position, 2, moved); assert(false); } catch (const std::out_of_range&) {}
+    }
+    assert(Probe::live == 0);
+    {
+        scpp::ProbeConcreteHash values;
+        scpp::ProbeConcreteHash::iteration_output output;
+        scpp::int64 position = 0, key = -1;
+        assert(!values.iteration_next(position, 0, output) && !output.active);
+        values.set(0, Probe{10}); values.set(1, Probe{11}); values.set(2, Probe{12}); values.remove(0);
+        Probe::copy_budget = 0;
+        try { values.iteration_next(position, 3, key, output); assert(false); } catch (int) {}
+        assert(position == 0 && key == -1 && !output.active && Probe::live == 2);
+        Probe::copy_budget = -1;
+        assert(values.iteration_next(position, 3, key, output) && key == 1 && output.value.value == 11);
+        Probe::copy_budget = 0;
+        try { values.iteration_next(position, 3, key, output); assert(false); } catch (int) {}
+        assert(position == 2 && key == 1 && output.value.value == 11);
+        Probe::copy_budget = -1;
+        for (int i = 3; i < 100; ++i) values.set(i, Probe{i});
+        assert(values.iteration_next(position, 3, output) && output.value.value == 12);
+        assert(!values.iteration_next(position, 3, output));
+        values.clear(); assert(output.value.value == 12 && Probe::live == 1);
+        auto moved = static_cast<scpp::ProbeConcreteHash::iteration_output&&>(output);
+        assert(moved.active && moved.value.value == 12);
+    }
+    assert(Probe::live == 0);
     const auto limit = scpp::detail::vector_capacity_limit(sizeof(Probe));
     try { (void)scpp::detail::vector_growth(limit, limit + 1, sizeof(Probe)); assert(false); }
     catch (const std::length_error&) {}

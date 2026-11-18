@@ -80,7 +80,7 @@ final class Cpp_Concrete_Collections
 	/** @return \Generator<type_definition> Existing declaration planning supplies complete element types first. */
 	public function dependencies(): \Generator
 	{
-		foreach ($this->types as $type) yield from $type->concrete_types();
+		foreach ($this->types as $type) foreach ($type->concrete_types() as $argument) yield $argument;
 	}
 
 	/** Guarded concrete definitions follow complete dependencies, just like existing inline adapters. @return string[] */

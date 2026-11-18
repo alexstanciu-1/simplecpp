@@ -92,3 +92,46 @@ suite including incremental/fresh checks took 615.48 ms.
 | JS | 0.820 | 271.777 | 30.775 | 17.949 | 81 |
 
 Local raw fixtures, Ninja graphs, Clang traces and results: `v0.2/build/foreach-proof/`.
+
+## Construction-aware output storage
+
+Application-defined vector/hash elements use a recipe-generated nested `iteration_output`
+with inline value storage and an active flag. Empty construction never invokes the element's
+default constructor and adds no heap allocation. Inactive bytes are initialized so GCC's
+strict optimized diagnostics do not mistake guarded shared-owner storage for an uninitialized
+owner. Successful advance copies into the slot; subsequent publication uses existing move
+assignment. Destruction releases an active value exactly once.
+
+The shared `iterable_type::iteration_output_type()` capability selects this strategy; null
+keeps the existing runtime/custom-Iterator reference-output strategy. Normal foreach binds
+its fresh local to the active slot value only inside a successful iteration. Existing
+destinations are assigned only after success. Yield foreach stores the same slot in its
+existing frame and uses existing close, move and exception cleanup. No new AST nodes,
+preparation traversals or retained preparation facts are introduced.
+
+Complete concrete definitions needed by cursor frame layouts are published before private
+lowering. Lowering obtains their headers through a read-only publication accessor. Concrete
+dependency enumeration yields a sequence, preserving multiple recipe arguments named alike.
+
+`application_collection_iteration_native.py` checks required constructors, empty loops,
+value/key outputs, copies, shared identity, receiver replacement, growth and suspended loops
+in all flavors. Sixteen revisions per flavor cover edits, deletion, retry, recovery, namespace
+changes and fresh-build equivalence. Additional probes check cursor moves, early close and
+exception cleanup. The concrete recipe probes cover throwing copies, aligned values, hash
+holes and leaks under ASan/UBSan. Cross-thread mutation and by-reference foreach remain deferred.
+
+Application traversal fixture measurements (2026-11-18): four source units plus entry,
+required constructors, hash/vector loops and suspended producers. Native columns are medians
+of three fresh builds, O2/g0, Ninja8, mold, no PCH/LTO, prebuilt libc++ runtime; direct Ninja
+qualification included. PHP columns are single initial/no-op service measurements. Trace
+frontend/backend totals sum work across units and overlap in wall time.
+
+| Flavor | PHP initial ms | PHP no-op ms | Native wall ms | Frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| php | 16.86 | 2.03 | 584.29 | 291.37 | 510.75 | 57.00 |
+| cpp | 15.54 | 2.21 | 564.58 | 265.96 | 497.18 | 59.00 |
+| js | 15.65 | 2.14 | 573.43 | 270.02 | 512.27 | 59.00 |
+
+Native ranges: PHP 556.6–1436.1 ms (first-run outlier), C++ 560.4–568.8 ms,
+JS 557.5–593.9 ms. No attribution is made for the outlier. Raw local results and traces:
+`/tmp/app-traversal-proof3/`. This fixture is not comparable to the earlier tiny struct benchmark.

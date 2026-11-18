@@ -382,7 +382,7 @@ CPP;
 		$program->require_prepared();
 		if ($this->headers === null) {
 			$headers = new Cpp_Headers();
-			$headers->publish_fields($program->file, $this, $this->root);
+			$headers->publish_layout_dependencies($program->file, $this, $this->root);
 			if ($headers->files() !== []) {
 				$emitter = new self($headers, $this->root, $this->generator_layouts);
 				$text = $emitter->unit($program, $program->file, $function);
@@ -484,6 +484,12 @@ CPP;
 		}
 		$prototypes = '';
 		$unit_headers = [];
+		foreach ($declarations as $node) {
+			if (!($node instanceof ast_function_declaration) || !($node->return_type_def() instanceof generator_type_definition)) continue;
+			foreach ($this->application_types($node) as $type) {
+				if ($type instanceof application_collection_type) $unit_headers[$this->headers->collection_header($type, $this->root)] = true;
+			}
+		}
 		// Calls and definitions need complete value and handle types even when only the signature names them.
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_function_declaration) {
@@ -722,8 +728,12 @@ CPP;
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
 				$direct = $this->iteration_direct($statement);
-				$output = $direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output');
-				if ($resume === null && (!$direct || $destination === $statement->value)) {
+				$output_type = $type->iteration_output_type();
+				$output = $output_type !== null ? ($resume === null ? 'iteration_output' : $prefix . 'output')
+					: ($direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output'));
+				if ($resume === null && $output_type !== null) {
+					$lines[] = "\t" . $output_type . ' ' . $output . ';';
+				} elseif ($resume === null && (!$direct || $destination === $statement->value)) {
 					$lines[] = "\t" . $statement->value->type_def()->cpp_type() . ' ' . $output . '{};';
 				}
 				$key = $statement->key === null ? null : $this->name($statement->key);
@@ -742,7 +752,14 @@ CPP;
 					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
 				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
-				if (!$direct) {
+				if ($output_type !== null) {
+					if ($destination === $statement->value) {
+						if ($resume === null) $lines[] = "\t[[maybe_unused]] auto& " . $this->name($destination) . ' = ' . $output . '.value;';
+					} else {
+						$operand = 'static_cast<' . $statement->value->type_def()->cpp_type() . '&&>(' . $output . '.value)';
+						$lines[] = "\t" . $this->name($destination) . ' = ' . $this->conversion($destination->type_def(), $statement->conversion, $operand, $statement->value) . ';';
+					}
+				} elseif (!$direct) {
 					$operand = $method !== null && $statement->conversion === value_conversion::identity
 						? 'static_cast<' . $statement->value->type_def()->cpp_type() . '&&>(' . $output . ')' : $output;
 					$converted = $this->conversion($destination->type_def(), $statement->conversion, $operand, $statement->value);

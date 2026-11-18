@@ -53,11 +53,15 @@ if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|sw
 }
 $hash = concreteTemplate('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
     'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
-    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'append' => \Scpp\Api\template('collections/hash_append', []),
+    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next', 'append' => \Scpp\Api\template('collections/hash_append', []),
 ]);
 if (preg_match('/\btemplate\s*</', implode('', $hash)) || str_contains($hash['storage'], 'std::vector')) throw new RuntimeException('Concrete hash depends on templates');
+$applicationHash = \Scpp\Api\concreteApplication('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
+    'n' => 'ProbeConcreteHash', 'inline' => 'inline ', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
+    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'append' => '', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
+], 'scpp');
 $source = file_get_contents(__DIR__ . '/fixtures/concrete_probe.cpp');
-$source = str_replace(['@pair@', '@declaration@', '@implementation@', '@hash@'], [$pair['declaration'], $parts['declaration'],
-    $parts['storage'] . 'namespace detail { struct vector_access {' . $parts['access'] . '}; }' . $parts['definition'], $hash['storage']], $source);
+$source = str_replace(['@pair@', '@declaration@', '@implementation@', '@hash@'], [$pair['declaration'], $parts['output_declaration'] . $parts['declaration'],
+    $parts['storage'] . 'namespace detail { struct vector_access {' . $parts['access'] . '}; }' . $parts['definition'] . $parts['output_definition'], $hash['storage'] . $applicationHash], $source);
 file_put_contents($argv[1], $source);
 echo "Concrete recipe binding and validation passed\n";

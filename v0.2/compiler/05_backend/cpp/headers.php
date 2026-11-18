@@ -36,7 +36,7 @@ final class Cpp_Headers
 			}
 		}
 		$emitter = new Cpp_Emitter($this, $program->session?->cpp_namespace ?? 'App', $layouts);
-		foreach ($program->files as $file) $this->publish_fields($file, $emitter, $program->session?->cpp_namespace ?? 'App');
+		foreach ($program->files as $file) $this->publish_layout_dependencies($file, $emitter, $program->session?->cpp_namespace ?? 'App');
 		foreach ($program->files as $key => $file) {
 			$source_key = (string) $key;
 			$header = hash('sha256', (string) $key) . '.hpp';
@@ -77,7 +77,9 @@ final class Cpp_Headers
 					}
 					foreach ($emitter->application_types($node) as $type) {
 						if ($type instanceof application_collection_type) {
-							$owners[$type->cpp_type()] = 'class ' . $type->cpp_type() . ';';
+							if ($node->return_type_def() instanceof generator_type_definition) {
+								$record_headers[$this->collection_header($type, $program->session?->cpp_namespace ?? 'App')] = true;
+							} else $owners[$type->cpp_type()] = 'class ' . $type->cpp_type() . ';';
 						} elseif ($type instanceof enum_type_definition) {
 							$record_headers[$this->publish_enum($type->declaration, $emitter, $program->session?->cpp_namespace ?? 'App')] = true;
 						} elseif ($type instanceof record_type_definition) {
@@ -246,10 +248,15 @@ final class Cpp_Headers
 		return $header;
 	}
 
-	/** Source-private records need a header when a concrete field must precede their layout. */
-	public function publish_fields(ast_file_node $file, Cpp_Emitter $emitter, string $root): void
+	/** Publish complete concrete types before record or cursor layouts, including source-private declarations. */
+	public function publish_layout_dependencies(ast_file_node $file, Cpp_Emitter $emitter, string $root): void
 	{
 		foreach ($file->declaration_nodes as $node) {
+			if ($node instanceof ast_function_declaration && $node->return_type_def() instanceof generator_type_definition) {
+				foreach ($emitter->application_types($node) as $type) {
+					if ($type instanceof application_collection_type) $this->publish_collection($type, $emitter, $root);
+				}
+			}
 			if (!($node instanceof ast_record_declaration)) continue;
 			foreach ($node->fields as $field) {
 				if (!($field->type_def() instanceof application_collection_type)) continue;
@@ -257,6 +264,14 @@ final class Cpp_Headers
 				break;
 			}
 		}
+	}
+
+	/** Read settled publication only; private source lowering must not mutate the shared header plan. */
+	public function collection_header(application_collection_type $type, string $root): string
+	{
+		$header = hash('sha256', "collection-field\0" . $root . "\0" . $type->cpp_type()) . '.hpp';
+		if (!isset($this->files['units/' . $header])) throw new \LogicException('Concrete layout dependency was not published');
+		return $header;
 	}
 
 	/** Did type visibility or the published enum helper contract change for this source? */
