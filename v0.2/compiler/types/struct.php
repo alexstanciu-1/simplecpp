@@ -3,15 +3,17 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Nominal identity of an application-defined inline struct. Whole-value copies use memberwise assignment. */
-final class struct_type_definition extends type_definition implements dependency_watcher, iterable_type
+/** Nominal record payload/layout identity, distinct from its source value storage contract. */
+final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
-	public readonly ast_struct_declaration $declaration;
+	public readonly ast_record_declaration $declaration;
 	/** Canonical shared identity published alongside the value identity before body preparation. */
-	public readonly shared_struct_type_definition $shared;
-	public readonly weak_struct_type_definition $weak;
+	public readonly shared_record_type_definition $shared;
+	/** Required class value; structs reuse their explicit shared identity without another allocation. */
+	public readonly shared_record_type_definition $required;
+	public readonly weak_record_type_definition $weak;
 
 	/** Native non-owning publication context for relaying layout changes to embedding types and body readers. */
 	private ?Dependency_Watches $dependencies = null;
@@ -21,27 +23,37 @@ final class struct_type_definition extends type_definition implements dependency
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
+	/** Prepared fact: abstract obligations checked after signatures; cleared with nominal layout invalidation. */
+	public bool $abstract_contract_ready = false;
 	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
 	private ?self $base_type = null;
 	/** Prepared fact: non-owning validated traversal method; null for absent or invalidated contract. */
 	private ?ast_function_declaration $iterator = null;
 
 	/** CONSTRUCTOR */
-	public function __construct(ast_struct_declaration $declaration)
+	public function __construct(ast_record_declaration $declaration)
 	{
 		parent::__construct($declaration->name());
 		$this->declaration = $declaration;
-		$this->shared = new shared_struct_type_definition($this);
-		$this->weak = new weak_struct_type_definition($this);
+		$this->shared = new shared_record_type_definition($this);
+		$this->required = $declaration->kind === record_kind::class_type ? new shared_record_type_definition($this, true) : $this->shared;
+		$this->weak = new weak_record_type_definition($this);
 	}
 
 	/** METHODS */
+	/** Bare classes use required shared values; bare structs retain inline values. */
+	public function default_type(): type_definition
+	{
+		return $this->declaration->kind === record_kind::class_type ? $this->required : $this;
+	}
+
 	/** Bind the declaration to this publication before following any forward field references. */
 	public function bind_layout(string $source_key, symbol_entry $symbol, Dependency_Watches $dependencies): void
 	{
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->ready = false;
+		$this->abstract_contract_ready = false;
 		$this->base_type = null;
 		$this->iterator = null;
 		$this->symbol = $symbol;
@@ -59,6 +71,7 @@ final class struct_type_definition extends type_definition implements dependency
 	{
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
+		$this->abstract_contract_ready = false;
 		$this->base_type = null;
 		$this->iterator = null;
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
@@ -85,7 +98,11 @@ final class struct_type_definition extends type_definition implements dependency
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
-			if (!($base instanceof self)) throw new diagnostic($written->source(), $written->byte_start(), 'Base must be a struct');
+			if ($base instanceof shared_record_type_definition && $base->required) $base = $base->payload;
+			if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
+				throw new diagnostic($written->source(), $written->byte_start(),
+					$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
+			}
 			$base->prepare_layout($symbols, $active, $work);
 			$this->base_type = $base;
 			$this->validate_inherited_members();
@@ -98,6 +115,8 @@ final class struct_type_definition extends type_definition implements dependency
 				throw new diagnostic($field->source(), $duplicate->byte_start(), 'Duplicate struct field: ' . $field->short_name);
 			}
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			// The temporary instance-property policy permits absence independently of written nullability.
+			if ($type instanceof shared_record_type_definition && $type->required) $type = $type->payload->shared;
 			if ($type instanceof self) {
 				$type->prepare_layout($symbols, $active, $work);
 				$constructor = $type->constructor();
@@ -106,7 +125,7 @@ final class struct_type_definition extends type_definition implements dependency
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 						'Inline field requires a zero-argument constructor: ' . $type->name);
 				}
-			} elseif (!($type instanceof struct_handle_definition) && !$type?->supports_instance_field()) {
+			} elseif (!($type instanceof record_handle_definition) && !$type?->supports_instance_field()) {
 				throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
@@ -135,6 +154,9 @@ final class struct_type_definition extends type_definition implements dependency
 	{
 		$written = $this->declaration->interface_reference;
 		if ($written === null || $this->iterator !== null) return;
+		if ($this->declaration->kind !== record_kind::structure) {
+			throw new diagnostic($written->source(), $written->byte_start(), 'Class Iterator implementations are deferred');
+		}
 		$argument = $written->first_child;
 		$key_argument = $argument?->next_sibling;
 		if ($written->name !== Iterator_Contract::NAME || $argument === null || $key_argument?->next_sibling !== null) {
@@ -143,7 +165,8 @@ final class struct_type_definition extends type_definition implements dependency
 		$element = Type_Resolution::named($argument, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 		$key = $key_argument === null ? null : Type_Resolution::named($key_argument, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 		$method = $this->declaration->methods[Iterator_Contract::METHOD] ?? null;
-		if ($element === null || ($key_argument !== null && $key === null) || $method === null || !Iterator_Contract::validate($method, $element, $key)) {
+		if ($element === null || ($key_argument !== null && $key === null) || $method === null
+			|| $method->has_virtual_dispatch() || !Iterator_Contract::validate($method, $element, $key)) {
 			throw new diagnostic($written->source(), $written->byte_start(), 'Iterator requires public instance ' . Iterator_Contract::METHOD . '(T &value' . ($key_argument === null ? '' : ', K &key') . '): bool');
 		}
 		$this->dependencies?->watch($symbols->entry($method->symbol_key()), $this);
@@ -197,9 +220,28 @@ final class struct_type_definition extends type_definition implements dependency
 	}
 
 	/** Nearest instance-field declaration; access checks never retry a hidden base field. */
-	public function field(string $name): ?ast_struct_field
+	public function field(string $name): ?ast_instance_field
 	{
 		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
+	}
+
+	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
+	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
+	{
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
+			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
+			$dependencies?->watch($symbol, $watcher);
+			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
+		}
+		return null;
+	}
+
+	/** Native layout follows validated written virtual contracts, including inherited ones. */
+	public function polymorphic(): bool
+	{
+		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
+		return $this->base_type?->polymorphic() ?? false;
 	}
 
 	/** Settled single-base relation; equality includes the type itself. */
@@ -221,11 +263,6 @@ final class struct_type_definition extends type_definition implements dependency
 			}
 		}
 		for ($base = $this->base_type; $base !== null; $base = $base->base_type) {
-			foreach ($this->declaration->methods as $name => $method) {
-				if ($name !== '__construct' && isset($base->declaration->methods[$name])) {
-					throw new diagnostic($method->source(), $method->byte_start(), 'Inherited method redeclaration is deferred: ' . $name);
-				}
-			}
 			foreach ($this->declaration->static_properties as $name => $property) {
 				if (isset($base->declaration->static_properties[$name]) || isset($base->declaration->fields[$name])) {
 					throw new diagnostic($property->source(), $property->byte_start(), 'Inherited property redeclaration: ' . $name);
@@ -256,7 +293,7 @@ final class struct_type_definition extends type_definition implements dependency
 		if ($syntax instanceof ast_field_expression && ($syntax->parent instanceof ast_field_assignment
 			|| $syntax->parent instanceof ast_assignment_statement)) {
 			for ($field = $syntax; $field instanceof ast_field_expression; $field = $field->receiver) {
-				if ($field->receiver->type_def() instanceof shared_struct_type_definition) return $this->cpp_type() . '(' . $value . ')';
+				if ($field->receiver->type_def() instanceof shared_record_type_definition) return $this->cpp_type() . '(' . $value . ')';
 			}
 		}
 		return $value;
@@ -276,14 +313,14 @@ final class struct_type_definition extends type_definition implements dependency
 }
 
 /** Canonical identity of a strong owner or weak observer of an application record. */
-abstract class struct_handle_definition extends type_definition
+abstract class record_handle_definition extends type_definition
 {
 	/** Native non-owning payload identity. */
-	public readonly struct_type_definition $payload;
+	public readonly record_type_definition $payload;
 
-	protected function __construct(string $family, struct_type_definition $payload)
+	protected function __construct(string $family, record_type_definition $payload, ?string $name = null)
 	{
-		parent::__construct($family . '<' . $payload->name . '>');
+		parent::__construct($name ?? $family . '<' . $payload->name . '>');
 		$this->payload = $payload;
 	}
 
@@ -294,9 +331,9 @@ abstract class struct_handle_definition extends type_definition
 }
 
 /** Observer of an exact struct allocation, e.g. weak<Point>. Only lock() exposes its payload. */
-final class weak_struct_type_definition extends struct_handle_definition
+final class weak_record_type_definition extends record_handle_definition
 {
-	public function __construct(struct_type_definition $payload)
+	public function __construct(record_type_definition $payload)
 	{
 		parent::__construct('weak', $payload);
 	}
@@ -307,14 +344,22 @@ final class weak_struct_type_definition extends struct_handle_definition
 	}
 }
 
-/** Thread-confined owning reference to an exact application struct, e.g. shared<Point>. */
-final class shared_struct_type_definition extends struct_handle_definition
+/** Exact record owner contract: explicit shared<Struct>, required Class or optional ?Class. */
+final class shared_record_type_definition extends record_handle_definition
 {
-	public function __construct(struct_type_definition $payload)
+	/** PROPERTIES */
+	/** Semantic presence contract; both variants use the same native owner. */
+	public readonly bool $required;
+
+	/** CONSTRUCTOR */
+	public function __construct(record_type_definition $payload, bool $required = false)
 	{
-		parent::__construct('shared', $payload);
+		$this->required = $required;
+		$name = $payload->declaration->kind === record_kind::class_type ? ($required ? '' : '?') . $payload->name : null;
+		parent::__construct('shared', $payload, $name);
 	}
 
+	/** METHODS */
 	/** Borrow the payload's settled traversal while the emitter retains this shared allocation. */
 	public function iteration(): ?iterable_type
 	{
@@ -335,9 +380,12 @@ final class shared_struct_type_definition extends struct_handle_definition
 	public function prepare_binary(ast_binary_expression $value): void
 	{
 		$peer = $value->left->type_def() === $this ? $value->right : $value->left;
-		if (($peer->type_def() !== type_null::instance() && $peer->type_def() !== $this) || !in_array($value->operator, [
+		$peer_type = $peer->type_def();
+		$compatible = $peer_type === type_null::instance()
+			|| ($peer_type instanceof self && ($this->admits_view($peer_type) || $peer_type->admits_view($this)));
+		if (!$compatible || !in_array($value->operator, [
 			binary_operator::equal, binary_operator::not_equal, binary_operator::identical, binary_operator::not_identical], true)) {
-			throw new diagnostic($value->source(), $value->byte_start(), 'Shared owners require equality against null or the same shared type');
+			throw new diagnostic($value->source(), $value->byte_start(), 'Shared owners require equality against null or related shared types');
 		}
 		$value->settle_binary(type_bool::instance(), $this);
 	}
@@ -345,7 +393,7 @@ final class shared_struct_type_definition extends struct_handle_definition
 	/** Preserve effects of a null-valued expression and evaluate operands once in source order. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
 	{
-		if ($expr->left->type_def() === $this && $expr->right->type_def() === $this) {
+		if ($expr->left->type_def() instanceof self && $expr->right->type_def() instanceof self) {
 			$op = in_array($expr->operator, [binary_operator::equal, binary_operator::identical], true) ? '==' : '!=';
 			return "(($left).ptr $op ($right).ptr)";
 		}
@@ -360,21 +408,49 @@ final class shared_struct_type_definition extends struct_handle_definition
 
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return $expr->left->type_def() !== $this || $expr->right->type_def() !== $this
+		return !($expr->left->type_def() instanceof self && $expr->right->type_def() instanceof self)
 			|| ($expr->left instanceof ast_name_expression && $expr->right instanceof ast_name_expression);
 	}
 
+	/** Exact struct owners stay exact; class views admit only settled derived-to-base ancestry. */
+	private function admits_view(self $source): bool
+	{
+		return $source->payload === $this->payload || ($source->payload->declaration->kind === record_kind::class_type
+			&& $this->payload->declaration->kind === record_kind::class_type && $source->payload->derives_from($this->payload));
+	}
+
+	/** Same-payload contracts share storage; required destinations check potentially empty owners. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
-		if ($value->type_def() === type_null::instance()
+		$source = $value->type_def();
+		if ($this->required && $value->constant_known() && $value->constant() === null) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Required object cannot be null: ' . $this->name);
+		}
+		if ($source instanceof self && $source->payload === $this->payload) {
+			return $this->required && !$source->required ? value_conversion::require_owner : value_conversion::identity;
+		}
+		if ($source instanceof self && $this->admits_view($source)) {
+			return $this->required && !$source->required ? value_conversion::require_owner_view : value_conversion::owner_view;
+		}
+		if (!$this->required && $source === type_null::instance()
 			&& ($context === conversion_context::assignment || $context === conversion_context::typed_destination)) {
 			return value_conversion::empty_owner;
 		}
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
+	/** Select the shared-view pattern from settled conversion facts; no ancestry query occurs here. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion !== value_conversion::owner_view && $conversion !== value_conversion::require_owner_view) return null;
+		if ($source === null) throw new \LogicException('View conversion requires a concrete source type');
+		return Cpp_Shared_View::request($source, $this, $conversion === value_conversion::require_owner_view);
+	}
+
+	/** Emit remaining presence/empty conversion after any concrete view adapter. */
 	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
+		if ($conversion === value_conversion::require_owner) return $this->cpp_type() . '::require(' . $value . ')';
 		if ($conversion !== value_conversion::empty_owner) return parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		$empty = $this->cpp_type() . '{}';
 		return $syntax instanceof ast_keyword_expression ? $empty : '((void)(' . $value . '), ' . $empty . ')';

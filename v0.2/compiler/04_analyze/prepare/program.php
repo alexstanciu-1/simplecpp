@@ -46,7 +46,7 @@ final class Program_Preparation
 		foreach ($files as $key => $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
-					$node->body()->bind_source_key((string) $key);
+					$node->bind_source_key((string) $key);
 				}
 			}
 		}
@@ -82,7 +82,7 @@ final class Program_Preparation
 		foreach ($files as $key => $file) {
 			foreach ($file->declaration_nodes as $record) {
 				if ($record instanceof ast_enum_declaration) Enum_Preparation::declaration($record);
-				if ($record instanceof ast_struct_declaration) {
+				if ($record instanceof ast_record_declaration) {
 					$record->definition->bind_layout((string) $key, $symbols->entry($record->symbol_key()), $dependencies);
 					$layouts[] = $record->definition;
 				}

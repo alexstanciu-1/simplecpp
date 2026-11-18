@@ -25,12 +25,17 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined element coverage follows 1.3; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Pending | Bounded readonly initialization still needed |
 | 2 Selection and lookup | Collection has/remove/clear and traversal implemented | Match, lazy fallback, populated tables and tokenizer bindings remain |
-| 3 AST relationships | First single-base storage/fields/construction slice implemented | Polymorphism, general interfaces, narrowing and non-owning AST lifetime contracts remain |
+| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls and checked shared-class casts/instanceof implemented | General interfaces, broader narrowing and non-owning AST lifetime contracts remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
 Synchronous yield additionally supports locals, branches, while/do-while/for and
 foreach over collections/custom Iterator, with retained receivers and cleanup.
+The remote integration preserves cursor-layout publication and concrete adapter
+publication together. Iterator remains the existing explicit struct contract: this
+merge does not enable class implementations, inherited/virtual traversal methods or
+producer methods. Class values may use their existing checked conversions within
+free-function producers.
 Nested generated cursors, delegation and producer methods remain deferred. This
 is sufficient to pause yield expansion for the current bootstrap focus; see the
 [yield backlog](yield_completion_backlog.md) for the remaining independent slices.
@@ -88,7 +93,7 @@ Discuss inheritance, handles and interfaces together before implementing this mi
 | Order | Group | Initial scope |
 | --- | --- | --- |
 | 3.1 | Base storage and inheritance | One base, derived fields, inherited access, protected access and construction. No multiple class inheritance. |
-| 3.2 | Behavior through base references | Virtual/abstract methods, overrides, parent calls and derived-to-base shared handles. Preserve destruction and allocation identity. |
+| 3.2 | Object contracts, then behavior through base views | First class/shared defaults and explicit function nullability with the temporary relaxed property rule below; then ownership-preserving shared upcasts; then virtual/abstract methods and overrides. Preserve destruction and allocation identity. |
 | 3.3 | Type tests and narrowing | Subtype tests, then interface-capability tests. Keep exact concrete type identity distinct. |
 | 3.4 | Interfaces | Interface-typed parameters/references and multiple capabilities using the dispatch model. |
 | 3.5 | Non-owning AST links | Define validity of parent links and retained-generation references. Reuse weak handles where suitable; discuss borrow/reference machinery where needed. |
@@ -269,6 +274,654 @@ reflection; explicit deletion; custom dispatch; ownership-layout redesign and
 optimization campaigns. Plan those against the agreed native-C++/runtime division
 above, but do not implement them as part of this first extends slice.
 
+
+### Next slice — class defaults and object nullability boundaries
+
+Doc Status: planning. Agreed direction after the first extends slice; not an
+implementation claim. Establish these contracts before generalizing shared base
+views. Object borrowing is deferred and is not a prerequisite for this slice.
+
+#### Agreed defaults and temporary property rule
+
+- A bare class type `Node` uses shared object storage by default. Copies share
+  object identity; they do not copy the payload. A bare struct type uses inline
+  value storage and the existing memberwise copy rules. The keywords do not adopt
+  C++'s merely visibility-based distinction.
+- Keep nullability explicit at function/method parameter and return boundaries:
+  `Node` requires an object; `?Node` accepts absence. Known null rejects for a
+  required boundary; a potentially empty value requires a presence check before
+  the callee body or return boundary completes. Optional boundaries accept null
+  without inventing an object. Required-to-optional adaptation preserves identity.
+- Temporarily relax **shared-object instance properties**, including properties
+  declared inside either classes or structs. `public Node $left;` starts empty,
+  accepts `= null`, and accepts later assignments of `null`, despite having no `?`.
+  This is not restricted to construction or initialization.
+- Do not introduce property initialization/definite-assignment analysis, additional
+  presence checks on property reads/copies/writes, or constructor-completion
+  validation for those properties. Preserve ordinary member type/access checks
+  and the runtime's existing empty-handle dereference guard; this relaxation does
+  not authorize undefined native dereferences.
+- Passing such a property to a required parameter or returning it as required
+  still uses the function-boundary presence check. Its written `Node` annotation
+  is not proof that its current value is present. `?Node` remains meaningful for
+  explicitly nullable interfaces even though these properties temporarily share
+  the same empty-storage permission.
+
+Examples of the agreed property policy (proposed class support, not current
+compiler coverage):
+
+```php
+class Addition {
+    public Node $left;
+}
+
+struct Node_holder {
+    public Node $left;
+}
+```
+
+Both `left` properties may remain empty and may later be reset to null. This rule
+concerns shared-object storage, not nullable inline struct payloads, scalars or
+containers. Static-property policy is not expanded by this instance-property
+slice. Do not broaden required local/value contracts by implication.
+
+This decision deliberately supersedes the **initialization-only** restriction in
+[type-use modifiers](../../../specs/type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25)
+for the planned instance-property slice. The owning normative contract must be
+updated alongside implementation; this planning note is not semantic authority.
+Do not silently restore the old later-null-assignment rejection or stronger
+property validation while implementing the agreed exception.
+
+#### Bounded implementation scope and owners
+
+The next slice admits class declarations with shared-by-default type uses and
+exact-concrete construction, assignment, instance properties and callable
+parameters/returns. Reuse existing field/method/constructor machinery and the
+current exact-type ownership mechanism. Preserve existing struct behavior and
+explicit shared struct handles. Class inheritance/upcasts are not prerequisites
+for this proof; no control-block/view redesign or two-pointer representation is
+selected here.
+
+| Stage / owner | Work in this slice |
+| --- | --- |
+| Parsing / collection | Retain class versus struct declaration kind and written nullability in the common model. Reuse nominal publication and member ownership; do not create a separate class-only compiler pipeline. |
+| Type/signature preparation | Resolve nominal payload identity separately from default storage and required/optional value contracts. Keep required and optional class uses distinct even if their C++ storage is identical. Reuse existing conversion/binding owners. |
+| Property preparation | Record the relaxed property contract locally. Property reads remain potentially empty; do not mark all occurrences of the canonical class type nullable or infer presence from its spelling. No property initialization dataflow analysis is required. |
+| Boundary preparation | Decide required versus optional parameter/default/return admission and prepare any necessary presence conversion. A null default requires an optional parameter. A reference to handle storage remains distinct from borrowing the object. |
+| Lowering / ownership | Consume prepared storage/conversion facts, reuse exact-type allocation/destruction and native payload layouts, and emit checks only at required function boundaries or existing guarded dereferences. No emitter-owned nullability inference or new shared ownership ABI. |
+
+A plain class parameter receives a shared handle by value; object mutation is
+visible through aliases, while rebinding the parameter does not replace the
+caller's handle. Existing explicit reference-parameter rules concern caller
+storage and must not become implicit borrowed-object parameters. General object
+reference-parameter extensions are outside this slice.
+
+#### Incremental contract and verification checklist
+
+Use stable nominal/signature symbols and the existing dependency owner. Consumers
+must observe declaration kind/default storage, property contract, and callable
+nullability/default changes. A cached body must not retain an old requiredness or
+presence-conversion decision after a signature edit. Keep `this` record watches
+and original member ownership from the extends review fixes. Semantic
+re-preparation, source re-emission and native rebuilding are separate concerns;
+unchanged emitted text does not prove cached semantic facts are current.
+
+- [x] Run equivalent proofs in cpp/php/js on Clang and GCC.
+- [x] Prove bare class copies/arguments preserve object identity and mutation;
+  parameter rebinding leaves the caller unchanged. Struct copies remain values.
+- [x] Exercise an uninitialized and explicitly null shared-object property in
+  both a class and a struct; allow null reset after a non-null assignment.
+  Confirm no extra property presence checks or initialization analysis are emitted.
+- [x] Required parameters/returns reject known null; optional parameters/returns
+  and optional null defaults accept it. Empty property values fail required
+  function boundaries before the callee body executes; populated values pass
+  without payload copies or duplicate evaluation.
+- [x] Empty property dereference retains the existing runtime failure behavior;
+  resetting a property releases its ownership normally. Verify alias lifetime,
+  exact-type weak expiry and cleanup without introducing owning parent cycles.
+- [x] Edit class/struct declaration kind, callable required/optional annotations,
+  defaults and property types with unchanged consumers. Compare diagnostics and
+  generated output with fresh compilation through errors, retries and recovery.
+- [x] Verify watch replacement after a property target/signature changes. No-op
+  compilation prepares/emits nothing; unrelated bodies and sources remain reused.
+- [x] Check cross-unit declarations/includes and native rebuilds after storage
+  or signature changes; retain one factory definition per concrete payload.
+- [x] Update the owning nullability contract and implementation documentation,
+  explicitly retaining this temporary relaxed property policy.
+
+#### Implementation and proof
+
+Implemented the common `ast_record_declaration` / `ast_instance_field` model with
+one immutable declaration-kind enum. The nominal payload owns the optional and
+required class identities; structs reuse their existing shared identity. There
+are no new per-expression flags, field initialization indexes or preparation
+traversals. Existing member ownership, layout preparation and signature watches
+remain authoritative. Failed nullable signature lookups register their watch owner
+before resolution so recovery/retirement also works after failure.
+
+`classes_native.py --memcheck` exercises cpp/php/js with Clang and GCC: shared
+mutation versus parameter rebinding, struct value copies, constructors/methods,
+all four empty property forms, null reset, optional defaults, required argument
+and return failures, single evaluation, weak expiry and Valgrind cleanup. It
+compares fresh and retained output/diagnostics after kind, property target,
+nullability/default and missing-type edits, including retries. Generated checks
+are asserted at boundaries and absent from ordinary field assignment/reset bodies.
+No-op and unrelated-source reuse are asserted. CTest registers the repeatable proof.
+
+The existing extends, constructor, weak, enum-method and failure-cleanup proofs
+also pass. The general retained/fresh suite covers 100 revisions and 24 fresh
+checkpoints per flavor. This establishes functional reuse, not a measured compiler
+speedup or native parallel preparation proof.
+
+Review follow-up closes the remaining gaps: the repeatable class suite now recovers
+by adding/deleting/restoring the missing provider with signatures and callers
+unchanged. Successful return-contract edits (`?Class` ↔ `Class`) assert that the
+unchanged caller adds/removes its presence conversion, matches fresh output and
+runs correctly. Source `weak()`/`lock()` exercises optional typing, live identity,
+retention, expiry and a required argument failure before callee execution. The
+nullable resolver reuses its resolved element in the common specialization lookup;
+it no longer repeats runtime element resolution. Existing carrier type/value
+proofs cover that path. No new caches or preparation passes were introduced.
+
+Coverage limits remain explicit: required class locals need an initializer until
+definite-assignment support lands; obtaining an owning `$this` value is deferred
+(field/method receiver use works). Static-property policy is not broadened by this
+instance-property exception. See [implementation details](../../compiler/docs/classes.md).
+
+#### Follow-up boundaries
+
+The follow-up below implements ownership-preserving class base views. Native
+virtual/abstract behavior remains the next separate discussion. Explicit shared
+struct handles retain exact-type conversion admission for this bounded slice.
+
+Defer `ref Node`, `Node*`, borrowed object parameters, stored/returned borrows,
+new unique/value overrides, interfaces, virtual overrides, shared-struct upcasts,
+downcasts, parent/generation lifetime rules and cycle management. Ordinary PHP-like
+object passing does not require borrows: shared identity already supports object
+mutation. Explicit PHP-style reference parameters alias variable/handle storage;
+they are not a reason to introduce object borrowing now.
+
+### Implemented slice — class inheritance and shared base views
+
+Doc Status: planning. Execution record for the agreed follow-up; the owning
+inheritance specification remains semantic authority. Virtual methods and
+override enforcement are not implemented by this slice.
+
+Proof target:
+
+```php
+class Node { public int $start = 0; }
+class IntegerLiteral extends Node { public int $value = 0; }
+function start_of(Node $node): int { return $node->start; }
+$literal = new IntegerLiteral();
+echo start_of($literal);
+```
+
+Implemented representation: a typed view pointer plus a pointer
+to the shared control block. A single allocation owns the control block and concrete
+payload; derived/base handles retain that allocation and may have different typed
+view pointers. Concrete destruction belongs to the allocation's retained destroy
+operation, not the static type of the view. This costs a second pointer per handle;
+do not assume an exact-type allocation pointer can be reinterpreted as a base
+allocation. The runtime owns the control block and count operations; generated
+allocation callbacks destroy the concrete payload and release its storage. A
+concrete inline adapter transfers each demanded source/target view pair. The
+application owner backend supplies that pattern; the reusable engine owns
+deduplication and emission, without C++ templates. No
+ABI framework or new expression facts were introduced.
+
+Weak views must retain the same control block and only expose their typed pointer
+after successfully obtaining strong ownership. An expired cached view pointer
+must never be dereferenced. Identity compares the allocation/control block, not
+an adjusted view address. Preserve the current thread-confined ownership contract;
+this slice does not add thread-safe counters.
+
+| Owner | Bounded change |
+| --- | --- |
+| Parser / record AST | Reuse the single written base and existing declaration kind; no new member inventories. |
+| Declaration preparation | Admit single class-to-class inheritance, settle ancestry before consumers and preserve original field/constructor owners. Reject cycles and cross-kind bases. |
+| Conversion preparation | Prepare derived-to-base shared conversion using settled ancestry; compose with existing required/optional presence conversion. Keep downcasts and unrelated conversions rejected. |
+| Runtime ownership / C++ lowering | Preserve the control block and concrete destruction while C++ adjusts the typed view. Emit settled conversions without repeating ancestry searches. |
+| Incremental | Watch nominal ancestry and callable contracts through existing stable symbols. Base edits invalidate dependent conversions and cached callers, including when native spelling stays unchanged. |
+
+Verification:
+
+- [x] Base field access and construction through a derived class in cpp/php/js.
+- [x] Required/optional derived-to-base parameters, returns and assignments;
+  preserve relaxed shared fields, known-null rejection and runtime presence checks.
+- [x] One allocation identity across views, alias mutation and exactly-once
+  concrete destruction after the final strong reference, regardless of view type.
+- [x] Weak locking before/after expiry; copies and reassignment release the right
+  allocation; failure paths clean up on Clang/GCC with memory checking.
+- [x] Reject unrelated conversion, downcasts, inheritance cycles and cross-kind
+  bases; no borrowed-object or implicit owning-this capability is introduced.
+- [x] Edit/remove/restore base edges with unchanged callers; compare retained/fresh
+  diagnostics and C++, check no-op/unrelated reuse and rebuild native consumers.
+- [x] Record handle size/allocation impact. Do not claim execution or compilation
+  speed improvements without measurements.
+
+The repeatable `shared_upcasts_native.py --memcheck` proof runs cpp/php/js with
+Clang and GCC: three-level ancestry, explicit/inherited base constructors,
+field mutation through views, parameter/return/property conversions, null checks,
+related-view identity, weak expiry and concrete destruction. A derived-only
+owned field proves cleanup through the last base view; a throwing derived
+constructor proves partial-construction cleanup. Successful and failing ancestry
+edits compare retained/fresh output and diagnostics, with native rebuilding,
+no-op and unrelated reuse checks. Unsupported method replacement stays rejected.
+
+On the tested 64-bit Clang/GCC targets, strong and weak handles are each 16 bytes
+(previously 8); the common control is 24 bytes (previous counters were 8). The
+fixture's 24-byte Leaf payload occupies one 48-byte allocation. Upcasting creates
+no allocation. These are storage measurements, not timing/speedup claims.
+
+The existing class-defaults, extends, weak, shared-reference and constructor
+proofs protect previous behavior. The runtime header is independently compiled
+on both compilers; generator publication/input checks and generated freshness
+also cover the publication change. Generator contract capture passes 130 accepted
+and 247 rejected runtime cases. Isolated committed-HEAD comparison across all 130
+accepted cases confirms that only `public/scpp/owner_access.hpp` changes. The two
+frozen-baseline CTests remain red on pre-existing arithmetic-header/runtime-source
+and input-hash drift, reproduced with committed HEAD; only the ownership-header
+hashes were updated here. Do not describe those frozen comparisons as passing.
+See [implementation details](../../compiler/docs/shared_upcasts.md).
+
+### Concrete inline adapter engine — implemented
+
+The first pattern handles admitted shared class upcasts. Preparation still owns
+ancestry and nullability; lowering consumes its conversion and requests a concrete
+native signature/body. The engine knows parameter modes, result type, explicit
+provider headers and exception contract. It does not infer ownership semantics.
+Required/optional occurrences share a native adapter; required-presence checks
+remain at the use. No new prepared expression facts or AST traversal were added.
+
+Source-private requests are merged as immutable text during bundle publication.
+Per-source demand survives incremental reuse; the final demand union determines
+which fragments remain. Generated fragments follow complete type dependencies;
+they are internal includes, not standalone public headers. Single-file output
+embeds the same definitions. See [engine ownership](../../compiler/docs/inline_adapters.md).
+
+Verification (`inline_adapters_native.py`, plus `shared_upcasts_native.py --memcheck`):
+
+- [x] cpp/php/js native correctness on Clang and GCC, including constructor arguments.
+- [x] One adapter per native signature despite multiple uses and presence contracts.
+- [x] No adapter for unused pairs and no C++ application-view template.
+- [x] Retained/fresh equivalence after demand removal, final-use removal, restoration,
+  error/retry/recovery and root-namespace edits; obsolete fragments are deleted.
+- [x] No-op preparation/emission reuse and unchanged adapter-using source reuse.
+- [x] Persistent Ninja builds on Clang/GCC for cpp/php/js: no-op preserves object
+  and executable timestamps; a single-consumer edit rebuilds only changed C++;
+  touching an adapter header rebuilds exactly its consumers through native depfiles.
+- [x] Successful source deletion/restoration: removing one consumer preserves the
+  surviving cached consumer and adapter; removing the last use retires the fragment
+  from disk and the manifest. Restoration recreates demand. Every revision matches
+  fresh output, preserves timestamps for unchanged artifacts and runs natively.
+  Source removal relinks without recompiling unrelated translation units.
+- [x] Global/custom namespaces, complete include ordering and standalone emission.
+- [x] Shared identity, null checks, concrete destruction and weak lifetime retained.
+
+Deferred: unique ownership conversion semantics, borrowing, downcasts, interfaces,
+virtual dispatch, arbitrary template parsing and new adapter patterns. Native
+reference/move parameter spelling is engine vocabulary, not source feature admission.
+No compile-time or execution-speed improvement is claimed without measurements.
+
+### Concrete virtual methods and mandatory override intent — implemented
+
+Add public concrete instance virtual methods, inherited method lookup and exact-contract
+explicit overrides for the small class AST family. A base method may supply a default
+implementation; descendants may inherit it unchanged or explicitly override it.
+Include final-method protection. Ordinary unmarked methods remain nonvirtual, and
+nonvirtual hiding stays rejected. This records the completed bounded slice; the normative inheritance contract
+remains the semantic authority.
+
+The [owning inheritance spec](../../../specs/inheritance_v0_2.md#abstract-types-and-overriding)
+requires explicit override intent in every flavor. Reject missing/spurious markers,
+final-method replacement and incompatible contracts in common preparation; emit native
+C++ `override` as an additional check. C++ itself makes its marker optional; Simple C++
+does not. Inheriting an implementation unchanged needs no declaration or marker.
+
+Agreed PHP-flavor spelling additions: support both zero-argument attributes
+`#[\Virtual]` / `#[\Override]` and declaration modifiers `virtual function` /
+`override function`. For example, these pairs express the same intent:
+
+```php
+#[\Virtual]
+public function evaluate(): int { return 0; }
+
+public virtual function evaluate(): int { return 0; }
+
+#[\Override]
+public function evaluate(): int { return $this->value; }
+
+public override function evaluate(): int { return $this->value; }
+```
+
+These are alternative declarations, not four methods in one class. The modifiers
+are Simple C++ PHP-flavor syntax, not a claim of standard PHP compatibility. Normalize
+attributes and modifiers to one common written intent, with source locations for
+errors. Reject duplicate intent (including attribute plus equivalent modifier),
+conflicting Virtual/Override intent, and attribute arguments. The owning inheritance contract records the modifier aliases. No second semantic
+path or general attribute engine was introduced.
+
+| Flavor | New virtual contract | Replacement of inherited virtual contract |
+| --- | --- | --- |
+| cpp | `virtual int evaluate() { ... }` | `int evaluate() override { ... }` |
+| php | `#[\Virtual] public function evaluate(): int { ... }` or `public virtual function evaluate(): int { ... }` | `#[\Override] public function evaluate(): int { ... }` or `public override function evaluate(): int { ... }` |
+| js | `virtual evaluate(): int { ... }` | `override evaluate(): int { ... }` |
+
+Virtual establishes a new contract; Override replaces an inherited one. Repeating
+Virtual on an inherited contract is invalid. Constructors, static/private methods
+and lifecycle declarations are not admitted as virtual/override methods here.
+Final implementations reject further overrides. Keep parameter and return types,
+passing modes, nullability and optional-parameter positions exact in this slice;
+parameter names and default values may differ. Defaults and conversions come from
+the statically selected declaration, never the runtime implementation. Reject
+unsupported variance/reference-return cases explicitly until their later slices.
+
+Example proof: Node.evaluate returns 0; IntegerLiteral.evaluate overrides it and
+returns its value. A function taking bare Node receives an IntegerLiteral through
+the existing shared-view adapter and dispatches evaluate to the derived body.
+An intermediate descendant without a declaration inherits the implementation.
+
+| Owner / stage | Bounded responsibility |
+| --- | --- |
+| Tokens / parsers | Recognize the flavor spellings and retain virtual/override/final intent on the common method declaration. No flavor-specific semantic models. |
+| Declaration collection | Keep only locally authored methods in their declaring inventory/index; retain existing duplicate handling. No flattened inherited-method copies. |
+| Declaration preparation | Settle base relationships and callable contracts before dependent bodies. Resolve inherited lookup with original declaring ownership; validate override compatibility, markers and finality. |
+| Prepared relationships | Cache method-contract completion on the declaration and retain existing symbol watches. Resolve inherited contracts during validation without caching foreign AST pointers; invalidation clears completion. |
+| C++ lowering | Consume settled contracts and emit native inheritance, virtual/override/final declarations and ordinary virtual calls. No repeated ancestry inference or handwritten vtable mechanism. |
+| Runtime ownership | Preserve the existing control block, typed view, concrete destroy callback, strong/weak identity and presence checks. No new handle or allocation for dispatch. |
+
+Native polymorphic payloads acquire native virtual dispatch state; handles retain
+their existing representation. The inheritance contract also requires virtual
+destruction for virtual hierarchies, including an implicit public nonthrowing
+virtual destructor when none is authored. Preserve existing copy/move behavior:
+adding a destructor must not silently suppress moves. The allocation's concrete
+callback still owns destruction; virtual dispatch does not transfer that ownership.
+Preserve receiver lifetime across argument evaluation, single evaluation, required
+presence checks and the existing source evaluation contract.
+
+Incremental contract: separate implementation bodies from callable/layout contracts.
+Calls observe their statically selected declaration, not every possible derived body.
+Lookup must observe traversed ancestry and missing nearer declarations so adding an
+override invalidates prior inherited lookup. Use existing stable symbol/dependency
+owners; no parallel registry of implementations on every call site.
+
+| Edit | Required invalidation / reuse |
+| --- | --- |
+| Override body only | Reprepare/reemit the owning implementation as needed; unchanged caller C++ and native objects remain reusable. |
+| Base signature, access, virtual/final status | Revalidate affected overrides and calls; republish changed native contracts. |
+| Method insertion/removal or base-edge change | Revisit affected inherited lookup, including previously absent methods and selected inherited defaults. |
+| Override removal/restoration | Fall back to inherited implementation, then restore derived dispatch. Update declarations and rebuild dependent native objects through header dependencies. |
+| Invalid edit, unchanged retry, recovery | Preserve pending watches/work and last successful output; recovery must match a fresh compilation without stale method links. |
+
+Verification checklist (cpp/php/js, native Clang and GCC):
+
+- [x] Base-typed dispatch, unchanged inherited implementation and three-level overriding.
+- [x] Both PHP attribute and modifier forms normalize equivalently, including edits
+  switching spellings; verify missing/spurious, duplicate and conflicting markers.
+- [x] Reject signature/mode/nullability mismatches, final replacement, nonvirtual
+  hiding and unsupported method categories. Check statically selected defaults.
+- [x] Shared allocation identity, alias mutation, weak expiry and exactly-once
+  concrete cleanup remain correct; null checks and receiver lifetime survive dispatch.
+- [x] Verify implicit virtual destruction and preserved copy/move behavior; record
+  payload/handle size effects without claiming an unmeasured performance improvement.
+- [x] Cross-file edits to base contracts, ancestry, derived markers and method
+  insertion/deletion/restoration; repeat errors and compare recovery diagnostics,
+  generated artifacts and native behavior with fresh compilation.
+- [x] Persistent Ninja builds prove no-op reuse and body-only caller-object reuse;
+  contract/layout changes rebuild required native consumers via depfiles even when
+  their emitted C++ text is unchanged. Include an unrelated source that stays reused.
+- [x] Review regression: a class named `scpp` with virtual/override integer-returning
+  methods compiles and runs in project and standalone output. Member return spelling
+  reuses the existing signature qualification rule (`::scpp::int64`).
+- [x] Review regression: add/remove an unused base field while caller C++ bytes and
+  timestamps remain unchanged. Changed native headers rebuild both the base-typed
+  caller and allocating caller through depfiles; the unrelated object stays reused.
+  Compare every revision with fresh emission and run both native builds.
+- [x] Retain concrete-adapter demand/reuse/removal coverage through method edits;
+  successful deletion must retire obsolete artifacts and restoration recreate demand.
+
+Deferred: abstract methods/types, interfaces, unique ownership, borrows, callable
+variance, reference-return virtual methods, protected virtual methods, explicit
+parent-method calls, authored destructors, downcasts and struct virtual support.
+Do not broaden static redeclaration or final-type support as a side effect.
+
+Implementation evidence: [virtual-method ownership and verification](../../compiler/docs/virtual_methods.md).
+`virtual_methods_native.py --memcheck` covers persistent native builds and
+retained/fresh recovery in all three flavors on Clang/GCC. The existing class,
+extends and shared-upcast proofs also pass. Shared/weak handles remain 16 bytes,
+control blocks 24 bytes; the tested allocation grows from 48 to 56 bytes with a
+polymorphic payload. These are storage observations, not timing claims.
+
+Incremental limitation: existing nominal AST replacement can still invalidate
+caller preparation/emission after an implementation-body edit. The tests prove
+unchanged caller C++ bytes, file timestamps and native object reuse, not zero
+caller reanalysis. No-op builds reuse all these stages. A broader nominal-identity
+refactor remains outside this slice.
+
+### Checked shared-class casts and instanceof — implemented
+
+Implemented explicit checked class access and nonthrowing type tests together, following
+[checked shared-object access](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests).
+Uses native C++ RTTI and the existing concrete inline adapter engine. This planning
+note records delivery and verification; the linked semantic/frontend contracts own
+language meaning. Deferred object features remain outside this slice.
+
+PHP-flavor example:
+
+```php
+function aaaa(Node $node): void {
+    $literal = object_cast($node, IntegerLiteral::class);
+    bbb($literal);
+}
+
+if ($node instanceof IntegerLiteral) {
+    bbb(object_cast($node, IntegerLiteral::class));
+}
+```
+
+The cast target is a statically named class resolved through normal namespace/import
+lookup, never a runtime string or an ownership-wrapper expression. The
+[frontend contract](../compiler_frontends.md#checked-shared-class-access) records
+`Target::class` for cpp/php and `Target.class` for js. All flavors use `instanceof`
+and normalize to one common operation and target reference.
+
+Bounded semantics:
+
+- `object_cast` accepts required/optional shared class operands and returns a required
+  target-class handle. A compatible present object succeeds; absence or runtime mismatch
+  throws the runtime error code `invalid_object_cast`. It never implicitly narrows at an
+  ordinary assignment, argument or return boundary.
+- `instanceof` evaluates its operand once and returns false for absence or mismatch,
+  true for a compatible object. It does not acquire a lasting owning result, change the
+  operand's static type, authorize reference rebinding or eliminate a later cast check.
+  Preserve the owning specification's precedence, including negated tests.
+- Admit same-type and proven upward views plus related base-to-derived class casts.
+  Reject unrelated classes, bare-null operands, inline values and dynamic targets during
+  preparation. A valid runtime mismatch is not a preparation error.
+- Downward casts/tests require a polymorphic source contract that already exists.
+  Do not add virtual members/destructors solely to enable a cast. Same-type/upward
+  operations need only the appropriate presence check and prepared pointer conversion.
+
+Native lowering and ownership:
+
+- Demand-emitted concrete functions use built-in `dynamic_cast<Target*>(source.view)`
+  for downward operations. This is a C++ operator, not template instantiation. A null
+  native result means absence or mismatch; the cast pattern calls a runtime-owned error
+  helper, while the test pattern returns false. No custom vtable/type-tag registry.
+- Reuse concrete adapter identity, dependency ordering, per-source demand, bundle merging
+  and obsolete-fragment retirement. Request only used source/target/operation pairs;
+  required/optional source identities with identical native storage may share a pattern.
+  Keep the throwing cast and boolean test distinct contracts.
+- For an owning result, take the source handle by value. An lvalue copy retains its
+  existing control block; a temporary can transfer its existing hold. After a successful
+  pointer check, transfer that hold and the adjusted view to the result and clear the
+  adapter parameter. On failure, ordinary parameter destruction releases the temporary
+  hold. Never consume or clear the caller's named handle.
+- Preserve control-block/allocation identity, aliasing, weak observers and concrete
+  cleanup. No payload copying/slicing, new object allocation or new control block.
+  Each operand is evaluated once, with its ownership retained through the native check.
+  The test uses the existing concrete adapter `const_reference` mode: its sole argument
+  lives through the call, and the check neither calls user code nor escapes the handle.
+  This avoids a temporary retain without exposing a source borrow feature.
+- Runtime owns `invalid_object_cast` failure construction/publication; the application
+  ownership backend owns concrete view-transfer patterns. Preparation owns admission;
+  emission consumes settled facts rather than repeating ancestry/polymorphism searches.
+- Downward operations require native RTTI on Clang/GCC. Validate the effective build
+  configuration and diagnose an incompatible RTTI-disabled build explicitly. Include
+  relevant compiler flags in existing native-build/cache identity; never silently force
+  RTTI on against an explicitly incompatible configuration.
+
+Incremental ownership and dependencies:
+
+- Retain target syntax on the expression and use existing stable symbol/type resolution.
+  Observe source/target contracts, traversed ancestry and source polymorphism, including
+  unresolved target names needed for recovery. Do not cache a foreign method body or
+  scan every possible descendant implementation at each call site.
+- Base-edge edits, target deletion/recreation and removal/restoration of the last virtual
+  contract invalidate dependent cast/test admission, even if native type spelling stays
+  unchanged. Rebuild occurrence facts through their existing preparation owner.
+- Preserve pending watches and last successful output through invalid edits and repeated
+  retries. Recovery must match fresh diagnostics, generated artifacts and native behavior.
+- Reused sources retain adapter demand. Editing/deleting one consumer must preserve an
+  adapter used by another cached source; removal of the last use retires it from disk
+  and the manifest. Restoration recreates demand without stale generation links.
+- Separate source preparation/emission reuse from native object reuse. Preserve the
+  documented nominal-AST replacement limitation; do not claim zero caller reanalysis
+  merely because generated bytes or native objects remain unchanged.
+
+Verification checklist (cpp/php/js, Clang and GCC):
+
+- [x] Same-type/upward success, checked downcast success, mismatching sibling object,
+  empty optional handle and a deeper descendant; reject unrelated/nonpolymorphic casts.
+- [x] Required cast result, false type tests on absence/mismatch, boolean precedence,
+  namespace/import target lookup and explicit rejection of unsupported target forms.
+- [x] Effectful operands execute exactly once on success/failure. Test a temporary
+  owning operand and verify checks are not skipped or reordered across required effects.
+- [x] Cast success preserves allocation identity and alias mutation; named input remains
+  valid. Cast failure releases only temporary holds. Weak expiry and exactly-once concrete
+  cleanup remain correct, including the last-owner path; run native memory checks.
+- [x] No payload copy/new object allocation from either operation; concrete generated
+  adapter signatures/bodies contain no C++ template machinery. Verify include dependencies,
+  runtime error-provider selection, and project/standalone output.
+- [x] Edit/remove/restore ancestry, target declarations and the final virtual contract;
+  repeat failed compilation and compare recovery with fresh output in every flavor.
+- [x] Deduplicate demanded adapters, preserve them for cached surviving consumers, retire
+  last-use/source-deletion artifacts, and restore them correctly.
+- [x] Persistent Ninja builds verify no-op and unrelated-object reuse. Include a real
+  header-only contract/layout edit with unchanged caller C++ bytes/timestamps that still
+  rebuilds dependent native objects through depfiles.
+- [x] Verify RTTI-enabled builds and the explicit failure for incompatible RTTI-disabled
+  configuration. Keep build-cache flag changes distinct from source semantic invalidation.
+
+Deferred: interfaces, interface cross-casts, struct casts/virtuals, unique ownership,
+borrows, weak-handle casts, abstract methods/types, automatic flow narrowing, redundant
+check elimination and a custom RTTI implementation. No execution/compile-time performance
+claim without separate measurements.
+
+Implementation evidence: [checked shared-class access](../../compiler/docs/object_access.md).
+`object_access_native.py --memcheck` verifies all three flavors on Clang/GCC, including
+native Valgrind checks, project/standalone emission and retained/fresh equivalence.
+Two body-only type-test targets produce distinct concrete adapters; required/optional
+sources with the same native representation share demand. Inherited source polymorphism
+is observed through the ancestry chain. Removing the last consumer retires its fragment;
+a cached surviving consumer keeps it live.
+
+Persistent native builds prove no-op reuse, body-edit caller-object reuse and real
+base-layout edits that rebuild dependent objects without rewriting caller C++ bytes or
+timestamps. Changing the effective Ninja compile command to `-fno-rtti` rejects downward
+operations explicitly; restoring flags rebuilds successfully. Same/upward operations
+also pass with RTTI disabled. This verifies native-command cache invalidation, not a
+new source-level RTTI configuration mechanism.
+
+Existing concrete-adapter and virtual-method native suites, compiler style/failure
+cleanup, generator input/cleanup and runtime freshness pass. Generator capture verifies
+17 accepted/37 rejected base cases and 130 accepted/247 rejected runtime cases. Only
+ownership-header frozen hashes changed; the already documented unrelated arithmetic
+header/runtime-source/input-hash baseline drift remains, so frozen parity comparisons
+are not reported green.
+
+The nominal AST replacement limitation described above remains: unchanged native caller
+objects do not imply zero caller preparation after every declaration edit. No broader
+incremental identity refactor, interfaces, unique or borrow implementation was added.
+
+### Explicit ancestor instance calls — implemented
+
+Continue the small AST family with concrete instance parent calls. PHP uses
+`parent::method(...)`, JS uses `super.method(...)`, and C++ uses the actual ancestor
+name, `Base::method(...)`, including namespace/import lookup. `Parent` is not a
+special C++ alias. PHP/JS start at the immediate lexical base; C++ can explicitly
+select a more distant strict ancestor. Ordinary inherited lookup selects the
+original declaration owner and bypasses virtual redispatch for this call only.
+
+The existing call AST owns written parent intent and a resettable prepared fixed-
+dispatch flag. Preparation owns relationship/access/instance checks and stable-symbol
+watches. Ordinary method binding owns arguments, defaults and conversions; the C++
+invocation emitter only changes receiver/target selection. No RTTI, shared-handle
+adapter, payload copy, new ownership allocation or alternate argument-lowering path.
+Constructor initialization remains a separate operation; a parent method at the
+start of a constructor body executes after implicit base construction.
+
+Verification checklist (cpp/php/js; Clang and GCC):
+
+- [x] Concrete virtual and ordinary ancestor calls, inherited owner selection through
+  three levels, parent defaults and virtual calls made inside the parent body.
+- [x] Same-object field mutation, void calls and writable-reference argument forwarding.
+  Outer receiver retention survives argument-driven release of its source owner; weak
+  expiry and concrete cleanup pass Valgrind checks.
+- [x] Single argument evaluation and checked conversion failures before the parent body;
+  namespaced/imported C++ ancestor names and standalone emission.
+- [x] Reject private/missing methods, free/static contexts, absent/unrelated bases,
+  wrong arity and current-instance use during base initialization. Repeat failures and
+  recover to fresh output; distinguish parent methods from constructor syntax.
+- [x] Base-body/default edits, nearer override insertion/removal, valid reparenting and
+  base declaration deletion/restoration match fresh diagnostics/emission/native results.
+- [x] No-op preparation/emission/native reuse; body-edit caller-object reuse; real
+  header-only changes rebuild dependent objects while caller C++ bytes/timestamps stay
+  unchanged and unrelated objects remain reused.
+- [x] C++ explicit grandparent selection bypasses a nearer override.
+
+Evidence: [ancestor-call implementation and checks](../../compiler/docs/parent_methods.md),
+`parent_methods_native.py --memcheck`. Preserve the earlier nominal AST invalidation
+limitation; native reuse is not a claim of zero caller reanalysis. Existing method,
+class, extends, namespace/import and failure-cleanup regressions protect earlier work.
+
+Deferred: parent constants/properties/static-method spellings, protected-method
+admission, broader reference-return support, abstract bodies, interfaces, unique and
+borrows. Existing type-qualified static calls remain supported. No performance claim
+without separate measurement.
+
+### Abstract class and method slice — implemented
+
+Supports explicit abstract classes and bodyless public instance methods in cpp/php/js,
+mandatory overrides, inherited implementations and abstract intermediates. Native C++
+owns pure virtual dispatch; the compiler rejects abstract construction and incomplete
+concrete descendants. Fixed parent calls to abstract bodies reject.
+
+Keep structures light: written declaration flags, a nullable body, declaration-owned
+source dependency identity and one record readiness bit. Obligations use a transient
+nearest-method scan over existing ancestry, with no persistent flattened inventory.
+Existing record invalidation clears readiness. No synthetic body or preparation job
+is allocated for abstract declarations.
+
+- [x] Verify native dispatch, inherited concrete implementations and re-abstraction.
+- [x] Verify constructor inheritance, ownership identity, alias mutation, checked
+  downcasts, weak expiry and cleanup on Clang/GCC, including Valgrind.
+- [x] Verify invalid syntax/contracts, mandatory overrides, exact signatures,
+  abstract construction and abstract parent calls, including failed-build retries.
+- [x] Compare retained/fresh output and diagnostics across cpp/php/js after body,
+  default, signature and header edits, added obligations and deletion/restoration.
+- [x] Verify no-op reuse, isolated body rebuilds and header-only dependent rebuilds;
+  unrelated native objects and callers remain reused when their artifacts are unchanged.
+- [x] Run existing class, virtual, parent, object-access and lifecycle regressions.
+
+Evidence: [abstract-method implementation](../../compiler/docs/abstract_methods.md)
+and `abstract_methods_native.py --memcheck`. Earlier slice deferrals above describe
+those historical scopes; abstract classes/methods are now implemented in this slice.
+Interfaces, abstract structs, protected-method expansion, callable variance, broader
+reference returns, unique and borrows remain deferred. No preparation-speed benchmark
+or broader incremental invalidation redesign is claimed.
+
 ## 4. Failures and cleanup — failed preparation and retry
 
 | Order | Group | Initial scope |
@@ -333,7 +986,7 @@ These are not rejected. Review the actual use before deciding whether a bounded 
 
 ## Next discussion and verification policy
 
-Suggested immediate order is 1.1 then 1.2 in this workspace, coordinating collections separately, followed by the token/source-snapshot proof. After the foundation, prioritize AST relationships over peripheral syntax. The tokenizer work can proceed independently where its prerequisites are available.
+The next proposed group is 1.3: application-defined vector elements, followed by bounded 1.5 readonly initialization and the token/source-snapshot proof. Groups 1.1 and 1.2 have reached their agreed bounded scope. Coordinate collection ownership before implementation. Continue AST relationships against the updated milestone-3 status rather than repeating landed slices. Tokenizer work can proceed independently where its prerequisites are available.
 
 Open decision: confirm a readable native-oriented translation with deliberate local adaptations, rather than near-verbatim PHP. This determines which traits, unions, closures and collection behaviors are mandatory. Writing this plan does not settle that question.
 

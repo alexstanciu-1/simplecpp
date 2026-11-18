@@ -25,7 +25,7 @@ final class Compilation_Inspection
 		foreach ($file->functions() as $id => $function) {
 			$functions[] = ['id' => $id, 'name' => $function->name(),
 				'return_type' => $function->return_type_reference?->spelling(),
-				'body_locals' => count($function->body()->locals)];
+				'body_locals' => count($function->optional_body()?->locals ?? [])];
 		}
 		$result = ['locals' => $locals, 'references' => $references, 'functions' => $functions];
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
@@ -65,7 +65,7 @@ final class Compilation_Inspection
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
 					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : value_conversion::name($parameter->default_conversion()),
-				], $function->parameters), 'body' => self::body($function->body())];
+				], $function->parameters), 'body' => $function->optional_body() === null ? null : self::body($function->body())];
 		}
 		return $result;
 	}
@@ -203,6 +203,12 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_object_access_expression) {
+			$row['operator'] = $value->test ? 'instanceof' : 'object_cast';
+			$row['target'] = $value->target->spelling();
+			$row['dynamic_check'] = $value->dynamic_check();
+			$row['operand'] = self::value($value->operand);
+		}
 		if ($value instanceof ast_ownership_expression) {
 			$row['operator'] = $value->lock ? 'lock' : 'weak';
 			$row['operand'] = self::value($value->operand);
@@ -231,6 +237,7 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();
+			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
 			$row['arguments'] = array_map(self::value(...), $value->cardinality === null && $value->function_def() instanceof runtime_function
 					? $value->runtime_operands() : $value->arguments);
 		}

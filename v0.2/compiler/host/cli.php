@@ -21,10 +21,14 @@ final class Compiler_Cli
 			return 0;
 		}
 		$command = $arguments[1];
-		if (in_array($command, ['program', 'project'], true))
+		if (in_array($command, ['program', 'project', 'build'], true))
 		{
 			try {
-				return $command === 'project' ? Program_Command::project($arguments) : Program_Command::run($arguments);
+				return match ($command) {
+					'build' => Program_Command::build($arguments),
+					'project' => Program_Command::project($arguments),
+					default => Program_Command::run($arguments),
+				};
 			}
 			catch (\RuntimeException $error) {
 				fwrite(\STDERR, $error->getMessage() . "\n");
@@ -102,6 +106,7 @@ final class Compiler_Cli
 			. "       php main.php frontend <app-dir> [status|stop]\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
+			. "       php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json>\n"
 			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n"
 			. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
 	}

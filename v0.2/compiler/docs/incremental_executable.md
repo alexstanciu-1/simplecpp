@@ -76,8 +76,10 @@ failed publication with a newly added source, and recovery without lost emission
 
 No-op still performs input metadata checks and existing declaration/import validation.
 Emitted-text comparison may read generated files; source input change detection remains
-mtime+size. Function-level emission, output
-transactions across process crashes and service/CLI integration remain separate work.
+mtime+size. The [PHP native-build host](native_build.md) can now run after this coordinator
+in the same PHP process. The `build` CLI uses the existing full-build project cache;
+it does not make that CLI a retained service. Function-level emission, output
+transactions across process crashes and retained-service integration remain separate work.
 
 ## Recorded proof
 

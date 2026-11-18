@@ -302,3 +302,84 @@ unsigned or narrow representations. Direct signed prefixed literals admit the fu
 including its minimum, while exponentiation retains its existing precedence over unary signs.
 Malformed digits and out-of-range values produce source diagnostics. Written destinations reuse generated
 checked conversions. Binary prefixes, separators and suffixes remain deferred.
+
+## Checked shared-class access
+
+The bounded implementation of
+[checked object access](../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
+admits class operands and targets only; interfaces and struct targets remain deferred.
+
+| Intent | C++ flavor | PHP flavor | JS flavor |
+| --- | --- | --- | --- |
+| Required checked view | `object_cast(node, Leaf::class)` | `object_cast($node, Leaf::class)` | `object_cast(node, Leaf.class)` |
+| Boolean type test | `node instanceof Leaf` | `$node instanceof Leaf` | `node instanceof Leaf` |
+
+`object_cast` and `instanceof` are reserved operator spellings in all three flavors.
+The cast's second operand is a static type marker, not a value argument. Both operations
+retain a single evaluated operand and a written target type reference; ordinary
+namespace/import resolution applies. A target cannot be a string, variable or ownership
+wrapper. `instanceof` binds more tightly than logical negation and comparison:
+`!node instanceof Leaf` means `!(node instanceof Leaf)`. Parentheses can make that
+intent explicit. Tests do not narrow the variable's static type.
+
+Common preparation admits same-type/upward relationships and polymorphic downward
+relationships. Required and optional shared operands are accepted; bare null, inline
+values, unrelated records and weak/unique handles are rejected. A successful cast
+returns the required target class. Absence/mismatch throws `invalid_object_cast`;
+`instanceof` returns false. Native RTTI must be enabled for downward operations.
+No virtual member is introduced solely for casting. Same-type/upward operations use
+presence checks and pointer adjustment and do not require RTTI.
+
+## Explicit ancestor instance calls
+
+PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
+the immediate base of the lexical declaring record and follows inherited members.
+The C++ flavor uses the actual ancestor type name, such as `Node::evaluate(...)`,
+including ordinary namespace/import qualification. `Parent` is not a special alias.
+C++ may name a more distant strict ancestor to select that lookup starting point.
+
+All forms select the resolved ancestor implementation on the current object and
+suppress virtual redispatch for that call. Virtual calls made inside that body still
+use ordinary dispatch. Defaults and conversions belong to the selected method.
+Written parent qualification and prepared fixed dispatch are retained on the existing
+call node; argument syntax and semantic admission use the ordinary call machinery.
+
+This slice supports concrete instance methods with the existing public/private rules.
+Protected-method declarations, parent static members/constants/properties and broader
+reference-return support remain deferred; already-supported type-qualified static
+calls remain unchanged. Missing bases/methods, private access, unrelated C++ qualifiers,
+free/static contexts and current-instance use in base-constructor arguments reject.
+A parent method call may be the first authored constructor-body statement, after
+implicit base construction. It is not mistaken for `parent::__construct(...)` or
+`super(...)`.
+
+## Abstract classes and methods
+
+All three flavors admit explicit `abstract class Node`. In the C++ flavor,
+`abstract class` is a Simple C++ source marker, not a native C++ keyword.
+Bodyless public instance methods use these spellings:
+
+| Flavor | Declaration inside an abstract class |
+| --- | --- |
+| PHP | `abstract public function evaluate(): int;` |
+| JS | `abstract evaluate(): int;` |
+| C++ | `virtual int evaluate() = 0;` |
+
+Abstract methods participate in virtual dispatch. Every replacement requires the
+existing override marker (including PHP `#[\Override]`). A bodyless replacement
+uses `abstract override` in PHP/JS or trailing `override = 0` in C++.
+Signatures follow the existing exact override rules. Abstract methods cannot have
+bodies or be final, static, private, constructors or destructors. PHP/JS abstract
+methods do not also take an explicit virtual marker.
+
+An explicitly abstract class cannot be constructed, even when all its methods
+have implementations. A concrete descendant must implement all inherited abstract
+obligations; an abstract intermediate may retain or reintroduce them. Inherited
+concrete implementations satisfy obligations without redeclaration. Fixed ancestor
+calls cannot select a bodyless abstract method. Constructors and fields in an
+abstract base remain usable through concrete descendants.
+
+Lowering uses native pure virtual declarations and existing shared ownership.
+Interfaces, abstract structs, protected-method expansion, callable variance,
+unique ownership and borrows remain deferred. See the
+[implementation and verification](../compiler/docs/abstract_methods.md).

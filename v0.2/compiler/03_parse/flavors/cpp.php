@@ -48,7 +48,9 @@ final class Cpp_Grammar implements statement_grammar
 			if ($tokens[$position]->kind === token_kind::lparen) ++$depth;
 			elseif ($tokens[$position]->kind === token_kind::rparen) --$depth;
 		}
-		return ($tokens[$position]->kind ?? null) === token_kind::lbrace;
+		while (isset($tokens[$position]) && in_array($cursor->tokens->text_at($position), ['override', 'final'], true)) ++$position;
+		return ($tokens[$position]->kind ?? null) === token_kind::lbrace
+			|| (($tokens[$position]->kind ?? null) === token_kind::assign && ($tokens[$position + 1]->kind ?? null) === token_kind::integer);
 	}
 
 	/** C++ flavor places the explicit return type before the function name. */

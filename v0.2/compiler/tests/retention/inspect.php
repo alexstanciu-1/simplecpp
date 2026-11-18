@@ -87,7 +87,7 @@ final class Retention_Inspection
 				if ($node instanceof ast_function_declaration) {
 					$live_watchers->attach($node);
 					$live_watchers->attach($node->body());
-				} elseif ($node instanceof ast_struct_declaration) {
+				} elseif ($node instanceof ast_record_declaration) {
 					$live_watchers->attach($node->definition);
 				}
 			}

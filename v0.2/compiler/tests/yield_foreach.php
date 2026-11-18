@@ -162,9 +162,19 @@ CPP;
 	$vector_temporary = $vector_factory . str_replace($loop($v('x'), 'yield (int)' . $v('value') . ';'),
 		$loop('make()', 'yield (int)' . $v('value') . ';'), $vector_producer);
 	$custom_temporary = str_replace($loop($v('x'), 'yield ' . $v('value') . ';'), $loop('make_counter()', 'yield ' . $v('value') . ';'), $custom_base);
+	$base_field = match ($flavor) {
+		flavor::php => 'public int $number=7;', flavor::cpp => 'int number=7;', flavor::js => 'number:int=7;',
+	};
+	$classes = 'class Base {' . $base_field . '}' . ($flavor === flavor::cpp ? ';class Child : Base {};' : 'class Child extends Base {}');
+	$views = $signature('views', 'Iterator<Base>', 'Child') . '{' . $loop('make()', $decl('Base', 'view', $v('x')) . 'yield ' . $v('x') . ';') . '}';
+	$view_library = $classes . $vector_factory . $views;
+	$view_main = $decl('Base', 'value', 'new Child()') . $loop('views(new Child())', 'echo ' . $v('value') . $member . 'number;') . 'return 8;';
+	$emit('view', $view_library . $view_main, '77');
 	foreach ([
 		'collection' => [$vector_main, $vector_base, str_replace('=10;', '=11;', $vector_base),
 			str_replace('yield (int)' . $v('value'), 'yield "bad"', $vector_base), $vector_temporary, '1020', '1120'],
+		'view' => [$view_main, $view_library, str_replace('=7;', '=9;', $view_library),
+			str_replace('yield ' . $v('x'), 'yield 1', $view_library), str_replace('Iterator<Base>', 'Iterator<Child>', $view_library), '77', '99'],
 		'custom' => [$custom_main, $custom_base, str_replace('>=3', '>=2', $custom_base),
 			str_replace('implements Iterator<int>', '', $custom_base), $custom_temporary, '0122', '011'],
 	] as $case => [$entry_source, $base, $changed, $invalid, $temporary, $expected, $changed_output]) {

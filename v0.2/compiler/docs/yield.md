@@ -241,3 +241,29 @@ link column is the Ninja link-command duration. They do not sum to wall time.
 
 Raw local results: `v0.2/build/yield-foreach-final/results.json` and
 `v0.2/build/yield-foreach-timing-{0,1,2}/results.json` (generated test artifacts).
+
+## Common-record and adapter publication integration
+
+Yield frame dependencies use the canonical record/handle definitions. Source-unit
+emission receives settled cursor layouts and independently collects concrete inline
+adapter demand. Both inventories reach output publication, including reuse for
+unchanged units. Yielded conversions and suspended local initialization route through
+the same emitter conversion boundary as ordinary code. This is required when a
+class value is converted to a shared base view inside a producer.
+
+The merge regression adds a cross-file producer that traverses a temporary vector,
+initializes a base-class local and yields a derived class through a base-class output.
+It compares retained and fresh artifacts after edits, failure, deletion and recovery,
+and executes the resulting programs in all three flavors. This does not add class
+Iterator contracts, virtual traversal or method producers.
+
+Merge verification (2026-11-18): yield-foreach (132 native fixtures), yield (147),
+Iterator (63), ordinary foreach (135), plus the strengthened 15-case view-publication
+check passed. Class defaults, shared upcasts, inline-adapter lifecycle, virtual
+methods, abstract methods, ancestor calls, checked object access and native-build
+qualification suites also passed. The record/ownership and native-build suites
+exercise Clang/GCC and all three flavors. The 12 sequential suites took 669.23 seconds;
+this is regression execution time, not a compilation benchmark. Logs and suite
+results are retained locally under `v0.2/build/merge-verification/`. Compiler style
+(218 PHP files), Iterator metadata validation and 19-artifact compiler-generation
+freshness passed. Class/inherited/virtual Iterator rejection remains covered.

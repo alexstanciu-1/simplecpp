@@ -50,6 +50,9 @@ final class value_conversion
 	public const int format_float64 /** uint16 */ = 20;
 
 	public const int empty_owner /** uint16 */ = 21;
+	public const int require_owner /** uint16 */ = 22;
+	public const int owner_view /** uint16 */ = 23;
+	public const int require_owner_view /** uint16 */ = 24;
 
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int|exit_conversion $code /** uint16|exit_conversion */): string
@@ -60,6 +63,9 @@ final class value_conversion
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
 			self::empty_owner => 'empty_owner',
+			self::require_owner => 'require_owner',
+			self::owner_view => 'owner_view',
+			self::require_owner_view => 'require_owner_view',
 			self::format_bool_t => 'format_bool_t',
 			self::format_uint8 => 'format_uint8',
 			self::format_int64 => 'format_int64',

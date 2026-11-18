@@ -126,8 +126,8 @@ final class Symbol_Publication implements declaration_sink
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
 					$node->retire_signature();
-					$dependencies->retire($node->body());
-				} elseif ($node instanceof ast_struct_declaration) {
+					if ($node->optional_body() !== null) $dependencies->retire($node->body());
+				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
 				}
 			}
@@ -187,7 +187,7 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->is_private, $head->is_static, $head->return_type_reference?->spelling(), array_map(
+				$contracts[$key] = json_encode([$head->is_private, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->return_type_reference?->spelling(), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
@@ -207,8 +207,8 @@ final class Symbol_Publication implements declaration_sink
 			foreach ($file->declaration_nodes as $function) {
 				if ($function instanceof ast_function_declaration) {
 					$watchers[] = $function;
-					$watchers[] = $function->body();
-				} elseif ($function instanceof ast_struct_declaration) {
+					if ($function->optional_body() !== null) $watchers[] = $function->body();
+				} elseif ($function instanceof ast_record_declaration) {
 					$watchers[] = $function->definition;
 				}
 			}

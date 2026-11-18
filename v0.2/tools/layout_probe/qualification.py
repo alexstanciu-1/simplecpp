@@ -15,6 +15,7 @@ from probe import sha, write
 
 SOURCE = Path(__file__).with_name('argument_order.cpp')
 WEEK = 7 * 24 * 60 * 60
+CACHE_SCHEMA = 2
 CASES = {'divide', 'remainder', 'divide_zero', 'remainder_zero'}
 
 
@@ -66,12 +67,14 @@ def valid_traces(traces):
         trace in ('LR', 'RL') for trace in traces.values())
 
 
-def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, build_dir=None):
+def request_context(compiler_name, flags, link_flags=()):
+    """Protocol request and fast-path admission; no subprocesses or filesystem fingerprinting."""
     compiler = Path(shutil.which(compiler_name) or compiler_name).absolute()
     # Common Ninja/CMake invocations use absolute inputs and can share a record across build dirs.
     options = [*flags, *link_flags]
     extra = []
     fast = True
+    relative = False
     args = iter(options)
     for option in args:
         if option in ('-I', '-include-pch'):
@@ -89,8 +92,10 @@ def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, bu
             # Unknown options can select inputs indirectly (e.g. response files).
             fast = False
             continue
+        relative |= not os.path.isabs(path)
+        fast &= bool(path)
         extra.append(os.path.abspath(path))
-    relative = any(not os.path.isabs(option) for option in options if not option.startswith('-'))
+    relative |= any(not os.path.isabs(option) for option in options if not option.startswith('-'))
     env_keys = ('PATH', 'CPATH', 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'GCC_EXEC_PREFIX',
                 'COMPILER_PATH', 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'LD_PRELOAD', 'SDKROOT', 'CCC_OVERRIDE_OPTIONS')
     env = {k: os.environ[k] for k in env_keys if k in os.environ}
@@ -98,10 +103,38 @@ def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, bu
     relative |= any(not os.path.isabs(item) for k, v in env.items() if k not in ('CCC_OVERRIDE_OPTIONS', 'LD_PRELOAD')
                     for item in v.split(os.pathsep))
     fast &= not (env.get('LD_PRELOAD') or env.get('CCC_OVERRIDE_OPTIONS'))
-    # Relative searches must be interpreted from Ninja's working directory on refresh.
-    if cached_only and relative and build_dir is not None and Path.cwd() != Path(build_dir).resolve():
-        return None
     request = [str(compiler), str(SOURCE), options, len(flags), env, os.getcwd() if relative else None]
+    return compiler, request, bool(fast), extra
+
+
+def valid_inputs(inputs):
+    """The snapshot is a nonempty path map with nullable, exactly typed stat tuples."""
+    return isinstance(inputs, dict) and bool(inputs) and all(
+        isinstance(path, str) and os.path.isabs(path) and '\0' not in path and
+        (value is None or (isinstance(value, list) and len(value) == 5 and all(type(x) is int for x in value)))
+        for path, value in inputs.items())
+
+
+def valid_record(cached, saved, slot):
+    """Bind the index's entire input snapshot to the content-addressed, versioned record."""
+    key = cached['key']
+    context = saved['context']
+    tested = saved['tested_at']
+    return (isinstance(key, str) and len(key) == 64 and all(c in '0123456789abcdef' for c in key)
+            and type(tested) in (int, float) and 0 <= time.time() - tested < WEEK
+            and valid_traces(saved['traces']) and type(context['cache_schema']) is int
+            and context['cache_schema'] == CACHE_SCHEMA
+            and context['request'] == slot and valid_inputs(cached['inputs'])
+            and context['inputs_sha256'] == sha(json.dumps(cached['inputs'], sort_keys=True).encode())
+            and sha(json.dumps(context, sort_keys=True).encode()) == key)
+
+
+def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, build_dir=None):
+    compiler, request, fast, extra = request_context(compiler_name, flags, link_flags)
+    # Relative searches must be interpreted from Ninja's working directory on refresh.
+    if cached_only and request[-1] is not None and build_dir is not None and Path.cwd() != Path(build_dir).resolve():
+        return None
+    env = request[4]
     slot = sha(json.dumps(request, sort_keys=True).encode())
     cache.mkdir(parents=True, exist_ok=True)
     index = cache / ('inputs-' + slot + '.json')
@@ -114,10 +147,12 @@ def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, bu
             raise
         try:
             cached = json.loads(index.read_bytes())
-            saved = json.loads((cache / (cached['key'] + '.json')).read_bytes())
-            if (fast and 0 <= time.time() - saved['tested_at'] < WEEK and valid_traces(saved['traces'])
-                    and sha(json.dumps(saved['context'], sort_keys=True).encode()) == cached['key']
-                    and cached['inputs'] and all(stamp(path) == old for path, old in cached['inputs'].items())):
+            name = cached['key']
+            if not isinstance(name, str) or len(name) != 64 or any(c not in '0123456789abcdef' for c in name):
+                raise ValueError('Invalid qualification record key')
+            saved = json.loads((cache / (name + '.json')).read_bytes())
+            if (fast and valid_record(cached, saved, slot)
+                    and all(stamp(path) == old for path, old in cached['inputs'].items())):
                 return cached['key'], saved['traces'], 'cached'
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             pass
@@ -134,13 +169,14 @@ def qualify(compiler_name, flags, cache, link_flags=(), *, cached_only=False, bu
                 'flags': flags, 'link_flags': list(link_flags), 'probe_sha256': file_hash(SOURCE), 'driver_sha256': file_hash(Path(__file__)),
                 'preprocessed_sha256': sha(preprocessed),
             }
-            key = sha(json.dumps(context, sort_keys=True).encode())
             deps = depfile.read_text().replace(chr(92) + chr(10), ' ').removeprefix('probe:')
             paths = {*shlex.split(deps.replace('$$', '$')), *context['components'], *extra, str(compiler), str(SOURCE), __file__}
             # Include/library search roots can legally be absent. Track their creation as a change.
             paths.update(item for k in ('CPATH', 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LD_LIBRARY_PATH', 'LIBRARY_PATH')
                          for item in env.get(k, '').split(os.pathsep) if item)
             inputs = {os.path.abspath(p): stamp(p) for p in paths}
+            context.update(cache_schema=CACHE_SCHEMA, inputs_sha256=sha(json.dumps(inputs, sort_keys=True).encode()))
+            key = sha(json.dumps(context, sort_keys=True).encode())
             if not fast:
                 try:
                     saved = json.loads((cache / (key + '.json')).read_bytes())
@@ -177,8 +213,13 @@ def main():
     parser.add_argument('--flag', action='append', default=[])
     parser.add_argument('--link-flag', action='append', default=[])
     parser.add_argument('--cache', type=Path, required=True)
+    parser.add_argument('--context-stamp', type=Path, help='Native artifact dependency, written only when identity changes')
     args = parser.parse_args()
     key, traces, status = qualify(args.cxx, args.flag, args.cache, args.link_flag)
+    if args.context_stamp is not None:
+        content = (key + '\n').encode()
+        if not args.context_stamp.is_file() or args.context_stamp.read_bytes() != content:
+            write(args.context_stamp, content)
     print(f'Native argument probe {status}: {key} {json.dumps(traces, sort_keys=True)}')
 
 

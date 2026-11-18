@@ -24,7 +24,7 @@ final class Literal_Declaration_Preparation
 					. ' type: ' . $declaration->type_reference?->spelling());
 			}
 			if (($declaration instanceof ast_global_declaration) && !$type->supports_global_storage()
-				&& !(($declaration->parent instanceof ast_struct_declaration) && $type->supports_instance_field())) {
+				&& !(($declaration->parent instanceof ast_record_declaration) && $type->supports_instance_field())) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 			}
 			$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);

@@ -12,7 +12,7 @@ final class ast_global_declaration extends ast_literal_declaration
 {
 	public function name(): string
 	{
-		return ($this->parent ?? null) instanceof ast_struct_declaration
+		return ($this->parent ?? null) instanceof ast_record_declaration
 			? $this->parent->name() . '::' . $this->short_name : parent::name();
 	}
 
@@ -24,7 +24,7 @@ final class ast_global_declaration extends ast_literal_declaration
 	/** Return: token position of the declared name, independent of inferred/explicit type. */
 	public function name_position(): int /** uint32 */
 	{
-		if ($this->parent instanceof ast_struct_declaration) {
+		if ($this->parent instanceof ast_record_declaration) {
 			return $this->type_reference->start === $this->start + 1 ? $this->type_reference->end : $this->start + 1;
 		}
 		return $this->start + ($this->source()->flavor === flavor::php ? 1 : 2);

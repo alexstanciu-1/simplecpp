@@ -3,16 +3,19 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Parse struct members and preserve their declaration order and visibility. */
-final class Struct_Syntax
+/** Parse record members and preserve their declaration order and visibility. */
+final class Record_Syntax
 {
 	/** Parse members in source order. @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members */
-	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_struct_declaration
+	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration
 	{
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
 		$start = $c->position();
-		$c->take_keyword('struct');
+		$abstract = $c->keyword('abstract');
+		if ($abstract) $c->take_keyword('abstract');
+		$kind = $c->keyword('class') ? record_kind::class_type : record_kind::structure;
+		$c->take_keyword($kind === record_kind::class_type ? 'class' : 'struct');
 		$name = $c->name(token_kind::identifier);
 		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void' || $name === Iterator_Contract::NAME) {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
@@ -36,6 +39,8 @@ final class Struct_Syntax
 		$protected_section = false;
 		while (!$c->is(token_kind::rbrace)) {
 			$field_start = $c->position();
+			$modifiers = [];
+			self::modifiers($c, $modifiers, true);
 			// JS visibility spellings are contextual identifiers; recognize them only before a member.
 			$js_visibility = $flavor === flavor::js && $c->is(token_kind::identifier)
 				&& ($c->next_is(token_kind::identifier) || $c->next_is(token_kind::keyword))
@@ -55,6 +60,7 @@ final class Struct_Syntax
 				$private = $private_section;
 				$protected = $protected_section;
 			}
+			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
 			if ($protected && ($static || $c->keyword('const'))) {
 				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
@@ -65,6 +71,7 @@ final class Struct_Syntax
 				continue;
 			}
 			if ($static) $c->take_keyword('static');
+			self::modifiers($c, $modifiers, false);
 			if (!$static && $flavor !== flavor::cpp && $c->keyword('const')) {
 				$members[] = Constant_Syntax::read($parser, $private);
 				continue;
@@ -97,10 +104,28 @@ final class Struct_Syntax
 				}
 			}
 			if ($method !== null) {
+				if ($flavor === flavor::cpp) self::modifiers($c, $modifiers, false);
+				$method->is_abstract = isset($modifiers['abstract']);
+				$method->is_virtual = isset($modifiers['virtual']);
+				$method->is_override = isset($modifiers['override']);
+				$method->is_final = isset($modifiers['final']);
+				$method->modifier_start = $modifiers === [] ? null : min($modifiers);
 				if ($protected && !$constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected ordinary methods are deferred');
-				$members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
+				if ($flavor === flavor::cpp && $method->is_abstract) throw new diagnostic($c->tokens->source, $c->offset(), 'Use = 0 for C++ abstract methods');
+				if ($flavor === flavor::cpp && $c->is(token_kind::assign)) {
+					if (!$method->is_virtual && !$method->is_override) throw new diagnostic($c->tokens->source, $c->offset(), 'Pure virtual method requires virtual or override');
+					$c->take(token_kind::assign, '=');
+					if (!$c->is(token_kind::integer) || $c->tokens->text_at($c->position()) !== '0') throw new diagnostic($c->tokens->source, $c->offset(), 'Pure virtual declaration requires = 0');
+					$c->take(token_kind::integer, '0');
+					$method->is_abstract = true;
+				}
+				if ($method->is_abstract) {
+					$method->complete_abstract($c->take(token_kind::semicolon, '; after abstract method') + 1);
+					$members[] = $method;
+				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
 				continue;
 			}
+			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
 			if ($static) {
 				$members[] = Global_Syntax::read($parser, true, $private);
 				continue;
@@ -119,7 +144,7 @@ final class Struct_Syntax
 				$initializer = $parser->literal_initializer('Field initializer requires a literal or enum case', allow_case: true);
 			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
-			$node = new ast_struct_field($field, $type, $field_start, $end, $private, $initializer, $protected);
+			$node = new ast_instance_field($field, $type, $field_start, $end, $private, $initializer, $protected);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
 				while ($tail->duplicate_element() !== null) $tail = $tail->duplicate_element();
@@ -130,6 +155,29 @@ final class Struct_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_struct_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $interface);
+		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interface);
 	}
+	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
+	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
+	{
+		while (true) {
+			$at = $c->position();
+			if ($attributes && $c->is(token_kind::attribute)) {
+				$c->take(token_kind::attribute, '#[');
+				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
+				$name = $c->name(token_kind::identifier);
+				if (!in_array($name, ['Virtual', 'Override'], true)) throw new diagnostic($c->tokens->source, $c->offset(), 'Unsupported method attribute');
+				if ($c->is(token_kind::lparen)) throw new diagnostic($c->tokens->source, $c->offset(), 'Method attributes take no arguments');
+				$c->take(token_kind::rbracket, ']');
+				$name = strtolower($name);
+			} else {
+				$name = $c->tokens->text_at($at);
+				if (!in_array($name, ['virtual', 'override', 'final', 'abstract'], true)) return;
+				$c->take($c->is(token_kind::keyword) ? token_kind::keyword : token_kind::identifier, $name);
+			}
+			if (isset($modifiers[$name])) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Duplicate method modifier: ' . $name);
+			$modifiers[$name] = $at;
+		}
+	}
+
 }

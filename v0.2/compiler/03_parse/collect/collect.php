@@ -167,7 +167,7 @@ final class Body_Collection
 			}
 			return;
 		}
-		if (($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			$this->expression($value->operand);
 		}

@@ -147,3 +147,12 @@ These are observations under current machine load, not a before/after comparison
 | JS | 1.535 | 309.702 | 18.021 | 20.277 | 97 |
 
 Native artifacts/traces: `v0.2/build/keyed-iterator-final/`.
+
+## Common-record integration boundary
+
+The shared class/struct AST and type definitions also retain the written Iterator
+contract. Admission remains explicit on structs with their own public nonvirtual
+next method. Classes, inherited/virtual next contracts and producer methods are
+not enabled by the record-model merge. Signature preparation validates ordinary
+method contracts before settling Iterator. No duplicate record or Iterator AST
+hierarchy is introduced.

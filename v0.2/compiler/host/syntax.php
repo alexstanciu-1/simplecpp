@@ -20,7 +20,7 @@ final class Syntax_Inspection
 		$functions = [];
 		foreach ($file->functions() as $function)
 		{
-			$body = array_map(self::statement(...), $function->body()->statements);
+			$body = array_map(self::statement(...), $function->optional_body()?->statements ?? []);
 			$functions[] = ['name' => self::name($function, $function->short_name, $function->name_position()),
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling(),
@@ -29,7 +29,7 @@ final class Syntax_Inspection
 				'return_type' => self::name($function, $function->return_type_reference?->spelling(), $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
-				'body_span' => self::span($function->body())];
+				'body_span' => $function->optional_body() === null ? null : self::span($function->body())];
 			if ($function->is_private) $functions[array_key_last($functions)]['visibility'] = 'private';
 			if ($function->is_protected) $functions[array_key_last($functions)]['visibility'] = 'protected';
 		}
@@ -39,11 +39,12 @@ final class Syntax_Inspection
 				$result['enums'][] = ['name' => $node->name(), 'backing' => $node->backing?->spelling(),
 					'cases' => array_map(static fn(ast_enum_case $case): string => $case->initializer->source_text(), $node->cases)];
 			}
-			if ($node instanceof ast_struct_declaration) {
-				$result['structs'][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_struct_field $field): string =>
+			if ($node instanceof ast_record_declaration) {
+				$category = $node->kind === record_kind::class_type ? 'classes' : 'structs';
+				$result[$category][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_instance_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
-				if ($node->interface_reference !== null) $result['structs'][array_key_last($result['structs'])]['implements'] = $node->interface_reference->spelling();
-				if ($node->base_reference !== null) $result['structs'][array_key_last($result['structs'])]['base'] = $node->base_reference->spelling();
+				if ($node->interface_reference !== null) $result[$category][array_key_last($result[$category])]['implements'] = $node->interface_reference->spelling();
+				if ($node->base_reference !== null) $result[$category][array_key_last($result[$category])]['base'] = $node->base_reference->spelling();
 			}
 		}
 		$result['imports'] = array_map(static fn(ast_import $import): array => [
@@ -124,6 +125,10 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_object_access_expression) {
+			return ['kind' => $expression->test ? 'instanceof' : 'object_cast', 'target' => $expression->target->spelling(),
+				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_ownership_expression) {
 			return ['kind' => $expression->lock ? 'lock' : 'weak', 'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
@@ -137,6 +142,10 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
+			if ($expression->parent_qualified) {
+				return ['kind' => 'parent_call', 'name' => $expression->name,
+					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+			}
 			if ($expression->receiver !== null) {
 				return ['kind' => 'member_or_qualified_call', 'name' => $expression->name,
 					'receiver' => self::expression($expression->receiver),

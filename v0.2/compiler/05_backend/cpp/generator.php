@@ -82,7 +82,7 @@ trait Cpp_Generator
 				$slot = 'local_' . $id;
 				$declaration = "using {$slot}_type = " . $local_type->cpp_type() . ';';
 				foreach ($local_type->cpp_headers() as $header) $headers[$header] = true;
-				if ($local_type instanceof struct_type_definition || $local_type instanceof struct_handle_definition || $local_type instanceof enum_type_definition) $types[] = $local_type;
+				if ($local_type instanceof record_type_definition || $local_type instanceof record_handle_definition || $local_type instanceof enum_type_definition) $types[] = $local_type;
 			}
 			$slots[] = "$declaration struct {$slot}_slot { union { {$slot}_type value; }; {$slot}_slot() {} ~{$slot}_slot() {} }; {$slot}_slot $slot;";
 			$flags[] = "bool live_$id = false;";
@@ -207,8 +207,8 @@ CPP;
 	/** Capture the nearest shared owner or an owned temporary; named frame storage is addressed directly. */
 	private function generator_iteration_capture(ast_expression $source): ?ast_expression
 	{
-		while ($source instanceof ast_field_expression && !($source->type_def() instanceof shared_struct_type_definition)) $source = $source->receiver;
-		return $source instanceof ast_name_expression && !($source->type_def() instanceof shared_struct_type_definition) ? null : $source;
+		while ($source instanceof ast_field_expression && !($source->type_def() instanceof shared_record_type_definition)) $source = $source->receiver;
+		return $source instanceof ast_name_expression && !($source->type_def() instanceof shared_record_type_definition) ? null : $source;
 	}
 
 	/** Decide output staging once from the existing conversion and method contract. */
@@ -233,7 +233,7 @@ CPP;
 		foreach ([$source_type, $capture?->type_def(), $type->iteration_value_type(), $key_type] as $used) {
 			if ($used === null) continue;
 			foreach ($used->cpp_headers() as $header) $headers[$header] = true;
-			if ($used instanceof struct_type_definition || $used instanceof struct_handle_definition || $used instanceof enum_type_definition) $types[] = $used;
+			if ($used instanceof record_type_definition || $used instanceof record_handle_definition || $used instanceof enum_type_definition) $types[] = $used;
 		}
 		return 'struct iteration_' . $statement->start . '_type { ' . $fields . ' };';
 	}
@@ -256,7 +256,7 @@ CPP;
 			$source = $source->receiver;
 		}
 		$receiver = $prefix . 'receiver';
-		if ($capture->type_def() instanceof shared_struct_type_definition) {
+		if ($capture->type_def() instanceof shared_record_type_definition) {
 			if ($fields === []) return '*' . $receiver . '.operator->()';
 			$receiver .= '->' . array_pop($fields);
 		}
@@ -279,12 +279,12 @@ CPP;
 			$key_type = $type->iteration_key_type();
 			$key = $this->value($statement->key, $globals, $declarations, $headers);
 			foreach ($key_type->conversion_headers($statement->key_conversion) as $header) $headers[$header] = true;
-			$body .= $key_type->cpp_type() . ' next_key = ' . $key_type->lower_cpp_conversion($statement->key_conversion, $key, $statement->key) . ";\n";
+			$body .= $key_type->cpp_type() . ' next_key = ' . $this->conversion($key_type, $statement->key_conversion, $key, $statement->key) . ";\n";
 		}
 		$value_type = $type->iteration_value_type();
 		$value = $this->value($statement->value, $globals, $declarations, $headers);
 		foreach ($value_type->conversion_headers($statement->conversion) as $header) $headers[$header] = true;
-		$body .= $value_type->cpp_type() . ' next_value = ' . $value_type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ";\n";
+		$body .= $value_type->cpp_type() . ' next_value = ' . $this->conversion($value_type, $statement->conversion, $value, $statement->value) . ";\n";
 		$body .= 'yield_value = static_cast<' . $value_type->cpp_type() . "&&>(next_value);\n";
 		if ($statement->key !== null) $body .= 'yield_key = static_cast<' . $key_type->cpp_type() . "&&>(next_key);\n";
 		$state = ++$resume->state;

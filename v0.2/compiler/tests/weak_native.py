@@ -68,8 +68,8 @@ void operator delete(void* p) noexcept {
 }
 int main() {
     using namespace App;
-    static_assert(sizeof(weak_Parent) == sizeof(void*));
-    static_assert(sizeof(owner_Parent::allocation) == sizeof(scpp_records::Parent) + 8);
+    static_assert(sizeof(weak_Parent) == 2 * sizeof(void*));
+    static_assert(sizeof(owner_Parent::allocation) == sizeof(scpp_records::Parent) + sizeof(scpp::application_control));
     for (int i=0; i<4096; ++i) {
         unsigned start = frees;
         auto parent = makeParent_();

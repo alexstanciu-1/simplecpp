@@ -1,0 +1,56 @@
+# Checked shared-class access
+
+Doc Status: supporting
+
+Semantics belong to [checked object access](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests);
+the implemented spellings and bounded class-only scope are in the
+[frontend contract](../../specs/compiler_frontends.md#checked-shared-class-access).
+
+`ast_object_access_expression` owns the operand and written target reference. Common
+`Object_Access_Preparation` resolves the target through existing type/import lookup,
+admits the relationship and records the required target identity and whether a native
+runtime type check is needed. It watches both ancestry chains, including inherited
+polymorphism. No descendant inventory or foreign executable bodies are retained.
+Invalidation clears the occurrence facts through the existing body owner.
+
+`Cpp_Object_Access` expands two concrete adapter patterns. A downward operation uses
+`dynamic_cast<Target*>(source.view)`; same-type/upward views use ordinary pointer
+conversion. A cast takes one shared handle by value, keeping the allocation alive during
+the check. It transfers that temporary hold into the result and clears the local
+parameter. Failure calls the runtime's `throw_invalid_object_cast`; parameter cleanup
+releases the temporary hold. A test takes an internal `const&` parameter and returns
+whether the pointer is present. Its sole argument remains alive through the call; no
+user callback or handle escape occurs inside the test, so no temporary retain is needed. Neither changes a caller's named handle, copies the payload or
+allocates an object/control block. The original concrete allocation owns destruction.
+
+The existing adapter engine now accepts concrete body-only type dependencies. They
+participate in both specialization identity and declaration ordering. This matters for
+two tests with identical source/bool signatures but different targets. RTTI requirements
+also participate in identity; downward fragments diagnose disabled RTTI explicitly.
+Same/upward fragments require no RTTI. There is no C++ template conversion framework.
+
+Private per-source demand, cross-unit deduplication, retained-output reuse and obsolete
+fragment retirement remain owned by the adapter/bundle engine. Do not recreate these
+protocols in the cast pattern. Changed native flags invalidate native commands; they do
+not change source semantic facts. The tests exercise flag rejection and recovery in the
+persistent Ninja graph, without silently overriding `-fno-rtti`.
+
+Run `XDEBUG_MODE=off python3 -B v0.2/compiler/tests/object_access_native.py --memcheck`
+from the repository root. It checks cpp/php/js on Clang and GCC, including:
+
+- Required results, optional absence, same/up/down views, deeper descendants, sibling
+  mismatch, precedence, namespace/import targets and unsupported inputs.
+- Single evaluation, allocation identity, alias mutation, exact strong-count changes,
+  failed-cast cleanup, last-owner transfers, weak expiry and Valgrind leak/error checks.
+- Template-free concrete bodies, distinct body-only target identities, runtime provider
+  includes, project/standalone builds and RTTI-disabled rejection/upward success.
+- Retained/fresh equivalence through invalid edits/retries, inherited polymorphism,
+  ancestry and target deletion/restoration; cached-consumer demand and last-use removal.
+- No-op preparation/emission/native reuse, implementation-body native reuse, header-only
+  layout rebuilds with unchanged caller C++ bytes/timestamps and unrelated object reuse.
+
+As before, replacing nominal declaration ASTs can invalidate callers' preparation even
+when their emitted bytes and native objects remain unchanged. These tests do not claim
+zero caller reanalysis for such edits or native parallel-preparation safety. Interfaces,
+struct casts, abstract declarations, unique, borrows, weak casts and automatic narrowing
+remain deferred. No performance improvement is claimed without measurements.

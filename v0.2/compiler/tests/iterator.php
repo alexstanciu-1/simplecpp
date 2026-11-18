@@ -142,6 +142,14 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name . '_shared'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex('012')];
 	$entry = $prepare($model . $decl('cursor') . $loop('cursor', $echo . 'if (' . $v('value') . '<2) {continue;}') . 'return 8;');
 	$fixtures[$flavor->name . '_continue'] = ['cpp' => (new Cpp_Emitter())->emit($entry), 'stdout_hex' => bin2hex('012')];
+	rejects(fn() => $prepare(str_replace('struct Counter', 'class Counter', $model) . 'return 8;'), 'Class Iterator');
+	$inherited = $flavor === flavor::cpp ? 'struct Child : Counter implements Iterator<int>{};'
+		: 'struct Child extends Counter implements Iterator<int>{}';
+	rejects(fn() => $prepare($model . $inherited . 'return 8;'), 'Iterator requires');
+	$virtual_signature = match ($flavor) {
+		flavor::php => '#[Virtual] ' . $signature, flavor::cpp => 'virtual ' . $signature, flavor::js => 'virtual ' . $signature,
+	};
+	rejects(fn() => $prepare(str_replace($signature, $virtual_signature, $model) . 'return 8;'), 'Virtual modifiers');
 	rejects(fn() => $prepare(str_replace(' implements Iterator<int>', '', $model) . $main), 'iterable');
 	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<int,string>', $model) . $main), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<string>', $model) . $main), 'Iterator requires');

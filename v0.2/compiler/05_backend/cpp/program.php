@@ -26,6 +26,8 @@ final class Cpp_Program
 		$headers = new Cpp_Headers($program, $layouts);
 		$header_files = $headers->files();
 		$emitted = [];
+		$source_adapters = [];
+		$adapter_files = [];
 		foreach ($program->files as $path => $file) {
 			$prior_path = $previous?->source_units[$path] ?? null;
 			$header_path = 'units/' . hash('sha256', (string) $path) . '.hpp';
@@ -34,12 +36,19 @@ final class Cpp_Program
 				&& !$headers->type_visibility_changed($file, $previous)
 				&& (($path !== $program->entry_path) === ($path !== $previous->entry_path))) {
 				$bodies[$path] = $previous->files[$prior_path];
+				$source_adapters[$path] = $previous->source_adapters[$path] ?? [];
+				foreach ($source_adapters[$path] as $adapter) {
+					self::merge_adapter($adapter_files, $adapter, $previous->files[$adapter]);
+				}
 				continue;
 			}
 			$emitted[] = (string) $path;
+			$emitter = new Cpp_Emitter($headers, $root, $layouts);
 			$bodies[$path] = (string) $path === $program->entry_path
-				? (new Cpp_Emitter($headers, $root, $layouts))->entry_body($program->entry)
-				: (new Cpp_Emitter($headers, $root, $layouts))->source_definitions($file);
+				? $emitter->entry_body($program->entry) : $emitter->source_definitions($file);
+			$requested = $emitter->adapter_files();
+			$source_adapters[$path] = array_keys($requested);
+			foreach ($requested as $adapter => $text) self::merge_adapter($adapter_files, $adapter, $text);
 		}
 		$output = self::assemble($program->entry_path, $bodies, $root);
 		$native = [];
@@ -55,8 +64,15 @@ final class Cpp_Program
 			}
 		}
 		sort($native, \SORT_STRING);
-		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files), $native,
-			array_values(array_unique($links)), $emitted, $root);
+		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files, $adapter_files), $native,
+			array_values(array_unique($links)), $emitted, $root, $source_adapters);
+	}
+
+	/** Merge source-private adapter text after lowering; differing expansions cannot silently share a symbol. @param string[] $files */
+	private static function merge_adapter(array &$files /** array<string,string> */, string $path, string $text): void
+	{
+		if (isset($files[$path]) && $files[$path] !== $text) throw new \LogicException('Conflicting adapter definitions across source units');
+		$files[$path] = $text;
 	}
 
 	public static function empty_unit(): string

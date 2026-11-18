@@ -33,6 +33,8 @@ final class Cpp_Emitter
 	private bool $qualified_adapters = false;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
+	/** Private demand collected during this source unit’s existing lowering walk. */
+	private Cpp_Adapters $inline_adapters;
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -49,9 +51,23 @@ final class Cpp_Emitter
 		$this->headers = $headers;
 		$this->root = $root;
 		$this->generator_layouts = $generator_layouts;
+		$this->inline_adapters = new Cpp_Adapters($root);
 	}
 
 	/** METHODS */
+	/** Route prepared conversions through private adapter demand without changing ordinary type-owned lowering. */
+	private function conversion(type_definition $type, int $conversion /** uint16 */, string $value,
+		?ast_expression $syntax = null, ?type_definition $source_type = null): string
+	{
+		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
+	}
+
+	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
+	public function adapter_files(): array /** array<string,string> */
+	{
+		return $this->inline_adapters->files();
+	}
+
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
 	public function declaration(ast_function_declaration|ast_global_declaration|ast_type_declaration $node,
 		array &$includes /** array<string,bool> */): string
@@ -76,13 +92,13 @@ final class Cpp_Emitter
 			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
 				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
 		}
-		if ($node instanceof ast_struct_declaration) {
+		if ($node instanceof ast_record_declaration) {
 			$layout = [];
 			$base = $node->definition->base();
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$type = $field->type_def();
-				$qualifier = ($type instanceof struct_type_definition || $type instanceof struct_handle_definition || $type instanceof enum_type_definition) && $this->root !== '' ? '::' . $this->root : '';
+				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition) && $this->root !== '' ? '::' . $this->root : '';
 				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 					$type, $field->initializer, $field->conversion, $includes);
 				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
@@ -91,6 +107,24 @@ final class Cpp_Emitter
 				$type = $property->type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
+			}
+			if ($node->definition->polymorphic()) {
+				$name = Cpp_Identifier::source($node->short_name);
+				$layout[] = "\tvirtual ~$name() noexcept = default;";
+				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
+				$layout[] = "\t$name(const $name&) = default;";
+				$layout[] = "\t$name($name&&) = default;";
+				$layout[] = "\t$name& operator=(const $name&) = default;";
+				$layout[] = "\t$name& operator=($name&&) = default;";
+			}
+			foreach ($node->methods as $method) {
+				if (!$method->has_virtual_dispatch()) continue;
+				$type = $method->return_type_def();
+				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+				$result = $this->member_type($type);
+				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
+					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
@@ -103,10 +137,11 @@ final class Cpp_Emitter
 			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
-			return $this->constructor_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
 				. ($base === null ? '' : ' : public ' . $base->cpp_type()) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
+			if ($node->has_virtual_dispatch()) return '';
 			return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
 				. $this->signature($node, $includes) . ';';
 		}
@@ -163,50 +198,60 @@ final class Cpp_Emitter
 		}
 		if ($literal instanceof ast_name_expression && $type instanceof enum_type_definition) return $type->cpp_case($literal->declaration());
 		return self::plain_integer_literal($literal, $conversion)
-			?? $type->lower_cpp_conversion($conversion, $literal->type_def()->lower_cpp_literal($literal), $literal);
+			?? $this->conversion($type, $conversion, $literal->type_def()->lower_cpp_literal($literal), $literal);
 	}
 
-	/** Pointer-sized owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
-	public function owner_declaration(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	/** Two-pointer owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
+	public function owner_declaration(shared_record_type_definition $type, array &$includes /** array<string,bool> */): string
 	{
+		$includes['scpp/owner_access.hpp'] = true;
 		$payload = $type->payload;
 		$name = Cpp_Identifier::source($payload->declaration->short_name);
-		$forward = $this->constructor_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
+		$forward = $this->record_signature_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
 		$owner = $type->cpp_type();
 		$weak = $type->payload->weak->cpp_type();
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
+		$factory_declaration = $payload->declaration->is_abstract ? '' : "\tstatic $owner make($params);\n";
+		$presence = $payload->declaration->kind === record_kind::class_type ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
 #define $guard
 {$forward}struct $owner {
 	struct allocation;
-	allocation* ptr{};
+	::scpp::application_control* ptr{};
+	$record* view{};
 	$owner() noexcept = default;
-	static $owner make($params);
-	explicit operator bool() const noexcept { return ptr != nullptr; }
+$factory_declaration$presence	explicit operator bool() const noexcept { return ptr != nullptr; }
 	$record* operator->() const;
 	$owner(const $owner& other) noexcept;
-	$owner($owner&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	$owner($owner&& other) noexcept : ptr(other.ptr), view(other.view) { other.ptr = nullptr; other.view = nullptr; }
 	$owner& operator=($owner other) noexcept {
 		auto* old = ptr;
+		auto* old_view = view;
 		ptr = other.ptr;
+		view = other.view;
 		other.ptr = old;
+		other.view = old_view;
 		return *this;
 	}
 	~$owner();
 };
 struct $weak {
-	{$owner}::allocation* ptr{};
+	::scpp::application_control* ptr{};
+	$record* view{};
 	$weak() noexcept = default;
-	explicit $weak(const $owner& owner) noexcept : ptr(owner.ptr) { retain(); }
-	$weak(const $weak& other) noexcept : ptr(other.ptr) { retain(); }
-	$weak($weak&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	explicit $weak(const $owner& owner) noexcept : ptr(owner.ptr), view(owner.view) { retain(); }
+	$weak(const $weak& other) noexcept : ptr(other.ptr), view(other.view) { retain(); }
+	$weak($weak&& other) noexcept : ptr(other.ptr), view(other.view) { other.ptr = nullptr; other.view = nullptr; }
 	$weak& operator=($weak other) noexcept {
 		auto* old = ptr;
+		auto* old_view = view;
 		ptr = other.ptr;
+		view = other.view;
 		other.ptr = old;
+		other.view = old_view;
 		return *this;
 	}
 	void retain() noexcept;
@@ -219,7 +264,7 @@ CPP;
 	}
 
 	/** Complete the typed allocation only after its inline payload layout is available. @param bool[] $includes */
-	public function owner_methods(shared_struct_type_definition $type, array &$includes /** array<string,bool> */): string
+	public function owner_methods(shared_record_type_definition $type, array &$includes /** array<string,bool> */): string
 	{
 		$payload = $type->payload->cpp_type();
 		$owner = $type->cpp_type();
@@ -227,51 +272,47 @@ CPP;
 		$guard = $this->owner_guard($type) . '_DEF';
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
-		$allocation_ctor = $constructor === null ? 'allocation() : value{} {}' : "allocation($params);";
-		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
+		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
+		$factory = $constructor === null && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
+		$presence = $type->payload->declaration->kind === record_kind::class_type
+			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
+
+		$allocation = $type->payload->declaration->is_abstract ? '' : <<<CPP
+struct {$owner}::allocation : ::scpp::application_control {
+	using payload_type = $payload;
+	union { payload_type value; };
+	$allocation_ctor
+	~allocation() {} // The last strong owner ends the active union member's lifetime.
+	static void destroy_value(::scpp::application_control* control) noexcept {
+		static_cast<allocation*>(control)->value.~payload_type();
+	}
+	static void dispose_allocation(::scpp::application_control* control) noexcept {
+		delete static_cast<allocation*>(control);
+	}
+};
+$factory
+CPP;
 
 		return <<<CPP
 #ifndef $guard
 #define $guard
-struct {$owner}::allocation {
-	using payload_type = $payload;
-	union { payload_type value; };
-	__UINT32_TYPE__ count{1};
-	__UINT32_TYPE__ weak_count{1}; // Includes one hold until payload destruction completes.
-	$allocation_ctor
-	~allocation() {} // The last strong owner ends the active union member's lifetime.
-	void retain_strong() noexcept {
-		if (count == __UINT32_MAX__) __builtin_trap();
-		++count;
-	}
-	void release_weak() noexcept { if (--weak_count == 0) delete this; }
-};
-$factory
+$allocation
 inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
-	return &ptr->value;
+	return view;
 }
-inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr) {
+$presence
+inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr), view(other.view) {
 	if (ptr) ptr->retain_strong();
 }
-inline {$owner}::~$owner() {
-	if (ptr && --ptr->count == 0) {
-		using payload_type = $payload;
-		ptr->value.~payload_type();
-		ptr->release_weak();
-	}
-}
-inline void {$weak}::retain() noexcept {
-	if (ptr) {
-		if (ptr->weak_count == __UINT32_MAX__) __builtin_trap();
-		++ptr->weak_count;
-	}
-}
+inline {$owner}::~$owner() { if (ptr) ptr->release_strong(); }
+inline void {$weak}::retain() noexcept { if (ptr) ptr->retain_weak(); }
 inline $owner {$weak}::lock() const noexcept {
 	$owner result;
 	if (ptr && ptr->count) {
 		ptr->retain_strong();
 		result.ptr = ptr;
+		result.view = view;
 	}
 	return result;
 }
@@ -282,7 +323,7 @@ CPP;
 	}
 
 	/** Define user-directed allocation in the payload source, where parameter types are complete. @param bool[] $headers */
-	private function allocation_factory(shared_struct_type_definition $type, array &$headers /** array<string,bool> */): string
+	private function allocation_factory(shared_record_type_definition $type, array &$headers /** array<string,bool> */): string
 	{
 		$owner = $type->cpp_type();
 		$constructor = $type->payload->constructor();
@@ -294,14 +335,14 @@ CPP;
 		}
 		$forward = implode(', ', $args);
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
-		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : value($payload_args) {}\n";
-		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tresult.ptr = new allocation($forward);\n\treturn result;\n}\n";
+		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
+		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
 	}
 
 	/** Public layouts and unit-local uses can independently request the same concrete owner. */
-	private function owner_guard(shared_struct_type_definition $type): string
+	private function owner_guard(shared_record_type_definition $type): string
 	{
-		return 'SCPP_OWNER_' . hash('sha256', $this->root . "\0" . $type->name);
+		return 'SCPP_OWNER_' . hash('sha256', $this->root . "\0" . $type->payload->name);
 	}
 
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
@@ -335,6 +376,7 @@ CPP;
 	private function unit(?prepared_entry $entry, ast_file_node $file, string $entry_name): string
 	{
 		$this->enum_helpers = [];
+		$this->inline_adapters = new Cpp_Adapters($this->root);
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -352,9 +394,9 @@ CPP;
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
-			if (!($node instanceof ast_struct_declaration)) continue;
+			if (!($node instanceof ast_record_declaration)) continue;
 			$constructor = $node->definition->constructor();
-			if ($constructor !== null) {
+			if ($constructor !== null && !$node->is_abstract) {
 				// Each payload's source owns its factory, including inherited constructor contracts.
 				$owner = $node->definition->shared;
 				$declarations[$owner->name] = $owner;
@@ -364,6 +406,7 @@ CPP;
 		}
 		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
+			if ($function->is_abstract) continue;
 			$name = self::function_name($function);
 			if ($function->is_constructor()) {
 				$owner = $function->parent->definition->shared;
@@ -387,7 +430,7 @@ CPP;
 				continue;
 			}
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
-			if ($function->is_constructor()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			if ($function->is_constructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
 			if ($first instanceof ast_base_statement) {
@@ -408,6 +451,11 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
+		foreach ($this->inline_adapters->dependencies() as $type) {
+			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
+			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
+		}
 		$prototypes = '';
 		$unit_headers = [];
 		// Calls and definitions need complete value and handle types even when only the signature names them.
@@ -417,7 +465,7 @@ CPP;
 			}
 		}
 		foreach ($global_references as $property) {
-			if ($property->parent instanceof ast_struct_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
+			if ($property->parent instanceof ast_record_declaration) $declarations[$property->parent->symbol_key()] = $property->parent;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
@@ -438,11 +486,11 @@ CPP;
 		}
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_enum_declaration) continue;
-			if ($function instanceof struct_handle_definition) {
+			if ($function instanceof record_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
 			}
-			if ($function instanceof ast_struct_declaration) {
+			if ($function instanceof ast_record_declaration) {
 				$this->type_prototypes($function, $records, $unit_headers, $required_headers, $layouts, $owners);
 				continue;
 			}
@@ -451,7 +499,8 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototypes .= $this->declaration($function, $required_headers) . "\n";
+				$prototype = $this->declaration($function, $required_headers);
+				if ($prototype !== '') $prototypes .= $prototype . "\n";
 			}
 		}
 		$owner_types = '';
@@ -471,7 +520,7 @@ CPP;
 		}
 		ksort($global_references, \SORT_STRING);
 		foreach ($global_references as $name => $global) {
-			if ($global->parent instanceof ast_struct_declaration) continue;
+			if ($global->parent instanceof ast_record_declaration) continue;
 			$include = $this->headers?->declaration_header($global);
 			if ($include !== null) {
 				$unit_headers[$include] = true;
@@ -500,19 +549,27 @@ CPP;
 			$header .= '#include "' . $include . "\"\n";
 		}
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
-		return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+		$adapter_files = $this->adapter_files();
+		if ($adapter_files === []) {
+			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+		}
+		$text = $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		foreach ($adapter_files as $path => $body) {
+			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
+		}
+		return $text . self::namespace_body($this->root, implode("\n", $definitions));
 	}
 
 	/**
 	 * Emit private definitions once, with complete embedded types before their parents.
 	 * @param bool[] $seen
 	 * @param bool[] $unit_headers
-	 * @param shared_struct_type_definition[] $owners
+	 * @param shared_record_type_definition[] $owners
 	 * @param bool[] $runtime_headers
 	 */
 	private function type_prototypes(ast_type_declaration $record, array &$seen /** array<string,bool> */,
 		array &$unit_headers /** array<string,bool> */, array &$runtime_headers /** array<string,bool> */, string &$text,
-		array &$owners /** array<string,shared_struct_type_definition> */): void
+		array &$owners /** array<string,shared_record_type_definition> */): void
 	{
 		$key = $record->symbol_key();
 		if (isset($seen[$key])) return;
@@ -531,9 +588,9 @@ CPP;
 		}
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) {
+			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) {
 				$this->type_prototypes($type->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
-			} elseif ($type instanceof struct_handle_definition) {
+			} elseif ($type instanceof record_handle_definition) {
 				$owners[$type->payload->name] = $type->payload->shared;
 			}
 		}
@@ -659,7 +716,7 @@ CPP;
 				if (!$direct) {
 					$operand = $method !== null && $statement->conversion === value_conversion::identity
 						? 'static_cast<' . $statement->value->type_def()->cpp_type() . '&&>(' . $output . ')' : $output;
-					$converted = $destination->type_def()->lower_cpp_conversion($statement->conversion, $operand, $statement->value);
+					$converted = $this->conversion($destination->type_def(), $statement->conversion, $operand, $statement->value);
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => null];
@@ -738,7 +795,7 @@ CPP;
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$type = $statement->target->type_def();
 				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
-				$lines[] = "\t" . $field . ' = ' . $type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ';';
+				$lines[] = "\t" . $field . ' = ' . $this->conversion($type, $statement->conversion, $value, $statement->value) . ';';
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
@@ -787,7 +844,7 @@ CPP;
 					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
 						logical_root: $conversion === value_conversion::identity);
 					$type = $function->return_type_def();
-					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value);
+					$value = $this->conversion($type, $conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
 						$required_headers[$header] = true;
 					}
@@ -887,7 +944,7 @@ CPP;
 		$execution = $statement->execution_type();
 		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
-			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value);
+			$right = $this->conversion($execution, $conversion, $right, $statement->value);
 			foreach ($execution->conversion_headers($conversion) as $header) {
 				$headers[$header] = true;
 			}
@@ -896,14 +953,14 @@ CPP;
 			$headers[$header] = true;
 		}
 		if ($statement->left_conversion() !== value_conversion::identity) {
-			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left, source_type: $type);
+			$left = $this->conversion($execution, $statement->left_conversion(), $left, source_type: $type);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
 				$headers[$header] = true;
 			}
 		}
 		$result = $execution->lower_cpp_binary($statement->operator, $left, $right, $execution);
 		if ($statement->write_back() !== value_conversion::identity) {
-			$result = $type->lower_cpp_conversion($statement->write_back(), $result, source_type: $execution);
+			$result = $this->conversion($type, $statement->write_back(), $result, source_type: $execution);
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
 				$headers[$header] = true;
 			}
@@ -1005,10 +1062,10 @@ CPP;
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
-			if ($type instanceof struct_type_definition) {
+			if ($type instanceof record_type_definition) {
 				$declarations[$type->declaration->symbol_key()] = $type->declaration;
 			}
-			if ($type instanceof struct_handle_definition) $declarations[$type->name] = $type;
+			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
 			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
@@ -1036,7 +1093,7 @@ CPP;
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
-		return $this->binding_initialization($statement, $prefix, $type->lower_cpp_conversion($conversion, $operand, $value));
+		return $this->binding_initialization($statement, $prefix, $this->conversion($type, $conversion, $operand, $value));
 	}
 
 	/** A suspended declaration starts its lifetime only after its checked initializer succeeds. */
@@ -1066,11 +1123,16 @@ CPP;
 		$reorderable = false;
 		$value_type = $value->type_def();
 		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
-		if ($value_type instanceof struct_handle_definition || $value_type instanceof struct_type_definition) {
+		if ($value_type instanceof record_handle_definition || $value_type instanceof record_type_definition) {
 			++$this->record_expressions;
 		}
 		foreach ($value_type->cpp_headers() as $header) {
 			$required_headers[$header] = true;
+		}
+		if ($value instanceof ast_object_access_expression) {
+			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers);
+			$request = Cpp_Object_Access::request($value->operand->type_def(), $value->target_type(), $value->test, $value->dynamic_check());
+			return $this->inline_adapters->call($request, [$operand]);
 		}
 		if ($value instanceof ast_ownership_expression) {
 			$type = $value->type_def();
@@ -1093,7 +1155,7 @@ CPP;
 		}
 		if ($value instanceof ast_field_expression) {
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
-			$access = $value->receiver->type_def() instanceof shared_struct_type_definition ? '->' : '.';
+			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if ($value instanceof ast_empty_collection_expression) {
@@ -1142,7 +1204,7 @@ CPP;
 				$required_headers[$header] = true;
 			}
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
-			return '(' . $type->lower_cpp_conversion($conversion, $operand, $value->operand) . ')';
+			return '(' . $this->conversion($type, $conversion, $operand, $value->operand) . ')';
 		}
 		if ($value instanceof ast_unary_expression) {
 			$operand_safe = false;
@@ -1187,13 +1249,13 @@ CPP;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $type->lower_cpp_conversion($value->left_conversion, $left, $value->left);
+				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
 				foreach ($type->conversion_headers($value->left_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
 			}
 			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $type->lower_cpp_conversion($value->right_conversion, $right, $value->right);
+				$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
 				foreach ($type->conversion_headers($value->right_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
@@ -1276,7 +1338,7 @@ CPP;
 					if ($conversion !== value_conversion::identity) {
 						$type = $function->parameters[0];
 						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
-						$operand = $type->lower_cpp_conversion($conversion, $operand, $operands[0]);
+						$operand = $this->conversion($type, $conversion, $operand, $operands[0]);
 					}
 					return $symbol . '(' . $operand . ')';
 				}
@@ -1345,7 +1407,7 @@ CPP;
 					$type->conversion_headers($conversion)) as $header) {
 					$required_headers[$header] = true;
 				}
-				return $type->lower_cpp_conversion($conversion, $literal, $declaration->initializer);
+				return $this->conversion($type, $conversion, $literal, $declaration->initializer);
 			}
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);
@@ -1370,17 +1432,17 @@ CPP;
 	{
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_struct_type_definition)) {
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
 		// Inline fields share the storage duration of their root. A temporary record
 		// still needs the named receiver binding for the non-const reference parameter.
-		$inline_storage = $base->type_def() instanceof struct_type_definition
+		$inline_storage = $base->type_def() instanceof record_type_definition
 			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
 				&& $base->declaration() instanceof ast_local_binding));
 		$operand = $this->value($base, $globals, $declarations, $headers);
-		if ($base->type_def() instanceof shared_struct_type_definition) {
+		if ($base->type_def() instanceof shared_record_type_definition) {
 			$steps[] = 'auto receiver_owner = ' . $operand . ';';
 			if ($fields === []) return '*receiver_owner.operator->()';
 			$operand = 'receiver_owner->' . array_pop($fields);
@@ -1408,13 +1470,16 @@ CPP;
 			if ($function->parameters === []) return $name . '(' . $receiver . ')';
 			$arguments[] = $receiver;
 		} elseif ($method) {
-			$inline_storage = false;
-			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
+			$inline_storage = $value->ancestor_dispatch;
+			$place = $value->ancestor_dispatch ? 'scpp_self'
+				: $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
 			if (!$inline_storage) {
 				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
 				$place = 'receiver_payload';
 			}
-			$arguments[] = $place;
+			if ($function->has_virtual_dispatch()) $name = '(' . $place . ').'
+				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
+			else $arguments[] = $place;
 		} elseif ($function->parameters === []) {
 			return $name . '()';
 		}
@@ -1435,7 +1500,7 @@ CPP;
 				$required_headers[$header] = true;
 			}
 			if ($parameter->mode === passing_mode::value) {
-				$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
+				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
 			if (!$method && count($function->parameters) === 1) {
@@ -1481,12 +1546,12 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
-	/** Calls and definitions use complete record types. @param (ast_declaration_interface|struct_handle_definition)[] $declarations */
+	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
 		foreach (($this->headers?->declaration_header($function) !== null
 			? self::signature_application_types($function) : $this->application_types($function)) as $type) {
-			if ($type instanceof struct_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
 		}
 	}
@@ -1500,7 +1565,7 @@ CPP;
 	private function base_initializer(ast_base_initialization $site, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
-		/** @var struct_type_definition $base */
+		/** @var record_type_definition $base */
 		$base = $site->type_def();
 		$constructor = $base->constructor();
 		$arguments = [];
@@ -1513,24 +1578,29 @@ CPP;
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
 				$value = $this->value($argument, $globals, $declarations, $headers);
-				$arguments[] = $type->lower_cpp_conversion($conversion, $value, $argument);
+				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
 			}
 		}
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
 	}
 
 	/** Parameter types need only forward declarations in the native payload and owner declarations. */
-	private function constructor_forwards(ast_struct_declaration $record): string
+	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
-		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
-			$type = $parameter->type_def();
+		$types = [];
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
+		foreach ($record->methods as $method) {
+			if (!$method->has_virtual_dispatch()) continue;
+			foreach (self::signature_application_types($method) as $type) $types[] = $type;
+		}
+		foreach ($types as $type) {
 			if ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
 					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
-			} elseif ($type instanceof struct_type_definition) {
+			} elseif ($type instanceof record_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
-			} elseif ($type instanceof struct_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 		}
 		return implode('', $forwards);
 	}
@@ -1553,13 +1623,20 @@ CPP;
 			return $function->parent->definition->cpp_type() . '::' . Cpp_Identifier::source($function->parent->short_name)
 				. '(' . implode(', ', $parameters) . ')';
 		}
-		if ($function->has_receiver()) {
+		if ($function->has_receiver() && !$function->has_virtual_dispatch()) {
 			array_unshift($parameters, '[[maybe_unused]] ' . $function->parent->definition->cpp_type()
 				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . self::function_name($function)
+		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
 			. '(' . implode(', ', $parameters) . ')';
+	}
+
+	/** Payload member declarations live inside scpp_records; qualify application signature types. */
+	private function member_type(type_definition $type): string
+	{
+		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)
+			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
 
 	/** Share native parameter names, types, passing modes and includes. @param bool[] $headers @return string[] */
@@ -1569,7 +1646,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if ($function->is_constructor() && ($type instanceof struct_handle_definition || $type instanceof struct_type_definition)) {
+			if (($function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -1601,26 +1678,32 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** A virtual slot has the same native member name throughout its inheritance chain. */
+	private static function virtual_name(ast_function_declaration $method): string
+	{
+		return 'scpp_virtual_' . self::name_component($method->short_name);
+	}
+
 	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */
 	private static function self_value_constructor(ast_function_declaration $constructor): bool
 	{
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Application types named by a callable signature. @return \Generator<struct_handle_definition|struct_type_definition|enum_type_definition> */
+	/** Application types named by a callable signature. @return \Generator<record_handle_definition|record_type_definition|enum_type_definition> */
 	public static function signature_application_types(ast_function_declaration $function): \Generator
 	{
 		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
 		$type = $function->return_type_def();
 		if ($type instanceof generator_type_definition) {
 			foreach ([$type->iteration_value_type(), $type->iteration_key_type()] as $output) {
-				if ($output instanceof struct_handle_definition || $output instanceof struct_type_definition || $output instanceof enum_type_definition) yield $output;
+				if ($output instanceof record_handle_definition || $output instanceof record_type_definition || $output instanceof enum_type_definition) yield $output;
 			}
 		}
-		if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
+		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			if ($type instanceof struct_handle_definition || $type instanceof struct_type_definition || $type instanceof enum_type_definition) yield $type;
+			if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
 		}
 	}
 
@@ -1705,7 +1788,7 @@ CPP;
 
 	public static function global_name(ast_global_declaration $declaration): string
 	{
-		if ($declaration->parent instanceof ast_struct_declaration) {
+		if ($declaration->parent instanceof ast_record_declaration) {
 			return $declaration->parent->definition->cpp_type() . '::' . self::property_name($declaration);
 		}
 		return 'var_' . self::qualified_name($declaration);
@@ -1713,7 +1796,7 @@ CPP;
 
 	public static function function_name(ast_function_declaration $declaration): string
 	{
-		if ($declaration->parent instanceof ast_struct_declaration) {
+		if ($declaration->parent instanceof ast_record_declaration) {
 			$owner = self::qualified_name($declaration->parent);
 			return 'method_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
 		}

@@ -20,8 +20,12 @@ final readonly class cpp_program_output
 	/** @var string[] Relative artifact path -> complete text. */
 	public array $files /** array<string,string> */;
 
+	/** @var string[][] Native owning source -> requested adapter header paths; retained text lives in files. */
+	public array $source_adapters /** array<string,list<string>> */;
+
 	/** CONSTRUCTOR */
 	/**
+	 * @param string[][] $source_adapters
 	 * @param string[] $source_units
 	 * @param string[] $files
 	 * @param string[] $native_sources
@@ -29,7 +33,7 @@ final readonly class cpp_program_output
 	 * @param string[] $link_inputs
 	 */
 	public function __construct(string $entry_path, array $source_units /** array<string,string> */,
-		array $files /** array<string,string> */, array $native_sources /** list<string> */ = [], array $link_inputs /** list<string> */ = [], array $emitted_sources /** list<string> */ = [], string $cpp_namespace = 'App')
+		array $files /** array<string,string> */, array $native_sources /** list<string> */ = [], array $link_inputs /** list<string> */ = [], array $emitted_sources /** list<string> */ = [], string $cpp_namespace = 'App', array $source_adapters /** array<string,list<string>> */ = [])
 	{
 		$this->entry_path = $entry_path;
 		$this->cpp_namespace = $cpp_namespace;
@@ -38,6 +42,7 @@ final readonly class cpp_program_output
 		$this->native_sources = $native_sources;
 		$this->source_units = $source_units;
 		$this->files = $files;
+		$this->source_adapters = $source_adapters;
 	}
 
 	/** METHODS */

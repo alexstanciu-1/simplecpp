@@ -10,7 +10,7 @@ final class Function_Preparation
 	public static function reset(ast_function_declaration $function): void
 	{
 		$function->reset_preparation();
-		self::reset_body($function->body());
+		if ($function->optional_body() !== null) self::reset_body($function->body());
 	}
 
 	/** Reset every supported body fact before a new traversal, including expression occurrences. */
@@ -115,7 +115,7 @@ final class Function_Preparation
 			}
 			return;
 		}
-		if (($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
 		}
@@ -147,11 +147,11 @@ final class Function_Preparation
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
-		/** @var struct_type_definition[] $iterators */
+		/** @var record_type_definition[] $iterators */
 		$iterators = [];
 		foreach ($symbols->declarations as $declaration)
 		{
-			if ($declaration instanceof ast_struct_declaration && $declaration->interface_reference !== null) {
+			if ($declaration instanceof ast_record_declaration && $declaration->interface_reference !== null) {
 				$iterators[] = $declaration->definition;
 			}
 			if (!($declaration instanceof ast_function_declaration)) {
@@ -160,6 +160,7 @@ final class Function_Preparation
 			if ($declaration->return_type_ready()) {
 				continue;
 			}
+			$dependencies?->forget($declaration);
 			$type = $declaration->return_type_reference === null ? null
 				: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true);
 			if ($type === null) {
@@ -176,7 +177,7 @@ final class Function_Preparation
 				if ($parameter_type === null) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 				}
-				if ($parameter_type instanceof struct_type_definition && $parameter->mode === passing_mode::reference) {
+				if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 				}
 				$parameter->settle_type($parameter_type);
@@ -206,6 +207,12 @@ final class Function_Preparation
 			}
 			$declaration->settle_return_type($type);
 		}
+		foreach ($symbols->declarations as $declaration) {
+			if ($declaration instanceof ast_function_declaration) Method_Preparation::contract($declaration, $symbols, $dependencies);
+		}
+		foreach ($symbols->declarations as $declaration) {
+			if ($declaration instanceof ast_record_declaration) Method_Preparation::record_contract($declaration->definition);
+		}
 		foreach ($iterators as $iterator) $iterator->prepare_iterator($symbols);
 		return $symbols;
 	}
@@ -216,7 +223,7 @@ final class Function_Preparation
 		foreach ($file->functions() as $declaration) {
 			$node = $declaration;
 			$node->return_type_def();
-			(new Preparation())->function_body($node->body(), $symbols, null, $dependencies);
+			if ($node->optional_body() !== null) (new Preparation())->function_body($node->body(), $symbols, null, $dependencies);
 		}
 	}
 }

@@ -15,6 +15,8 @@ def run(*args):
 
 assert run('--help').returncode == 0
 assert run('parse').returncode == 2
+assert run('build').returncode == 2
+assert b'php main.php build' in run('--help').stdout
 with tempfile.TemporaryDirectory() as directory:
     source = Path(directory) / 'source.input'
     for flavor, text, first in [('cpp', b'int x=3;', 'identifier'),
@@ -43,7 +45,7 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_bytes(b'let x=1;\nlet y=')
     result = run('parse', 'js', source)
     assert result.returncode == 1 and not result.stdout
-    assert b':2:7: Expected integer or name' in result.stderr
+    assert b':2:7: Expected identifier' in result.stderr
     source.write_bytes('"é\x00"'.encode())
     assert json.loads(run('tokens', 'php', source).stdout)['tokens'][0]['text_hex'] == '22c3a90022'
     source.write_bytes(b'"\xff\x00"')

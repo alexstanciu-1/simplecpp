@@ -72,7 +72,9 @@ final class ast_file_node extends ast_node
 	public function settle_preparation(): void
 	{
 		foreach ($this->functions() as $function) {
-			$function->body()->require_prepared();
+			$function->return_type_def();
+			if ($function->is_abstract && !$function->method_contract_ready) throw new \LogicException('Abstract method contract is not prepared');
+			$function->optional_body()?->require_prepared();
 		}
 		foreach ($this->globals() as $global) {
 			$global->type_def();
@@ -111,7 +113,7 @@ final class ast_file_node extends ast_node
 				&& $declaration->parent instanceof ast_method_owner && $declaration->parent->parent === $this)) {
 				throw new \LogicException('Invalid AST declaration ownership');
 			}
-			if ($declaration instanceof ast_function_declaration) {
+			if ($declaration instanceof ast_function_declaration && !$declaration->is_abstract) {
 				$declaration->body();
 			}
 		}

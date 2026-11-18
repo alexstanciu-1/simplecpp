@@ -31,7 +31,7 @@ final class Declaration_Diagnostics
 				$first[$key] = $node;
 			}
 			if ($node instanceof ast_function_declaration) {
-				array_push($errors, ...self::locals($node->body()));
+				array_push($errors, ...self::callable($node));
 			}
 		}
 		return self::ordered($errors);
@@ -95,7 +95,7 @@ final class Declaration_Diagnostics
 		foreach ($files as $file)
 		{
 			foreach ($file->functions() as $function) {
-				array_push($errors, ...self::locals($function->body()));
+				array_push($errors, ...self::callable($function));
 			}
 			$main = $file->main();
 			if ($main !== null) {
@@ -105,14 +105,28 @@ final class Declaration_Diagnostics
 		return self::ordered($errors);
 	}
 
+	/** Bodyless signatures have no local scope; inspect their owned parameter inventory without allocating a scope. @return diagnostic[] */
+	private static function callable(ast_function_declaration $function): array /** list<diagnostic> */
+	{
+		if ($function->optional_body() !== null) return self::locals($function->body());
+		$first = [];
+		$errors = [];
+		foreach ($function->parameters as $parameter) {
+			$name = $parameter->short_name;
+			if (isset($first[$name])) $errors[] = self::duplicate($parameter, $first[$name], 'parameter');
+			else $first[$name] = $parameter;
+		}
+		return $errors;
+	}
+
 	/** Diagnostic label for a published declaration. */
 	private static function kind(ast_declaration_interface $node): string
 	{
 		return match (true) {
-			$node instanceof ast_struct_declaration => 'struct',
+			$node instanceof ast_record_declaration => 'struct',
 			$node instanceof ast_enum_declaration => 'enum',
-			$node instanceof ast_function_declaration && $node->parent instanceof ast_struct_declaration => 'method',
-			$node instanceof ast_global_declaration && $node->parent instanceof ast_struct_declaration => 'static property',
+			$node instanceof ast_function_declaration && $node->parent instanceof ast_record_declaration => 'method',
+			$node instanceof ast_global_declaration && $node->parent instanceof ast_record_declaration => 'static property',
 			$node instanceof ast_global_declaration => 'global',
 			$node instanceof ast_constant_declaration => 'constant',
 			default => 'function',
