@@ -74,9 +74,10 @@ operand and conversion to select the target literal suffix, pass an exact local 
 or normalize arithmetic for the canonical overload. Conversion headers are collected
 before the call. String arguments retain their value-copy semantics.
 
-Generated application code and public vector headers remain template-free. The existing
-runtime's private storage implementation continues using std::vector. No runtime ABI,
-publication format or metadata schema changes are needed for these already planned members.
+Generated application code and public vector headers remain template-free. Runtime
+storage now uses the reusable [concrete recipe engine](../../tools/api_generator/concrete_templates.md)
+and a generated live-element buffer instead of std::vector. The public vector ABI and
+compiler preparation model are unchanged.
 
 Collection, preparation reset, inspection and lowering traverse the new syntax nodes.
 Existing symbol watches, grouped preparation queues and generation cleanup remain the

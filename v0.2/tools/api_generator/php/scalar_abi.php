@@ -57,3 +57,27 @@ function nativeScalarConversion(array $plan, string $target, string $source, str
     }
     throw new \RuntimeException('Native adapter lacks a validated conversion');
 }
+
+/** Concrete instantiations call named checked bindings; proven native conversions need only a cast. */
+function concreteNativeScalarConversion(array $plan, string $target, string $source, string $expression): string {
+    if ($target === 'string' && $source === 'const char*') return "string{" . $expression . "}";
+    foreach ($plan['conversions'] as $conversion) {
+        if (!$conversion['native_source'] || $conversion['target'] !== $target || $conversion['source'] !== $source) continue;
+        if (!$conversion['can_fail']) return "static_cast<$target>($expression)";
+        foreach ($plan['checked_conversions']['functions'] ?? [] as $binding) {
+            if ($binding['target'] === $target && scalarNativeIdentity($plan, $binding['source']) === $source) {
+                return "{$binding['symbol']}($expression)";
+            }
+        }
+        // Native int fits the canonical integer even when the matching optional width is not published.
+        if ($source === 'int') {
+            foreach ($plan['checked_conversions']['functions'] ?? [] as $binding) {
+                if ($binding['target'] === $target && $binding['source'] === 'int64') {
+                    return "{$binding['symbol']}(static_cast<int64>($expression))";
+                }
+            }
+        }
+        throw new \RuntimeException('Concrete native adapter lacks a named checked binding');
+    }
+    throw new \RuntimeException('Native adapter lacks a validated conversion');
+}
