@@ -88,11 +88,12 @@ final class record_type_definition extends type_definition implements dependency
 		$this->base_type = null;
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;
-			if ($this->declaration->kind === record_kind::class_type) {
-				throw new diagnostic($written->source(), $written->byte_start(), 'Class inheritance is deferred');
-			}
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
-			if (!($base instanceof self)) throw new diagnostic($written->source(), $written->byte_start(), 'Base must be a struct');
+			if ($base instanceof shared_record_type_definition && $base->required) $base = $base->payload;
+			if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
+				throw new diagnostic($written->source(), $written->byte_start(),
+					$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
+			}
 			$base->prepare_layout($symbols, $active, $work);
 			$this->base_type = $base;
 			$this->validate_inherited_members();
@@ -291,9 +292,12 @@ final class shared_record_type_definition extends record_handle_definition
 	public function prepare_binary(ast_binary_expression $value): void
 	{
 		$peer = $value->left->type_def() === $this ? $value->right : $value->left;
-		if (($peer->type_def() !== type_null::instance() && !($peer->type_def() instanceof self && $peer->type_def()->payload === $this->payload)) || !in_array($value->operator, [
+		$peer_type = $peer->type_def();
+		$compatible = $peer_type === type_null::instance()
+			|| ($peer_type instanceof self && ($this->admits_view($peer_type) || $peer_type->admits_view($this)));
+		if (!$compatible || !in_array($value->operator, [
 			binary_operator::equal, binary_operator::not_equal, binary_operator::identical, binary_operator::not_identical], true)) {
-			throw new diagnostic($value->source(), $value->byte_start(), 'Shared owners require equality against null or the same shared type');
+			throw new diagnostic($value->source(), $value->byte_start(), 'Shared owners require equality against null or related shared types');
 		}
 		$value->settle_binary(type_bool::instance(), $this);
 	}
@@ -320,6 +324,13 @@ final class shared_record_type_definition extends record_handle_definition
 			|| ($expr->left instanceof ast_name_expression && $expr->right instanceof ast_name_expression);
 	}
 
+	/** Exact struct owners stay exact; class views admit only settled derived-to-base ancestry. */
+	private function admits_view(self $source): bool
+	{
+		return $source->payload === $this->payload || ($source->payload->declaration->kind === record_kind::class_type
+			&& $this->payload->declaration->kind === record_kind::class_type && $source->payload->derives_from($this->payload));
+	}
+
 	/** Same-payload contracts share storage; required destinations check potentially empty owners. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
@@ -330,6 +341,9 @@ final class shared_record_type_definition extends record_handle_definition
 		if ($source instanceof self && $source->payload === $this->payload) {
 			return $this->required && !$source->required ? value_conversion::require_owner : value_conversion::identity;
 		}
+		if ($source instanceof self && $this->admits_view($source)) {
+			return $this->required && !$source->required ? value_conversion::require_owner_view : value_conversion::owner_view;
+		}
 		if (!$this->required && $source === type_null::instance()
 			&& ($context === conversion_context::assignment || $context === conversion_context::typed_destination)) {
 			return value_conversion::empty_owner;
@@ -337,6 +351,15 @@ final class shared_record_type_definition extends record_handle_definition
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
+	/** Select the shared-view pattern from settled conversion facts; no ancestry query occurs here. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion !== value_conversion::owner_view && $conversion !== value_conversion::require_owner_view) return null;
+		if ($source === null) throw new \LogicException('View conversion requires a concrete source type');
+		return Cpp_Shared_View::request($source, $this, $conversion === value_conversion::require_owner_view);
+	}
+
+	/** Emit remaining presence/empty conversion after any concrete view adapter. */
 	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
 		if ($conversion === value_conversion::require_owner) return $this->cpp_type() . '::require(' . $value . ')';

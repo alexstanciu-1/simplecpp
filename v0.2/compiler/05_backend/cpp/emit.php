@@ -31,6 +31,8 @@ final class Cpp_Emitter
 	private bool $qualified_adapters = false;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
+	/** Private demand collected during this source unit’s existing lowering walk. */
+	private Cpp_Adapters $inline_adapters;
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -40,9 +42,23 @@ final class Cpp_Emitter
 	{
 		$this->headers = $headers;
 		$this->root = $root;
+		$this->inline_adapters = new Cpp_Adapters($root);
 	}
 
 	/** METHODS */
+	/** Route prepared conversions through private adapter demand without changing ordinary type-owned lowering. */
+	private function conversion(type_definition $type, int $conversion /** uint16 */, string $value,
+		?ast_expression $syntax = null, ?type_definition $source_type = null): string
+	{
+		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
+	}
+
+	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
+	public function adapter_files(): array /** array<string,string> */
+	{
+		return $this->inline_adapters->files();
+	}
+
 	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
 	public function declaration(ast_function_declaration|ast_global_declaration|ast_type_declaration $node,
 		array &$includes /** array<string,bool> */): string
@@ -153,12 +169,13 @@ final class Cpp_Emitter
 		}
 		if ($literal instanceof ast_name_expression && $type instanceof enum_type_definition) return $type->cpp_case($literal->declaration());
 		return self::plain_integer_literal($literal, $conversion)
-			?? $type->lower_cpp_conversion($conversion, $literal->type_def()->lower_cpp_literal($literal), $literal);
+			?? $this->conversion($type, $conversion, $literal->type_def()->lower_cpp_literal($literal), $literal);
 	}
 
-	/** Pointer-sized owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
+	/** Two-pointer owner layout available before either the record or its counted allocation is complete. @param bool[] $includes */
 	public function owner_declaration(shared_record_type_definition $type, array &$includes /** array<string,bool> */): string
 	{
+		$includes['scpp/owner_access.hpp'] = true;
 		$payload = $type->payload;
 		$name = Cpp_Identifier::source($payload->declaration->short_name);
 		$forward = $this->constructor_forwards($payload->declaration) . self::namespace_body($payload->cpp_namespace(), "struct $name;\n");
@@ -173,31 +190,39 @@ final class Cpp_Emitter
 #define $guard
 {$forward}struct $owner {
 	struct allocation;
-	allocation* ptr{};
+	::scpp::application_control* ptr{};
+	$record* view{};
 	$owner() noexcept = default;
 	static $owner make($params);
 $presence	explicit operator bool() const noexcept { return ptr != nullptr; }
 	$record* operator->() const;
 	$owner(const $owner& other) noexcept;
-	$owner($owner&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	$owner($owner&& other) noexcept : ptr(other.ptr), view(other.view) { other.ptr = nullptr; other.view = nullptr; }
 	$owner& operator=($owner other) noexcept {
 		auto* old = ptr;
+		auto* old_view = view;
 		ptr = other.ptr;
+		view = other.view;
 		other.ptr = old;
+		other.view = old_view;
 		return *this;
 	}
 	~$owner();
 };
 struct $weak {
-	{$owner}::allocation* ptr{};
+	::scpp::application_control* ptr{};
+	$record* view{};
 	$weak() noexcept = default;
-	explicit $weak(const $owner& owner) noexcept : ptr(owner.ptr) { retain(); }
-	$weak(const $weak& other) noexcept : ptr(other.ptr) { retain(); }
-	$weak($weak&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+	explicit $weak(const $owner& owner) noexcept : ptr(owner.ptr), view(owner.view) { retain(); }
+	$weak(const $weak& other) noexcept : ptr(other.ptr), view(other.view) { retain(); }
+	$weak($weak&& other) noexcept : ptr(other.ptr), view(other.view) { other.ptr = nullptr; other.view = nullptr; }
 	$weak& operator=($weak other) noexcept {
 		auto* old = ptr;
+		auto* old_view = view;
 		ptr = other.ptr;
+		view = other.view;
 		other.ptr = old;
+		other.view = old_view;
 		return *this;
 	}
 	void retain() noexcept;
@@ -218,7 +243,7 @@ CPP;
 		$guard = $this->owner_guard($type) . '_DEF';
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
-		$allocation_ctor = $constructor === null ? 'allocation() : value{} {}' : "allocation($params);";
+		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
 		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
 		$presence = $type->payload->declaration->kind === record_kind::class_type
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
@@ -226,46 +251,35 @@ CPP;
 		return <<<CPP
 #ifndef $guard
 #define $guard
-struct {$owner}::allocation {
+struct {$owner}::allocation : ::scpp::application_control {
 	using payload_type = $payload;
 	union { payload_type value; };
-	__UINT32_TYPE__ count{1};
-	__UINT32_TYPE__ weak_count{1}; // Includes one hold until payload destruction completes.
 	$allocation_ctor
 	~allocation() {} // The last strong owner ends the active union member's lifetime.
-	void retain_strong() noexcept {
-		if (count == __UINT32_MAX__) __builtin_trap();
-		++count;
+	static void destroy_value(::scpp::application_control* control) noexcept {
+		static_cast<allocation*>(control)->value.~payload_type();
 	}
-	void release_weak() noexcept { if (--weak_count == 0) delete this; }
+	static void dispose_allocation(::scpp::application_control* control) noexcept {
+		delete static_cast<allocation*>(control);
+	}
 };
 $factory
 inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
-	return &ptr->value;
+	return view;
 }
 $presence
-inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr) {
+inline {$owner}::$owner(const $owner& other) noexcept : ptr(other.ptr), view(other.view) {
 	if (ptr) ptr->retain_strong();
 }
-inline {$owner}::~$owner() {
-	if (ptr && --ptr->count == 0) {
-		using payload_type = $payload;
-		ptr->value.~payload_type();
-		ptr->release_weak();
-	}
-}
-inline void {$weak}::retain() noexcept {
-	if (ptr) {
-		if (ptr->weak_count == __UINT32_MAX__) __builtin_trap();
-		++ptr->weak_count;
-	}
-}
+inline {$owner}::~$owner() { if (ptr) ptr->release_strong(); }
+inline void {$weak}::retain() noexcept { if (ptr) ptr->retain_weak(); }
 inline $owner {$weak}::lock() const noexcept {
 	$owner result;
 	if (ptr && ptr->count) {
 		ptr->retain_strong();
 		result.ptr = ptr;
+		result.view = view;
 	}
 	return result;
 }
@@ -288,8 +302,8 @@ CPP;
 		}
 		$forward = implode(', ', $args);
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
-		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : value($payload_args) {}\n";
-		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tresult.ptr = new allocation($forward);\n\treturn result;\n}\n";
+		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
+		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
 	}
 
 	/** Public layouts and unit-local uses can independently request the same concrete owner. */
@@ -329,6 +343,7 @@ CPP;
 	private function unit(?prepared_entry $entry, ast_file_node $file, string $entry_name): string
 	{
 		$this->enum_helpers = [];
+		$this->inline_adapters = new Cpp_Adapters($this->root);
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -396,6 +411,11 @@ CPP;
 			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+		}
+		foreach ($this->inline_adapters->dependencies() as $type) {
+			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
+			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
+			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
 		}
 		$prototypes = '';
 		$unit_headers = [];
@@ -489,7 +509,15 @@ CPP;
 			$header .= '#include "' . $include . "\"\n";
 		}
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
-		return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+		$adapter_files = $this->adapter_files();
+		if ($adapter_files === []) {
+			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+		}
+		$text = $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		foreach ($adapter_files as $path => $body) {
+			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
+		}
+		return $text . self::namespace_body($this->root, implode("\n", $definitions));
 	}
 
 	/**
@@ -630,7 +658,7 @@ CPP;
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$type = $statement->target->type_def();
 				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
-				$lines[] = "\t" . $field . ' = ' . $type->lower_cpp_conversion($statement->conversion, $value, $statement->value) . ';';
+				$lines[] = "\t" . $field . ' = ' . $this->conversion($type, $statement->conversion, $value, $statement->value) . ';';
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
@@ -679,7 +707,7 @@ CPP;
 					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
 						logical_root: $conversion === value_conversion::identity);
 					$type = $function->return_type_def();
-					$value = $type->lower_cpp_conversion($conversion, $value, $statement->value);
+					$value = $this->conversion($type, $conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
 						$required_headers[$header] = true;
 					}
@@ -773,7 +801,7 @@ CPP;
 		$execution = $statement->execution_type();
 		$conversion = $statement->conversion();
 		if ($conversion !== value_conversion::identity) {
-			$right = $execution->lower_cpp_conversion($conversion, $right, $statement->value);
+			$right = $this->conversion($execution, $conversion, $right, $statement->value);
 			foreach ($execution->conversion_headers($conversion) as $header) {
 				$headers[$header] = true;
 			}
@@ -782,14 +810,14 @@ CPP;
 			$headers[$header] = true;
 		}
 		if ($statement->left_conversion() !== value_conversion::identity) {
-			$left = $execution->lower_cpp_conversion($statement->left_conversion(), $left, source_type: $type);
+			$left = $this->conversion($execution, $statement->left_conversion(), $left, source_type: $type);
 			foreach ($execution->conversion_headers($statement->left_conversion()) as $header) {
 				$headers[$header] = true;
 			}
 		}
 		$result = $execution->lower_cpp_binary($statement->operator, $left, $right, $execution);
 		if ($statement->write_back() !== value_conversion::identity) {
-			$result = $type->lower_cpp_conversion($statement->write_back(), $result, source_type: $execution);
+			$result = $this->conversion($type, $statement->write_back(), $result, source_type: $execution);
 			foreach ($type->conversion_headers($statement->write_back()) as $header) {
 				$headers[$header] = true;
 			}
@@ -922,7 +950,7 @@ CPP;
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
-		return $prefix . ' = ' . $type->lower_cpp_conversion($conversion, $operand, $value);
+		return $prefix . ' = ' . $this->conversion($type, $conversion, $operand, $value);
 	}
 
 	/**
@@ -1018,7 +1046,7 @@ CPP;
 				$required_headers[$header] = true;
 			}
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
-			return '(' . $type->lower_cpp_conversion($conversion, $operand, $value->operand) . ')';
+			return '(' . $this->conversion($type, $conversion, $operand, $value->operand) . ')';
 		}
 		if ($value instanceof ast_unary_expression) {
 			$operand_safe = false;
@@ -1063,13 +1091,13 @@ CPP;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $type->lower_cpp_conversion($value->left_conversion, $left, $value->left);
+				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
 				foreach ($type->conversion_headers($value->left_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
 			}
 			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $type->lower_cpp_conversion($value->right_conversion, $right, $value->right);
+				$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
 				foreach ($type->conversion_headers($value->right_conversion) as $header) {
 					$required_headers[$header] = true;
 				}
@@ -1130,7 +1158,7 @@ CPP;
 					if ($conversion !== value_conversion::identity) {
 						$type = $function->parameters[0];
 						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
-						$operand = $type->lower_cpp_conversion($conversion, $operand, $operands[0]);
+						$operand = $this->conversion($type, $conversion, $operand, $operands[0]);
 					}
 					return $symbol . '(' . $operand . ')';
 				}
@@ -1199,7 +1227,7 @@ CPP;
 					$type->conversion_headers($conversion)) as $header) {
 					$required_headers[$header] = true;
 				}
-				return $type->lower_cpp_conversion($conversion, $literal, $declaration->initializer);
+				return $this->conversion($type, $conversion, $literal, $declaration->initializer);
 			}
 			if ($declaration instanceof ast_global_declaration) {
 				$name = self::global_name($declaration);
@@ -1289,7 +1317,7 @@ CPP;
 				$required_headers[$header] = true;
 			}
 			if ($parameter->mode === passing_mode::value) {
-				$operand = $type->lower_cpp_conversion($conversion, $operand, $argument);
+				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
 			if (!$method && count($function->parameters) === 1) {
@@ -1366,7 +1394,7 @@ CPP;
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
 				$value = $this->value($argument, $globals, $declarations, $headers);
-				$arguments[] = $type->lower_cpp_conversion($conversion, $value, $argument);
+				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
 			}
 		}
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';

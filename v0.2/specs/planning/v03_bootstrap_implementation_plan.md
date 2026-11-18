@@ -394,23 +394,22 @@ instance-property exception. See [implementation details](../../compiler/docs/cl
 
 #### Follow-up boundaries
 
-After this slice, discuss ownership-preserving shared derived/base views, then
-native virtual/abstract behavior. Upcasts must preserve allocation identity and
-concrete destruction, but their representation is still undecided. The existing
-struct extends implementation is not authorization for cross-type shared handles.
+The follow-up below implements ownership-preserving class base views. Native
+virtual/abstract behavior remains the next separate discussion. Explicit shared
+struct handles retain exact-type conversion admission for this bounded slice.
 
 Defer `ref Node`, `Node*`, borrowed object parameters, stored/returned borrows,
-new unique/value overrides, interfaces, virtual overrides, shared upcasts,
+new unique/value overrides, interfaces, virtual overrides, shared-struct upcasts,
 downcasts, parent/generation lifetime rules and cycle management. Ordinary PHP-like
 object passing does not require borrows: shared identity already supports object
 mutation. Explicit PHP-style reference parameters alias variable/handle storage;
 they are not a reason to introduce object borrowing now.
 
-### Proposed next slice — class inheritance and shared base views
+### Implemented slice — class inheritance and shared base views
 
-Doc Status: planning. The class-defaults slice is complete; this is a follow-up
-proposal, not implemented behavior. Settle the ownership representation before
-changing shared handles. Keep virtual methods and overrides out of this slice.
+Doc Status: planning. Execution record for the agreed follow-up; the owning
+inheritance specification remains semantic authority. Virtual methods and
+override enforcement are not implemented by this slice.
 
 Proof target:
 
@@ -422,15 +421,18 @@ $literal = new IntegerLiteral();
 echo start_of($literal);
 ```
 
-Recommended representation for discussion: a typed view pointer plus a pointer
+Implemented representation: a typed view pointer plus a pointer
 to the shared control block. A single allocation owns the control block and concrete
 payload; derived/base handles retain that allocation and may have different typed
 view pointers. Concrete destruction belongs to the allocation's retained destroy
 operation, not the static type of the view. This costs a second pointer per handle;
 do not assume an exact-type allocation pointer can be reinterpreted as a base
-allocation. Compare a runtime-owned implementation with the current generated
-owner machinery before selecting the precise layout or destruction mechanism.
-No ABI framework is proposed.
+allocation. The runtime owns the control block and count operations; generated
+allocation callbacks destroy the concrete payload and release its storage. A
+concrete inline adapter transfers each demanded source/target view pair. The
+application owner backend supplies that pattern; the reusable engine owns
+deduplication and emission, without C++ templates. No
+ABI framework or new expression facts were introduced.
 
 Weak views must retain the same control block and only expose their typed pointer
 after successfully obtaining strong ownership. An expired cached view pointer
@@ -438,7 +440,7 @@ must never be dereferenced. Identity compares the allocation/control block, not
 an adjusted view address. Preserve the current thread-confined ownership contract;
 this slice does not add thread-safe counters.
 
-| Owner | Proposed bounded change |
+| Owner | Bounded change |
 | --- | --- |
 | Parser / record AST | Reuse the single written base and existing declaration kind; no new member inventories. |
 | Declaration preparation | Admit single class-to-class inheritance, settle ancestry before consumers and preserve original field/constructor owners. Reject cycles and cross-kind bases. |
@@ -446,21 +448,85 @@ this slice does not add thread-safe counters.
 | Runtime ownership / C++ lowering | Preserve the control block and concrete destruction while C++ adjusts the typed view. Emit settled conversions without repeating ancestry searches. |
 | Incremental | Watch nominal ancestry and callable contracts through existing stable symbols. Base edits invalidate dependent conversions and cached callers, including when native spelling stays unchanged. |
 
-Verification checklist before completion:
+Verification:
 
-- [ ] Base field access and construction through a derived class in cpp/php/js.
-- [ ] Required/optional derived-to-base parameters, returns and assignments;
+- [x] Base field access and construction through a derived class in cpp/php/js.
+- [x] Required/optional derived-to-base parameters, returns and assignments;
   preserve relaxed shared fields, known-null rejection and runtime presence checks.
-- [ ] One allocation identity across views, alias mutation and exactly-once
+- [x] One allocation identity across views, alias mutation and exactly-once
   concrete destruction after the final strong reference, regardless of view type.
-- [ ] Weak locking before/after expiry; copies and reassignment release the right
+- [x] Weak locking before/after expiry; copies and reassignment release the right
   allocation; failure paths clean up on Clang/GCC with memory checking.
-- [ ] Reject unrelated conversion, downcasts, inheritance cycles and cross-kind
+- [x] Reject unrelated conversion, downcasts, inheritance cycles and cross-kind
   bases; no borrowed-object or implicit owning-this capability is introduced.
-- [ ] Edit/remove/restore base edges with unchanged callers; compare retained/fresh
+- [x] Edit/remove/restore base edges with unchanged callers; compare retained/fresh
   diagnostics and C++, check no-op/unrelated reuse and rebuild native consumers.
-- [ ] Record handle size/allocation impact. Do not claim execution or compilation
+- [x] Record handle size/allocation impact. Do not claim execution or compilation
   speed improvements without measurements.
+
+The repeatable `shared_upcasts_native.py --memcheck` proof runs cpp/php/js with
+Clang and GCC: three-level ancestry, explicit/inherited base constructors,
+field mutation through views, parameter/return/property conversions, null checks,
+related-view identity, weak expiry and concrete destruction. A derived-only
+owned field proves cleanup through the last base view; a throwing derived
+constructor proves partial-construction cleanup. Successful and failing ancestry
+edits compare retained/fresh output and diagnostics, with native rebuilding,
+no-op and unrelated reuse checks. Unsupported method replacement stays rejected.
+
+On the tested 64-bit Clang/GCC targets, strong and weak handles are each 16 bytes
+(previously 8); the common control is 24 bytes (previous counters were 8). The
+fixture's 24-byte Leaf payload occupies one 48-byte allocation. Upcasting creates
+no allocation. These are storage measurements, not timing/speedup claims.
+
+The existing class-defaults, extends, weak, shared-reference and constructor
+proofs protect previous behavior. The runtime header is independently compiled
+on both compilers; generator publication/input checks and generated freshness
+also cover the publication change. Generator contract capture passes 130 accepted
+and 247 rejected runtime cases. Isolated committed-HEAD comparison across all 130
+accepted cases confirms that only `public/scpp/owner_access.hpp` changes. The two
+frozen-baseline CTests remain red on pre-existing arithmetic-header/runtime-source
+and input-hash drift, reproduced with committed HEAD; only the ownership-header
+hashes were updated here. Do not describe those frozen comparisons as passing.
+See [implementation details](../../compiler/docs/shared_upcasts.md).
+
+### Concrete inline adapter engine — implemented
+
+The first pattern handles admitted shared class upcasts. Preparation still owns
+ancestry and nullability; lowering consumes its conversion and requests a concrete
+native signature/body. The engine knows parameter modes, result type, explicit
+provider headers and exception contract. It does not infer ownership semantics.
+Required/optional occurrences share a native adapter; required-presence checks
+remain at the use. No new prepared expression facts or AST traversal were added.
+
+Source-private requests are merged as immutable text during bundle publication.
+Per-source demand survives incremental reuse; the final demand union determines
+which fragments remain. Generated fragments follow complete type dependencies;
+they are internal includes, not standalone public headers. Single-file output
+embeds the same definitions. See [engine ownership](../../compiler/docs/inline_adapters.md).
+
+Verification (`inline_adapters_native.py`, plus `shared_upcasts_native.py --memcheck`):
+
+- [x] cpp/php/js native correctness on Clang and GCC, including constructor arguments.
+- [x] One adapter per native signature despite multiple uses and presence contracts.
+- [x] No adapter for unused pairs and no C++ application-view template.
+- [x] Retained/fresh equivalence after demand removal, final-use removal, restoration,
+  error/retry/recovery and root-namespace edits; obsolete fragments are deleted.
+- [x] No-op preparation/emission reuse and unchanged adapter-using source reuse.
+- [x] Persistent Ninja builds on Clang/GCC for cpp/php/js: no-op preserves object
+  and executable timestamps; a single-consumer edit rebuilds only changed C++;
+  touching an adapter header rebuilds exactly its consumers through native depfiles.
+- [x] Successful source deletion/restoration: removing one consumer preserves the
+  surviving cached consumer and adapter; removing the last use retires the fragment
+  from disk and the manifest. Restoration recreates demand. Every revision matches
+  fresh output, preserves timestamps for unchanged artifacts and runs natively.
+  Source removal relinks without recompiling unrelated translation units.
+- [x] Global/custom namespaces, complete include ordering and standalone emission.
+- [x] Shared identity, null checks, concrete destruction and weak lifetime retained.
+
+Deferred: unique ownership conversion semantics, borrowing, downcasts, interfaces,
+virtual dispatch, arbitrary template parsing and new adapter patterns. Native
+reference/move parameter spelling is engine vocabulary, not source feature admission.
+No compile-time or execution-speed improvement is claimed without measurements.
 
 ### Mandatory override intent — agreed direction for the following slice
 

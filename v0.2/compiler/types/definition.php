@@ -311,10 +311,22 @@ abstract class type_definition
 		return $this->lower_cpp_conversion($conversion, $operand, $syntax);
 	}
 
+	/** A concrete adapter request for an already-prepared conversion; ordinary conversions need none. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		return null;
+	}
+
 	/** Consume transport flags and the already-approved scalar operation; never re-decide admission. */
-	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
+	final public function lower_cpp_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null, ?Cpp_Adapters $adapters = null): string
 	{
 		$source = $source_type ?? $syntax?->type_def();
+		$request = $this->cpp_conversion_adapter($conversion, $source);
+		if ($request !== null) {
+			if ($adapters === null) throw new \LogicException('Concrete conversion requires private adapter lowering');
+			$value = $adapters->call($request, [$value]);
+			$conversion = $request->continuation;
+		}
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
 			return $this->box_cpp($syntax, $value);
 		}

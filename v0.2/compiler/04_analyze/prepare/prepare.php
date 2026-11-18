@@ -987,6 +987,7 @@ final class Preparation
 		if ($base === null) throw new diagnostic($site->source(), $site->byte_start(), 'Base initialization requires a base');
 		if ($site->target !== null) {
 			$target = Type_Resolution::named($site->target, $this->symbols, $record->namespace, $this->owner, $this->dependencies);
+			if ($target instanceof shared_record_type_definition && $target->required) $target = $target->payload;
 			if ($target !== $base) throw new diagnostic($site->source(), $site->byte_start(), 'Initializer must select the immediate base');
 		}
 		if ($site->explicit && $base->constructor() === null) {

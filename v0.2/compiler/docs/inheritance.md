@@ -47,8 +47,8 @@ requires the base layout first and completes resource-bearing base dependencies
 through the existing split layout/owner headers. Runtime adapters in base
 initializers use qualified names, including when the application namespace is
 disabled: constructor-body imports are not in scope there. C++ performs memberwise copies,
-base/member construction and exception unwinding. Exact-type shared/weak owners
-retain their existing allocation and destruction protocol; no vtable is added.
+base/member construction and exception unwinding. Shared/weak owners use the runtime control block and typed view described in
+[shared base views](shared_upcasts.md); no payload vtable is added.
 For every effective authored constructor contract, the payload's own source emits
 its allocation factory once and collects complete parameter types. This applies
 equally to authored and inherited constructors. Empty shared/weak handle users
@@ -56,8 +56,10 @@ need only factory declarations; they do not emit inherited factory definitions.
 
 Deferred: inherited ordinary-method/static-member lookup, protected ordinary
 methods/static members, virtual/abstract declarations and overrides, interfaces,
-shared-handle upcasts, base-value slicing and explicit parent method calls beyond
-construction. New class ownership defaults and destructor syntax are not added.
+base-value slicing and explicit parent method calls beyond construction. The
+separate [class slice](classes.md) adds class defaults, and [shared base views](shared_upcasts.md)
+adds class inheritance/upcasts. Explicit shared-struct upcasts and authored
+destructor syntax remain deferred.
 
 Verification:
 

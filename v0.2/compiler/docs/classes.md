@@ -11,7 +11,7 @@ respective relationships. There is no second class preparation pipeline.
 Bare structs resolve to their inline payload. Bare classes resolve to a required
 shared identity; `?Class` resolves to its optional identity. The payload owns these
 canonical definitions once per declaration generation. Both class contracts lower
-to the same exact-type owner and counted allocation. Structs do not allocate an
+to the same typed owner view and counted allocation. Structs do not allocate an
 additional required identity. Written type references remain unchanged.
 
 ```php
@@ -53,8 +53,9 @@ function boundaries, optional defaults and exact weak locking are covered.
 `weak<Class>` locks to `?Class`; `shared<Class>` is rejected as a redundant storage
 spelling. Explicit shared struct behavior remains unchanged.
 
-Class inheritance, shared upcasts, virtuals, borrows, new value/unique overrides
-and general object-reference parameter extensions remain deferred. Required class
+Class inheritance and derived-to-base shared views are now covered by the
+[shared base-view slice](shared_upcasts.md). Virtuals, borrows, new value/unique
+overrides and general object-reference parameter extensions remain deferred. Required class
 locals currently require an initializer: the normative definite-assignment feature
 is not implemented by this slice. `$this` may be a field/method receiver, but obtaining
 an owning `$this` value is deferred until its ownership binding is defined.
