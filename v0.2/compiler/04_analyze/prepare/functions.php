@@ -180,6 +180,9 @@ final class Function_Preparation
 				if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 				}
+				if ($parameter_type instanceof application_vector_type && $parameter->mode === passing_mode::reference) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable application vector parameters are deferred');
+				}
 				$parameter->settle_type($parameter_type);
 				$default = $parameter->default_value;
 				if ($default !== null) {

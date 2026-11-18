@@ -82,10 +82,10 @@ modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded
 
 Type-reference syntax preserves nested arguments, including vector<vector<int>>;
 that syntax alone does not make nested container specializations available.
-The bounded application-vector slice now resolves `vector<Record>` for local storage:
+The bounded application-vector slice now resolves `vector<Record>` for local storage and by-value function/method signatures:
 struct elements use value copies and class elements use their ordinary shared ownership.
 Empty construction, append, checked indexing/replacement and copying are implemented;
-application-vector signatures, fields and traversal remain deferred. See
+application-vector writable references, fields and traversal remain deferred. See
 [application vectors](../compiler/docs/application_vectors.md).
 Every closing angle consumes one token. Shift expressions consume two byte-adjacent
 angles and produce one AST operation; whitespace/comments between angles prevent

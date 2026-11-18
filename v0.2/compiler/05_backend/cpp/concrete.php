@@ -66,6 +66,15 @@ final class Cpp_Concrete_Vectors
 		$this->types[$type->cpp_type()] = $type;
 	}
 
+	/** Signatures may precede concrete definitions, including methods on their own element type. */
+	public function forwards(): string
+	{
+		$lines = [];
+		foreach ($this->types as $name => $_) $lines[$name] = 'class ' . $name . ";\n";
+		ksort($lines, \SORT_STRING);
+		return implode('', $lines);
+	}
+
 	/** @return \Generator<type_definition> Existing declaration planning supplies complete element types first. */
 	public function dependencies(): \Generator
 	{

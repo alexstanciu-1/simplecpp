@@ -15,7 +15,8 @@ add_library(json_proof_runtime STATIC ${json_generated}/src/runtime.cpp ${json_g
 add_dependencies(json_proof_runtime json_publication)
 target_include_directories(json_proof_runtime PUBLIC ${json_generated}/public
   PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/numeric ${PROJECT_SOURCE_DIR}/runtime/src/sequence
-    ${PROJECT_SOURCE_DIR}/runtime/src/boxed ${PROJECT_SOURCE_DIR}/runtime/src/ownership)
+    ${PROJECT_SOURCE_DIR}/runtime/src/boxed ${PROJECT_SOURCE_DIR}/runtime/src/ownership
+    ${PROJECT_SOURCE_DIR}/runtime/src/hash)
 target_link_libraries(json_proof_runtime PRIVATE scpp_boxed_storage)
 target_compile_features(json_proof_runtime PUBLIC cxx_std_23)
 scpp_add_json(json_proof_module json_proof_runtime ${json_generated})

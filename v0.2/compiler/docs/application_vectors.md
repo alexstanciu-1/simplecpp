@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-The first application specialization slice admits local `vector<Record>` values in
+The first application specialization slice admits `vector<Record>` local values and by-value function/method signatures in
 all three flavors. Empty construction, append, checked indexed reads/replacement,
 count/empty and ordinary vector copying reuse the existing collection protocols.
 The element retains its normal storage semantics: structs are copied inline; bare
@@ -58,10 +58,9 @@ templates, source-template parsing or compiler-generated templates are introduce
 
 ## Boundaries and proofs
 
-Application-vector function/method parameters and returns, instance fields, nested
-collections, explicit shared/weak element spellings, enums and foreach remain separate
-slices. Signatures and fields receive preparation diagnostics rather than incomplete
-native output. Existing runtime specializations retain their current capabilities.
+Application-vector writable references, instance fields, nested collections, explicit
+shared/weak element spellings, enums and foreach remain separate slices. References and
+fields receive preparation diagnostics rather than incomplete native output. Existing runtime specializations retain their current capabilities.
 
 `application_vectors_native.py` verifies Clang and GCC in all flavors, including
 required constructors, heap-backed string copies, class/shared-field identity, growth,
@@ -69,3 +68,22 @@ class upcasts, typed copies, no-op reuse, element-layout edits, deletion, failed
 recovery against fresh compilations, source-demand deduplication/retirement and App
 namespace changes. Its `--memcheck` option adds ASan/UBSan and leak checks. Instrumented
 O2/g0, Ninja8/mold timings separate PHP work, native wall, frontend, LLVM and link work.
+
+## By-value signatures
+
+Functions and methods reuse ordinary argument binding, exact-type conversions and return
+preparation. Passing a vector copies its storage; inline elements copy independently,
+while class elements and shared fields keep their object identity. Native returns retain
+the existing value/move behavior. No new AST nodes or retained preparation facts are needed.
+
+Signature dependency discovery yields the concrete vector and its nominal element. Public
+callable headers forward-declare the vector; record member signatures do likewise, so a
+method on Point may accept vector<Point> without a recursive header definition. Each
+caller/callee source requests the same recipe through existing adapter publication, after
+complete element layouts/owner definitions and before executable bodies. Native payload
+member signatures qualify the concrete type with the configured application namespace.
+
+`application_vector_signatures_native.py` tests function forwarding, struct and class
+methods, independent copies, shared identity, cross-file signature/element edits, deletion,
+retry and recovery against fresh builds in all three flavors with Clang and GCC. It also
+checks no-op reuse and configured/disabled application namespaces, and records stage timings.

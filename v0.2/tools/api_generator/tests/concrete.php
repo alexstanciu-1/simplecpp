@@ -51,8 +51,13 @@ $text = implode('', $parts);
 if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|swap|exchange|equal|is_)/', $text)) {
     throw new RuntimeException('Concrete vector depends on a template algorithm');
 }
+$hash = concreteTemplate('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
+    'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate',
+    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'append' => \Scpp\Api\template('collections/hash_append', []),
+]);
+if (preg_match('/\btemplate\s*</', implode('', $hash)) || str_contains($hash['storage'], 'std::vector')) throw new RuntimeException('Concrete hash depends on templates');
 $source = file_get_contents(__DIR__ . '/fixtures/concrete_probe.cpp');
-$source = str_replace(['@pair@', '@declaration@', '@implementation@'], [$pair['declaration'], $parts['declaration'],
-    $parts['storage'] . 'namespace detail { struct vector_access {' . $parts['access'] . '}; }' . $parts['definition']], $source);
+$source = str_replace(['@pair@', '@declaration@', '@implementation@', '@hash@'], [$pair['declaration'], $parts['declaration'],
+    $parts['storage'] . 'namespace detail { struct vector_access {' . $parts['access'] . '}; }' . $parts['definition'], $hash['storage']], $source);
 file_put_contents($argv[1], $source);
 echo "Concrete recipe binding and validation passed\n";

@@ -576,6 +576,11 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
 }
 
+/** Concrete storage selection shared by runtime publication and future application specialization. */
+function hashConcreteRecipe(array $hash): string {
+    requireThat($hash['storage'] === 'private_ordered_concrete_swiss', 'Unsupported hash concrete storage');
+    return 'collections/hash';
+}
 function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'hash', 'hashes', 'Hash');
     if($m === null) {
@@ -624,7 +629,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_typed_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => collectionTraversalPlan()];
+        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => collectionTraversalPlan()];
     }
     requireThat($hashes !== [], 'Empty hash publication');
     ksort($hashes, SORT_STRING);

@@ -44,9 +44,6 @@ final class Type_Resolution
 		if ($optional !== null) return $optional;
 		if ($syntax->first_child !== null) $function->watch_signature($dependencies);
 		$type = self::resolve($syntax, $allow_void, $symbols, $function->namespace, $function, $dependencies);
-		if ($type instanceof application_vector_type) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Application vector parameters and returns are deferred');
-		}
 		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
 		return self::application($syntax, $symbols, $function, $dependencies);
