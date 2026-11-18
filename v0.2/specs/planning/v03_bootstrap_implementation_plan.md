@@ -663,6 +663,229 @@ unchanged caller C++ bytes, file timestamps and native object reuse, not zero
 caller reanalysis. No-op builds reuse all these stages. A broader nominal-identity
 refactor remains outside this slice.
 
+### Checked shared-class casts and instanceof — implemented
+
+Implemented explicit checked class access and nonthrowing type tests together, following
+[checked shared-object access](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests).
+Uses native C++ RTTI and the existing concrete inline adapter engine. This planning
+note records delivery and verification; the linked semantic/frontend contracts own
+language meaning. Deferred object features remain outside this slice.
+
+PHP-flavor example:
+
+```php
+function aaaa(Node $node): void {
+    $literal = object_cast($node, IntegerLiteral::class);
+    bbb($literal);
+}
+
+if ($node instanceof IntegerLiteral) {
+    bbb(object_cast($node, IntegerLiteral::class));
+}
+```
+
+The cast target is a statically named class resolved through normal namespace/import
+lookup, never a runtime string or an ownership-wrapper expression. The
+[frontend contract](../compiler_frontends.md#checked-shared-class-access) records
+`Target::class` for cpp/php and `Target.class` for js. All flavors use `instanceof`
+and normalize to one common operation and target reference.
+
+Bounded semantics:
+
+- `object_cast` accepts required/optional shared class operands and returns a required
+  target-class handle. A compatible present object succeeds; absence or runtime mismatch
+  throws the runtime error code `invalid_object_cast`. It never implicitly narrows at an
+  ordinary assignment, argument or return boundary.
+- `instanceof` evaluates its operand once and returns false for absence or mismatch,
+  true for a compatible object. It does not acquire a lasting owning result, change the
+  operand's static type, authorize reference rebinding or eliminate a later cast check.
+  Preserve the owning specification's precedence, including negated tests.
+- Admit same-type and proven upward views plus related base-to-derived class casts.
+  Reject unrelated classes, bare-null operands, inline values and dynamic targets during
+  preparation. A valid runtime mismatch is not a preparation error.
+- Downward casts/tests require a polymorphic source contract that already exists.
+  Do not add virtual members/destructors solely to enable a cast. Same-type/upward
+  operations need only the appropriate presence check and prepared pointer conversion.
+
+Native lowering and ownership:
+
+- Demand-emitted concrete functions use built-in `dynamic_cast<Target*>(source.view)`
+  for downward operations. This is a C++ operator, not template instantiation. A null
+  native result means absence or mismatch; the cast pattern calls a runtime-owned error
+  helper, while the test pattern returns false. No custom vtable/type-tag registry.
+- Reuse concrete adapter identity, dependency ordering, per-source demand, bundle merging
+  and obsolete-fragment retirement. Request only used source/target/operation pairs;
+  required/optional source identities with identical native storage may share a pattern.
+  Keep the throwing cast and boolean test distinct contracts.
+- For an owning result, take the source handle by value. An lvalue copy retains its
+  existing control block; a temporary can transfer its existing hold. After a successful
+  pointer check, transfer that hold and the adjusted view to the result and clear the
+  adapter parameter. On failure, ordinary parameter destruction releases the temporary
+  hold. Never consume or clear the caller's named handle.
+- Preserve control-block/allocation identity, aliasing, weak observers and concrete
+  cleanup. No payload copying/slicing, new object allocation or new control block.
+  Each operand is evaluated once, with its ownership retained through the native check.
+  The test uses the existing concrete adapter `const_reference` mode: its sole argument
+  lives through the call, and the check neither calls user code nor escapes the handle.
+  This avoids a temporary retain without exposing a source borrow feature.
+- Runtime owns `invalid_object_cast` failure construction/publication; the application
+  ownership backend owns concrete view-transfer patterns. Preparation owns admission;
+  emission consumes settled facts rather than repeating ancestry/polymorphism searches.
+- Downward operations require native RTTI on Clang/GCC. Validate the effective build
+  configuration and diagnose an incompatible RTTI-disabled build explicitly. Include
+  relevant compiler flags in existing native-build/cache identity; never silently force
+  RTTI on against an explicitly incompatible configuration.
+
+Incremental ownership and dependencies:
+
+- Retain target syntax on the expression and use existing stable symbol/type resolution.
+  Observe source/target contracts, traversed ancestry and source polymorphism, including
+  unresolved target names needed for recovery. Do not cache a foreign method body or
+  scan every possible descendant implementation at each call site.
+- Base-edge edits, target deletion/recreation and removal/restoration of the last virtual
+  contract invalidate dependent cast/test admission, even if native type spelling stays
+  unchanged. Rebuild occurrence facts through their existing preparation owner.
+- Preserve pending watches and last successful output through invalid edits and repeated
+  retries. Recovery must match fresh diagnostics, generated artifacts and native behavior.
+- Reused sources retain adapter demand. Editing/deleting one consumer must preserve an
+  adapter used by another cached source; removal of the last use retires it from disk
+  and the manifest. Restoration recreates demand without stale generation links.
+- Separate source preparation/emission reuse from native object reuse. Preserve the
+  documented nominal-AST replacement limitation; do not claim zero caller reanalysis
+  merely because generated bytes or native objects remain unchanged.
+
+Verification checklist (cpp/php/js, Clang and GCC):
+
+- [x] Same-type/upward success, checked downcast success, mismatching sibling object,
+  empty optional handle and a deeper descendant; reject unrelated/nonpolymorphic casts.
+- [x] Required cast result, false type tests on absence/mismatch, boolean precedence,
+  namespace/import target lookup and explicit rejection of unsupported target forms.
+- [x] Effectful operands execute exactly once on success/failure. Test a temporary
+  owning operand and verify checks are not skipped or reordered across required effects.
+- [x] Cast success preserves allocation identity and alias mutation; named input remains
+  valid. Cast failure releases only temporary holds. Weak expiry and exactly-once concrete
+  cleanup remain correct, including the last-owner path; run native memory checks.
+- [x] No payload copy/new object allocation from either operation; concrete generated
+  adapter signatures/bodies contain no C++ template machinery. Verify include dependencies,
+  runtime error-provider selection, and project/standalone output.
+- [x] Edit/remove/restore ancestry, target declarations and the final virtual contract;
+  repeat failed compilation and compare recovery with fresh output in every flavor.
+- [x] Deduplicate demanded adapters, preserve them for cached surviving consumers, retire
+  last-use/source-deletion artifacts, and restore them correctly.
+- [x] Persistent Ninja builds verify no-op and unrelated-object reuse. Include a real
+  header-only contract/layout edit with unchanged caller C++ bytes/timestamps that still
+  rebuilds dependent native objects through depfiles.
+- [x] Verify RTTI-enabled builds and the explicit failure for incompatible RTTI-disabled
+  configuration. Keep build-cache flag changes distinct from source semantic invalidation.
+
+Deferred: interfaces, interface cross-casts, struct casts/virtuals, unique ownership,
+borrows, weak-handle casts, abstract methods/types, automatic flow narrowing, redundant
+check elimination and a custom RTTI implementation. No execution/compile-time performance
+claim without separate measurements.
+
+Implementation evidence: [checked shared-class access](../../compiler/docs/object_access.md).
+`object_access_native.py --memcheck` verifies all three flavors on Clang/GCC, including
+native Valgrind checks, project/standalone emission and retained/fresh equivalence.
+Two body-only type-test targets produce distinct concrete adapters; required/optional
+sources with the same native representation share demand. Inherited source polymorphism
+is observed through the ancestry chain. Removing the last consumer retires its fragment;
+a cached surviving consumer keeps it live.
+
+Persistent native builds prove no-op reuse, body-edit caller-object reuse and real
+base-layout edits that rebuild dependent objects without rewriting caller C++ bytes or
+timestamps. Changing the effective Ninja compile command to `-fno-rtti` rejects downward
+operations explicitly; restoring flags rebuilds successfully. Same/upward operations
+also pass with RTTI disabled. This verifies native-command cache invalidation, not a
+new source-level RTTI configuration mechanism.
+
+Existing concrete-adapter and virtual-method native suites, compiler style/failure
+cleanup, generator input/cleanup and runtime freshness pass. Generator capture verifies
+17 accepted/37 rejected base cases and 130 accepted/247 rejected runtime cases. Only
+ownership-header frozen hashes changed; the already documented unrelated arithmetic
+header/runtime-source/input-hash baseline drift remains, so frozen parity comparisons
+are not reported green.
+
+The nominal AST replacement limitation described above remains: unchanged native caller
+objects do not imply zero caller preparation after every declaration edit. No broader
+incremental identity refactor, interfaces, unique or borrow implementation was added.
+
+### Explicit ancestor instance calls — implemented
+
+Continue the small AST family with concrete instance parent calls. PHP uses
+`parent::method(...)`, JS uses `super.method(...)`, and C++ uses the actual ancestor
+name, `Base::method(...)`, including namespace/import lookup. `Parent` is not a
+special C++ alias. PHP/JS start at the immediate lexical base; C++ can explicitly
+select a more distant strict ancestor. Ordinary inherited lookup selects the
+original declaration owner and bypasses virtual redispatch for this call only.
+
+The existing call AST owns written parent intent and a resettable prepared fixed-
+dispatch flag. Preparation owns relationship/access/instance checks and stable-symbol
+watches. Ordinary method binding owns arguments, defaults and conversions; the C++
+invocation emitter only changes receiver/target selection. No RTTI, shared-handle
+adapter, payload copy, new ownership allocation or alternate argument-lowering path.
+Constructor initialization remains a separate operation; a parent method at the
+start of a constructor body executes after implicit base construction.
+
+Verification checklist (cpp/php/js; Clang and GCC):
+
+- [x] Concrete virtual and ordinary ancestor calls, inherited owner selection through
+  three levels, parent defaults and virtual calls made inside the parent body.
+- [x] Same-object field mutation, void calls and writable-reference argument forwarding.
+  Outer receiver retention survives argument-driven release of its source owner; weak
+  expiry and concrete cleanup pass Valgrind checks.
+- [x] Single argument evaluation and checked conversion failures before the parent body;
+  namespaced/imported C++ ancestor names and standalone emission.
+- [x] Reject private/missing methods, free/static contexts, absent/unrelated bases,
+  wrong arity and current-instance use during base initialization. Repeat failures and
+  recover to fresh output; distinguish parent methods from constructor syntax.
+- [x] Base-body/default edits, nearer override insertion/removal, valid reparenting and
+  base declaration deletion/restoration match fresh diagnostics/emission/native results.
+- [x] No-op preparation/emission/native reuse; body-edit caller-object reuse; real
+  header-only changes rebuild dependent objects while caller C++ bytes/timestamps stay
+  unchanged and unrelated objects remain reused.
+- [x] C++ explicit grandparent selection bypasses a nearer override.
+
+Evidence: [ancestor-call implementation and checks](../../compiler/docs/parent_methods.md),
+`parent_methods_native.py --memcheck`. Preserve the earlier nominal AST invalidation
+limitation; native reuse is not a claim of zero caller reanalysis. Existing method,
+class, extends, namespace/import and failure-cleanup regressions protect earlier work.
+
+Deferred: parent constants/properties/static-method spellings, protected-method
+admission, broader reference-return support, abstract bodies, interfaces, unique and
+borrows. Existing type-qualified static calls remain supported. No performance claim
+without separate measurement.
+
+### Abstract class and method slice — implemented
+
+Supports explicit abstract classes and bodyless public instance methods in cpp/php/js,
+mandatory overrides, inherited implementations and abstract intermediates. Native C++
+owns pure virtual dispatch; the compiler rejects abstract construction and incomplete
+concrete descendants. Fixed parent calls to abstract bodies reject.
+
+Keep structures light: written declaration flags, a nullable body, declaration-owned
+source dependency identity and one record readiness bit. Obligations use a transient
+nearest-method scan over existing ancestry, with no persistent flattened inventory.
+Existing record invalidation clears readiness. No synthetic body or preparation job
+is allocated for abstract declarations.
+
+- [x] Verify native dispatch, inherited concrete implementations and re-abstraction.
+- [x] Verify constructor inheritance, ownership identity, alias mutation, checked
+  downcasts, weak expiry and cleanup on Clang/GCC, including Valgrind.
+- [x] Verify invalid syntax/contracts, mandatory overrides, exact signatures,
+  abstract construction and abstract parent calls, including failed-build retries.
+- [x] Compare retained/fresh output and diagnostics across cpp/php/js after body,
+  default, signature and header edits, added obligations and deletion/restoration.
+- [x] Verify no-op reuse, isolated body rebuilds and header-only dependent rebuilds;
+  unrelated native objects and callers remain reused when their artifacts are unchanged.
+- [x] Run existing class, virtual, parent, object-access and lifecycle regressions.
+
+Evidence: [abstract-method implementation](../../compiler/docs/abstract_methods.md)
+and `abstract_methods_native.py --memcheck`. Earlier slice deferrals above describe
+those historical scopes; abstract classes/methods are now implemented in this slice.
+Interfaces, abstract structs, protected-method expansion, callable variance, broader
+reference returns, unique and borrows remain deferred. No preparation-speed benchmark
+or broader incremental invalidation redesign is claimed.
+
 ## 4. Failures and cleanup — failed preparation and retry
 
 | Order | Group | Initial scope |

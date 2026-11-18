@@ -10,7 +10,7 @@ final class Function_Preparation
 	public static function reset(ast_function_declaration $function): void
 	{
 		$function->reset_preparation();
-		self::reset_body($function->body());
+		if ($function->optional_body() !== null) self::reset_body($function->body());
 	}
 
 	/** Reset every supported body fact before a new traversal, including expression occurrences. */
@@ -100,7 +100,7 @@ final class Function_Preparation
 			}
 			return;
 		}
-		if (($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
 		}
@@ -187,6 +187,9 @@ final class Function_Preparation
 		foreach ($symbols->declarations as $declaration) {
 			if ($declaration instanceof ast_function_declaration) Method_Preparation::contract($declaration, $symbols, $dependencies);
 		}
+		foreach ($symbols->declarations as $declaration) {
+			if ($declaration instanceof ast_record_declaration) Method_Preparation::record_contract($declaration->definition);
+		}
 		return $symbols;
 	}
 
@@ -196,7 +199,7 @@ final class Function_Preparation
 		foreach ($file->functions() as $declaration) {
 			$node = $declaration;
 			$node->return_type_def();
-			(new Preparation())->function_body($node->body(), $symbols, null, $dependencies);
+			if ($node->optional_body() !== null) (new Preparation())->function_body($node->body(), $symbols, null, $dependencies);
 		}
 	}
 }

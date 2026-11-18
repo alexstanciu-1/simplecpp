@@ -46,7 +46,7 @@ final class Program_Preparation
 		foreach ($files as $key => $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
-					$node->body()->bind_source_key((string) $key);
+					$node->bind_source_key((string) $key);
 				}
 			}
 		}

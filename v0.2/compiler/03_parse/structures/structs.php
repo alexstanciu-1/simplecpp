@@ -79,6 +79,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	/** Native owning canonical type for this declaration generation. */
 	public readonly record_type_definition $definition;
 	public readonly record_kind $kind;
+	public readonly bool $is_abstract;
 	/** Native owning optional written base, independent of resolution success. */
 	public readonly ?ast_type_reference $base_reference;
 
@@ -89,7 +90,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_instance_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure)
+		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -115,6 +116,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 		$this->base_reference = $base_reference;
 		$base_reference?->attach($this);
 		$this->kind = $kind;
+		$this->is_abstract = $abstract;
 		$this->definition = new record_type_definition($this);
 	}
 

@@ -113,9 +113,9 @@ final class Cpp_Emitter
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$result = $this->member_type($type);
-				$layout[] = "\t" . ($method->is_virtual ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
-					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ';';
+					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
@@ -202,6 +202,7 @@ final class Cpp_Emitter
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
+		$factory_declaration = $payload->declaration->is_abstract ? '' : "\tstatic $owner make($params);\n";
 		$presence = $payload->declaration->kind === record_kind::class_type ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
@@ -211,8 +212,7 @@ final class Cpp_Emitter
 	::scpp::application_control* ptr{};
 	$record* view{};
 	$owner() noexcept = default;
-	static $owner make($params);
-$presence	explicit operator bool() const noexcept { return ptr != nullptr; }
+$factory_declaration$presence	explicit operator bool() const noexcept { return ptr != nullptr; }
 	$record* operator->() const;
 	$owner(const $owner& other) noexcept;
 	$owner($owner&& other) noexcept : ptr(other.ptr), view(other.view) { other.ptr = nullptr; other.view = nullptr; }
@@ -262,13 +262,11 @@ CPP;
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
-		$factory = $constructor === null ? $this->allocation_factory($type, $includes) : '';
+		$factory = $constructor === null && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
 		$presence = $type->payload->declaration->kind === record_kind::class_type
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
-		return <<<CPP
-#ifndef $guard
-#define $guard
+		$allocation = $type->payload->declaration->is_abstract ? '' : <<<CPP
 struct {$owner}::allocation : ::scpp::application_control {
 	using payload_type = $payload;
 	union { payload_type value; };
@@ -282,6 +280,12 @@ struct {$owner}::allocation : ::scpp::application_control {
 	}
 };
 $factory
+CPP;
+
+		return <<<CPP
+#ifndef $guard
+#define $guard
+$allocation
 inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
 	return view;
@@ -381,7 +385,7 @@ CPP;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
 			$constructor = $node->definition->constructor();
-			if ($constructor !== null) {
+			if ($constructor !== null && !$node->is_abstract) {
 				// Each payload's source owns its factory, including inherited constructor contracts.
 				$owner = $node->definition->shared;
 				$declarations[$owner->name] = $owner;
@@ -391,6 +395,7 @@ CPP;
 		}
 		$unit_flavor = null;
 		foreach ($file->functions() as $function) {
+			if ($function->is_abstract) continue;
 			$name = self::function_name($function);
 			if ($function->is_constructor()) {
 				$owner = $function->parent->definition->shared;
@@ -478,7 +483,8 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototypes .= $this->declaration($function, $required_headers) . "\n";
+				$prototype = $this->declaration($function, $required_headers);
+				if ($prototype !== '') $prototypes .= $prototype . "\n";
 			}
 		}
 		$owner_types = '';
@@ -994,6 +1000,11 @@ CPP;
 		foreach ($value_type->cpp_headers() as $header) {
 			$required_headers[$header] = true;
 		}
+		if ($value instanceof ast_object_access_expression) {
+			$operand = $this->value($value->operand, $global_references, $declarations, $required_headers);
+			$request = Cpp_Object_Access::request($value->operand->type_def(), $value->target_type(), $value->test, $value->dynamic_check());
+			return $this->inline_adapters->call($request, [$operand]);
+		}
 		if ($value instanceof ast_ownership_expression) {
 			$type = $value->type_def();
 			$declarations[$type->name] = $type;
@@ -1308,13 +1319,15 @@ CPP;
 			if ($function->parameters === []) return $name . '(' . $receiver . ')';
 			$arguments[] = $receiver;
 		} elseif ($method) {
-			$inline_storage = false;
-			$place = $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
+			$inline_storage = $value->ancestor_dispatch;
+			$place = $value->ancestor_dispatch ? 'scpp_self'
+				: $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage);
 			if (!$inline_storage) {
 				$steps[] = 'auto&& receiver_payload = ' . $place . ';';
 				$place = 'receiver_payload';
 			}
-			if ($function->has_virtual_dispatch()) $name = '(' . $place . ').' . self::virtual_name($function);
+			if ($function->has_virtual_dispatch()) $name = '(' . $place . ').'
+				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
 		} elseif ($function->parameters === []) {
 			return $name . '()';

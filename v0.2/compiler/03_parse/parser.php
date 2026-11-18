@@ -74,10 +74,10 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			if ($this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'struct', 'class' => Record_Syntax::read($this, $grammar, $members),
+					'abstract', 'struct', 'class' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
@@ -366,8 +366,9 @@ final class Parser
 			$c = $this->cursor;
 			$start = $c->position();
 			$spelling = $c->tokens->text_at($start);
-			if (($source->flavor === flavor::php && $spelling === 'parent')
-				|| ($source->flavor === flavor::js && $spelling === 'super')) {
+			if (($source->flavor === flavor::php && $spelling === 'parent'
+					&& $c->tokens->text_at($start + 2) === '__construct')
+				|| ($source->flavor === flavor::js && $spelling === 'super' && $c->next_is(token_kind::lparen))) {
 				$c->name(token_kind::identifier);
 				if ($source->flavor === flavor::php) {
 					$c->take(token_kind::scope, '::');
@@ -494,10 +495,10 @@ final class Parser
 	}
 
 	/** Parse the common argument list after a function path or member name. */
-	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver): ast_call_expression
+	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, bool $parent_qualified = false): ast_call_expression
 	{
 		$arguments = $this->arguments();
-		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver);
+		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $parent_qualified);
 	}
 
 	/** Parse ordinary or constructor arguments in source order. @return ast_expression[] */
@@ -597,6 +598,12 @@ final class Parser
 	{
 		$left = $this->primary();
 		while (!$this->cursor->at_end()) {
+			if ($this->cursor->keyword('instanceof') && $minimum_precedence <= binary_operator::power->precedence()) {
+				$this->cursor->take_keyword('instanceof');
+				$target = $this->named_type();
+				$left = new ast_object_access_expression($left->start, $this->cursor->position(), $left, $target, true);
+				continue;
+			}
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			$operator = match ($kind) {
 				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
@@ -782,6 +789,17 @@ final class Parser
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(): ast_expression
 	{
+		$c = $this->cursor;
+		$flavor = $c->tokens->source->flavor;
+		$spelling = $c->at_end() ? '' : $c->tokens->text_at($c->position());
+		if (($flavor === flavor::php && $spelling === 'parent' && $c->next_is(token_kind::scope))
+			|| ($flavor === flavor::js && $spelling === 'super' && $c->next_is(token_kind::dot))) {
+			$start = $c->take(token_kind::identifier, 'parent qualifier');
+			$separator = $flavor === flavor::php ? token_kind::scope : token_kind::dot;
+			$c->take($separator, 'parent member separator');
+			$name = $c->name(token_kind::identifier);
+			return $this->call_arguments($start, $name, $separator, null, true);
+		}
 		if ($this->lexical_qualifier()) return $this->lexical_member();
 		if ($this->cursor->keyword('new')) {
 			$start = $this->cursor->position();
@@ -793,6 +811,21 @@ final class Parser
 			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->arguments();
 			elseif ($this->cursor->tokens->source->flavor !== flavor::php) $this->cursor->take(token_kind::lparen, '( after the constructed type');
 			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments);
+		}
+		if ($this->cursor->keyword('object_cast')) {
+			$start = $this->cursor->position();
+			$this->cursor->take_keyword('object_cast');
+			$this->cursor->take(token_kind::lparen, '(');
+			$operand = $this->value();
+			$this->cursor->take(token_kind::comma, ', before the target class marker');
+			$at = $this->cursor->position();
+			$constant = false;
+			$marker = false;
+			$name = $this->names->variable_path($constant, $marker);
+			if (!$marker) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'object_cast requires a class type marker');
+			$target = new ast_type_reference($at, $this->cursor->position(), $name);
+			$end = $this->cursor->take(token_kind::rparen, ')') + 1;
+			return new ast_object_access_expression($start, $end, $operand, $target, false);
 		}
 		if ($this->cursor->keyword('weak') || $this->cursor->keyword('lock')) {
 			$start = $this->cursor->position();

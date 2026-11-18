@@ -23,6 +23,8 @@ final class record_type_definition extends type_definition implements dependency
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
+	/** Prepared fact: abstract obligations checked after signatures; cleared with nominal layout invalidation. */
+	public bool $abstract_contract_ready = false;
 	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
 	private ?self $base_type = null;
 
@@ -49,6 +51,7 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->ready = false;
+		$this->abstract_contract_ready = false;
 		$this->base_type = null;
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
@@ -65,6 +68,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
+		$this->abstract_contract_ready = false;
 		$this->base_type = null;
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}

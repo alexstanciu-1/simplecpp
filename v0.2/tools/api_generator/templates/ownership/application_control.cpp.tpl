@@ -1,6 +1,7 @@
 #pragma once
 namespace scpp {
 [[noreturn]] void throw_empty_owner();
+[[noreturn]] void throw_invalid_object_cast();
 // Thread-confined control shared by every typed view of one application allocation.
 // Retaining and observing counts stay inline; last-owner cleanup lives in the runtime.
 struct application_control {

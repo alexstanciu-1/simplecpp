@@ -18,6 +18,8 @@ final class Method_Preparation
 			|| $method->short_name === '__destruct' || $method->parent->kind !== record_kind::class_type)) {
 			self::fail($method, 'Virtual modifiers require a public class instance method');
 		}
+		if (($method->is_abstract && (!$method->parent->is_abstract || $method->is_final))
+			|| ($method->is_abstract && $method->is_virtual && $method->source()->flavor !== flavor::cpp)) self::fail($method, 'Abstract method requires an abstract class and cannot be final or explicitly virtual');
 		if ($method->is_virtual && ($method->is_override || $method->is_final)) self::fail($method, 'Conflicting virtual method modifiers');
 		if (!$method->is_constructor()) {
 			$base = $record->base()?->method_symbol($method->short_name, $symbols, $method, $dependencies)?->declaration();
@@ -40,6 +42,27 @@ final class Method_Preparation
 		}
 		if ($method->is_final && !$method->is_override) self::fail($method, 'Final requires an overriding implementation in this slice');
 		$method->method_contract_ready = true;
+	}
+
+	/** Scan nearest declarations once per invalidated record; no retained inherited-method inventory. */
+	public static function record_contract(record_type_definition $record): void
+	{
+		if ($record->abstract_contract_ready) return;
+		if ($record->declaration->is_abstract && $record->declaration->kind !== record_kind::class_type) {
+			throw new diagnostic($record->declaration->source(), $record->declaration->byte_start(), 'Abstract structs are deferred');
+		}
+		if (!$record->declaration->is_abstract) {
+			$seen = [];
+			for ($type = $record; $type !== null; $type = $type->base()) {
+				foreach ($type->declaration->methods as $name => $method) {
+					if (isset($seen[$name])) continue;
+					$seen[$name] = true;
+					if ($method->is_abstract) throw new diagnostic($record->declaration->source(), $record->declaration->byte_start(),
+						'Concrete class must implement abstract method: ' . $name);
+				}
+			}
+		}
+		$record->abstract_contract_ready = true;
 	}
 
 	private static function fail(ast_function_declaration $method, string $message): never

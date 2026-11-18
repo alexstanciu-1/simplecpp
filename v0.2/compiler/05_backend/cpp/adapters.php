@@ -39,7 +39,7 @@ final readonly class cpp_adapter_parameter
 	}
 }
 
-/** Private lowering request supplied by a pattern owner; native signature determines specialization identity. */
+/** Private lowering request supplied by a pattern owner; native signature and body types determine specialization identity. */
 final readonly class cpp_inline_adapter
 {
 	/** PROPERTIES */
@@ -47,6 +47,9 @@ final readonly class cpp_inline_adapter
 	/** @var cpp_adapter_parameter[] */
 	public array $parameters /** list<cpp_adapter_parameter> */;
 	public type_definition $result;
+	/** @var type_definition[] Native non-owning concrete types used only by the body; also part of specialization identity. */
+	public array $body_types /** list<type_definition> */;
+	public bool $requires_rtti;
 	public string $body;
 	public bool $noexcept;
 	/** @var string[] Explicit runtime provider headers needed by the pattern body. */
@@ -56,12 +59,16 @@ final readonly class cpp_inline_adapter
 
 	/** CONSTRUCTOR */
 	/** Retain a concrete pattern expansion; this is not a general C++ template parser. @param cpp_adapter_parameter[] $parameters
+	 * @param type_definition[] $body_types
 	 * @param string[] $headers
 	 */
 	public function __construct(string $pattern, array $parameters /** list<cpp_adapter_parameter> */, type_definition $result,
-		string $body, bool $noexcept, int $continuation /** uint16 */ = value_conversion::identity, array $headers /** list<string> */ = [])
+		string $body, bool $noexcept, int $continuation /** uint16 */ = value_conversion::identity, array $headers /** list<string> */ = [],
+		array $body_types /** list<type_definition> */ = [], bool $requires_rtti = false)
 	{
 		$this->pattern = $pattern;
+		$this->body_types = $body_types;
+		$this->requires_rtti = $requires_rtti;
 		$this->parameters = $parameters;
 		$this->result = $result;
 		$this->body = $body;
@@ -79,6 +86,8 @@ final readonly class cpp_inline_adapter
 			$parts[] = $parameter->type->cpp_type();
 			$parts[] = $parameter->mode->name;
 		}
+		foreach ($this->body_types as $type) $parts[] = 'body:' . $type->cpp_type();
+		if ($this->requires_rtti) $parts[] = 'requires_rtti';
 		return implode("\0", $parts);
 	}
 }
@@ -128,6 +137,7 @@ final class Cpp_Adapters
 	{
 		foreach ($this->requests as $request) {
 			yield $request->result;
+			yield from $request->body_types;
 			foreach ($request->parameters as $parameter) yield $parameter->type;
 		}
 	}
@@ -139,7 +149,8 @@ final class Cpp_Adapters
 		ksort($this->requests, \SORT_STRING);
 		foreach ($this->requests as $key => $request) {
 			$guard = 'SCPP_INLINE_ADAPTER_' . strtoupper($key);
-			$includes = '';
+			$includes = $request->requires_rtti
+				? "#if !defined(__GXX_RTTI) && !defined(_CPPRTTI)\n#error \"Simple C++ checked downcasts require native RTTI\"\n#endif\n" : '';
 			foreach ($request->headers as $header) $includes .= '#include <' . $header . ">\n";
 			$files['units/' . $key . '.hpp'] = "// Concrete inline adapter; include after its complete type dependencies.\n#ifndef $guard\n#define $guard\n"
 				. $includes . Cpp_Emitter::namespace_body($this->root, $this->definition($key, $request)) . "#endif\n";

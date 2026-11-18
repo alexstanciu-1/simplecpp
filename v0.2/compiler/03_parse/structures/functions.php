@@ -112,10 +112,14 @@ final class ast_call_expression extends ast_expression
 	public readonly ?token_kind $member_separator;
 	/** Native owning receiver; a relative JS dotted path may instead resolve as a namespace call. */
 	public readonly ?ast_expression $receiver;
+	/** Written PHP parent:: / JS super. qualification; C++ retains its actual type name. */
+	public readonly bool $parent_qualified;
 	/** @var ast_expression[] Native owning arguments in source order. */
 	public readonly array $arguments /** list<ast_expression> */;
 
 	/** PREP FACTS */
+	/** Prepared fact: fixed ancestor implementation on the current instance; false before preparation/reset. */
+	public private(set) bool $ancestor_dispatch = false;
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
@@ -129,12 +133,13 @@ final class ast_call_expression extends ast_expression
 	 * @param ast_expression[] $arguments
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null)
+		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null, bool $parent_qualified = false)
 	{
 		parent::__construct($start, $end);
 		$this->name = $name;
 		$this->member_separator = $member_separator;
 		$this->receiver = $receiver;
+		$this->parent_qualified = $parent_qualified;
 		$receiver?->attach($this);
 		$this->arguments = $arguments;
 		foreach ($arguments as $argument) {
@@ -160,7 +165,7 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** @param int[] $conversions */
-	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */): void
+	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false): void
 	{
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
@@ -168,6 +173,7 @@ final class ast_call_expression extends ast_expression
 		}
 		$this->settle_value($function->return_type_def(), null);
 		$this->function_symbol = $symbol;
+		$this->ancestor_dispatch = $ancestor_dispatch;
 		$this->conversions = $conversions;
 	}
 
@@ -208,6 +214,7 @@ final class ast_call_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->function_symbol = null;
+		$this->ancestor_dispatch = false;
 		$this->cardinality = null;
 		$this->conversions = [];
 	}
@@ -227,8 +234,6 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PROPERTIES */
 	/** Native non-owning queue reference; null outside incremental ownership or after retirement. */
 	private ?preparation_work $preparation_work = null;
-	/** Stable logical source key bound before watches; cleared on retirement, never a source-unit object identity. */
-	private string $source_key = '';
 
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
@@ -250,12 +255,12 @@ final class ast_function_body extends ast_statement_block implements dependency_
 			throw new \LogicException('Preparation work requires a source key');
 		}
 		$source_key = $work === null ? '' : $source_key;
-		if (($this->preparation_work === $work) && ($this->source_key === $source_key)) {
+		if (($this->preparation_work === $work) && ($this->dependency_source_key() === $source_key)) {
 			return;
 		}
-		$this->preparation_work?->retire($this->source_key, $this);
+		$this->preparation_work?->retire($this->dependency_source_key(), $this);
 		$this->preparation_work = $work;
-		$this->source_key = $source_key;
+		$this->parent->bind_source_key($source_key);
 		$work?->register($source_key, $this);
 	}
 
@@ -265,20 +270,20 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		if ($this->preparation_work !== null) {
 			throw new \LogicException('Attached source identity belongs to the incremental coordinator');
 		}
-		$this->source_key = $source_key;
+		$this->parent->bind_source_key($source_key);
 	}
 
 	/** Bound logical source key; standalone analysis uses its source path as the unit identity. */
 	public function dependency_source_key(): string
 	{
-		return $this->source_key !== '' ? $this->source_key : $this->root()->source()->path;
+		return $this->parent->dependency_source_key();
 	}
 
 	/** Invalidate completion only; observers never rebuild or traverse cached statements here. */
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->source_key, $this);
+		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
 		$this->root()->begin_preparation();
 	}
 
@@ -290,7 +295,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->source_key, $this);
+		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -306,7 +311,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->name_lookups = $lookups;
 		$this->exit_digits = $target?->digits;
 		$this->prepared = true;
-		$this->preparation_work?->complete($this->source_key, $this);
+		$this->preparation_work?->complete($this->dependency_source_key(), $this);
 	}
 
 	public function require_prepared(): void
@@ -338,6 +343,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public readonly bool $is_static;
 	/** Written method intent, populated by Record_Syntax before publication. */
 	public bool $is_virtual = false;
+	public bool $is_abstract = false;
+	/** Stable logical source identity belongs to the callable, including declarations without a body. */
+	private string $source_key = '';
 	public bool $is_override = false;
 	public bool $is_final = false;
 	/** First method modifier token, null for unmarked declarations. */
@@ -405,7 +413,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Written virtual intent is validated before emission; inherited overrides stay virtual. */
 	public function has_virtual_dispatch(): bool
 	{
-		return $this->is_virtual || $this->is_override;
+		return $this->is_virtual || $this->is_override || $this->is_abstract;
 	}
 
 	public function has_receiver(): bool
@@ -449,6 +457,31 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->body = $body;
 	}
 
+	/** Complete a bodyless declaration without inventing executable syntax. */
+	public function complete_abstract(int $end /** uint32 */): void
+	{
+		if (!$this->is_abstract || $this->body !== null) throw new \LogicException('Invalid abstract method completion');
+		$this->end = $end;
+	}
+
+	/** Null means no executable body; body() remains the checked concrete-body accessor. */
+	public function optional_body(): ?ast_function_body
+	{
+		return $this->body;
+	}
+
+	public function bind_source_key(string $source_key): void
+	{
+		$this->source_key = $source_key;
+	}
+
+	/** Queue only executable bodies; signatures retain their own source identity. */
+	public function attach_preparation_work(?preparation_work $work, string $source_key = ''): void
+	{
+		$this->body?->attach_preparation_work($work, $source_key);
+		$this->source_key = $source_key;
+	}
+
 	public function body(): ast_function_body
 	{
 		return $this->body ?? throw new \LogicException('Function body is not complete');
@@ -462,7 +495,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		foreach ($this->parameters as $parameter) {
 			$parameter->reset_preparation();
 		}
-		$this->body()->reset_preparation();
+		$this->body?->reset_preparation();
 	}
 
 	public function settle_return_type(type_definition $type): void
@@ -489,7 +522,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 
 	public function dependency_source_key(): string
 	{
-		return $this->body()->dependency_source_key();
+		return $this->source_key !== '' ? $this->source_key : $this->root()->source()->path;
 	}
 
 	/** A replaced payload changes the prepared function contract even when its written name stays the same. */
@@ -497,7 +530,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		$this->return_type_def = null;
 		$this->method_contract_ready = false;
-		$this->body()->invalidate_dependencies();
+		$this->body?->invalidate_dependencies();
+		$this->root()->begin_preparation();
 		$this->signature_dependencies?->changed($this->root()->scope->parent->entry($this->symbol_key()));
 	}
 

@@ -12,6 +12,8 @@ final class Record_Syntax
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
 		$start = $c->position();
+		$abstract = $c->keyword('abstract');
+		if ($abstract) $c->take_keyword('abstract');
 		$kind = $c->keyword('class') ? record_kind::class_type : record_kind::structure;
 		$c->take_keyword($kind === record_kind::class_type ? 'class' : 'struct');
 		$name = $c->name(token_kind::identifier);
@@ -98,12 +100,24 @@ final class Record_Syntax
 			}
 			if ($method !== null) {
 				if ($flavor === flavor::cpp) self::modifiers($c, $modifiers, false);
+				$method->is_abstract = isset($modifiers['abstract']);
 				$method->is_virtual = isset($modifiers['virtual']);
 				$method->is_override = isset($modifiers['override']);
 				$method->is_final = isset($modifiers['final']);
 				$method->modifier_start = $modifiers === [] ? null : min($modifiers);
 				if ($protected && !$constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected ordinary methods are deferred');
-				$members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
+				if ($flavor === flavor::cpp && $method->is_abstract) throw new diagnostic($c->tokens->source, $c->offset(), 'Use = 0 for C++ abstract methods');
+				if ($flavor === flavor::cpp && $c->is(token_kind::assign)) {
+					if (!$method->is_virtual && !$method->is_override) throw new diagnostic($c->tokens->source, $c->offset(), 'Pure virtual method requires virtual or override');
+					$c->take(token_kind::assign, '=');
+					if (!$c->is(token_kind::integer) || $c->tokens->text_at($c->position()) !== '0') throw new diagnostic($c->tokens->source, $c->offset(), 'Pure virtual declaration requires = 0');
+					$c->take(token_kind::integer, '0');
+					$method->is_abstract = true;
+				}
+				if ($method->is_abstract) {
+					$method->complete_abstract($c->take(token_kind::semicolon, '; after abstract method') + 1);
+					$members[] = $method;
+				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
 				continue;
 			}
 			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
@@ -136,7 +150,7 @@ final class Record_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind);
+		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract);
 	}
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
@@ -153,7 +167,7 @@ final class Record_Syntax
 				$name = strtolower($name);
 			} else {
 				$name = $c->tokens->text_at($at);
-				if (!in_array($name, ['virtual', 'override', 'final'], true)) return;
+				if (!in_array($name, ['virtual', 'override', 'final', 'abstract'], true)) return;
 				$c->take($c->is(token_kind::keyword) ? token_kind::keyword : token_kind::identifier, $name);
 			}
 			if (isset($modifiers[$name])) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Duplicate method modifier: ' . $name);

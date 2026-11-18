@@ -26,6 +26,9 @@ See [int64 unary signs](docs/unary.md) for metadata-driven prefix arithmetic and
 See [discarded-value int64 updates](docs/updates.md) for shared storage ownership and generated update handlers.
 See [int64 compound assignments](docs/compounds.md) for shared operator admission and ordered write-back.
 See [explicit scalar casts](docs/casts.md) for generated conversion reuse and AST-owned decisions.
+See [explicit ancestor calls](docs/parent_methods.md) for parent dispatch and incremental dependencies.
+See [abstract classes and methods](docs/abstract_methods.md) for bodyless contracts and incremental verification.
+See [checked shared-class access](docs/object_access.md) for native RTTI, concrete adapters and incremental verification.
 See [single-base structs](docs/inheritance.md) for base storage, inherited fields and construction.
 See [typed literal constants](docs/constants.md) for publication, imports and value-sensitive invalidation.
 See [scalar comparisons](docs/comparisons.md) for generated admission, sequencing and focused tests.
