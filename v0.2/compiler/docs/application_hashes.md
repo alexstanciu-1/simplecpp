@@ -53,7 +53,7 @@ Key/value argument arrays exist only transiently during lowering, not on AST occ
 
 ## Boundaries and verification
 
-Application collection writable references, nested collection values,
+Nested collection values,
 explicit shared/weak value spellings, enum values and application-defined keys remain
 separate slices. Nullable-returning `find()` is deferred rather than generating a new
 application carrier implicitly. Runtime-specialization behavior remains unchanged.

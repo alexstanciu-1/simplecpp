@@ -61,8 +61,9 @@ templates, source-template parsing or compiler-generated templates are introduce
 
 ## Boundaries and proofs
 
-Application-vector writable references, nested collections, explicit
-shared/weak element spellings and enums remain separate slices. Unsupported references receive preparation diagnostics rather than incomplete native output. Existing runtime specializations retain their current capabilities.
+Nested collections, explicit shared/weak element spellings and enums remain separate slices.
+Writable parameters use the [common reference binder](collection_references.md); property,
+element and temporary reference arguments remain rejected. Existing runtime specializations retain their capabilities.
 
 `application_vectors_native.py` verifies Clang and GCC in all flavors, including
 required constructors, heap-backed string copies, class/shared-field identity, growth,

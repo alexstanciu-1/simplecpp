@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-Every currently published vector/hash specialization can be a writable parameter of a
+Every currently published vector/hash specialization, including application-defined elements, can be a writable parameter of a
 function or ordinary method. The existing reference binder owns admission: the argument
 must name a local or parameter and have the exact canonical type. Aliases such as
 vector<int>/vector<int64> identify the same type; element conversions never authorize
@@ -59,3 +59,37 @@ wall time. O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime, fresh app 
 Clang traces. Direct Ninja wall includes qualification overhead; Clang components do not
 sum to wall time. These fixture medians are not a controlled flavor performance comparison.
 Sources, fixtures, executable output, build logs and traces: `/tmp/scpp-collection-references-proof/`.
+
+## Application-defined elements
+
+Concrete application vector/hash definitions now use this same binder and native `Type&`
+signature. Removing their temporary declaration restriction is the complete production
+change; no new AST structures, type flags, generated code or preparation passes are needed.
+Element conversion still does not authorize a reference conversion. A reference borrows
+the caller's container slot, not its buffer, so replacing the container is safe and visible
+to all aliases of that slot. Inline element copies remain independent; shared fields keep
+identity. Constructors remain by-value only.
+
+`application_collection_references_native.py` covers vector and both hash key types in
+all flavors with Clang and GCC. It checks functions/methods, forwarding, aliased arguments,
+replacement, by-value isolation, shared element fields, temporary/property rejection and
+incompatible specializations. Fifteen incremental revisions per flavor compare fresh
+artifacts, including reference-to-value signature edits, deletion, failed retry and recovery.
+No-op runs prepare no bodies and rebuild no native objects.
+
+The separate [mixed/dynamic coverage review](boxed_collection_coverage.md) checks which
+parts of this common path already work for boxed containers.
+
+Application-reference fixture timings (2026-11-18), single measurements, milliseconds:
+
+| Flavor | PHP initial | PHP no-op | Native wall | Frontend | LLVM backend | Link |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| php | 14.69 | 1.84 | 481.06 | 220.11 | 414.74 | 62.00 |
+| cpp | 15.11 | 1.73 | 401.03 | 175.80 | 362.21 | 59.00 |
+| js | 15.47 | 1.77 | 390.90 | 175.85 | 341.49 | 59.00 |
+
+O2/g0, Ninja8, mold, no PCH/LTO, prebuilt libc++ runtime, direct Ninja qualification.
+Frontend/backend are cumulative trace work across translation units, not additive wall
+components. This larger fixture exercises three collection specializations, shared fields,
+functions and methods; it is not a regression comparison against tiny earlier fixtures.
+Raw local results: `/tmp/scpp-app-refs-proof3/`; boxed audit: `/tmp/scpp-boxed-coverage2/`.
