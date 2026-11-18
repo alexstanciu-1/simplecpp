@@ -187,7 +187,7 @@ def prove(work, flavor, libraries):
         ('base', private_ctor, 'Cannot call private constructor'),
         ('derived', source['derived'][:insert] + protected_receiver + source['derived'][insert:] + source['inherit'], 'Cannot access protected field'),
         ('derived', bad_base + source['inherit'], 'Base must be a struct'),
-        ('derived', multiple + source['inherit'], 'Expected {'),
+        ('derived', multiple + source['inherit'], 'Only classes implement interfaces' if flavor == 'cpp' else 'Expected {'),
     ]:
         edits += [(name, text, error), (name, source[name] + (source['inherit'] if name == 'derived' else ''), None)]
     resident = service(app, output)

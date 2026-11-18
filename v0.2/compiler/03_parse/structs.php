@@ -14,8 +14,14 @@ final class Record_Syntax
 		$start = $c->position();
 		$abstract = $c->keyword('abstract');
 		if ($abstract) $c->take_keyword('abstract');
-		$kind = $c->keyword('class') ? record_kind::class_type : record_kind::structure;
-		$c->take_keyword($kind === record_kind::class_type ? 'class' : 'struct');
+		$kind = $c->keyword('interface') ? record_kind::interface_type
+			: ($c->keyword('class') ? record_kind::class_type : record_kind::structure);
+		$c->take_keyword(match ($kind) {
+			record_kind::interface_type => 'interface',
+			record_kind::class_type => 'class',
+			default => 'struct',
+		});
+		if ($kind === record_kind::interface_type) $abstract = true;
 		$name = $c->name(token_kind::identifier);
 		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void' || $name === Iterator_Contract::NAME) {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
@@ -28,11 +34,19 @@ final class Record_Syntax
 			} else $c->take_keyword('extends');
 			$base = $parser->named_type();
 		}
-		$interface = null;
-		if ($c->keyword('implements')) {
-			$c->take_keyword('implements');
-			$interface = $parser->named_type();
+		$interfaces = [];
+		if ($kind === record_kind::interface_type && $base !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
+		if ($c->keyword('implements') || ($flavor === flavor::cpp && $c->is(token_kind::comma))) {
+			if ($c->keyword('implements')) $c->take_keyword('implements');
+			else $c->take(token_kind::comma, ',');
+			do {
+				if ($flavor === flavor::cpp && $c->keyword('public')) $c->take_keyword('public');
+				$interfaces[] = $parser->named_type();
+				if (!$c->is(token_kind::comma)) break;
+				$c->take(token_kind::comma, ',');
+			} while (true);
 		}
+		if ($kind === record_kind::interface_type && $interfaces !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
 		$c->take(token_kind::lbrace, '{');
 		$fields = [];
 		$private_section = false;
@@ -62,6 +76,7 @@ final class Record_Syntax
 			}
 			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
+			if ($kind === record_kind::interface_type && ($static || $private || $protected || $c->keyword('const'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces admit only public instance method contracts');
 			if ($protected && ($static || $c->keyword('const'))) {
 				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
 			}
@@ -81,6 +96,7 @@ final class Record_Syntax
 				flavor::cpp => $c->tokens->text_at($c->position()) === $name && $c->next_is(token_kind::lparen),
 				flavor::js => $c->tokens->text_at($c->position()) === 'constructor' && $c->next_is(token_kind::lparen),
 			};
+			if ($constructor && $kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface constructors are forbidden');
 			if ($constructor) {
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Constructor cannot be static');
 				if ($flavor === flavor::php) $c->take_keyword('function');
@@ -98,7 +114,7 @@ final class Record_Syntax
 			} else {
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
 				$method = $js_method ? $parser->named_function_header(false, $static, $private)
-					: ($grammar->function_start($parser) ? $grammar->function_header($parser, $static, $private) : null);
+					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private) : null);
 				if ($method?->short_name === '__construct' || ($flavor === flavor::js && $method?->short_name === 'constructor')) {
 					throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a constructor declaration');
 				}
@@ -119,12 +135,14 @@ final class Record_Syntax
 					$c->take(token_kind::integer, '0');
 					$method->is_abstract = true;
 				}
+				if ($kind === record_kind::interface_type) $method->is_abstract = true;
 				if ($method->is_abstract) {
 					$method->complete_abstract($c->take(token_kind::semicolon, '; after abstract method') + 1);
 					$members[] = $method;
 				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
 				continue;
 			}
+			if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface fields are forbidden');
 			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
 			if ($static) {
 				$members[] = Global_Syntax::read($parser, true, $private);
@@ -155,7 +173,7 @@ final class Record_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interface);
+		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces);
 	}
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void

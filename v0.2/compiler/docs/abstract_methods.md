@@ -55,5 +55,6 @@ Verified across cpp/php/js on Clang and GCC:
 
 Existing virtual-method, ancestor-call, object-access, class, frontend lifecycle,
 failure-cleanup, preparation-work and compiler-style checks also passed.
-Interfaces, abstract structs, protected-method expansion, callable variance,
+The subsequent [interface slice](interfaces.md) adds class capability contracts.
+Abstract structs, protected-method expansion, callable variance,
 broader reference returns, unique and borrows remain deferred.

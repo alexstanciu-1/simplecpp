@@ -323,3 +323,6 @@ to source-unit emission and Ninja object reuse; CLI/service integration remains 
 
 [Generated unit headers](docs/unit_headers.md) expose only externally watched native declarations;
 local-only declarations stay in their `.cpp`, and Ninja tracks header consumers through depfiles.
+
+The [class interface slice](docs/interfaces.md) adds shared capability views, mandatory
+override checks and inherited implementation bridges with incremental verification.

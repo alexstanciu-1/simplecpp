@@ -619,7 +619,7 @@ final class Preparation
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 				}
 			}
-			if ($record instanceof ast_record_declaration && $record->kind === record_kind::class_type) {
+			if ($record instanceof ast_record_declaration && $record->kind !== record_kind::structure) {
 				$parent = $syntax->parent;
 				if (!(($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax)) {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
@@ -951,6 +951,7 @@ final class Preparation
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
 					$this->source_call($call, $symbol, $method, $initializing);
+					$call->interface_dispatch = $record instanceof record_type_definition && $record->interface_dispatch($name);
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
@@ -1132,7 +1133,12 @@ final class Preparation
 		$record = $this->owner->parent->parent;
 		$base = $record->definition->base();
 		$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
-		if ($base === null) throw new diagnostic($site->source(), $site->byte_start(), 'Base initialization requires a base');
+		if ($base === null) {
+			if ($site->explicit) throw new diagnostic($site->source(), $site->byte_start(), 'Base initialization requires a base');
+			// A C++ colon edge can resolve to an interface: omitted base initialization then does no work.
+			$site->settle_construction(type_void::instance(), []);
+			return;
+		}
 		if ($site->target !== null) {
 			$target = Type_Resolution::named($site->target, $this->symbols, $record->namespace, $this->owner, $this->dependencies);
 			if ($target instanceof shared_record_type_definition && $target->required) $target = $target->payload;

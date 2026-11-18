@@ -922,6 +922,192 @@ Interfaces, abstract structs, protected-method expansion, callable variance, bro
 reference returns, unique and borrows remain deferred. No preparation-speed benchmark
 or broader incremental invalidation redesign is claimed.
 
+### First interface slice — implemented
+
+Implemented and verified 2026-11-18. This advances 3.4 with class implementations
+and shared interface views; interface-capability tests from 3.3 follow separately. The
+[inheritance contract](../../../specs/inheritance_v0_2.md#interface-implementation)
+owns semantics. This note bounds implementation coverage, not the full language.
+
+#### Inherited implementations and mandatory override
+
+An interface establishes a callable obligation. A compatible public instance method
+already inherited from a base may satisfy it without a new source declaration or
+marker. Preserve that method's original declaring owner, body and dispatch policy.
+The base does not retroactively implement the interface or become virtual merely
+because a descendant adds a capability.
+
+```php
+interface HasStart {
+    public function start(): int;
+}
+
+class Node {
+    public function start(): int { return 0; }
+}
+
+class IntegerLiteral extends Node implements HasStart {
+    // Inherited start() satisfies HasStart; no redeclaration is required.
+}
+```
+
+Where native C++ requires it, emit a public interface-overriding forwarding member
+in the implementing descendant, targeting the selected inherited implementation.
+Preparation owns this binding. Do not synthesize a source AST method, copy the
+foreign body or mutate the base declaration. Native C++ multiple inheritance alone
+does not make a method from an unrelated base override an interface's pure method.
+
+| Source situation | Required behavior |
+| --- | --- |
+| Interface's own bodyless method | Establishes a contract; no Virtual/Override marker required. |
+| Newly authored implementation of an interface method | Explicit Override is mandatory, even without a matching base-class method. |
+| Compatible inherited implementation used unchanged | No new declaration and no new marker; prepare an interface binding. |
+| One local method satisfies multiple compatible interface contracts | One Override marker; validate against every requirement. |
+| Descendant replaces an existing non-final interface implementation | Override remains mandatory. |
+| Override with no matching virtual/interface obligation | Reject. |
+| Virtual used instead of Override for an implementation | Reject; this fulfills an existing contract. |
+
+Reuse both existing attribute and modifier spellings and their duplicate/conflict
+diagnostics. The current exact-contract checks apply: types, passing modes,
+nullability and optional-parameter positions match. Parameter names and default
+values may differ; the statically selected callable supplies defaults. A private,
+protected, static or incompatible method does not silently satisfy a public
+interface obligation. Existing nonvirtual hiding restrictions remain in force.
+An interface forwarding binding must not be used to authorize otherwise forbidden
+source redeclarations.
+
+The full contract permits inherited final implementations, including an existing
+final virtual slot. That case needs a different binding strategy: an ordinary
+same-name forwarding override can violate C++ final. Defer inherited-final
+satisfaction explicitly in this first slice, with an unsupported-case diagnostic
+rather than claiming it is a language error or silently emitting invalid C++.
+
+#### Bounded scope and owners
+
+- Public bodyless instance methods; classes implement one or multiple independent
+  interfaces. Abstract implementers may retain obligations; concrete classes must
+  discharge them. Reuse common abstract/override signature validation.
+- Admit compatible same-name requirements using the exact-contract subset; reject
+  conflicting contracts. Preserve each interface declaration's identity and defaults.
+- Interface-typed shared storage, parameters and returns use class-like handle
+  semantics. Function nullability remains explicit; shared properties retain the
+  agreed relaxed empty-storage rule. Interfaces cannot be constructed.
+- Include class-to-interface conversion and passing/returning an existing interface
+  view. Reuse the concrete inline adapter engine, parameter binding and runtime
+  ownership. No source templates, new control block or payload copy.
+- Frontends retain written interface/implements intent using the common nominal
+  model. Multiple implemented interfaces are valid multiplicity; retain the existing
+  single-base representation. Do not allocate body scopes/jobs for prototypes.
+- Declaration preparation resolves interface edges and settles requirements before
+  body work. Keep original declarations; store only needed prepared bindings with
+  the implementing owner. Avoid a second flattened method inventory, repeated
+  per-call ancestry scans or emitter-owned semantic resolution.
+- Lower to native abstract interface payloads and public virtual interface edges,
+  as specified, plus prepared forwarding members where required. Preserve public
+  virtual nonthrowing interface destruction and existing copy/move behavior.
+- Handle views may have adjusted pointers but retain the original allocation,
+  control block and concrete destruction callback. Preserve allocation identity,
+  strong/weak lifetime and receiver retention through calls.
+- Existing declaration watches own invalidation; source-owned adapter demand owns
+  publication/removal. Lowering reads settled contracts and owns its output. No
+  foreign-body preparation, shared registry mutation or new threading machinery.
+
+#### Incremental contract and verification checklist
+
+Completed semantic, emitted-C++ and native proofs across cpp/php/js on Clang and
+GCC, comparing each successful incremental recovery with a fresh build.
+
+- [x] Small AST proof: Node plus two concrete expressions, a shared child link and
+      an interface-typed operation. Verify virtual dispatch reaches the original
+      object and distinguish alias mutation from copying.
+- [x] Local marked implementation, inherited ordinary and virtual implementations,
+      abstract intermediates and a later explicit override. Check calls through
+      concrete, base and interface views; adding the interface must not change
+      pre-existing base-view dispatch semantics.
+- [x] Multiple independent interfaces, including compatible same-name requirements
+      and conflicts. Verify both adjusted interface views share allocation identity.
+- [x] Missing/spurious/duplicate/conflicting markers in all admitted spellings;
+      missing methods, wrong signatures/modes/nullability, invalid visibility/static
+      methods, interface construction and explicitly deferred forms reject cleanly.
+- [x] Calls through interface and concrete types select their own declared defaults;
+      conversions retain checks and evaluate each argument once under the existing
+      evaluation contract. Preserve writable-reference behavior where already admitted.
+- [x] Interface parameters/returns, nullable function boundaries and empty shared
+      properties; null dereference guards, weak expiry and exactly-once concrete
+      cleanup. Release other owners during argument evaluation and verify receiver
+      lifetime. Run native memory/lifetime checks.
+- [x] Interface signature/default edits; add/remove an obligation or implements edge;
+      change base ancestry or inherited implementation visibility/signature; insert,
+      remove and restore a nearer override. Watch missing candidates as well as
+      selected declarations; never retain stale forwarding bindings.
+- [x] Delete/restore interface and implementation sources, repeat invalid builds and
+      recover. Preserve pending work and compare diagnostics, generated artifacts and
+      native behavior with fresh compilation.
+- [x] No-op preparation/emission/native reuse; implementation-body-only edits preserve
+      unchanged caller emission and objects. Do not claim zero caller preparation
+      where current nominal replacement invalidates contracts more broadly.
+- [x] Interface/header changes rebuild required native consumers through depfiles,
+      including consumers whose generated C++ stays byte-identical. Verify unrelated
+      units remain reused and qualification does not hide artifact invalidation.
+- [x] Retain adapter demands from reused sources; remove the last use/implements edge
+      and retire obsolete adapters/headers; restore and compare with fresh publication.
+- [x] Keep declaration/body/lowering ownership explicit and run existing inheritance,
+      abstract/virtual/parent-call, adapter, failure-cleanup and style regressions.
+      Sequential PHP checks do not establish native thread safety.
+
+Deferred: interface inheritance/diamonds; interface instanceof/downcasts/cross-casts;
+struct implementers; inherited-final interface satisfaction; callable variance and
+broader reference returns; interface fields/constants/static methods/default bodies;
+traits; unique; borrows/non-owning AST links; cross-thread ownership and scheduling.
+Review broader ownership or dispatch changes before expanding this slice. No native
+performance or preparation-speed claim follows from the proposed design.
+
+Implementation evidence: [class interfaces](../../compiler/docs/interfaces.md) and
+`interfaces_native.py --memcheck`. The common record kind and original declarations
+own interfaces; the existing record readiness flag now covers all method obligations.
+Only written/resolved interface edges and required forwarding targets are retained.
+No copied method inventories, synthetic AST bodies, runtime ownership changes or
+new preparation framework were introduced. C++ constructor syntax with only an
+interface edge settles omitted base initialization as a void no-op.
+
+Verification includes multiple interface views sharing one control block, adjusted
+pointers, weak expiry, receiver retention when an argument releases its owner,
+reference mutation and by-value handle forwarding. Effect traces prove single
+argument evaluation and checked byte conversion failure before the method body.
+Record-name shadowing (`scpp`) and standalone emission compile on both toolchains.
+Retained tests cover body-only edits, defaults/signatures, reparenting, adding/removing
+obligations, invalid retries, source deletion/restoration, actual native header rebuilds
+with unchanged caller C++, and last-use adapter retirement/restoration. Existing
+extends, classes, shared-upcast, inline-adapter, virtual, abstract, parent-call,
+frontend/AST/preparation and failure-cleanup checks pass. The extends fixture now
+expects semantic rejection of unsupported comma-separated struct base edges, since
+C++ base lists are parsed for interface support. Source method-contract validation
+precedes outstanding-obligation diagnostics, preserving existing error precedence.
+
+Review fixes keep the same owners and retained structures. Method preparation validates
+an inherited abstract method's exact signature before allowing its body to remain
+outstanding. The emitter registers forwarding targets with the ordinary function
+key, avoiding duplicate standalone prototypes and signature inventory entries.
+
+- [x] Reject an incompatible inherited abstract signature in all three flavors;
+      compare repeated retained diagnostics and recovery with fresh builds, and
+      compile the compatible abstract obligation on Clang and GCC.
+- [x] Successfully remove and restore the last implements edge on an inherited
+      ordinary-method implementer. Check that both the published bridge declaration
+      and out-of-line definition disappear/reappear, with fresh-output equivalence.
+- [x] Preserve main and unrelated source emission and native objects through that
+      transition. The implementer, its layout consumer, base method and interface
+      owners rebuild as the last bridge changes exported header demand.
+      The consumer keeps byte-identical emitted C++. No-op builds
+      after removal and restoration prepare/emit/rebuild nothing.
+- [x] Assert exactly one standalone declaration for the inherited forwarding target
+      and compile/run it on both native toolchains in cpp/php/js.
+
+These checks prove the sequential implementation and generated native behavior;
+they do not claim cross-thread ownership safety or a preparation-speed improvement.
+The earlier nominal replacement limitation remains: unchanged emitted callers/native
+objects do not imply zero caller preparation after every declaration edit.
+
 ## 4. Failures and cleanup — failed preparation and retry
 
 | Order | Group | Initial scope |
