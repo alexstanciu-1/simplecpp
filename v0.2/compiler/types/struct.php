@@ -175,7 +175,7 @@ final class record_type_definition extends type_definition implements dependency
 					if ($record instanceof self) $record->prepare_layout($symbols, $active, $work, true);
 				}
 			}
-			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression)) {
+			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression) && !$field->is_readonly) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');
 			}
 			if ($field->initializer !== null) {
@@ -186,6 +186,9 @@ final class record_type_definition extends type_definition implements dependency
 					}
 				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
+			}
+			if ($field->is_readonly && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Readonly property requires a default or constructor: ' . $field->short_name);
 			}
 			$field->settle_type($type);
 		}
@@ -444,6 +447,11 @@ final class shared_record_type_definition extends record_handle_definition
 	}
 
 	/** METHODS */
+	public function mutates_referenced_value(): bool
+	{
+		return true;
+	}
+
 	/** Borrow the payload's settled traversal while the emitter retains this shared allocation. */
 	public function iteration(): ?iterable_type
 	{

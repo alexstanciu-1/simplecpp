@@ -23,6 +23,7 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 	public readonly ?ast_expression $initializer;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
+	public readonly bool $is_readonly;
 
 	/** PREP FACTS */
 	/** Prepared fact: typed destination conversion for the written literal or enum case. */
@@ -33,11 +34,12 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 	/** CONSTRUCTOR */
 	/** Retain the written visibility and attach the field type to its declaration. */
 	public function __construct(string $name, ast_type_reference $type, int $start /** uint32 */, int $end /** uint32 */, bool $private,
-		?ast_expression $initializer = null, bool $protected = false)
+		?ast_expression $initializer = null, bool $protected = false, bool $readonly = false)
 	{
 		parent::__construct($start, $end);
 		$this->is_private = $private;
 		$this->is_protected = $protected;
+		$this->is_readonly = $readonly;
 		$this->short_name = $name;
 		$this->namespace = null;
 		$this->type_reference = $type;

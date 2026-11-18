@@ -4,6 +4,8 @@ final class type_@name@ extends boxed_type_definition implements iterable_type, 
 {
 @iteration@
 @append_method@
+	public function mutates_referenced_value(): bool { return @reference_mutation@; }
+
 	public function supports_instance_field(): bool { return @field_admission@; }
 
 	public function supports_static_property(): bool { return false; }

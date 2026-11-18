@@ -255,3 +255,16 @@ immutable declaration kind chooses default storage through the nominal payload's
 canonical type definitions; it does not duplicate layout/member indexes. Written
 field syntax stays distinct from the effective prepared field contract. See
 [class defaults and object boundaries](classes.md).
+
+## Stored-value readonly fields
+
+`ast_instance_field.is_readonly` records written syntax, not a preparation result.
+`Readonly_Access` checks stored-value mutation paths and stops at reference-identity
+boundaries. The type query defaults to value behavior; shared record owners override it,
+and boxed generation derives dynamic behavior from its existing copy/identity contract.
+
+`Readonly_Initialization` is temporary constructor preparation state. Conditional joins
+retain only uninitialized/initialized/path-dependent states for the current record's readonly
+fields. It is released on success or failure. No AST occurrence flags, extra body traversal,
+runtime initialization bitmap or const C++ layout is added. Readonly changes use existing
+record dependencies and body invalidation. See the normative initialization contract.

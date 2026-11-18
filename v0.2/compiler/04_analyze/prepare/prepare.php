@@ -46,6 +46,8 @@ final class Preparation
 	private int $loop_depth /** uint32 */ = 0;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
+	/** Transient initialization proof, owned only while preparing a constructor. */
+	private ?Readonly_Initialization $readonly_initialization = null;
 	/** Native non-owning context for this body's variable lookup and dependency registration. */
 	private scope $symbols;
 	/** Native non-owning owner of the facts being prepared. */
@@ -83,9 +85,13 @@ final class Preparation
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
-		$this->body($syntax->statements, $syntax->source(),
-			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
-			$syntax);
+		try {
+			$this->body($syntax->statements, $syntax->source(),
+				($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
+				$syntax);
+		} finally {
+			$this->readonly_initialization = null;
+		}
 		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups,
 			$target);
 	}
@@ -103,6 +109,8 @@ final class Preparation
 		$this->latest_writes = [];
 		/** @var ast_function_declaration $function */
 		$function = $owner->parent;
+		$this->readonly_initialization = $function->is_constructor() && $function->parent instanceof ast_record_declaration
+			? new Readonly_Initialization($function->parent) : null;
 		foreach ($function->parameters as $parameter) {
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
@@ -111,6 +119,7 @@ final class Preparation
 		$this->name_lookups = 0;
 		$this->loop_depth = 0;
 		$completion = $this->sequence($syntax, $source, $target, $function);
+		if (($completion & statement_completion::fallthrough) !== 0) $this->readonly_initialization?->complete($owner);
 		if (($target === null) && ($completion !== statement_completion::returns) && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
@@ -188,15 +197,17 @@ final class Preparation
 				}
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
-				$this->writable_property($statement->target);
+				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
 				$this->value($statement->value);
 				$type = $statement->target->type_def();
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
 				else $statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+				if ($initializing_field !== null) $this->readonly_initialization->states[$initializing_field->short_name] = 1;
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$this->value($statement->target);
+				Readonly_Access::write($receiver, true);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
@@ -207,7 +218,7 @@ final class Preparation
 				$binding = null;
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_field_expression) {
-					$this->writable_property($receiver);
+					$this->writable_property($receiver, payload: true);
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
@@ -228,7 +239,7 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_append_statement) {
 				if ($statement->receiver instanceof ast_field_expression) {
-					$this->writable_property($statement->receiver);
+					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
 					if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
@@ -260,6 +271,7 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
+				$this->readonly_initialization?->complete($statement);
 				if ($target === null) {
 					$return_type = $function->return_type_def();
 					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
@@ -320,7 +332,10 @@ final class Preparation
 	{
 		$completion = 0;
 		$has_else = false;
+		$before = $this->readonly_initialization?->states;
+		$joined = null;
 		foreach ($statement->arms as $arm) {
+			if ($before !== null) $this->readonly_initialization->states = $before;
 			$this->forget_values();
 			if ($arm->condition !== null) {
 				$this->condition($arm->condition);
@@ -332,6 +347,18 @@ final class Preparation
 			$arm_completion = $this->sequence($arm->body->statements, $source, $target, $function);
 			array_pop($this->local_frames);
 			$completion |= $arm_completion;
+			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
+				$states = $this->readonly_initialization->states;
+				if ($joined === null) $joined = $states;
+				else foreach ($states as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+			}
+		}
+		if ($before !== null) {
+			if (!$has_else) {
+				if ($joined === null) $joined = $before;
+				else foreach ($before as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+			}
+			$this->readonly_initialization->states = $joined ?? $before;
 		}
 		$this->forget_values();
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
@@ -362,7 +389,10 @@ final class Preparation
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
 			}
 		}
-		if (($method = $type->iteration_method()) !== null) $this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
+		if (($method = $type->iteration_method()) !== null) {
+			Readonly_Access::write($statement->source_value, true);
+			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
+		}
 		$destination = $this->find_local($statement->value->short_name);
 		$statement->value->settle_type($type->iteration_value_type());
 		$statement->destination = $destination ?? $statement->value;
@@ -528,19 +558,22 @@ final class Preparation
 	}
 
 	/** Check writable instance paths and qualified static members for all property writes. */
-	private function writable_property(ast_name_expression|ast_field_expression $root): void
+	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
 			$this->static_destination($root);
-		} else {
-			$this->value($root);
-			$root = $root->receiver;
-			while ($root instanceof ast_field_expression) $root = $root->receiver;
-			if (!($root instanceof ast_this_expression)
-				&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
-				throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
-			}
+			return null;
 		}
+		$this->value($root);
+		$field = $initialize ? $this->readonly_initialization?->assignment($root, $this->loop_depth) : null;
+		Readonly_Access::write($root, $payload, $field);
+		$root = $root->receiver;
+		while ($root instanceof ast_field_expression) $root = $root->receiver;
+		if (!($root instanceof ast_this_expression)
+			&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
+			throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
+		}
+		return $field;
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
@@ -548,6 +581,7 @@ final class Preparation
 	{
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
+			Readonly_Access::write($statement->target->receiver, true);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
 			}
@@ -713,6 +747,9 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$syntax->settle_field($field->type_def());
+			if (!(($syntax->parent instanceof ast_field_assignment) && $syntax->parent->target === $syntax)) {
+				$this->readonly_initialization?->read($syntax);
+			}
 			return;
 		}
 		if ($syntax instanceof ast_index_expression) {
@@ -937,6 +974,7 @@ final class Preparation
 			$type = $runtime->parameters[$index];
 			if ($index === 0 && $runtime->receiver_method) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
+				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
 				if ($runtime->is_reference(0) && $argument instanceof ast_name_expression) {
 					$this->bind_reference($argument, $type, $writes);
 				}
@@ -1015,6 +1053,8 @@ final class Preparation
 					$method = $symbol?->declaration();
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
+					Readonly_Access::write($receiver, true);
+					if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
 					$this->source_call($call, $symbol, $method, $initializing);
 					$call->interface_dispatch = $record instanceof record_type_definition && $record->interface_dispatch($name);
 					return;

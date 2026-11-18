@@ -278,6 +278,12 @@ abstract class type_definition
 		return [];
 	}
 
+	/** Mutation through a reference changes its referent, not the stored binding. */
+	public function mutates_referenced_value(): bool
+	{
+		return false;
+	}
+
 	/** Backend property: copying a plain value cannot call user code, allocate or throw. */
 	public function cpp_trivial_value(): bool
 	{
