@@ -32,12 +32,12 @@ still use ordinary virtual dispatch; the explicit selection applies only to this
 call. Existing argument capture selection handles order, conversion failures and
 lifetimes without a second parent-specific argument emitter.
 
-A current instance is required. Base-initializer arguments cannot access it. PHP's
+An instance target requires a current instance. Base-initializer arguments cannot access it. PHP's
 `parent::__construct(...)` and JS's `super(...)` remain separate constructor syntax;
 a first-statement parent method call follows implicit base construction instead.
-Private ancestor members reject under existing access rules. Protected ordinary
-methods, parent static members, abstract bodies, interfaces, unique and borrows remain
-deferred. Existing type-qualified static calls keep their prior behavior.
+Private ancestor members reject under existing access rules. Protected methods use the lexical access check. A selected static method goes directly
+through the ordinary binder and can run inside a static caller. Only an instance call
+records fixed ancestor dispatch.
 
 Run from the repository root:
 

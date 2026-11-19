@@ -1223,27 +1223,37 @@ final class Preparation
 		return true;
 	}
 
-	/** Resolve fixed implementation lookup on the lexical current instance, retaining ordinary call admission. */
+	/** Select the ancestor declaration before applying instance-specific receiver checks. */
 	private function ancestor_call(ast_call_expression $call, string $name, ?record_type_definition $lookup, ?string $initializing, ?symbol_entry $selected = null): void
 	{
 		$context = $this->owner->parent->parent;
-		if (!($context instanceof ast_record_declaration) || $this->owner->parent->is_static) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
+		if (!($context instanceof ast_record_declaration)) {
+			throw new diagnostic($call->source(), $call->byte_start(), ($selected === null) ? 'Ancestor call requires a declaring record' : 'Instance method requires a receiver: ancestor call has no current instance');
 		}
-		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
-		for ($type = $context->definition; $type !== null; $type = $type->base()) {
-			$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+		if ($lookup === null) {
+			$this->dependencies?->watch($this->symbols->entry($context->symbol_key()), $this->owner);
+			$lookup = $context->definition->base();
+			if ($lookup === null) throw new diagnostic($call->source(), $call->byte_start(), 'Ancestor call requires a base type');
 		}
-		$lookup ??= $context->definition->base();
-		if ($lookup === null || $lookup === $context->definition || !$context->definition->derives_from($lookup)) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
+		else {
+			for ($type = $context->definition; $type !== null; $type = $type->base()) {
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+			}
+			if ($lookup === $context->definition || !$context->definition->derives_from($lookup)) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
+			}
 		}
 		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration) || $method->is_constructor()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor instance method: ' . $name);
+			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor method: ' . $name);
 		}
-		if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Parent static calls are deferred');
+		if ($method->is_static) {
+			$this->source_call($call, $symbol, $method, $initializing);
+			return;
+		}
+		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
+		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
 		if ($method->is_abstract) throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call an abstract ancestor implementation');
 		$this->source_call($call, $symbol, $method, $initializing, true);
 	}

@@ -54,6 +54,29 @@ def rejections(work, flavor, src, helpers):
         p.wait()
 
 
+def ancestor_calls(work, flavor, helpers):
+    work.mkdir(exist_ok=True)
+    s, klass, method, static, qualifier = helpers
+    parent = {'php': 'parent::', 'js': 'super.', 'cpp': 'Middle::'}[flavor]
+    def provider(name, value):
+        return klass(name, static('answer', 'return '+value+';', visibility='protected'))
+    body = static('read', 'return '+parent+'answer();') + method('readInstance', 'return '+parent+'answer();')
+    child = klass('Child', body, 'Middle')
+    base, other = provider('Base', '3'), provider('Other', '7')
+    middle = klass('Middle', '', 'Base')
+    main = s['infer']('p', 'new Child()') + f"echo Child{qualifier}read(),{s['v']}p{s['access']}readInstance();return 8;"
+    src = dict(base=base, middle=middle, other=other, child=child, main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'33'), (None, None, b'33'),
+        ('middle', klass('Middle', '', 'Other'), b'77'),
+        ('other', other.replace('protected', 'private'), None), (None, None, None),
+        ('other', other, b'77'), ('other', klass('Other'), None), ('other', other, b'77'),
+        ('middle', middle, b'33'), ('base', base.replace('protected', 'public'), b'33'),
+        ('child', klass('Child', body, 'Other'), b'33' if flavor == 'cpp' else b'77'),
+        ('child', child, b'33'),
+    ])
+
+
 def prove(work):
     for flavor in ['php', 'cpp', 'js']:
         src, helpers = sources(flavor)
@@ -75,6 +98,7 @@ def prove(work):
             ('main', src['main'], b'3394'), (None, None, b'3394'),
         ])
         rejections(work, flavor, src, helpers)
+        ancestor_calls(work/'ancestor', flavor, helpers)
 
 
 def main():

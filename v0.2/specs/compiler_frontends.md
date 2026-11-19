@@ -357,17 +357,17 @@ The C++ flavor uses the actual ancestor type name, such as `Node::evaluate(...)`
 including ordinary namespace/import qualification. `Parent` is not a special alias.
 C++ may name a more distant strict ancestor to select that lookup starting point.
 
-All forms select the resolved ancestor implementation on the current object and
+For instance methods these forms select the resolved ancestor implementation on the current object and
 suppress virtual redispatch for that call. Virtual calls made inside that body still
 use ordinary dispatch. Defaults and conversions belong to the selected method.
 Written parent qualification and prepared fixed dispatch are retained on the existing
 call node; argument syntax and semantic admission use the ordinary call machinery.
 
-This slice supports concrete instance methods with the existing public/private rules.
-Protected-method declarations, parent static members/constants/properties and broader
-reference-return support remain deferred; already-supported type-qualified static
-calls remain unchanged. Missing bases/methods, private access, unrelated C++ qualifiers,
-free/static contexts and current-instance use in base-constructor arguments reject.
+For static methods, preparation binds the selected declaration directly, including
+its visibility and defaults. PHP/JS parent qualification requires a lexical base.
+C++ static qualification names a type explicitly. A static caller can call a static
+target. An instance target requires an initialized current instance. Parent-qualified
+constants and properties remain deferred.
 A parent method call may be the first authored constructor-body statement, after
 implicit base construction. It is not mistaken for `parent::__construct(...)` or
 `super(...)`.
@@ -406,8 +406,7 @@ unique ownership and borrows remain deferred. Class interfaces are covered below
 Static method lookup starts at the qualified type and follows its base chain. Lexical
 `self::` (PHP), `Self::` (C++) and `class.` (JS) spellings start at the enclosing record. Protected access requires the
 declaring record or a descendant context; no instance receiver is involved.
-Ancestor static calls, static
-redeclarations and protected static properties/constants remain deferred. See
+Static redeclarations and protected static properties/constants remain deferred. See
 [protected static methods](../compiler/docs/protected_static_methods.md).
 
 ## Class interfaces

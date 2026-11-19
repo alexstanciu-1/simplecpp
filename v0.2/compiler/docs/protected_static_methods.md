@@ -26,7 +26,8 @@ record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
 `Base::hidden()`. Both `Child::hidden()` and lexical self inside Child start lookup at Child.
 The existing method lookup watches each visited record and named method slot and
 binds the selected Base declaration directly, including its defaults and visibility.
-Ancestor static calls, static redeclarations, protected static properties/constants
+PHP `parent::` and JS `super.` start at the lexical base. C++ names the base explicitly.
+Static redeclarations, protected static properties/constants
 and expression-qualified static calls are separate work.
 
 ## Implementation and retained state
@@ -51,6 +52,8 @@ Nineteen incremental checkpoints per flavor compare retained and fresh diagnosti
 or emitted artifacts. They cover defaults, private/public/protected edits, intermediate-base changes that select a different implementation, deletion, retries without edits and recovery. Successful revisions
 build and execute with Clang. Negative checks cover external/unrelated access,
 inherited protected calls from outside the hierarchy, and deferred protected data members.
+Twelve additional ancestor-call checkpoints per flavor exercise both caller kinds,
+intermediate and immediate base changes, private access, deletion and recovery.
 Existing protected-instance and ordinary method regressions protect receiver rules
 and shared binder behavior. Native timing results are reported separately from
 cumulative frontend/LLVM work; no preparation speedup is claimed.
