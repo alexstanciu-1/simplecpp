@@ -190,7 +190,7 @@ final class Body_Collection
 			|| ($value instanceof ast_unary_expression)) {
 			$this->expression($value->operand);
 		}
-		if ($value instanceof ast_field_expression) {
+		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {
 			$this->expression($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {
@@ -221,8 +221,10 @@ final class Body_Collection
 	 * @param ast_statement[] $statements
 	 */
 	public function body(int $start /** uint32 */, int $end /** uint32 */,
-		array $statements /** list<ast_statement> */): ast_function_body
+		array $statements /** list<ast_statement> */, bool $signature_shared = false): ast_function_body
 	{
-		return new ast_function_body($start, $end, $statements, $this->locals, $this->references, $this->declarations->publish());
+		// The authored scope owns parameter duplicate links. A private body only indexes those parameters.
+		$scope = $signature_shared ? $this->declarations->publish_references() : $this->declarations->publish();
+		return new ast_function_body($start, $end, $statements, $this->locals, $this->references, $scope);
 	}
 }

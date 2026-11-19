@@ -51,6 +51,9 @@ final class ast_file_node extends ast_node
 	/** Preparation state: whole-file facts are ready only after successful settlement. */
 	private bool $prepared = false;
 
+	/** Prepared fact: source-owned executable implementations. @var array<string,array<int,ast_function_declaration>> */
+	private array $static_implementations /** array<string,array<uint64,ast_function_declaration>> */ = [];
+
 	/** CONSTRUCTOR */
 	public function __construct(token_list $tokens, ?string $namespace = null, type_availability $availability = new type_availability())
 	{
@@ -74,7 +77,7 @@ final class ast_file_node extends ast_node
 		foreach ($this->functions() as $function) {
 			$function->return_type_def();
 			if ($function->is_abstract && !$function->method_contract_ready) throw new \LogicException('Abstract method contract is not prepared');
-			$function->optional_body()?->require_prepared();
+			if (!$function->is_static) $function->optional_body()?->require_prepared();
 		}
 		foreach ($this->globals() as $global) {
 			$global->type_def();
@@ -83,6 +86,10 @@ final class ast_file_node extends ast_node
 			$constant->type_def();
 		}
 		$this->main()?->body()->require_prepared();
+		foreach ($this->static_implementations as &$group) {
+			if (count($group) > 1) uasort($group, static fn(ast_function_declaration $a, ast_function_declaration $b): int =>
+				strcmp($a->instance->called->declaration()->name(), $b->instance->called->declaration()->name()));
+		}
 		$this->prepared = true;
 	}
 
@@ -153,6 +160,41 @@ final class ast_file_node extends ast_node
 			}
 		}
 		return $functions;
+	}
+
+	/** Install one completed body in its defining unit. */
+	public function publish_implementation(ast_function_declaration $method): void
+	{
+		$this->static_implementations[$method->symbol_key()][spl_object_id($method->instance->called)] = $method;
+	}
+
+	/** Remove one retired body without reading a deleted called-type declaration. */
+	public function retire_implementation(ast_function_declaration $method): void
+	{
+		$key = $method->symbol_key();
+		unset($this->static_implementations[$key][spl_object_id($method->instance->called)]);
+		if (empty($this->static_implementations[$key])) unset($this->static_implementations[$key]);
+	}
+
+	/** Fresh standalone preparation replaces the complete demand graph. */
+	public function reset_implementations(): void
+	{
+		$this->static_implementations = [];
+	}
+
+	/** @return ast_function_declaration[] Published implementations of one static method. */
+	public function static_implementations(ast_function_declaration $method): array
+	{
+		return $this->static_implementations[$method->symbol_key()] ?? [];
+	}
+
+	/** Executable definitions in stable publication order. @return \Generator<ast_function_declaration> */
+	public function implementations(): \Generator
+	{
+		foreach ($this->functions() as $method) {
+			if ($method->is_static) yield from $this->static_implementations[$method->symbol_key()] ?? [];
+			else yield $method;
+		}
 	}
 
 	/** @return ast_global_declaration[] */

@@ -6,7 +6,7 @@ from application_vectors_native import measure
 from extends_native import source_edit
 
 
-def revisions(work,flavor,sources,edits):
+def revisions(work,flavor,sources,edits, *, unaffected_source=None):
     app=work/flavor;app.mkdir();out=work/(flavor+'-out');rows=[]
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
     for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
@@ -22,12 +22,16 @@ def revisions(work,flavor,sources,edits):
             got=invoke(proc);fresh=work/f'{flavor}-fresh-{revision}';cleaner=service(app,fresh)
             try:clean=invoke(cleaner)
             finally:cleaner.stdin.close();cleaner.wait()
-            if expected is None:
+            if expected is None or isinstance(expected, str):
                 assert 'error' in got and got['error']==clean.get('error'),(flavor,revision,got,clean)
+                if isinstance(expected, str):
+                    assert expected in got['error'], (flavor, revision, got)
                 assert artifacts(out)==before
                 continue
             assert 'error' not in got and 'error' not in clean,(flavor,revision,got,clean)
             assert artifacts(out)==artifacts(fresh),(flavor,revision)
+            if revision and unaffected_source:
+                assert got['preparation']['reused'] and not any(p.endswith('/'+unaffected_source) for p in got['emitted_sources']), got
             row={'revision':revision,'php_ms':got['php_ms'],'prepared':got['preparation']['prepared']}
             if revision==1 and name is None:assert got['preparation']['prepared']==0
             else:row.update(measure(out,work/f'{flavor}-native-{revision}',expected))
@@ -36,7 +40,7 @@ def revisions(work,flavor,sources,edits):
     (work/(flavor+'-timings.json')).write_text(json.dumps(rows,indent=2)+'\n')
 
 
-def guard(work,flavor,label,source,error):
+def guard(work,flavor,label,source,error, *, retry_entry=False):
     app=work/(flavor+'-'+label);app.mkdir();out=work/(flavor+'-'+label+'-out')
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),source)
     p=service(app,out)
@@ -44,5 +48,6 @@ def guard(work,flavor,label,source,error):
     finally:p.stdin.close();p.wait()
     assert 'error' not in got,got
     entry=out/'entry.cpp';text=entry.read_text().replace('int main(', 'int tested_entry(')
-    entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == '+json.dumps(error)+' ? 8 : 91;} return 92;}\n')
+    on_expected = 'tested_entry()' if retry_entry else '8'
+    entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == '+json.dumps(error)+' ? '+on_expected+' : 91;} return 92;}\n')
     measure(out,work/(flavor+'-'+label+'-native'),b'')

@@ -81,7 +81,9 @@ final class Preparation
 		$this->dependencies = $dependencies;
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
-		$errors = Declaration_Diagnostics::locals($syntax);
+		// Declaration collection owns duplicate chains on the authored body, including shared parameters.
+		$authored = $syntax->parent->instance?->method->declaration();
+		$errors = Declaration_Diagnostics::locals($authored?->body() ?? $syntax);
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
@@ -496,6 +498,7 @@ final class Preparation
 		$type = null;
 		if ($declaration->type_reference !== null) {
 			$type = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
+			if ($type instanceof record_type_definition) $type->require_complete_value($declaration->type_reference);
 			if ($type === null) {
 				throw new diagnostic($source, $root->byte_at($declaration->type_position()),
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
@@ -556,15 +559,48 @@ final class Preparation
 		}
 	}
 
+	/** Resolve a qualified data name once; PHP spells properties separately from constants. */
+	private function bind_static_data(ast_name_expression $syntax, string $qualifier, string $name): bool
+	{
+		$type = $this->symbols->entry($syntax->root()->type_key($qualifier));
+		$this->dependencies?->watch($type, $this->owner);
+		$record = $type->declaration();
+		if (!($record instanceof ast_record_declaration)) return false;
+		return $this->bind_record_data($syntax, $record->definition, $name, $qualifier);
+	}
+
+	/** Bind the selected declaration from the lookup starting type, observing each visited record. */
+	private function bind_record_data(ast_name_expression $syntax, record_type_definition $lookup, string $name, string $qualifier): bool
+	{
+		$properties = !$syntax->constant_only;
+		$constants = !$properties || $syntax->source()->flavor !== flavor::php;
+		$member = $lookup->static_data_member($name, $properties, $constants, $this->symbols,
+			$this->owner, $this->dependencies);
+		if ($member === null) {
+			$message = $constants ? 'Unknown constant: ' : 'Unknown static property: ';
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), $message . $qualifier . '::' . $name);
+		}
+		return $this->bind_literal($syntax, $this->symbols->entry($member->symbol_key()));
+	}
+
 	/** Watch missing and inaccessible members so visibility edits also recover an unchanged caller. */
 	private function bind_literal(ast_name_expression $syntax, symbol_entry $symbol): bool
 	{
 		$this->dependencies?->watch($symbol, $this->owner);
 		$member = $symbol->declaration();
 		if ($member === null) return false;
-		if ($member->is_private && $this->owner->parent->parent !== $member->parent) {
-			$kind = $member instanceof ast_constant_declaration ? 'constant' : 'static property';
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private ' . $kind . ' ' . $member->name());
+		if ($member->visibility !== member_visibility::public) {
+			$context = $this->owner->parent->parent;
+			if ($member->visibility === member_visibility::protected) {
+				$allowed = $member->parent->definition->permits_protected_access($context, watcher: $this->access_watcher());
+			}
+			else {
+				$allowed = $context === $member->parent;
+			}
+			if (!$allowed) {
+				$kind = $member instanceof ast_constant_declaration ? 'constant' : 'static property';
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access ' . $member->visibility->name . ' ' . $kind . ' ' . $member->name());
+			}
 		}
 		if ($member instanceof ast_constant_declaration) $syntax->settle_constant($symbol);
 		else $syntax->settle_global($symbol);
@@ -575,6 +611,8 @@ final class Preparation
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
+			if ($root instanceof ast_called_type_name && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed late-static property writes are deferred');
+			if ($root instanceof ast_qualified_data && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed expression-qualified static property writes are deferred');
 			$this->static_destination($root);
 			return null;
 		}
@@ -736,18 +774,15 @@ final class Preparation
 			if (!($record instanceof ast_method_owner)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
 			}
-			if ($this->owner->parent->is_constructor()) {
-				$parent = $syntax->parent;
-				$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax;
-				if (!$is_receiver && !($parent instanceof ast_return_statement)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
-				}
+			$parent = $syntax->parent;
+			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
+				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 			}
-			if ($record instanceof ast_record_declaration && $record->kind !== record_kind::structure) {
-				$parent = $syntax->parent;
-				if (!(($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
-				}
+			if (!$is_receiver && $record instanceof ast_record_declaration) {
+				if ($record->kind !== record_kind::structure) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
+				$record->definition->require_complete_value($syntax);
 			}
 			// Receiver facts depend on the current layout, including inherited types and access.
 			$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
@@ -755,7 +790,13 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_new_expression) {
-			$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			if ($syntax->target instanceof ast_called_type_reference) {
+				$record = $this->called_record($syntax, 'Late-static construction');
+				if ($record->kind !== record_kind::class_type) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Late-static construction requires a class');
+				$payload = $record->definition;
+			} else {
+				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			}
 			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
 			if (!($payload instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a record: ' . $syntax->target->name);
@@ -778,7 +819,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
 			}
 			$context = $this->owner->parent->parent;
-			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type)) {
+			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type, $this->access_watcher())) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$syntax->settle_field($field->type_def());
@@ -897,6 +938,15 @@ final class Preparation
 		{
 			$this->name_lookups++;
 			$name = $syntax->name;
+			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
+				$lookup = match (true) {
+					$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
+					$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
+					default => $this->static_qualifier($syntax->receiver, $initializing),
+				};
+				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
+				return;
+			}
 			if (!$syntax->constant_only && ($name === $initializing)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Cannot read local during its initialization: ' . $name);
@@ -920,6 +970,9 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
 			if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return;
+			$scope_separator = strrpos($name, '::');
+			if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
+				substr($name, $scope_separator + 2))) return;
 			if (!$syntax->constant_only) {
 				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
 				$symbol = $this->symbols->entry($key);
@@ -933,15 +986,7 @@ final class Preparation
 				if ($this->bind_literal($syntax, $symbol)) return;
 				// C++ and JS share the namespace separator with type-qualified members.
 				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
-					$qualified = substr($name, 0, $last) . '::' . substr($name, $last + 1);
-					$property = $this->symbols->entry('var:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
-					if ($this->bind_literal($syntax, $property)) return;
-					$symbol = $this->symbols->entry($syntax->root()->constant_key($qualified));
-					if ($this->bind_literal($syntax, $symbol)) return;
-					if ($this->symbols->resolve('class:' . Source_Names::resolve(substr($name, 0, $last), $this->owner->scope->namespace))
-						instanceof ast_record_declaration) {
-						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown constant: ' . $qualified);
-					}
+					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
 				}
 				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
 					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));
@@ -1058,10 +1103,22 @@ final class Preparation
 		return false;
 	}
 
+	/** Evaluate the qualifier in preparation order and select its declared record without a handle presence check. */
+	private function static_qualifier(ast_expression $receiver, ?string $initializing): record_type_definition
+	{
+		$this->value($receiver, $initializing);
+		$type = $receiver->type_def();
+		if ($type instanceof record_handle_definition) $type = $type->payload;
+		if (!($type instanceof record_type_definition) || $type->declaration->kind === record_kind::interface_type) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Static qualifier requires a concrete record type');
+		}
+		return $type;
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null): void
 	{
-		if ($call->parent_qualified) {
+		if ($call->qualifier === call_qualifier::lexical_parent) {
 			$this->ancestor_call($call, $call->name, null, $initializing);
 			return;
 		}
@@ -1073,10 +1130,14 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
-				$this->value($receiver, $initializing);
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
-				$record = $receiver->type_def();
-				if ($record instanceof shared_record_type_definition) $record = $record->payload;
+				$static = $call->expression_qualified();
+				if ($static) $record = $this->static_qualifier($receiver, $initializing);
+				else {
+					$this->value($receiver, $initializing);
+					$record = $receiver->type_def();
+					if ($record instanceof shared_record_type_definition) $record = $record->payload;
+				}
 				if ($record instanceof record_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
@@ -1087,11 +1148,16 @@ final class Preparation
 					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
 					$method = $symbol?->declaration();
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
-					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
-					Readonly_Access::write($receiver, true);
-					if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
-					$this->source_call($call, $symbol, $method, $initializing);
-					$call->interface_dispatch = $record instanceof record_type_definition && $record->interface_dispatch($name);
+					if ($static !== $method->is_static) {
+						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
+						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
+					}
+					if (!$static) {
+						Readonly_Access::write($receiver, true);
+						if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+					}
+					$this->source_call($call, $symbol, $method, $initializing, called: $static ? $record : null);
+					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
@@ -1204,85 +1270,130 @@ final class Preparation
 		$this->source_call($call, $symbol, $function, $initializing);
 	}
 
+	/** Read the called type attached to this prepared static body. */
+	private function called_record(ast_node $site, string $operation): ast_record_declaration
+	{
+		return $this->owner->parent->instance?->called->declaration()
+			?? throw new diagnostic($site->source(), $site->byte_start(), $operation . ' requires a called type in a static method');
+	}
+
 	/** Exact type-qualified calls require a method; ambiguous namespace paths may continue lookup. */
 	private function qualified_call(ast_call_expression $call, string $qualified, ?string $initializing, bool $required): bool
 	{
-		if ($call->source()->flavor === flavor::cpp && ($separator = strrpos($qualified, '::')) !== false) {
+		$late = $call->qualifier === call_qualifier::called_type;
+		if ($late) {
+			$record = $this->called_record($call, 'Late-static call');
+			$name = $call->name;
+		} else {
+			$separator = strrpos($qualified, '::');
 			$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
 			$this->dependencies?->watch($type_symbol, $this->owner);
 			$record = $type_symbol->declaration();
-			if ($record instanceof ast_record_declaration) {
-				$name = substr($qualified, $separator + 2);
-				$selected = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
-				if ($selected === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);
-				if (!$selected->declaration()->is_static) {
-					$this->ancestor_call($call, $name, $record->definition, $initializing, $selected);
-					return true;
-				}
-			}
+			$name = substr($qualified, $separator + 2);
 		}
-		$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
-		$this->dependencies?->watch($symbol, $this->owner);
-		$method = $symbol->declaration();
+		if ($record instanceof ast_record_declaration) {
+			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
+		}
+		else {
+			$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
+			$this->dependencies?->watch($symbol, $this->owner);
+		}
+		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration)) {
+			if ($late) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $record->name() . '::' . $name);
+			if ($record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);
+			}
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
 		}
+		if (!$method->is_static && !$late && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
+			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
+			return true;
+		}
 		if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ' . $method->name());
-		$this->source_call($call, $symbol, $method, $initializing);
+		$this->source_call($call, $symbol, $method, $initializing, called: $record->definition);
 		return true;
 	}
 
-	/** Resolve fixed implementation lookup on the lexical current instance, retaining ordinary call admission. */
-	private function ancestor_call(ast_call_expression $call, string $name, ?record_type_definition $lookup, ?string $initializing, ?symbol_entry $selected = null): void
+	/** Watch the lexical base selection even when the member lookup fails. */
+	private function lexical_base(ast_expression $syntax, string $operation): record_type_definition
 	{
 		$context = $this->owner->parent->parent;
-		if (!($context instanceof ast_record_declaration) || $this->owner->parent->is_static) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
+		if (!($context instanceof ast_record_declaration)) throw new diagnostic($syntax->source(), $syntax->byte_start(), $operation . ' requires a declaring record');
+		$this->dependencies?->watch($this->symbols->entry($context->symbol_key()), $this->owner);
+		return $context->definition->base() ?? throw new diagnostic($syntax->source(), $syntax->byte_start(), $operation . ' requires a base type');
+	}
+
+	/** Select the ancestor declaration before applying instance-specific receiver checks. */
+	private function ancestor_call(ast_call_expression $call, string $name, ?record_type_definition $lookup, ?string $initializing, ?symbol_entry $selected = null): void
+	{
+		if ($lookup === null) {
+			$lookup = $this->lexical_base($call, 'Ancestor call');
 		}
-		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
-		for ($type = $context->definition; $type !== null; $type = $type->base()) {
-			$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
-		}
-		$lookup ??= $context->definition->base();
-		if ($lookup === null || $lookup === $context->definition || !$context->definition->derives_from($lookup)) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
+		else {
+			$context = $this->owner->parent->parent;
+			if (!($context instanceof ast_record_declaration)) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
+			for ($type = $context->definition; $type !== null; $type = $type->base()) {
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+			}
+			if ($lookup === $context->definition || !$context->definition->derives_from($lookup)) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
+			}
 		}
 		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration) || $method->is_constructor()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor instance method: ' . $name);
+			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor method: ' . $name);
 		}
-		if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Parent static calls are deferred');
+		if ($method->is_static) {
+			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
+			return;
+		}
+		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
+		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
 		if ($method->is_abstract) throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call an abstract ancestor implementation');
 		$this->source_call($call, $symbol, $method, $initializing, true);
 	}
 
+	/** Standalone preparation has no subscription to retain. */
+	private function access_watcher(): ?dependency_watcher
+	{
+		return $this->dependencies === null ? null : $this->owner;
+	}
+
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
-	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false): void
+	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
 	{
 		$context = $this->owner->parent->parent;
 		$receiver = null;
-		if ($function->is_protected) {
+		if ($function->is_protected && !$function->is_static) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
-		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null);
-		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing), $ancestor_dispatch);
+		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
+		$conversions = $this->bind_arguments($call, $function, $initializing);
+		$instance = null;
+		if ($called !== null && $this->dependencies !== null) {
+			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;
+			$instance = $this->dependencies->static_call($this->owner, $symbol,
+				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
+		}
+		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}
 
 	/** Inline and shared construction use the same published signature and argument checks. */
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && $payload->declaration->is_abstract) throw new diagnostic($site->source(), $site->byte_start(), 'Cannot instantiate an abstract class');
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
 		if ($constructor !== null) {
 			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
-			$constructor->require_access($this->owner->parent->parent, $site);
+			$constructor->require_access($this->owner->parent->parent, $site, watcher: $this->access_watcher());
 		}
 		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
 	}

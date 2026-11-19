@@ -139,7 +139,8 @@ class ast_name_expression extends ast_expression
 		if (!($constant instanceof ast_constant_declaration)) {
 			throw new \LogicException('Expected a constant symbol');
 		}
-		$this->settle_value($constant->type_def(), $constant->constant(), $constant->constant_known());
+		if ($this instanceof ast_qualified_data) $this->settle_value($constant->type_def(), null);
+		else $this->settle_value($constant->type_def(), $constant->constant(), $constant->constant_known());
 		$this->binding = $symbol;
 	}
 
@@ -179,6 +180,30 @@ class ast_name_expression extends ast_expression
 		parent::reset_preparation();
 		$this->binding = null;
 	}
+}
+
+/** A static data access whose qualifier must run, e.g. produce()::$count or (p)::LIMIT. */
+final class ast_qualified_data extends ast_name_expression
+{
+	/** Native owning qualifier expression. */
+	public readonly ast_expression $receiver;
+
+	public function __construct(ast_expression $receiver, string $name, int $end /** uint32 */, bool $constant_only)
+	{
+		parent::__construct($name, $receiver->start, $end, constant_only: $constant_only);
+		$this->receiver = $receiver;
+		$receiver->attach($this);
+	}
+}
+
+/** Data selected from the current called type, e.g. static::$count or Static::STEP. */
+final class ast_called_type_name extends ast_name_expression
+{
+}
+
+/** A lexical ancestor data name, e.g. parent::$count or super.STEP. */
+final class ast_ancestor_name extends ast_name_expression
+{
 }
 
 /**

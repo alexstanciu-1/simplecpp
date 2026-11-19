@@ -160,12 +160,12 @@ def boundaries(work,flavor,libraries):
         ('child',klass('Child',method('run','return '+call+';')),'base' if flavor!='cpp' else 'strict base'),
         ('child',klass('Child',static,'Base'),'current instance'),
         ('child',klass('Child',method('run','return '+parent('get','1',base='Base')+';'),'Base'),'argument'),
-        ('main',s['function']('outside','int',[],'return '+call+';')+main,'current instance'),
+        ('main',s['function']('outside','int',[],'return '+call+';')+main,'current instance' if flavor=='cpp' else 'declaring record'),
         ('child',klass('Child',method('run','return '+parent('missing',base='Base')+';'),'Base'),'method')]
     if flavor=='cpp':cases.append(('child',klass('Child',method('run','return Other::get();'),'Base'),'strict base'))
     else:
         st=method('get','return 3;').replace('function ','static function ',1) if flavor=='php' else 'static '+method('get','return 3;')
-        cases.append(('base',klass('Base',st),'static calls are deferred'))
+        cases.append(('base',klass('Base',st),None))
     resident=service(app,out)
     good={'base':base,'child':child,'main':main}
     try:

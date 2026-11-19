@@ -90,18 +90,16 @@ final class Record_Syntax
 			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
 			if ($kind === record_kind::interface_type && ($static || $private || $protected || $c->keyword('const'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces admit only public instance method contracts');
-			if ($protected && ($static || $c->keyword('const'))) {
-				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
-			}
+			$visibility = $private ? member_visibility::private : ($protected ? member_visibility::protected : member_visibility::public);
 			if ($static && $flavor === flavor::cpp && $c->next_is(token_kind::identifier)
 				&& $c->tokens->text_at($c->position() + 1) === 'constexpr') {
-				$members[] = Constant_Syntax::read($parser, $private);
+				$members[] = Constant_Syntax::read($parser, $visibility);
 				continue;
 			}
 			if ($static) $c->take_keyword('static');
 			self::modifiers($c, $modifiers, false);
 			if (!$static && $flavor !== flavor::cpp && $c->keyword('const')) {
-				$members[] = Constant_Syntax::read($parser, $private);
+				$members[] = Constant_Syntax::read($parser, $visibility);
 				continue;
 			}
 			$readonly = $c->tokens->text_at($c->position()) === 'readonly';
@@ -163,7 +161,7 @@ final class Record_Syntax
 			if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface fields are forbidden');
 			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
 			if ($static) {
-				$members[] = Global_Syntax::read($parser, true, $private);
+				$members[] = Global_Syntax::read($parser, true, $visibility);
 				continue;
 			}
 			if ($flavor === flavor::js) {
@@ -202,12 +200,6 @@ final class Record_Syntax
 				$c->take(token_kind::attribute, '#[');
 				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
 				$name = $c->name(token_kind::identifier);
-		if ($flavor === flavor::cpp && !$c->at_end() && $c->tokens->text_at($c->position()) === 'final') {
-			if ($final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: final');
-			$c->take($c->tokens->tokens[$c->position()]->kind, 'final');
-			$final = true;
-		}
-		if ($final && ($abstract || $kind !== record_kind::class_type)) throw new diagnostic($c->tokens->source, $c->offset(), 'Final requires a non-abstract class');
 				if (!in_array($name, ['Virtual', 'Override'], true)) throw new diagnostic($c->tokens->source, $c->offset(), 'Unsupported method attribute');
 				if ($c->is(token_kind::lparen)) throw new diagnostic($c->tokens->source, $c->offset(), 'Method attributes take no arguments');
 				$c->take(token_kind::rbracket, ']');

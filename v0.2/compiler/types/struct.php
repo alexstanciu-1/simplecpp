@@ -147,6 +147,7 @@ final class record_type_definition extends type_definition implements dependency
 			// The temporary instance-property policy permits absence independently of written nullability.
 			if ($type instanceof shared_record_type_definition && $type->required) $type = $type->payload->shared;
 			if ($type instanceof self) {
+				$type->require_complete_value($field->type_reference);
 				$type->prepare_layout($symbols, $active, $work);
 				$constructor = $type->constructor();
 				$constructor?->require_access($this->declaration, $field->type_reference);
@@ -294,6 +295,19 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
 	}
 
+	/** Each visited record owns its local indexes; return the original declaration for binding. */
+	public function static_data_member(string $name, bool $properties, bool $constants, scope $symbols,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?ast_literal_declaration
+	{
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			$record = $type->declaration;
+			$dependencies?->watch($symbols->entry($record->symbol_key()), $watcher);
+			if ($properties && isset($record->static_properties[$name])) return $record->static_properties[$name];
+			if ($constants && isset($record->constants[$name])) return $record->constants[$name];
+		}
+		return null;
+	}
+
 	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
 	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
 	{
@@ -319,14 +333,21 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->base_type?->polymorphic() ?? false;
 	}
 
-	/** Settled single-base relation; equality includes the type itself. */
 	/** Protected access uses lexical ancestry and, for instance members, the receiver's declared type. */
-	public function permits_protected_access(ast_node $context, ?self $receiver = null): bool
+	public function permits_protected_access(ast_node $context, ?self $receiver = null,
+		?dependency_watcher $watcher = null): bool
 	{
-		return $context instanceof ast_record_declaration && $context->definition->derives_from($this)
-			&& ($receiver === null || $receiver->derives_from($context->definition));
+		if (!($context instanceof ast_record_declaration)) return false;
+		$caller = $context->definition;
+		// Layout invalidation propagates from base to descendant. Observe the roots used by this decision.
+		if ($watcher !== null) {
+			$caller->dependencies?->watch($caller->symbol, $watcher);
+			if ($receiver !== null && $receiver !== $caller) $receiver->dependencies?->watch($receiver->symbol, $watcher);
+		}
+		return $caller->derives_from($this) && ($receiver === null || $receiver->derives_from($caller));
 	}
 
+	/** Settled single-base relation; equality includes the type itself. */
 	public function derives_from(self $ancestor): bool
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {
@@ -361,6 +382,14 @@ final class record_type_definition extends type_definition implements dependency
 				}
 			}
 		}
+	}
+
+	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */
+	public function require_complete_value(ast_node $site): void
+	{
+		if (!$this->declaration->is_abstract) return;
+		throw new diagnostic($site->source(), $site->byte_start(), $this->declaration->kind === record_kind::structure
+			? 'Abstract struct cannot be used as a complete value: ' . $this->name : 'Cannot instantiate an abstract class');
 	}
 
 	public function supports_inferred_local(): bool
@@ -525,11 +554,10 @@ final class shared_record_type_definition extends record_handle_definition
 			|| ($expr->left instanceof ast_name_expression && $expr->right instanceof ast_name_expression);
 	}
 
-	/** Struct owners stay exact; object views admit settled base and interface edges. */
+	/** A view follows settled ancestry and preserves the allocation identity. */
 	private function admits_view(self $source): bool
 	{
-		return $source->payload === $this->payload || ($source->payload->declaration->kind !== record_kind::structure
-			&& $this->payload->declaration->kind !== record_kind::structure && $source->payload->derives_from($this->payload));
+		return $source->payload->derives_from($this->payload);
 	}
 
 	/** Same-payload contracts share storage; required destinations check potentially empty owners. */

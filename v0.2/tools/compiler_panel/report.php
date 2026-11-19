@@ -84,10 +84,11 @@ try {
 		static function ($p): array {
 			$result = ['entry' => Compilation_Inspection::program($p->entry), 'functions_by_file' => [], 'globals_by_file' => []];
 			foreach ($p->files as $path => $file) {
-				foreach ($file->functions() as $function) {
+				foreach ($file->implementations() as $function) {
 					$result['functions_by_file'][$path][] = ['name' => $function->name(),
 						'return_type' => $function->return_type_def()->name,
-						'body' => Compilation_Inspection::body($function->body())];
+						'called_type' => $function->instance?->called->declaration()->name(),
+						'body' => $function->optional_body() === null ? null : Compilation_Inspection::body($function->body())];
 				}
 				foreach ($file->globals() as $global) {
 					$result['globals_by_file'][$path][] = ['name' => $global->name(),

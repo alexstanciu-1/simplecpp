@@ -1,12 +1,14 @@
-# Shared class base views
+# Shared base views for classes and structs
 
 Doc Status: supporting
 
 Bare classes retain shared-by-default source semantics. Bare structs remain
-inline values; explicit `shared<Struct>` still uses shared ownership. This slice
-adds class-to-class single inheritance and implicit shared derived-to-base
-conversions. Explicit shared-struct upcasts, downcasts, interfaces, borrows and
-owning `$this` values remain deferred. The [virtual-method slice](virtual_methods.md)
+inline values. An explicit `shared<DerivedStruct>` converts to `shared<BaseStruct>`
+along the same settled base chain as a class owner. Empty handles stay empty.
+Copying the base view keeps the concrete payload alive. The final release destroys
+the derived fields as well as the base. Explicit struct downcasts require a polymorphic source; see [checked access](object_access.md).
+[Three-flavor struct proof](../tests/shared_struct_views_native.py).
+The [virtual-method slice](virtual_methods.md)
 adds inherited method lookup and explicitly marked virtual replacements.
 Nonvirtual method hiding remains rejected.
 

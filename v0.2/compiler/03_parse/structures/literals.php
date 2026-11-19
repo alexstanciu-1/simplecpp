@@ -9,7 +9,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	use ast_declaration;
 
 	/** PROPERTIES */
-	public readonly bool $is_private;
+	public readonly member_visibility $visibility;
 	/** Native owning written type; null requests scalar-literal inference in this slice. */
 	public readonly ?ast_type_reference $type_reference;
 	/** Native owning initializer syntax. */
@@ -24,10 +24,10 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	/** CONSTRUCTOR */
 	/** $start and $end are token boundaries, with exclusive end. */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?string $namespace, ?ast_type_reference $type_reference, ast_expression $initializer, bool $private = false)
+		?string $namespace, ?ast_type_reference $type_reference, ast_expression $initializer, member_visibility $visibility = member_visibility::public)
 	{
 		parent::__construct($start, $end);
-		$this->is_private = $private;
+		$this->visibility = $visibility;
 		$this->short_name = $name;
 		$this->namespace = $namespace;
 		$this->type_reference = $type_reference;

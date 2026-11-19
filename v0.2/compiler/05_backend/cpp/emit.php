@@ -129,10 +129,17 @@ final class Cpp_Emitter
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
 					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 			}
+			$final_slots = [];
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override;';
+				$slot = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override';
+				if ($method->is_final && $method->has_virtual_dispatch()) {
+					$final_slots[] = $slot . ' final;';
+					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
+				} else {
+					$layout[] = $slot . ';';
+				}
 			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
@@ -146,8 +153,19 @@ final class Cpp_Emitter
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
 			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
-			foreach ($node->definition->interfaces() as $interface) $bases[] = 'public virtual ' . $interface->cpp_type();
-			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			$interface_bases = [];
+			foreach ($node->definition->interfaces() as $interface) {
+				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
+			}
+			$view = '';
+			if ($final_slots !== []) {
+				// A sibling base can implement the new interfaces without overriding the class's final slot.
+				$name = self::final_view_name($node);
+				$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
+				$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
+			}
+			array_push($bases, ...$interface_bases);
+			return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
 				. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
@@ -431,7 +449,7 @@ CPP;
 			}
 		}
 		$unit_flavor = null;
-		foreach ($file->functions() as $function) {
+		foreach ($file->implementations() as $function) {
 			if ($function->is_abstract) continue;
 			$name = self::function_name($function);
 			if ($function->is_constructor()) {
@@ -837,7 +855,10 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_field_assignment) {
-				$field = $this->value($statement->target, $global_references, $declarations, $required_headers);
+				if ($statement->target instanceof ast_qualified_data) {
+					$lines[] = "\t" . $this->discard_qualifier($statement->target->receiver, $global_references, $declarations, $required_headers) . ';';
+					$field = $this->name_value($statement->target, $global_references, $declarations, $required_headers);
+				} else $field = $this->value($statement->target, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$type = $statement->target->type_def();
 				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
@@ -964,7 +985,10 @@ CPP;
 		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
 			&& $statement->value->declaration() instanceof ast_local_binding);
 		$steps = [];
-		if ($destination instanceof ast_field_expression && !$simple_rhs) {
+		if ($destination instanceof ast_qualified_data) {
+			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
+			$name = $this->name_value($destination, $global_references, $declarations, $headers);
+		} elseif ($destination instanceof ast_field_expression && !$simple_rhs) {
 			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
 			$steps[] = 'auto& compound_target = ' . $place . ';';
 			$name = 'compound_target';
@@ -1425,7 +1449,7 @@ CPP;
 				return $type->lower_cpp_cardinality($value->cardinality,
 					$this->value($receiver, $global_references, $declarations, $required_headers));
 			}
-			$function = $value->function_def();
+			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
@@ -1527,33 +1551,81 @@ CPP;
 			return $value->type_def()->lower_cpp_literal($value);
 		}
 		if ($value instanceof ast_name_expression) {
-			$reorderable = $value->type_def()->cpp_trivial_value();
-			$declaration = $value->declaration();
-			if ($declaration instanceof ast_enum_case) {
-				return $declaration->parent->definition->cpp_case($declaration);
-			}
-			if ($declaration instanceof runtime_integer_constant) {
-				return $declaration->value . 'LL';
-			}
-			if ($declaration instanceof ast_constant_declaration) {
-				$type = $declaration->type_def();
-				$conversion = $declaration->initialization();
-				$reorderable = $reorderable && ($conversion === value_conversion::identity);
-				$literal = $this->value($declaration->initializer, $global_references, $declarations, $required_headers);
-				foreach (array_merge($type->cpp_headers(), $declaration->initializer->type_def()->cpp_headers(),
-					$type->conversion_headers($conversion)) as $header) {
-					$required_headers[$header] = true;
-				}
-				return $this->conversion($type, $conversion, $literal, $declaration->initializer);
-			}
-			if ($declaration instanceof ast_global_declaration) {
-				$name = self::global_name($declaration);
-				$global_references[$name] = $declaration;
-				return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
-			}
-			return $this->name($declaration);
+			$member = $this->name_value($value, $global_references, $declarations, $required_headers, $reorderable);
+			if (!($value instanceof ast_qualified_data)) return $member;
+			$reorderable = false;
+			$steps = [];
+			$member = $this->qualified_operand($value->receiver, $member, $steps, $global_references, $declarations, $required_headers);
+			return $steps === [] ? $member : '([&]() -> decltype(auto) { ' . implode(' ', $steps) . ' return (' . $member . '); }())';
 		}
 		throw new \LogicException('Unhandled prepared value');
+	}
+
+	/**
+	 * Emit the bound declaration independently of its written qualifier.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $required_headers
+	 */
+	private function name_value(ast_name_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
+		bool &$reorderable = false): string
+	{
+		$reorderable = $value->type_def()->cpp_trivial_value();
+		$declaration = $value->declaration();
+		if ($declaration instanceof ast_enum_case) {
+			return $declaration->parent->definition->cpp_case($declaration);
+		}
+		if ($declaration instanceof runtime_integer_constant) {
+			return $declaration->value . 'LL';
+		}
+		if ($declaration instanceof ast_constant_declaration) {
+			$type = $declaration->type_def();
+			$conversion = $declaration->initialization();
+			$reorderable = $reorderable && ($conversion === value_conversion::identity);
+			$literal = $this->value($declaration->initializer, $global_references, $declarations, $required_headers);
+			foreach (array_merge($type->cpp_headers(), $declaration->initializer->type_def()->cpp_headers(),
+				$type->conversion_headers($conversion)) as $header) {
+				$required_headers[$header] = true;
+			}
+			return $this->conversion($type, $conversion, $literal, $declaration->initializer);
+		}
+		if ($declaration instanceof ast_global_declaration) {
+			$name = self::global_name($declaration);
+			$global_references[$name] = $declaration;
+			return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
+		}
+		return $this->name($declaration);
+	}
+
+	/**
+	 * End an effectful qualifier's full expression before the selected read or call.
+	 * @param string[] $steps
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function qualified_operand(ast_expression $receiver, string $operand, array &$steps /** list<string> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$declarations /** array<string,ast_function_declaration> */,
+		array &$headers /** array<string,bool> */): string
+	{
+		$discard = $this->discard_qualifier($receiver, $globals, $declarations, $headers);
+		if (($receiver instanceof ast_name_expression && !($receiver instanceof ast_qualified_data)) || $receiver instanceof ast_this_expression) {
+			return '(' . $discard . ', ' . $operand . ')';
+		}
+		$steps[] = $discard . ';';
+		return $operand;
+	}
+
+	/**
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function discard_qualifier(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		return 'static_cast<void>(' . $this->value($receiver, $globals, $declarations, $headers) . ')';
 	}
 
 	/**
@@ -1601,6 +1673,9 @@ CPP;
 		$steps = [];
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
+		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
+			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
+		}
 		if ($method && $function->parent instanceof ast_enum_declaration) {
 			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
@@ -1617,7 +1692,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($function->parameters === []) {
+		} elseif ($function->parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -1640,7 +1715,7 @@ CPP;
 				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && count($function->parameters) === 1) {
+			if (!$method && $steps === [] && count($function->parameters) === 1) {
 				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
@@ -1660,7 +1735,7 @@ CPP;
 			$arguments[0] = 'enum_receiver';
 			$direct = false;
 		}
-		if ($direct || (!$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -1732,13 +1807,19 @@ CPP;
 			$arguments[] = $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
 				: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
 		}
-		if ($method->has_virtual_dispatch()) $target = 'this->' . $method->parent->definition->cpp_type() . '::' . self::virtual_name($method);
+		$owner = $record->definition->cpp_type();
+		$receiver = 'this';
+		if ($method->is_final && $method->has_virtual_dispatch()) {
+			$receiver = 'static_cast<' . $owner . '*>(this)';
+			$owner = self::final_view_name($record);
+		}
+		if ($method->has_virtual_dispatch()) $target = $receiver . '->' . $method->parent->definition->cpp_type() . '::' . self::virtual_name($method);
 		else {
 			$target = self::function_name($method);
 			array_unshift($arguments, '*this');
 		}
 		foreach ($method->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->member_type($method->return_type_def()) . ' ' . $record->definition->cpp_type() . '::' . self::virtual_name($method)
+		return $this->member_type($method->return_type_def()) . ' ' . $owner . '::' . self::virtual_name($method)
 			. '(' . implode(', ', $this->parameters($method, $headers, false, true)) . ') { return ' . $target . '(' . implode(', ', $arguments) . "); }\n";
 	}
 
@@ -1854,6 +1935,12 @@ CPP;
 		return $expand($text);
 	}
 
+	/** The descendant owns one native interface view for its inherited final virtual slots. */
+	private static function final_view_name(ast_record_declaration $record): string
+	{
+		return 'scpp_final_view_' . self::qualified_name($record);
+	}
+
 	/** A virtual slot has the same native member name throughout its inheritance chain. */
 	private static function virtual_name(ast_function_declaration $method): string
 	{
@@ -1901,7 +1988,7 @@ CPP;
 			if (!self::inert_scalar_conversion($value->type_def(), $value->conversion())) return false;
 			$value = $value->operand;
 		}
-		if ($value instanceof ast_name_expression) {
+		if ($value instanceof ast_name_expression && !($value instanceof ast_qualified_data)) {
 			$constant = $value->declaration();
 			return $constant instanceof runtime_integer_constant || ($constant instanceof ast_constant_declaration
 				&& self::inert_literal_argument($constant->initializer, $constant->type_def(), $constant->initialization()));
@@ -1981,10 +2068,15 @@ CPP;
 		return 'var_' . self::qualified_name($declaration);
 	}
 
+	/** Encode inherited implementations by called and declaring types while retaining direct method names. */
 	public static function function_name(ast_function_declaration $declaration): string
 	{
 		if ($declaration->parent instanceof ast_record_declaration) {
 			$owner = self::qualified_name($declaration->parent);
+			if ($declaration->instance !== null && $declaration->instance->called->declaration() !== $declaration->parent) {
+				$called = self::qualified_name($declaration->instance->called->declaration());
+				return 'called_' . strlen($called) . '_' . $called . '_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
+			}
 			return 'method_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
 		}
 		return self::qualified_name($declaration) . '_';

@@ -88,8 +88,8 @@ signature alone does not identify an implementation.
 
 ### Expression-qualified properties and constants — 2026-10-07
 
-The same declared-type qualification supports `$object::$property` reads/plain
-statement writes and `$object::CONSTANT` reads, including expression qualifiers
+The same declared-type qualification supports `$object::$property` reads, plain writes,
+compound writes and discarded prefix/postfix updates, as well as `$object::CONSTANT` reads, including expression qualifiers
 such as `produce()::$property`. Reuse the normal property/constant name categories,
 visibility, storage and assignment-conversion rules. Qualification does not create
 per-instance static storage.

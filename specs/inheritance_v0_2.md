@@ -416,18 +416,24 @@ Use an explicit concrete static target or an ordinary interface instance method.
 Late static binding distinguishes the lexical declaring type (names and access) from
 the called type. An explicit `Child::method()` establishes Child, including when
 the implementation is inherited. `self::method()` and `parent::method()` select a
-fixed implementation and forward the current called type; `static::method()` selects
-through that called type and forwards it. Expression-qualified static calls establish
+fixed implementation and forward the current called type (C++ flavor `Self::` / `Parent::`,
+JS flavor `class.` / `super.`). PHP and JS `static::method()` and C++ `Static::method()`
+select through that called type and forward it. Expression-qualified static calls establish
 the qualifier's declared type and evaluate that expression exactly once, consistently
 with the [static-member contract](static_members_v0_2.md).
 
+Inside a static method, PHP spells late-selected data access `static::$property` and
+`static::CONSTANT`, C++ uses `Static::name`, and JS uses `static::name`. Reads and
+property writes check visibility from the lexical declaring type. Discarded late-static
+compound assignments and prefix/postfix updates use the ordinary property operator
+and checked write-back rules.
 Late-selected properties keep the actual declaring owner's single storage location;
 constants keep their selected declaration. No inherited storage duplication is implied.
 Compatible descendant static-method redeclarations are part of this extension, with
 exact callable contracts and no visibility narrowing, not C++ virtual overriding.
 Inherited property/constant redeclaration restrictions do not change.
 
-`new static(...)` constructs the called class using its checked constructor
+PHP and JS `new static(...)` and C++ `new Static(...)` construct the called class using its checked constructor
 contract. The first construction group admits shared class handles only and applies
 ordinary checked-at-preparation result conversions; it does not slice inline records.
 Called-type context is compiler-managed, never ambient global runtime state. Cross-file

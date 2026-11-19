@@ -323,7 +323,7 @@ checked conversions. Binary prefixes, separators and suffixes remain deferred.
 
 The bounded implementation of
 [checked object access](../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
-admits class and interface operands/targets; struct targets remain deferred.
+admits class and interface operands/targets. Explicitly shared struct operands admit same-type and ancestor targets, and descendant targets when the declared source is polymorphic.
 
 | Intent | C++ flavor | PHP flavor | JS flavor |
 | --- | --- | --- | --- |
@@ -344,12 +344,12 @@ interfaces need no known common implementer; a class can gain an interface throu
 a descendant. Final classes cannot acquire additional interfaces through descendants;
 impossible final-class/interface casts and tests reject during preparation. Required and optional shared operands are accepted; bare null, inline
 values, unrelated records and weak/unique handles are rejected. A successful cast
-returns the required target class/interface view. Absence/mismatch throws `invalid_object_cast`;
+returns the required target class/interface view or a present `shared<TargetStruct>`. Absence/mismatch throws `invalid_object_cast`;
 `instanceof` returns false. Native RTTI must be enabled for downward operations and cross-casts.
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.
 
-## Explicit ancestor instance calls
+## Explicit ancestor member access
 
 PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
@@ -357,17 +357,20 @@ The C++ flavor uses the actual ancestor type name, such as `Node::evaluate(...)`
 including ordinary namespace/import qualification. `Parent` is not a special alias.
 C++ may name a more distant strict ancestor to select that lookup starting point.
 
-All forms select the resolved ancestor implementation on the current object and
+For instance methods these forms select the resolved ancestor implementation on the current object and
 suppress virtual redispatch for that call. Virtual calls made inside that body still
 use ordinary dispatch. Defaults and conversions belong to the selected method.
 Written parent qualification and prepared fixed dispatch are retained on the existing
 call node; argument syntax and semantic admission use the ordinary call machinery.
 
-This slice supports concrete instance methods with the existing public/private rules.
-Protected-method declarations, parent static members/constants/properties and broader
-reference-return support remain deferred; already-supported type-qualified static
-calls remain unchanged. Missing bases/methods, private access, unrelated C++ qualifiers,
-free/static contexts and current-instance use in base-constructor arguments reject.
+For static methods, preparation binds the selected declaration directly, including
+its visibility and defaults. PHP/JS parent qualification requires a lexical base.
+C++ static qualification names a type explicitly. A static caller can call a static
+target. An instance target requires an initialized current instance. PHP `parent::$count` and `parent::STEP`, and JS `super.count` and `super.STEP`,
+use the same lexical base selection for data members. C++ uses the written type,
+such as `Middle::count` and `Middle::STEP`. Reads and writes select the declaring
+property’s single storage location. Constants are read-only. Both forms enforce
+the selected declaration’s visibility.
 A parent method call may be the first authored constructor-body statement, after
 implicit base construction. It is not mistaken for `parent::__construct(...)` or
 `super(...)`.
@@ -399,9 +402,17 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs, protected static methods, callable variance,
+Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Callable variance,
 unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
+
+Static method lookup starts at the qualified type and follows its base chain. Lexical
+`self::` (PHP), `Self::` (C++) and `class.` (JS) spellings start at the enclosing record. Protected access requires the
+declaring record or a descendant context; no instance receiver is involved.
+Descendants can redeclare a static method with an exact signature and equal or wider visibility.
+A final static method seals that declaration. Protected static properties and constants accept declaring-type and descendant names, and lexical self.
+Lookup starts at the qualified record and binds the declaring record’s property storage or constant. See
+[protected static methods](../compiler/docs/protected_static_methods.md).
 
 ## Class interfaces
 
@@ -429,8 +440,8 @@ it does not change the original base method's dispatch policy or source identity
 Abstract implementers may retain outstanding obligations; concrete types must fulfill
 them. Nonvirtual source hiding restrictions still apply.
 
-Interface inheritance/diamonds, interface type tests/casts, struct implementers,
-inherited-final satisfaction, variance and broader reference returns remain deferred.
+An inherited public final class method can fulfill a newly introduced interface.
+Interface inheritance/diamonds, struct implementers, variance and broader reference returns remain deferred.
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).
@@ -449,7 +460,7 @@ General boolean subjects and broader selection forms remain deferred.
 PHP/JS use the protected member modifier; C++ uses protected member sections.
 Ordinary class/struct instance methods and class virtual/abstract methods share the
 existing lexical and declared-receiver access contract. Overrides may widen
-protected to public, never narrow visibility. Protected static methods stay deferred.
+protected to public, never narrow visibility. Protected static methods use lexical access as described above.
 
 ### Final classes
 
@@ -457,3 +468,23 @@ PHP/JS use `final class Leaf`; C++ accepts `class Leaf final`. Final classes may
 inherit and implement interfaces but cannot be extended. Abstract/final combinations,
 duplicate final modifiers and final structs/interfaces reject in this class-only slice.
 The native payload is final; ownership and required-field policies are unchanged.
+
+## Static calls qualified by a value
+
+All three flavors accept `produce()::method(args)`. A local qualifier is
+`$p::method()` in PHP, `p::method()` in JS and `(p)::method()` in C++.
+C++ keeps `p::method()` as a named path. Existing JS dotted calls retain
+their ordinary value/namespace lookup.
+
+Preparation uses the qualifier's declared class or struct and the selected
+method's ordinary access and argument contracts. At execution the qualifier
+finishes, including temporary destruction, before the first argument. An empty
+typed handle can qualify the call. See the [static call contract](../../specs/static_members_v0_2.md#expression-qualified-static-calls--2026-10-07).
+
+The same postfix qualifier admits static property reads, plain statement assignments
+and constant reads. PHP distinguishes `produce()::$count` from `produce()::LIMIT`.
+C++ and JS use `produce()::count` and `produce()::LIMIT` with their existing static
+data lookup. Inherited storage belongs to the selected declaration. On a write,
+the qualifier finishes before RHS evaluation and conversion. On a constant read,
+the qualifier still runs before the constant value is used. Such reads are runtime
+expressions and cannot supply constant-only defaults or value-match labels.

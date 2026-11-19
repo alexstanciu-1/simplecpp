@@ -59,8 +59,7 @@ methods/static members, virtual/abstract declarations and overrides, interfaces,
 base-value slicing and explicit parent method calls beyond construction. The
 separate [class slice](classes.md) adds class defaults, and [shared base views](shared_upcasts.md)
 adds class inheritance/upcasts. The subsequent [virtual-method slice](virtual_methods.md)
-implements public inherited lookup and concrete virtual class methods with mandatory overrides. Explicit shared-struct upcasts and authored
-destructor syntax remain deferred.
+implements public inherited lookup and concrete virtual class methods with mandatory overrides. Explicit shared-struct upcasts now reuse the shared base-view path. Authored destructor syntax remains deferred.
 
 Verification:
 

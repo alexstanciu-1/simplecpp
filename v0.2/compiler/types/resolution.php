@@ -46,7 +46,9 @@ final class Type_Resolution
 		$type = self::resolve($syntax, $allow_void, $symbols, $function->namespace, $function, $dependencies);
 		if ($type !== null) return $type;
 		$function->watch_signature($dependencies);
-		return self::application($syntax, $symbols, $function, $dependencies);
+		$type = self::application($syntax, $symbols, $function, $dependencies);
+		if ($type instanceof record_type_definition) $type->require_complete_value($syntax);
+		return $type;
 	}
 
 	/** Explicit handles name one nominal record payload; classes already have shared storage. */
@@ -156,9 +158,11 @@ final class Type_Resolution
 	private static function argument(ast_type_reference $syntax, ?scope $symbols, ?string $namespace,
 		?dependency_watcher $watcher, ?Dependency_Watches $dependencies): type_definition
 	{
-		return ($symbols !== null && $watcher !== null
+		$type = ($symbols !== null && $watcher !== null
 			? self::named($syntax, $symbols, $namespace, $watcher, $dependencies) : self::resolve($syntax)) ?? throw new diagnostic($syntax->source(), $syntax->byte_start(),
 			'Unknown or unsupported type: ' . $syntax->spelling());
+		if ($type instanceof record_type_definition) $type->require_complete_value($syntax);
+		return $type;
 	}
 
 }

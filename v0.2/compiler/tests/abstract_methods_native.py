@@ -142,9 +142,9 @@ def invalid_contracts(work,flavor,libraries):
     static=pure.replace('virtual ','static virtual ',1) if flavor=='cpp' else pure.replace('function ','static function ',1) if flavor=='php' else 'static '+pure
     final=pure.replace(' = 0',' final = 0') if flavor=='cpp' else pure.replace('abstract ','abstract final ',1)
     duplicate=pure.replace('delta=1','delta=1,int delta=2') if flavor=='cpp' else pure.replace('$delta=1','$delta=1,int $delta=2') if flavor=='php' else pure.replace('delta:int=1','delta:int=1,delta:int=2')
-    cases=[(klass('Node',pure),'abstract class'),('abstract '+klass('Node',private),'public class instance'),
-        ('abstract '+klass('Node',static),'public class instance'),('abstract '+klass('Node',final),'cannot be final'),
-        ('abstract '+klass('Node',duplicate),'Duplicate parameter'),('abstract '+s['record']('Spare', '')+base,'Abstract structs'),
+    cases=[(klass('Node',pure),'abstract class'),('abstract '+klass('Node',private),'public or protected instance'),
+        ('abstract '+klass('Node',static),'public or protected instance'),('abstract '+klass('Node',final),'cannot be final'),
+        ('abstract '+klass('Node',duplicate),'Duplicate parameter'),
         ('abstract '+klass('Node',abstract(override=True)),'no inherited virtual target')]
     if flavor!='cpp':cases.append(('abstract '+klass('Node',pure[:-1]+' {return 1;}'),'after abstract method'))
     resident=service(app,out)

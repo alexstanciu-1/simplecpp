@@ -3,11 +3,11 @@
 Doc Status: supporting
 
 The [inheritance contract](../../../specs/inheritance_v0_2.md) owns semantics.
-This bounded implementation supports public/protected concrete class instance virtual methods,
+This bounded implementation supports public/protected concrete class and struct instance virtual methods,
 mandatory overrides, final implementations and inherited ordinary-method lookup.
 The separate [abstract-method slice](abstract_methods.md) adds bodyless contracts.
 Interfaces, unique ownership, borrows,
-callable variance, reference-return virtuals, authored destructors and struct virtual methods remain deferred.
+callable variance, reference-return virtuals, and authored destructors remain deferred.
 
 The separate [ancestor-call slice](parent_methods.md) adds fixed parent implementation calls.
 
@@ -18,8 +18,8 @@ Duplicate markers, including attribute plus modifier, reject. Cpp uses leading
 `virtual` and trailing `override`/`final`; js uses leading modifiers. An override
 is mandatory when declaring a replacement. Inheriting a body unchanged needs no
 marker. Ordinary methods remain nonvirtual and cannot be hidden by a descendant.
-Final is admitted on overriding implementations. Final class declarations now prevent extension;
-the existing method-level final policy is unchanged.
+Public and protected class instance methods can seal an ordinary implementation or an override with final.
+Static methods also admit final to seal a declaration. Final class declarations prevent extension.
 
 Record_Syntax normalizes written intent on the existing method declaration.
 Function_Preparation settles all signatures before Method_Preparation validates
@@ -81,4 +81,5 @@ or compile-time speed measurements.
 
 Protected instance methods now share the existing protected-field receiver rule;
 protected abstract declarations and public visibility widening are supported.
-Protected static methods remain deferred. See the [bounded goal](../../specs/planning/class_contract_completion.md).
+Protected static methods now have a separate [bounded lexical-access slice](protected_static_methods.md).
+See the earlier [instance-method/final-class goal](../../specs/planning/class_contract_completion.md).

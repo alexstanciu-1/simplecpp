@@ -43,6 +43,9 @@ final class Dependency_Watches
 	 */
 	private \SplObjectStorage $pending /** SplObjectStorage<dependency_watcher,null> */;
 
+	/** Session-owned demand graph, allocated only by programs that call static methods. */
+	public private(set) ?Called_Methods $called_methods = null;
+
 	/** CONSTRUCTOR */
 	public function __construct()
 	{
@@ -52,6 +55,13 @@ final class Dependency_Watches
 	}
 
 	/** METHODS */
+	/** Register the caller's demand without inspecting or preparing foreign syntax. */
+	public function static_call(ast_function_body $caller, symbol_entry $method, symbol_entry $called): called_method_instance
+	{
+		$this->called_methods ??= new Called_Methods();
+		return $this->called_methods->request($caller, $method, $called);
+	}
+
 	/** Register one identity pair; repeated reads of the same symbol do not allocate additional relations. */
 	public function watch(symbol_entry $symbol, dependency_watcher $watcher, int $uses /** uint8 */ = 0): void
 	{
@@ -89,6 +99,7 @@ final class Dependency_Watches
 	/** Remove all subscriptions and any queued notification before rebuilding or abandoning a watcher. */
 	public function forget(dependency_watcher $watcher): void
 	{
+		if ($watcher instanceof ast_function_body) $this->called_methods?->forget($watcher);
 		$this->pending->offsetUnset($watcher);
 		if (!$this->targets->offsetExists($watcher)) {
 			return;
@@ -126,6 +137,7 @@ final class Dependency_Watches
 	public function dispatch(): void
 	{
 		if (count($this->pending) === 0) return;
+		$this->called_methods?->invalidate();
 		$delivered = new \SplObjectStorage();
 		while (count($this->pending) !== 0) {
 			$pending = $this->pending;

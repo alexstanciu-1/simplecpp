@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Constant_Syntax
 {
 	/** Normalize required flavor type/name spelling and retain one initializer node. */
-	public static function read(Parser $parser, bool $private = false): ast_constant_declaration
+	public static function read(Parser $parser, member_visibility $visibility = member_visibility::public): ast_constant_declaration
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
@@ -32,6 +32,6 @@ final class Constant_Syntax
 		$cursor->take(token_kind::assign, '=');
 		$initializer = $parser->literal_initializer('Constant initializer requires a literal');
 		$end = $cursor->take(token_kind::semicolon, '; (constant initializer must be a literal)') + 1;
-		return new ast_constant_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $private);
+		return new ast_constant_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $visibility);
 	}
 }

@@ -34,6 +34,15 @@ final class ast_call_statement extends ast_statement
 	}
 }
 
+/** Lexical self and parent calls forward the enclosing static implementation's called type. */
+enum call_qualifier: int /** uint8 */
+{
+	case ordinary = 0;
+	case lexical_self = 1;
+	case lexical_parent = 2;
+	case called_type = 3;
+}
+
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
 final class ast_call_expression extends ast_expression
 {
@@ -43,8 +52,8 @@ final class ast_call_expression extends ast_expression
 	public readonly ?token_kind $member_separator;
 	/** Native owning receiver; a relative JS dotted path may instead resolve as a namespace call. */
 	public readonly ?ast_expression $receiver;
-	/** Written PHP parent:: / JS super. qualification; C++ retains its actual type name. */
-	public readonly bool $parent_qualified;
+	/** Written lexical qualifier, retained independently of the name used in lookup. */
+	public readonly call_qualifier $qualifier;
 	/** @var ast_expression[] Native owning arguments in source order. */
 	public readonly array $arguments /** list<ast_expression> */;
 
@@ -56,7 +65,7 @@ final class ast_call_expression extends ast_expression
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|null $function_symbol = null;
+	private symbol_entry|runtime_function|called_method_instance|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -66,13 +75,13 @@ final class ast_call_expression extends ast_expression
 	 * @param ast_expression[] $arguments
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null, bool $parent_qualified = false)
+		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null, call_qualifier $qualifier = call_qualifier::ordinary)
 	{
 		parent::__construct($start, $end);
 		$this->name = $name;
 		$this->member_separator = $member_separator;
 		$this->receiver = $receiver;
-		$this->parent_qualified = $parent_qualified;
+		$this->qualifier = $qualifier;
 		$receiver?->attach($this);
 		$this->arguments = $arguments;
 		foreach ($arguments as $argument) {
@@ -81,6 +90,12 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** METHODS */
+	/** A value followed by :: selects a static method through its declared type. */
+	public function expression_qualified(): bool
+	{
+		return $this->member_separator === token_kind::scope && $this->receiver !== null;
+	}
+
 	public function symbol_key(): string
 	{
 		return $this->root()->function_key($this->name);
@@ -98,14 +113,14 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** @param int[] $conversions */
-	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false): void
+	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false, ?called_method_instance $instance = null): void
 	{
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
 			throw new \LogicException('Invalid settled call');
 		}
 		$this->settle_value($function->return_type_def(), null);
-		$this->function_symbol = $symbol;
+		$this->function_symbol = $instance ?? $symbol;
 		$this->ancestor_dispatch = $ancestor_dispatch;
 		$this->conversions = $conversions;
 	}
@@ -131,7 +146,14 @@ final class ast_call_expression extends ast_expression
 		if ($this->function_symbol instanceof runtime_function) {
 			return $this->function_symbol;
 		}
+		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
 		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
+	}
+
+	/** Lower only after the coordinator has settled all reachable implementations. */
+	public function implementation(): ast_function_declaration|runtime_function
+	{
+		return $this->function_symbol instanceof called_method_instance ? $this->function_symbol->implementation : $this->function_def();
 	}
 
 	/** $index: argument ordinal. */
@@ -193,10 +215,10 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		if (($this->preparation_work === $work) && ($this->dependency_source_key() === $source_key)) {
 			return;
 		}
-		$this->preparation_work?->retire($this->dependency_source_key(), $this);
+		if (!$this->parent->is_static) $this->preparation_work?->retire($this->dependency_source_key(), $this);
 		$this->preparation_work = $work;
 		$this->parent->bind_source_key($source_key);
-		$work?->register($source_key, $this);
+		if (!$this->parent->is_static) $work?->register($source_key, $this);
 	}
 
 	/** Full-program preparation binds its logical source identity before registering any watches. */
@@ -218,8 +240,16 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
+		$this->queue_change();
 		$this->root()->begin_preparation();
+	}
+
+	/** Authored static bodies signal defining-unit edits. Only reachable private instances run their executable work. */
+	private function queue_change(): void
+	{
+		if ($this->preparation_work === null) return;
+		if ($this->parent->is_static) $this->preparation_work->change_source($this->dependency_source_key());
+		else $this->preparation_work->enqueue($this->dependency_source_key(), $this);
 	}
 
 	public function is_prepared(?entry_target $target = null): bool
@@ -230,7 +260,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
+		$this->queue_change();
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -297,6 +327,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	private ?Dependency_Watches $signature_dependencies = null;
 
 	/** PREP FACTS */
+	/** Prepared fact: non-owning called-type identity of a private implementation. */
+	public private(set) ?called_method_instance $instance = null;
 	/** Prepared fact: inherited callable contract validated after signature settlement. */
 	public bool $method_contract_ready = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
@@ -357,9 +389,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	}
 
 	/** Enforce lexical access for a call or an implicit inline-field initialization. */
-	public function require_access(ast_node $context, ast_node $site, ?record_type_definition $receiver = null): void
+	public function require_access(ast_node $context, ast_node $site, ?record_type_definition $receiver = null,
+		?dependency_watcher $watcher = null): void
 	{
-		if ($this->is_protected && !$this->parent->definition->permits_protected_access($context, $this->is_constructor() ? null : $receiver)) {
+		if ($this->is_protected && !$this->parent->definition->permits_protected_access($context,
+			($this->is_constructor() || $this->is_static) ? null : $receiver, $watcher)) {
 			$kind = $this->is_constructor() ? 'constructor' : 'method';
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call protected ' . $kind . ' ' . $this->name());
 		}
@@ -379,6 +413,16 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function is_constructor(): bool
 	{
 		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_record_declaration;
+	}
+
+	/** Borrow the settled signature and lexical parent. Only the new executable subtree owns mutable body facts. */
+	public function instantiate(called_method_instance $instance): self
+	{
+		$method = clone $this;
+		$method->instance = $instance;
+		$method->body = Parser::instance_body($this);
+		$method->body->attach($method);
+		return $method;
 	}
 
 	/** Attach the completed body once and settle the function token boundary. */

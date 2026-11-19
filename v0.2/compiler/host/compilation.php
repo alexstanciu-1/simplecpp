@@ -60,8 +60,8 @@ final class Compilation_Inspection
 			'name' => $constant->name(), 'type' => $constant->type_def()->name,
 			'conversion' => value_conversion::name($constant->initialization()), 'initializer' => self::value($constant->initializer),
 		], $program->file->constants());
-		foreach ($program->file->functions() as $function) {
-			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
+		foreach ($program->file->implementations() as $function) {
+			$result['functions'][] = ['name' => $function->name(), 'called_type' => $function->instance?->called->declaration()->name(), 'return_type' => $function->return_type_def()->name,
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
 					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : value_conversion::name($parameter->default_conversion()),
@@ -121,7 +121,9 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'return', 'value' => null];
 			}
 			elseif ($statement instanceof ast_field_assignment) {
-				$statements[] = ['kind' => 'field_write', 'field' => $statement->target instanceof ast_name_expression ? $statement->target->name : $statement->target->field, 'value' => self::value($statement->value)];
+				$row = ['kind' => 'field_write', 'field' => $statement->target instanceof ast_name_expression ? $statement->target->name : $statement->target->field, 'value' => self::value($statement->value)];
+				if ($statement->target instanceof ast_qualified_data) $row['target'] = self::value($statement->target);
+				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$statements[] = ['kind' => 'keyed_write', 'receiver' => self::value($statement->receiver),
@@ -257,6 +259,7 @@ final class Compilation_Inspection
 			$row['bytes_hex'] = bin2hex($value->bytes());
 		}
 		if ($value instanceof ast_name_expression) {
+			if ($value instanceof ast_qualified_data) $row['receiver'] = self::value($value->receiver);
 			$declaration = $value->declaration();
 			$row['binding'] = $declaration instanceof ast_local_binding
 				? $declaration->storage_id() : $declaration->symbol_key();

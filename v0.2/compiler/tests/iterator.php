@@ -149,7 +149,7 @@ foreach (flavor::cases() as $flavor) {
 	$virtual_signature = match ($flavor) {
 		flavor::php => '#[Virtual] ' . $signature, flavor::cpp => 'virtual ' . $signature, flavor::js => 'virtual ' . $signature,
 	};
-	rejects(fn() => $prepare(str_replace($signature, $virtual_signature, $model) . 'return 8;'), 'Virtual modifiers');
+	rejects(fn() => $prepare(str_replace($signature, $virtual_signature, $model) . 'return 8;'), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace(' implements Iterator<int>', '', $model) . $main), 'iterable');
 	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<int,string>', $model) . $main), 'Iterator requires');
 	rejects(fn() => $prepare(str_replace('Iterator<int>', 'Iterator<string>', $model) . $main), 'Iterator requires');

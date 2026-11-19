@@ -97,7 +97,12 @@ final class Cpp_Headers
 						}
 					}
 				}
-				$lines[$node->symbol_key()] = $emitter->declaration($node, $includes);
+				if ($node instanceof ast_function_declaration && $node->is_static) {
+					foreach ($file->static_implementations($node) as $implementation) {
+						if (!$implementation->instance->external) continue;
+						$lines[Cpp_Emitter::function_name($implementation)] = $emitter->declaration($implementation, $includes);
+					}
+				} else $lines[$node->symbol_key()] = $emitter->declaration($node, $includes);
 				$this->declarations[$node->symbol_key()] = $header;
 			}
 			if ($lines === []) {
@@ -294,6 +299,7 @@ final class Cpp_Headers
 
 	public function declaration_header(ast_declaration_interface $node): ?string
 	{
+		if ($node instanceof ast_function_declaration && $node->instance !== null && !$node->instance->external) return null;
 		return $this->declarations[$node->symbol_key()] ?? null;
 	}
 

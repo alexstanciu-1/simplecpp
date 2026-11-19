@@ -85,6 +85,7 @@ require_once __DIR__ . '/types/void.php';
 require_once __DIR__ . '/04_analyze/prepare/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/readonly.php';
 require_once __DIR__ . '/04_analyze/prepare/transfer.php';
+require_once __DIR__ . '/04_analyze/prepare/called_methods.php';
 require_once __DIR__ . '/04_analyze/prepare/prepare.php';
 require_once __DIR__ . '/04_analyze/prepare/functions.php';
 require_once __DIR__ . '/04_analyze/prepare/methods.php';

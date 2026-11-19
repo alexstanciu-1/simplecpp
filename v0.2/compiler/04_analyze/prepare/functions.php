@@ -140,7 +140,7 @@ final class Function_Preparation
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
 		}
-		if ($value instanceof ast_field_expression) {
+		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {
 			self::expression($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {
@@ -242,6 +242,7 @@ final class Function_Preparation
 	public static function bodies(ast_file_node $file, scope $symbols, ?Dependency_Watches $dependencies = null): void
 	{
 		foreach ($file->functions() as $declaration) {
+			if ($declaration->is_static) continue;
 			$node = $declaration;
 			$node->return_type_def();
 			if ($node->optional_body() !== null) (new Preparation())->function_body($node->body(), $symbols, null, $dependencies);

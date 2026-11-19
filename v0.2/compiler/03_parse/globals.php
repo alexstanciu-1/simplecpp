@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Global_Syntax
 {
 	/** Flavor spelling is normalized before creating one shared global-declaration node. */
-	public static function read(Parser $parser, bool $static = false, bool $private = false): ast_global_declaration
+	public static function read(Parser $parser, bool $static = false, member_visibility $visibility = member_visibility::public): ast_global_declaration
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position() - ($static ? 1 : 0);
@@ -46,6 +46,6 @@ final class Global_Syntax
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Expected scalar literal for global initializer');
 		}
 		$end = $cursor->take(token_kind::semicolon, '; (global initializer must be a scalar literal)') + 1;
-		return new ast_global_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $private);
+		return new ast_global_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $visibility);
 	}
 }
