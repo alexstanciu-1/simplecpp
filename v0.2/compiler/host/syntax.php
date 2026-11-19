@@ -47,6 +47,7 @@ final class Syntax_Inspection
 				};
 				$result[$category][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_instance_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
+				if ($node->is_final) $result[$category][array_key_last($result[$category])]['final'] = true;
 				if ($node->interface_references !== []) $result[$category][array_key_last($result[$category])]['implements'] = array_map(
 					static fn(ast_type_reference $type): string => $type->spelling(), $node->interface_references);
 				if (count($node->interface_references) === 1) $result[$category][array_key_last($result[$category])]['implements'] = $node->interface_references[0]->spelling();

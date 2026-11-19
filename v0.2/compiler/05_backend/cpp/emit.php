@@ -148,7 +148,7 @@ final class Cpp_Emitter
 			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
 			foreach ($node->definition->interfaces() as $interface) $bases[] = 'public virtual ' . $interface->cpp_type();
 			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-				. ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+				. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
 			if ($node->has_virtual_dispatch()) return '';

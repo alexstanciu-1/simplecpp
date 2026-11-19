@@ -341,8 +341,8 @@ intent explicit. Tests do not narrow the variable's static type.
 Common preparation admits same-type/upward relationships and polymorphic downward
 relationships, including class/interface and interface/interface cross-casts. Two
 interfaces need no known common implementer; a class can gain an interface through
-a descendant. Class finality is not implemented: final-class syntax remains rejected
-and finality-aware overlap checks are deferred. Required and optional shared operands are accepted; bare null, inline
+a descendant. Final classes cannot acquire additional interfaces through descendants;
+impossible final-class/interface casts and tests reject during preparation. Required and optional shared operands are accepted; bare null, inline
 values, unrelated records and weak/unique handles are rejected. A successful cast
 returns the required target class/interface view. Absence/mismatch throws `invalid_object_cast`;
 `instanceof` returns false. Native RTTI must be enabled for downward operations and cross-casts.
@@ -450,3 +450,10 @@ PHP/JS use the protected member modifier; C++ uses protected member sections.
 Ordinary class/struct instance methods and class virtual/abstract methods share the
 existing lexical and declared-receiver access contract. Overrides may widen
 protected to public, never narrow visibility. Protected static methods stay deferred.
+
+### Final classes
+
+PHP/JS use `final class Leaf`; C++ accepts `class Leaf final`. Final classes may
+inherit and implement interfaces but cannot be extended. Abstract/final combinations,
+duplicate final modifiers and final structs/interfaces reject in this class-only slice.
+The native payload is final; ownership and required-field policies are unchanged.

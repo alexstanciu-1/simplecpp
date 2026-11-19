@@ -120,6 +120,7 @@ final class record_type_definition extends type_definition implements dependency
 					throw new diagnostic($written->source(), $written->byte_start(),
 						$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
 				}
+				if ($base->declaration->is_final) throw new diagnostic($written->source(), $written->byte_start(), 'Cannot extend final class: ' . $base->name);
 				$base->prepare_layout($symbols, $active, $work);
 				$this->base_type = $base;
 				$this->validate_inherited_members();

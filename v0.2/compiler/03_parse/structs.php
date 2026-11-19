@@ -12,8 +12,15 @@ final class Record_Syntax
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
 		$start = $c->position();
-		$abstract = $c->keyword('abstract');
-		if ($abstract) $c->take_keyword('abstract');
+		$abstract = false;
+		$final = false;
+		while (!$c->at_end() && ($c->keyword('abstract') || $c->tokens->text_at($c->position()) === 'final')) {
+			$modifier = $c->keyword('abstract') ? 'abstract' : 'final';
+			if ($modifier === 'abstract' ? $abstract : $final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: ' . $modifier);
+			if ($modifier === 'abstract') $abstract = true;
+			else $final = true;
+			$c->take($c->tokens->tokens[$c->position()]->kind, $modifier);
+		}
 		$kind = $c->keyword('interface') ? record_kind::interface_type
 			: ($c->keyword('class') ? record_kind::class_type : record_kind::structure);
 		$c->take_keyword(match ($kind) {
@@ -23,6 +30,12 @@ final class Record_Syntax
 		});
 		if ($kind === record_kind::interface_type) $abstract = true;
 		$name = $c->name(token_kind::identifier);
+		if ($flavor === flavor::cpp && !$c->at_end() && $c->tokens->text_at($c->position()) === 'final') {
+			if ($final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: final');
+			$c->take($c->tokens->tokens[$c->position()]->kind, 'final');
+			$final = true;
+		}
+		if ($final && ($abstract || $kind !== record_kind::class_type)) throw new diagnostic($c->tokens->source, $c->offset(), 'Final requires a non-abstract class');
 		if (type_registry::resolve($name) !== null || type_registry::generic_arity($name) !== null || $name === 'void' || $name === Iterator_Contract::NAME) {
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
 		}
@@ -178,7 +191,7 @@ final class Record_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces);
+		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final);
 	}
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
@@ -189,6 +202,12 @@ final class Record_Syntax
 				$c->take(token_kind::attribute, '#[');
 				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
 				$name = $c->name(token_kind::identifier);
+		if ($flavor === flavor::cpp && !$c->at_end() && $c->tokens->text_at($c->position()) === 'final') {
+			if ($final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: final');
+			$c->take($c->tokens->tokens[$c->position()]->kind, 'final');
+			$final = true;
+		}
+		if ($final && ($abstract || $kind !== record_kind::class_type)) throw new diagnostic($c->tokens->source, $c->offset(), 'Final requires a non-abstract class');
 				if (!in_array($name, ['Virtual', 'Override'], true)) throw new diagnostic($c->tokens->source, $c->offset(), 'Unsupported method attribute');
 				if ($c->is(token_kind::lparen)) throw new diagnostic($c->tokens->source, $c->offset(), 'Method attributes take no arguments');
 				$c->take(token_kind::rbracket, ']');

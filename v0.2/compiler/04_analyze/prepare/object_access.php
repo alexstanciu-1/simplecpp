@@ -25,6 +25,10 @@ final class Object_Access_Preparation
 			}
 		}
 		$upward = $source->payload->derives_from($target->payload);
+		// A final class cannot acquire another interface through a future descendant.
+		if (($source->payload->declaration->is_final && $target->payload->declaration->kind === record_kind::interface_type && !$upward)
+			|| ($target->payload->declaration->is_final && $source->payload->declaration->kind === record_kind::interface_type
+				&& !$target->payload->derives_from($source->payload))) self::fail($site, 'Final class does not implement the requested interface relationship');
 		// Classes have one base; an interface may overlap an open class or another interface
 		// without a currently known common implementer. No descendant inventory is needed.
 		if (!$upward && !$target->payload->derives_from($source->payload)
