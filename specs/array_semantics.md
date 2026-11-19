@@ -725,3 +725,19 @@ Weak observers, value-record keys and source-defined hashing methods remain outs
 slice. Hash values remain independently governed by their supported storage contracts.
 The implementation and verification are recorded in
 [the common key contract](../v0.2/compiler/docs/hash_keys.md).
+
+### v0.2 typed populated vector initialization
+
+An explicitly typed local vector initializer may contain ordered positional elements
+in `[...]`, with an optional trailing comma. Its element type provides the ordinary
+typed-destination conversion context. Direct nested literals receive that context
+recursively. Each element is evaluated, checked and appended before the next; a
+failure prevents subsequent elements and destroys partially constructed storage.
+Previously performed external effects remain. The local is not visible until its
+initializer succeeds. Ordinary value-copy and shared-identity contracts apply.
+
+This bounded compiler slice admits existing vector specializations through the
+metadata-defined sequence-initialization capability. It does not activate additional
+element families, infer a type from a populated literal, admit keyed entries or
+extend populated initialization to hash/mixed/dynamic. Destination propagation for
+calls, returns, assignments and append remains a separate implementation slice.

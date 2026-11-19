@@ -315,7 +315,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 55,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 56,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }

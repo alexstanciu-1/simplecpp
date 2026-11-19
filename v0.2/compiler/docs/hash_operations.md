@@ -35,7 +35,7 @@ conversion and lowering handlers. Preparation performs identity checks and calls
 existing scalar/carrier conversion path; it does not interpret metadata at compile time.
 Application C++ continues to use concrete template-free public runtime APIs.
 
-The former `ast_empty_vector_expression` is now `ast_empty_collection_expression`, shared
+The former `ast_empty_vector_expression` is now `ast_collection_expression`, shared
 by vector and hash explicitly typed local initializers. Collection nodes live in
 `03_parse/structures/collections.php`. Indexed reads reuse `ast_index_expression`.
 New `ast_index_assignment` owns receiver, key and value children and retains only the
@@ -103,3 +103,5 @@ Instance fields default to empty and reuse value copying and keyed writes; see
 Indexed compounds reuse generated element operations; see [indexed compounds](indexed_compounds.md).
 
 Discarded numeric indexed updates use generated element rules; see [indexed updates](indexed_updates.md).
+
+Populated typed vector locals now reuse the [common sequence initialization path](populated_vectors.md).

@@ -45,6 +45,9 @@ requireThat(!str_contains($integerOutput['public/scpp/output.hpp'], 'echo_string
     && !str_contains($integerOutput['private/output_provider.hpp'], 'SCPP_OUTPUT_HAS_STRING'), 'Unavailable string output published');
 requireThat(count($integerOnly['hashes']['specializations']) === 1, 'Integer-only hash publication failed');
 
+$m = decode($metadata,'metadata'); $m->vector->initialization = 'unchecked';
+rejects(fn() => $prepare(encode($m),readFile($root.'/runtime/metadata/publication.json')));
+
 $dt = $prepare($metadata,$datetime);
 requireThat(count($dt['datetime']['operations']) === 11, 'Datetime operations lost');
 requireThat($dt['datetime']['build']['requires'] === 'scpp_runtime', 'Datetime dependency lost');

@@ -124,6 +124,13 @@ interface indexed_collection_type extends index_read_type
 	public function lower_cpp_empty(): string;
 }
 
+/** Metadata-approved ordered initialization, using the existing checked element and append contracts. */
+interface sequence_initializer_type extends indexed_collection_type
+{
+	public function write_type(): type_definition;
+	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
+}
+
 /** Source append on a writable receiver with a published value parameter. */
 interface appendable_collection_type
 {

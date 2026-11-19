@@ -117,6 +117,10 @@ final class Function_Preparation
 			}
 			return;
 		}
+		if ($value instanceof ast_collection_expression) {
+			foreach ($value->elements as $element) self::expression($element);
+			return;
+		}
 		if ($value instanceof ast_interpolated_string) {
 			foreach ($value->parts as $part) {
 				self::expression($part);

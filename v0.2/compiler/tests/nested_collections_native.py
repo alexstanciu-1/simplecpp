@@ -59,7 +59,7 @@ def sources(flavor):
     return dict(point=point, bag=bag, api=api, main=main)
 
 
-def sanitize(output, destination, expected):
+def sanitize(output, destination, expected, static_abi=False):
     """Instrument generated nested storage; reuse the prebuilt runtime (not instrumented here)."""
     root = Path(__file__).resolve().parents[2]
     units = [output / name for name in json.loads((output / 'manifest.json').read_text())['translation_units']]
@@ -67,6 +67,8 @@ def sanitize(output, destination, expected):
         '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
         '-I', str(root / 'runtime/generated/public'), *map(str, units),
         str(root / 'build/clang/libscpp_runtime.a'), '-o', str(destination)]
+    if static_abi:
+        command.insert(1, '-static-libstdc++')
     subprocess.run(command, check=True, capture_output=True)
     result = subprocess.run([str(destination)], capture_output=True,
         env={**os.environ, 'ASAN_OPTIONS': 'detect_leaks=1:halt_on_error=1', 'UBSAN_OPTIONS': 'halt_on_error=1'})

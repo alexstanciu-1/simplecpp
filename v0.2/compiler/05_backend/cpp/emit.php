@@ -1251,10 +1251,20 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
-		if ($value instanceof ast_empty_collection_expression) {
+		if ($value instanceof ast_collection_expression) {
 			/** @var indexed_collection_type $type */
 			$type = $value->type_def();
-			return $type->lower_cpp_empty();
+			if ($value->elements === []) return $type->lower_cpp_empty();
+			if (!($type instanceof sequence_initializer_type)) throw new \LogicException('Unprepared sequence initializer');
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
+			$code = '[&]() { ' . $type->cpp_type() . ' sequence = ' . $type->lower_cpp_empty() . '; ';
+			foreach ($value->elements as $position => $element) {
+				$operand = $this->value($element, $global_references, $declarations, $required_headers);
+				$conversion = $value->element_conversion($position);
+				foreach ($type->write_type()->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$code .= $type->lower_cpp_sequence_append($element, $conversion, 'sequence', $operand, $this->inline_adapters) . '; ';
+			}
+			return $code . 'return sequence; }()';
 		}
 		if ($value instanceof ast_index_expression) {
 			/** @var index_read_type $type */

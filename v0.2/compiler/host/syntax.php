@@ -113,8 +113,9 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_field_expression) {
 			return ['kind' => 'field', 'receiver' => self::expression($expression->receiver), 'name' => $expression->field];
 		}
-		if ($expression instanceof ast_empty_collection_expression) {
-			return ['kind' => 'empty_collection'];
+		if ($expression instanceof ast_collection_expression) {
+			return $expression->elements === [] ? ['kind' => 'empty_collection']
+				: ['kind' => 'collection', 'elements' => array_map(self::expression(...), $expression->elements)];
 		}
 		if ($expression instanceof ast_index_expression) {
 			return ['kind' => 'index', 'receiver' => self::expression($expression->receiver), 'index' => self::expression($expression->index)];

@@ -189,6 +189,9 @@ final class Compilation_Inspection
 		if ($value instanceof ast_construction_expression) {
 			$row['arguments'] = array_map(self::value(...), $value->arguments);
 		}
+		if ($value instanceof ast_collection_expression) {
+			$row['elements'] = array_map(self::value(...), $value->elements);
+		}
 		if ($value instanceof ast_interpolated_string) {
 			$row['parts'] = array_map(self::value(...), $value->parts);
 		}

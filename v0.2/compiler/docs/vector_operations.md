@@ -55,7 +55,7 @@ The generated specialization validates and lowers the zero-argument const member
 
 ## Ownership and generated handlers
 
-`ast_empty_collection_expression` retains only inherited expression facts; its explicit
+`ast_collection_expression` retains inherited expression facts and ordered element syntax/conversions; its explicit
 local declaration supplies the resolved vector type. `ast_index_expression` owns
 receiver/index syntax and retains its inherited result type. `ast_append_statement`
 owns receiver/value syntax. The shared `ast_index_assignment` owns receiver,
@@ -172,3 +172,5 @@ Indexed arithmetic/bitwise/shift/power and string compounds reuse element rules;
 [indexed compounds](indexed_compounds.md).
 
 Discarded numeric indexed updates use generated element rules; see [indexed updates](indexed_updates.md).
+
+Populated typed vector locals now reuse the [common sequence initialization path](populated_vectors.md).

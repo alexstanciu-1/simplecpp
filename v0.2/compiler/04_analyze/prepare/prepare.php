@@ -510,9 +510,8 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
-		elseif (($declaration->initializer instanceof ast_empty_collection_expression) && ($type instanceof indexed_collection_type)) {
-			$this->expression_visits++;
-			$declaration->initializer->settle_collection($type);
+		elseif (($declaration->initializer instanceof ast_collection_expression) && ($type instanceof indexed_collection_type)) {
+			$this->collection($declaration->initializer, $type, $name);
 		}
 		else {
 			$this->value($declaration->initializer, $name);
@@ -629,6 +628,28 @@ final class Preparation
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}
 
+	/** Prepare ordered elements once using the destination contract; nested literals inherit their element destination. */
+	private function collection(ast_collection_expression $syntax, type_definition&indexed_collection_type $type, ?string $initializing): void
+	{
+		$this->expression_visits++;
+		if ($syntax->elements === []) {
+			$syntax->settle_collection($type);
+			return;
+		}
+		if (!($type instanceof sequence_initializer_type)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Populated literal requires a sequence-initializable destination');
+		}
+		$destination = $type->write_type();
+		$conversions = [];
+		foreach ($syntax->elements as $element) {
+			if ($element instanceof ast_collection_expression && $destination instanceof indexed_collection_type) {
+				$this->collection($element, $destination, $initializing);
+			} else $this->value($element, $initializing);
+			$conversions[] = $destination->prepare_conversion($element, conversion_context::typed_destination);
+		}
+		$syntax->settle_collection($type, $conversions);
+	}
+
 	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
 	private function match_result(ast_match_arm $arm, ?type_definition &$result, ?string $initializing): void
 	{
@@ -644,8 +665,8 @@ final class Preparation
 	{
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
 		$this->expression_visits++;
-		if ($syntax instanceof ast_empty_collection_expression) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
+		if ($syntax instanceof ast_collection_expression) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
 		}
 		if ($syntax instanceof ast_match_expression) {
 			$this->value($syntax->subject, $initializing);

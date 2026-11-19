@@ -659,6 +659,7 @@
     "provider": "core.vectors",
     "source_type": "vector",
     "storage": "concrete_buffer",
+    "initialization": "ordered_append",
     "count_type": "int64",
     "read": "value_copy",
     "mutation": "explicit_set",

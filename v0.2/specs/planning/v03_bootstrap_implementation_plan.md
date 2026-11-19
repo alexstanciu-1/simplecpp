@@ -21,7 +21,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | --- | --- | --- |
 | 1.1 Integer representations/literals | Hexadecimal/octal literals and five optional integer widths implemented | uint64 and operations requiring its promotion remain deferred; unavailable constant-evaluation outcome exists |
 | 1.2 Backed enums | Bounded scope implemented, including string backing and public instance methods | Broader enum integration is separate |
-| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; recursive vector/hash values implemented; broader element/key families and populated literals remain separate |
+| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; recursive vector/hash values implemented; typed populated vector locals implemented; broader element/key families and keyed literals remain separate |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
@@ -263,6 +263,13 @@ assignment expressions, application/shared carriers and new implicit conversions
 
 Verification passed: the two coalescing-assignment tests and seven existing
 coalescing/logical/compound/loop tests (9/9), plus tokenizer, parser and style checks.
+
+### 2.4 Typed populated vector locals — implemented
+
+[Sequence initialization](../../compiler/docs/populated_vectors.md) uses metadata-owned
+append bindings and resolved element contracts, including direct nested literals.
+Inference, keyed literals and additional destination contexts remain separate.
+
 
 ## 3. Object relationships — a small AST family
 

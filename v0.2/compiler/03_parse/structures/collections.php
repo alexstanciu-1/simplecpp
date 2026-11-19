@@ -3,12 +3,43 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Empty [] initializer; its explicitly typed local supplies the concrete collection identity during preparation. */
-final class ast_empty_collection_expression extends ast_expression
+/** Typed [] or [a, b] initializer; owns ordered syntax and uses the destination's collection contract. */
+final class ast_collection_expression extends ast_expression
 {
-	public function settle_collection(type_definition&indexed_collection_type $type): void
+	/** PROPERTIES */
+	/** @var ast_expression[] Native owning elements, in source order. */
+	public readonly array $elements /** list<ast_expression> */;
+
+	/** PREP FACTS */
+	/** @var int[] Prepared fact: approved element conversions; empty before preparation or after reset. */
+	private array $conversions /** list<uint16> */ = [];
+
+	/** CONSTRUCTOR */
+	/** $start/$end: token boundaries. @param ast_expression[] $elements */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $elements /** list<ast_expression> */ = [])
 	{
+		parent::__construct($start, $end);
+		$this->elements = $elements;
+		foreach ($elements as $element) $element->attach($this);
+	}
+
+	/** METHODS */
+	/** @param int[] $conversions */
+	public function settle_collection(type_definition&indexed_collection_type $type, array $conversions /** list<uint16> */ = []): void
+	{
+		$this->conversions = $conversions;
 		$this->settle_value($type, null);
+	}
+
+	public function element_conversion(int $position /** uint32 */): int /** uint16 */
+	{
+		return $this->conversions[$position] ?? throw new \LogicException('Collection element is not prepared');
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->conversions = [];
 	}
 }
 
