@@ -25,8 +25,6 @@ final class Object_Access_Preparation
 			}
 		}
 		$upward = $source->payload->derives_from($target->payload);
-		if (!$upward && ($source->payload->declaration->kind === record_kind::structure
-			|| $target->payload->declaration->kind === record_kind::structure)) self::fail($site, 'Shared struct access requires the same struct or its base');
 		// A final class cannot acquire another interface through a future descendant.
 		if (($source->payload->declaration->is_final && $target->payload->declaration->kind === record_kind::interface_type && !$upward)
 			|| ($target->payload->declaration->is_final && $source->payload->declaration->kind === record_kind::interface_type
@@ -34,9 +32,11 @@ final class Object_Access_Preparation
 		// Classes have one base; an interface may overlap an open class or another interface
 		// without a currently known common implementer. No descendant inventory is needed.
 		if (!$upward && !$target->payload->derives_from($source->payload)
-			&& $source->payload->declaration->kind === record_kind::class_type
-			&& $target->payload->declaration->kind === record_kind::class_type) self::fail($site, 'Object access requires related classes');
-		if (!$upward && !$source->payload->polymorphic()) self::fail($site, 'Checked object access requires a polymorphic source class or interface');
+			&& ($source->payload->declaration->kind === record_kind::structure || $target->payload->declaration->kind === record_kind::structure
+				|| ($source->payload->declaration->kind === record_kind::class_type && $target->payload->declaration->kind === record_kind::class_type))) {
+			self::fail($site, 'Object access requires related classes or related structs');
+		}
+		if (!$upward && !$source->payload->polymorphic()) self::fail($site, 'Checked object access requires a polymorphic source class, struct or interface');
 		$site->settle_access($target, !$upward);
 	}
 

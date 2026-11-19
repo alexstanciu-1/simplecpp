@@ -56,5 +56,12 @@ Verified across cpp/php/js on Clang and GCC:
 Existing virtual-method, ancestor-call, object-access, class, frontend lifecycle,
 failure-cleanup, preparation-work and compiler-style checks also passed.
 The subsequent [interface slice](interfaces.md) adds class capability contracts.
-Abstract structs, protected-method expansion, callable variance,
+Callable variance,
 broader reference returns, unique and borrows remain deferred.
+
+For a struct, the bare name denotes an inline value. Abstract structs may be base
+subobjects and handle payloads. Preparation rejects a complete abstract struct in
+construction, copying, fields, by-value signatures and collection payloads, even
+when the record has no bodyless methods. A concrete descendant copies its base
+and fields under the ordinary exact-type value contract. See the
+[polymorphic struct proof](../tests/polymorphic_structs_native.py).

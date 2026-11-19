@@ -323,7 +323,7 @@ checked conversions. Binary prefixes, separators and suffixes remain deferred.
 
 The bounded implementation of
 [checked object access](../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
-admits class and interface operands/targets. Explicitly shared struct operands admit their own bare struct name or an ancestor struct name as target.
+admits class and interface operands/targets. Explicitly shared struct operands admit same-type and ancestor targets, and descendant targets when the declared source is polymorphic.
 
 | Intent | C++ flavor | PHP flavor | JS flavor |
 | --- | --- | --- | --- |
@@ -402,7 +402,7 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs, callable variance,
+Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Callable variance,
 unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
 

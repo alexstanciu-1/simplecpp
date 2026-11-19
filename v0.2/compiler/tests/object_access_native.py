@@ -261,7 +261,7 @@ def syntax_and_recovery(work, flavor, libraries):
         (fn('check','bool',[('n','?Node')],f'return {v}n instanceof Unrelated;'),'related classes'),
         (fn('check','bool',[('n','?Node')],'return null instanceof Leaf;'),'operand must be a shared class'),
         (fn('check','bool',[('n','?Node')],f'return weak({v}n) instanceof Leaf;'),'operand must be a shared class'),
-        (fn('check','bool',[('n','?Node')],f'return {v}n instanceof Point;'),'Shared struct access requires'),
+        (fn('check','bool',[('n','?Node')],f'return {v}n instanceof Point;'),'related structs'),
         (fn('check','bool',[('n','?Node')],'return 1 instanceof Leaf;'),'operand must be a shared class'),
         (fn('check','bool',[('n','?Node')],f'return {v}n instanceof shared<Leaf>;'),'bare class, struct or interface name'),
         (fn('check','bool',[('n','?Node')],f'return object_cast({v}n,"Leaf") instanceof Leaf;'),'Expected'),

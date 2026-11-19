@@ -15,8 +15,10 @@ Invalidation clears the occurrence facts through the existing body owner.
 
 For an explicitly shared struct, resolving the bare struct name selects its existing
 canonical shared handle. Same-type and upward casts require presence; upward tests
-only inspect presence. Both use the existing static pointer adjustment. Struct
-downcasts, unrelated structs and struct/interface cross-casts reject during preparation.
+only inspect presence. Both use the existing static pointer adjustment. A checked downcast along a struct
+base chain requires virtual dispatch on the declared source (possibly inherited).
+It uses the same RTTI adapter as a class downcast. An abstract marker alone supplies
+no RTTI. Unrelated structs and struct/interface cross-casts reject during preparation.
 
 Interface overlap reuses the same admission owner: unrelated classes still reject,
 but class/interface and interface/interface pairs can overlap without a known

@@ -3,11 +3,11 @@
 Doc Status: supporting
 
 The [inheritance contract](../../../specs/inheritance_v0_2.md) owns semantics.
-This bounded implementation supports public/protected concrete class instance virtual methods,
+This bounded implementation supports public/protected concrete class and struct instance virtual methods,
 mandatory overrides, final implementations and inherited ordinary-method lookup.
 The separate [abstract-method slice](abstract_methods.md) adds bodyless contracts.
 Interfaces, unique ownership, borrows,
-callable variance, reference-return virtuals, authored destructors and struct virtual methods remain deferred.
+callable variance, reference-return virtuals, and authored destructors remain deferred.
 
 The separate [ancestor-call slice](parent_methods.md) adds fixed parent implementation calls.
 

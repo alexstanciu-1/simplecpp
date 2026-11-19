@@ -16,11 +16,11 @@ final class Method_Preparation
 		$dependencies?->watch($symbols->entry($method->parent->symbol_key()), $method);
 		$marked = $method->has_virtual_dispatch() || ($method->is_final && !$method->is_static);
 		if ($marked && ($method->is_constructor() || $method->is_static || $method->is_private
-			|| $method->short_name === '__destruct' || $method->parent->kind === record_kind::structure)) {
-			self::fail($method, 'Virtual modifiers require a public class instance method or a protected class instance method');
+			|| $method->short_name === '__destruct')) {
+			self::fail($method, 'Virtual modifiers require a public or protected instance method');
 		}
 		if (($method->is_abstract && (!$method->parent->is_abstract || $method->is_final))
-			|| ($method->is_abstract && $method->is_virtual && $method->source()->flavor !== flavor::cpp)) self::fail($method, 'Abstract method requires an abstract class and cannot be final or explicitly virtual');
+			|| ($method->is_abstract && $method->is_virtual && $method->source()->flavor !== flavor::cpp)) self::fail($method, 'Abstract method requires an abstract class or struct and cannot be final or explicitly virtual');
 		if ($method->is_virtual && ($method->is_override || $method->is_final)) self::fail($method, 'Conflicting virtual method modifiers');
 		$requirements = $record->interface_requirements($method->short_name);
 		foreach ($requirements as $requirement) {
@@ -53,9 +53,6 @@ final class Method_Preparation
 	public static function record_contract(record_type_definition $record, scope $symbols, ?Dependency_Watches $dependencies): void
 	{
 		if ($record->method_contract_ready) return;
-		if ($record->declaration->is_abstract && $record->declaration->kind === record_kind::structure) {
-			throw new diagnostic($record->declaration->source(), $record->declaration->byte_start(), 'Abstract structs are deferred');
-		}
 		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
 		foreach ($record->declaration->methods as $method) self::contract($method, $symbols, $dependencies);
 		$forwards = [];
@@ -90,7 +87,7 @@ final class Method_Preparation
 					if (isset($seen[$name])) continue;
 					$seen[$name] = true;
 					if ($method->is_abstract) throw new diagnostic($record->declaration->source(), $record->declaration->byte_start(),
-						'Concrete class must implement abstract method: ' . $name);
+						'Concrete ' . ($record->declaration->kind === record_kind::structure ? 'struct' : 'class') . ' must implement abstract method: ' . $name);
 				}
 			}
 		}

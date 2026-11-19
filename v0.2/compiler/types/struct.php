@@ -147,6 +147,7 @@ final class record_type_definition extends type_definition implements dependency
 			// The temporary instance-property policy permits absence independently of written nullability.
 			if ($type instanceof shared_record_type_definition && $type->required) $type = $type->payload->shared;
 			if ($type instanceof self) {
+				$type->require_complete_value($field->type_reference);
 				$type->prepare_layout($symbols, $active, $work);
 				$constructor = $type->constructor();
 				$constructor?->require_access($this->declaration, $field->type_reference);
@@ -381,6 +382,14 @@ final class record_type_definition extends type_definition implements dependency
 				}
 			}
 		}
+	}
+
+	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */
+	public function require_complete_value(ast_node $site): void
+	{
+		if (!$this->declaration->is_abstract) return;
+		throw new diagnostic($site->source(), $site->byte_start(), $this->declaration->kind === record_kind::structure
+			? 'Abstract struct cannot be used as a complete value: ' . $this->name : 'Cannot instantiate an abstract class');
 	}
 
 	public function supports_inferred_local(): bool

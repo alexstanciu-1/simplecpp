@@ -83,8 +83,8 @@ def prove(work, flavor, libraries):
     else: conflict = conflict.replace('virtual ', 'virtual override ', 1)
     static = ('static ' + method('virtual', '8')) if flavor == 'cpp' else method('virtual', '8').replace('virtual ', 'static virtual ', 1)
     private = ('private: ' + method('virtual', '8')) if flavor == 'cpp' else method('virtual', '8').replace('public ', 'private ', 1) if flavor == 'php' else 'private '+method('virtual', '8')
-    for invalid, message in [(conflict, 'Conflicting virtual'), (static, 'public class instance'),
-                             (private, 'public class instance'),
+    for invalid, message in [(conflict, 'Conflicting virtual'), (static, 'public or protected instance'),
+                             (private, 'public or protected instance'),
                              (method('override', '8').replace('=2', ''), 'signature must match')]:
         steps += [('leaf', klass('Leaf', invalid, 'Node'), None, message), ('leaf', leaf, b'910', None)]
     steps += [('node', klass('Node', method('virtual', v+'delta', default='1', result='float')), None, 'signature must match'),

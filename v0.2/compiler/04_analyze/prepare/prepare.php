@@ -497,6 +497,7 @@ final class Preparation
 		$type = null;
 		if ($declaration->type_reference !== null) {
 			$type = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
+			if ($type instanceof record_type_definition) $type->require_complete_value($declaration->type_reference);
 			if ($type === null) {
 				throw new diagnostic($source, $root->byte_at($declaration->type_position()),
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
@@ -766,8 +767,9 @@ final class Preparation
 			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 			}
-			if (!$is_receiver && $record instanceof ast_record_declaration && $record->kind !== record_kind::structure) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
+			if (!$is_receiver && $record instanceof ast_record_declaration) {
+				if ($record->kind !== record_kind::structure) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
+				$record->definition->require_complete_value($syntax);
 			}
 			// Receiver facts depend on the current layout, including inherited types and access.
 			$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
@@ -1371,9 +1373,7 @@ final class Preparation
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && $payload->declaration->is_abstract && !($site instanceof ast_base_initialization)) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot instantiate an abstract class');
-		}
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
