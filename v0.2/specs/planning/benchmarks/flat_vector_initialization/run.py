@@ -60,7 +60,7 @@ def measure(work, php, repeats):
     generator = ROOT / 'tools/api_generator/generate.php'
     facts = ROOT / 'build/clang/native-layout/facts.json'
     m = json.loads((runtime / 'metadata/runtime.json').read_text())
-    m['vector']['initialization'].pop('consume')
+    m['vector']['initialization']['bulk'].pop('consume')
     metadata = work / 'readonly.json'; metadata.write_text(json.dumps(m))
     compiler = work / 'readonly-compiler'
     run([php, generator, 'emit-compiler', metadata, runtime / 'metadata/publication.json', facts, facts.with_name('context.json'), compiler])

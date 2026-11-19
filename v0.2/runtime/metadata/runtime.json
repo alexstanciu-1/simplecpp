@@ -659,17 +659,23 @@
     "provider": "core.vectors",
     "source_type": "vector",
     "initialization": {
-      "element_families": [
-        "integer",
-        "string"
-      ],
-      "read_only": "from_list",
-      "consume": "from_owned",
-      "input": "literal_input",
-      "presizing": "entry_count",
-      "transfer": "nothrow",
-      "stack_bytes": 4096,
-      "inline_elements": {"integer": 512, "string": 128}
+      "mode": "ordered_elements",
+      "bulk": {
+        "element_families": [
+          "integer",
+          "string"
+        ],
+        "read_only": "from_list",
+        "consume": "from_owned",
+        "input": "literal_input",
+        "presizing": "entry_count",
+        "transfer": "nothrow",
+        "stack_bytes": 4096,
+        "inline_elements": {
+          "integer": 512,
+          "string": 128
+        }
+      }
     },
     "storage": "concrete_buffer",
     "count_type": "int64",
@@ -751,6 +757,18 @@
       "string"
     ],
     "count_type": "int64",
+    "key_contracts": {
+      "int64": {
+        "hash": "::scpp::detail::hash_integer(@key@)",
+        "equal": "@left@ == @right@",
+        "nonthrowing": true
+      },
+      "string": {
+        "hash": "::scpp::detail::hash_string_bytes(@key@.data(), static_cast<std::size_t>(@key@.size()))",
+        "equal": "@left@.size() == @right@.size() && (@left@.size() == 0 || ::memcmp(@left@.data(), @right@.data(), static_cast<std::size_t>(@left@.size())) == 0)",
+        "nonthrowing": true
+      }
+    },
     "key_policy": "strict",
     "read": "value_copy",
     "optional_lookup": "nullable",

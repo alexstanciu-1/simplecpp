@@ -56,7 +56,7 @@ void operator delete(void* p) noexcept {
 }
 int main() {
     using Owner = App::owner_Point;
-    static_assert(sizeof(Owner) == sizeof(void*));
+    static_assert(sizeof(Owner) == 2 * sizeof(void*));
     Owner empty;
     Owner empty_copy = empty;
     assert(!empty && !empty_copy && empty.ptr == nullptr);
@@ -842,7 +842,7 @@ void operator delete(void* p) noexcept {
 int main() {
     using namespace App;
     using namespace scpp_records;
-    static_assert(sizeof(decltype(Segment::start)) == sizeof(void*));
+    static_assert(sizeof(decltype(Segment::start)) == 2 * sizeof(void*));
     Segment a;
     assert(!a.start && !a.end);
     a.start = owner_Point::make();

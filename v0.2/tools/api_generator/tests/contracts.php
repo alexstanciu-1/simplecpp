@@ -16,6 +16,13 @@ $owners = readFile($root.'/tests/ownership/publication.json');
 $prepare = fn(string $m, string $p): array => prepareRuntime(decode($m,'metadata'), decode($p,'publication'), $facts);
 $hashPlan = $prepare($metadata, $hashes);
 requireThat(count($hashPlan['hashes']['specializations']) === 4, 'Hash specializations lost');
+foreach (['missing', 'throwing', 'incomplete'] as $invalid) {
+    $m = decode($metadata, 'metadata');
+    if ($invalid === 'missing') unset($m->hash->key_contracts->string);
+    elseif ($invalid === 'throwing') $m->hash->key_contracts->int64->nonthrowing = false;
+    else $m->hash->key_contracts->int64->equal = '@left@ == unknown';
+    rejects(fn() => $prepare(encode($m), $hashes));
+}
 foreach (['key'=>'int8','value'=>'hash_int64_int64'] as $key=>$value) {
     $p = decode($hashes,'publication'); $p->hashes->specializations[0]->{$key} = $value;
     rejects(fn() => $prepare($metadata,encode($p)));
@@ -37,6 +44,11 @@ $integerOutput = render($integerOnly);
 requireThat(!str_contains($integerOutput['public/scpp/output.hpp'], 'echo_string')
     && !str_contains($integerOutput['private/output_provider.hpp'], 'SCPP_OUTPUT_HAS_STRING'), 'Unavailable string output published');
 requireThat(count($integerOnly['hashes']['specializations']) === 1, 'Integer-only hash publication failed');
+
+$m = decode($metadata,'metadata'); $m->vector->initialization = 'unchecked';
+rejects(fn() => $prepare(encode($m),readFile($root.'/runtime/metadata/publication.json')));
+$m = decode($metadata,'metadata'); $m->vector->initialization->mode = 'unchecked';
+rejects(fn() => $prepare(encode($m),readFile($root.'/runtime/metadata/publication.json')));
 
 $dt = $prepare($metadata,$datetime);
 requireThat(count($dt['datetime']['operations']) === 11, 'Datetime operations lost');

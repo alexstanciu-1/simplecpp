@@ -27,9 +27,9 @@ def proof(work):
     bootstrap = (ROOT / 'compiler/boot.php').read_text().replace("__DIR__ . '/generated/", repr(str(compiler) + '/') + " . '")
     boot.write_text(bootstrap.replace('__DIR__', repr(str(ROOT / 'compiler'))))
     observations = {}
-    for variant in ('owned', 'readonly', 'relocated', 'reduced', 'disabled', 'restored'):
+    for variant in ('owned', 'readonly', 'relocated', 'reduced', 'append', 'disabled', 'restored'):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)
-        init = m['vector']['initialization']
+        init = m['vector']['initialization']['bulk']
         if variant == 'readonly': init.pop('consume')
         if variant == 'relocated':
             m['submodules']['core.vectors']['header'] = 'scpp/collections/input.hpp'
@@ -37,6 +37,7 @@ def proof(work):
         if variant == 'reduced':
             for key in ('hashes', 'carriers', 'string', 'boxed'): p.pop(key, None)
             p['vectors']['specializations'] = [p['vectors']['specializations'][0]]
+        if variant == 'append': m['vector']['initialization'].pop('bulk')
         if variant == 'disabled': m['vector'].pop('initialization')
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(p))
         for product, target in [('runtime', output), ('compiler', compiler)]:
@@ -50,7 +51,7 @@ def proof(work):
         else:
             assert not (output / 'public/scpp/vectors.hpp').exists()
             assert 'public/scpp/vectors.hpp' not in inventory
-        if variant in ('readonly', 'disabled'):
+        if variant in ('readonly', 'append', 'disabled'):
             assert 'from_owned' not in (output / 'public' / header).read_text()
         if variant == 'disabled':
             assert 'literal_input' not in (output / 'public' / header).read_text()
@@ -65,11 +66,14 @@ def proof(work):
                 if variant == 'disabled':
                     result = subprocess.run(['php', '-r', EMIT, str(boot), flavor, source], capture_output=True, text=True,
                                             env={**os.environ, 'XDEBUG_MODE':'off'})
-                    assert result.returncode != 0 and 'published initialization capability' in result.stderr
+                    assert result.returncode != 0 and 'sequence-initializable' in result.stderr
                     continue
                 cpp = run(['php', '-r', EMIT, boot, flavor, source])
-                factory = init.get('consume', init['read_only'])
-                assert '::' + factory + '(' + ('input.data()' if variant == 'relocated' else 'input') + ', 2)' in cpp
+                if variant == 'append':
+                    assert '.append(' in cpp and '::from_owned(' not in cpp
+                else:
+                    factory = init.get('consume', init['read_only'])
+                    assert '::' + factory + '(' + ('input.data()' if variant == 'relocated' else 'input') + ', 2)' in cpp
                 assert '#include "' + header + '"' in cpp or '#include <' + header + '>' in cpp
                 unit, exe = work / 'consumer.cpp', work / 'consumer'
                 unit.write_text(cpp)
@@ -80,14 +84,14 @@ def proof(work):
     # Rejected metadata must leave the last complete export untouched.
     snapshot = {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*') if p.is_file()}
     for field, value in [('consume','bad::name'), ('input','class'), ('presizing','none'), ('transfer','throwing'), ('stack_bytes',0), ('element_families',['dynamic'])]:
-        m = copy.deepcopy(metadata); m['vector']['initialization'][field] = value
+        m = copy.deepcopy(metadata); m['vector']['initialization']['bulk'][field] = value
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(publication))
         result = subprocess.run(['php', str(generator), 'emit-runtime', str(mp), str(pp), str(facts), str(context), str(output)], capture_output=True)
         assert result.returncode != 0, field
         assert snapshot == {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*') if p.is_file()}
     # The generated native assertion enforces the byte budget without PHP layout guesses.
     m = copy.deepcopy(metadata)
-    m['vector']['initialization']['inline_elements']['integer'] = 513
+    m['vector']['initialization']['bulk']['inline_elements']['integer'] = 513
     mp.write_text(json.dumps(m)); pp.write_text(json.dumps(publication))
     run(['php', generator, 'emit-runtime', mp, pp, facts, context, output])
     for cxx in ('clang++', 'g++'):

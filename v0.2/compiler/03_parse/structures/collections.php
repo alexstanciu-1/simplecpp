@@ -3,47 +3,43 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Empty [] initializer; its explicitly typed local supplies the concrete collection identity during preparation. */
-final class ast_empty_collection_expression extends ast_expression
+/** Typed [] or [a, b] initializer; owns ordered syntax and uses the destination's collection contract. */
+final class ast_collection_expression extends ast_expression
 {
-	public function settle_collection(type_definition&indexed_collection_type $type): void
-	{
-		$this->settle_value($type, null);
-	}
-}
+	/** PROPERTIES */
+	/** @var ast_expression[] Native owning elements, in source order. */
+	public readonly array $elements /** list<ast_expression> */;
 
-/** One positional input occurrence owns its expression and prepared conversion, e.g. number() in [number(), 2]. */
-final class ast_initializer_entry extends ast_node
-{
-	public readonly ast_expression $value;
-	/** Null before preparation or after reset. */
-	public ?int $conversion /** uint16 */ = null;
+	/** PREP FACTS */
+	/** @var int[] Prepared fact: approved element conversions; empty before preparation or after reset. */
+	private array $conversions /** list<uint16> */ = [];
 
-	public function __construct(ast_expression $value)
-	{
-		parent::__construct($value->start, $value->end);
-		$this->value = $value;
-		$value->attach($this);
-	}
-}
-
-/** Populated positional syntax, e.g. [1, number()]; target context selects its published capability. */
-final class ast_list_expression extends ast_expression
-{
-	/** @var ast_initializer_entry[] Owning source-ordered entries; no second expression inventory. */
-	public readonly array $entries /** list<ast_initializer_entry> */;
-
-	/** $start/$end: token positions. @param ast_initializer_entry[] $entries */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $entries /** list<ast_initializer_entry> */)
+	/** CONSTRUCTOR */
+	/** $start/$end: token boundaries. @param ast_expression[] $elements */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $elements /** list<ast_expression> */ = [])
 	{
 		parent::__construct($start, $end);
-		$this->entries = $entries;
-		foreach ($entries as $entry) $entry->attach($this);
+		$this->elements = $elements;
+		foreach ($elements as $element) $element->attach($this);
 	}
 
-	public function settle_list(type_definition $type): void
+	/** METHODS */
+	/** @param int[] $conversions */
+	public function settle_collection(type_definition&indexed_collection_type $type, array $conversions /** list<uint16> */ = []): void
 	{
+		$this->conversions = $conversions;
 		$this->settle_value($type, null);
+	}
+
+	public function element_conversion(int $position /** uint32 */): int /** uint16 */
+	{
+		return $this->conversions[$position] ?? throw new \LogicException('Collection element is not prepared');
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->conversions = [];
 	}
 }
 

@@ -91,6 +91,11 @@ final class Record_Syntax
 				$members[] = Constant_Syntax::read($parser, $private);
 				continue;
 			}
+			$readonly = $c->tokens->text_at($c->position()) === 'readonly';
+			if ($readonly) {
+				$c->take($c->is(token_kind::keyword) ? token_kind::keyword : token_kind::identifier, 'readonly');
+				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Readonly static properties are deferred');
+			}
 			$constructor = match ($flavor) {
 				flavor::php => $c->keyword('function') && $c->tokens->text_at($c->position() + 1) === '__construct',
 				flavor::cpp => $c->tokens->text_at($c->position()) === $name && $c->next_is(token_kind::lparen),
@@ -120,6 +125,7 @@ final class Record_Syntax
 				}
 			}
 			if ($method !== null) {
+				if ($readonly) throw new diagnostic($c->tokens->source, $c->offset(), 'Readonly applies to instance fields');
 				if ($flavor === flavor::cpp) self::modifiers($c, $modifiers, false);
 				$method->is_abstract = isset($modifiers['abstract']);
 				$method->is_virtual = isset($modifiers['virtual']);
@@ -162,7 +168,7 @@ final class Record_Syntax
 				$initializer = $parser->literal_initializer('Field initializer requires a literal or enum case', allow_case: true);
 			}
 			$end = $c->take(token_kind::semicolon, ';') + 1;
-			$node = new ast_instance_field($field, $type, $field_start, $end, $private, $initializer, $protected);
+			$node = new ast_instance_field($field, $type, $field_start, $end, $private, $initializer, $protected, $readonly);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
 				while ($tail->duplicate_element() !== null) $tail = $tail->duplicate_element();

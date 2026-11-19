@@ -7,16 +7,19 @@ positional input in cpp/php/js. Empty input keeps its existing construction path
 Source authority: [data initialization](../../../specs/data_initialization.md).
 Scope and proofs: [planning checklist](../../specs/planning/collection_initialization.md).
 
-The parser stores one ordered list of `ast_initializer_entry` nodes, each owning its
-expression and one prepared conversion. Reference collection and reset visit those
-children through their existing traversal owners. Preparation resolves the local's
-expected type, queries its published `list_initialization()` capability, and prepares
-ordinary element conversions. It does not infer a container family from syntax or
-method names, inspect native sizes, or retain another expression inventory.
+The parser uses one `ast_collection_expression`, owning its expressions in source
+order and one compact list of approved conversion codes. Empty input uses the same
+node. There are no per-entry wrapper objects or extra dependency indexes. Preparation
+propagates destination element types recursively through nested literals and checks
+`sequence_initializer_type`; it does not branch on element families.
 
-Runtime metadata publishes a read-only factory and an optional private consuming
-factory. The generated type handler supplies one shared binding with its element type,
-factory spelling, concrete heap-input guard and inline limit. Bindings remain fixed
+Runtime metadata declares `initialization.mode: ordered_elements`. Optional `bulk`
+metadata publishes a read-only factory and an optional private consuming factory.
+The generated capability selects bulk where eligible and existing append bindings
+otherwise, including application/nested vectors. Removing `bulk` selects append;
+removing the initialization contract disables populated construction. The generated type handler supplies one shared binding with its element type,
+factory spelling, concrete heap-input guard and inline limit, constructed with the
+canonical type rather than lazily during emission. Bindings remain fixed
 within a compiler session. Provider edits require regeneration and a fresh process;
 application source changes retain normal incremental preparation and emission reuse.
 
@@ -53,7 +56,7 @@ preserves source entry order, single evaluation and suppression of later entries
 when evaluation/conversion fails. Runtime factories own allocation/population;
 lowering emits no per-element append calls.
 
-Deferred: nested/keyed literals, mixed/dynamic inputs, application-defined elements,
+Deferred: bulk transport for nested/application element types, keyed literals, mixed/dynamic inputs,
 source user factories/non-escape enforcement, populated assignment RHS syntax,
 inference expansion, move-only/throwing-transfer input and provider hot reload.
 

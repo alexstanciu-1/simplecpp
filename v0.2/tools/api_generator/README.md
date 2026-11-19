@@ -310,3 +310,11 @@ int64/string key/value combinations. Provider-owned headers and generated src/ha
 are tracked by CMake. Compiler generation emits hashes.php and direct two-argument
 registration from the same validated runtime plan; source hash operations remain deferred.
 See [compiler hash identities](../../compiler/docs/hash_types.md) for scope and proofs.
+
+## Concrete hash keys
+
+`ConcreteHashKey` supplies nonthrowing hash/equality expressions independently of the
+value storage contract. The hash recipe names its key parameter; the concrete engine
+obtains both expressions through the common interface. Runtime metadata owns int/string
+bodies, while compiler application types supply their own contracts. Shared owners use
+control-pointer identity. See [the compiler contract](../../compiler/docs/hash_keys.md).

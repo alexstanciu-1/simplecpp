@@ -1,4 +1,5 @@
 {
+  "hash_key": "k",
   "parameters": {
     "k": {"alias": "key_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]},
     "v": {"alias": "value_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]}

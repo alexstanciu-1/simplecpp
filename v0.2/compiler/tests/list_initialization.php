@@ -71,7 +71,7 @@ foreach (flavor::cases() as $flavor) {
 		flavor::cpp => 'struct Pretender { static int from_owned() { return 1; } };',
 		flavor::js => 'struct Pretender { static from_owned():int { return 1; } }',
 	};
-	rejects(fn() => $prepare($pretender . $decl('Pretender', 'value', '[1]') . 'return 8;'), 'published initialization capability');
+	rejects(fn() => $prepare($pretender . $decl('Pretender', 'value', '[1]') . 'return 8;'), 'published collection initialization capability');
 	$bytes = 'long heap-backed input with a NUL\\0after the zero';
 	$source = $decl('string', 'text', '"' . $bytes . '"') . $decl('vector<string>', 'values', "[$s, $s, \"a\\0b\"]")
 		. $v . '[0] = "replacement";' . 'echo ' . $s . ', "|", ' . $v . '[1], "|", ' . $v . '[2];'

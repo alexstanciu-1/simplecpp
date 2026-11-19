@@ -2,7 +2,8 @@
 
 Doc Status: planning
 
-Recorded 2026-11-19. First flat published-vector slice implemented and verified.
+Recorded 2026-11-19. Flat bulk transport and remote populated-vector coverage are
+integrated under one generated contract; see the integration results below.
 This note supports bootstrap 2.4 and records the bounded transport decision and
 verification. The [data initialization standard](../../../specs/data_initialization.md)
 remains authoritative and now includes the narrow private runtime transport amendment.
@@ -45,8 +46,8 @@ count before transfer and perform no growth allocations while filling. Empty inp
 requires no element backing allocation. This is not a promise of one total allocation
 or exact public capacity: a representation can also allocate a storage record.
 Future keyed factories reserve for the input entry count without discarding ordered
-entries or bypassing duplicate-key validation. Nested construction applies presizing
-independently at every level; nested source support is not part of the first slice.
+entries or bypassing duplicate-key validation. Nested source construction is now supported. Only eligible bulk levels promise
+presizing; application/outer levels currently retain append construction.
 
 Reserve/populate algorithms belong to the runtime factory, not emitted per-element
 reserve/append calls. The current metadata uses a 4096-byte inline budget with
@@ -138,10 +139,11 @@ provider-reload mechanism was added. Tests distinguish these boundaries explicit
 
 ### Implementation and verification evidence
 
-- Parser, reference collection and reset use one `ast_list_expression` with ordered
-  entries owning their expressions and conversion facts. Existing empty `[]` behavior
+- Parser, reference collection and reset use one `ast_collection_expression` with ordered
+  expressions and compact conversion codes; no per-entry wrapper objects. Existing empty `[]` behavior
   is preserved. Only explicitly typed local initializers are admitted in this slice.
-- A generated `list_initialization_binding` selects the element type, concrete factory,
+- A generated `sequence_initializer_type` capability owns construction selection.
+  Its optional shared `list_initialization_binding` selects the element type, concrete factory,
   private heap guard and inline limit. Handwritten preparation queries this capability;
   it does not branch on vector/scalar/string names. Application types cannot gain it
   by declaring a method named `from_owned`.
@@ -174,11 +176,11 @@ provider-reload mechanism was added. Tests distinguish these boundaries explicit
   artifact/model changes are restricted to the five vector-bearing accepted cases.
 - [dev002 report](benchmarks/flat_vector_initialization/report.md): 162 clean native
   timing trials, separate Clang phase profiles, PHP prepare/emit samples and all three
-  flavors. Current generated runtime matches the measured runtime SHA-256. Execution
+  flavors. These measurements belong to the pre-integration commit; no new timing claim is
+  made for the merged application/nested paths. Execution
   and compile-time improvements are reported with the string/small-case tradeoffs.
 
-Deferred: nested source literals, hashes/keyed duplicate handling, mixed/dynamic,
-application-defined element families, user-written factories/non-escape enforcement,
+Deferred: bulk transport for application/nested element types, hashes/keyed duplicate handling, mixed/dynamic, user-written factories/non-escape enforcement,
 move-only or throwing-transfer elements, general moves/borrows, inference expansion,
 spread input and production representation changes. Constructor spelling versus
 static factory spelling is an internal binding choice, not a second semantic path.
@@ -212,5 +214,69 @@ $values = implode(', ', $elements);
 if ($count <= $binding->inline_entries) {
     return "([&]() {\n    $type input[]{{$values}};\n"
         . "    return $binding->factory(input, $count);\n}())";
+}
+```
+
+## Integrated contract — 2026-11-19
+
+Remote populated-vector coverage and the optimized flat slice share one syntax and
+preparation path. Existing nested vectors, records, shared owners, hash-valued elements
+and yield-producer initialization remain supported. Metadata mode `ordered_elements`
+grants the capability; optional bulk metadata selects private input transport for
+eligible published types. Other admitted specializations use their generated append
+binding. Removing bulk does not remove source capability. Source factories remain
+read-only; a method name cannot grant consuming rights.
+
+The AST uses one collection node and compact per-element conversion codes, with no
+entry wrapper objects, extra preparation passes or dependency lists. Bulk bindings
+are built with canonical generated type identities, never by the emitter. Bindings
+remain fixed per session; provider edits are verified in fresh sessions.
+
+Evaluation guarantees cover each expression and conversion in source order, single
+evaluation, suppression after evaluation/conversion failure, and cleanup. Internal
+allocation/transfer timing is unspecified; we do not require an append between source
+expressions. Both implementations preserve value copies and shared identity.
+
+Integration verification — completed:
+- [x] Both source suites and unchanged flat catalog output (72 examples, both columns).
+- [x] 75 flat fixtures per compiler on Clang/GCC; allocation/presizing/lifetime proofs
+  passed with ASan/UBSan/LeakSanitizer on both. Leak checks ran outside the sandbox
+  because its ptrace restriction prevents LeakSanitizer execution.
+- [x] Nested/application incremental edits, deletion/recovery and fresh equivalence:
+  five successful revisions plus two failure probes per flavor compiled and ran on
+  both Clang/GCC. Additional nested/application and partial-cleanup sanitizer checks
+  passed for cpp/php/js (generated storage instrumented, prebuilt runtime reused).
+- [x] Inner bulk plus outer append in the same expression, including yield producers.
+- [x] Provider bulk/read-only/append/disabled/restored transitions, relocation and reduction.
+- [x] Generator contracts and reviewed version-5 parity export: unchanged 17 accepted /
+  37 rejected cases and target facts. Remote bumped the export format to version 5;
+  the stale version-4 assertion and baseline were explicitly updated.
+- [x] Initial 15-test CTest selection: 14 passed; stale parity expectation repaired.
+  Final affected selection: 8/8 passed, including parity, input contracts, concrete
+  recipes, vector publication, source checks, style and catalog.
+
+### Integrated footprint relative to fetched remote
+
+Includes the local bulk implementation plus integration changes; excludes benchmark
+artifacts/scripts and the parity JSON baseline. Paired replacement lines count as
+changed; counts precede this accounting section.
+
+| Area | Added | Changed | Removed |
+| --- | ---: | ---: | ---: |
+| Compiler | 49 | 4 | 0 |
+| Runtime/generator/build | 101 | 6 | 2 |
+| Tests | 585 | 5 | 0 |
+| Documentation | 385 | 14 | 0 |
+
+The shared capability is generated; one nullable binding selects bulk versus append
+without a handwritten element-family test:
+
+```php
+interface sequence_initializer_type extends indexed_collection_type
+{
+    /** Null selects ordered append; a binding selects private bulk transport. */
+    public function list_initialization(): ?list_initialization_binding;
+    public function write_type(): type_definition;
+    public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 ```

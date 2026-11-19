@@ -45,8 +45,9 @@ leaves the element values and count intact. Local vector initialization/copy and
 accept the same canonical specialization, including vector<int>/vector<int64> aliases.
 Copies have independent elements/cardinality; string elements retain their existing
 value semantics. Self-assignment is harmless. By-value arguments and returns use the common value path.
-Exact-type named locals/parameters also support writable reference arguments. Populated literals,
-iteration and other methods remain deferred.
+Exact-type named locals/parameters also support writable reference arguments. Traversal,
+collection methods and [recursive vector/hash values](nested_collections.md) are supported.
+Populated literals remain deferred.
 
 Source `count(values)` returns the published count type and `empty(values)` returns bool.
 The generated specialization validates and lowers the zero-argument const members
@@ -54,7 +55,7 @@ The generated specialization validates and lowers the zero-argument const member
 
 ## Ownership and generated handlers
 
-`ast_empty_collection_expression` retains only inherited expression facts; its explicit
+`ast_collection_expression` retains inherited expression facts and ordered element syntax/conversions; its explicit
 local declaration supplies the resolved vector type. `ast_index_expression` owns
 receiver/index syntax and retains its inherited result type. `ast_append_statement`
 owns receiver/value syntax. The shared `ast_index_assignment` owns receiver,
@@ -171,3 +172,5 @@ Indexed arithmetic/bitwise/shift/power and string compounds reuse element rules;
 [indexed compounds](indexed_compounds.md).
 
 Discarded numeric indexed updates use generated element rules; see [indexed updates](indexed_updates.md).
+
+Populated typed vector locals now reuse the [common sequence initialization path](populated_vectors.md).

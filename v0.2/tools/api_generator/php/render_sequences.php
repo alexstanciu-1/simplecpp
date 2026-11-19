@@ -356,8 +356,8 @@ function renderVectors(array $plan): array {
         $vars = compact('n', 'e', 'count') + ['access' => 'detail::vector_access'] + $v['traversal'];
         $h .= "class $n final {\npublic:\n" . $instances[$n]['declaration'];
         $d .= $instances[$n]['definition'];
-        if ($v['initialization'] !== null) {
-            $init = $v['initialization'];
+        if (($v['initialization']['bulk'] ?? null) !== null) {
+            $init = $v['initialization']['bulk'];
             $bindings = $vars + ['input' => $init['input'], 'read_only' => $init['read_only'], 'inline_limit' => $init['inline_limit'], 'stack_bytes' => $init['stack_bytes']];
             $h .= template('collections/vector_input_declaration', $bindings);
             $d .= template('collections/vector_input_definition', $bindings);

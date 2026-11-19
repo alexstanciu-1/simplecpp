@@ -73,7 +73,8 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('hash<int,int>', 'values', '[]') . "$v" . '[null] = 1;', 'Hash key requires int64'],
 		[$decl('hash<int,int>', 'values', '[]') . "$v" . '[1] = "no";', 'conversion'],
 		[$decl('hash<string,int>', 'values', '[]') . "$v" . '[1] = 1;', 'conversion'],
-		[$decl('hash<int,int>', 'values', '[1]'), 'published initialization capability'],
+		[$decl('hash<int,int>', 'values', '[1]'), 'sequence-initializable'],
+		[$decl('hash<int,string>', 'values', '[]') . "$v" . '[] = 1;', 'Append requires an appendable collection'],
 		[$decl('hash<int,int>', 'values', '[]') . $decl('hash<string,int>', 'copy', $v), 'conversion'],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);

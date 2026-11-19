@@ -468,7 +468,12 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         foreach($values as $value) {
             $add('append', 'void', [$value], true, $value === $element ? 'move_value':'explicit_element_then_append');
         }
-        $initialization = listInitializationPlan($m->initialization ?? null, $family, $element, $name, $count);
+        $initialization = null;
+        if (isset($m->initialization)) {
+            fields($m->initialization, ['mode', 'bulk']);
+            literals($m->initialization, ['mode' => 'ordered_elements']);
+            $initialization = ['bulk' => listInitializationPlan($m->initialization->bulk ?? null, $family, $element, $name, $count)];
+        }
         $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
     }
     requireThat($vectors !== [], 'Empty vector publication');
@@ -604,8 +609,6 @@ function hashConcreteArguments(array $hash, string $count): array {
     return [
         'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
         'count' => '::scpp::' . $count,
-        'hash' => $hash['key'] === 'int64' ? '::scpp::detail::hash_integer(key)' : '::scpp::detail::hash_string_bytes(key.data(), static_cast<std::size_t>(key.size()))',
-        'equal' => $hash['key'] === 'int64' ? 'left == right' : 'left.size() == right.size() && (left.size() == 0 || ::memcmp(left.data(), right.data(), static_cast<std::size_t>(left.size())) == 0)',
         'enable_append' => $hash['key'] === 'int64' ? '1' : '',
         'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
     ];
@@ -615,11 +618,22 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'read', 'optional_lookup', 'append']);
+    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append']);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     foreach(['key_types', 'value_types'] as $key) {
         requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
     }
+    $keyContracts = [];
+    foreach (object(at($m, 'key_contracts')) as $identity => $contract) {
+        fields($contract, ['hash', 'equal', 'nonthrowing']);
+        requireThat(in_array($identity, names($m->key_types), true), 'Hash contract requires a registered key type');
+        requireThat(at($contract, 'nonthrowing') === true, 'Hash key operations must be nonthrowing');
+        $hash = textValue(at($contract, 'hash'));
+        $equal = textValue(at($contract, 'equal'));
+        requireThat(str_contains($hash, '@key@') && str_contains($equal, '@left@') && str_contains($equal, '@right@'), 'Incomplete hash key contract');
+        $keyContracts[$identity] = compact('hash', 'equal');
+    }
+    requireThat(count($keyContracts) === count(names($m->key_types)), 'Missing hash key contract');
     if(!property_exists($publication, 'hashes')) {
         return;
     }
@@ -666,7 +680,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     $dependencies = ['bool_t', 'int64'];
     foreach ($hashes as $hash) $dependencies = array_merge($dependencies, [$hash['key'], $hash['value'], 'nullable_' . $hash['value']]);
     $plan['hash_publication'] = ['provider' => $provider, 'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
-    $plan['hashes'] = ['header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
+    $plan['hashes'] = ['key_contracts' => $keyContracts, 'header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
 }
 const DATETIME_SIGNATURES = [ 'now_unix_seconds' => ['int64', []], 'now_unix_millis' => ['int64', []], 'monotonic_millis' => ['int64', []], 'monotonic_micros' => ['uint64', []], 'monotonic_nanos' => ['uint64', []], 'sleep_millis' => ['void', ['int64']], 'format_iso_utc' => ['string', ['int64']], 'parse_iso_utc' => ['result_int64', ['string']], 'parse_common_local' => ['result_int64', ['string']], 'format_local' => ['string', ['string', 'int64']], 'format_local_now' => ['string', ['string']]];
 function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): void {

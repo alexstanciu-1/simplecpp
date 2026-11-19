@@ -62,15 +62,22 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         ];
         $template = readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl');
         $code .= strtr($template, $bindings);
-        if (!isset($applicationCases[$key])) {
-            $app = 'application_hash_' . $definitions[$hash['key']]['class'] . '_type';
-            $applicationCases[$key] = "\t\tif (\$family === " . var_export($family, true) . " && \$second === $key::instance()) return new $app(\$element);\n";
+        foreach (['generic' => false] + ($hash['key'] === 'int64' ? ['append' => true] : []) as $variant => $append) {
+            if (isset($applicationCases[$variant])) continue;
+            $app = $append ? 'application_hash_int64_type' : 'application_hash_type';
+            $applicationCases[$variant] = $append
+                ? "\t\tif (\$family === " . var_export($family, true) . " && \$second === $key::instance() && \$element->concrete_storage_support('copy_constructible') === true) return new $app(\$element, \$second);\n"
+                : "\t\tif (\$family === " . var_export($family, true) . " && \$second?->hash_key_supported() && \$element->concrete_storage_support('copy_constructible') === true) return new $app(\$element, \$second);\n";
             $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
+            if (!$append) $recipe = array_replace($recipe, ['enable_append' => '', 'append' => '']);
             $code .= strtr($template, array_replace($bindings, [
                 '@lookup_property@' => '', '@lookup@' => '',
-                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, iterable_type' . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
+                '@append_method@' => $append ? compilerHashAppend($hash) : '',
+                '@key@' => '$this->key_type',
+                '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
+                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, iterable_type' . ($append ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
-                '@identity@' => "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$value)\n\t{\n\t\tparent::__construct(" . var_export($family, true) . " . '<' . \$value->name . ',' . $key::instance()->name . '>', \$value, $key::instance());\n" . $presence . "\t\t\$this->native_name = 'scpp_hash_' . hash('sha256', \$value::class . ':' . \$value->name . ':' . \$this->key_type->name);\n\t}\n",
+                '@identity@' => "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$value, type_definition \$key)\n\t{\n\t\tparent::__construct(" . var_export($family, true) . " . '<' . \$value->name . ',' . \$key->name . '>', \$value, \$key);\n" . str_replace("$key::instance()", '$key', $presence) . "\t\t\$this->native_name = 'scpp_hash_' . hash('sha256', \$value::class . ':' . \$value->name . ':' . \$key::class . ':' . \$key->name);\n\t}\n",
                 '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $runtime['hashes']['count_type'])['provider']), true),
                 '@factory@' => "\tpublic static function concrete_recipe(): string { return " . var_export(hashConcreteRecipe($hash), true) . "; }\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['k' => \$this->key_type, 'v' => \$this->value_type]; }\n\t/** @return string[] */\n\tpublic function recipe_arguments(): array { return " . var_export($recipe, true) . "; }",
@@ -78,7 +85,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         }
         $cases[] = "\t\t\tif ((\$element === $value::instance()) && (\$second === $key::instance())) return $class::instance();";
     }
-    return [$code, implode("\n", $cases), $family, implode('', $applicationCases)];
+    return [$code, implode("\n", $cases), $family, ($applicationCases['append'] ?? '') . ($applicationCases['generic'] ?? '')];
 }
 
 /** Generate append only when the published method plan provides the integer-key operation. */

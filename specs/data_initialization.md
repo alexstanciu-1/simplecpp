@@ -540,10 +540,12 @@ The runtime receives the entry count and presizes destination element storage be
 population, with no growth during transfer. Empty vectors need no element backing
 allocation. This does not promise one total allocation or exact publicly observable
 capacity. Temporary input uses bounded aligned local storage or owned heap backing;
-that choice is a backend policy, not source syntax. Current active-v0.2 source support
-is limited to explicitly typed local flat literals for published integer/string
-vectors. Nested/keyed literals, application elements and source-written factories
-are separate implementation slices.
+that choice is a backend policy, not source syntax. Current active-v0.2 bulk transport covers published integer/string vectors.
+The common ordered initialization capability also admits existing application and
+nested vector specializations through generated append bindings. Nested input inherits
+its destination context recursively. Element evaluation and conversion order is
+guaranteed; internal allocation/transfer timing is not. Keyed literals and
+source-written factories remain separate implementation slices.
 
 ### 3.4 Built-in bindings and input shapes
 
@@ -697,3 +699,37 @@ contract invalidation. Moving/consuming sequence input, function-valued entries 
 mixed-shape bracket literals remain explicit deferred work.
 The [compiler implementation note](../compiler/my-try/docs/planning/data_initialization.md)
 records the hybrid lowering approach and performance proof boundaries.
+
+## v0.2 stored-value readonly instance fields — 2026-11-18
+
+A `readonly` instance field is initialized exactly once, by a written declaration default
+or a direct assignment to `this` in its declaring constructor. Every normally returning
+constructor path must initialize it. Reading before initialization, repeated initialization,
+compound/update initialization and initialization inside a loop are rejected. Constructors
+may initialize in if/elseif/else arms when all continuing paths establish the field exactly
+once. Before calling an ordinary method on `this`, initialization must be complete; helper
+methods cannot initialize readonly fields. A missing written default requires a constructor
+in the declaring record; implicit zero/empty native storage is not source initialization.
+
+Use `public readonly int $offset;` in PHP, `readonly int offset;` in C++, and
+`readonly offset: int;` in JS. Static readonly fields and readonly methods are deferred.
+
+Readonly protects the stored value, not objects reached through reference identity:
+
+- Assignment, compounds and updates to the property are forbidden after initialization.
+- Inline field writes and mutation of strings, vectors, hashes or mixed through the property
+  are forbidden. Copying those values to a writable local remains allowed.
+- A stored shared owner cannot be replaced, but its referenced object can be mutated.
+- Dynamic retains shared container identity: keyed writes and mutable container methods
+  may mutate that referent. Replacing the dynamic property itself remains forbidden.
+- Readonly does not add writable property references. Those remain rejected; future reference
+  support must continue to prohibit writable references to readonly properties.
+- Whole-record copies preserve field values; replacing a writable record local is allowed.
+
+Existing ordinary instance methods and custom Iterator contracts are mutable receiver
+contracts. They cannot borrow a readonly inline value; copy it to a local first. Const
+runtime queries remain allowed, as does ordinary collection traversal producing copied
+values. Const/pure user-method contracts are separate work, not inferred by scanning bodies.
+
+Compiler validation enforces this contract; generated C++ fields need not be `const`.
+No deep freezing, borrow analysis or delayed AST attachment is introduced.

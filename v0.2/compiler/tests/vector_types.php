@@ -56,8 +56,15 @@ foreach (flavor::cases() as $flavor) {
 	$return = $frontend->parse(new source_file('return-type', signature($flavor, 'int', 'vector<int>'), $flavor))->functions()[0];
 	verify($return->return_type_reference->spelling() === 'vector<int>', 'Generic return syntax');
 	verify($return->root()->tokens->text_at($return->name_position()) === 'inspect', 'Generic return moved name diagnostics');
+	$resolve = static fn(string $type) => Type_Resolution::resolve($parse($type)->functions()[0]->parameters[0]->type_reference);
+	foreach (['vector<vector<vector<int>>>', 'hash<hash<hash<int,string>,int>,string>',
+		'vector<hash<vector<int>,string>>', 'hash<vector<hash<string,int>>,string>'] as $nested_type) {
+		$nested_definition = $resolve($nested_type);
+		verify($nested_definition === $resolve(str_replace('int', 'int64', $nested_type)), 'Nested aliases duplicated canonical identity');
+		verify($nested_definition->concrete_storage_support('nothrow_move_constructible') === true, 'Missing concrete storage contract');
+	}
 	foreach (['vector' => 'exactly one', 'vector<int,string>' => 'exactly one',
-		'vector<byte>' => 'Unavailable runtime specialization', 'vector<vector<int>>' => 'Unavailable runtime specialization',
+		'vector<byte>' => 'Unavailable runtime specialization',
 		'vector<Missing>' => 'Unknown or unsupported type', 'int<string>' => 'does not accept arguments'] as $text => $message) {
 		rejects(fn() => Type_Resolution::resolve($parse($text)->functions()[0]->parameters[0]->type_reference), $message);
 	}

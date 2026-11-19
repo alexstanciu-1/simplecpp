@@ -33,6 +33,61 @@ interface application_collection_type
 	public function cpp_headers(): array;
 }
 
+/** Existing owned-value lifecycle accepted by concrete recipes; native assertions still verify every requirement. */
+trait concrete_value_storage
+{
+	public function concrete_storage_support(string $requirement): ?bool
+	{
+		return in_array($requirement, ['copy_constructible', 'nothrow_move_constructible', 'nothrow_move_assignable', 'nothrow_destructible'], true)
+			? true : null;
+	}
+}
+
+/** Storage-capable element owns canonical outer collections; nested arguments never need per-use identities. */
+trait collection_specializations
+{
+	/** Native owning outer identities; their element links back non-owningly. @var type_definition[] */
+	private array $collections /** array<string,type_definition> */ = [];
+
+	/** Cache only supported identities on the element generation; no global cache retains retired declarations. */
+	public function collection_type(string $family, ?type_definition $key): ?type_definition
+	{
+		if ($key !== null) return $key->keyed_collection_type($family, $this->default_type());
+		$identity = $family;
+		if (isset($this->collections[$identity])) return $this->collections[$identity];
+		$type = type_registry::application_collection($family, $this->default_type(), $key);
+		if ($type !== null) $this->collections[$identity] = $type;
+		return $type;
+	}
+}
+
+/** Weak canonical pair index: a surviving key must not retain retired value declarations or hash definitions. */
+trait hash_key_specializations
+{
+	/** Native weak key/value links; live AST/type users own specializations. @var \WeakMap<type_definition,array<string,\WeakReference<type_definition>>>|null */
+	private ?\WeakMap $hashes = null;
+
+	public function hash_key_supported(): bool
+	{
+		return true;
+	}
+
+	/** Reuse a live pair without pinning either a retired value generation or its specialization. */
+	public function keyed_collection_type(string $family, type_definition $value): ?type_definition
+	{
+		$type = ($this->hashes[$value][$family] ?? null)?->get();
+		if ($type !== null) return $type;
+		$type = type_registry::application_collection($family, $value, $this);
+		if ($type !== null) {
+			$this->hashes ??= new \WeakMap();
+			$families = $this->hashes[$value] ?? [];
+			$families[$family] = \WeakReference::create($type);
+			$this->hashes[$value] = $families;
+		}
+		return $type;
+	}
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
@@ -84,6 +139,15 @@ interface index_read_type
 interface indexed_collection_type extends index_read_type
 {
 	public function lower_cpp_empty(): string;
+}
+
+/** Metadata-approved ordered initialization, using the existing checked element and append contracts. */
+interface sequence_initializer_type extends indexed_collection_type
+{
+	/** Null selects ordered append; a binding selects private bulk transport. */
+	public function list_initialization(): ?list_initialization_binding;
+	public function write_type(): type_definition;
+	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 
 /** Source append on a writable receiver with a published value parameter. */
@@ -138,7 +202,6 @@ trait ordered_keyed_store
 abstract class type_definition
 {
 
-
 	/** PROPERTIES */
 	public readonly string $name;
 
@@ -149,8 +212,40 @@ abstract class type_definition
 	}
 
 	/** METHODS */
-	/** Null means this type has no published populated-list construction capability. */
-	public function list_initialization(): ?list_initialization_binding
+	public function hash_key_supported(): bool
+	{
+		return false;
+	}
+
+	public function lower_cpp_hash_key(string $key): ?string
+	{
+		return null;
+	}
+
+	public function lower_cpp_key_equal(string $left, string $right): ?string
+	{
+		return null;
+	}
+
+	public function keyed_collection_type(string $family, type_definition $value): ?type_definition
+	{
+		return null;
+	}
+
+	/** Null leaves a concrete lifecycle requirement unproven; native recipe assertions remain mandatory. */
+	public function concrete_storage_support(string $requirement): ?bool
+	{
+		return null;
+	}
+
+	/** Source storage identity; class declarations override this with their required shared value. */
+	public function default_type(): type_definition
+	{
+		return $this;
+	}
+
+	/** Types without an approved concrete storage contract do not synthesize outer collections. */
+	public function collection_type(string $family, ?type_definition $key): ?type_definition
 	{
 		return null;
 	}
@@ -300,6 +395,12 @@ abstract class type_definition
 	public function binary_headers(binary_operator $operator): array /** list<string> */
 	{
 		return [];
+	}
+
+	/** Mutation through a reference changes its referent, not the stored binding. */
+	public function mutates_referenced_value(): bool
+	{
+		return false;
 	}
 
 	/** Backend property: copying a plain value cannot call user code, allocate or throw. */
