@@ -12,7 +12,7 @@ Use existing metadata, type handlers, argument binding, collection machinery and
 
 Numbers give the proposed implementation order within each milestone. They are discussion-sized groups, not single batch implementation requests. Reassess the next group after each executable proof. Language readiness and runtime/host readiness are separate tracks. Inventory host dependencies during milestone 1, even though their integration is milestone 7.
 
-## Status checkpoint — 2026-11-18
+## Status checkpoint — 2026-11-19
 
 The original language audit remains a dated baseline, not a current feature checklist.
 This checkpoint separates implemented language support from translated-compiler proofs.
@@ -23,7 +23,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.2 Backed enums | Bounded scope implemented, including string backing and public instance methods | Broader enum integration is separate |
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; broader element/key families, nested collections and populated literals remain separate |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
-| 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Actual token/source-location proof remains; broader readonly/const-method contracts and delayed attachment stay separate |
+| 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
@@ -40,11 +40,11 @@ Nested generated cursors, delegation and producer methods remain deferred. This
 is sufficient to pause yield expansion for the current bootstrap focus; see the
 [yield backlog](yield_completion_backlog.md) for the remaining independent slices.
 
-Next proposed discussion: the actual token/source-location proof. The bounded collection goal and stored-value readonly fields are implemented.
+Next proposed discussion: the smallest tokenizer-path slice in milestone 2. The bounded collection goal, stored-value readonly fields and valid-data token/source-location proof are implemented.
 Preserve the common collection protocols, metadata ownership, light
 retained facts and single-pass preparation. Do not imply authorization for a broad
-collection implementation or runtime redesign. Then execute the token/source-location proof using the bounded readonly contract. No complete translated token/source
-milestone or native compiler bootstrap is claimed by this checkpoint. PHP incremental
+collection implementation or runtime redesign. The valid-data token/source-location proof now uses the bounded readonly contract. This completes the bounded milestone-1 valid-data proof, not a full source-model translation
+or native compiler bootstrap. PHP incremental
 recovery is already implemented; milestone 6 concerns translating that model faithfully.
 
 ## 1. Typed data foundation — tokens and source snapshots
@@ -58,6 +58,11 @@ recovery is already implemented; milestone 6 concerns translating that model fai
 | 1.5 | Construction-time immutability | Readonly fields initialized during construction. Keep delayed AST attachment separate. |
 
 Proof: translate the token representation and source-location lookup. Construct, pass and iterate a token list. Verify spans and line/column results in a native executable.
+
+Valid-data proof complete: [native token/source-location verification](../../compiler/docs/token_source_proof.md)
+compares all three flavors with the production PHP models, including incremental
+method edits, deletion, retry and recovery. Exceptions, packing and full source-model
+translation remain deferred; this does not claim a native compiler bootstrap.
 
 Do not block this proof on every optional width, populated collection literals or full PHP readonly behavior. Start the host/runtime binding inventory alongside this work.
 
@@ -1691,7 +1696,7 @@ These are not rejected. Review the actual use before deciding whether a bounded 
 
 ## Next discussion and verification policy
 
-Group 1.3 now has application-defined vector/hash storage and by-value signatures through shared concrete publication; empty instance fields and traversal are implemented; writable collection parameters are implemented; bounded 1.5 readonly initialization is implemented; proceed to the actual token/source-snapshot proof. Groups 1.1 and 1.2 have reached their agreed bounded scope. Coordinate collection ownership before implementation. Continue AST relationships against the updated milestone-3 status rather than repeating landed slices. Tokenizer work can proceed independently where its prerequisites are available.
+Group 1.3 now has application-defined vector/hash storage and by-value signatures through shared concrete publication; empty instance fields and traversal are implemented; writable collection parameters are implemented; bounded 1.5 readonly initialization and the valid-data token/source-snapshot proof are implemented; review the tokenizer-path prerequisites next. Groups 1.1 and 1.2 have reached their agreed bounded scope. Coordinate collection ownership before implementation. Continue AST relationships against the updated milestone-3 status rather than repeating landed slices. Tokenizer work can proceed independently where its prerequisites are available.
 
 Open decision: confirm a readable native-oriented translation with deliberate local adaptations, rather than near-verbatim PHP. This determines which traits, unions, closures and collection behaviors are mandatory. Writing this plan does not settle that question.
 
@@ -1711,7 +1716,7 @@ All three flavors pass native construction/copy/reference-boundary tests, enum f
 recovery checks. Ordinary struct, constructor, method and enum-default regressions pass.
 Two old 8-byte-owner assertions in the struct suite were corrected to its existing
 control-pointer plus view-pointer layout; no owner ABI changed in this work.
-Compiler writing checks pass. The actual token/source-location milestone proof is next.
+Compiler writing checks pass. The subsequent valid-data token/source-location proof is recorded in section 1.
 
 Initial readonly fixture timings (ms; individual observations):
 
