@@ -143,7 +143,7 @@ provider-reload mechanism was added. Tests distinguish these boundaries explicit
   expressions and compact conversion codes; no per-entry wrapper objects. Existing empty `[]` behavior
   is preserved. Only explicitly typed local initializers are admitted in this slice.
 - A generated `sequence_initializer_type` capability owns construction selection.
-  Its optional shared `list_initialization_binding` selects the element type, concrete factory,
+  Its optional shared `initialization_transport` selects the element type, concrete factory,
   private heap guard and inline limit. Handwritten preparation queries this capability;
   it does not branch on vector/scalar/string names. Application types cannot gain it
   by declaring a method named `from_owned`.
@@ -209,7 +209,7 @@ expressions; the native compiler handles array construction and partial cleanup:
 
 ```php
 $count = count($elements);
-$type = $binding->element->cpp_type();
+$type = $binding->element;
 $values = implode(', ', $elements);
 if ($count <= $binding->inline_entries) {
     return "([&]() {\n    $type input[]{{$values}};\n"
@@ -275,8 +275,211 @@ without a handwritten element-family test:
 interface sequence_initializer_type extends indexed_collection_type
 {
     /** Null selects ordered append; a binding selects private bulk transport. */
-    public function list_initialization(): ?list_initialization_binding;
+    public function list_initialization(): ?initialization_transport;
     public function write_type(): type_definition;
     public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 ```
+
+## First typed keyed local initialization slice — implemented
+
+Implemented 2026-11-19. This section records the agreed scope and verification;
+the top-level data initialization standard remains semantic authority.
+
+### Scope and source spelling
+
+Start with the four already published hash combinations: integer/string values with
+integer/string keys (`hash<Value,Key>`). Admit explicitly typed local initializers
+using bracket-keyed entries in all three flavors, with an optional trailing comma:
+
+```php
+$codes hash<int,string> = ["identifier" => 1, "integer" => 2,];
+```
+
+```cpp
+hash<int,string> codes = ["identifier" => 1, "integer" => 2,];
+```
+
+```javascript
+let codes: hash<int,string> = ["identifier" => 1, "integer" => 2,];
+```
+
+Preserve existing empty `[]` construction. This is a bounded implementation of the
+standard's keyed protocol, not implicit PHP array construction. Use existing key
+admission/equality and typed-destination value conversions. Do not coerce numeric-looking
+string keys into integers or introduce another key normalization policy.
+
+### Evaluation, duplicate rejection and ownership
+
+Implemented evaluation contract for this slice:
+
+1. Process entries in source order. Evaluate and convert the key once, then evaluate
+   and convert its value once, before starting the next entry.
+2. Key evaluation/conversion failure suppresses that value and all later entries.
+   Value evaluation/conversion failure suppresses later entries. Keep already performed
+   external effects; do not roll them back.
+3. Materialize private typed entries, preserving duplicates, then invoke one published
+   runtime factory. The factory rejects equal keys using the destination's existing
+   key equality, including duplicates produced by calls or equivalent expressions.
+   It must never silently overwrite an earlier value.
+4. Duplicate validation occurs in the factory after input materialization. A duplicate
+   is therefore not a promise to skip its value or later source expressions. Verify
+   this explicitly; do not confuse it with key-conversion failure. Do not add constant
+   duplicate folding or an extra compile-time duplicate map in this first slice.
+5. On failure, destroy constructed input entries and partial destination storage.
+   On success, publish only the complete hash. Source lvalues remain unchanged;
+   consuming bindings may move only private copies/materialized temporaries. User
+   factories remain read-only and are not enabled here.
+
+Internal allocation timing remains unspecified, consistent with the integrated
+sequence contract. Allocation failure may interrupt input or destination construction;
+no stable trace of allocation points is promised. The receiver must enforce duplicate
+rejection even when no compiler analysis can prove key equality. Existing ordinary
+hash `set` retains replacement semantics; construction must not redefine that API.
+
+### Metadata, presizing and lightweight owners
+
+Extend the existing initialization family with a keyed capability, keeping positional
+and keyed shapes explicit. Metadata/generated contracts own key/value identities,
+factory names, provider includes, read-only/consuming eligibility, duplicate-rejection
+policy and bounded private-input storage. Generate capability queries; handwritten
+preparation must not contain a hash-name or scalar-family whitelist.
+
+- **Syntax:** retain one ordered inventory of key/value expressions. Prefer a dedicated
+  keyed syntax/entry shape so positional vectors do not gain unused key fields. An entry
+  owns its key/value syntax and only the required prepared conversion facts; no parallel
+  prepared tree, normalized-key cache or persistent duplicate index. Duplicate keys are
+  valid input occurrences retained until runtime validation, not erroneous duplicate
+  declarations to link through the symbol duplicate mechanism.
+- **Preparation:** supply the explicit destination context; validate the keyed capability
+  and prepare each key/value once using existing conversions and symbol watches. Retain
+  no per-literal copy of the provider contract and add no preparation pass.
+- **Lowering:** reuse the private typed-input lifetime/storage approach and generated
+  argument conversions. Emit one factory call; do not emit a chain of replacing `set`
+  calls, a temporary source hash, or public C++ container templates.
+- **Runtime/generator:** own concrete entry/input transport and the duplicate-checking
+  factory. Reuse destination key hashing/equality and storage lifecycle. If the existing
+  runtime insertion helper replaces values, factor its bounded construction insertion
+  path rather than duplicate a hash algorithm in the emitter.
+
+Presize for the supplied entry count before filling. Cover entry storage, live-slot
+bookkeeping and the hash index/buckets, accounting for load factor and physical-index
+limits. Reserving entries alone is insufficient if insertion still grows/rehashes the
+index. Verify zero capacity growth/rehash during successful filling. Do not promise one
+allocation or exact public capacity; empty input requires no entry/index backing.
+Reject size/byte arithmetic overflow before allocation. Private input uses an explicit
+byte budget, generated native size assertions and aligned inline/owned-heap storage;
+keys and values must both be counted. Reuse nonthrowing-transfer eligibility and retain
+a read-only factory path. No public reserve API or general storage redesign is implied.
+
+### Keyed verification checklist — completed
+
+- [x] All four published key/value combinations in cpp/php/js on Clang and GCC:
+      empty, one/many entries, trailing comma, integer boundaries, empty/heap strings,
+      embedded NUL and numeric-looking string keys.
+- [x] Duplicate literals, equal strings with different spellings, computed equal keys
+      and hash collisions: equality rejects duplicates; collisions alone do not.
+      Existing ordinary `set` still replaces. Failed construction exposes no result.
+- [x] Trace distinct effectful key/value calls to prove key-before-value, entry order
+      and single evaluation. Checked key/value failures suppress the required suffix.
+      Duplicate detection follows completed materialization, including later effects.
+- [x] Source lvalue independence, copied string bytes, destroyed source/input backing,
+      partial construction cleanup and allocation-failure sweeps. Check both read-only
+      and consuming factories; run ASan/UBSan and leak checks separately from timings.
+- [x] Direct presizing instrumentation for entries, live slots and index: no growth or
+      rehash during fill, including threshold boundaries. Exercise private inline/heap
+      boundaries, alignment, zero input and overflow/size rejection.
+- [x] Reject missing target context, positional/keyed mixtures, invalid keys/values,
+      unsupported destinations and deferred nested/context forms with source diagnostics.
+- [x] Source incremental edits to keys, values, entry count and destination type;
+      referenced constant/function changes, deletion, repeated failure and recovery.
+      Compare diagnostics and emitted artifacts with fresh compilation in every flavor;
+      execute successful revisions on Clang/GCC. Retire obsolete provider includes/calls
+      and preserve unrelated preparation, emission and native-object reuse.
+- [x] Provider contracts stay fixed per session. Regenerate and start fresh sessions
+      for callable/include relocation, reduced publication, consuming removal/restoration
+      and keyed-capability removal/restoration. Validate native includes end to end;
+      rejected metadata preserves the last complete export.
+- [x] One preparation per expression and pure emission; existing sequence bulk/append,
+      nested vectors, ordinary hash mutation and lookup suites remain green. Update both
+      lowering-catalog columns from actual output.
+- [x] Record emitted size and focused PHP preparation/emission plus native compile/link
+      costs for representative tables. Use dev002 for comparative timing claims, with
+      clean execution measurements separated from sanitizers/allocation instrumentation.
+
+### Keyed implementation and verification evidence
+
+The capability is generated from hash initialization metadata. Handwritten preparation
+retains only each entry's value-conversion ID and uses the existing strict key contract.
+The shared `initialization_transport` and private-input emitter now serve both positional
+vectors and keyed hashes. Ordinary `set` and bulk construction share insertion ownership;
+the known-new insertion helper takes rvalue references, avoiding an extra move in `set`.
+
+Completed verification on 2026-11-19:
+
+- 138 source/native fixtures across cpp/php/js passed on dev002 with Clang 18.1.3
+  and GCC 13.3. Both compiler runs passed ASan/UBSan ownership proofs with leak and
+  stack-use-after-return checking, including emitted heap-input allocation failures.
+- Presizing proofs cover counts 1–4, 63–65, 255–257, 1024, 65,536 and 65,537. Integer construction
+  performs five destination allocations, covering storage, entries, live slots,
+  controls and buckets, with no insertion-time growth. Read-only and consuming factories
+  use one-byte positions at 256 entries, two at 257 and 65,536, and four at 65,537. Empty construction allocates none.
+- Fresh-session provider tests cover read-only fallback, renamed/relocated exports,
+  reduced publication, capability removal/restoration and forced full-hash collisions.
+  Rejected name conflicts preserve the last complete export. Tests exercise published
+  methods, the private storage pointer, visible type names and members of the input guard.
+- Retained-session tests compare fresh output after edits, errors, deletion and recovery.
+  Real Ninja builds verify caller/unrelated native object reuse across all flavors on
+  both compilers. With cross-unit declarations held constant, editing a key, adding an
+  entry, switching key type and removing/restoring the initializer each rebuild exactly
+  the caller object. Each edit matches fresh emitted C++ and runs on both compilers.
+  Removing the final external function use can also change its declaring header and
+  legitimately rebuild that owner. Removing/restoring keyed input retires/restores
+  factory requirements.
+- Final local CTest runs passed 12/12 checks: source/native/ownership/incremental,
+  provider exports, ordinary hash operations/types, generator contracts/concrete
+  templates/parity, style and catalog. Earlier focused vector and populated-initializer
+  regression suites also passed. The catalog checks both C++ columns (73 examples).
+- Frozen generator parity retains 17 accepted and 37 rejected cases, with unchanged
+  artifact/model fingerprints; only generator-input hashes changed.
+
+[dev002 report](benchmarks/keyed_initialization/report.md) records 72 clean timing
+samples and 12 separate Clang phase profiles. It includes PHP preparation/emission,
+native compile/link, staged wall and executable checks. This is an acceptance-cost
+record, not evidence of a before/after speedup or per-operation execution throughput.
+Measured runtime source hashes match the final local generated sources.
+
+A representative preparation excerpt shows the single existing traversal and facts:
+
+```php
+foreach ($declaration->initializer->entries as $entry) {
+    $this->value($entry->key, $name);
+    $type->prepare_key($entry->key);
+    $this->value($entry->value, $name);
+    $entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
+}
+```
+
+### Keyed implementation footprint
+
+Initial implementation before review fixes, relative to `f8e371fa9`, including the previously drafted keyed plan and new files.
+Changed lines pair removed/added lines within each edit; added/removed are the remainder.
+
+| Area | Added | Changed | Removed |
+| --- | ---: | ---: | ---: |
+| Compiler | 107 | 9 | 0 |
+| Tests | 528 | 3 | 0 |
+| Documentation | 342 | 8 | 0 |
+| Runtime/generator/build | 88 | 12 | 0 |
+
+Excludes benchmark harness/results and mechanical parity-input hashes. The two shared
+input-template renames preserve their bytes and are counted as moves, not additions.
+
+### Explicit deferrals
+
+Brace-keyed spelling, nested keyed literals, application/enum/shared-owner key or value
+families, boxed mixed/dynamic, inferred targets, constants/static tables, property/default/
+call/return/assignment destination contexts, integer-hash positional initialization,
+user-defined factories and non-escape enforcement, move-only/throwing-transfer elements,
+source borrows/moves, provider hot reload and compile-time duplicate evaluation.
+The native tokenizer port is a separate milestone-2 slice, not part of this implementation.

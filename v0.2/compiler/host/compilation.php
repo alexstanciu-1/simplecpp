@@ -191,6 +191,11 @@ final class Compilation_Inspection
 		if ($value instanceof ast_construction_expression) {
 			$row['arguments'] = array_map(self::value(...), $value->arguments);
 		}
+		if ($value instanceof ast_keyed_collection_expression) {
+			$entries = [];
+			foreach ($value->entries as $entry) $entries[] = ['key' => self::value($entry->key), 'value' => self::value($entry->value)];
+			$row['entries'] = $entries;
+		}
 		if ($value instanceof ast_collection_expression) {
 			$row['elements'] = array_map(self::value(...), $value->elements);
 		}

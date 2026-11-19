@@ -18,11 +18,28 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => ''];
         $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
         $h .= template('collections/hash_declaration', $vars);
+        if ($hash['initialization'] !== null) {
+            $init = (array)$hash['initialization'];
+            $input = $vars + $init + ['e' => $init['entry'], 'inline_limit' => $init['inline_entries']];
+            $h .= "    struct {$init['entry']} { $k key; $v value; };\n";
+            $h .= template('collections/initialization_input_declaration', $input);
+            $d .= template('collections/initialization_input_definition', $input);
+            if (isset($init['consume'])) $h .= "    static $n {$init['consume']}({$init['entry']}* values, $count count);\n";
+        }
         foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
         $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
 
         $parts = concreteTemplate(hashConcreteRecipe($hash), ['k' => new RuntimeConcreteType($plan, $k), 'v' => new RuntimeConcreteType($plan, $v)], array_diff_key($vars, ['k' => true, 'v' => true]) + hashConcreteArguments($hash, $count), 'scpp');
         $d .= $parts['storage'] . $parts['lifecycle'] . $parts['definition'] . template('collections/hash_lookup_definition', $vars) . template('collections/hash_iteration', $vars);
+        if ($hash['initialization'] !== null) {
+            foreach (['read_only', 'consume'] as $mode) {
+                if (!isset($init[$mode])) continue;
+                $consume = $mode === 'consume';
+                $d .= template('collections/hash_input_factory', $input + ['factory' => $init[$mode], 'qualifier' => $consume ? '' : 'const ',
+                    'key_transfer' => $consume ? "static_cast<$k&&>(values[i].key)" : "$k(values[i].key)",
+                    'value_transfer' => $consume ? "static_cast<$v&&>(values[i].value)" : "$v(values[i].value)"]);
+            }
+        }
         if($k === 'int64') {
             $h .= $parts['append_declaration'] . scalarInputFences($plan, 'append', [[$v]]);
             $d .= $parts['append_definition'];

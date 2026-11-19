@@ -618,10 +618,29 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append']);
+    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization']);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     foreach(['key_types', 'value_types'] as $key) {
         requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
+    }
+    $initialization = $m->initialization ?? null;
+    $callables = [];
+    if ($initialization !== null) {
+        fields($initialization, ['mode', 'duplicates', 'read_only', 'consume', 'entry', 'input', 'presizing', 'transfer', 'stack_bytes', 'inline_entries']);
+        literals($initialization, ['mode' => 'ordered_keyed', 'duplicates' => 'reject', 'presizing' => 'entry_count', 'transfer' => 'nothrow']);
+        foreach (['read_only', 'consume', 'entry', 'input'] as $field) {
+            if ($field === 'consume' && !isset($initialization->$field)) continue;
+            $name = textValue(at($initialization, $field));
+            requireThat(recordIdentifier($name), 'Invalid keyed initialization name');
+            requireThat(!in_array($name, $callables, true), 'Duplicate keyed initialization name');
+            $callables[] = $name;
+        }
+        // Both the guard name and the entry type are used inside the guard's class scope.
+        foreach ([$initialization->input, $initialization->entry] as $guardType) {
+            requireThat(!in_array($guardType, ['data', 'data_'], true), 'Keyed initialization type conflicts with an input guard member');
+        }
+        requireThat(is_int($initialization->stack_bytes) && $initialization->stack_bytes >= 1 && $initialization->stack_bytes <= 65536, 'Invalid keyed input byte budget');
+        requireThat(is_int($initialization->inline_entries) && $initialization->inline_entries >= 0 && $initialization->inline_entries <= 65536, 'Invalid keyed inline entry count');
     }
     $keyContracts = [];
     foreach (object(at($m, 'key_contracts')) as $identity => $contract) {
@@ -672,7 +691,10 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $hashes[$name] = compact('name', 'key', 'value', 'methods') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => collectionTraversalPlan()];
+        $traversal = collectionTraversalPlan();
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method']]);
+        requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
+        $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }
     requireThat($hashes !== [], 'Empty hash publication');
     ksort($hashes, SORT_STRING);

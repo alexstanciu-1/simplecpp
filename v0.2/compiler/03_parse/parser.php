@@ -977,13 +977,22 @@ final class Parser
 		if ($this->cursor->is(token_kind::lbracket)) {
 			$start = $this->cursor->take(token_kind::lbracket, '[');
 			$elements = [];
+			$entries = [];
 			while (!$this->cursor->is(token_kind::rbracket)) {
-				$elements[] = $this->value();
+				$element = $this->value();
+				if ($this->cursor->is(token_kind::arrow)) {
+					if ($elements !== []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Cannot mix positional and keyed entries');
+					$this->cursor->take(token_kind::arrow, '=>');
+					$entries[] = new ast_keyed_entry($element, $this->value());
+				} else {
+					if ($entries !== []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Cannot mix keyed and positional entries');
+					$elements[] = $element;
+				}
 				if (!$this->cursor->is(token_kind::comma)) break;
 				$this->cursor->take(token_kind::comma, ',');
 			}
 			$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-			return new ast_collection_expression($start, $end, $elements);
+			return $entries === [] ? new ast_collection_expression($start, $end, $elements) : new ast_keyed_collection_expression($start, $end, $entries);
 		}
 		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
 			&& !$this->cursor->next_is(token_kind::floating))) {

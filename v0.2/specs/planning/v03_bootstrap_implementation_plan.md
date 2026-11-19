@@ -84,7 +84,7 @@ methods, reflection and broader enum integration remain separate follow-ups.
 | 2.2 | Container presence and mutation | Contains/find, removal, missing-key handling and ordered keyed traversal. Distinguish missing from stored null. |
 | 2.3 | Lazy fallback | Coalescing, then coalescing assignment through the same presence model. Avoid repeated lookups and eager defaults. |
 | 2.4 | Text and table construction | Raw/multiline strings and bounded populated collection forms required by compiler tables. See the [private consuming-input contract and first vector slice](collection_initialization.md); flat published integer/string vector locals implemented; user factory inputs remain read-only and provider bindings stay fixed per compiler session. |
-| 2.5 | Tokenizer runtime bindings | Byte-scanning or regex facilities needed by the selected translation. These are runtime facilities, not new language constructs. |
+| 2.5 | Native tokenizer path | Review and port the native tokenizer from the earlier v0.1/v0.2 runtime outside this workspace folder. Inventory its required runtime bindings; PHP PCRE is not a bootstrap requirement. |
 
 Integration: one metadata-defined ordered initialization capability now preserves
   nested/application coverage and selects presized bulk transport for eligible published
@@ -271,8 +271,36 @@ coalescing/logical/compound/loop tests (9/9), plus tokenizer, parser and style c
 ### 2.4 Typed populated vector locals — implemented
 
 [Sequence initialization](../../compiler/docs/populated_vectors.md) uses metadata-owned
-append bindings and resolved element contracts, including direct nested literals.
+bulk construction where eligible and generated append bindings otherwise, with resolved
+element contracts and direct nested literals.
 Inference, keyed literals and additional destination contexts remain separate.
+
+
+### 2.4 Typed keyed initialization — implemented
+
+The [first keyed slice and checklist](collection_initialization.md#first-typed-keyed-local-initialization-slice--implemented)
+covers explicitly typed local hashes with published integer/string keys and values,
+duplicate rejection, ordered private input, complete presizing and incremental recovery.
+Implementation and cpp/php/js native/incremental proofs are recorded in the
+[keyed initialization note](../../compiler/docs/keyed_initialization.md). Constants/static
+tables, broader element families and nested keyed construction remain follow-ups.
+
+### 2.5 Tokenizer direction — clarified 2026-11-19
+
+`preg_match_all` is a performance choice in the PHP bootstrap: character-by-character
+scanning was slow in PHP. It is not a required design for the compiled tokenizer.
+Review the native tokenizer in the earlier v0.1/v0.2 runtime outside this workspace
+folder and port the suitable implementation, adapting it to current token/source ownership,
+flavors, byte spans, UTF-8 handling and diagnostics. Locate and assess that donor before
+selecting its design; this note does not claim it has been inspected or can be copied
+unchanged. Keep retained structures light and publication/incremental recovery explicit.
+
+PCRE/`preg_match_all` support can follow with the broader library port from v0.1 and the
+pre-reset v0.2 work. It must not block the tokenizer milestone. Compiled scanning avoids
+PHP interpreter per-character overhead, but throughput and compile-time claims still
+need measurement. Verify the selected port against the current PHP tokenizer on valid
+and malformed inputs, all flavors, token kinds/spans, diagnostics and source-edit recovery.
+This is a separate future slice; do not change the active PHP tokenizer in the keyed work.
 
 
 ## 3. Object relationships — a small AST family

@@ -98,6 +98,10 @@ struct @n@::storage {
     void set(key_type key, value_type value) {
         const auto found = locate(key);
         if (found.position != UINT32_MAX) { at_slot(found.position).value = static_cast<value_type&&>(value); return; }
+        insert_new(static_cast<key_type&&>(key), static_cast<value_type&&>(value));
+    }
+    // Caller has established absence. Shared by replacement-aware set and unique construction.
+    void insert_new(key_type&& key, value_type&& value) {
         if (used >= UINT32_MAX) throw std::length_error("hash_physical_entry_limit");
         reserve(used + 1);
         const auto buckets = index.capacity();

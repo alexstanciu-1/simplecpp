@@ -7,6 +7,7 @@ final class @class@ extends hash_type_definition@interfaces@
 	/** Immutable canonical binding, shared by occurrences; its type references are non-owning. */
 	private readonly runtime_function $presence_binding;
 @lookup_property@
+@initialization@
 @identity@
 	/** METHODS */
 @iteration@

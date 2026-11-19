@@ -359,8 +359,8 @@ function renderVectors(array $plan): array {
         if (($v['initialization']['bulk'] ?? null) !== null) {
             $init = $v['initialization']['bulk'];
             $bindings = $vars + ['input' => $init['input'], 'read_only' => $init['read_only'], 'inline_limit' => $init['inline_limit'], 'stack_bytes' => $init['stack_bytes']];
-            $h .= template('collections/vector_input_declaration', $bindings);
-            $d .= template('collections/vector_input_definition', $bindings);
+            $h .= template('collections/initialization_input_declaration', $bindings);
+            $d .= template('collections/initialization_input_definition', $bindings);
             if (isset($init['consume'])) {
                 $h .= "    static $n {$init['consume']}($e* values, $count count);\n";
                 $d .= template('collections/vector_input_factory', $bindings + ['factory' => $init['consume'], 'qualifier' => '', 'transfer' => 'static_cast<' . $e . '&&>(values[i])']);

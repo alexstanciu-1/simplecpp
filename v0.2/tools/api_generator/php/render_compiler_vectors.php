@@ -69,17 +69,17 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             && $index['result_category'] === 'value', 'Compiler vector requires value-copy index binding');
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
         $countClass = 'type_' . $definitions[$vector['count_type']]['class'];
-        $initialization = "\tpublic function list_initialization(): ?list_initialization_binding { return null; }\n";
+        $initialization = "\tpublic function list_initialization(): ?initialization_transport { return null; }\n";
         $initializationSetup = '';
         $sequence = $vector['initialization'] !== null ? ', sequence_initializer_type' : '';
         if (($vector['initialization']['bulk'] ?? null) !== null) {
             $init = $vector['initialization']['bulk'];
             $input = var_export($export['symbol'] . '::' . $init['input'], true);
             $factory = var_export($export['symbol'] . '::' . ($init['consume'] ?? $init['read_only']), true);
-            $initialization = "\tprivate readonly list_initialization_binding \$initialization;\n"
-                . "\tpublic function list_initialization(): ?list_initialization_binding\n\t{\n"
+            $initialization = "\tprivate readonly initialization_transport \$initialization;\n"
+                . "\tpublic function list_initialization(): ?initialization_transport\n\t{\n"
                 . "\t\treturn \$this->initialization;\n\t}\n";
-            $initializationSetup = "\t\t\$this->initialization = new list_initialization_binding($elementClass::instance(), $input, $factory, {$init['inline_limit']});\n";
+            $initializationSetup = "\t\t\$this->initialization = new initialization_transport($elementClass::instance()->cpp_type(), $input, $factory, {$init['inline_limit']});\n";
         }
         $bindings = [
             '@initialization@' => $initialization,
@@ -101,7 +101,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
             $recipe = ['count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
             $code .= strtr($template, array_replace($bindings, [
-                '@initialization@' => "\tpublic function list_initialization(): ?list_initialization_binding { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true),
                 '@factory@' => "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . " + ['buffer' => '::scpp::detail', 'access_name' => 'access_' . \$this->native_name, 'access' => 'detail::access_' . \$this->native_name];\n\t}\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['e' => \$this->element_type]; }",

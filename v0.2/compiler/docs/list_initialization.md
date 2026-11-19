@@ -17,7 +17,7 @@ Runtime metadata declares `initialization.mode: ordered_elements`. Optional `bul
 metadata publishes a read-only factory and an optional private consuming factory.
 The generated capability selects bulk where eligible and existing append bindings
 otherwise, including application/nested vectors. Removing `bulk` selects append;
-removing the initialization contract disables populated construction. The generated type handler supplies one shared binding with its element type,
+removing the initialization contract disables populated construction. The generated type handler supplies one shared `initialization_transport` with its native element spelling,
 factory spelling, concrete heap-input guard and inline limit, constructed with the
 canonical type rather than lazily during emission. Bindings remain fixed
 within a compiler session. Provider edits require regeneration and a fresh process;

@@ -744,6 +744,18 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
+    "initialization": {
+      "mode": "ordered_keyed",
+      "duplicates": "reject",
+      "read_only": "from_entries",
+      "consume": "from_owned_entries",
+      "entry": "keyed_entry",
+      "input": "keyed_input",
+      "presizing": "entry_count",
+      "transfer": "nothrow",
+      "stack_bytes": 4096,
+      "inline_entries": 64
+    },
     "provider": "core.hashes",
     "source_type": "hash",
     "binding": "ordered_typed_swiss",

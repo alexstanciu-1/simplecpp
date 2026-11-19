@@ -1275,6 +1275,20 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if ($value instanceof ast_keyed_collection_expression) {
+			/** @var type_definition&keyed_initializer_type $type */
+			$type = $value->type_def();
+			$elements = [];
+			foreach ($value->entries as $entry) {
+				$key = $this->value($entry->key, $global_references, $declarations, $required_headers);
+				$operand = $this->value($entry->value, $global_references, $declarations, $required_headers);
+				$conversion = $entry->conversion ?? throw new \LogicException('Unprepared keyed entry');
+				foreach ($type->write_type()->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$elements[] = '{' . $type->lower_cpp_key($entry->key, $key) . ', '
+					. $type->write_type()->lower_cpp_exact_argument($entry->value, $conversion, $operand, $this->inline_adapters) . '}';
+			}
+			return Cpp_List_Initialization::expression($type->keyed_initialization(), $elements);
+		}
 		if ($value instanceof ast_collection_expression) {
 			/** @var indexed_collection_type $type */
 			$type = $value->type_def();

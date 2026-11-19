@@ -1,0 +1,21 @@
+2026-11-19 — alex-ai@dev002.travelfuse.ro
+Work directory: /tmp/scpp-keyed-20261119
+PHP 8.5; Clang 18.1.3; GCC 13.3; libstdc++
+
+Keyed initialization and incremental proofs passed: 138 fixtures
+clang++ PASS 138 initialization native fixtures
+g++ PASS 138 initialization native fixtures
+clang++ PASS keyed capacity/index/ownership/allocation failure proofs ASan/UBSan
+g++ PASS keyed capacity/index/ownership/allocation failure proofs ASan/UBSan
+PASS 72 clean compile/link/executable samples plus 12 separate Clang profiles
+
+ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1
+Native correctness: C++23 O2 g0 warnings as errors.
+Ownership proof: C++23 O1 debug, ASan/UBSan, use-after-scope.
+Measured runtime.cpp and hash.cpp hashes match the final local generated sources.
+Source/input/factory lifetime and allocation proofs are separate from timing.
+
+Local retained PHP + native Ninja proof:
+cpp PASS source recovery, factory retirement and Clang/GCC native object reuse
+php PASS source recovery, factory retirement and Clang/GCC native object reuse
+js PASS source recovery, factory retirement and Clang/GCC native object reuse

@@ -117,6 +117,14 @@ final class Function_Preparation
 			}
 			return;
 		}
+		if ($value instanceof ast_keyed_collection_expression) {
+			foreach ($value->entries as $entry) {
+				$entry->conversion = null;
+				self::expression($entry->key);
+				self::expression($entry->value);
+			}
+			return;
+		}
 		if ($value instanceof ast_collection_expression) {
 			foreach ($value->elements as $element) self::expression($element);
 			return;
