@@ -42,6 +42,44 @@ def prove(work, flavor):
                     work / (flavor + '-lifetime'), app / ('caller.' + flavor)], check=True)
 
 
+def forwarding(work, flavor):
+    _, (_, klass, _, static, sep) = sources(flavor)
+    lexical = {'php': 'self', 'cpp': 'Self', 'js': 'class'}[flavor]
+    parent = {'php': 'parent', 'cpp': 'Parent', 'js': 'super'}[flavor]
+
+    def middle(first=lexical, second=parent):
+        return klass('Middle', static('run', f'return {first}{sep}hop();')
+                     + static('hop', f'return {second}{sep}step();')
+                     + static('step', 'return 9;'), 'Base')
+
+    base = klass('Base', static('step', f'return {lexical}{sep}tag();')
+                 + static('tag', 'return 3;', visibility='private'))
+    main = f'echo Left{sep}run(),Right{sep}run();return 8;'
+    src = dict(base=base, middle=middle(), left=klass('Left', '', 'Middle'),
+               right=klass('Right', '', 'Middle'), main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'33'), (None, None, b'33'),
+        ('middle', middle(first='Middle'), b'33'), ('middle', middle(second='Base'), b'33'),
+        ('middle', middle(), b'33'), ('base', base.replace('return 3;', 'return 7;'), b'77'),
+        ('base', None, None), (None, None, None), ('base', base, b'33'),
+        ('main', f'echo Right{sep}run();return 8;', b'3'), ('main', main, b'33'),
+    ])
+    # Output alone cannot distinguish two called types executing the same declaration.
+    # Check every selected implementation along the chain, including retirement after edits.
+    for revision, hops, steps in [
+        (0, ('Left', 'Right'), ('Left', 'Right')), (2, ('Middle',), ('Middle',)),
+        (3, ('Left', 'Right'), ('Base',)), (8, ('Left', 'Right'), ('Left', 'Right')),
+        (9, ('Right',), ('Right',)), (10, ('Left', 'Right'), ('Left', 'Right')),
+    ]:
+        units = work / f'{flavor}-fresh-{revision}' / 'units'
+        cpp = ''.join(p.read_text() for p in units.glob('*.cpp'))
+        for owner, method, wanted in [('Middle', 'hop', hops), ('Base', 'step', steps), ('Base', 'tag', steps)]:
+            for called in ('Left', 'Right', 'Middle', 'Base'):
+                prefix = 'method_' if called == owner else f'called_{len(called)}_{called}_'
+                symbol = f'{prefix}{len(owner)}_{owner}_{method}('
+                assert (symbol in cpp) == (called in wanted), (flavor, revision, symbol)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -51,3 +89,5 @@ if __name__ == '__main__':
         root.mkdir(exist_ok=True)
         for flavor in ('php', 'cpp', 'js'):
             prove(root, flavor)
+            (root / 'forwarding').mkdir(exist_ok=True)
+            forwarding(root / 'forwarding', flavor)

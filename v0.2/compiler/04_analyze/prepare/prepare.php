@@ -1093,7 +1093,7 @@ final class Preparation
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null): void
 	{
-		if ($call->parent_qualified) {
+		if ($call->qualifier === call_qualifier::lexical_parent) {
 			$this->ancestor_call($call, $call->name, null, $initializing);
 			return;
 		}
@@ -1336,7 +1336,9 @@ final class Preparation
 		$conversions = $this->bind_arguments($call, $function, $initializing);
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
-			$instance = $this->dependencies->static_call($this->owner, $symbol, $this->symbols->entry($called->declaration->symbol_key()));
+			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;
+			$instance = $this->dependencies->static_call($this->owner, $symbol,
+				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
 		}
 		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}

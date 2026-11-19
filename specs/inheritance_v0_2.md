@@ -416,7 +416,8 @@ Use an explicit concrete static target or an ordinary interface instance method.
 Late static binding distinguishes the lexical declaring type (names and access) from
 the called type. An explicit `Child::method()` establishes Child, including when
 the implementation is inherited. `self::method()` and `parent::method()` select a
-fixed implementation and forward the current called type; `static::method()` selects
+fixed implementation and forward the current called type (C++ flavor `Self::` / `Parent::`,
+JS flavor `class.` / `super.`); `static::method()` selects
 through that called type and forwards it. Expression-qualified static calls establish
 the qualifier's declared type and evaluate that expression exactly once, consistently
 with the [static-member contract](static_members_v0_2.md).

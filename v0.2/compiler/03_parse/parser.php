@@ -537,10 +537,10 @@ final class Parser
 	}
 
 	/** Parse the common argument list after a function path or member name. */
-	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, bool $parent_qualified = false): ast_call_expression
+	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, call_qualifier $qualifier = call_qualifier::ordinary): ast_call_expression
 	{
 		$arguments = $this->arguments();
-		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $parent_qualified);
+		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
 
 	/** Parse ordinary or constructor arguments in source order. @return ast_expression[] */
@@ -861,7 +861,8 @@ final class Parser
 		$name = $c->tokens->text_at($c->position());
 		return match ($flavor) {
 			flavor::php => $name === 'self' || $name === 'parent',
-			flavor::cpp => $name === 'Self',
+			flavor::cpp => $name === 'Self' || ($name === 'Parent'
+				&& ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen),
 			flavor::js => $name === 'class' || $name === 'super',
 		};
 	}
@@ -872,7 +873,7 @@ final class Parser
 		$c = $this->cursor;
 		$start = $c->position();
 		$qualifier = $c->tokens->text_at($start);
-		$ancestor = $qualifier === 'parent' || $qualifier === 'super';
+		$ancestor = $qualifier === 'parent' || $qualifier === 'super' || $qualifier === 'Parent';
 		if (!$ancestor && $this->declaring_type === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body or enum method body');
 		$flavor = $c->tokens->source->flavor;
 		$c->take($c->tokens->tokens[$start]->kind, 'type qualifier');
@@ -881,7 +882,8 @@ final class Parser
 		$variable = $flavor === flavor::php && $c->is(token_kind::variable);
 		$name = $c->name($variable ? token_kind::variable : token_kind::identifier);
 		if (!$ancestor) $name = $this->declaring_type . '::' . $name;
-		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, $ancestor ? $separator : token_kind::scope, null, $ancestor);
+		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, $ancestor ? $separator : token_kind::scope, null,
+			$ancestor ? call_qualifier::lexical_parent : call_qualifier::lexical_self);
 		$constant = $flavor === flavor::php && !$variable;
 		if ($ancestor) return new ast_ancestor_name($name, $start, $c->position(), constant_only: $constant);
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $constant);

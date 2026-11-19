@@ -34,6 +34,14 @@ final class ast_call_statement extends ast_statement
 	}
 }
 
+/** Lexical self and parent calls forward the enclosing static implementation's called type. */
+enum call_qualifier: int /** uint8 */
+{
+	case ordinary = 0;
+	case lexical_self = 1;
+	case lexical_parent = 2;
+}
+
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
 final class ast_call_expression extends ast_expression
 {
@@ -43,8 +51,8 @@ final class ast_call_expression extends ast_expression
 	public readonly ?token_kind $member_separator;
 	/** Native owning receiver; a relative JS dotted path may instead resolve as a namespace call. */
 	public readonly ?ast_expression $receiver;
-	/** Written PHP parent:: / JS super. qualification; C++ retains its actual type name. */
-	public readonly bool $parent_qualified;
+	/** Written lexical qualifier, retained independently of the name used in lookup. */
+	public readonly call_qualifier $qualifier;
 	/** @var ast_expression[] Native owning arguments in source order. */
 	public readonly array $arguments /** list<ast_expression> */;
 
@@ -66,13 +74,13 @@ final class ast_call_expression extends ast_expression
 	 * @param ast_expression[] $arguments
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null, bool $parent_qualified = false)
+		?token_kind $member_separator, array $arguments /** list<ast_expression> */, ?ast_expression $receiver = null, call_qualifier $qualifier = call_qualifier::ordinary)
 	{
 		parent::__construct($start, $end);
 		$this->name = $name;
 		$this->member_separator = $member_separator;
 		$this->receiver = $receiver;
-		$this->parent_qualified = $parent_qualified;
+		$this->qualifier = $qualifier;
 		$receiver?->attach($this);
 		$this->arguments = $arguments;
 		foreach ($arguments as $argument) {

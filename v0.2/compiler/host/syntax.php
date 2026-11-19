@@ -157,7 +157,7 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
-			if ($expression->parent_qualified) {
+			if ($expression->qualifier === call_qualifier::lexical_parent) {
 				return ['kind' => 'parent_call', 'name' => $expression->name,
 					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 			}

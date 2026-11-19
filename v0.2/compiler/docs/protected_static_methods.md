@@ -26,7 +26,7 @@ record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
 `Base::hidden()`. Both `Child::hidden()` and lexical self inside Child start lookup at Child.
 The existing method lookup watches each visited record and named method slot and
 binds the selected Base declaration directly, including its defaults and visibility.
-PHP `parent::` and JS `super.` start at the lexical base. C++ names the base explicitly.
+PHP `parent::`, C++ `Parent::` and JS `super.` start method lookup at the lexical base.
 Protected static properties and constants use declaring-type names, descendant names or lexical self.
 A descendant may read `Base::STEP` and update `Base::$count`. Inside Base,
 `self::$count`, `Self::count` or `class.count` selects the same storage. Inside Child,
@@ -81,7 +81,11 @@ Ordinary function and instance-method bodies remain preparation roots, as does t
 A successful preparation retires implementations unreachable from those roots, including recursive
 cycles, and forgets their watches. Failed preparation leaves executable publication pending for retry.
 An unchanged incremental invocation skips demand traversal and body preparation.
-Forwarding the current called type through lexical qualifiers and constructing `new static()` are later slices.
+Inside a static implementation, a lexical self or parent call forwards the current called-type symbol
+to the selected method. For example, when `Leaf::run()` enters a method declared on Middle,
+`self::step()` starts lookup at Middle and carries Leaf. Writing `Middle::step()` establishes Middle.
+An expression qualifier establishes its declared record type. Ordinary instance bodies use their
+existing lexical lookup without a runtime called-type context. Shared construction via `new static()` is deferred.
 
 Run `python3 -B v0.2/compiler/tests/called_methods_native.py` to compare incremental and fresh
 artifacts and diagnostics and check that retired bodies are collectible while a sibling retains its body.
