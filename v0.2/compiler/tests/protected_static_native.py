@@ -40,9 +40,6 @@ def rejections(work, flavor, src, helpers):
             ('other', klass('Other', static('read', f'return Base{qualifier}hidden();')), 'Cannot call protected method'),
             ('main', f'echo Child{qualifier}hidden();return 8;', 'Cannot call protected method'),
         ]
-        property_text = {'php':'protected static int $value = 1;', 'cpp':'protected: static int value = 1;', 'js':'protected static value:int = 1;'}[flavor]
-        constant_text = {'php':'protected const int VALUE = 1;', 'cpp':'protected: static constexpr int VALUE = 1;', 'js':'protected const VALUE:int = 1;'}[flavor]
-        cases += [('other', klass('Other', text), 'Protected static members are deferred') for text in [property_text, constant_text]]
         for name, text, message in cases:
             source_edit(app/(name+'.'+flavor), text)
             got = invoke(p)

@@ -22,8 +22,10 @@ def revisions(work,flavor,sources,edits):
             got=invoke(proc);fresh=work/f'{flavor}-fresh-{revision}';cleaner=service(app,fresh)
             try:clean=invoke(cleaner)
             finally:cleaner.stdin.close();cleaner.wait()
-            if expected is None:
+            if expected is None or isinstance(expected, str):
                 assert 'error' in got and got['error']==clean.get('error'),(flavor,revision,got,clean)
+                if isinstance(expected, str):
+                    assert expected in got['error'], (flavor, revision, got)
                 assert artifacts(out)==before
                 continue
             assert 'error' not in got and 'error' not in clean,(flavor,revision,got,clean)

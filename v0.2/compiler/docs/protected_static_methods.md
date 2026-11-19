@@ -27,8 +27,12 @@ record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
 The existing method lookup watches each visited record and named method slot and
 binds the selected Base declaration directly, including its defaults and visibility.
 PHP `parent::` and JS `super.` start at the lexical base. C++ names the base explicitly.
-Protected static properties/constants
-and expression-qualified static calls are separate work.
+Protected static properties and constants use exact declaring-type names or lexical self.
+A descendant may read `Base::STEP` and update `Base::$count`. Inside Base,
+`self::$count`, `Self::count` or `class.count` selects the same storage. Data
+lookup through descendant names or descendant self is deferred. The literal
+declaration stores one visibility enum. Binding uses the same protected ancestry
+query and dependency watches as static calls, including on a failed access.
 
 ## Static redeclarations in descendants
 
@@ -46,8 +50,7 @@ Static finality is checked at preparation and adds no C++ virtual slot.
 
 ## Implementation and retained state
 
-The parser preserves existing `is_static`/`is_protected` flags and rejects deferred
-data members after distinguishing them from methods. The declaration's shared
+Methods carry their existing `is_static` and `is_protected` flags. The declaration's shared
 `require_access` query supplies lexical-only checks for static methods. Source-call
 preparation subscribes to the lexical caller's ancestry before the access decision,
 including failed access, so intermediate-base edits can invalidate unchanged callers.
@@ -64,8 +67,9 @@ with no receiver, retain/release operation or runtime visibility test.
 
 Nineteen incremental checkpoints per flavor compare retained and fresh diagnostics
 or emitted artifacts. They cover defaults, private/public/protected edits, intermediate-base changes that select a different implementation, deletion, retries without edits and recovery. Successful revisions
-build and execute with Clang. Negative checks cover external/unrelated access,
-inherited protected calls from outside the hierarchy, and deferred protected data members.
+build and execute with Clang. Negative checks cover external calls through the declaring and descendant types.
+The protected static data fixture compares 21 checkpoints per flavor against fresh
+builds, including visibility edits, base replacement, deletion and recovery.
 Twelve additional ancestor-call checkpoints per flavor exercise both caller kinds,
 intermediate and immediate base changes, private access, deletion and recovery.
 The static redeclaration fixture adds 28 checkpoints per flavor covering defaults,

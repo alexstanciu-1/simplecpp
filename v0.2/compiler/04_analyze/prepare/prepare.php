@@ -550,9 +550,19 @@ final class Preparation
 		$this->dependencies?->watch($symbol, $this->owner);
 		$member = $symbol->declaration();
 		if ($member === null) return false;
-		if ($member->is_private && $this->owner->parent->parent !== $member->parent) {
-			$kind = $member instanceof ast_constant_declaration ? 'constant' : 'static property';
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private ' . $kind . ' ' . $member->name());
+		if ($member->visibility !== member_visibility::public) {
+			$context = $this->owner->parent->parent;
+			if ($member->visibility === member_visibility::protected) {
+				$this->watch_lexical_ancestry($context, $member->parent);
+				$allowed = $member->parent->definition->permits_protected_access($context);
+			}
+			else {
+				$allowed = $context === $member->parent;
+			}
+			if (!$allowed) {
+				$kind = $member instanceof ast_constant_declaration ? 'constant' : 'static property';
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access ' . $member->visibility->name . ' ' . $kind . ' ' . $member->name());
+			}
 		}
 		if ($member instanceof ast_constant_declaration) $syntax->settle_constant($symbol);
 		else $syntax->settle_global($symbol);
@@ -1258,16 +1268,25 @@ final class Preparation
 		$this->source_call($call, $symbol, $method, $initializing, true);
 	}
 
+	/** Observe the caller's base chain before deciding protected static access, including denied calls and reads. */
+	private function watch_lexical_ancestry(ast_node $context, ast_record_declaration $declaring): void
+	{
+		if (($this->dependencies === null) || !($context instanceof ast_record_declaration)) {
+			return;
+		}
+		for ($type = $context->definition; $type !== null; $type = $type->base()) {
+			$this->dependencies->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+			if ($type->declaration === $declaring) break;
+		}
+	}
+
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false): void
 	{
 		$context = $this->owner->parent->parent;
 		$receiver = null;
 		if ($function->is_protected && $function->is_static) {
-			// Lexical access depends on the caller's ancestry, even for an exact declaring-type call.
-			for ($type = $context instanceof ast_record_declaration ? $context->definition : null; $type !== null; $type = $type->base()) {
-				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
-			}
+			$this->watch_lexical_ancestry($context, $function->parent);
 		}
 		elseif ($function->is_protected) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();

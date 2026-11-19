@@ -180,10 +180,10 @@ final class Symbol_Publication implements declaration_sink
 				$contracts[$key] = 'type:' . spl_object_id($head);
 			}
 			elseif ($head instanceof ast_constant_declaration) {
-				$contracts[$key] = json_encode([$head->is_private, $head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
+				$contracts[$key] = json_encode([$head->visibility->value, $head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
 			elseif ($head instanceof ast_global_declaration) {
-				$contracts[$key] = ($head->is_private ? 'private global:' : 'global:') . ($head->type_reference?->spelling() ?? type_registry::literal_type($head->initializer)->name);
+				$contracts[$key] = $head->visibility->name . ' global:' . ($head->type_reference?->spelling() ?? type_registry::literal_type($head->initializer)->name);
 			}
 			else {
 				/** @var ast_function_declaration $head */

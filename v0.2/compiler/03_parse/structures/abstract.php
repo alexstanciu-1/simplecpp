@@ -3,6 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Declared visibility of a static property or constant; native uint8. */
+enum member_visibility: int
+{
+	case public = 0;
+	case protected = 1;
+	case private = 2;
+}
+
 /** Parameter transport intent; native uint8. Reference binds exact stable storage without conversion. */
 enum passing_mode: int
 {
