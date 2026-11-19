@@ -117,6 +117,46 @@ def late_selection(work, flavor):
     ])
 
 
+def factories(work, flavor):
+    _, (s, klass, _, static, sep) = sources(flavor)
+    v, access = s['v'], s['access']
+    late = 'Static' if flavor == 'cpp' else 'static'
+    def factory(name, args=''):
+        return static(name, f'return new {late}({args});').replace('static int ', 'static Base ').replace('):int', '):Base')
+    def constructor(name, default, visibility):
+        param = ('x:int' if flavor == 'js' else 'int '+v+'x') + default
+        ctor = {'php': ' function __construct', 'js': ' constructor', 'cpp': ': '+name}[flavor]
+        return f'{visibility}{ctor}({param}) {{{v}this{access}n={v}x;}}'
+    def child(name, default=None, visibility='public'):
+        return klass(name, '' if default is None else constructor(name, default, visibility), 'Base')
+    base_body = s['field']('n', 'int', '1') + factory('make') + factory('withArg', '9')
+    base = klass('Base', base_body, abstract=True)
+    def call(owner, name='make'):
+        return f'{owner}{sep}{name}(){access}n'
+    main = 'echo '+','.join([call('Left'), call('Right'), call('Right','withArg')])+';return 8;'
+    left, right = child('Left'), child('Right', '=5')
+    src = dict(base=base, left=left, right=right, main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'159'), (None, None, b'159'),
+        ('left', child('Left', '=4'), b'459'), ('left', child('Left', ''), 'Argument count mismatch'),
+        (None, None, 'Argument count mismatch'),
+        ('main', 'echo '+call('Right')+';return 8;', b'5'),
+        ('left', child('Left', '=4', 'private'), b'5'),
+        ('main', main, 'Cannot call private constructor'),
+        ('left', child('Left', '=4', 'protected'), 'Cannot call protected constructor'),
+        ('left', left, b'159'), ('right', child('Right', '=7'), b'179'),
+        ('right', child('Right'), 'Only zero-argument initialization'), ('right', right, b'159'),
+        ('main', 'echo '+call('Base')+';return 8;', 'Cannot instantiate an abstract class'),
+        ('main', s['infer']('p', f'new {late}()')+'return 8;', 'requires a called type'),
+        ('main', main, b'159'),
+        ('base', klass('Base', base_body+constructor('Base', '=3', 'protected'), abstract=True), b'359'),
+        ('right', child('Right'), b'339'), ('right', right, b'359'), ('base', base, b'159'),
+        ('extra', s['record']('Inline', factory('make')), b'159'),
+        ('main', s['infer']('p', f'Inline{sep}make()')+'return 8;', 'Late-static construction requires a class'),
+        ('main', main, b'159'),
+    ])
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -130,3 +170,5 @@ if __name__ == '__main__':
             forwarding(root / 'forwarding', flavor)
             (root / 'late').mkdir(exist_ok=True)
             late_selection(root / 'late', flavor)
+            (root / 'factories').mkdir(exist_ok=True)
+            factories(root / 'factories', flavor)

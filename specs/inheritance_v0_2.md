@@ -431,7 +431,7 @@ Compatible descendant static-method redeclarations are part of this extension, w
 exact callable contracts and no visibility narrowing, not C++ virtual overriding.
 Inherited property/constant redeclaration restrictions do not change.
 
-`new static(...)` constructs the called class using its checked constructor
+PHP and JS `new static(...)` and C++ `new Static(...)` construct the called class using its checked constructor
 contract. The first construction group admits shared class handles only and applies
 ordinary checked-at-preparation result conversions; it does not slice inline records.
 Called-type context is compiler-managed, never ambient global runtime state. Cross-file

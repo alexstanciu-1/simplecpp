@@ -934,8 +934,14 @@ final class Parser
 			$start = $this->cursor->position();
 			$this->cursor->take_keyword('new');
 			$at = $this->cursor->position();
-			$name = $this->names->path(true);
-			$target = new ast_type_reference($at, $this->cursor->position(), $name);
+			$called = $c->tokens->source->flavor === flavor::cpp ? 'Static' : 'static';
+			if ($c->next_is(token_kind::lparen) && $c->tokens->text_at($at) === $called) {
+				$c->take($c->tokens->tokens[$at]->kind, $called);
+				$target = new ast_called_type_reference($at, $c->position(), $called);
+			} else {
+				$name = $this->names->path(true);
+				$target = new ast_type_reference($at, $c->position(), $name);
+			}
 			$arguments = [];
 			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->arguments();
 			elseif ($this->cursor->tokens->source->flavor !== flavor::php) $this->cursor->take(token_kind::lparen, '( after the constructed type');

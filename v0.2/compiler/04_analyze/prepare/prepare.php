@@ -775,7 +775,13 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_new_expression) {
-			$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			if ($syntax->target instanceof ast_called_type_reference) {
+				$record = $this->called_record($syntax, 'Late-static construction');
+				if ($record->kind !== record_kind::class_type) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Late-static construction requires a class');
+				$payload = $record->definition;
+			} else {
+				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			}
 			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
 			if (!($payload instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a record: ' . $syntax->target->name);
@@ -1365,7 +1371,9 @@ final class Preparation
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && $payload->declaration->is_abstract) throw new diagnostic($site->source(), $site->byte_start(), 'Cannot instantiate an abstract class');
+		if ($payload instanceof record_type_definition && $payload->declaration->is_abstract && !($site instanceof ast_base_initialization)) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot instantiate an abstract class');
+		}
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);

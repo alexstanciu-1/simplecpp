@@ -96,7 +96,11 @@ declarations. Siblings that inherit a property write the same storage. Siblings 
 their own property write separate storage. Preparation resolves both cases before C++ emission.
 
 An expression qualifier establishes its declared record type. Ordinary instance bodies use their
-existing lexical lookup without a runtime called-type context. Shared construction via `new static()` is deferred.
+existing lexical lookup without a runtime called-type context. Static factories use `new static(args)` in PHP and JS and `new Static(args)` in C++.
+Preparation selects the called class and binds its effective constructor from the lexical owner's
+access context. The expression yields a required shared owner of the called class. Returning it
+through a base-class signature uses the ordinary return conversion. A change to the called class
+or selected constructor invalidates the prepared factory through its existing watches.
 
 Run `python3 -B v0.2/compiler/tests/called_methods_native.py` to compare incremental and fresh
 artifacts and diagnostics and check that retired bodies are collectible while a sibling retains its body.

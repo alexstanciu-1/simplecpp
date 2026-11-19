@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Written type syntax, e.g. int in int value = 8; resolved facts remain on the owning declaration/expression.
  * Nested references use first_child and next_sibling in argument order, e.g. vector<int>.
  */
-final class ast_type_reference extends ast_node
+class ast_type_reference extends ast_node
 {
 	public readonly string $name;
 	/** Native owning first argument; null for a simple type. */
@@ -43,4 +43,9 @@ final class ast_type_reference extends ast_node
 		return $name . '>';
 	}
 
+}
+
+/** Factory target in new static(...), resolved from the called class during body preparation. */
+final class ast_called_type_reference extends ast_type_reference
+{
 }
