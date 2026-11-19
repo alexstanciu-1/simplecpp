@@ -1096,7 +1096,11 @@ final class Preparation
 				$this->value($receiver, $initializing);
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$record = $receiver->type_def();
-				if ($record instanceof shared_record_type_definition) $record = $record->payload;
+				$static = $call->expression_qualified();
+				if ($record instanceof shared_record_type_definition || ($static && $record instanceof record_handle_definition)) $record = $record->payload;
+				if ($static && (!($record instanceof record_type_definition) || $record->declaration->kind === record_kind::interface_type)) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Static qualifier requires a concrete record type');
+				}
 				if ($record instanceof record_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
@@ -1107,11 +1111,16 @@ final class Preparation
 					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
 					$method = $symbol?->declaration();
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
-					if ($method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Static method requires a type-qualified call: ' . $method->name());
-					Readonly_Access::write($receiver, true);
-					if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+					if ($static !== $method->is_static) {
+						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
+						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
+					}
+					if (!$static) {
+						Readonly_Access::write($receiver, true);
+						if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+					}
 					$this->source_call($call, $symbol, $method, $initializing);
-					$call->interface_dispatch = $record instanceof record_type_definition && $record->interface_dispatch($name);
+					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;

@@ -81,6 +81,12 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** METHODS */
+	/** A value followed by :: selects a static method through its declared type. */
+	public function expression_qualified(): bool
+	{
+		return $this->member_separator === token_kind::scope && $this->receiver !== null;
+	}
+
 	public function symbol_key(): string
 	{
 		return $this->root()->function_key($this->name);

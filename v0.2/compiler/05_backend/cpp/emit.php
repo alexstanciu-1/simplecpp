@@ -1581,6 +1581,18 @@ CPP;
 		$steps = [];
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
+		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
+			$receiver = $value->receiver;
+			$qualifier = $this->value($receiver, $global_references, $declarations, $required_headers);
+			$discard = 'static_cast<void>(' . $qualifier . ')';
+			if ($receiver instanceof ast_name_expression || $receiver instanceof ast_this_expression) {
+				// A named place has no temporary to release; the comma selects the fixed function.
+				$name = '(' . $discard . ', ' . $name . ')';
+			} else {
+				// End the full expression before any argument, even if it produced the last owner.
+				$steps[] = $discard . ';';
+			}
+		}
 		if ($method && $function->parent instanceof ast_enum_declaration) {
 			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
@@ -1597,7 +1609,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($function->parameters === []) {
+		} elseif ($function->parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -1620,7 +1632,7 @@ CPP;
 				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && count($function->parameters) === 1) {
+			if (!$method && $steps === [] && count($function->parameters) === 1) {
 				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
@@ -1640,7 +1652,7 @@ CPP;
 			$arguments[0] = 'enum_receiver';
 			$direct = false;
 		}
-		if ($direct || (!$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call

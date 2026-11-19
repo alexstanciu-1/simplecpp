@@ -1779,7 +1779,7 @@ exercise these slices against fresh compilations and native output.
 
 | Candidate | Prerequisite or decision |
 | --- | --- |
-| Expression-qualified static access | The spec settles evaluation of the qualifier, including an empty handle. Agree the C++/JS syntax and its distinction from instance lookup. Preserve effects through lowering, even for a constant read. |
+| Expression-qualified static data access | Calls now use the [three-flavor expression qualifier](../compiler_frontends.md#static-calls-qualified-by-a-value). Extend it to properties and constants, preserving qualifier effects even for a constant read. |
 | Late-static lookup and shared factories | Model the called type separately from the lexical owner and forward it across calls. This affects call preparation and emitted signatures. |
 | Inherited final method satisfying a newly introduced interface | Review the C++ forwarding and final-slot design before changing the existing diagnostic. |
 | Interface inheritance, variance and abstract structs | Separate proofs for interface layout/dispatch, signature bridges, and inline construction/copy admission, respectively. |

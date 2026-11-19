@@ -175,8 +175,12 @@ final class Parser
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
 		}
-		if ($this->names->call_start() || ($this->cursor->tokens->source->flavor === flavor::cpp
-			&& $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
+		$flavor = $this->cursor->tokens->source->flavor;
+		if ($this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
+				&& in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'weak', 'lock', 'object_cast', 'match'], true))
+			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
+				&& $this->cursor->next_is(token_kind::scope))
+			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
 			if (!($value instanceof ast_call_expression)) {
@@ -750,6 +754,12 @@ final class Parser
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+		if ($index !== null && ($this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::lbracket)
+			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
+			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
+			if ($target instanceof ast_call_expression) return $this->call_statement($target);
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
+		}
 		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
 			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
 			$operator = $this->take_update_operator();
@@ -777,9 +787,20 @@ final class Parser
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(bool $field_target = false): ast_expression
 	{
-		$value = $this->atom();
+		return $this->postfix($this->atom(), $field_target);
+	}
+
+	/** Continue member calls and indexing on the expression already parsed. */
+	private function postfix(ast_expression $value, bool $field_target): ast_expression
+	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
+			if ($this->cursor->is(token_kind::scope)) {
+				$this->cursor->take(token_kind::scope, '::');
+				$name = $this->cursor->name(token_kind::identifier);
+				$value = $this->call_arguments($value->start, $name, token_kind::scope, $value);
+				continue;
+			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
 				$name = $this->cursor->name(token_kind::identifier);

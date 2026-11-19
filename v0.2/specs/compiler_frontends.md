@@ -468,3 +468,15 @@ PHP/JS use `final class Leaf`; C++ accepts `class Leaf final`. Final classes may
 inherit and implement interfaces but cannot be extended. Abstract/final combinations,
 duplicate final modifiers and final structs/interfaces reject in this class-only slice.
 The native payload is final; ownership and required-field policies are unchanged.
+
+## Static calls qualified by a value
+
+All three flavors accept `produce()::method(args)`. A local qualifier is
+`$p::method()` in PHP, `p::method()` in JS and `(p)::method()` in C++.
+C++ keeps `p::method()` as a named path. Existing JS dotted calls retain
+their ordinary value/namespace lookup.
+
+Preparation uses the qualifier's declared class or struct and the selected
+method's ordinary access and argument contracts. At execution the qualifier
+finishes, including temporary destruction, before the first argument. An empty
+typed handle can qualify the call. See the [static call contract](../../specs/static_members_v0_2.md#expression-qualified-static-calls--2026-10-07).
