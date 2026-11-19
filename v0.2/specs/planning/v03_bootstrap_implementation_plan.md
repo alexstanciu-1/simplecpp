@@ -1758,4 +1758,7 @@ Other key families and self-referential collection fields remain separate.
 [Protected instance methods and final classes](class_contract_completion.md) reuse
 existing access, declaration and cast/test owners. Required-field policy remains
 unchanged. Exact-type uses were inventoried; no new query syntax is introduced.
-Protected static methods and the broader interface/composition work remain separate.
+Protected static methods subsequently gained [declaring-type calls and lexical self
+resolution](../../compiler/docs/protected_static_methods.md), reusing the same access
+and call owners without retained structure changes. Broader static lookup and
+interface/composition work remain separate.

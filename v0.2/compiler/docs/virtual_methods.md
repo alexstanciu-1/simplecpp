@@ -81,4 +81,5 @@ or compile-time speed measurements.
 
 Protected instance methods now share the existing protected-field receiver rule;
 protected abstract declarations and public visibility widening are supported.
-Protected static methods remain deferred. See the [bounded goal](../../specs/planning/class_contract_completion.md).
+Protected static methods now have a separate [bounded lexical-access slice](protected_static_methods.md).
+See the earlier [instance-method/final-class goal](../../specs/planning/class_contract_completion.md).

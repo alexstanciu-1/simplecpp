@@ -399,9 +399,16 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs, protected static methods, callable variance,
+Abstract structs, callable variance,
 unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
+
+Protected static methods accept exact declaring-type calls and the existing lexical
+`self::` (PHP), `Self::` (C++) and `class.` (JS) resolution. Access requires the
+declaring record or a descendant context; no instance receiver is involved.
+Inherited static lookup through a descendant name, ancestor static calls, static
+redeclarations and protected static properties/constants remain deferred. See
+[protected static methods](../compiler/docs/protected_static_methods.md).
 
 ## Class interfaces
 
@@ -449,7 +456,7 @@ General boolean subjects and broader selection forms remain deferred.
 PHP/JS use the protected member modifier; C++ uses protected member sections.
 Ordinary class/struct instance methods and class virtual/abstract methods share the
 existing lexical and declared-receiver access contract. Overrides may widen
-protected to public, never narrow visibility. Protected static methods stay deferred.
+protected to public, never narrow visibility. Protected static methods use lexical access as described above.
 
 ### Final classes
 

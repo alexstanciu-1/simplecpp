@@ -1250,7 +1250,13 @@ final class Preparation
 	{
 		$context = $this->owner->parent->parent;
 		$receiver = null;
-		if ($function->is_protected) {
+		if ($function->is_protected && $function->is_static) {
+			// Lexical access depends on the caller's ancestry, even for an exact declaring-type call.
+			for ($type = $context instanceof ast_record_declaration ? $context->definition : null; $type !== null; $type = $type->base()) {
+				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+			}
+		}
+		elseif ($function->is_protected) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}

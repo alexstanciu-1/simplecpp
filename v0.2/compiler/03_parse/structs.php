@@ -90,7 +90,8 @@ final class Record_Syntax
 			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
 			if ($kind === record_kind::interface_type && ($static || $private || $protected || $c->keyword('const'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces admit only public instance method contracts');
-			if ($protected && ($static || $c->keyword('const'))) {
+			if ($protected && ($c->keyword('const') || ($static && $flavor === flavor::cpp
+				&& $c->tokens->text_at($c->position() + 1) === 'constexpr'))) {
 				throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
 			}
 			if ($static && $flavor === flavor::cpp && $c->next_is(token_kind::identifier)
@@ -163,6 +164,7 @@ final class Record_Syntax
 			if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface fields are forbidden');
 			if ($modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Method modifier requires a method');
 			if ($static) {
+				if ($protected) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected static members are deferred');
 				$members[] = Global_Syntax::read($parser, true, $private);
 				continue;
 			}
