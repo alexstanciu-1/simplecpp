@@ -118,8 +118,8 @@ final class Record_Syntax
 					$parser->source_namespace(), $parameters, private: $private, protected: $protected);
 			} else {
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
-				$method = $js_method ? $parser->named_function_header(false, $static, $private)
-					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private) : null);
+				$method = $js_method ? $parser->named_function_header(false, $static, $private, $protected)
+					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private, $protected) : null);
 				if ($method?->short_name === '__construct' || ($flavor === flavor::js && $method?->short_name === 'constructor')) {
 					throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a constructor declaration');
 				}
@@ -132,7 +132,6 @@ final class Record_Syntax
 				$method->is_override = isset($modifiers['override']);
 				$method->is_final = isset($modifiers['final']);
 				$method->modifier_start = $modifiers === [] ? null : min($modifiers);
-				if ($protected && !$constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Protected ordinary methods are deferred');
 				if ($flavor === flavor::cpp && $method->is_abstract) throw new diagnostic($c->tokens->source, $c->offset(), 'Use = 0 for C++ abstract methods');
 				if ($flavor === flavor::cpp && $c->is(token_kind::assign)) {
 					if (!$method->is_virtual && !$method->is_override) throw new diagnostic($c->tokens->source, $c->offset(), 'Pure virtual method requires virtual or override');

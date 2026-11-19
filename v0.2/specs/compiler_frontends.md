@@ -399,7 +399,7 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs, protected-method expansion, callable variance,
+Abstract structs, protected static methods, callable variance,
 unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
 
@@ -443,3 +443,10 @@ See the [language contract](../../specs/match_v0_2.md) and
 constant labels, one required default and exact result types form the first slice.
 Literal `match(true)` additionally admits ordered boolean conditions and lazy results.
 General boolean subjects and broader selection forms remain deferred.
+
+### Protected instance methods
+
+PHP/JS use the protected member modifier; C++ uses protected member sections.
+Ordinary class/struct instance methods and class virtual/abstract methods share the
+existing lexical and declared-receiver access contract. Overrides may widen
+protected to public, never narrow visibility. Protected static methods stay deferred.

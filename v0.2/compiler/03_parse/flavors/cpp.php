@@ -54,14 +54,14 @@ final class Cpp_Grammar implements statement_grammar
 	}
 
 	/** C++ flavor places the explicit return type before the function name. */
-	public function function_header(Parser $parser, bool $static = false, bool $private = false): ast_function_declaration
+	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration
 	{
 		$start = $parser->cursor->position();
 		$type = $parser->return_type();
 		$name = $parser->cursor->name(token_kind::identifier);
 		$parameters = $parser->parameters();
 		return new ast_function_declaration($name, $type,
-			$start, $parser->cursor->position(), false, $parser->source_namespace(), $parameters, $static, $private);
+			$start, $parser->cursor->position(), false, $parser->source_namespace(), $parameters, $static, $private, $protected);
 	}
 
 	/** A leading type or auto declares a local; a simple-name write requires an existing binding. */

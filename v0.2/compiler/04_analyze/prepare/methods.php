@@ -15,9 +15,9 @@ final class Method_Preparation
 		$method->watch_signature($dependencies);
 		$dependencies?->watch($symbols->entry($method->parent->symbol_key()), $method);
 		$marked = $method->has_virtual_dispatch() || $method->is_final;
-		if ($marked && ($method->is_constructor() || $method->is_static || $method->is_private || $method->is_protected
+		if ($marked && ($method->is_constructor() || $method->is_static || $method->is_private
 			|| $method->short_name === '__destruct' || $method->parent->kind === record_kind::structure)) {
-			self::fail($method, 'Virtual modifiers require a public class instance method');
+			self::fail($method, 'Virtual modifiers require a public class instance method or a protected class instance method');
 		}
 		if (($method->is_abstract && (!$method->parent->is_abstract || $method->is_final))
 			|| ($method->is_abstract && $method->is_virtual && $method->source()->flavor !== flavor::cpp)) self::fail($method, 'Abstract method requires an abstract class and cannot be final or explicitly virtual');
@@ -96,6 +96,7 @@ final class Method_Preparation
 	/** Share the exact callable contract check between base overrides and interface obligations. */
 	private static function compatible(ast_function_declaration $method, ast_function_declaration $base): void
 	{
+		if (($method->is_private && !$base->is_private) || ($method->is_protected && !$base->is_private && !$base->is_protected)) self::fail($method, 'Override cannot narrow visibility');
 		if ($method->return_type_def() !== $base->return_type_def() || count($method->parameters) !== count($base->parameters)) self::fail($method, 'Override signature must match exactly');
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];

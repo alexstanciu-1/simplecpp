@@ -762,9 +762,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
 			}
 			$context = $this->owner->parent->parent;
-			if ($field->is_protected && (!($context instanceof ast_record_declaration)
-				|| !$context->definition->derives_from($field->parent->definition)
-				|| !$type->derives_from($context->definition))) {
+			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$syntax->settle_field($field->type_def());
@@ -1247,7 +1245,13 @@ final class Preparation
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false): void
 	{
-		$function->require_access($this->owner->parent->parent, $call);
+		$context = $this->owner->parent->parent;
+		$receiver = null;
+		if ($function->is_protected) {
+			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
+			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
+		}
+		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null);
 		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing), $ancestor_dispatch);
 	}
 
