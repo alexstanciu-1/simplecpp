@@ -43,11 +43,12 @@ foreach (flavor::cases() as $flavor) {
 		? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 	$v = $var('values');
 	$s = $var('strings');
+	$access = $flavor === flavor::js ? '.' : '->';
 	$code = $function('float', 'number', 'return 9.75;') . $decl('vector<int>', 'values', '[]')
-		. "$v" . '[] = 8;' . "$v" . '[] = true;' . "$v" . '[] = number();'
+		. $v . $access . 'reserve(5);' . "$v" . '[] = 8;' . "$v" . '[] = true;' . "$v" . '[] = number();'
 		. 'echo ' . "$v" . '[0], ' . "$v" . '[1], ' . "$v" . '[2];'
 		. $decl('vector<string>', 'strings', '[]') . "$s" . '[] = "a\\0b";'
-		. $decl('string', 'copy', "$s" . '[0]') . $var('copy') . ' = "changed";'
+		. $s . $access . 'reserve(16);' . $decl('string', 'copy', "$s" . '[0]') . $var('copy') . ' = "changed";'
 		. "$s" . '[] = ' . "$s" . '[0];' . 'echo ' . "$s" . '[0], ' . "$s" . '[1];'
 		. $decl('int', 'i', '0') . 'while (' . $var('i') . ' < 2) {' . "$v" . '[] = 4; ' . $var('i') . '++;}'
 		. 'echo ' . "$v" . '[3] + ' . "$v" . '[4]; return 8;';
@@ -60,7 +61,7 @@ foreach (flavor::cases() as $flavor) {
 	verify(!str_contains($cpp, 'std::vector') && !str_contains($cpp, 'vector<'), 'Application contains vector templates');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("819a\0ba\0b8")];
 	foreach ([
-		[$decl('int', 'values', '[]'), 'explicitly typed local initializer'],
+		[$decl('int', 'values', '[]'), 'Destination has no published collection initialization capability'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[] = "no";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[] = 1e100;', 'outside'],

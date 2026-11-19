@@ -54,3 +54,10 @@ alive through the call; modifying a temporary value does not modify its source c
 This does not authorize binding arbitrary properties to writable reference parameters.
 An empty shared owner fails using the normal checked access. Field visibility applies.
 See [compiler binding and verification](../../v0.2/compiler/docs/collection_methods.md).
+
+The v0.2 vector member spelling is `values->reserve(count)` in cpp/php and
+`values.reserve(count)` in js. It accepts an integer count and returns void for
+published runtime and application vectors. A successful call preserves logical
+size, contents and index bounds. Smaller requests retain capacity. A negative
+count raises `ValueError`; an unrepresentable allocation size raises a length
+error. Allocation failure preserves the existing elements.

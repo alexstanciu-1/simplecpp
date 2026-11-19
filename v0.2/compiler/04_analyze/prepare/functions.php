@@ -69,6 +69,7 @@ final class Function_Preparation
 				continue;
 			}
 			if ($statement instanceof ast_field_assignment) {
+				$statement->transfer = false;
 				$statement->conversion = null;
 				self::expression($statement->target);
 				self::expression($statement->value);

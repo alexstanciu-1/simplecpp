@@ -341,7 +341,7 @@ function renderVectors(array $plan): array {
         $h .= "class {$v['name']};\n";
         $element = new RuntimeConcreteType($plan, $v['element']);
         $instances[$v['name']] = concreteTemplate(vectorConcreteRecipe($v), ['e' => $element],
-            ['n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
+            ['enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
         $d .= $instances[$v['name']]['storage'];
     }
     $d .= "namespace detail { struct vector_access {\n";
@@ -407,6 +407,7 @@ function renderVectors(array $plan): array {
             $d .= "void $n::set($index index, $value value) { set($a, $b); }\n";
         }
         $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
+        if ($v['enable_reserve'] === '1') $h .= scalarInputFences($plan, 'reserve', [[$count]]);
         $h .= scalarInputFences($plan, 'remove', [[$count]]);
         $h .= scalarInputFences($plan, 'has', [[$count]], false, ' const');
         $h .= scalarInputFences($plan, 'append', array_map(static fn(string $type): array => [$type], $values));

@@ -20,6 +20,11 @@ final class initialization_transport
 	}
 }
 
+/** Whole-value move assignment preserves source value semantics when a private source dies. */
+interface private_value_transfer_type
+{
+}
+
 /** Generated keyed construction capability; strict key admission reuses the ordinary key contract. */
 interface keyed_initializer_type
 {

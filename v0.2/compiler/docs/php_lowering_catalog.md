@@ -340,6 +340,13 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 
 ## Published vectors and hashes
 
+In the tokenizer, the successful tail `$out->tokens = $items; return $out;` emits the following C++. Only the implementation unit includes `<utility>`. A later read of `$items`, or passing it to an earlier user reference parameter, restores ordinary assignment. Body preparation checks storage identity and private uses. The generated vector provider authorizes transfer of the whole value.
+
+```cpp
+(var_out_2).tokens = std::move(var_items_3);
+return var_out_2;
+```
+
 Published integer/string vectors use bulk construction; nested/application vectors retain generated append construction. Typed keyed locals support the four published integer/string hash combinations. User factories remain read-only and deferred; nested keyed input is not enabled.
 
 ```text

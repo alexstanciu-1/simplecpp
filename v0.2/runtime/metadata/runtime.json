@@ -678,6 +678,8 @@
       }
     },
     "storage": "concrete_buffer",
+    "reserve": "checked_capacity_preserve_size",
+    "transfer_assignment": "private_value_nothrow",
     "count_type": "int64",
     "read": "value_copy",
     "mutation": "explicit_set",

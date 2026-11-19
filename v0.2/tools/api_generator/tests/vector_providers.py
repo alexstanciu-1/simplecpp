@@ -77,6 +77,24 @@ def proof(work):
     assert baseline['submodules']['nodes']['core.vectors']['requires'] == ['core.scalars', 'core.string']
     assert '#include <scpp/numeric.hpp>' not in (output / 'public/scpp/vectors.hpp').read_text()
 
+    reduced = copy.deepcopy(metadata)
+    del reduced['vector']['transfer_assignment']
+    mp.write_text(json.dumps(reduced))
+    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+    assert 'private_value_transfer_type' not in (compiler / 'types/vectors.php').read_text()
+    assert b'private_value_transfer_type' in compiler_before['vectors.php']
+
+    reduced = copy.deepcopy(metadata)
+    del reduced['vector']['reserve']
+    without = emit(reduced, publication)
+    assert all('reserve' not in [m['name'] for m in v['methods']] for v in without['vectors'])
+    assert 'void reserve(' not in (output / 'public/scpp/vectors.hpp').read_text()
+    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+    assert "'reserve' =>" not in (compiler/'types/vectors.php').read_text()
+    emit(metadata, publication)
+    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+    assert snapshot() == original and "'reserve' =>" in (compiler/'types/vectors.php').read_text()
+
     # Invalid provider/header and effective cycles fail before changing a successful publication.
     for kind in ('missing', 'legacy_header', 'cycle', 'unpublished', 'duplicate'):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)

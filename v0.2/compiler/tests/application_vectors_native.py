@@ -66,10 +66,10 @@ def prove(work, flavor, libraries, memcheck):
               ('other',s['function']('other','void',[],decl('empty','vector<Point>','[]')),b'7:9:11:101:13',None),
               ('use',s['function']('exercise','int',[],'echo "retired"; return 0;'),b'retired',None),
               ('other',None,b'retired',None),('use',use,b'7:9:11:101:13',None)]
-    signature=s['function']('rejected','void',[('items','vector<Point>')],'')
+    signature=s['function']('observe','void',[('items','vector<Point>')],'')
     signature=signature.replace('$items','&$items') if flavor=='php' else signature.replace('items:', '&items:') if flavor=='js' else signature.replace(' items',' &items')
     field=s['record']('Rejected',s['field']('items','vector<Point>'))
-    edits += [('use',use+signature,None,'deferred'), ('use',use,b'7:9:11:101:13',None),
+    edits += [('use',use+signature,b'7:9:11:101:13',None), ('use',use,b'7:9:11:101:13',None),
               ('use',use+field,b'7:9:11:101:13',None), ('use',use,b'7:9:11:101:13',None)]
     other_present=False
     measurements=[]

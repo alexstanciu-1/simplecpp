@@ -373,7 +373,11 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     if ($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization']);
+    fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
+    $transfer = property_exists($m, 'transfer_assignment');
+    if ($transfer) literals($m, ['transfer_assignment' => 'private_value_nothrow']);
+    $reserve = property_exists($m, 'reserve');
+    if ($reserve) literals($m, ['reserve' => 'checked_capacity_preserve_size']);
     literals($m, ['source_type' => 'vector', 'storage' => 'concrete_buffer', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'Vector count requires signed integer type');
@@ -399,6 +403,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Vector publication header conflicts with provider');
     requireThat(hasType($plan, $count) && hasNative($plan, 'long long'), 'Vector requires published count and native long long construction');
     requireThat(hasValue($plan, 'bool_t'), 'Vector requires published boolean type');
+    if ($reserve) checkHeader($plan, 'scpp/value_error.hpp');
     $vectors = [];
     $demands = [];
     foreach(listValue(at($p, 'specializations')) as $item) {
@@ -455,6 +460,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         $add('size', $count, [], false, 'checked_count');
         $add('empty', 'bool_t', [], false, 'none');
         $add('clear', 'void', [], true, 'none');
+        if ($reserve) $add('reserve', 'void', [$count], true, $m->reserve);
         $add('remove', 'bool_t', [$count], true, 'erase_shift_missing_false');
         $add('has', 'bool_t', [$count], false, 'index_presence');
         $indices = $nativeIndex ? [$count, 'int']:[$count];
@@ -474,7 +480,9 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
             literals($m->initialization, ['mode' => 'ordered_elements']);
             $initialization = ['bulk' => listInitializationPlan($m->initialization->bulk ?? null, $family, $element, $name, $count)];
         }
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
+        $bulk = $initialization['bulk'] ?? null;
+        if ($reserve && $bulk !== null) requireThat(!in_array('reserve', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with reserve');
+        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);

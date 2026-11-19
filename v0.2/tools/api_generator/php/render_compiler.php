@@ -214,7 +214,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $source = $collection['source_type'] ?? ($collection['source_family'] . '<' . implode(',', $elements) . '>');
         foreach ($collection['methods'] as $method) {
             $name = $method['name'];
-            if (!in_array($name, ['clear', 'remove', 'has'], true)) continue;
+            if (!sourceCollectionMember($name)) continue;
             $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
             $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => type_{$collection['name']}::instance()->runtime_method('$name'),";
         }
@@ -315,7 +315,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 56,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 57,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }

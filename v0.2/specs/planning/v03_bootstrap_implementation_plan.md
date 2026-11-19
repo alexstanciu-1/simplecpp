@@ -285,23 +285,242 @@ Implementation and cpp/php/js native/incremental proofs are recorded in the
 [keyed initialization note](../../compiler/docs/keyed_initialization.md). Constants/static
 tables, broader element families and nested keyed construction remain follow-ups.
 
-### 2.5 Tokenizer direction — clarified 2026-11-19
+### 2.5 First tokenizer proof — implemented
 
-`preg_match_all` is a performance choice in the PHP bootstrap: character-by-character
-scanning was slow in PHP. It is not a required design for the compiled tokenizer.
-Review the native tokenizer in the earlier v0.1/v0.2 runtime outside this workspace
-folder and port the suitable implementation, adapting it to current token/source ownership,
-flavors, byte spans, UTF-8 handling and diagnostics. Locate and assess that donor before
-selecting its design; this note does not claim it has been inspected or can be copied
-unchanged. Keep retained structures light and publication/incremental recovery explicit.
+**Question.** How close does an ordinary scanner written in Simple C++ come to
+handwritten C++ when both recognize the same input and return the same tokens?
 
-PCRE/`preg_match_all` support can follow with the broader library port from v0.1 and the
-pre-reset v0.2 work. It must not block the tokenizer milestone. Compiled scanning avoids
-PHP interpreter per-character overhead, but throughput and compile-time claims still
-need measurement. Verify the selected port against the current PHP tokenizer on valid
-and malformed inputs, all flavors, token kinds/spans, diagnostics and source-edit recovery.
-This is a separate future slice; do not change the active PHP tokenizer in the keyed work.
+The v0.1 runtime at tag `v0.1.77` uses a scan-local `std::string_view` for spelling
+comparisons. The branch's `my-try-cpp` scanner compares spans in an immutable byte
+owner and gives its token builder the previous token count as a capacity hint.
+Use these as references for the experiment. The current PHP tokenizer owns the
+lexical contract. [v0.1 scanner](../../../runtime/include/modules/tokenizer/tokenizer.hpp)
+· [my-try-cpp scanner](../../../compiler/my-try-cpp/src/tokenize/scanner.cpp)
+· [PHP tokenizer](../../compiler/02_tokenize/tokens.php)
 
+**Source slice.** Write the byte loop, lookahead, keyword classification and token
+append in Simple C++ in cpp/php/js flavors. Start with the existing checked byte
+index operation. Scan valid ASCII identifiers (including underscores and digits
+after the first byte), a small documented keyword set drawn from the selected
+flavor, space/tab/CR/LF, and the overlapping operators `=`, `==` and `===`.
+Match a whole identifier before classifying it and take the longest operator.
+Reuse the milestone-1 logical token model. One result owns the source snapshot
+and an ordered vector of kind, byte offset and byte length. Compare spelling
+in place. Inspect emitted C++ for byte-access calls, copied substrings and token
+storage growth. [Token/source proof](../../compiler/docs/token_source_proof.md)
+
+**Verification checklist**
+
+- [x] Use the production PHP tokenizer to generate expected output per input flavor.
+  Compare count and every ordered (kind ID, byte offset, byte length) tuple, including
+  exact source slices. Cover empty and whitespace-only files, CRLF, long identifiers,
+  keyword prefixes/suffixes, adjacent operators and an operator ending at EOF.
+  For an unsupported ASCII byte selected from the PHP oracle,
+  compare the first diagnostic and byte offset. Choose malformed fixtures against the
+  oracle separately for each flavor. A valid token outside the proof vocabulary is
+  outside the comparison corpus.
+- [x] Rescan after a small source edit, then an invalid edit and recovery. Compare
+  recovered tokens with a fresh scan. A retained earlier result must still resolve
+  its spans against the original bytes. Exercise an unchanged sibling source to
+  verify reuse at the existing incremental boundary.
+- [x] On dev002, build generated cpp/php/js and a handwritten C++ scanner with
+  both Clang and GCC. Use identical corpus bytes, lexical work, logical token
+  fields, output ownership and capacity policy. Record native token size and
+  initial capacity for each implementation. Measure a cold estimate separately
+  from an edited-input scan given the prior count wherever the storage API supports
+  that hint. Disclose any capacity mismatch in the comparison.
+- [x] Benchmark in-memory scans on identifier-heavy, operator-heavy and mixed
+  inputs. Preload bytes, warm up and repeat, consume the result and verify the complete token dump
+  against PHP in a separate run of the same executable. Report median and spread in MiB/s and tokens/s,
+  with corpus sizes and token counts. Exclude file I/O, parsing and output formatting.
+  Count allocations and allocated bytes per scan in a separate instrumented run.
+- [x] Record clean compile and link wall times, emitted C++ bytes, and separate
+  Clang frontend/backend profiles. Report Simple C++ prepare/emit separately.
+  Fix and record compiler versions, flags, optimization, jobs, runtime-object reuse
+  and cache settings. Report generated-to-handwritten ratios per compiler and corpus.
+  Use any measured gap to select a follow-up in byte access, spelling comparison
+  or token storage.
+
+The first proof ends with parity results, generated-code inspection and a dev002
+comparison. Full lexical coverage (including UTF-8 validation, strings, comments
+and flavor-specific syntax), production integration, public string views and the
+PCRE library port are later decisions.
+
+**Results on dev002, 2026-11-19.** All 12 combinations of source flavor, scanner
+implementation and native compiler matched PHP. The resident compiler reused the
+unchanged sibling token list, preserved its output through a failed edit, and
+matched fresh emission on recovery. The native test retained earlier scanner
+results while later input changed and failed. The proof represents the first
+lexical failure with its message and byte offset in the returned result.
+
+Without a previous-count hint, generated throughput was 0.35–0.42× handwritten
+for identifiers, 0.54–0.70× for operators and 1.19–1.29× for mixed input. Generated
+scans used six additional allocations per corpus. Handwritten scans given the
+previous revision's count used two allocations total and led on all three corpora.
+The application vector currently has no source reserve operation. Separate byte
+access and token-vector publication measurements would help identify where to
+invest next. [Report and reproduction](benchmarks/tokenizer/report.md)
+
+### 2.5 Token storage experiment — measured on dev002
+
+All four combinations of prior-count reserve and final vector copy/move passed
+PHP token parity and retained-result edit recovery across cpp/php/js with Clang
+and GCC. In the mixed corpus, reserve alone gave 1.86–2.12× throughput and reduced
+allocation calls from 19 to 8. Moving alone gave 1.01–1.08× and reduced calls
+from 19 to 17. Together they yielded 1.94–2.30× and six allocation calls.
+The experiment modified isolated emitted units. A candidate first language slice
+is a metadata-published reserve operation that checks the capacity request and
+preserves vector size, element lifetimes and checked indexing. The caller can use
+the last successful count as a bounded hint. Last-use ownership transfer needs its
+own proof before generalization. [Storage comparison](benchmarks/tokenizer/storage/report.md)
+
+### 2.5 Source-level vector reserve — implemented
+
+The scanner in all three flavors calls the metadata-published vector member.
+Its driver starts with a zero hint and preserves the last successful count through a
+failed edit. The scanner caps the requested capacity at the new source byte length.
+Source lowering emits the direct member call and retains final vector copy assignment.
+
+On dev002 the cpp/php/js programs matched the PHP oracle on Clang and GCC for
+zero, low and high hints, an invalid edit and restoration. Both published integer
+vectors and concrete token vectors passed size, read/write bounds, negative count,
+overflow, failed allocation and safe subsequent growth checks. With near-exact
+hints the mixed corpus used eight allocations instead of nineteen and ran at
+212–266 MiB/s. [Measurements](benchmarks/tokenizer/storage/source-reserve.dev002.json)
+
+**Capacity at initialization — proposed.** Allow an empty destination value to
+request capacity when it is constructed. A candidate PHP-flavor spelling is
+`$items = vector<Token>::with_capacity($previous_count);`. This is a named factory
+proposal. It returns size zero with room for at least the requested number of
+elements; the first append produces element zero. Reuse the published reserve
+checks for zero, negative and excessive counts and preserve safe later growth.
+Keep the provider responsible for storage. Check existing static-factory syntax
+for parameterized types before choosing the final spelling. In standard C++,
+`std::vector<Token>(n)` constructs **n elements**. Rust's
+`Vec::with_capacity(n)` is precedent for the named capacity contract.
+[Standard C++ vector constructors](https://eel.is/c++draft/vector.cons) ·
+[Rust Vec capacity factory](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.with_capacity)
+
+### 2.5 Tokenizer integration roadmap — planned
+
+The isolated whole-file prototype reached 98.5% of handwritten throughput on Clang
+and 99.2% on GCC for one warm scan of each of nine sources on dev002. Those figures
+describe the combined prototype. Use the individual experiments to decide which
+changes to integrate and verify each through the ordinary source compiler.
+[Whole-file comparison](benchmarks/tokenizer/byte_access/source_native.md) ·
+[Native-work inventory](benchmarks/tokenizer/native_work.md)
+
+| Order | Integration decision | Owner and reuse |
+|---|---|---|
+| In use | Reserve using a previous count when available. | The caller chooses the hint. The published vector operation preserves size and checked access. |
+| 1 | Transfer an owned value at a proven last use in assignment. Start with publication of the tokenizer’s local vector. | Body preparation proves eligibility. The value provider defines transfer semantics and the C++ emitter selects the assignment form. |
+| 2 | Establish one retained source owner, then acquire a scoped checked byte view. | The scanner chooses the owner. A runtime capability can serve parsers, decoders and other byte readers. Verify validity for inline and heap strings before exposing the view. |
+| 3 | Construct fresh values directly in destination storage when the destination supports it. | Preparation preserves argument evaluation and construction semantics. The destination provider owns capacity, lifetime, growth and failure. Prove reuse with a second record type. |
+| 4 | Use ordinary constant lookup tables where source workloads justify them. Keep the tokenizer’s short-circuit equals lookahead. | Byte classifications belong to the scanner. Constant table lookup can also serve decoding and escaping. |
+| Later | Revisit range facts when a second consumer justifies their preparation cost. | The measured nonnegative cursor is a local proof. General range analysis and unchecked indexing are outside the first slice. |
+
+### 2.5 First integration slice — last-use transfer of owned values
+
+**Contract.** Source assignment retains value semantics. Lowering may consume a
+private source value when the destination receives the same value and no permitted
+observer can distinguish the transfer through later reads, aliases, cleanup,
+identity, required checks or effects. Eligibility belongs to the assignment of
+the **whole value**. A concrete provider must support a value-preserving,
+nonthrowing transfer assignment, release previous destination ownership correctly,
+and leave the source safe to destroy. Verify that eliding the copy is allowed by
+the source contract, including any observable copy hooks or required failures.
+A C++ move constructor or an element-level move trait alone does not establish
+this contract. [Runtime ownership design debt](safe_low_level_concepts_debt.md)
+
+**First admitted shape.** At the successful exit of the scanner, a plain owned
+local is assigned with an identity conversion to an exact-type field of a
+distinct, private local result, immediately followed by returning that result.
+Earlier loops may populate the local and earlier exits may discard it. The
+publication itself executes once, on a straight-line tail. For
+`out.tokens = items; return out;`, C++ may select the provider’s move assignment.
+An early lexical error still drops the unpublished local. Keep returning the
+result through its existing lowering. The field name, vector family, token type
+and source spelling play no part in the eligibility query.
+
+**Ownership and preparation budget.**
+
+- Reuse resolved storage identities, prepared assignment conversion and the
+  type provider’s generated facts. Body preparation owns the last-use and
+  alias decision. Start at candidate tail assignments and use existing facts or
+  a bounded body-local use check. Keep syntax nodes light. A missing proof selects
+  ordinary copy assignment.
+- Check the source’s history as well as the tail. A writable reference, escaped
+  handle to the local or its elements, captured binding, or observable cleanup
+  can survive the last textual mention. Distinguish such aliases from independent
+  earlier value copies. A later use of the same storage, even under another name,
+  invalidates transfer. Require a stable destination disjoint from the source.
+- Known nonescaping operations such as populating the vector must remain eligible
+  under their actual contracts. Treat unknown alias effects conservatively.
+  Parameters, globals, fields as sources, self/overlapping assignment and
+  uncertain control flow retain existing lowering in this slice.
+- The prepared decision belongs to the body revision. C++ field-assignment emission
+  consumes it without a second liveness walk or a handwritten vector branch.
+  Reuse the existing provider/dependency publication path for type eligibility.
+  Review the existing field-assignment owners in
+  [preparation](../../compiler/04_analyze/prepare/prepare.php) and
+  [C++ emission](../../compiler/05_backend/cpp/emit.php).
+
+**Implementation and verification, 2026-11-19.** The vector provider opts into
+`private_value_nothrow` for the whole value. Preparation screens the final two
+statements, then reads existing block occurrence indexes for the candidate's two
+resolved locals. The assignment carries one boolean. Earlier ordinary copies,
+append and validated nonretaining receiver operations are admitted. Unknown
+uses, for/foreach headers and nonlocal storage select the existing copy path.
+No program-wide liveness state or cross-body reads are needed.
+
+- [x] The original scanner emits `std::move` across cpp/php/js. Matched native
+  runs on dev002 with Clang and GCC verified all 11 oracle fixtures, full spans,
+  empty input, lexical error with no partial tokens, recovery and retained results.
+- [x] With the same 5,120-token mixed input and reserve hint, all six native
+  pairs measured 8 allocations / 286,834 bytes with the capability disabled and
+  6 / 163,930 with transfer. The difference comprises 122,880 record bytes
+  and 24 storage bytes. No scanner throughput claim follows from allocation counts.
+  Replacing an already populated destination preserved token parity. A separate
+  counted-element probe checks release of the old element, absence of element
+  copy/move during transfer, and final destruction.
+- [x] A later read or earlier writable reference restores copy. Removal restores
+  transfer. Tests include nested shadowing, an independent earlier value copy,
+  overlapping field input, ordinary string assignment, a nonidentity conversion,
+  and diagnostics plus recovery after an invalid edit. Removing provider eligibility
+  in fresh compiler sessions restored the copy without changing scanner source.
+- [x] Resident output matched fresh output across all three flavors. No-op builds
+  prepared and emitted zero bodies. Native Ninja builds reused the caller and
+  records objects on scanner body edits on both compilers.
+- [ ] Full caller **preparation and emission** reuse remains open. Even with the
+  records in a separate unit and an unchanged signature, retiring a function
+  whose signature watches an application type conservatively notifies its callers.
+  Here the scanner and its direct caller are prepared again, and the unrelated
+  function is reused. Reworking nominal-signature invalidation must preserve
+  notification on simultaneous type replacement and import rebinding.
+
+**Preparation cost on dev002.** PHP 8.5, Xdebug off, CPU 7, medians of 11 warm
+batches. Full-body measurements include reset and preparation, with parsing and
+emission excluded. Proof-only measurements run on the already prepared tree.
+The screening column uses the fixture's entry body, which has no candidate.
+
+| Flavor | Scanner body before (µs) | Scanner body after (µs) | Candidate proof alone (µs) | Noncandidate screen (µs) |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 532.96 | 542.78 | 9.14 | 0.09 |
+| php | 457.71 | 467.06 | 8.36 | 0.08 |
+| js | 519.93 | 525.22 | 8.81 | 0.08 |
+
+The resident project check also records per-edit and no-op wall times (including
+frontend, preparation, emission and bundle I/O). In the local verification run,
+restoration took 5.2–6.3 ms and the following no-op 1.5–1.8 ms.
+[Preparation measurement](benchmarks/tokenizer/transfer_preparation.php) ·
+[Incremental proof](../../compiler/tests/last_use_transfer.py) ·
+[Lowering catalog](../../compiler/docs/php_lowering_catalog.md#published-vectors-and-hashes)
+
+**Deferred.** New source move syntax, consuming call parameters, whole-program
+alias analysis, general control-flow liveness, changing shared/unique semantics,
+source/view integration, direct slot construction, cursor proofs and scanner
+classification changes are separate decisions. The first slice changes only the
+lowering of proven assignments.
 
 ## 3. Object relationships — a small AST family
 

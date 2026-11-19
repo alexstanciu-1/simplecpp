@@ -264,6 +264,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    if (isset($publication->vectors, $metadata->vector->reserve)) $headers[] = 'scpp/value_error.hpp';
     foreach ($publication->string->functions ?? [] as $name) {
         $function = at($metadata->string->functions, $name);
         if (in_array($function->implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) $headers[] = 'scpp/value_error.hpp';

@@ -92,6 +92,7 @@ final class Preparation
 		} finally {
 			$this->readonly_initialization = null;
 		}
+		Last_Use_Transfer::prepare($syntax);
 		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups,
 			$target);
 	}

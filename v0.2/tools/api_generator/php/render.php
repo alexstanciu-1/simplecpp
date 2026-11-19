@@ -88,7 +88,7 @@ function render(array $plan): array {
     }
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $files = [];
-    if ($valueErrors) {
+    if ($valueErrors || in_array('1', array_column($plan['vectors'] ?? [], 'enable_reserve'), true)) {
         $files['public/scpp/value_error.hpp'] = BANNER . "#pragma once\n#include <stdexcept>\nnamespace scpp { class ValueError : public std::invalid_argument { public: using std::invalid_argument::invalid_argument; }; }\n";
         $d .= includeHeader('scpp/value_error.hpp');
     }

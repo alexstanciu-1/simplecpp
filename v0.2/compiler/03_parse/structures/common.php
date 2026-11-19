@@ -163,6 +163,11 @@ class ast_name_expression extends ast_expression
 		return $declaration;
 	}
 
+	public function refers_to(ast_local_binding $local): bool
+	{
+		return $this->binding === $local;
+	}
+
 	public function local_def(): ast_local_binding
 	{
 		return $this->binding instanceof ast_local_binding

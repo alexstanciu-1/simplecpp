@@ -1,3 +1,4 @@
+#include <scpp/value_error.hpp>
 #include "vector_buffer.hpp"
 #include "concrete_index_impl.hpp"
 #include <cassert>
@@ -65,6 +66,11 @@ int main() {
         auto moved = static_cast<ProbeVector&&>(values); assert(values.empty() && moved.size() == 129);
         Probe output{999}; scpp::int64 position = 0, key = -1;
         assert(moved.iteration_next(position, moved.iteration_limit(), key, output) && output.value == 1 && key == 0);
+        const int live_before = Probe::live, copies_before = Probe::copies, moves_before = Probe::moves;
+        destination = static_cast<ProbeVector&&>(moved);
+        assert(Probe::live == live_before - 1 && Probe::copies == copies_before && Probe::moves == moves_before);
+        assert(moved.empty() && destination.size() == 129);
+        destination.clear(); assert(Probe::live == live_before - 130);
         moved.clear(); assert(!moved.iteration_next(position, 129, key, output) && output.value == 1);
     }
     assert(Probe::live == 0);

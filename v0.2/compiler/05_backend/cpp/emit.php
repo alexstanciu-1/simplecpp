@@ -841,7 +841,13 @@ CPP;
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$type = $statement->target->type_def();
 				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
-				$lines[] = "\t" . $field . ' = ' . $this->conversion($type, $statement->conversion, $value, $statement->value) . ';';
+				if ($statement->transfer) {
+					$required_headers['utility'] = true;
+					$rhs = 'std::move(' . $value . ')';
+				} else {
+					$rhs = $this->conversion($type, $statement->conversion, $value, $statement->value);
+				}
+				$lines[] = "\t" . $field . ' = ' . $rhs . ';';
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */

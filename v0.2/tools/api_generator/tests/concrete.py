@@ -16,7 +16,7 @@ def prove(work, sanitize):
     source = work / 'probe.cpp'
     run(['php', ROOT/'tools/api_generator/tests/concrete.php', source])
     for compiler in ['clang++', 'g++']:
-        flags = ['-std=c++23', '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
+        flags = ['-std=c++23', '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'runtime/generated/public'), '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
         if sanitize and compiler == 'clang++': flags += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer']
         run([compiler, *flags, source, '-o', work/'probe'])
         run([work/'probe'])

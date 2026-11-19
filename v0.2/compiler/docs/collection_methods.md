@@ -219,3 +219,17 @@ equivalence, no-op/native caller reuse, source-function precedence, imports and 
 rejection of application-value lookup. Provider relocation/retirement verifies both
 binding headers and the nullable result identity. Application optional values and
 coalescing remain separate slices.
+
+## Vector reserve
+
+The vector metadata policy `checked_capacity_preserve_size` publishes the mutable
+member `reserve(int): void` on runtime and application vector types in all three
+flavors. It uses the same receiver and argument preparation as other collection
+methods. The optional concrete recipe emits the checked native member for both
+kinds of vector. Removing the capability also removes the compiler binding and
+native API. Reservation never creates indexable elements. Construction, relocation
+and cleanup remain owned by the vector storage.
+
+The scanner accepts the last successful token count, caps the hint at the current
+source byte length and reserves its private vector before scanning. Failed edits
+preserve the previous count. Publication still copies the completed vector.

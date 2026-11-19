@@ -237,6 +237,8 @@ final class ast_field_assignment extends ast_statement
 	/** Native owning assigned expression. */
 	public readonly ast_expression $value;
 
+	/** Prepared fact: true only for a proven terminal whole-value transfer. */
+	public bool $transfer = false;
 	/** Prepared fact: assignment conversion, cleared before each preparation. */
 	public ?int $conversion /** uint16 */ = null;
 
