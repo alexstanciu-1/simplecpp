@@ -179,7 +179,7 @@ final class Parser
 			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
-			if ($value instanceof ast_qualified_data) return $this->plain_property_assignment($value);
+			if ($value instanceof ast_qualified_data || $value instanceof ast_called_type_name) return $this->plain_property_assignment($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -751,7 +751,8 @@ final class Parser
 		else {
 			$initializer = $this->assignment_value();
 		}
-		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression && !($initializer instanceof ast_qualified_data))) {
+		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression
+			&& !($initializer instanceof ast_qualified_data) && !($initializer instanceof ast_called_type_name))) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), $diagnostic);
 		}
 		return $initializer;
@@ -779,6 +780,7 @@ final class Parser
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		}
+		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Late-static properties support plain writes');
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expression-qualified static properties support plain writes');
 		}
@@ -860,9 +862,7 @@ final class Parser
 		$flavor = $c->tokens->source->flavor;
 		if (!$scope && ($flavor !== flavor::js || !$c->next_is(token_kind::dot))) return null;
 		$name = $c->tokens->text_at($c->position());
-		if ($scope && $name === ($flavor === flavor::cpp ? 'Static' : 'static')
-			&& ($c->tokens->tokens[$c->position() + 2]->kind ?? null) === token_kind::identifier
-			&& ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen) return call_qualifier::called_type;
+		if ($scope && $name === ($flavor === flavor::cpp ? 'Static' : 'static')) return call_qualifier::called_type;
 		return match ($flavor) {
 			flavor::php => match ($name) {
 				'self' => call_qualifier::lexical_self, 'parent' => call_qualifier::lexical_parent, default => null,
@@ -878,7 +878,7 @@ final class Parser
 		};
 	}
 
-	/** Self names the lexical owner; parent and late-static method names are relative to their prepared lookup type. */
+	/** Self names the lexical owner. Parent and late-static member names are resolved during preparation. */
 	private function qualified_member(call_qualifier $qualifier): ast_expression
 	{
 		$c = $this->cursor;
@@ -894,6 +894,7 @@ final class Parser
 		if ($self) $name = $this->declaring_type . '::' . $name;
 		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, $self ? token_kind::scope : $separator, null, $qualifier);
 		$constant = $flavor === flavor::php && !$variable;
+		if ($qualifier === call_qualifier::called_type) return new ast_called_type_name($name, $start, $c->position(), constant_only: $constant);
 		if (!$self) return new ast_ancestor_name($name, $start, $c->position(), constant_only: $constant);
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $constant);
 	}

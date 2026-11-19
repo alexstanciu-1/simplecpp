@@ -119,7 +119,48 @@ def prove(work, flavor):
     revisions(ancestor, flavor, src, edits)
 
 
+def late_static(work, flavor):
+    _, (_, klass, _, static, sep) = sources(flavor)
+    prop, const, name = {
+        'php': ('static int $n=0;', 'const int STEP=', '$n'),
+        'cpp': ('static int n=0;', 'static constexpr int STEP=', 'n'),
+        'js': ('static n:int=0;', 'const STEP:int=', 'n'),
+    }[flavor]
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    vis = ': ' if flavor == 'cpp' else ' '
+    n, step = late+name, late+'STEP'
+    body = static('tick', f'{n}={n}+{step};return {n};')
+    base = klass('Base', 'public'+vis+prop+body)
+    def child(owner, value, visibility='public', field=''):
+        return klass(owner, field+visibility+vis+const+str(value)+';', 'Base')
+    main = f'echo Left{sep}tick(),Right{sep}tick(),Base{sep}{name};return 8;'
+    left, right = child('Left', 2), child('Right', 5)
+    src = dict(base=base, left=left, right=right, main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'277'), (None, None, b'277'), ('left', child('Left', 4), b'499'),
+        ('left', child('Left', 4, 'private'), 'Cannot access private constant Left::STEP'),
+        (None, None, 'Cannot access private constant'), ('left', left, b'277'),
+        ('main', f'echo Left{sep}tick(),Right{sep}tick();return 8;', b'27'),
+        ('base', base.replace('public'+vis+prop, 'protected'+vis+prop), b'27'),
+        ('left', child('Left', 2, 'protected'), 'Cannot access protected constant Left::STEP'),
+        ('left', left, b'27'), ('base', base, b'27'), ('main', main, b'277'),
+        ('right', klass('Right', '', 'Base'), 'Unknown constant:'), ('right', right, b'277'),
+        ('main', f'echo {step};return 8;', 'requires a called type'), ('main', main, b'277'),
+        ('base', base.replace(f'{n}={n}+{step}', f'{step}=1'), 'Assignment requires a writable static property'),
+        ('base', base, b'277'),
+        ('main', f'echo Left{sep}tick(),Right{sep}tick(),Left{sep}{name},Right{sep}{name};return 8;', b'2777'),
+        ('base', klass('Base', body), None),
+        ('left', child('Left', 2, field='public'+vis+prop), None),
+        ('right', child('Right', 5, field='public'+vis+prop), b'2525'),
+        ('left', child('Left', 2, field='private'+vis+prop), 'Cannot access private static property'),
+        ('left', child('Left', 2, field='public'+vis+prop), b'2525'),
+    ])
+
+
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-static-data-') as tmp:
         for flavor in ['php', 'cpp', 'js']:
             prove(Path(tmp), flavor)
+            late = Path(tmp)/'late'
+            late.mkdir(exist_ok=True)
+            late_static(late, flavor)

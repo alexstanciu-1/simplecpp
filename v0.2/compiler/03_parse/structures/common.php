@@ -191,6 +191,11 @@ final class ast_qualified_data extends ast_name_expression
 	}
 }
 
+/** Data selected from the current called type, e.g. static::$count or Static::STEP. */
+final class ast_called_type_name extends ast_name_expression
+{
+}
+
 /** A lexical ancestor data name, e.g. parent::$count or super.STEP. */
 final class ast_ancestor_name extends ast_name_expression
 {

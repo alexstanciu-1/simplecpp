@@ -422,6 +422,9 @@ select through that called type and forward it. Expression-qualified static call
 the qualifier's declared type and evaluate that expression exactly once, consistently
 with the [static-member contract](static_members_v0_2.md).
 
+Inside a static method, PHP spells late-selected data access `static::$property` and
+`static::CONSTANT`, C++ uses `Static::name`, and JS uses `static::name`. Reads and
+plain property assignments check visibility from the lexical declaring type.
 Late-selected properties keep the actual declaring owner's single storage location;
 constants keep their selected declaration. No inherited storage duplication is implied.
 Compatible descendant static-method redeclarations are part of this extension, with

@@ -88,6 +88,13 @@ PHP and JS `static::step()` and C++ `Static::step()` start method lookup at the 
 and forward it. Visibility is checked from the body’s lexical owner. The selected declaration supplies
 defaults and argument conversions. Lookup watches each nearer method slot, including empty slots,
 so adding or deleting a descendant declaration updates the inherited caller on the next compilation.
+Late-static property reads, plain assignments and constant reads start at the same called type.
+For example, PHP `static::$n = static::STEP;` uses the called type to find both declarations.
+C++ spells this `Static::n = Static::STEP;` and JS spells it `static::n = static::STEP;`.
+The ordinary static-data binder checks visibility from the lexical owner and watches the selected
+declarations. Siblings that inherit a property write the same storage. Siblings that each declare
+their own property write separate storage. Preparation resolves both cases before C++ emission.
+
 An expression qualifier establishes its declared record type. Ordinary instance bodies use their
 existing lexical lookup without a runtime called-type context. Shared construction via `new static()` is deferred.
 

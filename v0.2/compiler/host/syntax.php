@@ -111,6 +111,9 @@ final class Syntax_Inspection
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
 			return $row;
 		}
+		if ($expression instanceof ast_called_type_name) {
+			return ['kind' => 'late_static_data', 'name' => $expression->name, 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_qualified_data) {
 			return ['kind' => 'qualified_static_data', 'receiver' => self::expression($expression->receiver),
 				'name' => $expression->name, 'span' => self::span($expression)];

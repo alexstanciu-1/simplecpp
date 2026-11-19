@@ -598,6 +598,7 @@ final class Preparation
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
+			if ($root instanceof ast_called_type_name && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Late-static properties support plain writes');
 			if ($root instanceof ast_qualified_data && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Expression-qualified static properties support plain writes');
 			$this->static_destination($root);
 			return null;
@@ -916,9 +917,12 @@ final class Preparation
 		{
 			$this->name_lookups++;
 			$name = $syntax->name;
-			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_qualified_data) {
-				$lookup = $syntax instanceof ast_qualified_data ? $this->static_qualifier($syntax->receiver, $initializing)
-					: $this->lexical_base($syntax, 'Ancestor access');
+			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
+				$lookup = match (true) {
+					$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
+					$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
+					default => $this->static_qualifier($syntax->receiver, $initializing),
+				};
 				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
 				return;
 			}
@@ -1245,13 +1249,19 @@ final class Preparation
 		$this->source_call($call, $symbol, $function, $initializing);
 	}
 
+	/** Read the called type attached to this prepared static body. */
+	private function called_record(ast_node $site, string $operation): ast_record_declaration
+	{
+		return $this->owner->parent->instance?->called->declaration()
+			?? throw new diagnostic($site->source(), $site->byte_start(), $operation . ' requires a called type in a static method');
+	}
+
 	/** Exact type-qualified calls require a method; ambiguous namespace paths may continue lookup. */
 	private function qualified_call(ast_call_expression $call, string $qualified, ?string $initializing, bool $required): bool
 	{
 		$late = $call->qualifier === call_qualifier::called_type;
 		if ($late) {
-			$record = $this->owner->parent->instance?->called->declaration()
-				?? throw new diagnostic($call->source(), $call->byte_start(), 'Late-static call requires a called type in a static method');
+			$record = $this->called_record($call, 'Late-static call');
 			$name = $call->name;
 		} else {
 			$separator = strrpos($qualified, '::');
