@@ -544,6 +544,24 @@ final class Preparation
 		}
 	}
 
+	/** Resolve a qualified data name once; PHP spells properties separately from constants. */
+	private function bind_static_data(ast_name_expression $syntax, string $qualifier, string $name): bool
+	{
+		$type = $this->symbols->entry($syntax->root()->type_key($qualifier));
+		$this->dependencies?->watch($type, $this->owner);
+		$record = $type->declaration();
+		if (!($record instanceof ast_record_declaration)) return false;
+		$properties = !$syntax->constant_only;
+		$constants = !$properties || $syntax->source()->flavor !== flavor::php;
+		$member = $record->definition->static_data_member($name, $properties, $constants, $this->symbols,
+			$this->owner, $this->dependencies);
+		if ($member === null) {
+			$message = $constants ? 'Unknown constant: ' : 'Unknown static property: ';
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), $message . $qualifier . '::' . $name);
+		}
+		return $this->bind_literal($syntax, $this->symbols->entry($member->symbol_key()));
+	}
+
 	/** Watch missing and inaccessible members so visibility edits also recover an unchanged caller. */
 	private function bind_literal(ast_name_expression $syntax, symbol_entry $symbol): bool
 	{
@@ -917,6 +935,9 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
 			}
 			if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return;
+			$scope_separator = strrpos($name, '::');
+			if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
+				substr($name, $scope_separator + 2))) return;
 			if (!$syntax->constant_only) {
 				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
 				$symbol = $this->symbols->entry($key);
@@ -930,15 +951,7 @@ final class Preparation
 				if ($this->bind_literal($syntax, $symbol)) return;
 				// C++ and JS share the namespace separator with type-qualified members.
 				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
-					$qualified = substr($name, 0, $last) . '::' . substr($name, $last + 1);
-					$property = $this->symbols->entry('var:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
-					if ($this->bind_literal($syntax, $property)) return;
-					$symbol = $this->symbols->entry($syntax->root()->constant_key($qualified));
-					if ($this->bind_literal($syntax, $symbol)) return;
-					if ($this->symbols->resolve('class:' . Source_Names::resolve(substr($name, 0, $last), $this->owner->scope->namespace))
-						instanceof ast_record_declaration) {
-						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown constant: ' . $qualified);
-					}
+					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
 				}
 				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
 					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));

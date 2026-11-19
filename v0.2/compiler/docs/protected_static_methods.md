@@ -27,10 +27,12 @@ record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
 The existing method lookup watches each visited record and named method slot and
 binds the selected Base declaration directly, including its defaults and visibility.
 PHP `parent::` and JS `super.` start at the lexical base. C++ names the base explicitly.
-Protected static properties and constants use exact declaring-type names or lexical self.
+Protected static properties and constants use declaring-type names, descendant names or lexical self.
 A descendant may read `Base::STEP` and update `Base::$count`. Inside Base,
-`self::$count`, `Self::count` or `class.count` selects the same storage. Data
-lookup through descendant names or descendant self is deferred. The literal
+`self::$count`, `Self::count` or `class.count` selects the same storage. Inside Child,
+`Child::$count` and `self::$count` also resolve to Base’s storage. Each visited record
+is watched for replacements, and the selected member symbol supplies storage or the
+constant fact through the ordinary binder. The literal
 declaration stores one visibility enum. Binding uses the same protected ancestry
 query and dependency watches as static calls, including on a failed access.
 
@@ -68,7 +70,7 @@ with no receiver, retain/release operation or runtime visibility test.
 Nineteen incremental checkpoints per flavor compare retained and fresh diagnostics
 or emitted artifacts. They cover defaults, private/public/protected edits, intermediate-base changes that select a different implementation, deletion, retries without edits and recovery. Successful revisions
 build and execute with Clang. Negative checks cover external calls through the declaring and descendant types.
-The protected static data fixture compares 21 checkpoints per flavor against fresh
+The protected static data fixture compares 38 checkpoints per flavor against fresh
 builds, including visibility edits, base replacement, deletion and recovery.
 Twelve additional ancestor-call checkpoints per flavor exercise both caller kinds,
 intermediate and immediate base changes, private access, deletion and recovery.

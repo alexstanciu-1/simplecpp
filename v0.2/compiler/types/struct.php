@@ -294,6 +294,19 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
 	}
 
+	/** Each visited record owns its local indexes; return the original declaration for binding. */
+	public function static_data_member(string $name, bool $properties, bool $constants, scope $symbols,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?ast_literal_declaration
+	{
+		for ($type = $this; $type !== null; $type = $type->base_type) {
+			$record = $type->declaration;
+			$dependencies?->watch($symbols->entry($record->symbol_key()), $watcher);
+			if ($properties && isset($record->static_properties[$name])) return $record->static_properties[$name];
+			if ($constants && isset($record->constants[$name])) return $record->constants[$name];
+		}
+		return null;
+	}
+
 	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
 	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
 	{

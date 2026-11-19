@@ -1,4 +1,4 @@
-"""Protected static storage and constants through declaring-type and lexical self names."""
+"""Protected static storage and constants through declaring, descendant and lexical self names."""
 import tempfile
 from pathlib import Path
 
@@ -33,9 +33,36 @@ def prove(work, flavor):
         ('base', base('public'), b'8'), ('base', base(), None),
         ('main', f'echo {constant};return 8;', 'Cannot access protected constant Base::STEP'), ('base', base(constant_visibility='public'), b'2'),
         ('base', base(), None), ('main', main, b'24'),
-        ('child', child(f'return {lexical}STEP;'), None),
-        ('child', child(f'return Child{sep}{name};'), None), ('child', update, b'24'),
+        ('child', child(f'return {lexical}STEP;'), b'22'),
+        ('child', child(f'return Child{sep}{name};'), b'22'), ('child', update, b'24'),
         ('base', None, None), ('base', base(), b'24'),
+    ])
+
+    inherited = work/'inherited'
+    inherited.mkdir(exist_ok=True)
+    def provider(owner, step, property_present=True, constant_present=True):
+        prefix = 'public: ' if flavor == 'cpp' else 'public '
+        members = (prefix+prop if property_present else '')
+        if constant_present:
+            members += prefix+const.replace('2', str(step))
+        return klass(owner, members)
+    update = child(f'Child{sep}{name}=5;{lexical}{name}+={lexical}STEP;return Child{sep}{name};')
+    main = f'echo Child{sep}update(),Base{sep}{name},Other{sep}{name};return 8;'
+    other = provider('Other', 4)
+    src = dict(base=provider('Base', 2), other=other, middle=middle, child=update, main=main)
+    revisions(inherited, flavor, src, [
+        (None, None, b'771'), (None, None, b'771'),
+        ('middle', klass('Middle', '', 'Other'), b'919'),
+        ('other', provider('Other', 3), b'818'),
+        ('other', provider('Other', 4, property_present=False), 'Unknown static property:' if flavor == 'php' else 'Unknown constant:'), (None, None, None),
+        ('other', other, b'919'), ('other', provider('Other', 4, constant_present=False), 'Unknown constant:'),
+        ('other', other, b'919'), ('middle', middle, b'771'),
+        ('base', base(), 'Cannot access protected static property Base::n'),
+        ('main', f'echo Child{sep}{name};return 8;', 'Cannot access protected static property Base::n'),
+        ('main', f'echo Child{sep}STEP;return 8;', 'Cannot access protected constant Base::STEP'),
+        ('main', f'echo Child{sep}update();return 8;', b'7'),
+        ('base', base('private'), 'Cannot access private static property Base::n'),
+        ('base', provider('Base', 2), b'7'), ('main', main, b'771'),
     ])
 
 
