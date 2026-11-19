@@ -183,6 +183,7 @@ final class Parser
 			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
+			if ($value instanceof ast_qualified_data) return $this->plain_property_assignment($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -212,10 +213,7 @@ final class Parser
 				$value = $this->assignment_value();
 				return new ast_property_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 			}
-			$this->cursor->take(token_kind::assign, '=');
-			$value = $this->assignment_value();
-			$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
-			return new ast_field_assignment($target, $value, $end);
+			return $this->plain_property_assignment($target);
 		}
 		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::lbracket)) {
 			$start = $this->cursor->position();
@@ -742,10 +740,19 @@ final class Parser
 		else {
 			$initializer = $this->assignment_value();
 		}
-		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression)) {
+		if (type_registry::literal_type($initializer) === null && !($allow_case && $initializer instanceof ast_name_expression && !($initializer instanceof ast_qualified_data))) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), $diagnostic);
 		}
 		return $initializer;
+	}
+
+	/** Parse a plain write after its instance or static target has been selected. */
+	private function plain_property_assignment(ast_field_expression|ast_name_expression $target): ast_field_assignment
+	{
+		$this->cursor->take(token_kind::assign, '=');
+		$value = $this->assignment_value();
+		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		return new ast_field_assignment($target, $value, $end);
 	}
 
 	/** Parse a keyed write or append on a named local or field; preparation checks writability. */
@@ -757,8 +764,12 @@ final class Parser
 		if ($index !== null && ($this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::lbracket)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
+			if ($target instanceof ast_qualified_data) return $this->plain_property_assignment($target);
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
+		}
+		if ($receiver instanceof ast_qualified_data) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expression-qualified static properties support plain writes');
 		}
 		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
 			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
@@ -797,8 +808,11 @@ final class Parser
 			$flavor = $this->cursor->tokens->source->flavor;
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
-				$name = $this->cursor->name(token_kind::identifier);
-				$value = $this->call_arguments($value->start, $name, token_kind::scope, $value);
+				$property = $flavor === flavor::php && $this->cursor->is(token_kind::variable);
+				$name = $this->cursor->name($property ? token_kind::variable : token_kind::identifier);
+				$value = !$property && $this->cursor->is(token_kind::lparen)
+					? $this->call_arguments($value->start, $name, token_kind::scope, $value)
+					: new ast_qualified_data($value, $name, $this->cursor->position(), $flavor === flavor::php && !$property);
 				continue;
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {

@@ -596,6 +596,7 @@ final class Preparation
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
+			if ($root instanceof ast_qualified_data && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Expression-qualified static properties support plain writes');
 			$this->static_destination($root);
 			return null;
 		}
@@ -756,18 +757,14 @@ final class Preparation
 			if (!($record instanceof ast_method_owner)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
 			}
-			if ($this->owner->parent->is_constructor()) {
-				$parent = $syntax->parent;
-				$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax;
-				if (!$is_receiver && !($parent instanceof ast_return_statement)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
-				}
+			$parent = $syntax->parent;
+			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
+				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 			}
-			if ($record instanceof ast_record_declaration && $record->kind !== record_kind::structure) {
-				$parent = $syntax->parent;
-				if (!(($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $syntax)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
-				}
+			if (!$is_receiver && $record instanceof ast_record_declaration && $record->kind !== record_kind::structure) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owning this values for classes are deferred');
 			}
 			// Receiver facts depend on the current layout, including inherited types and access.
 			$this->dependencies?->watch($this->symbols->entry($record->symbol_key()), $this->owner);
@@ -917,8 +914,9 @@ final class Preparation
 		{
 			$this->name_lookups++;
 			$name = $syntax->name;
-			if ($syntax instanceof ast_ancestor_name) {
-				$lookup = $this->lexical_base($syntax, 'Ancestor access');
+			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_qualified_data) {
+				$lookup = $syntax instanceof ast_qualified_data ? $this->static_qualifier($syntax->receiver, $initializing)
+					: $this->lexical_base($syntax, 'Ancestor access');
 				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
 				return;
 			}
@@ -1078,6 +1076,18 @@ final class Preparation
 		return false;
 	}
 
+	/** Evaluate the qualifier in preparation order and select its declared record without a handle presence check. */
+	private function static_qualifier(ast_expression $receiver, ?string $initializing): record_type_definition
+	{
+		$this->value($receiver, $initializing);
+		$type = $receiver->type_def();
+		if ($type instanceof record_handle_definition) $type = $type->payload;
+		if (!($type instanceof record_type_definition) || $type->declaration->kind === record_kind::interface_type) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Static qualifier requires a concrete record type');
+		}
+		return $type;
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null): void
 	{
@@ -1093,13 +1103,13 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
-				$this->value($receiver, $initializing);
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
-				$record = $receiver->type_def();
 				$static = $call->expression_qualified();
-				if ($record instanceof shared_record_type_definition || ($static && $record instanceof record_handle_definition)) $record = $record->payload;
-				if ($static && (!($record instanceof record_type_definition) || $record->declaration->kind === record_kind::interface_type)) {
-					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Static qualifier requires a concrete record type');
+				if ($static) $record = $this->static_qualifier($receiver, $initializing);
+				else {
+					$this->value($receiver, $initializing);
+					$record = $receiver->type_def();
+					if ($record instanceof shared_record_type_definition) $record = $record->payload;
 				}
 				if ($record instanceof record_type_definition || $record instanceof enum_type_definition) {
 					if ($call->source()->flavor === flavor::cpp && $call->member_separator === token_kind::dot) {

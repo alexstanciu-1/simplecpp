@@ -131,7 +131,7 @@ final class Function_Preparation
 			|| ($value instanceof ast_unary_expression)) {
 			self::expression($value->operand);
 		}
-		if ($value instanceof ast_field_expression) {
+		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {
 			self::expression($value->receiver);
 		}
 		if ($value instanceof ast_index_expression) {

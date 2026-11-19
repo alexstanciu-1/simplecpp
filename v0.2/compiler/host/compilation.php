@@ -121,7 +121,9 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'return', 'value' => null];
 			}
 			elseif ($statement instanceof ast_field_assignment) {
-				$statements[] = ['kind' => 'field_write', 'field' => $statement->target instanceof ast_name_expression ? $statement->target->name : $statement->target->field, 'value' => self::value($statement->value)];
+				$row = ['kind' => 'field_write', 'field' => $statement->target instanceof ast_name_expression ? $statement->target->name : $statement->target->field, 'value' => self::value($statement->value)];
+				if ($statement->target instanceof ast_qualified_data) $row['target'] = self::value($statement->target);
+				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$statements[] = ['kind' => 'keyed_write', 'receiver' => self::value($statement->receiver),
@@ -252,6 +254,7 @@ final class Compilation_Inspection
 			$row['bytes_hex'] = bin2hex($value->bytes());
 		}
 		if ($value instanceof ast_name_expression) {
+			if ($value instanceof ast_qualified_data) $row['receiver'] = self::value($value->receiver);
 			$declaration = $value->declaration();
 			$row['binding'] = $declaration instanceof ast_local_binding
 				? $declaration->storage_id() : $declaration->symbol_key();

@@ -480,3 +480,11 @@ Preparation uses the qualifier's declared class or struct and the selected
 method's ordinary access and argument contracts. At execution the qualifier
 finishes, including temporary destruction, before the first argument. An empty
 typed handle can qualify the call. See the [static call contract](../../specs/static_members_v0_2.md#expression-qualified-static-calls--2026-10-07).
+
+The same postfix qualifier admits static property reads, plain statement assignments
+and constant reads. PHP distinguishes `produce()::$count` from `produce()::LIMIT`.
+C++ and JS use `produce()::count` and `produce()::LIMIT` with their existing static
+data lookup. Inherited storage belongs to the selected declaration. On a write,
+the qualifier finishes before RHS evaluation and conversion. On a constant read,
+the qualifier still runs before the constant value is used. Such reads are runtime
+expressions and cannot supply constant-only defaults or value-match labels.

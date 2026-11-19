@@ -837,7 +837,10 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_field_assignment) {
-				$field = $this->value($statement->target, $global_references, $declarations, $required_headers);
+				if ($statement->target instanceof ast_qualified_data) {
+					$lines[] = "\t" . $this->discard_qualifier($statement->target->receiver, $global_references, $declarations, $required_headers) . ';';
+					$field = $this->name_value($statement->target, $global_references, $declarations, $required_headers);
+				} else $field = $this->value($statement->target, $global_references, $declarations, $required_headers);
 				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
 				$type = $statement->target->type_def();
 				foreach ($type->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
@@ -1507,33 +1510,81 @@ CPP;
 			return $value->type_def()->lower_cpp_literal($value);
 		}
 		if ($value instanceof ast_name_expression) {
-			$reorderable = $value->type_def()->cpp_trivial_value();
-			$declaration = $value->declaration();
-			if ($declaration instanceof ast_enum_case) {
-				return $declaration->parent->definition->cpp_case($declaration);
-			}
-			if ($declaration instanceof runtime_integer_constant) {
-				return $declaration->value . 'LL';
-			}
-			if ($declaration instanceof ast_constant_declaration) {
-				$type = $declaration->type_def();
-				$conversion = $declaration->initialization();
-				$reorderable = $reorderable && ($conversion === value_conversion::identity);
-				$literal = $this->value($declaration->initializer, $global_references, $declarations, $required_headers);
-				foreach (array_merge($type->cpp_headers(), $declaration->initializer->type_def()->cpp_headers(),
-					$type->conversion_headers($conversion)) as $header) {
-					$required_headers[$header] = true;
-				}
-				return $this->conversion($type, $conversion, $literal, $declaration->initializer);
-			}
-			if ($declaration instanceof ast_global_declaration) {
-				$name = self::global_name($declaration);
-				$global_references[$name] = $declaration;
-				return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
-			}
-			return $this->name($declaration);
+			$member = $this->name_value($value, $global_references, $declarations, $required_headers, $reorderable);
+			if (!($value instanceof ast_qualified_data)) return $member;
+			$reorderable = false;
+			$steps = [];
+			$member = $this->qualified_operand($value->receiver, $member, $steps, $global_references, $declarations, $required_headers);
+			return $steps === [] ? $member : '([&]() -> decltype(auto) { ' . implode(' ', $steps) . ' return (' . $member . '); }())';
 		}
 		throw new \LogicException('Unhandled prepared value');
+	}
+
+	/**
+	 * Emit the bound declaration independently of its written qualifier.
+	 * @param ast_global_declaration[] $global_references
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $required_headers
+	 */
+	private function name_value(ast_name_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
+		bool &$reorderable = false): string
+	{
+		$reorderable = $value->type_def()->cpp_trivial_value();
+		$declaration = $value->declaration();
+		if ($declaration instanceof ast_enum_case) {
+			return $declaration->parent->definition->cpp_case($declaration);
+		}
+		if ($declaration instanceof runtime_integer_constant) {
+			return $declaration->value . 'LL';
+		}
+		if ($declaration instanceof ast_constant_declaration) {
+			$type = $declaration->type_def();
+			$conversion = $declaration->initialization();
+			$reorderable = $reorderable && ($conversion === value_conversion::identity);
+			$literal = $this->value($declaration->initializer, $global_references, $declarations, $required_headers);
+			foreach (array_merge($type->cpp_headers(), $declaration->initializer->type_def()->cpp_headers(),
+				$type->conversion_headers($conversion)) as $header) {
+				$required_headers[$header] = true;
+			}
+			return $this->conversion($type, $conversion, $literal, $declaration->initializer);
+		}
+		if ($declaration instanceof ast_global_declaration) {
+			$name = self::global_name($declaration);
+			$global_references[$name] = $declaration;
+			return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
+		}
+		return $this->name($declaration);
+	}
+
+	/**
+	 * End an effectful qualifier's full expression before the selected read or call.
+	 * @param string[] $steps
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function qualified_operand(ast_expression $receiver, string $operand, array &$steps /** list<string> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$declarations /** array<string,ast_function_declaration> */,
+		array &$headers /** array<string,bool> */): string
+	{
+		$discard = $this->discard_qualifier($receiver, $globals, $declarations, $headers);
+		if (($receiver instanceof ast_name_expression && !($receiver instanceof ast_qualified_data)) || $receiver instanceof ast_this_expression) {
+			return '(' . $discard . ', ' . $operand . ')';
+		}
+		$steps[] = $discard . ';';
+		return $operand;
+	}
+
+	/**
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function discard_qualifier(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		return 'static_cast<void>(' . $this->value($receiver, $globals, $declarations, $headers) . ')';
 	}
 
 	/**
@@ -1582,16 +1633,7 @@ CPP;
 		$arguments = [];
 		$method = $value instanceof ast_call_expression && $function->has_receiver();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
-			$receiver = $value->receiver;
-			$qualifier = $this->value($receiver, $global_references, $declarations, $required_headers);
-			$discard = 'static_cast<void>(' . $qualifier . ')';
-			if ($receiver instanceof ast_name_expression || $receiver instanceof ast_this_expression) {
-				// A named place has no temporary to release; the comma selects the fixed function.
-				$name = '(' . $discard . ', ' . $name . ')';
-			} else {
-				// End the full expression before any argument, even if it produced the last owner.
-				$steps[] = $discard . ';';
-			}
+			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
 		if ($method && $function->parent instanceof ast_enum_declaration) {
 			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
@@ -1893,7 +1935,7 @@ CPP;
 			if (!self::inert_scalar_conversion($value->type_def(), $value->conversion())) return false;
 			$value = $value->operand;
 		}
-		if ($value instanceof ast_name_expression) {
+		if ($value instanceof ast_name_expression && !($value instanceof ast_qualified_data)) {
 			$constant = $value->declaration();
 			return $constant instanceof runtime_integer_constant || ($constant instanceof ast_constant_declaration
 				&& self::inert_literal_argument($constant->initializer, $constant->type_def(), $constant->initialization()));

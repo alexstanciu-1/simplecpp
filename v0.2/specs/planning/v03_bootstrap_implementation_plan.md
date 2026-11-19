@@ -1771,6 +1771,7 @@ Explicit ancestor static calls now use the ordinary binder. Compatible static re
 | 2 | Implemented. Explicit ancestor property reads/writes and constant reads in all three flavors. | PHP `parent::` and JS `super.` select the lexical base. C++ names the type. Reuse inherited lookup and verify both base edges. |
 | 3 | Verified. Inherited name collisions during editing. | Existing record layout validator rejects repeated static properties/constants and instance/static property collisions. Exercise introduction, failed retry and removal in a separate intermediate source. |
 | 4 | Implemented. Shared incremental dependencies for protected access. | The record access check observes the lexical layout and, for instance access, the receiver layout. Their base dependencies already propagate. Verify factory access when the lexical base changes and instance field/method access when a receiver becomes a sibling and returns. |
+| 5 | Implemented. Expression-qualified static calls, property reads/plain writes and constant reads. | The [three-flavor expression qualifier](../compiler_frontends.md#static-calls-qualified-by-a-value) preserves evaluation and temporary lifetime. Reads and writes bind the declaring symbol. |
 
 The [static data and method suites](../../compiler/docs/protected_static_methods.md)
 exercise these slices against fresh compilations and native output.
@@ -1779,7 +1780,6 @@ exercise these slices against fresh compilations and native output.
 
 | Candidate | Prerequisite or decision |
 | --- | --- |
-| Expression-qualified static data access | Calls now use the [three-flavor expression qualifier](../compiler_frontends.md#static-calls-qualified-by-a-value). Extend it to properties and constants, preserving qualifier effects even for a constant read. |
 | Late-static lookup and shared factories | Model the called type separately from the lexical owner and forward it across calls. This affects call preparation and emitted signatures. |
 | Inherited final method satisfying a newly introduced interface | Review the C++ forwarding and final-slot design before changing the existing diagnostic. |
 | Interface inheritance, variance and abstract structs | Separate proofs for interface layout/dispatch, signature bridges, and inline construction/copy admission, respectively. |
