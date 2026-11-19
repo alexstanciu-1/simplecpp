@@ -480,6 +480,16 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
+		elseif ($declaration->initializer instanceof ast_list_expression) {
+			$this->expression_visits++;
+			$binding = $type?->list_initialization();
+			if ($binding === null) throw new diagnostic($source, $declaration->initializer->byte_start(), 'Populated list requires an explicitly typed published initialization capability');
+			foreach ($declaration->initializer->entries as $entry) {
+				$this->value($entry->value, $name);
+				$entry->conversion = $binding->element->prepare_conversion($entry->value, conversion_context::typed_destination);
+			}
+			$declaration->initializer->settle_list($type);
+		}
 		elseif (($declaration->initializer instanceof ast_empty_collection_expression) && ($type instanceof indexed_collection_type)) {
 			$this->expression_visits++;
 			$declaration->initializer->settle_collection($type);
@@ -610,6 +620,7 @@ final class Preparation
 	{
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
 		$this->expression_visits++;
+		if ($syntax instanceof ast_list_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Populated list requires an explicitly typed local initializer; nested lists are deferred');
 		if ($syntax instanceof ast_empty_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)');
 		}

@@ -356,6 +356,17 @@ function renderVectors(array $plan): array {
         $vars = compact('n', 'e', 'count') + ['access' => 'detail::vector_access'] + $v['traversal'];
         $h .= "class $n final {\npublic:\n" . $instances[$n]['declaration'];
         $d .= $instances[$n]['definition'];
+        if ($v['initialization'] !== null) {
+            $init = $v['initialization'];
+            $bindings = $vars + ['input' => $init['input'], 'read_only' => $init['read_only'], 'inline_limit' => $init['inline_limit'], 'stack_bytes' => $init['stack_bytes']];
+            $h .= template('collections/vector_input_declaration', $bindings);
+            $d .= template('collections/vector_input_definition', $bindings);
+            if (isset($init['consume'])) {
+                $h .= "    static $n {$init['consume']}($e* values, $count count);\n";
+                $d .= template('collections/vector_input_factory', $bindings + ['factory' => $init['consume'], 'qualifier' => '', 'transfer' => 'static_cast<' . $e . '&&>(values[i])']);
+            }
+            $d .= template('collections/vector_input_factory', $bindings + ['factory' => $init['read_only'], 'qualifier' => 'const ', 'transfer' => 'values[i]']);
+        }
         foreach($v['casts_from'] as $c) {
             $src = $c['source'];
             $h .= "    explicit $n(const $src&);\n";

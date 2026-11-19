@@ -917,8 +917,18 @@ final class Parser
 		}
 		if ($this->cursor->is(token_kind::lbracket)) {
 			$start = $this->cursor->take(token_kind::lbracket, '[');
-			$end = $this->cursor->take(token_kind::rbracket, '] (only empty typed collection initializers are supported)') + 1;
-			return new ast_empty_collection_expression($start, $end);
+			if ($this->cursor->is(token_kind::rbracket)) {
+				$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+				return new ast_empty_collection_expression($start, $end);
+			}
+			$entries = [];
+			do {
+				$entries[] = new ast_initializer_entry($this->value());
+				if (!$this->cursor->is(token_kind::comma)) break;
+				$this->cursor->take(token_kind::comma, ',');
+			} while (!$this->cursor->is(token_kind::rbracket));
+			$end = $this->cursor->take(token_kind::rbracket, '] (flat positional input only)') + 1;
+			return new ast_list_expression($start, $end, $entries);
 		}
 		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
 			&& !$this->cursor->next_is(token_kind::floating))) {

@@ -61,7 +61,6 @@ foreach (flavor::cases() as $flavor) {
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("819a\0ba\0b8")];
 	foreach ([
 		[$decl('int', 'values', '[]'), 'explicitly typed local initializer'],
-		[$decl('vector<int>', 'values', '[1]'), 'only empty typed collection'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[] = "no";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[] = 1e100;', 'outside'],

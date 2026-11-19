@@ -1,0 +1,8 @@
+2026-11-19; dev002; Clang 18.1.3 / GCC 13.3; O1, ASan/UBSan, warnings as errors.
+Flags: -fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=all
+ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1
+Clang:
+PASS: labelled order/results/failure prefixes; allocation-failure assignment atomicity; repeated nested/string lvalue ownership and temporary lifetime; exact presizing/no growth at both levels and capacity boundaries
+GCC:
+PASS: labelled order/results/failure prefixes; allocation-failure assignment atomicity; repeated nested/string lvalue ownership and temporary lifetime; exact presizing/no growth at both levels and capacity boundaries
+Local sandbox LeakSanitizer could not run under tracing; sanitizer acceptance uses dev002 results above.

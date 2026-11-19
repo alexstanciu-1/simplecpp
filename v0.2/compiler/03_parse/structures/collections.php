@@ -12,6 +12,41 @@ final class ast_empty_collection_expression extends ast_expression
 	}
 }
 
+/** One positional input occurrence owns its expression and prepared conversion, e.g. number() in [number(), 2]. */
+final class ast_initializer_entry extends ast_node
+{
+	public readonly ast_expression $value;
+	/** Null before preparation or after reset. */
+	public ?int $conversion /** uint16 */ = null;
+
+	public function __construct(ast_expression $value)
+	{
+		parent::__construct($value->start, $value->end);
+		$this->value = $value;
+		$value->attach($this);
+	}
+}
+
+/** Populated positional syntax, e.g. [1, number()]; target context selects its published capability. */
+final class ast_list_expression extends ast_expression
+{
+	/** @var ast_initializer_entry[] Owning source-ordered entries; no second expression inventory. */
+	public readonly array $entries /** list<ast_initializer_entry> */;
+
+	/** $start/$end: token positions. @param ast_initializer_entry[] $entries */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $entries /** list<ast_initializer_entry> */)
+	{
+		parent::__construct($start, $end);
+		$this->entries = $entries;
+		foreach ($entries as $entry) $entry->attach($this);
+	}
+
+	public function settle_list(type_definition $type): void
+	{
+		$this->settle_value($type, null);
+	}
+}
+
 /** Value-copy indexed read, e.g. values[0]; owns its receiver and index, never represents mutable element storage. */
 final class ast_index_expression extends ast_expression
 {

@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 71 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 72 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -340,6 +340,21 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 
 ## Published vectors and hashes
 
+Flat populated literals currently require an explicitly typed published integer or string vector. User factories remain read-only; nested and keyed literals are deferred.
+
+```text
++----------------------------------+--------------------------------------------------+----------------------------------+-----------------------------------------+
+| PHP-flavor pattern               | Lowered C++ code                                 | Lowered C++ header code          | Generation and lowering                 |
++----------------------------------+--------------------------------------------------+----------------------------------+-----------------------------------------+
+| $values vector<int> = [7, 7, 7]; | scpp::vector_int64 var_values_0 = ([&]() {       | .cpp includes                    | Metadata selects the input and factory. |
+|                                  | scpp::int64 input[]{7L, 7L, 7L};                 | #include <scpp/core/scalars.hpp> | Native arrays preserve entry order.     |
+|                                  | return scpp::vector_int64::from_owned(input, 3); | #include <scpp/vectors.hpp>      | The runtime presizes and consumes       |
+|                                  | }());                                            | No unit header.                  | private elements; larger input arrays   |
+|                                  |                                                  |                                  | use a concrete heap cleanup guard.      |
++----------------------------------+--------------------------------------------------+----------------------------------+-----------------------------------------+
+```
+
+
 ```text
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | PHP-flavor pattern            | Lowered C++ code                                                                                | Lowered C++ header code          | Generation and lowering                |
@@ -432,14 +447,14 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 |                                            |                                                                                                    | #include <scpp/mixed.hpp>        | The runtime owns tag checks.           |
 |                                            |                                                                                                    | No unit header.                  |                                        |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | scpp::mixed var_sum_2 = scpp::boxed_add_mixed_mixed(var_x_0, var_y_1);                             | .cpp includes                    | The published helper checks the tags.  |
-|     $x mixed = 3;                          | scpp::bool_t var_before_3 = scpp::boxed_less_int64_mixed(2LL, var_x_0);                            | #include <scpp/core/scalars.hpp> | Both locals can be borrowed directly.  |
+| Given                                      | scpp::mixed var_sum_2 = scpp::boxed_add_mixed_mixed(var_x_0, var_y_1, 1);                          | .cpp includes                    | The published helper checks the tags.  |
+|     $x mixed = 3;                          | scpp::bool_t var_before_3 = scpp::boxed_less_int64_mixed(2LL, var_x_0, 1);                         | #include <scpp/core/scalars.hpp> | Both locals can be borrowed directly.  |
 |     $y mixed = 4;                          |                                                                                                    | #include <scpp/mixed.hpp>        | A literal can also precede a box.      |
 | $sum = $x + $y;                            |                                                                                                    | No unit header.                  |                                        |
 | $before = 2 < $x;                          |                                                                                                    |                                  |                                        |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
-| Given                                      | scpp::dynamic var_y_1 = scpp::boxed_add_dynamic_int64(var_x_0, 2LL);                               | .cpp includes                    | The helpers read the dynamic local by  |
-|     $x dynamic = 8;                        | scpp::bool_t var_b_2 = scpp::boxed_less_dynamic_int64(var_x_0, 3LL);                               | #include <scpp/core/scalars.hpp> | reference and take the literal by      |
+| Given                                      | scpp::dynamic var_y_1 = scpp::boxed_add_dynamic_int64(var_x_0, 2LL, 1);                            | .cpp includes                    | The helpers read the dynamic local by  |
+|     $x dynamic = 8;                        | scpp::bool_t var_b_2 = scpp::boxed_less_dynamic_int64(var_x_0, 3LL, 1);                            | #include <scpp/core/scalars.hpp> | reference and take the literal by      |
 | $y = $x + 2;                               |                                                                                                    | #include <scpp/dynamic.hpp>      | value. Runtime dispatch checks the     |
 | $b = $x < 3;                               |                                                                                                    | No unit header.                  | stored payload kind.                   |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+

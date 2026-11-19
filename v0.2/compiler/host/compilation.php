@@ -189,6 +189,12 @@ final class Compilation_Inspection
 		if ($value instanceof ast_construction_expression) {
 			$row['arguments'] = array_map(self::value(...), $value->arguments);
 		}
+		if ($value instanceof ast_list_expression) {
+			$row['entries'] = array_map(static fn(ast_initializer_entry $entry): array => [
+				'value' => self::value($entry->value),
+				'conversion' => value_conversion::name($entry->conversion ?? throw new \LogicException('Unprepared initializer entry')),
+			], $value->entries);
+		}
 		if ($value instanceof ast_interpolated_string) {
 			$row['parts'] = array_map(self::value(...), $value->parts);
 		}

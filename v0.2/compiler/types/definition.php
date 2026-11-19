@@ -3,6 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Published positional initialization transport; fixed for a compiler session and shared by literal occurrences. */
+final class list_initialization_binding
+{
+	public readonly type_definition $element;
+	public readonly string $input;
+	public readonly string $factory;
+	public readonly int $inline_entries /** uint32 */;
+
+	public function __construct(type_definition $element, string $input, string $factory, int $inline_entries /** uint32 */)
+	{
+		$this->element = $element;
+		$this->input = $input;
+		$this->factory = $factory;
+		$this->inline_entries = $inline_entries;
+	}
+}
+
 /** Generated concrete collection contract; canonical arguments serve layout planning, recipe data serves private lowering. */
 interface application_collection_type
 {
@@ -121,6 +138,7 @@ trait ordered_keyed_store
 abstract class type_definition
 {
 
+
 	/** PROPERTIES */
 	public readonly string $name;
 
@@ -131,6 +149,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Null means this type has no published populated-list construction capability. */
+	public function list_initialization(): ?list_initialization_binding
+	{
+		return null;
+	}
+
 	/** Generated native member signature on this canonical type, independent of concrete publication location. */
 	public function runtime_method(string $name): runtime_function|runtime_overloads|null
 	{

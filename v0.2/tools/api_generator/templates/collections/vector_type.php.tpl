@@ -5,6 +5,7 @@ final class @class@ extends vector_type_definition@interfaces@
 	/** @var array<string,runtime_function|null> Canonical signatures cached on this type, never on each call. */
 	private array $runtime_methods = [];
 @identity@
+@initialization@
 	/** METHODS */
 @iteration@
 @methods@

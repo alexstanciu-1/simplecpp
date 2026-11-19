@@ -467,7 +467,8 @@ value iteration in input order. `at` rejects negative/out-of-range indices by th
 Reads return values, never native references to backing storage. Keyed initialization
 uses `initializer_list<initializer_entry<TValue, TKey>>`; there is no separate
 `initializer_entries` container. The first v0.2 input domain requires copyable
-element/key/value types; move-only or consuming input is deferred.
+element/key/value types. User-visible move-only or consuming input remains deferred;
+the bounded private runtime transport below does not change the read-only source API.
 
 The compiler materializes typed input without first constructing another vector/hash
 through this same protocol. Typed input does not require mixed boxing unless the
@@ -513,6 +514,36 @@ threshold or zero-allocation/zero-copy guarantee is part of the API. Factories
 populate the destination directly; they may reserve capacity using `count()`.
 Temporary elements may still be copied into destination storage. A factory that
 needs persistent input must explicitly copy values into ordinary owning storage.
+
+### Private consuming transport for registered runtime bindings
+
+A registered runtime initialization binding may additionally publish a consuming
+entry point for compiler-owned, call-scoped input storage. This is an implementation
+of the existing initialization capability, not another source interface. A method
+name or signature alone never grants consumption. User factories continue to receive
+read-only input and remain subject to the non-escape rules above.
+
+Entry expressions and their approved conversions execute exactly once in source
+order before invoking the factory. Source lvalues are copied into private input
+storage; only these private copies or materialized temporary results may be consumed.
+A shared value copy retains its ordinary shared identity. The transport cannot move
+from a source local, property, parameter or collection slot, nor retain input backing.
+
+The first transport admits nonthrowing element moves and destruction only. Every
+constructed input slot remains destructible after transfer. If input evaluation,
+conversion, allocation or factory validation fails, constructed inputs and any partial
+destination are destroyed. An existing assignment destination is replaced only after
+successful construction; already performed source side effects are not rolled back.
+Without an eligible consuming entry point, initialization uses the read-only factory.
+
+The runtime receives the entry count and presizes destination element storage before
+population, with no growth during transfer. Empty vectors need no element backing
+allocation. This does not promise one total allocation or exact publicly observable
+capacity. Temporary input uses bounded aligned local storage or owned heap backing;
+that choice is a backend policy, not source syntax. Current active-v0.2 source support
+is limited to explicitly typed local flat literals for published integer/string
+vectors. Nested/keyed literals, application elements and source-written factories
+are separate implementation slices.
 
 ### 3.4 Built-in bindings and input shapes
 

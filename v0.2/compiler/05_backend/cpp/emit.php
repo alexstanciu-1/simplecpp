@@ -1251,6 +1251,17 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if ($value instanceof ast_list_expression) {
+			$binding = $value->type_def()->list_initialization() ?? throw new \LogicException('Missing prepared initialization binding');
+			$elements = [];
+			foreach ($value->entries as $entry) {
+				$conversion = $entry->conversion ?? throw new \LogicException('Unprepared initializer entry');
+				foreach ($binding->element->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$operand = $this->value($entry->value, $global_references, $declarations, $required_headers);
+				$elements[] = $binding->element->lower_cpp_exact_argument($entry->value, $conversion, $operand, $this->inline_adapters);
+			}
+			return Cpp_List_Initialization::expression($binding, $elements);
+		}
 		if ($value instanceof ast_empty_collection_expression) {
 			/** @var indexed_collection_type $type */
 			$type = $value->type_def();
