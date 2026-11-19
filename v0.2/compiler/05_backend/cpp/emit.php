@@ -979,7 +979,10 @@ CPP;
 		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
 			&& $statement->value->declaration() instanceof ast_local_binding);
 		$steps = [];
-		if ($destination instanceof ast_field_expression && !$simple_rhs) {
+		if ($destination instanceof ast_qualified_data) {
+			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
+			$name = $this->name_value($destination, $global_references, $declarations, $headers);
+		} elseif ($destination instanceof ast_field_expression && !$simple_rhs) {
 			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
 			$steps[] = 'auto& compound_target = ' . $place . ';';
 			$name = 'compound_target';

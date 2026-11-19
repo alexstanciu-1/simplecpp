@@ -171,17 +171,10 @@ final class Parser
 		if ($this->cursor->keyword('return')) {
 			return $this->return_statement();
 		}
-		$flavor = $this->cursor->tokens->source->flavor;
-		if ($this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
-				&& (in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'lock', 'object_cast', 'match'], true)
-					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
-			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
-				&& $this->cursor->next_is(token_kind::scope))
-			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
+		if ($this->expression_statement_start()) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
-			if ($value instanceof ast_called_type_name) return $this->property_write($value);
-			if ($value instanceof ast_qualified_data) return $this->plain_property_assignment($value);
+			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data) return $this->property_write($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -311,7 +304,7 @@ final class Parser
 		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
 		if ($this->update_start()) {
 			$update = $this->update_statement(token_kind::rparen, true);
-		} elseif ($this->property_statement_start()) {
+		} elseif ($this->property_statement_start() || $this->expression_statement_start() || $this->cursor->next_is(token_kind::lbracket)) {
 			$position = $this->cursor->position();
 			$target = $this->primary();
 			$update = $this->property_update($position, $target, $this->take_update_operator(), true, token_kind::rparen);
@@ -763,12 +756,6 @@ final class Parser
 			$value = $this->assignment_value();
 			return new ast_property_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 		}
-		return $this->plain_property_assignment($target);
-	}
-
-	/** Parse a plain write after its instance or static target has been selected. */
-	private function plain_property_assignment(ast_field_expression|ast_name_expression $target): ast_field_assignment
-	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
@@ -784,13 +771,13 @@ final class Parser
 		if ($index !== null && ($this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::lbracket)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
-			if ($target instanceof ast_qualified_data) return $this->plain_property_assignment($target);
+			if ($target instanceof ast_qualified_data) return $this->property_write($target);
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		}
 		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed late-static property writes are deferred');
 		if ($receiver instanceof ast_qualified_data) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expression-qualified static properties support plain writes');
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed expression-qualified static property writes are deferred');
 		}
 		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
 			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
@@ -1111,6 +1098,18 @@ final class Parser
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
 
+	/** Recognize expression-led calls and property targets before parsing their postfix operations. */
+	private function expression_statement_start(): bool
+	{
+		$flavor = $this->cursor->tokens->source->flavor;
+		return $this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
+				&& (in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'lock', 'object_cast', 'match'], true)
+					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
+			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
+				&& $this->cursor->next_is(token_kind::scope))
+			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot));
+	}
+
 	/** Distinguish member writes from declarations and simple local updates. */
 	private function property_statement_start(bool $prefix = false): bool
 	{
@@ -1155,7 +1154,7 @@ final class Parser
 		$postfix = !$cursor->is(token_kind::increment) && !$cursor->is(token_kind::decrement);
 		if (!$postfix) {
 			$operator = $this->take_update_operator();
-			if ($allow_property && ($this->property_statement_start(true) || $this->names->call_start() || $cursor->next_is(token_kind::lbracket))) {
+			if ($allow_property && ($this->property_statement_start(true) || $this->expression_statement_start() || $cursor->next_is(token_kind::lbracket))) {
 				$target = $this->primary();
 				if ($target instanceof ast_index_expression) {
 					if ($terminator !== token_kind::semicolon) {

@@ -599,7 +599,7 @@ final class Preparation
 	{
 		if ($root instanceof ast_name_expression) {
 			if ($root instanceof ast_called_type_name && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed late-static property writes are deferred');
-			if ($root instanceof ast_qualified_data && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Expression-qualified static properties support plain writes');
+			if ($root instanceof ast_qualified_data && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed expression-qualified static property writes are deferred');
 			$this->static_destination($root);
 			return null;
 		}

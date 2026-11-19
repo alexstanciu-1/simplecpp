@@ -95,6 +95,10 @@ def data_members(work, flavor):
     text_base = klass('Base', prop+constant+text_property+text_constant)
     text_main = s['infer']('box', 'new Box()') + empty
     text_main += f'{local}{v}text={expr}LABEL;echo {expr}{v}text;return 8;'
+    target = expr+name
+    # Each P is one factory call. Its last owner must be gone before rhs checks the weak observer.
+    updates = s['infer']('box','new Box()') + empty + f'{target}+=rhs({v}box);++{target};{target}--;--{local}{name};'
+    updates += f'for ({s["infer"]("i","0")}{v}i<1;{target}++) {{{v}i++;}} echo Base{sep}{name},Other{sep}{name};return 8;'
     revisions(work, flavor, src, [
         (None, None, b'PRP5P2551'), (None, None, b'PRP5P2551'),
         ('child', klass('Child', '', 'Other'), b'PRP5P4515'),
@@ -109,6 +113,17 @@ def data_members(work, flavor):
         ('main', main, b'PRP5P2551'),
         ('base', text_base, b'PRP5P2551'), ('main', text_main, b'PPnew'),
         ('base', src['base'], 'Unknown'), ('main', main, b'PRP5P2551'),
+        ('main', updates, b'PRPPP61'), ('child', klass('Child', '', 'Other'), b'PRPPP16'),
+        ('helpers', produce.replace('Child', 'Other', 1)+rhs, b'PRPPP16'),
+        ('helpers', None, None), ('helpers', produce+rhs, b'PRPPP16'),
+        ('child', child, b'PRPPP61'),
+        ('main', updates.replace(target+'+=', expr+'STEP+='), 'Assignment requires a writable static property'),
+        ('main', updates, b'PRPPP61'),
+        ('child', klass('Child', prop.replace(' '+name, ' '+v+'only'), 'Base'), b'PRPPP61'),
+        ('main', s['infer']('box','new Box()')+f'{expr}{v}only++;echo Child{sep}{v}only;return 8;', b'P2'),
+        ('helpers', produce.replace('Child', 'Base', 1)+rhs, 'Unknown'),
+        ('helpers', produce+rhs, b'P2'), ('main', updates, b'PRPPP61'),
+        ('helpers', produce+rhs.replace('return 5;', f'Base{sep}{name}=20;return 5;'), b'PRPPP61'),
     ])
     absent = {'php': '$box ?Box=null;', 'cpp': '?Box box=null;', 'js': 'let box:?Box=null;'}[flavor]
     fail_target = f'({v}box{access}observer)::{name}'
@@ -119,6 +134,10 @@ def data_members(work, flavor):
     rhs_marker = s['function']('unexpected', 'int', [], 'echo "rhs";return 9;')
     guard(work, flavor, 'write-qualifier-failure', defs+rhs_marker+retry+absent+fail_target+'=unexpected();return 8;',
           'ownership_empty_access', retry_entry=True)
+    guard(work, flavor, 'compound-qualifier-failure', defs+rhs_marker+retry+absent+fail_target+'+=unexpected();return 8;',
+          'ownership_empty_access', retry_entry=True)
+    guard(work, flavor, 'compound-divide-failure', defs+retry+empty+f'{local}{name}/=0;return 8;',
+          'division_by_zero', retry_entry=True)
     fail_rhs = s['function']('failRhs', 'int', [], absent+'return '+fail_target+';')
     guard(work, flavor, 'write-rhs-failure', defs+fail_rhs+retry+empty+f'{local}{name}=failRhs();return 8;',
           'ownership_empty_access', retry_entry=True)
