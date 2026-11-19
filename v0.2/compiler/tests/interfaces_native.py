@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from abstract_methods_native import forms as abstract_forms
+from collection_goal_native import revisions
 from app_namespace_native import artifacts, invoke, service
 from extends_native import runtime, source_edit
 from inline_adapters_native import incremental_native_build, adapter_files
@@ -112,6 +113,41 @@ def incremental(work, flavor, libraries):
     finally:resident.stdin.close();resident.wait()
 
 
+def final_binding(work, flavor):
+    s, evaluate, klass, _, interface, implementation = forms(flavor)
+    v, access = s['v'], s['access']
+    def provider(final=True, ordinary=False):
+        return klass('Middle', evaluate('' if ordinary else 'override', '10+'+v+'delta', final=final),
+                     None if ordinary else 'Base')
+    left = implementation('Leaf', base='Middle', interfaces=('Readable', 'Other'))
+    def read(name, type_name):
+        return s['function'](name, 'int', [('x', type_name)], f'return {v}x{access}evaluate();')
+    api = read('throughBase', 'Middle') + read('throughI', 'Readable') + read('throughJ', 'Other')
+    main = s['infer']('x', 'new Twig()') + f'echo throughBase({v}x),{v}x{access}evaluate(),throughI({v}x),throughJ({v}x);return 8;'
+    twig = klass('Twig', '', 'Leaf')
+    changed = klass('Twig', evaluate('override', '20+'+v+'delta'), 'Leaf')
+    src = dict(root=klass('Base', evaluate('virtual')), middle=provider(), contract=interface(),
+               other=interface('Other', default='3'), leaf=left, twig=twig, api=api, main=main)
+    normal = b'12121113'
+    revisions(work, flavor, src, [
+        (None, None, normal), (None, None, normal),
+        ('twig', changed, 'Cannot override final'), (None, None, 'Cannot override final'),
+        ('middle', provider(False), b'22222123'), ('twig', twig, normal), ('middle', provider(), normal),
+        ('contract', interface(result='float'), 'match exactly'), ('contract', interface(), normal),
+        ('leaf', implementation('Leaf', base='Middle', interfaces=('Readable',)), None), ('leaf', left, normal),
+        ('middle', None, None), ('middle', provider(), normal),
+        ('middle', provider(ordinary=True), normal), ('twig', changed, 'Cannot override final'),
+        ('twig', twig, normal),
+        ('middle', klass('Middle', {'php':'protected final function evaluate(int $delta=2):int{return 12;}',
+                                   'js':'protected final evaluate(delta:int=2):int{return 12;}',
+                                   'cpp':'protected: int evaluate(int delta=2) final{return 12;}'}[flavor]),
+         'cannot narrow visibility'),
+        ('middle', provider(), normal),
+        ('middle', implementation('Middle', evaluate('override','10+'+v+'delta',final=True), 'Base'), normal),
+        ('middle', provider(), normal),
+    ])
+
+
 def ownership(work, flavor, libraries, memcheck):
     s, evaluate, klass, method, interface, implementation = forms(flavor)
     v, acc = s['v'], s['access']
@@ -207,7 +243,7 @@ def contracts(work, flavor, libraries):
         (interface()+implementation('Leaf',evaluate('override'),interfaces=('Readable','Readable'))+'return 8;','duplicate'),
         (interface()+klass('Leaf',evaluate('override'))+'return 8;','no inherited'),
         (interface()+interface('Other',result='float')+implementation('Leaf',evaluate('override'),interfaces=('Readable','Other'))+'return 8;','match exactly'),
-        (interface()+implementation('Leaf',evaluate('override'),interfaces=('Missing',))+'return 8;','interface'),
+        (interface()+klass('Base')+implementation('Leaf',evaluate('override'),base='Base',interfaces=('Missing',))+'return 8;','interface'),
         (interface()+implementation('Leaf',evaluate('override'),interfaces=('?Readable',))+'return 8;','base' if flavor=='cpp' else 'interface'),
         (interface()+s['infer']('x','new Readable()')+'return 8;','abstract'),
         (interface()+implementation('Leaf',evaluate('override'))+s['function']('fail','Readable',[],'return null;')+'return 8;','null'),
@@ -230,7 +266,7 @@ def contracts(work, flavor, libraries):
     invalid.append((interface()+implementation('Leaf',private)+'return 8;','public'))
     base=klass('Base',evaluate('virtual'))
     final=klass('Final',evaluate('override',final=True),'Base')
-    invalid.append((interface()+base+final+implementation('Leaf',base='Final')+'return 8;','inherited final'))
+    invalid.append((interface()+base+final+implementation('Leaf',evaluate('override'),base='Final')+'return 8;','final method'))
     for marker in ['virtual override','override override']:
         if flavor=='cpp':bad=('virtual '+evaluate('override')) if marker.startswith('virtual') else evaluate('override').replace(' override',' override override')
         else:bad=evaluate('override').replace('override',marker)
@@ -361,6 +397,8 @@ def main():
         libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
         for flavor in ['cpp','php','js']:
             incremental(work,flavor,libraries)
+            (work/'final-binding').mkdir(exist_ok=True)
+            final_binding(work/'final-binding', flavor)
             ownership(work,flavor,libraries,args.memcheck)
             contracts(work,flavor,libraries)
             removal(work,flavor,libraries)

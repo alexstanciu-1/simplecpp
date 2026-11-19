@@ -440,8 +440,8 @@ it does not change the original base method's dispatch policy or source identity
 Abstract implementers may retain outstanding obligations; concrete types must fulfill
 them. Nonvirtual source hiding restrictions still apply.
 
-Interface inheritance/diamonds, interface type tests/casts, struct implementers,
-inherited-final satisfaction, variance and broader reference returns remain deferred.
+An inherited public final class method can fulfill a newly introduced interface.
+Interface inheritance/diamonds, struct implementers, variance and broader reference returns remain deferred.
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).

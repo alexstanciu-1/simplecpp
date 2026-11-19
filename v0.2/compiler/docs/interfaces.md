@@ -34,7 +34,12 @@ By-value nontrivial parameters move into the implementation; references and scal
 parameters pass directly. A later source override replaces this interface slot. Calls
 on the original nonvirtual base still use the original implementation. The prepared
 call retains dispatch intent when its source contract remains a nonvirtual declaration.
-Lowering does not resolve ancestry or inspect foreign executable bodies.
+An inherited final implementation seals the source method for all descendant views.
+A final nonvirtual implementation uses the ordinary forwarding member. For a final virtual
+implementation, the descendant introduces a native base for its new interface views.
+That base forwards to the declaring class's existing final slot through the descendant;
+a C++ using-declaration keeps direct class calls on the original slot. The existing
+forwarding map supplies both forms. No body is copied or interface entry allocated at runtime.
 
 Native interfaces use public virtual interface inheritance and nonthrowing virtual
 destruction. Concrete shared-view adapters preserve one control block, adjusted view
@@ -70,8 +75,7 @@ Interface capability tests and checked casts now reuse the
 [shared-object access path](object_access.md), preserving control blocks and adjusted views.
 
 Deferred: interface inheritance/diamonds,
-struct implementers, inherited-final satisfaction, variance and broader reference
+struct implementers, variance and broader reference
 returns, interface data/static/default members, traits, unique, borrows and native
-threading. Unsupported inherited-final satisfaction is diagnosed as deferred, not
-classified as an invalid language contract. Sequential tests do not prove thread safety
+threading. Sequential tests do not prove thread safety
 or a preparation-speed improvement.

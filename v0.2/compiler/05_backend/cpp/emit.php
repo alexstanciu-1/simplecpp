@@ -129,10 +129,17 @@ final class Cpp_Emitter
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
 					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 			}
+			$final_slots = [];
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override;';
+				$slot = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override';
+				if ($method->is_final && $method->has_virtual_dispatch()) {
+					$final_slots[] = $slot . ' final;';
+					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
+				} else {
+					$layout[] = $slot . ';';
+				}
 			}
 			if (isset($node->methods['__construct'])) {
 				$constructor = $node->methods['__construct'];
@@ -146,8 +153,19 @@ final class Cpp_Emitter
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
 			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
-			foreach ($node->definition->interfaces() as $interface) $bases[] = 'public virtual ' . $interface->cpp_type();
-			return $this->record_signature_forwards($node) . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			$interface_bases = [];
+			foreach ($node->definition->interfaces() as $interface) {
+				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
+			}
+			$view = '';
+			if ($final_slots !== []) {
+				// A sibling base can implement the new interfaces without overriding the class's final slot.
+				$name = self::final_view_name($node);
+				$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
+				$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
+			}
+			array_push($bases, ...$interface_bases);
+			return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
 				. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
 		}
 		if ($node instanceof ast_function_declaration) {
@@ -1766,13 +1784,19 @@ CPP;
 			$arguments[] = $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
 				: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
 		}
-		if ($method->has_virtual_dispatch()) $target = 'this->' . $method->parent->definition->cpp_type() . '::' . self::virtual_name($method);
+		$owner = $record->definition->cpp_type();
+		$receiver = 'this';
+		if ($method->is_final && $method->has_virtual_dispatch()) {
+			$receiver = 'static_cast<' . $owner . '*>(this)';
+			$owner = self::final_view_name($record);
+		}
+		if ($method->has_virtual_dispatch()) $target = $receiver . '->' . $method->parent->definition->cpp_type() . '::' . self::virtual_name($method);
 		else {
 			$target = self::function_name($method);
 			array_unshift($arguments, '*this');
 		}
 		foreach ($method->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->member_type($method->return_type_def()) . ' ' . $record->definition->cpp_type() . '::' . self::virtual_name($method)
+		return $this->member_type($method->return_type_def()) . ' ' . $owner . '::' . self::virtual_name($method)
 			. '(' . implode(', ', $this->parameters($method, $headers, false, true)) . ') { return ' . $target . '(' . implode(', ', $arguments) . "); }\n";
 	}
 
@@ -1886,6 +1910,12 @@ CPP;
 			}, $body);
 		};
 		return $expand($text);
+	}
+
+	/** The descendant owns one native interface view for its inherited final virtual slots. */
+	private static function final_view_name(ast_record_declaration $record): string
+	{
+		return 'scpp_final_view_' . self::qualified_name($record);
 	}
 
 	/** A virtual slot has the same native member name throughout its inheritance chain. */

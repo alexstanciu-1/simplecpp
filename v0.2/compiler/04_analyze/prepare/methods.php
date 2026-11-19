@@ -39,14 +39,13 @@ final class Method_Preparation
 					if ($base->is_final) self::fail($method, 'Cannot redeclare final static method');
 				}
 				else {
+					if ($base->is_final) self::fail($method, 'Cannot override final method');
 					if (!$base->has_virtual_dispatch() && !$record->base()->interface_dispatch($method->short_name)) self::fail($method, 'Nonvirtual method hiding is forbidden');
 					if (!$method->is_override) self::fail($method, 'Inherited virtual method requires override');
-					if ($base->is_final) self::fail($method, 'Cannot override final method');
 				}
 				self::compatible($method, $base);
 			} elseif ($method->is_override && $requirements === []) self::fail($method, 'Override has no inherited virtual target');
 		}
-		if ($method->is_final && !$method->is_static && !$method->is_override) self::fail($method, 'Final requires an overriding implementation in this slice');
 		$method->method_contract_ready = true;
 	}
 
@@ -80,7 +79,6 @@ final class Method_Preparation
 			if ($implementation->parent !== $record->declaration) {
 				// Reuse an already inherited interface slot without a redundant bridge.
 				if ($record->base()?->derives_from($requirement->parent->definition)) continue;
-				if ($implementation->is_final) self::fail($implementation, 'Inherited final interface implementation is deferred');
 				$forwards[$name] = $implementation;
 			}
 		}

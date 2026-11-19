@@ -1774,14 +1774,14 @@ Explicit ancestor static calls now use the ordinary binder. Compatible static re
 | 5 | Implemented. Expression-qualified static calls, property reads/plain writes and constant reads. | The [three-flavor expression qualifier](../compiler_frontends.md#static-calls-qualified-by-a-value) preserves evaluation and temporary lifetime. Reads and writes bind the declaring symbol. |
 
 The [static data and method suites](../../compiler/docs/protected_static_methods.md)
-exercise these slices against fresh compilations and native output.
+exercise these slices against fresh compilations and native output. Static bodies now also support
+called-type forwarding, late-selected members and shared factories. Inherited public final
+class methods can satisfy a new interface through the [existing forwarding path](../../compiler/docs/interfaces.md).
 
 **Separate design or implementation slices**
 
 | Candidate | Prerequisite or decision |
 | --- | --- |
-| Late-static lookup and shared factories | Model the called type separately from the lexical owner and forward it across calls. This affects call preparation and emitted signatures. |
-| Inherited final method satisfying a newly introduced interface | Review the C++ forwarding and final-slot design before changing the existing diagnostic. |
 | Interface inheritance, variance and abstract structs | Separate proofs for interface layout/dispatch, signature bridges, and inline construction/copy admission, respectively. |
 | Interface-qualified static dispatch and exact-type query syntax | Source behavior remains a discussion item. Subtype and interface-capability tests already exist. |
 
