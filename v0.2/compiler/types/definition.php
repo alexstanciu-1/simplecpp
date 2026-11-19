@@ -16,6 +16,33 @@ interface application_collection_type
 	public function cpp_headers(): array;
 }
 
+/** Existing owned-value lifecycle accepted by concrete recipes; native assertions still verify every requirement. */
+trait concrete_value_storage
+{
+	public function concrete_storage_support(string $requirement): ?bool
+	{
+		return in_array($requirement, ['copy_constructible', 'nothrow_move_constructible', 'nothrow_move_assignable', 'nothrow_destructible'], true)
+			? true : null;
+	}
+}
+
+/** Storage-capable element owns canonical outer collections; nested arguments never need per-use identities. */
+trait collection_specializations
+{
+	/** Native owning outer identities; their element links back non-owningly. @var type_definition[] */
+	private array $collections /** array<string,type_definition> */ = [];
+
+	/** Cache only supported identities on the element generation; no global cache retains retired declarations. */
+	public function collection_type(string $family, ?type_definition $key): ?type_definition
+	{
+		$identity = $family . ':' . ($key?->name ?? '');
+		if (isset($this->collections[$identity])) return $this->collections[$identity];
+		$type = type_registry::application_collection($family, $this->default_type(), $key);
+		if ($type !== null) $this->collections[$identity] = $type;
+		return $type;
+	}
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
@@ -131,6 +158,24 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Null leaves a concrete lifecycle requirement unproven; native recipe assertions remain mandatory. */
+	public function concrete_storage_support(string $requirement): ?bool
+	{
+		return null;
+	}
+
+	/** Source storage identity; class declarations override this with their required shared value. */
+	public function default_type(): type_definition
+	{
+		return $this;
+	}
+
+	/** Types without an approved concrete storage contract do not synthesize outer collections. */
+	public function collection_type(string $family, ?type_definition $key): ?type_definition
+	{
+		return null;
+	}
+
 	/** Generated native member signature on this canonical type, independent of concrete publication location. */
 	public function runtime_method(string $name): runtime_function|runtime_overloads|null
 	{

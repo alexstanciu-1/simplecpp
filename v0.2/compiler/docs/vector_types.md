@@ -8,8 +8,9 @@ All three flavors parse generic type arguments into `ast_type_reference` using
 `first_child` and `next_sibling`. Type resolution admits published `vector<T>` specializations. The subsequent
 [first value-operation slice](vector_operations.md) adds typed empty construction,
 append and indexed reads. Same-specialization local copying and assignment are also supported.
-General methods, casts, parameter passing, returns and fields remain deferred.
-An unused vector-typed parameter can also be emitted for export/header proofs.
+Common by-value/reference calls, returns, fields and collection methods are supported.
+Application-record values and [recursive collection values](nested_collections.md) use
+the common concrete recipes; cross-element casts remain deferred.
 
 The generator CLI receives metadata, runtime publication and native facts. It prepares
 the runtime plan before generating compiler types. `compilerVectorTypes()` consumes

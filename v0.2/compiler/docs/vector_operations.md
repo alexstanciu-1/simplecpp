@@ -45,8 +45,9 @@ leaves the element values and count intact. Local vector initialization/copy and
 accept the same canonical specialization, including vector<int>/vector<int64> aliases.
 Copies have independent elements/cardinality; string elements retain their existing
 value semantics. Self-assignment is harmless. By-value arguments and returns use the common value path.
-Exact-type named locals/parameters also support writable reference arguments. Populated literals,
-iteration and other methods remain deferred.
+Exact-type named locals/parameters also support writable reference arguments. Traversal,
+collection methods and [recursive vector/hash values](nested_collections.md) are supported.
+Populated literals remain deferred.
 
 Source `count(values)` returns the published count type and `empty(values)` returns bool.
 The generated specialization validates and lowers the zero-argument const members

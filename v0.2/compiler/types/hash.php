@@ -7,6 +7,8 @@ namespace scpp\compiler;
 abstract class hash_type_definition extends type_definition implements indexed_mutation_type, counted_collection_type
 {
 	use checked_indexed_mutation;
+	use collection_specializations;
+	use concrete_value_storage;
 
 	/** PROPERTIES */
 	/** Native non-owning canonical value type. */

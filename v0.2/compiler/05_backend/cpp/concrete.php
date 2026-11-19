@@ -42,9 +42,7 @@ final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
 
 	public function supports(string $requirement): ?bool
 	{
-		if (!($this->type instanceof record_type_definition) && !($this->type instanceof record_handle_definition)) return null;
-		return in_array($requirement, ['copy_constructible', 'nothrow_move_constructible', 'nothrow_move_assignable', 'nothrow_destructible'], true)
-			? true : null;
+		return $this->type->concrete_storage_support($requirement);
 	}
 }
 
@@ -65,6 +63,10 @@ final class Cpp_Concrete_Collections
 	/** METHODS */
 	public function request(application_collection_type $type): void
 	{
+		if (isset($this->types[$type->cpp_type()])) return;
+		foreach ($type->concrete_types() as $argument) {
+			if ($argument instanceof application_collection_type) $this->request($argument);
+		}
 		$this->types[$type->cpp_type()] = $type;
 	}
 
@@ -87,7 +89,6 @@ final class Cpp_Concrete_Collections
 	public function files(): array /** array<string,string> */
 	{
 		$files = [];
-		ksort($this->types, \SORT_STRING);
 		foreach ($this->types as $name => $type) {
 			$key = hash('sha256', $this->root . "\0" . $name);
 			$guard = 'SCPP_CONCRETE_' . strtoupper($key);
@@ -102,6 +103,12 @@ final class Cpp_Concrete_Collections
 			$header = "// Concrete application collection; include after complete element declarations.\n#ifndef $guard\n#define $guard\n";
 			foreach (array_unique($includes) as $include) $header .= '#include <' . $include . ">\n";
 			$header .= \Scpp\Api\concreteSupport($type::concrete_recipe());
+			foreach ($type->concrete_types() as $argument) {
+				if ($argument instanceof application_collection_type) {
+					$dependency = hash('sha256', $this->root . "\0" . $argument->cpp_type());
+					$header .= '#include "' . $dependency . '.hpp"' . "\n";
+				}
+			}
 			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $body) . "\n#endif\n";
 		}
 		return $files;

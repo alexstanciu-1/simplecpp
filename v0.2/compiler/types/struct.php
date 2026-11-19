@@ -6,6 +6,9 @@ namespace scpp\compiler;
 /** Nominal record payload/layout identity, distinct from its source value storage contract. */
 final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
+	use collection_specializations;
+	use concrete_value_storage;
+
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
 	public readonly ast_record_declaration $declaration;
@@ -19,11 +22,6 @@ final class record_type_definition extends type_definition implements dependency
 	private ?Dependency_Watches $dependencies = null;
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
-	/**
-	 * Native owning canonical collection specializations; elements link back non-owningly to this declaration generation.
-	 * @var type_definition[]
-	 */
-	private array $collections /** array<string,type_definition> */ = [];
 
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
@@ -54,16 +52,6 @@ final class record_type_definition extends type_definition implements dependency
 	public function default_type(): type_definition
 	{
 		return $this->declaration->kind !== record_kind::structure ? $this->required : $this;
-	}
-
-	/** Cache only supported identities for this declaration generation; no global cache retains retired ASTs. */
-	public function collection_type(string $family, ?type_definition $key): ?type_definition
-	{
-		$identity = $family . ':' . ($key?->name ?? '');
-		if (isset($this->collections[$identity])) return $this->collections[$identity];
-		$type = type_registry::application_collection($family, $this->default_type(), $key);
-		if ($type !== null) $this->collections[$identity] = $type;
-		return $type;
 	}
 
 	/** Bind the declaration to this publication before following any forward field references. */
@@ -170,9 +158,8 @@ final class record_type_definition extends type_definition implements dependency
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
 			if ($type instanceof application_collection_type) {
-				foreach ($type->concrete_types() as $argument) {
-					$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
-					if ($record instanceof self) $record->prepare_layout($symbols, $active, $work, true);
+				foreach (self::collection_records($type) as $record) {
+					$record->prepare_layout($symbols, $active, $work, true);
 				}
 			}
 			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression) && !$field->is_readonly) {
@@ -397,11 +384,24 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		return $this->cpp_namespace() . '::' . Cpp_Identifier::source($this->declaration->short_name);
 	}
+
+	/** STATIC METHODS */
+	/** Follow nested value storage to its nominal layout dependencies without retaining a flattened index. @return \Generator<self> */
+	private static function collection_records(application_collection_type $type): \Generator
+	{
+		foreach ($type->concrete_types() as $argument) {
+			if ($argument instanceof application_collection_type) yield from self::collection_records($argument);
+			$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
+			if ($record instanceof self) yield $record;
+		}
+	}
 }
 
 /** Canonical identity of a strong owner or weak observer of an application record. */
 abstract class record_handle_definition extends type_definition
 {
+	use concrete_value_storage;
+
 	/** Native non-owning payload identity. */
 	public readonly record_type_definition $payload;
 

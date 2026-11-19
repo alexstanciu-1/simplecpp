@@ -227,6 +227,10 @@ final class Cpp_Headers
 		if (isset($this->files['units/' . $header])) return $header;
 		$text = "#pragma once\n";
 		foreach ($type->concrete_types() as $argument) {
+			if ($argument instanceof application_collection_type) {
+				$text .= '#include "' . $this->publish_collection($argument, $emitter, $root) . "\"\n";
+				continue;
+			}
 			$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
 			if (!($record instanceof record_type_definition)) continue;
 			$dependency = $this->publish_record($record->declaration, $emitter, $root);

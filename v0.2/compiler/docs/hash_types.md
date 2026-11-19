@@ -4,8 +4,9 @@ Doc Status: supporting
 
 This slice connects the existing typed-hash runtime to provider exports and compiler
 resolution. The subsequent [hash operations slice](hash_operations.md) adds empty
-construction, keyed writes and reads. Append, iteration and hash argument passing
-remain deferred. Unused typed parameters provide a native proof
+construction, keyed writes and reads. Integer-key append, traversal and common argument
+passing are supported. [Recursive collection values](nested_collections.md) reuse the
+concrete recipe path. The initial unused typed parameters provided a native proof
 that source identities select the correct concrete declarations and public headers.
 
 ## Publication and ownership
@@ -50,7 +51,8 @@ Custom publication removal retires the hash header/source and generated identiti
 This foundation introduced compiler inventory version 23; the value slice advances it to 24. No new AST nodes, symbol indexes, watchers, queues,
 prepared expression records or cleanup owners are introduced. Unchanged ASTs and stable
 symbols retain their existing incremental ownership. Optional widths, bool keys/values,
-nested hashes and hash payloads in other containers/carriers remain unavailable.
+and unpublished carrier payloads remain unavailable. Nested hash/vector values now use
+the recursive concrete specialization path.
 
 ## Verification
 

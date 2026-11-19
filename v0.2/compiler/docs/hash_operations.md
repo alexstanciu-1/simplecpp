@@ -50,8 +50,9 @@ which returns a copy and throws on absence.
 
 ## Boundaries and verification
 
-Nonempty literals, inferred empty collections, hash append, traversal and nested
-containers remain deferred. Runtime storage algorithms and public ABI are unchanged.
+Nonempty literals and inferred empty collections remain deferred. Integer-key append,
+traversal and [recursive vector/hash values](nested_collections.md) are supported.
+Runtime storage algorithms and public ABI are unchanged.
 
 `tests/hash_operations.php` checks all four pairs, strict keys, converted values, NUL
 preservation, numeric-string distinction, copied reads, missing keys, conversion failures,

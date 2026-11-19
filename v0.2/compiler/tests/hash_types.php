@@ -62,9 +62,15 @@ foreach (flavor::cases() as $flavor) {
 	$forward = str_replace('return;', 'inspect(' . ($flavor === flavor::php ? '$value' : 'value') . '); return;', $forward);
 	$frontend->prepare(new source_file('hash-calls', signature($flavor, 'hash<int,string>')
 		. $forward . 'return 8;', $flavor), new entry_target(31));
+	foreach (['vector<vector<vector<int>>>', 'hash<hash<hash<int,string>,int>,string>',
+		'vector<hash<vector<int>,string>>', 'hash<vector<hash<string,int>>,string>'] as $nested_type) {
+		$type = $resolve($nested_type);
+		verify($type === $resolve(str_replace('int', 'int64', $nested_type)), 'Nested aliases duplicated canonical identity');
+		verify($type->concrete_storage_support('nothrow_move_constructible') === true, 'Missing concrete storage contract');
+	}
 	foreach (['hash' => 'two arguments', 'hash<int>' => 'two arguments', 'hash<int,string,bool>' => 'two arguments',
 		'hash<byte,string>' => 'Unavailable runtime specialization', 'hash<int,bool>' => 'Unavailable runtime specialization',
-		'hash<string,Missing>' => 'Unknown or unsupported type', 'hash<vector<int>,string>' => 'Unavailable runtime specialization',
+		'hash<string,Missing>' => 'Unknown or unsupported type',
 		'nullable<hash<int,string>>' => 'Unavailable runtime specialization', 'int<string>' => 'does not accept arguments',
 		'vector<int,string>' => 'one argument'] as $text => $message) {
 		rejects(fn() => $resolve($text), $message);

@@ -21,7 +21,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | --- | --- | --- |
 | 1.1 Integer representations/literals | Hexadecimal/octal literals and five optional integer widths implemented | uint64 and operations requiring its promotion remain deferred; unavailable constant-evaluation outcome exists |
 | 1.2 Backed enums | Bounded scope implemented, including string backing and public instance methods | Broader enum integration is separate |
-| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; broader element/key families, nested collections and populated literals remain separate |
+| 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; recursive vector/hash values implemented; broader element/key families and populated literals remain separate |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
@@ -1732,3 +1732,12 @@ into wall time. These are fixture observations, not a controlled performance com
 Raw proof: `/tmp/scpp-readonly-verified`; merge proof: `/tmp/readonly-merge-tests.log`;
 record regressions: `/tmp/readonly-record-regressions.log` and
 `/tmp/readonly-struct-regression-final.log` (corrected stale assertions).
+
+### Recursive collection values — implemented
+
+[Recursive specialization](../../compiler/docs/nested_collections.md) reuses vector/hash
+recipes and canonical element-owned caches, including three-level homogeneous and mixed
+family nesting. All three flavors pass copying, mutation, fields, calls, traversal and
+36 incremental checkpoints against fresh output. No AST facts or preparation passes were
+added. Shared-owner hash keys, broader key contracts and self-referential collection
+fields remain separate.
