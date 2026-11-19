@@ -169,6 +169,13 @@ final class Body_Collection
 			}
 			return;
 		}
+		if ($value instanceof ast_keyed_collection_expression) {
+			foreach ($value->entries as $entry) {
+				$this->expression($entry->key);
+				$this->expression($entry->value);
+			}
+			return;
+		}
 		if ($value instanceof ast_collection_expression) {
 			foreach ($value->elements as $element) $this->expression($element);
 			return;

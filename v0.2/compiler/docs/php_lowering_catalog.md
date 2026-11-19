@@ -8,7 +8,7 @@ Each row was prepared as a PHP-flavor program and emitted through `Cpp_Program::
 
 The **header** column distinguishes direct runtime includes in the example’s implementation unit from declarations actually emitted into an application `.hpp`. **No unit header** means the program emitted no application header for that row. Runtime includes are listed once per example, including those needed by setup. Every entry unit also includes `<scpp/entry.hpp>` and emits the target assertion; those common lines are shown below. A source use of a runtime type does not, by itself, publish an application declaration.
 
-All 72 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
+All 73 examples are checked against the PHP frontend’s emitted implementation and header columns. Most examples append `return 8;` as harness setup. The tables show the relevant emitted statements.
 
 [Scalars and conversions](#locals-literals-and-conversions) · [Expressions](#expressions-and-updates) · [Strings and output](#strings-and-output) · [Control flow](#control-flow-and-entry) · [Vectors and hashes](#published-vectors-and-hashes) · [Carriers and boxed values](#carriers-and-boxed-values) · [Functions and project headers](#functions-namespaces-and-project-units)
 
@@ -340,7 +340,19 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 
 ## Published vectors and hashes
 
-Flat populated literals currently require an explicitly typed published integer or string vector. User factories remain read-only; nested and keyed literals are deferred.
+Published integer/string vectors use bulk construction; nested/application vectors retain generated append construction. Typed keyed locals support the four published integer/string hash combinations. User factories remain read-only and deferred; nested keyed input is not enabled.
+
+```text
++----------------------------------------------------+--------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| PHP-flavor pattern                                 | Lowered C++ code                                                                                             | Lowered C++ header code          | Generation and lowering                |
++----------------------------------------------------+--------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+| $codes hash<int,string> = ["id" => 1, "int" => 2]; | scpp::hash_int64_string var_codes_0 = ([&]() {                                                               | .cpp includes                    | Metadata selects keyed transport.      |
+|                                                    |     scpp::hash_int64_string::keyed_entry input[]{{scpp::string{"id", 2}, 1L}, {scpp::string{"int", 3}, 2L}}; | #include <scpp/core/scalars.hpp> | Braced input evaluates each key then   |
+|                                                    |     return scpp::hash_int64_string::from_owned_entries(input, 2);                                            | #include <scpp/hashes.hpp>       | value, in entry order. The factory     |
+|                                                    | }());                                                                                                        | #include <scpp/string.hpp>       | presizes entries and index and rejects |
+|                                                    |                                                                                                              | No unit header.                  | duplicates after materialization.      |
++----------------------------------------------------+--------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
+```
 
 ```text
 +----------------------------------+--------------------------------------------------+----------------------------------+-----------------------------------------+

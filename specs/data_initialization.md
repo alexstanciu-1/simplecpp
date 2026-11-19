@@ -733,3 +733,23 @@ values. Const/pure user-method contracts are separate work, not inferred by scan
 
 Compiler validation enforces this contract; generated C++ fields need not be `const`.
 No deep freezing, borrow analysis or delayed AST attachment is introduced.
+
+
+### Active v0.2 typed keyed local slice
+
+The four published integer/string key/value hash combinations admit explicitly typed
+local bracket-keyed input in all flavors, with an optional trailing comma. Existing
+strict key admission/equality and typed-destination value conversions apply. Each key
+expression/conversion completes before its value, then the next entry. Evaluation or
+conversion failure suppresses the remaining input. The compiler materializes ordered
+private entries before the runtime factory validates duplicates; therefore duplicates
+do not promise suppression of their values or later input effects. Equal keys are errors,
+never replacement. Internal allocation timing remains unspecified, and failures clean
+up constructed input and partial destination without rolling back external effects.
+
+The runtime presizes entry and index storage before filling. The private consuming
+transport above may consume those entries; source lvalues remain unchanged. This bounded
+slice does not activate source factories, nested keyed forms, brace syntax, inferred
+or non-local contexts, or new key/value families. Existing `set` replacement semantics
+and empty construction remain unchanged. See the
+[implementation note](../v0.2/compiler/docs/keyed_initialization.md).

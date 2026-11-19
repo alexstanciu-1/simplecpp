@@ -22,13 +22,13 @@ def includes(runtime):
             for arg in ('-I', str(path))]
 
 
-def prove(out, cxx, runtime, fixtures):
+def prove(out, cxx, runtime, fixtures, extra_sources=()):
     out.mkdir(parents=True, exist_ok=True)
     flags = ['-std=c++23', '-O2', '-g0', '-Wall', '-Wextra', '-Werror', *includes(runtime)]
     objects = []
     for name, source in [('runtime', runtime / 'generated/src/runtime.cpp'),
                          ('output', runtime / 'src/output/output.cpp'),
-                         ('arithmetic', runtime / 'src/numeric/arithmetic.cpp')]:
+                         ('arithmetic', runtime / 'src/numeric/arithmetic.cpp'), *extra_sources]:
         obj = out / (name + '.o')
         run([cxx, *flags, '-c', source, '-o', obj])
         objects.append(obj)
@@ -53,7 +53,7 @@ def prove(out, cxx, runtime, fixtures):
         assert result.returncode == 8 and result.stdout.hex() == fixture['stdout_hex'], (name, result.returncode, result.stdout, result.stderr)
         observations[name] = {'native_wall_ms': (time.perf_counter() - start) * 1000}
     (out / 'results.json').write_text(json.dumps(observations, indent=2))
-    print(cxx, 'PASS', len(observations), 'flat-list native fixtures')
+    print(cxx, 'PASS', len(observations), 'initialization native fixtures')
 
 
 if __name__ == '__main__':

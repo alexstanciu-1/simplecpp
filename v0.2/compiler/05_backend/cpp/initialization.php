@@ -7,10 +7,10 @@ namespace scpp\compiler;
 final class Cpp_List_Initialization
 {
 	/** @param string[] $elements Converted element expressions in source order. */
-	public static function expression(list_initialization_binding $binding, array $elements /** list<string> */): string
+	public static function expression(initialization_transport $binding, array $elements /** list<string> */): string
 	{
 		$count = count($elements);
-		$type = $binding->element->cpp_type();
+		$type = $binding->element;
 		$values = implode(', ', $elements);
 		if ($count <= $binding->inline_entries) {
 			return "([&]() {\n    $type input[]{{$values}};\n"

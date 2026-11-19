@@ -3,21 +3,30 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Published positional initialization transport; fixed for a compiler session and shared by literal occurrences. */
-final class list_initialization_binding
+/** Published private initialization transport; fixed for a compiler session and shared by literal occurrences. */
+final class initialization_transport
 {
-	public readonly type_definition $element;
+	public readonly string $element;
 	public readonly string $input;
 	public readonly string $factory;
 	public readonly int $inline_entries /** uint32 */;
 
-	public function __construct(type_definition $element, string $input, string $factory, int $inline_entries /** uint32 */)
+	public function __construct(string $element, string $input, string $factory, int $inline_entries /** uint32 */)
 	{
 		$this->element = $element;
 		$this->input = $input;
 		$this->factory = $factory;
 		$this->inline_entries = $inline_entries;
 	}
+}
+
+/** Generated keyed construction capability; strict key admission reuses the ordinary key contract. */
+interface keyed_initializer_type
+{
+	public function keyed_initialization(): initialization_transport;
+	public function prepare_key(ast_expression $key): void;
+	public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	public function write_type(): type_definition;
 }
 
 /** Generated concrete collection contract; canonical arguments serve layout planning, recipe data serves private lowering. */
@@ -145,7 +154,7 @@ interface indexed_collection_type extends index_read_type
 interface sequence_initializer_type extends indexed_collection_type
 {
 	/** Null selects ordered append; a binding selects private bulk transport. */
-	public function list_initialization(): ?list_initialization_binding;
+	public function list_initialization(): ?initialization_transport;
 	public function write_type(): type_definition;
 	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }

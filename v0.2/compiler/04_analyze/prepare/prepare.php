@@ -510,6 +510,17 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
+		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
+			if (!($type instanceof keyed_initializer_type)) throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
+			$this->expression_visits++;
+			foreach ($declaration->initializer->entries as $entry) {
+				$this->value($entry->key, $name);
+				$type->prepare_key($entry->key);
+				$this->value($entry->value, $name);
+				$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
+			}
+			$declaration->initializer->settle_collection($type);
+		}
 		elseif (($declaration->initializer instanceof ast_collection_expression) && $type !== null) {
 			if (!($type instanceof indexed_collection_type)) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Destination has no published collection initialization capability');
@@ -668,6 +679,7 @@ final class Preparation
 	{
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
 		$this->expression_visits++;
+		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
 		}

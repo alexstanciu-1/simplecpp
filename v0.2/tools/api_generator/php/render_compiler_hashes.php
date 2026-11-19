@@ -44,7 +44,19 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             . $carrier['name'] . "::instance(), " . var_export($find['name'], true)
             . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true);\n";
         $export = typeExport($runtime['submodules'], $hash['name']);
+        $initialization = '';
+        $initializationSetup = '';
+        if ($hash['initialization'] !== null) {
+            $init = (array)$hash['initialization'];
+            $prefix = $export['symbol'] . '::';
+            $entry = var_export($prefix . $init['entry'], true);
+            $input = var_export($prefix . $init['input'], true);
+            $factory = var_export($prefix . ($init['consume'] ?? $init['read_only']), true);
+            $initialization = "\tprivate readonly initialization_transport \$initialization;\n\tpublic function keyed_initialization(): initialization_transport { return \$this->initialization; }\n";
+            $initializationSetup = "\t\t\$this->initialization = new initialization_transport($entry, $input, $factory, {$init['inline_entries']});\n";
+        }
         $bindings = [
+            '@initialization@' => $initialization,
             '@append_method@' => compilerHashAppend($hash),
             '@set@' => $set['name'], '@index@' => $at['name'],
             '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()'),
@@ -56,8 +68,8 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
 
             '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
-            '@interfaces@' => ' implements iterable_type, key_presence_type, key_lookup_type' . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
-            '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . "\t}\n",
+            '@interfaces@' => ' implements iterable_type, key_presence_type, key_lookup_type' . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
+            '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . $initializationSetup . "\t}\n",
             '@factory@' => "\tpublic static function instance(): self { return self::\$instance ??= new self(); }",
         ];
         $template = readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl');
@@ -71,7 +83,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
             if (!$append) $recipe = array_replace($recipe, ['enable_append' => '', 'append' => '']);
             $code .= strtr($template, array_replace($bindings, [
-                '@lookup_property@' => '', '@lookup@' => '',
+                '@lookup_property@' => '', '@lookup@' => '', '@initialization@' => '',
                 '@append_method@' => $append ? compilerHashAppend($hash) : '',
                 '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),

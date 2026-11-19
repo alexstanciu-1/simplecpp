@@ -43,6 +43,44 @@ final class ast_collection_expression extends ast_expression
 	}
 }
 
+/** One ordered key/value input occurrence, e.g. key() => value(); owns both expressions. */
+final class ast_keyed_entry extends ast_node
+{
+	public readonly ast_expression $key;
+	public readonly ast_expression $value;
+	/** Null until value conversion is prepared, or after reset. Keys use the strict identity contract. */
+	public ?int $conversion /** uint16 */ = null;
+
+	public function __construct(ast_expression $key, ast_expression $value)
+	{
+		parent::__construct($key->start, $value->end);
+		$this->key = $key;
+		$this->value = $value;
+		$key->attach($this);
+		$value->attach($this);
+	}
+}
+
+/** Nonempty bracket-keyed input; duplicates remain ordered syntax, never a PHP map. */
+final class ast_keyed_collection_expression extends ast_expression
+{
+	/** @var ast_keyed_entry[] Native owning entries. */
+	public readonly array $entries /** list<ast_keyed_entry> */;
+
+	/** @param ast_keyed_entry[] $entries */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $entries /** list<ast_keyed_entry> */)
+	{
+		parent::__construct($start, $end);
+		$this->entries = $entries;
+		foreach ($entries as $entry) $entry->attach($this);
+	}
+
+	public function settle_collection(type_definition&keyed_initializer_type $type): void
+	{
+		$this->settle_value($type, null);
+	}
+}
+
 /** Value-copy indexed read, e.g. values[0]; owns its receiver and index, never represents mutable element storage. */
 final class ast_index_expression extends ast_expression
 {

@@ -1,0 +1,1020 @@
+{
+  "host": "tf-dev002",
+  "flags": "C++23 O2 g0, libstdc++, default linker, sequential, no LTO/PCH/ccache, proof runtime objects reused",
+  "runtime_sha256": {
+    "runtime.cpp": "c897fd676bdf63eaf7549826c27c65e523e3e17cfeb23097c37df02b97a17bbf",
+    "hash.cpp": "ca5cffe11a43a76b54bb2b5ef360875c9f916f8d9c3823c6e29918d21221669e"
+  },
+  "cases": [
+    {
+      "compiler": "clang++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.50644,
+          "emit_ms": 0.072677,
+          "source_bytes": 64,
+          "php_wall_ms": 53.138911724090576,
+          "compile_ms": 41.996411979198456,
+          "link_ms": 54.73379045724869,
+          "native_ms": 96.73020243644714,
+          "execute_process_ms": 1.489005982875824
+        },
+        {
+          "prepare_ms": 0.515577,
+          "emit_ms": 0.074099,
+          "source_bytes": 64,
+          "php_wall_ms": 56.313738226890564,
+          "compile_ms": 41.46258533000946,
+          "link_ms": 56.58004432916641,
+          "native_ms": 98.04262965917587,
+          "execute_process_ms": 1.3080686330795288
+        },
+        {
+          "prepare_ms": 0.480341,
+          "emit_ms": 0.071534,
+          "source_bytes": 64,
+          "php_wall_ms": 52.17316001653671,
+          "compile_ms": 43.16249489784241,
+          "link_ms": 55.84099888801575,
+          "native_ms": 99.00349378585815,
+          "execute_process_ms": 1.6654357314109802
+        }
+      ],
+      "cpp_bytes": 543,
+      "profile_ms": {
+        "Total Frontend": 16.845,
+        "Total Backend": 4.932,
+        "Total Optimizer": 2.141,
+        "Total CodeGenPasses": 1.984
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.338781,
+          "emit_ms": 0.178655,
+          "source_bytes": 599,
+          "php_wall_ms": 56.88050389289856,
+          "compile_ms": 42.561762034893036,
+          "link_ms": 54.27050590515137,
+          "native_ms": 96.8322679400444,
+          "execute_process_ms": 1.4161691069602966
+        },
+        {
+          "prepare_ms": 1.357998,
+          "emit_ms": 0.184125,
+          "source_bytes": 599,
+          "php_wall_ms": 57.26376175880432,
+          "compile_ms": 39.66616094112396,
+          "link_ms": 51.35627090930939,
+          "native_ms": 91.02243185043335,
+          "execute_process_ms": 1.4336928725242615
+        },
+        {
+          "prepare_ms": 1.316399,
+          "emit_ms": 0.180709,
+          "source_bytes": 599,
+          "php_wall_ms": 52.75429040193558,
+          "compile_ms": 41.98460280895233,
+          "link_ms": 57.43958055973053,
+          "native_ms": 99.42418336868286,
+          "execute_process_ms": 1.4338195323944092
+        }
+      ],
+      "cpp_bytes": 1262,
+      "profile_ms": {
+        "Total Frontend": 16.836,
+        "Total Backend": 4.381,
+        "Total CodeGenPasses": 1.837,
+        "Total Optimizer": 1.798
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.471951,
+          "emit_ms": 0.188714,
+          "source_bytes": 608,
+          "php_wall_ms": 57.3771595954895,
+          "compile_ms": 66.27045571804047,
+          "link_ms": 61.24182790517807,
+          "native_ms": 127.51228362321854,
+          "execute_process_ms": 1.7640665173530579
+        },
+        {
+          "prepare_ms": 1.38616,
+          "emit_ms": 0.188083,
+          "source_bytes": 608,
+          "php_wall_ms": 57.11417645215988,
+          "compile_ms": 69.14539635181427,
+          "link_ms": 61.328887939453125,
+          "native_ms": 130.4742842912674,
+          "execute_process_ms": 1.5942007303237915
+        },
+        {
+          "prepare_ms": 1.315087,
+          "emit_ms": 0.182743,
+          "source_bytes": 608,
+          "php_wall_ms": 60.659922659397125,
+          "compile_ms": 65.59067219495773,
+          "link_ms": 60.405150055885315,
+          "native_ms": 125.99582225084305,
+          "execute_process_ms": 1.6263201832771301
+        }
+      ],
+      "cpp_bytes": 1324,
+      "profile_ms": {
+        "Total Backend": 40.024,
+        "Total Optimizer": 31.425,
+        "Total Frontend": 17.691,
+        "Total CodeGenPasses": 7.725
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "cpp",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.710293,
+          "emit_ms": 0.149941,
+          "source_bytes": 733,
+          "php_wall_ms": 58.13560634851456,
+          "compile_ms": 53.08842658996582,
+          "link_ms": 59.87230688333511,
+          "native_ms": 112.96073347330093,
+          "execute_process_ms": 1.4940351247787476
+        },
+        {
+          "prepare_ms": 0.66148,
+          "emit_ms": 0.148038,
+          "source_bytes": 733,
+          "php_wall_ms": 55.934838950634,
+          "compile_ms": 54.32308465242386,
+          "link_ms": 52.705809473991394,
+          "native_ms": 107.02889412641525,
+          "execute_process_ms": 1.4843866229057312
+        },
+        {
+          "prepare_ms": 0.654678,
+          "emit_ms": 0.137908,
+          "source_bytes": 733,
+          "php_wall_ms": 55.727869272232056,
+          "compile_ms": 53.93560975790024,
+          "link_ms": 58.81114304065704,
+          "native_ms": 112.74675279855728,
+          "execute_process_ms": 1.6068890690803528
+        }
+      ],
+      "cpp_bytes": 1807,
+      "profile_ms": {
+        "Total Frontend": 16.342,
+        "Total Backend": 13.869,
+        "Total CodeGenPasses": 7.204,
+        "Total Optimizer": 5.944
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.535314,
+          "emit_ms": 0.077496,
+          "source_bytes": 66,
+          "php_wall_ms": 57.717688381671906,
+          "compile_ms": 42.21890866756439,
+          "link_ms": 53.967759013175964,
+          "native_ms": 96.18666768074036,
+          "execute_process_ms": 1.3691559433937073
+        },
+        {
+          "prepare_ms": 0.512832,
+          "emit_ms": 0.075682,
+          "source_bytes": 66,
+          "php_wall_ms": 52.71036922931671,
+          "compile_ms": 40.57403653860092,
+          "link_ms": 55.182382464408875,
+          "native_ms": 95.7564190030098,
+          "execute_process_ms": 1.5707165002822876
+        },
+        {
+          "prepare_ms": 0.521899,
+          "emit_ms": 0.073398,
+          "source_bytes": 66,
+          "php_wall_ms": 56.95503205060959,
+          "compile_ms": 43.12264919281006,
+          "link_ms": 52.082359790802,
+          "native_ms": 95.20500898361206,
+          "execute_process_ms": 1.294456422328949
+        }
+      ],
+      "cpp_bytes": 543,
+      "profile_ms": {
+        "Total Frontend": 15.726,
+        "Total Backend": 4.765,
+        "Total Optimizer": 2.092,
+        "Total CodeGenPasses": 1.94
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.336186,
+          "emit_ms": 0.183945,
+          "source_bytes": 601,
+          "php_wall_ms": 57.17980116605759,
+          "compile_ms": 37.20027208328247,
+          "link_ms": 54.9188032746315,
+          "native_ms": 92.11907535791397,
+          "execute_process_ms": 1.422286033630371
+        },
+        {
+          "prepare_ms": 1.323573,
+          "emit_ms": 0.187521,
+          "source_bytes": 601,
+          "php_wall_ms": 57.43715167045593,
+          "compile_ms": 42.8551584482193,
+          "link_ms": 59.42044407129288,
+          "native_ms": 102.27560251951218,
+          "execute_process_ms": 1.3724565505981445
+        },
+        {
+          "prepare_ms": 1.365701,
+          "emit_ms": 0.185358,
+          "source_bytes": 601,
+          "php_wall_ms": 54.798439145088196,
+          "compile_ms": 38.32663595676422,
+          "link_ms": 62.55519390106201,
+          "native_ms": 100.88182985782623,
+          "execute_process_ms": 1.344054937362671
+        }
+      ],
+      "cpp_bytes": 1262,
+      "profile_ms": {
+        "Total Frontend": 15.779,
+        "Total Backend": 4.368,
+        "Total CodeGenPasses": 1.821,
+        "Total Optimizer": 1.811
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.344662,
+          "emit_ms": 0.188855,
+          "source_bytes": 610,
+          "php_wall_ms": 56.04612082242966,
+          "compile_ms": 63.07394802570343,
+          "link_ms": 58.42350423336029,
+          "native_ms": 121.49745225906372,
+          "execute_process_ms": 1.5110820531845093
+        },
+        {
+          "prepare_ms": 1.317561,
+          "emit_ms": 0.180429,
+          "source_bytes": 610,
+          "php_wall_ms": 52.882976830005646,
+          "compile_ms": 63.149236142635345,
+          "link_ms": 53.7911057472229,
+          "native_ms": 116.94034188985825,
+          "execute_process_ms": 1.353435218334198
+        },
+        {
+          "prepare_ms": 1.368868,
+          "emit_ms": 0.178345,
+          "source_bytes": 610,
+          "php_wall_ms": 54.96656894683838,
+          "compile_ms": 62.91414797306061,
+          "link_ms": 60.33230572938919,
+          "native_ms": 123.2464537024498,
+          "execute_process_ms": 1.48029625415802
+        }
+      ],
+      "cpp_bytes": 1324,
+      "profile_ms": {
+        "Total Backend": 26.22,
+        "Total Optimizer": 20.809,
+        "Total Frontend": 16.014,
+        "Total CodeGenPasses": 4.668
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "php",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.718177,
+          "emit_ms": 0.144431,
+          "source_bytes": 735,
+          "php_wall_ms": 52.96895653009415,
+          "compile_ms": 48.47552627325058,
+          "link_ms": 57.644203305244446,
+          "native_ms": 106.11972957849503,
+          "execute_process_ms": 1.4569461345672607
+        },
+        {
+          "prepare_ms": 0.666119,
+          "emit_ms": 0.136827,
+          "source_bytes": 735,
+          "php_wall_ms": 53.01513522863388,
+          "compile_ms": 53.640954196453094,
+          "link_ms": 54.56535518169403,
+          "native_ms": 108.20630937814713,
+          "execute_process_ms": 1.397646963596344
+        },
+        {
+          "prepare_ms": 0.677911,
+          "emit_ms": 0.139582,
+          "source_bytes": 735,
+          "php_wall_ms": 55.680692195892334,
+          "compile_ms": 53.8361594080925,
+          "link_ms": 55.90587854385376,
+          "native_ms": 109.74203795194626,
+          "execute_process_ms": 1.4594271779060364
+        }
+      ],
+      "cpp_bytes": 1807,
+      "profile_ms": {
+        "Total Frontend": 16.171,
+        "Total Backend": 13.8,
+        "Total CodeGenPasses": 7.152,
+        "Total Optimizer": 5.919
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.545363,
+          "emit_ms": 0.07466,
+          "source_bytes": 68,
+          "php_wall_ms": 58.6271733045578,
+          "compile_ms": 43.826960027217865,
+          "link_ms": 57.400643825531006,
+          "native_ms": 101.22760385274887,
+          "execute_process_ms": 1.6028732061386108
+        },
+        {
+          "prepare_ms": 0.520727,
+          "emit_ms": 0.070963,
+          "source_bytes": 68,
+          "php_wall_ms": 53.202129900455475,
+          "compile_ms": 44.03562843799591,
+          "link_ms": 57.4241578578949,
+          "native_ms": 101.45978629589081,
+          "execute_process_ms": 1.32017582654953
+        },
+        {
+          "prepare_ms": 0.525536,
+          "emit_ms": 0.071775,
+          "source_bytes": 68,
+          "php_wall_ms": 52.569977939128876,
+          "compile_ms": 43.00692677497864,
+          "link_ms": 54.86000329256058,
+          "native_ms": 97.86693006753922,
+          "execute_process_ms": 1.394219696521759
+        }
+      ],
+      "cpp_bytes": 543,
+      "profile_ms": {
+        "Total Frontend": 16.868,
+        "Total Backend": 4.651,
+        "Total Optimizer": 2.054,
+        "Total CodeGenPasses": 1.887
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.357377,
+          "emit_ms": 0.180318,
+          "source_bytes": 603,
+          "php_wall_ms": 53.90535295009613,
+          "compile_ms": 41.04103893041611,
+          "link_ms": 52.696652710437775,
+          "native_ms": 93.73769164085388,
+          "execute_process_ms": 1.5161111950874329
+        },
+        {
+          "prepare_ms": 1.347267,
+          "emit_ms": 0.187081,
+          "source_bytes": 603,
+          "php_wall_ms": 57.507485151290894,
+          "compile_ms": 41.419386863708496,
+          "link_ms": 57.9773485660553,
+          "native_ms": 99.3967354297638,
+          "execute_process_ms": 1.4299675822257996
+        },
+        {
+          "prepare_ms": 1.367605,
+          "emit_ms": 0.18654,
+          "source_bytes": 603,
+          "php_wall_ms": 57.7990785241127,
+          "compile_ms": 39.64263200759888,
+          "link_ms": 55.40136247873306,
+          "native_ms": 95.04399448633194,
+          "execute_process_ms": 1.4705881476402283
+        }
+      ],
+      "cpp_bytes": 1262,
+      "profile_ms": {
+        "Total Frontend": 17.063,
+        "Total Backend": 4.514,
+        "Total CodeGenPasses": 1.881,
+        "Total Optimizer": 1.843
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.404044,
+          "emit_ms": 0.189165,
+          "source_bytes": 612,
+          "php_wall_ms": 55.68660795688629,
+          "compile_ms": 65.26659429073334,
+          "link_ms": 58.282360434532166,
+          "native_ms": 123.5489547252655,
+          "execute_process_ms": 1.423366367816925
+        },
+        {
+          "prepare_ms": 1.413431,
+          "emit_ms": 0.191099,
+          "source_bytes": 612,
+          "php_wall_ms": 55.77710270881653,
+          "compile_ms": 65.45517593622208,
+          "link_ms": 55.199965834617615,
+          "native_ms": 120.65514177083969,
+          "execute_process_ms": 1.372218132019043
+        },
+        {
+          "prepare_ms": 1.350253,
+          "emit_ms": 0.178685,
+          "source_bytes": 612,
+          "php_wall_ms": 57.07874149084091,
+          "compile_ms": 63.489124178886414,
+          "link_ms": 57.83964693546295,
+          "native_ms": 121.32877111434937,
+          "execute_process_ms": 1.3800561428070068
+        }
+      ],
+      "cpp_bytes": 1324,
+      "profile_ms": {
+        "Total Backend": 26.365,
+        "Total Optimizer": 20.766,
+        "Total Frontend": 16.163,
+        "Total CodeGenPasses": 4.792
+      }
+    },
+    {
+      "compiler": "clang++",
+      "flavor": "js",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.710082,
+          "emit_ms": 0.146384,
+          "source_bytes": 737,
+          "php_wall_ms": 57.475924491882324,
+          "compile_ms": 52.49323695898056,
+          "link_ms": 57.720400393009186,
+          "native_ms": 110.21363735198975,
+          "execute_process_ms": 1.6103684902191162
+        },
+        {
+          "prepare_ms": 0.700264,
+          "emit_ms": 0.149049,
+          "source_bytes": 737,
+          "php_wall_ms": 53.696125745773315,
+          "compile_ms": 48.86975139379501,
+          "link_ms": 60.29382348060608,
+          "native_ms": 109.16357487440109,
+          "execute_process_ms": 1.4062300324440002
+        },
+        {
+          "prepare_ms": 0.693622,
+          "emit_ms": 0.145482,
+          "source_bytes": 737,
+          "php_wall_ms": 56.431494653224945,
+          "compile_ms": 50.863467156887054,
+          "link_ms": 51.915593445301056,
+          "native_ms": 102.77906060218811,
+          "execute_process_ms": 1.3334527611732483
+        }
+      ],
+      "cpp_bytes": 1807,
+      "profile_ms": {
+        "Total Frontend": 16.491,
+        "Total Backend": 14.103,
+        "Total CodeGenPasses": 7.344,
+        "Total Optimizer": 5.999
+      }
+    },
+    {
+      "compiler": "g++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.520306,
+          "emit_ms": 0.072957,
+          "source_bytes": 64,
+          "php_wall_ms": 53.22656035423279,
+          "compile_ms": 25.482840836048126,
+          "link_ms": 47.49380797147751,
+          "native_ms": 72.97664880752563,
+          "execute_process_ms": 1.493610441684723
+        },
+        {
+          "prepare_ms": 0.553118,
+          "emit_ms": 0.078657,
+          "source_bytes": 64,
+          "php_wall_ms": 58.39920789003372,
+          "compile_ms": 28.519943356513977,
+          "link_ms": 43.14780980348587,
+          "native_ms": 71.66775315999985,
+          "execute_process_ms": 1.32761150598526
+        },
+        {
+          "prepare_ms": 0.556825,
+          "emit_ms": 0.081653,
+          "source_bytes": 64,
+          "php_wall_ms": 59.947170317173004,
+          "compile_ms": 25.87311714887619,
+          "link_ms": 46.99161648750305,
+          "native_ms": 72.86473363637924,
+          "execute_process_ms": 1.578696072101593
+        }
+      ],
+      "cpp_bytes": 543
+    },
+    {
+      "compiler": "g++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.380349,
+          "emit_ms": 0.190508,
+          "source_bytes": 599,
+          "php_wall_ms": 55.87680637836456,
+          "compile_ms": 30.103124678134918,
+          "link_ms": 41.947051882743835,
+          "native_ms": 72.05017656087875,
+          "execute_process_ms": 1.4095529913902283
+        },
+        {
+          "prepare_ms": 1.349301,
+          "emit_ms": 0.187392,
+          "source_bytes": 599,
+          "php_wall_ms": 57.8719824552536,
+          "compile_ms": 29.903888702392578,
+          "link_ms": 47.47842252254486,
+          "native_ms": 77.38231122493744,
+          "execute_process_ms": 1.449301838874817
+        },
+        {
+          "prepare_ms": 1.35405,
+          "emit_ms": 0.184145,
+          "source_bytes": 599,
+          "php_wall_ms": 53.94698679447174,
+          "compile_ms": 30.540429055690765,
+          "link_ms": 47.293052077293396,
+          "native_ms": 77.83348113298416,
+          "execute_process_ms": 1.5330687165260315
+        }
+      ],
+      "cpp_bytes": 1262
+    },
+    {
+      "compiler": "g++",
+      "flavor": "cpp",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.368858,
+          "emit_ms": 0.190187,
+          "source_bytes": 608,
+          "php_wall_ms": 53.95485460758209,
+          "compile_ms": 44.43752020597458,
+          "link_ms": 46.8263104557991,
+          "native_ms": 91.26383066177368,
+          "execute_process_ms": 1.4204606413841248
+        },
+        {
+          "prepare_ms": 1.376031,
+          "emit_ms": 0.19218,
+          "source_bytes": 608,
+          "php_wall_ms": 54.034337401390076,
+          "compile_ms": 44.64954137802124,
+          "link_ms": 46.8420535326004,
+          "native_ms": 91.49159491062164,
+          "execute_process_ms": 1.6376301646232605
+        },
+        {
+          "prepare_ms": 1.324154,
+          "emit_ms": 0.184125,
+          "source_bytes": 608,
+          "php_wall_ms": 56.27104640007019,
+          "compile_ms": 44.51455920934677,
+          "link_ms": 46.2663397192955,
+          "native_ms": 90.78089892864227,
+          "execute_process_ms": 1.470424234867096
+        }
+      ],
+      "cpp_bytes": 1324
+    },
+    {
+      "compiler": "g++",
+      "flavor": "cpp",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.700684,
+          "emit_ms": 0.147487,
+          "source_bytes": 733,
+          "php_wall_ms": 53.01744490861893,
+          "compile_ms": 46.98164761066437,
+          "link_ms": 46.45504057407379,
+          "native_ms": 93.43668818473816,
+          "execute_process_ms": 1.3007819652557373
+        },
+        {
+          "prepare_ms": 0.696406,
+          "emit_ms": 0.146475,
+          "source_bytes": 733,
+          "php_wall_ms": 54.414428770542145,
+          "compile_ms": 47.55367338657379,
+          "link_ms": 46.99736088514328,
+          "native_ms": 94.55103427171707,
+          "execute_process_ms": 1.45779550075531
+        },
+        {
+          "prepare_ms": 0.701687,
+          "emit_ms": 0.146575,
+          "source_bytes": 733,
+          "php_wall_ms": 53.89843136072159,
+          "compile_ms": 47.68659174442291,
+          "link_ms": 43.21359097957611,
+          "native_ms": 90.90018272399902,
+          "execute_process_ms": 1.4174282550811768
+        }
+      ],
+      "cpp_bytes": 1807
+    },
+    {
+      "compiler": "g++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.572894,
+          "emit_ms": 0.08501,
+          "source_bytes": 66,
+          "php_wall_ms": 57.712920010089874,
+          "compile_ms": 26.897892355918884,
+          "link_ms": 47.99036681652069,
+          "native_ms": 74.88825917243958,
+          "execute_process_ms": 1.7184466123580933
+        },
+        {
+          "prepare_ms": 0.569428,
+          "emit_ms": 0.077596,
+          "source_bytes": 66,
+          "php_wall_ms": 58.755092322826385,
+          "compile_ms": 26.16748958826065,
+          "link_ms": 43.50406676530838,
+          "native_ms": 69.67155635356903,
+          "execute_process_ms": 1.539669930934906
+        },
+        {
+          "prepare_ms": 0.52242,
+          "emit_ms": 0.076594,
+          "source_bytes": 66,
+          "php_wall_ms": 54.24443632364273,
+          "compile_ms": 29.807254672050476,
+          "link_ms": 47.02267795801163,
+          "native_ms": 76.8299326300621,
+          "execute_process_ms": 1.3589411973953247
+        }
+      ],
+      "cpp_bytes": 543
+    },
+    {
+      "compiler": "g++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.38604,
+          "emit_ms": 0.188474,
+          "source_bytes": 601,
+          "php_wall_ms": 58.263808488845825,
+          "compile_ms": 30.562803149223328,
+          "link_ms": 45.64625769853592,
+          "native_ms": 76.20906084775925,
+          "execute_process_ms": 1.6145780682563782
+        },
+        {
+          "prepare_ms": 1.393875,
+          "emit_ms": 0.187662,
+          "source_bytes": 601,
+          "php_wall_ms": 56.232526898384094,
+          "compile_ms": 31.225048005580902,
+          "link_ms": 46.51243984699249,
+          "native_ms": 77.7374878525734,
+          "execute_process_ms": 1.5764310956001282
+        },
+        {
+          "prepare_ms": 1.442326,
+          "emit_ms": 0.198663,
+          "source_bytes": 601,
+          "php_wall_ms": 63.84369730949402,
+          "compile_ms": 30.901752412319183,
+          "link_ms": 44.616974890232086,
+          "native_ms": 75.51872730255127,
+          "execute_process_ms": 1.3960450887680054
+        }
+      ],
+      "cpp_bytes": 1262
+    },
+    {
+      "compiler": "g++",
+      "flavor": "php",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.355533,
+          "emit_ms": 0.185548,
+          "source_bytes": 610,
+          "php_wall_ms": 55.85617572069168,
+          "compile_ms": 41.320860385894775,
+          "link_ms": 47.71497845649719,
+          "native_ms": 89.03583884239197,
+          "execute_process_ms": 1.5863999724388123
+        },
+        {
+          "prepare_ms": 1.435012,
+          "emit_ms": 0.1811,
+          "source_bytes": 610,
+          "php_wall_ms": 53.8901761174202,
+          "compile_ms": 47.12734371423721,
+          "link_ms": 43.6844527721405,
+          "native_ms": 90.81179648637772,
+          "execute_process_ms": 1.408204436302185
+        },
+        {
+          "prepare_ms": 1.345314,
+          "emit_ms": 0.185578,
+          "source_bytes": 610,
+          "php_wall_ms": 57.17284977436066,
+          "compile_ms": 45.02451419830322,
+          "link_ms": 44.57630217075348,
+          "native_ms": 89.6008163690567,
+          "execute_process_ms": 1.656860113143921
+        }
+      ],
+      "cpp_bytes": 1324
+    },
+    {
+      "compiler": "g++",
+      "flavor": "php",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.799199,
+          "emit_ms": 0.154229,
+          "source_bytes": 735,
+          "php_wall_ms": 57.18587338924408,
+          "compile_ms": 48.87595772743225,
+          "link_ms": 48.437587916851044,
+          "native_ms": 97.3135456442833,
+          "execute_process_ms": 1.5210136771202087
+        },
+        {
+          "prepare_ms": 0.786976,
+          "emit_ms": 0.155422,
+          "source_bytes": 735,
+          "php_wall_ms": 57.748906314373016,
+          "compile_ms": 47.728031873703,
+          "link_ms": 48.1555312871933,
+          "native_ms": 95.8835631608963,
+          "execute_process_ms": 1.5802085399627686
+        },
+        {
+          "prepare_ms": 0.733696,
+          "emit_ms": 0.149832,
+          "source_bytes": 735,
+          "php_wall_ms": 58.996930718421936,
+          "compile_ms": 48.424892127513885,
+          "link_ms": 44.6678027510643,
+          "native_ms": 93.09269487857819,
+          "execute_process_ms": 1.6191229224205017
+        }
+      ],
+      "cpp_bytes": 1807
+    },
+    {
+      "compiler": "g++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 3,
+      "samples": [
+        {
+          "prepare_ms": 0.53304,
+          "emit_ms": 0.073909,
+          "source_bytes": 68,
+          "php_wall_ms": 57.496078312397,
+          "compile_ms": 25.848306715488434,
+          "link_ms": 44.70427334308624,
+          "native_ms": 70.55258005857468,
+          "execute_process_ms": 1.5126019716262817
+        },
+        {
+          "prepare_ms": 0.529563,
+          "emit_ms": 0.073147,
+          "source_bytes": 68,
+          "php_wall_ms": 56.85429275035858,
+          "compile_ms": 29.101453721523285,
+          "link_ms": 46.45715653896332,
+          "native_ms": 75.5586102604866,
+          "execute_process_ms": 1.3756081461906433
+        },
+        {
+          "prepare_ms": 0.511459,
+          "emit_ms": 0.067617,
+          "source_bytes": 68,
+          "php_wall_ms": 51.40288919210434,
+          "compile_ms": 29.035955667495728,
+          "link_ms": 46.15887999534607,
+          "native_ms": 75.1948356628418,
+          "execute_process_ms": 1.4849305152893066
+        }
+      ],
+      "cpp_bytes": 543
+    },
+    {
+      "compiler": "g++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 64,
+      "samples": [
+        {
+          "prepare_ms": 1.377795,
+          "emit_ms": 0.17605,
+          "source_bytes": 603,
+          "php_wall_ms": 57.74611979722977,
+          "compile_ms": 30.947431921958923,
+          "link_ms": 44.59215700626373,
+          "native_ms": 75.53958892822266,
+          "execute_process_ms": 1.4680400490760803
+        },
+        {
+          "prepare_ms": 1.37563,
+          "emit_ms": 0.192892,
+          "source_bytes": 603,
+          "php_wall_ms": 55.30396103858948,
+          "compile_ms": 30.303627252578735,
+          "link_ms": 46.94567620754242,
+          "native_ms": 77.24930346012115,
+          "execute_process_ms": 1.332208514213562
+        },
+        {
+          "prepare_ms": 1.293517,
+          "emit_ms": 0.184135,
+          "source_bytes": 603,
+          "php_wall_ms": 56.02940917015076,
+          "compile_ms": 30.246004462242126,
+          "link_ms": 43.51586103439331,
+          "native_ms": 73.76186549663544,
+          "execute_process_ms": 1.5355348587036133
+        }
+      ],
+      "cpp_bytes": 1262
+    },
+    {
+      "compiler": "g++",
+      "flavor": "js",
+      "kind": "int",
+      "count": 65,
+      "samples": [
+        {
+          "prepare_ms": 1.355001,
+          "emit_ms": 0.187402,
+          "source_bytes": 612,
+          "php_wall_ms": 54.694220423698425,
+          "compile_ms": 41.158027946949005,
+          "link_ms": 46.695686876773834,
+          "native_ms": 87.85371482372284,
+          "execute_process_ms": 1.406066119670868
+        },
+        {
+          "prepare_ms": 1.443047,
+          "emit_ms": 0.195327,
+          "source_bytes": 612,
+          "php_wall_ms": 55.34864217042923,
+          "compile_ms": 44.08702999353409,
+          "link_ms": 46.113021671772,
+          "native_ms": 90.20005166530609,
+          "execute_process_ms": 1.5134140849113464
+        },
+        {
+          "prepare_ms": 1.448807,
+          "emit_ms": 0.193383,
+          "source_bytes": 612,
+          "php_wall_ms": 59.477828443050385,
+          "compile_ms": 44.51679438352585,
+          "link_ms": 42.156994342803955,
+          "native_ms": 86.6737887263298,
+          "execute_process_ms": 1.551024615764618
+        }
+      ],
+      "cpp_bytes": 1324
+    },
+    {
+      "compiler": "g++",
+      "flavor": "js",
+      "kind": "string",
+      "count": 16,
+      "samples": [
+        {
+          "prepare_ms": 0.695995,
+          "emit_ms": 0.146345,
+          "source_bytes": 737,
+          "php_wall_ms": 57.908959686756134,
+          "compile_ms": 47.447942197322845,
+          "link_ms": 45.20934820175171,
+          "native_ms": 92.65729039907455,
+          "execute_process_ms": 1.5304014086723328
+        },
+        {
+          "prepare_ms": 0.69308,
+          "emit_ms": 0.148108,
+          "source_bytes": 737,
+          "php_wall_ms": 57.037100195884705,
+          "compile_ms": 43.303728103637695,
+          "link_ms": 46.59397900104523,
+          "native_ms": 89.89770710468292,
+          "execute_process_ms": 1.5014633536338806
+        },
+        {
+          "prepare_ms": 0.670137,
+          "emit_ms": 0.140484,
+          "source_bytes": 737,
+          "php_wall_ms": 53.840041160583496,
+          "compile_ms": 47.275543212890625,
+          "link_ms": 47.49438911676407,
+          "native_ms": 94.7699323296547,
+          "execute_process_ms": 1.463666558265686
+        }
+      ],
+      "cpp_bytes": 1807
+    }
+  ],
+  "clang++": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "g++": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+}

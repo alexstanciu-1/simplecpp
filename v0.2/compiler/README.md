@@ -17,6 +17,7 @@ for tool selection, the current flow and retained MT experiment evidence.
 
 See [common scopes](docs/scopes.md) for declaration ownership and shared publication.
 See [flat vector initialization](docs/list_initialization.md) for ordered private inputs, presizing and fixed-session bindings.
+- [Typed keyed initialization](docs/keyed_initialization.md): presized duplicate-rejecting runtime factories and ordered private input.
 See [application vectors](docs/application_vectors.md) for local record/class elements through the common concrete recipe.
 - [Application-defined hash values and shared concrete publication](docs/application_hashes.md).
 See [direct scalar lowering](docs/direct_lowering.md) for conservative wrapper removal without preparation changes.
