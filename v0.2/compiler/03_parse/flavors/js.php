@@ -19,9 +19,9 @@ final class Js_Grammar implements statement_grammar
 		return $parser->cursor->keyword('function');
 	}
 
-	public function function_header(Parser $parser, bool $static = false, bool $private = false): ast_function_declaration
+	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration
 	{
-		return $parser->named_function_header(static: $static, private: $private);
+		return $parser->named_function_header(static: $static, private: $private, protected: $protected);
 	}
 
 	/** Let introduces a local with an optional type; bare writes require an existing binding. */

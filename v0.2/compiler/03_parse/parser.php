@@ -9,7 +9,7 @@ namespace scpp\compiler;
 interface statement_grammar {
 	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
 	public function function_start(Parser $parser): bool;
-	public function function_header(Parser $parser, bool $static = false, bool $private = false): ast_function_declaration;
+	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration;
 }
 
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
@@ -74,10 +74,10 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('interface') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			if ($this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'abstract', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
+					'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
@@ -429,7 +429,7 @@ final class Parser
 	}
 
 	/** PHP and JS share the explicit function-keyword/colon-return header grammar. */
-	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false): ast_function_declaration
+	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration
 	{
 		$start = $this->cursor->position();
 		if ($keyword) $this->cursor->take_keyword('function');
@@ -438,7 +438,7 @@ final class Parser
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
 		$type = $this->return_type();
 		return new ast_function_declaration($name, $type,
-			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private);
+			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
 	}
 
 	public function source_namespace(): ?string

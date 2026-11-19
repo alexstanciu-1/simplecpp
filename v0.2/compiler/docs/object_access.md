@@ -15,7 +15,8 @@ Invalidation clears the occurrence facts through the existing body owner.
 
 Interface overlap reuses the same admission owner: unrelated classes still reject,
 but class/interface and interface/interface pairs can overlap without a known
-implementer. Class finality remains unavailable and its syntax rejected. Existing
+implementer. A final class cannot acquire an unimplemented interface through a descendant;
+both directions of that impossible relationship reject during preparation. Existing
 record watches observe implements edits and inherited source polymorphism; no new
 retained fields or implementer index is needed.
 
@@ -58,7 +59,7 @@ from the repository root. It checks cpp/php/js on Clang and GCC, including:
 As before, replacing nominal declaration ASTs can invalidate callers' preparation even
 when their emitted bytes and native objects remain unchanged. These tests do not claim
 zero caller reanalysis for such edits or native parallel-preparation safety. Interface
-inheritance, class finality, struct casts, unique, borrows, weak casts and automatic
+inheritance, struct casts, unique, borrows, weak casts and automatic
 narrowing remain deferred. No performance improvement is claimed without measurements.
 
 The interface extension is verified with

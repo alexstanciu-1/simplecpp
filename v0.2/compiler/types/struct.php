@@ -120,6 +120,7 @@ final class record_type_definition extends type_definition implements dependency
 					throw new diagnostic($written->source(), $written->byte_start(),
 						$this->declaration->kind === record_kind::structure ? 'Base must be a struct' : 'Base must be a class');
 				}
+				if ($base->declaration->is_final) throw new diagnostic($written->source(), $written->byte_start(), 'Cannot extend final class: ' . $base->name);
 				$base->prepare_layout($symbols, $active, $work);
 				$this->base_type = $base;
 				$this->validate_inherited_members();
@@ -319,6 +320,13 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** Settled single-base relation; equality includes the type itself. */
+	/** Protected access uses lexical ancestry and, for instance members, the receiver's declared type. */
+	public function permits_protected_access(ast_node $context, ?self $receiver = null): bool
+	{
+		return $context instanceof ast_record_declaration && $context->definition->derives_from($this)
+			&& ($receiver === null || $receiver->derives_from($context->definition));
+	}
+
 	public function derives_from(self $ancestor): bool
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {

@@ -257,7 +257,7 @@ def rejections(work, flavor):
         (fn('check','bool',[('n','?Readable')],'return null instanceof Other;'),'operand must be'),
         (fn('acceptOther','int',[('n','Other')],'return 1;')+fn('check','int',[('n','Readable')],f'if ({v}n instanceof Other) {{return acceptOther({v}n);}}return 0;'),'conversion'),
         (fn('check','Other',[('n','?Readable')],f'return object_cast({v}n,"Other");'),'Expected'),
-        (('class Closed final {};' if flavor=='cpp' else 'final '+klass('Closed')),'Expected'),
+        (('class Closed final {};' if flavor=='cpp' else 'final '+klass('Closed'))+klass('Child',base='Closed'),'Cannot extend final'),
         (fn('check','bool',[('n','unique<Plain>')],f'return {v}n instanceof Other;'),'does not accept arguments'),
         (fn('check','bool',[],s['local']('p','Point')+f'return {v}p instanceof Other;'),'operand must be'),
     ]

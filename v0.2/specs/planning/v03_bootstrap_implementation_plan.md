@@ -25,7 +25,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
-| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
+| 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, protected instance methods, final classes, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
@@ -1667,8 +1667,8 @@ access and weak-parent/root-lifetime behavior together. Basic staged constructio
 range assignment work as ordinary application code. No additional language feature was
 required by this example. Actual compiler-AST translation and any declaration-specific
 composition policy remain separate work, not a claim of full bootstrap completion.
-Broader protected-method support, exact-type queries, interface inheritance/diamonds,
-struct implementers, inherited-final satisfaction, class finality, unique, borrows and
+Exact-type queries, protected static methods, interface inheritance/diamonds,
+struct implementers, inherited-final satisfaction, unique, borrows and
 native threading remain deferred; none is required to complete this bounded example.
 
 ## 4. Failures and cleanup — failed preparation and retry
@@ -1780,3 +1780,10 @@ family nesting. All three flavors pass copying, mutation, fields, calls, travers
 36 incremental checkpoints against fresh output. No AST facts or preparation passes were
 added. Shared-owner hash keys now use the [common key contract](../../compiler/docs/hash_keys.md).
 Other key families and self-referential collection fields remain separate.
+
+### Milestone 3.1–3.3 bounded follow-up
+
+[Protected instance methods and final classes](class_contract_completion.md) reuse
+existing access, declaration and cast/test owners. Required-field policy remains
+unchanged. Exact-type uses were inventoried; no new query syntax is introduced.
+Protected static methods and the broader interface/composition work remain separate.
