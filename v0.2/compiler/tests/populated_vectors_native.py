@@ -4,7 +4,7 @@ from pathlib import Path
 from classes_native import fixture
 from collection_goal_native import revisions, guard
 from app_namespace_native import service, invoke
-from extends_native import source_edit
+from extends_native import source_edit, runtime, build
 from nested_collections_native import sanitize
 
 
@@ -66,7 +66,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--sanitize', action='store_true')
+    parser.add_argument('--portable', action='store_true', help='Also compile every successful revision and failure probe on Clang and GCC')
     args = parser.parse_args(); args.output.mkdir(parents=True, exist_ok=True)
+    libraries = {}
+    if args.portable:
+        root = Path(__file__).resolve().parents[2]
+        libraries = {cc: runtime(args.output, cc, [root / 'runtime/generated/src/hash.cpp']) for cc in ('clang++', 'g++')}
     expected = b'12193true65784067'
     for flavor in ['php', 'cpp', 'js']:
         src = sources(flavor)
@@ -75,6 +80,13 @@ def main():
             ('point', None, None), (None, None, None), ('point', src['point'], expected),
             ('api', src['api'].replace('return '+fixture(flavor)['v']+'x;', 'return "bad";'), None),
             ('api', src['api'], expected)])
+        # One common syntax supports inner bulk arrays and outer application append.
+        emitted = ''.join(p.read_text() for p in (args.output/(flavor+'-out')).rglob('*.cpp'))
+        assert '::from_owned(' in emitted and '.append(' in emitted
+        for cc, library in libraries.items():
+            for revision in (0, 1, 2, 5, 7):
+                expected_revision = expected.replace(b'657', b'656') if revision == 2 else expected
+                build(args.output/f'{flavor}-fresh-{revision}', args.output/f'{flavor}-{cc}-{revision}', cc, library, expected_revision)
         rejection(args.output, flavor, src)
         s = fixture(flavor); v = s['v']
         # Failure after a heap string was copied must unwind the partially filled vector.
@@ -83,9 +95,15 @@ def main():
         guard(args.output, flavor, 'cleanup', source, 'sequence_index_out_of_range')
         number = s['function']('number', 'float', [], 'return 1e100;')
         guard(args.output, flavor, 'conversion', number + declaration(flavor, 'items', 'vector<int>', '[1, number()]') + 'return 8;', 'integer_cast_out_of_range')
+        for cc, library in libraries.items():
+            for label in ('cleanup', 'conversion'):
+                build(args.output/(flavor+'-'+label+'-out'), args.output/f'{flavor}-{cc}-{label}', cc, library, b'')
         if args.sanitize:
             sanitize(args.output/(flavor+'-out'), args.output/(flavor+'-sanitized'), expected)
             sanitize(args.output/(flavor+'-cleanup-out'), args.output/(flavor+'-cleanup-sanitized'), b'', static_abi=True)
+
+    print('PASS populated vectors: all flavors, incremental/fresh recovery, nested bulk/append and failure cleanup'
+          + ('; every successful revision checked on Clang/GCC' if args.portable else ''))
 
 
 if __name__ == '__main__':

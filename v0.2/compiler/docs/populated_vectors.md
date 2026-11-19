@@ -36,8 +36,8 @@ call/return destination context and assignment/append literal context are deferr
 
 ## Owners and cost
 
-Runtime vector metadata declares `initialization: ordered_append`. Validation
-carries it into the publication plan. The generator grants `sequence_initializer_type`
+Runtime vector metadata declares `initialization.mode: ordered_elements`, with an
+optional `bulk` transport contract. Validation carries it into the publication plan. The generator grants `sequence_initializer_type`
 and emits its element append binding using the existing validated append method.
 Application-defined vectors use this same template and their resolved element
 contract. Preparation does not read metadata or branch on scalar/record/owner names.
@@ -50,8 +50,10 @@ Collection/reset/inspection follow the owned syntax; ordinary symbol watches cov
 references inside elements and the written destination type.
 
 Preparation visits each element once and immediately checks its destination conversion.
-Lowering consumes those decisions and calls the generated append binding. The existing
-vector append statement delegates to that binding too. A small immediately invoked
+Lowering consumes those decisions and the generated construction binding. Published
+integer/string vectors use presized bulk construction; other eligible types use the
+generated append binding. See [bulk transport](list_initialization.md). The existing
+vector append statement delegates to that binding too. On the append path, a small immediately invoked
 C++ lambda creates the temporary vector, appends elements and returns it by value;
 this isolates partial construction and works in nested expressions and suspended
 producer initialization. It introduces no C++ collection templates. Ordinary RAII
@@ -73,7 +75,9 @@ Rejections cover missing type context, populated non-sequence destinations, wron
 element types, self-reference and keyed syntax. Runtime probes check an element
 failure after a heap-backed string was stored and a failing float-to-int conversion.
 
-The PHP proof checks one visit per expression and pure emission. Existing vector/hash
+The PHP proof checks one visit per expression and pure emission. `--portable` also
+compiles every successful incremental/fresh revision and both failure probes on
+Clang and GCC. Nested construction exercises inner bulk and outer append together. Existing vector/hash
 operation checks, compiler-generation, concrete-template and runtime vector-consumer
 checks remain green. Optional `--sanitize` checks generated storage and partial
 construction with ASan/UBSan/LeakSanitizer; the prebuilt runtime is uninstrumented.

@@ -658,8 +658,26 @@
   "vector": {
     "provider": "core.vectors",
     "source_type": "vector",
+    "initialization": {
+      "mode": "ordered_elements",
+      "bulk": {
+        "element_families": [
+          "integer",
+          "string"
+        ],
+        "read_only": "from_list",
+        "consume": "from_owned",
+        "input": "literal_input",
+        "presizing": "entry_count",
+        "transfer": "nothrow",
+        "stack_bytes": 4096,
+        "inline_elements": {
+          "integer": 512,
+          "string": 128
+        }
+      }
+    },
     "storage": "concrete_buffer",
-    "initialization": "ordered_append",
     "count_type": "int64",
     "read": "value_copy",
     "mutation": "explicit_set",

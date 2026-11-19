@@ -351,13 +351,30 @@ function vectorConcreteRecipe(array $vector): string {
     return 'collections/vector';
 }
 
+/** Validate the bounded positional transport contract; runtime families supply element/result identities. */
+function listInitializationPlan(mixed $init, string $family, string $element, string $result, string $count): ?array {
+    if ($init === null) return null;
+    fields($init, ['element_families', 'read_only', 'consume', 'input', 'presizing', 'transfer', 'stack_bytes', 'inline_elements']);
+    literals($init, ['presizing' => 'entry_count', 'transfer' => 'nothrow']);
+    $admitted = names(at($init, 'element_families'));
+    requireThat(array_diff($admitted, ['integer', 'string']) === [], 'Unsupported initialization element family');
+    foreach (['read_only', 'input'] as $key) requireThat(recordIdentifier(textValue(at($init, $key))), 'Invalid initialization binding name');
+    if (isset($init->consume)) requireThat(recordIdentifier(textValue($init->consume)), 'Invalid consuming binding name');
+    requireThat(is_int($init->stack_bytes) && $init->stack_bytes >= 1 && $init->stack_bytes <= 65536, 'Invalid initialization stack bound');
+    $limits = object(at($init, 'inline_elements'));
+    requireThat(array_keys($limits) === $admitted, 'Inline limits must match initialized element families');
+    foreach ($limits as $limit) requireThat(is_int($limit) && $limit >= 0 && $limit <= 65536, 'Invalid inline element limit');
+    requireThat(count(array_unique([$init->read_only, $init->input, $init->consume ?? ''])) === 3, 'Initialization names must differ');
+    return in_array($family, $admitted, true) ? (array)$init + ['element' => $element, 'result' => $result, 'count' => $count, 'inline_limit' => $limits[$family]] : null;
+}
+
 function prepareVectors(mixed $metadata, mixed $publication, array $registry, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'vector', 'vectors', 'Vector');
     if ($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'storage', 'initialization', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations']);
-    literals($m, ['source_type' => 'vector', 'storage' => 'concrete_buffer', 'initialization' => 'ordered_append', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
+    fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization']);
+    literals($m, ['source_type' => 'vector', 'storage' => 'concrete_buffer', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'Vector count requires signed integer type');
     $families = names(at($m, 'element_families'), 'Duplicate vector element family');
@@ -451,7 +468,13 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         foreach($values as $value) {
             $add('append', 'void', [$value], true, $value === $element ? 'move_value':'explicit_element_then_append');
         }
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'concrete_buffer', 'initialization' => textValue(at($m, 'initialization')), 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan()];
+        $initialization = null;
+        if (isset($m->initialization)) {
+            fields($m->initialization, ['mode', 'bulk']);
+            literals($m->initialization, ['mode' => 'ordered_elements']);
+            $initialization = ['bulk' => listInitializationPlan($m->initialization->bulk ?? null, $family, $element, $name, $count)];
+        }
+        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);

@@ -140,7 +140,7 @@ def proof(work):
         assert normalized == compiler_before['registry.php'], 'Method bindings ignored provider relocation or unrelated registry output changed'
         for method in ('clear', 'remove', 'has'):
             refs, const_refs = (0, 1) if method == 'has' else (1, 0)
-            assert f"'{method}', '{header}', reference_mask: {refs}, const_reference_mask: {const_refs}, receiver_method: true".encode() in after['registry.php']
+            assert f"'{method}', $this->cpp_headers()[0], reference_mask: {refs}, const_reference_mask: {const_refs}, receiver_method: true".encode() in after['vectors.php']
         for flavor in ('cpp', 'php', 'js'):
             adapter = output / f'public/scpp/{flavor}/string_vectors.hpp'
             assert f'#include "{header}"' in adapter.read_text()

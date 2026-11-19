@@ -3,6 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Published positional initialization transport; fixed for a compiler session and shared by literal occurrences. */
+final class list_initialization_binding
+{
+	public readonly type_definition $element;
+	public readonly string $input;
+	public readonly string $factory;
+	public readonly int $inline_entries /** uint32 */;
+
+	public function __construct(type_definition $element, string $input, string $factory, int $inline_entries /** uint32 */)
+	{
+		$this->element = $element;
+		$this->input = $input;
+		$this->factory = $factory;
+		$this->inline_entries = $inline_entries;
+	}
+}
+
 /** Generated concrete collection contract; canonical arguments serve layout planning, recipe data serves private lowering. */
 interface application_collection_type
 {
@@ -127,6 +144,8 @@ interface indexed_collection_type extends index_read_type
 /** Metadata-approved ordered initialization, using the existing checked element and append contracts. */
 interface sequence_initializer_type extends indexed_collection_type
 {
+	/** Null selects ordered append; a binding selects private bulk transport. */
+	public function list_initialization(): ?list_initialization_binding;
 	public function write_type(): type_definition;
 	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }

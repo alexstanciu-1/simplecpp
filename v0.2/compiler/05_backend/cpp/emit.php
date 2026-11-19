@@ -1257,14 +1257,18 @@ CPP;
 			if ($value->elements === []) return $type->lower_cpp_empty();
 			if (!($type instanceof sequence_initializer_type)) throw new \LogicException('Unprepared sequence initializer');
 			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
-			$code = '[&]() { ' . $type->cpp_type() . ' sequence = ' . $type->lower_cpp_empty() . '; ';
+			$binding = $type->list_initialization();
+			$elements = [];
+			$code = $binding === null ? '[&]() { ' . $type->cpp_type() . ' sequence = ' . $type->lower_cpp_empty() . '; ' : '';
 			foreach ($value->elements as $position => $element) {
 				$operand = $this->value($element, $global_references, $declarations, $required_headers);
 				$conversion = $value->element_conversion($position);
 				foreach ($type->write_type()->conversion_headers($conversion) as $header) $required_headers[$header] = true;
-				$code .= $type->lower_cpp_sequence_append($element, $conversion, 'sequence', $operand, $this->inline_adapters) . '; ';
+				if ($binding !== null) {
+					$elements[] = $type->write_type()->lower_cpp_exact_argument($element, $conversion, $operand, $this->inline_adapters);
+				} else $code .= $type->lower_cpp_sequence_append($element, $conversion, 'sequence', $operand, $this->inline_adapters) . '; ';
 			}
-			return $code . 'return sequence; }()';
+			return $binding !== null ? Cpp_List_Initialization::expression($binding, $elements) : $code . 'return sequence; }()';
 		}
 		if ($value instanceof ast_index_expression) {
 			/** @var index_read_type $type */

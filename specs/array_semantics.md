@@ -731,8 +731,13 @@ The implementation and verification are recorded in
 An explicitly typed local vector initializer may contain ordered positional elements
 in `[...]`, with an optional trailing comma. Its element type provides the ordinary
 typed-destination conversion context. Direct nested literals receive that context
-recursively. Each element is evaluated, checked and appended before the next; a
-failure prevents subsequent elements and destroys partially constructed storage.
+recursively. Each element expression and its destination conversion completes before the next
+element is evaluated. Evaluation or conversion failure prevents later elements.
+Partial inputs and destination storage are destroyed on failure. Internal allocation
+and transfer timing is not specified: implementations may build private typed input
+then bulk-construct, or incrementally populate the destination. Allocation failure
+may therefore interrupt at different points; allocation counts, growth and individual
+append steps are not source-observable guarantees.
 Previously performed external effects remain. The local is not visible until its
 initializer succeeds. Ordinary value-copy and shared-identity contracts apply.
 

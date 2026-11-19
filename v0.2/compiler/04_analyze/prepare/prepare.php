@@ -510,7 +510,10 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
-		elseif (($declaration->initializer instanceof ast_collection_expression) && ($type instanceof indexed_collection_type)) {
+		elseif (($declaration->initializer instanceof ast_collection_expression) && $type !== null) {
+			if (!($type instanceof indexed_collection_type)) {
+				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Destination has no published collection initialization capability');
+			}
 			$this->collection($declaration->initializer, $type, $name);
 		}
 		else {

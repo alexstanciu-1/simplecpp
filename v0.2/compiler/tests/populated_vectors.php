@@ -18,8 +18,8 @@ foreach (flavor::cases() as $flavor) {
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	if (serialize($entry) !== $before) throw new RuntimeException('Lowering modified prepared facts');
-	if (!str_contains($cpp, '.append(') || str_contains($cpp, 'std::vector<')) {
-		throw new RuntimeException('Literal did not reuse concrete append binding');
+	if (!str_contains($cpp, '::from_owned(') || str_contains($cpp, 'std::vector<')) {
+		throw new RuntimeException('Literal did not select published bulk binding');
 	}
 }
 echo "Populated vector conversion and pure lowering checks passed\n";

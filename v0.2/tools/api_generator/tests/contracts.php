@@ -47,6 +47,8 @@ requireThat(count($integerOnly['hashes']['specializations']) === 1, 'Integer-onl
 
 $m = decode($metadata,'metadata'); $m->vector->initialization = 'unchecked';
 rejects(fn() => $prepare(encode($m),readFile($root.'/runtime/metadata/publication.json')));
+$m = decode($metadata,'metadata'); $m->vector->initialization->mode = 'unchecked';
+rejects(fn() => $prepare(encode($m),readFile($root.'/runtime/metadata/publication.json')));
 
 $dt = $prepare($metadata,$datetime);
 requireThat(count($dt['datetime']['operations']) === 11, 'Datetime operations lost');

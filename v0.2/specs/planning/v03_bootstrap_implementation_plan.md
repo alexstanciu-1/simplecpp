@@ -83,8 +83,12 @@ methods, reflection and broader enum integration remain separate follow-ups.
 | 2.1 | Selection | Match with one subject evaluation, lazy selected arms and a clear result-type rule. Start with enum/scalar subjects, then match on true. |
 | 2.2 | Container presence and mutation | Contains/find, removal, missing-key handling and ordered keyed traversal. Distinguish missing from stored null. |
 | 2.3 | Lazy fallback | Coalescing, then coalescing assignment through the same presence model. Avoid repeated lookups and eager defaults. |
-| 2.4 | Text and table construction | Raw/multiline strings and bounded populated collection forms required by compiler tables. |
+| 2.4 | Text and table construction | Raw/multiline strings and bounded populated collection forms required by compiler tables. See the [private consuming-input contract and first vector slice](collection_initialization.md); flat published integer/string vector locals implemented; user factory inputs remain read-only and provider bindings stay fixed per compiler session. |
 | 2.5 | Tokenizer runtime bindings | Byte-scanning or regex facilities needed by the selected translation. These are runtime facilities, not new language constructs. |
+
+Integration: one metadata-defined ordered initialization capability now preserves
+  nested/application coverage and selects presized bulk transport for eligible published
+  vectors, with generated append fallback for other specializations.
 
 Proof: tokenize representative input through a translated path and compare token kinds, positions and diagnostics with PHP.
 
