@@ -1760,5 +1760,5 @@ existing access, declaration and cast/test owners. Required-field policy remains
 unchanged. Exact-type uses were inventoried; no new query syntax is introduced.
 Protected static methods subsequently gained [declaring-type calls and lexical self
 resolution](../../compiler/docs/protected_static_methods.md), reusing the same access
-and call owners without retained structure changes. Broader static lookup and
-interface/composition work remain separate.
+and call owners without retained structure changes. Descendant-name and lexical self calls now reuse the inherited method lookup.
+Ancestor static calls, static redeclarations and interface/composition work remain separate.

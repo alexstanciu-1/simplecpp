@@ -1194,26 +1194,29 @@ final class Preparation
 	/** Exact type-qualified calls require a method; ambiguous namespace paths may continue lookup. */
 	private function qualified_call(ast_call_expression $call, string $qualified, ?string $initializing, bool $required): bool
 	{
-		if ($call->source()->flavor === flavor::cpp && ($separator = strrpos($qualified, '::')) !== false) {
-			$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
-			$this->dependencies?->watch($type_symbol, $this->owner);
-			$record = $type_symbol->declaration();
-			if ($record instanceof ast_record_declaration) {
-				$name = substr($qualified, $separator + 2);
-				$selected = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
-				if ($selected === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);
-				if (!$selected->declaration()->is_static) {
-					$this->ancestor_call($call, $name, $record->definition, $initializing, $selected);
-					return true;
-				}
-			}
+		$separator = strrpos($qualified, '::');
+		$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
+		$this->dependencies?->watch($type_symbol, $this->owner);
+		$record = $type_symbol->declaration();
+		$name = substr($qualified, $separator + 2);
+		if ($record instanceof ast_record_declaration) {
+			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
 		}
-		$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
-		$this->dependencies?->watch($symbol, $this->owner);
-		$method = $symbol->declaration();
+		else {
+			$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
+			$this->dependencies?->watch($symbol, $this->owner);
+		}
+		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration)) {
+			if ($record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);
+			}
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
+		}
+		if (!$method->is_static && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
+			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
+			return true;
 		}
 		if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ' . $method->name());
 		$this->source_call($call, $symbol, $method, $initializing);

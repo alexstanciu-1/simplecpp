@@ -403,10 +403,10 @@ Abstract structs, callable variance,
 unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
 
-Protected static methods accept exact declaring-type calls and the existing lexical
-`self::` (PHP), `Self::` (C++) and `class.` (JS) resolution. Access requires the
+Static method lookup starts at the qualified type and follows its base chain. Lexical
+`self::` (PHP), `Self::` (C++) and `class.` (JS) spellings start at the enclosing record. Protected access requires the
 declaring record or a descendant context; no instance receiver is involved.
-Inherited static lookup through a descendant name, ancestor static calls, static
+Ancestor static calls, static
 redeclarations and protected static properties/constants remain deferred. See
 [protected static methods](../compiler/docs/protected_static_methods.md).
 

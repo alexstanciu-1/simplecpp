@@ -23,8 +23,9 @@ Existing defaults, checked conversions and writable-reference binding are unchan
 
 PHP `self::`, C++ `Self::` and JS `class.` continue to name the lexical declaring
 record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
-`Base::hidden()`. This does not add inherited static lookup: `Child::hidden()`
-and descendant self lookup for a method declared only in Base remain unsupported.
+`Base::hidden()`. Both `Child::hidden()` and lexical self inside Child start lookup at Child.
+The existing method lookup watches each visited record and named method slot and
+binds the selected Base declaration directly, including its defaults and visibility.
 Ancestor static calls, static redeclarations, protected static properties/constants
 and expression-qualified static calls are separate work.
 
@@ -46,16 +47,15 @@ with no receiver, retain/release operation or runtime visibility test.
 
 `XDEBUG_MODE=off python3 -B v0.2/compiler/tests/protected_static_native.py`
 
-Sixteen incremental checkpoints per flavor compare retained and fresh diagnostics
-or emitted artifacts. They cover defaults, private/public/protected edits, unrelated
-intermediate bases, deletion, retries without edits and recovery. Successful revisions
+Nineteen incremental checkpoints per flavor compare retained and fresh diagnostics
+or emitted artifacts. They cover defaults, private/public/protected edits, intermediate-base changes that select a different implementation, deletion, retries without edits and recovery. Successful revisions
 build and execute with Clang. Negative checks cover external/unrelated access,
-unsupported inherited/self lookup, and deferred protected data members.
+inherited protected calls from outside the hierarchy, and deferred protected data members.
 Existing protected-instance and ordinary method regressions protect receiver rules
 and shared binder behavior. Native timing results are reported separately from
 cumulative frontend/LLVM work; no preparation speedup is claimed.
 
-Verified 2026-11-19: all 48 new incremental checkpoints passed, as did the 24
+Before inherited lookup, all 48 new incremental checkpoints passed, as did the 24
 protected-instance checkpoints, ordinary method suite, namespace checks and PHP style.
 The registered protected-static test took 18.27 seconds; the broader method suite
 took 110.04 seconds. No runtime or generator changes were needed.
