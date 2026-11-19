@@ -7,7 +7,7 @@ from protected_static_native import sources
 
 
 def prove(work, flavor):
-    _, (_, klass, _, static, sep) = sources(flavor)
+    _, (syntax, klass, method, static, sep) = sources(flavor)
     prop, const, name, lexical = {
         'php': ('static int $n=1;', 'const int STEP=2;', '$n', 'self::'),
         'cpp': ('static int n=1;', 'static constexpr int STEP=2;', 'n', 'Self::'),
@@ -64,6 +64,59 @@ def prove(work, flavor):
         ('base', base('private'), 'Cannot access private static property Base::n'),
         ('base', provider('Base', 2), b'7'), ('main', main, b'771'),
     ])
+
+    collisions = work/'collisions'
+    collisions.mkdir(exist_ok=True)
+    # Insert a declaration into the intermediate record while Child still reads Base's data.
+    prefix = 'public: ' if flavor == 'cpp' else 'public '
+    revisions(collisions, flavor, src, [
+        (None, None, b'771'), (None, None, b'771'),
+        ('middle', klass('Middle', prefix+prop, 'Base'), 'Inherited property redeclaration'),
+        (None, None, None), ('middle', middle, b'771'),
+        ('middle', klass('Middle', prefix+const, 'Base'), 'Inherited constant redeclaration'),
+        ('middle', middle, b'771'),
+        ('middle', klass('Middle', syntax['field']('n','int','4'), 'Base'), 'Inherited property redeclaration'),
+        ('middle', middle, b'771'),
+    ])
+
+    ancestor = work/'ancestor'
+    ancestor.mkdir(exist_ok=True)
+    qualifier = {'php': 'parent::', 'cpp': 'Middle::', 'js': 'super.'}[flavor]
+    n = qualifier + name
+    step = qualifier + 'STEP'
+    body = static('update', f'{n}=5;++{n};{n}--;{n}+={step};return {n};')
+    def derived(parent):
+        return klass('Child', body, parent)
+    src['child'] = derived('Middle')
+    instance = method('read', f'return {n}+{step};')
+    instance_main = syntax['infer']('p', 'new Child()') + f"echo {syntax['v']}p{syntax['access']}read();return 8;"
+    edits = [
+        (None, None, b'771'), (None, None, b'771'),
+        ('middle', klass('Middle', '', 'Other'), b'919'),
+        ('other', provider('Other', 3), b'818'),
+        ('other', provider('Other', 4, constant_present=False), 'Unknown constant:'),
+        (None, None, None), ('other', other, b'919'),
+        ('other', provider('Other', 4, property_present=False),
+         'Unknown static property:' if flavor == 'php' else 'Unknown constant:'),
+        ('other', other, b'919'), ('middle', middle, b'771'),
+        ('child', derived('Other'), b'771' if flavor == 'cpp' else b'919'),
+        ('child', derived('Middle'), b'771'), ('middle', None, None), ('middle', middle, b'771'),
+        ('base', base('private'), 'Cannot access private static property Base::n'),
+        ('base', provider('Base', 2), b'771'),
+        ('child', klass('Child', body + instance, 'Middle'), b'771'),
+        ('main', instance_main, b'3'),
+        ('child', klass('Child', method('read', f'{step}=0;return 0;'), 'Middle'),
+         'Assignment requires a writable static property'),
+        ('child', klass('Child', instance, 'Middle'), b'3'),
+    ]
+    if flavor != 'cpp':
+        edits += [
+            ('child', klass('Child', instance), 'Ancestor access requires a base type'),
+            ('child', klass('Child', instance, 'Middle'), b'3'),
+            ('main', f'echo {step};return 8;', 'Ancestor access requires a declaring record'),
+            ('main', instance_main, b'3'),
+        ]
+    revisions(ancestor, flavor, src, edits)
 
 
 if __name__ == '__main__':

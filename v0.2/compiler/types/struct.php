@@ -332,14 +332,21 @@ final class record_type_definition extends type_definition implements dependency
 		return $this->base_type?->polymorphic() ?? false;
 	}
 
-	/** Settled single-base relation; equality includes the type itself. */
 	/** Protected access uses lexical ancestry and, for instance members, the receiver's declared type. */
-	public function permits_protected_access(ast_node $context, ?self $receiver = null): bool
+	public function permits_protected_access(ast_node $context, ?self $receiver = null,
+		?dependency_watcher $watcher = null): bool
 	{
-		return $context instanceof ast_record_declaration && $context->definition->derives_from($this)
-			&& ($receiver === null || $receiver->derives_from($context->definition));
+		if (!($context instanceof ast_record_declaration)) return false;
+		$caller = $context->definition;
+		// Layout invalidation propagates from base to descendant. Observe the roots used by this decision.
+		if ($watcher !== null) {
+			$caller->dependencies?->watch($caller->symbol, $watcher);
+			if ($receiver !== null && $receiver !== $caller) $receiver->dependencies?->watch($receiver->symbol, $watcher);
+		}
+		return $caller->derives_from($this) && ($receiver === null || $receiver->derives_from($caller));
 	}
 
+	/** Settled single-base relation; equality includes the type itself. */
 	public function derives_from(self $ancestor): bool
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {

@@ -1762,3 +1762,27 @@ Protected static methods subsequently gained [declaring-type calls and lexical s
 resolution](../../compiler/docs/protected_static_methods.md), reusing the same access
 and call owners without retained structure changes. Descendant-name and lexical self calls now reuse the inherited method lookup.
 Explicit ancestor static calls now use the ordinary binder. Compatible static redeclarations and final static methods reuse declaration checks and fixed lookup. Interface/composition work remains separate.
+
+#### Inheritance follow-ups after ancestor static methods
+
+| Order | Small work and status | Owner and verification |
+| --- | --- | --- |
+| 1 | Implemented. Protected static properties and constants through declaring types, descendants and lexical self. | The declaring symbol owns storage or the constant value. |
+| 2 | Implemented. Explicit ancestor property reads/writes and constant reads in all three flavors. | PHP `parent::` and JS `super.` select the lexical base. C++ names the type. Reuse inherited lookup and verify both base edges. |
+| 3 | Verified. Inherited name collisions during editing. | Existing record layout validator rejects repeated static properties/constants and instance/static property collisions. Exercise introduction, failed retry and removal in a separate intermediate source. |
+| 4 | Implemented. Shared incremental dependencies for protected access. | The record access check observes the lexical layout and, for instance access, the receiver layout. Their base dependencies already propagate. Verify factory access when the lexical base changes and instance field/method access when a receiver becomes a sibling and returns. |
+
+The [static data and method suites](../../compiler/docs/protected_static_methods.md)
+exercise these slices against fresh compilations and native output.
+
+**Separate design or implementation slices**
+
+| Candidate | Prerequisite or decision |
+| --- | --- |
+| Expression-qualified static access | The spec settles evaluation of the qualifier, including an empty handle. Agree the C++/JS syntax and its distinction from instance lookup. Preserve effects through lowering, even for a constant read. |
+| Late-static lookup and shared factories | Model the called type separately from the lexical owner and forward it across calls. This affects call preparation and emitted signatures. |
+| Inherited final method satisfying a newly introduced interface | Review the C++ forwarding and final-slot design before changing the existing diagnostic. |
+| Interface inheritance, variance and abstract structs | Separate proofs for interface layout/dispatch, signature bridges, and inline construction/copy admission, respectively. |
+| Interface-qualified static dispatch and exact-type query syntax | Source behavior remains a discussion item. Subtype and interface-capability tests already exist. |
+
+Required-field policy stays as agreed. Trait composition and ownership families remain separate workstreams.

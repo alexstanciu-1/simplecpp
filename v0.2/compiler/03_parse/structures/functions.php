@@ -357,10 +357,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	}
 
 	/** Enforce lexical access for a call or an implicit inline-field initialization. */
-	public function require_access(ast_node $context, ast_node $site, ?record_type_definition $receiver = null): void
+	public function require_access(ast_node $context, ast_node $site, ?record_type_definition $receiver = null,
+		?dependency_watcher $watcher = null): void
 	{
 		if ($this->is_protected && !$this->parent->definition->permits_protected_access($context,
-			($this->is_constructor() || $this->is_static) ? null : $receiver)) {
+			($this->is_constructor() || $this->is_static) ? null : $receiver, $watcher)) {
 			$kind = $this->is_constructor() ? 'constructor' : 'method';
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call protected ' . $kind . ' ' . $this->name());
 		}

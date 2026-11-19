@@ -176,6 +176,11 @@ class ast_name_expression extends ast_expression
 	}
 }
 
+/** A lexical ancestor data name, e.g. parent::$count or super.STEP. */
+final class ast_ancestor_name extends ast_name_expression
+{
+}
+
 /**
  * Owns a local name, optional written type and initializer; collection assigns its ID and preparation settles its type and known value.
  *

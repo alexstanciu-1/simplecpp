@@ -53,13 +53,18 @@ Static finality is checked at preparation and adds no C++ virtual slot.
 ## Implementation and retained state
 
 Methods carry their existing `is_static` and `is_protected` flags. The declaration's shared
-`require_access` query supplies lexical-only checks for static methods. Source-call
-preparation subscribes to the lexical caller's ancestry before the access decision,
-including failed access, so intermediate-base edits can invalidate unchanged callers.
-Only protected static calls perform that ancestry walk. The usual stable method
+`require_access` query supplies lexical-only checks for static methods. The shared
+protected-access query subscribes the body to the lexical caller's layout before
+checking access. For instance members it also observes a distinct receiver layout.
+A layout relays invalidation from its base, including through an intermediate
+record. The same query checks protected constructors without a receiver. The usual stable method
 entry tracks visibility, signature and deletion changes.
 
-There are no new AST fields, nodes, occurrence facts, indexes or preparation passes.
+Ancestor data access uses a fieldless `ast_ancestor_name` marker for PHP and JS.
+Both data access and calls ask preparation for the lexical base, so an edit to
+the base link invalidates the selection even when the caller's tokens are reused.
+Named C++ access uses the existing qualified name. All three bind the selected
+member's stable symbol and reuse ordinary property reads, writes and constant facts.
 The existing binder settles arguments; lowering emits the same direct helper call,
 with no receiver, retain/release operation or runtime visibility test.
 

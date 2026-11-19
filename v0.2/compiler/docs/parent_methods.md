@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 The [inheritance contract](../../../specs/inheritance_v0_2.md#explicit-parent-member-access)
-owns semantics. The [frontend contract](../../specs/compiler_frontends.md#explicit-ancestor-instance-calls)
+owns semantics. The [frontend contract](../../specs/compiler_frontends.md#explicit-ancestor-member-access)
 records `parent::method()` in PHP, `super.method()` in JS and an actual ancestor type
 qualifier such as `Base::method()` in C++. No special `Parent` alias is introduced.
 

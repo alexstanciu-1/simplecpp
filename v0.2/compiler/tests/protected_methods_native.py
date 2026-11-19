@@ -64,6 +64,27 @@ def rejects(work, flavor, src, call):
     finally:p.stdin.close();p.wait()
 
 
+def receiver_edits(work, flavor):
+    """A receiver can keep its member while losing the ancestry required to access it."""
+    work.mkdir(exist_ok=True)
+    s, klass, method = forms(flavor)
+    target = s['v']+'other'+s['access']
+    base = klass('Base', s['field']('n', 'int', '3', True) + method('read', 'return 4;', visibility='protected'))
+    def child(expression):
+        return klass('Child', method('inspect', 'return '+target+expression+';', [('other', 'Leaf')]), 'Base')
+    main = s['infer']('p', 'new Child()') + s['infer']('q', 'new Leaf()')
+    main += f"echo {s['v']}p{s['access']}inspect({s['v']}q);return 8;"
+    middle = klass('Middle', '', 'Child')
+    sibling = klass('Middle', '', 'Base')
+    src = dict(base=base, child=child('n'), middle=middle, leaf=klass('Leaf', '', 'Middle'), main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'3'), (None, None, b'3'),
+        ('middle', sibling, 'Cannot access protected field'), (None, None, None), ('middle', middle, b'3'),
+        ('child', child('read()'), b'4'), ('middle', sibling, 'Cannot call protected method'),
+        (None, None, None), ('middle', middle, b'4'), ('middle', None, None), ('middle', middle, b'4'),
+    ])
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
@@ -74,6 +95,7 @@ def main():
             ('base',src['base'].replace('protected','private',1),None),(None,None,None),
             ('base',src['base'],b'107389'),('base',None,None),('base',src['base'],b'107389')])
         rejects(args.output,flavor,src,call)
+        receiver_edits(args.output/"receiver", flavor)
 
 
 if __name__=='__main__':main()

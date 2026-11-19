@@ -74,6 +74,23 @@ def ancestor_calls(work, flavor, helpers):
     ])
 
 
+def protected_factory(work, flavor, helpers):
+    """Changing only the caller's intermediate base must revoke and restore construction access."""
+    work.mkdir(exist_ok=True)
+    s, klass, _, static, sep = helpers
+    ctor = {'php': 'protected function __construct() {}', 'js': 'protected constructor() {}',
+            'cpp': 'protected: Base() {}'}[flavor]
+    factory = static('make', s['infer']('p', 'new Base()')+'return 3;')
+    middle = klass('Middle', '', 'Base')
+    src = dict(base=klass('Base', ctor), middle=middle, other=klass('Other'),
+               child=klass('Child', factory, 'Middle'), main=f'echo Child{sep}make();return 8;')
+    revisions(work, flavor, src, [
+        (None, None, b'3'), (None, None, b'3'),
+        ('middle', klass('Middle', '', 'Other'), 'Cannot call protected constructor'),
+        (None, None, None), ('middle', middle, b'3'), ('middle', None, None), ('middle', middle, b'3'),
+    ])
+
+
 def redeclarations(work, flavor, helpers):
     work.mkdir(exist_ok=True)
     s, klass, method, static, q = helpers
@@ -141,6 +158,7 @@ def prove(work):
         ])
         rejections(work, flavor, src, helpers)
         ancestor_calls(work/'ancestor', flavor, helpers)
+        protected_factory(work/'factory', flavor, helpers)
         redeclarations(work/'redeclare', flavor, helpers)
 
 

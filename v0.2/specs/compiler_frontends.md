@@ -349,7 +349,7 @@ returns the required target class/interface view. Absence/mismatch throws `inval
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.
 
-## Explicit ancestor instance calls
+## Explicit ancestor member access
 
 PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
@@ -366,8 +366,11 @@ call node; argument syntax and semantic admission use the ordinary call machiner
 For static methods, preparation binds the selected declaration directly, including
 its visibility and defaults. PHP/JS parent qualification requires a lexical base.
 C++ static qualification names a type explicitly. A static caller can call a static
-target. An instance target requires an initialized current instance. Parent-qualified
-constants and properties remain deferred.
+target. An instance target requires an initialized current instance. PHP `parent::$count` and `parent::STEP`, and JS `super.count` and `super.STEP`,
+use the same lexical base selection for data members. C++ uses the written type,
+such as `Middle::count` and `Middle::STEP`. Reads and writes select the declaring
+property’s single storage location. Constants are read-only. Both forms enforce
+the selected declaration’s visibility.
 A parent method call may be the first authored constructor-body statement, after
 implicit base construction. It is not mistaken for `parent::__construct(...)` or
 `super(...)`.

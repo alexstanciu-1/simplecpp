@@ -551,9 +551,15 @@ final class Preparation
 		$this->dependencies?->watch($type, $this->owner);
 		$record = $type->declaration();
 		if (!($record instanceof ast_record_declaration)) return false;
+		return $this->bind_record_data($syntax, $record->definition, $name, $qualifier);
+	}
+
+	/** Bind the selected declaration from the lookup starting type, observing each visited record. */
+	private function bind_record_data(ast_name_expression $syntax, record_type_definition $lookup, string $name, string $qualifier): bool
+	{
 		$properties = !$syntax->constant_only;
 		$constants = !$properties || $syntax->source()->flavor !== flavor::php;
-		$member = $record->definition->static_data_member($name, $properties, $constants, $this->symbols,
+		$member = $lookup->static_data_member($name, $properties, $constants, $this->symbols,
 			$this->owner, $this->dependencies);
 		if ($member === null) {
 			$message = $constants ? 'Unknown constant: ' : 'Unknown static property: ';
@@ -571,8 +577,7 @@ final class Preparation
 		if ($member->visibility !== member_visibility::public) {
 			$context = $this->owner->parent->parent;
 			if ($member->visibility === member_visibility::protected) {
-				$this->watch_lexical_ancestry($context, $member->parent);
-				$allowed = $member->parent->definition->permits_protected_access($context);
+				$allowed = $member->parent->definition->permits_protected_access($context, watcher: $this->access_watcher());
 			}
 			else {
 				$allowed = $context === $member->parent;
@@ -793,7 +798,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access private field ' . $type->name . '::' . $syntax->field);
 			}
 			$context = $this->owner->parent->parent;
-			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type)) {
+			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type, $this->access_watcher())) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$syntax->settle_field($field->type_def());
@@ -912,6 +917,11 @@ final class Preparation
 		{
 			$this->name_lookups++;
 			$name = $syntax->name;
+			if ($syntax instanceof ast_ancestor_name) {
+				$lookup = $this->lexical_base($syntax, 'Ancestor access');
+				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
+				return;
+			}
 			if (!$syntax->constant_only && ($name === $initializing)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Cannot read local during its initialization: ' . $name);
@@ -1246,19 +1256,24 @@ final class Preparation
 		return true;
 	}
 
+	/** Watch the lexical base selection even when the member lookup fails. */
+	private function lexical_base(ast_expression $syntax, string $operation): record_type_definition
+	{
+		$context = $this->owner->parent->parent;
+		if (!($context instanceof ast_record_declaration)) throw new diagnostic($syntax->source(), $syntax->byte_start(), $operation . ' requires a declaring record');
+		$this->dependencies?->watch($this->symbols->entry($context->symbol_key()), $this->owner);
+		return $context->definition->base() ?? throw new diagnostic($syntax->source(), $syntax->byte_start(), $operation . ' requires a base type');
+	}
+
 	/** Select the ancestor declaration before applying instance-specific receiver checks. */
 	private function ancestor_call(ast_call_expression $call, string $name, ?record_type_definition $lookup, ?string $initializing, ?symbol_entry $selected = null): void
 	{
-		$context = $this->owner->parent->parent;
-		if (!($context instanceof ast_record_declaration)) {
-			throw new diagnostic($call->source(), $call->byte_start(), ($selected === null) ? 'Ancestor call requires a declaring record' : 'Instance method requires a receiver: ancestor call has no current instance');
-		}
 		if ($lookup === null) {
-			$this->dependencies?->watch($this->symbols->entry($context->symbol_key()), $this->owner);
-			$lookup = $context->definition->base();
-			if ($lookup === null) throw new diagnostic($call->source(), $call->byte_start(), 'Ancestor call requires a base type');
+			$lookup = $this->lexical_base($call, 'Ancestor call');
 		}
 		else {
+			$context = $this->owner->parent->parent;
+			if (!($context instanceof ast_record_declaration)) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 			for ($type = $context->definition; $type !== null; $type = $type->base()) {
 				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
 			}
@@ -1281,16 +1296,10 @@ final class Preparation
 		$this->source_call($call, $symbol, $method, $initializing, true);
 	}
 
-	/** Observe the caller's base chain before deciding protected static access, including denied calls and reads. */
-	private function watch_lexical_ancestry(ast_node $context, ast_record_declaration $declaring): void
+	/** Standalone preparation has no subscription to retain. */
+	private function access_watcher(): ?dependency_watcher
 	{
-		if (($this->dependencies === null) || !($context instanceof ast_record_declaration)) {
-			return;
-		}
-		for ($type = $context->definition; $type !== null; $type = $type->base()) {
-			$this->dependencies->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
-			if ($type->declaration === $declaring) break;
-		}
+		return $this->dependencies === null ? null : $this->owner;
 	}
 
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
@@ -1298,14 +1307,11 @@ final class Preparation
 	{
 		$context = $this->owner->parent->parent;
 		$receiver = null;
-		if ($function->is_protected && $function->is_static) {
-			$this->watch_lexical_ancestry($context, $function->parent);
-		}
-		elseif ($function->is_protected) {
+		if ($function->is_protected && !$function->is_static) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
-		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null);
+		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
 		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing), $ancestor_dispatch);
 	}
 
@@ -1320,7 +1326,7 @@ final class Preparation
 		}
 		if ($constructor !== null) {
 			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
-			$constructor->require_access($this->owner->parent->parent, $site);
+			$constructor->require_access($this->owner->parent->parent, $site, watcher: $this->access_watcher());
 		}
 		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
 	}
