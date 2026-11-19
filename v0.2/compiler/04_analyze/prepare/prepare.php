@@ -81,7 +81,9 @@ final class Preparation
 		$this->dependencies = $dependencies;
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
-		$errors = Declaration_Diagnostics::locals($syntax);
+		// Declaration collection owns duplicate chains on the authored body, including shared parameters.
+		$authored = $syntax->parent->instance?->method->declaration();
+		$errors = Declaration_Diagnostics::locals($authored?->body() ?? $syntax);
 		if ($errors !== []) {
 			throw new diagnostic_group($errors);
 		}
@@ -1129,7 +1131,7 @@ final class Preparation
 						Readonly_Access::write($receiver, true);
 						if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
 					}
-					$this->source_call($call, $symbol, $method, $initializing);
+					$this->source_call($call, $symbol, $method, $initializing, called: $static ? $record : null);
 					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
 					return;
 				}
@@ -1271,7 +1273,7 @@ final class Preparation
 			return true;
 		}
 		if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ' . $method->name());
-		$this->source_call($call, $symbol, $method, $initializing);
+		$this->source_call($call, $symbol, $method, $initializing, called: $record->definition);
 		return true;
 	}
 
@@ -1306,7 +1308,7 @@ final class Preparation
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor method: ' . $name);
 		}
 		if ($method->is_static) {
-			$this->source_call($call, $symbol, $method, $initializing);
+			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
 			return;
 		}
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
@@ -1322,7 +1324,7 @@ final class Preparation
 	}
 
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
-	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false): void
+	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
 	{
 		$context = $this->owner->parent->parent;
 		$receiver = null;
@@ -1331,7 +1333,12 @@ final class Preparation
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
-		$call->settle_function($symbol, $this->bind_arguments($call, $function, $initializing), $ancestor_dispatch);
+		$conversions = $this->bind_arguments($call, $function, $initializing);
+		$instance = null;
+		if ($called !== null && $this->dependencies !== null) {
+			$instance = $this->dependencies->static_call($this->owner, $symbol, $this->symbols->entry($called->declaration->symbol_key()));
+		}
+		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}
 
 	/** Inline and shared construction use the same published signature and argument checks. */

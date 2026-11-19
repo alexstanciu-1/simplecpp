@@ -68,6 +68,12 @@ final class Incremental_Preparation
 		if ($errors !== []) {
 			throw new diagnostic_group(Declaration_Diagnostics::ordered($errors));
 		}
+		$instances = $session->dependency_watches->called_methods;
+		if ($instances !== null) {
+			$prepared = $instances->prepare($symbols, $session->dependency_watches, $work);
+			$report['prepared'] += $prepared;
+			$report['reused'] += $instances->count() - $prepared;
+		}
 		foreach ($work->emission_sources() as $key => $_) {
 			if (isset($files[$key])) {
 				$files[$key]->settle_preparation();

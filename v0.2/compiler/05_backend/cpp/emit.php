@@ -431,7 +431,7 @@ CPP;
 			}
 		}
 		$unit_flavor = null;
-		foreach ($file->functions() as $function) {
+		foreach ($file->implementations() as $function) {
 			if ($function->is_abstract) continue;
 			$name = self::function_name($function);
 			if ($function->is_constructor()) {
@@ -1408,7 +1408,7 @@ CPP;
 				return $type->lower_cpp_cardinality($value->cardinality,
 					$this->value($receiver, $global_references, $declarations, $required_headers));
 			}
-			$function = $value->function_def();
+			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
@@ -2015,10 +2015,15 @@ CPP;
 		return 'var_' . self::qualified_name($declaration);
 	}
 
+	/** Encode inherited implementations by called and declaring types while retaining direct method names. */
 	public static function function_name(ast_function_declaration $declaration): string
 	{
 		if ($declaration->parent instanceof ast_record_declaration) {
 			$owner = self::qualified_name($declaration->parent);
+			if ($declaration->instance !== null && $declaration->instance->called->declaration() !== $declaration->parent) {
+				$called = self::qualified_name($declaration->instance->called->declaration());
+				return 'called_' . strlen($called) . '_' . $called . '_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
+			}
 			return 'method_' . strlen($owner) . '_' . $owner . '_' . self::name_component($declaration->short_name);
 		}
 		return self::qualified_name($declaration) . '_';

@@ -13,9 +13,10 @@ final class Syntax_Cursor
 	public readonly token_list $tokens;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens)
+	public function __construct(token_list $tokens, int $start /** uint32 */ = 0)
 	{
 		$this->tokens = $tokens;
+		$this->index = $start;
 	}
 
 	/** METHODS */

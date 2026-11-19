@@ -37,7 +37,8 @@ def rejections(work, flavor, src, helpers):
     try:
         cases = [
             ('main', f'echo Base{qualifier}hidden();return 8;', 'Cannot call protected method'),
-            ('other', klass('Other', static('read', f'return Base{qualifier}hidden();')), 'Cannot call protected method'),
+            ('other', klass('Other', static('read', f'return Base{qualifier}hidden();')
+                            + method('probe', f'return Other{qualifier}read();')), 'Cannot call protected method'),
             ('main', f'echo Child{qualifier}hidden();return 8;', 'Cannot call protected method'),
         ]
         for name, text, message in cases:
@@ -127,7 +128,9 @@ def redeclarations(work, flavor, helpers):
         ('leaf', klass('Leaf', child_method, 'Child'), None), ('leaf', leaf, b'373'),
         ('child', None, None), ('child', child(child_method), b'373'),
         ('main', f'echo Leaf{q}answer();return 8;', b'7'),
-        ('base', base(base_method.replace('protected', 'private', 1)), None),
+        ('base', base(base_method.replace('protected', 'private', 1)), b'7'),
+        ('main', f'echo Child{q}readParent();return 8;', 'Cannot call private method'),
+        ('main', f'echo Leaf{q}answer();return 8;', b'7'),
         ('child', child(child_method).replace(parent+'answer()', '3'), b'7'),
         ('base', base(method('answer', 'return 3;')), None),
         ('base', src['base'], b'7'),

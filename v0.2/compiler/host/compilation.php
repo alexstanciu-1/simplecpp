@@ -60,8 +60,8 @@ final class Compilation_Inspection
 			'name' => $constant->name(), 'type' => $constant->type_def()->name,
 			'conversion' => value_conversion::name($constant->initialization()), 'initializer' => self::value($constant->initializer),
 		], $program->file->constants());
-		foreach ($program->file->functions() as $function) {
-			$result['functions'][] = ['name' => $function->name(), 'return_type' => $function->return_type_def()->name,
+		foreach ($program->file->implementations() as $function) {
+			$result['functions'][] = ['name' => $function->name(), 'called_type' => $function->instance?->called->declaration()->name(), 'return_type' => $function->return_type_def()->name,
 				'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array => [
 					'name' => $parameter->short_name, 'type' => $parameter->type_def()->name, 'id' => $parameter->storage_id(),
 					'passing' => $parameter->mode->name, 'default_conversion' => $parameter->default_value === null ? null : value_conversion::name($parameter->default_conversion()),

@@ -233,6 +233,7 @@ final class Function_Preparation
 	public static function bodies(ast_file_node $file, scope $symbols, ?Dependency_Watches $dependencies = null): void
 	{
 		foreach ($file->functions() as $declaration) {
+			if ($declaration->is_static) continue;
 			$node = $declaration;
 			$node->return_type_def();
 			if ($node->optional_body() !== null) (new Preparation())->function_body($node->body(), $symbols, null, $dependencies);

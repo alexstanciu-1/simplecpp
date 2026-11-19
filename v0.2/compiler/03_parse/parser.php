@@ -32,9 +32,9 @@ final class Parser
 	private readonly type_availability $availability;
 
 	/** CONSTRUCTOR */
-	public function __construct(token_list $tokens, ?declaration_sink $sink = null, type_availability $availability = new type_availability())
+	public function __construct(token_list $tokens, ?declaration_sink $sink = null, type_availability $availability = new type_availability(), int $start /** uint32 */ = 0)
 	{
-		$this->cursor = new Syntax_Cursor($tokens);
+		$this->cursor = new Syntax_Cursor($tokens, $start);
 		$this->names = new Namespace_Syntax($this->cursor);
 		$this->sink = $sink;
 		$this->availability = $availability;
@@ -64,11 +64,7 @@ final class Parser
 		$collector = new Body_Collection($this->root->scope);
 		$this->lexical = $collector;
 		$declarations = new Scope_Collection($this->root->scope);
-		$grammar = match ($this->cursor->tokens->source->flavor) {
-			flavor::cpp => new Cpp_Grammar(),
-				flavor::php => new Php_Grammar(),
-				flavor::js => new Js_Grammar(),
-		};
+		$grammar = $this->grammar();
 		$statements = [];
 		$nodes = [];
 		$imports = [];
@@ -376,8 +372,24 @@ final class Parser
 		return $this->callable_body($grammar, $function);
 	}
 
+	private function grammar(): statement_grammar
+	{
+		return match ($this->cursor->tokens->source->flavor) {
+			flavor::cpp => new Cpp_Grammar(),
+			flavor::php => new Php_Grammar(),
+			flavor::js => new Js_Grammar(),
+		};
+	}
+
 	/** Functions and methods share lexical collection, statement grammar and body ownership. */
 	public function callable_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type = null, bool $derived_constructor = false): ast_function_declaration
+	{
+		$function->complete_body($this->read_body($grammar, $function, $declaring_type, $derived_constructor));
+		return $function;
+	}
+
+	/** Build one body and its local scope on the current token cursor. */
+	private function read_body(statement_grammar $grammar, ast_function_declaration $function, ?string $declaring_type, bool $derived_constructor, bool $signature_shared = false): ast_function_body
 	{
 		$source = $this->cursor->tokens->source;
 		$this->declaring_type = $declaring_type;
@@ -426,8 +438,7 @@ final class Parser
 		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
 		$this->lexical = $previous;
 		$this->declaring_type = null;
-		$function->complete_body($body_collector->body($body_start, $end, $statements));
-		return $function;
+		return $body_collector->body($body_start, $end, $statements, $signature_shared);
 	}
 
 	/** PHP and JS share the explicit function-keyword/colon-return header grammar. */
@@ -1154,5 +1165,15 @@ final class Parser
 		$value = $this->assignment_value();
 		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
 		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
+	}
+
+	/** STATIC METHODS */
+	/** Parse only the demanded executable fragment, sharing the published signature and token inventory. */
+	public static function instance_body(ast_function_declaration $method): ast_function_body
+	{
+		$file = $method->root();
+		$parser = new self($file->tokens, availability: $file->type_availability, start: $method->body()->start);
+		$parser->root = $file;
+		return $parser->read_body($parser->grammar(), $method, $method->parent->short_name, false, signature_shared: true);
 	}
 }

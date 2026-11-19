@@ -21,6 +21,7 @@ final class Program_Preparation
 		}
 		foreach ($files as $file) {
 			$file->begin_preparation();
+			$file->reset_implementations();
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
 					Function_Preparation::reset($node);
@@ -67,6 +68,7 @@ final class Program_Preparation
 			Function_Preparation::bodies($file, $symbols, $dependencies);
 		}
 		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
+		$dependencies->called_methods?->prepare($symbols, $dependencies);
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}

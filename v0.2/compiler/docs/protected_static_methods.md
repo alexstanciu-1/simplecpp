@@ -45,7 +45,7 @@ type must match. Parameter names and default values can differ. Visibility can w
 including from private, or stay equal. Source `final` seals a static declaration at
 any level. Virtual, abstract and override modifiers are invalid for static methods.
 
-Each declaration keeps its own symbol, defaults and generated helper. A call finds
+Each declaration keeps its own symbol and defaults. A call finds
 the nearest declaration from its qualifier. A lexical self call inside an inherited
 body still starts at the record that owns that body. A parent call starts at the base.
 Static finality is checked at preparation and adds no C++ virtual slot.
@@ -67,6 +67,24 @@ Named C++ access uses the existing qualified name. All three bind the selected
 member's stable symbol and reuse ordinary property reads, writes and constant facts.
 The existing binder settles arguments; lowering emits the same direct helper call,
 with no receiver, retain/release operation or runtime visibility test.
+
+## Called-type implementation ownership
+
+An explicit call through `Left` or `Right` checks access and arguments against the selected
+method declaration. The session interns the method symbol and the qualifier’s record symbol as a pair.
+The defining unit shares the authored signature and tokens across pairs and prepares one private
+body per reachable pair. Recursive calls reuse the same pair. C++ calls the selected helper directly.
+Only helpers with a caller in another unit need a header declaration.
+
+Signatures, defaults and syntax are checked eagerly. A static body receives semantic checks on demand.
+Ordinary function and instance-method bodies remain preparation roots, as does the selected entry.
+A successful preparation retires implementations unreachable from those roots, including recursive
+cycles, and forgets their watches. Failed preparation leaves executable publication pending for retry.
+An unchanged incremental invocation skips demand traversal and body preparation.
+Forwarding the current called type through lexical qualifiers and constructing `new static()` are later slices.
+
+Run `python3 -B v0.2/compiler/tests/called_methods_native.py` to compare incremental and fresh
+artifacts and diagnostics and check that retired bodies are collectible while a sibling retains its body.
 
 ## Verification
 

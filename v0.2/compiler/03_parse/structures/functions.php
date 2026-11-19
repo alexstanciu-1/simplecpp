@@ -56,7 +56,7 @@ final class ast_call_expression extends ast_expression
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|null $function_symbol = null;
+	private symbol_entry|runtime_function|called_method_instance|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -104,14 +104,14 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** @param int[] $conversions */
-	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false): void
+	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false, ?called_method_instance $instance = null): void
 	{
 		$function = $symbol->declaration();
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
 			throw new \LogicException('Invalid settled call');
 		}
 		$this->settle_value($function->return_type_def(), null);
-		$this->function_symbol = $symbol;
+		$this->function_symbol = $instance ?? $symbol;
 		$this->ancestor_dispatch = $ancestor_dispatch;
 		$this->conversions = $conversions;
 	}
@@ -137,7 +137,14 @@ final class ast_call_expression extends ast_expression
 		if ($this->function_symbol instanceof runtime_function) {
 			return $this->function_symbol;
 		}
+		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
 		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
+	}
+
+	/** Lower only after the coordinator has settled all reachable implementations. */
+	public function implementation(): ast_function_declaration|runtime_function
+	{
+		return $this->function_symbol instanceof called_method_instance ? $this->function_symbol->implementation : $this->function_def();
 	}
 
 	/** $index: argument ordinal. */
@@ -199,10 +206,10 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		if (($this->preparation_work === $work) && ($this->dependency_source_key() === $source_key)) {
 			return;
 		}
-		$this->preparation_work?->retire($this->dependency_source_key(), $this);
+		if (!$this->parent->is_static) $this->preparation_work?->retire($this->dependency_source_key(), $this);
 		$this->preparation_work = $work;
 		$this->parent->bind_source_key($source_key);
-		$work?->register($source_key, $this);
+		if (!$this->parent->is_static) $work?->register($source_key, $this);
 	}
 
 	/** Full-program preparation binds its logical source identity before registering any watches. */
@@ -224,8 +231,16 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
+		$this->queue_change();
 		$this->root()->begin_preparation();
+	}
+
+	/** Authored static bodies signal defining-unit edits. Only reachable private instances run their executable work. */
+	private function queue_change(): void
+	{
+		if ($this->preparation_work === null) return;
+		if ($this->parent->is_static) $this->preparation_work->change_source($this->dependency_source_key());
+		else $this->preparation_work->enqueue($this->dependency_source_key(), $this);
 	}
 
 	public function is_prepared(?entry_target $target = null): bool
@@ -236,7 +251,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;
-		$this->preparation_work?->enqueue($this->dependency_source_key(), $this);
+		$this->queue_change();
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -303,6 +318,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	private ?Dependency_Watches $signature_dependencies = null;
 
 	/** PREP FACTS */
+	/** Prepared fact: non-owning called-type identity of a private implementation. */
+	public private(set) ?called_method_instance $instance = null;
 	/** Prepared fact: inherited callable contract validated after signature settlement. */
 	public bool $method_contract_ready = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
@@ -387,6 +404,16 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function is_constructor(): bool
 	{
 		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_record_declaration;
+	}
+
+	/** Borrow the settled signature and lexical parent. Only the new executable subtree owns mutable body facts. */
+	public function instantiate(called_method_instance $instance): self
+	{
+		$method = clone $this;
+		$method->instance = $instance;
+		$method->body = Parser::instance_body($this);
+		$method->body->attach($method);
+		return $method;
 	}
 
 	/** Attach the completed body once and settle the function token boundary. */

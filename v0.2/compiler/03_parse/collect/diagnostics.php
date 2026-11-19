@@ -108,7 +108,7 @@ final class Declaration_Diagnostics
 	/** Bodyless signatures have no local scope; inspect their owned parameter inventory without allocating a scope. @return diagnostic[] */
 	private static function callable(ast_function_declaration $function): array /** list<diagnostic> */
 	{
-		if ($function->optional_body() !== null) return self::locals($function->body());
+		if (!$function->is_static && $function->optional_body() !== null) return self::locals($function->body());
 		$first = [];
 		$errors = [];
 		foreach ($function->parameters as $parameter) {
