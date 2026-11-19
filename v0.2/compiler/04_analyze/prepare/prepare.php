@@ -598,7 +598,7 @@ final class Preparation
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
-			if ($root instanceof ast_called_type_name && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Late-static properties support plain writes');
+			if ($root instanceof ast_called_type_name && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed late-static property writes are deferred');
 			if ($root instanceof ast_qualified_data && !$initialize) throw new diagnostic($root->source(), $root->byte_start(), 'Expression-qualified static properties support plain writes');
 			$this->static_destination($root);
 			return null;

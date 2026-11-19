@@ -180,7 +180,8 @@ final class Parser
 			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
-			if ($value instanceof ast_qualified_data || $value instanceof ast_called_type_name) return $this->plain_property_assignment($value);
+			if ($value instanceof ast_called_type_name) return $this->property_write($value);
+			if ($value instanceof ast_qualified_data) return $this->plain_property_assignment($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -198,19 +199,7 @@ final class Parser
 			if ($this->cursor->is(token_kind::lbracket)) {
 				return $this->indexed_write($target);
 			}
-			if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
-				return $this->property_update($target->start, $target, $this->take_update_operator(), true);
-			}
-			$operator = $this->compound_operator();
-			if ($operator !== null) {
-				if ($operator === binary_operator::power) {
-					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unsupported property compound operator');
-				}
-				$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
-				$value = $this->assignment_value();
-				return new ast_property_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
-			}
-			return $this->plain_property_assignment($target);
+			return $this->property_write($target);
 		}
 		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::lbracket)) {
 			$start = $this->cursor->position();
@@ -759,6 +748,24 @@ final class Parser
 		return $initializer;
 	}
 
+	/** Parse the discarded write or update on an already selected property. */
+	private function property_write(ast_field_expression|ast_name_expression $target): ast_statement
+	{
+		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
+			return $this->property_update($target->start, $target, $this->take_update_operator(), true);
+		}
+		$operator = $this->compound_operator();
+		if ($operator !== null) {
+			if ($operator === binary_operator::power) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unsupported property compound operator');
+			}
+			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
+			$value = $this->assignment_value();
+			return new ast_property_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
+		}
+		return $this->plain_property_assignment($target);
+	}
+
 	/** Parse a plain write after its instance or static target has been selected. */
 	private function plain_property_assignment(ast_field_expression|ast_name_expression $target): ast_field_assignment
 	{
@@ -781,7 +788,7 @@ final class Parser
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		}
-		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Late-static properties support plain writes');
+		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed late-static property writes are deferred');
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expression-qualified static properties support plain writes');
 		}

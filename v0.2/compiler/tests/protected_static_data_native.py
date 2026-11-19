@@ -2,7 +2,7 @@
 import tempfile
 from pathlib import Path
 
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 from protected_static_native import sources
 
 
@@ -157,6 +157,50 @@ def late_static(work, flavor):
     ])
 
 
+def late_updates(work, flavor):
+    _, (syntax, klass, _, static, sep) = sources(flavor)
+    name = '$n' if flavor == 'php' else 'n'
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    n = late + name
+    def prop(t='int', value='0', var=name):
+        declaration = f'{var}:{t}' if flavor == 'js' else f'{t} {var}'
+        return ('public: ' if flavor == 'cpp' else 'public ') + f'static {declaration}={value};'
+    counter = syntax['v']+'i'
+    # Net +1 per call; cover both prefix/postfix, including both for update positions.
+    loop = syntax['infer']('i', '0')
+    body = f'{n} += {syntax["v"]}delta;{n}++;--{n};++{n};{n}--;'
+    body += f'for ({loop}{counter}<1;++{n}) {{{counter}++;}}'
+    body += f'for ({loop}{counter}<1;{n}--) {{{counter}++;}} ++{n};return {n};'
+    def base(code, field=''):
+        return klass('Base', field+static('tick', code, [('delta','int')]))
+    left, right = klass('Left','','Base'), klass('Right','','Base')
+    calls = f'echo Left{sep}tick(2),Right{sep}tick(5);'
+    main = calls+f'echo Left{sep}{name},Right{sep}{name};return 8;'
+    src = dict(base=base(body, prop()), left=left, right=right, main=main)
+    separate = klass('Right',prop(),'Base')
+    revisions(work, flavor, src, [
+        (None, None, b'3999'), (None, None, b'3999'),
+        ('base', base(body), None), ('left', klass('Left',prop(),'Base'), None),
+        ('right', separate, b'3636'), ('right', klass('Right',prop('string','"text"'),'Base'), 'Unsupported compound operands'),
+        (None, None, None), ('right', separate, b'3636'),
+        ('right', None, None), ('right', separate, b'3636'),
+        ('base', base(f'{n} <<= 1;{n} |= 3;{n} *= 2;return {n};'), b'6666'),
+        ('base', klass('Base', static('tick', f'{n}=5;{n}+={late}bump();return {n};', [('delta','int')])
+                       + static('bump', f'{n}+=10;return {n};')), b'20202020'),
+        ('base', base(f'return {n}++;'), None), ('base', base(body), b'3636'),
+        ('right', klass('Right',prop().replace('public','private'),'Base'), 'Cannot access private static property'),
+        ('right', separate, b'3636'),
+    ])
+    # The second invocation checks the actual property after the first threw.
+    flag = '$attempt' if flavor == 'php' else 'attempt'
+    for label, op, error in [('narrow', '+= 10', 'integer_cast_out_of_range'), ('divide', '/= 0', 'division_by_zero')]:
+        storage = prop('byte','250') + prop(var=flag)
+        attempt = late+flag
+        code = f'if ({attempt}) {{if ({n} == 250) {{return 8;}} return 90;}} ++{attempt};{n} {op};return 91;'
+        source = klass('Base',storage+static('run',code))+left+f'return Left{sep}run();'
+        guard(work, flavor, label, source, error, retry_entry=True)
+
+
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-static-data-') as tmp:
         for flavor in ['php', 'cpp', 'js']:
@@ -164,3 +208,6 @@ if __name__ == '__main__':
             late = Path(tmp)/'late'
             late.mkdir(exist_ok=True)
             late_static(late, flavor)
+            updates = Path(tmp)/'updates'
+            updates.mkdir(exist_ok=True)
+            late_updates(updates, flavor)
