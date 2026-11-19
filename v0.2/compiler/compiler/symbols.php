@@ -123,9 +123,15 @@ final class Symbol_Publication implements declaration_sink
 			$file->scope->parent = $scope;
 		}
 		foreach ($retired as $file) {
+			$same_bindings = null;
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
-					$node->retire_signature();
+					$replacement = $files[$node->dependency_source_key()] ?? null;
+					$same_bindings ??= $replacement !== null && $replacement->source()->path === $file->source()->path
+						&& $replacement->same_import_bindings($file);
+					$next = $same_bindings ? ($scope->declarations[$node->symbol_key()] ?? null) : null;
+					$node->retire_signature($next instanceof ast_function_declaration && $next->root() === $replacement
+						&& $next->duplicate_element() === null ? $next : null);
 					if ($node->optional_body() !== null) $dependencies->retire($node->body());
 				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
@@ -187,7 +193,9 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->return_type_reference?->spelling(), array_map(
+				// A generator return type retains its producer declaration.
+				$producer = $head->return_type_reference?->name === Iterator_Contract::NAME ? spl_object_id($head) : null;
+				$contracts[$key] = json_encode([$producer, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->return_type_reference?->spelling(), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}

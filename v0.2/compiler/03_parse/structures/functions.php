@@ -485,12 +485,19 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->return_type_def = $type;
 	}
 
-	/** Forget outgoing watches and notify callers before replacing a nominal contract in the same batch as its payload. */
-	public function retire_signature(): void
+	/** Preserve nominal dependency edges across replacement until the new signature settles. */
+	public function retire_signature(?ast_function_declaration $replacement): void
 	{
-		if ($this->signature_dependencies === null) return;
-		$this->signature_dependencies->forget($this);
-		$this->signature_dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		$dependencies = $this->signature_dependencies;
+		if ($dependencies === null) return;
+		if ($replacement !== null) {
+			$replacement->bind_source_key($this->dependency_source_key());
+			$replacement->watch_signature($dependencies);
+			$dependencies->replace_signature($this, $replacement);
+		} else {
+			$dependencies->forget($this);
+			$dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		}
 		$this->signature_dependencies = null;
 	}
 

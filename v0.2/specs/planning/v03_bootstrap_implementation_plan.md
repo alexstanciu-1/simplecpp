@@ -491,12 +491,17 @@ No program-wide liveness state or cross-body reads are needed.
 - [x] Resident output matched fresh output across all three flavors. No-op builds
   prepared and emitted zero bodies. Native Ninja builds reused the caller and
   records objects on scanner body edits on both compilers.
-- [ ] Full caller **preparation and emission** reuse remains open. Even with the
-  records in a separate unit and an unchanged signature, retiring a function
-  whose signature watches an application type conservatively notifies its callers.
-  Here the scanner and its direct caller are prepared again, and the unrelated
-  function is reused. Reworking nominal-signature invalidation must preserve
-  notification on simultaneous type replacement and import rebinding.
+- [x] Body-only scanner edits prepare one body and reuse two across cpp/php/js.
+  The caller is absent from emitted sources and its native object is reused on
+  Clang and GCC. Signature publication hands existing nominal watches to the
+  replacement before dispatch. Rebinding an import invalidates the caller.
+  Replacing a return record and the producer together diagnoses the caller's
+  removed field, and restoring it recovers with fresh-equivalent output.
+- [x] The writable-reference fixture clears the scanner's vector. The resulting
+  empty vector reaches the caller on the copy path. Three fresh provider sessions
+  use identical scanner source with transfer enabled, removed, and restored.
+  The regression checks move/copy/move, the utility include, native output and
+  byte-identical restored C++ artifacts in each flavor.
 
 **Preparation cost on dev002.** PHP 8.5, Xdebug off, CPU 7, medians of 11 warm
 batches. Full-body measurements include reset and preparation, with parsing and

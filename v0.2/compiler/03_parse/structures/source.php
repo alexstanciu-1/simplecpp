@@ -239,6 +239,17 @@ final class ast_file_node extends ast_node
 			? 'const:' . $name : $this->constant_key($name);
 	}
 
+	/** Compare written binding context across a file replacement without retaining a second index. */
+	public function same_import_bindings(ast_file_node $previous): bool
+	{
+		if (count($this->imports) !== count($previous->imports)) return false;
+		foreach ($this->imports as $i => $import) {
+			$old = $previous->imports[$i];
+			if ($old->local_name !== $import->local_name || $old->kind !== $import->kind || $old->target !== $import->target) return false;
+		}
+		return true;
+	}
+
 	/** Plain imports bind complete type names; no prefix aliasing or duplicate retained index. */
 	public function type_key(string $name): string
 	{
