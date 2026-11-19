@@ -27,8 +27,22 @@ record. JS uses `Base.hidden()` for explicit qualification; PHP/C++ use
 The existing method lookup watches each visited record and named method slot and
 binds the selected Base declaration directly, including its defaults and visibility.
 PHP `parent::` and JS `super.` start at the lexical base. C++ names the base explicitly.
-Static redeclarations, protected static properties/constants
+Protected static properties/constants
 and expression-qualified static calls are separate work.
+
+## Static redeclarations in descendants
+
+A class or struct can redeclare an inherited static method. Declaration preparation
+checks the nearest ancestor declaration once using the shared callable compatibility
+check. Parameter count, canonical types, passing modes, optional positions and return
+type must match. Parameter names and default values can differ. Visibility can widen,
+including from private, or stay equal. Source `final` seals a static declaration at
+any level. Virtual, abstract and override modifiers are invalid for static methods.
+
+Each declaration keeps its own symbol, defaults and generated helper. A call finds
+the nearest declaration from its qualifier. A lexical self call inside an inherited
+body still starts at the record that owns that body. A parent call starts at the base.
+Static finality is checked at preparation and adds no C++ virtual slot.
 
 ## Implementation and retained state
 
@@ -54,6 +68,9 @@ build and execute with Clang. Negative checks cover external/unrelated access,
 inherited protected calls from outside the hierarchy, and deferred protected data members.
 Twelve additional ancestor-call checkpoints per flavor exercise both caller kinds,
 intermediate and immediate base changes, private access, deletion and recovery.
+The static redeclaration fixture adds 28 checkpoints per flavor covering defaults,
+visibility, signature mismatches, both static/instance collisions, final declarations
+on classes and structs, edits, deletion and recovery.
 Existing protected-instance and ordinary method regressions protect receiver rules
 and shared binder behavior. Native timing results are reported separately from
 cumulative frontend/LLVM work; no preparation speedup is claimed.

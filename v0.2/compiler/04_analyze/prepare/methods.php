@@ -14,7 +14,7 @@ final class Method_Preparation
 		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
 		$method->watch_signature($dependencies);
 		$dependencies?->watch($symbols->entry($method->parent->symbol_key()), $method);
-		$marked = $method->has_virtual_dispatch() || $method->is_final;
+		$marked = $method->has_virtual_dispatch() || ($method->is_final && !$method->is_static);
 		if ($marked && ($method->is_constructor() || $method->is_static || $method->is_private
 			|| $method->short_name === '__destruct' || $method->parent->kind === record_kind::structure)) {
 			self::fail($method, 'Virtual modifiers require a public class instance method or a protected class instance method');
@@ -34,13 +34,19 @@ final class Method_Preparation
 			$base = $record->base()?->method_symbol($method->short_name, $symbols, $method, $dependencies)?->declaration();
 			if ($base !== null) {
 				self::contract($base, $symbols, $dependencies);
-				if ((!$base->has_virtual_dispatch() && !$record->base()->interface_dispatch($method->short_name)) || $method->is_static) self::fail($method, 'Nonvirtual method hiding is forbidden');
-				if (!$method->is_override) self::fail($method, 'Inherited virtual method requires override');
-				if ($base->is_final) self::fail($method, 'Cannot override final method');
+				if ($base->is_static !== $method->is_static) self::fail($method, 'Static and instance methods cannot replace one another');
+				if ($method->is_static) {
+					if ($base->is_final) self::fail($method, 'Cannot redeclare final static method');
+				}
+				else {
+					if (!$base->has_virtual_dispatch() && !$record->base()->interface_dispatch($method->short_name)) self::fail($method, 'Nonvirtual method hiding is forbidden');
+					if (!$method->is_override) self::fail($method, 'Inherited virtual method requires override');
+					if ($base->is_final) self::fail($method, 'Cannot override final method');
+				}
 				self::compatible($method, $base);
 			} elseif ($method->is_override && $requirements === []) self::fail($method, 'Override has no inherited virtual target');
 		}
-		if ($method->is_final && !$method->is_override) self::fail($method, 'Final requires an overriding implementation in this slice');
+		if ($method->is_final && !$method->is_static && !$method->is_override) self::fail($method, 'Final requires an overriding implementation in this slice');
 		$method->method_contract_ready = true;
 	}
 
@@ -93,15 +99,16 @@ final class Method_Preparation
 		$record->method_contract_ready = true;
 	}
 
-	/** Share the exact callable contract check between base overrides and interface obligations. */
+	/** Share the exact callable contract check across static redeclarations, overrides and interface obligations. */
 	private static function compatible(ast_function_declaration $method, ast_function_declaration $base): void
 	{
-		if (($method->is_private && !$base->is_private) || ($method->is_protected && !$base->is_private && !$base->is_protected)) self::fail($method, 'Override cannot narrow visibility');
-		if ($method->return_type_def() !== $base->return_type_def() || count($method->parameters) !== count($base->parameters)) self::fail($method, 'Override signature must match exactly');
+		$contract = $method->is_static ? 'Static redeclaration' : 'Override';
+		if (($method->is_private && !$base->is_private) || ($method->is_protected && !$base->is_private && !$base->is_protected)) self::fail($method, $contract . ' cannot narrow visibility');
+		if ($method->return_type_def() !== $base->return_type_def() || count($method->parameters) !== count($base->parameters)) self::fail($method, $contract . ' signature must match exactly');
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];
 			if ($parameter->type_def() !== $original->type_def() || $parameter->mode !== $original->mode
-				|| ($parameter->default_value === null) !== ($original->default_value === null)) self::fail($method, 'Override signature must match exactly');
+				|| ($parameter->default_value === null) !== ($original->default_value === null)) self::fail($method, $contract . ' signature must match exactly');
 		}
 	}
 

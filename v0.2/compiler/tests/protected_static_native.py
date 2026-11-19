@@ -77,6 +77,51 @@ def ancestor_calls(work, flavor, helpers):
     ])
 
 
+def redeclarations(work, flavor, helpers):
+    work.mkdir(exist_ok=True)
+    s, klass, method, static, q = helpers
+    self_name = {'php': 'self', 'cpp': 'Self', 'js': 'class'}[flavor]
+    parent = {'php': 'parent::', 'cpp': 'Base::', 'js': 'super.'}[flavor]
+    def answer(name, default, visibility):
+        return static('answer', 'return '+s['v']+name+';', [(name, 'int')], visibility).replace(')', '='+default+')', 1)
+    def final(text):
+        return text.replace(') {', ') final {', 1) if flavor == 'cpp' else text.replace('static ', 'final static ', 1)
+    base_method = answer('n', '3', 'protected')
+    child_method = answer('value', '7', 'public')
+    def base(member):
+        return klass('Base', member + static('readBase', f'return {self_name}{q}answer();'))
+    def child(member):
+        return klass('Child', member + static('readChild', f'return {self_name}{q}answer();')
+                     + static('readParent', f'return {parent}answer();'), 'Base')
+    main = f'echo Child{q}readBase(),Leaf{q}readChild(),Child{q}readParent();return 8;'
+    leaf = klass('Leaf', '', 'Child')
+    src = dict(base=base(base_method), child=child(''), leaf=leaf, main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'333'), (None, None, b'333'),
+        ('child', child(child_method), b'373'), ('child', child(''), b'333'),
+        ('child', child(child_method), b'373'), ('base', base(final(base_method)), None),
+        (None, None, None), ('child', child(''), b'333'), ('base', src['base'], b'333'),
+        ('child', child(child_method.replace('public', 'private', 1)), None),
+        ('child', child(child_method.replace('public', 'protected', 1)), b'373'),
+        ('base', base(base_method.replace('protected', 'public', 1)), None),
+        ('base', src['base'], b'373'),
+        ('child', child(child_method.replace('static ', 'override static ', 1)), None),
+        ('child', child(child_method.replace('=7', '')), None),
+        ('child', child(child_method.replace('int', 'float')), None),
+        ('child', child(method('answer', 'return 7;')), None),
+        ('child', child(final(child_method)), b'373'),
+        ('leaf', klass('Leaf', child_method, 'Child'), None), ('leaf', leaf, b'373'),
+        ('child', None, None), ('child', child(child_method), b'373'),
+        ('main', f'echo Leaf{q}answer();return 8;', b'7'),
+        ('base', base(base_method.replace('protected', 'private', 1)), None),
+        ('child', child(child_method).replace(parent+'answer()', '3'), b'7'),
+        ('base', base(method('answer', 'return 3;')), None),
+        ('base', src['base'], b'7'),
+        ('main', s['record']('ParentValue', base_method) + s['record']('Value', final(child_method), 'ParentValue')
+         + f'echo Value{q}answer();return 8;', b'7'),
+    ])
+
+
 def prove(work):
     for flavor in ['php', 'cpp', 'js']:
         src, helpers = sources(flavor)
@@ -99,6 +144,7 @@ def prove(work):
         ])
         rejections(work, flavor, src, helpers)
         ancestor_calls(work/'ancestor', flavor, helpers)
+        redeclarations(work/'redeclare', flavor, helpers)
 
 
 def main():

@@ -18,7 +18,7 @@ Duplicate markers, including attribute plus modifier, reject. Cpp uses leading
 `virtual` and trailing `override`/`final`; js uses leading modifiers. An override
 is mandatory when declaring a replacement. Inheriting a body unchanged needs no
 marker. Ordinary methods remain nonvirtual and cannot be hidden by a descendant.
-Final is admitted on overriding implementations. Final class declarations now prevent extension;
+Instance methods admit final on overriding implementations. Static methods also admit final to seal a declaration. Final class declarations now prevent extension;
 the existing method-level final policy is unchanged.
 
 Record_Syntax normalizes written intent on the existing method declaration.

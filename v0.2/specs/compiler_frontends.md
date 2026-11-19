@@ -406,7 +406,8 @@ unique ownership and borrows remain deferred. Class interfaces are covered below
 Static method lookup starts at the qualified type and follows its base chain. Lexical
 `self::` (PHP), `Self::` (C++) and `class.` (JS) spellings start at the enclosing record. Protected access requires the
 declaring record or a descendant context; no instance receiver is involved.
-Static redeclarations and protected static properties/constants remain deferred. See
+Descendants can redeclare a static method with an exact signature and equal or wider visibility.
+A final static method seals that declaration. Protected static properties/constants remain deferred. See
 [protected static methods](../compiler/docs/protected_static_methods.md).
 
 ## Class interfaces
