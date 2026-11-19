@@ -10,7 +10,7 @@ namespace scpp\compiler;
  */
 final class type_@name@ extends type_definition
 {
-	/** CONSTANTS */
+@type_traits@	/** CONSTANTS */
 	public const int MINIMUM /** int64 */ = (-@maximum@ - 1);
 	public const int MAXIMUM /** int64 */ = @maximum@;
 

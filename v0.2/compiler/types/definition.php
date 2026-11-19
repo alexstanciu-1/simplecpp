@@ -35,10 +35,38 @@ trait collection_specializations
 	/** Cache only supported identities on the element generation; no global cache retains retired declarations. */
 	public function collection_type(string $family, ?type_definition $key): ?type_definition
 	{
-		$identity = $family . ':' . ($key?->name ?? '');
+		if ($key !== null) return $key->keyed_collection_type($family, $this->default_type());
+		$identity = $family;
 		if (isset($this->collections[$identity])) return $this->collections[$identity];
 		$type = type_registry::application_collection($family, $this->default_type(), $key);
 		if ($type !== null) $this->collections[$identity] = $type;
+		return $type;
+	}
+}
+
+/** Weak canonical pair index: a surviving key must not retain retired value declarations or hash definitions. */
+trait hash_key_specializations
+{
+	/** Native weak key/value links; live AST/type users own specializations. @var \WeakMap<type_definition,array<string,\WeakReference<type_definition>>>|null */
+	private ?\WeakMap $hashes = null;
+
+	public function hash_key_supported(): bool
+	{
+		return true;
+	}
+
+	/** Reuse a live pair without pinning either a retired value generation or its specialization. */
+	public function keyed_collection_type(string $family, type_definition $value): ?type_definition
+	{
+		$type = ($this->hashes[$value][$family] ?? null)?->get();
+		if ($type !== null) return $type;
+		$type = type_registry::application_collection($family, $value, $this);
+		if ($type !== null) {
+			$this->hashes ??= new \WeakMap();
+			$families = $this->hashes[$value] ?? [];
+			$families[$family] = \WeakReference::create($type);
+			$this->hashes[$value] = $families;
+		}
 		return $type;
 	}
 }
@@ -158,6 +186,26 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	public function hash_key_supported(): bool
+	{
+		return false;
+	}
+
+	public function lower_cpp_hash_key(string $key): ?string
+	{
+		return null;
+	}
+
+	public function lower_cpp_key_equal(string $left, string $right): ?string
+	{
+		return null;
+	}
+
+	public function keyed_collection_type(string $family, type_definition $value): ?type_definition
+	{
+		return null;
+	}
+
 	/** Null leaves a concrete lifecycle requirement unproven; native recipe assertions remain mandatory. */
 	public function concrete_storage_support(string $requirement): ?bool
 	{

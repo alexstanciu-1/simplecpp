@@ -13,12 +13,19 @@ interface ConcreteType {
     public function supports(string $requirement): ?bool;
 }
 
+/** Nonthrowing key operations; equality must imply equal hashes and remain stable while stored. */
+interface ConcreteHashKey {
+    public function hashExpression(string $key): ?string;
+    public function equalityExpression(string $left, string $right): ?string;
+}
+
 /** Adapter over validated runtime publication facts, without retaining or copying the entire plan. */
-final readonly class RuntimeConcreteType implements ConcreteType {
+final readonly class RuntimeConcreteType implements ConcreteType, ConcreteHashKey {
     private string $identity;
     private string $symbol;
     private string $header;
     private ?string $lifecycle;
+    private ?array $keyContract;
 
     public function __construct(array $plan, string $identity) {
         $identity = object($plan['aliases'])[$identity] ?? $identity;
@@ -30,12 +37,19 @@ final readonly class RuntimeConcreteType implements ConcreteType {
             if ($type['name'] === $identity) { $lifecycle = 'native_value'; break; }
         }
         if (($plan['string']['name'] ?? null) === $identity) $lifecycle = $plan['string']['lifecycle'];
+        $this->keyContract = $plan['hashes']['key_contracts'][$identity] ?? null;
         $this->identity = $identity;
         $this->symbol = $export['symbol'];
         $this->header = providerHeader($plan['submodules'], $provider);
         $this->lifecycle = $lifecycle;
     }
 
+    public function hashExpression(string $key): ?string {
+        return $this->keyContract === null ? null : strtr($this->keyContract['hash'], ['@key@' => $key]);
+    }
+    public function equalityExpression(string $left, string $right): ?string {
+        return $this->keyContract === null ? null : strtr($this->keyContract['equal'], ['@left@' => $left, '@right@' => $right]);
+    }
     public function identity(): string { return $this->identity; }
     public function cppType(string $namespace): string {
         $prefix = $namespace . '::';

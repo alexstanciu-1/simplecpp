@@ -12,8 +12,8 @@ $groups vector<hash<vector<Point>,string>> = [];
 ```
 
 This is recursive specialization, not a fixed-depth feature. Hash argument order
-remains `hash<Value,Key>`; keys remain int/int64 or string. Shared-owner keys and the
-general hashing/equality contract are separate work. Other unpublished scalar or
+remains `hash<Value,Key>`. Int/int64, string and [shared-owner keys](hash_keys.md)
+use the common hashing/equality contract. Other key families remain separate. Other unpublished scalar or
 carrier payload specializations are not activated by this change.
 
 ## Ownership and preparation

@@ -36,6 +36,15 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
             $contracts .= "static_assert($expression, \"$name requires $parameter.$requirement\");\n";
         }
     }
+    if (isset($recipe->hash_key)) {
+        $key = $types[textValue($recipe->hash_key)] ?? null;
+        requireThat($key instanceof ConcreteHashKey, 'Concrete hash requires a key contract');
+        $hash = $key->hashExpression('key');
+        $equal = $key->equalityExpression('left', 'right');
+        requireThat($hash !== null && $equal !== null, 'Concrete type is not hashable');
+        requireThat(!array_key_exists('hash', $values) && !array_key_exists('equal', $values), 'Key operations belong to the type contract');
+        $values += compact('hash', 'equal');
+    }
     requireThat(!array_key_exists('type_contracts', $values), 'Concrete type contracts are generated');
     $values['type_contracts'] = $contracts;
     $result = [];
@@ -60,7 +69,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
 function concreteRecipe(string $name): mixed {
     static $recipes = [];
     $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key']);
     return $recipe;
 }
 

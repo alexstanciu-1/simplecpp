@@ -74,10 +74,23 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $unary = compilerUnaryPlan($compiler, $definitions);
     $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
     foreach ($definitions as $identity => $definition) {
+        $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
+        $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
         if (isset($definition['cpp_header'])) {
             $header = var_export($definition['cpp_header'], true);
             $methods .= "\n\t/** @return string[] */\n\tpublic function cpp_headers(): array /** list<string> */\n\t{\n\t\treturn [$header];\n\t}\n";
+        }
+        if ($keyContract !== null) {
+            foreach (['hash' => ['lower_cpp_hash_key', ['key']], 'equal' => ['lower_cpp_key_equal', ['left', 'right']]] as $operation => [$method, $arguments]) {
+                $expression = var_export($keyContract[$operation], true);
+                $parameters = [];
+                foreach ($arguments as $argument) {
+                    $parameters[] = 'string $' . $argument;
+                    $expression = str_replace('@' . $argument . '@', "' . \$" . $argument . " . '", $expression);
+                }
+                $methods .= "\n\tpublic function $method(" . implode(', ', $parameters) . "): ?string\n\t{\n\t\treturn $expression;\n\t}\n";
+            }
         }
         if ($definition['copy_semantics'] === 'trivial') {
             $methods .= "
@@ -101,7 +114,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@name@' => $identity, '@maximum@' => $definition['maximum'], '@magnitude@' => $definition['magnitude'],
                 '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
                 '@cpp_minimum@' => var_export($definition['minimum_cpp'], true), '@cpp_suffix@' => var_export($definition['suffix'], true),
-                '@conversion_methods@' => $methods,
+                '@type_traits@' => $typeTraits, '@conversion_methods@' => $methods,
             ]);
             continue;
         }
@@ -143,7 +156,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalars/scalar_type.php.tpl'), [
             '@name@' => $identity, '@class@' => $definition['class'], '@limits@' => $limits, '@index_interface@' => $indexInterface,
             '@accept_names@' => $accept, '@representation@' => var_export($definition['cpp'], true),
-            '@constructor_checks@' => $hostChecks, '@literal_methods@' => $literalMethods, '@conversion_methods@' => $methods,
+            '@constructor_checks@' => $hostChecks, '@literal_methods@' => $literalMethods, '@type_traits@' => $typeTraits, '@conversion_methods@' => $methods,
         ]);
     }
     $cases = [];
@@ -302,7 +315,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
     $files['bindings/entry.php'] = compilerEntryBinding($compiler);
-    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 54,
+    $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 55,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }

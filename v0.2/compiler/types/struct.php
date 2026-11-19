@@ -434,6 +434,8 @@ final class weak_record_type_definition extends record_handle_definition
 /** Exact record owner contract: explicit shared<Struct>, required Class or optional ?Class. */
 final class shared_record_type_definition extends record_handle_definition
 {
+	use hash_key_specializations;
+
 	/** PROPERTIES */
 	/** Semantic presence contract; both variants use the same native owner. */
 	public readonly bool $required;
@@ -466,6 +468,17 @@ final class shared_record_type_definition extends record_handle_definition
 	public function lower_cpp_condition(string $value, bool $negated = false): string
 	{
 		return 'static_cast<bool>(' . $value . ')';
+	}
+
+	/** Allocation identity is unchanged by field mutations or adjusted base/interface views. */
+	public function lower_cpp_hash_key(string $key): ?string
+	{
+		return '::scpp::detail::hash_pointer((' . $key . ').ptr)';
+	}
+
+	public function lower_cpp_key_equal(string $left, string $right): ?string
+	{
+		return '((' . $left . ').ptr == (' . $right . ').ptr)';
 	}
 
 	/** Ordinary and strict equality use allocation identity for owners and presence for null. */

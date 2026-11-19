@@ -16,6 +16,13 @@ $owners = readFile($root.'/tests/ownership/publication.json');
 $prepare = fn(string $m, string $p): array => prepareRuntime(decode($m,'metadata'), decode($p,'publication'), $facts);
 $hashPlan = $prepare($metadata, $hashes);
 requireThat(count($hashPlan['hashes']['specializations']) === 4, 'Hash specializations lost');
+foreach (['missing', 'throwing', 'incomplete'] as $invalid) {
+    $m = decode($metadata, 'metadata');
+    if ($invalid === 'missing') unset($m->hash->key_contracts->string);
+    elseif ($invalid === 'throwing') $m->hash->key_contracts->int64->nonthrowing = false;
+    else $m->hash->key_contracts->int64->equal = '@left@ == unknown';
+    rejects(fn() => $prepare(encode($m), $hashes));
+}
 foreach (['key'=>'int8','value'=>'hash_int64_int64'] as $key=>$value) {
     $p = decode($hashes,'publication'); $p->hashes->specializations[0]->{$key} = $value;
     rejects(fn() => $prepare($metadata,encode($p)));

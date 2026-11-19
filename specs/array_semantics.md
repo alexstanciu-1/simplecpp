@@ -700,3 +700,28 @@ This does not activate additional collection specializations or scalar types.
 For this topic:
 - model/spec boundary statements should use **outside the supported subset** when describing unsupported semantics
 - generator/runtime failure behavior may use **rejected** or **throws** when describing the concrete implementation outcome
+
+## v0.2 shared-owner hash keys
+
+Typed `hash<Value,Key>` additionally admits supported shared-owner key types in all
+flavors. Hash-key eligibility requires the storage contract plus nonmutating,
+nonthrowing hashing/equality, with equal keys producing equal hashes and stable key
+identity while stored. This capability is separate from arithmetic or general equality
+operator admission. Existing int/string key behavior remains unchanged.
+
+Shared keys compare allocation identity, consistent with owner `==`/`===`. Base/interface
+views hash the same control identity, not an adjusted payload/view address. Mutating
+object fields does not change its key. Expressions must have the exact declared key type;
+existing conversions can produce that type before lookup/insertion. Nullable owners admit
+one empty-owner key. This does not authorize an empty required class value.
+
+A hash owns strong copies of its keys. Table copies retain the same object identities;
+removal, clear and destruction release the stored owners. Keys keep their allocations
+alive, including while external owners are cleared. This does not provide cycle collection
+or thread-safe reference counts. Value-copy key traversal retains its selected key through
+the loop body under the existing traversal rules.
+
+Weak observers, value-record keys and source-defined hashing methods remain outside this
+slice. Hash values remain independently governed by their supported storage contracts.
+The implementation and verification are recorded in
+[the common key contract](../v0.2/compiler/docs/hash_keys.md).

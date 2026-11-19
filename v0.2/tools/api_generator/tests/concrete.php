@@ -8,8 +8,10 @@ use Scpp\Api\ConcreteType;
 use Scpp\Api\RuntimeConcreteType;
 
 /** Independent provider proof: no metadata plan or AST is exposed to the engine. */
-final readonly class FixtureConcreteType implements ConcreteType {
+final readonly class FixtureConcreteType implements ConcreteType, \Scpp\Api\ConcreteHashKey {
     public function __construct(private string $name, private ?bool $copyable = null) {}
+    public function hashExpression(string $key): ?string { return "(void($key), 7)"; }
+    public function equalityExpression(string $left, string $right): ?string { return "$left == $right"; }
     public function identity(): string { return 'fixture:' . $this->name; }
     public function cppType(string $namespace): string { return $this->name; }
     public function headers(): array { return []; }
@@ -53,10 +55,16 @@ if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|sw
 }
 $hashArguments = [
     'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
-    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next', 'enable_append' => '1', 'append' => \Scpp\Api\template('collections/hash_append', []),
+    'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next', 'enable_append' => '1', 'append' => \Scpp\Api\template('collections/hash_append', []),
 ];
 $hashTypes = ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')];
 $hash = concreteTemplate('collections/hash', $hashTypes, $hashArguments);
+rejected(fn() => concreteTemplate('collections/hash', ['k' => $byte, 'v' => $integer], $hashArguments));
+rejected(fn() => concreteTemplate('collections/hash', $hashTypes, $hashArguments + ['hash' => '7']));
+rejected(fn() => concreteTemplate('collections/hash', $hashTypes, $hashArguments + ['equal' => 'true']));
+if ($integer->hashExpression('k') !== '::scpp::detail::hash_integer(k)'
+    || $integer->equalityExpression('a', 'b') !== 'a == b'
+    || !str_contains($string->hashExpression('k'), 'hash_string_bytes(k.data()')) throw new RuntimeException('Key contract lost');
 $invalid = $hashArguments; unset($invalid['enable_append']);
 rejected(fn() => concreteTemplate('collections/hash', $hashTypes, $invalid));
 $invalid['enable_append'] = 'true';
@@ -68,7 +76,7 @@ if ($withoutAppend['append_declaration'] !== '' || $withoutAppend['append_defini
 if (preg_match('/\btemplate\s*</', implode('', $hash)) || str_contains($hash['storage'], 'std::vector')) throw new RuntimeException('Concrete hash depends on templates');
 $applicationHash = \Scpp\Api\concreteApplication('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
     'n' => 'ProbeConcreteHash', 'inline' => 'inline ', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
-    'hash' => '(void(key), 7)', 'equal' => 'left == right', 'enable_append' => '', 'append' => '', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
+    'enable_append' => '', 'append' => '', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
 ], 'scpp');
 $source = file_get_contents(__DIR__ . '/fixtures/concrete_probe.cpp');
 $source = str_replace(['@pair@', '@declaration@', '@implementation@', '@hash@'], [$pair['declaration'], $parts['output_declaration'] . $parts['declaration'],

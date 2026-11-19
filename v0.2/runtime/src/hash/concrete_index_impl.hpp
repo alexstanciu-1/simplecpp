@@ -52,6 +52,7 @@ void concrete_hash_index::erase(std::uint32_t bucket) noexcept {
     controls_[bucket] = static_cast<unsigned char>(hash_detail::ctrl_state_t::deleted);
     --size_; ++deleted_;
 }
+std::uint64_t hash_pointer(const void* key) noexcept { return hash_detail::mix64(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(key))); }
 std::uint64_t hash_integer(std::int64_t key) noexcept { return hash_detail::mix64(static_cast<std::uint64_t>(key)); }
 std::uint64_t hash_string_bytes(const char* bytes, std::size_t size) noexcept {
     return hash_detail::mix64(static_cast<std::uint64_t>(std::hash<std::string_view>{}({bytes, size})));

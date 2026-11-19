@@ -46,8 +46,7 @@ final class type_registry
 		};
 	}
 
-	/** Select a published canonical specialization; no descriptor lookup or per-use allocation. */
-	/** Create a supported application collection; the nominal declaration owns canonicalization. */
+	/** Create an approved concrete collection; canonical element/key owners cache the result. */
 	public static function application_collection(string $family, type_definition $element, ?type_definition $second): ?type_definition
 	{
 @application_specializations@		return null;

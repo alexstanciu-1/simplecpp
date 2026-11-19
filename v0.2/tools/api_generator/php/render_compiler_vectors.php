@@ -10,7 +10,7 @@ function compilerIndexRead(string $receiver, string $count, string $element, str
 }
 
 /** Generate one method contract for both prepublished and application concrete collection identities. */
-function compilerCollectionMethods(array $collection, array $definitions): string {
+function compilerCollectionMethods(array $collection, array $definitions, ?string $keyExpression = null): string {
     $bindings = [];
     foreach ($collection['methods'] as $method) {
         $name = $method['name'];
@@ -32,7 +32,7 @@ function compilerCollectionMethods(array $collection, array $definitions): strin
         $parameters = ['$this'];
         foreach ($argumentTypes as $type) {
             requireThat(isset($definitions[$type]), 'Collection method argument type is unavailable');
-            $parameters[] = 'type_' . $definitions[$type]['class'] . '::instance()';
+            $parameters[] = $keyExpression ?? 'type_' . $definitions[$type]['class'] . '::instance()';
         }
         $class = $result === 'void' ? 'void' : $definitions[$result]['class'];
         $bindings[] = "\t\t\t'$name' => \$this->runtime_methods[\$name] ??= new runtime_function('$name', [" . implode(', ', $parameters)

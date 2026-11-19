@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../../tools/api_generator/php/input.php';
 require_once __DIR__ . '/../../../tools/api_generator/php/render.php';
 
 /** Transient adapter over a settled type; the recipe sees no AST or symbol table. */
-final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
+final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType, \Scpp\Api\ConcreteHashKey
 {
 	/** PROPERTIES */
 	/** Native non-owning prepared type; lifetime is bounded by private lowering. */
@@ -38,6 +38,16 @@ final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType
 	public function headers(): array
 	{
 		return $this->type->cpp_headers();
+	}
+
+	public function hashExpression(string $key): ?string
+	{
+		return $this->type->lower_cpp_hash_key($key);
+	}
+
+	public function equalityExpression(string $left, string $right): ?string
+	{
+		return $this->type->lower_cpp_key_equal($left, $right);
 	}
 
 	public function supports(string $requirement): ?bool

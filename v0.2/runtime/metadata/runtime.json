@@ -738,6 +738,18 @@
       "string"
     ],
     "count_type": "int64",
+    "key_contracts": {
+      "int64": {
+        "hash": "::scpp::detail::hash_integer(@key@)",
+        "equal": "@left@ == @right@",
+        "nonthrowing": true
+      },
+      "string": {
+        "hash": "::scpp::detail::hash_string_bytes(@key@.data(), static_cast<std::size_t>(@key@.size()))",
+        "equal": "@left@.size() == @right@.size() && (@left@.size() == 0 || ::memcmp(@left@.data(), @right@.data(), static_cast<std::size_t>(@left@.size())) == 0)",
+        "nonthrowing": true
+      }
+    },
     "key_policy": "strict",
     "read": "value_copy",
     "optional_lookup": "nullable",

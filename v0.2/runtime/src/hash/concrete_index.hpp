@@ -33,6 +33,7 @@ public:
     void add(std::uint64_t hash, std::uint32_t position) noexcept;
     void erase(std::uint32_t bucket) noexcept;
 };
+std::uint64_t hash_pointer(const void* key) noexcept;
 std::uint64_t hash_integer(std::int64_t key) noexcept;
 std::uint64_t hash_string_bytes(const char* bytes, std::size_t size) noexcept;
 }

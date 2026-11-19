@@ -131,8 +131,14 @@ final class Type_Resolution
 		}
 		$element = self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
-		$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
-		$type = $owner->collection_type($syntax->name, $key);
+		$published = type_registry::specialize($syntax->name, $element, $key);
+		if ($published !== null) return $published;
+		if ($key !== null) {
+			$type = $key->keyed_collection_type($syntax->name, $element);
+		} else {
+			$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
+			$type = $owner->collection_type($syntax->name, $key);
+		}
 		if ($type !== null) return $type;
 		return self::specialize($syntax, $element, $key);
 	}

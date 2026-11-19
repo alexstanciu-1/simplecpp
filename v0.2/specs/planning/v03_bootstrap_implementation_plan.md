@@ -1739,5 +1739,5 @@ record regressions: `/tmp/readonly-record-regressions.log` and
 recipes and canonical element-owned caches, including three-level homogeneous and mixed
 family nesting. All three flavors pass copying, mutation, fields, calls, traversal and
 36 incremental checkpoints against fresh output. No AST facts or preparation passes were
-added. Shared-owner hash keys, broader key contracts and self-referential collection
-fields remain separate.
+added. Shared-owner hash keys now use the [common key contract](../../compiler/docs/hash_keys.md).
+Other key families and self-referential collection fields remain separate.

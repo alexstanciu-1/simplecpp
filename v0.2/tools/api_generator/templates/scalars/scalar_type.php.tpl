@@ -7,7 +7,7 @@ namespace scpp\compiler;
 /** Canonical @name@ definition; literal facts belong to source AST nodes, not this shared identity. */
 final class type_@class@ extends type_definition@index_interface@
 {
-@limits@	/** STATIC PROPERTIES */
+@type_traits@@limits@	/** STATIC PROPERTIES */
 	private static ?self $instance = null;
 
 	/** CONSTRUCTOR */
