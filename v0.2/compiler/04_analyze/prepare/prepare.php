@@ -1248,11 +1248,18 @@ final class Preparation
 	/** Exact type-qualified calls require a method; ambiguous namespace paths may continue lookup. */
 	private function qualified_call(ast_call_expression $call, string $qualified, ?string $initializing, bool $required): bool
 	{
-		$separator = strrpos($qualified, '::');
-		$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
-		$this->dependencies?->watch($type_symbol, $this->owner);
-		$record = $type_symbol->declaration();
-		$name = substr($qualified, $separator + 2);
+		$late = $call->qualifier === call_qualifier::called_type;
+		if ($late) {
+			$record = $this->owner->parent->instance?->called->declaration()
+				?? throw new diagnostic($call->source(), $call->byte_start(), 'Late-static call requires a called type in a static method');
+			$name = $call->name;
+		} else {
+			$separator = strrpos($qualified, '::');
+			$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
+			$this->dependencies?->watch($type_symbol, $this->owner);
+			$record = $type_symbol->declaration();
+			$name = substr($qualified, $separator + 2);
+		}
 		if ($record instanceof ast_record_declaration) {
 			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
 		}
@@ -1262,13 +1269,14 @@ final class Preparation
 		}
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration)) {
+			if ($late) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $record->name() . '::' . $name);
 			if ($record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);
 			}
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
 		}
-		if (!$method->is_static && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
+		if (!$method->is_static && !$late && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
 			return true;
 		}

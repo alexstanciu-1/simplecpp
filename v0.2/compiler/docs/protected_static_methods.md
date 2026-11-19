@@ -84,6 +84,10 @@ An unchanged incremental invocation skips demand traversal and body preparation.
 Inside a static implementation, a lexical self or parent call forwards the current called-type symbol
 to the selected method. For example, when `Leaf::run()` enters a method declared on Middle,
 `self::step()` starts lookup at Middle and carries Leaf. Writing `Middle::step()` establishes Middle.
+PHP and JS `static::step()` and C++ `Static::step()` start method lookup at the current called type
+and forward it. Visibility is checked from the body’s lexical owner. The selected declaration supplies
+defaults and argument conversions. Lookup watches each nearer method slot, including empty slots,
+so adding or deleting a descendant declaration updates the inherited caller on the next compilation.
 An expression qualifier establishes its declared record type. Ordinary instance bodies use their
 existing lexical lookup without a runtime called-type context. Shared construction via `new static()` is deferred.
 

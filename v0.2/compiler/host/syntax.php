@@ -157,8 +157,8 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
-			if ($expression->qualifier === call_qualifier::lexical_parent) {
-				return ['kind' => 'parent_call', 'name' => $expression->name,
+			if ($expression->qualifier === call_qualifier::lexical_parent || $expression->qualifier === call_qualifier::called_type) {
+				return ['kind' => $expression->qualifier === call_qualifier::called_type ? 'late_static_call' : 'parent_call', 'name' => $expression->name,
 					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 			}
 			if ($expression->receiver !== null) {

@@ -852,40 +852,49 @@ final class Parser
 		return $value;
 	}
 
-	/** Recognize a lexical type qualifier only before its flavor's member separator. */
-	private function lexical_qualifier(): bool
+	/** Recognize contextual member qualifiers according to flavor, separator and supported syntax. */
+	private function member_qualifier(): ?call_qualifier
 	{
 		$c = $this->cursor;
+		$scope = $c->next_is(token_kind::scope);
 		$flavor = $c->tokens->source->flavor;
-		if (!$c->next_is($flavor === flavor::js ? token_kind::dot : token_kind::scope)) return false;
+		if (!$scope && ($flavor !== flavor::js || !$c->next_is(token_kind::dot))) return null;
 		$name = $c->tokens->text_at($c->position());
+		if ($scope && $name === ($flavor === flavor::cpp ? 'Static' : 'static')
+			&& ($c->tokens->tokens[$c->position() + 2]->kind ?? null) === token_kind::identifier
+			&& ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen) return call_qualifier::called_type;
 		return match ($flavor) {
-			flavor::php => $name === 'self' || $name === 'parent',
-			flavor::cpp => $name === 'Self' || ($name === 'Parent'
-				&& ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen),
-			flavor::js => $name === 'class' || $name === 'super',
+			flavor::php => match ($name) {
+				'self' => call_qualifier::lexical_self, 'parent' => call_qualifier::lexical_parent, default => null,
+			},
+			flavor::cpp => match ($name) {
+				'Self' => call_qualifier::lexical_self,
+				'Parent' => ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen ? call_qualifier::lexical_parent : null,
+				default => null,
+			},
+			flavor::js => $scope ? null : match ($name) {
+				'class' => call_qualifier::lexical_self, 'super' => call_qualifier::lexical_parent, default => null,
+			},
 		};
 	}
 
-	/** Self has a lexical name; preparation selects the current base for an ancestor qualifier. */
-	private function lexical_member(): ast_expression
+	/** Self names the lexical owner; parent and late-static method names are relative to their prepared lookup type. */
+	private function qualified_member(call_qualifier $qualifier): ast_expression
 	{
 		$c = $this->cursor;
 		$start = $c->position();
-		$qualifier = $c->tokens->text_at($start);
-		$ancestor = $qualifier === 'parent' || $qualifier === 'super' || $qualifier === 'Parent';
-		if (!$ancestor && $this->declaring_type === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body or enum method body');
+		$self = $qualifier === call_qualifier::lexical_self;
+		if ($self && $this->declaring_type === null) throw new diagnostic($c->tokens->source, $c->offset(), 'Declaring-type qualifier requires a struct body or enum method body');
 		$flavor = $c->tokens->source->flavor;
 		$c->take($c->tokens->tokens[$start]->kind, 'type qualifier');
-		$separator = $flavor === flavor::js ? token_kind::dot : token_kind::scope;
+		$separator = $c->tokens->tokens[$c->position()]->kind;
 		$c->take($separator, 'member separator');
 		$variable = $flavor === flavor::php && $c->is(token_kind::variable);
 		$name = $c->name($variable ? token_kind::variable : token_kind::identifier);
-		if (!$ancestor) $name = $this->declaring_type . '::' . $name;
-		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, $ancestor ? $separator : token_kind::scope, null,
-			$ancestor ? call_qualifier::lexical_parent : call_qualifier::lexical_self);
+		if ($self) $name = $this->declaring_type . '::' . $name;
+		if (!$variable && $c->is(token_kind::lparen)) return $this->call_arguments($start, $name, $self ? token_kind::scope : $separator, null, $qualifier);
 		$constant = $flavor === flavor::php && !$variable;
-		if ($ancestor) return new ast_ancestor_name($name, $start, $c->position(), constant_only: $constant);
+		if (!$self) return new ast_ancestor_name($name, $start, $c->position(), constant_only: $constant);
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $constant);
 	}
 
@@ -893,7 +902,8 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
-		if ($this->lexical_qualifier()) return $this->lexical_member();
+		$qualifier = $this->member_qualifier();
+		if ($qualifier !== null) return $this->qualified_member($qualifier);
 		if ($c->keyword('match')) {
 			$start = $c->position();
 			$c->take_keyword('match');
@@ -1092,7 +1102,7 @@ final class Parser
 		$flavor = $this->cursor->tokens->source->flavor;
 		return ($this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
 			&& $this->cursor->next_is($flavor === flavor::js ? token_kind::dot : token_kind::member))
-			|| $this->lexical_qualifier() || ($prefix
+			|| $this->member_qualifier() !== null || ($prefix
 				? $this->cursor->next_is(token_kind::scope) || $this->cursor->next_is(token_kind::backslash)
 					|| $this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::backslash)
 				: $this->names->qualified_write());

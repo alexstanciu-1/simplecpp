@@ -80,6 +80,43 @@ def forwarding(work, flavor):
                 assert (symbol in cpp) == (called in wanted), (flavor, revision, symbol)
 
 
+def late_selection(work, flavor):
+    _, (_, klass, method, static, sep) = sources(flavor)
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    lexical = {'php': 'self::', 'js': 'class.', 'cpp': 'Self::'}[flavor]
+    parent = {'php': 'parent::', 'js': 'super.', 'cpp': 'Parent::'}[flavor]
+    v = '$' if flavor == 'php' else ''
+
+    def label(n, visibility='public'):
+        return static('label', f'return {v}n;', [('n', 'int')], visibility).replace(')', f'={n})', 1)
+
+    body = static('step', f'{late}label();return {late}label();')
+    base = klass('Base', label(3, 'private') + body)
+    middle = klass('Middle', static('run', f'return {lexical}relay();')
+                   + static('relay', f'return {parent}step();')
+                   + static('reset', f'return Base{sep}step();'), 'Base')
+    left = klass('Left', '', 'Middle')
+    changed = klass('Left', label(7), 'Middle')
+    main = f'echo Left{sep}run(),Right{sep}run(),Left{sep}reset();return 8;'
+    src = dict(base=base, middle=middle, left=left, right=klass('Right', '', 'Middle'), main=main)
+    revisions(work, flavor, src, [
+        (None, None, b'333'), (None, None, b'333'), ('left', changed, b'733'),
+        ('left', klass('Left', label(7, 'private'), 'Middle'), 'Cannot call private method'),
+        (None, None, 'Cannot call private method'), ('left', changed, b'733'),
+        ('left', left, b'333'), ('left', None, None), ('left', changed, b'733'),
+        ('base', klass('Base', body), 'Unknown static method'), ('base', base, b'733'),
+        ('main', f'echo {late}label();return 8;', 'requires a called type'), ('main', main, b'733'),
+        ('extra', klass('Extra', method('bad', f'return {late}label();')), 'requires a called type'),
+        ('extra', None, b'733'),
+        ('left', left, b'333'), ('base', klass('Base', method('label', 'return 3;') + body), 'requires a receiver'),
+        ('base', base, b'333'),
+        ('main', f'echo Left{sep}run();return 8;', b'3'), ('left', changed, b'7'),
+        ('base', klass('Base', body), b'7'),
+        ('base', klass('Base', body.replace('label();', 'label(1,2);')), 'Argument count mismatch'),
+        ('base', klass('Base', body), b'7'),
+    ])
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -91,3 +128,5 @@ if __name__ == '__main__':
             prove(root, flavor)
             (root / 'forwarding').mkdir(exist_ok=True)
             forwarding(root / 'forwarding', flavor)
+            (root / 'late').mkdir(exist_ok=True)
+            late_selection(root / 'late', flavor)

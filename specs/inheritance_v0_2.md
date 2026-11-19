@@ -417,8 +417,8 @@ Late static binding distinguishes the lexical declaring type (names and access) 
 the called type. An explicit `Child::method()` establishes Child, including when
 the implementation is inherited. `self::method()` and `parent::method()` select a
 fixed implementation and forward the current called type (C++ flavor `Self::` / `Parent::`,
-JS flavor `class.` / `super.`); `static::method()` selects
-through that called type and forwards it. Expression-qualified static calls establish
+JS flavor `class.` / `super.`). PHP and JS `static::method()` and C++ `Static::method()`
+select through that called type and forward it. Expression-qualified static calls establish
 the qualifier's declared type and evaluate that expression exactly once, consistently
 with the [static-member contract](static_members_v0_2.md).
 

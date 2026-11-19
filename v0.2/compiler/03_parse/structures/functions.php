@@ -40,6 +40,7 @@ enum call_qualifier: int /** uint8 */
 	case ordinary = 0;
 	case lexical_self = 1;
 	case lexical_parent = 2;
+	case called_type = 3;
 }
 
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
