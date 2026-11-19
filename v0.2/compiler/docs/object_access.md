@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 Semantics belong to [checked object access](../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests);
-the implemented spellings and bounded class/interface scope are in the
+the implemented spellings and class, interface and shared struct scope are in the
 [frontend contract](../../specs/compiler_frontends.md#checked-shared-class-access).
 
 `ast_object_access_expression` owns the operand and written target reference. Common
@@ -12,6 +12,11 @@ admits the relationship and records the required target identity and whether a n
 runtime type check is needed. It watches both ancestry chains, including inherited
 polymorphism. No descendant inventory or foreign executable bodies are retained.
 Invalidation clears the occurrence facts through the existing body owner.
+
+For an explicitly shared struct, resolving the bare struct name selects its existing
+canonical shared handle. Same-type and upward casts require presence; upward tests
+only inspect presence. Both use the existing static pointer adjustment. Struct
+downcasts, unrelated structs and struct/interface cross-casts reject during preparation.
 
 Interface overlap reuses the same admission owner: unrelated classes still reject,
 but class/interface and interface/interface pairs can overlap without a known

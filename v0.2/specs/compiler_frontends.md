@@ -323,7 +323,7 @@ checked conversions. Binary prefixes, separators and suffixes remain deferred.
 
 The bounded implementation of
 [checked object access](../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests)
-admits class and interface operands/targets; struct targets remain deferred.
+admits class and interface operands/targets. Explicitly shared struct operands admit their own bare struct name or an ancestor struct name as target.
 
 | Intent | C++ flavor | PHP flavor | JS flavor |
 | --- | --- | --- | --- |
@@ -344,7 +344,7 @@ interfaces need no known common implementer; a class can gain an interface throu
 a descendant. Final classes cannot acquire additional interfaces through descendants;
 impossible final-class/interface casts and tests reject during preparation. Required and optional shared operands are accepted; bare null, inline
 values, unrelated records and weak/unique handles are rejected. A successful cast
-returns the required target class/interface view. Absence/mismatch throws `invalid_object_cast`;
+returns the required target class/interface view or a present `shared<TargetStruct>`. Absence/mismatch throws `invalid_object_cast`;
 `instanceof` returns false. Native RTTI must be enabled for downward operations and cross-casts.
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.

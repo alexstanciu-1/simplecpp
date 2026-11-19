@@ -146,7 +146,7 @@ def prove(work, flavor, libraries):
         ('main', source['inaccessible'], 'Cannot access protected field'),
         (None, None, 'Cannot access protected field'),
         ('main', source['main'], None),
-        ('main', source['upcast'], 'Unsupported explicit conversion'),
+        ('main', source['upcast'], None),
         ('main', source['main'], None),
         ('derived', source['derived'].replace(source['parent'], source['invalid_this']) + source['inherit'], 'Current instance'),
         ('derived', source['derived'] + source['inherit'], None),

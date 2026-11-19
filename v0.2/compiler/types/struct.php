@@ -545,11 +545,10 @@ final class shared_record_type_definition extends record_handle_definition
 			|| ($expr->left instanceof ast_name_expression && $expr->right instanceof ast_name_expression);
 	}
 
-	/** Struct owners stay exact; object views admit settled base and interface edges. */
+	/** A view follows settled ancestry and preserves the allocation identity. */
 	private function admits_view(self $source): bool
 	{
-		return $source->payload === $this->payload || ($source->payload->declaration->kind !== record_kind::structure
-			&& $this->payload->declaration->kind !== record_kind::structure && $source->payload->derives_from($this->payload));
+		return $source->payload->derives_from($this->payload);
 	}
 
 	/** Same-payload contracts share storage; required destinations check potentially empty owners. */
