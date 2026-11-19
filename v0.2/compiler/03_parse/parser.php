@@ -173,7 +173,8 @@ final class Parser
 		}
 		$flavor = $this->cursor->tokens->source->flavor;
 		if ($this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
-				&& in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'weak', 'lock', 'object_cast', 'match'], true))
+				&& (in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'lock', 'object_cast', 'match'], true)
+					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
 			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
 				&& $this->cursor->next_is(token_kind::scope))
 			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot))) {
