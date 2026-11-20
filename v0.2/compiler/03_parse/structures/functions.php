@@ -3,6 +3,13 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Read-only declaration queries shared by source functions and published runtime bindings. */
+interface callable_signature
+{
+	public function name(): string;
+	public function return_type_def(): type_definition;
+}
+
 /** Statement-position invocation owns the same call expression used in value positions: ping(); */
 final class ast_call_statement extends ast_statement
 {
@@ -23,7 +30,7 @@ final class ast_call_statement extends ast_statement
 	}
 
 	/** Inspection requires completion of the enclosing function, including calls inside nested arms. */
-	public function function_def(): ast_function_declaration|runtime_function
+	public function function_def(): callable_signature
 	{
 		$owner = $this->parent;
 		while (!($owner instanceof ast_function_body)) {
@@ -370,7 +377,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher, callable_signature
 {
 	use ast_declaration { name as private namespace_name; }
 
