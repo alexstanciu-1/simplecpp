@@ -282,6 +282,11 @@ final class Parser
 		}
 		if ($this->cursor->keyword('try')) return $this->try_statement($grammar, $collector);
 		if ($this->cursor->keyword('throw')) {
+			if ($this->cursor->next_is(token_kind::semicolon)) {
+				$start = $this->cursor->position();
+				$this->cursor->take_keyword('throw');
+				return new ast_rethrow_statement($start, $this->cursor->take(token_kind::semicolon, ';') + 1);
+			}
 			$operation = $this->throw_expression();
 			$end = $this->cursor->take(token_kind::semicolon, '; after throw') + 1;
 			return new ast_throw_statement($operation, $end);
@@ -414,16 +419,17 @@ final class Parser
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('try');
 		$body = $this->braced_block($grammar, $collector, '{ after try');
-		$handler = $this->cursor->keyword('catch') ? $this->catch_clause($grammar, $collector) : null;
+		$handlers = [];
+		while ($this->cursor->keyword('catch')) $handlers[] = $this->catch_clause($grammar, $collector);
 		$finalizer = null;
 		if ($this->cursor->keyword('finally')) {
 			$this->cursor->take_keyword('finally');
 			$finalizer = $this->braced_block($grammar, $collector, '{ after finally');
 		}
-		if ($handler === null && $finalizer === null) {
+		if ($handlers === [] && $finalizer === null) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Try requires catch or finally');
 		}
-		return new ast_try_statement($start, $body, $handler, $finalizer);
+		return new ast_try_statement($start, $body, $handlers, $finalizer);
 	}
 
 	/** Seed the handler's lexical collector with its one typed binding. */

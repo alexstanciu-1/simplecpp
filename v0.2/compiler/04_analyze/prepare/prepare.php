@@ -58,6 +58,8 @@ final class Preparation
 	private ?array $switch_break_states = null;
 	/** Inherited by nested statements inside a finalizer. */
 	private bool $in_finalizer = false;
+	/** Permission is lexical and restored before each sibling finally region. */
+	private bool $in_catch = false;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
@@ -217,6 +219,10 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$next = $this->loop($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_rethrow_statement) {
+				if (!$this->in_catch) throw new diagnostic($source, $statement->byte_start(), 'Bare throw requires an enclosing catch body');
+				$next = statement_completion::throws;
 			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$this->prepare_throw($statement->operation);
@@ -379,15 +385,22 @@ final class Preparation
 		}
 		$outer_finalizer = $this->finalizer_block;
 		$in_finalizer = $this->in_finalizer;
+		$outer_catch = $this->in_catch;
 		try {
-			$handler = $syntax->handler;
-			if ($handler !== null) {
+			$completion = $this->lexical_block($syntax->body, $target, $function);
+			$seen = [];
+			foreach ($syntax->handlers as $handler) {
 				$caught = Type_Resolution::local($handler->type, $this->symbols, $this->owner, $this->dependencies);
 				$this->require_exception($caught, $handler->type, true);
+				if (count($syntax->handlers) > 1) {
+					$this->check_catch_order($handler, $caught, $seen);
+					$seen[spl_object_id($caught)] = true;
+				}
 				$handler->binding->settle_type($caught);
+				$this->in_catch = true;
+				$completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
 			}
-			$completion = $this->lexical_block($syntax->body, $target, $function);
-			if ($handler !== null) $completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
+			$this->in_catch = $outer_catch;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
@@ -402,7 +415,20 @@ final class Preparation
 		} finally {
 			$this->finalizer_block = $outer_finalizer;
 			$this->in_finalizer = $in_finalizer;
+			$this->in_catch = $outer_catch;
 		}
+	}
+
+	/** A previous catch of this type, an ancestor or the runtime root covers the entire arm. @param bool[] $seen */
+	private function check_catch_order(ast_catch_clause $handler, type_definition $caught, array $seen /** array<int,bool> */): void
+	{
+		if ($seen === []) return;
+		$shadowed = isset($seen[spl_object_id(type_registry::exception())]);
+		for ($record = $caught instanceof shared_record_type_definition ? $caught->payload : null;
+			!$shadowed && $record !== null; $record = $record->base()) {
+			$shadowed = isset($seen[spl_object_id($record->required)]);
+		}
+		if ($shadowed) throw new diagnostic($handler->source(), $handler->byte_start(), 'Catch is shadowed by an earlier handler: ' . $caught->name);
 	}
 
 	private function break_target(): ast_repeating_statement|ast_switch_statement|null

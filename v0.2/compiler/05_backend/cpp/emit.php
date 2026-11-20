@@ -933,6 +933,17 @@ CPP;
 				}
 				if ($header_scope) $lines[] = "\t}";
 			}
+			elseif ($statement instanceof ast_rethrow_statement) {
+				// A nested finally may execute under a different native unwind. Use the lexical transport there.
+				$rethrow = 'throw;';
+				for ($node = $statement; !($node instanceof ast_catch_clause); $node = $node->parent) {
+					if ($node->parent instanceof ast_try_statement && $node === $node->parent->finalizer) {
+						$rethrow = 'throw caught_exception;';
+						break;
+					}
+				}
+				$lines[] = "\t" . $rethrow;
+			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
 			}
@@ -1208,24 +1219,31 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */,
 		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
 	{
-		$handler = $syntax->handler;
-		$lines = [$handler === null ? "\t{" : "\ttry {"];
+		$lines = [$syntax->handlers === [] ? "\t{" : "\ttry {"];
 		foreach ($this->statements($syntax->body, $declarations, $globals, $headers, $function) as $line) {
 			$lines[] = "\t" . $line;
 		}
-		if ($handler !== null) {
+		if ($syntax->handlers !== []) {
 			$root = type_registry::exception();
 			foreach ($root->cpp_headers() as $header) $headers[$header] = true;
 			$lines[] = "\t} catch (const " . $root->cpp_type() . '& caught_exception) {';
-			$binding = $this->name($handler->binding);
-			$type = $handler->binding->type_def();
-			$value = $type === $root ? 'caught_exception'
-				: $this->inline_adapters->call(Cpp_Exception_Catch::request($root, $type), ['caught_exception']);
-			$lines[] = "\t\t[[maybe_unused]] auto " . $binding . ' = ' . $value . ';';
-			if ($type !== $root) $lines[] = "\t\tif (!" . $binding . ') throw;';
-			foreach ($this->statements($handler->body, $declarations, $globals, $headers, $function) as $line) {
-				$lines[] = "\t" . $line;
+			foreach ($syntax->handlers as $index => $handler) {
+				$binding = $this->name($handler->binding);
+				$type = $handler->binding->type_def();
+				$branch = $index === 0 ? '' : 'else ';
+				if ($type === $root) {
+					$lines[] = "\t\t" . $branch . '{';
+					$lines[] = "\t\t\t[[maybe_unused]] auto " . $binding . ' = caught_exception;';
+				} else {
+					$match = $this->inline_adapters->call(Cpp_Exception_Catch::request($root, $type), ['caught_exception']);
+					$lines[] = "\t\t" . $branch . "if (auto $binding = $match) {";
+				}
+				foreach ($this->statements($handler->body, $declarations, $globals, $headers, $function) as $line) {
+					$lines[] = "\t\t" . $line;
+				}
+				$lines[] = "\t\t}";
 			}
+			if ($type !== $root) $lines[] = "\t\telse throw;";
 		}
 		$lines[] = "\t}";
 		return $lines;

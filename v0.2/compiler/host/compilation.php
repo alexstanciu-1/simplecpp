@@ -100,16 +100,15 @@ final class Compilation_Inspection
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				$statements[] = $row;
 			}
+			elseif ($statement instanceof ast_rethrow_statement) $statements[] = ['kind' => 'rethrow'];
 			elseif ($statement instanceof ast_throw_statement) {
 				$statements[] = self::value($statement->operation);
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				$row = ['kind' => 'try', 'body' => self::body($statement->body)];
-				if ($statement->handler !== null) {
-					$row['catch_type'] = $statement->handler->binding->type_def()->name;
-					$row['binding'] = $statement->handler->binding->short_name;
-					$row['handler'] = self::body($statement->handler->body);
-				}
+				$row['handlers'] = array_map(static fn(ast_catch_clause $handler): array => [
+					'catch_type' => $handler->binding->type_def()->name, 'binding' => $handler->binding->short_name,
+					'body' => self::body($handler->body)], $statement->handlers);
 				if ($statement->finalizer !== null) $row['finally'] = self::body($statement->finalizer);
 				$statements[] = $row;
 			}

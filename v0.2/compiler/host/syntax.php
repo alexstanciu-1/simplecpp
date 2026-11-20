@@ -254,17 +254,16 @@ final class Syntax_Inspection
 				'body' => array_map(self::statement(...), $statement->body->statements)];
 			return $row;
 		}
+		if ($statement instanceof ast_rethrow_statement) return ['kind' => 'rethrow', 'span' => self::span($statement)];
 		if ($statement instanceof ast_throw_statement) {
 			return ['kind' => 'throw', 'span' => self::span($statement), 'value' => self::expression($statement->operation->operand)];
 		}
 		if ($statement instanceof ast_try_statement) {
 			$row = ['kind' => 'try', 'span' => self::span($statement),
 				'body' => array_map(self::statement(...), $statement->body->statements)];
-			if ($statement->handler !== null) {
-				$row['catch_type'] = $statement->handler->type->spelling();
-				$row['binding'] = $statement->handler->binding->short_name;
-				$row['handler'] = array_map(self::statement(...), $statement->handler->body->statements);
-			}
+			$row['handlers'] = array_map(static fn(ast_catch_clause $handler): array => [
+				'catch_type' => $handler->type->spelling(), 'binding' => $handler->binding->short_name,
+				'body' => array_map(self::statement(...), $handler->body->statements)], $statement->handlers);
 			if ($statement->finalizer !== null) $row['finally'] = array_map(self::statement(...), $statement->finalizer->statements);
 			return $row;
 		}

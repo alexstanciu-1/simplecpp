@@ -64,9 +64,9 @@ final class Function_Preparation
 				$statement->protected_completion = $statement->completion = null;
 				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
-				if ($statement->handler !== null) {
-					$statement->handler->binding->reset_preparation();
-					self::reset_block($statement->handler->body);
+				foreach ($statement->handlers as $handler) {
+					$handler->binding->reset_preparation();
+					self::reset_block($handler->body);
 				}
 				if ($statement->finalizer !== null) self::reset_block($statement->finalizer);
 				continue;

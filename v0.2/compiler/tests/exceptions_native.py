@@ -59,15 +59,17 @@ def prove(work, flavor, library):
     snapshot = 'first π\n  problem\n'
     snapshot_literal = json.dumps(snapshot, ensure_ascii=False)
     offset = snapshot.encode('utf-8').index(b'problem')
-    expected = (0, f'input.phs:{offset}'.encode(), b'')
+    expected = (0, f'Finput.phs:{offset}'.encode(), b'')
     catch_path = app / f'handler.{flavor}'
     catch_source = klass('UnrelatedFailure', base='Failure')
     source_edit(catch_path, catch_source)
+    middle = app / f'middle.{flavor}'
+    source_edit(middle, klass('DiagnosticBase', base='Failure'))
     source_edit(app / f'diagnostic.{flavor}',
                 klass('Snapshot', field('path', 'string', '"input.phs"') +
                       field('content', 'string', snapshot_literal)) +
                 klass('Diagnostic', field('origin', 'Snapshot') + field('offset', 'int') +
-                      field('marker', 'int', '0'), 'Failure'))
+                      field('marker', 'int', '0'), 'DiagnosticBase'))
     source_edit(app / f'quiet.{flavor}', s['function']('quiet', 'int', [], 'return 42;'))
     def nullable_local(name, type_name, value):
         declaration = s['local'](name, '?' + type_name).removesuffix(';')
@@ -88,17 +90,16 @@ def prove(work, flavor, library):
         try {{
             try {{
                 try {{
-                    try {{
-                        {departing}
-                        {v}original = null;
-                        {v}snapshot = null;
-                        throw {v}departing;
-                    }} {missed} {{ return 2; }}
-                }} {inner} {{
+                    {departing}
+                    {v}original = null;
+                    {v}snapshot = null;
+                    throw {v}departing;
+                }} {missed} {{ return 2; }} {inner} {{
                     if ({v}inner !== lock({v}observe_diagnostic)) {{ return 3; }}
                     {member("inner", "marker")} = 91;
-                    throw {v}inner;
-                }}
+                    {v}inner = new Diagnostic();
+                    throw;
+                }} {catch(flavor, "Failure", "sibling")} {{ return 51; }} finally {{ echo "F"; }}
             }} {base} {{
                 if ({member("base", "get_message")}() !== "Exception") {{ return 4; }}
                 throw {v}base;
@@ -138,6 +139,13 @@ def prove(work, flavor, library):
             assert (output / 'manifest.json').read_bytes() == manifest
             assert artifacts(output) == before
 
+        source_edit(middle, klass('DiagnosticBase', base='UnrelatedFailure'))
+        check_failed_edit('shadowed', 'fresh-shadowed')
+        source_edit(middle, klass('DiagnosticBase', base='Failure'))
+        restored = invoke(resident)
+        assert 'error' not in restored and artifacts(output) == before, restored
+        assert invoke(resident)['preparation']['prepared'] == 0
+
         source_edit(base_path, klass('Failure'))
         check_failed_edit('shared descendant', 'fresh-non-exception-base')
 
@@ -158,7 +166,20 @@ def prove(work, flavor, library):
         assert artifacts(output) == artifacts(fresh_output) == before
         native(output, work / 'recovered', expected, library)
 
+        source_edit(main_path, good.replace('= 91;', '= 91; echo "E";'))
+        edited = invoke(resident)
+        assert edited['preparation']['prepared'] == 1, edited
+        assert [Path(path).name for path in edited['emitted_sources']] == [main_path.name], edited
+        native(output, work / 'edited', (0, b'E' + expected[1], b''), library)
+        source_edit(main_path, good)
+        assert 'error' not in invoke(resident) and artifacts(output) == before
+
         invalid = [
+            ('throw;', 'enclosing catch'),
+            (s['function']('bad', 'void', [], 'throw;') + 'return 0;', 'enclosing catch'),
+            ('try {} ' + base + ' {} finally { throw; } return 0;', 'enclosing catch'),
+            ('try {} ' + inner + ' {} ' + inner + ' {} return 0;', 'shadowed'),
+            ('try {} ' + base + ' {} ' + inner + ' {} return 0;', 'shadowed'),
             ('throw 3;', 'shared descendant'),
             ('try { return 0; } ' + catch(flavor, 'Snapshot', 'wrong') + ' { return 2; }', 'shared descendant'),
             ('try { return 0; } ' + base + ' {}', 'explicit value return'),
@@ -182,6 +203,13 @@ def prove(work, flavor, library):
             'js': 'Exception.make',
         }[flavor]
         prefix = 'use Exception as RootFailure; ' if flavor == 'php' else ''
+        # The inner finally runs during a second unwind. Its lexical catch still owns the first payload.
+        source_edit(main_path, prefix + f'try {{ throw {factory_call}("first"); }} ' + base +
+                    f' {{ try {{ throw {factory_call}("second"); }} finally {{ throw; }} }}')
+        nested = invoke(resident)
+        assert 'error' not in nested, nested
+        native(output, work / 'nested', (1, b'', b'first\n'), library)
+
         source_edit(main_path, prefix + 'throw ' + factory_call + '("original\\0message");')
         factory = invoke(resident)
         assert 'error' not in factory, factory

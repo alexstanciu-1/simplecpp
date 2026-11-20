@@ -189,6 +189,11 @@ final class ast_throw_statement extends ast_statement
 	}
 }
 
+/** Bare throw; resumes the enclosing handler's original exception. */
+final class ast_rethrow_statement extends ast_statement
+{
+}
+
 /** Typed handler owns the binding and its lexical body. */
 final class ast_catch_clause extends ast_node
 {
@@ -214,7 +219,8 @@ final class ast_try_statement extends ast_statement
 {
 	/** PROPERTIES */
 	public readonly ast_block $body;
-	public readonly ?ast_catch_clause $handler;
+	/** @var ast_catch_clause[] Owned sibling handlers in source selection order. */
+	public readonly array $handlers /** list<ast_catch_clause> */;
 	public readonly ?ast_block $finalizer;
 
 	/** PREP FACTS */
@@ -227,15 +233,15 @@ final class ast_try_statement extends ast_statement
 	public ?ast_repeating_statement $continue_target = null;
 
 	/** CONSTRUCTOR */
-	/** Attach disjoint lexical regions; an empty written finalizer is still a block. */
-	public function __construct(int $start /** uint32 */, ast_block $body, ?ast_catch_clause $handler, ?ast_block $finalizer)
+	/** Attach disjoint lexical regions; an empty written finalizer is still a block. @param ast_catch_clause[] $handlers */
+	public function __construct(int $start /** uint32 */, ast_block $body, array $handlers /** list<ast_catch_clause> */, ?ast_block $finalizer)
 	{
-		parent::__construct($start, ($finalizer ?? $handler)->end);
+		parent::__construct($start, ($finalizer ?? $handlers[array_key_last($handlers)])->end);
 		$this->body = $body;
-		$this->handler = $handler;
+		$this->handlers = $handlers;
 		$this->finalizer = $finalizer;
 		$body->attach($this);
-		$handler?->attach($this);
+		foreach ($handlers as $handler) $handler->attach($this);
 		$finalizer?->attach($this);
 	}
 }

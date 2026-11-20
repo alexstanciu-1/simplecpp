@@ -76,7 +76,7 @@ final class Declaration_Diagnostics
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($errors, ...self::locals($statement->body));
-				if ($statement->handler !== null) array_push($errors, ...self::locals($statement->handler->body));
+				foreach ($statement->handlers as $handler) array_push($errors, ...self::locals($handler->body));
 				if ($statement->finalizer !== null) array_push($errors, ...self::locals($statement->finalizer));
 			}
 			elseif ($statement instanceof ast_branch_statement) {
