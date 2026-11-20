@@ -16,12 +16,12 @@ required default when no label matches. Evaluate only that arm's result. A subje
 failure evaluates no arm; a selected result failure propagates normally. Default
 may appear anywhere. A trailing comma is optional. There is one label per arm.
 
-The first slice admits published integer types and backed enums as subjects.
-Labels are signed integer literals, named integer constants or enum cases, with
-exactly the subject's canonical type. Labels are compile-time data, not executable
-conditions. Duplicate values (including aliases), duplicate defaults and missing
-defaults are errors. An enum label must belong to the subject enum. String-backed
-enums are admitted by their nominal case identity; plain string subjects are not.
+Constant-label admission belongs to the subject type. Published integers use exact
+integer values; backed enums use cases of the same nominal enum. Byte strings use
+exact bytes, including length and embedded NULs. Integer and string labels accept
+literals or named constants of exactly the subject type. Locals, calls and other
+computed labels are rejected even when their value can be inferred. Duplicate
+values (including aliases), duplicate defaults and missing defaults are errors.
 
 All value arms must produce the same canonical type. A default of the form
 `default => throw expression` contributes no result type and requires at
@@ -52,7 +52,7 @@ Only the literal `true` syntax selects this form. Boolean variables, calls, name
 constants and `match(false)` remain outside this slice, even when their values are
 known. No retained mode flag or constant-propagation rule is needed.
 
-Deferred: general boolean subjects, plain string or float subjects,
+Deferred: general boolean subjects, float subjects,
 computed integer/enum labels, multiple labels per arm, exhaustiveness inference, omitted
 defaults, implicit result unification and reference results. This syntax is a
 Simple C++ extension in cpp/js, not a claim about native C++/ECMAScript syntax.

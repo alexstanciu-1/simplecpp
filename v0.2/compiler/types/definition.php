@@ -149,6 +149,12 @@ interface key_lookup_type
 	public function lookup_function(): runtime_function;
 }
 
+/** A single probe returning a shared owner; absent and present-empty both produce an empty handle. */
+interface shared_value_lookup_type
+{
+	public function shared_lookup_function(): ?runtime_function;
+}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
 interface index_read_type
 {
@@ -225,10 +231,34 @@ trait ordered_keyed_store
 	}
 }
 
+/** Constant-label contracts shared by selection constructs. The strategy is canonical per type. */
+enum constant_dispatch
+{
+	case integer_switch;
+	case enum_switch;
+	case byte_equality;
+
+	/** Return a duplicate key only for an admitted constant label of the subject's exact type. */
+	public function label_key(ast_expression $label): int|string|null
+	{
+		$binding = $label instanceof ast_name_expression ? $label->declaration() : null;
+		return match ($this) {
+			self::enum_switch => $binding instanceof ast_enum_case ? $binding->short_name : null,
+			self::integer_switch => ($label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration
+				|| $binding instanceof runtime_integer_constant) && is_int($label->constant()) ? $label->constant() : null,
+			self::byte_equality => self::bytes($binding instanceof ast_constant_declaration ? $binding->initializer : $label),
+		};
+	}
+
+	private static function bytes(ast_expression $literal): ?string
+	{
+		return $literal instanceof ast_string_expression ? $literal->bytes() : null;
+	}
+}
+
 /** Shared semantic type contract; canonical definitions own type-specific behavior, never occurrence facts. */
 abstract class type_definition
 {
-
 	/** PROPERTIES */
 	public readonly string $name;
 
@@ -239,6 +269,11 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	public function constant_dispatch(): ?constant_dispatch
+	{
+		return null;
+	}
+
 	public function hash_key_supported(): bool
 	{
 		return false;

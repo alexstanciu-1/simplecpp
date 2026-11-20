@@ -1306,23 +1306,42 @@ CPP;
 	private function match_selection(ast_match_expression $match, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
-		if (ast_match_expression::is_condition_subject($match->subject)) {
+		$conditional = ast_match_expression::is_condition_subject($match->subject);
+		$dispatch = $match->subject->type_def()->constant_dispatch();
+		if ($conditional || $dispatch === constant_dispatch::byte_equality) {
 			$code = '';
+			$scope = false;
+			if (!$conditional) {
+				$subject = $this->value($match->subject, $globals, $declarations, $headers);
+				if (count($match->arms) === 1) $code = '(void)(' . $subject . '); ';
+				elseif (!($match->subject instanceof ast_name_expression && $match->subject->declaration() instanceof ast_local_binding)) {
+					$scope = true;
+					// A field may borrow a temporary receiver that dies at this semicolon. Own the selected bytes.
+					$code = 'const auto dispatch_subject = ' . $subject . '; ';
+					$subject = 'dispatch_subject';
+				}
+			}
 			$default = null;
 			foreach ($match->arms as $arm) {
 				if ($arm->label === null) {
 					$default = $arm;
 					continue;
 				}
-				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { '
+				if ($conditional) $test = $this->condition($arm->label, $globals, $declarations, $headers);
+				else {
+					$bytes = $dispatch->label_key($arm->label);
+					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
+				}
+				$code .= 'if (' . $test . ') { '
 					. $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' } ';
 			}
-			return $code . $this->selection_exit($default->result, $globals, $declarations, $headers);
+			$code .= $this->selection_exit($default->result, $globals, $declarations, $headers);
+			return $scope ? '{ ' . $code . ' }' : $code;
 		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
 			if ($arm->label === null) $code .= 'default: ';
-			elseif ($arm->label->type_def() instanceof enum_type_definition) $code .= 'case ' . $this->value($arm->label, $globals, $declarations, $headers) . ': ';
+			elseif ($dispatch === constant_dispatch::enum_switch) $code .= 'case ' . $this->value($arm->label, $globals, $declarations, $headers) . ': ';
 			else {
 				$integer = $arm->label->constant();
 				$code .= 'case ' . ($integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL') . ': ';

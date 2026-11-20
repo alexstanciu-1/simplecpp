@@ -78,7 +78,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility']);
+        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility', 'constant_dispatch']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage', 'instance_field']);
@@ -178,6 +178,15 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     }
     $providers ??= submodulePlan($metadata);
     foreach ($definitions as $identity => &$definition) {
+        if (isset($rows[$identity]->constant_dispatch)) {
+            $dispatch = textValue($rows[$identity]->constant_dispatch);
+            requireThat(match ($dispatch) {
+                'integer_switch' => $definition['strategy'] === 'integer',
+                'byte_equality' => $definition['strategy'] === 'string',
+                default => false,
+            }, 'Invalid constant dispatch strategy for ' . $identity);
+            $definition['constant_dispatch'] = $dispatch;
+        }
         $definition['required_module'] = $membership[$identity];
         if (!in_array($definition['strategy'], ['integer', 'boolean', 'floating', 'null'], true)) continue;
         $export = typeExport($providers, $identity);

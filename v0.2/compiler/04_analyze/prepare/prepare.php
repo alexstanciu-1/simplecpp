@@ -874,8 +874,9 @@ final class Preparation
 			$this->value($syntax->subject, $initializing);
 			$type = $syntax->subject->type_def();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
-			if (!$conditional && !($type instanceof enum_type_definition) && !(defined($type::class . '::MINIMUM') && defined($type::class . '::MAXIMUM'))) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires an integer or enum, or literal true');
+			$dispatch = $type->constant_dispatch();
+			if (!$conditional && $dispatch === null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires constant-label dispatch or literal true');
 			}
 			$seen = [];
 			$default = null;
@@ -889,11 +890,8 @@ final class Preparation
 				$this->value($arm->label, $initializing);
 				if ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
 				if (!$conditional) {
-					$binding = $arm->label instanceof ast_name_expression ? $arm->label->declaration() : null;
-					if ($type instanceof enum_type_definition && $binding instanceof ast_enum_case) $key = $binding->short_name;
-					elseif (($arm->label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)
-						&& is_int($arm->label->constant())) $key = $arm->label->constant();
-					else throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label requires an integer literal, named constant or enum case');
+					$key = $dispatch->label_key($arm->label);
+					if ($key === null) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label requires a literal, named constant or enum case');
 					if (isset($seen[$key])) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match label');
 					$seen[$key] = true;
 				}
@@ -1453,17 +1451,21 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
-			if ($builtin === 'hash_contains' || $builtin === 'hash_find') {
+			if ($builtin === 'hash_contains' || $builtin === 'hash_find' || $builtin === 'hash_get_or_null') {
 				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
 				$receiver = $call->arguments[0];
 				$this->value($receiver, $initializing);
 				$type = $receiver->type_def();
 				$binding = match ($builtin) {
 					'hash_contains' => $type instanceof key_presence_type ? $type->presence_function() : null,
+					'hash_get_or_null' => $type instanceof shared_value_lookup_type ? $type->shared_lookup_function() : null,
 					'hash_find' => $type instanceof key_lookup_type ? $type->lookup_function() : null,
 				};
-				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), $builtin === 'hash_contains'
-					? 'hash_contains requires a key-presence collection' : 'hash_find requires a collection with published optional lookup');
+				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), match ($builtin) {
+					'hash_contains' => 'hash_contains requires a key-presence collection',
+					'hash_find' => 'hash_find requires a collection with published optional lookup',
+					'hash_get_or_null' => 'hash_get_or_null requires a hash with shared class values',
+				});
 				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}

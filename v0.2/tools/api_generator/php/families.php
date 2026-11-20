@@ -642,7 +642,7 @@ function hashConcreteArguments(array $hash, string $count): array {
     return [
         'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
         'count' => '::scpp::' . $count,
-        'enable_append' => $hash['key'] === 'int64' ? '1' : '',
+        'enable_shared_lookup' => '', 'enable_append' => $hash['key'] === 'int64' ? '1' : '',
         'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
     ];
 }
