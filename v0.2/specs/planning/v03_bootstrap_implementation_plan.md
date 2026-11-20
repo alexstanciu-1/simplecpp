@@ -24,7 +24,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.3 Application-defined collection elements | Published specializations retain common calls/fields; application vectors and hashes support construction, indexing, copies, fields, calls, traversal and generated has/remove/clear; vector and integer-key hash append | Writable parameters implemented; recursive vector/hash values implemented; typed populated vector locals implemented; broader element/key families and keyed literals remain separate |
 | 1.4 Collection traversal | Value/keyed foreach for vector/hash/mixed/dynamic and metadata-defined custom Iterator implemented | Application-defined vector/hash value/key traversal implemented, including yield foreach; references/destructuring remain separate |
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
-| 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
+| 2 Selection and lookup | Capability-based integer/enum/string match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, protected instance methods, final classes, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
 | 4 Source failures and cleanup | Typed throw/catch/rethrow, finally with delayed exits, and bounded throwing fallbacks implemented | Typed host failure bindings and translated preparation and publication recovery proofs remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
@@ -126,6 +126,26 @@ exhaustiveness, implicit common result types, void/generator/reference results,
 ternary/switch syntax and the 2.2–2.5 collection/tokenizer work. This slice does not
 change section 1 work owned by the other workspace or claim compile-time gains.
 
+Constant-label dispatch now comes from the subject's published type capability.
+Integer/enum cases retain native switch lowering. String labels compare exact
+bytes and length, including embedded NULs. Source switch uses the same contract for clause entry.
+
+#### Source switch statements — implemented for ordinary bodies
+
+`switch` and `match` share constant-label admission and type-directed native
+dispatch. Each case owns a lexical block. Strings select a clause index; integer
+and enum cases use native labels. Fallthrough enters the next clause after local
+destruction. Break targets the nearest loop or switch, while continue targets the
+nearest loop. A protected region can carry both destinations through cleanup.
+
+The Clang fixture `compiler/tests/switch_native.py` covers cpp/php/js, grouped
+labels, optional and middle defaults, byte-exact lookup, subject failure, nested
+loops and switches, readonly construction, and nested finalizers. Retained label
+edits, duplicate-label errors, source deletion and restoration are compared with
+fresh output. A body-only edit reuses its caller and a no-op rebuild does no work.
+Switch in resumable iterator bodies, labelled transfers and computed labels remain
+outside this slice.
+
 ### 2.1 Ordered match conditions — implemented
 
 Extend the existing match syntax with literal `match(true)`. Boolean conditions run
@@ -191,7 +211,7 @@ a value, and success returns an owned copy. Indexed reads remain throwing. Gener
 `key_lookup_type` supplies the existing runtime-call protocol; no new AST field,
 preparation pass or backend operation is added.
 
-Application lookup remains deferred. Optional inline structs need a value carrier;
+Presence-preserving application lookup remains deferred. Optional inline structs need a value carrier;
 nullable class handles alone would conflate a missing key with a present empty handle.
 Do not synthesize application carriers or expand the runtime ownership model here.
 
@@ -211,6 +231,20 @@ Verification checklist:
 
 Deferred: application nullable values, nullable payload publication, boxed/nested
 lookup and new removal/clear syntax. Coalescing and local conditional assignment follow below.
+
+#### Shared-object fallback and previous-generation guards
+
+Implemented `hash_get_or_null(old, path)` for shared class values. One storage
+search returns the same allocation or an empty handle. Presence-sensitive code
+can use `hash_contains`. For a previous generation, guard the scope read and
+construct a scope only on a miss. Guard optional receiver actions (including
+arguments) and traversal directly, without materializing an empty vector.
+
+`compiler/tests/shared_lookup_native.py` covers cpp/php/js on Clang, hit/miss,
+retention and release, a native-inserted empty payload, lazy construction,
+guarded argument evaluation and traversal order. A fallback-body edit, source
+deletion, recovery and no-op rebuild are compared with fresh output. General
+nullsafe syntax, optional inline-record carriers and cache initialization are deferred.
 
 ### 2.3 Lazy fallback — first published nullable slice implemented
 

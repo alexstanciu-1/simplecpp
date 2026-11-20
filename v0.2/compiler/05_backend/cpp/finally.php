@@ -7,22 +7,26 @@ namespace scpp\compiler;
 final class Cpp_Finally_Exit
 {
 	/** PROPERTIES */
-	/** Native non-owning loop target, absent for a region with returns alone. */
-	public readonly ?ast_repeating_statement $loop_target;
+	private readonly ast_try_statement $region;
 	private readonly string $result;
 	private readonly ?string $type;
 	private readonly string $outcome;
 
 	/** CONSTRUCTOR */
-	public function __construct(int $position /** uint32 */, ?string $type, ?ast_repeating_statement $loop_target)
+	public function __construct(ast_try_statement $region, ?string $type)
 	{
-		$this->loop_target = $loop_target;
+		$this->region = $region;
 		$this->type = $type;
-		$this->result = 'scpp_pending_exit_' . $position;
-		$this->outcome = 'scpp_exit_outcome_' . $position;
+		$this->result = 'scpp_pending_exit_' . $region->start;
+		$this->outcome = 'scpp_exit_outcome_' . $region->start;
 	}
 
 	/** METHODS */
+	public function transfer_target(int $exit): ast_repeating_statement|ast_switch_statement|null
+	{
+		return $exit === statement_completion::breaks ? $this->region->break_target : $this->region->continue_target;
+	}
+
 	/** Only a saved value activates the named union; all other exits have empty storage. */
 	public function declaration(): string
 	{
@@ -51,7 +55,7 @@ final class Cpp_Finally_Exit
 			? 'static_cast<' . $this->type . '&&>(' . $this->result . '.slot.value)' : null;
 		$keyword = $this->keyword($exit);
 		$resume = $keyword . ($value === null ? '' : ' ' . $value) . ';';
-		if ($outer !== null && ($exit === statement_completion::returns || $outer->loop_target === $this->loop_target)) {
+		if ($outer !== null && ($exit === statement_completion::returns || $outer->transfer_target($exit) === $this->transfer_target($exit))) {
 			$resume = $outer->save($exit, $value);
 		}
 		return 'if (' . $this->result . '.kind == ' . $this->outcome . '::exit_' . $keyword . ') { ' . $resume . ' }';

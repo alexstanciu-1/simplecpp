@@ -118,7 +118,8 @@ final class Body_Collection
 			}
 			$value = $statement->condition;
 		}
-		elseif ($statement instanceof ast_if_statement) {
+		elseif ($statement instanceof ast_branch_statement) {
+			if ($statement instanceof ast_switch_statement) $this->expression($statement->subject);
 			foreach ($statement->arms as $arm) {
 				if ($arm->condition !== null) {
 					$this->expression($arm->condition);

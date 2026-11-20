@@ -33,6 +33,31 @@ string copies/embedded NUL, nesting, invalid programs and retained-versus-fresh
 recovery. Its persistent Ninja builds check unchanged caller/native object reuse.
 This does not establish a compile-time speedup or native parallel safety.
 
+## Constant-label dispatch
+
+Each published type can opt in using `compiler.value_types.*.constant_dispatch`.
+The generator validates the strategy against the type representation and emits the
+canonical type query. A nominal enum derives its case strategy from its settled
+integer storage. Preparation checks exact type identity and uses the strategy to
+obtain a temporary duplicate key. No occurrence stores a dispatch plan.
+
+The byte-equality strategy compares the subject's length and literal bytes. Empty
+labels need only the length test. A simple local is read directly; a computed subject
+is evaluated once and its temporary stays alive during comparison. Named string
+labels use the decoded bytes of their watched constant declaration. A default-only
+match still evaluates its subject. The ordered condition form below is unaffected.
+
+Source `switch` consumes the same capability. A clause owns a lexical block and
+retains one fallthrough flag. Integer and enum subjects select a native C++ case.
+String dispatch computes a clause index with the same length and byte comparisons,
+then enters a native switch. Preparation joins direct entry with predecessor
+fallthrough and consumes switch breaks. A finalizer records break and continue
+destinations independently when those exits cross its protected region.
+
+`tests/switch_native.py` exercises shared label dependencies, case-local destruction,
+constructor initialization, protected transfers, retained/fresh equivalence and
+native caller reuse across cpp/php/js on Clang.
+
 ## Ordered condition slice
 
 Literal `true` selects conditions through `ast_match_expression::is_condition_subject`.

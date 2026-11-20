@@ -57,7 +57,10 @@ Nested collection values,
 explicit shared/weak value spellings, enum values and application-defined keys remain
 separate slices. `hash_contains(collection, key)` is supported through the generated key-presence
 capability and existing native member binding. It needs no nullable payload carrier.
-Nullable-returning `find()` is deferred rather than generating a new
+`hash_get_or_null(h, key)` returns a copied shared handle for class values. Its empty
+result covers both missing keys and stored empty handles. The concrete recipe emits
+the method when the settled hash type publishes its shared lookup binding.
+Presence-preserving nullable-returning `find()` is deferred rather than generating a new
 application carrier implicitly. Runtime-specialization behavior remains unchanged.
 
 `application_hashes_native.py` reuses the vector by-value signature/recovery harness

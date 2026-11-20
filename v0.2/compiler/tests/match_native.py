@@ -34,6 +34,16 @@ def prove(work, flavor, libraries):
     api += fn('failure','int',[],s['infer']('n','match(1){1=>fail(1),default=>selected()}')+f'echo "L";return {v}n;')
     api += fn('subjectFailure','int',[],'return match(fail(1)){1=>selected(),default=>selected()};')
     api += fn('copy', 'string', [('x','string')], f'return match (1) {{1=>{v}x,default=>"other"}};')
+    labels += const('EXT', 'string', '"a\\0b"')
+    api += fn('extension', 'string', [], 'echo "T";return "a\\0b";')
+    api += fn('selectText', 'int', [('x','string')],
+              f'return match({v}x){{default=>9,EXT=>1,"a"=>2,""=>3,"01"=>4,"1"=>5}};')
+    api += fn('lazyText', 'int', [], 'return match(extension()){default=>fail(1),EXT=>selected()};')
+    api += fn('onlyDefault', 'int', [], 'return match(extension()){default=>7};')
+    field = 'this field belongs to a temporary shared owner'
+    holder = s['klass']('Holder', s['field']('text', 'string', '"' + field + '"'))
+    api += fn('owner', 'Holder', [], 'echo "H";return new Holder();')
+    api += fn('temporaryField', 'int', [], 'return match(owner()' + s['access'] + 'text){"' + field + '"=>2,default=>0};')
     main = s['infer']('n','match (subject()) { 1=>selected(),default=>fail(1)}')
     main += f'echo {v}n,choose(1),fail(0),limit((-9223372036854775807 - 1)),limit(9223372036854775807);'
     main += f'echo named(Kind{sep}One),textual(Text{sep}Two);'
@@ -41,14 +51,15 @@ def prove(work, flavor, libraries):
     main += 'if (true || match(subject()){1=>true,default=>false}) {}'
     main += 'echo labelled(1),small(255);'
     main += 'echo match (2) {default=>match(1){1=>5,default=>0},1=>0};'
-    main += s['infer']('a','"a\\0b"')+s['infer']('b',f'copy({v}a)')+f'{v}a="changed";echo {v}b;return 8;'
-    expected=b'SA4871214675a\0b'
+    main += s['infer']('a','"a\\0b"')+s['infer']('b',f'copy({v}a)')+f'{v}a="changed";echo {v}b;echo selectText("a\\0b"),selectText("a"),selectText(""),selectText("01"),selectText("1"),selectText("a\\0c"),lazyText(),onlyDefault(),temporaryField();return 8;'
+    expected=b'SA4871214675a\0b123459TA4T7H2'
     app,out=work/flavor,work/(flavor+'-out')
-    write_app(app,flavor,{'labels':labels,'types':enum+textenum,'api':api,'main':main,'idle':fn('idle','int',[],'return 3;')})
+    write_app(app,flavor,{'labels':labels,'types':enum+textenum,'holder':holder,'api':api,'main':main,'idle':fn('idle','int',[],'return 3;')})
     result=fresh(app,out);assert 'error' not in result,result
     manifest=json.loads((out/'manifest.json').read_text())
     units={Path(p).stem:u for p,u in manifest['sources'].items()}
     generated=(out/units['api']).read_text()
+    assert 'std::memcmp(' in generated and '.data()' in generated and 'const auto dispatch_subject = extension_()' in generated, generated
     assert 'switch (' in generated and generated.count('([&]()')==1,generated
     assert '([&]()' in (out/units['main']).read_text()
     for cc,lib in libraries.items():
@@ -69,7 +80,7 @@ def prove(work, flavor, libraries):
            ('api',api,None,expected),('types',enum.replace('One=1','Renamed=1')+textenum,'Unknown enum case',None),
            ('types',enum+textenum,None,expected),('api',api,None,expected),
            ('labels',labels.replace('=1;', '=2;', 1),None,expected.replace(b'4675',b'4075')),
-           ('labels',None,'Unknown',None),('labels',labels,None,expected),('api',api,None,expected)]
+           ('labels',labels.replace('a\\0b','a'),'Duplicate match label',None),('labels',None,'Unknown',None),('labels',labels,None,expected),('api',api,None,expected)]
     try:
         for i,(name,source,error,stdout) in enumerate(edits):
             before=artifacts(out)
@@ -84,19 +95,22 @@ def prove(work, flavor, libraries):
                 continue
             assert 'error' not in current and 'error' not in comparison,(current,comparison)
             assert artifacts(out)==artifacts(comparison_out),i
-            if i in [7,11]:assert current['preparation']['prepared']==0 and current['emitted_sources']==[],current
+            if i in [7,12]:assert current['preparation']['prepared']==0 and current['emitted_sources']==[],current
             for cc,lib in libraries.items():
                 changed=incremental_native_build(out,work/(flavor+'-native-'+cc),cc,lib,stdout)
-                if i in [7,11]:assert not changed,changed
+                if i in [7,12]:assert not changed,changed
                 if i==1:assert changed=={units['api']},changed
     finally:resident.stdin.close();resident.wait()
-    invalid=[('match(1){LABEL=>2,ALIAS=>3,default=>4}','Duplicate match label'),('match(1){1=>2}','default arm'),('match(1){default=>2,default=>3}','Duplicate match default'),
+    invalid=[('match("x"){EXT=>1,"a\\0b"=>2,default=>3}','Duplicate match label'),
+             ('match("x"){1=>1,default=>2}','label type'),
+             ('match("x"){extension()=>1,default=>2}','literal, named constant'),
+             ('match(1){LABEL=>2,ALIAS=>3,default=>4}','Duplicate match label'),('match(1){1=>2}','default arm'),('match(1){default=>2,default=>3}','Duplicate match default'),
              ('match(1){1=>2,1=>3,default=>4}','Duplicate match label'),
-             ('match(1){true=>2,default=>3}','label type'),('match(false){default=>1}','integer or enum'),
-             ('match(1.0){default=>1}','integer or enum'),('match(1){subject()=>2,default=>3}','literal, named constant'),
+             ('match(1){true=>2,default=>3}','label type'),('match(false){default=>1}','constant-label dispatch'),
+             ('match(1.0){default=>1}','constant-label dispatch'),('match(1){subject()=>2,default=>3}','literal, named constant'),
              ('match(1){1=>2,default=>"x"}','result types'),('match(1){}','default arm')]
     for i,(expr,error) in enumerate(invalid):
-        bad=work/f'{flavor}-bad-{i}';write_app(bad,flavor,{'labels':labels,'main':fn('subject','int',[],'return 1;')+s['infer']('x',expr)+'return 8;'})
+        bad=work/f'{flavor}-bad-{i}';write_app(bad,flavor,{'labels':labels,'main':fn('subject','int',[],'return 1;')+fn('extension','string',[],'return "x";')+s['infer']('x',expr)+'return 8;'})
         result=fresh(bad,work/f'{flavor}-bad-out-{i}');assert error in result.get('error',''),result
     print(flavor,'match behavior, rejection and incremental/native recovery passed',flush=True)
 

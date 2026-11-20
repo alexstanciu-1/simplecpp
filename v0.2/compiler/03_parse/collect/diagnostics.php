@@ -79,7 +79,7 @@ final class Declaration_Diagnostics
 				if ($statement->handler !== null) array_push($errors, ...self::locals($statement->handler->body));
 				if ($statement->finalizer !== null) array_push($errors, ...self::locals($statement->finalizer));
 			}
-			elseif ($statement instanceof ast_if_statement) {
+			elseif ($statement instanceof ast_branch_statement) {
 				foreach ($statement->arms as $arm) {
 					array_push($errors, ...self::locals($arm->body));
 				}

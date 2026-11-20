@@ -934,6 +934,7 @@
     "value_types": {
       "int64": {
         "class": "int64",
+        "constant_dispatch": "integer_switch",
         "literal_family": "integer",
         "declarations": {
           "inferred_local": true,
@@ -978,6 +979,7 @@
       },
       "uint8": {
         "class": "uint8",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,
@@ -1005,6 +1007,7 @@
       },
       "string": {
         "class": "string",
+        "constant_dispatch": "byte_equality",
         "literal_family": "string",
         "declarations": {
           "inferred_local": true,
@@ -1022,6 +1025,7 @@
       },
       "int8": {
         "class": "int8",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,
@@ -1035,6 +1039,7 @@
       },
       "int16": {
         "class": "int16",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,
@@ -1048,6 +1053,7 @@
       },
       "int32": {
         "class": "int32",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,
@@ -1061,6 +1067,7 @@
       },
       "uint16": {
         "class": "uint16",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,
@@ -1074,6 +1081,7 @@
       },
       "uint32": {
         "class": "uint32",
+        "constant_dispatch": "integer_switch",
         "literal_family": null,
         "declarations": {
           "inferred_local": true,

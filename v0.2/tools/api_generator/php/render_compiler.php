@@ -77,6 +77,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        if (isset($definition['constant_dispatch'])) {
+            $methods .= "\n\tpublic function constant_dispatch(): constant_dispatch { return constant_dispatch::" . $definition['constant_dispatch'] . "; }\n";
+        }
         if (isset($definition['cpp_header'])) {
             $header = var_export($definition['cpp_header'], true);
             $methods .= "\n\t/** @return string[] */\n\tpublic function cpp_headers(): array /** list<string> */\n\t{\n\t\treturn [$header];\n\t}\n";

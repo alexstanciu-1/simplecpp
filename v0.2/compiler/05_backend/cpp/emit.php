@@ -775,7 +775,7 @@ CPP;
 			elseif ($statement instanceof ast_loop_transfer) {
 				$continuing = $statement instanceof ast_continue_statement;
 				$transfer = $continuing ? 'continue;' : 'break;';
-				if ($this->finally_exit !== null && $this->finally_exit->loop_target === $statement->target) {
+				if ($this->finally_exit !== null && $this->finally_exit->transfer_target($continuing ? statement_completion::continues : statement_completion::breaks) === $statement->target) {
 					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
 				}
 				elseif ($resume !== null) {
@@ -911,6 +911,9 @@ CPP;
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
+			}
+			elseif ($statement instanceof ast_switch_statement) {
+				array_push($lines, ...$this->switch_lines($statement, $function, $declarations, $global_references, $required_headers));
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
@@ -1051,6 +1054,66 @@ CPP;
 		return $lines;
 	}
 
+	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
+	private function switch_lines(ast_switch_statement $syntax, ast_function_declaration $function,
+		array &$declarations, array &$globals, array &$headers): array
+	{
+		$dispatch = $syntax->subject->type_def()->constant_dispatch();
+		$subject = $this->value($syntax->subject, $globals, $declarations, $headers);
+		if ($syntax->arms === []) return ["\t(void)(" . $subject . ');'];
+		$lines = [];
+		$owns_subject = false;
+		if ($dispatch === constant_dispatch::byte_equality) {
+			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->declaration() instanceof ast_local_binding;
+			$place = $local ? $subject : 'switch_subject';
+			$tests = [];
+			foreach ($syntax->arms as $i => $arm) {
+				if ($arm->condition === null) continue;
+				$bytes = $dispatch->label_key($arm->condition);
+				$tests[] = Cpp_String_Literals::equal_bytes($place, $bytes, $headers) . ' ? ' . $i . ' : ';
+			}
+			if ($tests === []) $lines[] = "\t(void)(" . $subject . ');';
+			elseif (!$local) {
+				$owns_subject = true;
+				$lines[] = "\t{";
+				$lines[] = "\tconst auto switch_subject = " . $subject . ';';
+			}
+			$subject = implode('', $tests) . '-1';
+		}
+		$head = count($lines);
+		$lines[] = "\tswitch (" . $subject . ') {';
+		$has_default = false;
+		foreach ($syntax->arms as $i => $arm) {
+			if ($arm->condition === null) {
+				$has_default = true;
+				$label = 'default';
+			} else {
+				$label = 'case ' . ($dispatch === constant_dispatch::byte_equality ? $i
+					: $this->native_case($arm->condition, $dispatch, $globals, $declarations, $headers));
+			}
+			if ($arm->body->statements === []) {
+				$lines[] = "\t" . $label . ($i === count($syntax->arms) - 1 ? ':;' : ':');
+				continue;
+			}
+			$lines[] = "\t" . $label . ': {';
+			foreach ($this->statements($arm->body, $declarations, $globals, $headers, $function) as $line) $lines[] = "\t" . $line;
+			$lines[] = "\t}";
+			if ($arm->falls_through && $i < count($syntax->arms) - 1) $lines[] = "\t[[fallthrough]];";
+		}
+		// A synthetic miss also keeps native constant and partial enum switches warning-safe.
+		if (!$has_default) $lines[$head] .= ' default: break;';
+		$lines[] = "\t}";
+		if ($owns_subject) $lines[] = "\t}";
+		return $lines;
+	}
+
+	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
+	{
+		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
+		$integer = $label->constant();
+		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
+	}
+
 	/**
 	 * Enclose the entire protected operation. A finalizer thrown from the outer handler replaces its pending exception.
 	 * @param ast_function_declaration[] $declarations
@@ -1073,11 +1136,11 @@ CPP;
 		$outer = $this->finally_exit;
 		$pending = null;
 		$returns = ($syntax->protected_completion & statement_completion::returns) !== 0;
-		if ($returns || $syntax->transfer_target !== null) {
+		if ($returns || ($syntax->protected_completion & statement_completion::loop_transfers)) {
 			$result = $function->return_type_def();
 			$type = !$returns || $result === type_void::instance() ? null
 				: ($function->is_implicit_entry ? 'int' : $this->signature_type($result, false));
-			$pending = new Cpp_Finally_Exit($syntax->start, $type, $syntax->transfer_target);
+			$pending = new Cpp_Finally_Exit($syntax, $type);
 			$lines[] = "\t\t" . $pending->declaration();
 			$lines[] = "\t\t" . $pending->start();
 		}
@@ -1307,27 +1370,42 @@ CPP;
 	private function match_selection(ast_match_expression $match, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
-		if (ast_match_expression::is_condition_subject($match->subject)) {
+		$conditional = ast_match_expression::is_condition_subject($match->subject);
+		$dispatch = $match->subject->type_def()->constant_dispatch();
+		if ($conditional || $dispatch === constant_dispatch::byte_equality) {
 			$code = '';
+			$scope = false;
+			if (!$conditional) {
+				$subject = $this->value($match->subject, $globals, $declarations, $headers);
+				if (count($match->arms) === 1) $code = '(void)(' . $subject . '); ';
+				elseif (!($match->subject instanceof ast_name_expression && $match->subject->declaration() instanceof ast_local_binding)) {
+					$scope = true;
+					// A field may borrow a temporary receiver that dies at this semicolon. Own the selected bytes.
+					$code = 'const auto dispatch_subject = ' . $subject . '; ';
+					$subject = 'dispatch_subject';
+				}
+			}
 			$default = null;
 			foreach ($match->arms as $arm) {
 				if ($arm->label === null) {
 					$default = $arm;
 					continue;
 				}
-				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { '
+				if ($conditional) $test = $this->condition($arm->label, $globals, $declarations, $headers);
+				else {
+					$bytes = $dispatch->label_key($arm->label);
+					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
+				}
+				$code .= 'if (' . $test . ') { '
 					. $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' } ';
 			}
-			return $code . $this->selection_exit($default->result, $globals, $declarations, $headers);
+			$code .= $this->selection_exit($default->result, $globals, $declarations, $headers);
+			return $scope ? '{ ' . $code . ' }' : $code;
 		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
 			if ($arm->label === null) $code .= 'default: ';
-			elseif ($arm->label->type_def() instanceof enum_type_definition) $code .= 'case ' . $this->value($arm->label, $globals, $declarations, $headers) . ': ';
-			else {
-				$integer = $arm->label->constant();
-				$code .= 'case ' . ($integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL') . ': ';
-			}
+			else $code .= 'case ' . $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers) . ': ';
 			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' ';
 		}
 		return $code . '}';
