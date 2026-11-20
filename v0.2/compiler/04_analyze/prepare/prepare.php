@@ -656,16 +656,7 @@ final class Preparation
 	{
 		$this->local_frames[] = [];
 		try {
-			$this->statement_visits++;
-			if ($statement->initializer instanceof ast_local_declaration) {
-				$this->declaration($statement->initializer);
-				if ($function->return_type_def() instanceof generator_type_definition && $statement->initializer->type_def() instanceof generator_type_definition) {
-					throw new diagnostic($source, $statement->initializer->byte_start(), 'Nested cursor locals are deferred');
-				}
-			}
-			else {
-				$this->write($statement->initializer);
-			}
+			$this->sequence($statement->initializers, $source, $target, $function);
 			return $this->loop($statement, $source, $target, $function);
 		}
 		finally {
@@ -680,7 +671,17 @@ final class Preparation
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
 		if (!$post_test) {
-			$this->condition($statement->condition);
+			if ($statement instanceof ast_for_statement) {
+				$last = array_key_last($statement->conditions);
+				foreach ($statement->conditions as $i => $test) {
+					$this->guard_reads = [];
+					if ($i === $last) $this->condition($test);
+					elseif ($test instanceof ast_call_expression) {
+						$this->expression_visits++;
+						$this->call($test);
+					} else $this->value($test);
+				}
+			} else $this->condition($statement->condition);
 			$this->forget_values();
 		}
 		$this->local_frames[] = [];
@@ -699,12 +700,14 @@ final class Preparation
 			$this->forget_values();
 		}
 		if ($statement instanceof ast_for_statement) {
-			$this->statement_visits++;
-			$this->write($statement->update);
+			$this->sequence($statement->updates, $source, $target, $function);
 			$this->forget_values();
 		}
 		// A post-test loop enters its body once; return and throw are terminal exits.
 		$terminal = statement_completion::returns | statement_completion::throws;
+		if ($statement instanceof ast_for_statement && !$statement->conditions && !($completion & statement_completion::breaks)) {
+			return $completion & $terminal;
+		}
 		return $post_test && ($completion & ~$terminal) === 0 ? $completion
 			: (($completion & $terminal) | statement_completion::fallthrough);
 	}

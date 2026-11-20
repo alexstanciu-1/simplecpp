@@ -16,8 +16,13 @@ abstract class ast_repeating_statement extends ast_statement
 	}
 }
 
-/** Conditional loop syntax owns a test evaluated outside the body-local scope. */
+/** Pre-test and post-test loops share the body and transfer target. */
 abstract class ast_loop_statement extends ast_repeating_statement
+{
+}
+
+/** While and do-while each own exactly one required condition. */
+abstract class ast_tested_loop extends ast_loop_statement
 {
 	public readonly ast_expression $condition;
 
@@ -30,35 +35,30 @@ abstract class ast_loop_statement extends ast_repeating_statement
 }
 
 /** Test before every iteration: while (running) { running = false; }. */
-final class ast_while_statement extends ast_loop_statement
+final class ast_while_statement extends ast_tested_loop
 {
 }
 
 /** Execute the body before testing: do { echo "once"; } while (false); */
-final class ast_do_while_statement extends ast_loop_statement
+final class ast_do_while_statement extends ast_tested_loop
 {
 }
 
-/** Bounded for (int i = 0; i < 10; i = i + 1) { ... }; header scope owns the initializer binding. */
+/** Each for clause owns its ordered syntax. An empty test list repeats until control leaves the loop. */
 final class ast_for_statement extends ast_loop_statement
 {
-	/** Native owning initializer; executes once, before the first test. */
-	public readonly ast_local_declaration|ast_storage_write $initializer;
-	/** Native owning update; executes after normal body completion or continue. */
-	public readonly ast_storage_write $update;
-	/** Native owning header scope; the body scope is its child. */
-	public readonly scope $scope;
-
-	/** $start: for token position; the body supplies the exclusive end. */
-	public function __construct(int $start /** uint32 */, ast_local_declaration|ast_storage_write $initializer,
-		ast_expression $condition, ast_storage_write $update, ast_block $body, scope $scope)
+	/** @param ast_statement[] $initializers
+	 * @param ast_expression[] $conditions
+	 * @param ast_statement[] $updates
+	 */
+	public function __construct(int $start /** uint32 */, public readonly array $initializers /** list<ast_statement> */,
+		public readonly array $conditions /** list<ast_expression> */, public readonly array $updates /** list<ast_statement> */,
+		ast_block $body, public readonly scope $scope)
 	{
-		parent::__construct($start, $body->end, $condition, $body);
-		$this->initializer = $initializer;
-		$this->update = $update;
-		$this->scope = $scope;
-		$initializer->attach($this);
-		$update->attach($this);
+		parent::__construct($start, $body->end, $body);
+		foreach ($initializers as $item) $item->attach($this);
+		foreach ($conditions as $item) $item->attach($this);
+		foreach ($updates as $item) $item->attach($this);
 	}
 }
 

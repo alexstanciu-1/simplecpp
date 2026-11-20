@@ -2,58 +2,31 @@
 
 Doc Status: supporting
 
-The [loop contract](../../../specs/loop_statements_v0_2.md#bounded-for-slice--2026-11-04)
-defines one required initializer (declaration/assignment/update), condition and storage-write
-update, with a braced body. Existing typed/inferred declarations and generated
-conversions/truthiness apply in all three flavors. Omitted/comma clauses,
-standalone call clauses and foreach remain deferred. Int64 compound
-assignments are supported in both initializer and update positions.
+The [loop contract](../../../specs/loop_statements_v0_2.md#for-headers) defines
+three ordered, independently optional header clauses. For example, `for (;;)`
+needs only a braced body. `for (; trace(), ready(); step())` discards the trace
+result, tests readiness and calls step after normal completion or continue.
 
 ## Structure and ownership
 
-`ast_for_statement` extends the existing loop node. It directly owns the initializer,
-storage-write update and header scope, alongside inherited condition/body ownership.
-The body scope is a child of the header scope, which is a child of the enclosing
-block scope. Header declarations have function-unique storage IDs and stay out of
-the enclosing block's local index. One initializer cannot contain duplicate header
-declarations; body duplicates retain the existing scoped duplicate diagnostics.
+`ast_for_statement` owns the three lists, body and header scope. Declarations
+become visible in written order, including to later initializers. The body owns
+a child scope. Header items reuse ordinary declarations, storage writes, call
+statements and expressions. The lists also drive collection, reset and inspection.
 
-The parser reuses flavor statement grammar for initialization and the shared
-assignment parser with an explicit closing-parenthesis delimiter for updates.
-`Body_Collection::publish_scope()` publishes the header through `Scope_Collection`.
-The enclosing occurrence index references header expressions without owning them.
-No synthetic block, duplicate syntax list or separate prepared loop is introduced.
-Reset and inspection cover initializer and update as well as test/body.
+Preparation visits each item once. It uses ordinary statement preparation for
+initializers and updates and applies generated truthiness only to the final test.
+Existing repeating-region value barriers and dependency watches apply. An empty
+test needs no synthetic true expression or constant folding.
 
-Preparation pushes one header frame, prepares initialization once, then reuses the
-loop worker for test and body. It exits the body frame before preparing the update,
-so body locals cannot resolve there. Value barriers precede repeated regions and
-follow update/exit; there is no fixed point, path map copy or extra traversal.
-Completion and loop-depth validation reuse the existing transfer machinery.
-Each initializer/update counts as one statement visit. Calls in every clause use
-the existing enclosing-body dependency watcher.
+Ordinary lowering emits native `for`. A scoped prelude accommodates multiple
+declarations and compound snapshots. Generator lowering keeps live header locals
+across suspension and routes continue through any pending updates. Header locals
+are destroyed in reverse declaration order.
 
-C++ lowering emits native `for`, preserving continue-to-update and break/return
-suppression. Declaration/write rendering is shared between ordinary statements
-and headers through one backend helper, including generated conversions, required
-headers and identity-write handling. No new metadata or runtime API is required.
-
-## Mining and tests
-
-Reviewed the donor control-flow catalog and
-`compiler/my-try/04_analyze/prepare/semantics/loops.php`: header scope, exclusion of
-body locals from update and native for emission are useful concepts. Its arrays
-of clauses, prepared loop records and path-specific local maps are not adopted.
-
-`tests/for.php` covers all flavors, exact preparation counts, ownership/publication,
-header/body shadowing, nonescaping header locals, typed/inferred initialization,
-assignment to outer storage, string/bool conditions, zero iterations, nested loops,
-continue/update order, break suppression, reset, inspection and emission purity.
-It rejects unsupported clauses, body-local update targets and false guaranteed-return
-claims. Incremental tests change update-callee signatures, recover without replacing
-caller AST/tokens, reuse body-only edits, edit the loop source and verify no-op reuse.
-Native proofs check output/exit and update-time conversion failure. Incremental native
-emission remains outside this slice.
+`tests/for.php` and its Clang harness cover clause order, skipped work, header scope,
+compound writes, and deletion/edit recovery against fresh output across cpp/php/js.
+`tests/yield.php` exercises multiple header locals and updates across suspension.
 
 ## Proof results — 2026-11-04
 

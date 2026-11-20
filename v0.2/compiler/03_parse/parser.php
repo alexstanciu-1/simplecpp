@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Parser extension point for flavor-specific statements and function headers; all flavors produce the same AST families.
  */
 interface statement_grammar {
-	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
+	public function statement(Parser $parser, Body_Collection $collector, ?token_kind $terminator = token_kind::semicolon): ast_statement;
 	public function function_start(Parser $parser): bool;
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration;
 }
@@ -496,37 +496,56 @@ final class Parser
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
 	}
 
-	/** Parse one initializer, condition and assignment update in a header-local scope. */
+	/** The header owns its separators; nested calls and constructors consume their own commas. */
 	private function for_loop(statement_grammar $grammar, Body_Collection $collector): ast_for_statement
 	{
-		$start = $this->cursor->position();
-		$this->cursor->take_keyword('for');
-		$this->cursor->take(token_kind::lparen, '(');
-		$header = $collector->child();
-		$this->lexical = $header;
-		$initializer = $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $header);
-		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_storage_write)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
+		$c = $this->cursor;
+		$start = $c->position();
+		$c->take_keyword('for');
+		$c->take(token_kind::lparen, '(');
+		$this->lexical = $header = $collector->child();
+		$initializers = $this->for_actions($grammar, $header, true);
+		$c->take(token_kind::semicolon, '; after for initialization');
+		$conditions = [];
+		if (!$c->is(token_kind::semicolon)) {
+			do {
+				$conditions[] = $this->value();
+				if (!$c->is(token_kind::comma)) break;
+				$c->take(token_kind::comma, ',');
+			} while (true);
 		}
-		$header->statement($initializer, 0);
-		$condition = $this->value();
-		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
-		if ($this->update_start()) {
-			$update = $this->update_statement(token_kind::rparen, true);
-		} elseif ($this->property_statement_start() || $this->expression_statement_start() || $this->cursor->next_is(token_kind::lbracket)) {
-			$position = $this->cursor->position();
-			$target = $this->primary();
-			$update = $this->property_update($position, $target, $this->take_update_operator(), true, token_kind::rparen);
-		}
-		else {
-			$update_start = $this->cursor->position();
-			$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
-				? token_kind::variable : token_kind::identifier);
-			$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
-		}
+		$c->take(token_kind::semicolon, '; after for conditions');
+		$updates = $this->for_actions($grammar, $header, false);
+		$c->take(token_kind::rparen, ') after for updates');
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
 		$this->lexical = $collector;
-		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
+		return new ast_for_statement($start, $initializers, $conditions, $updates, $body, $header->publish_scope());
+	}
+
+	/** Parse declarations only during initialization. A null terminator leaves the delimiter with the header. @return ast_statement[] */
+	private function for_actions(statement_grammar $grammar, Body_Collection $header, bool $initial): array /** list<ast_statement> */
+	{
+		$c = $this->cursor;
+		$items = [];
+		if ($c->is($initial ? token_kind::semicolon : token_kind::rparen)) return $items;
+		do {
+			$start = $c->position();
+			if ($this->update_start()) $item = $this->update_statement(null, true);
+			elseif ($this->property_statement_start() || $this->expression_statement_start() || $c->next_is(token_kind::lbracket)) {
+				$target = $this->primary();
+				$item = $target instanceof ast_call_expression ? new ast_call_statement($start, $c->position(), $target)
+					: $this->property_update($start, $target, $this->take_update_operator(), true, null);
+			} elseif ($initial) $item = $grammar->statement($this, $header, null);
+			else {
+				$name = $c->name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+				$item = $this->assignment($start, $name, assignment_intent::existing_binding, null);
+			}
+			if ($item instanceof ast_local_declaration) $header->declare_local($item);
+			$items[] = $item;
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		} while (true);
+		return $items;
 	}
 
 	/** Parse pre-test/post-test loops with a required braced body and explicit do-while terminator. */
@@ -1382,22 +1401,22 @@ final class Parser
 	}
 
 	/** $start: token position. */
-	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference): ast_local_declaration
+	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference, ?token_kind $terminator = token_kind::semicolon): ast_local_declaration
 	{
 		if ($type_reference !== null && $this->cursor->is(token_kind::lparen)) {
 			$at = $this->cursor->position();
 			$arguments = $this->arguments();
 			if ($arguments === []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Use a typed declaration without () for default initialization');
-			$end = $this->cursor->take(token_kind::semicolon, ';');
-			return new ast_local_declaration($start, $end + 1, $name, $type_reference, new ast_struct_default($at, $end, $arguments));
+			$value = new ast_struct_default($at, $this->cursor->position(), $arguments);
+			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, $value);
 		}
-		if ($type_reference !== null && $this->cursor->is(token_kind::semicolon)) {
-			$at = $this->cursor->take(token_kind::semicolon, ';');
-			return new ast_local_declaration($start, $at + 1, $name, $type_reference, new ast_struct_default($at, $at));
+		if ($type_reference !== null && ($this->cursor->is(token_kind::semicolon) || ($terminator === null && $this->cursor->is(token_kind::comma)))) {
+			$at = $this->cursor->position();
+			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, new ast_struct_default($at, $at));
 		}
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
 
@@ -1433,12 +1452,12 @@ final class Parser
 	}
 
 	private function property_update(int $start /** uint32 */, ast_expression $target, update_operator $operator, bool $postfix,
-		token_kind $terminator = token_kind::semicolon): ast_property_update
+		?token_kind $terminator = token_kind::semicolon): ast_property_update
 	{
 		if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable property');
 		}
-		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_property_update($start, $end, $target, $operator, $postfix);
 	}
 
@@ -1450,7 +1469,7 @@ final class Parser
 	}
 
 	/** Parse local updates in statements or loop headers; allow property targets in statements and the final for clause. */
-	private function update_statement(token_kind $terminator, bool $allow_property = false): ast_update_statement
+	private function update_statement(?token_kind $terminator, bool $allow_property = false): ast_update_statement
 	{
 		$cursor = $this->cursor;
 		$start = $cursor->position();
@@ -1463,14 +1482,14 @@ final class Parser
 					if ($terminator !== token_kind::semicolon) {
 						throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Indexed updates in for headers are deferred');
 					}
-					return new ast_index_update($start, $cursor->take($terminator, $terminator->label()) + 1, $target, $operator, false);
+					return new ast_index_update($start, $this->statement_end($terminator), $target, $operator, false);
 				}
 				return $this->property_update($start, $target, $operator, false, $terminator);
 			}
 		}
 		$name = $cursor->name($cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 		if ($postfix) $operator = $this->take_update_operator();
-		$end = $cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_update_statement($start, $end, $name, $operator, $postfix);
 	}
 
@@ -1486,14 +1505,20 @@ final class Parser
 
 	/** $start: token position. */
 	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent,
-		token_kind $terminator = token_kind::semicolon): ast_assignment_statement
+		?token_kind $terminator = token_kind::semicolon): ast_assignment_statement
 	{
 		$operator = $this->compound_operator();
 		$kind = $operator === null ? token_kind::assign : $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 		$this->cursor->take($kind, 'assignment operator');
 		$value = $this->assignment_value();
-		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
+	}
+
+	/** Header item spans exclude the separator; ordinary statement spans include their terminator. */
+	private function statement_end(?token_kind $terminator): int /** uint32 */
+	{
+		return $terminator === null ? $this->cursor->position() : $this->cursor->take($terminator, $terminator->label()) + 1;
 	}
 
 	/** STATIC METHODS */

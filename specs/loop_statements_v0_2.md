@@ -65,11 +65,12 @@ occurrence snapshots. This conservative policy prevents the first iteration's va
 from incorrectly proving conversions safe on subsequent iterations. No fixed point,
 alias graph, loop unrolling or repeated preparation pass is required.
 
-## Bounded for slice — 2026-11-04
+## For headers
 
-All flavors admit `for (initializer; condition; update) { statements }` with exactly
-one required declaration, assignment or discarded-value update initializer, one required condition expression,
-and one required assignment or discarded-value update clause. The initializer uses ordinary flavor syntax:
+All flavors admit `for (initializer; condition; update) { statements }` with two semicolons. Each clause can be empty or contain comma-separated items.
+Each initializer item uses ordinary declaration, write, update or standalone call syntax.
+An update item is a storage write, discarded increment/decrement or standalone call.
+Write each new binding with its flavor's declaration syntax. For example:
 
 ```text
 cpp: for (int i = 0; i < 10; i = i + 1) { echo i; }
@@ -80,11 +81,15 @@ js:  for (let i: int = 0; i < 10; i = i + 1) { echo i; }
 Existing inferred declarations (`auto`, PHP first write, JS `let`) and writes to
 existing locals are permitted in the initializer. An explicit declaration shadows
 outer storage. A bare PHP initializer write selects existing visible storage first;
-otherwise it declares a loop-local binding. Updates require existing local storage
-and cannot introduce declarations. All clauses use existing type/conversion rules;
+otherwise it declares a loop-local binding. Update writes require existing storage. Update clauses cannot introduce declarations. All clauses use existing type/conversion rules;
 the loop is not restricted to integer storage. Conditions use generated truthiness.
 
-Initialization runs once. The condition runs before every attempted iteration. On
+Initialization runs once. Within each clause, items execute in written order.
+The condition list runs before every attempted iteration. Earlier results are discarded
+(including a void call); only the final expression uses condition truthiness. An empty
+condition is unconditionally true. An exception skips the remaining items in that clause.
+For example, `for (; trace(), ready(); advance()) { work(); }` calls `trace` even on the
+final failed test. `for (;;) { work(); }` has no implicit call, test or update. On
 normal body completion or `continue`, the update runs once before the next test.
 Break, return or failure skip the update. A false first condition skips both body
 and update. Each reached clause retains its existing expression evaluation contract.
@@ -97,13 +102,10 @@ to pre-existing outer locals remain visible after it.
 Prepare initializer, condition, body and update once, in that order. Clear value
 knowledge before repeating regions and on exit, retaining types and bindings.
 Check the update even when a constant condition or body transfer prevents its
-execution. Completion conservatively permits zero iterations and does not prove
-a value function returns merely because the for body returns.
+execution. A written test conservatively permits zero iterations. With an omitted test,
+control can reach the next statement only through a break targeting this loop.
 
-Omitted clauses, comma-separated clauses,
-standalone call clauses and unbraced bodies remain deferred. Calls inside otherwise
-supported expressions are allowed. This slice adds no assignment expressions or
-general expression statements.
+Bodies require braces. Header separators do not introduce a general comma operator or value-producing assignment.
 
 
 ## Compound for headers — 2026-11-05
@@ -129,9 +131,7 @@ Break, return, body failure and a false initial condition suppress the update.
 Nested loops retain their own transfer targets and header scopes. Body-local
 shadowing cannot change the header's resolved destination.
 
-No source-level comma clauses, omitted clauses, assignment-expression
-values or new types are introduced. Preparation still visits each clause once;
-this is a reuse of assignment semantics, not a separate preparation operation.
+Preparation visits each header item once and shares ordinary assignment semantics.
 
 
 Prefix/postfix int64 increment/decrement is also admitted in both header positions

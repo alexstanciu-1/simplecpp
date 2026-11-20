@@ -25,20 +25,20 @@ final class Php_Grammar implements statement_grammar
 	}
 
 	/** First bare writes declare locals; prior body-local declarations make subsequent writes assignments. */
-	public function statement(Parser $parser, Body_Collection $collector): ast_statement
+	public function statement(Parser $parser, Body_Collection $collector, ?token_kind $terminator = token_kind::semicolon): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
 		$name = $cursor->name(token_kind::variable);
 		if ($parser->compound_operator() !== null) {
-			return $parser->assignment($start, $name, assignment_intent::existing_binding);
+			return $parser->assignment($start, $name, assignment_intent::existing_binding, $terminator);
 		}
 		if ($cursor->is(token_kind::assign)) {
 			if (!$collector->has_local($name)) {
-				return $parser->declaration($start, $name, null);
+				return $parser->declaration($start, $name, null, $terminator);
 			}
-			return $parser->assignment($start, $name, assignment_intent::declare_or_assign);
+			return $parser->assignment($start, $name, assignment_intent::declare_or_assign, $terminator);
 		}
-		return $parser->declaration($start, $name, $parser->named_type());
+		return $parser->declaration($start, $name, $parser->named_type(), $terminator);
 	}
 }

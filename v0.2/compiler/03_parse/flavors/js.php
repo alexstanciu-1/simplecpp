@@ -25,12 +25,12 @@ final class Js_Grammar implements statement_grammar
 	}
 
 	/** Let introduces a local with an optional type; bare writes require an existing binding. */
-	public function statement(Parser $parser, Body_Collection $collector): ast_statement
+	public function statement(Parser $parser, Body_Collection $collector, ?token_kind $terminator = token_kind::semicolon): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
 		if (!$cursor->keyword('let')) {
-			return $parser->assignment($start, $cursor->name(token_kind::identifier), assignment_intent::existing_binding);
+			return $parser->assignment($start, $cursor->name(token_kind::identifier), assignment_intent::existing_binding, $terminator);
 		}
 		$cursor->take_keyword('let');
 		$name = $cursor->name(token_kind::identifier);
@@ -39,6 +39,6 @@ final class Js_Grammar implements statement_grammar
 			$cursor->take(token_kind::colon, ':');
 			$type = $parser->named_type();
 		}
-		return $parser->declaration($start, $name, $type);
+		return $parser->declaration($start, $name, $type, $terminator);
 	}
 }

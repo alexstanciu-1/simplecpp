@@ -48,6 +48,14 @@ final class Body_Collection
 		return isset($this->local_names[$name]) || ($this->parent?->has_local($name) ?? false);
 	}
 
+	/** Establish a binding in its declaring scope before subsequent header items or statements are parsed. */
+	public function declare_local(ast_local_declaration $local): void
+	{
+		$this->declarations->declare($local);
+		$this->local_names[$local->declaration_key()] ??= $local;
+		$local->identify($this->storage_owner->next_id++);
+	}
+
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
@@ -65,9 +73,7 @@ final class Body_Collection
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {
-			$this->declarations->declare($statement);
-			$this->local_names[$statement->declaration_key()] ??= $statement;
-			$statement->identify($this->storage_owner->next_id++);
+			$this->declare_local($statement);
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
 		}
@@ -104,16 +110,12 @@ final class Body_Collection
 		}
 		elseif ($statement instanceof ast_loop_statement) {
 			if ($statement instanceof ast_for_statement) {
-				if (!($statement->initializer instanceof ast_update_statement)) {
-					$this->expression($statement->initializer instanceof ast_local_declaration
-						? $statement->initializer->initializer : $statement->initializer->value);
+				foreach ($statement->initializers as $item) {
+					if ($item instanceof ast_local_declaration) $this->expression($item->initializer);
+					else $this->statement($item, 0);
 				}
-				$this->expression($statement->condition);
-				if ($statement->update instanceof ast_property_update) {
-					$this->expression($statement->update->target);
-				} elseif ($statement->update instanceof ast_assignment_statement) {
-					$this->expression($statement->update->value);
-				}
+				foreach ($statement->conditions as $test) $this->expression($test);
+				foreach ($statement->updates as $item) $this->statement($item, 0);
 				return;
 			}
 			$value = $statement->condition;

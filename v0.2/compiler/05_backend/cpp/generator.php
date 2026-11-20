@@ -178,7 +178,9 @@ CPP;
 				yield $statement;
 				yield from $this->generator_bindings($statement->body);
 			} elseif ($statement instanceof ast_loop_statement) {
-				if ($statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) yield $statement->initializer;
+				if ($statement instanceof ast_for_statement) {
+					foreach ($statement->initializers as $item) if ($item instanceof ast_local_declaration) yield $item;
+				}
 				yield from $this->generator_bindings($statement->body);
 			}
 		}

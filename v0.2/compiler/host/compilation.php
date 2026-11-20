@@ -92,13 +92,12 @@ final class Compilation_Inspection
 					'body' => self::body($statement->body)];
 			}
 			elseif ($statement instanceof ast_loop_statement) {
-				$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
-					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				if ($statement instanceof ast_for_statement) {
-					$row['kind'] = 'for';
-					$row['initializer'] = self::binding($statement->initializer);
-					$row['update'] = self::binding($statement->update);
-				}
+					$row = ['kind' => 'for', 'initializers' => array_map(self::binding(...), $statement->initializers),
+						'conditions' => array_map(self::value(...), $statement->conditions),
+						'updates' => array_map(self::binding(...), $statement->updates), 'body' => self::body($statement->body)];
+				} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_throw_statement) {
@@ -164,8 +163,9 @@ final class Compilation_Inspection
 	}
 
 	/** @return mixed[] Declaration/write facts shared by body inspection and for headers. */
-	private static function binding(ast_local_declaration|ast_storage_write $statement): array /** array<string,mixed> */
+	private static function binding(ast_local_declaration|ast_storage_write|ast_call_statement $statement): array /** array<string,mixed> */
 	{
+		if ($statement instanceof ast_call_statement) return ['kind' => 'call', 'value' => self::value($statement->value)];
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'id' => $statement->id,
 				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
