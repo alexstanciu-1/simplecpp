@@ -416,6 +416,11 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_collection_append_native PROPERTIES TIMEOUT 600 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_boxed_fields_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_fields_native.py)
   set_tests_properties(compiler_boxed_fields_native PROPERTIES TIMEOUT 600 ENVIRONMENT "XDEBUG_MODE=off")
+  if(boxed_publication_type STREQUAL "OBJECT")
+    add_test(NAME compiler_indexed_descriptor_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_descriptor_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  endif()
   add_test(NAME compiler_boxed_index_mutation_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_index_mutation_native.py)
   set_tests_properties(compiler_boxed_index_mutation_native PROPERTIES TIMEOUT 600 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_collection_bootstrap_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_bootstrap_native.py)
