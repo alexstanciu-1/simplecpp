@@ -33,11 +33,13 @@ foreach (flavor::cases() as $flavor)
 	// Use actual NUL bytes in the source. Its escape grammar rejects ambiguous octal spellings.
 	$boundary = implode("\0", ['A', '0', '7', '8??/']);
 	$quoted = '"' . $boundary . '"';
+	$escape_source = $flavor === flavor::js ? 'echo `\\`\\0`;' : 'echo "\\0";';
+	$escape_output = $flavor === flavor::js ? "`\0" : "\0";
 	$code = $decl('string', 'first', '"héllo\\0world\\n"') . $decl('string', 'copy', $var('first'))
 		. $decl('string', 'empty', '""') . $decl('string', 'single', "'a\\nb'")
 		. 'echo ' . $var('first') . '; echo ' . $var('copy') . '; echo ' . $var('empty')
 		. '; echo ' . $var('single') . '; echo "!";'
-		. $decl('string', 'boundary', $quoted) . 'echo ' . $var('boundary') . '; echo ' . $quoted . '; return 8;';
+		. $decl('string', 'boundary', $quoted) . 'echo ' . $var('boundary') . '; echo ' . $quoted . ';' . $escape_source . 'return 8;';
 	$entry = $prepare($code);
 	$locals = array_values($entry->body()->locals);
 	verify($locals[0]->initializer instanceof ast_string_expression, 'String syntax missing');
@@ -58,7 +60,7 @@ foreach (flavor::cases() as $flavor)
 		'Expected byte-exact C++ spelling for both string construction and echo');
 	$direct = (new Cpp_Emitter())->emit($prepare('echo "direct"; return 8;'));
 	verify(!str_contains($direct, 'scpp::string') && !str_contains($direct, '<scpp/string.hpp>'), 'Direct echo allocated storage');
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!" . $boundary . $boundary)];
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!" . $boundary . $boundary . $escape_output)];
 	foreach ([
 		$decl('string', 'bad', '8'), $decl('int', 'bad', '"8"'),
 		$decl('bool', 'bad', '"true"'), $decl('float', 'bad', '"8.5"'),
@@ -74,6 +76,16 @@ foreach (flavor::cases() as $flavor)
 			continue;
 		}
 		throw new RuntimeException('Invalid string program accepted: ' . $invalid);
+	}
+	foreach (['"\\q"', '"\\07"', '"\\`"'] as $invalid_escape) {
+		try {
+			$prepare('echo ' . $invalid_escape . '; return 8;');
+		}
+		catch (diagnostic|diagnostic_group $error) {
+			verify(str_contains($error->getMessage(), 'Unsupported string escape'), $error->getMessage());
+			continue;
+		}
+		throw new RuntimeException('Invalid escape accepted: ' . $invalid_escape);
 	}
 	$literal = $locals[0]->initializer;
 	$literal->reset_preparation();

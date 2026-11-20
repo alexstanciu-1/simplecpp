@@ -52,6 +52,13 @@ Direct literal echo remains allocation-free and requires only the output API.
 String-value echo binds the value once before reading `data()` and `size()`. A
 returned string remains alive across both queries; calls execute exactly once.
 
+## Bootstrap escape selection proof
+
+The [escape selection proof](../tests/escape_selection_native.py) compiles the
+production decoder's single-byte switch as PHP++ and checks both flavor modes
+for all 256 input bytes. A decoded NUL is a present string. Unsupported escapes
+return null, and the escaped backtick produces a byte only in JS template mode.
+
 ## Explicit debt
 
 String globals remain rejected until initialization order and lifetime are designed;

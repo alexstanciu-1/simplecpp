@@ -37,11 +37,7 @@ final class String_Literals
 				$bytes .= (($next === "'") || ($next === '\\')) ? $next : '\\' . $next;
 				continue;
 			}
-			$decoded = match ($next) {
-				'\\' => '\\', '"' => '"', '$' => '$',
-					'`' => $js ? '`' : null, 'n' => "\n", 'r' => "\r", 't' => "\t", '0' => "\0",
-					default => null,
-			};
+			$decoded = self::decode_escape($next, $js);
 			$following = $text[$index + 1] ?? '';
 			if (($decoded === null) || (($next === '0') && ($following >= '0') && ($following <= '7'))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start() + $escape,
@@ -50,5 +46,23 @@ final class String_Literals
 			$bytes .= $decoded;
 		}
 		return $bytes;
+	}
+
+	/** Decode one byte following a backslash, or return null if the escape is unsupported. */
+	private static function decode_escape(string $next, bool $js): ?string
+	{
+		switch ($next) {
+			case '\\': return '\\';
+			case '"': return '"';
+			case '$': return '$';
+			case '`':
+				if ($js) return '`';
+				return null;
+			case 'n': return "\n";
+			case 'r': return "\r";
+			case 't': return "\t";
+			case '0': return "\0";
+			default: return null;
+		}
 	}
 }
