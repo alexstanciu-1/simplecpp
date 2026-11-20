@@ -1,0 +1,81 @@
+// The fixed grammar's return statement owns one decimal token by index.
+final class Function_Return {
+	public readonly int $start;
+	public readonly int $end;
+	public readonly int $literal_token;
+
+	public function __construct(int $start, int $end, int $literal_token) {
+		$this->start = $start;
+		$this->end = $end;
+		$this->literal_token = $literal_token;
+	}
+}
+
+// The completed braced body owns its statement and observes its declaring function.
+final class Function_Body {
+	public readonly int $start;
+	public readonly int $end;
+	public readonly Function_Return $statement;
+	private weak<Function_Declaration> $parent;
+
+	public function __construct(int $start, int $end, Function_Return $statement) {
+		if ($statement->start <= $start || $end <= $statement->end) {
+			throw Exception::make("Invalid function body range");
+		}
+		$this->start = $start;
+		$this->end = $end;
+		$this->statement = $statement;
+	}
+
+	public function attach(Function_Declaration $parent): void {
+		if (!$this->parent->is_empty()) {
+			throw Exception::make("Function body is already attached");
+		}
+		$this->parent = weak($parent);
+	}
+
+	public function function_declaration(): ?Function_Declaration {
+		return lock($this->parent);
+	}
+}
+
+// Port of the concrete top-level declaration's header and body transition.
+final class Function_Declaration {
+	public readonly string $short_name;
+	public readonly int $start;
+	public readonly int $header_end;
+	private ?Function_Body $completed_body = null;
+
+	public function __construct(string $name, int $start, int $header_end) {
+		if ($start < 0 || $header_end < $start) {
+			throw Exception::make("Invalid function header range");
+		}
+		$this->short_name = $name;
+		$this->start = $start;
+		$this->header_end = $header_end;
+	}
+
+	public function symbol_key(): string {
+		return "func:" . $this->short_name;
+	}
+
+	public static function complete_body(Function_Declaration $function, Function_Body $body): void {
+		if ($function->completed_body !== null || $body->start < $function->header_end) {
+			throw Exception::make("Invalid function body publication");
+		}
+		$body->attach($function);
+		$function->completed_body = $body;
+	}
+
+	public function body(): Function_Body {
+		$body = $this->completed_body;
+		if ($body === null) {
+			throw Exception::make("Function body is not complete");
+		}
+		return $body;
+	}
+
+	public function end(): int {
+		return $this->body()->end;
+	}
+}

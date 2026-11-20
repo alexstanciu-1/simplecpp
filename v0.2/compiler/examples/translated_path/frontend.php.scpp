@@ -95,27 +95,16 @@ function tokenize_source(string $path, string $text): vector<Token_Span> {
 	return $tokens;
 }
 
-// Owns the exact bytes addressed by every retained syntax span in this file.
+// Owns the immutable bytes and token positions addressed by the retained syntax.
 final class Translation_Source {
 	public readonly string $path;
 	public readonly string $text;
+	public readonly vector<Token_Span> $tokens;
 
 	public function __construct(string $path, string $text) {
 		$this->path = $path;
 		$this->text = $text;
-	}
-}
-
-// A parsed nullary declaration with an integer-literal return.
-final class Function_Syntax {
-	public readonly Translation_Source $source;
-	public readonly string $name;
-	public readonly Token_Span $literal;
-
-	public function __construct(Translation_Source $source, string $name, Token_Span $literal) {
-		$this->source = $source;
-		$this->name = $name;
-		$this->literal = $literal;
+		$this->tokens = tokenize_source($path, $text);
 	}
 }
 
@@ -135,16 +124,14 @@ final class Call_Syntax {
 // The parse cursor consumes tokens from only its own source.
 final class Translation_Parser {
 	private Translation_Source $source;
-	private vector<Token_Span> $tokens;
 	private int $index = 0;
 
 	public function __construct(Translation_Source $source) {
 		$this->source = $source;
-		$this->tokens = tokenize_source($source->path, $source->text);
 	}
 
 	private function expect(Token_Kind $kind, string $message): Token_Span {
-		$token = $this->tokens[$this->index];
+		$token = $this->source->tokens[$this->index];
 		if ($token->kind !== $kind) {
 			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
 		}
@@ -180,19 +167,34 @@ final class Translation_Parser {
 		$this->expect(Token_Kind::Close_Paren, "Expected )");
 	}
 
-	public function parse_declaration(): Function_Syntax {
+	private function function_header(): Function_Declaration {
+		$start = $this->index;
 		$this->keyword("function");
 		$name = $this->spelling($this->name_token());
 		$this->nullary();
 		$this->expect(Token_Kind::Colon, "Expected :");
 		$this->keyword("int");
+		return new Function_Declaration($name, $start, $this->index);
+	}
+
+	private function read_body(): Function_Body {
+		$body_start = $this->index;
 		$this->expect(Token_Kind::Open_Brace, "Expected {");
+		$return_start = $this->index;
 		$this->keyword("return");
-		$literal = $this->expect(Token_Kind::Decimal, "Expected decimal integer");
+		$literal = $this->index;
+		$this->expect(Token_Kind::Decimal, "Expected decimal integer");
 		$this->expect(Token_Kind::Semicolon, "Expected ;");
+		$statement = new Function_Return($return_start, $this->index, $literal);
 		$this->expect(Token_Kind::Close_Brace, "Expected }");
+		return new Function_Body($body_start, $this->index, $statement);
+	}
+
+	public function parse_declaration(): Function_Declaration {
+		$function = $this->function_header();
+		Function_Declaration::complete_body($function, $this->read_body());
 		$this->expect(Token_Kind::End, "Expected end of source");
-		return new Function_Syntax($this->source, $name, $literal);
+		return $function;
 	}
 
 	public function parse_entry(): Call_Syntax {

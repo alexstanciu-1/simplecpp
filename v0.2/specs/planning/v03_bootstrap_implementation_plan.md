@@ -2138,12 +2138,27 @@ syntax, collection owns the one declaration, preparation checks the value and
 settles the call, and lowering emits C++ using the runtime entry contract.
 
 The harness compares generated-program behavior with the production PHP compiler.
-It compares the source path, position and message for a missing semicolon, an
-unknown call after a changed declaration was prepared, and int64 overflow. The same
-translated instance keeps the previous output and declaration on failure, reuses
-the declaration on entry repair, and emits the same bytes as a fresh translation.
-A later declaration edit changes the executable result while the retained earlier
-declaration still resolves its span against the original bytes.
+For the nullary integer function it ports the production header and body-completion
+transition, with a single owned return statement and a weak body-to-declaration
+link. The body provides the completed end position. The collected definition
+owns its source bytes and tokens alongside the completed declaration. The harness
+compares the symbol key and token ranges with the actual PHP AST.
+
+It compares the source location and message for an incomplete entry, an unknown
+call after definition preparation, int64 overflow, and a missing closing brace
+after parsing the return statement. These failed edits preserve the declaration,
+caller binding, symbol head and output. An entry edit reuses the definition and
+its symbol identity. Repair in the same instance matches a fresh build.
+
+The compilation's symbol table owns one entry per canonical function key. The
+entry holds a weak head and the prepared caller retains the entry. Definition
+replacement retargets it while reusing the unchanged caller. Explicit deletion
+publishes a tombstone and produces a missing-call diagnostic at the same
+location as removing the definition file in PHP. The last successful C++
+remains available. Restoration fills the same entry and matches fresh output.
+A reader retaining the previous definition can still resolve its literal span
+against the old tokens and bytes. Reattaching its body to a second declaration
+fails without moving the parent or completing that declaration.
 
 The proof uses the current 31-value-bit native entry target and the bounded
 PHP-flavor grammar above. It lives under

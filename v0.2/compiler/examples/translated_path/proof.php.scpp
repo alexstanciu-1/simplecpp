@@ -17,6 +17,7 @@ function save_generated(string $path, string $text): void {
 
 function check_failed_edit(Translation $compiler, string $definition, string $entry): void {
 	$old_declaration = $compiler->declaration();
+	$old_entry = $compiler->entry_binding();
 	$old_output = $compiler->published_output();
 	$failed = false;
 	try {
@@ -27,7 +28,41 @@ function check_failed_edit(Translation $compiler, string $definition, string $en
 	}
 	assert_translation($failed, "Expected translated diagnostic");
 	assert_translation($compiler->declaration() === $old_declaration, "Failure replaced the declaration");
+	assert_translation($compiler->entry_binding() === $old_entry, "Failure replaced the entry binding");
+	if ($old_entry !== null) {
+		assert_translation($old_entry->symbol->declaration() === $old_declaration, "Failure retargeted the published symbol");
+	}
 	assert_translation($compiler->published_output() === $old_output, "Failure replaced the published C++");
+}
+
+function print_function_ast(Function_Declaration $function): void {
+	$body = $function->body();
+	$statement = $body->statement;
+	assert_translation($body->function_declaration() === $function, "Function body has the wrong parent");
+	echo $function->symbol_key(), "|", $function->start, "|", $function->header_end, "|", $function->end(), "|",
+		$body->start, "|", $body->end, "|", $statement->start, "|", $statement->end, "|", $statement->literal_token, "\n";
+}
+
+function check_reused_body(Function_Declaration $function): void {
+	$body = $function->body();
+	$other = new Function_Declaration($function->short_name, $function->start, $function->header_end);
+	try {
+		Function_Declaration::complete_body($other, $body);
+		throw Exception::make("Completed a declaration with an attached body");
+	} catch (Exception $failure) {
+		if ($failure->get_message() !== "Function body is already attached") {
+			throw $failure;
+		}
+	}
+	assert_translation($body->function_declaration() === $function, "Failed attachment replaced the parent");
+	try {
+		$other->body();
+		throw Exception::make("Failed attachment completed the declaration");
+	} catch (Exception $failure) {
+		if ($failure->get_message() !== "Function body is not complete") {
+			throw $failure;
+		}
+	}
 }
 
 $definition = read_source("definition.php");
@@ -37,12 +72,17 @@ $incomplete = read_source("incomplete.source");
 $fixed = read_source("fixed.source");
 $updated = read_source("updated.source");
 $overflow = read_source("overflow.source");
+$unclosed = read_source("unclosed.source");
 
 $compiler = new Translation();
 $first = $compiler->compile($definition, $main);
 $declaration = $compiler->declaration();
 if ($declaration === null) { throw Exception::make("Missing prepared declaration"); }
+$initial_entry = $compiler->entry_binding();
+if ($initial_entry === null) { throw Exception::make("Missing prepared caller"); }
 save_generated("initial.cpp", $first);
+print_function_ast($declaration->scope->declaration);
+check_reused_body($declaration->scope->declaration);
 
 check_failed_edit($compiler, $definition, $incomplete);
 check_failed_edit($compiler, $updated, $bad);
@@ -53,13 +93,48 @@ assert_translation($compiler->declaration() === $declaration, "Recovery prepared
 $fresh = new Translation();
 assert_translation($recovered === $fresh->compile($definition, $fixed), "Recovery differs from a fresh compilation");
 save_generated("recovered.cpp", $recovered);
+$recovered_entry = $compiler->entry_binding();
+if ($recovered_entry === null) { throw Exception::make("Recovery did not publish the entry"); }
+$symbol = $recovered_entry->symbol;
+assert_translation($symbol === $initial_entry->symbol, "Entry edit replaced the symbol for the same key");
+assert_translation($recovered_entry->target() === $declaration, "Initial symbol target is wrong");
 
+check_failed_edit($compiler, $unclosed, $fixed);
 $next = $compiler->compile($updated, $fixed);
 assert_translation($compiler->declaration() !== $declaration, "Changed declaration was reused");
 assert_translation($next === (new Translation())->compile($updated, $fixed), "Edited declaration differs from a fresh compilation");
-$old_syntax = $declaration->scope->declaration;
-$old_span = $old_syntax->literal;
-assert_translation(substr($old_syntax->source->text, $old_span->offset, $old_span->length) === "8",
+$edited_declaration = $compiler->declaration();
+assert_translation($compiler->entry_binding() === $recovered_entry, "Definition edit replaced the unchanged caller binding");
+assert_translation($recovered_entry->symbol === $symbol && $recovered_entry->target() === $edited_declaration,
+	"Definition edit failed to retarget the retained symbol");
+$old_source = $declaration->scope->source;
+$old_function = $declaration->scope->declaration;
+$old_body = $old_function->body();
+$old_span = $old_source->tokens[$old_body->statement->literal_token];
+assert_translation($old_body->function_declaration() === $old_function, "Old body parent was replaced");
+assert_translation(substr($old_source->text, $old_span->offset, $old_span->length) === "8",
 	"An old literal span lost its source snapshot");
 save_generated("updated.cpp", $next);
+
+try {
+	$compiler->compile(null, $fixed);
+	throw Exception::make("Removed declaration still binds");
+} catch (Translation_Diagnostic $error) {
+	echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+}
+assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
+	"Deletion replaced the retained entry");
+assert_translation($compiler->declaration() === null && $symbol->declaration() === null,
+	"Deletion failed to publish a tombstone");
+assert_translation($compiler->published_output() === $next, "Deletion replaced the last good output");
+
+$restored = $compiler->compile($definition, $fixed);
+assert_translation($compiler->declaration() !== $declaration, "Restoration reused the retired declaration");
+assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
+	"Restoration replaced the retained entry");
+assert_translation($recovered_entry->target() === $compiler->declaration(), "Restoration did not retarget the caller");
+assert_translation($restored === (new Translation())->compile($definition, $fixed), "Restoration differs from a fresh build");
+assert_translation(substr($old_source->text, $old_span->offset, $old_span->length) === "8",
+	"Restoration changed a retained source span");
+save_generated("restored.cpp", $restored);
 return 0;

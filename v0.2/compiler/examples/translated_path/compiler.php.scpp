@@ -9,18 +9,55 @@ final class Prepared_Declaration {
 	}
 }
 
-// The entry binding retains the declaration through lowering.
-final class Prepared_Call {
-	public readonly Prepared_Declaration $target;
+// Stable identity from the compilation scope. The current generation owns the head.
+final class Translation_Symbol {
+	private weak<Prepared_Declaration> $head;
 
-	public function __construct(Prepared_Declaration $target) {
-		$this->target = $target;
+	public function publish(?Prepared_Declaration $declaration): void {
+		$this->head = weak($declaration);
+	}
+
+	public function declaration(): ?Prepared_Declaration {
+		return lock($this->head);
 	}
 }
 
-function prepare_literal(Function_Syntax $syntax): int {
-	$source = $syntax->source;
-	$token = $syntax->literal;
+// One entry per canonical key, including keys whose heads have been withdrawn.
+final class Translation_Symbols {
+	private hash<Translation_Symbol, string> $entries;
+
+	public function entry(string $key): Translation_Symbol {
+		$entry = hash_get_or_null($this->entries, $key);
+		if ($entry === null) {
+			$entry = new Translation_Symbol();
+			$this->entries[$key] = $entry;
+		}
+		return $entry;
+	}
+}
+
+// Preparation retains a stable symbol rather than a snapshot of its declaration.
+final class Prepared_Call {
+	public readonly Call_Syntax $syntax;
+	public readonly Translation_Symbol $symbol;
+
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
+		$this->syntax = $syntax;
+		$this->symbol = $symbol;
+	}
+
+	public function target(): Prepared_Declaration {
+		$target = $this->symbol->declaration();
+		if ($target === null) {
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name);
+		}
+		return $target;
+	}
+}
+
+function prepare_literal(Translation_Scope $scope): int {
+	$source = $scope->source;
+	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
 		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
 	}
@@ -36,32 +73,29 @@ function prepare_literal(Function_Syntax $syntax): int {
 	return $value;
 }
 
-// Owns and resolves the single collected declaration in this grammar.
+// The collected definition owns the source generation and its completed function.
 final class Translation_Scope {
-	public readonly Function_Syntax $declaration;
+	public readonly Translation_Source $source;
+	public readonly Function_Declaration $declaration;
 
-	public function __construct(Function_Syntax $declaration) {
+	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
+		$declaration->body();
+		$this->source = $source;
 		$this->declaration = $declaration;
 	}
 
-	public function resolve(string $name): ?Function_Syntax {
-		if ($this->declaration->name === $name) {
+	public function resolve(string $key): ?Function_Declaration {
+		if ($this->declaration->symbol_key() === $key) {
 			return $this->declaration;
 		}
 		return null;
 	}
 }
 
-function prepare_call(Prepared_Declaration $candidate, Call_Syntax $call): Prepared_Call {
-	if ($candidate->scope->resolve($call->name) === null) {
-		throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
-	}
-	return new Prepared_Call($candidate);
-}
-
 function emit_translation(Prepared_Call $entry): string {
-	$name = "source_" . bin2hex($entry->target->scope->declaration->name);
-	$value = (string)$entry->target->value;
+	$target = $entry->target();
+	$name = "source_" . bin2hex($target->scope->declaration->short_name);
+	$value = (string)$target->value;
 	return "#include <scpp/core/scalars.hpp>\n#include <scpp/entry.hpp>\n"
 		. "SCPP_REQUIRE_ENTRY_TARGET(31);\n"
 		. "scpp::int64 " . $name . "() { return " . $value . "LL; }\n"
@@ -69,31 +103,80 @@ function emit_translation(Prepared_Call $entry): string {
 		. "int main() { return scpp::run_entry_with_exceptions(entry); }\n";
 }
 
-// The last successful preparation and emission belong to one retained compiler.
+// Retains the current definition, the caller binding, and the last successful emission.
 final class Translation {
+	private readonly Translation_Symbols $symbols;
 	private ?Prepared_Declaration $definition = null;
+	private ?Prepared_Call $entry = null;
 	private string $output = "";
 
-	public function compile(string $definition_text, string $entry_text): string {
+	public function __construct() {
+		$this->symbols = new Translation_Symbols();
+	}
+
+	public function compile(?string $definition_text, string $entry_text): string {
 		$definition = $this->definition;
-		if ($definition === null || $definition_text !== $definition->scope->declaration->source->text) {
-			$parser = new Translation_Parser(new Translation_Source("definition.php", $definition_text));
-			$scope = new Translation_Scope($parser->parse_declaration());
-			$value = prepare_literal($scope->declaration);
-			$definition = new Prepared_Declaration($scope, $value);
+		if (!isset($definition_text)) {
+			$definition = null;
+		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
+			$source = new Translation_Source("definition.php", $definition_text);
+			$parser = new Translation_Parser($source);
+			$scope = new Translation_Scope($source, $parser->parse_declaration());
+			$definition = new Prepared_Declaration($scope, prepare_literal($scope));
 		}
 
-		$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
-		$call = $parser->parse_entry();
-		$entry = prepare_call($definition, $call);
+		$call = $this->entry_syntax();
+		if ($call === null || $entry_text !== $call->source->text) {
+			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
+			$call = $parser->parse_entry();
+		}
+		$key = "func:" . $call->name;
+		if ($definition !== null && $definition->scope->resolve($key) === null) {
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+		}
+
+		$entry = $this->entry;
+		if ($entry === null || $entry->syntax !== $call) {
+			$entry = new Prepared_Call($call, $this->symbols->entry($key));
+		}
+		$this->publish_definition($definition);
 		$output = emit_translation($entry);
-		$this->definition = $definition;
+		$this->entry = $entry;
 		$this->output = $output;
 		return $output;
 	}
 
+	private function publish_definition(?Prepared_Declaration $definition): void {
+		$previous = $this->definition;
+		if ($definition === $previous) {
+			return;
+		}
+		if ($previous !== null) {
+			$old_key = $previous->scope->declaration->symbol_key();
+			if ($definition === null || $definition->scope->declaration->symbol_key() !== $old_key) {
+				$this->symbols->entry($old_key)->publish(null);
+			}
+		}
+		if ($definition !== null) {
+			$this->symbols->entry($definition->scope->declaration->symbol_key())->publish($definition);
+		}
+		$this->definition = $definition;
+	}
+
 	public function declaration(): ?Prepared_Declaration {
 		return $this->definition;
+	}
+
+	public function entry_binding(): ?Prepared_Call {
+		return $this->entry;
+	}
+
+	public function entry_syntax(): ?Call_Syntax {
+		$entry = $this->entry;
+		if ($entry === null) {
+			return null;
+		}
+		return $entry->syntax;
 	}
 
 	public function published_output(): string {
