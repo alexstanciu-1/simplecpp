@@ -86,130 +86,138 @@ final class Cpp_Emitter
 		return $this->inline_adapters->files() + $this->concrete_collections->files();
 	}
 
-	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
-	public function declaration(ast_function_declaration|ast_global_declaration|ast_type_declaration $node,
-		array &$includes /** array<string,bool> */): string
+	/** Spell an enum definition and its requested helper prototypes. @param bool[] $includes */
+	public function enum_declaration(ast_enum_declaration $node, array &$includes /** array<string,bool> */): string
 	{
-		if ($node instanceof ast_enum_declaration) {
-			$type = $node->definition;
-			$storage = $type->storage();
-			foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
-			$lines = [];
-			$ordinal = 0;
-			foreach ($node->cases as $case) {
-				$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
-					. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
-			}
-			$helper = '';
-			foreach (dependency_use::cases() as $use) {
-				if (!$this->needs_enum_helper($node, $use)) continue;
-				$binding = $type->helper_function($use);
-				$includes[$binding->header] = true;
-				$helper .= $this->enum_helper_signature($binding) . ";\n";
-			}
-			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
-				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
+		$type = $node->definition;
+		$storage = $type->storage();
+		foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
+		$lines = [];
+		$ordinal = 0;
+		foreach ($node->cases as $case) {
+			$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
+				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
-		if ($node instanceof ast_record_declaration) {
-			$layout = [];
-			$base = $node->definition->base();
-			foreach ($node->fields as $field) {
-				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$type = $field->storage_type();
-				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
-				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
-					$type, $field->initializer, $field->conversion, $includes);
-				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
-			}
-			foreach ($node->static_properties as $property) {
-				$type = $property->type_def();
-				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
-			}
-			$virtual = $node->definition->polymorphic();
-			$authored = isset($node->methods['__destruct']);
-			if ($virtual || $authored) {
-				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
-				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
-				$layout[] = "\t$name(const $name&) = default;";
-				$layout[] = "\t$name($name&&) = default;";
-				$layout[] = "\t$name& operator=(const $name&) = default;";
-				$layout[] = "\t$name& operator=($name&&) = default;";
-			}
-			foreach ($node->definition->effective_methods() as $method) {
-				if (!$method->has_virtual_dispatch()) continue;
-				if ($node->kind === record_kind::interface_type) {
-					$inherited = self::exact_interface_slot($node, $method);
-					if ($inherited !== null) {
-						// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
-						$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
-						continue;
-					}
-				}
-				$type = $method->return_type_def();
-				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
-				$result = $this->member_type($type);
-				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
-					. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
-			}
-			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
-				foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
-					. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
-			}
-			$final_slots = [];
-			foreach ($node->definition->interface_forwards as $method) {
-				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
-					&& self::exact_interface_slot($node, $method) === null;
-				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
-				if ($method->is_final && $method->has_virtual_dispatch()) {
-					$final_slots[] = $slot . ' final;';
-					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
-				} else {
-					$layout[] = $slot . ';';
+		$helper = '';
+		foreach (dependency_use::cases() as $use) {
+			if (!$this->needs_enum_helper($node, $use)) continue;
+			$binding = $type->helper_function($use);
+			$includes[$binding->header] = true;
+			$helper .= $this->enum_helper_signature($binding) . ";\n";
+		}
+		return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
+			. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
+	}
+
+	/** Spell the payload layout shared by private units and published headers. @param bool[] $includes */
+	public function record_declaration(ast_record_declaration $node, array &$includes /** array<string,bool> */): string
+	{
+		$layout = [];
+		$base = $node->definition->base();
+		foreach ($node->fields as $field) {
+			foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$type = $field->storage_type();
+			$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
+			$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
+				$type, $field->initializer, $field->conversion, $includes);
+			$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
+		}
+		foreach ($node->static_properties as $property) {
+			$type = $property->type_def();
+			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+			$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
+		}
+		$virtual = $node->definition->polymorphic();
+		$authored = isset($node->methods['__destruct']);
+		if ($virtual || $authored) {
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
+			if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
+			$layout[] = "\t$name(const $name&) = default;";
+			$layout[] = "\t$name($name&&) = default;";
+			$layout[] = "\t$name& operator=(const $name&) = default;";
+			$layout[] = "\t$name& operator=($name&&) = default;";
+		}
+		foreach ($node->definition->effective_methods() as $method) {
+			if (!$method->has_virtual_dispatch()) continue;
+			if ($node->kind === record_kind::interface_type) {
+				$inherited = self::exact_interface_slot($node, $method);
+				if ($inherited !== null) {
+					// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
+					$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
+					continue;
 				}
 			}
-			if (isset($node->methods['__construct'])) {
-				$constructor = $node->methods['__construct'];
-				$params = $this->constructor_parameters($constructor, $includes);
-				if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
-				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\t" . $name . '(' . $params . ');';
-				if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
-			}
-			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
-				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
-			}
-			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
-			$exception = $node->definition->exception_base();
-			if ($exception !== null) {
-				foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
-				$bases[] = 'public ::scpp::exception_payload';
-			}
-			$interface_bases = [];
-			foreach ($node->definition->interfaces() as $interface) {
-				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
-			}
-			$view = '';
-			if ($final_slots !== []) {
-				// A sibling base can implement the new interfaces without overriding the class's final slot.
-				$name = self::final_view_name($node);
-				$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
-				$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
-			}
-			array_push($bases, ...$interface_bases);
-			return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-				. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+			$type = $method->return_type_def();
+			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+			$result = $this->member_type($type);
+			$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+				. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
+				. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 		}
-		if ($node instanceof ast_function_declaration) {
-			if ($node->has_virtual_dispatch()) return '';
-			return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
-				. $this->signature($node, $includes) . ';';
+		foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+			foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
+				. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
 		}
+		$final_slots = [];
+		foreach ($node->definition->interface_forwards as $method) {
+			foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
+				&& self::exact_interface_slot($node, $method) === null;
+			$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+				. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
+			if ($method->is_final && $method->has_virtual_dispatch()) {
+				$final_slots[] = $slot . ' final;';
+				$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
+			} else {
+				$layout[] = $slot . ';';
+			}
+		}
+		if (isset($node->methods['__construct'])) {
+			$constructor = $node->methods['__construct'];
+			$params = $this->constructor_parameters($constructor, $includes);
+			if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\t" . $name . '(' . $params . ');';
+			if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
+		}
+		if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
+			$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
+		}
+		$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
+		$exception = $node->definition->exception_base();
+		if ($exception !== null) {
+			foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
+			$bases[] = 'public ::scpp::exception_payload';
+		}
+		$interface_bases = [];
+		foreach ($node->definition->interfaces() as $interface) {
+			if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
+		}
+		$view = '';
+		if ($final_slots !== []) {
+			// A sibling base can implement the new interfaces without overriding the class's final slot.
+			$name = self::final_view_name($node);
+			$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
+			$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
+		}
+		array_push($bases, ...$interface_bases);
+		return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+	}
+
+	/** Spell a free prototype, including a generator layout when needed. @param bool[] $includes */
+	public function function_declaration(ast_function_declaration $node, array &$includes /** array<string,bool> */): string
+	{
+		if ($node->has_virtual_dispatch()) return '';
+		return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
+			. $this->signature($node, $includes) . ';';
+	}
+
+	/** Spell the extern declaration shared by private units and published headers. @param bool[] $includes */
+	public function global_declaration(ast_global_declaration $node, array &$includes /** array<string,bool> */): string
+	{
 		foreach ($node->type_def()->cpp_headers() as $header) {
 			$includes[$header] = true;
 		}
@@ -600,7 +608,7 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototype = $this->declaration($function, $required_headers);
+				$prototype = $this->function_declaration($function, $required_headers);
 				if ($prototype !== '') $prototypes .= $prototype . "\n";
 			}
 		}
@@ -627,7 +635,7 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototypes .= $this->declaration($global, $required_headers) . "\n";
+				$prototypes .= $this->global_declaration($global, $required_headers) . "\n";
 			}
 		}
 		foreach ($file->globals() as $global) {
@@ -681,7 +689,7 @@ CPP;
 			return;
 		}
 		if ($record instanceof ast_enum_declaration) {
-			$text .= $this->declaration($record, $runtime_headers) . "\n";
+			$text .= $this->enum_declaration($record, $runtime_headers) . "\n";
 			return;
 		}
 		if ($record->definition->base() !== null) {
@@ -698,7 +706,7 @@ CPP;
 				$owners[$type->payload->name] = $type->payload->shared;
 			}
 		}
-		$text .= $this->declaration($record, $runtime_headers) . "\n";
+		$text .= $this->record_declaration($record, $runtime_headers) . "\n";
 	}
 
 	/**
