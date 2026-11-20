@@ -51,11 +51,7 @@ final class Compilation_Inspection
 		$result = self::body($program->body());
 		$result['native_int_digits'] = $program->target->digits;
 		$result['functions'] = [];
-		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
-			'name' => $global->name(), 'type' => $global->type_def()->name,
-			'initializer' => self::scalar($global->type_def()->convert_constant(
-				$global->initialization(), $global->initializer->constant())),
-		], $program->file->globals());
+		$result['globals'] = array_map(self::global_row(...), $program->file->globals());
 		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
 			'name' => $constant->name(), 'type' => $constant->type_def()->name,
 			'conversion' => value_conversion::name($constant->initialization()), 'initializer' => self::value($constant->initializer),
@@ -68,6 +64,14 @@ final class Compilation_Inspection
 				], $function->parameters), 'body' => $function->optional_body() === null ? null : self::body($function->body())];
 		}
 		return $result;
+	}
+
+	/** Inspect the converted global initializer in both whole-program and per-file reports. @return mixed[] */
+	public static function global_row(ast_global_declaration $global): array /** array<string,mixed> */
+	{
+		$row = ['name' => $global->name(), 'type' => $global->type_def()->name];
+		self::write_scalar($row, 'initializer', $global->type_def()->evaluate_constant($global->initialization(), $global->initializer));
+		return $row;
 	}
 
 	/**
@@ -210,8 +214,9 @@ final class Compilation_Inspection
 		if ($value instanceof ast_throw_expression) {
 			return ['kind' => 'throw', 'value' => self::value($value->operand)];
 		}
-		$row = ['type' => $value->type_def()->name,
-			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
+		$row = ['type' => $value->type_def()->name];
+		self::write_scalar($row, 'constant', $value->constant());
+		$row['constant_known'] = $value->constant_known();
 		if ($value instanceof ast_construction_expression) {
 			$row['arguments'] = array_map(self::value(...), $value->arguments);
 		}
@@ -299,13 +304,13 @@ final class Compilation_Inspection
 		}
 		return $row;
 	}
-	/** Preserve scalar identities and exact numeric values in the JSON inspection view. */
-	private static function scalar(int|float|bool|null|constant_evaluation $value /** int64|float64|bool|null|constant_evaluation */): string|bool|null
+	/** Write the JSON field directly; its numeric strings must round-trip exactly. @param mixed[] $row */
+	private static function write_scalar(array &$row, string $key,
+		int|float|bool|null|constant_evaluation $value /** int64|float64|bool|null|constant_evaluation */): void
 	{
-		if (is_float($value)) {
-			return type_float64::instance()->cpp_constant($value);
-		}
-		return $value === constant_evaluation::unavailable ? null : (is_int($value) ? (string) $value : $value);
+		if (is_int($value)) $row[$key] = (string)$value;
+		elseif (is_float($value)) $row[$key] = type_float64::instance()->cpp_constant($value);
+		elseif (is_bool($value)) $row[$key] = $value;
+		else $row[$key] = null;
 	}
-
 }
