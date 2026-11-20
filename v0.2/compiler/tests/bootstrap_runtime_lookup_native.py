@@ -53,7 +53,49 @@ def prove(work, flavor):
     ], unaffected_source='main.' + flavor, unaffected_revisions={2})
 
 
+def lazy_session(work, flavor):
+    forms, _, klass, _ = syntax(flavor)
+    fn, infer = forms['function'], forms['infer']
+    v, access = forms['v'], forms['access']
+    types = klass('Descriptor') + klass('RegistrySession', forms['field']('entries', 'hash<Descriptor,string>'))
+    entries = f'{v}session{access}entries'
+    factory = fn('make_descriptor', 'Descriptor', [], 'echo "F"; return new Descriptor();')
+    resolve = fn('resolve', '?Descriptor', [('session', 'RegistrySession'), ('name', 'string')],
+                 infer('cached', f'hash_get_or_null({entries},{v}name)') +
+                 f'if ({v}cached !== null) {{return {v}cached;}}'
+                 f'if ({v}name !== "fixed") {{return null;}}' +
+                 infer('created', 'make_descriptor()') +
+                 f'{entries}[{v}name]={v}created; return {v}created;')
+
+    # A tiny source consumer for bodies of the form name(...). Each edit passes
+    # a new body to the same live session, independently of the host rebuild.
+    name_slice = {'php': 'substr($body,0,$end)', 'cpp': 'body.substr(0,end)', 'js': 'body.slice(0,end)'}[flavor]
+    consumer = fn('bind_body', '?Descriptor', [('session', 'RegistrySession'), ('body', 'string')],
+                  infer('end', '0') +
+                  f'while ({v}end < strlen({v}body) && {v}body[{v}end] != 40) {{{v}end++;}}'
+                  f'return resolve({v}session,{name_slice});')
+    main = infer('session', 'new RegistrySession()')
+    main += infer('first', f'bind_body({v}session,"fixed(1)")')
+    main += infer('edited', f'bind_body({v}session,"fixed(2)")')
+    main += f'if ({v}first === null || {v}first !== {v}edited) {{return 91;}}'
+    main += f'if (bind_body({v}session,"missing()") !== null || count({entries}) != 1) {{return 92;}}'
+    main += infer('fresh', 'new RegistrySession()')
+    main += f'if (count({v}fresh{access}entries) != 0) {{return 93;}}'
+    main += infer('other', f'bind_body({v}fresh,"fixed(2)")')
+    main += f'if ({v}other === null || {v}other === {v}first) {{return 94;}} return 8;'
+    sources = dict(types=types, factory=factory, registry=resolve, consumer=consumer, main=main)
+    revisions(work, flavor, sources, [
+        (None, None, b'FF'), (None, None, b'FF'),
+        ('factory', factory.replace('"F"', '"G"'), b'GG'),
+        ('factory', None, 'Unknown function'), ('factory', factory, b'FF'),
+    ], unaffected_source='registry.' + flavor, unaffected_revisions={2})
+
+
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-runtime-lookup-') as tmp:
         for flavor in ('php', 'cpp', 'js'):
             prove(Path(tmp), flavor)
+        lazy = Path(tmp) / "lazy"
+        lazy.mkdir()
+        for flavor in ('php', 'cpp', 'js'):
+            lazy_session(lazy, flavor)

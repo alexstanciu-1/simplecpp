@@ -54,6 +54,12 @@ Work one verified slice at a time. The census above remains the baseline snapsho
 
    **Declaration lookup audited.** The import validator consumes an optional declaration immediately. A prepared cross-file call watches the stable symbol entry. The [import regression](../../compiler/tests/imports.php) checks target identity on replacement and recovery, the tombstone and its watcher on deletion, and absence of an entry for the local alias. The [native port contract](../../compiler/docs/stable_symbols.md#immediate-and-retained-lookup) describes the two lifetimes. The remaining nullable payload groups still need individual review.
 
+### Session-owned lazy registry proof
+
+The [runtime lookup fixture](../../compiler/tests/bootstrap_runtime_lookup_native.py) also compiles a small registry consumer in cpp, php and js. A session owns a typed hash of shared descriptors keyed by name. The resolver uses `hash_get_or_null` once, returns the cached owner on a hit, and calls the factory and inserts its result only for a recognized miss. Unknown names return an empty handle. The session owns the cache across body revisions. The descriptor stays alive independently when a caller retains its handle.
+
+The native fixture binds `fixed(1)` and its edit `fixed(2)` in the same live session and checks shared identity. An unknown call leaves the entry count at one. A fresh session starts empty and constructs a distinct descriptor. The observable factory trace contains exactly one call per session. Separately, the resident compiler rebuilds the fixture after a factory-body edit, reuses the registry unit, and recovers from factory deletion. Each successful revision is compared with fresh emission and executed. This establishes a port shape using existing language operations. Porting the generated registry, including flavor aliases for canonical keys, remains separate.
+
 ## Slice 7 nullable census at `89f091a5c`
 
 The refreshed PHP token scan counted 474 written nullable parameter and return positions under the original exclusions. Counts include anonymous functions and generated overrides. The groups below identify the payload to audit. Ownership depends on the use at each boundary, especially when a consumer retains an AST node, type descriptor or service beyond the call.
