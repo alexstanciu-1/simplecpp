@@ -790,6 +790,22 @@
     "optional_lookup": "nullable",
     "append": "max_live_nonnegative_plus_one"
   },
+  "regex": {
+    "provider": "regex.functions",
+    "namespace": "scpp::regex",
+    "functions": {
+      "regex_test": {
+        "native_name": "test",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "result": "result<bool_t>"
+      },
+      "preg_match": {
+        "native_name": "preg_match", "flavor": "php",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "result": "result_or_false<int64>"
+      }
+    }
+  },
   "filesystem": {
     "provider": "filesystem.functions",
     "namespace": "scpp::fs",
@@ -1711,6 +1727,7 @@
   "output": { "provider": "core.output" },
   "scalar_providers": {"core": "core.scalars", "numeric": "numeric.scalars"},
   "submodules": {
+    "regex.functions": {"module": "runtime-regex", "header": "scpp/regex.hpp", "requires": []},
     "filesystem.functions": {"module": "runtime-filesystem", "header": "scpp/filesystem.hpp", "requires": []},
     "core.mixed": {"module": "core", "header": "scpp/mixed.hpp", "requires": []},
     "core.dynamic": {"module": "core", "header": "scpp/dynamic.hpp", "requires": []},

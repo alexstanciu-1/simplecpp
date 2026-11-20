@@ -96,6 +96,9 @@ if(SCPP_ENABLE_JSON)
   list(APPEND runtime_outputs
     ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
+if(SCPP_ENABLE_REGEX)
+  list(APPEND runtime_outputs ${runtime_generated}/private/regex_provider.hpp)
+endif()
 if(SCPP_ENABLE_FILESYSTEM)
   list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_provider.hpp)
 endif()
@@ -163,6 +166,17 @@ if(SCPP_ENABLE_JSON)
   scpp_add_json(scpp_json scpp_runtime ${runtime_generated})
   add_executable(scpp_json_demo examples/json_demo.cpp)
   target_link_libraries(scpp_json_demo PRIVATE scpp_json)
+endif()
+
+if(SCPP_ENABLE_REGEX)
+  find_path(PCRE2_INCLUDE_DIR pcre2.h REQUIRED)
+  find_library(PCRE2_LIBRARY NAMES libpcre2-8.so REQUIRED)
+  # The native app builder consumes module-owned file paths from regex.module.json.
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/regex-deps)
+  file(CREATE_LINK "${PCRE2_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/regex-deps/libpcre2-8.so" SYMBOLIC)
+  add_library(scpp_regex STATIC runtime/src/regex/regex.cpp)
+  target_link_libraries(scpp_regex PUBLIC scpp_runtime ${PCRE2_LIBRARY})
+  target_include_directories(scpp_regex PRIVATE ${runtime_generated}/private ${PCRE2_INCLUDE_DIR})
 endif()
 
 if(SCPP_ENABLE_FILESYSTEM)
@@ -482,6 +496,12 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py)
+  if(SCPP_ENABLE_REGEX)
+    add_test(NAME compiler_regex_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
   if(SCPP_ENABLE_FILESYSTEM)
     add_test(NAME compiler_filesystem_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py

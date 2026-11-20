@@ -12,6 +12,7 @@
         "json": "json.module.json",
         "datetime": "datetime.module.json",
         "numeric": "numeric.module.json",
+        "regex": "regex.module.json",
         "filesystem": "filesystem.module.json"
     },
     "artifacts": [

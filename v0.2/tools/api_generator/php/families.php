@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
 require_once __DIR__ . '/json.php';
-require_once __DIR__ . '/filesystem.php';
+require_once __DIR__ . '/module_functions.php';
 
 /** Internal native traversal ABI shared by the supported concrete collection families. */
 function collectionTraversalPlan(): array {
@@ -40,7 +40,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -73,7 +73,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);
-    prepareFilesystem($metadata, $publication, $plan);
+    foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
