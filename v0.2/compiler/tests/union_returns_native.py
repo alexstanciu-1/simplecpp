@@ -33,6 +33,9 @@ def prove(work, flavor):
     sources = dict(root=root, common=klass('Middle','','Node'), record=record('Node'),
                    right=trait('Node'), other=klass('Other','','Node'), child=child,
                    api=inspect, factory=factory, forward=forward, wrap=from_child, main=main)
+    maker = s['record']('Factory',method('make','return new RecordDecl();',result=pair))
+    calls = s['local']('inlineFactory','Factory')+s['infer']('sharedFactory','new Factory()')
+    calls += 'echo inspect('+v+'inlineFactory'+s['access']+'make()),inspect('+v+'sharedFactory'+s['access']+'make());return 8;'
     revisions(work,flavor,sources,[
         (None,None,b'12'),(None,None,b'12'),
         ('factory',factory.replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
@@ -44,9 +47,13 @@ def prove(work, flavor):
         ('factory',factory.replace(pair,'RecordDecl|Other').replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
         ('factory',factory,b'12'),
         ('main','echo readDecl(false)'+s['access']+'tag();return 8;',b'0'),
-        ('methods',klass('Factory',method('make','return new RecordDecl();',result=pair)),'Closed union returns require a free function'),
+        ('methods',maker,b'0'),
         ('methods',None,b'0'),('observer',base_view+lifetime,b'0'),
         ('main',s['infer']('watch','observe()')+'if (lock('+v+'watch)) {return 1;}return 8;',b'1'),
+        ('methods',maker,b'1'),('main',calls,b'11'),
+        ('methods',maker.replace('new RecordDecl()', 'new Other()'),'Argument must belong'),
+        ('methods',maker.replace('new RecordDecl()', 'new TraitDecl()'),b'22'),
+        ('right',trait('Middle'),b'22'),('right',None,None),('right',trait('Node'),b'22'),
     ])
     for rev, native in [(0,'Node'),(8,'Middle'),(10,'Node')]:
         units = work/f'{flavor}-fresh-{rev}'/'units'

@@ -356,9 +356,9 @@ matching branch returns or throws, the continuing path may use the remaining arm
 A matching branch that can fall through provides no such guarantee. Testing an arm through a proper base uses the ordinary polymorphic-source
 requirement for checked object access.
 
-An ordinary free function or a static method called through its explicit declaring
+An ordinary free function, a nonvirtual instance method or a static method called through its explicit declaring
 type may return the same required two-arm class union. Static redeclarations,
-forwarding through `self`, `parent` or the called type, and instance-method union
+forwarding through `self`, `parent` or the called type, and virtual union
 returns are deferred.
 Every returned value must satisfy the declared union. The caller can forward the
 result as that union or access members of its common base. Returning an owner
