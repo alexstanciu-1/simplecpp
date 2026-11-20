@@ -75,8 +75,16 @@ final class ast_for_statement extends ast_loop_statement
 /** Transfer with a non-owning prepared destination. Numbered forms retain their literal in the syntax span. */
 abstract class ast_loop_transfer extends ast_statement
 {
+	private readonly int $exit_depth /** int64 */;
+
 	/** Prepared fact: native non-owning target; null until resolved or after invalidation. */
 	public ast_switch_statement|ast_repeating_statement|null $target = null;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, int $depth /** int64 */)
+	{
+		parent::__construct($start, $end);
+		$this->exit_depth = $depth;
+	}
 
 	public function numbered(): bool
 	{
@@ -85,7 +93,7 @@ abstract class ast_loop_transfer extends ast_statement
 
 	public function depth(): int
 	{
-		return $this->numbered() ? (int)$this->lexical_root()->tokens->text_at($this->end - 2) : 1;
+		return $this->exit_depth;
 	}
 }
 
