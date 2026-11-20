@@ -92,7 +92,7 @@ abstract class carrier_sentinel_type_definition extends type_definition
 		if (!($syntax instanceof ast_keyword_expression) || ($syntax->word !== $this->name)) {
 			throw new \LogicException('Expected sentinel literal');
 		}
-		$syntax->settle_scalar($this, null);
+		$syntax->settle_keyword($this);
 	}
 
 	public function cpp_type(): string
