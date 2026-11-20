@@ -23,8 +23,11 @@ final class record_type_definition extends type_definition implements dependency
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
 
-	/** Canonical intersections used by live signatures. @var \WeakMap<shared_record_type_definition,\WeakReference<intersection_type_definition>>|null */
-	private ?\WeakMap $intersections = null;
+	/**
+	 * Live parameter contracts keyed by the other nominal record: an interface for intersections, a class for unions.
+	 * @var \WeakMap<record_type_definition,\WeakReference<intersection_type_definition|class_union_type_definition>>|null
+	 */
+	private ?\WeakMap $parameter_contracts = null;
 
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
@@ -61,11 +64,32 @@ final class record_type_definition extends type_definition implements dependency
 	/** Share the nominal pair while signatures retain it. Both cache links are weak across generations. */
 	public function intersection(shared_record_type_definition $capability): intersection_type_definition
 	{
-		$this->intersections ??= new \WeakMap();
-		$type = ($this->intersections[$capability] ?? null)?->get();
+		$this->parameter_contracts ??= new \WeakMap();
+		$type = ($this->parameter_contracts[$capability->payload] ?? null)?->get();
 		if ($type === null) {
 			$type = new intersection_type_definition($this->required, $capability);
-			$this->intersections[$capability] = \WeakReference::create($type);
+			$this->parameter_contracts[$capability->payload] = \WeakReference::create($type);
+		}
+		return $type;
+	}
+
+	/** Select the nearest common class and intern the pair in canonical name order. */
+	public function class_union(self $other): ?class_union_type_definition
+	{
+		if (strcmp($this->name, $other->name) > 0) return $other->class_union($this);
+		// Walking both chains in opposite concatenation order aligns their shared suffix in linear time.
+		$base = $this;
+		$peer = $other;
+		while ($base !== $peer) {
+			$base = $base === null ? $other : $base->base();
+			$peer = $peer === null ? $this : $peer->base();
+		}
+		if ($base === null) return null;
+		$this->parameter_contracts ??= new \WeakMap();
+		$type = ($this->parameter_contracts[$other] ?? null)?->get();
+		if ($type === null || $type->base !== $base->required) {
+			$type = new class_union_type_definition($this, $other, $base->required);
+			$this->parameter_contracts[$other] = \WeakReference::create($type);
 		}
 		return $type;
 	}
@@ -674,6 +698,7 @@ final class shared_record_type_definition extends record_handle_definition
 		if ($this->required && $value->constant_known() && $value->constant() === null) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Required object cannot be null: ' . $this->name);
 		}
+		if ($source instanceof class_union_type_definition) $source = $source->base;
 		if ($source instanceof intersection_type_definition) {
 			if ($source->base->payload->derives_from($this->payload)) return value_conversion::intersection_base;
 			if ($source->capability->payload->derives_from($this->payload)) return value_conversion::intersection_capability;
@@ -694,6 +719,7 @@ final class shared_record_type_definition extends record_handle_definition
 	/** Select the shared-view pattern from settled conversion facts; no ancestry query occurs here. */
 	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
 	{
+		if ($source instanceof class_union_type_definition) $source = $source->base;
 		if ($source instanceof intersection_type_definition && ($conversion === value_conversion::intersection_base || $conversion === value_conversion::intersection_capability)) {
 			return $source->project($this, $conversion);
 		}
@@ -719,6 +745,47 @@ final class shared_record_type_definition extends record_handle_definition
 	public function cpp_type(): string
 	{
 		return 'owner_' . Cpp_Emitter::qualified_name($this->payload->declaration);
+	}
+}
+
+/** Closed parameter contract, e.g. NameExpr|FieldExpr, stored as its nearest common class owner. */
+final class class_union_type_definition extends type_definition
+{
+	/** PROPERTIES */
+	private readonly record_type_definition $first;
+	private readonly record_type_definition $second;
+	public readonly shared_record_type_definition $base;
+
+	/** CONSTRUCTOR */
+	public function __construct(record_type_definition $first, record_type_definition $second, shared_record_type_definition $base)
+	{
+		parent::__construct($first->name . '|' . $second->name);
+		$this->first = $first;
+		$this->second = $second;
+		$this->base = $base;
+	}
+
+	/** METHODS */
+	public function cpp_type(): string
+	{
+		return $this->base->cpp_type();
+	}
+
+	/** Test membership before choosing the existing shared-owner conversion. */
+	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		$source = $value->type_def();
+		if ($source === $this) return value_conversion::identity;
+		if ($source instanceof shared_record_type_definition && $source->required
+			&& ($source->payload->derives_from($this->first) || $source->payload->derives_from($this->second))) {
+			return $source === $this->base ? value_conversion::identity : value_conversion::owner_view;
+		}
+		throw new diagnostic($value->source(), $value->byte_start(), 'Argument must belong to ' . $this->name);
+	}
+
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		return $this->base->cpp_conversion_adapter($conversion, $source);
 	}
 }
 

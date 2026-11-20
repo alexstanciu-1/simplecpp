@@ -1104,6 +1104,8 @@ final class Preparation
 				$type = $binding->type_def();
 				$view = $type instanceof intersection_type_definition
 					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+				if ($type instanceof class_union_type_definition && ($syntax->parent instanceof ast_field_expression || $syntax->parent instanceof ast_call_expression)
+					&& $syntax->parent->receiver === $syntax) $view = $type->base;
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
@@ -1629,6 +1631,9 @@ final class Preparation
 			else {
 				$type = $parameter->type_def();
 				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+				if ($type instanceof class_union_type_definition && $argument->type_def() instanceof shared_record_type_definition) {
+					$this->dependencies?->watch($this->symbols->entry($argument->type_def()->payload->declaration->symbol_key()), $this->owner);
+				}
 				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
 					&& ($local = $argument->declaration()) instanceof ast_local_binding
 					&& isset($this->guards[$local->storage_id()])) {

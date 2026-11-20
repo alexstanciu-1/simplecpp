@@ -232,8 +232,8 @@ final class Function_Preparation
 			if ($parameter_type === null) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 			}
-			if ($parameter_type instanceof intersection_type_definition && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $type instanceof generator_type_definition)) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Intersection requires an ordinary required by-value parameter');
+			if (($parameter_type instanceof intersection_type_definition || $parameter_type instanceof class_union_type_definition) && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $type instanceof generator_type_definition)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), ($parameter_type instanceof class_union_type_definition ? 'Union' : 'Intersection') . ' requires an ordinary required by-value parameter');
 			}
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');

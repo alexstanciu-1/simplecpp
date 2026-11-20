@@ -779,11 +779,13 @@ final class Parser
 			}
 		}
 		$end = $this->cursor->position();
-		if ($parameter && $this->intersection_follows()) {
-			$this->cursor->take(token_kind::ampersand, '&');
+		if ($parameter && ($this->cursor->is(token_kind::pipe) || $this->intersection_follows())) {
+			$operator = $this->cursor->tokens->tokens[$end]->kind;
+			$separator = $operator === token_kind::pipe ? '|' : '&';
+			$this->cursor->take($operator, $separator);
 			$next = $this->named_type();
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
-			return new ast_compound_type_reference($start, $next->end, '&', $first);
+			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
 		$next = null;
 		if ($argument && $this->cursor->is(token_kind::comma)) {

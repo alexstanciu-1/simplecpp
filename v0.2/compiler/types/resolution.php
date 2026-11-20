@@ -17,9 +17,18 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
-		if ($syntax instanceof ast_compound_type_reference && $syntax->name === '&') {
+		if ($syntax instanceof ast_compound_type_reference) {
 			$left = self::signature($syntax->first_child, $symbols, $function, $dependencies, watcher: $watcher);
 			$right = self::signature($syntax->first_child->next_sibling, $symbols, $function, $dependencies, watcher: $watcher);
+			if ($syntax->name === '|') {
+				if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition
+					&& $left->required && $right->required && $left !== $right
+					&& $left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::class_type) {
+					$union = $left->payload->class_union($right->payload);
+					if ($union !== null) return $union;
+				}
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Union requires two distinct required classes with a common class base');
+			}
 			if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition && $left->required && $right->required) {
 				if ($left->payload->declaration->kind === record_kind::interface_type) [$left, $right] = [$right, $left];
 				if ($left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::interface_type) {

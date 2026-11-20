@@ -2043,7 +2043,9 @@ CPP;
 	{
 		$forwards = [];
 		$types = [];
-		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
+			foreach (self::signature_type_dependencies($parameter->type_def()) as $type) $types[] = $type;
+		}
 		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
 			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
 		}
@@ -2107,6 +2109,7 @@ CPP;
 		$parameters = [];
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
+			if ($type instanceof class_union_type_definition) $type = $type->base;
 			$native = $this->signature_type($type, $short_types);
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
@@ -2194,7 +2197,8 @@ CPP;
 		$result = $method->return_type_def();
 		$variant = $result instanceof shared_record_type_definition;
 		foreach ($method->parameters as $parameter) {
-			if ($parameter->mode === passing_mode::value && $parameter->type_def() instanceof shared_record_type_definition) $variant = true;
+			if ($parameter->mode === passing_mode::value && ($parameter->type_def() instanceof shared_record_type_definition
+				|| $parameter->type_def() instanceof class_union_type_definition)) $variant = true;
 		}
 		if (!$variant) return 'scpp_virtual_' . $name;
 		$parts = [$result->name];
@@ -2228,6 +2232,10 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
+		if ($type instanceof class_union_type_definition) {
+			yield $type->base;
+			return;
+		}
 		if ($type instanceof intersection_type_definition) {
 			yield $type;
 			yield $type->base;

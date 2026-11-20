@@ -124,3 +124,18 @@ cannot establish it because another binding can replace their owner.
 [Guarded arguments and incremental recovery](../tests/guarded_intersections_native.py)
 
 [Native and incremental proof](../tests/intersection_parameters_native.py)
+
+## Closed class-union parameters
+
+A required by-value parameter can name two distinct classes with a common class
+ancestor. PHP writes `NameExpr|FieldExpr $item`, C++ writes
+`NameExpr|FieldExpr item`, and JS writes `item: NameExpr|FieldExpr`.
+The type-reference siblings retain source order. Preparation interns the two
+resolved arms in canonical name order and selects the nearest common class
+from their settled base chains. The owner of that class is the native ABI.
+Virtual slot names retain the source union identity even when two signatures
+use the same owner. Shared-view conversions use the existing native adapters.
+
+The [union parameter proof](../tests/union_parameters_native.py) covers cross-unit
+calls, constructor and virtual method parameters, reversed signatures, rejected
+siblings, and ancestry edits that change the native owner.
