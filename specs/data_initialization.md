@@ -737,8 +737,10 @@ No deep freezing, borrow analysis or delayed AST attachment is introduced.
 
 ### Active v0.2 typed keyed local slice
 
-The four published integer/string key/value hash combinations admit explicitly typed
-local bracket-keyed input in all flavors, with an optional trailing comma. Existing
+Published runtime hashes and concrete application hashes with the keyed initialization
+capability admit explicitly typed local bracket-keyed input in all flavors, with an
+optional trailing comma. Value structs copy independently and shared class handles
+preserve allocation identity, including through an admitted upcast. Existing
 strict key admission/equality and typed-destination value conversions apply. Each key
 expression/conversion completes before its value, then the next entry. Evaluation or
 conversion failure suppresses the remaining input. The compiler materializes ordered
@@ -750,6 +752,6 @@ up constructed input and partial destination without rolling back external effec
 The runtime presizes entry and index storage before filling. The private consuming
 transport above may consume those entries; source lvalues remain unchanged. This bounded
 slice does not activate source factories, nested keyed forms, brace syntax, inferred
-or non-local contexts, or new key/value families. Existing `set` replacement semantics
+or non-local contexts, or additional key types. Existing `set` replacement semantics
 and empty construction remain unchanged. See the
 [implementation note](../v0.2/compiler/docs/keyed_initialization.md).

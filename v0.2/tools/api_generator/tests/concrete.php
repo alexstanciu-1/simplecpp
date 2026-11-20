@@ -55,7 +55,7 @@ if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|sw
 }
 $hashArguments = [
     'n' => 'ProbeHash', 'inline' => '', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
-    'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next', 'enable_shared_lookup' => '', 'enable_append' => '1', 'append' => \Scpp\Api\template('collections/hash_append', []),
+    'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next', 'enable_keyed_input' => '', 'enable_shared_lookup' => '', 'enable_append' => '1', 'append' => \Scpp\Api\template('collections/hash_append', []),
 ];
 $hashTypes = ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')];
 $hash = concreteTemplate('collections/hash', $hashTypes, $hashArguments);
@@ -76,7 +76,7 @@ if ($withoutAppend['append_declaration'] !== '' || $withoutAppend['append_defini
 if (preg_match('/\btemplate\s*</', implode('', $hash)) || str_contains($hash['storage'], 'std::vector')) throw new RuntimeException('Concrete hash depends on templates');
 $applicationHash = \Scpp\Api\concreteApplication('collections/hash', ['k' => new FixtureConcreteType('int64'), 'v' => new FixtureConcreteType('Probe')], [
     'n' => 'ProbeConcreteHash', 'inline' => 'inline ', 'index' => 'detail::concrete_hash_index', 'candidate' => 'detail::hash_candidate', 'count' => 'int64',
-    'enable_shared_lookup' => '', 'enable_append' => '', 'append' => '', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
+    'enable_keyed_input' => '', 'enable_shared_lookup' => '', 'enable_append' => '', 'append' => '', 'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
 ], 'scpp');
 $source = file_get_contents(__DIR__ . '/fixtures/concrete_probe.cpp');
 $source = str_replace(['@pair@', '@declaration@', '@implementation@', '@hash@'], [$pair['declaration'], $parts['output_declaration'] . $parts['declaration'],

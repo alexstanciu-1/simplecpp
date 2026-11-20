@@ -639,12 +639,22 @@ function hashConcreteRecipe(array $hash): string {
     requireThat($hash['storage'] === 'private_ordered_concrete_swiss', 'Unsupported hash concrete storage');
     return 'collections/hash';
 }
+/** Bind the same copy/consume factory body for runtime and application hashes. */
+function hashInputFactoryArguments(array $initialization, string $mode, string $key, string $value): array {
+    $consume = $mode === 'consume';
+    return [
+        'factory' => $initialization[$mode], 'qualifier' => $consume ? '' : 'const ',
+        'key_transfer' => $consume ? "static_cast<$key&&>(values[i].key)" : "$key(values[i].key)",
+        'value_transfer' => $consume ? "static_cast<$value&&>(values[i].value)" : "$value(values[i].value)",
+    ];
+}
+
 /** Key operations are selected once from the bounded strict-key policy, independently of the value provider. */
 function hashConcreteArguments(array $hash, string $count): array {
     return [
         'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
         'count' => '::scpp::' . $count,
-        'enable_shared_lookup' => '', 'enable_append' => $hash['key'] === 'int64' ? '1' : '',
+        'enable_keyed_input' => '', 'enable_shared_lookup' => '', 'enable_append' => $hash['key'] === 'int64' ? '1' : '',
         'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
     ];
 }
@@ -728,7 +738,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
         $traversal = collectionTraversalPlan();
-        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method']]);
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method']]);
         requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
         $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }

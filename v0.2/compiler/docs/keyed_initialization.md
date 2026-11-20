@@ -21,6 +21,22 @@ materialization. Consequently duplicate detection does not suppress later input 
 Equal keys throw `duplicate_initializer_key`; hash collisions alone are valid. Ordinary
 `set` still replaces values. Internal allocation timing is unspecified.
 
+Concrete application hashes also accept this notation. A registry can construct
+its table once and share its existing descriptors across lookups:
+
+```php
+$table hash<Binding,int> = [1 => $fixed, 2 => $overloads];
+return $table;
+```
+
+Each entry uses the hash's existing key checks and value conversion. A derived
+descriptor can enter through the ordinary shared upcast. Inline records are
+copied into the input, including records with a required constructor. Application
+entry sizes depend on source layouts, so these literals use guarded heap input
+even for small tables. The destination still presizes from the full entry count.
+The generated capability and concrete factory follow the published initialization
+names and consume/read-only selection. Removing the capability disables literals.
+
 ## Owners and cost
 
 A dedicated keyed expression owns ordered entry nodes, each with key/value expressions
@@ -58,7 +74,8 @@ values; no input pointer escapes. Source user factories remain read-only and def
 
 ## Verification
 
-- `keyed_initialization.php`: 138 fixtures across cpp/php/js, including all four types,
+- `keyed_initialization.php`: 144 fixtures across cpp/php/js, including application-value copies,
+  duplicate application keys with effectful inputs, the four published runtime types,
   NUL/heap strings, boundaries, duplicate literals/computed keys/constants, ordered
   failures, source-copy independence, rejected/deferred syntax and source incremental
   changes/deletion/retry/recovery against fresh output. Preparation visits each
@@ -71,6 +88,8 @@ values; no input pointer escapes. Source user factories remain read-only and def
 - `keyed_initialization_incremental.py`: retained PHP sessions and real Clang/GCC Ninja
   depfiles; no-op builds, caller/unrelated object reuse on body edits, invalid key
   signatures, declaration deletion/restoration and factory retirement/restoration.
+- `bootstrap_runtime_lookup_native.py` verifies descriptor identity, registry misses, caller reuse
+  after key edits, invalid key types, deletion and restoration against fresh builds.
 - Generator `keyed_initialization.py`: fresh-session read-only/consume selection, renamed
   guard/entry/factory, forced heap input, relocated headers, reduced publication and
   capability removal/restoration. Invalid metadata preserves the last complete export.
@@ -80,6 +99,6 @@ Native and sanitizer proofs pass on dev002 with Clang 18.1.3 and GCC 13.3. See t
 and [planning checklist](../../specs/planning/collection_initialization.md).
 
 Deferred: nested keyed construction, brace-keyed syntax, inferred or non-local target
-contexts, constants/static tables, application/enum/shared/boxed elements or keys,
+contexts, constants/static tables, additional key and value families,
 integer-hash positional input, user factories, general moves/borrows and hot reload.
 Existing nested vector and append-based application-vector support is preserved.

@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 `hash<Value,Key>` accepts application structs and bare classes as values, with the
-currently published strict `int`/`int64` and `string` key identities. Empty locals,
+currently published strict `int`/`int64` and `string` key identities. Empty and populated typed locals,
 keyed writes, checked value-copy reads, local copies and by-value function/method
 parameters/returns use the existing collection and call protocols in all flavors.
 There is no key coercion, application-defined key, or new conversion matrix.
@@ -13,9 +13,8 @@ struct Point { public int $x = 7; }
 function copy_points(hash<Point,string> $points): hash<Point,string> {
     return $points;
 }
-$points hash<Point,string> = [];
 $p Point;
-$points["origin"] = $p;
+$points hash<Point,string> = ["origin" => $p];
 $copy = copy_points($points);
 $q = $copy["origin"];
 $q->x = 9;
