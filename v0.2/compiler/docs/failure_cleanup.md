@@ -32,6 +32,28 @@ not a new filesystem transaction or rollback of all overwritten files. Repairing
 output destination permits retry without source edits and without re-preparing bodies.
 Native failure occurs after C++ publication and needs no prior AST generation.
 
+## Translated preparation proof
+
+The [bounded native preparation stage](../examples/preparation_recovery/preparation.php.scpp)
+translates the body completion and pending-work rules for one zero-argument
+integer-return function per source unit. It consumes return syntax exported
+by the existing frontend. The supported expressions are a canonical decimal
+literal and a call to a published function in the same subset. The worker saves
+its active body while preparing a job and restores it in `finally`. The pending
+work snapshot allows successful bodies to complete during traversal. Output
+work is acknowledged only after the batch succeeds.
+
+The [test](../tests/translated_preparation_recovery.py) prepares an initial
+program, edits two bodies, and encounters a missing function after one body
+completes. A repeat failure leaves the same body pending and the previous
+output intact. Adding the declaration repairs the input on the same native
+compiler instance. The unaffected and already completed bodies are reused.
+The repaired function bodies match both a fresh native instance and the
+PHP-hosted compiler byte for byte, with AST inputs from cpp, php, and js.
+
+The full native analyzer, its watcher graph, and filesystem publication
+are later bootstrap work.
+
 ## Lifetime qualification
 
 Existing cross-source expression facts use stable symbol entries, not direct links to
