@@ -77,7 +77,8 @@ final class Program_Preparation
 			Function_Preparation::bodies($file, $symbols, $dependencies);
 		}
 		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
-		$dependencies->called_methods?->prepare($symbols, $dependencies);
+		$instances = $dependencies->called_methods();
+		if ($instances !== null) $instances->prepare($symbols, $dependencies);
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}
