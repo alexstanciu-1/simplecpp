@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+from entry_probe import raw_entry
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -44,7 +45,7 @@ def qualify(directory, compilers, flags):
                 objects = []
                 exception = next((kind for kind in ('domain_error', 'out_of_range', 'runtime_error', 'length_error') if 'catch_' + kind in fixture), None)
                 if exception:
-                    source = source.replace('int main()', 'int tested_entry()')
+                    source = raw_entry(source)
                     error = json.dumps(fixture['catch_' + exception])
                     # Catch runtime exceptions with the archive's own C++ standard library.
                     observer = directory / 'observer.cpp'

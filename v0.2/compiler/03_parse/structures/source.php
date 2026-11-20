@@ -242,9 +242,13 @@ final class ast_file_node extends ast_node
 	/** Plain imports bind complete type names; no prefix aliasing or duplicate retained index. */
 	public function type_key(string $name): string
 	{
+		return 'class:' . ($this->imported_type_target($name) ?? Source_Names::resolve($name, $this->scope->namespace));
+	}
+
+	public function imported_type_target(string $name): ?string
+	{
 		$import = $this->function_imports[$name] ?? null;
-		return 'class:' . (($import?->kind === import_kind::symbol) ? $import->target
-			: Source_Names::resolve($name, $this->scope->namespace));
+		return $import?->kind === import_kind::symbol ? $import->target : null;
 	}
 
 	public function constant_key(string $name): string

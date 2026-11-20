@@ -43,6 +43,27 @@ A successful throw transports the same shared object. It never copies the payloa
 It has no normal fallthrough, including in a function with a non-void return type.
 Calls are not subject to static exception-effect analysis.
 
+## Throwing fallbacks
+
+The cpp, php and js frontends admit `throw expression` directly as the right
+operand of `??` and directly as the default result of `match`. The throw operand
+is an ordinary expression parsed up to the enclosing delimiter. Use the same
+canonical exception admission, single evaluation and shared transport as a
+throw statement.
+
+A coalescing expression with a throwing fallback keeps its ordinary left
+operand admission, presence test and payload type. A present value skips the
+fallback, including a present false, zero or empty string. A missing value
+evaluates the throw operand and exits by throwing, with no value produced.
+The enclosing expression still validates the fallback at preparation time.
+
+A throwing match default contributes no result type. At least one non-default
+arm must produce a value, and all value arms must retain the ordinary exact
+type agreement. Only a selected fallback throws. Direct throw syntax is
+admitted at these two fallback positions. A standalone value expression such
+as `(throw error)`, a direct throw in a labelled match arm, and `??= throw error`
+remain deferred.
+
 ## Handler and lifetime
 
 ```php
@@ -167,6 +188,6 @@ non-standard foreign exceptions, fatal signals or destructor termination.
 
 Reference returns crossing finally, returns/transfers escaping finally,
 multiple catch arms, union catches, arbitrary source-to-runtime inheritance, direct runtime construction (`new Exception`),
-throw expressions, bare rethrow, exception chaining and static exception-effect
+general throw expressions, bare rethrow, exception chaining and static exception-effect
 analysis remain deferred. Runtime-handle identity operators and ownership transformations
 such as `weak(Exception)` are not added by this slice. LLVM remains deferred.

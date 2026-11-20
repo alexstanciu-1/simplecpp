@@ -28,8 +28,8 @@ final class record_type_definition extends type_definition implements dependency
 	private bool $ready = false;
 	/** Prepared fact: abstract/interface obligations checked after signatures; cleared with nominal layout invalidation. */
 	public bool $method_contract_ready = false;
-	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
-	private ?self $base_type = null;
+	/** Prepared fact: the single resolved base, null for no base or invalidated layout. */
+	private self|type_exception|null $base_type = null;
 	/** Prepared fact: non-owning validated traversal method; null for absent or invalidated contract. */
 	private ?ast_function_declaration $iterator = null;
 	/** Prepared fact: non-owning direct interface edges, owned by this declaration generation. @var record_type_definition[] */
@@ -121,7 +121,10 @@ final class record_type_definition extends type_definition implements dependency
 			$written = $this->declaration->base_reference;
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($base instanceof shared_record_type_definition && $base->required) $base = $base->payload;
-			if ($base instanceof self && $base->declaration->kind === record_kind::interface_type && $written->source()->flavor === flavor::cpp) {
+			if ($base instanceof type_exception && $this->declaration->kind === record_kind::class_type) {
+				$this->base_type = $base;
+			}
+			elseif ($base instanceof self && $base->declaration->kind === record_kind::interface_type && $written->source()->flavor === flavor::cpp) {
 				array_unshift($interface_references, $written);
 			} else {
 				if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
@@ -131,7 +134,7 @@ final class record_type_definition extends type_definition implements dependency
 				if ($base->declaration->is_final) throw new diagnostic($written->source(), $written->byte_start(), 'Cannot extend final class: ' . $base->name);
 				$base->prepare_layout($symbols, $active, $work);
 				$this->base_type = $base;
-				$this->validate_inherited_members();
+				$this->validate_inherited_members($base);
 			}
 		}
 		foreach ($interface_references as $written) {
@@ -270,7 +273,7 @@ final class record_type_definition extends type_definition implements dependency
 	public function interface_requirements(?string $name = null): array /** list<ast_function_declaration> */
 	{
 		$requirements = [];
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			foreach ($type->interfaces as $interface) {
 				if ($name === null) {
 					foreach ($interface->declaration->methods as $method) $requirements[] = $method;
@@ -283,31 +286,42 @@ final class record_type_definition extends type_definition implements dependency
 	/** A prepared interface slot can add dispatch to an inherited ordinary implementation. */
 	public function interface_dispatch(string $name): bool
 	{
-		return isset($this->interface_forwards[$name]) || ($this->base_type?->interface_dispatch($name) ?? false);
+		return isset($this->interface_forwards[$name]) || ($this->base()?->interface_dispatch($name) ?? false);
 	}
 
 	public function base(): ?self
 	{
-		return $this->base_type;
+		return $this->base_type instanceof self ? $this->base_type : null;
+	}
+
+	public function exception_base(): ?type_exception
+	{
+		return $this->base_type instanceof type_exception ? $this->base_type : null;
+	}
+
+	/** Source inheritance follows the existing nominal links to the canonical runtime root. */
+	public function exception_descendant(): bool
+	{
+		return $this->base_type instanceof type_exception || ($this->base()?->exception_descendant() ?? false);
 	}
 
 	/** The effective constructor remains owned by its original declaration. */
 	public function constructor(): ?ast_function_declaration
 	{
-		return $this->declaration->methods['__construct'] ?? $this->base_type?->constructor();
+		return $this->declaration->methods['__construct'] ?? $this->base()?->constructor();
 	}
 
 	/** Nearest instance-field declaration; access checks never retry a hidden base field. */
 	public function field(string $name): ?ast_instance_field
 	{
-		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
+		return $this->declaration->fields[$name] ?? $this->base()?->field($name);
 	}
 
 	/** Each visited record owns its local indexes; return the original declaration for binding. */
 	public function static_data_member(string $name, bool $properties, bool $constants, scope $symbols,
 		dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?ast_literal_declaration
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			$record = $type->declaration;
 			$dependencies?->watch($symbols->entry($record->symbol_key()), $watcher);
 			if ($properties && isset($record->static_properties[$name])) return $record->static_properties[$name];
@@ -319,7 +333,7 @@ final class record_type_definition extends type_definition implements dependency
 	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
 	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
 			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
 			$dependencies?->watch($symbol, $watcher);
@@ -336,9 +350,9 @@ final class record_type_definition extends type_definition implements dependency
 	/** Native layout follows validated written virtual contracts, including inherited ones. */
 	public function polymorphic(): bool
 	{
-		if ($this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
+		if ($this->base_type instanceof type_exception || $this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
 		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
-		return $this->base_type?->polymorphic() ?? false;
+		return $this->base()?->polymorphic() ?? false;
 	}
 
 	/** Protected access uses lexical ancestry and, for instance members, the receiver's declared type. */
@@ -358,22 +372,22 @@ final class record_type_definition extends type_definition implements dependency
 	/** Settled single-base relation; equality includes the type itself. */
 	public function derives_from(self $ancestor): bool
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			if ($type === $ancestor || in_array($ancestor, $type->interfaces, true)) return true;
 		}
 		return false;
 	}
 
 	/** Keep inherited declarations at their owner and reject unsupported hiding. */
-	private function validate_inherited_members(): void
+	private function validate_inherited_members(self $parent): void
 	{
 		foreach ($this->declaration->fields as $field) {
-			$inherited = $this->base_type->field($field->short_name);
+			$inherited = $parent->field($field->short_name);
 			if ($inherited !== null && !($inherited->is_private && $field->is_private)) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Inherited field redeclaration: ' . $field->short_name);
 			}
 		}
-		for ($base = $this->base_type; $base !== null; $base = $base->base_type) {
+		for ($base = $parent; $base !== null; $base = $base->base()) {
 			foreach ($this->declaration->static_properties as $name => $property) {
 				if (isset($base->declaration->static_properties[$name]) || isset($base->declaration->fields[$name])) {
 					throw new diagnostic($property->source(), $property->byte_start(), 'Inherited property redeclaration: ' . $name);

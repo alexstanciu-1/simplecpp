@@ -4,6 +4,7 @@ from pathlib import Path
 from app_namespace_native import artifacts, invoke, service
 from application_vectors_native import measure
 from extends_native import source_edit
+from entry_probe import raw_entry
 
 
 def revisions(work,flavor,sources,edits, *, unaffected_source=None):
@@ -47,7 +48,7 @@ def guard(work,flavor,label,source,error, *, retry_entry=False):
     try:got=invoke(p)
     finally:p.stdin.close();p.wait()
     assert 'error' not in got,got
-    entry=out/'entry.cpp';text=entry.read_text().replace('int main(', 'int tested_entry(')
+    entry=out/'entry.cpp';text=raw_entry(entry.read_text())
     on_expected = 'tested_entry()' if retry_entry else '8'
     entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == '+json.dumps(error)+' ? '+on_expected+' : 91;} return 92;}\n')
     measure(out,work/(flavor+'-'+label+'-native'),b'')

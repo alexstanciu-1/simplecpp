@@ -23,7 +23,10 @@ conditions. Duplicate values (including aliases), duplicate defaults and missing
 defaults are errors. An enum label must belong to the subject enum. String-backed
 enums are admitted by their nominal case identity; plain string subjects are not.
 
-Every arm must produce a value with the same canonical type; there is no implicit
+All value arms must produce the same canonical type. A default of the form
+`default => throw expression` contributes no result type and requires at
+least one non-default value arm. See [throwing fallbacks](exceptions_v0_2.md#throwing-fallbacks).
+There is no implicit
 common-type search or arm conversion. Ordinary conversion at the enclosing
 initialization, argument or return boundary still applies. Selection produces a
 value, not assignable storage; ordinary value-copy/shared-ownership rules apply.

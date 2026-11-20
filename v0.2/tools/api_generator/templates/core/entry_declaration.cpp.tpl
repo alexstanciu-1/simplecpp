@@ -19,6 +19,7 @@ constexpr int native_int_digits() noexcept
 }
 // The argument is evaluated once; an out-of-range value throws.
 int entry_exit_checked(::int64_t value);
+int run_entry_with_exceptions(int (*entry)());
 }
 
 // Validate the source preparation target against the consuming C++ compiler.

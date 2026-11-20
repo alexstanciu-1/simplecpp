@@ -51,6 +51,7 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
+		if ($statement instanceof ast_try_statement) return;
 		if ($statement instanceof ast_yield_statement) {
 			$this->expression($statement->value);
 			if ($statement->key !== null) $this->expression($statement->key);
@@ -60,7 +61,7 @@ final class Body_Collection
 			$this->expression($statement->target);
 			return;
 		}
-		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement) || ($statement instanceof ast_update_statement)) {
+		if ($statement instanceof ast_loop_transfer || $statement instanceof ast_update_statement) {
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {
@@ -94,6 +95,9 @@ final class Body_Collection
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
 			|| ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 			$value = $statement->value;
+		}
+		elseif ($statement instanceof ast_throw_statement) {
+			$value = $statement->operation;
 		}
 		elseif ($statement instanceof ast_foreach_statement) {
 			$value = $statement->source_value;
@@ -131,9 +135,9 @@ final class Body_Collection
 	}
 
 	/** Collect a produced header name without inventing an initializer or scanning its body. */
-	public function iteration_binding(string $name, int $start /** uint32 */, bool $declare): ast_iteration_binding
+	public function produced_binding(string $name, int $start /** uint32 */, bool $declare): ast_produced_binding
 	{
-		$binding = new ast_iteration_binding($name, $start, $this->storage_owner->next_id++);
+		$binding = new ast_produced_binding($name, $start, $this->storage_owner->next_id++);
 		if ($declare) {
 			$this->declarations->declare($binding);
 			$this->local_names[$name] = $binding;
@@ -187,7 +191,7 @@ final class Body_Collection
 			return;
 		}
 		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
-			|| ($value instanceof ast_unary_expression)) {
+			|| ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
 			$this->expression($value->operand);
 		}
 		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {

@@ -42,8 +42,12 @@ final class Preparation
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
-	/** Active loop bodies within this function; reset before each preparation. */
-	private int $loop_depth /** uint32 */ = 0;
+	/** Native non-owning innermost active loop within this callable. */
+	private ?ast_repeating_statement $loop = null;
+	/** Native non-owning nearest enclosing loop outside the current finalizer. */
+	private ?ast_repeating_statement $finalizer_outer_loop = null;
+	/** Inherited by nested statements inside a finalizer. */
+	private bool $in_finalizer = false;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
@@ -120,14 +124,14 @@ final class Preparation
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
-		$this->loop_depth = 0;
+		$this->loop = null;
 		$completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->readonly_initialization?->complete($owner);
-		if (($target === null) && ($completion !== statement_completion::returns) && ($function->return_type_def() !== type_void::instance())
+		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
 		}
-		if (($target !== null) && ($completion !== statement_completion::returns)) {
+		if (($target !== null) && (($completion & statement_completion::fallthrough) !== 0)) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
 		}
 	}
@@ -175,10 +179,14 @@ final class Preparation
 			elseif ($statement instanceof ast_base_statement) {
 				$this->base_initialization($statement->value);
 			}
-			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
-				if ($this->loop_depth === 0) {
+			elseif ($statement instanceof ast_loop_transfer) {
+				if ($this->loop === null) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop');
 				}
+				if ($this->loop === $this->finalizer_outer_loop) {
+					throw new diagnostic($source, $statement->byte_start(), 'Break/continue cannot leave a finally block');
+				}
+				$statement->target = $this->loop;
 				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
@@ -189,6 +197,13 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_loop_statement) {
 				$next = $this->loop($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_throw_statement) {
+				$this->prepare_throw($statement->operation);
+				$next = statement_completion::throws;
+			}
+			elseif ($statement instanceof ast_try_statement) {
+				$next = $this->try_statement($statement, $source, $target, $function);
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);
@@ -274,6 +289,9 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
+				if ($this->in_finalizer) {
+					throw new diagnostic($source, $statement->byte_start(), 'Return cannot leave a finally block');
+				}
 				$this->readonly_initialization?->complete($statement);
 				if ($target === null) {
 					$return_type = $function->return_type_def();
@@ -309,6 +327,64 @@ final class Preparation
 			$completion = ($completion & ~statement_completion::fallthrough) | $next;
 		}
 		return $completion;
+	}
+
+	/** Compose protected exits with the independent finalizer, whose abrupt exits replace pending exits. */
+	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): int /** uint8 */
+	{
+		if (array_filter($this->readonly_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
+			throw new diagnostic($source, $syntax->byte_start(), 'Try during readonly field initialization is deferred');
+		}
+		$outer_loop = $this->finalizer_outer_loop;
+		$in_finalizer = $this->in_finalizer;
+		try {
+			$handler = $syntax->handler;
+			if ($handler !== null) {
+				$caught = Type_Resolution::local($handler->type, $this->symbols, $this->owner, $this->dependencies);
+				$this->require_exception($caught, $handler->type, true);
+				$handler->binding->settle_type($caught);
+			}
+			$completion = $this->exception_block($syntax->body, $target, $function);
+			if ($handler !== null) $completion |= $this->exception_block($handler->body, $target, $function, $handler->binding);
+			$syntax->protected_completion = $completion;
+			if ($syntax->finalizer !== null) {
+				if (($completion & statement_completion::loop_transfers) !== 0) $syntax->transfer_target = $this->loop;
+				$this->finalizer_outer_loop = $this->loop;
+				$this->in_finalizer = true;
+				$final = $this->exception_block($syntax->finalizer, $target, $function);
+				$completion = ($final & ~statement_completion::fallthrough)
+					| (($final & statement_completion::fallthrough) !== 0 ? $completion : 0);
+			}
+			return $syntax->completion = $completion;
+		} finally {
+			$this->finalizer_outer_loop = $outer_loop;
+			$this->in_finalizer = $in_finalizer;
+		}
+	}
+
+	/** A handler or finalizer starts without facts from partial writes in a sibling region. */
+	private function exception_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
+		?ast_produced_binding $binding = null): int /** uint8 */
+	{
+		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
+		try {
+			return $this->sequence($body->statements, $body->source(), $target, $function);
+		} finally {
+			array_pop($this->local_frames);
+			$this->forget_values();
+		}
+	}
+
+	/** Observe ancestry through the selected payload's stable symbol and layout invalidation. */
+	private function require_exception(?type_definition $type, ast_node $site, bool $catch = false): void
+	{
+		if ($type instanceof type_exception) return;
+		if ($type instanceof shared_record_type_definition) {
+			$this->dependencies?->watch($this->symbols->entry($type->payload->declaration->symbol_key()), $this->owner);
+			if ((!$catch || $type->required) && $type->payload->exception_descendant()) return;
+		}
+		throw new diagnostic($site->source(), $site->byte_start(), 'Throw and catch require core Exception or a shared descendant');
 	}
 
 	/** Resolve visible locals without copying outer indexes into child blocks. */
@@ -412,12 +488,13 @@ final class Preparation
 				$this->local_frames[count($this->local_frames) - 1][$statement->key->short_name] = $statement->key;
 			}
 			$this->local_frames[] = [];
-			$this->loop_depth++;
+			$outer_loop = $this->loop;
+			$this->loop = $statement;
 			try {
 				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 			}
 			finally {
-				$this->loop_depth--;
+				$this->loop = $outer_loop;
 				array_pop($this->local_frames);
 			}
 		}
@@ -425,7 +502,7 @@ final class Preparation
 			array_pop($this->local_frames);
 		}
 		$this->forget_values();
-		return ($completion & statement_completion::returns) | statement_completion::fallthrough;
+		return ($completion & (statement_completion::returns | statement_completion::throws)) | statement_completion::fallthrough;
 	}
 
 	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
@@ -462,12 +539,13 @@ final class Preparation
 			$this->forget_values();
 		}
 		$this->local_frames[] = [];
-		$this->loop_depth++;
+		$outer_loop = $this->loop;
+		$this->loop = $statement;
 		try {
 			$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 		}
 		finally {
-			$this->loop_depth--;
+			$this->loop = $outer_loop;
 			array_pop($this->local_frames);
 		}
 		$this->forget_values();
@@ -480,9 +558,10 @@ final class Preparation
 			$this->write($statement->update);
 			$this->forget_values();
 		}
-		// Only a post-test body with exclusively return exits guarantees return; transfers end at this loop.
-		return ($post_test && ($completion === statement_completion::returns)) ? statement_completion::returns
-			: (($completion & statement_completion::returns) | statement_completion::fallthrough);
+		// A post-test loop enters its body once; return and throw are terminal exits.
+		$terminal = statement_completion::returns | statement_completion::throws;
+		return $post_test && ($completion & ~$terminal) === 0 ? $completion
+			: (($completion & $terminal) | statement_completion::fallthrough);
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
@@ -505,7 +584,7 @@ final class Preparation
 			}
 		}
 		if ($declaration->initializer instanceof ast_struct_default) {
-			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition)) {
+			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception)) {
 				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
 			}
 			if ($type instanceof shared_record_type_definition && $type->required) {
@@ -617,7 +696,7 @@ final class Preparation
 			return null;
 		}
 		$this->value($root);
-		$field = $initialize ? $this->readonly_initialization?->assignment($root, $this->loop_depth) : null;
+		$field = $initialize ? $this->readonly_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
@@ -703,10 +782,20 @@ final class Preparation
 		$syntax->settle_collection($type, $conversions);
 	}
 
+	/** Statement and fallback throws use the same admission and settled root conversion. */
+	private function prepare_throw(ast_throw_expression $throw, ?string $initializing = null): void
+	{
+		$operand = $throw->operand;
+		$this->value($operand, $initializing);
+		$this->require_exception($operand->type_def(), $operand);
+		$throw->conversion = type_registry::exception()->prepare_conversion($operand, conversion_context::typed_destination);
+	}
+
 	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
 	private function match_result(ast_match_arm $arm, ?type_definition &$result, ?string $initializing): void
 	{
 		$this->value($arm->result, $initializing);
+		if ($arm->result instanceof ast_throw_expression) return;
 		$type = $arm->result->type_def();
 		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match arm requires a supported value result');
 		if ($result !== null && $result !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match result types must be identical');
@@ -718,6 +807,10 @@ final class Preparation
 	{
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
 		$this->expression_visits++;
+		if ($syntax instanceof ast_throw_expression) {
+			$this->prepare_throw($syntax, $initializing);
+			return;
+		}
 		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
@@ -754,6 +847,9 @@ final class Preparation
 			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
 			// Fallback runs after conditions, even when written first. Preserve reference-call invalidation.
 			$this->match_result($default, $result, $initializing);
+			if ($result === null) {
+				throw new diagnostic($default->source(), $default->byte_start(), 'Throwing match default requires a value arm');
+			}
 			$syntax->settle_match($result);
 			return;
 		}
@@ -889,7 +985,7 @@ final class Preparation
 				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier');
 				}
-				if ($syntax->right->type_def() !== $carrier->payload_type) {
+				if (!($syntax->right instanceof ast_throw_expression) && $syntax->right->type_def() !== $carrier->payload_type) {
 					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
 				}
 				$syntax->settle_binary($carrier->payload_type);
@@ -1025,7 +1121,7 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
-		$operands = $call->runtime_operands();
+		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
 			$variants = $runtime->by_arity[count($operands)] ?? null;
@@ -1147,6 +1243,14 @@ final class Preparation
 						: $this->symbols->entry('method:' . $record->name . '::' . $name);
 					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
 					$method = $symbol?->declaration();
+					if ($method === null && !$static && $record instanceof record_type_definition && $record->exception_descendant()) {
+						$binding = type_registry::exception()->runtime_method($name);
+						if ($binding !== null) {
+							if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+							$this->runtime_call($call, $binding);
+							return;
+						}
+					}
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					if ($static !== $method->is_static) {
 						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
@@ -1286,10 +1390,18 @@ final class Preparation
 			$name = $call->name;
 		} else {
 			$separator = strrpos($qualified, '::');
-			$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
+			$written_type = substr($qualified, 0, $separator);
+			$type_symbol = $this->symbols->entry($call->root()->type_key($written_type));
 			$this->dependencies?->watch($type_symbol, $this->owner);
 			$record = $type_symbol->declaration();
 			$name = substr($qualified, $separator + 2);
+			if ($record === null) {
+				$core = Type_Resolution::core_class($call->root(), $written_type);
+				if ($core !== null && $name === $core->factory->name()) {
+					$this->runtime_call($call, $core->factory);
+					return true;
+				}
+			}
 		}
 		if ($record instanceof ast_record_declaration) {
 			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);

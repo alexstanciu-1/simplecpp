@@ -160,6 +160,39 @@ The PHP tests now cover declaration equivalence, write intent, exact spans, unre
 names/types, malformed and wrong-flavor input, EOF diagnostics, 10,000 flat statements
 and CLI publication. Arithmetic, generic types and nesting proofs remain future work.
 
+## Typed exception statements
+
+Core metadata publishes `Exception::make(string)` and `get_message()`. Source
+classes can derive from the canonical exception root. Shared preparation checks
+the resolved type of each throw operand and handler binding. A typed catch
+binds one local in a sibling lexical scope. PHP uses
+`catch (Type $value)`, C++ uses `catch (Type value)`, and JS uses
+`catch (value: Type)`. `throw value;` propagates the same shared allocation.
+A narrower handler matches the dynamic type. Runtime guard failures unwind
+through source frames and are reported by the generated entry boundary.
+
+A throwing `??` fallback and a throwing `match` default use the same transport.
+Only the selected fallback evaluates its operand. A coalescing expression retains
+the carrier payload type, while a match gets its type from the value arms.
+Both forms check the exception operand during preparation.
+
+A braced `finally` may follow the try body directly or follow its catch.
+It runs once after the protected operation has unwound or finished, including
+after runtime guards and exceptions escaping a handler. A saved value or void
+return resumes after cleanup. Nested finalizers finish from inner to outer.
+An escaping finalizer exception replaces the pending exit. Returns from finally
+are rejected. Unlabelled break and continue can cross protected regions and
+resume their original loop after intervening finalizers. Continue proceeds to
+the loop update or next test. Break skips both. Transfers within a finalizer
+can target its own loops. A transfer out of a finalizer is rejected. Exception
+statements in yield producers and exception regions during readonly initialization
+remain deferred.
+
+See the [exception contract](../../specs/exceptions_v0_2.md) for the full language
+semantics and [the native proof](../compiler/tests/exceptions_native.py) for
+diagnostic identity, byte location, and incremental recovery. The [finally proof](../compiler/tests/finally_native.py)
+checks cleanup order, exit precedence, and recovery after edits to finalizer dependencies.
+
 ## Multifile entry slice
 
 The `program` command accepts an explicit mixed-flavor inventory and a selected

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from entry_probe import raw_entry
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/compiler_panel'))
@@ -52,7 +53,7 @@ def prove(work, fixture_script="strings.php", check_copy=True):
             for exception in ('length_error', 'invalid_argument', 'out_of_range', 'domain_error', 'runtime_error', 'ValueError'):
                 expected = fixture.get('catch_' + exception)
                 if expected:
-                    source = '#include <stdexcept>\n#include <string_view>\n' + source.replace('int main()', 'int tested_entry()')
+                    source = '#include <stdexcept>\n#include <string_view>\n' + raw_entry(source)
                     error_type = 'std::' + exception
                     if exception == 'ValueError':
                         source = '#include <scpp/value_error.hpp>\n' + source

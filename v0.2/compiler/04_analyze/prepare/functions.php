@@ -26,6 +26,10 @@ final class Function_Preparation
 	{
 		foreach ($body->statements as $statement)
 		{
+			if ($statement instanceof ast_loop_transfer) {
+				$statement->target = null;
+				continue;
+			}
 			if ($statement instanceof ast_yield_statement) {
 				$statement->conversion = $statement->key_conversion = null;
 				self::expression($statement->value);
@@ -57,6 +61,21 @@ final class Function_Preparation
 				}
 				self::expression($statement->condition);
 				self::reset_block($statement->body);
+				continue;
+			}
+			if ($statement instanceof ast_try_statement) {
+				$statement->protected_completion = $statement->completion = null;
+				$statement->transfer_target = null;
+				self::reset_block($statement->body);
+				if ($statement->handler !== null) {
+					$statement->handler->binding->reset_preparation();
+					self::reset_block($statement->handler->body);
+				}
+				if ($statement->finalizer !== null) self::reset_block($statement->finalizer);
+				continue;
+			}
+			if ($statement instanceof ast_throw_statement) {
+				self::expression($statement->operation);
 				continue;
 			}
 			if ($statement instanceof ast_if_statement) {
@@ -137,7 +156,7 @@ final class Function_Preparation
 			return;
 		}
 		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
-			|| ($value instanceof ast_unary_expression)) {
+			|| ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
 			self::expression($value->operand);
 		}
 		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {

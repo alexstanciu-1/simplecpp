@@ -100,6 +100,9 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_throw_expression) {
+			return ['kind' => 'throw', 'span' => self::span($expression), 'value' => self::expression($expression->operand)];
+		}
 		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_base_initialization) {
@@ -210,7 +213,7 @@ final class Syntax_Inspection
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
-		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+		if ($statement instanceof ast_loop_transfer) {
 			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_foreach_statement) {
@@ -227,6 +230,20 @@ final class Syntax_Inspection
 				$row['initializer'] = self::statement($statement->initializer);
 				$row['update'] = self::statement($statement->update);
 			}
+			return $row;
+		}
+		if ($statement instanceof ast_throw_statement) {
+			return ['kind' => 'throw', 'span' => self::span($statement), 'value' => self::expression($statement->operation->operand)];
+		}
+		if ($statement instanceof ast_try_statement) {
+			$row = ['kind' => 'try', 'span' => self::span($statement),
+				'body' => array_map(self::statement(...), $statement->body->statements)];
+			if ($statement->handler !== null) {
+				$row['catch_type'] = $statement->handler->type->spelling();
+				$row['binding'] = $statement->handler->binding->short_name;
+				$row['handler'] = array_map(self::statement(...), $statement->handler->body->statements);
+			}
+			if ($statement->finalizer !== null) $row['finally'] = array_map(self::statement(...), $statement->finalizer->statements);
 			return $row;
 		}
 		if ($statement instanceof ast_if_statement) {

@@ -3,22 +3,29 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Shared owning loop syntax; iteration order is represented by the concrete node, not prepared copies. */
-abstract class ast_loop_statement extends ast_statement
+/** Any repeating statement owns a lexical body and can be the target of a loop transfer. */
+abstract class ast_repeating_statement extends ast_statement
 {
-	/** Native owning test expression, evaluated outside body-local scope. */
-	public readonly ast_expression $condition;
-	/** Native owning braced lexical scope. */
 	public readonly ast_block $body;
 
-	/** $start/$end: token positions, including the trailing semicolon for do-while. */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $condition, ast_block $body)
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_block $body)
 	{
 		parent::__construct($start, $end);
-		$this->condition = $condition;
 		$this->body = $body;
-		$condition->attach($this);
 		$body->attach($this);
+	}
+}
+
+/** Conditional loop syntax owns a test evaluated outside the body-local scope. */
+abstract class ast_loop_statement extends ast_repeating_statement
+{
+	public readonly ast_expression $condition;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $condition, ast_block $body)
+	{
+		parent::__construct($start, $end, $body);
+		$this->condition = $condition;
+		$condition->attach($this);
 	}
 }
 
@@ -55,56 +62,30 @@ final class ast_for_statement extends ast_loop_statement
 	}
 }
 
-/** Bare break; exits the nearest enclosing loop. No separate target fact is needed for current loop-only syntax. */
-final class ast_break_statement extends ast_statement
+/** Unlabelled transfer resolved to the innermost lexical repeating statement. */
+abstract class ast_loop_transfer extends ast_statement
+{
+	/** Prepared fact: native non-owning target; null until resolved or after invalidation. */
+	public ?ast_repeating_statement $target = null;
+}
+
+/** Bare break; exits the resolved loop without running its update or test. */
+final class ast_break_statement extends ast_loop_transfer
 {
 }
 
 /** Bare continue; reaches the nearest loop's next test, including a do-while trailing condition. */
-final class ast_continue_statement extends ast_statement
+final class ast_continue_statement extends ast_loop_transfer
 {
-}
-
-/** Produced value in foreach (items as value); its fact drives conversion and it supplies new loop-local storage. */
-final class ast_iteration_binding extends ast_expression implements ast_local_binding
-{
-	use ast_declaration;
-
-	public readonly int $id /** uint32 */;
-
-	/** $start: name token position; $id: function-local storage ordinal. */
-	public function __construct(string $name, int $start /** uint32 */, int $id /** uint32 */)
-	{
-		parent::__construct($start, $start + 1);
-		$this->short_name = $name;
-		$this->namespace = null;
-		$this->id = $id;
-	}
-
-	public function storage_id(): int /** uint32 */
-	{
-		return $this->id;
-	}
-
-	public function symbol_key(): string
-	{
-		return 'var:' . $this->declaration_key();
-	}
-
-	public function settle_type(type_definition $type): void
-	{
-		$this->settle_value($type, null);
-	}
 }
 
 /** foreach (items as key => value) owns its source, produced bindings and braced body. */
-final class ast_foreach_statement extends ast_statement
+final class ast_foreach_statement extends ast_repeating_statement
 {
 	/** PROPERTIES */
 	public readonly ast_expression $source_value;
-	public readonly ?ast_iteration_binding $key;
-	public readonly ast_iteration_binding $value;
-	public readonly ast_block $body;
+	public readonly ?ast_produced_binding $key;
+	public readonly ast_produced_binding $value;
 	public readonly scope $scope;
 
 	/** PREP FACTS */
@@ -115,18 +96,16 @@ final class ast_foreach_statement extends ast_statement
 
 	/** CONSTRUCTOR */
 	/** $start: foreach token position. Children are owned syntax; scope indexes those children. */
-	public function __construct(int $start /** uint32 */, ast_expression $source, ?ast_iteration_binding $key,
-		ast_iteration_binding $value, ast_block $body, scope $scope)
+	public function __construct(int $start /** uint32 */, ast_expression $source, ?ast_produced_binding $key,
+		ast_produced_binding $value, ast_block $body, scope $scope)
 	{
-		parent::__construct($start, $body->end);
+		parent::__construct($start, $body->end, $body);
 		$this->source_value = $source;
 		$this->key = $key;
 		$this->value = $value;
-		$this->body = $body;
 		$this->scope = $scope;
 		$source->attach($this);
 		$key?->attach($this);
 		$value->attach($this);
-		$body->attach($this);
 	}
 }

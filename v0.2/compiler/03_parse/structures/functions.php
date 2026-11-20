@@ -125,12 +125,14 @@ final class ast_call_expression extends ast_expression
 		$this->conversions = $conversions;
 	}
 
-	/** @return ast_expression[] Runtime operands in evaluation order, including a method receiver. */
-	public function runtime_operands(): array /** list<ast_expression> */
+	/** @return ast_expression[] Runtime operands in evaluation order; a type qualifier does not evaluate. */
+	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
 	{
-		if ($this->function_symbol instanceof runtime_function && $this->function_symbol->name() === 'enum_from_value'
-			&& ($this->arguments[0] ?? null) instanceof ast_type_marker) return array_slice($this->arguments, 1);
-		return $this->receiver === null ? $this->arguments : [$this->receiver, ...$this->arguments];
+		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
+		if ($binding?->name() === 'enum_from_value' && ($this->arguments[0] ?? null) instanceof ast_type_marker) {
+			return array_slice($this->arguments, 1);
+		}
+		return $this->receiver === null || $binding?->type_qualified ? $this->arguments : [$this->receiver, ...$this->arguments];
 	}
 
 	/** @param int[] $conversions Approved runtime operand conversions; empty denotes exact arguments. */

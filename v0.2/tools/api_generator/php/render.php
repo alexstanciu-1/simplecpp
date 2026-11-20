@@ -158,6 +158,10 @@ function render(array $plan): array {
         }
     }
     $files += ['public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
+    $files['src/runtime.cpp'] .= template('core/entry_exception_boundary', [
+        'exception_header' => isset($plan['exception']) ? includeHeader($plan['exception']['header']) : '',
+        'language_exception_handler' => isset($plan['exception']) ? template('core/entry_language_exception') : '',
+    ]);
     renderOwnership($plan, $files);
     renderHashes($plan, $files, $groups);
     renderDatetime($plan, $files);
@@ -173,6 +177,12 @@ function render(array $plan): array {
     }
     requireThat(!isset($files['public/scpp/owner_access.hpp']), 'The owner access header path is reserved');
     $files['public/scpp/owner_access.hpp'] = BANNER . template('ownership/application_control');
+    if (isset($plan['exception'])) {
+        $path = 'public/' . $plan['exception']['header'];
+        requireThat(!isset($files[$path]), 'The core Exception header path is reserved');
+        $files[$path] = BANNER . template('core/exception_declaration',
+            ['string_header' => $plan['string']['header']]);
+    }
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
