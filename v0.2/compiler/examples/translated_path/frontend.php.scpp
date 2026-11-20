@@ -1,0 +1,206 @@
+// Token spans refer to one immutable source string.
+enum Token_Kind: int {
+	case Word = 1;
+	case Decimal = 2;
+	case Open_Paren = 3;
+	case Close_Paren = 4;
+	case Colon = 5;
+	case Open_Brace = 6;
+	case Close_Brace = 7;
+	case Semicolon = 8;
+	case End = 9;
+	case Invalid = 10;
+}
+
+struct Token_Span {
+	public Token_Kind $kind = Token_Kind::Invalid;
+	public int $offset;
+	public int $length;
+}
+
+// Retains the source identity and byte offset for frontend and preparation failures.
+final class Translation_Diagnostic extends Exception {
+	public readonly string $path;
+	public readonly int $offset;
+	public readonly string $detail;
+
+	public function __construct(string $path, int $offset, string $detail) {
+		$this->path = $path;
+		$this->offset = $offset;
+		$this->detail = $detail;
+	}
+}
+
+function decimal_byte(byte $value): bool {
+	return $value >= 48 && $value <= 57;
+}
+
+function identifier_byte(byte $value): bool {
+	return ($value >= 65 && $value <= 90) || ($value >= 97 && $value <= 122) || $value === (byte)95;
+}
+
+function tokenize_source(string $path, string $text): vector<Token_Span> {
+	$tokens vector<Token_Span> = [];
+	$length = strlen($text);
+	$offset = 0;
+	while ($offset < $length) {
+		$start = $offset;
+		$value = $text[$offset];
+		$offset++;
+		if ($value == 32 || $value == 9 || $value == 10 || $value == 13) {
+			continue;
+		}
+
+		$kind = Token_Kind::Invalid;
+		if (identifier_byte($value)) {
+			$kind = Token_Kind::Word;
+			while ($offset < $length) {
+				$next = $text[$offset];
+				if (!identifier_byte($next) && !decimal_byte($next)) {
+					break;
+				}
+				$offset++;
+			}
+		} else if (decimal_byte($value)) {
+			$kind = Token_Kind::Decimal;
+			while ($offset < $length && decimal_byte($text[$offset])) {
+				$offset++;
+			}
+		} else {
+			$kind = match ((int)$value) {
+				40 => Token_Kind::Open_Paren,
+				41 => Token_Kind::Close_Paren,
+				58 => Token_Kind::Colon,
+				123 => Token_Kind::Open_Brace,
+				125 => Token_Kind::Close_Brace,
+				59 => Token_Kind::Semicolon,
+				default => Token_Kind::Invalid,
+			};
+			if ($kind === Token_Kind::Invalid) {
+				throw new Translation_Diagnostic($path, $start, "Unsupported token");
+			}
+		}
+		$token Token_Span;
+		$token->kind = $kind;
+		$token->offset = $start;
+		$token->length = $offset - $start;
+		$tokens[] = $token;
+	}
+
+	$end Token_Span;
+	$end->kind = Token_Kind::End;
+	$end->offset = $length;
+	$end->length = 0;
+	$tokens[] = $end;
+	return $tokens;
+}
+
+// Owns the exact bytes addressed by every retained syntax span in this file.
+final class Translation_Source {
+	public readonly string $path;
+	public readonly string $text;
+
+	public function __construct(string $path, string $text) {
+		$this->path = $path;
+		$this->text = $text;
+	}
+}
+
+// A parsed nullary declaration with an integer-literal return.
+final class Function_Syntax {
+	public readonly Translation_Source $source;
+	public readonly string $name;
+	public readonly Token_Span $literal;
+
+	public function __construct(Translation_Source $source, string $name, Token_Span $literal) {
+		$this->source = $source;
+		$this->name = $name;
+		$this->literal = $literal;
+	}
+}
+
+// The selected entry has one return of a nullary source call.
+final class Call_Syntax {
+	public readonly Translation_Source $source;
+	public readonly string $name;
+	public readonly int $offset;
+
+	public function __construct(Translation_Source $source, string $name, int $offset) {
+		$this->source = $source;
+		$this->name = $name;
+		$this->offset = $offset;
+	}
+}
+
+// The parse cursor consumes tokens from only its own source.
+final class Translation_Parser {
+	private Translation_Source $source;
+	private vector<Token_Span> $tokens;
+	private int $index = 0;
+
+	public function __construct(Translation_Source $source) {
+		$this->source = $source;
+		$this->tokens = tokenize_source($source->path, $source->text);
+	}
+
+	private function expect(Token_Kind $kind, string $message): Token_Span {
+		$token = $this->tokens[$this->index];
+		if ($token->kind !== $kind) {
+			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
+		}
+		if ($kind !== Token_Kind::End) {
+			$this->index++;
+		}
+		return $token;
+	}
+
+	private function spelling(Token_Span $token): string {
+		return substr($this->source->text, $token->offset, $token->length);
+	}
+
+	private function keyword(string $name): void {
+		$message = "Expected " . $name;
+		$token = $this->expect(Token_Kind::Word, $message);
+		if ($this->spelling($token) !== $name) {
+			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
+		}
+	}
+
+	private function name_token(): Token_Span {
+		$token = $this->expect(Token_Kind::Word, "Expected function name");
+		$name = $this->spelling($token);
+		if ($name === "function" || $name === "int" || $name === "return") {
+			throw new Translation_Diagnostic($this->source->path, $token->offset, "Expected function name");
+		}
+		return $token;
+	}
+
+	private function nullary(): void {
+		$this->expect(Token_Kind::Open_Paren, "Expected (");
+		$this->expect(Token_Kind::Close_Paren, "Expected )");
+	}
+
+	public function parse_declaration(): Function_Syntax {
+		$this->keyword("function");
+		$name = $this->spelling($this->name_token());
+		$this->nullary();
+		$this->expect(Token_Kind::Colon, "Expected :");
+		$this->keyword("int");
+		$this->expect(Token_Kind::Open_Brace, "Expected {");
+		$this->keyword("return");
+		$literal = $this->expect(Token_Kind::Decimal, "Expected decimal integer");
+		$this->expect(Token_Kind::Semicolon, "Expected ;");
+		$this->expect(Token_Kind::Close_Brace, "Expected }");
+		$this->expect(Token_Kind::End, "Expected end of source");
+		return new Function_Syntax($this->source, $name, $literal);
+	}
+
+	public function parse_entry(): Call_Syntax {
+		$this->keyword("return");
+		$name = $this->name_token();
+		$this->nullary();
+		$this->expect(Token_Kind::Semicolon, "Expected ;");
+		$this->expect(Token_Kind::End, "Expected end of source");
+		return new Call_Syntax($this->source, $this->spelling($name), $name->offset);
+	}
+}

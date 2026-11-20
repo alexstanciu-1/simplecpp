@@ -1,0 +1,65 @@
+function assert_translation(bool $condition, string $message): void {
+	if (!$condition) {
+		throw Exception::make($message);
+	}
+}
+
+function read_source(string $path): string {
+	$result = fs_get($path);
+	assert_translation(isset($result), "Cannot read " . $path);
+	return $result;
+}
+
+function save_generated(string $path, string $text): void {
+	$written = fs_put($path, $text);
+	assert_translation(isset($written), "Cannot write " . $path);
+}
+
+function check_failed_edit(Translation $compiler, string $definition, string $entry): void {
+	$old_declaration = $compiler->declaration();
+	$old_output = $compiler->published_output();
+	$failed = false;
+	try {
+		$compiler->compile($definition, $entry);
+	} catch (Translation_Diagnostic $error) {
+		$failed = true;
+		echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+	}
+	assert_translation($failed, "Expected translated diagnostic");
+	assert_translation($compiler->declaration() === $old_declaration, "Failure replaced the declaration");
+	assert_translation($compiler->published_output() === $old_output, "Failure replaced the published C++");
+}
+
+$definition = read_source("definition.php");
+$main = read_source("initial.source");
+$bad = read_source("bad.source");
+$incomplete = read_source("incomplete.source");
+$fixed = read_source("fixed.source");
+$updated = read_source("updated.source");
+$overflow = read_source("overflow.source");
+
+$compiler = new Translation();
+$first = $compiler->compile($definition, $main);
+$declaration = $compiler->declaration();
+if ($declaration === null) { throw Exception::make("Missing prepared declaration"); }
+save_generated("initial.cpp", $first);
+
+check_failed_edit($compiler, $definition, $incomplete);
+check_failed_edit($compiler, $updated, $bad);
+check_failed_edit($compiler, $overflow, $main);
+
+$recovered = $compiler->compile($definition, $fixed);
+assert_translation($compiler->declaration() === $declaration, "Recovery prepared an unchanged declaration again");
+$fresh = new Translation();
+assert_translation($recovered === $fresh->compile($definition, $fixed), "Recovery differs from a fresh compilation");
+save_generated("recovered.cpp", $recovered);
+
+$next = $compiler->compile($updated, $fixed);
+assert_translation($compiler->declaration() !== $declaration, "Changed declaration was reused");
+assert_translation($next === (new Translation())->compile($updated, $fixed), "Edited declaration differs from a fresh compilation");
+$old_syntax = $declaration->scope->declaration;
+$old_span = $old_syntax->literal;
+assert_translation(substr($old_syntax->source->text, $old_span->offset, $old_span->length) === "8",
+	"An old literal span lost its source snapshot");
+save_generated("updated.cpp", $next);
+return 0;

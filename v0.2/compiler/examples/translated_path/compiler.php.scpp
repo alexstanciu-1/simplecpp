@@ -1,0 +1,102 @@
+// Holds the collected function syntax and the checked integer from preparation.
+final class Prepared_Declaration {
+	public readonly Translation_Scope $scope;
+	public readonly int $value;
+
+	public function __construct(Translation_Scope $scope, int $value) {
+		$this->scope = $scope;
+		$this->value = $value;
+	}
+}
+
+// The entry binding retains the declaration through lowering.
+final class Prepared_Call {
+	public readonly Prepared_Declaration $target;
+
+	public function __construct(Prepared_Declaration $target) {
+		$this->target = $target;
+	}
+}
+
+function prepare_literal(Function_Syntax $syntax): int {
+	$source = $syntax->source;
+	$token = $syntax->literal;
+	if ($token->length > 1 && $source->text[$token->offset] == 48) {
+		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
+	}
+	$value = 0;
+	$end = $token->offset + $token->length;
+	for ($offset = $token->offset; $offset < $end; $offset++) {
+		$digit = (int)$source->text[$offset] - 48;
+		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
+			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range");
+		}
+		$value = $value * 10 + $digit;
+	}
+	return $value;
+}
+
+// Owns and resolves the single collected declaration in this grammar.
+final class Translation_Scope {
+	public readonly Function_Syntax $declaration;
+
+	public function __construct(Function_Syntax $declaration) {
+		$this->declaration = $declaration;
+	}
+
+	public function resolve(string $name): ?Function_Syntax {
+		if ($this->declaration->name === $name) {
+			return $this->declaration;
+		}
+		return null;
+	}
+}
+
+function prepare_call(Prepared_Declaration $candidate, Call_Syntax $call): Prepared_Call {
+	if ($candidate->scope->resolve($call->name) === null) {
+		throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+	}
+	return new Prepared_Call($candidate);
+}
+
+function emit_translation(Prepared_Call $entry): string {
+	$name = "source_" . bin2hex($entry->target->scope->declaration->name);
+	$value = (string)$entry->target->value;
+	return "#include <scpp/core/scalars.hpp>\n#include <scpp/entry.hpp>\n"
+		. "SCPP_REQUIRE_ENTRY_TARGET(31);\n"
+		. "scpp::int64 " . $name . "() { return " . $value . "LL; }\n"
+		. "int entry() { return scpp::entry_exit_checked(" . $name . "()); }\n"
+		. "int main() { return scpp::run_entry_with_exceptions(entry); }\n";
+}
+
+// The last successful preparation and emission belong to one retained compiler.
+final class Translation {
+	private ?Prepared_Declaration $definition = null;
+	private string $output = "";
+
+	public function compile(string $definition_text, string $entry_text): string {
+		$definition = $this->definition;
+		if ($definition === null || $definition_text !== $definition->scope->declaration->source->text) {
+			$parser = new Translation_Parser(new Translation_Source("definition.php", $definition_text));
+			$scope = new Translation_Scope($parser->parse_declaration());
+			$value = prepare_literal($scope->declaration);
+			$definition = new Prepared_Declaration($scope, $value);
+		}
+
+		$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
+		$call = $parser->parse_entry();
+		$entry = prepare_call($definition, $call);
+		$output = emit_translation($entry);
+		$this->definition = $definition;
+		$this->output = $output;
+		return $output;
+	}
+
+	public function declaration(): ?Prepared_Declaration {
+		return $this->definition;
+	}
+
+	public function published_output(): string {
+		return $this->output;
+	}
+}

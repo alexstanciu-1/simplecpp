@@ -2128,6 +2128,28 @@ These two call sites can proceed with explicit state.
 
 Proof: parse a real expression, collect its declaration, prepare through the common AST, emit C++, compile and execute. Include a diagnostic and successful retry. Review readability and ownership as well as results.
 
+### First translated expression path — verified
+
+The executable proof reads two PHP-flavor source files through the typed filesystem
+module. The declaration file contains one nullary function whose body returns an
+unpadded nonnegative decimal int64 literal. The entry file returns a call to that
+function. Token spans address an immutable source snapshot. The parser produces
+syntax, collection owns the one declaration, preparation checks the value and
+settles the call, and lowering emits C++ using the runtime entry contract.
+
+The harness compares generated-program behavior with the production PHP compiler.
+It compares the source path, position and message for a missing semicolon, an
+unknown call after a changed declaration was prepared, and int64 overflow. The same
+translated instance keeps the previous output and declaration on failure, reuses
+the declaration on entry repair, and emits the same bytes as a fresh translation.
+A later declaration edit changes the executable result while the retained earlier
+declaration still resolves its span against the original bytes.
+
+The proof uses the current 31-value-bit native entry target and the bounded
+PHP-flavor grammar above. It lives under
+[translated_path](../../compiler/examples/translated_path). With the filesystem
+module built, run `ctest --preset default -R compiler_translated_path`.
+
 ## 6. Incremental identity and retention — multiple generations
 
 | Order | Group | Initial scope |
