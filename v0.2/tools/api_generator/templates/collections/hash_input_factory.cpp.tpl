@@ -1,4 +1,4 @@
-@n@ @n@::@factory@(@qualifier@@e@* values, @count@ count) {
+@inline@@n@ @n@::@factory@(@qualifier@@e@* values, @count@ count) {
     if (count < 0 || static_cast<std::uint64_t>(count) > UINT32_MAX / 2
         || static_cast<std::uint64_t>(count) > static_cast<std::size_t>(PTRDIFF_MAX) / sizeof(storage::entry))
         throw std::length_error("hash_initializer_size_limit");

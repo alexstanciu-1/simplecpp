@@ -154,10 +154,10 @@ def ownership(work, flavor, libraries, memcheck):
     # Both capabilities share a signature but retain their own source default.
     source = interface() + interface('Other', default='3') + klass('Token')
     ctor={'cpp':'Leaf() {}','php':'public function __construct() {}','js':'constructor() {}'}[flavor]
-    source += implementation('Leaf', ctor + s['field']('hold','Token') + s['field']('offset','int','8')
+    source += implementation('Leaf', ctor + s['field']('hold','?Token') + s['field']('offset','int','8')
         + evaluate('override',v+'this'+acc+'offset + '+v+'delta',default='2'),interfaces=('Readable','Other'))
     source += implementation('Twig',evaluate('override','20 + '+v+'delta',default='2'),'Leaf',interfaces=())
-    source += klass('Holder',s['field']('value','Readable'))
+    source += klass('Holder',s['field']('value','?Readable'))
     source += s['function']('holder','Holder',[],'return new Holder();')
     source += s['function']('view','Readable',[('x','Leaf')],f'return {v}x;')
     source += s['function']('other','Other',[('x','Leaf')],f'return {v}x;')

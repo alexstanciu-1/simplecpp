@@ -1,1 +1,1 @@
-@n@::@input@::~@input@() noexcept { delete[] data_; }
+@inline@@n@::@input@::~@input@() noexcept { delete[] data_; }

@@ -46,9 +46,8 @@ slot with a C++ using-declaration. Its source declaration still selects defaults
 allows two branches to redeclare a common slot without adding competing native overrides.
 Concrete shared-view adapters preserve one control block, adjusted view
 pointers, allocation identity and concrete cleanup. No runtime ownership code or
-reference-count synchronization is changed. Required function boundaries and nullable
-function types retain their existing checks; shared properties retain the temporary
-relaxed empty-storage policy. Constructors with only interface edges have no concrete
+reference-count synchronization is changed. Required function boundaries and class
+instance fields preserve written nullability. Constructors with only interface edges have no concrete
 base to initialize; preparation records an omitted initializer as a void no-op.
 
 Existing watchers track interface signatures, implementer ancestry and selected or

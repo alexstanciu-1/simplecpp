@@ -165,7 +165,7 @@ def behavior(work, flavor, libraries):
     else: identity = 'virtual '+identity.removeprefix('function ')
     base = klass('Node', method('virtual', v+'delta', default='1')+identity)
     leaf = klass('Leaf', method('override', '8 + '+v+'delta'), 'Node')
-    box = klass('Box', s['field']('value','Node'))
+    box = klass('Box', s['field']('value','?Node'))
     reset = s['function']('reset', 'int', [('b','Box')], f'{v}b{access}value=new Node(); echo "R"; return 2;')
     mark = s['function']('mark', 'int', [], 'echo "BAD"; return 2;')
     run = s['function']('run', 'int', [], s['infer']('b','new Box()')+f'{v}b{access}value=new Leaf(); return {v}b{access}value{access}evaluate(reset({v}b));')

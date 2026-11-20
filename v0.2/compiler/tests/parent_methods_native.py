@@ -100,12 +100,12 @@ def behavior(work,flavor,libraries,memcheck):
     v,acc=s['v'],s['access']
     # Ordinary methods use free functions; a base field mutation must hit this same payload.
     parameter={'cpp':'int &n','php':'int &$n','js':'&n:int'}[flavor]
-    base=klass('Node',s['field']('x','int','3')+s['field']('hold','Token')
+    base=klass('Node',s['field']('x','int','3')+s['field']('hold','?Token')
         +method('bump',f'{v}this{acc}x += 2; {v}n += 1; return {v}this{acc}x;',params=parameter)
         +method('echoValue',f'echo {v}this{acc}x;',result='void'))
     body=s['infer']('n','8')+s['infer']('result',parent('bump',v+'n',base='Node'))+parent('echoValue',base='Node')+';'+f'return {v}result + {v}n;'
     leaf=klass('Leaf',method('run',body),'Node')
-    box=klass('Box',s['field']('value','Leaf'))
+    box=klass('Box',s['field']('value','?Leaf'))
     reset=s['function']('reset','int',[('b','Box')],f'{v}b{acc}value=null; return 1;')
     # Outer ordinary call must retain its receiver while an argument clears its final source owner.
     p={'cpp':'int ignored','php':'int $ignored','js':'ignored:int'}[flavor]

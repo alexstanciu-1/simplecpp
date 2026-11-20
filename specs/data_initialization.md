@@ -419,8 +419,8 @@ Publish no partially initialized instance on failure; already executed source ef
 are not rolled back.
 
 Property defaults use ordinary typed expression/conversion rules, except for the
-[temporary required-field empty-storage exception](type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25).
-That exception does not supply a default value to set: or synthesized public inputs. The agreed bounded
+[remaining field storage exceptions](type_use_modifiers.md#temporary-field-storage-exceptions).
+Those exceptions do not supply a default value to set: or synthesized public inputs. The agreed bounded
 scope is scalar literals, supported constant expressions, permitted null values and
 typed data notation for containers/eligible nested records. Arbitrary calls, `$this`
 and sibling-property references in default expressions remain deferred. These default
@@ -737,8 +737,10 @@ No deep freezing, borrow analysis or delayed AST attachment is introduced.
 
 ### Active v0.2 typed keyed local slice
 
-The four published integer/string key/value hash combinations admit explicitly typed
-local bracket-keyed input in all flavors, with an optional trailing comma. Existing
+Published runtime hashes and concrete application hashes with the keyed initialization
+capability admit explicitly typed local bracket-keyed input in all flavors, with an
+optional trailing comma. Value structs copy independently and shared class handles
+preserve allocation identity, including through an admitted upcast. Existing
 strict key admission/equality and typed-destination value conversions apply. Each key
 expression/conversion completes before its value, then the next entry. Evaluation or
 conversion failure suppresses the remaining input. The compiler materializes ordered
@@ -750,6 +752,6 @@ up constructed input and partial destination without rolling back external effec
 The runtime presizes entry and index storage before filling. The private consuming
 transport above may consume those entries; source lvalues remain unchanged. This bounded
 slice does not activate source factories, nested keyed forms, brace syntax, inferred
-or non-local contexts, or new key/value families. Existing `set` replacement semantics
+or non-local contexts, or additional key types. Existing `set` replacement semantics
 and empty construction remain unchanged. See the
 [implementation note](../v0.2/compiler/docs/keyed_initialization.md).

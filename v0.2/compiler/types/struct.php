@@ -218,8 +218,14 @@ final class record_type_definition extends type_definition implements dependency
 				continue;
 			}
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
-			// The temporary instance-property policy permits absence independently of written nullability.
-			if ($type instanceof shared_record_type_definition && $type->required) $type = $type->payload->shared;
+			if ($type instanceof shared_record_type_definition && $type->required) {
+				if ($this->declaration->kind === record_kind::structure) {
+					// Struct storage retains the bootstrap exception.
+					$type = $type->payload->shared;
+				} elseif ($field->initializer === null && !isset($this->declaration->methods['__construct'])) {
+					throw new diagnostic($field->source(), $field->byte_start(), 'Required property needs a constructor: ' . $field->short_name);
+				}
+			}
 			if ($type instanceof self) {
 				$type->require_complete_value($field->type_reference);
 				$type->prepare_layout($symbols, $active, $work);
