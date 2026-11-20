@@ -444,7 +444,8 @@ abstract class type_definition
 	}
 
 	/** Consume the original prepared operand types when selecting the native binding. */
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
+		bool $bare_comparison = false): string
 	{
 		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type(), $typed_initializer);
 	}

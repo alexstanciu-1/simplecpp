@@ -28,7 +28,8 @@ abstract class carrier_type_definition extends type_definition
 	abstract public function lower_cpp_presence(string $value): string;
 
 	/** A strict null comparison operates on the carrier itself and reads only presence. */
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
+		bool $bare_comparison = false): string
 	{
 		$carrier_first = $expr->left->type_def() === $this;
 		return $this->lower_null_presence_comparison($expr, $this->lower_cpp_presence($carrier_first ? $left : $right),
