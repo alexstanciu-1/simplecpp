@@ -81,20 +81,34 @@ def static_returns(work, flavor):
     sources = dict(root=klass('Node',method('tag','return 0;',intent='virtual')),
                    middle=klass('Middle','','Node'), record=arm('RecordDecl','Node'), right=arm('TraitDecl','Node'),
                    other=arm('Other','Node'), factory=factory, derived=klass('Derived','','RecordSyntax'), api=inspect, main=main)
+    parent = {'php':'parent::','cpp':'Parent::','js':'super.'}[flavor]
+    bridge = klass('Derived',signature.replace('read(', 'relay(')+'{return '+parent+'read('+v+'flag);}', 'RecordSyntax')
+    make = fn('produce','Sibling',[],'echo "P";return new Sibling();')
+    sibling = fn('consumeSibling','int',[],'return inspect(produce()::read(false));')
+    sources['sibling'] = klass('Sibling','','RecordSyntax')+make
     revisions(work,flavor,sources,[
         (None,None,b'12'),(None,None,b'12'),
         ('factory',factory.replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
         (None,None,'Argument must belong'),('factory',factory,b'12'),
         ('record',arm('RecordDecl','Middle'),b'12'),('right',arm('TraitDecl','Middle'),b'12'),
-        ('main',main.replace('RecordSyntax','Derived'),'explicit declaring-type call'),('main',main,b'12'),
+        ('main',main.replace('RecordSyntax','Derived'),b'12'),('main',main,b'12'),
         ('derived',klass('Derived',signature+'{'+body+'}','RecordSyntax'),'redeclarations are deferred'),
         ('derived',sources['derived'],b'12'),('right',None,None),('right',arm('TraitDecl','Node'),b'12'),
         ('factory',factory.replace(pair,'RecordDecl|Other').replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
         ('factory',factory,b'12'),
-        ('factory',factory.replace('new TraitDecl()',lexical+'read(true)'),'explicit declaring-type call'),
-        ('factory',factory.replace('new TraitDecl()',late+'read(true)'),'explicit declaring-type call'),
+        ('factory',factory.replace('new TraitDecl()',lexical+'read(true)'),b'11'),
+        ('factory',factory.replace('new TraitDecl()',late+'read(true)'),b'11'),
         ('factory',factory,b'12'),
+        ('derived',bridge,b'12'),('user',sibling,b'12'),
+        ('main','echo inspect(Derived'+sep+'relay(true)),consumeSibling();return 8;',b'1P2'),
+        ('main','echo inspect(Derived'+sep+'relay(true));return 8;',b'1'),
+        ('user',None,b'1'),('user',sibling,b'1'),('main',main,b'12'),
     ])
+    for rev, retained in ((20,True),(22,False),(23,True)):
+        units = work/f'{flavor}-fresh-{rev}'/'units'
+        emitted = ''.join(p.read_text() for p in units.glob('*.cpp'))
+        assert ('called_7_Sibling_12_RecordSyntax_read' in emitted) == retained
+        assert 'called_7_Derived_12_RecordSyntax_read' in emitted
     for rev, owner in ((0,'Node'),(6,'Middle'),(12,'Node')):
         out = work/f'{flavor}-fresh-{rev}'
         units = json.loads((out/'manifest.json').read_text())['sources']
