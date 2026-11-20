@@ -531,7 +531,7 @@ Discuss inheritance, handles and interfaces together before implementing this mi
 | 3.1 | Base storage and inheritance | One base, derived fields, inherited access, protected access and construction. No multiple class inheritance. |
 | 3.2 | Object contracts, then behavior through base views | First class/shared defaults and explicit function nullability with the temporary relaxed property rule below; then ownership-preserving shared upcasts; then virtual/abstract methods and overrides. Preserve destruction and allocation identity. |
 | 3.3 | Type tests and narrowing | Subtype tests, then interface-capability tests. Keep exact concrete type identity distinct. |
-| 3.4 | Interfaces | Interface-typed parameters/references and multiple capabilities using the dispatch model. |
+| 3.4 | Interfaces | Class implementations, transitive interface views and diamond dispatch are proven. Ordinary struct implementers remain open. [Interface proof](../../compiler/docs/interfaces.md) |
 | 3.5 | Non-owning AST links | Define validity of parent links and retained-generation references. Reuse weak handles where suitable; discuss borrow/reference machinery where needed. |
 | 3.6 | Staged initialization and composition | Write-once attachment, settling ranges and a declaration trait/interface use. Evaluate bounded traits versus a simpler truthful owner. |
 

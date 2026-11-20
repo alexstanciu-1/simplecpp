@@ -1145,7 +1145,7 @@ final class Preparation
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
 					$symbol = $record instanceof record_type_definition
-						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies)
+						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call)
 						: $this->symbols->entry('method:' . $record->name . '::' . $name);
 					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
 					$method = $symbol?->declaration();
@@ -1294,7 +1294,7 @@ final class Preparation
 			$name = substr($qualified, $separator + 2);
 		}
 		if ($record instanceof ast_record_declaration) {
-			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
+			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call);
 		}
 		else {
 			$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
@@ -1343,7 +1343,7 @@ final class Preparation
 				throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
 			}
 		}
-		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
+		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call);
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration) || $method->is_constructor()) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor method: ' . $name);

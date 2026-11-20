@@ -111,7 +111,9 @@ final class record_type_definition extends type_definition implements dependency
 			$cycle = array_merge(array_slice($cycle, $index), array_slice($cycle, 0, $index));
 			$node = $symbols->resolve('class:' . $cycle[0]);
 			$cycle[] = $cycle[0];
-			throw new diagnostic($node->source(), $node->byte_start(), ((in_array(true, $active, true) || $concrete_field) ? 'Recursive concrete collection fields are deferred: ' : 'Recursive inline layout: ') . implode(' -> ', $cycle));
+			$message = $node->kind === record_kind::interface_type ? 'Recursive interface inheritance: ' : 'Recursive inline layout: ';
+			if (in_array(true, $active, true) || $concrete_field) $message = 'Recursive concrete collection fields are deferred: ';
+			throw new diagnostic($node->source(), $node->byte_start(), $message . implode(' -> ', $cycle));
 		}
 		$active[$this->name] = $concrete_field;
 		$this->dependencies->forget($this);
@@ -140,8 +142,8 @@ final class record_type_definition extends type_definition implements dependency
 			}
 		}
 		foreach ($interface_references as $written) {
-			if ($written->name === Iterator_Contract::NAME) continue;
-			if ($this->declaration->kind !== record_kind::class_type) throw new diagnostic($written->source(), $written->byte_start(), 'Only classes implement interfaces in this slice');
+			if ($written->name === Iterator_Contract::NAME && $this->declaration->kind !== record_kind::interface_type) continue;
+			if ($this->declaration->kind === record_kind::structure) throw new diagnostic($written->source(), $written->byte_start(), 'Only classes implement interfaces in this slice');
 			$type = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if (!($type instanceof shared_record_type_definition) || !$type->required || $type->payload->declaration->kind !== record_kind::interface_type) throw new diagnostic($written->source(), $written->byte_start(), 'Implemented type must be an interface');
 			$interface = $type->payload;
@@ -265,22 +267,32 @@ final class record_type_definition extends type_definition implements dependency
 		throw new \LogicException('Source traversal calls are emitted through their method declaration');
 	}
 
-	/** Direct settled edges; interfaces currently have no interface parents. @return record_type_definition[] */
+	/** Direct implemented or extended interfaces in source order. @return record_type_definition[] */
 	public function interfaces(): array /** list<record_type_definition> */
 	{
 		return $this->interfaces;
 	}
 
-	/** Read original contracts through settled edges; the temporary result is not a retained member index. @return ast_function_declaration[] */
+	/** Collect distinct reachable interfaces once per query. @param record_type_definition[] $seen */
+	private function collect_interfaces(array &$seen /** array<string,record_type_definition> */): void
+	{
+		foreach ($this->interfaces as $interface) {
+			if (isset($seen[$interface->name])) continue;
+			$seen[$interface->name] = $interface;
+			$interface->collect_interfaces($seen);
+		}
+	}
+
+	/** Read original obligations through settled edges. @return ast_function_declaration[] */
 	public function interface_requirements(?string $name = null): array /** list<ast_function_declaration> */
 	{
+		$interfaces = [];
+		for ($type = $this; $type !== null; $type = $type->base_type) $type->collect_interfaces($interfaces);
 		$requirements = [];
-		for ($type = $this; $type !== null; $type = $type->base_type) {
-			foreach ($type->interfaces as $interface) {
-				if ($name === null) {
-					foreach ($interface->declaration->methods as $method) $requirements[] = $method;
-				} elseif (isset($interface->declaration->methods[$name])) $requirements[] = $interface->declaration->methods[$name];
-			}
+		foreach ($interfaces as $interface) {
+			if ($name === null) {
+				foreach ($interface->declaration->methods as $method) $requirements[] = $method;
+			} elseif (isset($interface->declaration->methods[$name])) $requirements[] = $interface->declaration->methods[$name];
 		}
 		return $requirements;
 	}
@@ -340,7 +352,7 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
-	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
+	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies, ?ast_node $call = null): ?symbol_entry
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {
 			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
@@ -349,12 +361,24 @@ final class record_type_definition extends type_definition implements dependency
 			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
 			if (isset($type->hook_slots[$name])) return $type->hook_slots[$name];
 		}
-		foreach ($this->interface_requirements($name) as $method) {
-			$symbol = $symbols->entry($method->symbol_key());
-			$dependencies?->watch($symbol, $watcher);
-			return $symbol;
+		if ($call === null) return null;
+		$requirements = $this->interface_requirements($name);
+		$selected = $requirements[0] ?? null;
+		if ($selected === null) return null;
+		if (count($requirements) > 1) {
+			// A unique visible redeclaration must descend from every competing declaration.
+			foreach ($requirements as $method) {
+				if ($method->parent->definition->derives_from($selected->parent->definition)) $selected = $method;
+			}
+			foreach ($requirements as $method) {
+				if (!$selected->parent->definition->derives_from($method->parent->definition)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Ambiguous inherited interface method: ' . $name);
+				}
+			}
 		}
-		return null;
+		$symbol = $symbols->entry($selected->symbol_key());
+		$dependencies?->watch($symbol, $watcher);
+		return $symbol;
 	}
 
 	/** Native layout follows validated written virtual contracts, including inherited ones. */
@@ -379,11 +403,17 @@ final class record_type_definition extends type_definition implements dependency
 		return $caller->derives_from($this) && ($receiver === null || $receiver->derives_from($caller));
 	}
 
-	/** Settled single-base relation; equality includes the type itself. */
+	/** Settled nominal ancestry includes the concrete base chain and all reachable interfaces. */
 	public function derives_from(self $ancestor): bool
 	{
 		for ($type = $this; $type !== null; $type = $type->base_type) {
-			if ($type === $ancestor || in_array($ancestor, $type->interfaces, true)) return true;
+			if ($type === $ancestor) return true;
+			if ($ancestor->declaration->kind === record_kind::interface_type && $type->interfaces !== []) {
+				if (in_array($ancestor, $type->interfaces, true)) return true;
+				$reachable = [];
+				$type->collect_interfaces($reachable);
+				if (($reachable[$ancestor->name] ?? null) === $ancestor) return true;
+			}
 		}
 		return false;
 	}

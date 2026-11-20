@@ -124,6 +124,14 @@ final class Cpp_Emitter
 			}
 			foreach ($node->definition->effective_methods() as $method) {
 				if (!$method->has_virtual_dispatch()) continue;
+				if ($node->kind === record_kind::interface_type) {
+					$inherited = self::exact_interface_slot($node, $method);
+					if ($inherited !== null) {
+						// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
+						$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
+						continue;
+					}
+				}
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$result = $this->member_type($type);
@@ -140,7 +148,7 @@ final class Cpp_Emitter
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
-					&& !self::has_exact_interface_slot($node, $method);
+					&& self::exact_interface_slot($node, $method) === null;
 				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
 					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
 				if ($method->is_final && $method->has_virtual_dispatch()) {
@@ -1979,12 +1987,12 @@ CPP;
 	}
 
 	/** An inherited ordinary implementation may introduce its own dispatch slot alongside an adapted interface. */
-	private static function has_exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): bool
+	private static function exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): ?ast_function_declaration
 	{
 		foreach ($record->definition->interface_requirements($method->short_name) as $contract) {
-			if (self::virtual_name($contract) === self::virtual_name($method)) return true;
+			if (self::virtual_name($contract) === self::virtual_name($method)) return $contract;
 		}
-		return false;
+		return null;
 	}
 
 	/** Standalone inspection uses the same publication plan, embedding each generated header once. @param string[] $files */

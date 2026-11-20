@@ -459,7 +459,11 @@ Abstract implementers may retain outstanding obligations; concrete types must fu
 them. Nonvirtual source hiding restrictions still apply.
 
 An inherited public final class method can fulfill a newly introduced interface.
-Interface inheritance/diamonds, struct implementers and broader reference returns remain deferred.
+An interface can extend multiple interfaces. PHP and JS use `interface Both extends Left, Right`.
+C++ uses `interface Both : public Left, public Right`. The static interface selects the
+original method and its defaults. A diamond shares its original declaration. If separate branches
+declare the same method, an explicit compatible redeclaration can select the call contract.
+Struct implementers and broader reference returns remain deferred.
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).

@@ -19,8 +19,8 @@ The static callable selects defaults. Fixed shared-value parameters allow contra
 Abstract implementers may leave bodies outstanding; an existing inherited abstract
 method must still satisfy the directional callable contract.
 
-Each invalidated record validates its obligations through existing ancestry and direct
-interface edges. The existing record readiness flag now covers abstract and interface
+Each invalidated record validates its obligations through concrete ancestry and transitive
+interface edges. A temporary visited set deduplicates the original interfaces in a diamond. The existing record readiness flag now covers abstract and interface
 contracts. Temporary requirement lists reference original declarations; method queries
 select only the requested name. Preparation retains forwarding targets and the distinct contracts needing shared-view adapters. No synthetic source method, copied body or flattened member table
 is added. Unchanged contracts retain their readiness and no-op builds reuse prepared
@@ -41,7 +41,10 @@ a C++ using-declaration keeps direct class calls on the original slot. The exist
 forwarding map supplies both forms. No body is copied or interface entry allocated at runtime.
 
 Native interfaces use public virtual interface inheritance and nonthrowing virtual
-destruction. Concrete shared-view adapters preserve one control block, adjusted view
+destruction. An interface redeclaring an existing native signature imports the original
+slot with a C++ using-declaration. Its source declaration still selects defaults. This
+allows two branches to redeclare a common slot without adding competing native overrides.
+Concrete shared-view adapters preserve one control block, adjusted view
 pointers, allocation identity and concrete cleanup. No runtime ownership code or
 reference-count synchronization is changed. Required function boundaries and nullable
 function types retain their existing checks; shared properties retain the temporary
@@ -86,8 +89,11 @@ native namespace qualification with a record named `scpp`.
 Interface capability tests and checked casts now reuse the
 [shared-object access path](object_access.md), preserving control blocks and adjusted views.
 
-Deferred: interface inheritance/diamonds,
-struct implementers and broader reference
-returns, interface data/static/default members, traits, unique, borrows and native
+The [interface inheritance fixture](../tests/interface_inheritance_native.py) exercises diamond dispatch,
+ancestor conversions, conflicting contracts, defaults, cycle diagnostics and incremental recovery.
+Preparation validates parent contracts before implementers in both fresh and retained generations.
+
+Deferred: struct implementers and broader reference
+returns, interface data/static/default members, trait use in interfaces, unique, borrows and native
 threading. Sequential tests do not prove thread safety
 or a preparation-speed improvement.
