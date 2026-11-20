@@ -30,6 +30,11 @@ final class ast_constant_declaration extends ast_literal_declaration
 			? $this->parent->name() . '::' . $this->short_name : parent::name();
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::constant_declaration;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'const:' . $this->name();

@@ -26,7 +26,7 @@ The inventory concerns active v0.2 compiler sources, not donor implementation su
 
 | Use | Current owner | Implication for native translation |
 | --- | --- | --- |
-| Compare get_class on two declarations | `ast_declaration::link_duplicate`, structures/abstract.php | A defensive same-category check, with existing local-binding/type-declaration family exceptions. Preserve the invariant; discuss category identity when translating this trait. It does not yet justify a public exact-object query. |
+| Compare declaration categories | `ast_declaration::link_duplicate`, structures/abstract.php | Production returns a fixed category per declaration kind. Local bindings share one category, and type declarations share another. |
 | Dynamic class name as dispatch key | runtime overload selection in prepare.php; generated type handlers | Compiler type identity/dispatch, not a source object's concrete-class query. Reuse the eventual canonical type identifier/capability mechanism; do not add reflection merely to reproduce PHP array keys. |
 | Dynamic class name in generated concrete identity | cpp/concrete.php and generator-produced specialization names | Distinguishes compiler type-definition families plus semantic names. Needs stable compiler identity when ported, not necessarily runtime RTTI. |
 | Dynamic class constants MINIMUM/MAXIMUM | enum preparation, match and enum construction in prepare.php | Existing integer representation/capability knowledge; belongs with the deferred metadata/type-knowledge review. |

@@ -16,6 +16,11 @@ final class ast_global_declaration extends ast_literal_declaration
 			? $this->parent->name() . '::' . $this->short_name : parent::name();
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::global_declaration;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->name();
