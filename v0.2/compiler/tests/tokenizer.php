@@ -72,6 +72,18 @@ foreach ([['$', flavor::php, 0], ['$1', flavor::php, 0], ['$a', flavor::cpp, 0],
 $source = new source_file('lines', "a\r\nb\n", flavor::cpp);
 check($source->location(3) === ['line' => 2, 'column' => 1], 'LF lines');
 check($source->location(5) === ['line' => 3, 'column' => 1], 'EOF location');
+$content = "\né\r\n\n\0abc\n🙂";
+$snapshot = new source_file('byte-columns', $content, flavor::php);
+$line = $column = 1;
+for ($offset = 0; $offset <= strlen($content); ++$offset) {
+	check($snapshot->location($offset) === ['line' => $line, 'column' => $column], 'Location at byte ' . $offset);
+	if ($offset < strlen($content) && $content[$offset] === "\n") {
+		++$line;
+		$column = 1;
+	} else {
+		++$column;
+	}
+}
 $old = scan('old');
 scan('new', flavor::js);
 check(($old->text_at(0) === 'old') && ($old->source->flavor === flavor::php), 'Old generation stays intact');

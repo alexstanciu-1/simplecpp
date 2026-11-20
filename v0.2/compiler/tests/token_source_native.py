@@ -60,7 +60,7 @@ def sources(flavor):
     body += f'while ({v}i < strlen({v}content)) {{if ({v}content[{v}i] == 10) {{{v}starts[]={v}i+1;}}{v}i++;}}'
     body += f'{v}this{a}content={v}content;{v}this{a}line_starts={v}starts;'
     lookup = s['infer']('low', '0') + s['infer']('high', f'count({v}this{a}line_starts)')
-    lookup += f'while ({v}low+1 < {v}high) {{' + s['infer']('middle', f'({v}low+{v}high)/2')
+    lookup += f'while ({v}low+1 < {v}high) {{' + s['infer']('middle', f'{v}low+(({v}high-{v}low)>>1)')
     lookup += f'if ({v}this{a}line_starts[{v}middle] <= {v}offset) {{{v}low={v}middle;}} else {{{v}high={v}middle;}}}}'
     lookup += inline('result', 'SourceLocation', f'{v}low+1,{v}offset-{v}this{a}line_starts[{v}low]+1') + f'return {v}result;'
     source = s['record']('SourceFile', ro('content', 'string') + ro('line_starts', 'vector<int>') + ctor('SourceFile', [('content', 'string')], body) + method('location', 'SourceLocation', [('offset', 'int')], lookup))
