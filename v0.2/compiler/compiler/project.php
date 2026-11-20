@@ -36,15 +36,18 @@ final class Project_Compiler
 	{
 		$session = (new Module_Loader($this->runtime))->load($path, $directory);
 		$state = Project_Changes::capture($session, $facts, $directory, $optimize_functions);
-		$previous = Cpp_Bundle::read($directory);
-		$removed = Project_Changes::mark($session, $state, Cpp_Bundle::baseline($previous));
+		[$previous, $cached] = Cpp_Bundle::with_reader($directory,
+			static function (bool $present) use ($directory, $force, $state): array {
+				$snapshot = $present ? Cpp_Bundle::snapshot($directory) : new cpp_bundle_snapshot([], null);
+				return [$snapshot, $force ? null : Cpp_Bundle::reuse($directory, $state, $snapshot->manifest)];
+			});
+		$removed = Project_Changes::mark($session, $state, Cpp_Bundle::baseline($previous->manifest));
 		$changes = [];
 		foreach (array_merge(array_values($session->units()), $removed) as $unit) {
 			if ($unit->status !== change_status::none) {
 				$changes[$unit->module->root . '/' . $unit->path] = $unit->status->name;
 			}
 		}
-		$cached = $force ? null : Cpp_Bundle::reuse($directory, $state, $previous);
 		if ($cached !== null) {
 			return ['manifest' => $directory . '/manifest.json',
 				'sources' => count($cached['sources']), 'translation_units' => count($cached['translation_units']),
@@ -58,18 +61,18 @@ final class Project_Compiler
 	 *
 	 * $state: captured input state.
 	 * $changes: source path -> change status.
-	 * $previous: validated previous bundle manifest.
+	 * $previous: pinned previous bundle snapshot or validated inventory.
 	 * Return: compilation report; counts and source changes.
 	 *
 	 * @param mixed[]|null $state
 	 * @param string[] $changes
 	 * @param string[] $optimize_functions
-	 * @param mixed[]|null $previous
+	 * @param mixed[]|cpp_bundle_snapshot|null $previous
 	 * @return mixed[]
 	 */
 	public function compile(compilation_session $session, string $facts, string $directory, ?array $state /** array<string,mixed> */ = null,
 		array $changes /** array<string,string> */ = [],
-		?array $previous /** array<string,mixed> */ = null, array $optimize_functions = []): array /** array<string,mixed> */
+		array|cpp_bundle_snapshot|null $previous /** array<string,mixed> */ = null, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$target = Native_Target::load($facts);
 		$program = (new Program_Frontend())->prepare($session, $target);

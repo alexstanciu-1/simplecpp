@@ -2,10 +2,16 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 namespace {
 const char* c_path(const scpp::string& path) {
@@ -80,4 +86,41 @@ scpp::bool_t scpp::fs::remove(const string& path) {
 
     std::error_code error;
     return std::filesystem::remove(filename, error) && !error;
+}
+
+scpp::result_string scpp::fs::stage(const string& directory) {
+#if defined(__unix__) || defined(__APPLE__)
+    const auto* name = c_path(directory);
+    if (name == nullptr || *name == '\0') {
+        return result_string{error_t{string{"fs_stage: invalid directory"}}};
+    }
+
+    auto path = (std::filesystem::path(name) / ".scpp-stage-XXXXXX").string();
+#if defined(__linux__)
+    const int descriptor = ::mkostemp(path.data(), O_CLOEXEC);
+#else
+    const int descriptor = ::mkstemp(path.data());
+#endif
+    if (descriptor < 0) {
+        return result_string{error_t{string{"fs_stage: cannot reserve file"}}};
+    }
+
+    const auto discard = [](const char* filename) { ::unlink(filename); };
+    std::unique_ptr<char, decltype(discard)> reservation(path.data(), discard);
+#if !defined(__linux__)
+    const bool cloexec = ::fcntl(descriptor, F_SETFD, FD_CLOEXEC) == 0;
+#else
+    constexpr bool cloexec = true;
+#endif
+    if (::close(descriptor) != 0 || !cloexec) {
+        return result_string{error_t{string{"fs_stage: cannot seal reservation"}}};
+    }
+
+    auto result = result_string{string{path.c_str()}};
+    reservation.release();
+    return result;
+#else
+    (void)directory;
+    return result_string{error_t{string{"fs_stage: exclusive reservation is unavailable on this host"}}};
+#endif
 }

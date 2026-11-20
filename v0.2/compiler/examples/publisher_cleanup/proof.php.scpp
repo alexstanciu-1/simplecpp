@@ -1,0 +1,108 @@
+function require_publication(bool $valid, string $message): void {
+	if (!$valid) {
+		throw Exception::make($message);
+	}
+}
+
+function read_publication(string $path): string {
+	$result = fs_get($path);
+	require_publication(isset($result), "Cannot read " . $path);
+	return $result;
+}
+
+function stage_publication(string $directory, string $message): string {
+	$result = fs_stage($directory);
+	if (!isset($result)) { throw Exception::make($message); }
+	return $result;
+}
+
+function write_publication(string $path, string $bytes): void {
+	$result = fs_put($path, $bytes);
+	if (!isset($result)) { throw Exception::make("Cannot write " . $path); }
+}
+
+final class Published_Bundle {
+	public readonly string $entry;
+	public readonly string $unit;
+
+	public function __construct(string $entry, string $unit) {
+		$this->entry = $entry;
+		$this->unit = $unit;
+	}
+}
+
+final class Bundle_Publisher {
+	private string $root;
+
+	public function __construct(string $root) {
+		$this->root = $root;
+	}
+
+	public function publish(string $unit_directory, string $entry_bytes, string $unit_bytes): Published_Bundle {
+		$entry = "";
+		$unit = "";
+		$manifest = "";
+		$committed = false;
+		try {
+			$entry = stage_publication($this->root, "Cannot reserve staged entry");
+			write_publication($entry, $entry_bytes);
+			$unit = stage_publication($this->root . "/" . $unit_directory, "Cannot reserve staged unit");
+			write_publication($unit, $unit_bytes);
+
+			$manifest = stage_publication($this->root, "Cannot reserve staged manifest");
+			write_publication($manifest, $entry . "\n" . $unit . "\n");
+			$revision = new Published_Bundle($entry, $unit);
+			if (!fs_rename($manifest, $this->root . "/manifest")) {
+				throw Exception::make("Cannot publish manifest");
+			}
+			$committed = true;
+			return $revision;
+		} finally {
+			if (!$committed) {
+				if ($manifest !== "") { fs_remove($manifest); }
+				if ($unit !== "") { fs_remove($unit); }
+				if ($entry !== "") { fs_remove($entry); }
+			}
+		}
+	}
+}
+
+require_publication(!isset(fs_stage("")) && !isset(fs_stage("bundle\0ignored")), "Accepted an invalid stage directory");
+$publisher = new Bundle_Publisher("bundle");
+$old = $publisher->publish("previous", "good\0entry", "good\0unit");
+$last_manifest = read_publication("bundle/manifest");
+require_publication($last_manifest === $old->entry . "\n" . $old->unit . "\n", "Wrong initial manifest");
+
+$entry_bytes = "new\0entry";
+$unit_bytes = "new\0unit";
+$failed = false;
+try {
+	$publisher->publish("units", $entry_bytes, $unit_bytes);
+} catch (Exception $error) {
+	$failed = $error->get_message() === "Cannot reserve staged unit";
+}
+require_publication($failed, "Expected failure after staging the entry");
+require_publication(read_publication("bundle/manifest") === $last_manifest
+	&& read_publication($old->entry) === "good\0entry"
+	&& read_publication($old->unit) === "good\0unit", "Failed publication changed the last good bundle");
+
+require_publication(fs_rename("bundle/units", "obstruction"), "Cannot remove output obstruction");
+require_publication(fs_rename("ready-units", "bundle/units"), "Cannot restore output directory");
+
+$next = $publisher->publish("units", $entry_bytes, $unit_bytes);
+require_publication($old->entry !== $next->entry && $old->unit !== $next->unit, "Reservation reused a published path");
+require_publication(read_publication("bundle/manifest") === $next->entry . "\n" . $next->unit . "\n"
+	&& read_publication($next->entry) === $entry_bytes
+	&& read_publication($next->unit) === $unit_bytes, "Retry published an incomplete bundle");
+$blocked = new Bundle_Publisher("blocked-manifest");
+$promotion_failed = false;
+try {
+	$blocked->publish("units", $entry_bytes, $unit_bytes);
+} catch (Exception $error) {
+	$promotion_failed = $error->get_message() === "Cannot publish manifest";
+}
+require_publication($promotion_failed, "Expected failure at manifest promotion");
+require_publication(read_publication("blocked-manifest/manifest/owner") === "keep", "Promotion changed the obstruction");
+
+echo $last_manifest;
+return 0;

@@ -93,7 +93,11 @@ covers weekly expiry: it does not by itself force native rebuilding. The tempora
 graph is removed after invocation. Stable object names and depfiles preserve no-op
 reuse and surviving objects across source membership changes.
 
-A build-directory lock serializes PHP host graph publication/invocation. The
+The PHP native host holds a shared bundle lock from manifest read through Ninja
+exit. The bundle writer uses the same persistent lock inode exclusively for publication
+and retirement. A separate build-directory lock serializes graph publication and
+invocation. Standalone bundle consumers can hold a shared lock on `.scpp-bundle.lock`
+around manifest and artifact reads. The
 qualification-record lock is nonblocking on the warm path; contention falls back
 to the protected graph. This stamp integration applies to the PHP host's saved
 graph; the existing panel/PCH graph orchestration remains outside this slice.

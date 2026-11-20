@@ -44,6 +44,16 @@ final class Native_Build
 		if ($bundle === false) {
 			throw new \RuntimeException('Missing generated bundle');
 		}
+		return Cpp_Bundle::with_reader($bundle, static function (bool $present) use ($bundle, $directory, $config): array {
+			if (!$present) throw new \RuntimeException('Missing generated bundle');
+			return self::run_with_bundle($bundle, $directory, $config);
+		});
+	}
+
+	/** The reader reservation spans manifest interpretation and all Ninja reads. */
+	private static function run_with_bundle(string $bundle, string $directory,
+		array $config /** array<string,mixed> */): array /** array<string,mixed> */
+	{
 		$manifest = Cpp_Bundle::read($bundle);
 		if (($manifest['translation_units'] ?? []) === []) {
 			throw new \RuntimeException('Native build requires a published executable bundle');

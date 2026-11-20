@@ -27,10 +27,34 @@ preserved too. Retrying without edits does not lose the error or grow retained h
 
 After lowering/emission/publication failure, prepared facts and downstream dirty-source
 membership survive for retry. The last successful in-memory output baseline remains.
-Existing bundle failure handling removes newly created uncommitted artifacts; this is
-not a new filesystem transaction or rollback of all overwritten files. Repairing the
+The bundle writer stages changed artifacts before installing any replacement. Its
+exclusive bundle reservation spans backup, installation, manifest commit and retirement.
+If publication fails, rollback restores replaced and withdrawn files at their original
+paths and removes newly installed files before releasing the reservation. Repairing the
 output destination permits retry without source edits and without re-preparing bodies.
 Native failure occurs after C++ publication and needs no prior AST generation.
+
+## Translated publisher proof
+
+The translated fixture writes two new artifacts to exclusively reserved paths.
+The manifest is the commit point. One rename switches it to the new artifacts
+after both writes succeed, and readers holding the previous manifest can still
+read its artifacts. Before the commit, the attempt owns its reservations and
+releases them in finally when a write or promotion fails.
+
+The test obstructs the second artifact's staging directory with a regular file.
+The translated publisher reports the reservation failure after the first write,
+and the test verifies that the previous manifest and both previous artifacts
+are byte-for-byte intact. It repairs only the destination and retries with the
+same publisher instance and payloads. Every surviving file belongs to one of
+the committed manifests. A second attempt targets a manifest occupied by a
+directory and verifies cleanup of both artifacts and the manifest stage while
+preserving that directory. The proof covers a single writer and recoverable
+filesystem errors under POSIX. The fixture uses a two-entry manifest to
+exercise the commit boundary in a translated program.
+
+Run the proof with the filesystem runtime enabled and built, using
+`ctest --preset default -R compiler_translated_publisher_cleanup`.
 
 ## Lifetime qualification
 
