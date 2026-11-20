@@ -1485,6 +1485,10 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
+			if ($value->receiver instanceof ast_name_expression && ($guard = $value->receiver->guard()) !== null
+				&& $guard->operand->type_def() instanceof class_union_type_definition) {
+				return 'scpp_guard_' . $guard->start . '->' . Cpp_Identifier::source($value->field);
+			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
@@ -1832,6 +1836,9 @@ CPP;
 		}
 		$name = $this->name($declaration);
 		$type = $declaration->type_def();
+		if ($type instanceof class_union_type_definition && ($guard = $value->guard()) !== null) {
+			return $this->inline_adapters->call(Cpp_Object_Access::guarded_owner($type, $guard->target_type()), [$name, '*scpp_guard_' . $guard->start]);
+		}
 		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
 			if ($value->type_def() === $type->base) return $name . '.base';
 			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);

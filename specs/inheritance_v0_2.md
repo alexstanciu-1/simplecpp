@@ -347,6 +347,14 @@ same union or a compatible base-class parameter. Passing preserves shared
 allocation identity and lifetime. Override signatures distinguish different
 arm pairs, including pairs whose nearest common class is identical.
 
+A direct positive `instanceof` test on a by-value union parameter narrows reads to
+the tested arm within that branch. This admits arm-specific member access and
+passing the same object by value to an arm-typed parameter. A writable reference
+still requires the exact declared storage type. Rebinding the parameter ends the
+proof. The other branch and code following the conditional keep the declared
+union. Testing an arm through a proper base uses the ordinary polymorphic-source
+requirement for checked object access.
+
 A readonly instance field may declare the same two-arm union. The constructor
 must initialize the field exactly once with a member of the union. Reading the
 field preserves its union type. Common-base methods and fields are accessible

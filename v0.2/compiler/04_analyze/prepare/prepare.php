@@ -41,7 +41,7 @@ final class Preparation
 	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
 	private array $latest_writes /** array<uint32,ast_assignment_statement|ast_local_declaration|null> */ = [];
-	/** Transient successful interface tests by local storage ID. @var ast_object_access_expression[] */
+	/** Transient successful type tests by local storage ID. @var ast_object_access_expression[] */
 	private array $guards /** array<uint32,ast_object_access_expression> */ = [];
 	/** Guarded argument reads in the current expression, indexed by slot with the first read position. @var int[] */
 	private array $guard_reads /** array<uint32,uint32> */ = [];
@@ -443,7 +443,7 @@ final class Preparation
 				$this->condition($arm->condition);
 				$remaining = $this->guards;
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
-				$guard = $this->interface_guard($arm->condition, $function);
+				$guard = $this->branch_guard($arm->condition, $function);
 				if ($guard !== null && $guard === $arm->condition) {
 					$this->guards[$guard->operand->local_def()->storage_id()] = $guard;
 				}
@@ -482,14 +482,17 @@ final class Preparation
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
-	/** Recognize a direct interface test on storage whose owner cannot be rebound through an alias. */
-	private function interface_guard(ast_expression $condition, ast_function_declaration $function): ?ast_object_access_expression
+	/** Recognize a direct interface or positive union-arm test on storage whose owner cannot be rebound through an alias. */
+	private function branch_guard(ast_expression $condition, ast_function_declaration $function): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
-			|| $test->target_type()->payload->declaration->kind !== record_kind::interface_type
 			|| $function->return_type_def() instanceof generator_type_definition) return null;
 		$local = $test->operand->declaration();
+		if ($local instanceof ast_parameter_declaration && $local->type_def() instanceof class_union_type_definition) {
+			return $condition === $test && $test->operand->type_def() === $local->type_def() ? $test : null;
+		}
+		if ($test->target_type()->payload->declaration->kind !== record_kind::interface_type) return null;
 		if ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::value) return $test;
 		return $local instanceof ast_local_declaration ? $test : null;
 	}
@@ -1129,7 +1132,14 @@ final class Preparation
 				$type = $binding->type_def();
 				$view = $type instanceof intersection_type_definition
 					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
-				if ($type instanceof class_union_type_definition) $view = $type->receiver_view($syntax);
+				if ($type instanceof class_union_type_definition) {
+					$guard = $this->guards[$id] ?? null;
+					if ($guard !== null) {
+						$syntax->settle_guard($guard, narrow: true);
+						return;
+					}
+					$view = $type->receiver_view($syntax);
+				}
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
@@ -1188,7 +1198,7 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
-		if ($argument->type_def() !== $type) {
+		if ($storage->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
 		$writes[] = $storage->storage_id();

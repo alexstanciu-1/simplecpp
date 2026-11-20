@@ -809,6 +809,11 @@ final class class_union_type_definition extends type_definition
 		return true;
 	}
 
+	public function has_arm(record_type_definition $record): bool
+	{
+		return $record === $this->first || $record === $this->second;
+	}
+
 	/** Test membership before choosing the existing shared-owner conversion. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
