@@ -35,15 +35,19 @@ def fixture(flavor):
     api = function('observe', 'weak<Parent>', ('p', 'shared<Parent>'), f'return weak({p});')
     api += function('acquire', 'shared<Parent>', ('w', 'weak<Parent>'), f'return lock({w});')
     same = local('p', 'makeParent()') + local('c', 'makeChild()')
+    same += f'if (!{c}{access}parent{access}is_empty()) {{ return 9; }} '
     same += f'{p}{access}child={c}; {p}{access}self=weak({p}); {c}{access}parent=observe({p}); '
     same += local('w', f'{c}{access}parent') + local('held', f'acquire({w})')
+    same += f'if ({w}{access}is_empty() || observe({p}){access}is_empty()) {{ return 10; }} '
     same += f'if ({p} !== {held} || {p} != lock({p}{access}self)) {{ return 1; }} '
     same += f'if ({p} == makeParent() || {p} === makeParent()) {{ return 2; }} '
     same += f'{p}=null; if (!{held} || lock({w}) !== {held}) {{ return 3; }} '
     same += f'{held}=null; if (lock({w}) !== {p} || lock({c}{access}parent) != null) {{ return 4; }} '
     same += local('expired', 'weak(makeParent())') + f'if (lock({names}expired)) {{ return 5; }} '
     same += f'{held}=lock(weak(makeParent())); if (!{held}) {{ return 6; }} '
-    same += f'if (lock(weak({p})) !== null) {{ return 7; }} return 8;'
+    same += f'if (lock(weak({p})) !== null) {{ return 7; }} '
+    same += f'if ({w}{access}is_empty() || {c}{access}parent{access}is_empty()) {{ return 11; }} '
+    same += f'{w}=weak({p}); if (!{w}{access}is_empty()) {{ return 12; }} return 8;'
     return parent, child, api, same, p, c, w, held
 
 
@@ -82,18 +86,20 @@ int main() {
         auto observer = child->parent;
         auto acquired = acquire_(observer);
         assert(parent.ptr->count == 2 && parent.ptr->weak_count == 4);
+        assert(weak_Parent{}.is_empty() && !observer.is_empty());
+        assert(parent.ptr->count == 2 && parent.ptr->weak_count == 4);
         parent = {};
         acquired = {};
         // Child's count proves Parent's payload was already destroyed while observers still exist.
         assert(child.ptr->count == 1 && observer.ptr->count == 0 && observer.ptr->weak_count == 2);
-        assert(!observer.lock() && frees == start);
+        assert(!observer.is_empty() && !observer.lock() && frees == start);
         child = {};
         assert(frees == start+1 && observer.ptr->weak_count == 1);
         auto copy = observer;
         observer = {};
-        assert(!copy.lock());
+        assert(!copy.is_empty() && !copy.lock());
         copy = {};
-        assert(frees == start+2);
+        assert(copy.is_empty() && frees == start+2);
         auto self = makeParent_();
         watched[0] = self.ptr;
         self->self = observe_(self);
@@ -130,7 +136,12 @@ def prove(work, flavor, memcheck):
     for path, text in [(api, api_text), (parent, parent_text), (child, child_text)]:
         path.write_text(text)
     out = work / ('out-' + flavor)
-    edits = [(entry, source, None), (entry, source.replace(f'acquire({w})', f'lock({p})'), 'lock() requires weak<T>'),
+    access = '.' if flavor == 'js' else '->'
+    empty_call = f'{w}{access}is_empty()'
+    invalid_call = source.replace(empty_call, f'{w}{access}is_empty(1)', 1)
+    assert invalid_call != source
+    edits = [(entry, source, None), (entry, invalid_call, 'Argument count mismatch for function: is_empty'),
+             (entry, source.replace(f'acquire({w})', f'lock({p})'), 'lock() requires weak<T>'),
              (entry, source.replace(f'acquire({w})', f'weak({w})'), 'weak() requires shared<T>'),
              (entry, source.replace(f'if (!{held}', f'if (!{w}'), 'Unsupported condition type'),
              (entry, source.replace(f'{p} !== {held}', f'{p} !== {c}'), 'Shared owners require equality against null or related shared types'),
@@ -156,6 +167,9 @@ def prove(work, flavor, memcheck):
             build(out, work / ('build-' + flavor), b'')
             build(baseline, work / f'build-fresh-{flavor}-{revision}', b'')
             if revision == 0:
+                generated = b'\n'.join(artifacts(out).values())
+                assert b'bool is_empty() const noexcept { return ptr == nullptr; }' in generated
+                assert b').is_empty()' in generated
                 native_lifetime(out, work / ('heap-' + flavor), memcheck)
         resident.stdin.close()
 

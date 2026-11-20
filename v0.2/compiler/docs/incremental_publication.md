@@ -51,6 +51,17 @@ serialization: two initial function contracts, zero on no-op, two for one replac
 (old/new), with an unrelated function untouched. It verifies ordered duplicate insertion,
 middle/head removal, recovery, stable tombstones and reactivation.
 
+The [publication gate proof](../tests/retention/gates.php) drives a resident
+`Incremental_Project` with two real source files per flavor. An external
+reader retains the old source generation through a body replacement. The
+same entry resolves to the new declaration while the reader can still read its
+old declaration directly from the retained source. After that reader releases
+its generation, weak probes confirm that neither the old declaration nor
+its AST root survives. The test then rejects an incomplete parse with the
+published entry and bundle intact, removes the declaration to a tombstone, and
+re-adds it through the same entry. The unchanged entry-point AST is reused
+throughout, and the restored bundle matches a fresh build byte for byte.
+
 The existing frontend/preparation/queue tests cover changed files, edits, rename/removal,
 parse failures, invalidation, preparation retry and recovery. The focused compiler CTest
 selection passed 50/50 tests. Native unary fixtures additionally exercise fresh C++ builds

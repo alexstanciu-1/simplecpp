@@ -123,8 +123,8 @@ final class ast_file_node extends ast_node
 				&& $declaration->parent instanceof ast_method_owner && $declaration->parent->parent === $this)) {
 				throw new \LogicException('Invalid AST declaration ownership');
 			}
-			if ($declaration instanceof ast_function_declaration && !$declaration->is_abstract) {
-				$declaration->body();
+			if ($declaration instanceof ast_function_declaration && !isset($declaration->end)) {
+				throw new \LogicException('Function declaration is not complete');
 			}
 		}
 		$bindings = [];

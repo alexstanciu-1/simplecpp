@@ -55,3 +55,54 @@ The harness checks cpp/php/js on Clang and GCC. Production PHP parent references
 GC policy are unchanged. Raw borrows, weak conversions, arenas, unique, compiler-enforced write-once
 attachment/range semantics, historical semantic snapshots and native
 threading remain deferred. This proof makes no performance-improvement claim.
+
+
+## Checked staged writes and weak symbol entries
+
+The [staged ownership example](../examples/staged_ownership/declarations.php.scpp)
+uses ordinary private fields and checked operations to stage a parent link and
+complete a function. The compiler rejects writes to those private fields from
+other classes. The operation checks repeat writes at runtime.
+
+```php
+// Simple C++ PHP flavor. This operation is inside Syntax_Node.
+if (!$child->parent->is_empty()) {
+    throw Exception::make("Parent already attached");
+}
+// Validate the ancestor chain before storing the backlink.
+$child->parent = weak($parent);
+```
+
+An empty backlink and an expired backlink both lock to an absent handle.
+An expired backlink still has a control block, so `is_empty()` returns false.
+The attachment operation leaves the backlink set for the rest of the child's
+lifetime.
+
+A function header can exist before its body. The completion operation validates
+the declaration kind and range before attempting attachment. It records the
+owning body handle, end position and completion flag after attachment succeeds.
+An abstract declaration completes its range without a body. The PHP-hosted
+compiler enforces the same transition with its existing end-position field and
+rejects incomplete functions at file completion.
+
+```php
+$declaration = new Function_Declaration(4, false);
+$body = new Function_Body(4, 16);
+Function_Declaration::complete_body($declaration, $body);
+$entry->publish($declaration);
+```
+
+The index owns its stable entry. That entry stores a weak reference to the
+completed declaration. The source generation owns the declaration and the
+declaration owns its body. Reparsing publishes a replacement in the existing
+entry. A reader can retain the old source generation until it finishes.
+Withdrawing a declaration clears the entry's weak reference and leaves the
+entry available for later publication.
+
+The [native proof](../examples/staged_ownership/proof.php.scpp) checks rejection
+of cycles, repeated completion and reattachment after expiry, and publication
+of unfinished functions. The [test harness](../tests/staged_ownership_native.py)
+checks that direct private writes reject and that repair reuses unaffected
+units, with entry sources in all three flavors. Caller-specific permission
+to invoke completion, compiler-enforced write-once fields, and raw index
+borrows remain separate language decisions.
