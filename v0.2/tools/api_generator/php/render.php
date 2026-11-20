@@ -166,6 +166,7 @@ function render(array $plan): array {
     renderHashes($plan, $files, $groups);
     renderDatetime($plan, $files);
     renderJson($plan, $files);
+    renderFilesystem($plan, $files, $groups);
     renderBoxed($plan, $files, $groups);
     $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('core/output_declaration', [
         'string_output' => isset($plan['string']) ? "class string;\nvoid echo_string(const string& value);\n" : '',

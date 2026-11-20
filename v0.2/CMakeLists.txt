@@ -95,6 +95,9 @@ if(SCPP_ENABLE_JSON)
   list(APPEND runtime_outputs
     ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
+if(SCPP_ENABLE_FILESYSTEM)
+  list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_provider.hpp)
+endif()
 # This source-local publication may have been written by another build profile.
 # Check its contents on every build; unchanged output keeps its timestamps.
 add_custom_target(scpp_runtime_publication
@@ -159,6 +162,12 @@ if(SCPP_ENABLE_JSON)
   scpp_add_json(scpp_json scpp_runtime ${runtime_generated})
   add_executable(scpp_json_demo examples/json_demo.cpp)
   target_link_libraries(scpp_json_demo PRIVATE scpp_json)
+endif()
+
+if(SCPP_ENABLE_FILESYSTEM)
+  add_library(scpp_filesystem STATIC runtime/src/filesystem/filesystem.cpp)
+  target_link_libraries(scpp_filesystem PUBLIC scpp_runtime)
+  target_include_directories(scpp_filesystem PRIVATE ${runtime_generated}/private)
 endif()
 
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
@@ -465,6 +474,12 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions.php)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py)
+  if(SCPP_ENABLE_FILESYSTEM)
+    add_test(NAME compiler_filesystem_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+  endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
   add_test(NAME compiler_constant_evaluation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/constant_evaluation.php)
   add_test(NAME compiler_literal_families COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/literal_families.php)

@@ -1,0 +1,7 @@
+{
+    "name": "runtime-filesystem",
+    "type": "c++",
+    "sources": ["src/filesystem/filesystem.cpp"],
+    "dependencies": {"runtime": {}},
+    "artifacts": ["../build/clang/libscpp_filesystem.a"]
+}

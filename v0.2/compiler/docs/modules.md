@@ -74,6 +74,30 @@ Build the desired runtime modules manually with the existing CMake options. The
 application compiler does not run CMake or the API generator. Do not additionally
 link the same runtime implementation from source when using the declared archive.
 
+## Filesystem module
+
+Configure the default build with `cmake --preset default -DSCPP_ENABLE_FILESYSTEM=ON`
+and build `scpp_filesystem`. In the application manifest select
+`"dependencies": {"runtime": {"modules": ["filesystem"]}}`. The compiler checks that
+selection when preparing a filesystem call or import. Changing the selection uses
+the same fresh frontend generation as a change to an optional type dependency.
+
+Runtime metadata owns the published filesystem signatures. The API generator uses
+the prepared signatures for both the public C++ declarations and the compiler
+bindings. Implementations are compiled privately into the filesystem archive.
+
+| Function | Behavior |
+| --- | --- |
+| `fs_get(string) -> result<string>` | Reads exact bytes, including empty files. |
+| `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
+| `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
+| `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
+
+The result-returning operations report structured errors on invalid paths and
+operational failure. Rename and remove return false on those failures. A publisher
+owns temporary-path reservation and cleanup. It can write to a stage and use
+rename to promote that stage after a successful write.
+
 ## Application discovery and inventory
 
 Application extensions are `.cpp`, `.php`, `.js`. Discovery is recursive and stable,

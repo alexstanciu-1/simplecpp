@@ -10,7 +10,8 @@
     "modules": {
         "json": "json.module.json",
         "datetime": "datetime.module.json",
-        "numeric": "numeric.module.json"
+        "numeric": "numeric.module.json",
+        "filesystem": "filesystem.module.json"
     },
     "artifacts": [
         "../build/clang/libscpp_runtime.a"

@@ -1,0 +1,3 @@
+{
+  "functions": ["fs_get", "fs_put", "fs_rename", "fs_remove"]
+}
