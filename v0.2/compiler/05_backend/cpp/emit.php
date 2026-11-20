@@ -555,9 +555,9 @@ CPP;
 		$unit_headers = [];
 		foreach ($declarations as $node) {
 			if (!($node instanceof ast_function_declaration) || !($node->return_type_def() instanceof generator_type_definition)) continue;
-			foreach ($this->application_types($node) as $type) {
+			$this->visit_application_types($node, function (type_definition $type) use (&$unit_headers): void {
 				if ($type instanceof application_collection_type) $unit_headers[$this->headers->collection_header($type, $this->root)] = true;
-			}
+			});
 		}
 		// Calls and definitions need complete value and handle types even when only the signature names them.
 		foreach ($declarations as $function) {
@@ -2164,11 +2164,11 @@ CPP;
 		$type = $lambda->type_def();
 		$signature = $type->signature;
 		foreach ($signature->cpp_headers() as $header) $headers[$header] = true;
-		foreach (self::signature_type_dependencies($signature) as $component) {
+		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
 			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
 			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
 			else $declarations[$component->name] = $component;
-		}
+		});
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {
@@ -2182,11 +2182,15 @@ CPP;
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
-		foreach (($this->headers?->declaration_header($function) !== null
-			? self::signature_application_types($function) : $this->application_types($function)) as $type) {
+		$collect = function (type_definition $type) use (&$declarations): void {
 			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			else $declarations[$type->name] = $type;
+		};
+		if ($this->headers?->declaration_header($function) !== null) {
+			self::visit_signature_application_types($function, $collect);
+		} else {
+			$this->visit_application_types($function, $collect);
 		}
 	}
 
@@ -2271,18 +2275,7 @@ CPP;
 	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
-		$types = [];
-		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
-			foreach (self::signature_type_dependencies($parameter->type_def()) as $type) $types[] = $type;
-		}
-		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
-			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
-		}
-		foreach (array_merge($record->definition->effective_methods(), $record->definition->interface_forwards) as $method) {
-			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
-			foreach (self::signature_application_types($method) as $type) $types[] = $type;
-		}
-		foreach ($types as $type) {
+		$collect = static function (type_definition $type) use (&$forwards): void {
 			if ($type instanceof intersection_type_definition) {
 				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 			} elseif ($type instanceof application_collection_type) {
@@ -2293,6 +2286,16 @@ CPP;
 			} elseif ($type instanceof record_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
 			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+		};
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
+			self::visit_signature_type_dependencies($parameter->type_def(), $collect);
+		}
+		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
+			self::visit_signature_application_types($contract, $collect);
+		}
+		foreach (array_merge($record->definition->effective_methods(), $record->definition->interface_forwards) as $method) {
+			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
+			self::visit_signature_application_types($method, $collect);
 		}
 		return implode('', $forwards);
 	}
@@ -2443,47 +2446,46 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
-	/** Application types named by a callable signature. @return \Generator<type_definition> */
-	public static function signature_application_types(ast_function_declaration $function): \Generator
+	/** Visit the receiver and outputs, then signature parameters in declaration order. @param \Closure(type_definition):void $visit */
+	public static function visit_signature_application_types(ast_function_declaration $function, \Closure $visit): void
 	{
-		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) yield $function->parent->type_definition();
+		if ($function->has_receiver() && $function->parent instanceof ast_enum_declaration) $visit($function->parent->type_definition());
 		$type = $function->return_type_def();
 		if ($type instanceof generator_type_definition) {
 			foreach ([$type->iteration_value_type(), $type->iteration_key_type()] as $output) {
-				if ($output instanceof record_handle_definition || $output instanceof record_type_definition || $output instanceof enum_type_definition) yield $output;
+				if ($output instanceof record_handle_definition || $output instanceof record_type_definition || $output instanceof enum_type_definition) $visit($output);
 			}
 		}
-		yield from self::signature_type_dependencies($type);
+		self::visit_signature_type_dependencies($type, $visit);
 		foreach ($function->parameters as $parameter) {
-			$type = $parameter->type_def();
-			yield from self::signature_type_dependencies($type);
+			self::visit_signature_type_dependencies($parameter->type_def(), $visit);
 		}
 	}
 
-	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
-	private static function signature_type_dependencies(type_definition $type): \Generator
+	/** Visit concrete and nominal dependencies at their position in the signature. @param \Closure(type_definition):void $visit */
+	private static function visit_signature_type_dependencies(type_definition $type, \Closure $visit): void
 	{
 		if ($type instanceof class_union_type_definition) {
-			yield $type->base;
+			$visit($type->base);
 			return;
 		}
 		if ($type instanceof callback_type_definition) {
-			yield from self::signature_type_dependencies($type->result);
-			foreach ($type->inputs as $input) yield from self::signature_type_dependencies($input);
+			self::visit_signature_type_dependencies($type->result, $visit);
+			foreach ($type->inputs as $input) self::visit_signature_type_dependencies($input, $visit);
 			return;
 		}
 		if ($type instanceof intersection_type_definition) {
-			yield $type;
-			yield $type->base;
-			yield $type->capability;
+			$visit($type);
+			$visit($type->base);
+			$visit($type->capability);
 			return;
 		}
 		if ($type instanceof application_collection_type) {
-			yield $type;
-			foreach ($type->concrete_types() as $argument) yield from self::signature_type_dependencies($argument);
+			$visit($type);
+			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
-		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) yield $type;
+		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}
 
 	/** Follow only prepared casts of literal values and immutable constant declarations. */

@@ -75,7 +75,8 @@ final class Cpp_Headers
 						$owners[$type->cpp_type()] = Cpp_Emitter::namespace_body($type->cpp_namespace(),
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
-					foreach ($emitter->application_types($node) as $type) {
+					$emitter->visit_application_types($node, function (type_definition $type) use ($node, $program, $emitter,
+						&$owners, &$record_headers, &$includes): void {
 						if ($type instanceof intersection_type_definition) {
 							$owners[$type->cpp_type()] = 'struct ' . $type->cpp_type() . ';';
 						} elseif ($type instanceof application_collection_type) {
@@ -97,7 +98,7 @@ final class Cpp_Headers
 									. $emitter->owner_methods($type->payload->shared, $includes);
 							}
 						}
-					}
+					});
 					if ($node->is_static) {
 						foreach ($file->static_implementations($node) as $implementation) {
 							if (!$implementation->instance->external) continue;
@@ -266,9 +267,9 @@ final class Cpp_Headers
 	{
 		foreach ($file->declaration_nodes as $node) {
 			if ($node instanceof ast_function_declaration && $node->return_type_def() instanceof generator_type_definition) {
-				foreach ($emitter->application_types($node) as $type) {
+				$emitter->visit_application_types($node, function (type_definition $type) use ($emitter, $root): void {
 					if ($type instanceof application_collection_type) $this->publish_collection($type, $emitter, $root);
-				}
+				});
 			}
 			if (!($node instanceof ast_record_declaration)) continue;
 			foreach ($node->fields as $field) {

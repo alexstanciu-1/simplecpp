@@ -234,9 +234,7 @@ final class record_type_definition extends type_definition implements dependency
 					'Unsupported instance field type: ' . $field->type_reference->spelling());
 			}
 			if ($type instanceof application_collection_type) {
-				foreach (self::collection_records($type) as $record) {
-					$record->prepare_layout($symbols, $active, $work, true);
-				}
+				self::prepare_collection_records($type, $symbols, $active, $work);
 			}
 			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression) && !$field->is_readonly) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');
@@ -580,13 +578,16 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** STATIC METHODS */
-	/** Follow nested value storage to its nominal layout dependencies without retaining a flattened index. @return \Generator<self> */
-	private static function collection_records(application_collection_type $type): \Generator
+	/** Prepare each nested layout dependency in storage order, with the caller's active cycle path. @param bool[] $active */
+	private static function prepare_collection_records(application_collection_type $type, scope $symbols,
+		array &$active /** array<string,bool> */, ?preparation_work $work): void
 	{
 		foreach ($type->concrete_types() as $argument) {
-			if ($argument instanceof application_collection_type) yield from self::collection_records($argument);
+			if ($argument instanceof application_collection_type) {
+				self::prepare_collection_records($argument, $symbols, $active, $work);
+			}
 			$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
-			if ($record instanceof self) yield $record;
+			if ($record instanceof self) $record->prepare_layout($symbols, $active, $work, true);
 		}
 	}
 }
