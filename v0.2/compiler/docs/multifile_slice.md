@@ -2,6 +2,9 @@
 
 Doc Status: supporting
 
+This document records the original slice. The [current publication contract](incremental_executable.md)
+covers bundle locking, rollback, and incremental reuse.
+
 The [entry contract](../../../specs/compiler_entry_v0_2.md) owns the bounded semantics.
 One explicitly selected entry supplies the executable's exit value. Secondary
 sources may now also contain [void function definitions](functions_slice.md), callable

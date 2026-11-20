@@ -225,6 +225,11 @@ if(BUILD_TESTING)
   add_test(NAME compiler_frontend COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend.php)
   add_test(NAME compiler_native_build COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_build.py)
   set_tests_properties(compiler_native_build PROPERTIES TIMEOUT 300 ENVIRONMENT "XDEBUG_MODE=off")
+  if(UNIX)
+    add_test(NAME compiler_bundle_publication_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/bundle_publication_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   add_test(NAME compiler_style COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tools/check_style.py)
   add_test(NAME compiler_scopes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scopes.php)

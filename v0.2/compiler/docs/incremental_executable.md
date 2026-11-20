@@ -42,13 +42,13 @@ reuses prior text for the rest. It still assembles the complete current manifest
 entry adapter and dependency link inputs. Regenerating one unit includes all its
 functions, storage definitions, required forward declarations and includes.
 
-`Cpp_Publication` preserves files whose text is identical. `Cpp_Bundle` retains its
-previous ownership manifest until the replacement is committed. On an ordinary
-exception it removes newly created, not-yet-owned artifacts from that attempt, so a
-retry does not mistake them for unrelated files. Existing artifacts can have been
-updated before a write error: publication is atomic per file, not an all-files
-transaction. The host must not build after a failed publication. Process-crash recovery
-and filesystem failure during rollback are not guaranteed by this bounded protocol.
+`Cpp_Publication` preserves files whose text is identical. `Cpp_Bundle` stages replacements
+and the new manifest under an exclusive bundle lock. It holds prior versions in
+same-directory reservations until the manifest rename succeeds. This includes artifacts
+withdrawn from the new inventory. A recoverable failure restores the previous files and
+removes candidate output under that same lock. A restoration failure keeps its backup
+and reports the path for recovery. The protocol covers cooperating readers and writers
+through ordinary exceptions, with process-crash recovery outside this slice.
 
 Native object names derive from stable generated source paths, so adding/removing a
 source does not renumber surviving objects. The existing Ninja writer preserves an

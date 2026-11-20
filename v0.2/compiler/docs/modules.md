@@ -135,7 +135,9 @@ The saved input layout is version 4: module selection metadata, one source recor
 under its owning module, and `other_inputs`. Dependency source inventories are empty;
 artifact paths are recorded as configuration, without filesystem metadata. Older
 saved layouts cause one full rebuild. The previous output manifest is read once and
-shared across baseline extraction, reuse checks and publication.
+shared across baseline extraction, reuse checks and publication. The compiler pins its
+open file until publication. If another writer replaced that manifest during
+compilation, publication rejects the stale snapshot under the exclusive lock.
 
 `source_unit` retains the general `change_status` enum and its mtime/size. Removed
 app sources remain records for the change pass without entering active compilation.

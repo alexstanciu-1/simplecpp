@@ -27,8 +27,10 @@ preserved too. Retrying without edits does not lose the error or grow retained h
 
 After lowering/emission/publication failure, prepared facts and downstream dirty-source
 membership survive for retry. The last successful in-memory output baseline remains.
-Existing bundle failure handling removes newly created uncommitted artifacts; this is
-not a new filesystem transaction or rollback of all overwritten files. Repairing the
+The bundle writer stages changed artifacts before installing any replacement. Its
+exclusive bundle reservation spans backup, installation, manifest commit and retirement.
+If publication fails, rollback restores replaced and withdrawn files at their original
+paths and removes newly installed files before releasing the reservation. Repairing the
 output destination permits retry without source edits and without re-preparing bodies.
 Native failure occurs after C++ publication and needs no prior AST generation.
 
