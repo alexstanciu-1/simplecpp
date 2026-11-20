@@ -8,6 +8,7 @@ from application_vector_signatures_native import prove
 from extends_native import ROOT, runtime, build, source_edit
 from classes_native import fixture
 from app_namespace_native import service, invoke
+from entry_probe import raw_entry
 
 
 def behavior(work, flavor, libraries, memcheck=False):
@@ -36,7 +37,7 @@ def behavior(work, flavor, libraries, memcheck=False):
         result=invoke(proc);assert 'error' not in result,result
     finally:proc.stdin.close();proc.wait()
     entry=out/'entry.cpp'
-    entry.write_text('#include <stdexcept>\n#include <cstring>\n'+entry.read_text().replace('int main()', 'int tested_entry()')+
+    entry.write_text('#include <stdexcept>\n#include <cstring>\n'+raw_entry(entry.read_text())+
         '\nint main() { try { tested_entry(); } catch (const std::out_of_range& e) { return std::strcmp(e.what(),"hash_missing_key")==0 ? 8 : 92; } return 93; }\n')
     expected=b'260:7:9:7:13:1'
     for cc,lib in libraries.items():build(out,work/(flavor+'-behavior-'+cc),cc,lib,expected)

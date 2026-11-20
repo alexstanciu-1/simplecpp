@@ -68,6 +68,7 @@ scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
+  ${runtime_generated}/public/scpp/exception.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
@@ -104,7 +105,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
+add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/entry/exception.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
 if(hash_publication_type STREQUAL "OBJECT")
   target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/hash.cpp)
 endif()
@@ -518,6 +519,12 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_interface_access_native PROPERTIES TIMEOUT 300 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_object_access_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/object_access_native.py)
   set_tests_properties(compiler_object_access_native PROPERTIES TIMEOUT 300)
+  add_test(NAME compiler_failure_expressions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/failure_expressions_native.py)
+  set_tests_properties(compiler_failure_expressions_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
+  add_test(NAME compiler_finally_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/finally_native.py)
+  set_tests_properties(compiler_finally_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
+  add_test(NAME compiler_exceptions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/exceptions_native.py)
+  set_tests_properties(compiler_exceptions_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_virtual_methods_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/virtual_methods_native.py)
   set_tests_properties(compiler_virtual_methods_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_classes_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/classes_native.py)

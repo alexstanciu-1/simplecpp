@@ -276,6 +276,12 @@ final class Parser
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
 		}
+		if ($this->cursor->keyword('try')) return $this->try_statement($grammar, $collector);
+		if ($this->cursor->keyword('throw')) {
+			$operation = $this->throw_expression();
+			$end = $this->cursor->take(token_kind::semicolon, '; after throw') + 1;
+			return new ast_throw_statement($operation, $end);
+		}
 		if ($this->cursor->keyword('yield')) return $this->yield_statement();
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
@@ -356,11 +362,53 @@ final class Parser
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
 	}
 
-	/** Parse a lexical block once for conditional and loop bodies. */
-	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected): ast_block
+	/** Parse the protected region and the optional clauses in source order. */
+	private function try_statement(statement_grammar $grammar, Body_Collection $collector): ast_try_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('try');
+		$body = $this->braced_block($grammar, $collector, '{ after try');
+		$handler = $this->cursor->keyword('catch') ? $this->catch_clause($grammar, $collector) : null;
+		$finalizer = null;
+		if ($this->cursor->keyword('finally')) {
+			$this->cursor->take_keyword('finally');
+			$finalizer = $this->braced_block($grammar, $collector, '{ after finally');
+		}
+		if ($handler === null && $finalizer === null) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Try requires catch or finally');
+		}
+		return new ast_try_statement($start, $body, $handler, $finalizer);
+	}
+
+	/** Seed the handler's lexical collector with its one typed binding. */
+	private function catch_clause(statement_grammar $grammar, Body_Collection $collector): ast_catch_clause
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('catch');
+		$this->cursor->take(token_kind::lparen, '(');
+		$flavor = $this->cursor->tokens->source->flavor;
+		if ($flavor === flavor::js) {
+			$position = $this->cursor->position();
+			$name = $this->cursor->name(token_kind::identifier);
+			$this->cursor->take(token_kind::colon, ': before catch type');
+			$type = $this->type_reference();
+		} else {
+			$type = $this->type_reference();
+			$position = $this->cursor->position();
+			$name = $this->cursor->name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+		}
+		$this->cursor->take(token_kind::rparen, ')');
+		$child = $collector->child();
+		$binding = $child->produced_binding($name, $position, true);
+		$handler = $this->braced_block($grammar, $collector, '{ after catch', $child);
+		return new ast_catch_clause($start, $type, $binding, $handler);
+	}
+
+	/** Parse a lexical block once, optionally with an existing header binding. */
+	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected, ?Body_Collection $child = null): ast_block
 	{
 		$start = $this->cursor->take(token_kind::lbrace, $expected);
-		$child = $collector->child();
+		$child ??= $collector->child();
 		$this->lexical = $child;
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace)) {
@@ -391,12 +439,12 @@ final class Parser
 		$key = null;
 		if ($this->cursor->is(token_kind::arrow)) {
 			$this->cursor->take(token_kind::arrow, '=>');
-			$key = $header->iteration_binding($first, $first_pos, true);
+			$key = $header->produced_binding($first, $first_pos, true);
 			$first_pos = $this->cursor->position();
 			$first = $this->cursor->name($kind);
 			if ($first === $key->short_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Foreach key and value must have different names');
 		}
-		$value = $header->iteration_binding($first, $first_pos, !$collector->has_local($first));
+		$value = $header->produced_binding($first, $first_pos, !$collector->has_local($first));
 		$this->cursor->take(token_kind::rparen, ')');
 		$body = $this->braced_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
@@ -762,6 +810,14 @@ final class Parser
 		return new ast_echo_statement($start, $end, $values);
 	}
 
+	/** A selected throw evaluates its full operand up to the enclosing delimiter. */
+	private function throw_expression(): ast_throw_expression
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('throw');
+		return new ast_throw_expression($start, $this->value());
+	}
+
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
 	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
 	{
@@ -812,7 +868,10 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
-			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1)));
+			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
+				? $this->throw_expression()
+				: $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
+			$left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
 	}
@@ -1026,6 +1085,9 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($c->keyword('throw')) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
+		}
 		$qualifier = $this->member_qualifier();
 		if ($qualifier !== null) return $this->qualified_member($qualifier);
 		if ($c->keyword('match')) {
@@ -1045,7 +1107,7 @@ final class Parser
 					$label = $this->literal_initializer('Match label requires an integer literal', true);
 				} else $label = $this->value();
 				$c->take(token_kind::arrow, '=>');
-				$result = $this->value();
+				$result = $label === null && $c->keyword('throw') ? $this->throw_expression() : $this->value();
 				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());
 				if (!$c->is(token_kind::comma)) break;
 				$c->take(token_kind::comma, ',');

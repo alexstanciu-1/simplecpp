@@ -29,6 +29,12 @@ final class type_registry
 		};
 	}
 
+	/** Canonical core class binding, resolved independently of scalar names. */
+	public static function exception(): ?type_exception
+	{
+		return @exception@;
+	}
+
 	public static function resolve(string $name): ?type_definition
 	{
 		return match ($name) {

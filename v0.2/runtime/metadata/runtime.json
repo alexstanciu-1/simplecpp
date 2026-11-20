@@ -847,6 +847,13 @@
     ]
   },
   "compiler": {
+    "exception": {
+      "name": "Exception",
+      "header": "scpp/exception.hpp",
+      "handle": "scpp::exception_owner",
+      "make": "::scpp::make_exception",
+      "get_message": "get_message"
+    },
     "interfaces": {
       "iterator": {
         "name": "Iterator", "type_parameters": 1, "optional_key_parameter": { "type_argument": 1, "mode": "reference" },

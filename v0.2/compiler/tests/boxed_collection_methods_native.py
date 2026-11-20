@@ -8,6 +8,7 @@ from app_namespace_native import artifacts, invoke, service
 from application_vectors_native import measure
 from classes_native import fixture
 from extends_native import source_edit
+from entry_probe import raw_entry
 
 
 def prove(work,flavor):
@@ -75,7 +76,7 @@ def prove(work,flavor):
             try:got=invoke(p)
             finally:p.stdin.close();p.wait()
             assert 'error' not in got,got
-            entry=probe/'entry.cpp';text=entry.read_text().replace('int main(', 'int tested_entry(')
+            entry=probe/'entry.cpp';text=raw_entry(entry.read_text())
             check=f'std::string_view(e.what()) == "{error}"'
             entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return '+check+' ? 8 : 91;} return 92;}\n')
             measure(probe,work/(flavor+'-'+family+'-'+label+'-native'),b'')

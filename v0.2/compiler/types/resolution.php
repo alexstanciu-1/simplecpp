@@ -116,7 +116,17 @@ final class Type_Resolution
 		$entry = $symbols->entry($syntax->lexical_root()->type_key($syntax->name));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
-		return $record instanceof ast_type_declaration ? $record->type_definition() : null;
+		return $record instanceof ast_type_declaration ? $record->type_definition() : self::core_class($syntax->root(), $syntax->name);
+	}
+
+	/** Core-class fallback follows imports and honors a source declaration found by the caller. */
+	public static function core_class(ast_file_node $file, string $name): ?type_exception
+	{
+		$type = type_registry::exception();
+		if ($type === null) return null;
+		$key = $file->type_key($name);
+		if ($key === 'class:' . $type->name) return $type;
+		return $name === $type->name && $file->imported_type_target($name) === null ? $type : null;
 	}
 
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */

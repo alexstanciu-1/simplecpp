@@ -33,6 +33,8 @@ final class Cpp_Emitter
 	private bool $qualified_adapters = false;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
+	/** Owning lowering context for the innermost protected callable collecting exits. */
+	private ?Cpp_Finally_Exit $finally_exit = null;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
@@ -170,6 +172,11 @@ final class Cpp_Emitter
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
 			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
+			$exception = $node->definition->exception_base();
+			if ($exception !== null) {
+				foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
+				$bases[] = 'public ::scpp::exception_payload';
+			}
 			$interface_bases = [];
 			foreach ($node->definition->interfaces() as $interface) {
 				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
@@ -740,12 +747,16 @@ CPP;
 			if ($statement instanceof ast_yield_statement) {
 				$lines[] = $this->generator_yield($statement, $function->return_type_def(), $resume, $declarations, $global_references, $required_headers);
 			}
-			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
-				$transfer = $statement instanceof ast_break_statement ? 'break;' : 'continue;';
-				if ($resume !== null) {
+			elseif ($statement instanceof ast_loop_transfer) {
+				$continuing = $statement instanceof ast_continue_statement;
+				$transfer = $continuing ? 'continue;' : 'break;';
+				if ($this->finally_exit !== null && $this->finally_exit->loop_target === $statement->target) {
+					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
+				}
+				elseif ($resume !== null) {
 					$loop = $resume->loops[array_key_last($resume->loops)];
 					$lines[] = $this->generator_cleanup($resume, $loop['depth']);
-					if ($statement instanceof ast_continue_statement && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
+					if ($continuing && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
 				}
 				$lines[] = "\t" . $transfer;
 			}
@@ -870,6 +881,12 @@ CPP;
 					$lines[] = "\t}";
 				}
 			}
+			elseif ($statement instanceof ast_throw_statement) {
+				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
+			}
+			elseif ($statement instanceof ast_try_statement) {
+				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
+			}
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
 					$head = $index === 0 ? 'if' : 'else';
@@ -942,7 +959,7 @@ CPP;
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
-				if ($statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
+				if ($this->finally_exit === null && $statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
 					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
 					continue;
 				}
@@ -960,7 +977,7 @@ CPP;
 						$required_headers[$header] = true;
 					}
 				}
-				$lines[] = "\treturn " . $value . ';';
+				$lines[] = "\t" . ($this->finally_exit?->save(statement_completion::returns, $value) ?? ('return ' . $value . ';'));
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -975,7 +992,7 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
-				$lines[] = $resume === null ? "\treturn;" : "close(); return false;";
+				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? 'return;') : "close(); return false;";
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
@@ -989,6 +1006,96 @@ CPP;
 			$lines[] = $this->generator_cleanup($resume, count($resume->scopes) - 1);
 			array_pop($resume->scopes);
 		}
+		return $lines;
+	}
+
+	/**
+	 * Enclose the entire protected operation. A finalizer thrown from the outer handler replaces its pending exception.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 * @return string[]
+	 */
+	private function exception_region(ast_try_statement $syntax, ast_function_declaration $function,
+		array &$declarations /** array<string,ast_function_declaration> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
+	{
+		if ($syntax->finalizer === null) {
+			return $this->protected_region($syntax, $function, $declarations, $globals, $headers);
+		}
+		$lines = ["\t{", "\t\tauto scpp_finalizer = [&]() {"];
+		foreach ($this->statements($syntax->finalizer, $declarations, $globals, $headers, $function) as $line) {
+			$lines[] = "\t\t" . $line;
+		}
+		$lines[] = "\t\t};";
+		$outer = $this->finally_exit;
+		$pending = null;
+		$returns = ($syntax->protected_completion & statement_completion::returns) !== 0;
+		if ($returns || $syntax->transfer_target !== null) {
+			$result = $function->return_type_def();
+			$type = !$returns || $result === type_void::instance() ? null
+				: ($function->is_implicit_entry ? 'int' : $this->signature_type($result, false));
+			$pending = new Cpp_Finally_Exit($syntax->start, $type, $syntax->transfer_target);
+			$lines[] = "\t\t" . $pending->declaration();
+			$lines[] = "\t\t" . $pending->start();
+		}
+		$lines[] = "\t\ttry {";
+		$this->finally_exit = $pending ?? $outer;
+		try {
+			foreach ($this->protected_region($syntax, $function, $declarations, $globals, $headers) as $line) {
+				$lines[] = "\t\t" . $line;
+			}
+		} finally {
+			$this->finally_exit = $outer;
+		}
+		$lines[] = "\t\t} catch (...) { scpp_finalizer(); throw; }";
+		if ($pending !== null) {
+			$lines[] = "\t\t" . (($syntax->protected_completion & statement_completion::fallthrough) !== 0
+				? 'return {};' : '__builtin_trap();');
+			$lines[] = "\t\t}();";
+		}
+		$lines[] = "\t\tscpp_finalizer();";
+		if ($pending !== null) {
+			foreach ([statement_completion::returns, statement_completion::breaks, statement_completion::continues] as $exit) {
+				if (($syntax->completion & $exit) !== 0) $lines[] = "\t\t" . $pending->replay($exit, $outer);
+			}
+		}
+		if (($syntax->completion & statement_completion::fallthrough) === 0) $lines[] = "\t\t__builtin_trap();";
+		$lines[] = "\t}";
+		return $lines;
+	}
+
+	/**
+	 * Lower sibling native blocks; only the typed handler binds the language exception transport.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 * @return string[]
+	 */
+	private function protected_region(ast_try_statement $syntax, ast_function_declaration $function,
+		array &$declarations /** array<string,ast_function_declaration> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
+	{
+		$handler = $syntax->handler;
+		$lines = [$handler === null ? "\t{" : "\ttry {"];
+		foreach ($this->statements($syntax->body, $declarations, $globals, $headers, $function) as $line) {
+			$lines[] = "\t" . $line;
+		}
+		if ($handler !== null) {
+			$root = type_registry::exception();
+			foreach ($root->cpp_headers() as $header) $headers[$header] = true;
+			$lines[] = "\t} catch (const " . $root->cpp_type() . '& caught_exception) {';
+			$binding = $this->name($handler->binding);
+			$type = $handler->binding->type_def();
+			$value = $type === $root ? 'caught_exception'
+				: $this->inline_adapters->call(Cpp_Exception_Catch::request($root, $type), ['caught_exception']);
+			$lines[] = "\t\t[[maybe_unused]] auto " . $binding . ' = ' . $value . ';';
+			if ($type !== $root) $lines[] = "\t\tif (!" . $binding . ') throw;';
+			foreach ($this->statements($handler->body, $declarations, $globals, $headers, $function) as $line) {
+				$lines[] = "\t" . $line;
+			}
+		}
+		$lines[] = "\t}";
 		return $lines;
 	}
 
@@ -1166,10 +1273,10 @@ CPP;
 					$default = $arm;
 					continue;
 				}
-				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { return '
-					. $this->value($arm->result, $globals, $declarations, $headers) . '; } ';
+				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { '
+					. $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' } ';
 			}
-			return $code . 'return ' . $this->value($default->result, $globals, $declarations, $headers) . ';';
+			return $code . $this->selection_exit($default->result, $globals, $declarations, $headers);
 		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
@@ -1179,9 +1286,37 @@ CPP;
 				$integer = $arm->label->constant();
 				$code .= 'case ' . ($integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL') . ': ';
 			}
-			$code .= 'return ' . $this->value($arm->result, $globals, $declarations, $headers) . '; ';
+			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' ';
 		}
 		return $code . '}';
+	}
+
+	/**
+	 * Use the prepared root view and unified native transport for all throws.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function throw_call(ast_throw_expression $throw, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$root = type_registry::exception();
+		foreach ($root->cpp_headers() as $header) $headers[$header] = true;
+		$operand = $this->value($throw->operand, $globals, $declarations, $headers);
+		return '::scpp::throw_exception(' . $this->conversion($root, $throw->conversion, $operand, $throw->operand) . ')';
+	}
+
+	/**
+	 * Exit only the selected lazy branch, with its value or the language throw.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function selection_exit(ast_expression $branch, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		return $branch instanceof ast_throw_expression ? $this->throw_call($branch, $globals, $declarations, $headers) . ';'
+			: 'return ' . $this->value($branch, $globals, $declarations, $headers) . ';';
 	}
 
 	/**
@@ -1413,10 +1548,10 @@ CPP;
 				$carrier = $value->left->type_def();
 				$steps = [];
 				$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
-				$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+				$fallback = $this->selection_exit($value->right, $global_references, $declarations, $required_headers);
 				return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . implode(' ', $steps) . ' const auto& coalesce_value = ' . $left
 					. '; if (' . $carrier->lower_cpp_presence('coalesce_value') . ') { return '
-					. $carrier->lower_cpp_extract('coalesce_value') . '; } return ' . $right . '; }())';
+					. $carrier->lower_cpp_extract('coalesce_value') . '; } ' . $fallback . ' }())';
 			}
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
@@ -1522,7 +1657,9 @@ CPP;
 						$steps[] = 'auto&& method_receiver = ' . $receiver . ';';
 						$receiver = 'method_receiver';
 					}
-					$call = '(' . $receiver . ').' . $symbol . '(' . implode(', ', $arguments) . ')';
+					$access = $function->parameters[0] instanceof type_exception
+						&& $operands[0]->type_def() instanceof shared_record_type_definition ? '->' : '.';
+					$call = '(' . $receiver . ')' . $access . $symbol . '(' . implode(', ', $arguments) . ')';
 					return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
 				}
 				if (count($operands) === 1 && !$function->overloaded_first) {

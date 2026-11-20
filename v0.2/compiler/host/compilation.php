@@ -83,7 +83,7 @@ final class Compilation_Inspection
 		$statements = [];
 		foreach ($program->statements as $statement)
 		{
-			if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+			if ($statement instanceof ast_loop_transfer) {
 				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'];
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
@@ -99,6 +99,19 @@ final class Compilation_Inspection
 					$row['initializer'] = self::binding($statement->initializer);
 					$row['update'] = self::binding($statement->update);
 				}
+				$statements[] = $row;
+			}
+			elseif ($statement instanceof ast_throw_statement) {
+				$statements[] = self::value($statement->operation);
+			}
+			elseif ($statement instanceof ast_try_statement) {
+				$row = ['kind' => 'try', 'body' => self::body($statement->body)];
+				if ($statement->handler !== null) {
+					$row['catch_type'] = $statement->handler->binding->type_def()->name;
+					$row['binding'] = $statement->handler->binding->short_name;
+					$row['handler'] = self::body($statement->handler->body);
+				}
+				if ($statement->finalizer !== null) $row['finally'] = self::body($statement->finalizer);
 				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_if_statement) {
@@ -186,6 +199,9 @@ final class Compilation_Inspection
 	 */
 	private static function value(ast_expression $value): array /** array<string,mixed> */
 	{
+		if ($value instanceof ast_throw_expression) {
+			return ['kind' => 'throw', 'value' => self::value($value->operand)];
+		}
 		$row = ['type' => $value->type_def()->name,
 			'constant' => self::scalar($value->constant()), 'constant_known' => $value->constant_known()];
 		if ($value instanceof ast_construction_expression) {

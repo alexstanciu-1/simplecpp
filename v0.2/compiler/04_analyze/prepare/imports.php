@@ -43,10 +43,13 @@ final class Import_Preparation
 		};
 		foreach ($kinds as $kind) {
 			$key = $kind . ':' . $import->target;
-			if (!isset($traits[$key]) && $symbols->resolve($key) === null && ($kind === 'func'
-				? runtime_functions::free($key, $file->source()->flavor) === null
-				: ($kind !== 'const' || $file->source()->flavor !== flavor::php || runtime_constants::integer($key) === null))) {
-				continue;
+			if (!isset($traits[$key]) && $symbols->resolve($key) === null) {
+				$runtime = match ($kind) {
+					'func' => runtime_functions::free($key, $file->source()->flavor) !== null,
+					'const' => $file->source()->flavor === flavor::php && runtime_constants::integer($key) !== null,
+					'class' => $import->target === type_registry::exception()?->name,
+				};
+				if (!$runtime) continue;
 			}
 			$found = true;
 			$label = match ($kind) {

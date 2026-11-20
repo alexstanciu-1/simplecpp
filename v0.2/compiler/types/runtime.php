@@ -18,6 +18,8 @@ final readonly class runtime_function
 	public bool $overloaded_first;
 	/** Native member binding; operand zero is the receiver, with mutability in the reference masks. */
 	public bool $receiver_method;
+	/** A written type qualifier selects the binding and is absent from its operands. */
+	public bool $type_qualified;
 	/** Unknown bindings may retain receiver storage beyond the call. */
 	public bool $retains_receiver;
 	public int $required_parameters /** uint32 */;
@@ -27,9 +29,10 @@ final readonly class runtime_function
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false)
 	{
 		$this->retains_receiver = $retains_receiver;
+		$this->type_qualified = $type_qualified;
 		$this->receiver_method = $receiver_method;
 		$this->const_reference_mask = $const_reference_mask;
 		$this->reference_mask = $reference_mask;

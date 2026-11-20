@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import time
+from entry_probe import raw_entry
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -40,7 +41,7 @@ def prove(out, cxx, runtime, fixtures, extra_sources=()):
         units = []
         for path, code in files.items():
             if fixture.get('catch_out_of_range'):
-                code = '#include <stdexcept>\n' + code.replace('int main()', 'int tested_entry()')
+                code = '#include <stdexcept>\n' + raw_entry(code)
                 code += '\nint main() { try { tested_entry(); } catch (const std::out_of_range&) { return 8; } return 91; }\n'
             file = work / path
             file.parent.mkdir(parents=True, exist_ok=True)
