@@ -166,6 +166,12 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_ternary_expression) {
+			$this->expression($value->condition);
+			$this->expression($value->when_true);
+			$this->expression($value->when_false);
+			return;
+		}
 		if ($value instanceof ast_match_expression) {
 			$this->expression($value->subject);
 			foreach ($value->arms as $arm) {

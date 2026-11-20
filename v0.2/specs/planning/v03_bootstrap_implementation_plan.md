@@ -92,7 +92,17 @@ Integration: one metadata-defined ordered initialization capability now preserve
 
 Proof: tokenize representative input through a translated path and compare token kinds, positions and diagnostics with PHP.
 
-Keep ternary, switch, assignment expressions and general destructuring outside the critical path unless actual translation demonstrates a need. Isolated uses may have clear alternatives, while extensive enum maps warrant a direct language facility.
+Keep assignment expressions and general destructuring outside the critical path unless actual translation demonstrates a need. Isolated uses may have clear alternatives, while extensive enum maps warrant a direct language facility.
+
+### 2.1 Full ternary selection
+
+The [v0.2 conditional contract](../../../specs/conditional_expression_matrix.md#v02-full-ternary-selection)
+covers full ternary across cpp/php/js. Preparation reuses generated condition
+admission and the match arm result rule. Lowering uses the native conditional.
+The Clang fixture `compiler/tests/ternary_native.py` covers lazy calls and failures,
+precedence, string value semantics, caller invalidation after a callee signature edit,
+body-only rebuilds, no-op reuse and recovery against fresh output. Shorthand and
+heterogeneous result joins remain deferred.
 
 ### 2.1 First match slice — implemented, verification recorded below
 

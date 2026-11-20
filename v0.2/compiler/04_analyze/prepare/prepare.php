@@ -589,9 +589,9 @@ final class Preparation
 	}
 
 	/** Shared generated condition admission; preparation evaluates no runtime condition. */
-	private function condition(ast_expression $condition): void
+	private function condition(ast_expression $condition, ?string $initializing = null): void
 	{
-		$this->value($condition);
+		$this->value($condition, $initializing);
 		$condition->type_def()->prepare_condition($condition);
 	}
 
@@ -941,13 +941,13 @@ final class Preparation
 	}
 
 	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
-	private function match_result(ast_match_arm $arm, ?type_definition &$result, ?string $initializing): void
+	private function selection_result(ast_expression $branch, ?type_definition &$result, ?string $initializing, string $construct): void
 	{
-		$this->value($arm->result, $initializing);
-		if ($arm->result instanceof ast_throw_expression) return;
-		$type = $arm->result->type_def();
-		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match arm requires a supported value result');
-		if ($result !== null && $result !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match result types must be identical');
+		$this->value($branch, $initializing);
+		if ($branch instanceof ast_throw_expression) return;
+		$type = $branch->type_def();
+		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' arm requires a supported value result');
+		if ($result !== null && $result !== $type) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' result types must be identical');
 		$result = $type;
 	}
 
@@ -963,6 +963,14 @@ final class Preparation
 		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
+		}
+		if ($syntax instanceof ast_ternary_expression) {
+			$this->condition($syntax->condition, $initializing);
+			$result = null;
+			$this->selection_result($syntax->when_true, $result, $initializing, 'Ternary');
+			$this->selection_result($syntax->when_false, $result, $initializing, 'Ternary');
+			$syntax->settle_result($result);
+			return;
 		}
 		if ($syntax instanceof ast_match_expression) {
 			$this->value($syntax->subject, $initializing);
@@ -984,15 +992,15 @@ final class Preparation
 				$this->value($arm->label, $initializing);
 				if (!$conditional) $this->case_label($arm->label, $type, $dispatch, $seen, 'Match');
 				elseif ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
-				$this->match_result($arm, $result, $initializing);
+				$this->selection_result($arm->result, $result, $initializing, 'Match');
 			}
 			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
 			// Fallback runs after conditions, even when written first. Preserve reference-call invalidation.
-			$this->match_result($default, $result, $initializing);
+			$this->selection_result($default->result, $result, $initializing, 'Match');
 			if ($result === null) {
 				throw new diagnostic($default->source(), $default->byte_start(), 'Throwing match default requires a value arm');
 			}
-			$syntax->settle_match($result);
+			$syntax->settle_result($result);
 			return;
 		}
 		if ($syntax instanceof ast_object_access_expression) {

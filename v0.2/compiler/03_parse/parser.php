@@ -889,6 +889,16 @@ final class Parser
 				continue;
 			}
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
+			if ($kind === token_kind::question && $minimum_precedence <= ast_ternary_expression::PRECEDENCE) {
+				$this->cursor->take(token_kind::question, '?');
+				if ($this->cursor->is(token_kind::colon)) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Full ternary requires a true branch');
+				}
+				$when_true = $this->value();
+				$this->cursor->take(token_kind::colon, ': after ternary true branch');
+				$left = new ast_ternary_expression($left, $when_true, $this->value(ast_ternary_expression::PRECEDENCE));
+				continue;
+			}
 			$operator = match ($kind) {
 				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
 				token_kind::coalesce => binary_operator::coalesce,

@@ -136,6 +136,12 @@ final class Function_Preparation
 			self::expression($value->body);
 			return;
 		}
+		if ($value instanceof ast_ternary_expression) {
+			self::expression($value->condition);
+			self::expression($value->when_true);
+			self::expression($value->when_false);
+			return;
+		}
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {
