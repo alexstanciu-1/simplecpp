@@ -142,7 +142,7 @@ final class Preparation
 			? new Constructor_Initialization($function->parent) : null;
 		foreach ($function->parameters as $parameter) {
 			if ($parameter->type_def() instanceof record_type_definition && $parameter->mode === passing_mode::value) {
-				$this->dependencies?->watch($symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
+				$this->dependencies?->watch($this->symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
 				$this->reserve_array_bytes($parameter->type_def()->array_bytes(), $parameter);
 			}
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
