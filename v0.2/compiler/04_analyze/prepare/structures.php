@@ -10,6 +10,8 @@ final class statement_completion
 	public const int returns /** uint8 */ = 2;
 	public const int breaks /** uint8 */ = 4;
 	public const int continues /** uint8 */ = 8;
+	public const int loop_transfers /** uint8 */ = self::breaks | self::continues;
+	public const int throws /** uint8 */ = 16;
 }
 
 /**

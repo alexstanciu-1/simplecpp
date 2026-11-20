@@ -194,6 +194,7 @@ def prove(root):
             for label, text, move in [
                 ('move', original, True),
                 ('text-later', original.replace(tail, f'if ({var}size > 0) {{echo {var}text;}}' + tail), True),
+                ('try-read', original.replace(tail, f'try {{ echo {var}text; }} finally {{ {var}out{member}source="changed"; }}' + tail), False),
                 ('text-restored', original, True),
                 ('field-replaced', replace_field, True),
                 ('owner-replaced', replace_owner, True),
@@ -234,7 +235,7 @@ def prove(root):
                     assert flavor + '/main.' + flavor not in row['emitted_sources'], (label, row)
                     assert row['preparation'] == {'prepared': 1, 'reused': 2}, (label, row)
                 unit = json.loads((out / 'manifest.json').read_text())['sources'][key]
-                expected = {'text-later': b'if1-1', 'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
+                expected = {'text-later': b'if1-1', 'try-read': b'if1-1', 'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
                 for cc, lib in libraries.items():
                     changed = incremental_native_build(out, root / (flavor + '-' + cc), cc, lib, expected)
                     if label != 'move':
@@ -244,11 +245,11 @@ def prove(root):
                 code = (out / unit).read_text()
                 assert ('.tokens = std::move(var_items_' in code) == move, (flavor, label)
                 assert ('#include <utility>' in code) == ('std::move(' in code)
-                string_move = label not in ('text-later', 'nonvector')
+                string_move = label not in ('text-later', 'try-read', 'nonvector')
                 assert ('.source = std::move(var_text_' in code) == string_move, (flavor, label)
                 assert ('.source = var_text_' in code) != string_move, (flavor, label)
-                if label in ('move', 'field-replaced', 'owner-replaced', 'view-restored', 'original'):
-                    view = label not in ('field-replaced', 'owner-replaced')
+                if label in ('move', 'try-read', 'field-replaced', 'owner-replaced', 'view-restored', 'original'):
+                    view = label not in ('try-read', 'field-replaced', 'owner-replaced')
                     assert code.count('.checked_bytes()') == int(view), (flavor, label)
                     assert ('scpp_byte_view.read(' in code) == view
                     assert ('.source).byte_at(' in code) != view

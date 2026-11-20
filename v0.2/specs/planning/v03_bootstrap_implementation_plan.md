@@ -26,7 +26,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Bounded integer/enum match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; application-value lookup, broader fallback, populated tables and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, protected instance methods, final classes, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
-| 4 Source failures and cleanup | Runtime checked failures exist | Source throw/catch/rethrow and guaranteed cleanup remain |
+| 4 Source failures and cleanup | Typed throw/catch/rethrow, finally with delayed exits, and bounded throwing fallbacks implemented | Typed host failure bindings and translated preparation and publication recovery proofs remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
 Synchronous yield additionally supports locals, branches, while/do-while/for and
@@ -661,7 +661,7 @@ Discuss inheritance, handles and interfaces together before implementing this mi
 | 3.1 | Base storage and inheritance | One base, derived fields, inherited access, protected access and construction. No multiple class inheritance. |
 | 3.2 | Object contracts, then behavior through base views | First class/shared defaults and explicit function nullability with the temporary relaxed property rule below; then ownership-preserving shared upcasts; then virtual/abstract methods and overrides. Preserve destruction and allocation identity. |
 | 3.3 | Type tests and narrowing | Subtype tests, then interface-capability tests. Keep exact concrete type identity distinct. |
-| 3.4 | Interfaces | Interface-typed parameters/references and multiple capabilities using the dispatch model. |
+| 3.4 | Interfaces | Class implementations, transitive interface views and diamond dispatch are proven. Ordinary struct implementers remain open. [Interface proof](../../compiler/docs/interfaces.md) |
 | 3.5 | Non-owning AST links | Define validity of parent links and retained-generation references. Reuse weak handles where suitable; discuss borrow/reference machinery where needed. |
 | 3.6 | Staged initialization and composition | Write-once attachment, settling ranges and a declaration trait/interface use. Evaluate bounded traits versus a simpler truthful owner. |
 

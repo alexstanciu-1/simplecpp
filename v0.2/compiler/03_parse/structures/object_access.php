@@ -16,6 +16,8 @@ final class ast_object_access_expression extends ast_expression
 	private ?shared_record_type_definition $target_type = null;
 	/** Prepared fact: native check requirement; null until relationship admission succeeds. */
 	private ?bool $dynamic_check = null;
+	/** Prepared fact: a guarded argument consumes the adjusted native pointer. */
+	public bool $used_as_guard = false;
 
 	/** CONSTRUCTOR */
 	/** Own the single evaluated operand and the written target reference. */
@@ -52,5 +54,6 @@ final class ast_object_access_expression extends ast_expression
 		parent::reset_preparation();
 		$this->target_type = null;
 		$this->dynamic_check = null;
+		$this->used_as_guard = false;
 	}
 }

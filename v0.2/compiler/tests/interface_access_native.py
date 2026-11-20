@@ -252,7 +252,7 @@ def rejections(work, flavor):
     good=('namespace Forest; '+body) if flavor=='php' else 'namespace Forest {'+body+'}'
     app,out=work/(flavor+'-rejections'),work/(flavor+'-rejections-out');write_app(app,flavor,{'main':good})
     cases=[(fn('check','bool',[('n','?Plain')],f'return {v}n instanceof Readable;'),'polymorphic'),
-        (fn('check','bool',[('n','?Readable')],f'return {v}n instanceof Point;'),'target must be'),
+        (fn('check','bool',[('n','?Readable')],f'return {v}n instanceof Point;'),'requires related classes or related structs'),
         (fn('check','bool',[('n','?Readable')],f'return weak({v}n) instanceof Other;'),'operand must be'),
         (fn('check','bool',[('n','?Readable')],'return null instanceof Other;'),'operand must be'),
         (fn('acceptOther','int',[('n','Other')],'return 1;')+fn('check','int',[('n','Readable')],f'if ({v}n instanceof Other) {{return acceptOther({v}n);}}return 0;'),'conversion'),

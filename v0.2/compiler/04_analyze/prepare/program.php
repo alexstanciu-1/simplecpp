@@ -19,6 +19,15 @@ final class Program_Preparation
 		if ($session?->scope !== null) {
 			throw new \LogicException('Live incremental symbols require Incremental_Preparation');
 		}
+		$composed = Trait_Composition::replacements($files);
+		if ($composed !== []) {
+			$files = array_replace($files, $composed);
+			if ($session !== null) {
+				$units = $session->units();
+				foreach ($composed as $key => $file) $units[$key]->ast = $file;
+			}
+			$symbols = null;
+		}
 		foreach ($files as $file) {
 			$file->begin_preparation();
 			$file->reset_implementations();

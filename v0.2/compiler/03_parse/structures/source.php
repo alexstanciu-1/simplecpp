@@ -45,6 +45,9 @@ final class ast_file_node extends ast_node
 	/** @var ast_import[] Native non-owning constant binding index into imports. */
 	private readonly array $constant_imports /** array<string,ast_import> */;
 
+	/** Optional source trait declarations and direct use sites, owned by this parse. */
+	public ?trait_file_context $trait_context = null;
+
 	/** PREP FACTS */
 	/** Preparation state: run identity invalidates old emission handles even if reanalysis later succeeds. */
 	private int $preparation_revision /** uint32 */ = 0;
@@ -253,9 +256,13 @@ final class ast_file_node extends ast_node
 	/** Plain imports bind complete type names; no prefix aliasing or duplicate retained index. */
 	public function type_key(string $name): string
 	{
+		return 'class:' . ($this->imported_type_target($name) ?? Source_Names::resolve($name, $this->scope->namespace));
+	}
+
+	public function imported_type_target(string $name): ?string
+	{
 		$import = $this->function_imports[$name] ?? null;
-		return 'class:' . (($import?->kind === import_kind::symbol) ? $import->target
-			: Source_Names::resolve($name, $this->scope->namespace));
+		return $import?->kind === import_kind::symbol ? $import->target : null;
 	}
 
 	public function constant_key(string $name): string

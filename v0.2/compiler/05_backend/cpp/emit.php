@@ -35,6 +35,8 @@ final class Cpp_Emitter
 	private ?ast_field_expression $byte_view = null;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
+	/** Owning lowering context for the innermost protected callable collecting exits. */
+	private ?Cpp_Finally_Exit $finally_exit = null;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
 	/** Native non-owning during emission of the selected function. */
@@ -69,6 +71,12 @@ final class Cpp_Emitter
 	private function conversion(type_definition $type, int $conversion /** uint16 */, string $value,
 		?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
+		if ($conversion === value_conversion::guarded_intersection) {
+			$from = $syntax->type_def();
+			$base = $from->payload === $type->base->payload ? $value
+				: $this->inline_adapters->call(Cpp_Shared_View::request($from, $type->base, false), [$value]);
+			return $type->cpp_type() . '{' . $base . ', scpp_guard_' . $syntax->guard()->start . '}';
+		}
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
@@ -118,29 +126,46 @@ final class Cpp_Emitter
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
 			}
-			if ($node->definition->polymorphic()) {
+			$virtual = $node->definition->polymorphic();
+			$authored = isset($node->methods['__destruct']);
+			if ($virtual || $authored) {
 				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\tvirtual ~$name() noexcept = default;";
+				$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
 				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
 				$layout[] = "\t$name(const $name&) = default;";
 				$layout[] = "\t$name($name&&) = default;";
 				$layout[] = "\t$name& operator=(const $name&) = default;";
 				$layout[] = "\t$name& operator=($name&&) = default;";
 			}
-			foreach ($node->methods as $method) {
+			foreach ($node->definition->effective_methods() as $method) {
 				if (!$method->has_virtual_dispatch()) continue;
+				if ($node->kind === record_kind::interface_type) {
+					$inherited = self::exact_interface_slot($node, $method);
+					if ($inherited !== null) {
+						// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
+						$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
+						continue;
+					}
+				}
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$result = $this->member_type($type);
-				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
-					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
+					. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
+			}
+			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+				foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+				$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
+					. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
 			}
 			$final_slots = [];
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$slot = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override';
+				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
+					&& self::exact_interface_slot($node, $method) === null;
+				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
 				if ($method->is_final && $method->has_virtual_dispatch()) {
 					$final_slots[] = $slot . ' final;';
 					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
@@ -160,6 +185,11 @@ final class Cpp_Emitter
 				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 			}
 			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
+			$exception = $node->definition->exception_base();
+			if ($exception !== null) {
+				foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
+				$bases[] = 'public ::scpp::exception_payload';
+			}
 			$interface_bases = [];
 			foreach ($node->definition->interfaces() as $interface) {
 				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
@@ -441,6 +471,11 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+				$this->collect_signature_types($contract, $declarations);
+				$this->collect_signature_types($implementation, $declarations);
+				$definitions[] = $this->variance_forward($node, $contract, $implementation, $required_headers);
+			}
 			foreach ($node->definition->interface_forwards as $method) {
 				$declarations[self::function_name($method)] = $method;
 				$this->collect_signature_types($method, $declarations);
@@ -471,7 +506,7 @@ CPP;
 					$name = Cpp_Identifier::source($function->parent->short_name);
 					$definitions[] = $owner->payload->cpp_type() . '::' . $name . '() : ' . $name . '(' . implode(', ', $defaults) . ") {}\n";
 				}
-			} else {
+			} elseif (!$function->is_destructor()) {
 				$declarations[$name] = $function;
 			}
 			$this->adapter_flavor = null;
@@ -481,7 +516,7 @@ CPP;
 				continue;
 			}
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
-			if ($function->is_constructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
 			if ($first instanceof ast_base_statement) {
@@ -503,7 +538,7 @@ CPP;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies()] as $type) {
-			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
+			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
 		}
@@ -536,6 +571,7 @@ CPP;
 		ksort($declarations, \SORT_STRING);
 		$records = [];
 		$layouts = '';
+		$intersections = '';
 		$owners = [];
 		foreach ($declarations as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
@@ -543,6 +579,13 @@ CPP;
 		}
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_enum_declaration) continue;
+			if ($function instanceof intersection_type_definition) {
+				$owners[$function->base->payload->name] = $function->base;
+				$owners[$function->capability->payload->name] = $function->capability;
+				$intersections .= 'struct ' . $function->cpp_type() . ' { ' . $function->base->cpp_type() . ' base; '
+					. $function->capability->payload->cpp_type() . "* capability{}; };\n";
+				continue;
+			}
 			if ($function instanceof record_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
@@ -608,9 +651,9 @@ CPP;
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
 		$adapter_files = $this->adapter_files();
 		if ($adapter_files === []) {
-			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes . implode("\n", $definitions));
 		}
-		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes);
 		foreach ($adapter_files as $path => $body) {
 			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
 		}
@@ -728,12 +771,16 @@ CPP;
 			if ($statement instanceof ast_yield_statement) {
 				$lines[] = $this->generator_yield($statement, $function->return_type_def(), $resume, $declarations, $global_references, $required_headers);
 			}
-			elseif (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
-				$transfer = $statement instanceof ast_break_statement ? 'break;' : 'continue;';
-				if ($resume !== null) {
+			elseif ($statement instanceof ast_loop_transfer) {
+				$continuing = $statement instanceof ast_continue_statement;
+				$transfer = $continuing ? 'continue;' : 'break;';
+				if ($this->finally_exit !== null && $this->finally_exit->loop_target === $statement->target) {
+					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
+				}
+				elseif ($resume !== null) {
 					$loop = $resume->loops[array_key_last($resume->loops)];
 					$lines[] = $this->generator_cleanup($resume, $loop['depth']);
-					if ($statement instanceof ast_continue_statement && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
+					if ($continuing && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
 				}
 				$lines[] = "\t" . $transfer;
 			}
@@ -858,11 +905,28 @@ CPP;
 					$lines[] = "\t}";
 				}
 			}
+			elseif ($statement instanceof ast_throw_statement) {
+				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
+			}
+			elseif ($statement instanceof ast_try_statement) {
+				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
+			}
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
 					$head = $index === 0 ? 'if' : 'else';
 					if ($arm->condition !== null) {
-						$head = ($index === 0 ? 'if' : 'else if') . ' ('
+						$guard = $arm->condition instanceof ast_not_expression ? $arm->condition->operand : $arm->condition;
+						if ($guard instanceof ast_object_access_expression && $guard->used_as_guard) {
+							$operand = $this->value($guard->operand, $global_references, $declarations, $required_headers);
+							$request = Cpp_Object_Access::request($guard->operand->type_def(), $guard->target_type(), true, $guard->dynamic_check(), true);
+							$slot = 'scpp_guard_' . $guard->start;
+							$init = 'auto* ' . $slot . ' = ' . $this->inline_adapters->call($request, [$operand]);
+							$test = $slot . ($guard === $arm->condition ? ' != nullptr' : ' == nullptr');
+							if ($index === 0) {
+								$lines[] = "\t" . $init . ';';
+								$head = 'if (' . $test . ')';
+							} else $head = 'else if (' . $init . '; ' . $test . ')';
+						} else $head = ($index === 0 ? 'if' : 'else if') . ' ('
 							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
 					}
 					$lines[] = "\t" . $head . ' {';
@@ -935,7 +999,7 @@ CPP;
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
-				if ($statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
+				if ($this->finally_exit === null && $statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
 					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
 					continue;
 				}
@@ -953,7 +1017,7 @@ CPP;
 						$required_headers[$header] = true;
 					}
 				}
-				$lines[] = "\treturn " . $value . ';';
+				$lines[] = "\t" . ($this->finally_exit?->save(statement_completion::returns, $value) ?? ('return ' . $value . ';'));
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -968,7 +1032,7 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
-				$lines[] = $resume === null ? "\treturn;" : "close(); return false;";
+				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? 'return;') : "close(); return false;";
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
@@ -983,6 +1047,96 @@ CPP;
 			array_pop($resume->scopes);
 		}
 		if ($body instanceof ast_function_body) $this->byte_view = null;
+		return $lines;
+	}
+
+	/**
+	 * Enclose the entire protected operation. A finalizer thrown from the outer handler replaces its pending exception.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 * @return string[]
+	 */
+	private function exception_region(ast_try_statement $syntax, ast_function_declaration $function,
+		array &$declarations /** array<string,ast_function_declaration> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
+	{
+		if ($syntax->finalizer === null) {
+			return $this->protected_region($syntax, $function, $declarations, $globals, $headers);
+		}
+		$lines = ["\t{", "\t\tauto scpp_finalizer = [&]() {"];
+		foreach ($this->statements($syntax->finalizer, $declarations, $globals, $headers, $function) as $line) {
+			$lines[] = "\t\t" . $line;
+		}
+		$lines[] = "\t\t};";
+		$outer = $this->finally_exit;
+		$pending = null;
+		$returns = ($syntax->protected_completion & statement_completion::returns) !== 0;
+		if ($returns || $syntax->transfer_target !== null) {
+			$result = $function->return_type_def();
+			$type = !$returns || $result === type_void::instance() ? null
+				: ($function->is_implicit_entry ? 'int' : $this->signature_type($result, false));
+			$pending = new Cpp_Finally_Exit($syntax->start, $type, $syntax->transfer_target);
+			$lines[] = "\t\t" . $pending->declaration();
+			$lines[] = "\t\t" . $pending->start();
+		}
+		$lines[] = "\t\ttry {";
+		$this->finally_exit = $pending ?? $outer;
+		try {
+			foreach ($this->protected_region($syntax, $function, $declarations, $globals, $headers) as $line) {
+				$lines[] = "\t\t" . $line;
+			}
+		} finally {
+			$this->finally_exit = $outer;
+		}
+		$lines[] = "\t\t} catch (...) { scpp_finalizer(); throw; }";
+		if ($pending !== null) {
+			$lines[] = "\t\t" . (($syntax->protected_completion & statement_completion::fallthrough) !== 0
+				? 'return {};' : '__builtin_trap();');
+			$lines[] = "\t\t}();";
+		}
+		$lines[] = "\t\tscpp_finalizer();";
+		if ($pending !== null) {
+			foreach ([statement_completion::returns, statement_completion::breaks, statement_completion::continues] as $exit) {
+				if (($syntax->completion & $exit) !== 0) $lines[] = "\t\t" . $pending->replay($exit, $outer);
+			}
+		}
+		if (($syntax->completion & statement_completion::fallthrough) === 0) $lines[] = "\t\t__builtin_trap();";
+		$lines[] = "\t}";
+		return $lines;
+	}
+
+	/**
+	 * Lower sibling native blocks; only the typed handler binds the language exception transport.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 * @return string[]
+	 */
+	private function protected_region(ast_try_statement $syntax, ast_function_declaration $function,
+		array &$declarations /** array<string,ast_function_declaration> */,
+		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
+	{
+		$handler = $syntax->handler;
+		$lines = [$handler === null ? "\t{" : "\ttry {"];
+		foreach ($this->statements($syntax->body, $declarations, $globals, $headers, $function) as $line) {
+			$lines[] = "\t" . $line;
+		}
+		if ($handler !== null) {
+			$root = type_registry::exception();
+			foreach ($root->cpp_headers() as $header) $headers[$header] = true;
+			$lines[] = "\t} catch (const " . $root->cpp_type() . '& caught_exception) {';
+			$binding = $this->name($handler->binding);
+			$type = $handler->binding->type_def();
+			$value = $type === $root ? 'caught_exception'
+				: $this->inline_adapters->call(Cpp_Exception_Catch::request($root, $type), ['caught_exception']);
+			$lines[] = "\t\t[[maybe_unused]] auto " . $binding . ' = ' . $value . ';';
+			if ($type !== $root) $lines[] = "\t\tif (!" . $binding . ') throw;';
+			foreach ($this->statements($handler->body, $declarations, $globals, $headers, $function) as $line) {
+				$lines[] = "\t" . $line;
+			}
+		}
+		$lines[] = "\t}";
 		return $lines;
 	}
 
@@ -1160,10 +1314,10 @@ CPP;
 					$default = $arm;
 					continue;
 				}
-				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { return '
-					. $this->value($arm->result, $globals, $declarations, $headers) . '; } ';
+				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { '
+					. $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' } ';
 			}
-			return $code . 'return ' . $this->value($default->result, $globals, $declarations, $headers) . ';';
+			return $code . $this->selection_exit($default->result, $globals, $declarations, $headers);
 		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
@@ -1173,9 +1327,37 @@ CPP;
 				$integer = $arm->label->constant();
 				$code .= 'case ' . ($integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL') . ': ';
 			}
-			$code .= 'return ' . $this->value($arm->result, $globals, $declarations, $headers) . '; ';
+			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' ';
 		}
 		return $code . '}';
+	}
+
+	/**
+	 * Use the prepared root view and unified native transport for all throws.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function throw_call(ast_throw_expression $throw, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		$root = type_registry::exception();
+		foreach ($root->cpp_headers() as $header) $headers[$header] = true;
+		$operand = $this->value($throw->operand, $globals, $declarations, $headers);
+		return '::scpp::throw_exception(' . $this->conversion($root, $throw->conversion, $operand, $throw->operand) . ')';
+	}
+
+	/**
+	 * Exit only the selected lazy branch, with its value or the language throw.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function selection_exit(ast_expression $branch, array &$globals /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
+	{
+		return $branch instanceof ast_throw_expression ? $this->throw_call($branch, $globals, $declarations, $headers) . ';'
+			: 'return ' . $this->value($branch, $globals, $declarations, $headers) . ';';
 	}
 
 	/**
@@ -1414,10 +1596,10 @@ CPP;
 				$carrier = $value->left->type_def();
 				$steps = [];
 				$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
-				$right = $this->value($value->right, $global_references, $declarations, $required_headers);
+				$fallback = $this->selection_exit($value->right, $global_references, $declarations, $required_headers);
 				return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . implode(' ', $steps) . ' const auto& coalesce_value = ' . $left
 					. '; if (' . $carrier->lower_cpp_presence('coalesce_value') . ') { return '
-					. $carrier->lower_cpp_extract('coalesce_value') . '; } return ' . $right . '; }())';
+					. $carrier->lower_cpp_extract('coalesce_value') . '; } ' . $fallback . ' }())';
 			}
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
@@ -1496,10 +1678,12 @@ CPP;
 				$required_headers[$function->header] = true;
 				$symbol = $function->symbol;
 				if ($function->adapter_flavor !== null) {
-					$this->adapter_flavor = $function->adapter_flavor;
+					// A contributed body can use a different flavor from its C++ translation unit.
+					$foreign = $function->adapter_flavor !== $value->root()->tokens->source->flavor->value;
+					if (!$foreign) $this->adapter_flavor = $function->adapter_flavor;
 					$short = substr($symbol, strrpos($symbol, '::') + 2);
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
-					$symbol = $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
 				if ($function->receiver_method) {
@@ -1521,7 +1705,9 @@ CPP;
 						$steps[] = 'auto&& method_receiver = ' . $receiver . ';';
 						$receiver = 'method_receiver';
 					}
-					$call = '(' . $receiver . ').' . $symbol . '(' . implode(', ', $arguments) . ')';
+					$access = $function->parameters[0] instanceof type_exception
+						&& $operands[0]->type_def() instanceof shared_record_type_definition ? '->' : '.';
+					$call = '(' . $receiver . ')' . $access . $symbol . '(' . implode(', ', $arguments) . ')';
 					return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
 				}
 				if (count($operands) === 1 && !$function->overloaded_first) {
@@ -1626,7 +1812,13 @@ CPP;
 			$global_references[$name] = $declaration;
 			return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
 		}
-		return $this->name($declaration);
+		$name = $this->name($declaration);
+		$type = $declaration->type_def();
+		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
+			if ($value->type_def() === $type->base) return $name . '.base';
+			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);
+		}
+		return $name;
 	}
 
 	/**
@@ -1829,14 +2021,37 @@ CPP;
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
 	}
 
+	/** Adapt agreed value positions and dispatch once through the implementation slot. @param bool[] $headers */
+	private function variance_forward(ast_record_declaration $record, ast_function_declaration $contract,
+		ast_function_declaration $method, array &$headers /** array<string,bool> */): string
+	{
+		$arguments = [];
+		foreach ($contract->parameters as $i => $parameter) {
+			$type = $parameter->type_def();
+			$value = $this->forward_argument($parameter);
+			$target = $method->parameters[$i]->type_def();
+			$arguments[] = $target === $type ? $value : $this->conversion($target, value_conversion::owner_view, $value, null, $type);
+		}
+		$result = 'this->' . self::virtual_name($method) . '(' . implode(', ', $arguments) . ')';
+		$type = $contract->return_type_def();
+		if ($type !== $method->return_type_def()) $result = $this->conversion($type, value_conversion::owner_view, $result, null, $method->return_type_def());
+		return $this->member_type($type) . ' ' . $record->definition->cpp_type() . '::' . self::virtual_name($contract)
+			. '(' . implode(', ', $this->parameters($contract, $headers, false, true)) . ') { return ' . $result . "; }\n";
+	}
+
+	private function forward_argument(ast_parameter_declaration $parameter): string
+	{
+		$value = $this->name($parameter);
+		return $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
+			: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
+	}
+
 	/** Emit only a settled bridge; forward values by move and references unchanged, without visiting the source body. @param bool[] $headers */
 	private function interface_forward(ast_record_declaration $record, ast_function_declaration $method, array &$headers /** array<string,bool> */): string
 	{
 		$arguments = [];
 		foreach ($method->parameters as $parameter) {
-			$value = $this->name($parameter);
-			$arguments[] = $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
-				: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
+			$arguments[] = $this->forward_argument($parameter);
 		}
 		$owner = $record->definition->cpp_type();
 		$receiver = 'this';
@@ -1860,12 +2075,17 @@ CPP;
 		$forwards = [];
 		$types = [];
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
-		foreach (array_merge($record->methods, $record->definition->interface_forwards) as $method) {
+		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
+			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
+		}
+		foreach (array_merge($record->definition->effective_methods(), $record->definition->interface_forwards) as $method) {
 			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
-			if ($type instanceof application_collection_type) {
+			if ($type instanceof intersection_type_definition) {
+				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof application_collection_type) {
 				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
 			} elseif ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
@@ -1889,6 +2109,7 @@ CPP;
 	 */
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
+		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);
 		if ($function->is_constructor()) {
 			if (self::self_value_constructor($function)) array_unshift($parameters, 'int');
@@ -1918,7 +2139,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
+			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -1950,6 +2171,31 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** Each distinct inherited signature needs one override, even when multiple interfaces introduce it. */
+	private static function variance_bridges(ast_record_declaration $record): \Generator
+	{
+		$bridges = $record->definition->interface_adaptations;
+		foreach ($record->methods as $method) {
+			if ($method->adapted_base !== null) $bridges[] = [$method->adapted_base, $method];
+		}
+		$seen = [];
+		foreach ($bridges as [$contract, $method]) {
+			$key = self::virtual_name($contract);
+			if (isset($seen[$key])) continue;
+			$seen[$key] = true;
+			yield [$contract, $method];
+		}
+	}
+
+	/** An inherited ordinary implementation may introduce its own dispatch slot alongside an adapted interface. */
+	private static function exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): ?ast_function_declaration
+	{
+		foreach ($record->definition->interface_requirements($method->short_name) as $contract) {
+			if (self::virtual_name($contract) === self::virtual_name($method)) return $contract;
+		}
+		return null;
+	}
+
 	/** Standalone inspection uses the same publication plan, embedding each generated header once. @param string[] $files */
 	private static function inline_headers(string $text, array $files /** array<string,string> */): string
 	{
@@ -1975,7 +2221,16 @@ CPP;
 	/** A virtual slot has the same native member name throughout its inheritance chain. */
 	private static function virtual_name(ast_function_declaration $method): string
 	{
-		return 'scpp_virtual_' . self::name_component($method->short_name);
+		$name = self::name_component($method->short_name);
+		$result = $method->return_type_def();
+		$variant = $result instanceof shared_record_type_definition;
+		foreach ($method->parameters as $parameter) {
+			if ($parameter->mode === passing_mode::value && $parameter->type_def() instanceof shared_record_type_definition) $variant = true;
+		}
+		if (!$variant) return 'scpp_virtual_' . $name;
+		$parts = [$result->name];
+		foreach ($method->parameters as $parameter) $parts[] = $parameter->mode->name . ':' . $parameter->type_def()->name;
+		return 'scpp_slot_' . $name . '_' . bin2hex(implode("\0", $parts));
 	}
 
 	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */
@@ -2004,6 +2259,12 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
+		if ($type instanceof intersection_type_definition) {
+			yield $type;
+			yield $type->base;
+			yield $type->capability;
+			return;
+		}
 		if ($type instanceof application_collection_type) {
 			yield $type;
 			foreach ($type->concrete_types() as $argument) yield from self::signature_type_dependencies($argument);

@@ -14,8 +14,20 @@ final class Type_Resolution
 
 	/** Resolve runtime signature types directly; callables watch the nominal records named in their signatures. */
 	public static function signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
-		?Dependency_Watches $dependencies, bool $allow_void = false): ?type_definition
+		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
+		$watcher ??= $function;
+		if ($syntax instanceof ast_intersection_reference) {
+			$left = self::signature($syntax->left, $symbols, $function, $dependencies, watcher: $watcher);
+			$right = self::signature($syntax->right, $symbols, $function, $dependencies, watcher: $watcher);
+			if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition && $left->required && $right->required) {
+				if ($left->payload->declaration->kind === record_kind::interface_type) [$left, $right] = [$right, $left];
+				if ($left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::interface_type) {
+					return $left->payload->intersection($right);
+				}
+			}
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Intersection requires one required class and one interface');
+		}
 		if ($allow_void && $syntax->name === Iterator_Contract::NAME) {
 			if ($function->parent instanceof ast_method_owner) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Yield producers must be free functions');
@@ -36,17 +48,17 @@ final class Type_Resolution
 			return new generator_type_definition($function, $element, $key);
 		}
 		if (in_array($syntax->name, ['shared', 'weak'], true) && $syntax->first_child !== null) {
-			$function->watch_signature($dependencies);
-			return self::handle($syntax, $symbols, $function->namespace, $function, $dependencies);
+			if ($watcher === $function) $function->watch_signature($dependencies);
+			return self::handle($syntax, $symbols, $function->namespace, $watcher, $dependencies);
 		}
-		if ($syntax->name === 'nullable') $function->watch_signature($dependencies);
-		$optional = self::optional_type($syntax, $symbols, $function->namespace, $function, $dependencies);
+		if ($syntax->name === 'nullable' && $watcher === $function) $function->watch_signature($dependencies);
+		$optional = self::optional_type($syntax, $symbols, $function->namespace, $watcher, $dependencies);
 		if ($optional !== null) return $optional;
-		if ($syntax->first_child !== null) $function->watch_signature($dependencies);
-		$type = self::resolve($syntax, $allow_void, $symbols, $function->namespace, $function, $dependencies);
+		if ($syntax->first_child !== null && $watcher === $function) $function->watch_signature($dependencies);
+		$type = self::resolve($syntax, $allow_void, $symbols, $function->namespace, $watcher, $dependencies);
 		if ($type !== null) return $type;
-		$function->watch_signature($dependencies);
-		$type = self::application($syntax, $symbols, $function, $dependencies);
+		if ($watcher === $function) $function->watch_signature($dependencies);
+		$type = self::application($syntax, $symbols, $watcher, $dependencies);
 		if ($type instanceof record_type_definition) $type->require_complete_value($syntax);
 		return $type;
 	}
@@ -101,10 +113,20 @@ final class Type_Resolution
 	private static function application(ast_type_reference $syntax, scope $symbols, dependency_watcher $watcher,
 		?Dependency_Watches $dependencies): ?type_definition
 	{
-		$entry = $symbols->entry($syntax->root()->type_key($syntax->name));
+		$entry = $symbols->entry($syntax->lexical_root()->type_key($syntax->name));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
-		return $record instanceof ast_type_declaration ? $record->type_definition() : null;
+		return $record instanceof ast_type_declaration ? $record->type_definition() : self::core_class($syntax->root(), $syntax->name);
+	}
+
+	/** Core-class fallback follows imports and honors a source declaration found by the caller. */
+	public static function core_class(ast_file_node $file, string $name): ?type_exception
+	{
+		$type = type_registry::exception();
+		if ($type === null) return null;
+		$key = $file->type_key($name);
+		if ($key === 'class:' . $type->name) return $type;
+		return $name === $type->name && $file->imported_type_target($name) === null ? $type : null;
 	}
 
 	/** Preserve simple-name lookup; validate arity and resolve each argument once before specialization lookup. */
@@ -161,7 +183,7 @@ final class Type_Resolution
 		$type = ($symbols !== null && $watcher !== null
 			? self::named($syntax, $symbols, $namespace, $watcher, $dependencies) : self::resolve($syntax)) ?? throw new diagnostic($syntax->source(), $syntax->byte_start(),
 			'Unknown or unsupported type: ' . $syntax->spelling());
-		if ($type instanceof record_type_definition) $type->require_complete_value($syntax);
+		if ($type instanceof record_type_definition) $type->require_complete_value($syntax, true);
 		return $type;
 	}
 

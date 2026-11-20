@@ -98,7 +98,7 @@ final class ast_call_expression extends ast_expression
 
 	public function symbol_key(): string
 	{
-		return $this->root()->function_key($this->name);
+		return $this->lexical_root()->function_key($this->name);
 	}
 
 	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
@@ -125,12 +125,14 @@ final class ast_call_expression extends ast_expression
 		$this->conversions = $conversions;
 	}
 
-	/** @return ast_expression[] Runtime operands in evaluation order, including a method receiver. */
-	public function runtime_operands(): array /** list<ast_expression> */
+	/** @return ast_expression[] Runtime operands in evaluation order; a type qualifier does not evaluate. */
+	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
 	{
-		if ($this->function_symbol instanceof runtime_function && $this->function_symbol->name() === 'enum_from_value'
-			&& ($this->arguments[0] ?? null) instanceof ast_type_marker) return array_slice($this->arguments, 1);
-		return $this->receiver === null ? $this->arguments : [$this->receiver, ...$this->arguments];
+		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
+		if ($binding?->name() === 'enum_from_value' && ($this->arguments[0] ?? null) instanceof ast_type_marker) {
+			return array_slice($this->arguments, 1);
+		}
+		return $this->receiver === null || $binding?->type_qualified ? $this->arguments : [$this->receiver, ...$this->arguments];
 	}
 
 	/** @param int[] $conversions Approved runtime operand conversions; empty denotes exact arguments. */
@@ -305,6 +307,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	use ast_declaration { name as private namespace_name; }
 
 	/** PROPERTIES */
+	/** Native non-owning authored trait; null for an ordinary member. */
+	public ?ast_trait_declaration $trait_origin = null;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
 	public readonly bool $is_implicit_entry;
@@ -334,6 +338,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public private(set) ?called_method_instance $instance = null;
 	/** Prepared fact: inherited callable contract validated after signature settlement. */
 	public bool $method_contract_ready = false;
+	/** Prepared fact: nearest overridden declaration needing a shared-value bridge; native non-owning. */
+	public ?self $adapted_base = null;
+	/** Prepared fact: this override introduces its own signature alongside the inherited slots. */
+	public bool $introduces_slot = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
 
@@ -418,6 +426,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_record_declaration;
 	}
 
+	public function is_destructor(): bool
+	{
+		return $this->short_name === '__destruct' && ($this->parent ?? null) instanceof ast_record_declaration;
+	}
+
 	/** Borrow the settled signature and lexical parent. Only the new executable subtree owns mutable body facts. */
 	public function instantiate(called_method_instance $instance): self
 	{
@@ -474,6 +487,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		$this->return_type_def = null;
 		$this->method_contract_ready = false;
+		$this->adapted_base = null;
+		$this->introduces_slot = false;
 		foreach ($this->parameters as $parameter) {
 			$parameter->reset_preparation();
 		}
@@ -519,6 +534,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		$this->return_type_def = null;
 		$this->method_contract_ready = false;
+		$this->adapted_base = null;
+		$this->introduces_slot = false;
 		$this->body?->invalidate_dependencies();
 		$this->root()->begin_preparation();
 		$this->signature_dependencies?->changed($this->root()->scope->parent->entry($this->symbol_key()));
@@ -537,9 +554,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Return: token position. */
 	public function name_position(): int /** uint32 */
 	{
-		if ($this->is_constructor()) return $this->return_type_reference->start;
+		if ($this->is_constructor() || $this->is_destructor()) return $this->return_type_reference->start;
 		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
-			&& $this->root()->tokens->text_at($this->start) !== 'function') return $this->start;
+			&& $this->lexical_root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
 			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
 	}

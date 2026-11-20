@@ -48,11 +48,11 @@ final class Readonly_Initialization
 
 	/** METHODS */
 	/** Recognize one direct constructor write before preparing its RHS; settlement follows successful conversion. */
-	public function assignment(ast_field_expression $site, int $loop_depth /** uint32 */): ?ast_instance_field
+	public function assignment(ast_field_expression $site, bool $in_loop): ?ast_instance_field
 	{
 		$field = Readonly_Access::field($site);
 		if (!$field->is_readonly || !($site->receiver instanceof ast_this_expression) || $field->parent !== $this->record) return null;
-		if ($loop_depth !== 0 || $this->states[$field->short_name] !== 0) {
+		if ($in_loop || $this->states[$field->short_name] !== 0) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Readonly property must be initialized exactly once: ' . $field->short_name);
 		}
 		return $field;

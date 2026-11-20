@@ -9,6 +9,8 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	use ast_declaration;
 
 	/** PROPERTIES */
+	/** Non-owning lexical origin of a composed record constant or static property. */
+	public ?ast_trait_declaration $trait_origin = null;
 	public readonly member_visibility $visibility;
 	/** Native owning written type; null requests scalar-literal inference in this slice. */
 	public readonly ?ast_type_reference $type_reference;

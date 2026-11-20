@@ -102,8 +102,11 @@ final class Cpp_Program
 		return new cpp_program_output($entry_path, $units, $files, cpp_namespace: $root);
 	}
 
+	/** Wrap the selected entry so native unwinding completes before reporting an uncaught failure. */
 	public static function main_adapter(string $root): string
 	{
-		return "\nint main() { return ::" . ($root === '' ? '' : $root . '::') . "scpp_entry_body(); }\n";
+		$entry = '::' . ($root === '' ? '' : $root . '::') . 'scpp_entry_body';
+		return "\n#include <scpp/entry.hpp>\n"
+			. "int main() { return ::scpp::run_entry_with_exceptions($entry); }\n";
 	}
 }

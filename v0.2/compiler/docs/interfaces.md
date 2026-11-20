@@ -15,15 +15,14 @@ edge as either a concrete base or an interface; later edges must be interfaces.
 Interface prototypes have no body or body preparation job. Declaration preparation
 reuses signature and override compatibility checks. An authored implementation needs
 Override, while an unchanged inherited implementation needs no new source declaration.
-Contracts remain exact in this slice; defaults are selected from the static callable.
+The static callable selects defaults. Fixed shared-value parameters allow contravariance and shared results allow covariance.
 Abstract implementers may leave bodies outstanding; an existing inherited abstract
-method must still satisfy the exact callable contract.
+method must still satisfy the directional callable contract.
 
-Each invalidated record validates its obligations through existing ancestry and direct
-interface edges. The existing record readiness flag now covers abstract and interface
+Each invalidated record validates its obligations through concrete ancestry and transitive
+interface edges. A temporary visited set deduplicates the original interfaces in a diamond. The existing record readiness flag now covers abstract and interface
 contracts. Temporary requirement lists reference original declarations; method queries
-select only the requested name. The only retained method map contains required
-forwarding targets. No synthetic source method, copied body or flattened member table
+select only the requested name. Preparation retains forwarding targets and the distinct contracts needing shared-view adapters. No synthetic source method, copied body or flattened member table
 is added. Unchanged contracts retain their readiness and no-op builds reuse prepared
 bodies and native objects.
 
@@ -42,7 +41,10 @@ a C++ using-declaration keeps direct class calls on the original slot. The exist
 forwarding map supplies both forms. No body is copied or interface entry allocated at runtime.
 
 Native interfaces use public virtual interface inheritance and nonthrowing virtual
-destruction. Concrete shared-view adapters preserve one control block, adjusted view
+destruction. An interface redeclaring an existing native signature imports the original
+slot with a C++ using-declaration. Its source declaration still selects defaults. This
+allows two branches to redeclare a common slot without adding competing native overrides.
+Concrete shared-view adapters preserve one control block, adjusted view
 pointers, allocation identity and concrete cleanup. No runtime ownership code or
 reference-count synchronization is changed. Required function boundaries and nullable
 function types retain their existing checks; shared properties retain the temporary
@@ -54,6 +56,19 @@ missing method declarations. Invalidation clears resolved edges, bridges and rea
 Header publication includes interface layouts; depfiles rebuild affected native
 consumers even if emitted caller C++ is unchanged. Source-owned adapter demand is
 retained on reuse and retired when its final consumer disappears.
+
+## Shared-value dispatch
+
+Only a virtual signature with a by-value shared parameter or shared result uses a
+signature-based C++ slot. The slot encodes the canonical return and parameter types
+and passing modes, so independently compiled descendants agree on its name. A variant
+override introduces an implementation slot and forwards inherited slots to it. The
+bridge moves each changed argument or result through the existing shared-view adapter.
+This preserves allocation identity and empty owners. An explicit ancestor call still
+selects the ancestor implementation. Rebuild affected native units when adopting this ABI.
+
+The [shared variance test](../tests/shared_variance_native.py) compares retained
+and fresh builds through ancestry, presence, signature and deletion edits in all three flavors.
 
 ## Verification
 
@@ -74,8 +89,38 @@ native namespace qualification with a record named `scpp`.
 Interface capability tests and checked casts now reuse the
 [shared-object access path](object_access.md), preserving control blocks and adjusted views.
 
-Deferred: interface inheritance/diamonds,
-struct implementers, variance and broader reference
-returns, interface data/static/default members, traits, unique, borrows and native
+The [interface inheritance fixture](../tests/interface_inheritance_native.py) exercises diamond dispatch,
+ancestor conversions, conflicting contracts, defaults, cycle diagnostics and incremental recovery.
+Preparation validates parent contracts before implementers in both fresh and retained generations.
+
+Deferred: struct implementers and broader reference
+returns, interface data/static/default members, trait use in interfaces, unique, borrows and native
 threading. Sequential tests do not prove thread safety
 or a preparation-speed improvement.
+
+## Class and interface parameter intersections
+
+A required by-value parameter can name one class and one interface. PHP writes
+`Base&Readable $item`, C++ writes `Base&Readable item`, and JS writes
+`item: Base&Readable`. Either order names the same contract. A declared type or a direct interface guard on a local can establish the two components. An intersection can forward to another pair
+when both requirements follow from its declared components.
+
+One concrete native pair retains the class owner and an adjusted interface pointer.
+Member preparation selects the appropriate view on the existing name occurrence.
+Fields use the class view. Distinct same-name methods on independent contracts require
+selecting a constituent explicitly, for example by passing the argument to a helper
+with that constituent as its parameter type. Calls and returns using either constituent
+reuse ordinary shared ownership. Conversions use compile-time pointer adjustments.
+Intersection reference parameters, defaults, producer parameters, written storage
+and return types are outside this slice.
+
+A successful interface guard can supply a borrowed native view to a by-value
+argument. A negative guard with a single returning or throwing arm supplies the
+same proof on fallthrough. Preparation tracks the tested local by storage ID.
+The argument links to its test through its existing binding slot. A guard with
+no such consumer still emits the ordinary boolean test. Loops, exception joins,
+and yield suspension do not propagate the proof. Writable reference parameters
+cannot establish it because another binding can replace their owner.
+[Guarded arguments and incremental recovery](../tests/guarded_intersections_native.py)
+
+[Native and incremental proof](../tests/intersection_parameters_native.py)

@@ -71,7 +71,7 @@ final class Last_Use_Transfer
 		}
 		foreach ($block->statements as $statement) {
 			if ($candidates === []) return;
-			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement) {
+			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_try_statement) {
 				$candidates = [];
 				return;
 			}
@@ -111,7 +111,7 @@ final class Last_Use_Transfer
 		}
 		foreach ($block->statements as $statement) {
 			// Header bindings have their own scope and may refer to existing writable storage.
-			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement) return false;
+			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_try_statement) return false;
 			if ($statement instanceof ast_loop_statement && !self::private_uses($statement->body, $write, $source, $result)) return false;
 			if ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) {

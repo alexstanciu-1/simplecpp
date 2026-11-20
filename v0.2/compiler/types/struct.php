@@ -23,19 +23,29 @@ final class record_type_definition extends type_definition implements dependency
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
 
+	/** Canonical intersections used by live signatures. @var \WeakMap<shared_record_type_definition,\WeakReference<intersection_type_definition>>|null */
+	private ?\WeakMap $intersections = null;
+
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
+	/** Prepared fact: callable entries for unresolved trait hooks owned by this abstract record. @var symbol_entry[] */
+	private array $hook_slots /** array<string,symbol_entry> */ = [];
 	/** Prepared fact: abstract/interface obligations checked after signatures; cleared with nominal layout invalidation. */
 	public bool $method_contract_ready = false;
-	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
-	private ?self $base_type = null;
+	/** Prepared fact: the single resolved base, null for no base or invalidated layout. */
+	private self|type_exception|null $base_type = null;
 	/** Prepared fact: non-owning validated traversal method; null for absent or invalidated contract. */
 	private ?ast_function_declaration $iterator = null;
 	/** Prepared fact: non-owning direct interface edges, owned by this declaration generation. @var record_type_definition[] */
 	private array $interfaces /** list<record_type_definition> */ = [];
 	/** Prepared fact: native non-owning forwarding targets; original methods remain at their declaring owner. @var ast_function_declaration[] */
 	public array $interface_forwards /** array<string,ast_function_declaration> */ = [];
+	/**
+	 * Prepared fact: distinct interface contracts paired with their selected implementation; native non-owning.
+	 * @var list<array{ast_function_declaration,ast_function_declaration}>
+	 */
+	public array $interface_adaptations /** list<array{ast_function_declaration,ast_function_declaration}> */ = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_record_declaration $declaration)
@@ -48,6 +58,18 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** METHODS */
+	/** Share the nominal pair while signatures retain it. Both cache links are weak across generations. */
+	public function intersection(shared_record_type_definition $capability): intersection_type_definition
+	{
+		$this->intersections ??= new \WeakMap();
+		$type = ($this->intersections[$capability] ?? null)?->get();
+		if ($type === null) {
+			$type = new intersection_type_definition($this->required, $capability);
+			$this->intersections[$capability] = \WeakReference::create($type);
+		}
+		return $type;
+	}
+
 	/** Bare classes/interfaces use required shared values; bare structs retain inline values. */
 	public function default_type(): type_definition
 	{
@@ -61,10 +83,12 @@ final class record_type_definition extends type_definition implements dependency
 		$this->dependencies?->forget($this);
 		$this->ready = false;
 		$this->method_contract_ready = false;
+		$this->hook_slots = [];
 		$this->base_type = null;
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
 		$this->dependencies = $dependencies;
@@ -81,10 +105,12 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
 		$this->method_contract_ready = false;
+		$this->hook_slots = [];
 		$this->base_type = null;
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
@@ -100,7 +126,9 @@ final class record_type_definition extends type_definition implements dependency
 			$cycle = array_merge(array_slice($cycle, $index), array_slice($cycle, 0, $index));
 			$node = $symbols->resolve('class:' . $cycle[0]);
 			$cycle[] = $cycle[0];
-			throw new diagnostic($node->source(), $node->byte_start(), ((in_array(true, $active, true) || $concrete_field) ? 'Recursive concrete collection fields are deferred: ' : 'Recursive inline layout: ') . implode(' -> ', $cycle));
+			$message = $node->kind === record_kind::interface_type ? 'Recursive interface inheritance: ' : 'Recursive inline layout: ';
+			if (in_array(true, $active, true) || $concrete_field) $message = 'Recursive concrete collection fields are deferred: ';
+			throw new diagnostic($node->source(), $node->byte_start(), $message . implode(' -> ', $cycle));
 		}
 		$active[$this->name] = $concrete_field;
 		$this->dependencies->forget($this);
@@ -108,12 +136,16 @@ final class record_type_definition extends type_definition implements dependency
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		$interface_references = $this->declaration->interface_references;
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;
 			$base = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($base instanceof shared_record_type_definition && $base->required) $base = $base->payload;
-			if ($base instanceof self && $base->declaration->kind === record_kind::interface_type && $written->source()->flavor === flavor::cpp) {
+			if ($base instanceof type_exception && $this->declaration->kind === record_kind::class_type) {
+				$this->base_type = $base;
+			}
+			elseif ($base instanceof self && $base->declaration->kind === record_kind::interface_type && $written->source()->flavor === flavor::cpp) {
 				array_unshift($interface_references, $written);
 			} else {
 				if (!($base instanceof self) || $base->declaration->kind !== $this->declaration->kind) {
@@ -123,12 +155,13 @@ final class record_type_definition extends type_definition implements dependency
 				if ($base->declaration->is_final) throw new diagnostic($written->source(), $written->byte_start(), 'Cannot extend final class: ' . $base->name);
 				$base->prepare_layout($symbols, $active, $work);
 				$this->base_type = $base;
-				$this->validate_inherited_members();
+				$base->require_destruction($written);
+				$this->validate_inherited_members($base);
 			}
 		}
 		foreach ($interface_references as $written) {
-			if ($written->name === Iterator_Contract::NAME) continue;
-			if ($this->declaration->kind !== record_kind::class_type) throw new diagnostic($written->source(), $written->byte_start(), 'Only classes implement interfaces in this slice');
+			if ($written->name === Iterator_Contract::NAME && $this->declaration->kind !== record_kind::interface_type) continue;
+			if ($this->declaration->kind === record_kind::structure) throw new diagnostic($written->source(), $written->byte_start(), 'Only classes implement interfaces in this slice');
 			$type = Type_Resolution::named($written, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if (!($type instanceof shared_record_type_definition) || !$type->required || $type->payload->declaration->kind !== record_kind::interface_type) throw new diagnostic($written->source(), $written->byte_start(), 'Implemented type must be an interface');
 			$interface = $type->payload;
@@ -252,22 +285,32 @@ final class record_type_definition extends type_definition implements dependency
 		throw new \LogicException('Source traversal calls are emitted through their method declaration');
 	}
 
-	/** Direct settled edges; interfaces currently have no interface parents. @return record_type_definition[] */
+	/** Direct implemented or extended interfaces in source order. @return record_type_definition[] */
 	public function interfaces(): array /** list<record_type_definition> */
 	{
 		return $this->interfaces;
 	}
 
-	/** Read original contracts through settled edges; the temporary result is not a retained member index. @return ast_function_declaration[] */
+	/** Collect distinct reachable interfaces once per query. @param record_type_definition[] $seen */
+	private function collect_interfaces(array &$seen /** array<string,record_type_definition> */): void
+	{
+		foreach ($this->interfaces as $interface) {
+			if (isset($seen[$interface->name])) continue;
+			$seen[$interface->name] = $interface;
+			$interface->collect_interfaces($seen);
+		}
+	}
+
+	/** Read original obligations through settled edges. @return ast_function_declaration[] */
 	public function interface_requirements(?string $name = null): array /** list<ast_function_declaration> */
 	{
+		$interfaces = [];
+		for ($type = $this; $type !== null; $type = $type->base()) $type->collect_interfaces($interfaces);
 		$requirements = [];
-		for ($type = $this; $type !== null; $type = $type->base_type) {
-			foreach ($type->interfaces as $interface) {
-				if ($name === null) {
-					foreach ($interface->declaration->methods as $method) $requirements[] = $method;
-				} elseif (isset($interface->declaration->methods[$name])) $requirements[] = $interface->declaration->methods[$name];
-			}
+		foreach ($interfaces as $interface) {
+			if ($name === null) {
+				foreach ($interface->declaration->methods as $method) $requirements[] = $method;
+			} elseif (isset($interface->declaration->methods[$name])) $requirements[] = $interface->declaration->methods[$name];
 		}
 		return $requirements;
 	}
@@ -275,31 +318,42 @@ final class record_type_definition extends type_definition implements dependency
 	/** A prepared interface slot can add dispatch to an inherited ordinary implementation. */
 	public function interface_dispatch(string $name): bool
 	{
-		return isset($this->interface_forwards[$name]) || ($this->base_type?->interface_dispatch($name) ?? false);
+		return isset($this->interface_forwards[$name]) || ($this->base()?->interface_dispatch($name) ?? false);
 	}
 
 	public function base(): ?self
 	{
-		return $this->base_type;
+		return $this->base_type instanceof self ? $this->base_type : null;
+	}
+
+	public function exception_base(): ?type_exception
+	{
+		return $this->base_type instanceof type_exception ? $this->base_type : null;
+	}
+
+	/** Source inheritance follows the existing nominal links to the canonical runtime root. */
+	public function exception_descendant(): bool
+	{
+		return $this->base_type instanceof type_exception || ($this->base()?->exception_descendant() ?? false);
 	}
 
 	/** The effective constructor remains owned by its original declaration. */
 	public function constructor(): ?ast_function_declaration
 	{
-		return $this->declaration->methods['__construct'] ?? $this->base_type?->constructor();
+		return $this->declaration->methods['__construct'] ?? $this->base()?->constructor();
 	}
 
 	/** Nearest instance-field declaration; access checks never retry a hidden base field. */
 	public function field(string $name): ?ast_instance_field
 	{
-		return $this->declaration->fields[$name] ?? $this->base_type?->field($name);
+		return $this->declaration->fields[$name] ?? $this->base()?->field($name);
 	}
 
 	/** Each visited record owns its local indexes; return the original declaration for binding. */
 	public function static_data_member(string $name, bool $properties, bool $constants, scope $symbols,
 		dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?ast_literal_declaration
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			$record = $type->declaration;
 			$dependencies?->watch($symbols->entry($record->symbol_key()), $watcher);
 			if ($properties && isset($record->static_properties[$name])) return $record->static_properties[$name];
@@ -308,29 +362,60 @@ final class record_type_definition extends type_definition implements dependency
 		return null;
 	}
 
-	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
-	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
+	/** Publish only after the entire record contract succeeds. @param ast_function_declaration[] $hooks */
+	public function settle_hook_slots(array $hooks /** array<string,ast_function_declaration> */): void
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
+		foreach ($hooks as $name => $hook) {
+			$entry = new symbol_entry();
+			$entry->publish($hook);
+			$this->hook_slots[$name] = $entry;
+		}
+	}
+
+	/** Authored methods and the selected abstract declarations native layout and descendant checks must see. @return ast_function_declaration[] */
+	public function effective_methods(): array /** array<string,ast_function_declaration> */
+	{
+		$methods = $this->declaration->methods;
+		foreach ($this->hook_slots as $name => $entry) $methods[$name] = $entry->declaration();
+		return $methods;
+	}
+
+	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
+	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies, ?ast_node $call = null): ?symbol_entry
+	{
+		for ($type = $this; $type !== null; $type = $type->base()) {
 			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
 			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
 			$dependencies?->watch($symbol, $watcher);
 			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
+			if (isset($type->hook_slots[$name])) return $type->hook_slots[$name];
 		}
-		foreach ($this->interface_requirements($name) as $method) {
-			$symbol = $symbols->entry($method->symbol_key());
-			$dependencies?->watch($symbol, $watcher);
-			return $symbol;
+		if ($call === null) return null;
+		$requirements = $this->interface_requirements($name);
+		$selected = $requirements[0] ?? null;
+		if ($selected === null) return null;
+		if (count($requirements) > 1) {
+			// A unique visible redeclaration must descend from every competing declaration.
+			foreach ($requirements as $method) {
+				if ($method->parent->definition->derives_from($selected->parent->definition)) $selected = $method;
+			}
+			foreach ($requirements as $method) {
+				if (!$selected->parent->definition->derives_from($method->parent->definition)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Ambiguous inherited interface method: ' . $name);
+				}
+			}
 		}
-		return null;
+		$symbol = $symbols->entry($selected->symbol_key());
+		$dependencies?->watch($symbol, $watcher);
+		return $symbol;
 	}
 
 	/** Native layout follows validated written virtual contracts, including inherited ones. */
 	public function polymorphic(): bool
 	{
-		if ($this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
+		if ($this->hook_slots !== [] || $this->base_type instanceof type_exception || $this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
 		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
-		return $this->base_type?->polymorphic() ?? false;
+		return $this->base()?->polymorphic() ?? false;
 	}
 
 	/** Protected access uses lexical ancestry and, for instance members, the receiver's declared type. */
@@ -347,25 +432,31 @@ final class record_type_definition extends type_definition implements dependency
 		return $caller->derives_from($this) && ($receiver === null || $receiver->derives_from($caller));
 	}
 
-	/** Settled single-base relation; equality includes the type itself. */
+	/** Settled nominal ancestry includes the concrete base chain and all reachable interfaces. */
 	public function derives_from(self $ancestor): bool
 	{
-		for ($type = $this; $type !== null; $type = $type->base_type) {
-			if ($type === $ancestor || in_array($ancestor, $type->interfaces, true)) return true;
+		for ($type = $this; $type !== null; $type = $type->base()) {
+			if ($type === $ancestor) return true;
+			if ($ancestor->declaration->kind === record_kind::interface_type && $type->interfaces !== []) {
+				if (in_array($ancestor, $type->interfaces, true)) return true;
+				$reachable = [];
+				$type->collect_interfaces($reachable);
+				if (($reachable[$ancestor->name] ?? null) === $ancestor) return true;
+			}
 		}
 		return false;
 	}
 
 	/** Keep inherited declarations at their owner and reject unsupported hiding. */
-	private function validate_inherited_members(): void
+	private function validate_inherited_members(self $parent): void
 	{
 		foreach ($this->declaration->fields as $field) {
-			$inherited = $this->base_type->field($field->short_name);
+			$inherited = $parent->field($field->short_name);
 			if ($inherited !== null && !($inherited->is_private && $field->is_private)) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Inherited field redeclaration: ' . $field->short_name);
 			}
 		}
-		for ($base = $this->base_type; $base !== null; $base = $base->base_type) {
+		for ($base = $parent; $base !== null; $base = $base->base()) {
 			foreach ($this->declaration->static_properties as $name => $property) {
 				if (isset($base->declaration->static_properties[$name]) || isset($base->declaration->fields[$name])) {
 					throw new diagnostic($property->source(), $property->byte_start(), 'Inherited property redeclaration: ' . $name);
@@ -385,11 +476,27 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */
-	public function require_complete_value(ast_node $site): void
+	public function require_complete_value(ast_node $site, bool $runtime_owned = false): void
 	{
+		$this->require_destruction($site, $runtime_owned);
 		if (!$this->declaration->is_abstract) return;
 		throw new diagnostic($site->source(), $site->byte_start(), $this->declaration->kind === record_kind::structure
 			? 'Abstract struct cannot be used as a complete value: ' . $this->name : 'Cannot instantiate an abstract class');
+	}
+
+	/** An inline value cleans up in its lexical scope; native allocation and container helpers require public access. */
+	public function require_destruction(ast_node $site, bool $runtime_owned = false): void
+	{
+		$method = $this->declaration->methods['__destruct'] ?? null;
+		if ($method === null || (!$method->is_private && !$method->is_protected)) return;
+		if (!$runtime_owned) {
+			for ($context = $site; isset($context->parent); $context = $context->parent) {
+				if (!($context instanceof ast_record_declaration)) continue;
+				if ($context === $this->declaration || ($method->is_protected && $this->permits_protected_access($context))) return;
+				break;
+			}
+		}
+		throw new diagnostic($site->source(), $site->byte_start(), 'Inaccessible destructor: ' . $this->name);
 	}
 
 	public function supports_inferred_local(): bool
@@ -567,6 +674,10 @@ final class shared_record_type_definition extends record_handle_definition
 		if ($this->required && $value->constant_known() && $value->constant() === null) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Required object cannot be null: ' . $this->name);
 		}
+		if ($source instanceof intersection_type_definition) {
+			if ($source->base->payload->derives_from($this->payload)) return value_conversion::intersection_base;
+			if ($source->capability->payload->derives_from($this->payload)) return value_conversion::intersection_capability;
+		}
 		if ($source instanceof self && $source->payload === $this->payload) {
 			return $this->required && !$source->required ? value_conversion::require_owner : value_conversion::identity;
 		}
@@ -583,6 +694,9 @@ final class shared_record_type_definition extends record_handle_definition
 	/** Select the shared-view pattern from settled conversion facts; no ancestry query occurs here. */
 	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
 	{
+		if ($source instanceof intersection_type_definition && ($conversion === value_conversion::intersection_base || $conversion === value_conversion::intersection_capability)) {
+			return $source->project($this, $conversion);
+		}
 		if ($conversion !== value_conversion::owner_view && $conversion !== value_conversion::require_owner_view) return null;
 		if ($source === null) throw new \LogicException('View conversion requires a concrete source type');
 		return Cpp_Shared_View::request($source, $this, $conversion === value_conversion::require_owner_view);
@@ -605,5 +719,76 @@ final class shared_record_type_definition extends record_handle_definition
 	public function cpp_type(): string
 	{
 		return 'owner_' . Cpp_Emitter::qualified_name($this->payload->declaration);
+	}
+}
+
+/** A required class and capability on one allocation, e.g. Base&Readable. */
+final class intersection_type_definition extends type_definition
+{
+	/** PROPERTIES */
+	public readonly shared_record_type_definition $base;
+	public readonly shared_record_type_definition $capability;
+
+	/** CONSTRUCTOR */
+	public function __construct(shared_record_type_definition $base, shared_record_type_definition $capability)
+	{
+		parent::__construct($base->name . '&' . $capability->name);
+		$this->base = $base;
+		$this->capability = $capability;
+	}
+
+	/** METHODS */
+	public function cpp_type(): string
+	{
+		return 'scpp_intersection_' . bin2hex($this->name);
+	}
+
+	/** Select the occurrence's shared receiver before ordinary field or method preparation. */
+	public function receiver_view(ast_name_expression $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?shared_record_type_definition
+	{
+		$parent = $syntax->parent;
+		if ($parent instanceof ast_field_expression && $parent->receiver === $syntax) return $this->base;
+		if (!($parent instanceof ast_call_expression) || $parent->receiver !== $syntax) return null;
+		if ($this->base->payload->derives_from($this->capability->payload)) return $this->base;
+		$separator = strrpos($parent->name, '\\');
+		$name = $separator === false ? $parent->name : substr($parent->name, $separator + 1);
+		$base = $this->base->payload->method_symbol($name, $symbols, $body, $dependencies, $parent);
+		if ($base === null) return $this->capability;
+		$other = $this->capability->payload->method_symbol($name, $symbols, $body, $dependencies, $parent);
+		if ($other !== null && $other !== $base) throw new diagnostic($parent->source(), $parent->byte_start(), 'Ambiguous intersection method: ' . $name);
+		return $this->base;
+	}
+
+	/** Prove both components from the declared argument type and record the native view adjustments. */
+	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		$from = $value->type_def();
+		if ($from === $this) return value_conversion::identity;
+		if ($from instanceof self && $from->base->payload->derives_from($this->base->payload)) {
+			if ($from->base->payload->derives_from($this->capability->payload)) return value_conversion::intersection_base;
+			if ($from->capability->payload->derives_from($this->capability->payload)) return value_conversion::intersection_capability;
+		}
+		if ($from instanceof shared_record_type_definition && $from->required && $from->payload->derives_from($this->base->payload)
+			&& $from->payload->derives_from($this->capability->payload)) return value_conversion::owner_view;
+		throw new diagnostic($value->source(), $value->byte_start(), 'Argument must statically satisfy ' . $this->name);
+	}
+
+	/** Bind once by transferring the input snapshot into one owner and setting its two typed views. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion === value_conversion::identity) return null;
+		$owner = $source instanceof self ? 'source.base' : 'source';
+		$view = $conversion === value_conversion::intersection_capability ? 'source.capability' : $owner . '.view';
+		$body = "\t" . $this->cpp_type() . " result;\n\tresult.capability = $view;\n\tresult.base.view = $owner.view;\n"
+			. "\tresult.base.ptr = $owner.ptr;\n\t$owner.ptr = nullptr;\n\treturn result;\n";
+		return new cpp_inline_adapter('bind_intersection_' . $conversion, [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::value)], $this, $body, true);
+	}
+
+	/** Transfer the retained owner to a constituent view; the source parameter is a by-value snapshot. */
+	public function project(shared_record_type_definition $target, int $conversion /** uint16 */): cpp_inline_adapter
+	{
+		$body = "\t" . $target->cpp_type() . " result;\n\tresult.view = source." . ($conversion === value_conversion::intersection_base ? 'base.view' : 'capability')
+			. ";\n\tresult.ptr = source.base.ptr;\n\tsource.base.ptr = nullptr;\n\treturn result;\n";
+		return new cpp_inline_adapter('project_intersection_' . $conversion, [new cpp_adapter_parameter($this, 'source', cpp_adapter_mode::value)], $target, $body, true);
 	}
 }

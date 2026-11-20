@@ -6,8 +6,7 @@ The [inheritance contract](../../../specs/inheritance_v0_2.md) owns semantics.
 This bounded implementation supports public/protected concrete class and struct instance virtual methods,
 mandatory overrides, final implementations and inherited ordinary-method lookup.
 The separate [abstract-method slice](abstract_methods.md) adds bodyless contracts.
-Interfaces, unique ownership, borrows,
-callable variance, reference-return virtuals, and authored destructors remain deferred.
+Class interfaces share the [interface forwarding path](interfaces.md). Unique ownership, borrows, reference-return virtuals and authored destructors remain deferred.
 
 The separate [ancestor-call slice](parent_methods.md) adds fixed parent implementation calls.
 
@@ -23,8 +22,9 @@ Static methods also admit final to seal a declaration. Final class declarations 
 
 Record_Syntax normalizes written intent on the existing method declaration.
 Function_Preparation settles all signatures before Method_Preparation validates
-inherited contracts. Parameter/result types, passing modes, nullability and default
-positions must match exactly; names/default values may differ. Calls select defaults
+inherited contracts. A fixed by-value shared parameter may widen to an ancestor and
+a shared result may narrow to a descendant. Both sides must have identical presence.
+Other types, modes and default positions match exactly. Names and default values may differ. Calls select defaults
 from the receiver's static contract. Invalid combinations are diagnosed before C++
 emission. No flattened method inventory or copied base contract is introduced.
 

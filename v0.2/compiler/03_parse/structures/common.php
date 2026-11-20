@@ -87,7 +87,7 @@ class ast_name_expression extends ast_expression
 	 * Prepared fact: local AST identity, stable source symbol or runtime constant; null until prepared.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_binding|symbol_entry|runtime_integer_constant|ast_enum_case|null $binding = null;
+	protected ast_local_binding|ast_object_access_expression|symbol_entry|runtime_integer_constant|ast_enum_case|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -104,14 +104,26 @@ class ast_name_expression extends ast_expression
 
 	/** METHODS */
 	/** Snapshot the latest write or initializer; unknown suppresses stale facts after borrowing or through aliases. */
-	public function settle_local(ast_local_binding $local, ?ast_assignment_statement $write = null, bool $unknown = false): void
+	public function settle_local(ast_local_binding $local, ?ast_assignment_statement $write = null, bool $unknown = false, ?type_definition $view = null): void
 	{
 		if (($write !== null) && ($write->local_def() !== $local)) {
 			throw new \LogicException('Read and latest write must refer to the same local');
 		}
 		$current = $write ?? $local;
-		$this->settle_value($local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
+		$this->settle_value($view ?? $local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
 		$this->binding = $local;
+	}
+
+	/** Bind this argument through the dominating test of the same local. */
+	public function settle_guard(ast_object_access_expression $guard): void
+	{
+		$this->binding = $guard;
+		$guard->used_as_guard = true;
+	}
+
+	public function guard(): ?ast_object_access_expression
+	{
+		return $this->binding instanceof ast_object_access_expression ? $this->binding : null;
 	}
 
 	/** Case reads retain only the owned case link; nominal identity is never a scalar constant fact. */
@@ -154,6 +166,7 @@ class ast_name_expression extends ast_expression
 	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
 	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant|ast_enum_case
 	{
+		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->declaration();
 		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof ast_enum_case) {
 			return $this->binding;
 		}
@@ -166,11 +179,12 @@ class ast_name_expression extends ast_expression
 
 	public function refers_to(ast_local_binding $local): bool
 	{
-		return $this->binding === $local;
+		return $this->binding === $local || ($this->binding instanceof ast_object_access_expression && $this->binding->operand->refers_to($local));
 	}
 
 	public function local_def(): ast_local_binding
 	{
+		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->local_def();
 		return $this->binding instanceof ast_local_binding
 			? $this->binding : throw new \LogicException('Local reference is not settled');
 	}

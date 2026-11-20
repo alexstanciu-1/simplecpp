@@ -44,6 +44,8 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
+    $exception = coreExceptionBinding($metadata);
+    if ($exception !== null && isset($plan['string'])) $plan['exception'] = $exception;
     prepareCheckedConversions($metadata, $facts, $plan);
     prepareVectors($metadata, $publication, $registry, $plan);
     prepareBoxed($metadata, $publication, $facts, $plan);
@@ -81,6 +83,21 @@ function privateValueTransfer(object $family): bool {
     if (!property_exists($family, 'transfer_assignment')) return false;
     literals($family, ['transfer_assignment' => 'private_value_nothrow']);
     return true;
+}
+
+/** Normalize the core runtime class binding once for native and compiler publication. */
+function coreExceptionBinding(mixed $metadata): ?array {
+    $exception = $metadata->compiler->exception ?? null;
+    if ($exception === null) return null;
+    fields($exception, ['name', 'header', 'handle', 'make', 'get_message']);
+    $binding = [];
+    foreach (['name', 'header', 'handle', 'make', 'get_message'] as $field) {
+        $binding[$field] = textValue(at($exception, $field));
+    }
+    requireThat($binding['header'] === 'scpp/exception.hpp' && $binding['handle'] === 'scpp::exception_owner'
+        && $binding['make'] === '::scpp::make_exception' && $binding['get_message'] === 'get_message'
+        && $binding['name'] === 'Exception', 'Unsupported core Exception contract');
+    return $binding;
 }
 
 function prepareString(mixed $metadata, mixed $publication, array $registry, array &$plan): void {

@@ -28,7 +28,7 @@ final class Syntax_Inspection
 				], $function->parameters),
 				'return_type' => self::name($function, $function->return_type_reference?->spelling(), $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
-				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
+				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->lexical_root()->byte_at($function->header_end)],
 				'body_span' => $function->optional_body() === null ? null : self::span($function->body())];
 			if ($function->is_private) $functions[array_key_last($functions)]['visibility'] = 'private';
 			if ($function->is_protected) $functions[array_key_last($functions)]['visibility'] = 'protected';
@@ -48,9 +48,11 @@ final class Syntax_Inspection
 				$result[$category][] = ['name' => $node->name(), 'fields' => array_map(static fn(ast_instance_field $field): string =>
 					$field->type_reference->spelling(), $node->fields), 'methods' => array_keys($node->methods)];
 				if ($node->is_final) $result[$category][array_key_last($result[$category])]['final'] = true;
-				if ($node->interface_references !== []) $result[$category][array_key_last($result[$category])]['implements'] = array_map(
-					static fn(ast_type_reference $type): string => $type->spelling(), $node->interface_references);
-				if (count($node->interface_references) === 1) $result[$category][array_key_last($result[$category])]['implements'] = $node->interface_references[0]->spelling();
+				if ($node->interface_references !== []) {
+					$relation = $node->kind === record_kind::interface_type ? 'extends' : 'implements';
+					$names = array_map(static fn(ast_type_reference $type): string => $type->spelling(), $node->interface_references);
+					$result[$category][array_key_last($result[$category])][$relation] = count($names) === 1 ? $names[0] : $names;
+				}
 				if ($node->base_reference !== null) $result[$category][array_key_last($result[$category])]['base'] = $node->base_reference->spelling();
 			}
 		}
@@ -86,8 +88,8 @@ final class Syntax_Inspection
 	 */
 	private static function name(ast_node $owner, string $name, int $position /** uint32 */, ?int $end /** uint32 */ = null): array /** array{text:string,span:array{start:uint32,end:uint32}} */
 	{
-		$token = $owner->root()->tokens->tokens[$position];
-		$last = $owner->root()->tokens->tokens[($end ?? ($position + 1)) - 1];
+		$token = $owner->lexical_root()->tokens->tokens[$position];
+		$last = $owner->lexical_root()->tokens->tokens[($end ?? ($position + 1)) - 1];
 		return ['text' => $name, 'span' => ['start' => $token->offset, 'end' => $last->offset + $last->length]];
 	}
 
@@ -100,6 +102,9 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_throw_expression) {
+			return ['kind' => 'throw', 'span' => self::span($expression), 'value' => self::expression($expression->operand)];
+		}
 		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_base_initialization) {
@@ -175,7 +180,7 @@ final class Syntax_Inspection
 					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 			}
 			$name_end = $expression->start;
-			while ($expression->root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
+			while ($expression->lexical_root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
 				$name_end++;
 			}
 			return ['kind' => 'call', 'name' => self::name($expression, $expression->name, $expression->start,
@@ -210,7 +215,7 @@ final class Syntax_Inspection
 	 */
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
-		if (($statement instanceof ast_break_statement) || ($statement instanceof ast_continue_statement)) {
+		if ($statement instanceof ast_loop_transfer) {
 			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_foreach_statement) {
@@ -227,6 +232,20 @@ final class Syntax_Inspection
 				$row['initializer'] = self::statement($statement->initializer);
 				$row['update'] = self::statement($statement->update);
 			}
+			return $row;
+		}
+		if ($statement instanceof ast_throw_statement) {
+			return ['kind' => 'throw', 'span' => self::span($statement), 'value' => self::expression($statement->operation->operand)];
+		}
+		if ($statement instanceof ast_try_statement) {
+			$row = ['kind' => 'try', 'span' => self::span($statement),
+				'body' => array_map(self::statement(...), $statement->body->statements)];
+			if ($statement->handler !== null) {
+				$row['catch_type'] = $statement->handler->type->spelling();
+				$row['binding'] = $statement->handler->binding->short_name;
+				$row['handler'] = array_map(self::statement(...), $statement->handler->body->statements);
+			}
+			if ($statement->finalizer !== null) $row['finally'] = array_map(self::statement(...), $statement->finalizer->statements);
 			return $row;
 		}
 		if ($statement instanceof ast_if_statement) {

@@ -9,7 +9,7 @@ namespace scpp\compiler;
 interface statement_grammar {
 	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
 	public function function_start(Parser $parser): bool;
-	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration;
+	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration;
 }
 
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
@@ -23,6 +23,8 @@ final class Parser
 	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
 	private ?Body_Collection $lexical = null;
 	private bool $started = false;
+	/** @var array<string,array<string,ast_trait_declaration>> Consumer-specific binding plan supplied after the source join. */
+	private array $trait_bindings /** array<string,array<string,ast_trait_declaration>> */ = [];
 	private ?string $declaring_type = null;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
@@ -70,15 +72,22 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			if ($this->cursor->keyword('trait') || $this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
+					'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
 				};
 				$node->attach($this->root);
+				if ($node instanceof ast_trait_declaration) {
+					$context = $this->root->trait_context ??= new trait_file_context();
+					$key = 'class:' . $node->name();
+					if (isset($context->origins[$key])) throw new diagnostic($node->source(), $node->byte_start(), 'Duplicate trait: ' . $node->name());
+					$context->origins[$key] = $node;
+					continue;
+				}
 				$this->sink?->discovered($node);
 				$declarations->import($node);
 				$nodes[] = $node;
@@ -132,6 +141,113 @@ final class Parser
 		return $this->root;
 	}
 
+	/**
+	 * Materialize into the consumer's pending inventories before record construction.
+	 * @param array<string,list<ast_function_declaration>> $hooks
+	 * @param array<string,list<array{string,string,int}>> $aliases Original name, private alias and adaptation token position.
+	 * @param ast_type_reference[] $uses
+	 * @param ast_instance_field[] $fields
+	 * @param ast_node[] $members
+	 */
+	public function contribute(string $consumer, array $uses /** array<string,ast_type_reference> */,
+		array $aliases /** array<string,list<array{string,string,int}>> */, array &$fields /** array<string,ast_instance_field> */, array &$members /** list<ast_node> */, array &$hooks /** array<string,list<ast_function_declaration>> */): void
+	{
+		if ($uses === []) return;
+		$context = $this->root->trait_context ??= new trait_file_context();
+		$direct = [];
+		$order = [];
+		$local = [];
+		$qualified_consumer = '\\' . Source_Names::resolve($consumer, $this->source_namespace());
+		$offered = [];
+		$data = [];
+		foreach ($members as $member) {
+			if ($member instanceof ast_function_declaration) $local[$member->short_name] = $member;
+			if ($member instanceof ast_literal_declaration) $data[$member::class][$member->short_name] = $member;
+		}
+		foreach ($uses as $name => $use) {
+			$context->uses[] = $use;
+			$expansion = $this->trait_bindings[$name] ?? null;
+			if ($expansion === null) continue;
+			$key = array_key_first($expansion);
+			if (isset($direct[$key])) throw new diagnostic($this->root->tokens->source, $this->root->byte_at($use->start), 'Duplicate trait use: ' . $name);
+			$direct[$key] = $name;
+			$order += $expansion;
+		}
+		foreach ($order as $symbol => $origin) {
+			$adaptations = isset($direct[$symbol]) ? ($aliases[$direct[$symbol]] ?? []) : [];
+			if ($origin->fields === [] && $origin->members === [] && $adaptations === []) continue;
+			$file = $origin->root();
+			$fragment = new self($file->tokens, availability: $file->type_availability, start: $origin->body_start);
+			$fragment->root = $file;
+			$contributions = [];
+			$nested = [];
+			$contributed = Record_Syntax::members($fragment, $fragment->grammar(), $qualified_consumer, record_kind::structure, true, true, $contributions, $nested, origin_name: $origin->short_name);
+			foreach ($contributed as $key => $field) {
+				if (isset($data[ast_global_declaration::class][$key])) $this->trait_conflict('property', $consumer, $data[ast_global_declaration::class][$key], $field, $origin);
+				if (isset($fields[$key])) $this->trait_conflict('field', $consumer, $fields[$key], $field, $origin);
+				if ($field->duplicate_element() !== null) {
+					$field->trait_origin = $origin;
+					$this->trait_conflict('field', $consumer, $field, $field->duplicate_element(), $origin);
+				}
+				$field->trait_origin = $origin;
+				$fields[$key] = $field;
+			}
+			$originals = [];
+			foreach ($contributions as $member) {
+				$key = $member->short_name;
+				if ($member instanceof ast_literal_declaration) {
+					if ($member instanceof ast_global_declaration && isset($fields[$key])) $this->trait_conflict('property', $consumer, $fields[$key], $member, $origin);
+					$first = $data[$member::class][$key] ?? null;
+					if ($first !== null) $this->trait_conflict($member instanceof ast_constant_declaration ? 'constant' : 'static property', $consumer, $first, $member, $origin);
+					$member->trait_origin = $origin;
+					$data[$member::class][$key] = $member;
+					$members[] = $member;
+					continue;
+				}
+				if ($member->is_abstract) {
+					$member->trait_origin = $origin;
+					$hooks[$key][] = $member;
+					continue;
+				}
+				if (isset($offered[$key])) $this->trait_conflict('method', $consumer, $offered[$key], $member, $origin);
+				$member->trait_origin = $origin;
+				$offered[$key] = $member;
+				if (!$member->is_static && $key !== '__construct' && $key !== '__destruct') $originals[$key] = $member;
+				if (isset($local[$key])) {
+					if ($member->is_static || $local[$key]->is_static) $this->trait_conflict('method', $consumer, $local[$key], $member, $origin);
+					continue;
+				}
+				$members[] = $member;
+			}
+			foreach ($adaptations as [$original, $alias, $at]) {
+				$method = $originals[$original] ?? throw new diagnostic($this->root->source(), $this->root->byte_at($at), 'Unknown trait method for alias: ' . $original);
+				if (isset($offered[$alias]) || isset($local[$alias])) throw new diagnostic($this->root->source(), $this->root->byte_at($at), 'Trait alias conflicts with method: ' . $alias);
+
+				// Each effective name owns its signature, body and preparation facts.
+				$copy = new self($file->tokens, availability: $file->type_availability, start: $method->start);
+				$copy->root = $file;
+				$grammar = $copy->grammar();
+				$header = $file->tokens->source->flavor === flavor::js
+					? $copy->named_function_header(false, private: true, alias: $alias)
+					: $grammar->function_header($copy, private: true, alias: $alias);
+				$header->trait_origin = $origin;
+				$offered[$alias] = $header;
+				$members[] = $copy->callable_body($grammar, $header, $qualified_consumer);
+			}
+		}
+	}
+
+	/** Identify both declarations while their nodes are still pending attachment to the consumer. */
+	private function trait_conflict(string $kind, string $consumer, ast_node $first, ast_node $next, ast_trait_declaration $origin): never
+	{
+		$file = $first->trait_origin?->root() ?? $this->root;
+		$source = $file->source();
+		$at = $source->location($file->byte_at($first->start));
+		$owners = ($first->trait_origin?->name() ?? $consumer) . ' and ' . $origin->name();
+		throw new diagnostic($origin->source(), $origin->root()->byte_at($next->start), 'Conflicting trait ' . $kind . ' '
+			. $next->short_name . ': ' . $owners . ' (first at ' . $source->path . ':' . $at['line'] . ':' . $at['column'] . ')');
+	}
+
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
@@ -159,6 +275,12 @@ final class Parser
 		}
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
+		}
+		if ($this->cursor->keyword('try')) return $this->try_statement($grammar, $collector);
+		if ($this->cursor->keyword('throw')) {
+			$operation = $this->throw_expression();
+			$end = $this->cursor->take(token_kind::semicolon, '; after throw') + 1;
+			return new ast_throw_statement($operation, $end);
 		}
 		if ($this->cursor->keyword('yield')) return $this->yield_statement();
 		if ($this->cursor->keyword('echo')) {
@@ -240,11 +362,53 @@ final class Parser
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
 	}
 
-	/** Parse a lexical block once for conditional and loop bodies. */
-	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected): ast_block
+	/** Parse the protected region and the optional clauses in source order. */
+	private function try_statement(statement_grammar $grammar, Body_Collection $collector): ast_try_statement
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('try');
+		$body = $this->braced_block($grammar, $collector, '{ after try');
+		$handler = $this->cursor->keyword('catch') ? $this->catch_clause($grammar, $collector) : null;
+		$finalizer = null;
+		if ($this->cursor->keyword('finally')) {
+			$this->cursor->take_keyword('finally');
+			$finalizer = $this->braced_block($grammar, $collector, '{ after finally');
+		}
+		if ($handler === null && $finalizer === null) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Try requires catch or finally');
+		}
+		return new ast_try_statement($start, $body, $handler, $finalizer);
+	}
+
+	/** Seed the handler's lexical collector with its one typed binding. */
+	private function catch_clause(statement_grammar $grammar, Body_Collection $collector): ast_catch_clause
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('catch');
+		$this->cursor->take(token_kind::lparen, '(');
+		$flavor = $this->cursor->tokens->source->flavor;
+		if ($flavor === flavor::js) {
+			$position = $this->cursor->position();
+			$name = $this->cursor->name(token_kind::identifier);
+			$this->cursor->take(token_kind::colon, ': before catch type');
+			$type = $this->type_reference();
+		} else {
+			$type = $this->type_reference();
+			$position = $this->cursor->position();
+			$name = $this->cursor->name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+		}
+		$this->cursor->take(token_kind::rparen, ')');
+		$child = $collector->child();
+		$binding = $child->produced_binding($name, $position, true);
+		$handler = $this->braced_block($grammar, $collector, '{ after catch', $child);
+		return new ast_catch_clause($start, $type, $binding, $handler);
+	}
+
+	/** Parse a lexical block once, optionally with an existing header binding. */
+	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected, ?Body_Collection $child = null): ast_block
 	{
 		$start = $this->cursor->take(token_kind::lbrace, $expected);
-		$child = $collector->child();
+		$child ??= $collector->child();
 		$this->lexical = $child;
 		$statements = [];
 		while (!$this->cursor->is(token_kind::rbrace)) {
@@ -275,12 +439,12 @@ final class Parser
 		$key = null;
 		if ($this->cursor->is(token_kind::arrow)) {
 			$this->cursor->take(token_kind::arrow, '=>');
-			$key = $header->iteration_binding($first, $first_pos, true);
+			$key = $header->produced_binding($first, $first_pos, true);
 			$first_pos = $this->cursor->position();
 			$first = $this->cursor->name($kind);
 			if ($first === $key->short_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Foreach key and value must have different names');
 		}
-		$value = $header->iteration_binding($first, $first_pos, !$collector->has_local($first));
+		$value = $header->produced_binding($first, $first_pos, !$collector->has_local($first));
 		$this->cursor->take(token_kind::rparen, ')');
 		$body = $this->braced_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
@@ -425,7 +589,7 @@ final class Parser
 	}
 
 	/** PHP and JS share the explicit function-keyword/colon-return header grammar. */
-	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false, bool $protected = false): ast_function_declaration
+	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration
 	{
 		$start = $this->cursor->position();
 		if ($keyword) $this->cursor->take_keyword('function');
@@ -433,7 +597,7 @@ final class Parser
 		$parameters = $this->parameters();
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
 		$type = $this->return_type();
-		return new ast_function_declaration($name, $type,
+		return new ast_function_declaration($alias ?? $name, $type,
 			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
 	}
 
@@ -456,10 +620,10 @@ final class Parser
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
-				$type = $this->return_type();
+				$type = $this->parameter_type();
 			}
 			else {
-				$type = $this->return_type();
+				$type = $this->parameter_type();
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
@@ -480,6 +644,18 @@ final class Parser
 		}
 		$this->cursor->take(token_kind::rparen, ') (typed parameters)');
 		return $parameters;
+	}
+
+	/** Distinguish a C++ reference declarator (Base &name) from Base & Capability name. */
+	private function parameter_type(): ast_type_reference
+	{
+		$type = $this->return_type();
+		$c = $this->cursor;
+		if (!$c->is(token_kind::ampersand) || !$c->next_is(token_kind::identifier)) return $type;
+		if ($c->tokens->source->flavor === flavor::cpp
+			&& !in_array($c->tokens->tokens[$c->position() + 2]->kind ?? null, [token_kind::identifier, token_kind::ampersand], true)) return $type;
+		$c->take(token_kind::ampersand, '&');
+		return new ast_intersection_reference($type, $this->named_type());
 	}
 
 	/** The reference marker precedes the parameter name in each flavor. */
@@ -634,6 +810,14 @@ final class Parser
 		return new ast_echo_statement($start, $end, $values);
 	}
 
+	/** A selected throw evaluates its full operand up to the enclosing delimiter. */
+	private function throw_expression(): ast_throw_expression
+	{
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('throw');
+		return new ast_throw_expression($start, $this->value());
+	}
+
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
 	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
 	{
@@ -684,7 +868,10 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
-			$left = new ast_binary_expression($left, $operator, $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1)));
+			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
+				? $this->throw_expression()
+				: $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
+			$left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
 	}
@@ -898,6 +1085,9 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($c->keyword('throw')) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
+		}
 		$qualifier = $this->member_qualifier();
 		if ($qualifier !== null) return $this->qualified_member($qualifier);
 		if ($c->keyword('match')) {
@@ -917,7 +1107,7 @@ final class Parser
 					$label = $this->literal_initializer('Match label requires an integer literal', true);
 				} else $label = $this->value();
 				$c->take(token_kind::arrow, '=>');
-				$result = $this->value();
+				$result = $label === null && $c->keyword('throw') ? $this->throw_expression() : $this->value();
 				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());
 				if (!$c->is(token_kind::comma)) break;
 				$c->take(token_kind::comma, ',');
@@ -1203,12 +1393,24 @@ final class Parser
 	}
 
 	/** STATIC METHODS */
+	/** Reuse the consumer tokens and original trait token generations. @param array<string,array<string,ast_trait_declaration>> $bindings */
+	public static function composed(ast_file_node $authored, array $bindings /** array<string,array<string,ast_trait_declaration>> */): ast_file_node
+	{
+		$parser = new self($authored->tokens, availability: $authored->type_availability);
+		$parser->trait_bindings = $bindings;
+		$file = $parser->parse();
+		// Preserve authored identities on a dependency-only rebuild, including traits in this consumer's file.
+		$file->trait_context->origins = $authored->trait_context->origins;
+		$file->trait_context->bindings = $bindings;
+		return $file;
+	}
+
 	/** Parse only the demanded executable fragment, sharing the published signature and token inventory. */
 	public static function instance_body(ast_function_declaration $method): ast_function_body
 	{
-		$file = $method->root();
+		$file = $method->lexical_root();
 		$parser = new self($file->tokens, availability: $file->type_availability, start: $method->body()->start);
 		$parser->root = $file;
-		return $parser->read_body($parser->grammar(), $method, $method->parent->short_name, false, signature_shared: true);
+		return $parser->read_body($parser->grammar(), $method, '\\' . $method->parent->name(), false, signature_shared: true);
 	}
 }

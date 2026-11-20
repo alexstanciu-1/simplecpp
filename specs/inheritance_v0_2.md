@@ -317,6 +317,24 @@ public, virtual and nonthrowing; implementing records use the existing polymorph
 cleanup/copy/move policy. This representation is not permission to slice an inline
 struct or implicitly allocate/box it as an interface value.
 
+### Class and interface intersection parameters
+
+An ordinary required by-value parameter may specify one required class and one
+ordinary interface joined by `&`, in either order. The argument must satisfy both contracts by its declared type or by the local guard below. The parameter denotes one object with shared
+lifetime. Binding evaluates the argument once. A parameter may forward to either
+constituent or to another intersection guaranteed by its declared components.
+Member access uses the class fields and the methods of both components.
+Distinct unrelated same-name methods require selecting a constituent view.
+A direct `instanceof Interface` test on a named class local or by-value parameter
+also proves the interface for intersection arguments in the successful arm. A single
+negated guard whose failure arm always returns or throws establishes the proof for
+subsequent statements. The declared type still supplies the class component.
+Replacing the local or passing it by writable reference invalidates the proof.
+Updating a field preserves it. A call may receive a guarded value and a writable
+reference to its source because all argument bindings finish before the callee runs.
+Keep a separate call that can rebind the local outside the guarded use's expression
+when the two evaluations can occur in either order.
+
 ## Trait composition
 
 Classes, structs and traits may compose traits using `use T, U;` in their member
@@ -340,9 +358,19 @@ The authored trait is not prepared as an instance, is not constructible and is n
 runtime base or conversion target. Contributed methods reuse ordinary parameter,
 reference-return and dispatch contracts, including satisfying interface obligations.
 
-Reject duplicate same-category members between traits or between a trait and the
-consumer, including an authored method replacing an ordinary trait method. Lifecycle
-methods use the precedence rule below. Property, method and constant
+A consumer-authored ordinary instance method takes precedence over one contributed
+ordinary instance method of the same name, regardless of declaration order. Two
+distinct trait contributions under the same name still conflict, even when the
+consumer declares that name. Other same-category member collisions remain errors.
+Lifecycle methods use the precedence rule below.
+
+In all three v0.2 flavors, `use Naming { name as private namespace_name; }`
+adds a private instance method to the consumer using the original trait implementation.
+The original name remains available under ordinary precedence. The alias must name
+an existing ordinary instance method of this directly used trait and introduce a fresh
+ordinary method name. Its signature and body retain trait-source provenance, including
+lexical imports; member calls inside it still resolve on the consumer.
+Property, method and constant
 names remain separate categories. Existing inherited-member restrictions still apply.
 Public contributed instance properties participate in synthesized `data` inputs under
 the ordinary public-property rules; private properties do not become data inputs.
@@ -394,7 +422,7 @@ Selected methods preserve trait lexical provenance and consumer access context.
 Constructor defaults, `set:` parameters, visibility and explicit parent initialization
 follow ordinary rules. Destructors follow ordinary nonthrowing cleanup and member/base
 cleanup order. No implicit constructor/destructor chaining is added. Bodyless lifecycle
-requirements remain rejected. Adaptations/aliases remain deferred.
+requirements and lifecycle aliases remain rejected.
 
 This v0.2 contract supersedes the legacy blanket rejection of trait syntax, not the
 deferred extensions.

@@ -4,9 +4,10 @@ from pathlib import Path
 from app_namespace_native import artifacts, invoke, service
 from application_vectors_native import measure
 from extends_native import source_edit
+from entry_probe import raw_entry
 
 
-def revisions(work,flavor,sources,edits, *, unaffected_source=None):
+def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_revisions=None):
     app=work/flavor;app.mkdir();out=work/(flavor+'-out');rows=[]
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
     for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
@@ -30,7 +31,7 @@ def revisions(work,flavor,sources,edits, *, unaffected_source=None):
                 continue
             assert 'error' not in got and 'error' not in clean,(flavor,revision,got,clean)
             assert artifacts(out)==artifacts(fresh),(flavor,revision)
-            if revision and unaffected_source:
+            if revision and unaffected_source and (unaffected_revisions is None or revision in unaffected_revisions):
                 assert got['preparation']['reused'] and not any(p.endswith('/'+unaffected_source) for p in got['emitted_sources']), got
             row={'revision':revision,'php_ms':got['php_ms'],'prepared':got['preparation']['prepared']}
             if revision==1 and name is None:assert got['preparation']['prepared']==0
@@ -47,7 +48,7 @@ def guard(work,flavor,label,source,error, *, retry_entry=False):
     try:got=invoke(p)
     finally:p.stdin.close();p.wait()
     assert 'error' not in got,got
-    entry=out/'entry.cpp';text=entry.read_text().replace('int main(', 'int tested_entry(')
+    entry=out/'entry.cpp';text=raw_entry(entry.read_text())
     on_expected = 'tested_entry()' if retry_entry else '8'
     entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == '+json.dumps(error)+' ? '+on_expected+' : 91;} return 92;}\n')
     measure(out,work/(flavor+'-'+label+'-native'),b'')

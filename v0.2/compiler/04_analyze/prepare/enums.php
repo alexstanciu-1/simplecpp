@@ -74,7 +74,7 @@ final class Enum_Preparation
 			$width = 1;
 		}
 		if ($separator === false) return false;
-		$symbol = $symbols->entry($syntax->root()->type_key(substr($name, 0, $separator)));
+		$symbol = $symbols->entry($syntax->lexical_root()->type_key(substr($name, 0, $separator)));
 		$dependencies?->watch($symbol, $watcher);
 		$enum = $symbol->declaration();
 		if (!($enum instanceof ast_enum_declaration)) return false;

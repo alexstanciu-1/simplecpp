@@ -60,7 +60,7 @@ int main() {
 }
 """)
     subprocess.run(write_build(work,[probe,*(p for p in units if p != factory)]),cwd=work,check=True, stdout=subprocess.DEVNULL)
-    subprocess.run([work / 'program'],check=True)
+    assert subprocess.run([work / 'program'], check=True, stdout=subprocess.PIPE).stdout == b''
     if memcheck:
         subprocess.run(['valgrind', '--leak-check=full', '--show-leak-kinds=all', '--errors-for-leak-kinds=definite,indirect,possible',
                         '--error-exitcode=99',f'--log-file={work}/memcheck.log',work / 'program'],check=True)

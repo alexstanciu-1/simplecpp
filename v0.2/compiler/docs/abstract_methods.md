@@ -56,8 +56,7 @@ Verified across cpp/php/js on Clang and GCC:
 Existing virtual-method, ancestor-call, object-access, class, frontend lifecycle,
 failure-cleanup, preparation-work and compiler-style checks also passed.
 The subsequent [interface slice](interfaces.md) adds class capability contracts.
-Callable variance,
-broader reference returns, unique and borrows remain deferred.
+Shared-value overrides use the [directional signature rules](virtual_methods.md). Broader reference returns, unique and borrows remain deferred.
 
 For a struct, the bare name denotes an inline value. Abstract structs may be base
 subobjects and handle payloads. Preparation rejects a complete abstract struct in

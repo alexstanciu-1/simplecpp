@@ -160,6 +160,39 @@ The PHP tests now cover declaration equivalence, write intent, exact spans, unre
 names/types, malformed and wrong-flavor input, EOF diagnostics, 10,000 flat statements
 and CLI publication. Arithmetic, generic types and nesting proofs remain future work.
 
+## Typed exception statements
+
+Core metadata publishes `Exception::make(string)` and `get_message()`. Source
+classes can derive from the canonical exception root. Shared preparation checks
+the resolved type of each throw operand and handler binding. A typed catch
+binds one local in a sibling lexical scope. PHP uses
+`catch (Type $value)`, C++ uses `catch (Type value)`, and JS uses
+`catch (value: Type)`. `throw value;` propagates the same shared allocation.
+A narrower handler matches the dynamic type. Runtime guard failures unwind
+through source frames and are reported by the generated entry boundary.
+
+A throwing `??` fallback and a throwing `match` default use the same transport.
+Only the selected fallback evaluates its operand. A coalescing expression retains
+the carrier payload type, while a match gets its type from the value arms.
+Both forms check the exception operand during preparation.
+
+A braced `finally` may follow the try body directly or follow its catch.
+It runs once after the protected operation has unwound or finished, including
+after runtime guards and exceptions escaping a handler. A saved value or void
+return resumes after cleanup. Nested finalizers finish from inner to outer.
+An escaping finalizer exception replaces the pending exit. Returns from finally
+are rejected. Unlabelled break and continue can cross protected regions and
+resume their original loop after intervening finalizers. Continue proceeds to
+the loop update or next test. Break skips both. Transfers within a finalizer
+can target its own loops. A transfer out of a finalizer is rejected. Exception
+statements in yield producers and exception regions during readonly initialization
+remain deferred.
+
+See the [exception contract](../../specs/exceptions_v0_2.md) for the full language
+semantics and [the native proof](../compiler/tests/exceptions_native.py) for
+diagnostic identity, byte location, and incremental recovery. The [finally proof](../compiler/tests/finally_native.py)
+checks cleanup order, exit precedence, and recovery after edits to finalizer dependencies.
+
 ## Multifile entry slice
 
 The `program` command accepts an explicit mixed-flavor inventory and a selected
@@ -349,13 +382,34 @@ returns the required target class/interface view or a present `shared<TargetStru
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.
 
+## Record and trait destructors
+
+PHP spells the zero-argument method `function __destruct() {}`, C++ spells it
+`~Name() {}`, and JS spells it `destructor() {}`. In a C++ trait, `Name` is the
+authored trait name. Each consumer emits its selected destructor on its own native
+record. Ordinary member visibility, access and nonthrowing cleanup apply.
+[Destructor contract](../../specs/destructors_v0_2.md)
+
+## Abstract trait hooks
+
+A PHP trait can declare `abstract protected function step(): int;`. JS uses
+`protected abstract step(): int;` and C++ uses `protected: virtual int step() = 0;`.
+After inheritance and composition settle, a concrete consumer must supply a concrete
+instance method with compatible parameters, return and visibility. The implementation
+can be local, inherited, or contributed by another trait. Each obligation is checked
+even when no body calls it. Multiple traits may require the same method.
+An ordinary implementation keeps its existing dispatch. An abstract consumer reuses a compatible existing method or carries an unresolved hook
+as one pure virtual slot. Same-name obligations share the slot, with public visibility
+taking precedence. Concrete descendants implement it through ordinary override rules.
+
 ## Explicit ancestor member access
 
 PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
-The C++ flavor uses the actual ancestor type name, such as `Node::evaluate(...)`,
-including ordinary namespace/import qualification. `Parent` is not a special alias.
-C++ may name a more distant strict ancestor to select that lookup starting point.
+The C++ flavor accepts `Parent::evaluate(...)` for a lexical parent method call.
+It also accepts an actual ancestor type name, such as `Node::evaluate(...)`, including
+ordinary namespace/import qualification, to select a particular strict ancestor.
+Inside a contributed trait method the lexical declaring record is the consuming class or struct.
 
 For instance methods these forms select the resolved ancestor implementation on the current object and
 suppress virtual redispatch for that call. Virtual calls made inside that body still
@@ -390,7 +444,7 @@ Bodyless public instance methods use these spellings:
 Abstract methods participate in virtual dispatch. Every replacement requires the
 existing override marker (including PHP `#[\Override]`). A bodyless replacement
 uses `abstract override` in PHP/JS or trailing `override = 0` in C++.
-Signatures follow the existing exact override rules. Abstract methods cannot have
+Signatures follow the shared-value override rules. Abstract methods cannot have
 bodies or be final, static, private, constructors or destructors. PHP/JS abstract
 methods do not also take an explicit virtual marker.
 
@@ -402,8 +456,7 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Callable variance,
-unique ownership and borrows remain deferred. Class interfaces are covered below. See the
+Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Shared-value callable variance applies to explicitly shared structs. Unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
 
 Static method lookup starts at the qualified type and follows its base chain. Lexical
@@ -429,9 +482,7 @@ Interfaces cannot be constructed.
 
 The concrete base is optional. C++ places it first when present; the remaining colon
 edges are interfaces. PHP/JS use a comma-separated implements list. Multiple independent
-interfaces may have compatible same-name requirements. Signature compatibility remains
-exact in this slice, including modes/nullability/optional positions; default values
-and parameter names may differ. The static callable determines defaults.
+interfaces may have compatible same-name requirements. A fixed shared-value parameter may widen and a shared result may narrow along settled ancestry. Modes, presence and optional positions remain exact. Default values and parameter names may differ. The static callable determines defaults.
 
 Every locally authored implementation needs the existing Override marker, including
 PHP `#[\Override]`. An unchanged compatible inherited public method fulfills an
@@ -441,7 +492,11 @@ Abstract implementers may retain outstanding obligations; concrete types must fu
 them. Nonvirtual source hiding restrictions still apply.
 
 An inherited public final class method can fulfill a newly introduced interface.
-Interface inheritance/diamonds, struct implementers, variance and broader reference returns remain deferred.
+An interface can extend multiple interfaces. PHP and JS use `interface Both extends Left, Right`.
+C++ uses `interface Both : public Left, public Right`. The static interface selects the
+original method and its defaults. A diamond shares its original declaration. If separate branches
+declare the same method, an explicit compatible redeclaration can select the call contract.
+Struct implementers and broader reference returns remain deferred.
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).

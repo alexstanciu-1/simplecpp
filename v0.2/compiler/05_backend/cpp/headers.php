@@ -65,7 +65,7 @@ final class Cpp_Headers
 					continue;
 				}
 				if ($node instanceof ast_function_declaration) {
-					if ($node->is_constructor()) continue;
+					if ($node->is_constructor() || $node->is_destructor()) continue;
 					if ($node->has_virtual_dispatch()) {
 						$this->declarations[$node->symbol_key()] = $this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
 						continue;
@@ -76,7 +76,9 @@ final class Cpp_Headers
 							'struct ' . Cpp_Identifier::source($node->parent->short_name) . ";\n");
 					}
 					foreach ($emitter->application_types($node) as $type) {
-						if ($type instanceof application_collection_type) {
+						if ($type instanceof intersection_type_definition) {
+							$owners[$type->cpp_type()] = 'struct ' . $type->cpp_type() . ';';
+						} elseif ($type instanceof application_collection_type) {
 							if ($node->return_type_def() instanceof generator_type_definition) {
 								$record_headers[$this->collection_header($type, $program->session?->cpp_namespace ?? 'App')] = true;
 							} else $owners[$type->cpp_type()] = 'class ' . $type->cpp_type() . ';';

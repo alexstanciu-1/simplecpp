@@ -248,7 +248,7 @@ def contracts(work, flavor, libraries):
         (interface()+s['infer']('x','new Readable()')+'return 8;','abstract'),
         (interface()+implementation('Leaf',evaluate('override'))+s['function']('fail','Readable',[],'return null;')+'return 8;','null'),
         (interface()+implementation('Leaf',evaluate('override')).replace('class Leaf','struct Leaf')+'return 8;','only classes'),
-        (interface()+('interface Other : Readable {};' if flavor=='cpp' else 'interface Other extends Readable {}')+'return 8;','inheritance'),
+        (interface()+('interface Other : Other {};' if flavor=='cpp' else 'interface Other extends Other {}')+'return 8;','inheritance'),
     ]
     abstract = abstract_forms(flavor)[-1]
     inherited_abstract = 'abstract '+klass('Base',abstract())+'abstract '+implementation('Leaf',base='Base')

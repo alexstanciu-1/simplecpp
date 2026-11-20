@@ -39,6 +39,7 @@ final class Incremental_Frontend
 		$retired = [];
 		/** @var ast_file_node[] $changed */
 		$changed = [];
+		$has_traits = false;
 		try
 		{
 			foreach ($units as $unit)
@@ -63,6 +64,7 @@ final class Incremental_Frontend
 						$retired[] = $prior->ast;
 					}
 				}
+				$has_traits = $has_traits || $unit->ast->trait_context !== null;
 			}
 			foreach ($old as $prior)
 			{
@@ -81,6 +83,17 @@ final class Incremental_Frontend
 				$stat = self::stat($unit->module->root . '/' . $unit->path);
 				if (($stat['mtime'] !== $unit->mtime) || ($stat['size'] !== $unit->size)) {
 					throw new \RuntimeException('Source changed during frontend collection: ' . $unit->path);
+				}
+			}
+			if ($has_traits && ($changed !== [] || $retired !== [])) {
+				$by_key = $candidate->units();
+				foreach (Trait_Composition::replacements($candidate->files()) as $key => $composed) {
+					$unit = $by_key[$key];
+					if ($unit->status === change_status::none) {
+						$retired[] = $unit->ast;
+						$unit->status = change_status::changed;
+					}
+					$changed[$key] = $unit->ast = $composed;
 				}
 			}
 			if ($previous !== null) {

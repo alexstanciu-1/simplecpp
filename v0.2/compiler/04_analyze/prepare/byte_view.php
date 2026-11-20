@@ -59,7 +59,7 @@ final class Scoped_Byte_View
 			return false;
 		}
 		foreach ($block->statements as $statement) {
-			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement) return false;
+			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_try_statement) return false;
 			if ($statement instanceof ast_storage_write && $statement->writes_to($owner)) return false;
 			if ($statement instanceof ast_loop_statement && !self::stable($statement->body, $field, true, $loop_read)) return false;
 			if ($statement instanceof ast_if_statement) {
