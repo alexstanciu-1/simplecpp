@@ -58,9 +58,15 @@ final class ast_keyword_expression extends ast_expression
 		$this->word = $word;
 	}
 
-	public function settle_scalar(type_definition $type, bool|null $value): void
+	public function settle_boolean(type_definition $type, bool $value): void
 	{
 		$this->settle_value($type, $value, true);
+	}
+
+	/** Null and explicit carrier sentinels are known by their literal type alone. */
+	public function settle_keyword(type_definition $type): void
+	{
+		$this->settle_value($type, null, true);
 	}
 }
 

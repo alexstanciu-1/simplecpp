@@ -91,8 +91,7 @@ try {
 						'body' => $function->optional_body() === null ? null : Compilation_Inspection::body($function->body())];
 				}
 				foreach ($file->globals() as $global) {
-					$result['globals_by_file'][$path][] = ['name' => $global->name(),
-						'type' => $global->type_def()->name, 'initializer' => (string)$global->initializer->integer()];
+					$result['globals_by_file'][$path][] = Compilation_Inspection::global_row($global);
 				}
 			}
 			return $result;

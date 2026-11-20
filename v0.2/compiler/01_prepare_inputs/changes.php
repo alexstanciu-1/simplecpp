@@ -21,7 +21,8 @@ final class Project_Changes
 		$modules = [];
 		$source_paths = [];
 		$visited = [];
-		$excluded = realpath($output);
+		$output_path = realpath($output);
+		$excluded = $output_path === false ? null : $output_path;
 		$dependency_roots = [];
 		foreach ($session->modules as $module) {
 			if (($module !== $session->entry) && ($module->root !== $session->entry->root)) {
@@ -54,7 +55,7 @@ final class Project_Changes
 			}
 		}
 		self::file($facts, $files);
-		self::scan(dirname(__DIR__), $files, false, $visited, true, $dependency_roots);
+		self::scan(dirname(__DIR__), $files, null, $visited, true, $dependency_roots);
 		$other_inputs = array_diff_key($files, $source_paths);
 		ksort($other_inputs, \SORT_STRING);
 		ksort($modules, \SORT_STRING);
@@ -176,7 +177,7 @@ final class Project_Changes
 	 * @param bool[] $dependency_roots
 	 */
 	private static function scan(string $directory, array &$files /** array<string,array{mtime:int64,size:uint64}> */,
-		string|false $excluded, array &$visited /** array<string,bool> */,
+		?string $excluded, array &$visited /** array<string,bool> */,
 		bool $compiler = false, array $dependency_roots /** array<string,bool> */ = []): void
 	{
 		$key = ($compiler ? 'compiler:' : 'module:') . (realpath($directory) ?: $directory);
@@ -197,7 +198,9 @@ final class Project_Changes
 			$path = $directory . '/' . $entry;
 			if (is_dir($path))
 			{
-				if (isset($dependency_roots[realpath($path)]) || (realpath($path) === $excluded) || (strtolower($entry) === 'build')
+				$canonical = realpath($path);
+				if (($canonical !== false && (isset($dependency_roots[$canonical]) || $canonical === $excluded))
+					|| (strtolower($entry) === 'build')
 					|| (($compiler) && ($entry === 'tests'))) {
 					continue;
 				}

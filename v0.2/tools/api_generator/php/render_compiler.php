@@ -370,12 +370,20 @@ function compilerEntryBinding(mixed $compiler): string {
 /** Generate literal handling from a closed, validated scalar vocabulary. */
 function compilerLiteralMethods(array $definition): string {
     if ($definition['literals'] === []) return '';
-    $cases = [];
-    foreach ($definition['literals'] as $word => $value) {
-        $cases[] = "\t\t\t" . var_export($word, true) . ' => ' . var_export($value, true) . ',';
+    $invalid = "throw new diagnostic(\$syntax->source(), \$syntax->byte_start(), 'Invalid scalar literal')";
+    if ($definition['strategy'] === 'boolean') {
+        $cases = [];
+        foreach ($definition['literals'] as $word => $value) {
+            $cases[] = "\t\t\t" . var_export($word, true) . ' => ' . var_export($value, true) . ',';
+        }
+        $prepare = "\$syntax->settle_boolean(\$this, match (\$syntax->word) {\n" . implode("\n", $cases)
+            . "\n\t\t\tdefault => $invalid,\n\t\t});";
+        $lower = "\$syntax->constant() ? 'true' : 'false'";
+    } else {
+        $word = var_export(array_key_first($definition['literals']), true);
+        $prepare = "if (\$syntax->word !== $word) $invalid;\n\t\t\$syntax->settle_keyword(\$this);";
+        $lower = "'nullptr'";
     }
-    $cases = implode("\n", $cases);
-    $lower = $definition['class'] === 'bool' ? "\$syntax->constant() ? 'true' : 'false'" : "'nullptr'";
     return <<<PHP_CODE
 	/** Validate only this type's literal spelling, then attach occurrence facts. */
 	public function prepare_literal(ast_expression \$syntax): void
@@ -384,11 +392,7 @@ function compilerLiteralMethods(array $definition): string {
 			parent::prepare_literal(\$syntax);
 			return;
 		}
-		\$value = match (\$syntax->word) {
-$cases
-			default => throw new diagnostic(\$syntax->source(), \$syntax->byte_start(), 'Invalid scalar literal'),
-		};
-		\$syntax->settle_scalar(\$this, \$value);
+		$prepare
 	}
 
 	public function lower_cpp_literal(ast_expression \$syntax): string

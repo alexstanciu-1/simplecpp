@@ -15,6 +15,12 @@ namespace scpp\compiler
 		return \scandir($directory);
 	}
 
+	/** Exercise an unresolved directory path independently of the test runner's filesystem permissions. */
+	function realpath(string $path): string|false
+	{
+		return $path === ($GLOBALS['unresolved_path'] ?? null) ? false : \realpath($path);
+	}
+
 	/** Count reads of the bundle manifest across baseline, reuse and publication. @param resource $handle */
 	function stream_get_contents($handle): string|false
 	{
@@ -49,7 +55,13 @@ namespace
 						'helper.cpp' => flavor::cpp], 'dependencies' => ['lib']],
 				'lib' => ['root' => $root, 'sources' => [], 'dependencies' => []],
 			], 'app');
+		mkdir($root . '/nested');
+		file_put_contents($root . '/nested/input.hpp', '// tracked input');
+		$GLOBALS['unresolved_path'] = $root . '/nested';
+		verify(realpath($root . '/out') === false, 'Expected absent output on first capture');
 		$state = Project_Changes::capture($session, $root . '/facts.json', $root . '/out');
+		verify(isset($state['other_inputs'][$root . '/nested/input.hpp']), 'Unresolved input mistaken for absent output');
+		unset($GLOBALS['unresolved_path']);
 		verify($GLOBALS['directory_reads'][$root] === 1, 'Shared root scanned more than once');
 		verify((!isset($state['other_inputs'][$root . '/main.cpp']))
 			&& (!isset($state['other_inputs'][$root . '/helper.cpp'])),
@@ -91,6 +103,8 @@ namespace
 			}
 			rmdir($root . '/out');
 		}
+		unlink($root . '/nested/input.hpp');
+		rmdir($root . '/nested');
 		foreach (glob($root . '/*') as $path) {
 			unlink($path);
 		}

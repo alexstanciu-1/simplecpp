@@ -18,13 +18,13 @@ trait Cpp_Generator
 		return $plans;
 	}
 
-	/** Application types needed by the signature and source-owned cursor layout. @return \Generator<type_definition> */
-	public function application_types(ast_function_declaration $function): \Generator
+	/** Visit the signature and then its source-owned cursor layout. @param \Closure(type_definition):void $visit */
+	public function visit_application_types(ast_function_declaration $function, \Closure $visit): void
 	{
-		yield from self::signature_application_types($function);
+		self::visit_signature_application_types($function, $visit);
 		if ($function->return_type_def() instanceof generator_type_definition) {
 			$plan = $this->generator_plan($function->return_type_def());
-			yield from $plan->types;
+			foreach ($plan->types as $type) $visit($type);
 		}
 	}
 
@@ -71,7 +71,8 @@ trait Cpp_Generator
 		$cleanup = [];
 		$moves = [];
 		$flags = [];
-		foreach ($this->generator_bindings($type->function->body()) as $local) {
+		self::visit_generator_bindings($type->function->body(), function (ast_local_declaration|ast_foreach_statement $local)
+			use (&$headers, &$types, &$slots, &$flags, &$cleanup, &$moves): void {
 			if ($local instanceof ast_foreach_statement) {
 				$id = 'iteration_' . $local->start;
 				$slot = $id;
@@ -88,7 +89,7 @@ trait Cpp_Generator
 			$flags[] = "bool live_$id = false;";
 			$cleanup[] = $this->generator_destroy($local);
 			$moves[] = "if (other.live_$id) { new (&$slot.value) {$slot}_type(static_cast<{$slot}_type&&>(other.$slot.value)); live_$id = true; }";
-		}
+		});
 		$flags = implode("\n", $flags);
 		$slots = implode("\n", $slots);
 		$cleanup = implode("\n", array_reverse($cleanup));
@@ -146,13 +147,13 @@ CPP;
 			$aliases[] = '[[maybe_unused]] auto& ' . $local . ' = storage.' . $local . ';';
 		}
 		$resume = new cpp_resume_context();
-		foreach ($this->generator_bindings($function->body()) as $local) {
+		self::visit_generator_bindings($function->body(), function (ast_local_declaration|ast_foreach_statement $local): void {
 			if ($local instanceof ast_foreach_statement) {
 				$prefix = 'iteration_' . $local->start . '.value.';
 				if ($local->destination === $local->value) $this->generator_locals[$local->value->storage_id()] = $prefix . 'output' . ($local->source_value->type_def()->iteration()->iteration_output_type() === null ? '' : '.value');
 				if ($local->key !== null) $this->generator_locals[$local->key->storage_id()] = $prefix . 'key';
 			} else $this->generator_locals[$local->storage_id()] = 'local_' . $local->storage_id() . '.value';
-		}
+		});
 		try {
 			$body = implode("\n", $this->statements($function->body(), $declarations, $globals, $headers, $function, $resume));
 		} finally {
@@ -167,22 +168,22 @@ CPP;
 			. "if (state == ~0u) return false;\ntry {\n" . $body . "\n} catch (...) { close(); throw; }\n}\n";
 	}
 
-	/** Visit declarations in lexical order without retaining another local inventory. @return \Generator<ast_local_declaration|ast_foreach_statement> */
-	private function generator_bindings(ast_statement_block $block): \Generator
+	/** Visit declarations in lexical order without retaining another local inventory. @param \Closure(ast_local_declaration|ast_foreach_statement):void $visit */
+	private static function visit_generator_bindings(ast_statement_block $block, \Closure $visit): void
 	{
 		foreach ($block->statements as $statement) {
-			if ($statement instanceof ast_local_declaration) yield $statement;
-			elseif ($statement instanceof ast_block_statement) yield from $this->generator_bindings($statement->body);
+			if ($statement instanceof ast_local_declaration) $visit($statement);
+			elseif ($statement instanceof ast_block_statement) self::visit_generator_bindings($statement->body, $visit);
 			elseif ($statement instanceof ast_if_statement) {
-				foreach ($statement->arms as $arm) yield from $this->generator_bindings($arm->body);
+				foreach ($statement->arms as $arm) self::visit_generator_bindings($arm->body, $visit);
 			} elseif ($statement instanceof ast_foreach_statement) {
-				yield $statement;
-				yield from $this->generator_bindings($statement->body);
+				$visit($statement);
+				self::visit_generator_bindings($statement->body, $visit);
 			} elseif ($statement instanceof ast_loop_statement) {
 				if ($statement instanceof ast_for_statement) {
-					foreach ($statement->initializers as $item) if ($item instanceof ast_local_declaration) yield $item;
+					foreach ($statement->initializers as $item) if ($item instanceof ast_local_declaration) $visit($item);
 				}
-				yield from $this->generator_bindings($statement->body);
+				self::visit_generator_bindings($statement->body, $visit);
 			}
 		}
 	}

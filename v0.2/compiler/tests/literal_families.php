@@ -69,7 +69,18 @@ foreach (flavor::cases() as $flavor) {
 		verify(type_registry::literal_type($value) === type_registry::resolve($type), 'Wrong literal-family identity');
 		verify($value->type_def() === type_registry::literal_type($value), 'Settled literal identity differs');
 	}
-	verify(type_registry::literal('false') === type_registry::resolve('bool'), 'False keyword owner');
+	foreach ([
+		['bool', 'true', type_registry::resolve('bool'), true],
+		['bool', 'false', type_registry::resolve('bool'), false],
+		['null', 'null', type_registry::resolve('null'), null],
+		['result_or_false<bool>', 'false_sentinel', \scpp\compiler\type_false_sentinel::instance(), null],
+		['result_or_bool<bool>', 'true_sentinel', \scpp\compiler\type_true_sentinel::instance(), null],
+	] as [$destination, $word, $owner, $payload]) {
+		$entry = $prepare(declaration($flavor, $destination, $word) . 'return 8;');
+		$value = $entry->body()->statements[0]->initializer;
+		verify($value->word === $word && $value->type_def() === $owner, "Wrong keyword identity for $word");
+		verify($value->constant_known() && $value->constant() === $payload, "Wrong known payload for $word");
+	}
 	verify(type_registry::literal('unknown') === null, 'Unknown literal spelling admitted');
 	$directory = sys_get_temp_dir() . '/scpp-literal-family-' . bin2hex(random_bytes(8));
 	mkdir($directory);
@@ -86,6 +97,9 @@ foreach (flavor::cases() as $flavor) {
 		$project->run();
 		foreach ([['int', '9223372036854775808', 'range'], ['float', '-0.0', null],
 			['float', '1e309', 'finite'], ['bool', 'false', null], ['null', 'null', null],
+			['result_or_false<bool>', 'false', null], ['result_or_false<bool>', 'false_sentinel', null],
+			['result_or_false<bool>', 'true_sentinel', 'Sentinel is not supported'],
+			['result_or_bool<bool>', 'true_sentinel', null], ['bool', 'true', null],
 			['string', '"bad\q"', 'escape'], ['string', '"A\0B"', null], ['int', '9', null]] as [$type, $literal, $error]) {
 			$write($type, $literal);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
