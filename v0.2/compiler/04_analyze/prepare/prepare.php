@@ -321,6 +321,7 @@ final class Preparation
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
 						$this->value($statement->value);
+						if ($return_type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
 					}
 				}
@@ -1642,6 +1643,10 @@ final class Preparation
 		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
 		$result = $function->return_type_def();
+		if ($called !== null && $result instanceof class_union_type_definition
+			&& ($called->declaration !== $function->parent || $call->qualifier !== call_qualifier::ordinary || $call->expression_qualified())) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Static union return requires an explicit declaring-type call');
+		}
 		if ($result instanceof record_type_definition) $this->require_inline_cleanup($result, $call);
 		$receiver = null;
 		if ($function->is_protected && !$function->is_static) {

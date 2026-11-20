@@ -173,7 +173,8 @@ final class ast_call_expression extends ast_expression
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
 			throw new \LogicException('Invalid settled call');
 		}
-		$this->settle_value($function->return_type_def(), null);
+		$result = $function->return_type_def();
+		$this->settle_value($result instanceof class_union_type_definition ? ($result->receiver_view($this) ?? $result) : $result, null);
 		$this->function_symbol = $instance ?? $symbol;
 		$this->ancestor_dispatch = $ancestor_dispatch;
 		$this->conversions = $conversions;

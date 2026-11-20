@@ -1,0 +1,114 @@
+"""Closed union return contracts across source files and incremental class-layout changes."""
+import argparse
+import json
+from pathlib import Path
+import tempfile
+
+from collection_goal_native import revisions
+from interfaces_native import forms
+
+
+def prove(work, flavor):
+    s, _, klass, method, _, _ = forms(flavor)
+    fn, v = s['function'], s['v']
+    pair = 'RecordDecl|TraitDecl'
+    factory = fn('readDecl',pair,[('record','bool')],
+                 'if ('+v+'record) {return new RecordDecl();}return new TraitDecl();')
+    inspect = fn('inspect','int',[('node','TraitDecl|RecordDecl')],
+                 'if ('+v+'node instanceof RecordDecl) {return 1;}return 2;')
+    forward = fn('forwardDecl',pair,[('record','bool')],'return readDecl('+v+'record);')
+    main = 'echo inspect(forwardDecl(true)),inspect(readDecl(false));return 8;'
+    def record(base):
+        return klass('RecordDecl','',base)
+    def trait(base):
+        return klass('TraitDecl','',base)
+    root = klass('Node',method('tag','return 0;',intent='virtual'))
+    child = klass('Child','','RecordDecl')
+    from_child = fn('fromChild',pair,[('child','Child')],'return '+v+'child;')
+    base_view = fn('baseView','Node',[('node',pair)],'return '+v+'node;')
+    lifetime = fn('observe','weak<Node>',[],
+                  s['infer']('owner','baseView(readDecl(true))')+
+                  s['infer']('watch','weak('+v+'owner)')+
+                  'if (lock('+v+'watch) === '+v+'owner) {echo 1;}return '+v+'watch;')
+    sources = dict(root=root, common=klass('Middle','','Node'), record=record('Node'),
+                   right=trait('Node'), other=klass('Other','','Node'), child=child,
+                   api=inspect, factory=factory, forward=forward, wrap=from_child, main=main)
+    revisions(work,flavor,sources,[
+        (None,None,b'12'),(None,None,b'12'),
+        ('factory',factory.replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
+        ('factory',factory,b'12'),('child',klass('Child','','Other'),'Argument must belong'),
+        (None,None,'Argument must belong'),('child',child,b'12'),
+        ('record',record('Middle'),b'12'),('right',trait('Middle'),b'12'),
+        ('right',None,None),('right',trait('Node'),b'12'),
+        ('factory',factory.replace(pair,'TraitDecl|RecordDecl'),b'12'),
+        ('factory',factory.replace(pair,'RecordDecl|Other').replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
+        ('factory',factory,b'12'),
+        ('main','echo readDecl(false)'+s['access']+'tag();return 8;',b'0'),
+        ('methods',klass('Factory',method('make','return new RecordDecl();',result=pair)),'Closed union returns require a free function'),
+        ('methods',None,b'0'),('observer',base_view+lifetime,b'0'),
+        ('main',s['infer']('watch','observe()')+'if (lock('+v+'watch)) {return 1;}return 8;',b'1'),
+    ])
+    for rev, native in [(0,'Node'),(8,'Middle'),(10,'Node')]:
+        units = work/f'{flavor}-fresh-{rev}'/'units'
+        assert any('owner_'+native+' readDecl_' in p.read_text() for p in units.glob('*.cpp'))
+
+
+def static_returns(work, flavor):
+    s, _, klass, method, _, _ = forms(flavor)
+    fn, v = s['function'], s['v']
+    sep = '.' if flavor == 'js' else '::'
+    pair = 'RecordDecl|TraitDecl'
+    body = 'if ('+v+'flag) {return new RecordDecl();}return new TraitDecl();'
+    signature = {'php':'public static function read(bool $flag): '+pair,
+                 'cpp':'public: static '+pair+' read(bool flag)',
+                 'js':'static read(flag:bool): '+pair}[flavor]
+    factory = klass('RecordSyntax',signature+'{'+body+'}')
+    def arm(name, base):
+        return klass(name,'',base)
+    inspect = fn('inspect','int',[('node',pair)],
+                 'if ('+v+'node instanceof RecordDecl) {return 1;}return 2;')
+    call = 'RecordSyntax'+sep+'read'
+    main = 'echo inspect('+call+'(true)),inspect('+call+'(false));return 8;'
+    lexical = {'php':'self::','cpp':'Self::','js':'class.'}[flavor]
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    sources = dict(root=klass('Node',method('tag','return 0;',intent='virtual')),
+                   middle=klass('Middle','','Node'), record=arm('RecordDecl','Node'), right=arm('TraitDecl','Node'),
+                   other=arm('Other','Node'), factory=factory, derived=klass('Derived','','RecordSyntax'), api=inspect, main=main)
+    revisions(work,flavor,sources,[
+        (None,None,b'12'),(None,None,b'12'),
+        ('factory',factory.replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
+        (None,None,'Argument must belong'),('factory',factory,b'12'),
+        ('record',arm('RecordDecl','Middle'),b'12'),('right',arm('TraitDecl','Middle'),b'12'),
+        ('main',main.replace('RecordSyntax','Derived'),'explicit declaring-type call'),('main',main,b'12'),
+        ('derived',klass('Derived',signature+'{'+body+'}','RecordSyntax'),'redeclarations are deferred'),
+        ('derived',sources['derived'],b'12'),('right',None,None),('right',arm('TraitDecl','Node'),b'12'),
+        ('factory',factory.replace(pair,'RecordDecl|Other').replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
+        ('factory',factory,b'12'),
+        ('factory',factory.replace('new TraitDecl()',lexical+'read(true)'),'explicit declaring-type call'),
+        ('factory',factory.replace('new TraitDecl()',late+'read(true)'),'explicit declaring-type call'),
+        ('factory',factory,b'12'),
+    ])
+    for rev, owner in ((0,'Node'),(6,'Middle'),(12,'Node')):
+        out = work/f'{flavor}-fresh-{rev}'
+        units = json.loads((out/'manifest.json').read_text())['sources']
+        provider = out/units[f'{flavor}/factory.{flavor}']
+        caller = out/units[f'{flavor}/main.{flavor}']
+        header = provider.with_suffix('.hpp')
+        signature = f'owner_{owner} method_12_RecordSyntax_read('
+        assert signature in provider.read_text() and signature in header.read_text()
+        assert header.name in caller.read_text()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output',type=Path)
+    args = parser.parse_args()
+    with tempfile.TemporaryDirectory(prefix='scpp-union-return-') as tmp:
+        work = args.output or Path(tmp)
+        work.mkdir(exist_ok=True)
+        for flavor in ('php','cpp','js'):
+            prove(work,flavor)
+        static_work = work/'static'
+        static_work.mkdir()
+        for flavor in ('php','cpp','js'):
+            static_returns(static_work,flavor)

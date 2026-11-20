@@ -42,6 +42,9 @@ final class Method_Preparation
 				if ($base->is_static !== $method->is_static) self::fail($method, 'Static and instance methods cannot replace one another');
 				if ($method->is_static) {
 					if ($base->is_final) self::fail($method, 'Cannot redeclare final static method');
+					if ($method->return_type_def() instanceof class_union_type_definition || $base->return_type_def() instanceof class_union_type_definition) {
+						self::fail($method, 'Static union return redeclarations are deferred');
+					}
 				}
 				else {
 					if ($base->is_final) self::fail($method, 'Cannot override final method');

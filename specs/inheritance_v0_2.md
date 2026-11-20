@@ -335,7 +335,7 @@ reference to its source because all argument bindings finish before the callee r
 Keep a separate call that can rebind the local outside the guarded use's expression
 when the two evaluations can occur in either order.
 
-### Closed class unions in parameters and readonly instance fields
+### Closed class unions in parameters, callable returns and readonly instance fields
 
 A required by-value parameter on an ordinary callable may name two distinct
 required classes separated by `|` when their concrete class chains share an
@@ -355,6 +355,14 @@ proof. After a single positive test with no else, if every path through the
 matching branch returns or throws, the continuing path may use the remaining arm.
 A matching branch that can fall through provides no such guarantee. Testing an arm through a proper base uses the ordinary polymorphic-source
 requirement for checked object access.
+
+An ordinary free function or a static method called through its explicit declaring
+type may return the same required two-arm class union. Static redeclarations,
+forwarding through `self`, `parent` or the called type, and instance-method union
+returns are deferred.
+Every returned value must satisfy the declared union. The caller can forward the
+result as that union or access members of its common base. Returning an owner
+preserves the allocation and its lifetime across the call.
 
 A readonly instance field may declare the same two-arm union. The constructor
 must initialize the field exactly once with a member of the union. Reading the
