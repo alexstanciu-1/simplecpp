@@ -39,6 +39,25 @@ this goal. Exact-type syntax, operand/target admission, empty handling and suppo
 nonpolymorphic views remain a discussion before implementation. No existing invariant
 was removed or rewritten by this inventory.
 
+### Duplicate-link translation proof
+
+The declaring scope links nodes only when both their symbol key and duplicate
+category agree. The proof uses an enum returned by the declaration kind. Local
+declarations and parameters share a category, as do records and enums. A local
+and global can have the same `var:` key, and a field and enum case can have the
+same bare key. The category keeps those pairs separate. The proof uses a weak
+successor link while the scope retains both nodes.
+
+The [PHP oracle](../../compiler/tests/duplicate_link_oracle.php) runs the actual
+`ast_declaration::link_duplicate` against production AST classes. The
+[native proof](../../compiler/tests/duplicate_links_native.py) compares decisions,
+checks accepted identity and rejected-write purity, clears and relinks the
+successor, and edits the candidate declaration in the same compiler instance.
+Errors keep the last good artifacts, and repair matches a fresh build with the
+unaffected unit reused. This verifies the duplicate-link call site with existing
+language features. The separate compiler-type dispatch sites still need their
+own identity decisions.
+
 ## Protected instance methods
 
 Implemented using existing `is_protected` method syntax, threaded through the flavor
