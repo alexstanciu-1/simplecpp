@@ -1,0 +1,396 @@
+{
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "cpu": [
+    7
+  ],
+  "flags": [
+    "clang++",
+    "-std=c++23",
+    "-O2",
+    "-g0",
+    "-Igenerated/public",
+    "-Isrc/hash",
+    "-Isrc/sequence",
+    "-Isrc/numeric"
+  ],
+  "pairs_ns_per_write": {
+    "int/insert": [
+      {
+        "direct": 50.295553,
+        "ordinary": 47.924581
+      },
+      {
+        "ordinary": 47.95638,
+        "direct": 50.68691
+      },
+      {
+        "direct": 49.864878,
+        "ordinary": 46.987864
+      },
+      {
+        "ordinary": 48.131053,
+        "direct": 50.474843
+      },
+      {
+        "direct": 51.102844,
+        "ordinary": 48.137431
+      },
+      {
+        "ordinary": 48.165527,
+        "direct": 50.531687
+      },
+      {
+        "direct": 50.279165,
+        "ordinary": 47.767131
+      },
+      {
+        "ordinary": 48.337128,
+        "direct": 50.264476
+      },
+      {
+        "direct": 50.720154,
+        "ordinary": 48.62972
+      },
+      {
+        "ordinary": 48.11615,
+        "direct": 50.817769
+      },
+      {
+        "direct": 50.200053,
+        "ordinary": 48.176514
+      },
+      {
+        "ordinary": 47.466451,
+        "direct": 50.938568
+      },
+      {
+        "direct": 50.61559,
+        "ordinary": 48.416748
+      },
+      {
+        "ordinary": 47.75174,
+        "direct": 50.415944
+      },
+      {
+        "direct": 49.76826,
+        "ordinary": 48.154195
+      },
+      {
+        "ordinary": 47.882172,
+        "direct": 50.11262
+      }
+    ],
+    "int/replace": [
+      {
+        "direct": 13.194824,
+        "ordinary": 11.910451
+      },
+      {
+        "ordinary": 12.215302,
+        "direct": 13.193522
+      },
+      {
+        "direct": 13.123149,
+        "ordinary": 11.86614
+      },
+      {
+        "ordinary": 11.973053,
+        "direct": 13.135966
+      },
+      {
+        "direct": 13.334015,
+        "ordinary": 11.847066
+      },
+      {
+        "ordinary": 12.057658,
+        "direct": 13.051422
+      },
+      {
+        "direct": 13.525431,
+        "ordinary": 12.480296
+      },
+      {
+        "ordinary": 12.046092,
+        "direct": 13.10258
+      },
+      {
+        "direct": 13.14212,
+        "ordinary": 12.217936
+      },
+      {
+        "ordinary": 11.936259,
+        "direct": 13.463562
+      },
+      {
+        "direct": 13.092896,
+        "ordinary": 12.520345
+      },
+      {
+        "ordinary": 11.927389,
+        "direct": 13.234975
+      },
+      {
+        "direct": 12.981191,
+        "ordinary": 11.961009
+      },
+      {
+        "ordinary": 11.846476,
+        "direct": 13.705078
+      },
+      {
+        "direct": 13.225677,
+        "ordinary": 11.942332
+      },
+      {
+        "ordinary": 11.983236,
+        "direct": 13.275533
+      }
+    ],
+    "string/insert": [
+      {
+        "direct": 98.709625,
+        "ordinary": 103.708445
+      },
+      {
+        "ordinary": 104.635254,
+        "direct": 97.996419
+      },
+      {
+        "direct": 98.893524,
+        "ordinary": 103.631602
+      },
+      {
+        "ordinary": 102.717692,
+        "direct": 97.504069
+      },
+      {
+        "direct": 97.501811,
+        "ordinary": 103.652893
+      },
+      {
+        "ordinary": 103.297221,
+        "direct": 98.461568
+      },
+      {
+        "direct": 97.623098,
+        "ordinary": 103.44927
+      },
+      {
+        "ordinary": 103.954468,
+        "direct": 98.345194
+      },
+      {
+        "direct": 97.93986,
+        "ordinary": 104.33665
+      },
+      {
+        "ordinary": 103.633728,
+        "direct": 97.87443
+      },
+      {
+        "direct": 97.742859,
+        "ordinary": 103.404409
+      },
+      {
+        "ordinary": 103.458944,
+        "direct": 97.918864
+      },
+      {
+        "direct": 98.20871,
+        "ordinary": 103.618744
+      },
+      {
+        "ordinary": 103.213938,
+        "direct": 98.832845
+      },
+      {
+        "direct": 98.655314,
+        "ordinary": 103.319916
+      },
+      {
+        "ordinary": 103.750539,
+        "direct": 98.758759
+      }
+    ],
+    "string/replace": [
+      {
+        "direct": 37.697154,
+        "ordinary": 42.464294
+      },
+      {
+        "ordinary": 42.902445,
+        "direct": 36.694814
+      },
+      {
+        "direct": 36.82015,
+        "ordinary": 42.88855
+      },
+      {
+        "ordinary": 42.904104,
+        "direct": 36.285411
+      },
+      {
+        "direct": 37.835368,
+        "ordinary": 42.66627
+      },
+      {
+        "ordinary": 43.440531,
+        "direct": 36.656596
+      },
+      {
+        "direct": 37.267375,
+        "ordinary": 42.698405
+      },
+      {
+        "ordinary": 43.129008,
+        "direct": 37.963348
+      },
+      {
+        "direct": 36.425669,
+        "ordinary": 43.838837
+      },
+      {
+        "ordinary": 42.282084,
+        "direct": 36.687398
+      },
+      {
+        "direct": 36.530518,
+        "ordinary": 42.555206
+      },
+      {
+        "ordinary": 43.80365,
+        "direct": 36.774272
+      },
+      {
+        "direct": 37.239339,
+        "ordinary": 42.851817
+      },
+      {
+        "ordinary": 42.509654,
+        "direct": 36.350535
+      },
+      {
+        "direct": 36.751567,
+        "ordinary": 42.289408
+      },
+      {
+        "ordinary": 42.063456,
+        "direct": 36.702861
+      }
+    ]
+  },
+  "build_ms": {
+    "int/direct": [
+      [
+        930.391624,
+        51.171168
+      ],
+      [
+        918.125135,
+        49.651037
+      ],
+      [
+        920.617009,
+        50.728156
+      ],
+      [
+        926.762447,
+        50.625824
+      ],
+      [
+        930.307477,
+        50.772199
+      ]
+    ],
+    "int/ordinary": [
+      [
+        924.66904,
+        49.360602
+      ],
+      [
+        937.247846,
+        49.128917
+      ],
+      [
+        921.078965,
+        50.440818
+      ],
+      [
+        915.367362,
+        50.64461
+      ],
+      [
+        919.568492,
+        50.532599
+      ]
+    ],
+    "string/direct": [
+      [
+        958.905041,
+        52.006895
+      ],
+      [
+        962.077442,
+        49.755923
+      ],
+      [
+        955.421776,
+        51.152873
+      ],
+      [
+        947.997871,
+        51.931594
+      ],
+      [
+        959.982873,
+        51.18871
+      ]
+    ],
+    "string/ordinary": [
+      [
+        953.307491,
+        50.611227
+      ],
+      [
+        960.416255,
+        51.538657
+      ],
+      [
+        951.816144,
+        51.594251
+      ],
+      [
+        951.726716,
+        50.688042
+      ],
+      [
+        942.687861,
+        50.754776
+      ]
+    ]
+  },
+  "header_sha256": {
+    "int/ordinary": "8557ba381fd6485e296bfdff837bb13097c68b71fa113d2c81ee369f79045f49",
+    "int/direct": "502fe31483a76974b0c5b54fec018823b9fcd36066fb230f691fad1dbf93338a",
+    "string/ordinary": "7c739879ae1742b091e1fce4777a5fe16fb82883f837e581c50f1a92ffba202a",
+    "string/direct": "883c27b913bd6dbe616e82c0c2f4bd6eb8c47f74284db2f1d24eca34ed261286"
+  },
+  "trace_ms": {
+    "int/ordinary": {
+      "Total Frontend": 889.273,
+      "Total Backend": 59.831
+    },
+    "int/direct": {
+      "Total Frontend": 885.891,
+      "Total Backend": 61.917
+    },
+    "string/ordinary": {
+      "Total Frontend": 912.105,
+      "Total Backend": 79.167
+    },
+    "string/direct": {
+      "Total Frontend": 914.363,
+      "Total Backend": 81.033
+    }
+  }
+}

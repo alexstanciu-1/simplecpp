@@ -474,6 +474,27 @@ scanner units sharing a vector, selection changes, cached reuse, last-use
 retirement, body and layout edits, fresh-build equivalence and allocation
 failure at growth. Idle scheduling and persistent proof storage remain deferred.
 
+**Keyed feasibility probe.** An isolated Clang probe exercised cpp, php and js
+with both `hash<Token,int>` and `hash<Token,string>`. It writes two integer
+fields into an existing value on replacement, constructs a new entry directly
+when the data and index have room, and delegates growth and rehash to ordinary
+`set`. Both direct paths were reached. Reads matched ordinary writes through
+removals, reinsertion and an index-width change. Injected growth allocation
+failures preserved visible entries and allowed retry. The probe modifies only
+temporary generated bundles. A production version should let hash storage own
+lookup, capacity checks and publication in one place. The [pinned dev002 comparison](benchmarks/tokenizer/destination/keyed.md)
+found faster insertion for both key types, faster short-string replacement and
+slower integer replacement. The [one-lookup follow-up](benchmarks/tokenizer/destination/keyed.md#one-lookup-storage-variant)
+shared ordinary replacement and constructed new entries directly. Both integer-key
+workloads slowed down and both short-string workloads improved. Retain ordinary
+hash writes pending evidence from a representative workload.
+
+The same source record is rejected by both boxed families during preparation.
+A separate nested-container control accepted by both retained the earlier value
+with mixed and observed a later child mutation with dynamic. An optimization
+for supported boxed payloads must preserve those ownership rules and runtime
+key checks. [Repeatable keyed probe](benchmarks/tokenizer/destination/keyed_probe.py)
+
 ### 2.5 First integration slice — last-use transfer of owned values
 
 **Contract.** Source assignment retains value semantics. Lowering may consume a
