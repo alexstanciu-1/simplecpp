@@ -92,7 +92,7 @@ def static_returns(work, flavor):
         (None,None,'Argument must belong'),('factory',factory,b'12'),
         ('record',arm('RecordDecl','Middle'),b'12'),('right',arm('TraitDecl','Middle'),b'12'),
         ('main',main.replace('RecordSyntax','Derived'),b'12'),('main',main,b'12'),
-        ('derived',klass('Derived',signature+'{'+body+'}','RecordSyntax'),'redeclarations are deferred'),
+        ('derived',klass('Derived',signature+'{'+body+'}','RecordSyntax'),b'12'),
         ('derived',sources['derived'],b'12'),('right',None,None),('right',arm('TraitDecl','Node'),b'12'),
         ('factory',factory.replace(pair,'RecordDecl|Other').replace('new TraitDecl()', 'new Other()'),'Argument must belong'),
         ('factory',factory,b'12'),
@@ -103,6 +103,10 @@ def static_returns(work, flavor):
         ('main','echo inspect(Derived'+sep+'relay(true)),consumeSibling();return 8;',b'1P2'),
         ('main','echo inspect(Derived'+sep+'relay(true));return 8;',b'1'),
         ('user',None,b'1'),('user',sibling,b'1'),('main',main,b'12'),
+        ('derived',klass('Derived',signature.replace(pair,'TraitDecl|RecordDecl')+'{return new TraitDecl();}','RecordSyntax'),b'12'),
+        ('main',main.replace('RecordSyntax','Derived'),b'22'),
+        ('derived',klass('Derived',signature.replace(pair,'Other|RecordDecl')+'{return new Other();}','RecordSyntax'),'signature'),
+        ('derived',sources['derived'],b'12'),
     ])
     for rev, retained in ((20,True),(22,False),(23,True)):
         units = work/f'{flavor}-fresh-{rev}'/'units'
@@ -120,6 +124,39 @@ def static_returns(work, flavor):
         assert header.name in caller.read_text()
 
 
+def virtual_returns(work, flavor):
+    s, _, klass, method, _, implement = forms(flavor)
+    fn, v, op = s['function'], s['v'], s['access']
+    pair = 'RecordDecl|TraitDecl'
+    reverse = 'TraitDecl|RecordDecl'
+    different = 'RecordDecl|Other'
+    def reader(result, arm, intent):
+        return method('read','return new '+arm+'();',result=result,intent=intent)
+    def interface(result):
+        signature = {'php':'public function read(): '+result,'cpp':result+' read()', 'js':'read(): '+result}[flavor]
+        return 'interface Reader {'+signature+';}'+(';' if flavor=='cpp' else '')
+    base = klass('Factory',reader(pair,'RecordDecl','virtual'))
+    leaf = implement('Leaf',reader(reverse,'TraitDecl','override'),'Factory',('Reader',))
+    other = klass('Foreign',reader(different,'Other','virtual'))
+    probe = fn('inspect','int',[('node',pair)],'if ('+v+'node instanceof RecordDecl) {return 1;}return 2;')
+    callers = ''.join(fn('via'+name,'int',[('source',name)],'return inspect('+v+'source'+op+'read());')
+                      for name in ('Factory','Reader','Leaf'))
+    main = s['infer']('leaf','new Leaf()')+'echo viaFactory('+v+'leaf),viaReader('+v+'leaf),viaLeaf('+v+'leaf);return 8;'
+    src = dict(node=klass('Node',method('tag','return 0;',intent='virtual')),record=klass('RecordDecl','','Node'),
+               trait=klass('TraitDecl','','Node'),other=klass('Other','','Node'), reader=interface(pair),
+               base=base,leaf=leaf,foreign=other,api=probe+callers,main=main)
+    revisions(work,flavor,src,[
+        (None,None,b'222'),(None,None,b'222'),('leaf',leaf.replace('new TraitDecl()', 'new RecordDecl()'),b'111'),
+        ('leaf',leaf.replace(reverse,different).replace('new TraitDecl()', 'new Other()'),'signature'),
+        (None,None,'signature'),('leaf',leaf,b'222'),('reader',interface(different),'signature'),
+        ('reader',None,None),('reader',interface(reverse),b'222'),
+        ('leaf',leaf.replace(reverse,'TraitDecl'),'signature'),('leaf',leaf,b'222'),
+    ])
+    emitted = ''.join(p.read_text() for p in (work/(flavor+'-out')/'units').iterdir())
+    for identity in (pair, 'Other|RecordDecl'):
+        assert 'scpp_slot_read_'+identity.encode().hex() in emitted
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path)
@@ -133,3 +170,7 @@ if __name__ == '__main__':
         static_work.mkdir()
         for flavor in ('php','cpp','js'):
             static_returns(static_work,flavor)
+        virtual_work = work/'virtual'
+        virtual_work.mkdir()
+        for flavor in ('php','cpp','js'):
+            virtual_returns(virtual_work,flavor)

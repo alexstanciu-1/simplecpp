@@ -227,9 +227,6 @@ final class Function_Preparation
 			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 		}
-		if ($type instanceof class_union_type_definition && $declaration->has_virtual_dispatch()) {
-			throw new diagnostic($declaration->source(), $declaration->return_type_reference->byte_start(), 'Virtual union returns are deferred');
-		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {
 			if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {

@@ -2192,6 +2192,7 @@ CPP;
 	/** Payload member declarations live inside scpp_records; qualify application signature types. */
 	private function member_type(type_definition $type): string
 	{
+		if ($type instanceof class_union_type_definition) $type = $type->base;
 		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type)
 			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
@@ -2289,7 +2290,7 @@ CPP;
 	{
 		$name = self::name_component($method->short_name);
 		$result = $method->return_type_def();
-		$variant = $result instanceof shared_record_type_definition;
+		$variant = $result instanceof shared_record_type_definition || $result instanceof class_union_type_definition;
 		foreach ($method->parameters as $parameter) {
 			if ($parameter->mode === passing_mode::value && ($parameter->type_def() instanceof shared_record_type_definition
 				|| $parameter->type_def() instanceof class_union_type_definition)) $variant = true;
