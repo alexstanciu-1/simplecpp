@@ -84,10 +84,19 @@ the same fresh frontend generation as a change to an optional type dependency.
 
 Runtime metadata owns the published filesystem signatures. The API generator uses
 the prepared signatures for both the public C++ declarations and the compiler
-bindings. The first published operation, `fs_get(string) -> result<string>`,
-reads exact bytes, including empty files. Invalid paths and operational read
-failures return a structured error. The implementation is compiled privately into
-the filesystem archive.
+bindings. Implementations are compiled privately into the filesystem archive.
+
+| Function | Behavior |
+| --- | --- |
+| `fs_get(string) -> result<string>` | Reads exact bytes, including empty files. |
+| `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
+| `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
+| `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
+
+The result-returning operations report structured errors on invalid paths and
+operational failure. Rename and remove return false on those failures. A publisher
+owns temporary-path reservation and cleanup. It can write to a stage and use
+rename to promote that stage after a successful write.
 
 ## Application discovery and inventory
 

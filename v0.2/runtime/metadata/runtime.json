@@ -798,6 +798,27 @@
         "native_name": "get",
         "parameters": [{"type": "string", "native_passing": "const_reference"}],
         "result": "result<string>"
+      },
+      "fs_put": {
+        "native_name": "put",
+        "parameters": [
+          {"type": "string", "native_passing": "const_reference"},
+          {"type": "string", "native_passing": "const_reference"}
+        ],
+        "result": "result<int64>"
+      },
+      "fs_rename": {
+        "native_name": "rename",
+        "parameters": [
+          {"type": "string", "native_passing": "const_reference"},
+          {"type": "string", "native_passing": "const_reference"}
+        ],
+        "result": "bool_t"
+      },
+      "fs_remove": {
+        "native_name": "remove",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "result": "bool_t"
       }
     }
   },
