@@ -335,7 +335,7 @@ reference to its source because all argument bindings finish before the callee r
 Keep a separate call that can rebind the local outside the guarded use's expression
 when the two evaluations can occur in either order.
 
-### Closed class unions in parameters and readonly instance fields
+### Closed class unions in parameters, callable returns and readonly instance fields
 
 A required by-value parameter on an ordinary callable may name two distinct
 required classes separated by `|` when their concrete class chains share an
@@ -346,6 +346,23 @@ may access the nearest common class's members and forward the value to the
 same union or a compatible base-class parameter. Passing preserves shared
 allocation identity and lifetime. Override signatures distinguish different
 arm pairs, including pairs whose nearest common class is identical.
+
+A direct positive `instanceof` test on a by-value union parameter narrows reads to
+the tested arm within that branch. This admits arm-specific member access and
+passing the same object by value to an arm-typed parameter. A writable reference
+still requires the exact declared storage type. Rebinding the parameter ends the
+proof. In a two-branch if/else the opposite branch receives the remaining arm;
+a direct negation exchanges the two proofs. Rebinding invalidates only the path
+where it occurs. After a single positive test with no else, if every path through the
+matching branch returns or throws, the continuing path may use the remaining arm.
+A matching branch that can fall through provides no such guarantee. Testing an arm through a proper base uses the ordinary polymorphic-source
+requirement for checked object access.
+
+A free function or method may return the same required two-arm class union. Static lookup and forwarding preserve the union contract under the ordinary called-type rules.
+Static redeclarations, virtual overrides and interface implementations must preserve the exact canonical arm pair for a union result.
+Every returned value must satisfy the declared union. The caller can forward the
+result as that union or access members of its common base. Returning an owner
+preserves the allocation and its lifetime across the call.
 
 A readonly instance field may declare the same two-arm union. The constructor
 must initialize the field exactly once with a member of the union. Reading the

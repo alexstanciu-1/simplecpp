@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Immutable published function signature and C++ binding, e.g. strlen(string): int. */
-final readonly class runtime_function
+final readonly class runtime_function implements callable_signature
 {
 	/** PROPERTIES */
 	private string $source_name;

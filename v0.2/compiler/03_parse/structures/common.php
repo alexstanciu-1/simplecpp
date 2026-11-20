@@ -114,9 +114,10 @@ class ast_name_expression extends ast_expression
 		$this->binding = $local;
 	}
 
-	/** Bind this argument through the dominating test of the same local. */
-	public function settle_guard(ast_object_access_expression $guard): void
+	/** Bind this read through its dominating test; a selected union arm supplies the occurrence type. */
+	public function settle_guard(ast_object_access_expression $guard, bool $narrow = false): void
 	{
+		if ($narrow) $this->settle_value($guard->target_type(), null);
 		$this->binding = $guard;
 		$guard->used_as_guard = true;
 	}

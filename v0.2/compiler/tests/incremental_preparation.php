@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/../host/compilation.php';
 use scpp\compiler\{Project_Compiler, Incremental_Preparation, entry_target, change_status, diagnostic_group};
 function verify(bool $ok, string $message): void
 {
@@ -23,7 +24,7 @@ try
 		$first = $app . '/first.' . $flavor;
 		$second = $app . '/second.' . $flavor;
 		file_put_contents($main, 'first(); return 8;');
-		file_put_contents($first, $head('first') . '{ second(); }');
+		file_put_contents($first, $head('first') . '{ second(); strlen("abc"); }');
 		file_put_contents($second, $head('second') . '{}');
 		$compiler = new Project_Compiler();
 		$session = $compiler->frontend($app);
@@ -38,6 +39,9 @@ try
 		/** @var \scpp\compiler\ast_call_statement $call */
 		$call = $first_body->statements[0];
 		$old_second = $call->function_def();
+		$report = \scpp\compiler\Compilation_Inspection::body($first_body)['statements'];
+		verify([$report[0]['target'], $report[0]['return_type'], $report[1]['target'], $report[1]['return_type']]
+			=== ['second', 'void', 'strlen', 'int64'], 'Source/runtime signature inspection differs');
 		verify($session->dependency_watches->observer_count($slot) === 1, 'Missing signature subscription');
 		$old_session = $session;
 		$session = $compiler->frontend($app, $session);

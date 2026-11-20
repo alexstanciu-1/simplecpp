@@ -145,3 +145,13 @@ ancestry first and then resolves pending union fields. The field retains the
 source union for admission and exposes its common-base owner for native storage
 and header dependencies. The [field proof](../tests/readonly_union_fields_native.py)
 covers constructor initialization, payload lifetime and incremental ancestry edits.
+
+Free functions, instance methods and static factories can return the same two-arm
+contract. Virtual and interface declarations require the same canonical pair.
+A direct arm test on a by-value union parameter can narrow both branches of an
+`if/else`. Rebinding the parameter invalidates the proof for subsequent reads.
+
+The [parser-to-visitor proof](../tests/union_pipeline_native.py) passes both
+factory results through a constructor-initialized readonly field to a visitor
+in another unit. It changes the nearest common base, removes an arm and compares
+incremental diagnostics, generated artifacts and recovery with fresh compilation.
