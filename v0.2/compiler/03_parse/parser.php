@@ -1022,6 +1022,17 @@ final class Parser
 		return $value;
 	}
 
+	/** A bare postfix update is allowed only as the complete RHS of a plain local statement. */
+	private function local_assignment_value(): ast_expression
+	{
+		$cursor = $this->cursor;
+		$name = $cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		if ($cursor->is($name) && ($cursor->next_is(token_kind::increment) || $cursor->next_is(token_kind::decrement))) {
+			return new ast_postfix_update_expression($this->update_statement(null));
+		}
+		return $this->assignment_value();
+	}
+
 	/** Parse a declaration literal, optionally retaining a name for an enum field default. */
 	public function literal_initializer(string $diagnostic, bool $allow_case = false): ast_expression
 	{
@@ -1449,7 +1460,7 @@ final class Parser
 			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, new ast_struct_default($at, $at));
 		}
 		$this->cursor->take(token_kind::assign, '=');
-		$value = $this->assignment_value();
+		$value = $terminator === token_kind::semicolon ? $this->local_assignment_value() : $this->assignment_value();
 		$end = $this->statement_end($terminator);
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
@@ -1544,7 +1555,8 @@ final class Parser
 		$operator = $this->compound_operator();
 		$kind = $operator === null ? token_kind::assign : $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 		$this->cursor->take($kind, 'assignment operator');
-		$value = $this->assignment_value();
+		$value = $operator === null && $terminator === token_kind::semicolon
+			? $this->local_assignment_value() : $this->assignment_value();
 		$end = $this->statement_end($terminator);
 		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
 	}

@@ -9,8 +9,7 @@ original int64 slice and its verification.
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#discarded-value-int64-updates--2026-11-05)
 admits all four prefix/postfix increment/decrement spellings on established int64
 locals and parameters, including reference parameters. Standalone statements and
-both for header write positions are supported in all flavors. Expression results,
-constants/direct globals and complex targets remain deferred.
+both for header write positions are supported in all flavors.
 [Float64 updates](float_updates.md) now reuse this same path.
 
 ## Owners and preparation
@@ -63,6 +62,19 @@ failure/recovery without replacing the caller AST/tokens, body-only reuse, same-
 operator edits with a changed mtime, and no-op reuse. Native recovery uses a fresh
 multifile preparation; incremental native emission remains deferred.
 
+
+## Postfix results in plain local statements
+
+The parser admits a bare postfix update as the complete RHS of a plain local
+assignment or initializer. The expression owns the existing update node. The
+update still resolves and invalidates one storage binding, and the expression
+publishes its int64 type without a constant fact. Reset clears both nodes.
+
+C++ emits native postfix directly. C++17 and later sequence the outer assignment's
+RHS before the store, including self-assignment. The assignment's conversion
+consumes the old value after the update. The focused proof covers both directions
+in all flavors, self-assignment, and incremental failure and recovery with the
+same caller AST. It compares recovered lowering with fresh lowering.
 
 ## Recorded proof — 2026-11-05
 

@@ -262,6 +262,27 @@ final class ast_isset_expression extends ast_expression
 	}
 }
 
+/** A complete assignment RHS that consumes a local update's old value. */
+final class ast_postfix_update_expression extends ast_expression
+{
+	public function __construct(public readonly ast_update_statement $update)
+	{
+		parent::__construct($update->start, $update->end);
+		$update->attach($this);
+	}
+
+	public function settle_update(): void
+	{
+		$this->settle_value($this->update->local_def()->type_def(), null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->update->reset_preparation();
+	}
+}
+
 /** A parenthesized assignment tested by a control statement, e.g. while ((n = read()) >= 0). */
 final class ast_condition_assignment extends ast_expression
 {

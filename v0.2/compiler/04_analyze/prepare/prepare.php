@@ -970,7 +970,7 @@ final class Preparation
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
-	private function write(ast_storage_write $statement): void
+	private function write(ast_storage_write $statement, bool $postfix_result = false): void
 	{
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
@@ -989,6 +989,9 @@ final class Preparation
 		$local = $this->assignment_local($statement, $statement->name);
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
+			if ($postfix_result && ($local instanceof ast_parameter_declaration || $type !== type_registry::integer())) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Postfix RHS requires an initialized int64 local');
+			}
 			$statement->require_update_type($type);
 			$statement->settle_update($local);
 			$this->latest_writes[$local->storage_id()] = null;
@@ -1067,6 +1070,11 @@ final class Preparation
 		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
+		}
+		if ($syntax instanceof ast_postfix_update_expression) {
+			$this->write($syntax->update, postfix_result: true);
+			$syntax->settle_update();
+			return;
 		}
 		if ($syntax instanceof ast_condition_assignment) {
 			if (!$syntax->in_condition()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Parenthesized assignment requires a control-statement condition');
