@@ -34,6 +34,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $nativeNames[$native_name] = true;
 
         $parameters = [];
+        $reference_mask = 0;
         $const_reference_mask = 0;
         $inputs = listValue(at($function, 'parameters'));
         requireThat(count($inputs) <= 32, 'Too many module function parameters');
@@ -45,9 +46,11 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $passing = textValue(at($parameter, 'native_passing'));
             $native = match ($passing) {
                 'value' => $export['symbol'],
+                'reference' => $export['symbol'] . '&',
                 'const_reference' => 'const ' . $export['symbol'] . '&',
                 default => throw new \RuntimeException('Unsupported module function native parameter passing'),
             };
+            if ($passing === 'reference') $reference_mask |= 1 << $index;
             if ($passing === 'const_reference') $const_reference_mask |= 1 << $index;
             $parameters[] = compact('type', 'native');
         }
@@ -55,7 +58,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $result = $export['identity'];
         $requires[] = $export['provider'];
         $native_result = $export['symbol'];
-        $functions[$name] = compact('native_name', 'flavor', 'parameters', 'result', 'native_result', 'const_reference_mask');
+        $functions[$name] = compact('native_name', 'flavor', 'parameters', 'result', 'native_result', 'reference_mask', 'const_reference_mask');
     }
     requireThat($functions !== [], 'Empty module function publication');
     $requires = array_values(array_unique($requires));

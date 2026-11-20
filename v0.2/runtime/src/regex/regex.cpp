@@ -48,7 +48,13 @@ bool parse(std::string_view pattern, pattern_body& body) {
 
 enum class outcome { match, miss, invalid_pattern, engine_error };
 
-outcome search(const scpp::string& pattern, const scpp::string& subject) {
+struct match_span {
+    scpp::int64 start;
+    scpp::int64 end;
+};
+
+outcome search(const scpp::string& pattern, const scpp::string& subject,
+               PCRE2_SIZE start_offset = 0, match_span* span = nullptr) {
     pattern_body body;
     if (!parse({pattern.data(), static_cast<std::size_t>(pattern.size())}, body))
         return outcome::invalid_pattern;
@@ -63,8 +69,15 @@ outcome search(const scpp::string& pattern, const scpp::string& subject) {
         pcre2_match_data_create(1, nullptr), pcre2_match_data_free);
     if (!data) return outcome::engine_error;
     const int rc = pcre2_match(code.get(), reinterpret_cast<PCRE2_SPTR>(subject.data()),
-                               subject.size(), 0, 0, data.get(), nullptr);
-    if (rc >= 0) return outcome::match;
+                               subject.size(), start_offset, 0, data.get(), nullptr);
+    if (rc >= 0) {
+        if (span) {
+            const auto* bounds = pcre2_get_ovector_pointer(data.get());
+            span->start = static_cast<scpp::int64>(bounds[0]);
+            span->end = static_cast<scpp::int64>(bounds[1]);
+        }
+        return outcome::match;
+    }
     return rc == PCRE2_ERROR_NOMATCH ? outcome::miss : outcome::engine_error;
 }
 }
@@ -82,4 +95,18 @@ scpp::result_or_false_int64 scpp::regex::preg_match(const string& pattern, const
     if (result == outcome::invalid_pattern || result == outcome::engine_error)
         return result_or_false_int64::from_false();
     return result_or_false_int64{int64{result == outcome::match}};
+}
+
+scpp::result_int64 scpp::regex::find_span(const string& pattern, const string& subject, int64 offset, int64& end) {
+    if (offset < 0 || offset > subject.size())
+        return result_int64{error_t{string{"regex_find_span: offset outside subject"}}};
+    match_span span;
+    const auto result = search(pattern, subject, static_cast<PCRE2_SIZE>(offset), &span);
+    if (result == outcome::miss) return result_int64{int64{-1}};
+    if (result != outcome::match)
+        return result_int64{error_t{string{result == outcome::invalid_pattern ?
+            "regex_find_span: invalid pattern" : "regex_find_span: matching failed"}}};
+    result_int64 start{span.start};
+    end = span.end;
+    return start;
 }

@@ -322,10 +322,11 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $symbol = var_export('::' . $runtime[$family]['namespace'] . '::' . $binding['native_name'], true);
             $header = var_export($runtime[$family]['header'], true);
             $module = var_export($runtime[$family]['module'], true);
+            $refs = $binding['reference_mask'] ? ', reference_mask: ' . $binding['reference_mask'] : '';
             $mask = $binding['const_reference_mask'];
             $key = ($binding['flavor'] === null ? '' : $binding['flavor'] . ':') . 'func:' . $name;
             $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header, const_reference_mask: $mask, required_module: $module),";
+                . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header$refs, const_reference_mask: $mask, required_module: $module),";
         }
     }
     $exportedNames = array_column(array_merge($runtime['types'] ?? [], $runtime['values'] ?? []), 'name');

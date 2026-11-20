@@ -28,6 +28,20 @@ function rejects(Closure $action, string $message): string
 	throw new RuntimeException('Expected rejection: ' . $message);
 }
 
+// PHP bootstrap extraction must preserve the output on both kinds of unsuccessful search.
+$span_end = 123;
+verify(\scpp\compiler\regex_find_span('/\Gx/', 'é!x', 2, $span_end) === -1 && $span_end === 123, 'Anchored miss');
+foreach ([['/[/', 0], ['/./u', 1], ['//', -1], ['//', 99]] as [$pattern, $offset]) {
+	try {
+		\scpp\compiler\regex_find_span($pattern, 'é', $offset, $span_end);
+	} catch (RuntimeException $error) {
+		verify($span_end === 123, 'Failed span search modified end');
+		continue;
+	}
+	throw new RuntimeException('Expected span search error');
+}
+verify(\scpp\compiler\regex_find_span('//', 'é', 2, $span_end) === 2 && $span_end === 2, 'Empty match at EOF');
+
 $fixtures = [];
 $target = new entry_target(31);
 foreach (flavor::cases() as $flavor) {

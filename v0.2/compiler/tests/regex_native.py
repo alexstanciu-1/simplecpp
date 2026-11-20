@@ -49,6 +49,24 @@ def fixture(flavor):
                 value = local(key + 'Value', scalar, owner)
                 want = str(expected) if scalar == 'int' else ('true' if expected else 'false')
                 statements.append(f'if ({value} !== {want}) {{ return 4; }}')
+    end = local('endByte', 'int', '99')
+    for i, (pattern, subject, offset, start, after) in enumerate([
+        ('/x/', 'x', 0, 0, 1), ('/x/', 'é!x', 2, 3, 4),
+        (r'/\\Gx/', 'é!x', 2, -1, 99), (r'/\\Gx/', 'é!x', 3, 3, 4),
+        ('/(x)/', r'a\0x', 2, 2, 3), ('//', '', 0, 0, 0),
+        ('//', 'é', 2, 2, 2), ('/x/', 'xx', 2, -1, 99),
+        ('/é/u', 'éé', 2, 2, 4), ('/./u', 'é', 1, None, 99),
+        ('/[/', 'x', 0, None, 99), ('//', 'x', -1, None, 99),
+        ('//', 'x', 9223372036854775807, None, 99),
+    ]):
+        statements.append(f'{end} = 99;')
+        owner = local(f'span{i}', 'result<int>', f'regex_find_span("{pattern}", "{subject}", {offset}, {end})')
+        if start is None:
+            statements.append(f'if (isset({owner})) {{ return 5; }}')
+        else:
+            value = local(f'start{i}', 'int', owner)
+            statements.append(f'if ({value} !== {start}) {{ return 6; }}')
+        statements.append(f'if ({end} !== {after}) {{ return 7; }}')
     return '\n'.join(statements) + '\nreturn 0;'
 
 
@@ -63,7 +81,9 @@ def prove(work, runtime, flavor):
         return subprocess.Popen([php, '-r', driver, root/'compiler/boot.php', app, out, runtime],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     source_edit(manifest, '{}')
-    source_edit(source, 'return 0;')
+    interpolation = {'php': '$n int = 8; echo "é{$n}";', 'cpp': 'int n = 8; echo f"é{n}";',
+                     'js': 'let n: int = 8; echo `é${n}`;'}[flavor]
+    source_edit(source, interpolation + ' return 0;')
     with compiler(output) as resident:
         def ok():
             result = invoke(resident)
@@ -78,6 +98,21 @@ def prove(work, runtime, flavor):
         source_edit(source, fixture(flavor))
         assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(manifest, enabled)
+        ok()
+        source_edit(source, 'regex_find_span("/a/", "a", 0, 1); return 0;')
+        bad = invoke(resident)
+        assert 'reference' in bad.get('error', '').lower(), bad
+        with compiler(work/('invalid-' + flavor)) as fresh:
+            assert invoke(fresh).get('error') == bad['error']
+            fresh.stdin.close()
+        source_edit(source, fixture(flavor))
+        ok()
+        byte_local = {'php': '$b byte = 0;', 'js': 'let b: byte = 0;', 'cpp': 'byte b = 0;'}[flavor]
+        var = '$b' if flavor == 'php' else 'b'
+        source_edit(source, byte_local + f'regex_find_span("/a/", "a", 0, {var}); return 0;')
+        bad = invoke(resident)
+        assert 'Reference argument requires exact storage type' in bad.get('error', ''), bad
+        source_edit(source, fixture(flavor))
         ok()
         if flavor != 'php':
             source_edit(source, 'preg_match("/a/", "a"); return 0;')

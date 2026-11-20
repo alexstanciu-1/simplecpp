@@ -97,3 +97,12 @@ false sentinel respectively. These calls consume byte strings with explicit leng
 including embedded NUL, and expose no capture output. Empty delimited patterns match.
 The supported modifiers are listed above. The module is built with `SCPP_ENABLE_REGEX=ON`
 and selected per application through `dependencies.runtime.modules`.
+
+All three flavors also expose `regex_find_span(pattern, subject, offset, end): result<int>`.
+Pass an existing writable int/int64 local or parameter for `end`. The offset is an absolute
+byte index from zero through the subject length, inclusive. Search begins there on the
+original subject; the pattern controls anchoring (for example, `\G`). On match, the
+payload is the first matched byte index and `end` receives the exclusive end. For an
+empty match the two indices coincide. On miss the payload is −1. An out-of-range
+offset, invalid pattern or engine failure (including a split UTF-8 code point in UTF
+mode) returns an error. Miss and error both preserve the caller's `end`.

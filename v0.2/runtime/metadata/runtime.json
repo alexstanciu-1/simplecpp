@@ -794,6 +794,11 @@
     "provider": "regex.functions",
     "namespace": "scpp::regex",
     "functions": {
+      "regex_find_span": {
+        "native_name": "find_span",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
+        "result": "result<int64>"
+      },
       "regex_test": {
         "native_name": "test",
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
