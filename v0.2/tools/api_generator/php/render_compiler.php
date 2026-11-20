@@ -214,6 +214,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['carriers'] ?? [] as $carrier) {
         if (isset($definitions[$carrier['payload']])) {
             $runtimeTypes[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $carrier['name'];
+            $runtimeTypes[$carrier['name']] = $carrier['name'];
         }
     }
     $runtimeCases = [];
@@ -301,6 +302,20 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $labels = implode(', ', array_map(static fn($key) => var_export($key, true), $keys));
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
+    }
+    foreach ($runtime['filesystem']['functions'] ?? [] as $name => $binding) {
+        $types = array_column($binding['parameters'], 'type');
+        foreach ([...$types, $binding['result']] as $type) {
+            requireThat(isset($runtimeTypes[$type]), 'Filesystem signature requires a compiler type: ' . $type);
+        }
+        $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
+        $result = $runtimeTypes[$binding['result']];
+        $symbol = var_export('::' . $runtime['filesystem']['namespace'] . '::' . $binding['native_name'], true);
+        $header = var_export($runtime['filesystem']['header'], true);
+        $module = var_export($runtime['filesystem']['module'], true);
+        $mask = $binding['const_reference_mask'];
+        $runtimeCases[] = "\t\t\t'func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
+            . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header, const_reference_mask: $mask, required_module: $module),";
     }
     $exportedNames = array_column(array_merge($runtime['types'] ?? [], $runtime['values'] ?? []), 'name');
     if (isset($runtime['string'])) $exportedNames[] = $runtime['string']['name'];

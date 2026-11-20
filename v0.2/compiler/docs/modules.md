@@ -74,6 +74,21 @@ Build the desired runtime modules manually with the existing CMake options. The
 application compiler does not run CMake or the API generator. Do not additionally
 link the same runtime implementation from source when using the declared archive.
 
+## Filesystem module
+
+Configure the default build with `cmake --preset default -DSCPP_ENABLE_FILESYSTEM=ON`
+and build `scpp_filesystem`. In the application manifest select
+`"dependencies": {"runtime": {"modules": ["filesystem"]}}`. The compiler checks that
+selection when preparing a filesystem call or import. Changing the selection uses
+the same fresh frontend generation as a change to an optional type dependency.
+
+Runtime metadata owns the published filesystem signatures. The API generator uses
+the prepared signatures for both the public C++ declarations and the compiler
+bindings. The first published operation, `fs_get(string) -> result<string>`,
+reads exact bytes, including empty files. Invalid paths and operational read
+failures return a structured error. The implementation is compiled privately into
+the filesystem archive.
+
 ## Application discovery and inventory
 
 Application extensions are `.cpp`, `.php`, `.js`. Discovery is recursive and stable,

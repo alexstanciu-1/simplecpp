@@ -790,6 +790,17 @@
     "optional_lookup": "nullable",
     "append": "max_live_nonnegative_plus_one"
   },
+  "filesystem": {
+    "provider": "filesystem.functions",
+    "namespace": "scpp::fs",
+    "functions": {
+      "fs_get": {
+        "native_name": "get",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "result": "result<string>"
+      }
+    }
+  },
   "datetime": {
     "binding": "native_datetime",
     "utc_years": "0000_9999",
@@ -1665,6 +1676,7 @@
   "output": { "provider": "core.output" },
   "scalar_providers": {"core": "core.scalars", "numeric": "numeric.scalars"},
   "submodules": {
+    "filesystem.functions": {"module": "runtime-filesystem", "header": "scpp/filesystem.hpp", "requires": []},
     "core.mixed": {"module": "core", "header": "scpp/mixed.hpp", "requires": []},
     "core.dynamic": {"module": "core", "header": "scpp/dynamic.hpp", "requires": []},
     "core.hashes": { "module": "core", "header": "scpp/hashes.hpp", "requires": [] },

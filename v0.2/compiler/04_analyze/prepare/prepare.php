@@ -1449,6 +1449,10 @@ final class Preparation
 			}
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null) {
+				if ($runtime instanceof runtime_function && !$file->type_availability->allows($runtime->required_module)) {
+					throw new diagnostic($call->source(), $call->byte_start(),
+						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
+				}
 				$this->runtime_call($call, $runtime);
 				return;
 			}

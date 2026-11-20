@@ -104,8 +104,8 @@ function submodulePlan(mixed $metadata): array {
     foreach (object(at($metadata, 'submodules')) as $id => $row) {
         requireThat(preg_match('/^[a-z][a-z0-9_.]*$/D', $id) === 1, 'Invalid submodule identity');
         fields($row, ['module', 'header', 'requires', 'requires_exports']);
-        // Numeric catalog presence does not activate optional publication or compiler types.
-        requireThat(in_array(textValue(at($row, 'module')), ['core', 'numeric'], true), 'Unavailable submodule module');
+        // Catalog presence does not activate optional publication or source availability.
+        requireThat(in_array(textValue(at($row, 'module')), ['core', 'numeric', 'runtime-filesystem'], true), 'Unavailable submodule module');
         $header = textValue(at($row, 'header'));
         requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid submodule header');
         requireThat(!isset($paths[$header]), 'Conflicting submodule headers');
@@ -260,6 +260,9 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         if (!isset($plan['groups'][$group]) || (in_array($group, ['string', 'vectors', 'carriers', 'hashes'], true) && !isset($publication->{$group}))) continue;
         $providers[] = $plan['groups'][$group]['provider'];
     }
+    if (property_exists($publication, 'filesystem')) {
+        $providers[] = textValue(at(at($metadata, 'filesystem'), 'provider'));
+    }
     if ($publication->boxed->scalar_dispatch ?? false) {
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
@@ -282,7 +285,7 @@ function finalizePublicationProviders(array &$plan): void {
     $providers = &$plan['submodules'];
     $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
     $published[] = $providers['groups']['output']['provider'];
-    foreach (['string', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication'] as $family) {
+    foreach (['string', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'filesystem'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

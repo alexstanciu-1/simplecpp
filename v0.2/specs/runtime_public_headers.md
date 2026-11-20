@@ -87,8 +87,9 @@ must agree with its provider. The handwritten output implementation includes the
 stable generated private `output_provider.hpp` bridge. The compiler retains per-file
 include collection through generated header queries.
 
-Only core and numeric provider modules are supported here. Other runtime families
-retain their existing renderers, with includes adapted to the relocated scalars.
+The provider graph covers core, numeric, and the optional filesystem declarations.
+Other runtime families retain their existing renderers, with includes adapted to
+the relocated scalars.
 See the [partition plan](planning/runtime_submodule_partitioning.md) for verification
 and deferred work.
 
