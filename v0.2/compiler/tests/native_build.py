@@ -449,7 +449,7 @@ def main():
                 (runtime/'module.json').write_text(json.dumps({'name':'runtime', 'type':'c++',
                     'artifacts':[os.path.relpath(library, runtime)]}))
             for flavor in ('cpp', 'php', 'js'):
-                native_proof(root/name/(flavor+" space $é"), compiler, flavor, runtime)
+                native_proof(root/name/(flavor+" space $$: é"), compiler, flavor, runtime)
 
 
 if __name__ == '__main__':
