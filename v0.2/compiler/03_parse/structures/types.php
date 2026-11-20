@@ -45,6 +45,18 @@ class ast_type_reference extends ast_node
 
 }
 
+/** Written integer argument, e.g. 0x4 in fixed_array<byte, 0x4>. Its token range preserves the authored radix. */
+final class ast_extent_literal extends ast_type_reference
+{
+	public readonly int $extent /** int64 */;
+
+	public function __construct(token_list $tokens, int $position /** uint32 */)
+	{
+		parent::__construct($position, $position + 1, $tokens->text_at($position));
+		$this->extent = type_int64::instance()->literal_value($tokens, $position, $position);
+	}
+}
+
 /** Infix type syntax such as Base&Readable; the children form one chain in written order. */
 final class ast_compound_type_reference extends ast_type_reference
 {

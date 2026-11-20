@@ -43,6 +43,9 @@ final class type_registry
 		};
 	}
 
+	/** Syntactic argument contract, available before names and storage providers resolve. */
+	public const array EXTENT_FAMILIES = [@extent_families@];
+
 	/** Generic family registration is independent of whether a specialization was published. */
 	public static function generic_arity(string $name): ?int /** uint8|null */
 	{

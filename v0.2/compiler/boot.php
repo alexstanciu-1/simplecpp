@@ -72,6 +72,7 @@ require_once __DIR__ . '/types/vector.php';
 require_once __DIR__ . '/types/carrier.php';
 require_once __DIR__ . '/types/boxed.php';
 require_once __DIR__ . '/types/hash.php';
+require_once __DIR__ . '/types/fixed_array.php';
 require_once __DIR__ . '/types/resolution.php';
 require_once __DIR__ . '/generated/types/int64.php';
 require_once __DIR__ . '/generated/types/null.php';

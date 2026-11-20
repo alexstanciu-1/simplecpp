@@ -5,6 +5,7 @@
         "generated/src/runtime.cpp",
         "src/output/output.cpp",
         "src/entry/entry.cpp",
+        "src/sequence/fixed_array.cpp",
         "src/ownership/owner_access.cpp"
     ],
     "modules": {

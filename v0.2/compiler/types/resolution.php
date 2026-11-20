@@ -9,7 +9,22 @@ final class Type_Resolution
 	/** Runtime types resolve directly. Application types register a body watch even when lookup fails. */
 	public static function local(ast_type_reference $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?type_definition
 	{
-		return self::named($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
+		return self::storage($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
+	}
+
+	/** Fixed extents currently have inline local and field storage only. */
+	public static function storage(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
+		?Dependency_Watches $dependencies): ?type_definition
+	{
+		$bound = $syntax->first_child?->next_sibling;
+		if ($bound instanceof ast_extent_literal) {
+			$element = self::storage($syntax->first_child, $symbols, $namespace, $watcher, $dependencies);
+			if ($element !== type_uint8::instance() && !($element instanceof fixed_array_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Inline fixed-array storage requires byte elements');
+			}
+			return fixed_array_type::resolve($element, $bound);
+		}
+		return self::named($syntax, $symbols, $namespace, $watcher, $dependencies);
 	}
 
 	/** Resolve runtime signature types directly; callables watch the nominal records named in their signatures. */
@@ -184,6 +199,9 @@ final class Type_Resolution
 		$arity = type_registry::generic_arity($syntax->name);
 		$child = $syntax->first_child;
 		if ($arity === null) {
+			if ($child?->next_sibling instanceof ast_extent_literal) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed arrays require inline local or instance-field storage');
+			}
 			if ($child !== null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type does not accept arguments: ' . $syntax->name);
 			}

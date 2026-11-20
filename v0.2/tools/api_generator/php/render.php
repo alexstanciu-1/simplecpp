@@ -177,6 +177,8 @@ function render(array $plan): array {
         $files['private/output_provider.hpp'] .= includeHeader($plan['string']['header']) . "#define SCPP_OUTPUT_HAS_STRING 1\n";
     }
     requireThat(!isset($files['public/scpp/owner_access.hpp']), 'The owner access header path is reserved');
+    requireThat(!isset($files['public/scpp/fixed_array.hpp']), 'The fixed-array header path is reserved');
+    $files['public/scpp/fixed_array.hpp'] = BANNER . template('collections/fixed_array_index');
     $files['public/scpp/owner_access.hpp'] = BANNER . template('ownership/application_control');
     if (isset($plan['exception'])) {
         $path = 'public/' . $plan['exception']['header'];
