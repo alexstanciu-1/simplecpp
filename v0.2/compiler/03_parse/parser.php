@@ -72,7 +72,7 @@ final class Parser
 		$statements = [];
 		$nodes = [];
 		$imports = [];
-		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
+		while (!$this->cursor->at_end() && (!$braced || !$this->cursor->is(token_kind::rbrace)))
 		{
 			if ($this->cursor->keyword('trait') || $this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];

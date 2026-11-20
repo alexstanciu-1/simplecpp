@@ -97,6 +97,30 @@ foreach (flavor::cases() as $flavor)
 		verify(str_contains($cpp, ' = ' . $expression_cpp . ';'), 'Incorrect logical grouping: ' . $expression_cpp);
 	}
 	$fixtures[$flavor->name . '_grouping'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('100')];
+	// Trace the parser's loop guard. R is a non-consuming brace probe, even on a hit.
+	$param = static fn(string $type, string $name): string => $flavor === flavor::js
+		? "$name: $type" : "$type " . $var($name);
+	$pos = $var('pos');
+	$size = $var('size');
+	$brace = $var('brace');
+	$braced = $var('braced');
+	$guard = $fn('at_end', $param('int', 'pos') . ',' . $param('int', 'size'), 'bool',
+			"echo \"E\",$pos; return $pos === $size;")
+		. $fn('is_rbrace', $param('int', 'pos') . ',' . $param('int', 'brace'), 'bool',
+			"echo \"R\",$pos; return $pos === $brace;")
+		. $fn('scan_body', implode(',', [$param('int', 'size'), $param('int', 'brace'), $param('bool', 'braced')]), 'void',
+			$decl('pos', 'int', '0') . "while (!at_end($pos,$size) && (!$braced || !is_rbrace($pos,$brace))) { $pos++; }"
+			. "echo \":\",$pos,\";\";");
+	$cases = [
+		'scan_body(0,0,true);' => 'E0:0;',            // Empty input.
+		'scan_body(2,0,false);' => 'E0E1E2:2;',       // Unbraced, even when the first token matches.
+		'scan_body(2,1,true);' => 'E0R0E1R1:1;',      // Stop before the brace.
+		'scan_body(1,0,true);' => 'E0R0:0;',          // Empty braced body.
+		'scan_body(1,1,true);' => 'E0R0E1:1;',        // EOF before the closing brace.
+	];
+	$guard .= implode('', array_keys($cases)) . 'return 8;';
+	$fixtures[$flavor->name . '_parser_guard'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($guard)),
+		'stdout_hex' => bin2hex(implode('', $cases))];
 	$code = '';
 	$expected = '';
 	foreach (['!false' => true, '!!true' => true, '!8' => false, '!0' => true,
