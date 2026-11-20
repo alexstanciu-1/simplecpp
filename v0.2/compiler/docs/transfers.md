@@ -1,56 +1,64 @@
-# Bare loop transfers
+# Loop and switch transfers
 
 Doc Status: supporting
 
-The [loop contract](../../../specs/loop_statements_v0_2.md) defines bare `break;` and
-`continue;` for all three flavors. Both target the nearest loop in the current
-function. Break exits without another test; continue reaches the next test,
-including do-while's trailing test. Numbered/labelled exits, switch, foreach
-and unbraced loops remain deferred.
-For the bounded `for` loop, continue reaches the update before the next test; see [for loops](for.md).
+The [loop contract](../../../specs/loop_statements_v0_2.md#exit-destinations) defines
+eligible targets. In `foreach → switch`, `break 2;` exits the foreach.
+A `continue 2;` there requires another enclosing loop. Suspended producers support
+bare exits.
 
 ## Owners and preparation
 
-`ast_break_statement` and `ast_continue_statement` are leaf statements retaining
-only inherited token positions/parent ownership. Collection adds no symbols;
-inspection exposes their kind and syntax span. Lowering emits direct C++ statements.
-There are no added runtime APIs, generated handlers or sequencing lambdas.
+The two transfer leaves retain the written depth in their existing token span and
+the resolved destination in their existing non-owning target field. Bare exits
+use the active loop or switch. Only a written depth needs a parent walk.
+The preparation worker tracks reachable nonlocal exits by destination and direction
+until each target consumes its own exits. Protected regions isolate these facts
+so a terminating finally can cancel its incoming transfers. Constructor field states
+join at the destination switch. All facts stay local to the body.
 
-Preparation owns invocation-local loop depth, reset for each function and restored
-on both success and failure. A small local refactor replaces its return-only boolean
-with uint8 completion flags: fallthrough, return, break and continue. Constants live
-in `statement_completion`; no instances, AST caches or separate prepared records
-are allocated. Sequences compose only the fallthrough paths, alternatives union
-their possible exits, and each loop consumes its own transfers. A while retains a
-possible zero-iteration exit; a do-while proves return only when its body exclusively
-returns. Existing unreachable-after-return rejection extends to unconditional
-transfers. All reachable syntax and non-pruned branches/tests are checked once.
-
-Value barriers on branches and loops remain unchanged. No fixed point, additional
-traversal, branch-map copy or callee-body scan is introduced. The counter-based
-nearest-loop validation is sufficient while native output preserves the same loop
-nesting. Revisit target identity before switch, labelled exits, finally, or control
-flow transformations that alter that nesting.
-
-## Donor review
-
-Reviewed `compiler/my-try/04_analyze/prepare/semantics/{loops,transfers,completion}.php`
-and its control-flow catalog: nearest targets, do-continue tests and composition of
-distinct exit kinds are useful concepts. Its weak target facts, per-exit local maps,
-switch/finally handling and prepared transfer records are not adopted. Current
-v0.2 needs only the transient loop context and flags described above.
+Lowering emits native break or continue for the nearest target. A nonlocal break
+lands after its target. A nonlocal continue lands just beyond the loop body's local
+scope, before the native update or test. The emitter creates labels only for jumps
+it emits. When a jump crosses a finally, the protected region records the destination
+in its existing exit discriminator and replays it after cleanup. An enclosing finally
+can forward the same destination.
 
 ## Proofs
 
 `tests/transfers.php` covers all flavors, nested loops/conditionals, continue test
 execution, break test suppression, mixed transfer/return completion, rejected
-outside-loop/numbered/labelled transfers and unreachable trailing statements.
+outside-loop, invalid-depth and labelled transfers and unreachable trailing statements.
 It checks exact visit counts, inspection, emission purity, reset/reprepare and
 incremental callee-signature rejection/recovery with caller AST/token reuse.
 Caller edits between continue/break/outside-loop/error recovery retain the unchanged
 callee declaration; no-op reuse is verified. `tests/transfers_native.py` executes
 the behavioral cases and bounded next-iteration range failures. Existing loop
 native proofs remain regression coverage for value barriers and cross-file calls.
+
+The native finally suite exercises two destinations through nested cleanup, numbered
+continue with a for update, switch and foreach counting, throwing cleanup, and
+resident callee edits, failed edits and recovery versus a fresh build. The switch
+suite also checks readonly initialization through a break to an outer switch.
+Run `php v0.2/compiler/tools/measure_transfer_preparation.php` to time repeated body
+preparation after symbol and layout publication.
+
+### Numbered exit preparation measurements
+
+Local PHP with Xdebug off, pinned to one logical CPU. Five runs per compiler
+revision alternated in order. Each figure is the median of the run medians, using
+21 batches of 250 preparations of an already-collected function. The previous
+revision is `d5f510482`. All non-exit statements in each nesting comparison match.
+
+| Prepared body | Previous µs | Current µs |
+| --- | ---: | ---: |
+| Two loops, no exit | 7.98 | 8.06 |
+| Two loops, bare break | 8.35 | 8.60 |
+| Two loops, break 2 | — | 10.88 |
+| Four loops, bare break / break 4 | 13.63 / — | 13.84 / 17.00 |
+| Eight loops, bare break / break 8 | 24.32 / — | 24.59 / 29.67 |
+| Bare break and continue through finally | 18.73 | 19.56 |
+| Break and break 2 through finally | — | 22.38 |
 
 ## Verification results — 2026-11-04
 

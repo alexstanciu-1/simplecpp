@@ -37,6 +37,8 @@ final class Cpp_Emitter
 	private int $record_expressions = 0;
 	/** Owning lowering context for the innermost protected callable collecting exits. */
 	private ?Cpp_Finally_Exit $finally_exit = null;
+	/** Labels requested only by emitted transfers and consumed at their lexical destinations. @var bool[] */
+	private array $transfer_labels = [];
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
 	/** Native non-owning during emission of the selected function. */
@@ -791,7 +793,10 @@ CPP;
 			elseif ($statement instanceof ast_loop_transfer) {
 				$continuing = $statement instanceof ast_continue_statement;
 				$transfer = $continuing ? 'continue;' : 'break;';
-				if ($this->finally_exit !== null && $this->finally_exit->transfer_target($continuing ? statement_completion::continues : statement_completion::breaks) === $statement->target) {
+				if ($statement->numbered() && $statement->depth() > 1) {
+					$transfer = $this->numbered_transfer($statement);
+				}
+				elseif ($this->finally_exit !== null && $this->finally_exit->transfer_target($continuing ? statement_completion::continues : statement_completion::breaks) === $statement->target) {
 					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
 				}
 				elseif ($resume !== null) {
@@ -866,7 +871,7 @@ CPP;
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => null];
-				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
 				$lines[] = "\t}";
 				if ($resume !== null) {
 					array_pop($resume->loops);
@@ -923,7 +928,7 @@ CPP;
 					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => $update_label];
-				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
 					$lines[] = "\t" . $line;
 				}
 				if ($resume !== null) {
@@ -1090,6 +1095,11 @@ CPP;
 			else {
 				throw new \LogicException('Unhandled prepared statement');
 			}
+			if ($this->transfer_labels !== [] && ($statement instanceof ast_repeating_statement || $statement instanceof ast_switch_statement)
+				&& isset($this->transfer_labels[$label = 'scpp_break_' . $statement->start])) {
+				$lines[] = $label . ':;';
+				unset($this->transfer_labels[$label]);
+			}
 			if ($leaf) $lines[] = '}';
 		}
 		if ($resume !== null) {
@@ -1098,6 +1108,32 @@ CPP;
 		}
 		if ($body instanceof ast_function_body) $this->byte_view = null;
 		return $lines;
+	}
+
+	/** Emit a jump only once its intervening finalizers have replayed the transfer. */
+	private function numbered_transfer(ast_loop_transfer $statement): string
+	{
+		$label = ($statement instanceof ast_continue_statement ? 'scpp_continue_' : 'scpp_break_') . $statement->target->start;
+		if ($this->finally_exit?->crosses($statement)) return $this->finally_exit->save_route($label, $statement);
+		$this->transfer_labels[$label] = true;
+		return 'goto ' . $label . ';';
+	}
+
+	/** Keep a continue landing outside body locals, immediately before the native update or test.
+	 * @param ast_function_declaration[] $declarations
+	 * @param ast_global_declaration[] $globals
+	 * @param bool[] $headers
+	 * @return string[]
+	 */
+	private function loop_body_lines(ast_repeating_statement $loop, array &$declarations, array &$globals, array &$headers,
+		ast_function_declaration $function, ?cpp_resume_context $resume): array
+	{
+		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume);
+		if ($this->transfer_labels === []) return $body;
+		$label = 'scpp_continue_' . $loop->start;
+		if (!isset($this->transfer_labels[$label])) return $body;
+		unset($this->transfer_labels[$label]);
+		return ['{', ...$body, '}', $label . ':;'];
 	}
 
 	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
@@ -1182,12 +1218,13 @@ CPP;
 		$outer = $this->finally_exit;
 		$pending = null;
 		$returns = ($syntax->protected_completion & statement_completion::returns) !== 0;
-		if ($returns || ($syntax->protected_completion & statement_completion::loop_transfers)) {
+		if ($returns || ($syntax->protected_completion & (statement_completion::loop_transfers | statement_completion::numbered))) {
 			$result = $function->return_type_def();
 			$type = !$returns || $result === type_void::instance() ? null
 				: ($function->is_implicit_entry ? 'int' : $this->signature_type($result, false));
 			$pending = new Cpp_Finally_Exit($syntax, $type);
-			$lines[] = "\t\t" . $pending->declaration();
+			$declaration_line = count($lines);
+			$lines[] = '';
 			$lines[] = "\t\t" . $pending->start();
 		}
 		$lines[] = "\t\ttry {";
@@ -1201,12 +1238,16 @@ CPP;
 		}
 		$lines[] = "\t\t} catch (...) { scpp_finalizer(); throw; }";
 		if ($pending !== null) {
+			$lines[$declaration_line] = "\t\t" . $pending->declaration();
 			$lines[] = "\t\t" . (($syntax->protected_completion & statement_completion::fallthrough) !== 0
 				? 'return {};' : '__builtin_trap();');
 			$lines[] = "\t\t}();";
 		}
 		$lines[] = "\t\tscpp_finalizer();";
 		if ($pending !== null) {
+			if ($syntax->completion & statement_completion::numbered) {
+				foreach ($pending->routes as $label => $route) $lines[] = "\t\t" . $pending->selected($label) . $this->numbered_transfer($route);
+			}
 			foreach ([statement_completion::returns, statement_completion::breaks, statement_completion::continues] as $exit) {
 				if (($syntax->completion & $exit) !== 0) $lines[] = "\t\t" . $pending->replay($exit, $outer);
 			}

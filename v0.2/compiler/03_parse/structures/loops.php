@@ -62,11 +62,21 @@ final class ast_for_statement extends ast_loop_statement
 	}
 }
 
-/** Unlabelled transfer resolved to the innermost lexical repeating statement. */
+/** Transfer with a non-owning prepared destination. Numbered forms retain their literal in the syntax span. */
 abstract class ast_loop_transfer extends ast_statement
 {
 	/** Prepared fact: native non-owning target; null until resolved or after invalidation. */
 	public ast_switch_statement|ast_repeating_statement|null $target = null;
+
+	public function numbered(): bool
+	{
+		return $this->end - $this->start > 2;
+	}
+
+	public function depth(): int
+	{
+		return $this->numbered() ? (int)$this->lexical_root()->tokens->text_at($this->end - 2) : 1;
+	}
 }
 
 /** Bare break; exits the resolved loop without running its update or test. */

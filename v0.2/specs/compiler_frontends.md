@@ -192,8 +192,9 @@ It runs once after the protected operation has unwound or finished, including
 after runtime guards and exceptions escaping a handler. A saved value or void
 return resumes after cleanup. Nested finalizers finish from inner to outer.
 An escaping finalizer exception replaces the pending exit. Returns from finally
-are rejected. Unlabelled break and continue can cross protected regions and
-resume their original loop after intervening finalizers. Continue proceeds to
+are rejected. Bare and numbered exits can cross protected regions and
+resume their resolved destination after intervening finalizers. Break counts loops
+and switches. Continue counts loops. Continue proceeds to
 the loop update or next test. Break skips both. Transfers within a finalizer
 can target its own loops. A transfer out of a finalizer is rejected. Exception
 statements in yield producers and exception regions during readonly initialization

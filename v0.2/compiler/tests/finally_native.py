@@ -285,6 +285,83 @@ def prove(work, flavor, library):
         assert 'error' not in result, result
         native(output, work / 'mixed-exits', (0, b'N0N1M0N0N1M1saved', b''), library)
 
+        # Edit a callee between a nearest exit and an outward exit under two finalizers.
+        choose = function('choose', 'void', [('near', 'bool')], f'''
+            for (;;) {{
+                for (;;) {{
+                    try {{
+                        try {{
+                            if ({v}near) {{ break; }}
+                            break;
+                        }} finally {{ echo "I"; }}
+                    }} finally {{ echo "F"; }}
+                }}
+                echo "N"; break;
+            }}
+            echo ":";
+        ''')
+        source_edit(provider, choose)
+        source_edit(entry, 'choose(true); choose(false); return 0;')
+        baseline = invoke(resident)
+        assert 'error' not in baseline, baseline
+        native(output, work / 'nearest', (0, b'IFN:IFN:', b''), library)
+        outward = choose.replace('                            break;', '                            break 2;')
+        source_edit(provider, outward)
+        edited = invoke(resident)
+        assert edited['preparation']['prepared'] == 1 and [Path(p).name for p in edited['emitted_sources']] == [provider.name], edited
+        native(output, work / 'numbered', (0, b'IFN:IF:', b''), library)
+        saved = artifacts(output)
+        source_edit(provider, outward.replace('break 2;', 'break 3;'))
+        error = invoke(resident)
+        assert 'exceeds' in error.get('error', '') and artifacts(output) == saved, error
+        assert fresh_build(app, work / 'invalid-depth').get('error') == error['error']
+        source_edit(provider, outward)
+        assert 'error' not in invoke(resident)
+        assert 'error' not in fresh_build(app, work / 'fresh-numbered')
+        assert artifacts(output) == artifacts(work / 'fresh-numbered') == saved
+        idle = invoke(resident)
+        assert idle['preparation']['prepared'] == 0 and idle['emitted_sources'] == [], idle
+
+        # Both nonlocal exits leave the same protected region with different destinations.
+        multiple = function('levels', 'void', [('far', 'bool')], f'''
+            for (;;) {{
+                for (;;) {{ for (;;) {{
+                    try {{ if ({v}far) {{ break 3; }} break 2; }} finally {{ echo "L"; }}
+                }} }}
+                echo "M"; break;
+            }}
+        ''')
+        # The native continue landing leaves body locals and still executes the for update.
+        source_edit(entry, multiple + 'levels(false); levels(true);' + f'{values} = [1,2,3];' + infer('i', '0') + f'''
+            for ({v}i = 0; {v}i < 3; {v}i++) {{
+                foreach ({v}values as {v}item) {{
+                    switch ({v}item) {{
+                        default: try {{ continue 2; }} finally {{ echo {v}i; }}
+                    }}
+                }}
+                {infer("suffix", '"unreached"')}
+                echo {v}suffix;
+            }}
+            foreach ({v}values as {v}item) {{
+                switch ({v}item) {{ case 1: break 2; }}
+                echo "unexpected";
+            }}
+            do {{ for (;;) {{ continue 2; }} }} while (false);
+            for (;;) {{ for (;;) {{ break 2; }} }}
+            switch ({v}i) {{ default: for (;;) {{ break 2; }} }}
+            return 0;
+        ''')
+        routes = invoke(resident)
+        assert 'error' not in routes, routes
+        native(output, work / 'numbered-targets', (0, b'LML012', b''), library)
+
+        # An escaping finalizer exception cancels the pending outer break.
+        source_edit(entry, f'try {{ for (;;) {{ for (;;) {{ try {{ break 2; }} finally {{ {throw("override")} }} }} }} }} '
+                    + handler + f' {{ echo {v}failure{member}get_message(); }} return 0;')
+        override = invoke(resident)
+        assert 'error' not in override, override
+        native(output, work / 'numbered-replaced', (0, b'override', b''), library)
+
         duplicate = form['local']('failure', 'Exception').removesuffix(';')
         source_edit(entry, f'try {{}} {handler} {{ {duplicate} = {factory}("duplicate"); }} finally {{}} return 0;')
         failure = invoke(resident)
