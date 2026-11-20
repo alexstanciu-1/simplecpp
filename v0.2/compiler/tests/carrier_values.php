@@ -88,6 +88,30 @@ foreach (flavor::cases() as $flavor) {
 		'Expected direct value-presence checks on both a call and a local');
 	$fixtures[$flavor->name . '-presence'] = ['cpp' => $cpp,
 		'stdout_hex' => bin2hex('0101yes1once1onceok1')];
+	$fill = match ($flavor) {
+		flavor::cpp => 'null fill(nullable<string> &item)',
+		flavor::php => 'function fill(nullable<string> &$item): null',
+		flavor::js => 'function fill(&item: nullable<string>): null',
+	};
+	$strict_null = $function('nullable<string>', 'text_once', 'echo "P"; return "";')
+		. $function('nullable<string>', 'absent_once', 'echo "A"; return null;')
+		. $function('null', 'null_once', 'echo "N"; return null;')
+		. $fill . '{echo "M"; ' . $var('item') . ' = "filled"; return null;}'
+		. $decl('?string', 'missing', 'null') . $decl('?string', 'blank', '""');
+	foreach ([$var('missing'), $var('blank')] as $candidate) {
+		$strict_null .= 'echo (int)(' . $candidate . ' === null), (int)(' . $candidate . ' !== null), '
+			. '(int)(null === ' . $candidate . '), (int)(null !== ' . $candidate . ');';
+	}
+	$strict_null .= 'echo (int)(text_once() !== null), (int)(null_once() === absent_once()), '
+		. '(int)(text_once() !== null_once());'
+		. 'echo (int)(' . $var('missing') . ' === fill(' . $var('missing') . ')), (int)(' . $var('missing') . ' !== null);'
+		. $var('missing') . ' = null; echo (int)(fill(' . $var('missing') . ') !== ' . $var('missing') . '); return 8;';
+	$entry = $prepare($strict_null);
+	$before = serialize($entry);
+	$cpp = (new Cpp_Emitter())->emit($entry);
+	verify($before === serialize($entry), 'Strict null comparison lowering mutated prepared facts');
+	verify(str_contains($cpp, '.has_value()') && !str_contains($cpp, '.value()'), 'Strict null comparison extracted its payload');
+	$fixtures[$flavor->name . '-strict-null'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('10100101P1NA1PN1M11M1')];
 	$vector = $decl('vector<string>', 'items', '[]') . $var('items') . '[] = "first";'
 		. $decl('nullable<vector<string>>', 'packed', $var('items'))
 		. $decl('vector<string>', 'copy', $var('packed')) . $var('copy') . '[] = "second";'

@@ -714,12 +714,8 @@ final class shared_record_type_definition extends record_handle_definition
 			return "(($left).ptr $op ($right).ptr)";
 		}
 		$owner_first = $expr->left->type_def() === $this;
-		$test = ($expr->operator === binary_operator::equal || $expr->operator === binary_operator::identical ? '!' : '')
-			. $this->lower_cpp_condition($owner_first ? $left : $right);
-		$null = $owner_first ? $expr->right : $expr->left;
-		if ($null instanceof ast_keyword_expression) return '(' . $test . ')';
-		return $owner_first ? '([&]() { const bool present_result = ' . $test . '; (void)(' . $right . '); return present_result; }())'
-			: '((void)(' . $left . '), ' . $test . ')';
+		return $this->lower_null_presence_comparison($expr, $this->lower_cpp_condition($owner_first ? $left : $right),
+			$owner_first ? $right : $left);
 	}
 
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool

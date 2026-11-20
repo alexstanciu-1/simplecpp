@@ -449,6 +449,17 @@ abstract class type_definition
 		return $this->lower_cpp_binary($expr->operator, $left, $right, $expr->right->value_type(), $typed_initializer);
 	}
 
+	/** Observe presence in operand order, including effects from a null-typed expression. */
+	protected function lower_null_presence_comparison(ast_binary_expression $expr, string $presence, string $null_value): string
+	{
+		$null_first = $expr->left->type_def() === type_null::instance();
+		$null = $null_first ? $expr->left : $expr->right;
+		$test = ($expr->operator === binary_operator::equal || $expr->operator === binary_operator::identical ? '!' : '') . $presence;
+		if ($null instanceof ast_keyword_expression) return '(' . $test . ')';
+		return $null_first ? '((void)(' . $null_value . '), ' . $test . ')'
+			: '([&]() { const bool present_result = ' . $test . '; (void)(' . $null_value . '); return present_result; }())';
+	}
+
 	/** A known exact native result when emitted as an argument. Null leaves normalization to the consumer. */
 	public function cpp_exact_binary_result(binary_operator $operator): ?type_definition
 	{

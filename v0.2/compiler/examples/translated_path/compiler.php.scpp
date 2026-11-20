@@ -116,7 +116,7 @@ final class Translation {
 
 	public function compile(?string $definition_text, string $entry_text): string {
 		$definition = $this->definition;
-		if (!isset($definition_text)) {
+		if ($definition_text === null) {
 			$definition = null;
 		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
 			$source = new Translation_Source("definition.php", $definition_text);

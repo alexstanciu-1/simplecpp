@@ -124,9 +124,10 @@ final class ast_binary_expression extends ast_expression
 	{
 		$this->settle_value($result, null);
 		$this->execution_type = $execution ?? $this->left->value_type();
-		$this->left_conversion = $left | (!$this->operator->logical() && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
+		$uses_payload = !$this->operator->logical() && !($this->execution_type instanceof carrier_type_definition);
+		$this->left_conversion = $left | ($uses_payload && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
 		$this->right_conversion = $right;
-		if (!$this->operator->logical() && !($this->right instanceof ast_throw_expression) && $this->right->type_def() instanceof carrier_type_definition) {
+		if ($uses_payload && !($this->right instanceof ast_throw_expression) && $this->right->type_def() instanceof carrier_type_definition) {
 			$this->right_conversion |= value_conversion::EXTRACT;
 		}
 	}

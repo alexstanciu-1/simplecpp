@@ -27,6 +27,20 @@ abstract class carrier_type_definition extends type_definition
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** A strict null comparison operates on the carrier itself and reads only presence. */
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
+	{
+		$carrier_first = $expr->left->type_def() === $this;
+		return $this->lower_null_presence_comparison($expr, $this->lower_cpp_presence($carrier_first ? $left : $right),
+			$carrier_first ? $right : $left);
+	}
+
+	/** The presence lowering sequences both original operands without copying the carrier. */
+	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
+	{
+		return true;
+	}
+
 	/** Enforce the metadata extraction policy before selecting a payload operation. */
 	public function require_extraction(ast_expression $site, conversion_context $context): void
 	{

@@ -27,11 +27,16 @@ a successful false payload. Null constructs nullable absence only. Same-carrier 
 preserves the complete state; converting between carrier identities extracts and rewraps
 an admitted payload, and does not silently propagate absence or failure.
 
-Nonlogical binary operators and unary signs/bitwise negation select the existing
-payload type handlers. There is no carrier promotion or operator matrix. Both operand
-orders and two-carrier operations work, producing the ordinary payload operation result.
-This implements the agreed payload-based operator model, not a separate state-aware
-carrier equality/identity scheme. No recursive carrier peeling is performed.
+Strict comparison of a nullable carrier with a null-typed operand reads the
+carrier's presence in either operand order. An empty string is a present value.
+Both operands are evaluated once, and a left carrier's presence is observed before
+any effects from the right operand. This comparison uses the existing presence
+binding without extracting or copying the payload.
+
+Other nonlogical binary operators and unary signs/bitwise negation select the
+existing payload type handlers. Both operand orders and two-carrier operations
+produce the ordinary payload operation result. There is no carrier promotion,
+recursive carrier peeling or general state-aware comparison path.
 
 `isset(carrier)` is true for a successful value or true sentinel. A successful false
 payload is present. Conditions and logical operators preserve alternate-state behavior:

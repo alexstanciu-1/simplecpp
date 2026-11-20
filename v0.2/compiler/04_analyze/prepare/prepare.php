@@ -1275,11 +1275,18 @@ final class Preparation
 				$box->prepare_binary($syntax);
 				return;
 			}
-			if ($syntax->left->type_def() instanceof carrier_type_definition) {
-				$syntax->left->type_def()->require_extraction($syntax->left, conversion_context::assignment);
+			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
+				$carrier = $left === type_null::instance() ? $right : ($right === type_null::instance() ? $left : null);
+				if ($carrier instanceof carrier_type_definition && $carrier->accepts_empty()) {
+					$syntax->settle_binary(type_bool::instance(), $carrier);
+					return;
+				}
 			}
-			if ($syntax->right->type_def() instanceof carrier_type_definition) {
-				$syntax->right->type_def()->require_extraction($syntax->right, conversion_context::assignment);
+			if ($left instanceof carrier_type_definition) {
+				$left->require_extraction($syntax->left, conversion_context::assignment);
+			}
+			if ($right instanceof carrier_type_definition) {
+				$right->require_extraction($syntax->right, conversion_context::assignment);
 			}
 			$syntax->left->value_type()->prepare_binary($syntax);
 			return;
