@@ -65,7 +65,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
 
     translated = run(executable, cwd=work)
     parsed, *diagnostics = translated.stdout.decode().splitlines()
-    assert len(diagnostics) == 12, translated.stdout
+    assert len(diagnostics) == 15, translated.stdout
     oracle = work / 'oracle'
     oracle.mkdir()
     (oracle / 'module.json').write_text('{}')
@@ -91,11 +91,16 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         ('bad', updated, bad, 'main.php', bad.index(b'missing_2')),
         ('overflow', overflow, initial, 'definition.php', overflow.index(b'9223372036854775808')),
         ('unclosed', unclosed, fixed, 'definition.php', len(unclosed)),
+        ('removed', None, fixed, 'main.php', fixed.index(b'answer_2')),
     ]
     for index, (name, current_definition, entry, expected_path, expected_offset) in enumerate(errors):
         path, offset, message = diagnostics[index * 3:index * 3 + 3]
         assert (path, int(offset)) == (expected_path, expected_offset), (path, offset, message)
-        (oracle / 'definition.php').write_bytes(current_definition)
+        definition_path = oracle / 'definition.php'
+        if current_definition is None:
+            definition_path.unlink()
+        else:
+            definition_path.write_bytes(current_definition)
         (oracle / 'main.php').write_bytes(entry)
         diagnostic = project(oracle, work / f'oracle-{name}', expected=1)
         text = (diagnostic.stdout + diagnostic.stderr).decode()
@@ -111,6 +116,7 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         ('initial', definition, initial, 8),
         ('recovered', definition, fixed, 8),
         ('updated', updated, fixed, 9),
+        ('restored', definition, fixed, 8),
     ]:
         (oracle / 'definition.php').write_bytes(current_definition)
         (oracle / 'main.php').write_bytes(entry)
@@ -124,4 +130,4 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         actual = run(generated, expected=status)
         assert (actual.stdout, actual.stderr) == (expected.stdout, expected.stderr)
 
-print('Translated function ranges, diagnostics, recovery, and executable behavior match the PHP oracle.')
+print('Translated function ranges, stable symbol lifecycle, diagnostics, and executable behavior match the PHP oracle.')

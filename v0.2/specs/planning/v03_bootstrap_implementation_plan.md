@@ -2146,13 +2146,19 @@ compares the symbol key and token ranges with the actual PHP AST.
 
 It compares the source location and message for an incomplete entry, an unknown
 call after definition preparation, int64 overflow, and a missing closing brace
-after parsing the return statement. Failure keeps the published declaration,
-entry syntax and output. Repair in the same translated instance matches a fresh
-build. An entry edit reuses the definition; a definition edit reuses the entry
-syntax and binds the call again. A reader retaining the previous definition can
-still reach its body and resolve its literal span against the original tokens
-and bytes. A failed attempt to attach the same body to a second declaration
-preserves the original parent and leaves the second declaration incomplete.
+after parsing the return statement. These failed edits preserve the declaration,
+caller binding, symbol head and output. An entry edit reuses the definition and
+its symbol identity. Repair in the same instance matches a fresh build.
+
+The compilation's symbol table owns one entry per canonical function key. The
+entry holds a weak head and the prepared caller retains the entry. Definition
+replacement retargets it while reusing the unchanged caller. Explicit deletion
+publishes a tombstone and produces a missing-call diagnostic at the same
+location as removing the definition file in PHP. The last successful C++
+remains available. Restoration fills the same entry and matches fresh output.
+A reader retaining the previous definition can still resolve its literal span
+against the old tokens and bytes. Reattaching its body to a second declaration
+fails without moving the parent or completing that declaration.
 
 The proof uses the current 31-value-bit native entry target and the bounded
 PHP-flavor grammar above. It lives under
