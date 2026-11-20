@@ -1421,7 +1421,7 @@ final class Preparation
 				if ($runtime->receiver_method) {
 					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
-						throw new diagnostic($call->source(), $call->byte_start(), 'Collection methods use -> in PHP/C++ and . in JS');
+						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS');
 					}
 				}
 				elseif ($call->member_separator === token_kind::member) {

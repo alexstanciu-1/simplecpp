@@ -511,7 +511,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Attach the completed body once and settle the function token boundary. */
 	public function complete_body(ast_function_body $body): void
 	{
-		if (($this->body !== null) || ($body->start < $this->start)) {
+		if ($this->is_abstract || isset($this->end) || $body->start < $this->header_end) {
 			throw new \LogicException('Invalid function body publication');
 		}
 		$body->attach($this);
@@ -522,7 +522,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Complete a bodyless declaration without inventing executable syntax. */
 	public function complete_abstract(int $end /** uint32 */): void
 	{
-		if (!$this->is_abstract || $this->body !== null) throw new \LogicException('Invalid abstract method completion');
+		if (!$this->is_abstract || isset($this->end) || $end < $this->header_end) {
+			throw new \LogicException('Invalid abstract method completion');
+		}
 		$this->end = $end;
 	}
 

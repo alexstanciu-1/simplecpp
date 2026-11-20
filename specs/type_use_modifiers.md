@@ -391,6 +391,13 @@ if ($held) {
 }
 ```
 
+The `is_empty()` member of `weak<T>` reports whether the handle has a control
+block. It returns true for a default-empty handle or one derived from an empty
+owner. It returns false for observers of both live and expired objects. For
+PHP and C++ flavors use `observer->is_empty()`; for JS use
+`observer.is_empty()`. The method evaluates its receiver once and reads only
+the control-block pointer. Use `lock()` to acquire a shared owner.
+
 Weak truthiness, negation, `isset`/`empty` and strict-null comparisons remain
 rejected; apply those operations to the locked shared result instead. A condition
 such as `if (lock($observer))` tests acquisition but does not retain that temporary

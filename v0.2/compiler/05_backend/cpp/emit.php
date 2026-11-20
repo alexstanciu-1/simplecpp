@@ -320,6 +320,7 @@ struct $weak {
 		return *this;
 	}
 	void retain() noexcept;
+	bool is_empty() const noexcept { return ptr == nullptr; }
 	$owner lock() const noexcept;
 	~$weak();
 };
