@@ -231,7 +231,10 @@ final class Preparation
 				$this->value($statement->value);
 				$type = $statement->target->type_def();
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
-				else $statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+				else {
+					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
+					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+				}
 				if ($initializing_field !== null) $this->readonly_initialization->states[$initializing_field->short_name] = 1;
 			}
 			elseif ($statement instanceof ast_index_compound) {
@@ -972,7 +975,8 @@ final class Preparation
 			if ($field->is_protected && !$field->parent->definition->permits_protected_access($context, $type, $this->access_watcher())) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
-			$syntax->settle_field($field->type_def());
+			$field_type = $field->type_def();
+			$syntax->settle_field($field_type instanceof class_union_type_definition ? ($field_type->receiver_view($syntax) ?? $field_type) : $field_type);
 			if (!(($syntax->parent instanceof ast_field_assignment) && $syntax->parent->target === $syntax)) {
 				$this->readonly_initialization?->read($syntax);
 			}
@@ -1125,6 +1129,7 @@ final class Preparation
 				$type = $binding->type_def();
 				$view = $type instanceof intersection_type_definition
 					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+				if ($type instanceof class_union_type_definition) $view = $type->receiver_view($syntax);
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
@@ -1693,6 +1698,15 @@ final class Preparation
 		$type->require_destruction($site);
 	}
 
+	/** A concrete source can leave the destination union after an ancestry edit. */
+	private function watch_union_source(ast_expression $value): void
+	{
+		$source = $value->type_def();
+		if ($source instanceof shared_record_type_definition) {
+			$this->dependencies?->watch($this->symbols->entry($source->payload->declaration->symbol_key()), $this->owner);
+		}
+	}
+
 	/** Watch both missing and existing targets without inspecting their bodies. */
 	private function callback_reference(ast_callable_reference $site, callback_type_definition $signature): void
 	{
@@ -1765,6 +1779,7 @@ final class Preparation
 			}
 			else {
 				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+				if ($type instanceof class_union_type_definition) $this->watch_union_source($argument);
 				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
 					&& ($local = $argument->declaration()) instanceof ast_local_binding
 					&& isset($this->guards[$local->storage_id()])) {

@@ -163,7 +163,7 @@ final class Cpp_Headers
 		$methods = [];
 		$headers = [];
 		foreach ($record->fields as $field) {
-			$type = $field->type_def();
+			$type = $field->storage_type();
 			if ($type instanceof record_handle_definition) {
 				$methods[$type->payload->name] ??= $emitter->owner_methods($type->payload->shared, $headers);
 				$type = $type->payload;
@@ -204,7 +204,7 @@ final class Cpp_Headers
 			$children[$this->publish_layout($interface->declaration, $emitter, $root)] = true;
 		}
 		foreach ($record->fields as $field) {
-			$type = $field->type_def();
+			$type = $field->storage_type();
 			if ($type instanceof application_collection_type) {
 				$children[$this->publish_collection($type, $emitter, $root)] = true;
 			} elseif ($type instanceof record_handle_definition) {

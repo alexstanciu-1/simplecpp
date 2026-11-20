@@ -622,10 +622,10 @@ final class Parser
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
-				$type = $this->parameter_type();
+				$type = $this->type_reference(allow_void: true, parameter: true);
 			}
 			else {
-				$type = $this->parameter_type();
+				$type = $this->type_reference(allow_void: true, parameter: true);
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
@@ -649,15 +649,12 @@ final class Parser
 	}
 
 	/** Distinguish a C++ reference declarator (Base &name) from Base & Capability name. */
-	private function parameter_type(): ast_type_reference
+	private function intersection_follows(): bool
 	{
-		$type = $this->return_type();
 		$c = $this->cursor;
-		if (!$c->is(token_kind::ampersand) || !$c->next_is(token_kind::identifier)) return $type;
-		if ($c->tokens->source->flavor === flavor::cpp
-			&& !in_array($c->tokens->tokens[$c->position() + 2]->kind ?? null, [token_kind::identifier, token_kind::ampersand], true)) return $type;
-		$c->take(token_kind::ampersand, '&');
-		return new ast_intersection_reference($type, $this->named_type());
+		return $c->is(token_kind::ampersand) && $c->next_is(token_kind::identifier)
+			&& ($c->tokens->source->flavor !== flavor::cpp
+				|| in_array($c->tokens->tokens[$c->position() + 2]->kind ?? null, [token_kind::identifier, token_kind::ampersand], true));
 	}
 
 	/** The reference marker precedes the parameter name in each flavor. */
@@ -770,41 +767,43 @@ final class Parser
 	}
 
 	/** Type keywords and identifiers share generated registration; preparation owns argument admission. */
-	public function named_type(): ast_type_reference
+	public function named_type(bool $allow_union = false): ast_type_reference
 	{
-		return $this->type_reference();
+		return $this->type_reference(allow_union: $allow_union);
 	}
 
 	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
-	private function type_reference(bool $argument = false, bool $allow_void = false): ast_type_reference
+	private function type_reference(bool $argument = false, bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
+		$child = null;
 		if ($this->cursor->is(token_kind::question)) {
 			$this->cursor->take(token_kind::question, '?');
-			$payload = $this->type_reference(false, false);
-			$end = $this->cursor->position();
-			$next = null;
-			if ($argument && $this->cursor->is(token_kind::comma)) {
-				$this->cursor->take(token_kind::comma, ',');
-				$next = $this->type_reference(true, true);
+			$word = 'nullable';
+			$child = $this->type_reference();
+		} else {
+			$word = $this->cursor->tokens->text_at($start);
+			if ($this->cursor->is(token_kind::keyword)
+				&& (($word === 'weak') || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
+				$this->cursor->take_keyword($word);
+			} else {
+				$word = $this->cursor->name(token_kind::identifier);
 			}
-			return new ast_type_reference($start, $end, 'nullable', $payload, $next);
-		}
-		$word = $this->cursor->tokens->text_at($start);
-		if ($this->cursor->is(token_kind::keyword)
-			&& (($word === 'weak') || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
-			$this->cursor->take_keyword($word);
-		}
-		else {
-			$word = $this->cursor->name(token_kind::identifier);
-		}
-		$child = null;
-		if ($this->cursor->is(token_kind::less)) {
-			$this->cursor->take(token_kind::less, '<');
-			$child = $this->type_reference(true, true);
-			$this->cursor->take(token_kind::greater, '>');
+			if ($this->cursor->is(token_kind::less)) {
+				$this->cursor->take(token_kind::less, '<');
+				$child = $this->type_reference(true, true);
+				$this->cursor->take(token_kind::greater, '>');
+			}
 		}
 		$end = $this->cursor->position();
+		if ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows())) {
+			$operator = $this->cursor->tokens->tokens[$end]->kind;
+			$separator = $operator === token_kind::pipe ? '|' : '&';
+			$this->cursor->take($operator, $separator);
+			$next = $this->named_type();
+			$first = new ast_type_reference($start, $end, $word, $child, $next);
+			return new ast_compound_type_reference($start, $next->end, $separator, $first);
+		}
 		$next = null;
 		if ($argument && $this->cursor->is(token_kind::comma)) {
 			$this->cursor->take(token_kind::comma, ',');

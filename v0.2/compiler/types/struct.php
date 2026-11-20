@@ -3,6 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Union field storage can be selected once every declared base chain is available. Native uint8. */
+enum record_layout_state: int
+{
+	case pending = 0;
+	case awaiting_union_fields = 1;
+	case ready = 2;
+}
+
 /** Nominal record payload/layout identity, distinct from its source value storage contract. */
 final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
@@ -23,12 +31,15 @@ final class record_type_definition extends type_definition implements dependency
 	private ?symbol_entry $symbol = null;
 	private string $source_key = '';
 
-	/** Canonical intersections used by live signatures. @var \WeakMap<shared_record_type_definition,\WeakReference<intersection_type_definition>>|null */
-	private ?\WeakMap $intersections = null;
+	/**
+	 * Live parameter contracts keyed by the other nominal record: an interface for intersections, a class for unions.
+	 * @var \WeakMap<record_type_definition,\WeakReference<intersection_type_definition|class_union_type_definition>>|null
+	 */
+	private ?\WeakMap $parameter_contracts = null;
 
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
-	private bool $ready = false;
+	private record_layout_state $layout_state = record_layout_state::pending;
 	/** Prepared fact: callable entries for unresolved trait hooks owned by this abstract record. @var symbol_entry[] */
 	private array $hook_slots /** array<string,symbol_entry> */ = [];
 	/** Prepared fact: abstract/interface obligations checked after signatures; cleared with nominal layout invalidation. */
@@ -61,11 +72,32 @@ final class record_type_definition extends type_definition implements dependency
 	/** Share the nominal pair while signatures retain it. Both cache links are weak across generations. */
 	public function intersection(shared_record_type_definition $capability): intersection_type_definition
 	{
-		$this->intersections ??= new \WeakMap();
-		$type = ($this->intersections[$capability] ?? null)?->get();
+		$this->parameter_contracts ??= new \WeakMap();
+		$type = ($this->parameter_contracts[$capability->payload] ?? null)?->get();
 		if ($type === null) {
 			$type = new intersection_type_definition($this->required, $capability);
-			$this->intersections[$capability] = \WeakReference::create($type);
+			$this->parameter_contracts[$capability->payload] = \WeakReference::create($type);
+		}
+		return $type;
+	}
+
+	/** Select the nearest common class and intern the pair in canonical name order. */
+	public function class_union(self $other): ?class_union_type_definition
+	{
+		if (strcmp($this->name, $other->name) > 0) return $other->class_union($this);
+		// Walking both chains in opposite concatenation order aligns their shared suffix in linear time.
+		$base = $this;
+		$peer = $other;
+		while ($base !== $peer) {
+			$base = $base === null ? $other : $base->base();
+			$peer = $peer === null ? $this : $peer->base();
+		}
+		if ($base === null) return null;
+		$this->parameter_contracts ??= new \WeakMap();
+		$type = ($this->parameter_contracts[$other] ?? null)?->get();
+		if ($type === null || $type->base !== $base->required) {
+			$type = new class_union_type_definition($this, $other, $base->required);
+			$this->parameter_contracts[$other] = \WeakReference::create($type);
 		}
 		return $type;
 	}
@@ -81,7 +113,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
-		$this->ready = false;
+		$this->layout_state = record_layout_state::pending;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
 		$this->base_type = null;
@@ -102,8 +134,8 @@ final class record_type_definition extends type_definition implements dependency
 	/** Drop stale field links and relay invalidation once for the previously completed layout. */
 	public function invalidate_dependencies(): void
 	{
-		if ($this->ready) $this->dependencies->changed($this->symbol);
-		$this->ready = false;
+		if ($this->layout_state !== record_layout_state::pending) $this->dependencies->changed($this->symbol);
+		$this->layout_state = record_layout_state::pending;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
 		$this->base_type = null;
@@ -115,9 +147,9 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** Resolve children first; diagnose inline cycles and the deferred recursive concrete-field boundary. @param bool[] $active */
-	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */, ?preparation_work $work, bool $concrete_field = false): void
+	public function prepare_layout(scope $symbols, array &$active /** array<string,bool> */, ?preparation_work $work, bool $concrete_field = false): record_layout_state
 	{
-		if ($this->ready) return;
+		if ($this->layout_state !== record_layout_state::pending) return $this->layout_state;
 		if (isset($active[$this->name])) {
 			$names = array_keys($active);
 			$cycle = array_slice($names, array_search($this->name, $names, true));
@@ -169,12 +201,21 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
+		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Duplicate struct property: ' . $this->name . '::' . $field->short_name);
 			}
 			if (($duplicate = $field->duplicate_element()) !== null) {
 				throw new diagnostic($field->source(), $duplicate->byte_start(), 'Duplicate struct field: ' . $field->short_name);
+			}
+			if ($field->is_readonly && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Readonly property requires a default or constructor: ' . $field->short_name);
+			}
+			if ($field->type_reference instanceof ast_compound_type_reference) {
+				if ($field->initializer !== null) throw new diagnostic($field->source(), $field->initializer->byte_start(), 'Readonly union field requires constructor initialization');
+				$state = record_layout_state::awaiting_union_fields;
+				continue;
 			}
 			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			// The temporary instance-property policy permits absence independently of written nullability.
@@ -209,15 +250,24 @@ final class record_type_definition extends type_definition implements dependency
 				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
 			}
-			if ($field->is_readonly && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
-				throw new diagnostic($field->source(), $field->byte_start(), 'Readonly property requires a default or constructor: ' . $field->short_name);
-			}
 			$field->settle_type($type);
 		}
 		unset($active[$this->name]);
-		$this->ready = true;
+		$this->layout_state = $state;
 		// A declaration-only unit may emit dependent constructor or owner declarations.
 		$work?->change_source($this->source_key);
+		return $state;
+	}
+
+	/** Finish only dirty holders. A failed resolution remains pending for the next generation. */
+	public function finish_union_fields(scope $symbols): void
+	{
+		foreach ($this->declaration->fields as $field) {
+			if ($field->type_reference instanceof ast_compound_type_reference) {
+				$field->settle_type(Type_Resolution::class_union($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies));
+			}
+		}
+		$this->layout_state = record_layout_state::ready;
 	}
 
 	/** Check once after ordinary signature preparation; all bodies consume the settled method. */
@@ -674,6 +724,7 @@ final class shared_record_type_definition extends record_handle_definition
 		if ($this->required && $value->constant_known() && $value->constant() === null) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Required object cannot be null: ' . $this->name);
 		}
+		if ($source instanceof class_union_type_definition) $source = $source->base;
 		if ($source instanceof intersection_type_definition) {
 			if ($source->base->payload->derives_from($this->payload)) return value_conversion::intersection_base;
 			if ($source->capability->payload->derives_from($this->payload)) return value_conversion::intersection_capability;
@@ -694,6 +745,7 @@ final class shared_record_type_definition extends record_handle_definition
 	/** Select the shared-view pattern from settled conversion facts; no ancestry query occurs here. */
 	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
 	{
+		if ($source instanceof class_union_type_definition) $source = $source->base;
 		if ($source instanceof intersection_type_definition && ($conversion === value_conversion::intersection_base || $conversion === value_conversion::intersection_capability)) {
 			return $source->project($this, $conversion);
 		}
@@ -719,6 +771,59 @@ final class shared_record_type_definition extends record_handle_definition
 	public function cpp_type(): string
 	{
 		return 'owner_' . Cpp_Emitter::qualified_name($this->payload->declaration);
+	}
+}
+
+/** Closed class contract, e.g. NameExpr|FieldExpr, stored as its nearest common class owner. */
+final class class_union_type_definition extends type_definition
+{
+	/** PROPERTIES */
+	private readonly record_type_definition $first;
+	private readonly record_type_definition $second;
+	public readonly shared_record_type_definition $base;
+
+	/** CONSTRUCTOR */
+	public function __construct(record_type_definition $first, record_type_definition $second, shared_record_type_definition $base)
+	{
+		parent::__construct($first->name . '|' . $second->name);
+		$this->first = $first;
+		$this->second = $second;
+		$this->base = $base;
+	}
+
+	/** METHODS */
+	public function cpp_type(): string
+	{
+		return $this->base->cpp_type();
+	}
+
+	/** A member receiver uses the native base view; forwarding a whole field retains the closed contract. */
+	public function receiver_view(ast_expression $value): ?shared_record_type_definition
+	{
+		$parent = $value->parent;
+		return ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression) && $parent->receiver === $value ? $this->base : null;
+	}
+
+	public function mutates_referenced_value(): bool
+	{
+		return true;
+	}
+
+	/** Test membership before choosing the existing shared-owner conversion. */
+	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		$source = $value->type_def();
+		if ($source === $this) return value_conversion::identity;
+		if ($source instanceof shared_record_type_definition && $source->required
+			&& ($source->payload->derives_from($this->first) || $source->payload->derives_from($this->second))) {
+			return $source === $this->base ? value_conversion::identity : value_conversion::owner_view;
+		}
+		throw new diagnostic($value->source(), $value->byte_start(), 'Argument must belong to ' . $this->name);
+	}
+
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		return $this->base->cpp_conversion_adapter($conversion, $source);
 	}
 }
 

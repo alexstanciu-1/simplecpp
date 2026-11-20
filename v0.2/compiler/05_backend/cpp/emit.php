@@ -115,7 +115,7 @@ final class Cpp_Emitter
 			$base = $node->definition->base();
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$type = $field->type_def();
+				$type = $field->storage_type();
 				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 					$type, $field->initializer, $field->conversion, $includes);
@@ -690,7 +690,7 @@ CPP;
 			$this->type_prototypes($interface->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
 		}
 		foreach ($record->fields as $field) {
-			$type = $field->type_def();
+			$type = $field->storage_type();
 			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) {
 				$this->type_prototypes($type->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
 			} elseif ($type instanceof record_handle_definition) {
@@ -2117,7 +2117,9 @@ CPP;
 	{
 		$forwards = [];
 		$types = [];
-		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
+		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
+			foreach (self::signature_type_dependencies($parameter->type_def()) as $type) $types[] = $type;
+		}
 		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
 			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
 		}
@@ -2181,6 +2183,7 @@ CPP;
 		$parameters = [];
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
+			if ($type instanceof class_union_type_definition) $type = $type->base;
 			$native = $type instanceof callback_type_definition ? null : $this->signature_type($type, $short_types);
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
@@ -2269,7 +2272,8 @@ CPP;
 		$result = $method->return_type_def();
 		$variant = $result instanceof shared_record_type_definition;
 		foreach ($method->parameters as $parameter) {
-			if ($parameter->mode === passing_mode::value && $parameter->type_def() instanceof shared_record_type_definition) $variant = true;
+			if ($parameter->mode === passing_mode::value && ($parameter->type_def() instanceof shared_record_type_definition
+				|| $parameter->type_def() instanceof class_union_type_definition)) $variant = true;
 		}
 		if (!$variant) return 'scpp_virtual_' . $name;
 		$parts = [$result->name];
@@ -2303,6 +2307,10 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
+		if ($type instanceof class_union_type_definition) {
+			yield $type->base;
+			return;
+		}
 		if ($type instanceof callback_type_definition) {
 			yield from self::signature_type_dependencies($type->result);
 			foreach ($type->inputs as $input) yield from self::signature_type_dependencies($input);

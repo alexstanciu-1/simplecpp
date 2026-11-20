@@ -17,9 +17,14 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
-		if ($syntax instanceof ast_intersection_reference) {
-			$left = self::signature($syntax->left, $symbols, $function, $dependencies, watcher: $watcher);
-			$right = self::signature($syntax->right, $symbols, $function, $dependencies, watcher: $watcher);
+		if ($syntax instanceof ast_compound_type_reference) {
+			if ($syntax->name === '|') {
+				if ($watcher === $function) $function->watch_signature($dependencies);
+				return self::class_union($syntax, $symbols, $function->namespace, $watcher, $dependencies);
+			}
+			$left = self::signature($syntax->first_child, $symbols, $function, $dependencies, watcher: $watcher);
+			$right = self::signature($syntax->first_child->next_sibling, $symbols, $function, $dependencies, watcher: $watcher);
+
 			if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition && $left->required && $right->required) {
 				if ($left->payload->declaration->kind === record_kind::interface_type) [$left, $right] = [$right, $left];
 				if ($left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::interface_type) {
@@ -61,6 +66,22 @@ final class Type_Resolution
 		$type = self::application($syntax, $symbols, $watcher, $dependencies);
 		if ($type instanceof record_type_definition) $type->require_complete_value($syntax);
 		return $type;
+	}
+
+	/** Resolve union arms through stable nominal entries after all class ancestry has settled. */
+	public static function class_union(ast_compound_type_reference $syntax, scope $symbols, ?string $namespace,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): class_union_type_definition
+	{
+		$first = $syntax->first_child;
+		$left = self::named($first, $symbols, $namespace, $watcher, $dependencies);
+		$right = self::named($first->next_sibling, $symbols, $namespace, $watcher, $dependencies);
+		if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition
+			&& $left->required && $right->required && $left !== $right
+			&& $left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::class_type) {
+			$union = $left->payload->class_union($right->payload);
+			if ($union !== null) return $union;
+		}
+		throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Union requires two distinct required classes with a common class base');
 	}
 
 	/** Settle one signature at the parameter boundary with the same component lookup as a direct function. */

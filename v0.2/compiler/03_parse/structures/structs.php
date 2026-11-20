@@ -62,6 +62,13 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 		return $this->type_def ?? throw new \LogicException('Struct field type is not prepared');
 	}
 
+	/** Native field representation for record layout and header dependencies. */
+	public function storage_type(): type_definition
+	{
+		$type = $this->type_def();
+		return $type instanceof class_union_type_definition ? $type->base : $type;
+	}
+
 	public function symbol_key(): string
 	{
 		return $this->short_name;

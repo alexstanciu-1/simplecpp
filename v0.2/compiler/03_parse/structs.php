@@ -253,9 +253,9 @@ final class Record_Syntax
 			if ($flavor === flavor::js) {
 				$field = $c->name(token_kind::identifier);
 				$c->take(token_kind::colon, ':');
-				$type = $parser->named_type();
+				$type = $parser->named_type(allow_union: $readonly);
 			} else {
-				$type = $parser->named_type();
+				$type = $parser->named_type(allow_union: $readonly);
 				$field = $c->name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			}
 			$initializer = null;

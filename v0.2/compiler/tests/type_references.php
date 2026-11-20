@@ -46,6 +46,21 @@ foreach ([
 	verify(($implicit->name === 'int') && ($implicit->start === $implicit->end)
 		&& ($implicit->parent === $file->main()), 'Implicit entry type anchor');
 
+	$intersection_source = match ($flavor) {
+		flavor::php => 'function visit(Base & Readable $item): void {}',
+		flavor::cpp => 'void visit(Base & Readable item) {}',
+		flavor::js => 'function visit(item: Base & Readable): void {}',
+	};
+	$parsed = $frontend->parse(new source_file('intersection', $intersection_source, $flavor));
+	$param = $parsed->declarations['func:visit']->parameters[0];
+	$pair = $param->type_reference;
+	$first = $pair->first_child;
+	$second = $first->next_sibling;
+	verify($pair->parent === $param && $first->parent === $pair && $second->parent === $pair, 'Intersection parents');
+	verify($pair->source_text() === 'Base & Readable' && $pair->spelling() === 'Base&Readable', 'Intersection spelling');
+	verify($first->source_text() === 'Base' && $second->source_text() === 'Readable' && $second->next_sibling === null,
+		'Intersection operand order and ranges');
+
 	// Synthetic nested shape only: this does not admit generic source syntax.
 	$integer = new ast_type_reference(0, 0, 'int');
 	$vector = new ast_type_reference(0, 0, 'vector', $integer);
