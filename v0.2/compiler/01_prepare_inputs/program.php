@@ -64,61 +64,9 @@ final class Program_Loader
 		$modules = [];
 		$active = [];
 		$physical = [];
-		$visit = function (string $name) use (&$visit, &$modules, &$active, &$physical, $definitions, $disk): module
-		{
-			if (isset($active[$name])) {
-				throw new \RuntimeException('Module dependency cycle: ' . $name);
-			}
-			if (isset($modules[$name])) {
-				return $modules[$name];
-			}
-			if ((preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1) || (!isset($definitions[$name]))) {
-				throw new \RuntimeException('Unknown or invalid module: ' . $name);
-			}
-			$active[$name] = true;
-			$input = $definitions[$name];
-			$root = $disk ? realpath($input['root']) : $input['root'];
-			if (($root === false) || (($disk) && (!is_dir($root)))) {
-				throw new \RuntimeException('Source root is not a directory: ' . $input['root']);
-			}
-			$type = $input['type'] ?? 'default';
-			if (!in_array($type, ['default', 'c++'], true)) {
-				throw new \RuntimeException('Unknown module type: ' . $type);
-			}
-			$module = new module($name, $root, $type, $input['manifest'] ?? null, $input['artifacts'] ?? []);
-			foreach ($input['dependencies'] as $dependency) {
-				if (isset($module->dependencies[$dependency])) {
-					continue;
-				}
-				$module->dependencies[$dependency] = $visit($dependency);
-			}
-			foreach ($input['sources'] as $path => $flavor)
-			{
-				$path = (string) $path;
-				self::require_relative($path);
-				$unit = new source_unit($module, $path, $flavor);
-				if ($disk) {
-					$resolved = self::disk_path($unit);
-					if (isset($physical[$resolved])) {
-						throw new \RuntimeException('Duplicate physical source: ' . $path);
-					}
-					$physical[$resolved] = true;
-				}
-				$module->sources[$path] = $unit;
-			}
-			if (isset($input['entry'])) {
-				self::require_relative($input['entry']);
-				$module->entry = $module->sources[$input['entry']]
-					?? throw new \RuntimeException('Selected entry is not in the source inventory: '
-					. $input['entry']);
-			}
-			unset($active[$name]);
-			$modules[$name] = $module;
-			return $module;
-		};
-		$main = $visit($entry);
+		$main = self::visit_module($entry, $definitions, $disk, $modules, $active, $physical);
 		foreach ($selected as $name) {
-			$visit($name);
+			self::visit_module($name, $definitions, $disk, $modules, $active, $physical);
 		}
 		if ($main->type !== 'default') {
 			throw new \RuntimeException('Executable entry must be a default module');
@@ -127,6 +75,69 @@ final class Program_Loader
 			throw new \RuntimeException('Entry module requires an entry source: ' . $entry);
 		}
 		return new compilation_session($modules, $main, $cpp_namespace);
+	}
+
+	/**
+	 * Resolve one module in dependency order while the enclosing inventory build owns the traversal state.
+	 * @param array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> $definitions
+	 * @param module[] $modules
+	 * @param bool[] $active
+	 * @param bool[] $physical
+	 */
+	private static function visit_module(string $name,
+		array $definitions /** array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> */,
+		bool $disk, array &$modules /** array<string,module> */, array &$active /** array<string,bool> */,
+		array &$physical /** array<string,bool> */): module
+	{
+		if (isset($active[$name])) {
+			throw new \RuntimeException('Module dependency cycle: ' . $name);
+		}
+		if (isset($modules[$name])) {
+			return $modules[$name];
+		}
+		if ((preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/D', $name) !== 1) || (!isset($definitions[$name]))) {
+			throw new \RuntimeException('Unknown or invalid module: ' . $name);
+		}
+		$active[$name] = true;
+		$input = $definitions[$name];
+		$root = $disk ? realpath($input['root']) : $input['root'];
+		if (($root === false) || (($disk) && (!is_dir($root)))) {
+			throw new \RuntimeException('Source root is not a directory: ' . $input['root']);
+		}
+		$type = $input['type'] ?? 'default';
+		if (!in_array($type, ['default', 'c++'], true)) {
+			throw new \RuntimeException('Unknown module type: ' . $type);
+		}
+		$module = new module($name, $root, $type, $input['manifest'] ?? null, $input['artifacts'] ?? []);
+		foreach ($input['dependencies'] as $dependency) {
+			if (isset($module->dependencies[$dependency])) {
+				continue;
+			}
+			$module->dependencies[$dependency] = self::visit_module($dependency, $definitions, $disk, $modules, $active, $physical);
+		}
+		foreach ($input['sources'] as $path => $flavor)
+		{
+			$path = (string) $path;
+			self::require_relative($path);
+			$unit = new source_unit($module, $path, $flavor);
+			if ($disk) {
+				$resolved = self::disk_path($unit);
+				if (isset($physical[$resolved])) {
+					throw new \RuntimeException('Duplicate physical source: ' . $path);
+				}
+				$physical[$resolved] = true;
+			}
+			$module->sources[$path] = $unit;
+		}
+		if (isset($input['entry'])) {
+			self::require_relative($input['entry']);
+			$module->entry = $module->sources[$input['entry']]
+				?? throw new \RuntimeException('Selected entry is not in the source inventory: '
+				. $input['entry']);
+		}
+		unset($active[$name]);
+		$modules[$name] = $module;
+		return $module;
 	}
 
 	/** Validate containment again at read time; module membership remains relative. */

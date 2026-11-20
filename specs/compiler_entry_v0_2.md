@@ -223,6 +223,49 @@ Named arguments, variadics, read-only references, reference returns, overloads, 
 first-class callables, methods and trailing parameter/argument commas are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
+### Named callbacks
+
+A free function or static method can declare a required by-value
+`callback<Result, Input1, Input2>` parameter. Use `callback<void>` for
+a callback with no inputs and no result. Components use ordinary signature
+types. Inline record values, nested callbacks and yield producer signatures
+are outside this slice.
+
+Pass a source function as `name(...)`. A type-qualified reference such as
+`Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
+static method using normal name lookup and access checks. The ellipsis forms
+a reference without invoking its target. The expected types and arity must
+match the target's required by-value signature exactly. Inside the accepting
+function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
+`op(value)` in C++ and JS), or forward it to another matching callback
+parameter. Invocation uses the ordinary argument conversions, evaluation
+contract and exception propagation.
+
+The C++ backend passes a typed native function pointer. Instance method
+references and persistent callback storage are outside this slice.
+
+### Capture-free lambdas
+
+An expression-bodied lambda has explicitly typed by-value inputs and a
+non-void result type.
+
+```text
+PHP  $inc = fn(int $x): int => $x + 1;
+C++  auto inc = fn(int x): int => x + 1;
+JS   let inc = fn(x: int): int => x + 1;
+```
+
+Each lambda expression has a distinct concrete type. An inferred local
+can invoke its lambda with ordinary call syntax. An inline lambda or
+such a local can supply a callback argument when the component types
+match exactly. The C++ backend emits a concrete capture-free lambda and
+converts it to a native function pointer at the callback boundary.
+
+The body sees its own parameters and ordinary nonlocal symbols. Enclosing
+locals and the current instance are unavailable. This slice covers inferred
+local initializers and typed callback arguments. Captures, block bodies,
+new lifetime rules and yield producers are deferred.
+
 ### Trailing literal parameter defaults
 
 A typed value parameter may declare `= literal` in all three flavors:

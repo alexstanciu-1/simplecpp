@@ -2043,6 +2043,13 @@ Basic exception infrastructure may move earlier if required by preceding proofs.
 | 5.4 | Remaining signatures | Review actual unions/intersections and nonliteral defaults individually. Preserve guarantees without automatically implementing all PHP type syntax. |
 | 5.5 | Traversal callbacks | Named callable references first. Add captures where they materially simplify the translation. |
 
+The frontend's disk and memory paths use named loaders and pass the source map
+explicitly. The [native loader proof](../../compiler/tests/source_loader_callbacks_native.py)
+passes a shared map handle through the same typed callback signature, with a
+stand-in for the filesystem read. Module discovery now uses a named recursive
+worker with explicit visited modules, active modules and physical source paths.
+These two call sites can proceed with explicit state.
+
 Proof: parse a real expression, collect its declaration, prepare through the common AST, emit C++, compile and execute. Include a diagnostic and successful retry. Review readability and ownership as well as results.
 
 ## 6. Incremental identity and retention — multiple generations

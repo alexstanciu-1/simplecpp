@@ -36,6 +36,11 @@ def prove(work, flavor):
     local = syntax['local']('copy', 'Base').removesuffix(';')+'='+var+';'
     copy = syntax['v']+'copy'
     local_guard = guarded(local+prefix.replace(var,copy)+use.replace(var,copy))
+    outer_v = syntax['v']
+    arrow_param = {'cpp': 'Base other', 'php': 'Base $other', 'js': 'other: Base'}[flavor]
+    bad_lambda = syntax['infer']('callback', f'fn({arrow_param}): int => measure({outer_v}other)')
+    good_lambda = syntax['infer']('callback', f'fn({arrow_param}): int => {outer_v}other{syntax["access"]}n')
+    nested_guard = guarded(prefix + good_lambda + f'return {outer_v}callback({var}) + measure({var});')
     sources = dict(base=base, cap=interface(), leaf=leaf, api=measure+replace+original,
                    guard=positive, main=main, failure=klass('Failure','', 'Exception'))
     revisions(work, flavor, sources, [
@@ -47,6 +52,8 @@ def prove(work, flavor):
         ('guard',guarded(prefix+use).replace(param, ref),bad),
         ('guard',guarded(prefix+'return measure('+var+')+replace('+var+');'),'Separate guarded'),
         ('guard',guarded(prefix+'echo measure('+var+'),replace('+var+');return 8;'),b'5180'),
+        ('guard',guarded(prefix+bad_lambda+use),bad),
+        ('guard',nested_guard,b'90'),
         ('guard',negative,b'50'), ('main','echo inspect(new Leaf());return 8;',b'5'),
         ('guard',local_guard,b'5'),
         ('guard',guarded(prefix+'return consume('+var+','+var+');'),b'5'),

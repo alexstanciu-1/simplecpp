@@ -1394,7 +1394,8 @@ CPP;
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
-			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
+			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
+			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -1654,7 +1655,24 @@ CPP;
 				. '; const auto binary_right = ' . $right . '; return '
 				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right', $typed_initializer) . '; }())';
 		}
+		if ($value instanceof ast_lambda_expression) {
+			$reorderable = true;
+			return $this->lambda($value, $global_references, $declarations, $required_headers);
+		}
+		if ($value instanceof ast_callable_reference) {
+			$function = $value->implementation();
+			$name = self::function_name($function);
+			$declarations[$name] = $function;
+			$reorderable = true;
+			return '&' . $name;
+		}
 		if ($value instanceof ast_call_expression) {
+			$callback = $value->callable_binding();
+			if ($callback !== null) {
+				$type = $callback->type_def();
+				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
+				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
+			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
 				/** @var counted_collection_type $type */
@@ -1889,13 +1907,15 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 */
-	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration $function,
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|callback_type_definition $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
 	{
 		$steps = [];
 		$arguments = [];
-		$method = $value instanceof ast_call_expression && $function->has_receiver();
+		$callback = $function instanceof callback_type_definition;
+		$parameters = $callback ? $function->inputs : $function->parameters;
+		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -1915,7 +1935,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($function->parameters === [] && $steps === []) {
+		} elseif ($parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -1923,10 +1943,11 @@ CPP;
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
-		foreach ($function->parameters as $index => $parameter) {
+		foreach ($parameters as $index => $parameter) {
 			$argument = $value->arguments[$index] ?? $parameter->default_value;
 			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
-			$type = $parameter->type_def();
+			$type = $callback ? $parameter : $parameter->type_def();
+			$by_value = $callback || $parameter->mode === passing_mode::value;
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
@@ -1934,19 +1955,19 @@ CPP;
 			foreach ($type->conversion_headers($conversion) as $header) {
 				$required_headers[$header] = true;
 			}
-			if ($parameter->mode === passing_mode::value) {
+			if ($by_value) {
 				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && $steps === [] && count($function->parameters) === 1) {
+			if (!$method && $steps === [] && count($parameters) === 1) {
 				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
 			$direct_arguments[] = $operand;
 			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
-				&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
+				&& ($conversion === value_conversion::identity) && $by_value;
 			// A prepared reference binds a stable named slot without reading its value.
-			if ($parameter->mode === passing_mode::reference) {
+			if (!$by_value) {
 				$has_reference = true;
 			} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
 				$order_sensitive[$index] = true;
@@ -1963,8 +1984,8 @@ CPP;
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
 		// after its predecessors, unless its expression needs a record destruction boundary.
-		foreach ($function->parameters as $index => $parameter) {
-			$type = $parameter->type_def();
+		foreach ($parameters as $index => $parameter) {
+			$type = $callback ? $parameter : $parameter->type_def();
 			$operand = $direct_arguments[$index];
 			if (!isset($order_sensitive[$index]) || $index === $inline_index) {
 				$arguments[] = $operand;
@@ -1972,13 +1993,35 @@ CPP;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 			$temporary = 'argument_' . $value->start . '_' . $index;
-			$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
+			$declaration = $type instanceof callback_type_definition ? $type->cpp_declarator($temporary) : $type->cpp_type() . ' ' . $temporary;
+			$steps[] = $declaration . ' = ' . $operand . ';';
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
+	}
+
+	/** Emit the concrete closure in place, with its own expression and result conversion. */
+	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
+	{
+		$type = $lambda->type_def();
+		$signature = $type->signature;
+		foreach ($signature->cpp_headers() as $header) $headers[$header] = true;
+		foreach (self::signature_type_dependencies($signature) as $component) {
+			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
+			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			else $declarations[$component->name] = $component;
+		}
+		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
+		$parameters = [];
+		foreach ($lambda->parameters as $parameter) {
+			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
+		}
+		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
+		return '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ' { return ' . $result . '; }';
 	}
 
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
@@ -2138,12 +2181,13 @@ CPP;
 		$parameters = [];
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
-			$native = $this->signature_type($type, $short_types);
+			$native = $type instanceof callback_type_definition ? null : $this->signature_type($type, $short_types);
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
-			$parameters[] = '[[maybe_unused]] ' . $native . ' '
-				. ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
+			$name = $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . ($type instanceof callback_type_definition
+				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $name);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -2259,6 +2303,11 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
+		if ($type instanceof callback_type_definition) {
+			yield from self::signature_type_dependencies($type->result);
+			foreach ($type->inputs as $input) yield from self::signature_type_dependencies($input);
+			return;
+		}
 		if ($type instanceof intersection_type_definition) {
 			yield $type;
 			yield $type->base;
@@ -2291,8 +2340,8 @@ CPP;
 	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
 	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
 	{
-		return ($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion);
+		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
 	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */

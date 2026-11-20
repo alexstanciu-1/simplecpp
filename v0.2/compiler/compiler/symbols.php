@@ -195,12 +195,30 @@ final class Symbol_Publication implements declaration_sink
 				/** @var ast_function_declaration $head */
 				// A generator return type retains its producer declaration.
 				$producer = $head->return_type_reference?->name === Iterator_Contract::NAME ? spl_object_id($head) : null;
-				$contracts[$key] = json_encode([$producer, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->return_type_reference?->spelling(), array_map(
-					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
+				$contracts[$key] = json_encode([$producer, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, self::signature_type($head->return_type_reference), array_map(
+					static fn(ast_parameter_declaration $parameter): array => [self::signature_type($parameter->type_reference), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
 		}
 		return $contracts;
+	}
+
+	/** Written type and the lexical bindings that can change its meaning without a signature edit. */
+	private static function signature_type(?ast_type_reference $type): ?string
+	{
+		if ($type === null) return null;
+		if ($type instanceof ast_intersection_reference) return self::signature_type($type->left) . '&' . self::signature_type($type->right);
+		if ($type->first_child === null) {
+			$alias = $type->lexical_root()->imported_type_target($type->name);
+			return $alias === null ? $type->name : $type->name . '=' . $alias;
+		}
+		$signature = $type->name . '<';
+		$separator = '';
+		for ($part = $type->first_child; $part !== null; $part = $part->next_sibling) {
+			$signature .= $separator . self::signature_type($part);
+			$separator = ',';
+		}
+		return $signature . '>';
 	}
 
 	/**
