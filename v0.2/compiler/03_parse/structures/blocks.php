@@ -143,6 +143,11 @@ final class ast_produced_binding extends ast_expression implements ast_local_bin
 		return $this->id;
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::local_binding;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();

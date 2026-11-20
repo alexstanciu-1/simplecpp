@@ -26,6 +26,10 @@ the inspection boundary; they are not the compiler's retained representation.
 - `Scope_Collection.pending` is a flat object-identity inventory of all declarations,
   including many valid distinct names. There is no list per name. Temporary head,
   tail and comparison indexes hold one reference per key.
+- Duplicate links require the same symbol key and declaration category.
+  Each declaration kind returns a fixed category without storing it on the node.
+  Local declarations, parameters and produced bindings share one category.
+  Record and enum declarations share another.
 - Body scopes publish local-variable chains. The compilation scope publishes public
   function chains; file scopes only publish reference indexes.
 - `ast_file_node.declaration_nodes` retains all syntax in order, including duplicate

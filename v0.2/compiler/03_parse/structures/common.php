@@ -283,6 +283,11 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 	}
 
 	/** METHODS */
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::local_binding;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();

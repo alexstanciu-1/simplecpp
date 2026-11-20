@@ -31,6 +31,11 @@ final class ast_enum_case extends ast_node implements ast_declaration_interface,
 		$initializer->attach($this);
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::enum_case;
+	}
+
 	public function symbol_key(): string
 	{
 		return $this->short_name;
@@ -73,6 +78,11 @@ final class ast_enum_declaration extends ast_node implements ast_method_owner
 	}
 
 	/** METHODS */
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::type_declaration;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'class:' . $this->name();
