@@ -58,10 +58,10 @@ foreach (flavor::cases() as $flavor)
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("38198N\0W")];
 	$unknown = $prepare('global ' . $decl('int', 'external', '8') . $decl('int', 'value', '1')
 		. $write('value', $var('external')) . 'return ' . $var('value') . ';');
-	verify($unknown->body()->statements[2]->conversion() === exit_conversion::checked, 'Unknown write lost runtime exit check');
+	verify($unknown->body()->statements[2]->conversion() === exit_conversion::checked->value, 'Unknown write lost runtime exit check');
 	$restored = $prepare('global ' . $decl('int', 'external', '8') . $decl('int', 'value', $var('external'))
 		. $write('value', '8') . 'return ' . $var('value') . ';');
-	verify($restored->body()->statements[2]->conversion() === exit_conversion::proven, 'Known write did not restore facts');
+	verify($restored->body()->statements[2]->conversion() === exit_conversion::proven->value, 'Known write did not restore facts');
 	foreach ([
 		$write('missing', $var('unknown')), $write('later', '8') . $decl('int', 'later', '1'),
 		...($flavor === flavor::php ? [] : ['global ' . $decl('int', 'external', '1') . $write('external', '8')]),

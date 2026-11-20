@@ -27,7 +27,7 @@ def prove(work):
             path.mkdir(parents=True, exist_ok=True)
         (app / 'module.json').write_text('{}')
         fn = lambda name, typ, body: (f'{typ} {name}()' if flavor == 'cpp' else f'function {name}(): {typ}') + '{' + body + '}'
-        provider = lambda typ='void', value='': fn('hidden', 'void', 'return;') + fn('visible', typ, 'hidden();' + value)
+        provider = lambda typ='bool', value='return true;': fn('hidden', 'void', 'return;') + fn('visible', typ, 'hidden();' + value)
         stamp = int(time.time())
         def write(name, text):
             nonlocal stamp
@@ -86,6 +86,7 @@ def prove(work):
             write('main', 'visible(); return 8;')
             main, library, manifest = step('first_external_use', 1, 2, 2, True)
             original_main = (main.read_bytes(), main.stat().st_mtime_ns)
+            # bool and int use the same scalar include: only the exported prototype changes.
             write('provider', provider('int', 'return 8;'))
             step('signature_header', 3, 2, 2, True)
             assert original_main == (main.read_bytes(), main.stat().st_mtime_ns), 'Consumer C++ changed for a discarded return value'

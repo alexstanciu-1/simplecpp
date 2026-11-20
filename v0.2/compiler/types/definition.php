@@ -702,7 +702,7 @@ abstract class type_definition
 	/** A literal or a plain storage read cannot modify a sibling's borrowed value. */
 	protected static function stable_cpp_operand(ast_expression $operand): bool
 	{
-		return ($operand instanceof ast_name_expression && $operand->declaration() instanceof ast_local_binding)
+		return ($operand instanceof ast_name_expression && $operand->local_binding() !== null)
 			|| $operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
 			|| $operand instanceof ast_string_expression || $operand instanceof ast_keyword_expression;
 	}
@@ -710,7 +710,7 @@ abstract class type_definition
 	/** A by-value source call on plain scalar reads cannot reach a sibling's ordinary local storage. */
 	protected static function independent_local_call(ast_expression $local, ast_expression $operand): bool
 	{
-		if (!($local instanceof ast_name_expression && $local->declaration() instanceof ast_local_declaration
+		if (!($local instanceof ast_name_expression && $local->local_binding() instanceof ast_local_declaration
 			&& $operand instanceof ast_call_expression && $operand->cardinality === null && $operand->callable_binding() === null)) {
 			return false;
 		}

@@ -64,9 +64,9 @@ final class Declaration_Diagnostics
 	{
 		$errors = [];
 		foreach ($body->scope->declarations as $head) {
-			/** @var ast_local_declaration $head */
+			/** @var ast_local_binding $head */
 			for ($local = $head->duplicate_element(); $local !== null; $local = $local->duplicate_element()) {
-				/** @var ast_local_declaration $local */
+				/** @var ast_local_binding $local */
 				$errors[] = self::duplicate($local, $head, 'local');
 			}
 		}
@@ -138,12 +138,14 @@ final class Declaration_Diagnostics
 		};
 	}
 
-	private static function duplicate(ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $node,
-		ast_local_declaration|ast_parameter_declaration|ast_produced_binding|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $first, string $kind): diagnostic
+	/** Report the new occurrence against the first occurrence in its own lexical source. */
+	private static function duplicate(ast_declaration_site $node, ast_declaration_site $first, string $kind): diagnostic
 	{
-		$source = $first->source();
-		$location = $source->location($first->lexical_root()->byte_at($first->name_position()));
-		return new diagnostic($node->source(), $node->lexical_root()->byte_at($node->name_position()),
+		$original = $first->lexical_root();
+		$source = $original->tokens->source;
+		$location = $source->location($original->byte_at($first->name_position()));
+		$current = $node->lexical_root();
+		return new diagnostic($current->tokens->source, $current->byte_at($node->name_position()),
 			'Duplicate ' . $kind . ': ' . $node->name() . '; first declaration at '
 			. $source->path . ':' . $location['line'] . ':' . $location['column']);
 	}

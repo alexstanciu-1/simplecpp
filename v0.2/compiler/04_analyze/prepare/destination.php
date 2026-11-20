@@ -44,11 +44,11 @@ final class Destination_Plan
 	private function candidate(array $statements /** list<ast_statement> */, ast_append_statement $append): void
 	{
 		if (!($append->receiver instanceof ast_name_expression)
-			|| !($append->receiver->declaration() instanceof ast_local_declaration)
+			|| !($append->receiver->local_binding() instanceof ast_local_declaration)
 			|| !($append->receiver->type_def() instanceof destination_append_type)
 			|| !($append->value instanceof ast_name_expression)
 			|| $append->conversion() !== value_conversion::identity) return;
-		$local = $append->value->declaration();
+		$local = $append->value->local_binding();
 		$type = $append->value->type_def();
 		if (!($local instanceof ast_local_declaration) || !($local->initializer instanceof ast_struct_default)
 			|| $local->initializer->arguments !== [] || !($type instanceof record_type_definition)
@@ -97,7 +97,7 @@ final class Destination_Plan
 	private static function scalar_input(ast_expression $value): bool
 	{
 		if ($value->type_def() !== type_registry::integer()) return false;
-		if ($value instanceof ast_name_expression) return $value->declaration() instanceof ast_local_declaration;
+		if ($value instanceof ast_name_expression) return $value->local_binding() instanceof ast_local_declaration;
 		return $value instanceof ast_binary_expression && $value->operator === binary_operator::subtract
 			&& $value->left_conversion === value_conversion::identity && $value->right_conversion === value_conversion::identity
 			&& self::scalar_input($value->left) && self::scalar_input($value->right);

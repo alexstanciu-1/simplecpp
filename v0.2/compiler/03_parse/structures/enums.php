@@ -16,7 +16,7 @@ final class ast_type_marker extends ast_expression
 }
 
 /** One owned named case; its literal AST owns the checked backing value, e.g. case Number = 300. */
-final class ast_enum_case extends ast_node implements ast_declaration_interface
+final class ast_enum_case extends ast_node implements ast_declaration_interface, name_binding
 {
 	use ast_declaration;
 

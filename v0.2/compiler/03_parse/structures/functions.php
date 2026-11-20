@@ -377,7 +377,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher, callable_signature
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature
 {
 	use ast_declaration { name as private namespace_name; }
 
@@ -663,7 +663,7 @@ final class ast_return_statement extends ast_statement
 
 	/** PREP FACTS */
 	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
-	protected exit_conversion|int|null $conversion /** exit_conversion|uint16|null */ = null;
+	protected ?int $conversion /** uint16|null */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -679,7 +679,7 @@ final class ast_return_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_conversion(exit_conversion|int $conversion /** exit_conversion|uint16 */): void
+	public function settle_conversion(int $conversion /** uint16 */): void
 	{
 		if ($this->conversion !== null) {
 			throw new \LogicException('Return conversion already settled');
@@ -687,7 +687,7 @@ final class ast_return_statement extends ast_statement
 		$this->conversion = $conversion;
 	}
 
-	public function conversion(): exit_conversion|int /** exit_conversion|uint16 */
+	public function conversion(): int /** uint16 */
 	{
 		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
 	}

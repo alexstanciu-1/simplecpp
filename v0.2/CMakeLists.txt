@@ -484,6 +484,10 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    add_test(NAME compiler_translated_path COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
     if(UNIX)
       add_test(NAME compiler_translated_publisher_cleanup COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_publisher_cleanup.py
@@ -492,6 +496,10 @@ if(BUILD_TESTING)
     endif()
   endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
+  add_executable(compiler_scalar_result_test compiler/tests/scalar_result.cpp)
+  target_compile_features(compiler_scalar_result_test PRIVATE cxx_std_20)
+  add_test(NAME compiler_scalar_result_transport COMMAND compiler_scalar_result_test)
+  add_test(NAME compiler_scalar_fact_edits COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scalar_fact_edits.py)
   add_test(NAME compiler_constant_evaluation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/constant_evaluation.php)
   add_test(NAME compiler_literal_families COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/literal_families.php)
   add_test(NAME compiler_declaration_policy COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/declaration_policy.php)

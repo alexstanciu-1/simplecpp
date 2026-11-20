@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Shared typed literal initializer and preparation readiness for namespace constants and global storage. */
-abstract class ast_literal_declaration extends ast_node implements ast_declaration_interface
+abstract class ast_literal_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, name_binding
 {
 	use ast_declaration;
 

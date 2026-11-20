@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/../host/compilation.php';
 
-use scpp\compiler\{flavor, entry_target, diagnostic, diagnostic_group, Incremental_Project, Source_Frontend, source_file, Cpp_Emitter, Cpp_Exit, exit_conversion};
+use scpp\compiler\{flavor, entry_target, diagnostic, diagnostic_group, Incremental_Project, Source_Frontend, source_file, Cpp_Emitter, Cpp_Exit, Compilation_Inspection, exit_conversion};
 
 function verify(bool $condition, string $message): void
 {
@@ -71,10 +72,26 @@ foreach (flavor::cases() as $flavor) {
 	$sum = $emitter->emit($prepare('return 3 + 5;'));
 	verify(str_contains($sum, '(3LL + 5LL)'), 'Entry literal spelling leaked into nested arithmetic');
 	$checked = $prepare($function('int', '8') . 'return result();');
-	verify($checked->body()->statements[0]->conversion() === exit_conversion::checked, 'Unknown exit lost runtime check');
+	verify($checked->body()->statements[0]->conversion() === exit_conversion::checked->value, 'Unknown exit lost runtime check');
 	$cpp = $emitter->emit($checked);
 	verify(str_contains($cpp, 'return scpp::entry_exit_checked(result_());') && str_contains($cpp, 'return 8LL;'),
 		'Entry check and ordinary function return must use their prepared bindings');
+	// Both destinations narrow an unknown integer using the same code, including inside nested blocks.
+	$byte = match ($flavor) {
+		flavor::cpp => 'byte narrow(int n){ {return n;} }',
+		flavor::php => 'function narrow(int $n):byte{ {return $n;} }',
+		flavor::js => 'function narrow(n:int):byte{ {return n;} }',
+	};
+	$nested = $prepare($byte . $function('int', '(int)narrow(8)') . '{return result();}');
+	$ordinary = $nested->file->functions()[0]->body()->statements[0]->body;
+	$entry = $nested->body()->statements[0]->body;
+	verify($ordinary->statements[0]->conversion() === $entry->statements[0]->conversion(), 'Expected a shared narrowing code');
+	verify(Compilation_Inspection::body($ordinary)['statements'][0]['conversion'] === 'integer_checked'
+		&& Compilation_Inspection::body($entry)['statements'][0]['conversion'] === 'checked', 'Nested return inspection lost its destination');
+	$nested_cpp = $emitter->emit($nested);
+	verify(str_contains($nested_cpp, 'scpp::checked_int64_to_uint8(') && str_contains($nested_cpp, 'scpp::entry_exit_checked('),
+		'Shared narrowing code selected the wrong runtime binding');
+	$fixtures[$flavor->name . '_nested'] = ['cpp' => $nested_cpp, 'stdout_hex' => ''];
 	$fixtures[$flavor->name . '_checked'] = ['cpp' => $cpp, 'stdout_hex' => ''];
 	foreach (['2147483648', '-2147483649'] as $outside) {
 		if ($outside === '2147483648') {
