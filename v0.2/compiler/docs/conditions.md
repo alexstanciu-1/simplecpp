@@ -4,7 +4,8 @@ Doc Status: supporting
 
 The [conditional contract](../../../specs/conditional_statements_v0_2.md) owns semantics.
 All flavors admit braced if/elseif/else-if/else, nested arms, and branch-local declarations.
-Unbraced arms, standalone blocks, ternary, null conditions,
+Full ternary selection reuses the same condition handler and emits a native C++ conditional.
+Unbraced arms, standalone blocks, null conditions,
 constant-condition reachability and precise value merging remain deferred.
 Logical `!`, `&&` and `||` now reuse this generated truthiness; see [logical expressions](logical.md).
 

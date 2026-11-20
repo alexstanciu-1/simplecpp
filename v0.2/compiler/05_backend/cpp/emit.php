@@ -1536,6 +1536,15 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
+		if ($value instanceof ast_ternary_expression) {
+			$test = $this->condition($value->condition, $global_references, $declarations, $required_headers);
+			$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
+			$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
+			$selection = '(' . $test . ' ? ' . $yes . ' : ' . $no . ')';
+			// Two native lvalue arms can yield a reference. Publish an owned value at an untyped use site.
+			return !$typed_initializer && !$value_type->cpp_trivial_value()
+				? $this->signature_type($value_type, false) . $selection : $selection;
+		}
 		if ($value instanceof ast_match_expression) {
 			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_selection($value, $global_references, $declarations, $required_headers) . ' }())';
 		}

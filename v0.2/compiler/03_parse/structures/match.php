@@ -20,8 +20,32 @@ final class ast_match_arm extends ast_node
 	}
 }
 
+/** A selection returns a value. Its result type is shared; branch values stay on the owned operands. */
+abstract class ast_selection_expression extends ast_expression
+{
+	public function settle_result(type_definition $type): void
+	{
+		$this->settle_value($type, null);
+	}
+}
+
+final class ast_ternary_expression extends ast_selection_expression
+{
+	/** Between xor and coalescing in the common expression grammar. */
+	public const int PRECEDENCE = 1;
+
+	public function __construct(public readonly ast_expression $condition, public readonly ast_expression $when_true,
+		public readonly ast_expression $when_false)
+	{
+		parent::__construct($condition->start, $when_false->end);
+		$condition->attach($this);
+		$when_true->attach($this);
+		$when_false->attach($this);
+	}
+}
+
 /** One lazy selection; the syntax inventory owns arms, with no retained label index or prepared tree. */
-final class ast_match_expression extends ast_expression
+final class ast_match_expression extends ast_selection_expression
 {
 	public readonly ast_expression $subject;
 	/** @var ast_match_arm[] Owning arms in written order, including erroneous duplicate labels/defaults. */
@@ -35,11 +59,6 @@ final class ast_match_expression extends ast_expression
 		$this->arms = $arms;
 		$subject->attach($this);
 		foreach ($arms as $arm) $arm->attach($this);
-	}
-
-	public function settle_match(type_definition $type): void
-	{
-		$this->settle_value($type, null);
 	}
 
 	/** Literal true selects ordered conditions; do not infer this mode from mutable value facts. */

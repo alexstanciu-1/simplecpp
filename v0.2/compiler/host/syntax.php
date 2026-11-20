@@ -150,6 +150,11 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_ternary_expression) {
+			return ['kind' => 'ternary', 'condition' => self::expression($expression->condition),
+				'when_true' => self::expression($expression->when_true), 'when_false' => self::expression($expression->when_false),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_match_expression) {
 			return ['kind' => 'match', 'subject' => self::expression($expression->subject), 'arms' => array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::expression($arm->label), 'result' => self::expression($arm->result)], $expression->arms), 'span' => self::span($expression)];
 		}
