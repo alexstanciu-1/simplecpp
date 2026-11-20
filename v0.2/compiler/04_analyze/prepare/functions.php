@@ -75,6 +75,10 @@ final class Function_Preparation
 				self::expression($statement->operation);
 				continue;
 			}
+			if ($statement instanceof ast_block_statement) {
+				self::reset_block($statement->body);
+				continue;
+			}
 			if ($statement instanceof ast_branch_statement) {
 				if ($statement instanceof ast_switch_statement) self::expression($statement->subject);
 				foreach ($statement->arms as $arm) {

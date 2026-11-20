@@ -59,7 +59,7 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
-		if ($statement instanceof ast_try_statement) return;
+		if ($statement instanceof ast_try_statement || $statement instanceof ast_block_statement) return;
 		if ($statement instanceof ast_yield_statement) {
 			$this->expression($statement->value);
 			if ($statement->key !== null) $this->expression($statement->key);

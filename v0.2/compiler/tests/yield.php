@@ -212,7 +212,7 @@ CPP;
 
 	$conditional_owner = $signature('owned', 'Iterator<weak<Point>>') . '{if (' . $v('x') . '>0) {'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');' . $v('x') . '=-1;'
-		. 'if (' . $v('x') . '<0) {' . $local('q', 'new Point()') . 'yield weak(' . $v('q') . ');}'
+		. '{' . $local('q', 'new Point()') . 'if (' . $v('x') . '<0) yield weak(' . $v('q') . ');}'
 		. 'yield weak(' . $v('p') . ');}' . $elseif . '(' . $v('x') . '==0){'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');return;}else {'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');}yield weak(new Point());}return 8;';

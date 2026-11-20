@@ -766,6 +766,14 @@ CPP;
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_block_statement) {
+				$lines[] = "\t{";
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
+					$lines[] = "\t" . $line;
+				}
+				$lines[] = "\t}";
+				continue;
+			}
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 				|| $statement instanceof ast_yield_statement);
 			if ($leaf) $lines[] = '{';

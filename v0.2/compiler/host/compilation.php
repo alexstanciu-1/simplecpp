@@ -113,6 +113,9 @@ final class Compilation_Inspection
 				if ($statement->finalizer !== null) $row['finally'] = self::body($statement->finalizer);
 				$statements[] = $row;
 			}
+			elseif ($statement instanceof ast_block_statement) {
+				$statements[] = ['kind' => 'block', 'body' => self::body($statement->body)];
+			}
 			elseif ($statement instanceof ast_branch_statement) {
 				$statements[] = ($statement instanceof ast_switch_statement ? ['kind' => 'switch', 'subject' => self::value($statement->subject)] : ['kind' => 'if']) + [ 'arms' => array_map(static fn(ast_branch_arm $arm): array => [
 					'condition' => $arm->condition === null ? null : self::value($arm->condition),

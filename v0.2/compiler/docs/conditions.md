@@ -1,12 +1,13 @@
-# Generated truthiness and braced conditionals
+# Generated truthiness, conditional arms and lexical blocks
 
 Doc Status: supporting
 
 The [conditional contract](../../../specs/conditional_statements_v0_2.md) owns semantics.
-All flavors admit braced if/elseif/else-if/else, nested arms, and branch-local declarations.
+All flavors admit braced or single-statement if/elseif/else-if/else arms and standalone lexical blocks.
+A guard such as `if (done()) return 8;` uses the existing condition and completion rules.
+Both forms of arm own the same block AST and emit braces, so nesting preserves the source binding of else.
 Full ternary selection reuses the same condition handler and emits a native C++ conditional.
-Unbraced arms, standalone blocks, null conditions,
-constant-condition reachability and precise value merging remain deferred.
+Null conditions, constant-condition reachability and precise value merging remain deferred.
 Logical `!`, `&&` and `||` now reuse this generated truthiness; see [logical expressions](logical.md).
 
 ## Type boundary

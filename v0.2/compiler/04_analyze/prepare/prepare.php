@@ -172,7 +172,7 @@ final class Preparation
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
 					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
 					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
-					|| $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
+					|| $statement instanceof ast_block_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 					|| $statement instanceof ast_break_statement || $statement instanceof ast_continue_statement)) {
 				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, loops, yields, echo, calls and bare return only');
 			}
@@ -227,6 +227,19 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_switch_statement) {
 				$next = $this->switch_statement($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_block_statement) {
+				$outer_guards = $this->guards;
+				$this->local_frames[] = [];
+				try {
+					$next = $this->sequence($statement->body->statements, $source, $target, $function);
+				} finally {
+					array_pop($this->local_frames);
+				}
+				// A guard's native pointer is scoped to its declaration. Keep only surviving outer proofs.
+				foreach ($this->guards as $id => $guard) {
+					if (($outer_guards[$id] ?? null) !== $guard) unset($this->guards[$id]);
+				}
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);

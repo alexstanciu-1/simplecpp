@@ -172,6 +172,7 @@ CPP;
 	{
 		foreach ($block->statements as $statement) {
 			if ($statement instanceof ast_local_declaration) yield $statement;
+			elseif ($statement instanceof ast_block_statement) yield from $this->generator_bindings($statement->body);
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $arm) yield from $this->generator_bindings($arm->body);
 			} elseif ($statement instanceof ast_foreach_statement) {

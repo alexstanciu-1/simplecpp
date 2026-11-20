@@ -264,6 +264,9 @@ final class Syntax_Inspection
 			if ($statement->finalizer !== null) $row['finally'] = array_map(self::statement(...), $statement->finalizer->statements);
 			return $row;
 		}
+		if ($statement instanceof ast_block_statement) {
+			return ['kind' => 'block', 'span' => self::span($statement), 'body' => array_map(self::statement(...), $statement->body->statements)];
+		}
 		if ($statement instanceof ast_branch_statement) {
 			return ($statement instanceof ast_switch_statement ? ['kind' => 'switch', 'subject' => self::expression($statement->subject)] : ['kind' => 'if']) + [ 'span' => self::span($statement), 'arms' => array_map(
 				static fn(ast_branch_arm $arm): array => ['condition' => $arm->condition === null ? null : self::expression($arm->condition),

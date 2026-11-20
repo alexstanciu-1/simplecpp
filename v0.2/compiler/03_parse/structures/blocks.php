@@ -47,6 +47,16 @@ final class ast_block extends ast_statement_block
 {
 }
 
+/** A standalone lexical scope in statement position, e.g. { int temporary = compute(); }. */
+final class ast_block_statement extends ast_statement
+{
+	public function __construct(public readonly ast_block $body)
+	{
+		parent::__construct($body->start, $body->end);
+		$body->attach($this);
+	}
+}
+
 /** One lexical clause; its expression is absent for else or default. */
 abstract class ast_branch_arm extends ast_node
 {

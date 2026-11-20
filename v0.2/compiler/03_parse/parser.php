@@ -261,6 +261,7 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->is(token_kind::lbrace)) return new ast_block_statement($this->braced_block($grammar, $collector, '{'));
 		if ($this->cursor->keyword('foreach')) return $this->foreach_loop($grammar, $collector);
 		if ($this->cursor->keyword('for')) {
 			return $this->for_loop($grammar, $collector);
@@ -328,7 +329,7 @@ final class Parser
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
 
-	/** Parse only braced alternatives; each body gets its own lexical collector and shared storage IDs. */
+	/** Parse alternatives in source order. Recursion binds each else to the nearest unmatched if. */
 	private function conditional(statement_grammar $grammar, Body_Collection $collector): ast_if_statement
 	{
 		$start = $this->cursor->position();
@@ -343,7 +344,7 @@ final class Parser
 				$condition = $this->value();
 				$this->cursor->take(token_kind::rparen, ')');
 			}
-			$body = $this->braced_block($grammar, $collector, '{ (braced conditional body)');
+			$body = $this->arm_body($grammar, $collector);
 			$arms[] = new ast_if_arm($arm_start, $body->end, $condition, $body);
 			if (!$conditional) {
 				break;
@@ -447,6 +448,18 @@ final class Parser
 		$binding = $child->produced_binding($name, $position, true);
 		$handler = $this->braced_block($grammar, $collector, '{ after catch', $child);
 		return new ast_catch_clause($start, $type, $binding, $handler);
+	}
+
+	/** A single-statement arm uses the same lexical scope and block representation as a braced arm. */
+	private function arm_body(statement_grammar $grammar, Body_Collection $collector): ast_block
+	{
+		if ($this->cursor->is(token_kind::lbrace)) return $this->braced_block($grammar, $collector, '{');
+		$start = $this->cursor->position();
+		$this->lexical = $child = $collector->child();
+		$statement = $this->statement($grammar, $child);
+		$child->statement($statement, 0);
+		$this->lexical = $collector;
+		return $child->block($start, $this->cursor->position(), [$statement]);
 	}
 
 	/** Parse a lexical block once, optionally with an existing header binding. */
