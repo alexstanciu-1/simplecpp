@@ -93,7 +93,7 @@ foreach (flavor::cases() as $flavor)
 	verify($body->statements[3]->values[0]->declaration() === $program->files['lib']->globals()[0], 'Cross-source global link');
 	verify($file->functions()[0]->body()->statements[0]->values[0]->declaration() === $file->globals()[0], 'Function captured main local');
 	verify($body->statements[3]->values[0]->constant() === null, 'Global initializer folded into a mutable read');
-	verify($body->statements[9]->conversion() === exit_conversion::checked, 'Global exit lacks runtime check');
+	verify($body->statements[9]->conversion() === exit_conversion::checked->value, 'Global exit lacks runtime check');
 	verify($program->files['root']->main() === null, 'Globals invented executable statements');
 	verify($program->files['root']->globals()[2]->initializer->integer() === PHP_INT_MIN, 'Minimum int64 lost');
 	verify($program->files['root']->globals()[3]->initializer->integer() === PHP_INT_MAX, 'Maximum int64 lost');

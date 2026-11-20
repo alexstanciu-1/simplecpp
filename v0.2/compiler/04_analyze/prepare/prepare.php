@@ -358,7 +358,7 @@ final class Preparation
 					$this->value($statement->value);
 					$this->require_integer($statement->value, 'Entry return requires int64');
 					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(),
-							$target, $statement->value));
+							$target, $statement->value)->value);
 				}
 				$next = statement_completion::returns;
 			}

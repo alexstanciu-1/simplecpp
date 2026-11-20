@@ -1042,9 +1042,9 @@ CPP;
 					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
 					continue;
 				}
-				if ($conversion instanceof exit_conversion) {
+				if ($function->is_implicit_entry) {
 					$value = self::plain_integer_literal($statement->value, $conversion)
-						?? Cpp_Exit::expression($conversion,
+						?? Cpp_Exit::expression(exit_conversion::from($conversion),
 							$this->value($statement->value, $global_references, $declarations, $required_headers));
 				}
 				else {
@@ -2531,11 +2531,10 @@ CPP;
 	}
 
 	/** The typed destination supplies the native type. Leave the signed minimum to the literal renderer. */
-	private static function plain_integer_literal(ast_expression $value, int|exit_conversion $conversion /** uint16|exit_conversion */): ?string
+	private static function plain_integer_literal(ast_expression $value, int $conversion /** uint16 */): ?string
 	{
 		if (!($value instanceof ast_integer_expression)
-			|| ($conversion !== value_conversion::identity && $conversion !== value_conversion::integer_proven
-				&& $conversion !== exit_conversion::proven)) {
+			|| ($conversion !== value_conversion::identity && $conversion !== value_conversion::integer_proven)) {
 			return null;
 		}
 		$integer = $value->integer();

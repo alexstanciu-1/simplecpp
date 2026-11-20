@@ -24,8 +24,8 @@ final class statement_completion
  * A constant inside the target range selects proven; an unknown value requires checked conversion.
  */
 enum exit_conversion: int /** uint8 */ {
-	case proven = 1;
-	case checked = 2;
+	case proven = value_conversion::integer_proven;
+	case checked = value_conversion::integer_checked;
 }
 
 /**

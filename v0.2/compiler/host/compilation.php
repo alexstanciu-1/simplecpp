@@ -129,7 +129,12 @@ final class Compilation_Inspection
 				$statements[] = self::binding($statement);
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$statements[] = ['kind' => 'return', 'conversion' => value_conversion::name($statement->conversion()),
+				// Inspection also accepts a nested block directly. Recover its enclosing return destination.
+				$owner = $program;
+				while (!($owner instanceof ast_function_body)) $owner = $owner->parent;
+				$code = $statement->conversion();
+				$statements[] = ['kind' => 'return', 'conversion' => $owner->parent->is_implicit_entry
+					? exit_conversion::from($code)->name : value_conversion::name($code),
 					'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_return_statement) {

@@ -663,7 +663,7 @@ final class ast_return_statement extends ast_statement
 
 	/** PREP FACTS */
 	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
-	protected exit_conversion|int|null $conversion /** exit_conversion|uint16|null */ = null;
+	protected ?int $conversion /** uint16|null */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -679,7 +679,7 @@ final class ast_return_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_conversion(exit_conversion|int $conversion /** exit_conversion|uint16 */): void
+	public function settle_conversion(int $conversion /** uint16 */): void
 	{
 		if ($this->conversion !== null) {
 			throw new \LogicException('Return conversion already settled');
@@ -687,7 +687,7 @@ final class ast_return_statement extends ast_statement
 		$this->conversion = $conversion;
 	}
 
-	public function conversion(): exit_conversion|int /** exit_conversion|uint16 */
+	public function conversion(): int /** uint16 */
 	{
 		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
 	}
