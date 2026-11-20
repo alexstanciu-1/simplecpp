@@ -169,7 +169,19 @@ final class Syntax_Inspection
 				'left' => self::expression($expression->left), 'right' => self::expression($expression->right),
 				'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_lambda_expression) {
+			return ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
+				['name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling()], $expression->parameters),
+				'result' => $expression->result->spelling(), 'body' => self::expression($expression->body), 'span' => self::span($expression)];
+		}
+		if ($expression instanceof ast_callable_reference) {
+			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_call_expression) {
+			if ($expression->qualifier === call_qualifier::local) {
+				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => array_map(self::expression(...), $expression->arguments),
+					'span' => self::span($expression)];
+			}
 			if ($expression->qualifier === call_qualifier::lexical_parent || $expression->qualifier === call_qualifier::called_type) {
 				return ['kind' => $expression->qualifier === call_qualifier::called_type ? 'late_static_call' : 'parent_call', 'name' => $expression->name,
 					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];

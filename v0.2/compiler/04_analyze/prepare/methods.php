@@ -12,7 +12,8 @@ final class Method_Preparation
 		if ($method->method_contract_ready || !($method->parent instanceof ast_record_declaration)) return;
 		$record = $method->parent->definition;
 		self::ancestor_contracts($record, $symbols, $dependencies);
-		$method->watch_signature($dependencies);
+		// Inherited contracts still relay ancestry changes. A root static method observes its written signature and component types.
+		if (!$method->is_static || $record->base() !== null) $method->watch_signature($dependencies);
 		$dependencies?->watch($symbols->entry($method->parent->symbol_key()), $method);
 		$marked = $method->has_virtual_dispatch() || ($method->is_final && !$method->is_static);
 		if ($marked && ($method->is_constructor() || $method->is_static || $method->is_private
@@ -171,7 +172,9 @@ final class Method_Preparation
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];
 			if ($parameter->mode !== $original->mode || ($parameter->default_value === null) !== ($original->default_value === null)) return null;
-			if ($parameter->type_def() === $original->type_def()) continue;
+			$provided = $parameter->type_def();
+			$required = $original->type_def();
+			if ($provided === $required || ($provided instanceof callback_type_definition && $provided->matches($required))) continue;
 			if ($method->is_static || $parameter->mode !== passing_mode::value
 				|| !self::widens($original->type_def(), $parameter->type_def(), $symbols, $dependencies, $watcher)) return null;
 			$exact = false;

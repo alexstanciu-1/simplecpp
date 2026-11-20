@@ -581,6 +581,7 @@
     "boolean_to_numeric_01"
   ],
   "string": {
+    "transfer_assignment": "private_value_nothrow",
     "search_offsets": {"php": "signed_offset", "js": "clamp", "cpp": "nonnegative"},
     "trim_defaults": {"php": "php_space", "js": "ascii_space", "cpp": "ascii_space"},
     "index_write": {"method": "set_byte", "key": "int64", "value": "uint8", "policy": "checked_byte_offset"},
@@ -746,6 +747,7 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
+    "transfer_assignment": "private_value_nothrow",
     "initialization": {
       "mode": "ordered_keyed",
       "duplicates": "reject",
@@ -809,6 +811,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
     "providers": {"mixed": "core.mixed", "dynamic": "core.dynamic"},
     "binding": "private_inline_boxed",

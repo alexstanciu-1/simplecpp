@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
-use scpp\compiler\{Program_Loader, Program_Frontend, Cpp_Program, entry_target, flavor};
+use scpp\compiler\{Program_Loader, Program_Frontend, Cpp_Program, entry_target, flavor, source_file};
 
 function verify(bool $ok, string $message): void
 {
@@ -63,6 +63,11 @@ try
 		'Duplicate AST ownership');
 	$output = Cpp_Program::emit($program);
 	verify(count($output->source_units) === 3, 'One output per source');
+	$snapshot = new source_file('virtual label', 'return 8;', flavor::php);
+	$memory = $frontend->prepare_sources('virtual.scpp', ['virtual.scpp' => $snapshot], new entry_target(31));
+	verify($memory->entry->file->tokens->source === $snapshot, 'Switching loaders lost the supplied snapshot identity');
+	verify($program->files['app/main.cpp']->tokens->source->content === 'helper(); return 8;',
+		'Loading a memory snapshot altered the disk session');
 	$reordered = Program_Loader::modules(array_reverse($definitions, true), 'app');
 	verify(Cpp_Program::emit($frontend->prepare($reordered, new entry_target(31)))->files === $output->files,
 		'Definition order changed output');

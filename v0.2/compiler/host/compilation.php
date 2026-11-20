@@ -153,7 +153,8 @@ final class Compilation_Inspection
 			elseif ($statement instanceof ast_call_statement) {
 				$statements[] = ['kind' => 'call', 'target' => $statement->value->target_name(),
 					'return_type' => $statement->value->type_def()->name,
-					'arguments' => array_map(self::value(...), $statement->value->cardinality === null && $statement->value->function_def() instanceof runtime_function
+					'arguments' => array_map(self::value(...), $statement->value->cardinality === null && $statement->value->callable_binding() === null
+						&& $statement->value->function_def() instanceof runtime_function
 					? $statement->value->runtime_operands() : $statement->value->arguments)];
 			}
 		}
@@ -265,10 +266,12 @@ final class Compilation_Inspection
 			$row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
+		if ($value instanceof ast_lambda_expression) $row['body'] = self::value($value->body);
+		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
-			$row['arguments'] = array_map(self::value(...), $value->cardinality === null && $value->function_def() instanceof runtime_function
+			$row['arguments'] = array_map(self::value(...), $value->cardinality === null && $value->callable_binding() === null && $value->function_def() instanceof runtime_function
 					? $value->runtime_operands() : $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {

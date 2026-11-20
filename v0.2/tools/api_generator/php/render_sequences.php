@@ -141,7 +141,8 @@ function renderString(array $plan): array {
     $count = $s['count_representation'];
     $lh = template('core/lifecycle_declaration', ['n' => $n]);
     $vars = compact('n', 'count', 'lh') + ['inline_capacity' => $s['inline_capacity']];
-    $h = template('strings/string_declaration', $vars);
+    $read = $plan['string_index_read'] ?? null;
+    $h = template('strings/string_declaration', $vars + ['view_forward' => $read ? ' class checked_byte_view;' : '']);
     $inputs = [];
     foreach ($plan['conversions'] as $conversion) {
         if ($conversion['target'] === $n) $inputs[] = scalarNativeIdentity($plan, $conversion['source']);
@@ -155,8 +156,9 @@ function renderString(array $plan): array {
             $h .= "    explicit $n(" . scalarInput($c['source']) . " value);\n";
         }
     }
-    $read = $plan['string_index_read'] ?? null;
     if ($read) $h .= "    {$read['result']} {$read['name']}({$read['key']} index) const;\n";
+    if ($read) $h .= "    ::scpp::detail::checked_byte_view checked_bytes() const &;\n"
+        . "    ::scpp::detail::checked_byte_view checked_bytes() const && = delete;\n";
     $write = $plan['string_index_write'] ?? null;
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
@@ -165,6 +167,8 @@ function renderString(array $plan): array {
         ? template('strings/string_classic_storage', ['n' => $n]) : '';
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
     if ($read) {
+        $h .= template('strings/checked_byte_view', ['n' => $n, 'key' => $read['key'], 'result' => $read['result']]);
+        $d .= "void detail::checked_byte_view::invalid_index() { throw std::out_of_range(\"sequence_index_out_of_range\"); }\n";
         $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
             . "    const auto bytes = detail::string_access::read(*this);\n"
             . "    return static_cast<{$read['result']}>(bytes[detail::sequence_index(index, bytes.size())]);\n}\n";

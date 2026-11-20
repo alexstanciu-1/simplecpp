@@ -28,6 +28,14 @@ through analysis; the parser neither selects int64 nor converts the spelling. Un
 names/types, duplicate declarations, overflow, conversions and inference restrictions
 remain semantic responsibilities. Successful parsing does not mean a valid program.
 
+## Named callback syntax
+
+All three flavors use `callback<Result, Input1, Input2>` on a parameter and
+`name(...)` to refer to a source function. Static references use each flavor's
+type-qualified syntax. See the [named callback contract](../../specs/compiler_entry_v0_2.md#named-callbacks).
+The three flavors also admit [capture-free `fn` expressions](../../specs/compiler_entry_v0_2.md#capture-free-lambdas)
+with their ordinary parameter syntax.
+
 ## First common subset
 
 | Intent | C++ | PHP | JS |

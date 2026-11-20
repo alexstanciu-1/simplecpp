@@ -72,6 +72,12 @@ start the deferred refactor without agreement. This is not an out-of-chat schedu
   Preparation owns semantic decisions; lowering consumes settled facts. Do not
   rebuild handwritten scalar matrices or restore wrappers for native int64 storage.
 
+- Classify a proposed optimization by the cost of proving it safe. Every edit pays
+  for foreground preparation, including bodies that never benefit. Reuse settled
+  facts for cheap lowering choices and measure bounded foreground proofs. Design
+  expensive optional analysis to run on demand first, with idle reuse as a later
+  option. See the [optimization policy and rationale](docs/generated_lowering.md#placing-optimization-work).
+
 - Apply the [evaluation contract](../../specs/expression_evaluation.md) when adding or
   removing operand snapshots. Keep a temporary when it preserves a required effect,
   value, or lifetime. For instance-field compounds, emit a direct update when the type
@@ -194,6 +200,8 @@ statement order. Keep current guidance and unresolved debt with their owners;
 do not append contradictory status sections or present historical proof counts
 as current requirements. Performance claims require relevant measurements.
 Implementation reports include lines added, changed and removed, separated by compiler, tests and documentation, plus short excerpts from the changed compiler source.
+Use Clang as the native target for v0.2 optimization tests, benchmarks and acceptance decisions across all three source flavors. Historical GCC measurements are retained for reference.
+
 End-to-end benchmarks must include the native Clang build and executable checks.
 Report Clang frontend, LLVM optimization/code generation, and linker work, alongside
 native and overall wall time. Record optimization, debug symbols, jobs, linker,

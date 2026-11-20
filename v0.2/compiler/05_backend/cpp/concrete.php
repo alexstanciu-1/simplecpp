@@ -62,6 +62,8 @@ final class Cpp_Concrete_Collections
 	/** PROPERTIES */
 	/** @var application_collection_type[] Native non-owning, only specializations used by this source emission. */
 	private array $types /** array<string,application_collection_type> */ = [];
+	/** @var string[] Private optional helpers requested by selected statements. */
+	private array $destination_headers = [];
 	private readonly string $root;
 
 	/** CONSTRUCTOR */
@@ -78,6 +80,31 @@ final class Cpp_Concrete_Collections
 			if ($argument instanceof application_collection_type) $this->request($argument);
 		}
 		$this->types[$type->cpp_type()] = $type;
+	}
+
+	/** Request the provider-owned definition once per concrete type in this unit.
+	 * @param ast_field_assignment[] $writes @param string[] $inputs
+	 */
+	public function destination_append(destination_append_type $type, array $writes, string $receiver, array $inputs): string
+	{
+		$this->request($type);
+		$name = $type->cpp_type();
+		$helper = 'destination_' . $name;
+		$key = hash('sha256', $this->root . "\0" . $name);
+		$path = 'units/' . hash('sha256', 'destination:' . $key) . '.hpp';
+		if (!isset($this->destination_headers[$path])) {
+			$params = [];
+			$names = [];
+			foreach ($writes as $i => $write) {
+				$names[] = 'f' . $i;
+				$params[] = $write->target->type_def()->cpp_type() . ' f' . $i;
+			}
+			$text = $type->destination_append_definition(['@helper@' => $helper, '@vector@' => $name,
+				'@element@' => $type->write_type()->cpp_type(), '@parameters@' => implode(', ', $params), '@inputs@' => implode(', ', $names)]);
+			$this->destination_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n"
+				. Cpp_Emitter::namespace_body($this->root, $text);
+		}
+		return $helper . '::append(' . implode(', ', [$receiver, ...$inputs]) . ')';
 	}
 
 	/** Signatures may precede concrete definitions, including methods on their own element type. */
@@ -121,6 +148,6 @@ final class Cpp_Concrete_Collections
 			}
 			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $body) . "\n#endif\n";
 		}
-		return $files;
+		return $files + $this->destination_headers;
 	}
 }

@@ -19,7 +19,11 @@ order and diagnostic ordering remain deterministic.
 Only affected declaration contracts are compared. Retired roots supply retired body
 watchers directly; surviving subscriptions remain. Notifications are deduplicated
 and dispatched before the frontend retires old preparation-queue attachments.
-Unchanged function contracts do not invalidate callers merely because the body changed.
+A same-source replacement with unchanged import bindings takes over the signature’s
+nominal watches before dispatch. A body-only edit can reuse its callers while a
+simultaneous payload replacement still reaches them. Changed import bindings
+conservatively invalidate callers of watched signatures in that file. Iterator
+return types retain their producer declaration, so replacing it invalidates consumers.
 The existing function/default, constant-value, global-type and ambiguity rules remain.
 
 ## Structure changes

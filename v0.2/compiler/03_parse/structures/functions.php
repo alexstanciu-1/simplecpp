@@ -41,6 +41,60 @@ enum call_qualifier: int /** uint8 */
 	case lexical_self = 1;
 	case lexical_parent = 2;
 	case called_type = 3;
+	case local = 4;
+}
+
+/** A named callable used as an argument. The target is resolved against the expected parameter type. */
+final class ast_callable_reference extends ast_expression
+{
+	/** Native non-owning stable symbol or selected static implementation. */
+	private symbol_entry|called_method_instance|null $target = null;
+
+	public function __construct(public readonly string $name, int $start /** uint32 */, int $end /** uint32 */)
+	{
+		parent::__construct($start, $end);
+	}
+
+	public function settle_target(symbol_entry|called_method_instance $target, callback_type_definition $signature): void
+	{
+		$this->target = $target;
+		$this->settle_value($signature, null);
+	}
+
+	public function implementation(): ast_function_declaration
+	{
+		return ($this->target instanceof called_method_instance ? $this->target->implementation : $this->target?->declaration())
+			?? throw new \LogicException('Callback target is not settled');
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->target = null;
+	}
+}
+
+/** An expression-bodied lambda owns only its written parameters, result type and expression. */
+final class ast_lambda_expression extends ast_expression
+{
+	/** Prepared result conversion. */
+	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
+
+	/** @param ast_parameter_declaration[] $parameters */
+	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
+		public readonly ast_type_reference $result, public readonly ast_expression $body)
+	{
+		parent::__construct($start, $body->end);
+		foreach ($parameters as $parameter) $parameter->attach($this);
+		$result->attach($this);
+		$body->attach($this);
+	}
+
+	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
+	{
+		$this->conversion = $conversion;
+		$this->settle_value($type, null);
+	}
 }
 
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
@@ -65,7 +119,7 @@ final class ast_call_expression extends ast_expression
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|called_method_instance|null $function_symbol = null;
+	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -109,7 +163,7 @@ final class ast_call_expression extends ast_expression
 
 	public function target_name(): string
 	{
-		return $this->cardinality?->name ?? $this->function_def()->name();
+		return $this->cardinality?->name ?? $this->callable_binding()?->name() ?? $this->function_def()->name();
 	}
 
 	/** @param int[] $conversions */
@@ -143,13 +197,26 @@ final class ast_call_expression extends ast_expression
 		$this->conversions = $conversions;
 	}
 
+	/** @param int[] $conversions */
+	public function settle_local_call(ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
+	{
+		$this->settle_value($signature->result, null);
+		$this->function_symbol = $parameter;
+		$this->conversions = $conversions;
+	}
+
+	public function callable_binding(): ?ast_local_binding
+	{
+		return $this->function_symbol instanceof ast_local_binding ? $this->function_symbol : null;
+	}
+
 	public function function_def(): ast_function_declaration|runtime_function
 	{
 		if ($this->function_symbol instanceof runtime_function) {
 			return $this->function_symbol;
 		}
 		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
-		return $this->function_symbol?->declaration() ?? throw new \LogicException('Call target is not settled or was removed');
+		return ($this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
 	}
 
 	/** Lower only after the coordinator has settled all reachable implementations. */
@@ -197,6 +264,8 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
+	/** Non-owning length initializer anchoring a proven scoped byte view. */
+	public ?ast_local_declaration $byte_view_length = null;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
 	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
@@ -263,6 +332,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	{
 		$this->prepared = false;
 		$this->queue_change();
+		$this->byte_view_length = null;
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 
@@ -500,12 +570,19 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->return_type_def = $type;
 	}
 
-	/** Forget outgoing watches and notify callers before replacing a nominal contract in the same batch as its payload. */
-	public function retire_signature(): void
+	/** Preserve nominal dependency edges across replacement until the new signature settles. */
+	public function retire_signature(?ast_function_declaration $replacement): void
 	{
-		if ($this->signature_dependencies === null) return;
-		$this->signature_dependencies->forget($this);
-		$this->signature_dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		$dependencies = $this->signature_dependencies;
+		if ($dependencies === null) return;
+		if ($replacement !== null) {
+			$replacement->bind_source_key($this->dependency_source_key());
+			$replacement->watch_signature($dependencies);
+			$dependencies->replace_signature($this, $replacement);
+		} else {
+			$dependencies->forget($this);
+			$dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		}
 		$this->signature_dependencies = null;
 	}
 

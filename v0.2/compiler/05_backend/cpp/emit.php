@@ -31,12 +31,16 @@ final class Cpp_Emitter
 	private ?string $adapter_flavor = null;
 	/** Initializer expressions cannot use imports declared inside the constructor body. */
 	private bool $qualified_adapters = false;
+	/** Non-owning field whose checked descriptor is live in the current emitted function. */
+	private ?ast_field_expression $byte_view = null;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 	/** Owning lowering context for the innermost protected callable collecting exits. */
 	private ?Cpp_Finally_Exit $finally_exit = null;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
+	/** Native non-owning during emission of the selected function. */
+	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
 	private Cpp_Concrete_Collections $concrete_collections;
 
@@ -49,8 +53,11 @@ final class Cpp_Emitter
 	private array $generator_locals /** array<uint32,string> */ = [];
 
 	/** CONSTRUCTOR */
-	/** @param cpp_generator_layout[] $generator_layouts */
-	public function __construct(?Cpp_Headers $headers = null, string $root = 'App', array $generator_layouts /** array<string,cpp_generator_layout> */ = [])
+	/** @param cpp_generator_layout[] $generator_layouts
+	 * @param Destination_Plan[] $destination_plans
+	 */
+	public function __construct(?Cpp_Headers $headers = null, string $root = 'App', array $generator_layouts /** array<string,cpp_generator_layout> */ = [],
+		private readonly array $destination_plans /** array<string,Destination_Plan> */ = [])
 	{
 		$this->headers = $headers;
 		$this->root = $root;
@@ -739,13 +746,24 @@ CPP;
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
+			$this->byte_view = null;
 			/** @var ast_function_declaration $function */
 			$function = $body->parent;
+			$this->destination = $this->destination_plans[$function->name()] ?? null;
 		}
 		$lines = [];
 		if ($resume !== null) $resume->scopes[] = $body;
 		foreach ($body->statements as $statement)
 		{
+			if (($writes = $this->destination?->writes($statement)) !== null) {
+				if ($writes !== []) {
+					$inputs = [];
+					foreach ($writes as $write) $inputs[] = $this->value($write->value, $global_references, $declarations, $required_headers);
+					$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+					$lines[] = "\t" . $this->concrete_collections->destination_append($statement->receiver->type_def(), $writes, $receiver, $inputs) . ';';
+				}
+				continue;
+			}
 			if ($statement instanceof ast_base_statement) continue;
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 				|| $statement instanceof ast_yield_statement);
@@ -967,6 +985,11 @@ CPP;
 				$lines[] = "\t" . ($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
+				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
+					$this->byte_view = $statement->initializer->arguments[0];
+					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
+					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
+				}
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
@@ -1023,6 +1046,7 @@ CPP;
 			$lines[] = $this->generator_cleanup($resume, count($resume->scopes) - 1);
 			array_pop($resume->scopes);
 		}
+		if ($body instanceof ast_function_body) $this->byte_view = null;
 		return $lines;
 	}
 
@@ -1370,7 +1394,8 @@ CPP;
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
-			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
+			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
+			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -1431,6 +1456,7 @@ CPP;
 		foreach ($value_type->cpp_headers() as $header) {
 			$required_headers[$header] = true;
 		}
+		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
 		if ($value instanceof ast_match_expression) {
 			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_selection($value, $global_references, $declarations, $required_headers) . ' }())';
 		}
@@ -1499,7 +1525,13 @@ CPP;
 		if ($value instanceof ast_index_expression) {
 			/** @var index_read_type $type */
 			$type = $value->receiver->type_def();
-			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$field = $value->receiver;
+			if ($this->byte_view !== null && $field instanceof ast_field_expression
+				&& $field->field === $this->byte_view->field && $field->receiver instanceof ast_name_expression
+				&& $field->receiver->refers_to($this->byte_view->receiver->declaration())) {
+				return 'scpp_byte_view.read(' . $this->value($value->index, $global_references, $declarations, $required_headers) . ')';
+			}
+			$receiver = $this->value($field, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
 			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}
@@ -1623,7 +1655,24 @@ CPP;
 				. '; const auto binary_right = ' . $right . '; return '
 				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right', $typed_initializer) . '; }())';
 		}
+		if ($value instanceof ast_lambda_expression) {
+			$reorderable = true;
+			return $this->lambda($value, $global_references, $declarations, $required_headers);
+		}
+		if ($value instanceof ast_callable_reference) {
+			$function = $value->implementation();
+			$name = self::function_name($function);
+			$declarations[$name] = $function;
+			$reorderable = true;
+			return '&' . $name;
+		}
 		if ($value instanceof ast_call_expression) {
+			$callback = $value->callable_binding();
+			if ($callback !== null) {
+				$type = $callback->type_def();
+				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
+				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
+			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
 				/** @var counted_collection_type $type */
@@ -1858,13 +1907,15 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 */
-	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration $function,
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|callback_type_definition $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
 	{
 		$steps = [];
 		$arguments = [];
-		$method = $value instanceof ast_call_expression && $function->has_receiver();
+		$callback = $function instanceof callback_type_definition;
+		$parameters = $callback ? $function->inputs : $function->parameters;
+		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -1884,7 +1935,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($function->parameters === [] && $steps === []) {
+		} elseif ($parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -1892,10 +1943,11 @@ CPP;
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
-		foreach ($function->parameters as $index => $parameter) {
+		foreach ($parameters as $index => $parameter) {
 			$argument = $value->arguments[$index] ?? $parameter->default_value;
 			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
-			$type = $parameter->type_def();
+			$type = $callback ? $parameter : $parameter->type_def();
+			$by_value = $callback || $parameter->mode === passing_mode::value;
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
@@ -1903,19 +1955,19 @@ CPP;
 			foreach ($type->conversion_headers($conversion) as $header) {
 				$required_headers[$header] = true;
 			}
-			if ($parameter->mode === passing_mode::value) {
+			if ($by_value) {
 				$operand = $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && $steps === [] && count($function->parameters) === 1) {
+			if (!$method && $steps === [] && count($parameters) === 1) {
 				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
 			$direct_arguments[] = $operand;
 			$direct = $direct && $operand_safe && $type->cpp_trivial_value()
-				&& ($conversion === value_conversion::identity) && ($parameter->mode === passing_mode::value);
+				&& ($conversion === value_conversion::identity) && $by_value;
 			// A prepared reference binds a stable named slot without reading its value.
-			if ($parameter->mode === passing_mode::reference) {
+			if (!$by_value) {
 				$has_reference = true;
 			} elseif (!self::inert_literal_argument($argument, $type, $conversion)) {
 				$order_sensitive[$index] = true;
@@ -1932,8 +1984,8 @@ CPP;
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
 		// after its predecessors, unless its expression needs a record destruction boundary.
-		foreach ($function->parameters as $index => $parameter) {
-			$type = $parameter->type_def();
+		foreach ($parameters as $index => $parameter) {
+			$type = $callback ? $parameter : $parameter->type_def();
 			$operand = $direct_arguments[$index];
 			if (!isset($order_sensitive[$index]) || $index === $inline_index) {
 				$arguments[] = $operand;
@@ -1941,13 +1993,35 @@ CPP;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
 			$temporary = 'argument_' . $value->start . '_' . $index;
-			$steps[] = $type->cpp_type() . ' ' . $temporary . ' = ' . $operand . ';';
+			$declaration = $type instanceof callback_type_definition ? $type->cpp_declarator($temporary) : $type->cpp_type() . ' ' . $temporary;
+			$steps[] = $declaration . ' = ' . $operand . ';';
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
+	}
+
+	/** Emit the concrete closure in place, with its own expression and result conversion. */
+	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
+	{
+		$type = $lambda->type_def();
+		$signature = $type->signature;
+		foreach ($signature->cpp_headers() as $header) $headers[$header] = true;
+		foreach (self::signature_type_dependencies($signature) as $component) {
+			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
+			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			else $declarations[$component->name] = $component;
+		}
+		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
+		$parameters = [];
+		foreach ($lambda->parameters as $parameter) {
+			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
+		}
+		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
+		return '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ' { return ' . $result . '; }';
 	}
 
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
@@ -2110,12 +2184,13 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			if ($type instanceof class_union_type_definition) $type = $type->base;
-			$native = $this->signature_type($type, $short_types);
+			$native = $type instanceof callback_type_definition ? null : $this->signature_type($type, $short_types);
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
-			$parameters[] = '[[maybe_unused]] ' . $native . ' '
-				. ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
+			$name = $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . ($type instanceof callback_type_definition
+				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $name);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -2236,6 +2311,11 @@ CPP;
 			yield $type->base;
 			return;
 		}
+		if ($type instanceof callback_type_definition) {
+			yield from self::signature_type_dependencies($type->result);
+			foreach ($type->inputs as $input) yield from self::signature_type_dependencies($input);
+			return;
+		}
 		if ($type instanceof intersection_type_definition) {
 			yield $type;
 			yield $type->base;
@@ -2268,8 +2348,8 @@ CPP;
 	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
 	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
 	{
-		return ($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
-			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion);
+		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
 	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */

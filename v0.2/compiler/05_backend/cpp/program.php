@@ -8,10 +8,11 @@ final class Cpp_Program
 {
 	/**
 	 * Reuse text outside the supplied changed-source set; null requests full emission.
+	 * @param array<string,array<string,Destination_Plan>> $destination_plans
 	 * @param bool[]|null $changed
 	 */
 	public static function emit(prepared_program $program, ?cpp_program_output $previous = null,
-		?array $changed /** array<string,bool>|null */ = null): cpp_program_output
+		?array $changed /** array<string,bool>|null */ = null, array $destination_plans /** array<string,array<string,Destination_Plan>> */ = []): cpp_program_output
 	{
 		$program->require_prepared();
 		$bodies = [];
@@ -43,7 +44,7 @@ final class Cpp_Program
 				continue;
 			}
 			$emitted[] = (string) $path;
-			$emitter = new Cpp_Emitter($headers, $root, $layouts);
+			$emitter = new Cpp_Emitter($headers, $root, $layouts, $destination_plans[$path] ?? []);
 			$bodies[$path] = (string) $path === $program->entry_path
 				? $emitter->entry_body($program->entry) : $emitter->source_definitions($file);
 			$requested = $emitter->adapter_files();

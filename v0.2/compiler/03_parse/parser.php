@@ -22,6 +22,8 @@ final class Parser
 	private readonly Namespace_Syntax $names;
 	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
 	private ?Body_Collection $lexical = null;
+	/** Temporary parameter names for JS dotted expressions within a lambda. @var bool[]|null */
+	private ?array $lambda_names /** array<string,bool>|null */ = null;
 	private bool $started = false;
 	/** @var array<string,array<string,ast_trait_declaration>> Consumer-specific binding plan supplied after the source join. */
 	private array $trait_bindings /** array<string,array<string,ast_trait_declaration>> */ = [];
@@ -673,9 +675,14 @@ final class Parser
 	}
 
 	/** Calls own ordinary value arguments; nested calls use the same parser and AST node. */
-	private function call(): ast_call_expression
+	private function call(): ast_expression
 	{
 		$start = $this->cursor->position();
+		if ($this->cursor->is(token_kind::variable)) {
+			$name = $this->cursor->name(token_kind::variable);
+			$arguments = $this->arguments();
+			return new ast_call_expression($start, $this->cursor->position(), $name, null, $arguments, qualifier: call_qualifier::local);
+		}
 		$name = $this->names->path(true, call: true);
 		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::scope)) {
 			$this->cursor->take(token_kind::scope, '::');
@@ -693,8 +700,18 @@ final class Parser
 	}
 
 	/** Parse the common argument list after a function path or member name. */
-	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, call_qualifier $qualifier = call_qualifier::ordinary): ast_call_expression
+	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, call_qualifier $qualifier = call_qualifier::ordinary): ast_expression
 	{
+		if ($this->cursor->next_is(token_kind::ellipsis)) {
+			$this->cursor->take(token_kind::lparen, '(');
+			$this->cursor->take(token_kind::ellipsis, '...');
+			$end = $this->cursor->take(token_kind::rparen, ')') + 1;
+			if ($qualifier !== call_qualifier::ordinary || ($receiver !== null
+				&& !($separator === token_kind::dot && str_contains($name, '\\')))) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$start]->offset, 'Callback reference requires a named free function or explicitly qualified static method');
+			}
+			return new ast_callable_reference($name, $start, $end);
+		}
 		$arguments = $this->arguments();
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
@@ -1080,10 +1097,46 @@ final class Parser
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $constant);
 	}
 
+	/** In C++ and JS, fn remains an ordinary name unless followed by an explicitly typed lambda header. */
+	private function lambda_start(): bool
+	{
+		$c = $this->cursor;
+		if ($c->keyword('fn')) return true;
+		if (!$c->is(token_kind::identifier) || !$c->next_is(token_kind::lparen)
+			|| $c->tokens->text_at($c->position()) !== 'fn') return false;
+		$depth = 1;
+		$tokens = $c->tokens->tokens;
+		for ($index = $c->position() + 2; isset($tokens[$index]); ++$index) {
+			$kind = $tokens[$index]->kind;
+			if ($kind === token_kind::lparen) ++$depth;
+			elseif ($kind === token_kind::rparen && --$depth === 0) return ($tokens[$index + 1]->kind ?? null) === token_kind::colon;
+		}
+		return false;
+	}
+
+	private function lambda_expression(): ast_lambda_expression
+	{
+		$c = $this->cursor;
+		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
+		$parameters = $this->parameters();
+		$c->take(token_kind::colon, ': (lambda result type)');
+		$result = $this->return_type();
+		$c->take(token_kind::arrow, '=>');
+		$outer = $this->lambda_names;
+		$this->lambda_names = [];
+		foreach ($parameters as $parameter) $this->lambda_names[$parameter->declaration_key()] = true;
+		try {
+			return new ast_lambda_expression($start, $parameters, $result, $this->value());
+		} finally {
+			$this->lambda_names = $outer;
+		}
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
 		}
@@ -1230,10 +1283,12 @@ final class Parser
 				return new ast_this_expression($start, $start + 1);
 			}
 		}
-		if ($this->cursor->tokens->source->flavor === flavor::js && $this->cursor->is(token_kind::identifier)
-			&& $this->cursor->next_is(token_kind::dot) && $this->lexical?->has_local($this->cursor->tokens->text_at($this->cursor->position()))) {
-			$start = $this->cursor->position();
-			return new ast_name_expression($this->cursor->name(token_kind::identifier), $start, $start + 1);
+		if ($c->tokens->source->flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::dot)) {
+			$name = $c->tokens->text_at($c->position());
+			if ($this->lambda_names === null ? $this->lexical?->has_local($name) : isset($this->lambda_names[$name])) {
+				$start = $c->position();
+				return new ast_name_expression($c->name(token_kind::identifier), $start, $start + 1);
+			}
 		}
 		if ($this->names->call_start()) {
 			return $this->call();

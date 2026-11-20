@@ -334,6 +334,12 @@ abstract class ast_storage_write extends ast_statement
 		return $this->binding ?? throw new \LogicException('Write binding is not settled');
 	}
 
+	/** Property and indexed writes have a selected place rather than a plain storage binding. */
+	public function writes_to(ast_local_binding $local): bool
+	{
+		return $this->binding === $local;
+	}
+
 	/** Publish the resolved storage only after semantic admission succeeds. */
 	protected function settle_binding(ast_local_binding $local): void
 	{

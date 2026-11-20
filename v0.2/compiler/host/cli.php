@@ -106,8 +106,8 @@ final class Compiler_Cli
 			. "       php main.php frontend <app-dir> [status|stop]\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
-			. "       php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json>\n"
-			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n"
+			. "       php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json> [--optimize-function=NAME ...]\n"
+			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force] [--optimize-function=NAME ...]\n"
 			. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
 	}
 

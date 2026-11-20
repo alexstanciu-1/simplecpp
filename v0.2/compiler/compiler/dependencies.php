@@ -84,6 +84,26 @@ final class Dependency_Watches
 		$this->targets[$watcher][$symbol] = null;
 	}
 
+	/** Replace a signature in its existing source bucket before delivering this publication's changes. */
+	public function replace_signature(ast_function_declaration $old, ast_function_declaration $new): void
+	{
+		if ($this->targets->offsetExists($old)) {
+			$key = $old->dependency_source_key();
+			$targets = $this->targets[$old];
+			foreach ($targets as $symbol) {
+				$group = $this->observers[$symbol][$key];
+				$group[$new] = $group[$old];
+				$group->offsetUnset($old);
+			}
+			$this->targets[$new] = $targets;
+			$this->targets->offsetUnset($old);
+		}
+		if ($this->pending->offsetExists($old)) {
+			$this->pending[$new] = null;
+			$this->pending->offsetUnset($old);
+		}
+	}
+
 	/** Query a requirement without exposing buckets or inspecting foreign executable ASTs. */
 	public function has_use(symbol_entry $symbol, dependency_use $use): bool
 	{

@@ -78,6 +78,13 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     return $plan;
 }
 
+/** Whole-value transfer may elide the copy only after body preparation proves a private last use. */
+function privateValueTransfer(object $family): bool {
+    if (!property_exists($family, 'transfer_assignment')) return false;
+    literals($family, ['transfer_assignment' => 'private_value_nothrow']);
+    return true;
+}
+
 /** Normalize the core runtime class binding once for native and compiler publication. */
 function coreExceptionBinding(mixed $metadata): ?array {
     $exception = $metadata->compiler->exception ?? null;
@@ -98,7 +105,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write', 'transfer_assignment']);
+    $transfer = privateValueTransfer($m);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
     requireThat($registry[$count]['signed'] ?? false, 'String count requires a signed integer type');
@@ -360,6 +368,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $requirements = exportProviders($plan['submodules'], $requires);
     $plan['source_types']->string = 'string';
     $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'inline_22_private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'inline_capacity' => 22, 'empty_state' => 'inline', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
+    if ($transfer) $plan['string']['transfer_assignment'] = true;
 }
 
 /** One storage-to-recipe selection shared by runtime and application compiler generation. */
@@ -391,8 +400,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         return;
     }
     fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
-    $transfer = property_exists($m, 'transfer_assignment');
-    if ($transfer) literals($m, ['transfer_assignment' => 'private_value_nothrow']);
+    $transfer = privateValueTransfer($m);
     $reserve = property_exists($m, 'reserve');
     if ($reserve) literals($m, ['reserve' => 'checked_capacity_preserve_size']);
     literals($m, ['source_type' => 'vector', 'storage' => 'concrete_buffer', 'read' => 'value_copy', 'mutation' => 'explicit_set', 'native_index' => 'int']);
@@ -643,7 +651,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization']);
+    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
+    $transfer = privateValueTransfer($m);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     foreach(['key_types', 'value_types'] as $key) {
         requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
@@ -727,7 +736,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     $dependencies = ['bool_t', 'int64'];
     foreach ($hashes as $hash) $dependencies = array_merge($dependencies, [$hash['key'], $hash['value'], 'nullable_' . $hash['value']]);
     $plan['hash_publication'] = ['provider' => $provider, 'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
-    $plan['hashes'] = ['key_contracts' => $keyContracts, 'header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
+    $plan['hashes'] = ['transfer_assignment' => $transfer, 'key_contracts' => $keyContracts, 'header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
 }
 const DATETIME_SIGNATURES = [ 'now_unix_seconds' => ['int64', []], 'now_unix_millis' => ['int64', []], 'monotonic_millis' => ['int64', []], 'monotonic_micros' => ['uint64', []], 'monotonic_nanos' => ['uint64', []], 'sleep_millis' => ['void', ['int64']], 'format_iso_utc' => ['string', ['int64']], 'parse_iso_utc' => ['result_int64', ['string']], 'parse_common_local' => ['result_int64', ['string']], 'format_local' => ['string', ['string', 'int64']], 'format_local_now' => ['string', ['string']]];
 function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): void {

@@ -129,6 +129,11 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
+		if ($value instanceof ast_lambda_expression) {
+			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
+			self::expression($value->body);
+			return;
+		}
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {
@@ -228,9 +233,14 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
-			$parameter_type = Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
+			$parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
+				? Type_Resolution::callback($parameter, $symbols, $declaration, $watcher, $dependencies)
+				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
 			if ($parameter_type === null) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
+			}
+			if ($type instanceof generator_type_definition && $parameter_type instanceof callback_type_definition) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Callback parameters on yield producers are deferred');
 			}
 			if (($parameter_type instanceof intersection_type_definition || $parameter_type instanceof class_union_type_definition) && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $type instanceof generator_type_definition)) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), ($parameter_type instanceof class_union_type_definition ? 'Union' : 'Intersection') . ' requires an ordinary required by-value parameter');

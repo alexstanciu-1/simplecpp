@@ -138,6 +138,13 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $read = $runtime['string_index_read'];
             requireThat(isset($definitions[$read['key']], $definitions[$read['result']]), 'Compiler string index requires key and result types');
             $indexInterface = ' implements index_read_type';
+            foreach ($runtime['string_functions'] ?? [] as $binding) {
+                if ($binding['implementation'] !== 'byte_length') continue;
+                $indexInterface = ' implements scoped_byte_read_type';
+                $methods .= "\n\tpublic function is_byte_length(runtime_function \$function): bool\n\t{\n"
+                    . "\t\treturn \$function->symbol === " . var_export($binding['symbol'], true) . ";\n\t}\n";
+                break;
+            }
             $methods .= "\n" . compilerIndexRead('String', 'type_' . $definitions[$read['key']]['class'],
                 'type_' . $definitions[$read['result']]['class'], $read['name']);
         }
@@ -149,6 +156,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@key@' => 'type_' . $definitions[$write['key']]['class'], '@value@' => 'type_' . $definitions[$write['value']]['class'],
                 '@method@' => $write['name'],
             ]);
+        }
+        if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
+            $indexInterface .= $indexInterface === '' ? ' implements private_value_transfer_type' : ', private_value_transfer_type';
         }
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"

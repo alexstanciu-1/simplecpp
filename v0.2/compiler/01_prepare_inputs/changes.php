@@ -11,9 +11,10 @@ final class Project_Changes
 	 *
 	 * Return: versioned saved input state.
 	 *
+	 * @param string[] $optimize_functions
 	 * @return mixed[]
 	 */
-	public static function capture(compilation_session $session, string $facts, string $output): array /** array<string,mixed> */
+	public static function capture(compilation_session $session, string $facts, string $output, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		clearstatcache();
 		$files = [];
@@ -57,7 +58,9 @@ final class Project_Changes
 		$other_inputs = array_diff_key($files, $source_paths);
 		ksort($other_inputs, \SORT_STRING);
 		ksort($modules, \SORT_STRING);
-		return ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
+		sort($optimize_functions, \SORT_STRING);
+		return ($optimize_functions === [] ? [] : ['optimize_functions' => array_values(array_unique($optimize_functions))])
+			+ ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
 			'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 

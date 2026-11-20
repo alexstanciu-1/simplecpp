@@ -379,7 +379,7 @@ own proof before generalization. [Storage comparison](benchmarks/tokenizer/stora
 The scanner in all three flavors calls the metadata-published vector member.
 Its driver starts with a zero hint and preserves the last successful count through a
 failed edit. The scanner caps the requested capacity at the new source byte length.
-Source lowering emits the direct member call and retains final vector copy assignment.
+Source lowering emits the direct member call. The reserve-only measurement retained final vector copy assignment.
 
 On dev002 the cpp/php/js programs matched the PHP oracle on Clang and GCC for
 zero, low and high hints, an invalid edit and restoration. Both published integer
@@ -410,14 +410,90 @@ changes to integrate and verify each through the ordinary source compiler.
 [Whole-file comparison](benchmarks/tokenizer/byte_access/source_native.md) ·
 [Native-work inventory](benchmarks/tokenizer/native_work.md)
 
-| Order | Integration decision | Owner and reuse |
+#### Optimization costs for the six tokenizer findings
+
+Clang is the v0.2 optimization target for cpp/php/js. Use its correctness, compile-time and runtime results to decide whether to integrate a change. Earlier GCC measurements are historical.
+
+Status refers to the working compiler and scanner fixture. The source transfer
+and checked view have independent eligibility checks. Either can fall back
+without disabling the other.
+[Compiler optimization policy](../../compiler/docs/generated_lowering.md#placing-optimization-work)
+
+| Finding | Integration status | Foreground cost and follow-up |
 |---|---|---|
-| In use | Reserve using a previous count when available. | The caller chooses the hint. The published vector operation preserves size and checked access. |
-| 1 | Transfer an owned value at a proven last use in assignment. Start with publication of the tokenizer’s local vector. | Body preparation proves eligibility. The value provider defines transfer semantics and the C++ emitter selects the assignment form. |
-| 2 | Establish one retained source owner, then acquire a scoped checked byte view. | The scanner chooses the owner. A runtime capability can serve parsers, decoders and other byte readers. Verify validity for inline and heap strings before exposing the view. |
-| 3 | Construct fresh values directly in destination storage when the destination supports it. | Preparation preserves argument evaluation and construction semantics. The destination provider owns capacity, lifetime, growth and failure. Prove reuse with a second record type. |
-| 4 | Use ordinary constant lookup tables where source workloads justify them. Keep the tokenizer’s short-circuit equals lookahead. | Byte classifications belong to the scanner. Constant table lookup can also serve decoding and escaping. |
-| Later | Revisit range facts when a second consumer justifies their preparation cost. | The measured nonnegative cursor is a local proof. General range analysis and unchecked indexing are outside the first slice. |
+| 1. Presize output | Integrated. The caller supplies the previous count, the scanner caps it at the byte length, and the vector provider checks the reserve request. The named capacity factory is still proposed. | Ordinary source and provider call. No capacity-inference pass. |
+| 2. Transfer the finished vector | Integrated. The provider permits whole-value transfer and preparation checks the local’s uses before moving it into the result. | Bounded foreground proof for the terminal assignment. Broader alias or control-flow analysis can be evaluated separately. |
+| 3. Retain the source before scanning | Integrated in the working tree. The scanner assigns its private by-value input to the result field before reading bytes. A later read of the parameter selects copy. | Uses the same provider contract as finding 2, with a separate parameter-use proof. On dev002 the separate parameter phase took 6.34–6.52 µs for a move, 0.86–0.90 µs for a miss and 1.72–1.79 µs for an immediate later read. [Paired body and isolated proof measurements](benchmarks/tokenizer/parameter_preparation.md). |
+| 4. Acquire one checked byte view | Integrated for stable private fields. A possible owner change selects ordinary checked indexing. | Bounded foreground stability proof. The view report measures this proof separately. Following stability through calls would require additional evidence. |
+| 5. Construct the token in its destination | The on-demand lowering pass recognizes the existing scanner source on the settled AST and constructs in spare capacity. Ordinary builds still append the local. | Use settled facts for explicit fresh construction. Discovering the equivalent form across several statements is the first proposed on-demand experiment. |
+| 6. Use a byte-classification table | Measured in the isolated prototype. The scanner fixture still classifies bytes with comparisons and short-circuits the equals lookahead. | A table belongs to scanner source. It requires no compiler classification-discovery pass. |
+
+The nonnegative cursor experiment is a separate range-analysis follow-up. Keep
+checked indexing as the fallback and revisit inferred loop ranges when another
+consumer justifies the proof cost.
+
+**First experiment — completed in isolation.** The [on-demand construction report](benchmarks/tokenizer/destination/report.md) records proof cost, emission, native behavior and incremental recovery. The [nine-file comparison](benchmarks/tokenizer/destination/source_files.md) supports keeping this optional: aggregate throughput rose 37.2% on Clang and fell 8.0% on GCC. The original verification scope follows. Compile the existing scanner body with ordinary
+append, request destination-construction analysis for that body, and emit it
+again using the in-memory plan. Use a second record type to verify reuse of the
+rule. Measure foreground, proof and warm emission costs separately. Verify that
+an unrelated edit preserves the plan and that changing the initializer or
+destination contract forces a fresh decision. Establish those results before
+investing in an idle scheduler or persistent cache.
+
+#### Production boundary for direct-slot construction
+
+Two source units using the same application vector request the same concrete
+header path. The experiment adds a member to that header after full bundle
+assembly. In a two-scanner-unit reproduction across cpp/php/js, retaining that
+header for one unit and re-emitting the other with the ordinary recipe made
+the existing adapter merge reject conflicting definitions. Preserve this check.
+A vector type must have one C++ class definition across translation units.
+[Concrete publication](../../compiler/05_backend/cpp/concrete.php) ·
+[Bundle assembly and adapter retirement](../../compiler/05_backend/cpp/program.php)
+
+The application-vector recipe publishes a construction capability and a stable
+friend declaration. Its generated binding supplies the helper definition. The
+compiler emits the helper in a separate header only while at least one selected
+source uses it. Every translation unit sees the same vector class definition.
+
+Select a prepared free function by qualified source name with the repeatable
+`--optimize-function=NAME` flag on `project` or `build`, or pass the names to
+`Incremental_Project::run()`. An empty selection skips discovery. A resident
+project reuses a plan (including a miss) while the body identity and prepared
+file revision match. Selection is fixed for each run and published with the
+bundle. The one-shot project cache also keys on the selected names.
+
+The first proof handles a fresh default aggregate, contiguous writes to all
+public integer fields in layout order, and a terminal append in that block.
+Inputs are integer locals or identity subtraction trees. There is no exposed
+slot reference. The helper increments size after construction and uses ordinary
+append when the vector must grow. Other cases follow ordinary lowering.
+
+The [Clang regression](../../compiler/tests/destination_append.py) exercises two
+scanner units sharing a vector, selection changes, cached reuse, last-use
+retirement, body and layout edits, fresh-build equivalence and allocation
+failure at growth. Idle scheduling and persistent proof storage remain deferred.
+
+**Keyed feasibility probe.** An isolated Clang probe exercised cpp, php and js
+with both `hash<Token,int>` and `hash<Token,string>`. It writes two integer
+fields into an existing value on replacement, constructs a new entry directly
+when the data and index have room, and delegates growth and rehash to ordinary
+`set`. Both direct paths were reached. Reads matched ordinary writes through
+removals, reinsertion and an index-width change. Injected growth allocation
+failures preserved visible entries and allowed retry. The probe modifies only
+temporary generated bundles. A production version should let hash storage own
+lookup, capacity checks and publication in one place. The [pinned dev002 comparison](benchmarks/tokenizer/destination/keyed.md)
+found faster insertion for both key types, faster short-string replacement and
+slower integer replacement. The [one-lookup follow-up](benchmarks/tokenizer/destination/keyed.md#one-lookup-storage-variant)
+shared ordinary replacement and constructed new entries directly. Both integer-key
+workloads slowed down and both short-string workloads improved. Retain ordinary
+hash writes pending evidence from a representative workload.
+
+The same source record is rejected by both boxed families during preparation.
+A separate nested-container control accepted by both retained the earlier value
+with mixed and observed a later child mutation with dynamic. An optimization
+for supported boxed payloads must preserve those ownership rules and runtime
+key checks. [Repeatable keyed probe](benchmarks/tokenizer/destination/keyed_probe.py)
 
 ### 2.5 First integration slice — last-use transfer of owned values
 
@@ -491,12 +567,17 @@ No program-wide liveness state or cross-body reads are needed.
 - [x] Resident output matched fresh output across all three flavors. No-op builds
   prepared and emitted zero bodies. Native Ninja builds reused the caller and
   records objects on scanner body edits on both compilers.
-- [ ] Full caller **preparation and emission** reuse remains open. Even with the
-  records in a separate unit and an unchanged signature, retiring a function
-  whose signature watches an application type conservatively notifies its callers.
-  Here the scanner and its direct caller are prepared again, and the unrelated
-  function is reused. Reworking nominal-signature invalidation must preserve
-  notification on simultaneous type replacement and import rebinding.
+- [x] Body-only scanner edits prepare one body and reuse two across cpp/php/js.
+  The caller is absent from emitted sources and its native object is reused on
+  Clang and GCC. Signature publication hands existing nominal watches to the
+  replacement before dispatch. Rebinding an import invalidates the caller.
+  Replacing a return record and the producer together diagnoses the caller's
+  removed field, and restoring it recovers with fresh-equivalent output.
+- [x] The writable-reference fixture clears the scanner's vector. The resulting
+  empty vector reaches the caller on the copy path. Three fresh provider sessions
+  use identical scanner source with transfer enabled, removed, and restored.
+  The regression checks move/copy/move, the utility include, native output and
+  byte-identical restored C++ artifacts in each flavor.
 
 **Preparation cost on dev002.** PHP 8.5, Xdebug off, CPU 7, medians of 11 warm
 batches. Full-body measurements include reset and preparation, with parsing and
@@ -521,6 +602,55 @@ alias analysis, general control-flow liveness, changing shared/unique semantics,
 source/view integration, direct slot construction, cursor proofs and scanner
 classification changes are separate decisions. The first slice changes only the
 lowering of proven assignments.
+
+### 2.5 Scoped checked byte view — integrated
+
+The isolated view measurement kept the source copy fixed. The Simple C++ scanner fixture takes the length and indexes the same
+private record field in each flavor. Preparation screens top-level local initializers
+for the published byte-length function. For the first eligible candidate it walks
+existing lexical references and statements once. A single non-owning body fact
+identifies the acquisition. A call exposing the owner, whole-owner replacement,
+field mutation after acquisition, suspension or an unsupported loop selects
+ordinary indexing. Sibling field assignments and early returns remain eligible.
+
+The checked descriptor captures pointer and size from the live field. Its internal
+`read(index)` uses the published key and result types. Ordinary indexing calls the
+method named in metadata. The scanner keeps its final vector
+move on the optimized path. The native proof covers inline and heap inputs,
+both exits, byte parity and invalid offsets. Resident edits switch from view to
+ordinary indexing and back, with fresh-equivalent output and unchanged caller reuse.
+CTest `compiler_scoped_byte_view_native` compiles and runs the lifetime fixture
+for cpp/php/js on Clang and GCC with both the default provider and its index
+method renamed to `checked_byte_view`. Each emitted scanner exercises both reads.
+
+[dev002 paired results and preparation cost](benchmarks/tokenizer/byte_access/scoped_view.md).
+General borrows and range-check elimination remain deferred.
+
+### 2.5 By-value parameter transfer — implemented
+
+Owned type providers opt in through `transfer_assignment: private_value_nothrow`.
+The generator exposes the existing type capability. Preparation checks a top-level
+identity assignment into a field of a distinct value-record local. A by-value
+parameter qualifies when the assignment is its only observed use. The body-local
+proof checks candidate parameters together using the existing lexical indexes.
+Writable references, additional reads, other writes and unsupported loop headers
+keep ordinary assignment. No new AST fields or source syntax are needed.
+
+For the scanner the transfer precedes acquisition of the byte view. The result
+owns the bytes on success and lexical error. The caller retains its input.
+The resident test adds an observable nested read of the parameter and removes it,
+compares each generation with fresh output and checks unchanged caller reuse.
+Independent provider toggles verify that either assignment can keep its copy.
+Typed hashes (published and application-defined), mixed and dynamic also publish
+the capability. The same preparation rule selects move or copy. The collection
+regression replaces a populated destination and checks both paths. Writes to
+the result preserve independent hash values, mixed copy-on-write and dynamic
+container identity. For hashes of class handles with integer and string keys, a
+weak observer of the displaced object expires while another owner of the incoming
+object retains its identity. The test runs each flavor on Clang and GCC and
+checks native memory errors and leaks when Valgrind is available.
+
+[Paired dev002 results](benchmarks/tokenizer/byte_access/parameter_transfer.md).
 
 ## 3. Object relationships — a small AST family
 
@@ -1912,6 +2042,13 @@ Basic exception infrastructure may move earlier if required by preceding proofs.
 | 5.3 | Generated definitions | Existing metadata generator emits target-language definitions and registration for required types. |
 | 5.4 | Remaining signatures | Review actual unions/intersections and nonliteral defaults individually. Preserve guarantees without automatically implementing all PHP type syntax. |
 | 5.5 | Traversal callbacks | Named callable references first. Add captures where they materially simplify the translation. |
+
+The frontend's disk and memory paths use named loaders and pass the source map
+explicitly. The [native loader proof](../../compiler/tests/source_loader_callbacks_native.py)
+passes a shared map handle through the same typed callback signature, with a
+stand-in for the filesystem read. Module discovery now uses a named recursive
+worker with explicit visited modules, active modules and physical source paths.
+These two call sites can proceed with explicit state.
 
 Proof: parse a real expression, collect its declaration, prepare through the common AST, emit C++, compile and execute. Include a diagnostic and successful retry. Review readability and ownership as well as results.
 

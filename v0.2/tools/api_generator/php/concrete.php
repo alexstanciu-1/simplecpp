@@ -69,7 +69,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
 function concreteRecipe(string $name): mixed {
     static $recipes = [];
     $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append']);
     return $recipe;
 }
 
@@ -78,6 +78,7 @@ function concreteApplication(string $name, array $types, array $values, string $
     $recipe = concreteRecipe($name);
     $parts = concreteTemplate($name, $types, $values, $namespace);
     foreach ($parts as $section => $text) $values['section_' . $section] = $text;
+    $values['destination_friend'] = isset($recipe->destination_append) ? 'friend struct destination_' . $values['n'] . ';' : '';
     return template(textValue(at($recipe, 'application')), $values);
 }
 
