@@ -52,6 +52,26 @@ final class Type_Resolution
 		return $type;
 	}
 
+	/** Settle one signature at the parameter boundary with the same component lookup as a direct function. */
+	public static function callback(ast_parameter_declaration $parameter, scope $symbols, ast_function_declaration $function,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): callback_type_definition
+	{
+		$syntax = $parameter->type_reference;
+		if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $function->has_receiver()) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callback parameters must be required by-value parameters of free functions or static methods');
+		}
+		$types = [];
+		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
+			$type = self::signature($part, $symbols, $function, $dependencies, $types === [], $watcher);
+			if ($type === null || $type instanceof generator_type_definition || $type instanceof record_type_definition) {
+				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
+			}
+			$types[] = $type;
+		}
+		$result = array_shift($types);
+		return new callback_type_definition($result, $types);
+	}
+
 	/** Explicit handles name one nominal record payload; classes already have shared storage. */
 	private static function handle(ast_type_reference $syntax, scope $symbols, ?string $namespace,
 		dependency_watcher $watcher, ?Dependency_Watches $dependencies): record_handle_definition

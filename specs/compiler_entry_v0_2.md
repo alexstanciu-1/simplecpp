@@ -223,6 +223,27 @@ Named arguments, variadics, read-only references, reference returns, overloads, 
 first-class callables, methods and trailing parameter/argument commas are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
+### Named callbacks
+
+A free function or static method can declare a required by-value
+`callback<Result, Input1, Input2>` parameter. Use `callback<void>` for
+a callback with no inputs and no result. Components use ordinary signature
+types. Inline record values, nested callbacks and yield producer signatures
+are outside this slice.
+
+Pass a source function as `name(...)`. A type-qualified reference such as
+`Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
+static method using normal name lookup and access checks. The ellipsis forms
+a reference without invoking its target. The expected types and arity must
+match the target's required by-value signature exactly. Inside the accepting
+function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
+`op(value)` in C++ and JS), or forward it to another matching callback
+parameter. Invocation uses the ordinary argument conversions, evaluation
+contract and exception propagation.
+
+The C++ backend passes a typed native function pointer. Captures, instance
+method references and persistent callback storage are outside this slice.
+
 ### Trailing literal parameter defaults
 
 A typed value parameter may declare `= literal` in all three flavors:

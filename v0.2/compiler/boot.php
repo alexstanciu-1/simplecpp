@@ -62,6 +62,7 @@ require_once __DIR__ . '/04_analyze/prepare/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/strings.php';
 require_once __DIR__ . '/types/conversion.php';
 require_once __DIR__ . '/types/definition.php';
+require_once __DIR__ . '/types/callback.php';
 require_once __DIR__ . '/types/runtime.php';
 require_once __DIR__ . '/types/generator.php';
 require_once __DIR__ . '/types/struct.php';

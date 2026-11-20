@@ -41,6 +41,9 @@ final class Namespace_Syntax
 	{
 		$index = $this->cursor->position();
 		$tokens = $this->cursor->tokens->tokens;
+		if (($tokens[$index]->kind ?? null) === token_kind::variable) {
+			return ($tokens[$index + 1]->kind ?? null) === token_kind::lparen;
+		}
 		if (($tokens[$index]->kind ?? null) === $this->root_marker) {
 			$index++;
 		}

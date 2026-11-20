@@ -661,7 +661,7 @@ abstract class type_definition
 	protected static function independent_local_call(ast_expression $local, ast_expression $operand): bool
 	{
 		if (!($local instanceof ast_name_expression && $local->declaration() instanceof ast_local_declaration
-			&& $operand instanceof ast_call_expression && $operand->cardinality === null)) {
+			&& $operand instanceof ast_call_expression && $operand->cardinality === null && $operand->callback_parameter() === null)) {
 			return false;
 		}
 		$function = $operand->function_def();
