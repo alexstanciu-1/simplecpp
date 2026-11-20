@@ -1,4 +1,4 @@
-"""Class storage, relaxed instance properties and explicit object boundaries across all flavors."""
+"""Class storage, optional instance properties and explicit object boundaries across all flavors."""
 import argparse
 import json
 from pathlib import Path
@@ -29,7 +29,7 @@ def fixture(flavor):
         'js': 'constructor(x:int=3) { this.x=x; }',
     }[flavor]
     node = klass('Node', field('x', 'int', '3') + constructor + getter())
-    addition = klass('Addition', field('left', 'Node') + field('spare', 'Node', 'null'))
+    addition = klass('Addition', field('left', '?Node') + field('spare', '?Node', 'null'))
     holder = record('Holder', field('left', 'Node', 'null') + field('spare', 'Node'))
     other = klass('Other', field('x', 'int', '4'))
     point = record('Point', field('x', 'int', '1'))
@@ -127,11 +127,11 @@ def prove(work, flavor, libraries, memcheck):
              (None,None,'Required object cannot be null',None),
              ('api',optional_api,None,b'C'),('api',s['api'],'Required object cannot be null',None),
              ('main',s['main'],None,b'88819'),
-             ('node',s['node'].replace('class ','struct ',1),'Unsupported explicit conversion',None),
+             ('node',s['node'].replace('class ','struct ',1),'Nullable record spelling requires a bare class type',None),
              ('node',s['node'],None,b'88819'),
              ('holder',s['holder'].replace('Node','Other'),'Unsupported implicit conversion',None),
              ('holder',s['holder'],None,b'88819'),
-             ('node',None,'Unsupported instance field type',None),(None,None,'Unsupported instance field type',None),
+             ('node',None,'Unknown or unsupported type: Node',None),(None,None,'Unknown or unsupported type: Node',None),
              ('node',s['node'],None,b'88819'),
              ('api',s['api'].replace(s['optional'],s['optional'].replace('?Node','Node')),'Required object cannot be null',None),
              ('api',s['api'],None,b'88819'),

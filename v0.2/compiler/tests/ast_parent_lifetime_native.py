@@ -22,10 +22,10 @@ def sources(flavor):
     range_method=method('setRange',f'{v}this{a}start={v}begin;{v}this{a}end={v}end;',result='void',params=params)
     node=klass('Node',s['field']('parent','weak<Node>')+s['field']('start','int','0')+
         s['field']('end','int','0')+s['field']('value','int','0')+range_method+evaluate('virtual',v+'this'+a+'value'))
-    addition=implementation('Addition',s['field']('left','Node')+s['field']('right','Node')+
+    addition=implementation('Addition',s['field']('left','?Node')+s['field']('right','?Node')+
         evaluate('override',v+'this'+a+'left'+a+'evaluate(0) + '+v+'this'+a+'right'+a+'evaluate(0)'),'Node',('Evaluable',))
     snapshot=klass('Snapshot',s['field']('stamp','int','0')+s['field']('text','string','"1+2+3"'))
-    root=klass('Root',s['field']('snapshot','Snapshot'),'Addition')
+    root=klass('Root',s['field']('snapshot','?Snapshot'),'Addition')
     literal=klass('Literal','','Node')
     marker='Evaluable'+('.class' if flavor=='js' else '::class')
     api=fn('capability','int',[('n','Node')],f'if ({v}n instanceof Evaluable) {{'+s['infer']('cap',f'object_cast({v}n,{marker})')+f'return {v}cap{a}evaluate();}} return -1;')

@@ -28,21 +28,25 @@ final class Readonly_Access
 	}
 }
 
-/** Transient constructor state: 0 uninitialized, 1 initialized, 2 path-dependent; no occurrence facts. */
-final class Readonly_Initialization
+/** Transient presence and readonly initialization of fields owned by the current constructor. */
+final class Constructor_Initialization
 {
 	/** PROPERTIES */
-	/** @var array<string,int> */
+	/** Field states: 0 uninitialized, 1 initialized, 2 path-dependent. @var array<string,int> */
 	public array $states /** array<string,uint8> */ = [];
 	/** Native non-owning declaring record. */
 	private readonly ast_record_declaration $record;
 
 	/** CONSTRUCTOR */
+	/** Seed the tracked fields from their declaration defaults. */
 	public function __construct(ast_record_declaration $record)
 	{
 		$this->record = $record;
 		foreach ($record->fields as $field) {
-			if ($field->is_readonly) $this->states[$field->short_name] = $field->initializer === null ? 0 : 1;
+			$type = $field->type_def();
+			if ($field->is_readonly || ($type instanceof shared_record_type_definition && $type->required)) {
+				$this->states[$field->short_name] = $field->initializer === null ? 0 : 1;
+			}
 		}
 	}
 
@@ -51,24 +55,37 @@ final class Readonly_Initialization
 	public function assignment(ast_field_expression $site, bool $in_loop): ?ast_instance_field
 	{
 		$field = Readonly_Access::field($site);
-		if (!$field->is_readonly || !($site->receiver instanceof ast_this_expression) || $field->parent !== $this->record) return null;
-		if ($in_loop || $this->states[$field->short_name] !== 0) {
+		$state = $this->states[$field->short_name] ?? null;
+		if ($state === null || !($site->receiver instanceof ast_this_expression) || $field->parent !== $this->record) return null;
+		if ($field->is_readonly && ($in_loop || $state !== 0)) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Readonly property must be initialized exactly once: ' . $field->short_name);
+		}
+		if ($state === 1) return null;
+		if ($in_loop) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Required property must be initialized outside a loop: ' . $field->short_name);
 		}
 		return $field;
 	}
 
-	public function read(ast_field_expression $site): void
+	/** Check direct reads of tracked fields on the current instance. */
+	public function read(ast_field_expression $site, ast_instance_field $field): void
 	{
-		if ($site->receiver instanceof ast_this_expression && isset($this->states[$site->field]) && $this->states[$site->field] !== 1) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Readonly property is not initialized: ' . $site->field);
+		if ($site->receiver instanceof ast_this_expression && $field->parent === $this->record
+			&& ($this->states[$field->short_name] ?? 1) !== 1) {
+			$this->uninitialized($site, $field);
 		}
 	}
 
 	public function complete(ast_node $site): void
 	{
 		foreach ($this->states as $name => $state) {
-			if ($state !== 1) throw new diagnostic($site->source(), $site->byte_start(), 'Readonly property is not initialized: ' . $name);
+			if ($state !== 1) $this->uninitialized($site, $this->record->fields[$name]);
 		}
+	}
+
+	private function uninitialized(ast_node $site, ast_instance_field $field): never
+	{
+		$contract = $field->is_readonly ? 'Readonly' : 'Required';
+		throw new diagnostic($site->source(), $site->byte_start(), $contract . ' property is not initialized: ' . $field->short_name);
 	}
 }

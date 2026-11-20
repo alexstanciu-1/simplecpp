@@ -482,8 +482,8 @@ Lookup starts at the qualified record and binds the declaring record’s propert
 ## Class interfaces
 
 The first interface slice admits public bodyless instance contracts and class
-implementers in all flavors. Bare interface types use shared storage; function
-nullability is explicit and shared properties retain the relaxed empty-storage rule.
+implementers in all flavors. Bare interface types use shared storage. Class instance
+fields and functions preserve written nullability.
 Interfaces cannot be constructed.
 
 | Flavor | Interface declaration | Implementing class |

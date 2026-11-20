@@ -23,7 +23,7 @@ def fixture(flavor):
     replacement_method = s['getter']()
     token = klass('Token')
     other = klass('Other')
-    literal = klass('Literal', field('hold', 'Token'), 'Node')
+    literal = klass('Literal', field('hold', '?Token'), 'Node')
     leaf = klass('Leaf', '', 'Literal')
     alternate = klass('Alternate', field('extra', 'int', '99'), 'Node')
     explicit_ctor = {

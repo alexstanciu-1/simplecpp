@@ -132,19 +132,33 @@ foreach (flavor::cases() as $flavor)
 		$target_layout = new entry_target(31);
 		verify(Incremental_Preparation::prepare($session, $target_layout) === ['prepared' => 3, 'reused' => 0], 'Cold imports');
 		$caller = $session->entry->entry->ast;
-		$slot = $session->scope->entry('func:Lib\ping');
+		$scope = $session->scope;
+		$key = 'func:Lib\ping';
+		$slot = $scope->entry($key);
+		$call = $caller->main()->body()->statements[0];
+		$original = $scope->resolve($key);
+		verify($original !== null && $call->function_def() === $original, 'Initial call target differs from lookup');
+		verify($scope->resolve('func:App\run') === null && !isset($scope->entries()['func:App\run']),
+			'Immediate alias lookup allocated a symbol entry');
 		verify($session->dependency_watches->observer_count($slot) === 1, 'Call watches alias instead of target');
 		file_put_contents($lib_path, $library . ' // edited body generation');
 		$session = $compiler->frontend($directory, $session);
 		verify($session->entry->entry->ast === $caller, 'Unchanged importing AST replaced');
 		verify(Incremental_Preparation::prepare($session, $target_layout) === ['prepared' => 2, 'reused' => 1], 'Stable import invalidates caller');
+		verify($scope->resolve($key) !== $original && $call->function_def() === $scope->resolve($key),
+			'Reused call still points to the replaced declaration');
+		unset($original);
 		file_put_contents($lib_path, body($flavor, 'Lib', definition($flavor, 'pong')));
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target_layout), 'Unknown function import');
+		verify($scope->resolve($key) === null && $scope->entries()[$key] === $slot, 'Missing target lost its slot');
+		verify($session->dependency_watches->observer_count($slot) === 1, 'Deletion discarded the call watch');
 		file_put_contents($lib_path, $library);
 		$session = $compiler->frontend($directory, $session);
 		verify($session->scope->entry('func:Lib\ping') === $slot, 'Import target did not reactivate');
 		verify(Incremental_Preparation::prepare($session, $target_layout) === ['prepared' => 3, 'reused' => 0], 'Reactivation did not prepare caller');
+		verify($session->entry->entry->ast === $caller && $call->function_def() === $scope->resolve($key),
+			'Recovered call did not follow the reactivated entry');
 		$conflict_path = $directory . '/conflict.' . $flavor->value;
 		file_put_contents($conflict_path, body($flavor, 'App', definition($flavor, 'run')));
 		$session = $compiler->frontend($directory, $session);

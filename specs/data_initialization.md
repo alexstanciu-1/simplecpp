@@ -419,8 +419,8 @@ Publish no partially initialized instance on failure; already executed source ef
 are not rolled back.
 
 Property defaults use ordinary typed expression/conversion rules, except for the
-[temporary required-field empty-storage exception](type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25).
-That exception does not supply a default value to set: or synthesized public inputs. The agreed bounded
+[remaining field storage exceptions](type_use_modifiers.md#temporary-field-storage-exceptions).
+Those exceptions do not supply a default value to set: or synthesized public inputs. The agreed bounded
 scope is scalar literals, supported constant expressions, permitted null values and
 typed data notation for containers/eligible nested records. Arbitrary calls, `$this`
 and sibling-property references in default expressions remain deferred. These default
