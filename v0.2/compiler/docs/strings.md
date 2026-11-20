@@ -52,7 +52,7 @@ Direct literal echo remains allocation-free and requires only the output API.
 String-value echo binds the value once before reading `data()` and `size()`. A
 returned string remains alive across both queries; calls execute exactly once.
 
-## Bootstrap C++ literal spelling proof
+## Bootstrap C++ text emission proofs
 
 The [translated byte emitter](../examples/cpp_literal_bytes/emitter.php.scpp)
 uses indexed byte reads and explicit widening to spell C++ string literals.
@@ -60,6 +60,12 @@ The [native proof](../tests/cpp_literal_bytes_native.py) compares the spelling
 with the production PHP helper, then compiles the emitted literals with Clang
 and reads back the exact bytes. It covers every byte value, adjacent octal
 digits after NUL, and every trigraph ending.
+
+The [owner allocation renderer](../examples/owner_allocation/emitter.php.scpp)
+uses quoted fragments for one production heredoc. Its [native proof](../tests/owner_allocation_native.py)
+compares the complete fragment byte for byte with the PHP emitter for default
+construction, authored constructors with and without parameters, and an abstract
+owner. An absent constructor remains distinct from a present empty parameter list.
 
 ## Explicit debt
 

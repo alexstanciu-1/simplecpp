@@ -1,0 +1,26 @@
+// Port of the allocation fragment in Cpp_Emitter::owner_methods.
+function owner_allocation(bool $is_abstract, string $owner, string $payload, ?string $parameters, string $factory): string {
+	if ($is_abstract) {
+		return "";
+	}
+	$constructor string = "";
+	if ($parameters === null) {
+		$constructor = "allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}";
+	} else {
+		$parameter_text string = $parameters;
+		$constructor = "allocation(" . $parameter_text . ");";
+	}
+	return "struct " . $owner . "::allocation : ::scpp::application_control {\n"
+		. "\tusing payload_type = " . $payload . ";\n"
+		. "\tunion { payload_type value; };\n"
+		. "\t" . $constructor . "\n"
+		. "\t~allocation() {} // The last strong owner ends the active union member's lifetime.\n"
+		. "\tstatic void destroy_value(::scpp::application_control* control) noexcept {\n"
+		. "\t\tstatic_cast<allocation*>(control)->value.~payload_type();\n"
+		. "\t}\n"
+		. "\tstatic void dispose_allocation(::scpp::application_control* control) noexcept {\n"
+		. "\t\tdelete static_cast<allocation*>(control);\n"
+		. "\t}\n"
+		. "};\n"
+		. $factory;
+}
