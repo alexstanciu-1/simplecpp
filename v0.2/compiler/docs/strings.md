@@ -67,6 +67,11 @@ compares the complete fragment byte for byte with the PHP emitter for default
 construction, authored constructors with and without parameters, and an abstract
 owner. An absent constructor remains distinct from a present empty parameter list.
 
+The [escape selection proof](../tests/escape_selection_native.py) compiles the
+production decoder's single-byte switch as PHP++ and checks both flavor modes
+for all 256 input bytes. A decoded NUL is a present string. Unsupported escapes
+return null, and the escaped backtick produces a byte only in JS template mode.
+
 ## Explicit debt
 
 String globals remain rejected until initialization order and lifetime are designed;
