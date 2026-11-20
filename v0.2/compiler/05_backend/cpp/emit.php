@@ -1573,8 +1573,7 @@ CPP;
 			return $statement->target->type_def()->lower_cpp_update($statement->operator, $target, $statement->postfix);
 		}
 		if ($statement instanceof ast_update_statement) {
-			return $statement->local_def()->type_def()->lower_cpp_update($statement->operator,
-				$this->name($statement->local_def()), $statement->postfix);
+			return $this->local_update($statement);
 		}
 		if ($statement instanceof ast_local_declaration) {
 			$type = $statement->type_def();
@@ -1614,6 +1613,12 @@ CPP;
 		return $this->binding_initialization($statement, $prefix, $this->conversion($type, $conversion, $operand, $value));
 	}
 
+	private function local_update(ast_update_statement $update): string
+	{
+		$local = $update->local_def();
+		return $local->type_def()->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
+	}
+
 	/** A suspended declaration starts its lifetime only after its checked initializer succeeds. */
 	private function binding_initialization(ast_local_declaration|ast_storage_write $statement, string $prefix, string $value): string
 	{
@@ -1649,6 +1654,9 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
+		if ($value instanceof ast_postfix_update_expression) {
+			return $this->local_update($value->update);
+		}
 		if ($value instanceof ast_condition_assignment) {
 			$local = $value->target->local_def();
 			$name = $this->name($local);

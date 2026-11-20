@@ -242,6 +242,10 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_postfix_update_expression) {
+			$row += ['kind' => 'postfix_update', 'id' => $value->update->local_def()->storage_id(),
+				'operator' => $value->update->operator->name];
+		}
 		if ($value instanceof ast_condition_assignment) {
 			$row += ['kind' => 'condition_assignment', 'target' => $value->target->local_def()->storage_id(),
 				'conversion' => value_conversion::name($value->conversion), 'value' => self::value($value->value)];

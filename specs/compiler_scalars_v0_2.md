@@ -222,6 +222,26 @@ implicit result-to-destination conversions remain deferred. Body statements and 
 use the ordinary shared assignment path.
 
 
+## Postfix int64 assignment RHS — 2026-11-20
+
+In all flavors, a bare initialized `int64` local followed by `++` or `--` can
+be the entire RHS of an ordinary plain local assignment or local initializer.
+This includes PHP's first-write inference and the canonical `int` alias.
+
+```php
+$index int64 = 10;
+$escape = $index++; // escape = 10, index = 11
+$escape = $index--; // escape = 11, index = 10
+$index = $index++;  // index = 10
+```
+
+Postfix yields the old value by value and applies the update once, before any
+assignment conversion and store. When the assignment targets the same local,
+the store writes the old value back. The existing signed-overflow policy applies.
+This amendment is limited to ordinary local statements, with parameter, property,
+and indexed operands, loop headers, compound assignments, prefix results, and
+postfix results inside larger expressions deferred.
+
 ## Discarded-value int64 updates — 2026-11-05
 
 All flavors admit prefix/postfix `++` and `--` on existing initialized int/int64
@@ -241,11 +261,10 @@ are explicit runtime metadata capabilities, independent of arithmetic admission.
 Native signed-overflow behavior is unchanged; no checked, wrapping or saturating
 policy is added. Runtime execution tests stay within representable int64 bounds.
 
-This slice discards results. Consuming prefix/postfix values in initialization,
-assignment, calls, returns, conditions or larger expressions remains deferred.
-It does not change the eventual value-snapshot contract: prefix yields the new
-value, postfix the old value, neither addressable. Repeated updates such as `++x++`
-and non-simple targets (calls, casts, literals, fields, indexes) are rejected.
+This slice discards results. The bounded postfix RHS amendment above admits old-value
+results on simple locals. The general value-snapshot contract is that prefix yields
+the new value and postfix yields the old value, neither addressable. Repeated
+updates such as `++x++` and non-simple targets (calls, casts, literals, fields, indexes) are rejected.
 Constants, direct global writes, other types and parenthesized-target spelling
 remain outside this slice.
 
