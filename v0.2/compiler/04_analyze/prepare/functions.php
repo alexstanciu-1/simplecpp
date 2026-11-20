@@ -129,6 +129,11 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
+		if ($value instanceof ast_lambda_expression) {
+			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
+			self::expression($value->body);
+			return;
+		}
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {

@@ -74,6 +74,29 @@ final class ast_callable_reference extends ast_expression
 	}
 }
 
+/** An expression-bodied lambda owns only its written parameters, result type and expression. */
+final class ast_lambda_expression extends ast_expression
+{
+	/** Prepared result conversion. */
+	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
+
+	/** @param ast_parameter_declaration[] $parameters */
+	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
+		public readonly ast_type_reference $result, public readonly ast_expression $body)
+	{
+		parent::__construct($start, $body->end);
+		foreach ($parameters as $parameter) $parameter->attach($this);
+		$result->attach($this);
+		$body->attach($this);
+	}
+
+	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
+	{
+		$this->conversion = $conversion;
+		$this->settle_value($type, null);
+	}
+}
+
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
 final class ast_call_expression extends ast_expression
 {
@@ -96,7 +119,7 @@ final class ast_call_expression extends ast_expression
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|called_method_instance|ast_parameter_declaration|null $function_symbol = null;
+	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -140,7 +163,7 @@ final class ast_call_expression extends ast_expression
 
 	public function target_name(): string
 	{
-		return $this->cardinality?->name ?? $this->callback_parameter()?->name() ?? $this->function_def()->name();
+		return $this->cardinality?->name ?? $this->callable_binding()?->name() ?? $this->function_def()->name();
 	}
 
 	/** @param int[] $conversions */
@@ -175,16 +198,16 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** @param int[] $conversions */
-	public function settle_callback(ast_parameter_declaration $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
+	public function settle_local_call(ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
 	{
 		$this->settle_value($signature->result, null);
 		$this->function_symbol = $parameter;
 		$this->conversions = $conversions;
 	}
 
-	public function callback_parameter(): ?ast_parameter_declaration
+	public function callable_binding(): ?ast_local_binding
 	{
-		return $this->function_symbol instanceof ast_parameter_declaration ? $this->function_symbol : null;
+		return $this->function_symbol instanceof ast_local_binding ? $this->function_symbol : null;
 	}
 
 	public function function_def(): ast_function_declaration|runtime_function
@@ -544,12 +567,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->return_type_def = $type;
 	}
 
-	/** Forget outgoing watches and notify callers before replacing a nominal contract in the same batch as its payload. */
-	public function retire_signature(): void
+	/** Forget outgoing watches; method retirement also relays changes to the declaring record contract. */
+	public function retire_signature(bool $relay): void
 	{
 		if ($this->signature_dependencies === null) return;
 		$this->signature_dependencies->forget($this);
-		$this->signature_dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
+		if ($relay) $this->signature_dependencies->changed($this->root()->scope->parent->entry($this->symbol_key()));
 		$this->signature_dependencies = null;
 	}
 

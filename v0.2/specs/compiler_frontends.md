@@ -33,6 +33,8 @@ remain semantic responsibilities. Successful parsing does not mean a valid progr
 All three flavors use `callback<Result, Input1, Input2>` on a parameter and
 `name(...)` to refer to a source function. Static references use each flavor's
 type-qualified syntax. See the [named callback contract](../../specs/compiler_entry_v0_2.md#named-callbacks).
+The three flavors also admit [capture-free `fn` expressions](../../specs/compiler_entry_v0_2.md#capture-free-lambdas)
+with their ordinary parameter syntax.
 
 ## First common subset
 

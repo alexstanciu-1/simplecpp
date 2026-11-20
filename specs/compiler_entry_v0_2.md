@@ -241,8 +241,30 @@ function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 parameter. Invocation uses the ordinary argument conversions, evaluation
 contract and exception propagation.
 
-The C++ backend passes a typed native function pointer. Captures, instance
-method references and persistent callback storage are outside this slice.
+The C++ backend passes a typed native function pointer. Instance method
+references and persistent callback storage are outside this slice.
+
+### Capture-free lambdas
+
+An expression-bodied lambda has explicitly typed by-value inputs and a
+non-void result type.
+
+```text
+PHP  $inc = fn(int $x): int => $x + 1;
+C++  auto inc = fn(int x): int => x + 1;
+JS   let inc = fn(x: int): int => x + 1;
+```
+
+Each lambda expression has a distinct concrete type. An inferred local
+can invoke its lambda with ordinary call syntax. An inline lambda or
+such a local can supply a callback argument when the component types
+match exactly. The C++ backend emits a concrete capture-free lambda and
+converts it to a native function pointer at the callback boundary.
+
+The body sees its own parameters and ordinary nonlocal symbols. Enclosing
+locals and the current instance are unavailable. This slice covers inferred
+local initializers and typed callback arguments. Captures, block bodies,
+new lifetime rules and yield producers are deferred.
 
 ### Trailing literal parameter defaults
 

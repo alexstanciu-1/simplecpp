@@ -1353,7 +1353,8 @@ CPP;
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
-			$prefix = '[[maybe_unused]] ' . $type->cpp_type() . ' ' . $this->name($statement);
+			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
+			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -1606,6 +1607,10 @@ CPP;
 				. '; const auto binary_right = ' . $right . '; return '
 				. $type->lower_prepared_binary($value, 'binary_left', 'binary_right', $typed_initializer) . '; }())';
 		}
+		if ($value instanceof ast_lambda_expression) {
+			$reorderable = true;
+			return $this->lambda($value, $global_references, $declarations, $required_headers);
+		}
 		if ($value instanceof ast_callable_reference) {
 			$function = $value->implementation();
 			$name = self::function_name($function);
@@ -1614,10 +1619,11 @@ CPP;
 			return '&' . $name;
 		}
 		if ($value instanceof ast_call_expression) {
-			$callback = $value->callback_parameter();
+			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
-				return $this->invocation($value, $type, $this->name($callback), $type->result, $global_references, $declarations, $required_headers);
+				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
+				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
 			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
@@ -1949,6 +1955,27 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
+	/** Emit the concrete closure in place, with its own expression and result conversion. */
+	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
+	{
+		$type = $lambda->type_def();
+		$signature = $type->signature;
+		foreach ($signature->cpp_headers() as $header) $headers[$header] = true;
+		foreach (self::signature_type_dependencies($signature) as $component) {
+			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
+			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			else $declarations[$component->name] = $component;
+		}
+		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
+		$parameters = [];
+		foreach ($lambda->parameters as $parameter) {
+			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
+		}
+		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
+		return '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ' { return ' . $result . '; }';
+	}
+
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
 	private function collect_signature_types(ast_function_declaration $function, array &$declarations): void
 	{
@@ -2265,7 +2292,7 @@ CPP;
 	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
 	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
 	{
-		return $argument instanceof ast_callable_reference || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
+		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 

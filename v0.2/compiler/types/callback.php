@@ -51,7 +51,7 @@ final class callback_type_definition extends type_definition
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		$source = $value->type_def();
-		if ($this->matches($source)) {
+		if ($this->matches($source instanceof lambda_type_definition ? $source->signature : $source)) {
 			return value_conversion::identity;
 		}
 		throw new diagnostic($value->source(), $value->byte_start(), 'Expected exact callback signature ' . $this->name);
@@ -71,5 +71,30 @@ final class callback_type_definition extends type_definition
 		if (!$matches) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback target signature mismatch: ' . $site->name . ' requires ' . $this->name);
 		}
+	}
+}
+
+/** Each prepared lambda expression owns its distinct concrete type. Its signature is structural. */
+final class lambda_type_definition extends type_definition
+{
+	public function __construct(public readonly callback_type_definition $signature)
+	{
+		parent::__construct('lambda ' . $signature->name);
+	}
+
+	/** The native callable type has no standalone spelling. */
+	public function cpp_type(): string
+	{
+		throw new \LogicException('Lambda types are deduced at their concrete declarations');
+	}
+
+	public function cpp_trivial_value(): bool
+	{
+		return true;
+	}
+
+	public function supports_inferred_local(): bool
+	{
+		return true;
 	}
 }

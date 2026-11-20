@@ -8,7 +8,7 @@ final class Program_Frontend
 {
 	public function prepare(compilation_session $session, entry_target $target): prepared_program
 	{
-		return $this->run($session, $target, static fn(source_unit $unit): source_file => Program_Loader::load($unit));
+		return $this->run($session, $target, Program_Frontend::load_disk(...), []);
 	}
 
 	/**
@@ -20,11 +20,29 @@ final class Program_Frontend
 		entry_target $target): prepared_program
 	{
 		$session = Program_Loader::memory($entry, $sources);
-		return $this->run($session, $target, static fn(source_unit $unit): source_file => $sources[$unit->path]);
+		return $this->run($session, $target, Program_Frontend::load_snapshot(...), $sources);
 	}
 
-	/** Rebuild all source results; this establishes no incremental reuse or module visibility policy. */
-	private function run(compilation_session $session, entry_target $target, \Closure $load): prepared_program
+	/** Disk units already carry their root and relative path. @param source_file[] $snapshots */
+	private static function load_disk(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
+	{
+		return Program_Loader::load($unit);
+	}
+
+	/** Preserve the caller-supplied snapshot identity and its source label. @param source_file[] $snapshots */
+	private static function load_snapshot(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
+	{
+		return $snapshots[$unit->path];
+	}
+
+	/**
+	 * Rebuild all source results with the selected loader and its explicit snapshot input.
+	 *
+	 * @param \Closure(source_unit, array<string,source_file>):source_file $load
+	 * @param source_file[] $snapshots
+	 */
+	private function run(compilation_session $session, entry_target $target, \Closure $load,
+		array $snapshots /** array<string,source_file> */): prepared_program
 	{
 		if ($session->scope !== null) {
 			throw new \LogicException('Incremental frontend publications cannot be prepared in place yet');
@@ -38,7 +56,7 @@ final class Program_Frontend
 		try
 		{
 			foreach ($units as $unit) {
-				$unit->ast = $frontend->collect($load($unit), $publication, $session->type_availability);
+				$unit->ast = $frontend->collect($load($unit, $snapshots), $publication, $session->type_availability);
 			}
 			$files = $session->files();
 			return Program_Preparation::prepare($session->entry_key(), $files, $target,

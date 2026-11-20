@@ -42,8 +42,10 @@ def prove(work, flavor):
         + fn('notify', 'void', [('op', 'callback<void>')], f'{v}op();'))
     box = forms['klass']('Box', forms['field']('rank', 'int', '7'))
     source_edit(source('box'), box)
-    source_edit(source('compare'),
-        fn('compare', 'int', [('a', 'Box'), ('b', 'Box')], f'return {v}a{forms["access"]}rank + {v}b{forms["access"]}rank;'))
+    source_edit(source('other'), forms['klass']('Other', forms['field']('rank', 'int', '7')))
+    compare = 'use Box as Payload;' + fn('compare', 'int', [('a', 'Payload'), ('b', 'Payload')],
+                 f'return {v}a{forms["access"]}rank + {v}b{forms["access"]}rank;')
+    source_edit(source('compare'), compare)
     source_edit(source('compare_use'),
         fn('compareBoxes', 'int', [('op', 'callback<int,Box,Box>')], f'return {v}op(new Box(), new Box());'))
     source_edit(source('quiet'), fn('quiet', 'void', [], 'return;'))
@@ -123,6 +125,21 @@ def prove(work, flavor):
         step('LR25:8:14!', emitted=['compute'], rebuilt=1)
         source_edit(source('arithmetic'), static_method.replace(' * 2', ' * 3'))
         step('LR25:12:14!', emitted=['arithmetic'], rebuilt=1)
+        source_edit(source('compare'), compare.replace('rank +', 'rank -'))
+        step('LR25:12:0!', emitted=['compare'], rebuilt=1)
+        source_edit(source('compare'), compare)
+        step('LR25:12:14!', emitted=['compare'], rebuilt=1)
+        source_edit(source('box'), box.replace('7', '8'))
+        step('LR25:12:16!')
+        assert timings[-1]['prepared'] > 1, timings[-1]
+        clean, fresh_output = fresh('nominal-recovered')
+        assert 'error' not in clean and artifacts(output) == artifacts(fresh_output), clean
+        source_edit(source('box'), box)
+        step('LR25:12:14!')
+        source_edit(source('compare'), compare.replace('use Box', 'use Other'))
+        rejection('Callback target signature mismatch', 'nominal-alias')
+        source_edit(source('compare'), compare)
+        step('LR25:12:14!')
         source_edit(source('compute'), fn('compute', 'string', [('a', 'int'), ('b', 'int')], 'return "wrong";'))
         rejection('Callback target signature mismatch', 'signature')
         source('compute').unlink()

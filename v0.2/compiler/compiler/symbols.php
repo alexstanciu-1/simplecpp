@@ -122,10 +122,12 @@ final class Symbol_Publication implements declaration_sink
 		foreach ($files as $file) {
 			$file->scope->parent = $scope;
 		}
+		$retired_functions = [];
 		foreach ($retired as $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
-					$node->retire_signature();
+					if ($node->parent instanceof ast_method_owner) $node->retire_signature(true);
+					else $retired_functions[] = $node;
 					if ($node->optional_body() !== null) $dependencies->retire($node->body());
 				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
@@ -133,6 +135,9 @@ final class Symbol_Publication implements declaration_sink
 			}
 		}
 		self::notify($scope, $dependencies, $old, self::declaration_contracts($scope, $keys));
+		// Old free signatures relay actual component changes through the notification join.
+		// Their consumers keep the stable symbol when only the implementation changed.
+		foreach ($retired_functions as $function) $function->retire_signature(false);
 		return $scope;
 	}
 
@@ -187,12 +192,30 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
-				$contracts[$key] = json_encode([$head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->return_type_reference?->spelling(), array_map(
-					static fn(ast_parameter_declaration $parameter): array => [$parameter->type_reference->spelling(), $parameter->mode->value,
+				$contracts[$key] = json_encode([$head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, self::signature_type($head->return_type_reference), array_map(
+					static fn(ast_parameter_declaration $parameter): array => [self::signature_type($parameter->type_reference), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
 		}
 		return $contracts;
+	}
+
+	/** Written type and the lexical bindings that can change its meaning without a signature edit. */
+	private static function signature_type(?ast_type_reference $type): ?string
+	{
+		if ($type === null) return null;
+		if ($type instanceof ast_intersection_reference) return self::signature_type($type->left) . '&' . self::signature_type($type->right);
+		if ($type->first_child === null) {
+			$alias = $type->lexical_root()->imported_type_target($type->name);
+			return $alias === null ? $type->name : $type->name . '=' . $alias;
+		}
+		$signature = $type->name . '<';
+		$separator = '';
+		for ($part = $type->first_child; $part !== null; $part = $part->next_sibling) {
+			$signature .= $separator . self::signature_type($part);
+			$separator = ',';
+		}
+		return $signature . '>';
 	}
 
 	/**

@@ -74,13 +74,20 @@ final class Type_Resolution
 		$types = [];
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::signature($part, $symbols, $function, $dependencies, $types === [], $watcher);
-			if ($type === null || $type instanceof generator_type_definition || $type instanceof record_type_definition) {
+			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
 			$types[] = $type;
 		}
 		$result = array_shift($types);
 		return new callback_type_definition($result, $types);
+	}
+
+	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */
+	public static function callback_component(?type_definition $type): bool
+	{
+		return $type !== null && !($type instanceof generator_type_definition || $type instanceof record_type_definition
+			|| $type instanceof intersection_type_definition || $type instanceof callback_type_definition);
 	}
 
 	/** Explicit handles name one nominal record payload; classes already have shared storage. */
