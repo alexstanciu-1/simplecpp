@@ -101,7 +101,7 @@ final class Cpp_Emitter
 				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
 		$helper = '';
-		foreach (dependency_use::cases() as $use) {
+		foreach (dependency_use::ordered_uses as $use) {
 			if (!$this->needs_enum_helper($node, $use)) continue;
 			$binding = $type->helper_function($use);
 			$includes[$binding->header] = true;
@@ -580,7 +580,7 @@ CPP;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
-			foreach (dependency_use::cases() as $use) {
+			foreach (dependency_use::ordered_uses as $use) {
 				if (!$this->needs_enum_helper($node, $use)) continue;
 				$required_headers['stdexcept'] = true;
 				$required_headers[$node->definition->helper_function($use)->header] = true;

@@ -18,6 +18,8 @@ enum dependency_use: int
 	case enum_from_value = 1;
 	case enum_name = 2;
 	case enum_value = 4;
+
+	public const array ordered_uses /** dependency_use[] */ = [self::enum_from_value, self::enum_name, self::enum_value];
 }
 
 /**

@@ -27,7 +27,7 @@ final class Cpp_Headers
 			foreach ($file->declaration_nodes as $node) {
 				if (!($node instanceof ast_enum_declaration)) continue;
 				$symbol = $file->scope->parent->entry($node->symbol_key());
-				foreach (dependency_use::cases() as $use) {
+				foreach (dependency_use::ordered_uses as $use) {
 					if ($program->dependencies->has_use($symbol, $use)) {
 						$key = $node->symbol_key();
 						$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
