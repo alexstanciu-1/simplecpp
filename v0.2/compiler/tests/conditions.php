@@ -76,6 +76,39 @@ foreach (flavor::cases() as $flavor)
 	verify(Compilation_Inspection::body($scoped_entry->body())['statements'][1]['kind'] === 'block', 'Block fact inspection');
 	Function_Preparation::reset_body($scoped_entry->body());
 	verify((new Cpp_Emitter())->emit((new Preparation())->prepare($scoped_entry->file, new entry_target(31))) === $scoped_cpp, 'Block reset differs');
+	$x = $var('x');
+	$source = $fn('nextInt', $flavor === flavor::js ? 'n:int' : 'int ' . $var('n'), 'int',
+		'echo "N";return ' . $var('n') . '-1;')
+		. $decl('x', 'int', '2') . 'while ((' . $x . '=nextInt(' . $x . '))>=0) {'
+		. 'if (' . $x . '==1) continue;echo ' . $x . ';}echo ' . $x . ';'
+		. 'while ((' . $x . '=nextInt(4))>=0) {break;}echo ' . $x . ';'
+		. 'if (false && ((' . $x . '=nextInt(8))>=0)) return 1;'
+		. 'if (true || ((' . $x . '=nextInt(8))>=0)) echo ' . $x . ';'
+		. $decl('ok', 'bool', 'false') . 'if ((' . $var('ok') . '=true)) echo "B";'
+		. 'do {' . $x . '++;} while ((' . $x . '=0));'
+		. 'for (;(' . $x . '=nextInt(1));) {return 1;}echo ' . $x . ';'
+		. $decl('text', 'string', '"old"') . 'if ((' . $var('text') . '="0")) return 2;echo ' . $var('text') . ';return 8;';
+	$assigned = $prepare($source);
+	$assigned_cpp = (new Cpp_Emitter())->emit($assigned);
+	verify(str_contains($assigned_cpp, 'var_x_0 = nextInt_(var_x_0)') && !str_contains($assigned_cpp, 'binary_left'), 'Direct tested write');
+	$fixtures[$flavor->name . '_assignment'] = ['cpp' => $assigned_cpp, 'stdout_hex' => bin2hex('NN0N-1N33BN00')];
+	Function_Preparation::reset_body($assigned->body());
+	verify((new Cpp_Emitter())->emit((new Preparation())->prepare($assigned->file, new entry_target(31))) === $assigned_cpp, 'Condition assignment reset');
+	$number = $fn('large', '', 'int', 'echo "L";return 256;');
+	$failed = $number . $decl('b', 'byte', '7') . 'try {if ((' . $var('b') . '=(byte)large())) echo "bad";}'
+		. 'finally {echo (int)' . $var('b') . ';} return 8;';
+	$fixtures[$flavor->name . '_checked_assignment'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failed)),
+		'stdout_hex' => bin2hex('L7'), 'catch_out_of_range' => true];
+	// An earlier small initializer cannot prove a narrowed argument safe after this write.
+	$narrow = $fn('narrow', $flavor === flavor::js ? 'n:byte' : 'byte ' . $var('n'), 'bool', 'echo "bad";return true;');
+	$guard = $number . $narrow . $decl('x', 'int', '1') . 'if (((' . $x . '=large())>0) && narrow(' . $x . ')) return 1;return 8;';
+	$fixtures[$flavor->name . '_assigned_range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($guard)),
+		'stdout_hex' => bin2hex('L'), 'catch_out_of_range' => true];
+	if ($flavor === flavor::php) {
+		$search = '$pos result_or_false<int> = false_sentinel;$offset int=0;'
+			. 'while (isset(($pos=strpos("a.a","a",$offset)))) {$offset=(int)$pos+1; echo (int)$pos;} return 8;';
+		$fixtures['php_search_assignment'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($search)), 'stdout_hex' => bin2hex('02')];
+	}
 	$single_pass = $prepare('if (true) { echo 1; } elseif (false) { echo 2; } else { echo 3; } return 8;');
 	verify($single_pass->body()->statement_visits === 5 && $single_pass->body()->expression_visits === 6,
 		'Conditions and arm statements must be prepared exactly once');
@@ -112,6 +145,11 @@ foreach (flavor::cases() as $flavor)
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp && $again->body()->statement_visits === $visits, 'Reset/reprepare differs');
 	foreach ([
+		['if ((' . $x . '=1)) {} return 8;', 'existing local'],
+		[$decl('x', 'int', '0') . 'if (' . $x . '=1) {}return 8;', 'Expected'],
+		[$decl('x', 'int', '0') . 'echo (' . $x . '=1); return 8;', 'control-statement condition'],
+		[$decl('x', 'int', '0') . 'if ((' . $x . '=(' . $x . '=1))) {}return 8;', 'control-statement condition'],
+		[$fn('bad', $p, 'bool', 'if ((' . $var('flag') . '=true)) return true;return false;') . 'return 8;', 'declared local'],
 		['if (null) {} return 8;', 'Unsupported condition type'],
 		[$fn('nothing', '', 'void', '') . 'if (nothing()) {} return 8;', 'Void call'],
 		['if (false) { missing(); } return 8;', 'Unknown function'],
@@ -140,7 +178,7 @@ foreach (flavor::cases() as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, '{ if (true) if (predicate()) echo "Y"; } return 8;');
+		file_put_contents($directory . '/main.' . $flavor->name, '{ ' . $decl('v', 'bool', 'false') . 'if (true) if ((' . $var('v') . '=!!predicate())) echo "Y"; } return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
 		$write = static function (string $type, string $value) use ($lib, $fn): void {
 			file_put_contents($lib, $fn('predicate', '', $type, 'return ' . $value . ';'));
@@ -155,7 +193,7 @@ foreach (flavor::cases() as $flavor)
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Condition signature edit did not invalidate caller');
 		verify($session->entry->entry->ast === $caller, 'Nested caller reparsed');
-		$condition = $caller->main()->body()->statements[0]->body->statements[0]->arms[0]->body->statements[0]->arms[0]->condition;
+		$condition = $caller->main()->body()->statements[0]->body->statements[1]->arms[0]->body->statements[0]->arms[0]->condition->value->operand->operand;
 		verify($condition->type_def()->name === 'string', 'Nested condition has stale type');
 		$write('string', '"false"');
 		$session = $compiler->frontend($directory, $session);

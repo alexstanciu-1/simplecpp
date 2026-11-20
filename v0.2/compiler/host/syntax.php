@@ -150,6 +150,10 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_condition_assignment) {
+			return ['kind' => 'condition_assignment', 'target' => $expression->target->name, 'value' => self::expression($expression->value),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_ternary_expression) {
 			return ['kind' => 'ternary', 'condition' => self::expression($expression->condition),
 				'when_true' => self::expression($expression->when_true), 'when_false' => self::expression($expression->when_false),

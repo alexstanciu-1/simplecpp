@@ -233,6 +233,10 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_condition_assignment) {
+			$row += ['kind' => 'condition_assignment', 'target' => $value->target->local_def()->storage_id(),
+				'conversion' => value_conversion::name($value->conversion), 'value' => self::value($value->value)];
+		}
 		if ($value instanceof ast_ternary_expression) {
 			$row += ['condition' => self::value($value->condition), 'when_true' => self::value($value->when_true), 'when_false' => self::value($value->when_false)];
 		}

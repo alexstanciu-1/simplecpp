@@ -260,3 +260,48 @@ final class ast_isset_expression extends ast_expression
 		$this->settle_value(type_bool::instance(), null);
 	}
 }
+
+/** A parenthesized assignment tested by a control statement, e.g. while ((n = read()) >= 0). */
+final class ast_condition_assignment extends ast_expression
+{
+	public private(set) ?int $conversion /** uint16 */ = null;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, public readonly ast_name_expression $target,
+		public readonly ast_expression $value)
+	{
+		parent::__construct($start, $end);
+		$target->attach($this);
+		$value->attach($this);
+	}
+
+	/** Follow only predicate operators up to the controlling statement. */
+	public function in_condition(): bool
+	{
+		$node = $this;
+		while (true) {
+			$parent = $node->parent;
+			if ($parent instanceof ast_binary_expression) {
+				if (!($parent->operator->lazy() || in_array($parent->operator, [
+					binary_operator::equal, binary_operator::not_equal, binary_operator::identical, binary_operator::not_identical,
+					binary_operator::less, binary_operator::less_equal, binary_operator::greater, binary_operator::greater_equal,
+				], true))) break;
+			} elseif (!($parent instanceof ast_not_expression || $parent instanceof ast_isset_expression)) break;
+			$node = $parent;
+		}
+		return (($parent instanceof ast_if_arm || $parent instanceof ast_tested_loop) && $parent->condition === $node)
+			|| ($parent instanceof ast_for_statement && ($parent->conditions[array_key_last($parent->conditions)] ?? null) === $node);
+	}
+
+	public function settle_assignment(ast_local_declaration $local, int $conversion /** uint16 */): void
+	{
+		$this->target->settle_local($local, unknown: true);
+		$this->settle_value($local->type_def(), null);
+		$this->conversion = $conversion;
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->conversion = null;
+	}
+}

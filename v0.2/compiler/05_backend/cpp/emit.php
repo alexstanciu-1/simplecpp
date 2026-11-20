@@ -1576,6 +1576,15 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
+		if ($value instanceof ast_condition_assignment) {
+			$local = $value->target->local_def();
+			$name = $this->name($local);
+			if ($value->conversion === value_conversion::identity && $value->value instanceof ast_name_expression
+				&& $value->value->refers_to($local)) return $name;
+			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
+			$rhs = $this->value($value->value, $global_references, $declarations, $required_headers);
+			return '(' . $name . ' = ' . $this->conversion($value_type, $value->conversion, $rhs, $value->value) . ')';
+		}
 		if ($value instanceof ast_ternary_expression) {
 			$test = $this->condition($value->condition, $global_references, $declarations, $required_headers);
 			$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);

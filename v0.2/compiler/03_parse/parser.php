@@ -1352,9 +1352,17 @@ final class Parser
 			return new ast_cast_expression($start, $this->cursor->position(), $type, $operand);
 		}
 		if ($this->cursor->is(token_kind::lparen)) {
-			$this->cursor->take(token_kind::lparen, '(');
+			$start = $c->take(token_kind::lparen, '(');
+			$name_kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+			if ($c->is($name_kind) && $c->next_is(token_kind::assign)) {
+				$at = $c->position();
+				$target = new ast_name_expression($c->name($name_kind), $at, $at + 1);
+				$c->take(token_kind::assign, '=');
+				$rhs = $this->assignment_value();
+				return new ast_condition_assignment($start, $c->take(token_kind::rparen, ') after assignment') + 1, $target, $rhs);
+			}
 			$value = $this->value();
-			$this->cursor->take(token_kind::rparen, ')');
+			$c->take(token_kind::rparen, ')');
 			return $value;
 		}
 		if ($this->declaring_type !== null && !$this->cursor->at_end()) {

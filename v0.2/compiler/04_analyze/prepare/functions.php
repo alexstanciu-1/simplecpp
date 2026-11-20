@@ -137,6 +137,11 @@ final class Function_Preparation
 			self::expression($value->body);
 			return;
 		}
+		if ($value instanceof ast_condition_assignment) {
+			self::expression($value->target);
+			self::expression($value->value);
+			return;
+		}
 		if ($value instanceof ast_ternary_expression) {
 			self::expression($value->condition);
 			self::expression($value->when_true);
