@@ -377,7 +377,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher, callable_signature
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature
 {
 	use ast_declaration { name as private namespace_name; }
 

@@ -98,13 +98,15 @@ final class Cpp_Headers
 							}
 						}
 					}
+					if ($node->is_static) {
+						foreach ($file->static_implementations($node) as $implementation) {
+							if (!$implementation->instance->external) continue;
+							$lines[Cpp_Emitter::function_name($implementation)] = $emitter->function_declaration($implementation, $includes);
+						}
+					} else $lines[$node->symbol_key()] = $emitter->function_declaration($node, $includes);
+				} elseif ($node instanceof ast_global_declaration) {
+					$lines[$node->symbol_key()] = $emitter->global_declaration($node, $includes);
 				}
-				if ($node instanceof ast_function_declaration && $node->is_static) {
-					foreach ($file->static_implementations($node) as $implementation) {
-						if (!$implementation->instance->external) continue;
-						$lines[Cpp_Emitter::function_name($implementation)] = $emitter->declaration($implementation, $includes);
-					}
-				} else $lines[$node->symbol_key()] = $emitter->declaration($node, $includes);
 				$this->declarations[$node->symbol_key()] = $header;
 			}
 			if ($lines === []) {
@@ -138,7 +140,7 @@ final class Cpp_Headers
 		if (isset($this->declarations[$key])) return $this->declarations[$key];
 		$header = $this->declarations[$key] = hash('sha256', 'enum:' . $key) . '.hpp';
 		$includes = [];
-		$definition = $emitter->declaration($enum, $includes);
+		$definition = $emitter->enum_declaration($enum, $includes);
 		$text = "// Generated enum declaration.\n#pragma once\n";
 		foreach ($includes as $include => $_) $text .= "#include <$include>\n";
 		$this->files['units/' . $header] = $text . Cpp_Emitter::namespace_body($root, $definition);
@@ -218,7 +220,7 @@ final class Cpp_Headers
 				$needs_methods = $needs_methods || $child !== self::record_header($type->declaration);
 			}
 		}
-		$definition = $emitter->declaration($record, $includes);
+		$definition = $emitter->record_declaration($record, $includes);
 		$text = "// Generated inline record layout.\n#pragma once\n";
 		foreach ($includes as $include => $_) $text .= "#include <$include>\n";
 		foreach ($children as $child => $_) $text .= "#include \"$child\"\n";

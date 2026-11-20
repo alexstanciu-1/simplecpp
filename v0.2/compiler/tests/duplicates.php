@@ -6,7 +6,7 @@ require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{Source_Frontend, Symbol_Publication, Program_Preparation, Syntax_Inspection,
-		Compilation_Inspection, ast_function_declaration, diagnostic_group, entry_target, flavor, source_file};
+		Compilation_Inspection, Declaration_Diagnostics, ast_function_declaration, diagnostic_group, entry_target, flavor, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -25,6 +25,16 @@ foreach ([
 			'function f(): void { let x: int=1; let x: int=2; } function other(): void {} function f(): void {} function f(): void {} let y: int=1; let y: int=2; return 8;'],
 	] as [$flavor, $text])
 {
+	// A catch binding supplies the first location; the conflicting local supplies the second.
+	[$handler, $expected] = match ($flavor) {
+		flavor::cpp => ["try {} catch (Exception err) {\nint err=1;}", 'handler:2:5: Duplicate local: err; first declaration at handler:1:25'],
+		flavor::php => ["try {} catch (Exception \$err) {\n\$err int=1;}", 'handler:2:1: Duplicate local: err; first declaration at handler:1:25'],
+		flavor::js => ["try {} catch (err: Exception) {\nlet err:int=1;}", 'handler:2:5: Duplicate local: err; first declaration at handler:1:15'],
+	};
+	$handler_file = $frontend->parse(new source_file('handler', $handler, $flavor));
+	$errors = Declaration_Diagnostics::locals($handler_file->main()->body());
+	verify(count($errors) === 1 && $errors[0]->getMessage() === $expected, 'Catch binding duplicate location changed');
+
 	$publisher = new Symbol_Publication();
 	$file = $frontend->collect(new source_file('a', $text, $flavor), $publisher);
 	$functions = $file->functions();

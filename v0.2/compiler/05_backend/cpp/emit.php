@@ -86,130 +86,138 @@ final class Cpp_Emitter
 		return $this->inline_adapters->files() + $this->concrete_collections->files();
 	}
 
-	/** Share declaration spelling between local prototypes and generated headers. @param bool[] $includes */
-	public function declaration(ast_function_declaration|ast_global_declaration|ast_type_declaration $node,
-		array &$includes /** array<string,bool> */): string
+	/** Spell an enum definition and its requested helper prototypes. @param bool[] $includes */
+	public function enum_declaration(ast_enum_declaration $node, array &$includes /** array<string,bool> */): string
 	{
-		if ($node instanceof ast_enum_declaration) {
-			$type = $node->definition;
-			$storage = $type->storage();
-			foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
-			$lines = [];
-			$ordinal = 0;
-			foreach ($node->cases as $case) {
-				$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
-					. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
-			}
-			$helper = '';
-			foreach (dependency_use::cases() as $use) {
-				if (!$this->needs_enum_helper($node, $use)) continue;
-				$binding = $type->helper_function($use);
-				$includes[$binding->header] = true;
-				$helper .= $this->enum_helper_signature($binding) . ";\n";
-			}
-			return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
-				. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
+		$type = $node->definition;
+		$storage = $type->storage();
+		foreach ($storage->cpp_headers() as $header) $includes[$header] = true;
+		$lines = [];
+		$ordinal = 0;
+		foreach ($node->cases as $case) {
+			$lines[] = "\t" . Cpp_Identifier::source($case->short_name) . ' = '
+				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
-		if ($node instanceof ast_record_declaration) {
-			$layout = [];
-			$base = $node->definition->base();
-			foreach ($node->fields as $field) {
-				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$type = $field->storage_type();
-				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
-				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
-					$type, $field->initializer, $field->conversion, $includes);
-				$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
-			}
-			foreach ($node->static_properties as $property) {
-				$type = $property->type_def();
-				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
-			}
-			$virtual = $node->definition->polymorphic();
-			$authored = isset($node->methods['__destruct']);
-			if ($virtual || $authored) {
-				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
-				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
-				$layout[] = "\t$name(const $name&) = default;";
-				$layout[] = "\t$name($name&&) = default;";
-				$layout[] = "\t$name& operator=(const $name&) = default;";
-				$layout[] = "\t$name& operator=($name&&) = default;";
-			}
-			foreach ($node->definition->effective_methods() as $method) {
-				if (!$method->has_virtual_dispatch()) continue;
-				if ($node->kind === record_kind::interface_type) {
-					$inherited = self::exact_interface_slot($node, $method);
-					if ($inherited !== null) {
-						// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
-						$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
-						continue;
-					}
-				}
-				$type = $method->return_type_def();
-				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
-				$result = $this->member_type($type);
-				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
-					. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
-			}
-			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
-				foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
-					. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
-			}
-			$final_slots = [];
-			foreach ($node->definition->interface_forwards as $method) {
-				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
-					&& self::exact_interface_slot($node, $method) === null;
-				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
-				if ($method->is_final && $method->has_virtual_dispatch()) {
-					$final_slots[] = $slot . ' final;';
-					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
-				} else {
-					$layout[] = $slot . ';';
+		$helper = '';
+		foreach (dependency_use::cases() as $use) {
+			if (!$this->needs_enum_helper($node, $use)) continue;
+			$binding = $type->helper_function($use);
+			$includes[$binding->header] = true;
+			$helper .= $this->enum_helper_signature($binding) . ";\n";
+		}
+		return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
+			. ' : ' . $storage->cpp_type() . " {\n" . implode("\n", $lines) . "\n};\n") . $helper;
+	}
+
+	/** Spell the payload layout shared by private units and published headers. @param bool[] $includes */
+	public function record_declaration(ast_record_declaration $node, array &$includes /** array<string,bool> */): string
+	{
+		$layout = [];
+		$base = $node->definition->base();
+		foreach ($node->fields as $field) {
+			foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$type = $field->storage_type();
+			$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
+			$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
+				$type, $field->initializer, $field->conversion, $includes);
+			$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
+		}
+		foreach ($node->static_properties as $property) {
+			$type = $property->type_def();
+			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+			$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
+		}
+		$virtual = $node->definition->polymorphic();
+		$authored = isset($node->methods['__destruct']);
+		if ($virtual || $authored) {
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
+			if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
+			$layout[] = "\t$name(const $name&) = default;";
+			$layout[] = "\t$name($name&&) = default;";
+			$layout[] = "\t$name& operator=(const $name&) = default;";
+			$layout[] = "\t$name& operator=($name&&) = default;";
+		}
+		foreach ($node->definition->effective_methods() as $method) {
+			if (!$method->has_virtual_dispatch()) continue;
+			if ($node->kind === record_kind::interface_type) {
+				$inherited = self::exact_interface_slot($node, $method);
+				if ($inherited !== null) {
+					// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
+					$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
+					continue;
 				}
 			}
-			if (isset($node->methods['__construct'])) {
-				$constructor = $node->methods['__construct'];
-				$params = $this->constructor_parameters($constructor, $includes);
-				if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
-				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\t" . $name . '(' . $params . ');';
-				if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
-			}
-			if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
-				$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
-			}
-			$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
-			$exception = $node->definition->exception_base();
-			if ($exception !== null) {
-				foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
-				$bases[] = 'public ::scpp::exception_payload';
-			}
-			$interface_bases = [];
-			foreach ($node->definition->interfaces() as $interface) {
-				if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
-			}
-			$view = '';
-			if ($final_slots !== []) {
-				// A sibling base can implement the new interfaces without overriding the class's final slot.
-				$name = self::final_view_name($node);
-				$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
-				$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
-			}
-			array_push($bases, ...$interface_bases);
-			return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-				. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+			$type = $method->return_type_def();
+			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
+			$result = $this->member_type($type);
+			$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+				. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
+				. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
 		}
-		if ($node instanceof ast_function_declaration) {
-			if ($node->has_virtual_dispatch()) return '';
-			return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
-				. $this->signature($node, $includes) . ';';
+		foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+			foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
+				. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
 		}
+		$final_slots = [];
+		foreach ($node->definition->interface_forwards as $method) {
+			foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+			$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
+				&& self::exact_interface_slot($node, $method) === null;
+			$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+				. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
+			if ($method->is_final && $method->has_virtual_dispatch()) {
+				$final_slots[] = $slot . ' final;';
+				$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
+			} else {
+				$layout[] = $slot . ';';
+			}
+		}
+		if (isset($node->methods['__construct'])) {
+			$constructor = $node->methods['__construct'];
+			$params = $this->constructor_parameters($constructor, $includes);
+			if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\t" . $name . '(' . $params . ');';
+			if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
+		}
+		if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
+			$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
+		}
+		$bases = $base === null ? [] : ['public ' . $base->cpp_type()];
+		$exception = $node->definition->exception_base();
+		if ($exception !== null) {
+			foreach ($exception->cpp_headers() as $header) $includes[$header] = true;
+			$bases[] = 'public ::scpp::exception_payload';
+		}
+		$interface_bases = [];
+		foreach ($node->definition->interfaces() as $interface) {
+			if ($final_slots === [] || !$base->derives_from($interface)) $interface_bases[] = 'public virtual ' . $interface->cpp_type();
+		}
+		$view = '';
+		if ($final_slots !== []) {
+			// A sibling base can implement the new interfaces without overriding the class's final slot.
+			$name = self::final_view_name($node);
+			$view = 'struct ' . $name . ' : ' . implode(', ', $interface_bases) . " {\n" . implode("\n", $final_slots) . "\n};\n";
+			$interface_bases = ['public ::' . ($this->root === '' ? '' : $this->root . '::') . $name];
+		}
+		array_push($bases, ...$interface_bases);
+		return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
+			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+	}
+
+	/** Spell a free prototype, including a generator layout when needed. @param bool[] $includes */
+	public function function_declaration(ast_function_declaration $node, array &$includes /** array<string,bool> */): string
+	{
+		if ($node->has_virtual_dispatch()) return '';
+		return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
+			. $this->signature($node, $includes) . ';';
+	}
+
+	/** Spell the extern declaration shared by private units and published headers. @param bool[] $includes */
+	public function global_declaration(ast_global_declaration $node, array &$includes /** array<string,bool> */): string
+	{
 		foreach ($node->type_def()->cpp_headers() as $header) {
 			$includes[$header] = true;
 		}
@@ -600,7 +608,7 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototype = $this->declaration($function, $required_headers);
+				$prototype = $this->function_declaration($function, $required_headers);
 				if ($prototype !== '') $prototypes .= $prototype . "\n";
 			}
 		}
@@ -627,7 +635,7 @@ CPP;
 				$unit_headers[$include] = true;
 			}
 			else {
-				$prototypes .= $this->declaration($global, $required_headers) . "\n";
+				$prototypes .= $this->global_declaration($global, $required_headers) . "\n";
 			}
 		}
 		foreach ($file->globals() as $global) {
@@ -681,7 +689,7 @@ CPP;
 			return;
 		}
 		if ($record instanceof ast_enum_declaration) {
-			$text .= $this->declaration($record, $runtime_headers) . "\n";
+			$text .= $this->enum_declaration($record, $runtime_headers) . "\n";
 			return;
 		}
 		if ($record->definition->base() !== null) {
@@ -698,7 +706,7 @@ CPP;
 				$owners[$type->payload->name] = $type->payload->shared;
 			}
 		}
-		$text .= $this->declaration($record, $runtime_headers) . "\n";
+		$text .= $this->record_declaration($record, $runtime_headers) . "\n";
 	}
 
 	/**
@@ -766,6 +774,14 @@ CPP;
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_block_statement) {
+				$lines[] = "\t{";
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
+					$lines[] = "\t" . $line;
+				}
+				$lines[] = "\t}";
+				continue;
+			}
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 				|| $statement instanceof ast_yield_statement);
 			if ($leaf) $lines[] = '{';
@@ -860,31 +876,50 @@ CPP;
 				$lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_loop_statement) {
-				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
-				$update_snapshot = null;
 				$update_label = null;
+				$header_scope = false;
+				$resume_updates = [];
 				if ($statement instanceof ast_for_statement) {
-					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers, $init_snapshot);
+					$tests = [];
+					$last = array_key_last($statement->conditions);
+					foreach ($statement->conditions as $i => $test) {
+						$tests[] = $i === $last ? $this->condition($test, $global_references, $declarations, $required_headers)
+							: '(void)(' . $this->value($test, $global_references, $declarations, $required_headers) . ')';
+					}
+					$condition = implode(', ', $tests);
+					$init = [];
+					$separate_init = $resume !== null;
+					foreach ($statement->initializers as $item) {
+						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot);
+						if ($snapshot !== null || ($item instanceof ast_local_declaration && count($statement->initializers) > 1)) $separate_init = true;
+						$init[] = $snapshot === null ? $text : "{ const auto $snapshot; $text; }";
+					}
+					$initializer = $separate_init ? '' : implode(', ', $init);
+					$prelude = $separate_init ? array_map(static fn(string $text): string => $text . ';', $init) : [];
+					$updates = [];
+					foreach ($statement->updates as $index => $item) {
+						$name = $index === 0 ? 'compound_previous' : 'compound_previous_' . $index;
+						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot, $name);
+						if ($resume !== null) $resume_updates[] = $snapshot === null ? "$text;" : "{ const auto $snapshot; $text; }";
+						elseif ($snapshot === null) $updates[] = $text;
+						else {
+							$prelude[] = $item->local_def()->type_def()->cpp_type() . " $name;";
+							$updates[] = "($snapshot, $text)";
+						}
+					}
+					$header_scope = $prelude !== [];
+					if ($header_scope) {
+						$lines[] = "\t{";
+						foreach ($prelude as $text) $lines[] = "\t" . $text;
+					}
 					if ($resume !== null) {
-						$lines[] = $init_snapshot === null ? "{ $initializer; }" : "{ const auto $init_snapshot; $initializer; }";
-						$initializer = '';
-					}
-					elseif ($init_snapshot !== null) {
-						$lines[] = "\t{ const auto " . $init_snapshot . '; ' . $initializer . '; }';
-						$initializer = '';
-					}
-					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers, $update_snapshot);
-					if ($resume === null && $update_snapshot !== null) {
-						$lines[] = "\t{ " . $statement->update->local_def()->type_def()->cpp_type() . ' compound_previous;';
-						$update = '(' . $update_snapshot . ', ' . $update . ')';
-					}
-					if ($resume !== null) {
-						$update_label = 'loop_update_' . ++$resume->loop_id;
-						$lines[] = "\twhile ($condition) {";
-					} else $lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
-				}
-				else {
+						if ($resume_updates !== []) $update_label = 'loop_update_' . ++$resume->loop_id;
+						$lines[] = "\twhile (" . ($condition === '' ? 'true' : $condition) . ') {';
+					} else $lines[] = "\tfor (" . $initializer . ';' . ($condition === '' ? '' : ' ' . $condition) . ';'
+						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
+				} else {
+					$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => $update_label];
@@ -895,16 +930,16 @@ CPP;
 					array_pop($resume->loops);
 					if ($update_label !== null) {
 						$lines[] = "goto $update_label;\n$update_label:;";
-						$lines[] = $update_snapshot === null ? "{ $update; }" : "{ const auto $update_snapshot; $update; }";
+						foreach ($resume_updates as $text) $lines[] = $text;
 					}
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
-				if ($resume !== null && $statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) {
-					$lines[] = $this->generator_destroy($statement->initializer);
+				if ($resume !== null && $statement instanceof ast_for_statement) {
+					foreach (array_reverse($statement->initializers) as $item) {
+						if ($item instanceof ast_local_declaration) $lines[] = $this->generator_destroy($item);
+					}
 				}
-				if ($resume === null && $update_snapshot !== null) {
-					$lines[] = "\t}";
-				}
+				if ($header_scope) $lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
@@ -1218,7 +1253,7 @@ CPP;
 	 */
 	private function compound(ast_assignment_statement $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
 	{
 		if ($statement instanceof ast_index_compound) return $this->indexed_compound($statement, $global_references, $declarations, $headers);
 		$property = $statement instanceof ast_property_compound;
@@ -1251,15 +1286,15 @@ CPP;
 		}
 		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
 			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
-		$left = $direct_read ? $name : 'compound_previous';
+		$left = $direct_read ? $name : $snapshot_name;
 		$result = $this->compound_result($statement, $type, $left, $right, $headers);
 		if ($direct_read) return $name . ' = ' . $result;
 		if ($steps !== []) {
-			$steps[] = 'const auto compound_previous = ' . $name . ';';
+			$steps[] = 'const auto ' . $snapshot_name . ' = ' . $name . ';';
 			$steps[] = $name . ' = ' . $result . ';';
 			return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
 		}
-		$snapshot = 'compound_previous = ' . $name;
+		$snapshot = $snapshot_name . ' = ' . $name;
 		return $name . ' = ' . $result;
 	}
 
@@ -1439,6 +1474,19 @@ CPP;
 			: 'return ' . $this->value($branch, $globals, $declarations, $headers) . ';';
 	}
 
+	/** Lower one discarded header action with the ordinary call or binding emitter.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function for_action(ast_statement $item, array &$globals, array &$declarations, array &$headers,
+		?string &$snapshot, string $snapshot_name = 'compound_previous'): string
+	{
+		$snapshot = null;
+		return $item instanceof ast_call_statement ? $this->value($item->value, $globals, $declarations, $headers)
+			: $this->binding($item, $globals, $declarations, $headers, $snapshot, $snapshot_name);
+	}
+
 	/**
 	 * Render a binding without its delimiter and report any required prior read to its enclosing statement or loop.
 	 * @param ast_global_declaration[] $global_references
@@ -1447,11 +1495,11 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
-			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
+			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot, $snapshot_name);
 		}
 		if ($statement instanceof ast_index_update) {
 			return $this->indexed_update($statement, $global_references, $declarations, $headers);

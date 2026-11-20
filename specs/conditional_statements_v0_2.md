@@ -39,9 +39,20 @@ Existing condition conversion, return completion, exception and control-transfer
 rules apply unchanged. A supported `break` or `continue` inside an unbraced
 conditional arm still requires a suitable enclosing construct.
 
+## Standalone lexical blocks
+
+A braced block `{ statements }` may itself appear wherever an executable statement
+is accepted, including in the implicit entry body. An empty block executes no actions.
+Each block introduces a lexical scope. It may shadow an outer local, write an
+existing outer binding, or establish a local that expires on exit. Execution
+enters the block unconditionally and forwards its completion to the enclosing
+statement sequence. A block introduces no break or continue target.
+A type guard established inside the block is usable within that scope. Rebinding
+an outer variable in the block invalidates any earlier narrowing of that variable.
+
 ## Scope boundary
 
-This amendment admits single-statement conditional bodies only. It does not admit
+Single-statement bodies apply to conditional arms. The grammar excludes
 unbraced loop bodies, colon/endif alternative syntax, empty semicolon bodies,
 numbered break/continue, or otherwise unsupported statement/declaration forms.
 A conditional may contain an already-supported braced loop or another supported
@@ -50,11 +61,9 @@ independent of conditional syntax admission.
 
 ## PHP-first compiler delivery — 2026-11-04
 
-The active `v0.2/compiler/` implements braced `if`, `elseif`, `else if`, and `else`
-in all three flavors, including nested conditionals. Both conditional-chain spellings
-normalize to the same AST; `elseif` is reserved in each flavor. Unbraced arms remain
-an implementation debt against the broader contract above. Standalone blocks, logical operators and ternary expressions are not added by this
-slice. Braced while/do-while are now covered by [the loop contract](loop_statements_v0_2.md).
+The active `v0.2/compiler/` implements braced and single-statement arms, nested
+conditionals and standalone lexical blocks in all three flavors. Both conditional-chain
+spellings normalize to the same AST. `elseif` is reserved in each flavor. Braced while/do-while are now covered by [the loop contract](loop_statements_v0_2.md).
 
 Conditions admit bool, int/int64, uint8/byte, float/float64 and string. Bool uses its value;
 numeric zero (including negative floating zero) is false; strings are false only

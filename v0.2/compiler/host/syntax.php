@@ -241,14 +241,13 @@ final class Syntax_Inspection
 				'body' => array_map(self::statement(...), $statement->body->statements)];
 		}
 		if ($statement instanceof ast_loop_statement) {
-			$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+			if ($statement instanceof ast_for_statement) {
+				$row = ['kind' => 'for', 'initializers' => array_map(self::statement(...), $statement->initializers),
+					'conditions' => array_map(self::expression(...), $statement->conditions),
+					'updates' => array_map(self::statement(...), $statement->updates), 'body' => array_map(self::statement(...), $statement->body->statements), 'span' => self::span($statement)];
+			} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
 				'body' => array_map(self::statement(...), $statement->body->statements)];
-			if ($statement instanceof ast_for_statement) {
-				$row['kind'] = 'for';
-				$row['initializer'] = self::statement($statement->initializer);
-				$row['update'] = self::statement($statement->update);
-			}
 			return $row;
 		}
 		if ($statement instanceof ast_throw_statement) {
@@ -264,6 +263,9 @@ final class Syntax_Inspection
 			}
 			if ($statement->finalizer !== null) $row['finally'] = array_map(self::statement(...), $statement->finalizer->statements);
 			return $row;
+		}
+		if ($statement instanceof ast_block_statement) {
+			return ['kind' => 'block', 'span' => self::span($statement), 'body' => array_map(self::statement(...), $statement->body->statements)];
 		}
 		if ($statement instanceof ast_branch_statement) {
 			return ($statement instanceof ast_switch_statement ? ['kind' => 'switch', 'subject' => self::expression($statement->subject)] : ['kind' => 'if']) + [ 'span' => self::span($statement), 'arms' => array_map(

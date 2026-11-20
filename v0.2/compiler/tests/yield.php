@@ -70,6 +70,10 @@ foreach (flavor::cases() as $flavor) {
 		'keyed' => [$keyed . $key_loop, 'a1b2'],
 		'discard_key' => [$keyed . $loop('numbers(1)', $echo) . 'return 8;', '12'],
 		'string' => [$string . $loop('text("abcdefghijklmnopqrstuvwxyz0123456789")', $echo) . 'return 8;', 'abcdefghijklmnopqrstuvwxyz0123456789tail'],
+		'for_lists' => [$signature('numbers', 'Iterator<int>') . '{for ('
+			. rtrim($local('i', '0'), ';') . ',' . rtrim($local('j', '2'), ';') . ';' . $v('i') . '<2;'
+			. $v('i') . '++,' . $v('j') . '++) {yield ' . $v('j') . ';continue;}}'
+			. $loop('numbers(1)', $echo) . 'return 8;', '23'],
 		'never_started' => [$model . $local('cursor', 'numbers(1)') . 'return 8;', ''],
 		'locals' => [$signature('numbers', 'Iterator<int>') . '{' . $local('a', $v('x')) . 'yield ' . $v('a') . ';' . $local('b', '2') . $v('a') . '+=' . $v('b') . ';yield ' . $v('a') . ';}' . $loop('numbers(1)', $echo) . 'return 8;', '13'],
 		'local_string' => [$signature('text', 'Iterator<string>', 'string') . '{' . $local('a', $v('x')) . 'yield ' . $v('a') . ';' . $v('a') . '="tail";yield ' . $v('a') . ';}' . $loop('text("abcdefghijklmnopqrstuvwxyz0123456789")', $echo) . 'return 8;', 'abcdefghijklmnopqrstuvwxyz0123456789tail'],
@@ -208,7 +212,7 @@ CPP;
 
 	$conditional_owner = $signature('owned', 'Iterator<weak<Point>>') . '{if (' . $v('x') . '>0) {'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');' . $v('x') . '=-1;'
-		. 'if (' . $v('x') . '<0) {' . $local('q', 'new Point()') . 'yield weak(' . $v('q') . ');}'
+		. '{' . $local('q', 'new Point()') . 'if (' . $v('x') . '<0) yield weak(' . $v('q') . ');}'
 		. 'yield weak(' . $v('p') . ');}' . $elseif . '(' . $v('x') . '==0){'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');return;}else {'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');}yield weak(new Point());}return 8;';

@@ -26,7 +26,7 @@ def prove(work, flavor):
     def guarded(body):
         return fn('inspect', 'int', [('item', 'Base')], body)
     positive = guarded('if ('+test+') {'+field+'=6;'+use+'}return 0;')
-    prefix = 'if (!('+test+')) {return 0;}'
+    prefix = 'if (!('+test+')) return 0;'
     negative = guarded(prefix + use)
     throwing = guarded('if (!('+test+')) {throw new Failure();}'+use)
     main = 'echo inspect(new Leaf()),inspect(new Base());return 8;'
@@ -46,6 +46,10 @@ def prove(work, flavor):
     revisions(work, flavor, sources, [
         (None,None,b'70'), (None,None,b'70'), ('guard',negative,b'50'),
         ('leaf',implement('Leaf',base='Base',interfaces=()),b'00'), ('leaf',leaf,b'50'),
+        ('guard',guarded('{'+prefix+use+'}'),b'50'),
+        ('guard',guarded('{'+prefix+'}'+use),bad),
+        ('guard',guarded(prefix+'{ replace('+var+'); }'+use),bad),
+        ('guard',guarded(prefix+'{ '+field+'=6; }'+use),b'70'),
         ('guard',guarded(prefix+var+'=new Base();'+use),bad),
         ('guard',guarded(prefix+'replace('+var+');'+use),bad), ('guard',negative,b'50'),
         ('guard',guarded('if ('+test+') {'+field+'=6;}'+use),bad),

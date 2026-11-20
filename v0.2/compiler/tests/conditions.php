@@ -63,6 +63,19 @@ foreach (flavor::cases() as $flavor)
 		verify(str_contains($cpp, $name), 'Missing C++ spelling ' . $name);
 	}
 	$fixtures[$flavor->name . '_names'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('2722345')];
+	$scoped = $fn('choose', $p, 'int', '{if (' . $var('flag') . ') return 7; return 8;}')
+		. $decl('x', 'int', '1') . '{}{' . $decl('x', 'int', '2') . '{echo ' . $var('x') . ';}} echo ' . $var('x') . ';'
+		. 'if (true) if (false) echo "bad"; else echo "inner";'
+		. 'if (false) {if (true) echo "bad";} else /* outer */ if (true) echo "outer";'
+		. 'if (false) return 1; elseif (true) echo choose(true); else return 2;'
+		. 'for (;;){ {' . $var('x') . '++;if (' . $var('x') . '<3) continue;break;} }echo ' . $var('x') . ';return choose(false);';
+	$scoped_entry = $prepare($scoped);
+	$scoped_cpp = (new Cpp_Emitter())->emit($scoped_entry);
+	$fixtures[$flavor->name . '_blocks'] = ['cpp' => $scoped_cpp, 'stdout_hex' => bin2hex('21innerouter73')];
+	verify(Syntax_Inspection::file($scoped_entry->file)['statements'][1]['kind'] === 'block', 'Block syntax inspection');
+	verify(Compilation_Inspection::body($scoped_entry->body())['statements'][1]['kind'] === 'block', 'Block fact inspection');
+	Function_Preparation::reset_body($scoped_entry->body());
+	verify((new Cpp_Emitter())->emit((new Preparation())->prepare($scoped_entry->file, new entry_target(31))) === $scoped_cpp, 'Block reset differs');
 	$single_pass = $prepare('if (true) { echo 1; } elseif (false) { echo 2; } else { echo 3; } return 8;');
 	verify($single_pass->body()->statement_visits === 5 && $single_pass->body()->expression_visits === 6,
 		'Conditions and arm statements must be prepared exactly once');
@@ -107,7 +120,11 @@ foreach (flavor::cases() as $flavor)
 		['if (true) {' . $decl('inside', 'int', '1') . '} echo ' . $var('inside') . '; return 8;', 'Unknown or not-yet-initialized'],
 		['if (true) {' . $decl('x', 'int', '1') . $decl('x', 'int', '2') . '} return 8;', 'Duplicate local'],
 		[$decl('x', 'int', '1') . 'if (true) {' . $decl('x', 'int', $var('x')) . '} return 8;', 'during its initialization'],
-		['if (true) echo 1; return 8;', 'braced conditional body'],
+		['if (true) ; return 8;', 'Expected'],
+		['if (true) ' . $decl('armOnly', 'int', '1') . 'echo ' . $var('armOnly') . ';return 8;', 'Unknown'],
+		['{' . $decl('inside', 'int', '1') . '} echo ' . $var('inside') . ';return 8;', 'Unknown'],
+		['{{' . $decl('x', 'int', '1') . $decl('x', 'int', '2') . '}}return 8;', 'Duplicate local'],
+		['{return 8;}echo 9;', 'Statements after return'],
 		['if (true) { return 8; } else { return 9; } echo 1;', 'Statements after return'],
 	] as [$invalid, $message]) {
 		rejects(fn() => $prepare($invalid), $message);
@@ -123,7 +140,7 @@ foreach (flavor::cases() as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (true) { if (predicate()) { echo "Y"; } } return 8;');
+		file_put_contents($directory . '/main.' . $flavor->name, '{ if (true) if (predicate()) echo "Y"; } return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
 		$write = static function (string $type, string $value) use ($lib, $fn): void {
 			file_put_contents($lib, $fn('predicate', '', $type, 'return ' . $value . ';'));
@@ -138,7 +155,7 @@ foreach (flavor::cases() as $flavor)
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Condition signature edit did not invalidate caller');
 		verify($session->entry->entry->ast === $caller, 'Nested caller reparsed');
-		$condition = $caller->main()->body()->statements[0]->arms[0]->body->statements[0]->arms[0]->condition;
+		$condition = $caller->main()->body()->statements[0]->body->statements[0]->arms[0]->body->statements[0]->arms[0]->condition;
 		verify($condition->type_def()->name === 'string', 'Nested condition has stale type');
 		$write('string', '"false"');
 		$session = $compiler->frontend($directory, $session);
@@ -146,10 +163,19 @@ foreach (flavor::cases() as $flavor)
 		$write('null', 'null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported condition type');
+		unlink($lib);
+		$session = $compiler->frontend($directory, $session);
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unknown');
 		$write('bool', 'false');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Condition recovery failed');
 		verify($session->entry->entry->ast === $caller, 'Recovery reparsed caller');
+		$sources = [];
+		foreach ($session->files() as $path => $file) $sources[$path] = $file->source();
+		$fresh = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
+		$retained = new scpp\compiler\prepared_program($session->entry_key(), $session->files(),
+			new scpp\compiler\prepared_entry($caller, $target), $session);
+		verify(Cpp_Program::emit($fresh)->files == Cpp_Program::emit($retained)->files, 'Recovered block emission differs from fresh');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
 	}
@@ -170,4 +196,4 @@ $fixtures['multifile'] = ['files' => $native_files, 'stdout_hex' => bin2hex('cro
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 }
-echo "Generated truthiness, braced branches/scopes, value barriers and incremental recovery passed\n";
+echo "Condition truthiness, guard arms, lexical blocks and incremental recovery passed\n";
