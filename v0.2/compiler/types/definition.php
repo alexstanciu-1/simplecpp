@@ -241,6 +241,8 @@ enum constant_dispatch
 	/** Return a duplicate key only for an admitted constant label of the subject's exact type. */
 	public function label_key(ast_expression $label): int|string|null
 	{
+		// An expression-qualified constant has a receiver to evaluate; a case label is static data.
+		if ($label instanceof ast_qualified_data || $label instanceof ast_called_type_name) return null;
 		$binding = $label instanceof ast_name_expression ? $label->declaration() : null;
 		return match ($this) {
 			self::enum_switch => $binding instanceof ast_enum_case ? $binding->short_name : null,

@@ -65,7 +65,7 @@ final class Function_Preparation
 			}
 			if ($statement instanceof ast_try_statement) {
 				$statement->protected_completion = $statement->completion = null;
-				$statement->transfer_target = null;
+				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
 				if ($statement->handler !== null) {
 					$statement->handler->binding->reset_preparation();
@@ -78,8 +78,10 @@ final class Function_Preparation
 				self::expression($statement->operation);
 				continue;
 			}
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_branch_statement) {
+				if ($statement instanceof ast_switch_statement) self::expression($statement->subject);
 				foreach ($statement->arms as $arm) {
+					if ($arm instanceof ast_switch_arm) $arm->falls_through = false;
 					if ($arm->condition !== null) {
 						self::expression($arm->condition);
 					}

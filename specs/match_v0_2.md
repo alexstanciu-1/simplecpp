@@ -56,3 +56,36 @@ Deferred: general boolean subjects, float subjects,
 computed integer/enum labels, multiple labels per arm, exhaustiveness inference, omitted
 defaults, implicit result unification and reference results. This syntax is a
 Simple C++ extension in cpp/js, not a claim about native C++/ECMAScript syntax.
+
+## Statement selection with switch
+
+All three flavors accept the following statement in ordinary executable bodies:
+
+```php
+switch ($extension) {
+    case "cpp":
+    case "hpp":
+        echo "C++";
+        break;
+    default:
+        echo "other";
+}
+```
+
+Evaluate the subject exactly once, even in an empty switch. Case labels use the
+constant-dispatch capability and exact label rules above. Duplicate labels and
+multiple defaults are errors. Literal `true` has no special condition form here.
+A failure evaluating the subject propagates before any clause runs.
+
+Enter at the matching case, or at the optional default wherever it appears.
+A miss without a default exits the switch. After entry, ordinary completion runs
+the next clause in source order without comparing its label. Each clause has its
+own lexical scope. Its automatic locals are destroyed before executing the next
+clause, including on fallthrough. Declare values outside the switch to share them
+between clauses.
+
+Unlabelled `break` exits the nearest enclosing loop or switch. Unlabelled
+`continue` advances the nearest enclosing loop, even across a switch. Transfers
+that leave a protected region run its finalizer before reaching their destination.
+Existing restrictions on exiting a finalizer and the bounded set of statements
+in resumable iterator bodies still apply.

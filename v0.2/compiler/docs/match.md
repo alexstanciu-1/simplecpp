@@ -47,8 +47,16 @@ is evaluated once and its temporary stays alive during comparison. Named string
 labels use the decoded bytes of their watched constant declaration. A default-only
 match still evaluates its subject. The ordered condition form below is unaffected.
 
-Source `switch` remains a separate statement slice. Its parser, break targets and
-fallthrough flow analysis can consume the same constant-label capability.
+Source `switch` consumes the same capability. A clause owns a lexical block and
+retains one fallthrough flag. Integer and enum subjects select a native C++ case.
+String dispatch computes a clause index with the same length and byte comparisons,
+then enters a native switch. Preparation joins direct entry with predecessor
+fallthrough and consumes switch breaks. A finalizer records break and continue
+destinations independently when those exits cross its protected region.
+
+`tests/switch_native.py` exercises shared label dependencies, case-local destruction,
+constructor initialization, protected transfers, retained/fresh equivalence and
+native caller reuse across cpp/php/js on Clang.
 
 ## Ordered condition slice
 

@@ -66,7 +66,7 @@ final class ast_for_statement extends ast_loop_statement
 abstract class ast_loop_transfer extends ast_statement
 {
 	/** Prepared fact: native non-owning target; null until resolved or after invalidation. */
-	public ?ast_repeating_statement $target = null;
+	public ast_switch_statement|ast_repeating_statement|null $target = null;
 }
 
 /** Bare break; exits the resolved loop without running its update or test. */

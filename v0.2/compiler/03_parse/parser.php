@@ -275,6 +275,7 @@ final class Parser
 			$end = $this->cursor->take(token_kind::semicolon, '; (only unlabelled break/continue are supported)') + 1;
 			return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
 		}
+		if ($this->cursor->keyword('switch')) return $this->switch_statement($grammar, $collector);
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
 		}
@@ -362,6 +363,48 @@ final class Parser
 			}
 		} while (true);
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
+	}
+
+	private function switch_statement(statement_grammar $grammar, Body_Collection $collector): ast_switch_statement
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		$c->take_keyword('switch');
+		$c->take(token_kind::lparen, '(');
+		$subject = $this->value();
+		$c->take(token_kind::rparen, ')');
+		$c->take(token_kind::lbrace, '{');
+		$arms = [];
+		while (!$c->is(token_kind::rbrace)) {
+			$arm_start = $c->position();
+			$label = null;
+			if ($c->keyword('default')) $c->take_keyword('default');
+			else {
+				$c->take_keyword('case');
+				$label = $this->constant_label();
+			}
+			$c->take(token_kind::colon, ':');
+			$child = $collector->child();
+			$this->lexical = $child;
+			$body_start = $c->position();
+			$statements = [];
+			while (!$c->keyword('case') && !$c->keyword('default') && !$c->is(token_kind::rbrace)) {
+				$statement = $this->statement($grammar, $child);
+				$child->statement($statement, count($statements));
+				$statements[] = $statement;
+			}
+			$this->lexical = $collector;
+			$body = $child->block($body_start, $c->position(), $statements);
+			$arms[] = new ast_switch_arm($arm_start, $body->end, $label, $body);
+		}
+		return new ast_switch_statement($start, $c->take(token_kind::rbrace, '}') + 1, $subject, $arms);
+	}
+
+	private function constant_label(): ast_expression
+	{
+		$c = $this->cursor;
+		return ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)
+			? $this->literal_initializer('Expected integer label', true) : $this->value();
 	}
 
 	/** Parse the protected region and the optional clauses in source order. */
@@ -1154,10 +1197,7 @@ final class Parser
 				$arm_start = $c->position();
 				$label = null;
 				if ($c->keyword('default')) $c->take_keyword('default');
-				elseif (!ast_match_expression::is_condition_subject($subject)
-					&& ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)) {
-					$label = $this->literal_initializer('Match label requires an integer literal', true);
-				} else $label = $this->value();
+				else $label = ast_match_expression::is_condition_subject($subject) ? $this->value() : $this->constant_label();
 				$c->take(token_kind::arrow, '=>');
 				$result = $label === null && $c->keyword('throw') ? $this->throw_expression() : $this->value();
 				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());

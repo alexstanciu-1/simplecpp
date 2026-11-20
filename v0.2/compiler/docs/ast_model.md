@@ -162,7 +162,7 @@ Function identity and incremental cache lifetimes follow [stable symbols](stable
 `ast_statement_block` owns the common ordered statements, lexical scope and local
 reference indexes. `ast_function_body` extends it with completion, statistics and
 dependency-watcher identity; `ast_block` is an ordinary branch body. `ast_if_statement`
-owns an ordered list of `ast_if_arm`, each owning a block and an optional condition
+owns an ordered list of `ast_branch_arm`, each owning a block and an optional condition
 (null only for else). Multiple arms are valid syntax, so a list is appropriate.
 No prepared block copies or per-arm watchers are introduced. See [conditions](conditions.md).
 

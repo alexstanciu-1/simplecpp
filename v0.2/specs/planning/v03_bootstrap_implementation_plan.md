@@ -128,29 +128,23 @@ change section 1 work owned by the other workspace or claim compile-time gains.
 
 Constant-label dispatch now comes from the subject's published type capability.
 Integer/enum cases retain native switch lowering. String labels compare exact
-bytes and length, including embedded NULs. Source switch can reuse this contract
-once its statement semantics and flow analysis are implemented.
+bytes and length, including embedded NULs. Source switch uses the same contract for clause entry.
 
-#### Follow-up proposal — source switch statements
+#### Source switch statements — implemented for ordinary bodies
 
-Use the subject's existing constant-label capability for integer, nominal enum and
-byte-string cases. Parse one subject and an ordered inventory of clauses. A default
-may appear anywhere and is optional. Reuse exact-type label admission, duplicate
-detection and existing declaration dependencies. Decide case-local declaration
-scope and the interaction with enclosing loops before introducing new flow targets.
+`switch` and `match` share constant-label admission and type-directed native
+dispatch. Each case owns a lexical block. Strings select a clause index; integer
+and enum cases use native labels. Fallthrough enters the next clause after local
+destruction. Break targets the nearest loop or switch, while continue targets the
+nearest loop. A protected region can carry both destinations through cleanup.
 
-Proposed behavior: evaluate the subject once and enter at the matching label or
-default. A miss without default skips the statement. Normal completion of a case
-falls through to the next case; break exits the nearest breakable construct.
-For native-switch strategies emit a C++ switch directly. For byte equality, use
-the same length/byte comparisons to select an entry index, then switch over that
-index so falling through never re-tests a label.
-
-Verify default-first/middle/absent, consecutive labels, duplicate bytes/enum cases,
-fallthrough and break, nested loops and switches, case-local lifetime, failure
-before entry and reachability after the statement. For retained builds compare
-label edits, deletion and recovery against fresh output; check unchanged callers
-and no-op native rebuilds in all three flavors. This is a separate language slice.
+The Clang fixture `compiler/tests/switch_native.py` covers cpp/php/js, grouped
+labels, optional and middle defaults, byte-exact lookup, subject failure, nested
+loops and switches, readonly construction, and nested finalizers. Retained label
+edits, duplicate-label errors, source deletion and restoration are compared with
+fresh output. A body-only edit reuses its caller and a no-op rebuild does no work.
+Switch in resumable iterator bodies, labelled transfers and computed labels remain
+outside this slice.
 
 ### 2.1 Ordered match conditions — implemented
 
