@@ -1,6 +1,6 @@
 
 /** Published @name@ scalar box and its generated admission and lowering bindings. */
-final class type_@name@ extends boxed_type_definition implements iterable_type, counted_collection_type, appendable_collection_type
+final class type_@name@ extends boxed_type_definition implements iterable_type, counted_collection_type, appendable_collection_type@transfer@
 {
 @iteration@
 @append_method@

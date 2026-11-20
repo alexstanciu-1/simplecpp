@@ -17,6 +17,7 @@ int main() {
             std::string(22, 'a'), std::string(23, 'a'), std::string(512, 'b')}) {
         scpp::string input(original.data(), static_cast<scpp::int64>(original.size()));
         const auto scan = App::scan_(input, 0);
+        assert(std::string_view(input.data(), input.size()) == original);
         input = scpp::string("replaced");
         const auto bytes = scan.source.checked_bytes();
         assert(bytes.size() == static_cast<scpp::int64>(original.size()));

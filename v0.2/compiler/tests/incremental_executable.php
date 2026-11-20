@@ -21,7 +21,7 @@ while (($line = fgets(STDIN)) !== false) {
 		}
 		else {
 			$start = hrtime(true);
-			$response = $project->run();
+			$response = $project->run($request['optimize_functions'] ?? []);
 			$response['php_ms'] = (hrtime(true) - $start) / 1e6;
 			$session = $project->session();
 			if ($handle === null) {

@@ -236,6 +236,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_scoped_byte_view_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scoped_byte_view_native.py ${native_facts} ${native_context})
   add_test(NAME compiler_last_use_transfer COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/last_use_transfer.py)
+  add_test(NAME compiler_collection_transfer COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_transfer.py)
+  add_test(NAME compiler_destination_append COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/destination_append.py)
   add_test(NAME compiler_vector_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations.php)
   add_test(NAME compiler_vector_operations_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations_native.py)
   add_test(NAME compiler_carrier_values COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values.php)

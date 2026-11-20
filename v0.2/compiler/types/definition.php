@@ -47,6 +47,13 @@ interface application_collection_type
 	public function cpp_headers(): array;
 }
 
+/** Concrete provider whose separate helper can construct a completed aggregate in spare storage. */
+interface destination_append_type extends application_collection_type, appendable_collection_type
+{
+	/** @param string[] $values Native helper template substitutions. */
+	public function destination_append_definition(array $values): string;
+}
+
 /** Existing owned-value lifecycle accepted by concrete recipes; native assertions still verify every requirement. */
 trait concrete_value_storage
 {

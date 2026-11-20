@@ -10,6 +10,7 @@
     "output_declaration": ["collections/vector_iteration_output", "core/iteration_output", "collections/vector_output_declaration"],
     "output_definition": ["collections/vector_output_iteration"]
   },
+  "destination_append": "collections/vector_destination_append",
   "application": "collections/vector_application",
   "support": ["sequence/vector_buffer.hpp"]
 }

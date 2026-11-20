@@ -12,13 +12,14 @@ final class Program_Command
 	 */
 	public static function build(array $arguments /** list<string> */): int /** int32 */
 	{
-		if (count($arguments) !== 7) {
-			fwrite(\STDERR, "Usage: php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json>\n");
+		$options = self::options(array_slice($arguments, 7));
+		if (count($arguments) < 7 || $options === null || $options['force']) {
+			fwrite(\STDERR, "Usage: php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json> [--optimize-function=NAME ...]\n");
 			return 2;
 		}
 		require_once __DIR__ . '/native_build.php';
 		$config = Native_Build::configuration($arguments[6]);
-		$report = (new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4]);
+		$report = (new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4], false, $options['functions']);
 		$report['native'] = Native_Build::run($arguments[4], $arguments[5], $config);
 		self::report($report);
 		return $report['native']['exit_code'] === 0 ? 0 : 1;
@@ -33,12 +34,29 @@ final class Program_Command
 	 */
 	public static function project(array $arguments /** list<string> */): int /** int32 */
 	{
-		if ((count($arguments) !== 5) && (!((count($arguments) === 6) && ($arguments[5] === '--force')))) {
+		$options = self::options(array_slice($arguments, 5));
+		if (count($arguments) < 5 || $options === null) {
 			fwrite(\STDERR,
-				"Usage: php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n");
+				"Usage: php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force] [--optimize-function=NAME ...]\n");
 			return 2;
 		}
-		return self::report((new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4], count($arguments) === 6));
+		return self::report((new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4], $options['force'], $options['functions']));
+	}
+
+	/** Parse optional body selections shared by both project entry points.
+	 * @param string[] $flags
+	 * @return array{force:bool,functions:list<string>}|null
+	 */
+	private static function options(array $flags): ?array
+	{
+		$force = false;
+		$functions = [];
+		foreach ($flags as $flag) {
+			if ($flag === '--force' && !$force) $force = true;
+			elseif (str_starts_with($flag, '--optimize-function=') && ($name = substr($flag, strlen('--optimize-function='))) !== '') $functions[] = $name;
+			else return null;
+		}
+		return ['force' => $force, 'functions' => $functions];
 	}
 
 	/**

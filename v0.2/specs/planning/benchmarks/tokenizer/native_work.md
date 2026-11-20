@@ -30,4 +30,6 @@ Using uint32 for token offset and length is a deferred storage-layout option. It
 
 [Allocation and publication measurements](byte_access/report.md) · [Split-view loop inspection and throughput](byte_access/split_view.md) · [Handwritten baseline](baseline.cpp)
 
-The Simple C++ scanner fixture now copies the input to the result and acquires a checked byte view from that field once when its owner is stable. The dev002 pairs isolate byte access with both source copy and final vector move held fixed. [Measurements and parity checks](byte_access/scoped_view.md).
+The scanner acquires a checked byte view from the result's source field once when its owner is stable. The first dev002 comparison held the source copy and final vector move fixed to measure byte access. [Scoped view measurements](byte_access/scoped_view.md).
+
+The scanner now transfers its by-value source string into that field at last use. A second comparison held the scoped view and final vector move fixed to measure the source transfer. [Source transfer measurements and parity checks](byte_access/parameter_transfer.md).

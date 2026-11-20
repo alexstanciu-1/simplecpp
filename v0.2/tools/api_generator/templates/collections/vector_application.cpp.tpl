@@ -8,6 +8,7 @@ private:
 struct storage;
 storage* storage_ = nullptr;
 friend struct @access@;
+@destination_friend@
 };
 @section_storage@
 namespace detail { struct @access_name@ {

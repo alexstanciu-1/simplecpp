@@ -8,6 +8,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
     $cases = [];
     $applicationCases = [];
     $family = isset($metadata->hash) ? textValue(at($metadata->hash, 'source_type')) : null;
+    $transfer = ($runtime['hashes']['transfer_assignment'] ?? false) ? ', private_value_transfer_type' : '';
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
         if (!isset($definitions[$hash['value']], $definitions[$hash['key']])) continue;
         $value = 'type_' . $definitions[$hash['value']]['class'];
@@ -68,7 +69,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
 
             '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
-            '@interfaces@' => ' implements iterable_type, key_presence_type, key_lookup_type' . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
+            '@interfaces@' => ' implements iterable_type, key_presence_type, key_lookup_type' . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . $initializationSetup . "\t}\n",
             '@factory@' => "\tpublic static function instance(): self { return self::\$instance ??= new self(); }",
         ];
@@ -87,7 +88,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 '@append_method@' => $append ? compilerHashAppend($hash) : '',
                 '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
-                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, iterable_type' . ($append ? ', appendable_collection_type' : ''),
+                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, iterable_type' . $transfer . ($append ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
                 '@identity@' => "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$value, type_definition \$key)\n\t{\n\t\tparent::__construct(" . var_export($family, true) . " . '<' . \$value->name . ',' . \$key->name . '>', \$value, \$key);\n" . str_replace("$key::instance()", '$key', $presence) . "\t\t\$this->native_name = 'scpp_hash_' . hash('sha256', \$value::class . ':' . \$value->name . ':' . \$key::class . ':' . \$key->name);\n\t}\n",
                 '@cpp@' => '$this->native_name',

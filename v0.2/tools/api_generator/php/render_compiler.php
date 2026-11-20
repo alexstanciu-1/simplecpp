@@ -157,6 +157,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@method@' => $write['name'],
             ]);
         }
+        if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
+            $indexInterface .= $indexInterface === '' ? ' implements private_value_transfer_type' : ', private_value_transfer_type';
+        }
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';

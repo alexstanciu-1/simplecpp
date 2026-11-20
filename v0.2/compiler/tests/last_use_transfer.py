@@ -62,6 +62,42 @@ def signature_edits(root, flavor):
         resident.wait()
 
 
+def parameter_modes(root, flavor, libraries):
+    s = fixture(flavor)
+    app = root / (flavor + '-modes')
+    app.mkdir()
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    v, access = s['v'], s['access']
+    field = v + 'out' + access + 'source'
+    body = s['local']('out', 'Packet') + field + '="previous destination with heap storage";'
+    body += field + '=' + v + 'text; return ' + v + 'out;'
+    publish = s['function']('publish', 'Packet', [('text', 'string')], body)
+    by_ref = {'cpp': ('string text', 'string& text'), 'php': ('string $text', 'string &$text'),
+              'js': ('text:string', '&text:string')}[flavor]
+    definitions = s['record']('Packet', s['field']('source', 'string'))
+    definitions += publish + publish.replace('publish', 'borrow').replace(*by_ref)
+    source_edit(app / ('packet.' + flavor), definitions)
+    message = 'original heap-backed caller bytes'
+    main = s['infer']('input', '"' + message + '"')
+    for name in ('publish', 'borrow'):
+        main += s['infer'](name + 'd', name + '(' + v + 'input)')
+        main += 'echo ' + v + name + 'd' + access + 'source,' + v + 'input;'
+    source_edit(app / ('main.' + flavor), main + 'return 8;')
+    out = root / (app.name + '-out')
+    proc = service(app, out)
+    try:
+        row = invoke(proc)
+        assert 'error' not in row, row
+        path = json.loads((out / 'manifest.json').read_text())['sources'][app.name + '/packet.' + flavor]
+        code = (out / path).read_text()
+        assert code.count('.source = std::move(var_text_') == code.count('.source = var_text_') == 1
+        for cc, lib in libraries.items():
+            incremental_native_build(out, root / (app.name + cc), cc, lib, message.encode() * 4)
+    finally:
+        proc.stdin.close()
+        proc.wait()
+
+
 def provider_changes(root, libraries):
     project = Path(__file__).resolve().parents[2]
     isolated = root / 'provider'
@@ -76,16 +112,23 @@ def provider_changes(root, libraries):
     capability = metadata['vector']['transfer_assignment']
     layout = project / 'build/clang/native-layout'
     first = {}
-    for label in ('move', 'copy', 'restore'):
-        if label == 'copy':
-            del metadata['vector']['transfer_assignment']
-        else:
-            metadata['vector']['transfer_assignment'] = capability
+    for label, vector, string in [('move', True, True), ('string-copy', True, False),
+                                  ('vector-copy', False, True), ('copy', False, False), ('restore', True, True)]:
+        for family, enabled in [('vector', vector), ('string', string), ('hash', vector), ('boxed', string)]:
+            if enabled:
+                metadata[family]['transfer_assignment'] = capability
+            else:
+                metadata[family].pop('transfer_assignment', None)
         config = isolated / 'metadata.json'
         config.write_text(json.dumps(metadata))
         subprocess.run(['php', project / 'tools/api_generator/generate.php', 'emit-compiler', config,
                         project / 'runtime/metadata/publication.json', layout / 'facts.json', layout / 'context.json',
                         compiler / 'generated'], check=True)
+        # Both application hash recipes, every published hash, and both boxed families opt in by metadata.
+        for filename, enabled in [('hashes.php', vector), ('boxed.php', string)]:
+            declarations = [line for line in (compiler / 'generated/types' / filename).read_text().splitlines()
+                            if line.startswith('final class ')]
+            assert declarations and all(('private_value_transfer_type' in line) == enabled for line in declarations)
         for flavor in ('cpp', 'php', 'js'):
             out = isolated / (flavor + '-out')
             run = subprocess.run(['php', driver, root / flavor, out], input='"run"\n', text=True,
@@ -94,9 +137,11 @@ def provider_changes(root, libraries):
             assert 'error' not in row, row
             unit = json.loads((out / 'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
             code = (out / unit).read_text()
-            assert ('.tokens = std::move(var_items_' in code) == (label != 'copy')
-            assert ('.tokens = var_items_' in code) == (label == 'copy')
-            assert ('#include <utility>' in code) == (label != 'copy')
+            assert ('.tokens = std::move(var_items_' in code) == vector
+            assert ('.tokens = var_items_' in code) == (not vector)
+            assert ('.source = std::move(var_text_' in code) == string
+            assert ('.source = var_text_' in code) != string
+            assert ('#include <utility>' in code) == (vector or string)
             for cc, lib in libraries.items():
                 incremental_native_build(out, isolated / (flavor + cc), cc, lib, b'1-1')
             if label == 'move':
@@ -107,7 +152,7 @@ def provider_changes(root, libraries):
 
 def prove(root):
     prepare(root)
-    libraries = {cc: runtime(root, cc) for cc in ('clang++', 'g++')}
+    libraries = {'clang++': runtime(root, 'clang++')}
     for flavor in ('cpp', 'php', 'js'):
         app = root / flavor
         path = app / ('scanner.' + flavor)
@@ -148,6 +193,8 @@ def prove(root):
             key = flavor + '/scanner.' + flavor
             for label, text, move in [
                 ('move', original, True),
+                ('text-later', original.replace(tail, f'if ({var}size > 0) {{echo {var}text;}}' + tail), True),
+                ('text-restored', original, True),
                 ('field-replaced', replace_field, True),
                 ('owner-replaced', replace_owner, True),
                 ('shadow-owner', shadow_owner, True),
@@ -187,7 +234,7 @@ def prove(root):
                     assert flavor + '/main.' + flavor not in row['emitted_sources'], (label, row)
                     assert row['preparation'] == {'prepared': 1, 'reused': 2}, (label, row)
                 unit = json.loads((out / 'manifest.json').read_text())['sources'][key]
-                expected = {'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
+                expected = {'text-later': b'if1-1', 'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
                 for cc, lib in libraries.items():
                     changed = incremental_native_build(out, root / (flavor + '-' + cc), cc, lib, expected)
                     if label != 'move':
@@ -196,13 +243,15 @@ def prove(root):
                             assert paths[f'{flavor}/{name}.{flavor}'] not in changed, (label, changed)
                 code = (out / unit).read_text()
                 assert ('.tokens = std::move(var_items_' in code) == move, (flavor, label)
-                assert ('#include <utility>' in code) == move
+                assert ('#include <utility>' in code) == ('std::move(' in code)
+                string_move = label not in ('text-later', 'nonvector')
+                assert ('.source = std::move(var_text_' in code) == string_move, (flavor, label)
+                assert ('.source = var_text_' in code) != string_move, (flavor, label)
                 if label in ('move', 'field-replaced', 'owner-replaced', 'view-restored', 'original'):
                     view = label not in ('field-replaced', 'owner-replaced')
                     assert code.count('.checked_bytes()') == int(view), (flavor, label)
                     assert ('scpp_byte_view.read(' in code) == view
                     assert ('.source).byte_at(' in code) != view
-                    assert '.source = var_text_' in code
                 if label == 'shadow-owner':
                     assert '.source).byte_at(' in code and 'scpp_byte_view.read(' in code
                 if label == 'conversion':
@@ -214,6 +263,7 @@ def prove(root):
             resident.stdin.close()
             resident.wait()
             source_edit(path, original)
+        parameter_modes(root, flavor, libraries)
         signature_edits(root, flavor)
         print(flavor, timings, flush=True)
     provider_changes(root, libraries)

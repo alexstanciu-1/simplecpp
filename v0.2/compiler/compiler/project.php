@@ -29,12 +29,13 @@ final class Project_Compiler
 	 *
 	 * Return: compilation report.
 	 *
+	 * @param string[] $optimize_functions
 	 * @return mixed[]
 	 */
-	public function run(string $path, string $facts, string $directory, bool $force = false): array /** array<string,mixed> */
+	public function run(string $path, string $facts, string $directory, bool $force = false, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$session = (new Module_Loader($this->runtime))->load($path, $directory);
-		$state = Project_Changes::capture($session, $facts, $directory);
+		$state = Project_Changes::capture($session, $facts, $directory, $optimize_functions);
 		$previous = Cpp_Bundle::read($directory);
 		$removed = Project_Changes::mark($session, $state, Cpp_Bundle::baseline($previous));
 		$changes = [];
@@ -49,7 +50,7 @@ final class Project_Compiler
 				'sources' => count($cached['sources']), 'translation_units' => count($cached['translation_units']),
 				'rebuilt' => false];
 		}
-		return $this->compile($session, $facts, $directory, $state, $changes, $previous);
+		return $this->compile($session, $facts, $directory, $state, $changes, $previous, $optimize_functions);
 	}
 
 	/**
@@ -62,16 +63,17 @@ final class Project_Compiler
 	 *
 	 * @param mixed[]|null $state
 	 * @param string[] $changes
+	 * @param string[] $optimize_functions
 	 * @param mixed[]|null $previous
 	 * @return mixed[]
 	 */
 	public function compile(compilation_session $session, string $facts, string $directory, ?array $state /** array<string,mixed> */ = null,
 		array $changes /** array<string,string> */ = [],
-		?array $previous /** array<string,mixed> */ = null): array /** array<string,mixed> */
+		?array $previous /** array<string,mixed> */ = null, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$target = Native_Target::load($facts);
 		$program = (new Program_Frontend())->prepare($session, $target);
-		$output = Cpp_Program::emit($program);
+		$output = Cpp_Program::emit($program, destination_plans: Destination_Plan::select($program, $optimize_functions));
 		$inputs = [$facts];
 		foreach ($session->modules as $module) {
 			if ($module->manifest !== null) {
@@ -81,7 +83,7 @@ final class Project_Compiler
 		foreach ($program->files as $file) {
 			$inputs[] = $file->tokens->source->path;
 		}
-		if (($state !== null) && (Project_Changes::capture($session, $facts, $directory) !== $state)) {
+		if (($state !== null) && (Project_Changes::capture($session, $facts, $directory, $optimize_functions) !== $state)) {
 			throw new \RuntimeException('Project inputs changed during compilation; retry the build');
 		}
 		Cpp_Bundle::write($directory, $output, $inputs, $state, $previous);

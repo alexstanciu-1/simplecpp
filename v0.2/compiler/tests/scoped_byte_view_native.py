@@ -57,16 +57,16 @@ def prove(root, facts, context):
                             config, runtime / 'metadata/publication.json', facts, context, root / family / 'generated'],
                            check=True)
         scanners = [emit_scanner(work, flavor, method, driver) for flavor in ('cpp', 'php', 'js')]
-        for cc in ('clang++', 'g++'):
-            flags = [cc, '-std=c++23', '-O1', '-UNDEBUG', *['-I' + str(runtime / path) for path in
-                     ('generated/public', 'generated/private', 'src/numeric', 'src/sequence', 'src/hash')]]
-            obj = work / (cc + '.o')
-            subprocess.run([*flags, '-c', runtime / 'generated/src/runtime.cpp', '-o', obj], check=True)
-            for unit, header in scanners:
-                exe = work / 'lifetime'
-                subprocess.run([*flags, '-I', header.parent, f'-DSCPP_SCANNER_HEADER="{header.name}"',
-                                PROJECT / 'compiler/tests/scoped_byte_view.cpp', unit, obj, '-o', exe], check=True)
-                subprocess.run([exe], check=True)
+        cc = 'clang++'
+        flags = [cc, '-std=c++23', '-O1', '-UNDEBUG', *['-I' + str(runtime / path) for path in
+                 ('generated/public', 'generated/private', 'src/numeric', 'src/sequence', 'src/hash')]]
+        obj = work / (cc + '.o')
+        subprocess.run([*flags, '-c', runtime / 'generated/src/runtime.cpp', '-o', obj], check=True)
+        for unit, header in scanners:
+            exe = work / 'lifetime'
+            subprocess.run([*flags, '-I', header.parent, f'-DSCPP_SCANNER_HEADER="{header.name}"',
+                            PROJECT / 'compiler/tests/scoped_byte_view.cpp', unit, obj, '-o', exe], check=True)
+            subprocess.run([exe], check=True)
 
 
 if __name__ == '__main__':

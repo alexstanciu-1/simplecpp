@@ -105,13 +105,23 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         if (!$application) {
             $application = true;
             $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
+            $destination = concreteRecipe(vectorConcreteRecipe($vector))->destination_append ?? null;
+            $destinationInterface = $destination === null ? '' : ', destination_append_type';
+            $destinationMethod = '';
+            if ($destination !== null) {
+                $slots = ['helper', 'vector', 'element', 'parameters', 'inputs'];
+                $placeholders = array_combine($slots, array_map(static fn(string $s): string => '@' . $s . '@', $slots));
+                $body = template(textValue($destination), $placeholders);
+                $destinationMethod = "\n\tpublic function destination_append_definition(array \$values): string\n\t{\n"
+                    . "\t\treturn strtr(" . var_export($body, true) . ", \$values);\n\t}\n";
+            }
             $recipe = ['enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
             $code .= strtr($template, array_replace($bindings, [
-                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence . $transfer, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),
-                '@factory@' => "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . " + ['buffer' => '::scpp::detail', 'access_name' => 'access_' . \$this->native_name, 'access' => 'detail::access_' . \$this->native_name];\n\t}\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['e' => \$this->element_type]; }",
+                '@factory@' => $destinationMethod . "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . " + ['buffer' => '::scpp::detail', 'access_name' => 'access_' . \$this->native_name, 'access' => 'detail::access_' . \$this->native_name];\n\t}\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['e' => \$this->element_type]; }",
             ]));
         }
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";

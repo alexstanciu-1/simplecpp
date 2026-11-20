@@ -30,6 +30,72 @@ The goal is simpler emitted C++ and reduced header/overload work for Clang. Remo
 wrappers is not itself proof of faster executables: optimized native_value accessors
 may already disappear. Measure build time and runtime behavior where relevant.
 
+## Placing optimization work
+
+The development build needs one semantic preparation that can diagnose the source
+and immediately emit correct C++. A smaller native loop can justify substantial
+analysis for a hot function. Running that analysis on every edited function
+charges the developer even for bodies where the optimization never applies.
+Evaluate the cost of *discovering* a safe transformation separately from the
+cost of spelling it in C++ and the benefit in the executable.
+
+| Where the work belongs | When to use it | Why |
+|---|---|---|
+| Ordinary source, provider or lowering | The source requests the operation, or prepared types, conversions and provider capabilities already determine the direct form. | Every build can benefit without a new search. The provider owns storage, checks and failure behavior. |
+| Bounded foreground proof | A cheap candidate check narrows the work to relevant bodies or statements. Existing body-local facts or occurrence indexes suffice. | Useful code is available on the first build. Measure the cost on bodies with and without candidates before widening the proof. |
+| Optional body analysis | The optimization needs broader reasoning about uses, aliases, effects, control flow or ranges. | An editor can build immediately with ordinary lowering and spend extra analysis time selectively on bodies likely to benefit. |
+
+Correctness checks and diagnostics belong to ordinary compilation. Every optional
+transformation must preserve the source evaluation contract, including observable
+failures, ownership and destruction. For example, a record with one final consumer
+can still be unsafe to construct early in a vector. An intervening call may
+grow that vector or throw before the source append would have allocated.
+Keep the ordinary append whenever the proof is incomplete.
+
+### Proposed ownership and reuse
+
+For the first optional pass, request optimization explicitly for one successfully
+prepared function body. The job reads that body's settled facts and the contracts
+it needs, and privately produces a small lowering plan. Keep optional decisions
+off shared syntax nodes. This keeps ordinary bodies light and lets a future
+native worker analyze one body while other workers read the same generation.
+
+Use the existing incremental dependency model. Reuse the plan across unrelated
+edits. An edit to the initializer or a change to a provider capability the proof
+used invalidates it. Publish a completed plan only if its input generation and
+dependencies are still current. Retain inputs until their readers finish. Each
+build fixes its plan selection before emission so worker timing cannot change
+C++ halfway through a build. A newly available plan can be selected on a later
+requested build, which then re-emits the affected unit as needed.
+
+Start with in-memory reuse to measure the benefit. A resident compiler could run
+the same job between requests, giving foreground edits priority. A one-shot
+compiler exits when its build finishes. Reuse across separate invocations would
+require a persistent cache with compatible compiler, provider and target facts.
+Idle scheduling and disk persistence are future decisions. Neither is required
+to try an on-demand pass.
+
+For the first experiment, measure foreground preparation without a plan (including
+candidate misses), the separate proof cost, and later emission with the cached
+plan. Compare emitted C++, native compile time and execution on the same workload.
+Verify source behavior on optimized and fallback paths, reuse after an unrelated
+edit, invalidation after a relevant edit, and retirement of stale results during
+edit and recovery. Compare fresh and incremental output with the same plan
+selection. These measurements guide which proofs merit foreground time.
+[Tokenizer findings and first experiment](../../specs/planning/v03_bootstrap_implementation_plan.md#optimization-costs-for-the-six-tokenizer-findings)
+
+### Requesting direct-slot construction
+
+Use `project` or `build` with `--optimize-function=scan` to request analysis
+of that prepared free function. Repeat the flag for additional functions, using
+qualified source names for namespaced functions. A resident project accepts the
+same selection as a list in `run()`. The selection applies to one invocation.
+
+The application-vector provider publishes the optional construction helper.
+Only source units with eligible sites include its private header. Removing the
+last site retires it. Body identity and the file's preparation revision govern
+in-memory plan reuse. Ordinary builds skip discovery and use the existing append.
+
 ## Implemented first slice
 
 `emit-compiler` reuses the API generator's scalar registry and validated target

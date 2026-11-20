@@ -37,6 +37,8 @@ final class Cpp_Emitter
 	private int $record_expressions = 0;
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
+	/** Native non-owning during emission of the selected function. */
+	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
 	private Cpp_Concrete_Collections $concrete_collections;
 
@@ -49,8 +51,11 @@ final class Cpp_Emitter
 	private array $generator_locals /** array<uint32,string> */ = [];
 
 	/** CONSTRUCTOR */
-	/** @param cpp_generator_layout[] $generator_layouts */
-	public function __construct(?Cpp_Headers $headers = null, string $root = 'App', array $generator_layouts /** array<string,cpp_generator_layout> */ = [])
+	/** @param cpp_generator_layout[] $generator_layouts
+	 * @param Destination_Plan[] $destination_plans
+	 */
+	public function __construct(?Cpp_Headers $headers = null, string $root = 'App', array $generator_layouts /** array<string,cpp_generator_layout> */ = [],
+		private readonly array $destination_plans /** array<string,Destination_Plan> */ = [])
 	{
 		$this->headers = $headers;
 		$this->root = $root;
@@ -701,11 +706,21 @@ CPP;
 			$this->byte_view = null;
 			/** @var ast_function_declaration $function */
 			$function = $body->parent;
+			$this->destination = $this->destination_plans[$function->name()] ?? null;
 		}
 		$lines = [];
 		if ($resume !== null) $resume->scopes[] = $body;
 		foreach ($body->statements as $statement)
 		{
+			if (($writes = $this->destination?->writes($statement)) !== null) {
+				if ($writes !== []) {
+					$inputs = [];
+					foreach ($writes as $write) $inputs[] = $this->value($write->value, $global_references, $declarations, $required_headers);
+					$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+					$lines[] = "\t" . $this->concrete_collections->destination_append($statement->receiver->type_def(), $writes, $receiver, $inputs) . ';';
+				}
+				continue;
+			}
 			if ($statement instanceof ast_base_statement) continue;
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 				|| $statement instanceof ast_yield_statement);
