@@ -41,8 +41,8 @@ final class Preparation
 	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
 	private array $latest_writes /** array<uint32,ast_assignment_statement|ast_local_declaration|null> */ = [];
-	/** Transient successful type tests by local storage ID. @var ast_object_access_expression[] */
-	private array $guards /** array<uint32,ast_object_access_expression> */ = [];
+	/** Dominating test or remaining union arm by local storage ID. @var (ast_object_access_expression|shared_record_type_definition)[] */
+	private array $guards /** array<uint32,ast_object_access_expression|shared_record_type_definition> */ = [];
 	/** Guarded argument reads in the current expression, indexed by slot with the first read position. @var int[] */
 	private array $guard_reads /** array<uint32,uint32> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
@@ -432,7 +432,6 @@ final class Preparation
 		$joined = null;
 		$remaining = $this->guards;
 		$surviving = $remaining;
-		$after_guard = null;
 		foreach ($statement->arms as $arm) {
 			if ($before !== null) $this->readonly_initialization->states = $before;
 			$this->forget_values();
@@ -459,9 +458,13 @@ final class Preparation
 				foreach ($surviving as $id => $previous) {
 					if (($this->guards[$id] ?? null) !== $previous) unset($surviving[$id]);
 				}
-			} elseif ($guard !== null && $arm->condition instanceof ast_not_expression && count($statement->arms) === 1
+			} elseif ($guard !== null && count($statement->arms) === 1
 				&& ($arm_completion & ~(statement_completion::returns | statement_completion::throws)) === 0) {
-				$after_guard = $guard;
+				$id = $guard->operand->local_def()->storage_id();
+				if ($arm->condition instanceof ast_not_expression) $surviving[$id] = $guard;
+				elseif (($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
+					$surviving[$id] = $union->remaining_arm($guard->target_type()->payload);
+				}
 			}
 			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
 				$states = $this->readonly_initialization->states;
@@ -478,7 +481,6 @@ final class Preparation
 		}
 		$this->forget_values();
 		$this->guards = $surviving;
-		if ($after_guard !== null) $this->guards[$after_guard->operand->local_def()->storage_id()] = $after_guard;
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
@@ -1134,11 +1136,11 @@ final class Preparation
 					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
 				if ($type instanceof class_union_type_definition) {
 					$guard = $this->guards[$id] ?? null;
-					if ($guard !== null) {
+					if ($guard instanceof ast_object_access_expression) {
 						$syntax->settle_guard($guard, narrow: true);
 						return;
 					}
-					$view = $type->receiver_view($syntax);
+					$view = $guard ?? $type->receiver_view($syntax);
 				}
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;

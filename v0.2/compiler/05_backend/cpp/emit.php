@@ -1485,9 +1485,10 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
-			if ($value->receiver instanceof ast_name_expression && ($guard = $value->receiver->guard()) !== null
-				&& $guard->operand->type_def() instanceof class_union_type_definition) {
-				return 'scpp_guard_' . $guard->start . '->' . Cpp_Identifier::source($value->field);
+			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
+				&& ($local = $value->receiver->declaration()) instanceof ast_local_binding && $local->type_def() instanceof class_union_type_definition) {
+				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
+				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
@@ -1836,14 +1837,25 @@ CPP;
 		}
 		$name = $this->name($declaration);
 		$type = $declaration->type_def();
-		if ($type instanceof class_union_type_definition && ($guard = $value->guard()) !== null) {
-			return $this->inline_adapters->call(Cpp_Object_Access::guarded_owner($type, $guard->target_type()), [$name, '*scpp_guard_' . $guard->start]);
+		if ($type instanceof class_union_type_definition && ($pointer = $this->union_pointer($value, $declaration, $declarations)) !== null) {
+			return $this->inline_adapters->call(Cpp_Object_Access::guarded_owner($type, $value->type_def()), [$name, '*' . $pointer]);
 		}
 		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
 			if ($value->type_def() === $type->base) return $name . '.base';
 			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);
 		}
 		return $name;
+	}
+
+	/** Project a prepared union read through the successful guard or its proven complement. @param ast_declaration_interface[] $declarations */
+	private function union_pointer(ast_name_expression $value, ast_local_binding $local, array &$declarations /** array<string,ast_declaration_interface> */): ?string
+	{
+		if (($guard = $value->guard()) !== null) return 'scpp_guard_' . $guard->start;
+		$arm = $value->type_def();
+		if (!($arm instanceof shared_record_type_definition) || $arm === $local->type_def()->base) return null;
+		$record = $arm->payload->declaration;
+		$declarations[$record->symbol_key()] = $record;
+		return 'static_cast<' . $arm->payload->cpp_type() . '*>(' . $this->name($local) . '.view)';
 	}
 
 	/**

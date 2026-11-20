@@ -1,10 +1,11 @@
-"""Positive union-arm guards preserve ownership, expire at rebinding and follow ancestry edits."""
+"""Positive and remaining-arm guards preserve ownership, expire at rebinding and follow ancestry edits."""
 import argparse
 from pathlib import Path
 import tempfile
 
 from collection_goal_native import revisions
 from interfaces_native import forms
+from exceptions_native import catch
 
 
 def prove(work, flavor):
@@ -25,7 +26,15 @@ def prove(work, flavor):
     param = {'php':'NameExpr $item','cpp':'NameExpr item','js':'item:NameExpr'}[flavor]
     ref = {'php':'NameExpr &$item','cpp':'NameExpr &item','js':'&item:NameExpr'}[flavor]
     replace = fn('replace','void',[('item','NameExpr')],item+'=new NameExpr();').replace(param,ref)
-    sources = dict(base=base, arm=arm, other=klass('FieldExpr','','Expr'), leaf=leaf, inspect=good, api=consume+replace, main=main)
+    field = klass('FieldExpr', s['field']('offset','int','3'), 'Expr')
+    offset = item+s['access']+'offset'
+    offset_of = fn('offsetOf','int',[('item','FieldExpr')],'return '+offset+';')
+    body = 'if ('+cond+') {'+read+'=4;return consume('+item+');}'+offset+'=7;return offsetOf('+item+')+'+offset+';'
+    both = inspect(body)
+    exceptional = inspect(body.replace('return consume('+item+');', 'throw new Failure();'))
+    caught = ('try {echo inspect(new NameExpr());}'+catch(flavor,'Failure','caught')+
+              '{echo "caught";}echo inspect(new FieldExpr());return 8;')
+    sources = dict(base=base, arm=arm, other=field, leaf=leaf, inspect=good, api=consume+replace+offset_of, main=main, failure=klass('Failure','','Exception'))
     revisions(work,flavor,sources,[
         (None,None,b'120'),(None,None,b'120'),
         ('inspect',inspect('if ('+cond+') {return 1;}return '+read+';'),'Unknown field'),
@@ -38,14 +47,25 @@ def prove(work, flavor):
         ('inspect',inspect('if ('+cond+') {return '+item+s['access']+'read();}return 0;'),b'40'),
         ('inspect',inspect('if ('+cond+') {'+s['infer']('saved',item)+item+'=new FieldExpr();return '+
                            s['v']+'saved'+s['access']+'read();}return 0;'),b'40'),
-        ('inspect',good,b'120'),
+        ('inspect',both,b'414'),
+        ('inspect',inspect(body.replace('return consume('+item+');','if (true) {return 1;}echo "fall";')),'Unknown field'),
+        ('inspect',inspect(body.replace(offset+'=7;', item+'=new NameExpr();'+offset+'=7;')),'Unknown field'),
+        ('inspect',both,b'414'),('leaf',klass('Derived','','FieldExpr'),b'1414'),('leaf',leaf,b'414'),
+        ('inspect',inspect('if ('+cond+') {return 4;}'+s['infer']('saved',item)+item+'=new NameExpr();return '+
+                           s['v']+'saved'+s['access']+'offset;'),b'43'),
+        ('inspect',both,b'414'),('main',caught,b'414'),('inspect',exceptional,b'caught14'),
+        ('other',klass('FieldExpr','','Expr'),'Unknown field'),(None,None,'Unknown field'),
+        ('other',None,None),('other',field,b'caught14'),('inspect',both,b'414'),('main',main,b'414'),
     ])
     units = work/(flavor+'-out')/'units'
     output = '\n'.join(p.read_text() for p in units.glob('*.cpp'))
     assert output.count('auto* scpp_guard_') == 1
     assert 'scpp_guard_' in next(line for line in output.splitlines() if '->n = ' in line)
+    assert 'static_cast<scpp_records::FieldExpr*>' in output
+    assert '->offset = 7' in output
     headers = '\n'.join(p.read_text() for p in units.glob('*.hpp'))
     assert headers.count('dynamic_cast<scpp_records::NameExpr*>(source.view)') == 1
+    assert 'dynamic_cast<scpp_records::FieldExpr*>' not in headers + output
 
 
 if __name__ == '__main__':
