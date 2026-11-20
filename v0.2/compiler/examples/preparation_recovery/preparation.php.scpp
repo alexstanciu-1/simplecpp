@@ -1,0 +1,162 @@
+/*
+ * Bounded translation of Preparation::function_body, preparation_work and
+ * Incremental_Preparation::prepare for one integer-return body per source unit.
+ * The frontend supplies the authored return expression and its byte offset.
+ */
+final class Return_Syntax {
+	public string $source;
+	public string $function_name;
+	public string $integer_spelling;
+	public string $callee;
+	public int $offset;
+
+	public function __construct(string $source, string $function_name, string $integer, string $callee, int $offset) {
+		$this->source = $source;
+		$this->function_name = $function_name;
+		$this->integer_spelling = $integer;
+		$this->callee = $callee;
+		$this->offset = $offset;
+	}
+}
+
+final class Preparation_Diagnostic extends Exception {
+	public string $source;
+	public int $offset;
+	public string $detail;
+
+	public function __construct(string $source, int $offset, string $detail) {
+		$this->source = $source;
+		$this->offset = $offset;
+		$this->detail = $detail;
+	}
+}
+
+final class Function_Body {
+	public Return_Syntax $syntax;
+	private string $prepared_expression;
+	private bool $ready = false;
+
+	public function __construct(Return_Syntax $syntax) {
+		$this->syntax = $syntax;
+	}
+
+	public function settle_preparation(string $expression): void {
+		if ($this->ready) {
+			throw Exception::make("Function body is already prepared");
+		}
+		$this->prepared_expression = $expression;
+		$this->ready = true;
+	}
+
+	public function prepared(): bool {
+		return $this->ready;
+	}
+
+	public function lower(): string {
+		if (!$this->ready) {
+			throw Exception::make("Function preparation is not complete");
+		}
+		$expression = $this->prepared_expression;
+		return "::scpp::int64 " . $this->syntax->function_name . "_()\n{\n\treturn " . $expression . ";\n}\n";
+	}
+}
+
+final class Preparation_Work {
+	public hash<Function_Body,string> $pending;
+	public hash<Function_Body,string> $emission_sources;
+
+	public function enqueue(Function_Body $body): void {
+		$key = $body->syntax->function_name;
+		$this->pending[$key] = $body;
+		$this->emission_sources[$key] = $body;
+	}
+
+	public function complete(Function_Body $body): void {
+		$this->pending->remove($body->syntax->function_name);
+	}
+}
+
+final class Published_Symbols {
+	public hash<Function_Body,string> $functions;
+}
+
+final class Preparation {
+	public ?Function_Body $owner = null;
+
+	public function function_body(Function_Body $body, Published_Symbols $symbols): void {
+		$previous = $this->owner;
+		$this->owner = $body;
+		try {
+			$expression = $this->prepare_return($symbols);
+			$body->settle_preparation($expression);
+		} finally {
+			$this->owner = $previous;
+		}
+	}
+
+	private function prepare_return(Published_Symbols $symbols): string {
+		$body = $this->owner;
+		if ($body === null) {
+			throw Exception::make("Preparation requires an active body");
+		}
+		$syntax = $body->syntax;
+		if ($syntax->callee === "") {
+			return $syntax->integer_spelling . "LL";
+		}
+		if (!hash_contains($symbols->functions, $syntax->callee)) {
+			throw new Preparation_Diagnostic($syntax->source, $syntax->offset,
+				"Unknown function: " . $syntax->callee);
+		}
+		return $symbols->functions[$syntax->callee]->syntax->function_name . "_()";
+	}
+}
+
+final class Incremental_Preparation {
+	public Preparation_Work $work;
+	public Preparation $preparation;
+	public Published_Symbols $symbols;
+	public hash<string,string> $output;
+	public int $prepared = 0;
+	public int $reused = 0;
+	public int $prepared_before_failure = 0;
+
+	public function __construct() {
+		$this->work = new Preparation_Work();
+		$this->preparation = new Preparation();
+		$this->symbols = new Published_Symbols();
+	}
+
+	public function publish_declaration(Return_Syntax $syntax): Function_Body {
+		$body = new Function_Body($syntax);
+		$this->symbols->functions[$syntax->function_name] = $body;
+		$this->work->enqueue($body);
+		return $body;
+	}
+
+	public function run(): void {
+		$this->prepared = 0;
+		$this->prepared_before_failure = 0;
+		$pending = $this->work->pending;
+		$first ?Preparation_Diagnostic = null;
+		foreach ($pending as $body) {
+			try {
+				$this->preparation->function_body($body, $this->symbols);
+				$this->work->complete($body);
+				$this->prepared++;
+			} catch (Preparation_Diagnostic $error) {
+				if ($first === null) {
+					$this->prepared_before_failure = $this->prepared;
+					$first = $error;
+				}
+			}
+		}
+		$this->reused = count($this->symbols->functions) - $this->prepared;
+		if ($first !== null) {
+			throw $first;
+		}
+		foreach ($this->work->emission_sources as $key => $body) {
+			$this->output[$key] = $body->lower();
+		}
+		$this->work->emission_sources->clear();
+	}
+}

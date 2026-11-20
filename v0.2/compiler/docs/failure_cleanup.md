@@ -34,6 +34,27 @@ paths and removes newly installed files before releasing the reservation. Repair
 output destination permits retry without source edits and without re-preparing bodies.
 Native failure occurs after C++ publication and needs no prior AST generation.
 
+## Translated preparation proof
+
+The [bounded native preparation stage](../examples/preparation_recovery/preparation.php.scpp)
+translates the body completion and pending-work rules for one zero-argument
+integer-return function per source unit. It consumes return syntax exported
+by the existing frontend. The supported expressions are a canonical decimal
+literal and a call to a published function in the same subset. The worker saves
+its active body while preparing a job and restores it in `finally`. The pending
+work snapshot allows successful bodies to complete during traversal. Output
+work is acknowledged only after the batch succeeds.
+
+The [test](../tests/translated_preparation_recovery.py) prepares an initial
+program, edits two bodies, and encounters a missing function after one body
+completes. A repeat failure leaves the same body pending and the previous
+output intact. Adding the declaration repairs the input on the same native
+compiler instance. The unaffected and already completed bodies are reused.
+The repaired function bodies match both a fresh native instance and the
+PHP-hosted compiler byte for byte, with AST inputs from cpp, php, and js.
+
+The full native analyzer and its watcher graph are later bootstrap work.
+
 ## Translated publisher proof
 
 The translated fixture writes two new artifacts to exclusively reserved paths.
@@ -55,6 +76,7 @@ exercise the commit boundary in a translated program.
 
 Run the proof with the filesystem runtime enabled and built, using
 `ctest --preset default -R compiler_translated_publisher_cleanup`.
+
 
 ## Lifetime qualification
 
