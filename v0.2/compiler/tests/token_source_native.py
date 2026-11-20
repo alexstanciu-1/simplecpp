@@ -32,7 +32,9 @@ foreach (json_decode(stream_get_contents(STDIN), true) as $encoded) {
     echo "\n";
 }
 '''
-    return subprocess.check_output(['php', '-r', php, str(COMPILER), str(line_delta)], input=json.dumps([base64.b64encode(x).decode() for x in CORPUS]).encode())
+    # The two multibyte letters occupy four bytes. The edit moves them to line two.
+    retained = f'same.php:NEW:{2 + line_delta}:5;same.php:OLD:{1 + line_delta}:7;'.encode()
+    return subprocess.check_output(['php', '-r', php, str(COMPILER), str(line_delta)], input=json.dumps([base64.b64encode(x).decode() for x in CORPUS]).encode()) + retained
 
 
 def sources(flavor):
@@ -58,28 +60,40 @@ def sources(flavor):
     location = s['record']('SourceLocation', ro('line', 'int') + ro('column', 'int') + ctor('SourceLocation', [('line', 'int'), ('column', 'int')], f'{v}this{a}line={v}line;{v}this{a}column={v}column;'))
     body = decl('starts', 'vector<int>', '[]') + f'{v}starts[]=0;' + s['infer']('i', '0')
     body += f'while ({v}i < strlen({v}content)) {{if ({v}content[{v}i] == 10) {{{v}starts[]={v}i+1;}}{v}i++;}}'
-    body += f'{v}this{a}content={v}content;{v}this{a}line_starts={v}starts;'
+    body += f'{v}this{a}path={v}path;{v}this{a}content={v}content;{v}this{a}line_starts={v}starts;'
     lookup = s['infer']('low', '0') + s['infer']('high', f'count({v}this{a}line_starts)')
     lookup += f'while ({v}low+1 < {v}high) {{' + s['infer']('middle', f'{v}low+(({v}high-{v}low)>>1)')
     lookup += f'if ({v}this{a}line_starts[{v}middle] <= {v}offset) {{{v}low={v}middle;}} else {{{v}high={v}middle;}}}}'
     lookup += inline('result', 'SourceLocation', f'{v}low+1,{v}offset-{v}this{a}line_starts[{v}low]+1') + f'return {v}result;'
-    source = s['record']('SourceFile', ro('content', 'string') + ro('line_starts', 'vector<int>') + ctor('SourceFile', [('content', 'string')], body) + method('location', 'SourceLocation', [('offset', 'int')], lookup))
+    source = s['record']('SourceFile', ro('path', 'string') + ro('content', 'string') + ro('line_starts', 'vector<int>') + ctor('SourceFile', [('path', 'string'), ('content', 'string')], body) + method('location', 'SourceLocation', [('offset', 'int')], lookup))
     # Text extraction uses the same byte substring operation through each flavor adapter.
     text = s['infer']('item', f'{v}this{a}tokens[{v}index]')
     value = f'{v}this{a}source{a}content'
     call = f'substr({value},{v}item{a}offset,{v}item{a}length)' if flavor == 'php' else f'{value}.substr({v}item{a}offset,{v}item{a}length)' if flavor == 'cpp' else f'{value}.slice({v}item.offset,{v}item.offset+{v}item.length)'
     token_list = s['record']('TokenList', ro('source', 'shared<SourceFile>') + ro('tokens', 'vector<Token>') + ctor('TokenList', [('source', 'shared<SourceFile>'), ('tokens', 'vector<Token>')], f'{v}this{a}source={v}source;{v}this{a}tokens={v}tokens;') + method('text_at', 'string', [('index', 'int')], text + 'return ' + call + ';'))
     kind = 'TokenKind.identifier' if flavor == 'js' else 'TokenKind::identifier'
-    make = s['infer']('source', f'new SourceFile({v}content)') + decl('items', 'vector<Token>', '[]') + s['infer']('i', '0')
+    make = s['infer']('source', f'new SourceFile({v}path,{v}content)') + decl('items', 'vector<Token>', '[]') + s['infer']('i', '0')
     make += f'while ({v}i < strlen({v}content)) {{' + s['infer']('length', '3') + f'if ({v}i+{v}length > strlen({v}content)) {{{v}length=strlen({v}content)-{v}i;}}' + inline('item', 'Token', f'{v}i,{v}length,{kind}') + f'{v}items[]={v}item;{v}i+=3;}}'
     make += inline('result', 'TokenList', f'{v}source,{v}items') + f'return {v}result;'
     use = s['infer']('i', '0') + f'while ({v}i <= strlen({v}list{a}source{a}content)) {{' + s['infer']('loc', f'{v}list{a}source{a}location({v}i)') + f'echo {v}loc{a}line,":",{v}loc{a}column,";";{v}i++;}}echo "|";'
     use += f'foreach ({v}list{a}tokens as {v}index => {v}item) {{echo {v}item{a}offset,":",{v}item{a}length,":",enum_value({v}item{a}kind),":",{v}list{a}text_at({v}index),";";}}echo "\\n";'
-    api = s['function']('makeTokens', 'TokenList', [('content', 'string')], make) + s['function']('show', 'void', [('list', 'TokenList')], use)
+    api = s['function']('makeTokens', 'TokenList', [('path', 'string'), ('content', 'string')], make) + s['function']('show', 'void', [('list', 'TokenList')], use)
     main = ''
     for i, content in enumerate(CORPUS):
         literal = json.dumps(content.decode(), ensure_ascii=False).replace('\\u0000', '\\0')
-        main += s['infer']('list'+str(i), 'makeTokens('+literal+')') + f'show({v}list{i});\n'
+        main += s['infer']('list'+str(i), 'makeTokens("fixture",'+literal+')') + f'show({v}list{i});\n'
+    # The third span starts at byte six in both generations. Query it only after the edit.
+    main += s['infer']('path', '"same.php"') + s['infer']('content', '"abαβOLD"')
+    main += s['infer']('previous', f'makeTokens({v}path,{v}content)')
+    main += f'{v}content="x\\nαβNEW";' + s['infer']('current', f'makeTokens({v}path,{v}content)')
+    main += f'if ({v}previous{a}source === {v}current{a}source) {{return 91;}}'
+    for generation in ('current', 'previous'):
+        owner = f'{v}{generation}{a}source'
+        token_at = f'{v}{generation}{a}tokens[2]'
+        main += '{' + s['infer']('span', token_at)
+        main += s['infer']('position', f'{owner}{a}location({v}span{a}offset)')
+        main += (f'echo {owner}{a}path,":",{v}{generation}{a}text_at(2),":",'
+                 f'{v}position{a}line,":",{v}position{a}column,";";}}')
     return {'types': '/** Logical token kind IDs from the production vocabulary. */\n' + enum + '/** Valid byte span; native packing is deferred. */\n' + token + '/** One-based line and byte column, including EOF. */\n' + location + '/** Immutable byte snapshot with an LF line-start index. */\n' + source + '/** Owns token values and retains their source snapshot. */\n' + token_list, 'api': api, 'main': main + 'return 8;'}
 
 
