@@ -23,6 +23,8 @@ final class Parser
 	/** Native non-owning lexical collector used to distinguish JS local fields from namespace paths. */
 	private ?Body_Collection $lexical = null;
 	private bool $started = false;
+	/** @var ast_trait_declaration[] Consumer-specific binding plan supplied after the source join. */
+	private array $trait_bindings /** array<string,ast_trait_declaration> */ = [];
 	private ?string $declaring_type = null;
 	/** Native owning until returned to the frontend. */
 	private ast_file_node $root;
@@ -70,15 +72,22 @@ final class Parser
 		$imports = [];
 		while ((!$this->cursor->at_end()) && ((!$braced) || (!$this->cursor->is(token_kind::rbrace))))
 		{
-			if ($this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			if ($this->cursor->keyword('trait') || $this->cursor->keyword('interface') || ($this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
+					'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this),
 					'global' => Global_Syntax::read($this),
 				};
 				$node->attach($this->root);
+				if ($node instanceof ast_trait_declaration) {
+					$context = $this->root->trait_context ??= new trait_file_context();
+					$key = 'class:' . $node->name();
+					if (isset($context->origins[$key])) throw new diagnostic($node->source(), $node->byte_start(), 'Duplicate trait: ' . $node->name());
+					$context->origins[$key] = $node;
+					continue;
+				}
 				$this->sink?->discovered($node);
 				$declarations->import($node);
 				$nodes[] = $node;
@@ -130,6 +139,42 @@ final class Parser
 		}
 		$this->root->complete($heads, $nodes, Declaration_Diagnostics::file($nodes), $imports);
 		return $this->root;
+	}
+
+	/**
+	 * Materialize into the consumer's pending inventories before record construction.
+	 * @param ast_type_reference[] $uses
+	 * @param ast_instance_field[] $fields
+	 * @param ast_node[] $members
+	 */
+	public function contribute(string $consumer, array $uses /** array<string,ast_type_reference> */,
+		array &$fields /** array<string,ast_instance_field> */, array &$members /** list<ast_node> */): void
+	{
+		if ($uses === []) return;
+		$context = $this->root->trait_context ??= new trait_file_context();
+		$seen = [];
+		foreach ($uses as $name => $use) {
+			$context->uses[] = $use;
+			$origin = $this->trait_bindings[$name] ?? null;
+			if ($origin === null) continue;
+			$file = $origin->root();
+			if (isset($seen[$origin->name()])) throw new diagnostic($this->root->tokens->source, $this->root->byte_at($use->start), 'Duplicate trait use: ' . $name);
+			$seen[$origin->name()] = true;
+			$fragment = new self($file->tokens, availability: $file->type_availability, start: $origin->body_start);
+			$fragment->root = $file;
+			$methods = [];
+			$nested = [];
+			$contributed = Record_Syntax::members($fragment, $fragment->grammar(), $consumer, record_kind::structure, false, true, $methods, $nested);
+			foreach ($contributed as $key => $field) {
+				if (isset($fields[$key]) || $field->duplicate_element() !== null) throw new diagnostic($file->source(), $file->byte_at($field->start), 'Duplicate field: ' . $consumer . '::' . $key);
+				$field->trait_origin = $origin;
+				$fields[$key] = $field;
+			}
+			foreach ($methods as $method) {
+				$method->trait_origin = $origin;
+				$members[] = $method;
+			}
+		}
 	}
 
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
@@ -1203,6 +1248,18 @@ final class Parser
 	}
 
 	/** STATIC METHODS */
+	/** Reuse the consumer tokens and original trait token generations. @param ast_trait_declaration[] $bindings */
+	public static function composed(ast_file_node $authored, array $bindings /** array<string,ast_trait_declaration> */): ast_file_node
+	{
+		$parser = new self($authored->tokens, availability: $authored->type_availability);
+		$parser->trait_bindings = $bindings;
+		$file = $parser->parse();
+		// Preserve authored identities on a dependency-only rebuild, including traits in this consumer's file.
+		$file->trait_context->origins = $authored->trait_context->origins;
+		$file->trait_context->bindings = $bindings;
+		return $file;
+	}
+
 	/** Parse only the demanded executable fragment, sharing the published signature and token inventory. */
 	public static function instance_body(ast_function_declaration $method): ast_function_body
 	{

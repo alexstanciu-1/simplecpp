@@ -490,7 +490,7 @@ final class Preparation
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
-		$root = $declaration->root();
+		$root = $declaration->lexical_root();
 		if (isset($this->local_frames[count($this->local_frames) - 1][$name])) {
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
 				'Duplicate local: ' . $name);
@@ -562,7 +562,7 @@ final class Preparation
 	/** Resolve a qualified data name once; PHP spells properties separately from constants. */
 	private function bind_static_data(ast_name_expression $syntax, string $qualifier, string $name): bool
 	{
-		$type = $this->symbols->entry($syntax->root()->type_key($qualifier));
+		$type = $this->symbols->entry($syntax->lexical_root()->type_key($qualifier));
 		$this->dependencies?->watch($type, $this->owner);
 		$record = $type->declaration();
 		if (!($record instanceof ast_record_declaration)) return false;
@@ -649,7 +649,7 @@ final class Preparation
 		$local = $this->find_local($statement->name);
 		if ($local === null) {
 			if (($statement->source()->flavor !== flavor::php)
-				&& ($this->symbols->resolve($statement->root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
+				&& ($this->symbols->resolve($statement->lexical_root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Cannot assign to a constant');
 			}
 			throw new diagnostic($statement->source(), $statement->byte_start(),
@@ -982,14 +982,14 @@ final class Preparation
 				}
 			}
 			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
-				$symbol = $this->symbols->entry($syntax->root()->constant_key($name));
+				$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
 				if ($this->bind_literal($syntax, $symbol)) return;
 				// C++ and JS share the namespace separator with type-qualified members.
 				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
 					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
 				}
 				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));
+					$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
 					if ($constant !== null) {
 						$syntax->settle_runtime_constant($constant);
 						return;
@@ -1075,7 +1075,7 @@ final class Preparation
 	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */
 	private function has_receiver(ast_name_expression $receiver): bool
 	{
-		$file = $receiver->root();
+		$file = $receiver->lexical_root();
 		$prefix = '';
 		foreach (explode('\\', $receiver->name) as $part) {
 			$local = $prefix === '' && $this->find_local($part) !== null;
@@ -1179,7 +1179,7 @@ final class Preparation
 			}
 		}
 		$this->name_lookups++;
-		$file = $call->root();
+		$file = $call->lexical_root();
 		if ($call->member_separator === token_kind::scope) {
 			$this->qualified_call($call, $call->name, $initializing, true);
 			return;
@@ -1286,7 +1286,7 @@ final class Preparation
 			$name = $call->name;
 		} else {
 			$separator = strrpos($qualified, '::');
-			$type_symbol = $this->symbols->entry($call->root()->type_key(substr($qualified, 0, $separator)));
+			$type_symbol = $this->symbols->entry($call->lexical_root()->type_key(substr($qualified, 0, $separator)));
 			$this->dependencies?->watch($type_symbol, $this->owner);
 			$record = $type_symbol->declaration();
 			$name = substr($qualified, $separator + 2);

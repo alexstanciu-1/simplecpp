@@ -185,7 +185,7 @@ final class Function_Preparation
 			$type = $declaration->return_type_reference === null ? null
 				: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true);
 			if ($type === null) {
-				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()),
+				throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 					'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 			}
 			$optional = false;

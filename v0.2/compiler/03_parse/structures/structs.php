@@ -17,6 +17,8 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 	use ast_declaration;
 
 	/** PROPERTIES */
+	/** Native non-owning authored trait; null for an ordinary member. */
+	public ?ast_trait_declaration $trait_origin = null;
 	/** Native owning written field type. */
 	public readonly ast_type_reference $type_reference;
 	/** Native owning optional literal or enum-case default written on the field. */

@@ -38,7 +38,7 @@ final class type_@name@ extends type_definition
 	/** Return: exact signed int64; reject overflow rather than relying on host casts or negation. */
 	private function literal_value(ast_integer_expression $syntax): int /** int64 */
 	{
-		$tokens = $syntax->root()->tokens;
+		$tokens = $syntax->lexical_root()->tokens;
 		$negative = $tokens->tokens[$syntax->start]->kind === token_kind::minus;
 		$text = $tokens->text_at($syntax->end - 1);
 		if (strlen($text) >= 2 && $text[0] === '0' && str_contains('xXoO', $text[1])) {

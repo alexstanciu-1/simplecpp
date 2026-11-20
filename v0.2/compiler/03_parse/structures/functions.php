@@ -98,7 +98,7 @@ final class ast_call_expression extends ast_expression
 
 	public function symbol_key(): string
 	{
-		return $this->root()->function_key($this->name);
+		return $this->lexical_root()->function_key($this->name);
 	}
 
 	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
@@ -302,6 +302,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	use ast_declaration { name as private namespace_name; }
 
 	/** PROPERTIES */
+	/** Native non-owning authored trait; null for an ordinary member. */
+	public ?ast_trait_declaration $trait_origin = null;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
 	public readonly bool $is_implicit_entry;
@@ -537,7 +539,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		if ($this->is_constructor()) return $this->return_type_reference->start;
 		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
-			&& $this->root()->tokens->text_at($this->start) !== 'function') return $this->start;
+			&& $this->lexical_root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
 			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
 	}

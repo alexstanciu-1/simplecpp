@@ -101,7 +101,7 @@ final class Type_Resolution
 	private static function application(ast_type_reference $syntax, scope $symbols, dependency_watcher $watcher,
 		?Dependency_Watches $dependencies): ?type_definition
 	{
-		$entry = $symbols->entry($syntax->root()->type_key($syntax->name));
+		$entry = $symbols->entry($syntax->lexical_root()->type_key($syntax->name));
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
 		return $record instanceof ast_type_declaration ? $record->type_definition() : null;

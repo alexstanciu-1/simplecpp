@@ -1477,10 +1477,12 @@ CPP;
 				$required_headers[$function->header] = true;
 				$symbol = $function->symbol;
 				if ($function->adapter_flavor !== null) {
-					$this->adapter_flavor = $function->adapter_flavor;
+					// A contributed body can use a different flavor from its C++ translation unit.
+					$foreign = $function->adapter_flavor !== $value->root()->tokens->source->flavor->value;
+					if (!$foreign) $this->adapter_flavor = $function->adapter_flavor;
 					$short = substr($symbol, strrpos($symbol, '::') + 2);
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
-					$symbol = $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$operands = $value->runtime_operands();
 				if ($function->receiver_method) {

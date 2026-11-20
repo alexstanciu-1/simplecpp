@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Record_Syntax
 {
 	/** Parse members in source order. @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members */
-	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration
+	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration|ast_trait_declaration
 	{
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
@@ -21,9 +21,10 @@ final class Record_Syntax
 			else $final = true;
 			$c->take($c->tokens->tokens[$c->position()]->kind, $modifier);
 		}
+		$trait = $c->keyword('trait');
 		$kind = $c->keyword('interface') ? record_kind::interface_type
 			: ($c->keyword('class') ? record_kind::class_type : record_kind::structure);
-		$c->take_keyword(match ($kind) {
+		$c->take_keyword($trait ? 'trait' : match ($kind) {
 			record_kind::interface_type => 'interface',
 			record_kind::class_type => 'class',
 			default => 'struct',
@@ -60,11 +61,42 @@ final class Record_Syntax
 			} while (true);
 		}
 		if ($kind === record_kind::interface_type && $interfaces !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
+		if ($trait && ($abstract || $final || $base !== null || $interfaces !== [])) throw new diagnostic($c->tokens->source, $c->offset(), 'Traits require an ordinary member body');
+		$body_start = $c->position();
+		$uses = [];
+		$fields = self::members($parser, $grammar, $name, $kind, $base !== null, $trait, $members, $uses);
+		if ($trait) return new ast_trait_declaration($name, $parser->source_namespace(), $start, $c->position(), $body_start, $fields, $members);
+		$parser->contribute($name, $uses, $fields, $members);
+		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final);
+		foreach ($uses as $use) $use->attach($record);
+		return $record;
+	}
+
+	/**
+	 * @param ast_node[] $members
+	 * @param ast_type_reference[] $uses
+	 * @return ast_instance_field[]
+	 */
+	public static function members(Parser $parser, statement_grammar $grammar, string $name, record_kind $kind,
+		bool $derived, bool $trait, array &$members /** list<ast_node> */, array &$uses /** array<string,ast_type_reference> */): array /** array<string,ast_instance_field> */
+	{
+		$c = $parser->cursor;
+		$flavor = $c->tokens->source->flavor;
 		$c->take(token_kind::lbrace, '{');
 		$fields = [];
 		$private_section = false;
 		$protected_section = false;
 		while (!$c->is(token_kind::rbrace)) {
+			if ($c->keyword('use')) {
+				if ($trait || $kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Direct trait use requires a class or struct');
+				$c->take_keyword('use');
+				$use = $parser->named_type();
+				if ($use->first_child !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a trait name');
+				$c->take(token_kind::semicolon, '; after trait use');
+				if (isset($uses[$use->name])) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate trait use: ' . $use->name);
+				$uses[$use->name] = $use;
+				continue;
+			}
 			$field_start = $c->position();
 			$modifiers = [];
 			self::modifiers($c, $modifiers, true);
@@ -89,6 +121,7 @@ final class Record_Syntax
 			}
 			self::modifiers($c, $modifiers, false);
 			$static = $c->keyword('static');
+			if ($trait && ($static || $c->keyword('const'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Trait static members and constants are deferred');
 			if ($kind === record_kind::interface_type && ($static || $private || $protected || $c->keyword('const'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces admit only public instance method contracts');
 			$visibility = $private ? member_visibility::private : ($protected ? member_visibility::protected : member_visibility::public);
 			if ($static && $flavor === flavor::cpp && $c->next_is(token_kind::identifier)
@@ -112,6 +145,7 @@ final class Record_Syntax
 				flavor::cpp => $c->tokens->text_at($c->position()) === $name && $c->next_is(token_kind::lparen),
 				flavor::js => $c->tokens->text_at($c->position()) === 'constructor' && $c->next_is(token_kind::lparen),
 			};
+			if ($trait && $constructor) throw new diagnostic($c->tokens->source, $c->offset(), 'Trait lifecycle methods are deferred');
 			if ($constructor && $kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface constructors are forbidden');
 			if ($constructor) {
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Constructor cannot be static');
@@ -138,6 +172,7 @@ final class Record_Syntax
 			if ($method !== null) {
 				if ($readonly) throw new diagnostic($c->tokens->source, $c->offset(), 'Readonly applies to instance fields');
 				if ($flavor === flavor::cpp) self::modifiers($c, $modifiers, false);
+				if ($trait && ($modifiers !== [] || $method->short_name === '__destruct')) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected ordinary instance trait method');
 				$method->is_abstract = isset($modifiers['abstract']);
 				$method->is_virtual = isset($modifiers['virtual']);
 				$method->is_override = isset($modifiers['override']);
@@ -155,7 +190,7 @@ final class Record_Syntax
 				if ($method->is_abstract) {
 					$method->complete_abstract($c->take(token_kind::semicolon, '; after abstract method') + 1);
 					$members[] = $method;
-				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
+				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $derived);
 				continue;
 			}
 			if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface fields are forbidden');
@@ -189,8 +224,9 @@ final class Record_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final);
+		return $fields;
 	}
+
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
 	{

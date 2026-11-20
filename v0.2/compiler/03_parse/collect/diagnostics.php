@@ -137,8 +137,8 @@ final class Declaration_Diagnostics
 		ast_local_declaration|ast_parameter_declaration|ast_function_declaration|ast_global_declaration|ast_constant_declaration|ast_type_declaration $first, string $kind): diagnostic
 	{
 		$source = $first->source();
-		$location = $source->location($first->root()->byte_at($first->name_position()));
-		return new diagnostic($node->source(), $node->root()->byte_at($node->name_position()),
+		$location = $source->location($first->lexical_root()->byte_at($first->name_position()));
+		return new diagnostic($node->source(), $node->lexical_root()->byte_at($node->name_position()),
 			'Duplicate ' . $kind . ': ' . $node->name() . '; first declaration at '
 			. $source->path . ':' . $location['line'] . ':' . $location['column']);
 	}

@@ -151,6 +151,6 @@ final class Method_Preparation
 
 	private static function fail(ast_function_declaration $method, string $message): never
 	{
-		throw new diagnostic($method->source(), $method->root()->byte_at($method->modifier_start ?? $method->start), $message . ': ' . $method->name());
+		throw new diagnostic($method->source(), $method->lexical_root()->byte_at($method->modifier_start ?? $method->start), $message . ': ' . $method->name());
 	}
 }
