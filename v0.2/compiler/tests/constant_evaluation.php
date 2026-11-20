@@ -34,7 +34,13 @@ final class test_constant_expression extends ast_expression
 
 	public function settle(int|float|bool|null $value /** int64|float64|bool|null */, bool $known): void
 	{
-		$this->settle_value(type_int64::instance(), $value, $known);
+		$type = match (true) {
+			is_float($value) => type_float64::instance(),
+			is_bool($value) => type_bool::instance(),
+			$value === null && $known => type_null::instance(),
+			default => type_int64::instance(),
+		};
+		$this->settle_value($type, $value, $known);
 	}
 }
 
@@ -68,12 +74,13 @@ foreach ([$type, type_int64::instance(), $type, type_int64::instance()] as $targ
 	verify($constant->constant_known() === $known && $constant->constant() === ($known ? 8 : null), 'Named constant evaluation');
 	foreach ([$cast, $local, $write, $read, $constant] as $node) $node->reset_preparation();
 }
-foreach ([null, false, 0] as $value) {
+foreach ([null, false, 0, PHP_INT_MAX, -0.0] as $value) {
 	$source = new test_constant_expression($value, true);
-	verify(type_int64::instance()->evaluate_constant($identity, $source) === $value, 'Known scalar changed');
-	$cast = new ast_cast_expression(0, 1, new ast_type_reference(0, 1, 'int'), $source);
-	$cast->settle_cast(type_int64::instance(), $identity);
-	verify($cast->constant_known() && $cast->constant() === $value, 'Known null/false/zero lost');
+	verify($source->type_def()->evaluate_constant($identity, $source) === $value, 'Known scalar changed');
+	$cast = new ast_cast_expression(0, 1, new ast_type_reference(0, 1, $source->type_def()->name), $source);
+	$cast->settle_cast($source->type_def(), $identity);
+	verify($cast->constant_known() && $cast->constant() === $value, 'Known scalar lost');
+	if (is_float($value)) verify(pack('E', $cast->constant()) === pack('E', $value), 'Signed zero lost');
 }
 $unknown = new test_constant_expression(null, false);
 verify(type_int64::instance()->evaluate_constant($identity, $unknown) === constant_evaluation::unavailable, 'Unknown became known null');
