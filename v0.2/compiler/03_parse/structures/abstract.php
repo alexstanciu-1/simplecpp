@@ -154,8 +154,16 @@ interface ast_declaration_interface {
 	public function clear_duplicate(): void;
 }
 
+/** Lexical name location for diagnostics, including a catch binding used as the first declaration. */
+interface ast_declaration_site
+{
+	public function name(): string;
+	public function name_position(): int /** uint32 */;
+	public function lexical_root(): ast_file_node;
+}
+
 /** Shared mutable body storage contract for local declarations and by-value parameters. */
-interface ast_local_binding extends ast_declaration_interface {
+interface ast_local_binding extends ast_declaration_interface, ast_declaration_site {
 	public function storage_id(): int /** uint32 */;
 	public function type_def(): type_definition;
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */;
@@ -364,7 +372,7 @@ enum update_operator: int
 
 
 /** A published nominal application type; struct layout and enum cases keep their distinct owners. */
-interface ast_type_declaration extends ast_declaration_interface
+interface ast_type_declaration extends ast_declaration_interface, ast_declaration_site
 {
 	public function type_definition(): type_definition;
 }
