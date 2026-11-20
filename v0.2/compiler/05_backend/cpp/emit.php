@@ -64,6 +64,12 @@ final class Cpp_Emitter
 	private function conversion(type_definition $type, int $conversion /** uint16 */, string $value,
 		?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
+		if ($conversion === value_conversion::guarded_intersection) {
+			$from = $syntax->type_def();
+			$base = $from->payload === $type->base->payload ? $value
+				: $this->inline_adapters->call(Cpp_Shared_View::request($from, $type->base, false), [$value]);
+			return $type->cpp_type() . '{' . $base . ', scpp_guard_' . $syntax->guard()->start . '}';
+		}
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
@@ -891,7 +897,18 @@ CPP;
 				foreach ($statement->arms as $index => $arm) {
 					$head = $index === 0 ? 'if' : 'else';
 					if ($arm->condition !== null) {
-						$head = ($index === 0 ? 'if' : 'else if') . ' ('
+						$guard = $arm->condition instanceof ast_not_expression ? $arm->condition->operand : $arm->condition;
+						if ($guard instanceof ast_object_access_expression && $guard->used_as_guard) {
+							$operand = $this->value($guard->operand, $global_references, $declarations, $required_headers);
+							$request = Cpp_Object_Access::request($guard->operand->type_def(), $guard->target_type(), true, $guard->dynamic_check(), true);
+							$slot = 'scpp_guard_' . $guard->start;
+							$init = 'auto* ' . $slot . ' = ' . $this->inline_adapters->call($request, [$operand]);
+							$test = $slot . ($guard === $arm->condition ? ' != nullptr' : ' == nullptr');
+							if ($index === 0) {
+								$lines[] = "\t" . $init . ';';
+								$head = 'if (' . $test . ')';
+							} else $head = 'else if (' . $init . '; ' . $test . ')';
+						} else $head = ($index === 0 ? 'if' : 'else if') . ' ('
 							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
 					}
 					$lines[] = "\t" . $head . ' {';

@@ -47,7 +47,7 @@ def prove(work, flavor):
         ('api',api,b'20'),('api',api+fn('bad','int',[('item','Readable')],'return measure('+var+');'),'statically satisfy'),
         ('api',api,b'20'),('main',lifetime,b'134F20'),
         ('main',main,b'20'),('specific',specific,b'20'),('main','echo forwardSpecific(new SpecificLeaf());return 8;',b'20'),
-        ('api',api+guarded,'statically satisfy'),('api',api,b'20'),
+        ('api',api+guarded,b'20'),('api',api,b'20'),
         ('host',host.replace(params,by_ref),'required by-value'),('host',host,b'20'),
         ('host',host.replace(params,params+'=null'),'required by-value'),('host',host,b'20'),
     ])

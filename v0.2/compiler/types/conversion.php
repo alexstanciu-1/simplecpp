@@ -56,6 +56,7 @@ final class value_conversion
 
 	public const int intersection_base /** uint16 */ = 25;
 	public const int intersection_capability /** uint16 */ = 26;
+	public const int guarded_intersection /** uint16 */ = 27;
 
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int|exit_conversion $code /** uint16|exit_conversion */): string
@@ -65,6 +66,7 @@ final class value_conversion
 		}
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::guarded_intersection => 'guarded_intersection',
 			self::intersection_base => 'intersection_base',
 			self::intersection_capability => 'intersection_capability',
 			self::empty_owner => 'empty_owner',

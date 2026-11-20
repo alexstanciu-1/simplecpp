@@ -320,14 +320,20 @@ struct or implicitly allocate/box it as an interface value.
 ### Class and interface intersection parameters
 
 An ordinary required by-value parameter may specify one required class and one
-ordinary interface joined by `&`, in either order. The argument’s declared type
-must guarantee both contracts. The parameter denotes one object with shared
+ordinary interface joined by `&`, in either order. The argument must satisfy both contracts by its declared type or by the local guard below. The parameter denotes one object with shared
 lifetime. Binding evaluates the argument once. A parameter may forward to either
 constituent or to another intersection guaranteed by its declared components.
 Member access uses the class fields and the methods of both components.
 Distinct unrelated same-name methods require selecting a constituent view.
-This slice supports static admission. A preceding `instanceof` test does not
-change a variable’s declared type.
+A direct `instanceof Interface` test on a named class local or by-value parameter
+also proves the interface for intersection arguments in the successful arm. A single
+negated guard whose failure arm always returns or throws establishes the proof for
+subsequent statements. The declared type still supplies the class component.
+Replacing the local or passing it by writable reference invalidates the proof.
+Updating a field preserves it. A call may receive a guarded value and a writable
+reference to its source because all argument bindings finish before the callee runs.
+Keep a separate call that can rebind the local outside the guarded use's expression
+when the two evaluations can occur in either order.
 
 ## Trait composition
 

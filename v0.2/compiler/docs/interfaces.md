@@ -102,8 +102,7 @@ or a preparation-speed improvement.
 
 A required by-value parameter can name one class and one interface. PHP writes
 `Base&Readable $item`, C++ writes `Base&Readable item`, and JS writes
-`item: Base&Readable`. Either order names the same contract. An argument's declared
-type must guarantee both components. An intersection can forward to another pair
+`item: Base&Readable`. Either order names the same contract. A declared type or a direct interface guard on a local can establish the two components. An intersection can forward to another pair
 when both requirements follow from its declared components.
 
 One concrete native pair retains the class owner and an adjusted interface pointer.
@@ -113,5 +112,15 @@ selecting a constituent explicitly, for example by passing the argument to a hel
 with that constituent as its parameter type. Calls and returns using either constituent
 reuse ordinary shared ownership. Conversions use compile-time pointer adjustments.
 Intersection reference parameters, defaults, producer parameters, written storage
-and return types, and narrowing after an `instanceof` guard are outside this slice.
+and return types are outside this slice.
+
+A successful interface guard can supply a borrowed native view to a by-value
+argument. A negative guard with a single returning or throwing arm supplies the
+same proof on fallthrough. Preparation tracks the tested local by storage ID.
+The argument links to its test through its existing binding slot. A guard with
+no such consumer still emits the ordinary boolean test. Loops, exception joins,
+and yield suspension do not propagate the proof. Writable reference parameters
+cannot establish it because another binding can replace their owner.
+[Guarded arguments and incremental recovery](../tests/guarded_intersections_native.py)
+
 [Native and incremental proof](../tests/intersection_parameters_native.py)
