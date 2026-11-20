@@ -84,10 +84,20 @@ the same fresh frontend generation as a change to an optional type dependency.
 
 Runtime metadata owns the published filesystem signatures. The API generator uses
 the prepared signatures for both the public C++ declarations and the compiler
-bindings. The first published operation, `fs_get(string) -> result<string>`,
-reads exact bytes, including empty files. Invalid paths and operational read
-failures return a structured error. The implementation is compiled privately into
-the filesystem archive.
+bindings. Implementations are compiled privately into the filesystem archive.
+
+| Function | Behavior |
+| --- | --- |
+| `fs_get(string) -> result<string>` | Reads exact bytes, including empty files. |
+| `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
+| `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
+| `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
+| `fs_stage(string) -> result<string>` | Exclusively reserves an empty file in an existing POSIX directory. |
+
+The result-returning operations report structured errors on invalid paths and
+operational failure. Rename and remove return false on those failures. A publisher
+can reserve a stage with `fs_stage` and owns cleanup after reservation. It can
+write to the stage and use rename to promote it after a successful write.
 
 ## Application discovery and inventory
 
@@ -125,7 +135,9 @@ The saved input layout is version 4: module selection metadata, one source recor
 under its owning module, and `other_inputs`. Dependency source inventories are empty;
 artifact paths are recorded as configuration, without filesystem metadata. Older
 saved layouts cause one full rebuild. The previous output manifest is read once and
-shared across baseline extraction, reuse checks and publication.
+shared across baseline extraction, reuse checks and publication. The compiler pins its
+open file until publication. If another writer replaced that manifest during
+compilation, publication rejects the stale snapshot under the exclusive lock.
 
 `source_unit` retains the general `change_status` enum and its mtime/size. Removed
 app sources remain records for the change pass without entering active compilation.

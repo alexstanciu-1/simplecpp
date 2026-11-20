@@ -102,7 +102,7 @@ def prove(work, flavor, libraries):
              ('match(true){true=>1}','default arm'),('match(true){default=>1,default=>2}','Duplicate match default'),
              ('match(true){true=>1,false=>"x",default=>0}','result types'),
              ('match(true){true=>1,missing()=>2,default=>0}','Unknown'),
-             ('match(false){default=>1}','integer or enum')]
+             ('match(false){default=>1}','constant-label dispatch')]
     for i,(expr,error) in enumerate(invalid):
         bad=work/f'{flavor}-bad-{i}';write_app(bad,flavor,{'main':s['infer']('x',expr)+'return 8;'})
         got=fresh(bad,work/f'{flavor}-bad-out-{i}');assert error.lower() in got.get('error','').lower(),got

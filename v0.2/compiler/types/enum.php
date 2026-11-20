@@ -55,6 +55,11 @@ final class enum_type_definition extends type_definition
 		$this->storage = $storage;
 	}
 
+	public function constant_dispatch(): ?constant_dispatch
+	{
+		return $this->storage()->constant_dispatch() === constant_dispatch::integer_switch ? constant_dispatch::enum_switch : null;
+	}
+
 	public function prepared(): bool
 	{
 		return $this->storage !== null;

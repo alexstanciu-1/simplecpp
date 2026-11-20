@@ -15,11 +15,12 @@ namespace scpp\compiler
 		return \scandir($directory);
 	}
 
-	/** Count reads of the bundle manifest across baseline, reuse and publication. */
-	function file_get_contents(string $path): string|false
+	/** Count reads of the bundle manifest across baseline, reuse and publication. @param resource $handle */
+	function stream_get_contents($handle): string|false
 	{
+		$path = stream_get_meta_data($handle)['uri'];
 		$GLOBALS['file_reads'][$path] = ($GLOBALS['file_reads'][$path] ?? 0) + 1;
-		return \file_get_contents($path);
+		return \stream_get_contents($handle);
 	}
 }
 
@@ -61,11 +62,20 @@ namespace
 		$output = new cpp_program_output('app/main.cpp', ['app/main.cpp' => 'entry.cpp'], ['entry.cpp' => '// generated']);
 		Cpp_Bundle::write($root . '/out', $output, [], $state);
 		$manifest = $root . '/out/manifest.json';
-		$previous = Cpp_Bundle::read($root . '/out');
-		verify(Cpp_Bundle::baseline($previous) === $state, 'Baseline changed');
-		verify(Cpp_Bundle::reuse($root . '/out', $state, $previous) !== null, 'Unchanged bundle not reusable');
+		$previous = Cpp_Bundle::with_reader($root . '/out',
+			static fn(bool $present) => Cpp_Bundle::snapshot($root . '/out'));
+		verify(Cpp_Bundle::baseline($previous->manifest) === $state, 'Baseline changed');
+		verify(Cpp_Bundle::reuse($root . '/out', $state, $previous->manifest) !== null, 'Unchanged bundle not reusable');
 		Cpp_Bundle::write($root . '/out', $output, [], $state, $previous);
 		verify($GLOBALS['file_reads'][$manifest] === 1, 'Manifest reread during reuse or publication');
+		try {
+			Cpp_Bundle::write($root . '/out', $output, [], $state, $previous);
+			throw new \LogicException('Stale snapshot accepted after manifest replacement');
+		}
+		catch (\RuntimeException $error) {
+			verify(str_contains($error->getMessage(), 'Program bundle changed'), $error->getMessage());
+		}
+		verify($GLOBALS['file_reads'][$manifest] === 1, 'Stale snapshot check reread the manifest');
 		verify(Project_Changes::capture($session, $root . '/facts.json', $root . '/out') === $state,
 			'Output affected inputs');
 		verify($GLOBALS['directory_reads'][$root] === 2, 'Final capture reused stale scan state');
@@ -75,10 +85,10 @@ namespace
 	}
 	finally
 	{
-		foreach (glob($root . '/out/*') ?: [] as $path) {
-			unlink($path);
-		}
 		if (is_dir($root . '/out')) {
+			foreach (new \FilesystemIterator($root . '/out', \FilesystemIterator::SKIP_DOTS) as $path) {
+				unlink($path->getPathname());
+			}
 			rmdir($root . '/out');
 		}
 		foreach (glob($root . '/*') as $path) {

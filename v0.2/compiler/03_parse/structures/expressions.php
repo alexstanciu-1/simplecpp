@@ -69,19 +69,19 @@ enum binary_operator: int
 	{
 		return match ($this) {
 			self::logical_xor => 0,
-			self::coalesce => 1,
-			self::logical_or => 2,
-			self::logical_and => 3,
-			self::bit_or => 4,
-			self::bit_xor => 5,
-			self::bit_and => 6,
-			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 7,
-			self::less, self::less_equal, self::greater, self::greater_equal => 8,
-			self::concatenate => 9,
-			self::shift_left, self::shift_right => 10,
-			self::add, self::subtract => 11,
-			self::multiply, self::divide, self::remainder => 12,
-			self::power => 13,
+			self::coalesce => 2,
+			self::logical_or => 3,
+			self::logical_and => 4,
+			self::bit_or => 5,
+			self::bit_xor => 6,
+			self::bit_and => 7,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 8,
+			self::less, self::less_equal, self::greater, self::greater_equal => 9,
+			self::concatenate => 10,
+			self::shift_left, self::shift_right => 11,
+			self::add, self::subtract => 12,
+			self::multiply, self::divide, self::remainder => 13,
+			self::power => 14,
 		};
 	}
 }

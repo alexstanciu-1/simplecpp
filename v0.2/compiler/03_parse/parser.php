@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Parser extension point for flavor-specific statements and function headers; all flavors produce the same AST families.
  */
 interface statement_grammar {
-	public function statement(Parser $parser, Body_Collection $collector): ast_statement;
+	public function statement(Parser $parser, Body_Collection $collector, ?token_kind $terminator = token_kind::semicolon): ast_statement;
 	public function function_start(Parser $parser): bool;
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration;
 }
@@ -261,6 +261,7 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
+		if ($this->cursor->is(token_kind::lbrace)) return new ast_block_statement($this->braced_block($grammar, $collector, '{'));
 		if ($this->cursor->keyword('foreach')) return $this->foreach_loop($grammar, $collector);
 		if ($this->cursor->keyword('for')) {
 			return $this->for_loop($grammar, $collector);
@@ -275,6 +276,7 @@ final class Parser
 			$end = $this->cursor->take(token_kind::semicolon, '; (only unlabelled break/continue are supported)') + 1;
 			return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
 		}
+		if ($this->cursor->keyword('switch')) return $this->switch_statement($grammar, $collector);
 		if ($this->cursor->keyword('if')) {
 			return $this->conditional($grammar, $collector);
 		}
@@ -327,7 +329,7 @@ final class Parser
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
 
-	/** Parse only braced alternatives; each body gets its own lexical collector and shared storage IDs. */
+	/** Parse alternatives in source order. Recursion binds each else to the nearest unmatched if. */
 	private function conditional(statement_grammar $grammar, Body_Collection $collector): ast_if_statement
 	{
 		$start = $this->cursor->position();
@@ -342,7 +344,7 @@ final class Parser
 				$condition = $this->value();
 				$this->cursor->take(token_kind::rparen, ')');
 			}
-			$body = $this->braced_block($grammar, $collector, '{ (braced conditional body)');
+			$body = $this->arm_body($grammar, $collector);
 			$arms[] = new ast_if_arm($arm_start, $body->end, $condition, $body);
 			if (!$conditional) {
 				break;
@@ -362,6 +364,48 @@ final class Parser
 			}
 		} while (true);
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
+	}
+
+	private function switch_statement(statement_grammar $grammar, Body_Collection $collector): ast_switch_statement
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		$c->take_keyword('switch');
+		$c->take(token_kind::lparen, '(');
+		$subject = $this->value();
+		$c->take(token_kind::rparen, ')');
+		$c->take(token_kind::lbrace, '{');
+		$arms = [];
+		while (!$c->is(token_kind::rbrace)) {
+			$arm_start = $c->position();
+			$label = null;
+			if ($c->keyword('default')) $c->take_keyword('default');
+			else {
+				$c->take_keyword('case');
+				$label = $this->constant_label();
+			}
+			$c->take(token_kind::colon, ':');
+			$child = $collector->child();
+			$this->lexical = $child;
+			$body_start = $c->position();
+			$statements = [];
+			while (!$c->keyword('case') && !$c->keyword('default') && !$c->is(token_kind::rbrace)) {
+				$statement = $this->statement($grammar, $child);
+				$child->statement($statement, count($statements));
+				$statements[] = $statement;
+			}
+			$this->lexical = $collector;
+			$body = $child->block($body_start, $c->position(), $statements);
+			$arms[] = new ast_switch_arm($arm_start, $body->end, $label, $body);
+		}
+		return new ast_switch_statement($start, $c->take(token_kind::rbrace, '}') + 1, $subject, $arms);
+	}
+
+	private function constant_label(): ast_expression
+	{
+		$c = $this->cursor;
+		return ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)
+			? $this->literal_initializer('Expected integer label', true) : $this->value();
 	}
 
 	/** Parse the protected region and the optional clauses in source order. */
@@ -404,6 +448,18 @@ final class Parser
 		$binding = $child->produced_binding($name, $position, true);
 		$handler = $this->braced_block($grammar, $collector, '{ after catch', $child);
 		return new ast_catch_clause($start, $type, $binding, $handler);
+	}
+
+	/** A single-statement arm uses the same lexical scope and block representation as a braced arm. */
+	private function arm_body(statement_grammar $grammar, Body_Collection $collector): ast_block
+	{
+		if ($this->cursor->is(token_kind::lbrace)) return $this->braced_block($grammar, $collector, '{');
+		$start = $this->cursor->position();
+		$this->lexical = $child = $collector->child();
+		$statement = $this->statement($grammar, $child);
+		$child->statement($statement, 0);
+		$this->lexical = $collector;
+		return $child->block($start, $this->cursor->position(), [$statement]);
 	}
 
 	/** Parse a lexical block once, optionally with an existing header binding. */
@@ -453,37 +509,56 @@ final class Parser
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
 	}
 
-	/** Parse one initializer, condition and assignment update in a header-local scope. */
+	/** The header owns its separators; nested calls and constructors consume their own commas. */
 	private function for_loop(statement_grammar $grammar, Body_Collection $collector): ast_for_statement
 	{
-		$start = $this->cursor->position();
-		$this->cursor->take_keyword('for');
-		$this->cursor->take(token_kind::lparen, '(');
-		$header = $collector->child();
-		$this->lexical = $header;
-		$initializer = $this->update_start() ? $this->update_statement(token_kind::semicolon) : $grammar->statement($this, $header);
-		if (!($initializer instanceof ast_local_declaration) && !($initializer instanceof ast_storage_write)) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'For initializer requires a declaration or assignment');
+		$c = $this->cursor;
+		$start = $c->position();
+		$c->take_keyword('for');
+		$c->take(token_kind::lparen, '(');
+		$this->lexical = $header = $collector->child();
+		$initializers = $this->for_actions($grammar, $header, true);
+		$c->take(token_kind::semicolon, '; after for initialization');
+		$conditions = [];
+		if (!$c->is(token_kind::semicolon)) {
+			do {
+				$conditions[] = $this->value();
+				if (!$c->is(token_kind::comma)) break;
+				$c->take(token_kind::comma, ',');
+			} while (true);
 		}
-		$header->statement($initializer, 0);
-		$condition = $this->value();
-		$this->cursor->take(token_kind::semicolon, '; (for condition separator)');
-		if ($this->update_start()) {
-			$update = $this->update_statement(token_kind::rparen, true);
-		} elseif ($this->property_statement_start() || $this->expression_statement_start() || $this->cursor->next_is(token_kind::lbracket)) {
-			$position = $this->cursor->position();
-			$target = $this->primary();
-			$update = $this->property_update($position, $target, $this->take_update_operator(), true, token_kind::rparen);
-		}
-		else {
-			$update_start = $this->cursor->position();
-			$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
-				? token_kind::variable : token_kind::identifier);
-			$update = $this->assignment($update_start, $name, assignment_intent::existing_binding, token_kind::rparen);
-		}
+		$c->take(token_kind::semicolon, '; after for conditions');
+		$updates = $this->for_actions($grammar, $header, false);
+		$c->take(token_kind::rparen, ') after for updates');
 		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
 		$this->lexical = $collector;
-		return new ast_for_statement($start, $initializer, $condition, $update, $body, $header->publish_scope());
+		return new ast_for_statement($start, $initializers, $conditions, $updates, $body, $header->publish_scope());
+	}
+
+	/** Parse declarations only during initialization. A null terminator leaves the delimiter with the header. @return ast_statement[] */
+	private function for_actions(statement_grammar $grammar, Body_Collection $header, bool $initial): array /** list<ast_statement> */
+	{
+		$c = $this->cursor;
+		$items = [];
+		if ($c->is($initial ? token_kind::semicolon : token_kind::rparen)) return $items;
+		do {
+			$start = $c->position();
+			if ($this->update_start()) $item = $this->update_statement(null, true);
+			elseif ($this->property_statement_start() || $this->expression_statement_start() || $c->next_is(token_kind::lbracket)) {
+				$target = $this->primary();
+				$item = $target instanceof ast_call_expression ? new ast_call_statement($start, $c->position(), $target)
+					: $this->property_update($start, $target, $this->take_update_operator(), true, null);
+			} elseif ($initial) $item = $grammar->statement($this, $header, null);
+			else {
+				$name = $c->name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+				$item = $this->assignment($start, $name, assignment_intent::existing_binding, null);
+			}
+			if ($item instanceof ast_local_declaration) $header->declare_local($item);
+			$items[] = $item;
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		} while (true);
+		return $items;
 	}
 
 	/** Parse pre-test/post-test loops with a required braced body and explicit do-while terminator. */
@@ -846,6 +921,16 @@ final class Parser
 				continue;
 			}
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
+			if ($kind === token_kind::question && $minimum_precedence <= ast_ternary_expression::PRECEDENCE) {
+				$this->cursor->take(token_kind::question, '?');
+				if ($this->cursor->is(token_kind::colon)) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Full ternary requires a true branch');
+				}
+				$when_true = $this->value();
+				$this->cursor->take(token_kind::colon, ': after ternary true branch');
+				$left = new ast_ternary_expression($left, $when_true, $this->value(ast_ternary_expression::PRECEDENCE));
+				continue;
+			}
 			$operator = match ($kind) {
 				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
 				token_kind::coalesce => binary_operator::coalesce,
@@ -1154,10 +1239,7 @@ final class Parser
 				$arm_start = $c->position();
 				$label = null;
 				if ($c->keyword('default')) $c->take_keyword('default');
-				elseif (!ast_match_expression::is_condition_subject($subject)
-					&& ($c->is(token_kind::minus) || $c->is(token_kind::plus)) && $c->next_is(token_kind::integer)) {
-					$label = $this->literal_initializer('Match label requires an integer literal', true);
-				} else $label = $this->value();
+				else $label = ast_match_expression::is_condition_subject($subject) ? $this->value() : $this->constant_label();
 				$c->take(token_kind::arrow, '=>');
 				$result = $label === null && $c->keyword('throw') ? $this->throw_expression() : $this->value();
 				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());
@@ -1332,22 +1414,22 @@ final class Parser
 	}
 
 	/** $start: token position. */
-	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference): ast_local_declaration
+	public function declaration(int $start /** uint32 */, string $name, ?ast_type_reference $type_reference, ?token_kind $terminator = token_kind::semicolon): ast_local_declaration
 	{
 		if ($type_reference !== null && $this->cursor->is(token_kind::lparen)) {
 			$at = $this->cursor->position();
 			$arguments = $this->arguments();
 			if ($arguments === []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Use a typed declaration without () for default initialization');
-			$end = $this->cursor->take(token_kind::semicolon, ';');
-			return new ast_local_declaration($start, $end + 1, $name, $type_reference, new ast_struct_default($at, $end, $arguments));
+			$value = new ast_struct_default($at, $this->cursor->position(), $arguments);
+			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, $value);
 		}
-		if ($type_reference !== null && $this->cursor->is(token_kind::semicolon)) {
-			$at = $this->cursor->take(token_kind::semicolon, ';');
-			return new ast_local_declaration($start, $at + 1, $name, $type_reference, new ast_struct_default($at, $at));
+		if ($type_reference !== null && ($this->cursor->is(token_kind::semicolon) || ($terminator === null && $this->cursor->is(token_kind::comma)))) {
+			$at = $this->cursor->position();
+			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, new ast_struct_default($at, $at));
 		}
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
 	}
 
@@ -1383,12 +1465,12 @@ final class Parser
 	}
 
 	private function property_update(int $start /** uint32 */, ast_expression $target, update_operator $operator, bool $postfix,
-		token_kind $terminator = token_kind::semicolon): ast_property_update
+		?token_kind $terminator = token_kind::semicolon): ast_property_update
 	{
 		if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable property');
 		}
-		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_property_update($start, $end, $target, $operator, $postfix);
 	}
 
@@ -1400,7 +1482,7 @@ final class Parser
 	}
 
 	/** Parse local updates in statements or loop headers; allow property targets in statements and the final for clause. */
-	private function update_statement(token_kind $terminator, bool $allow_property = false): ast_update_statement
+	private function update_statement(?token_kind $terminator, bool $allow_property = false): ast_update_statement
 	{
 		$cursor = $this->cursor;
 		$start = $cursor->position();
@@ -1413,14 +1495,14 @@ final class Parser
 					if ($terminator !== token_kind::semicolon) {
 						throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Indexed updates in for headers are deferred');
 					}
-					return new ast_index_update($start, $cursor->take($terminator, $terminator->label()) + 1, $target, $operator, false);
+					return new ast_index_update($start, $this->statement_end($terminator), $target, $operator, false);
 				}
 				return $this->property_update($start, $target, $operator, false, $terminator);
 			}
 		}
 		$name = $cursor->name($cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 		if ($postfix) $operator = $this->take_update_operator();
-		$end = $cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_update_statement($start, $end, $name, $operator, $postfix);
 	}
 
@@ -1436,14 +1518,20 @@ final class Parser
 
 	/** $start: token position. */
 	public function assignment(int $start /** uint32 */, string $name, assignment_intent $intent,
-		token_kind $terminator = token_kind::semicolon): ast_assignment_statement
+		?token_kind $terminator = token_kind::semicolon): ast_assignment_statement
 	{
 		$operator = $this->compound_operator();
 		$kind = $operator === null ? token_kind::assign : $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 		$this->cursor->take($kind, 'assignment operator');
 		$value = $this->assignment_value();
-		$end = $this->cursor->take($terminator, $terminator->label()) + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_assignment_statement($start, $end, $name, $value, $intent, $operator);
+	}
+
+	/** Header item spans exclude the separator; ordinary statement spans include their terminator. */
+	private function statement_end(?token_kind $terminator): int /** uint32 */
+	{
+		return $terminator === null ? $this->cursor->position() : $this->cursor->take($terminator, $terminator->label()) + 1;
 	}
 
 	/** STATIC METHODS */

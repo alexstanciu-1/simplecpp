@@ -1,6 +1,19 @@
 # Conditional / Coalesce Runtime Matrix
 Doc Status: normative
 
+## v0.2 full ternary selection
+
+All three flavors accept `condition ? when_true : when_false`. The condition uses
+the same type-directed truthiness as `if`. It runs once, followed by exactly one
+arm. Failure in the condition skips both arms. Failure in the selected arm propagates.
+Preparation checks both arms, including when the condition is a literal. They must
+have the same canonical value type admitted for a match result. The expression
+produces a value under that type's ordinary copy or shared-ownership semantics.
+
+In the common v0.2 grammar, `??` binds more tightly than ternary and `xor` binds
+less tightly. Nested full ternaries associate to the right. Shorthand `?:` and
+implicit joins between different arm types remain outside this slice.
+
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 
 Statement-form `$n ??= fallback;` accepts an existing declared local whose type

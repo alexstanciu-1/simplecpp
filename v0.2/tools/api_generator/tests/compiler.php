@@ -28,6 +28,20 @@ unset($metadata->compiler->modules->{'runtime-numeric'});
 $metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
+// A type opts into dispatch independently of its ordinary equality and literal operations.
+$dispatch = unserialize($originalExportMetadata);
+unset($dispatch->compiler->value_types->string->constant_dispatch);
+$removed = renderCompiler($dispatch, $facts);
+requireThat(str_contains($files['types/string.php'], 'constant_dispatch::byte_equality')
+    && !str_contains($removed['types/string.php'], 'function constant_dispatch(')
+    && $removed['types/int64.php'] === $files['types/int64.php'], 'Dispatch capability removal leaked across types');
+$dispatch->compiler->value_types->string->constant_dispatch = 'integer_switch';
+try {
+    renderCompiler($dispatch, $facts);
+    throw new \LogicException('Accepted native integer switch for a byte string');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'Invalid constant dispatch strategy'), 'Unexpected dispatch validation error');
+}
 // The target, rather than the PHP host or ordinary LL carrier, selects exact overload literals.
 foreach (['long' => 'L', 'long long' => 'LL'] as $native => $suffix) {
     $target = $facts;

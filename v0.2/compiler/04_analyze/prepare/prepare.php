@@ -50,8 +50,12 @@ final class Preparation
 	private int $name_lookups /** uint32 */ = 0;
 	/** Native non-owning innermost active loop within this callable. */
 	private ?ast_repeating_statement $loop = null;
-	/** Native non-owning nearest enclosing loop outside the current finalizer. */
-	private ?ast_repeating_statement $finalizer_outer_loop = null;
+	/** Current finalizer boundary for lexical transfer checks. */
+	private ?ast_block $finalizer_block = null;
+	/** Nearest active switch; the later opening token selects the innermost break target. */
+	private ?ast_switch_statement $switch = null;
+	/** Joined readonly constructor states on breaks from the active switch, only while proving initialization. */
+	private ?array $switch_break_states = null;
 	/** Inherited by nested statements inside a finalizer. */
 	private bool $in_finalizer = false;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
@@ -168,7 +172,7 @@ final class Preparation
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
 					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
 					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
-					|| $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
+					|| $statement instanceof ast_block_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 					|| $statement instanceof ast_break_statement || $statement instanceof ast_continue_statement)) {
 				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, loops, yields, echo, calls and bare return only');
 			}
@@ -192,13 +196,17 @@ final class Preparation
 				$this->base_initialization($statement->value);
 			}
 			elseif ($statement instanceof ast_loop_transfer) {
-				if ($this->loop === null) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop');
+				$destination = $statement instanceof ast_break_statement ? $this->break_target() : $this->loop;
+				if ($destination === null) {
+					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop or, for break, a switch');
 				}
-				if ($this->loop === $this->finalizer_outer_loop) {
+				if ($this->finalizer_block !== null && $destination->start < $this->finalizer_block->start) {
 					throw new diagnostic($source, $statement->byte_start(), 'Break/continue cannot leave a finally block');
 				}
-				$statement->target = $this->loop;
+				if ($destination === $this->switch && $this->readonly_initialization !== null) {
+					$this->switch_break_states = self::join_initialization($this->switch_break_states, $this->readonly_initialization->states);
+				}
+				$statement->target = $destination;
 				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
@@ -216,6 +224,22 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				$next = $this->try_statement($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_switch_statement) {
+				$next = $this->switch_statement($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_block_statement) {
+				$outer_guards = $this->guards;
+				$this->local_frames[] = [];
+				try {
+					$next = $this->sequence($statement->body->statements, $source, $target, $function);
+				} finally {
+					array_pop($this->local_frames);
+				}
+				// A guard's native pointer is scoped to its declaration. Keep only surviving outer proofs.
+				foreach ($this->guards as $id => $guard) {
+					if (($outer_guards[$id] ?? null) !== $guard) unset($this->guards[$id]);
+				}
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);
@@ -353,7 +377,7 @@ final class Preparation
 		if (array_filter($this->readonly_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during readonly field initialization is deferred');
 		}
-		$outer_loop = $this->finalizer_outer_loop;
+		$outer_finalizer = $this->finalizer_block;
 		$in_finalizer = $this->in_finalizer;
 		try {
 			$handler = $syntax->handler;
@@ -362,26 +386,99 @@ final class Preparation
 				$this->require_exception($caught, $handler->type, true);
 				$handler->binding->settle_type($caught);
 			}
-			$completion = $this->exception_block($syntax->body, $target, $function);
-			if ($handler !== null) $completion |= $this->exception_block($handler->body, $target, $function, $handler->binding);
+			$completion = $this->lexical_block($syntax->body, $target, $function);
+			if ($handler !== null) $completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
-				if (($completion & statement_completion::loop_transfers) !== 0) $syntax->transfer_target = $this->loop;
-				$this->finalizer_outer_loop = $this->loop;
+				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
+				if ($completion & statement_completion::continues) $syntax->continue_target = $this->loop;
+				$this->finalizer_block = $syntax->finalizer;
 				$this->in_finalizer = true;
-				$final = $this->exception_block($syntax->finalizer, $target, $function);
+				$final = $this->lexical_block($syntax->finalizer, $target, $function);
 				$completion = ($final & ~statement_completion::fallthrough)
 					| (($final & statement_completion::fallthrough) !== 0 ? $completion : 0);
 			}
 			return $syntax->completion = $completion;
 		} finally {
-			$this->finalizer_outer_loop = $outer_loop;
+			$this->finalizer_block = $outer_finalizer;
 			$this->in_finalizer = $in_finalizer;
 		}
 	}
 
-	/** A handler or finalizer starts without facts from partial writes in a sibling region. */
-	private function exception_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
+	private function break_target(): ast_repeating_statement|ast_switch_statement|null
+	{
+		if ($this->switch !== null && ($this->loop === null || $this->switch->start > $this->loop->start)) return $this->switch;
+		return $this->loop;
+	}
+
+	private function switch_statement(ast_switch_statement $syntax, source_file $source, ?entry_target $target,
+		ast_function_declaration $function): int
+	{
+		$this->value($syntax->subject);
+		$type = $syntax->subject->type_def();
+		$dispatch = $type->constant_dispatch();
+		if ($dispatch === null) throw new diagnostic($source, $syntax->byte_start(), 'Switch subject requires constant-label dispatch');
+		$outer = $this->switch;
+		$outer_break_states = $this->switch_break_states;
+		$this->switch_break_states = null;
+		$this->switch = $syntax;
+		$entry = $this->readonly_initialization?->states;
+		$seen = [];
+		$default = false;
+		$exits = 0;
+		$last = statement_completion::fallthrough;
+		try {
+			foreach ($syntax->arms as $arm) {
+				$this->forget_values();
+				if ($arm->condition !== null) {
+					$this->value($arm->condition);
+					$this->case_label($arm->condition, $type, $dispatch, $seen, 'Switch');
+				} else {
+					if ($default) throw new diagnostic($source, $arm->byte_start(), 'Duplicate switch default');
+					$default = true;
+				}
+				if ($entry !== null) {
+					$this->readonly_initialization->states = $last & statement_completion::fallthrough
+						? self::join_initialization($entry, $this->readonly_initialization->states) : $entry;
+				}
+				$last = $this->lexical_block($arm->body, $target, $function);
+				$arm->falls_through = (bool)($last & statement_completion::fallthrough);
+				$exits |= $last & ~statement_completion::fallthrough;
+			}
+			if ($entry !== null) {
+				$after = $this->switch_break_states;
+				if (!$default) $after = self::join_initialization($after, $entry);
+				if ($last & statement_completion::fallthrough) $after = self::join_initialization($after, $this->readonly_initialization->states);
+				$this->readonly_initialization->states = $after ?? $entry;
+			}
+		} finally {
+			$this->switch_break_states = $outer_break_states;
+			$this->switch = $outer;
+		}
+		$this->forget_values();
+		$after = !$default || ($last & statement_completion::fallthrough) || ($exits & statement_completion::breaks);
+		return ($exits & ~statement_completion::breaks) | ($after ? statement_completion::fallthrough : 0);
+	}
+
+	private function case_label(ast_expression $label, type_definition $type, constant_dispatch $dispatch, array &$seen, string $construct): void
+	{
+		if ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label type must equal subject type');
+		$key = $dispatch->label_key($label);
+		if ($key === null) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
+		if (isset($seen[$key])) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
+		$seen[$key] = true;
+	}
+
+	/** Keep definite constructor states only where all paths agree. */
+	private static function join_initialization(?array $joined, array $incoming): array
+	{
+		if ($joined === null) return $incoming;
+		foreach ($incoming as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+		return $joined;
+	}
+
+	/** Prepare a separate lexical frame; facts from its writes are forgotten on exit. */
+	private function lexical_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
 		?ast_produced_binding $binding = null): int /** uint8 */
 	{
 		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
@@ -475,14 +572,12 @@ final class Preparation
 			}
 			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
 				$states = $this->readonly_initialization->states;
-				if ($joined === null) $joined = $states;
-				else foreach ($states as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+				$joined = self::join_initialization($joined, $states);
 			}
 		}
 		if ($before !== null) {
 			if (!$has_else) {
-				if ($joined === null) $joined = $before;
-				else foreach ($before as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+				$joined = self::join_initialization($joined, $before);
 			}
 			$this->readonly_initialization->states = $joined ?? $before;
 		}
@@ -507,9 +602,9 @@ final class Preparation
 	}
 
 	/** Shared generated condition admission; preparation evaluates no runtime condition. */
-	private function condition(ast_expression $condition): void
+	private function condition(ast_expression $condition, ?string $initializing = null): void
 	{
-		$this->value($condition);
+		$this->value($condition, $initializing);
 		$condition->type_def()->prepare_condition($condition);
 	}
 
@@ -574,16 +669,7 @@ final class Preparation
 	{
 		$this->local_frames[] = [];
 		try {
-			$this->statement_visits++;
-			if ($statement->initializer instanceof ast_local_declaration) {
-				$this->declaration($statement->initializer);
-				if ($function->return_type_def() instanceof generator_type_definition && $statement->initializer->type_def() instanceof generator_type_definition) {
-					throw new diagnostic($source, $statement->initializer->byte_start(), 'Nested cursor locals are deferred');
-				}
-			}
-			else {
-				$this->write($statement->initializer);
-			}
+			$this->sequence($statement->initializers, $source, $target, $function);
 			return $this->loop($statement, $source, $target, $function);
 		}
 		finally {
@@ -598,7 +684,17 @@ final class Preparation
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
 		if (!$post_test) {
-			$this->condition($statement->condition);
+			if ($statement instanceof ast_for_statement) {
+				$last = array_key_last($statement->conditions);
+				foreach ($statement->conditions as $i => $test) {
+					$this->guard_reads = [];
+					if ($i === $last) $this->condition($test);
+					elseif ($test instanceof ast_call_expression) {
+						$this->expression_visits++;
+						$this->call($test);
+					} else $this->value($test);
+				}
+			} else $this->condition($statement->condition);
 			$this->forget_values();
 		}
 		$this->local_frames[] = [];
@@ -617,12 +713,14 @@ final class Preparation
 			$this->forget_values();
 		}
 		if ($statement instanceof ast_for_statement) {
-			$this->statement_visits++;
-			$this->write($statement->update);
+			$this->sequence($statement->updates, $source, $target, $function);
 			$this->forget_values();
 		}
 		// A post-test loop enters its body once; return and throw are terminal exits.
 		$terminal = statement_completion::returns | statement_completion::throws;
+		if ($statement instanceof ast_for_statement && !$statement->conditions && !($completion & statement_completion::breaks)) {
+			return $completion & $terminal;
+		}
 		return $post_test && ($completion & ~$terminal) === 0 ? $completion
 			: (($completion & $terminal) | statement_completion::fallthrough);
 	}
@@ -859,13 +957,13 @@ final class Preparation
 	}
 
 	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
-	private function match_result(ast_match_arm $arm, ?type_definition &$result, ?string $initializing): void
+	private function selection_result(ast_expression $branch, ?type_definition &$result, ?string $initializing, string $construct): void
 	{
-		$this->value($arm->result, $initializing);
-		if ($arm->result instanceof ast_throw_expression) return;
-		$type = $arm->result->type_def();
-		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match arm requires a supported value result');
-		if ($result !== null && $result !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match result types must be identical');
+		$this->value($branch, $initializing);
+		if ($branch instanceof ast_throw_expression) return;
+		$type = $branch->type_def();
+		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' arm requires a supported value result');
+		if ($result !== null && $result !== $type) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' result types must be identical');
 		$result = $type;
 	}
 
@@ -882,12 +980,21 @@ final class Preparation
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
 		}
+		if ($syntax instanceof ast_ternary_expression) {
+			$this->condition($syntax->condition, $initializing);
+			$result = null;
+			$this->selection_result($syntax->when_true, $result, $initializing, 'Ternary');
+			$this->selection_result($syntax->when_false, $result, $initializing, 'Ternary');
+			$syntax->settle_result($result);
+			return;
+		}
 		if ($syntax instanceof ast_match_expression) {
 			$this->value($syntax->subject, $initializing);
 			$type = $syntax->subject->type_def();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
-			if (!$conditional && !($type instanceof enum_type_definition) && !(defined($type::class . '::MINIMUM') && defined($type::class . '::MAXIMUM'))) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires an integer or enum, or literal true');
+			$dispatch = $type->constant_dispatch();
+			if (!$conditional && $dispatch === null) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match subject requires constant-label dispatch or literal true');
 			}
 			$seen = [];
 			$default = null;
@@ -899,25 +1006,17 @@ final class Preparation
 					continue;
 				}
 				$this->value($arm->label, $initializing);
-				if ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
-				if (!$conditional) {
-					$binding = $arm->label instanceof ast_name_expression ? $arm->label->declaration() : null;
-					if ($type instanceof enum_type_definition && $binding instanceof ast_enum_case) $key = $binding->short_name;
-					elseif (($arm->label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)
-						&& is_int($arm->label->constant())) $key = $arm->label->constant();
-					else throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label requires an integer literal, named constant or enum case');
-					if (isset($seen[$key])) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match label');
-					$seen[$key] = true;
-				}
-				$this->match_result($arm, $result, $initializing);
+				if (!$conditional) $this->case_label($arm->label, $type, $dispatch, $seen, 'Match');
+				elseif ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
+				$this->selection_result($arm->result, $result, $initializing, 'Match');
 			}
 			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
 			// Fallback runs after conditions, even when written first. Preserve reference-call invalidation.
-			$this->match_result($default, $result, $initializing);
+			$this->selection_result($default->result, $result, $initializing, 'Match');
 			if ($result === null) {
 				throw new diagnostic($default->source(), $default->byte_start(), 'Throwing match default requires a value arm');
 			}
-			$syntax->settle_match($result);
+			$syntax->settle_result($result);
 			return;
 		}
 		if ($syntax instanceof ast_object_access_expression) {
@@ -1476,17 +1575,21 @@ final class Preparation
 				return;
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
-			if ($builtin === 'hash_contains' || $builtin === 'hash_find') {
+			if ($builtin === 'hash_contains' || $builtin === 'hash_find' || $builtin === 'hash_get_or_null') {
 				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
 				$receiver = $call->arguments[0];
 				$this->value($receiver, $initializing);
 				$type = $receiver->type_def();
 				$binding = match ($builtin) {
 					'hash_contains' => $type instanceof key_presence_type ? $type->presence_function() : null,
+					'hash_get_or_null' => $type instanceof shared_value_lookup_type ? $type->shared_lookup_function() : null,
 					'hash_find' => $type instanceof key_lookup_type ? $type->lookup_function() : null,
 				};
-				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), $builtin === 'hash_contains'
-					? 'hash_contains requires a key-presence collection' : 'hash_find requires a collection with published optional lookup');
+				if ($binding === null) throw new diagnostic($receiver->source(), $receiver->byte_start(), match ($builtin) {
+					'hash_contains' => 'hash_contains requires a key-presence collection',
+					'hash_find' => 'hash_find requires a collection with published optional lookup',
+					'hash_get_or_null' => 'hash_get_or_null requires a hash with shared class values',
+				});
 				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}

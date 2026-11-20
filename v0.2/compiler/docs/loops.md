@@ -7,11 +7,11 @@ Bare [break/continue](transfers.md) target the nearest loop. Numbered/labelled t
 unbraced loops, constant-condition pruning and precise loop value analysis
 remain deferred. No additional truthiness types or runtime APIs are introduced.
 The [foreach slice](foreach.md) consumes generated collection traversal bindings.
-The [bounded for slice](for.md) adds one initializer, condition and assignment update.
+The [bounded for slice](for.md) supports ordered, optional initialization, test and update lists.
 
 ## Structure and ownership
 
-`ast_loop_statement` is a common syntax owner for a required condition and an `ast_block`.
+`ast_tested_loop` owns the required condition of a while or do-while and inherits its braced body.
 `ast_while_statement` and `ast_do_while_statement` identify test order. No loop-specific
 prepared object, alias graph, transfer target, retained completion flag or dependency
 watcher is introduced. Conditions belong to the loop, bodies own their lexical scopes.

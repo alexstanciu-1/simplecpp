@@ -45,12 +45,15 @@ def check_publication(work):
     registry = compiler / 'types/registry.php'
     assert 'scpp::result_string get(const scpp::string&)' in header.read_text()
     assert relocated in bridge.read_text()
-    assert any('func:fs_get' in line and relocated in line for line in registry.read_text().splitlines())
+    bindings = registry.read_text()
+    for function in profile['filesystem']['functions']:
+        assert any(f'func:{function}' in line and relocated in line for line in bindings.splitlines())
 
     del profile['filesystem']
     assert relocated not in publish()
     assert not header.exists() and not bridge.exists()
-    assert 'func:fs_get' not in registry.read_text()
+    bindings = registry.read_text()
+    assert not any(f'func:{name}' in bindings for name in metadata['filesystem']['functions'])
 
 
 # Toggle only the manifest in one compiler instance, and compare recovered output with a fresh build.
@@ -104,6 +107,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
     contents = bytes(range(256)) * 40
     (work / 'bytes').write_bytes(contents)
     (work / 'empty').touch()
+    blocked = work / 'blocked'
+    blocked.mkdir()
+    (blocked / 'member').touch()
 
     for flavor, declaration, variable, missing_call in [
         ('cpp', '{type} {name} = {value};', '', 'fs_get'),
@@ -112,20 +118,60 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
     ]:
         app = work / flavor
         app.mkdir()
+        def local(name, type_name, value):
+            return declaration.format(name=name, type=type_name, value=value)
+
         statements = [
-            declaration.format(type=type_name, name=name, value=value)
-            for type_name, name, value in [
-                ('result<string>', 'read', 'fs_get("bytes")'),
-                ('string', 'bytes', variable + 'read'),
-                ('result<string>', 'empty', 'fs_get("empty")'),
-                ('result<string>', 'missing', f'{missing_call}("missing")'),
-                ('result<string>', 'invalid', 'fs_get("bytes\\0ignored")'),
+            local(name, type_name, value)
+            for name, type_name, value in [
+                ('read', 'result<string>', 'fs_get("bytes")'),
+                ('bytes', 'string', variable + 'read'),
+                ('empty', 'result<string>', 'fs_get("empty")'),
+                ('missing', 'result<string>', f'{missing_call}("missing")'),
+                ('invalid', 'result<string>', 'fs_get("bytes\\0ignored")'),
             ]
         ]
+        binding = {'cpp': 'Exception failure', 'php': 'Exception $failure', 'js': 'failure: Exception'}[flavor]
+        factory = 'Exception.make' if flavor == 'js' else 'Exception::make'
+        stage = local('written', 'result<int>', f'fs_put("stage", {variable}bytes)')
+        confirmed = local('confirmed', 'int', variable + 'written')
+        before = local('before', 'string', 'fs_get("published")')
+        cleanup = local('cleaned', 'bool', 'false')
+        caught = local('caught', 'bool', 'false')
+        failed = local('failed', 'result<int>', 'fs_put("missing-dir/file", "bytes")')
+        invalid = local('badPath', 'result<int>', 'fs_put("published\\0ignored", "different")')
+        empty_write = local('emptyWrite', 'int', 'fs_put("empty", "")')
         source = ('use function fs_get as read_file;' if flavor == 'php' else '') + '\n'.join(statements)
         source += (
             f'\nif (!isset({variable}empty) || isset({variable}missing) || isset({variable}invalid)) {{return 3;}}'
-            f'\necho {variable}bytes; return 0;'
+            f'''
+            {stage}
+            {confirmed}
+            {failed}
+            {invalid}
+            {empty_write}
+            if ({variable}confirmed !== {len(contents)} || isset({variable}failed) ||
+                isset({variable}badPath) || {variable}emptyWrite !== 0) {{return 4;}}
+            {cleanup}
+            {caught}
+            try {{
+                try {{
+                    if (!fs_rename("stage", "blocked")) {{
+                        throw {factory}("failed promotion");
+                    }}
+                }} finally {{
+                    {variable}cleaned = fs_remove("stage");
+                }}
+            }} catch ({binding}) {{
+                {variable}caught = true;
+            }}
+            {before}
+            if (!{variable}caught || !{variable}cleaned || fs_remove("stage") ||
+                {variable}before !== "last good") {{return 5;}}
+            {variable}written = fs_put("stage", {variable}bytes);
+            if (!isset({variable}written) || !fs_rename("stage", "published")) {{return 6;}}
+            echo {variable}bytes; return 0;
+            '''
         )
         (app / f'main.{flavor}').write_text(source)
         output = work / f'{flavor}-out'
@@ -140,13 +186,22 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
         binary = app / 'program'
         run(cxx, '-std=c++23', '-stdlib=libc++', '-O1', f'--ld-path={linker}',
             '-I', include, *units, filesystem_archive, runtime_archive, '-o', binary)
+        published = work / 'published'
+        published.write_bytes(b'last good')
         assert run(binary, cwd=work) == contents
+        assert published.read_bytes() == contents
+        assert not (work / 'stage').exists()
+        assert (blocked / 'member').is_file()
 
     # Compile with the public header first and inspect the structured error payload directly.
     native = work / 'error.cpp'
     native.write_text('''
 #include "scpp/filesystem.hpp"
-int main() {
+int main(int argc, char** argv) {
+    if (argc == 2) {
+        const auto failed_write = scpp::fs::put(scpp::string{argv[1]}, scpp::string{"short buffered write"});
+        return failed_write.has_error() && !failed_write.has_value() ? 0 : 1;
+    }
     const auto failure = scpp::fs::get(scpp::string{"missing"});
     return failure.has_error() && !failure.has_value() && !failure.error().get_message().empty() ? 0 : 1;
 }
@@ -155,3 +210,5 @@ int main() {
     run(cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}',
         '-I', include, native, filesystem_archive, runtime_archive, '-o', binary)
     run(binary, cwd=work)
+    if Path('/dev/full').is_char_device():
+        run(binary, '/dev/full', cwd=work)

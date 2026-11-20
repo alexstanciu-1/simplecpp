@@ -225,6 +225,11 @@ if(BUILD_TESTING)
   add_test(NAME compiler_frontend COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend.php)
   add_test(NAME compiler_native_build COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_build.py)
   set_tests_properties(compiler_native_build PROPERTIES TIMEOUT 300 ENVIRONMENT "XDEBUG_MODE=off")
+  if(UNIX)
+    add_test(NAME compiler_bundle_publication_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/bundle_publication_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   add_test(NAME compiler_style COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tools/check_style.py)
   add_test(NAME compiler_scopes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scopes.php)
@@ -479,6 +484,12 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    if(UNIX)
+      add_test(NAME compiler_translated_publisher_cleanup COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_publisher_cleanup.py
+        ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+        $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    endif()
   endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
   add_test(NAME compiler_constant_evaluation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/constant_evaluation.php)
@@ -520,6 +531,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_coalesce COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce.php)
   add_test(NAME compiler_coalesce_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce_native.py)
   set_tests_properties(compiler_coalesce_native PROPERTIES TIMEOUT 300)
+  add_test(NAME compiler_shared_lookup_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/shared_lookup_native.py)
+  set_tests_properties(compiler_shared_lookup_native PROPERTIES TIMEOUT 180)
   add_test(NAME compiler_hash_find_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_find_native.py)
   set_tests_properties(compiler_hash_find_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_hash_contains COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_contains.php)
@@ -528,6 +541,9 @@ if(BUILD_TESTING)
   add_test(NAME compiler_match_conditions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/match_conditions.php)
   add_test(NAME compiler_match_conditions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/match_conditions_native.py)
   set_tests_properties(compiler_match_conditions_native PROPERTIES TIMEOUT 300)
+  add_test(NAME compiler_switch_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/switch_native.py)
+  set_tests_properties(compiler_switch_native PROPERTIES TIMEOUT 240)
+  add_test(NAME compiler_ternary_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ternary_native.py)
   add_test(NAME compiler_match_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/match_native.py)
   set_tests_properties(compiler_match_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_parent_methods_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/parent_methods_native.py)

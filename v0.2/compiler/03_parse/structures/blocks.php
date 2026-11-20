@@ -47,8 +47,18 @@ final class ast_block extends ast_statement_block
 {
 }
 
-/** One owned conditional arm; condition is absent only for the final else arm. */
-final class ast_if_arm extends ast_node
+/** A standalone lexical scope in statement position, e.g. { int temporary = compute(); }. */
+final class ast_block_statement extends ast_statement
+{
+	public function __construct(public readonly ast_block $body)
+	{
+		parent::__construct($body->start, $body->end);
+		$body->attach($this);
+	}
+}
+
+/** One lexical clause; its expression is absent for else or default. */
+abstract class ast_branch_arm extends ast_node
 {
 	public readonly ?ast_expression $condition;
 	public readonly ast_block $body;
@@ -65,19 +75,42 @@ final class ast_if_arm extends ast_node
 }
 
 /** Owns a valid ordered sequence of alternatives: if (...) {...} elseif (...) {...} else {...}. */
-final class ast_if_statement extends ast_statement
+abstract class ast_branch_statement extends ast_statement
 {
-	/** @var ast_if_arm[] Native owning syntax; multiple arms are valid. */
-	public readonly array $arms /** list<ast_if_arm> */;
+	/** @var ast_branch_arm[] Native owning syntax; multiple arms are valid. */
+	public readonly array $arms /** list<ast_branch_arm> */;
 
-	/** $start/$end: token positions. @param ast_if_arm[] $arms */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arms /** list<ast_if_arm> */)
+	/** $start/$end: token positions. @param ast_branch_arm[] $arms */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arms /** list<ast_branch_arm> */)
 	{
 		parent::__construct($start, $end);
 		$this->arms = $arms;
 		foreach ($arms as $arm) {
 			$arm->attach($this);
 		}
+	}
+}
+
+final class ast_if_arm extends ast_branch_arm
+{
+}
+
+final class ast_if_statement extends ast_branch_statement
+{
+}
+
+final class ast_switch_arm extends ast_branch_arm
+{
+	/** Prepared flow fact for an explicit native fallthrough annotation. */
+	public bool $falls_through = false;
+}
+
+final class ast_switch_statement extends ast_branch_statement
+{
+	public function __construct(int $start, int $end, public readonly ast_expression $subject, array $arms)
+	{
+		parent::__construct($start, $end, $arms);
+		$subject->attach($this);
 	}
 }
 
@@ -189,8 +222,9 @@ final class ast_try_statement extends ast_statement
 	public ?int $protected_completion /** uint8 */ = null;
 	/** Prepared fact: exits remaining after the finalizer; null until settled. */
 	public ?int $completion /** uint8 */ = null;
-	/** Prepared fact: native non-owning loop target of all transfers leaving the protected operation, if any. */
-	public ?ast_repeating_statement $transfer_target = null;
+	/** Prepared non-owning destinations of transfers escaping the protected operation. */
+	public ast_repeating_statement|ast_switch_statement|null $break_target = null;
+	public ?ast_repeating_statement $continue_target = null;
 
 	/** CONSTRUCTOR */
 	/** Attach disjoint lexical regions; an empty written finalizer is still a block. */

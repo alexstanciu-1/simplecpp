@@ -33,8 +33,8 @@ final class Destination_Plan
 		$append = $statements[array_key_last($statements)] ?? null;
 		if ($append instanceof ast_append_statement) $this->candidate($statements, $append);
 		foreach ($statements as $statement) {
-			if ($statement instanceof ast_loop_statement || $statement instanceof ast_foreach_statement) $this->visit($statement->body);
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_block_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_foreach_statement) $this->visit($statement->body);
+			if ($statement instanceof ast_branch_statement) {
 				foreach ($statement->arms as $arm) $this->visit($arm->body);
 			}
 		}

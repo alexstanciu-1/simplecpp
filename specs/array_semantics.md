@@ -557,6 +557,19 @@ boxed values, nested collections and nullable-valued hashes remain outside this 
 current admission. Application lookup must separately preserve absence versus a present
 empty shared handle; it must not be approximated with an empty handle alone.
 
+### Shared value or null
+
+In cpp/php/js, `hash_get_or_null(collection, key)` accepts a typed application hash
+whose value type is a required shared class handle. The result has the optional
+handle type of the same payload. A hit copies the shared handle and preserves
+allocation identity and lifetime independently of the hash. A miss returns an
+empty handle without insertion. A present empty handle also returns empty.
+Use `hash_contains` when key presence itself matters.
+
+The exact key, single evaluation, receiver lifetime and function resolution rules
+of `hash_contains` apply. The query performs one storage lookup on an allocated
+table. Indexed reads and the presence-preserving `hash_find` contract are unchanged.
+
 ## v0.2 typed collection removal methods
 
 Typed vectors and hashes expose `remove(key)` as a method: PHP/C++ `->remove(key)`

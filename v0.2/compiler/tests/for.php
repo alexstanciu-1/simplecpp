@@ -56,7 +56,7 @@ foreach (flavor::cases() as $flavor)
 	verify($entry->body()->statement_visits === 5 && $entry->body()->expression_visits === 9, 'For clauses must be visited once');
 	$for = $entry->body()->statements[0];
 	verify($for instanceof scpp\compiler\ast_for_statement, 'For AST missing');
-	verify(($for->initializer->parent === $for) && ($for->update->parent === $for), 'Header ownership');
+	verify(($for->initializers[0]->parent === $for) && ($for->updates[0]->parent === $for), 'Header ownership');
 	verify(($for->scope->parent === $entry->body()->scope) && ($for->body->scope->parent === $for->scope), 'Header scope hierarchy');
 	verify(count($for->scope->declarations) === 1 && count($entry->body()->scope->declarations) === 0, 'Header publication leaked');
 	$parameter = match ($flavor) {
@@ -99,11 +99,27 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'true;' . $var('inside') . '=1) {'
 		. $decl('inside', 'int', '0') . '} return 8;'), 'Assignment requires an existing local');
 	rejects(fn() => $prepare($fn('bad', '', 'int', $loop('return 8;')) . 'return 8;'), 'Non-void function requires');
-	foreach (['for (;;) {}', 'for (' . $decl('i', 'int', '0') . ';' . $var('i') . '=1) {}',
-		'for (' . $decl('i', 'int', '0') . 'true;) {}',
-		'for (' . $decl('i', 'int', '0') . 'true;' . $var('i') . '=1,' . $var('i') . '=2) {}'] as $invalid) {
+	foreach (['for (,;true;) {}', 'for (;true,;) {}', 'for (;;,) {}'] as $invalid) {
 		rejects(fn() => $prepare($invalid . 'return 8;'), 'Expected');
 	}
+	// Discard every condition prefix, including a void call; only the final value controls entry.
+	$i = $var('i');
+	$j = $var('j');
+	$many = $fn('mark', '', 'void', 'echo "M";')
+		. $fn('terminal', '', 'int', 'for (;;) {return 7;}')
+		. 'for (;;) {echo terminal();break;}'
+		. 'for (;false;) {echo "bad";}'
+		. 'for (mark(),' . rtrim($decl('i', 'int', '0'), ';') . ',' . rtrim($decl('j', 'int', $i . '+1'), ';') . ';'
+		. 'false,mark(),' . $i . '<3;mark(),' . $i . '++,' . $j . '+=2) {'
+		. 'if (' . $i . '==1) {continue;} echo ' . $j . ';if (' . $i . '==2) {break;}}'
+		. 'for (' . $decl('i','int','0') . ';mark()) {' . $i . '++;if (' . $i . '>1) {break;}}return 8;';
+	$many_entry = $prepare($many);
+	$many_cpp = (new Cpp_Emitter())->emit($many_entry);
+	verify(str_contains($many_cpp, 'for (;;)') && str_contains($many_cpp, '; mark_())'), 'Native omitted clauses and call update');
+	$fixtures[$flavor->name . '_lists'] = ['cpp' => $many_cpp, 'stdout_hex' => bin2hex('7MM1MMMM5M')];
+	Function_Preparation::reset_body($many_entry->body());
+	verify((new Cpp_Emitter())->emit((new Preparation())->prepare($many_entry->file, new entry_target(31))) === $many_cpp, 'Header list reset');
+	rejects(fn() => $prepare('for (' . rtrim($decl('i', 'int', '0'), ';') . ',' . rtrim($decl('i', 'int', '1'), ';') . ';false;) {}return 8;'), 'Duplicate');
 	// The update sees body writes and keeps the checked conversion in the called function.
 	$failure = $fn('checked', $parameter, 'int', $decl('narrow', 'byte', $var('v')) . 'return ' . $var('v') . ';')
 		. $decl('x', 'int', '1') . 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;'
@@ -151,13 +167,21 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'false;' . $var('inside') . '+=1) {'
 		. $decl('inside', 'int', '1') . '} return 8;'), 'existing local');
 	rejects(fn() => $prepare('for (' . $decl('i', 'int', '0') . 'false;' . $var('i') . '+=1) {} echo ' . $var('i') . '; return 8;'), 'Unknown');
+	// Both mutating updates must read their own destination before the call.
+	$v = $var('v');
+	$twice = $fn('change', $ref, 'int', $v . '=100;return 1;')
+		. $decl('i', 'int', '4') . $decl('j', 'int', '10')
+		. 'for (;' . $i . '<5;' . $i . '+=change(' . $i . '),' . $j . '+=change(' . $j . ')) {continue;}'
+		. 'echo ' . $i . ',' . $j . ';return 8;';
+	$fixtures[$flavor->name . '_two_snapshots'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($twice)), 'stdout_hex' => bin2hex('511')];
 	// Test-only exception observers verify no header write-back after failure; prior RHS effects remain.
 	foreach ([true, false] as $in_initializer) {
 		$v = $var('v');
 		$failure = $v . '/=zero(' . $v . ')';
 		$source = $fn('zero', $ref, 'int', $v . '=100; echo "R"; return 0;')
-			. $fn('update', $ref, 'void', 'for (' . ($in_initializer ? $failure : $v . '+=0') . ';true;'
-				. ($in_initializer ? $v . '+=1' : $failure) . ') { continue; } return;') . 'return 8;';
+			. $fn('later', '', 'void', 'echo "BAD";')
+			. $fn('update', $ref, 'void', 'for (' . ($in_initializer ? $failure . ',later()' : $v . '+=0') . ';true;'
+				. ($in_initializer ? $v . '+=1' : $failure . ',later()') . ') { continue; } return;') . 'return 8;';
 		$prepared = $prepare($source);
 		$name = '::App::' . Cpp_Emitter::function_name($prepared->file->declarations['func:update']);
 		$cpp = "#include <stdexcept>\n" . str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($prepared));
@@ -170,7 +194,7 @@ foreach (flavor::cases() as $flavor)
 	try {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
-		file_put_contents($main, 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=step(' . $var('i') . ')) { continue; } return 8;');
+		file_put_contents($main, 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=step(' . $var('i') . '),step(0)) { continue; } return 8;');
 		$lib = $directory . '/lib.' . $flavor->name;
 		$write = static function (string $type, string $value) use ($lib, $fn, $parameter): void {
 			file_put_contents($lib, $fn('step', $parameter, $type, 'return ' . $value . ';'));
@@ -185,6 +209,9 @@ foreach (flavor::cases() as $flavor)
 		$write('string', '"bad"');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported compound');
+		unlink($lib);
+		$session = $compiler->frontend($directory, $session);
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unknown');
 		$write('int64', $var('v') . '+1');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'For update recovery failed');
@@ -195,6 +222,9 @@ foreach (flavor::cases() as $flavor)
 		}
 		$program = (new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target);
 		$native_files = Cpp_Program::emit($program)->files;
+		$retained = Cpp_Program::emit(new scpp\compiler\prepared_program($session->entry_key(), $session->files(),
+			new scpp\compiler\prepared_entry($caller, $target), $session))->files;
+		verify($retained == $native_files, 'Recovered header emission differs from fresh');
 		$fixtures[$flavor->name . '_recovery'] = ['files' => $native_files, 'stdout_hex' => ''];
 		$write('int64', $var('v') . '+100');
 		$session = $compiler->frontend($directory, $session);

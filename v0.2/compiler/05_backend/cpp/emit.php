@@ -774,6 +774,14 @@ CPP;
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_block_statement) {
+				$lines[] = "\t{";
+				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
+					$lines[] = "\t" . $line;
+				}
+				$lines[] = "\t}";
+				continue;
+			}
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 				|| $statement instanceof ast_yield_statement);
 			if ($leaf) $lines[] = '{';
@@ -783,7 +791,7 @@ CPP;
 			elseif ($statement instanceof ast_loop_transfer) {
 				$continuing = $statement instanceof ast_continue_statement;
 				$transfer = $continuing ? 'continue;' : 'break;';
-				if ($this->finally_exit !== null && $this->finally_exit->loop_target === $statement->target) {
+				if ($this->finally_exit !== null && $this->finally_exit->transfer_target($continuing ? statement_completion::continues : statement_completion::breaks) === $statement->target) {
 					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
 				}
 				elseif ($resume !== null) {
@@ -868,31 +876,50 @@ CPP;
 				$lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_loop_statement) {
-				$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 				$post_test = $statement instanceof ast_do_while_statement;
-				$update_snapshot = null;
 				$update_label = null;
+				$header_scope = false;
+				$resume_updates = [];
 				if ($statement instanceof ast_for_statement) {
-					$initializer = $this->binding($statement->initializer, $global_references, $declarations, $required_headers, $init_snapshot);
+					$tests = [];
+					$last = array_key_last($statement->conditions);
+					foreach ($statement->conditions as $i => $test) {
+						$tests[] = $i === $last ? $this->condition($test, $global_references, $declarations, $required_headers)
+							: '(void)(' . $this->value($test, $global_references, $declarations, $required_headers) . ')';
+					}
+					$condition = implode(', ', $tests);
+					$init = [];
+					$separate_init = $resume !== null;
+					foreach ($statement->initializers as $item) {
+						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot);
+						if ($snapshot !== null || ($item instanceof ast_local_declaration && count($statement->initializers) > 1)) $separate_init = true;
+						$init[] = $snapshot === null ? $text : "{ const auto $snapshot; $text; }";
+					}
+					$initializer = $separate_init ? '' : implode(', ', $init);
+					$prelude = $separate_init ? array_map(static fn(string $text): string => $text . ';', $init) : [];
+					$updates = [];
+					foreach ($statement->updates as $index => $item) {
+						$name = $index === 0 ? 'compound_previous' : 'compound_previous_' . $index;
+						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot, $name);
+						if ($resume !== null) $resume_updates[] = $snapshot === null ? "$text;" : "{ const auto $snapshot; $text; }";
+						elseif ($snapshot === null) $updates[] = $text;
+						else {
+							$prelude[] = $item->local_def()->type_def()->cpp_type() . " $name;";
+							$updates[] = "($snapshot, $text)";
+						}
+					}
+					$header_scope = $prelude !== [];
+					if ($header_scope) {
+						$lines[] = "\t{";
+						foreach ($prelude as $text) $lines[] = "\t" . $text;
+					}
 					if ($resume !== null) {
-						$lines[] = $init_snapshot === null ? "{ $initializer; }" : "{ const auto $init_snapshot; $initializer; }";
-						$initializer = '';
-					}
-					elseif ($init_snapshot !== null) {
-						$lines[] = "\t{ const auto " . $init_snapshot . '; ' . $initializer . '; }';
-						$initializer = '';
-					}
-					$update = $this->binding($statement->update, $global_references, $declarations, $required_headers, $update_snapshot);
-					if ($resume === null && $update_snapshot !== null) {
-						$lines[] = "\t{ " . $statement->update->local_def()->type_def()->cpp_type() . ' compound_previous;';
-						$update = '(' . $update_snapshot . ', ' . $update . ')';
-					}
-					if ($resume !== null) {
-						$update_label = 'loop_update_' . ++$resume->loop_id;
-						$lines[] = "\twhile ($condition) {";
-					} else $lines[] = "\tfor (" . $initializer . '; ' . $condition . '; ' . $update . ') {';
-				}
-				else {
+						if ($resume_updates !== []) $update_label = 'loop_update_' . ++$resume->loop_id;
+						$lines[] = "\twhile (" . ($condition === '' ? 'true' : $condition) . ') {';
+					} else $lines[] = "\tfor (" . $initializer . ';' . ($condition === '' ? '' : ' ' . $condition) . ';'
+						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
+				} else {
+					$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => $update_label];
@@ -903,22 +930,25 @@ CPP;
 					array_pop($resume->loops);
 					if ($update_label !== null) {
 						$lines[] = "goto $update_label;\n$update_label:;";
-						$lines[] = $update_snapshot === null ? "{ $update; }" : "{ const auto $update_snapshot; $update; }";
+						foreach ($resume_updates as $text) $lines[] = $text;
 					}
 				}
 				$lines[] = "\t}" . ($post_test ? ' while (' . $condition . ');' : '');
-				if ($resume !== null && $statement instanceof ast_for_statement && $statement->initializer instanceof ast_local_declaration) {
-					$lines[] = $this->generator_destroy($statement->initializer);
+				if ($resume !== null && $statement instanceof ast_for_statement) {
+					foreach (array_reverse($statement->initializers) as $item) {
+						if ($item instanceof ast_local_declaration) $lines[] = $this->generator_destroy($item);
+					}
 				}
-				if ($resume === null && $update_snapshot !== null) {
-					$lines[] = "\t}";
-				}
+				if ($header_scope) $lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
+			}
+			elseif ($statement instanceof ast_switch_statement) {
+				array_push($lines, ...$this->switch_lines($statement, $function, $declarations, $global_references, $required_headers));
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				foreach ($statement->arms as $index => $arm) {
@@ -1059,6 +1089,66 @@ CPP;
 		return $lines;
 	}
 
+	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
+	private function switch_lines(ast_switch_statement $syntax, ast_function_declaration $function,
+		array &$declarations, array &$globals, array &$headers): array
+	{
+		$dispatch = $syntax->subject->type_def()->constant_dispatch();
+		$subject = $this->value($syntax->subject, $globals, $declarations, $headers);
+		if ($syntax->arms === []) return ["\t(void)(" . $subject . ');'];
+		$lines = [];
+		$owns_subject = false;
+		if ($dispatch === constant_dispatch::byte_equality) {
+			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->declaration() instanceof ast_local_binding;
+			$place = $local ? $subject : 'switch_subject';
+			$tests = [];
+			foreach ($syntax->arms as $i => $arm) {
+				if ($arm->condition === null) continue;
+				$bytes = $dispatch->label_key($arm->condition);
+				$tests[] = Cpp_String_Literals::equal_bytes($place, $bytes, $headers) . ' ? ' . $i . ' : ';
+			}
+			if ($tests === []) $lines[] = "\t(void)(" . $subject . ');';
+			elseif (!$local) {
+				$owns_subject = true;
+				$lines[] = "\t{";
+				$lines[] = "\tconst auto switch_subject = " . $subject . ';';
+			}
+			$subject = implode('', $tests) . '-1';
+		}
+		$head = count($lines);
+		$lines[] = "\tswitch (" . $subject . ') {';
+		$has_default = false;
+		foreach ($syntax->arms as $i => $arm) {
+			if ($arm->condition === null) {
+				$has_default = true;
+				$label = 'default';
+			} else {
+				$label = 'case ' . ($dispatch === constant_dispatch::byte_equality ? $i
+					: $this->native_case($arm->condition, $dispatch, $globals, $declarations, $headers));
+			}
+			if ($arm->body->statements === []) {
+				$lines[] = "\t" . $label . ($i === count($syntax->arms) - 1 ? ':;' : ':');
+				continue;
+			}
+			$lines[] = "\t" . $label . ': {';
+			foreach ($this->statements($arm->body, $declarations, $globals, $headers, $function) as $line) $lines[] = "\t" . $line;
+			$lines[] = "\t}";
+			if ($arm->falls_through && $i < count($syntax->arms) - 1) $lines[] = "\t[[fallthrough]];";
+		}
+		// A synthetic miss also keeps native constant and partial enum switches warning-safe.
+		if (!$has_default) $lines[$head] .= ' default: break;';
+		$lines[] = "\t}";
+		if ($owns_subject) $lines[] = "\t}";
+		return $lines;
+	}
+
+	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
+	{
+		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
+		$integer = $label->constant();
+		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
+	}
+
 	/**
 	 * Enclose the entire protected operation. A finalizer thrown from the outer handler replaces its pending exception.
 	 * @param ast_function_declaration[] $declarations
@@ -1081,11 +1171,11 @@ CPP;
 		$outer = $this->finally_exit;
 		$pending = null;
 		$returns = ($syntax->protected_completion & statement_completion::returns) !== 0;
-		if ($returns || $syntax->transfer_target !== null) {
+		if ($returns || ($syntax->protected_completion & statement_completion::loop_transfers)) {
 			$result = $function->return_type_def();
 			$type = !$returns || $result === type_void::instance() ? null
 				: ($function->is_implicit_entry ? 'int' : $this->signature_type($result, false));
-			$pending = new Cpp_Finally_Exit($syntax->start, $type, $syntax->transfer_target);
+			$pending = new Cpp_Finally_Exit($syntax, $type);
 			$lines[] = "\t\t" . $pending->declaration();
 			$lines[] = "\t\t" . $pending->start();
 		}
@@ -1163,7 +1253,7 @@ CPP;
 	 */
 	private function compound(ast_assignment_statement $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
 	{
 		if ($statement instanceof ast_index_compound) return $this->indexed_compound($statement, $global_references, $declarations, $headers);
 		$property = $statement instanceof ast_property_compound;
@@ -1196,15 +1286,15 @@ CPP;
 		}
 		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
 			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
-		$left = $direct_read ? $name : 'compound_previous';
+		$left = $direct_read ? $name : $snapshot_name;
 		$result = $this->compound_result($statement, $type, $left, $right, $headers);
 		if ($direct_read) return $name . ' = ' . $result;
 		if ($steps !== []) {
-			$steps[] = 'const auto compound_previous = ' . $name . ';';
+			$steps[] = 'const auto ' . $snapshot_name . ' = ' . $name . ';';
 			$steps[] = $name . ' = ' . $result . ';';
 			return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
 		}
-		$snapshot = 'compound_previous = ' . $name;
+		$snapshot = $snapshot_name . ' = ' . $name;
 		return $name . ' = ' . $result;
 	}
 
@@ -1315,27 +1405,42 @@ CPP;
 	private function match_selection(ast_match_expression $match, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
-		if (ast_match_expression::is_condition_subject($match->subject)) {
+		$conditional = ast_match_expression::is_condition_subject($match->subject);
+		$dispatch = $match->subject->type_def()->constant_dispatch();
+		if ($conditional || $dispatch === constant_dispatch::byte_equality) {
 			$code = '';
+			$scope = false;
+			if (!$conditional) {
+				$subject = $this->value($match->subject, $globals, $declarations, $headers);
+				if (count($match->arms) === 1) $code = '(void)(' . $subject . '); ';
+				elseif (!($match->subject instanceof ast_name_expression && $match->subject->declaration() instanceof ast_local_binding)) {
+					$scope = true;
+					// A field may borrow a temporary receiver that dies at this semicolon. Own the selected bytes.
+					$code = 'const auto dispatch_subject = ' . $subject . '; ';
+					$subject = 'dispatch_subject';
+				}
+			}
 			$default = null;
 			foreach ($match->arms as $arm) {
 				if ($arm->label === null) {
 					$default = $arm;
 					continue;
 				}
-				$code .= 'if (' . $this->condition($arm->label, $globals, $declarations, $headers) . ') { '
+				if ($conditional) $test = $this->condition($arm->label, $globals, $declarations, $headers);
+				else {
+					$bytes = $dispatch->label_key($arm->label);
+					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
+				}
+				$code .= 'if (' . $test . ') { '
 					. $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' } ';
 			}
-			return $code . $this->selection_exit($default->result, $globals, $declarations, $headers);
+			$code .= $this->selection_exit($default->result, $globals, $declarations, $headers);
+			return $scope ? '{ ' . $code . ' }' : $code;
 		}
 		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
 		foreach ($match->arms as $arm) {
 			if ($arm->label === null) $code .= 'default: ';
-			elseif ($arm->label->type_def() instanceof enum_type_definition) $code .= 'case ' . $this->value($arm->label, $globals, $declarations, $headers) . ': ';
-			else {
-				$integer = $arm->label->constant();
-				$code .= 'case ' . ($integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL') . ': ';
-			}
+			else $code .= 'case ' . $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers) . ': ';
 			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' ';
 		}
 		return $code . '}';
@@ -1369,6 +1474,19 @@ CPP;
 			: 'return ' . $this->value($branch, $globals, $declarations, $headers) . ';';
 	}
 
+	/** Lower one discarded header action with the ordinary call or binding emitter.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function for_action(ast_statement $item, array &$globals, array &$declarations, array &$headers,
+		?string &$snapshot, string $snapshot_name = 'compound_previous'): string
+	{
+		$snapshot = null;
+		return $item instanceof ast_call_statement ? $this->value($item->value, $globals, $declarations, $headers)
+			: $this->binding($item, $globals, $declarations, $headers, $snapshot, $snapshot_name);
+	}
+
 	/**
 	 * Render a binding without its delimiter and report any required prior read to its enclosing statement or loop.
 	 * @param ast_global_declaration[] $global_references
@@ -1377,11 +1495,11 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
-			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot);
+			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot, $snapshot_name);
 		}
 		if ($statement instanceof ast_index_update) {
 			return $this->indexed_update($statement, $global_references, $declarations, $headers);
@@ -1466,6 +1584,15 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
+		if ($value instanceof ast_ternary_expression) {
+			$test = $this->condition($value->condition, $global_references, $declarations, $required_headers);
+			$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
+			$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
+			$selection = '(' . $test . ' ? ' . $yes . ' : ' . $no . ')';
+			// Two native lvalue arms can yield a reference. Publish an owned value at an untyped use site.
+			return !$typed_initializer && !$value_type->cpp_trivial_value()
+				? $this->signature_type($value_type, false) . $selection : $selection;
+		}
 		if ($value instanceof ast_match_expression) {
 			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_selection($value, $global_references, $declarations, $required_headers) . ' }())';
 		}

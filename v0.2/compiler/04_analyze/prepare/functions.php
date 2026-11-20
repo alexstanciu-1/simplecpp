@@ -24,7 +24,13 @@ final class Function_Preparation
 	/** Reset nested source syntax once; the function remains the only dependency/completion owner. */
 	private static function reset_block(ast_statement_block $body): void
 	{
-		foreach ($body->statements as $statement)
+		self::reset_statements($body->statements);
+	}
+
+	/** Reset one ordered list of owned body or header statements. @param ast_statement[] $statements */
+	private static function reset_statements(array $statements /** list<ast_statement> */): void
+	{
+		foreach ($statements as $statement)
 		{
 			if ($statement instanceof ast_loop_transfer) {
 				$statement->target = null;
@@ -47,25 +53,16 @@ final class Function_Preparation
 			}
 			if ($statement instanceof ast_loop_statement) {
 				if ($statement instanceof ast_for_statement) {
-					$statement->initializer->reset_preparation();
-					if (!($statement->initializer instanceof ast_update_statement)) {
-						self::expression($statement->initializer instanceof ast_local_declaration
-							? $statement->initializer->initializer : $statement->initializer->value);
-					}
-					$statement->update->reset_preparation();
-					if ($statement->update instanceof ast_property_update) {
-						self::expression($statement->update->target);
-					} elseif ($statement->update instanceof ast_assignment_statement) {
-						self::expression($statement->update->value);
-					}
-				}
-				self::expression($statement->condition);
+					self::reset_statements($statement->initializers);
+					foreach ($statement->conditions as $test) self::expression($test);
+					self::reset_statements($statement->updates);
+				} else self::expression($statement->condition);
 				self::reset_block($statement->body);
 				continue;
 			}
 			if ($statement instanceof ast_try_statement) {
 				$statement->protected_completion = $statement->completion = null;
-				$statement->transfer_target = null;
+				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
 				if ($statement->handler !== null) {
 					$statement->handler->binding->reset_preparation();
@@ -78,8 +75,14 @@ final class Function_Preparation
 				self::expression($statement->operation);
 				continue;
 			}
-			if ($statement instanceof ast_if_statement) {
+			if ($statement instanceof ast_block_statement) {
+				self::reset_block($statement->body);
+				continue;
+			}
+			if ($statement instanceof ast_branch_statement) {
+				if ($statement instanceof ast_switch_statement) self::expression($statement->subject);
 				foreach ($statement->arms as $arm) {
+					if ($arm instanceof ast_switch_arm) $arm->falls_through = false;
 					if ($arm->condition !== null) {
 						self::expression($arm->condition);
 					}
@@ -132,6 +135,12 @@ final class Function_Preparation
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
 			self::expression($value->body);
+			return;
+		}
+		if ($value instanceof ast_ternary_expression) {
+			self::expression($value->condition);
+			self::expression($value->when_true);
+			self::expression($value->when_false);
 			return;
 		}
 		if ($value instanceof ast_match_expression) {

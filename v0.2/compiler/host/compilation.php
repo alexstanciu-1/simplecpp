@@ -92,13 +92,12 @@ final class Compilation_Inspection
 					'body' => self::body($statement->body)];
 			}
 			elseif ($statement instanceof ast_loop_statement) {
-				$row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
-					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				if ($statement instanceof ast_for_statement) {
-					$row['kind'] = 'for';
-					$row['initializer'] = self::binding($statement->initializer);
-					$row['update'] = self::binding($statement->update);
-				}
+					$row = ['kind' => 'for', 'initializers' => array_map(self::binding(...), $statement->initializers),
+						'conditions' => array_map(self::value(...), $statement->conditions),
+						'updates' => array_map(self::binding(...), $statement->updates), 'body' => self::body($statement->body)];
+				} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
+					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_throw_statement) {
@@ -114,8 +113,11 @@ final class Compilation_Inspection
 				if ($statement->finalizer !== null) $row['finally'] = self::body($statement->finalizer);
 				$statements[] = $row;
 			}
-			elseif ($statement instanceof ast_if_statement) {
-				$statements[] = ['kind' => 'if', 'arms' => array_map(static fn(ast_if_arm $arm): array => [
+			elseif ($statement instanceof ast_block_statement) {
+				$statements[] = ['kind' => 'block', 'body' => self::body($statement->body)];
+			}
+			elseif ($statement instanceof ast_branch_statement) {
+				$statements[] = ($statement instanceof ast_switch_statement ? ['kind' => 'switch', 'subject' => self::value($statement->subject)] : ['kind' => 'if']) + [ 'arms' => array_map(static fn(ast_branch_arm $arm): array => [
 					'condition' => $arm->condition === null ? null : self::value($arm->condition),
 					'body' => self::body($arm->body)], $statement->arms)];
 			}
@@ -164,8 +166,9 @@ final class Compilation_Inspection
 	}
 
 	/** @return mixed[] Declaration/write facts shared by body inspection and for headers. */
-	private static function binding(ast_local_declaration|ast_storage_write $statement): array /** array<string,mixed> */
+	private static function binding(ast_local_declaration|ast_storage_write|ast_call_statement $statement): array /** array<string,mixed> */
 	{
+		if ($statement instanceof ast_call_statement) return ['kind' => 'call', 'value' => self::value($statement->value)];
 		if ($statement instanceof ast_local_declaration) {
 			return ['kind' => 'local', 'id' => $statement->id,
 				'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
@@ -229,6 +232,9 @@ final class Compilation_Inspection
 		if ($value instanceof ast_unary_expression) {
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
+		}
+		if ($value instanceof ast_ternary_expression) {
+			$row += ['condition' => self::value($value->condition), 'when_true' => self::value($value->when_true), 'when_false' => self::value($value->when_false)];
 		}
 		if ($value instanceof ast_match_expression) {
 			$row['subject'] = self::value($value->subject);

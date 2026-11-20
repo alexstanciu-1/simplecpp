@@ -66,18 +66,18 @@ final class Cpp_Grammar implements statement_grammar
 	}
 
 	/** A leading type or auto declares a local; a simple-name write requires an existing binding. */
-	public function statement(Parser $parser, Body_Collection $collector): ast_statement
+	public function statement(Parser $parser, Body_Collection $collector, ?token_kind $terminator = token_kind::semicolon): ast_statement
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
 		if ($cursor->keyword('auto')) {
 			$cursor->take_keyword('auto');
-			return $parser->declaration($start, $cursor->name(token_kind::identifier), null);
+			return $parser->declaration($start, $cursor->name(token_kind::identifier), null, $terminator);
 		}
 		$first = $parser->named_type();
 		if ($cursor->is(token_kind::assign) || ($parser->compound_operator() !== null)) {
-			return $parser->assignment($start, $first->name, assignment_intent::existing_binding);
+			return $parser->assignment($start, $first->name, assignment_intent::existing_binding, $terminator);
 		}
-		return $parser->declaration($start, $cursor->name(token_kind::identifier), $first);
+		return $parser->declaration($start, $cursor->name(token_kind::identifier), $first, $terminator);
 	}
 }
