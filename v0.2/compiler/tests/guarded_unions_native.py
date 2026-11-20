@@ -31,6 +31,10 @@ def prove(work, flavor):
     offset_of = fn('offsetOf','int',[('item','FieldExpr')],'return '+offset+';')
     body = 'if ('+cond+') {'+read+'=4;return consume('+item+');}'+offset+'=7;return offsetOf('+item+')+'+offset+';'
     both = inspect(body)
+    yes = read+'=4;return consume('+item+');'
+    no = offset+'=7;return offsetOf('+item+')+'+offset+';'
+    positive = inspect('if ('+cond+') {'+yes+'}else {'+no+'}')
+    negative = inspect('if (!('+cond+')) {'+no+'}else {'+yes+'}')
     exceptional = inspect(body.replace('return consume('+item+');', 'throw new Failure();'))
     caught = ('try {echo inspect(new NameExpr());}'+catch(flavor,'Failure','caught')+
               '{echo "caught";}echo inspect(new FieldExpr());return 8;')
@@ -56,6 +60,14 @@ def prove(work, flavor):
         ('inspect',both,b'414'),('main',caught,b'414'),('inspect',exceptional,b'caught14'),
         ('other',klass('FieldExpr','','Expr'),'Unknown field'),(None,None,'Unknown field'),
         ('other',None,None),('other',field,b'caught14'),('inspect',both,b'414'),('main',main,b'414'),
+        ('inspect',positive,b'414'),('inspect',negative,b'414'),
+        ('inspect',positive.replace(yes,item+'=new FieldExpr();'+yes),'Unknown field'),
+        ('inspect',negative.replace(no,item+'=new NameExpr();'+no),'Unknown field'),
+        ('inspect',positive.replace(yes,item+'=new FieldExpr();return 8;'),b'814'),
+        ('inspect',negative.replace(no,item+'=new NameExpr();return 8;'),b'48'),
+        ('inspect',inspect('if ('+cond+') {'+read+'=4;}else {'+offset+'=7;}return '+offset+';'),'Unknown field'),
+        ('inspect',negative,b'414'),('leaf',klass('Derived','','FieldExpr'),b'1414'),
+        ('other',None,None),('other',field,b'1414'),('leaf',leaf,b'414'),
     ])
     units = work/(flavor+'-out')/'units'
     output = '\n'.join(p.read_text() for p in units.glob('*.cpp'))

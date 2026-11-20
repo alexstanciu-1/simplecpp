@@ -433,6 +433,7 @@ final class Preparation
 		$joined = null;
 		$remaining = $this->guards;
 		$surviving = $remaining;
+		$paired = count($statement->arms) === 2 && $statement->arms[1]->condition === null;
 		foreach ($statement->arms as $arm) {
 			if ($before !== null) $this->readonly_initialization->states = $before;
 			$this->forget_values();
@@ -443,8 +444,13 @@ final class Preparation
 				$this->condition($arm->condition);
 				$remaining = $this->guards;
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
-				$guard = $this->branch_guard($arm->condition, $function);
-				if ($guard !== null && $guard === $arm->condition) {
+				$guard = $this->branch_guard($arm->condition, $function, $paired);
+				if ($guard !== null && $paired && ($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
+					$id = $guard->operand->local_def()->storage_id();
+					$other = $union->remaining_arm($guard->target_type()->payload);
+					$this->guards[$id] = $guard === $arm->condition ? $guard : $other;
+					$remaining[$id] = $guard === $arm->condition ? $other : $guard;
+				} elseif ($guard !== null && $guard === $arm->condition) {
 					$this->guards[$guard->operand->local_def()->storage_id()] = $guard;
 				}
 			}
@@ -485,15 +491,15 @@ final class Preparation
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
-	/** Recognize a direct interface or positive union-arm test on storage whose owner cannot be rebound through an alias. */
-	private function branch_guard(ast_expression $condition, ast_function_declaration $function): ?ast_object_access_expression
+	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
+	private function branch_guard(ast_expression $condition, ast_function_declaration $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
 			|| $function->return_type_def() instanceof generator_type_definition) return null;
 		$local = $test->operand->declaration();
 		if ($local instanceof ast_parameter_declaration && $local->type_def() instanceof class_union_type_definition) {
-			return $condition === $test && $test->operand->type_def() === $local->type_def() ? $test : null;
+			return ($paired || $condition === $test) && $test->operand->type_def() === $local->type_def() ? $test : null;
 		}
 		if ($test->target_type()->payload->declaration->kind !== record_kind::interface_type) return null;
 		if ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::value) return $test;

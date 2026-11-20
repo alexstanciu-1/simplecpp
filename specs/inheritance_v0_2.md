@@ -351,7 +351,9 @@ A direct positive `instanceof` test on a by-value union parameter narrows reads 
 the tested arm within that branch. This admits arm-specific member access and
 passing the same object by value to an arm-typed parameter. A writable reference
 still requires the exact declared storage type. Rebinding the parameter ends the
-proof. After a single positive test with no else, if every path through the
+proof. In a two-branch if/else the opposite branch receives the remaining arm;
+a direct negation exchanges the two proofs. Rebinding invalidates only the path
+where it occurs. After a single positive test with no else, if every path through the
 matching branch returns or throws, the continuing path may use the remaining arm.
 A matching branch that can fall through provides no such guarantee. Testing an arm through a proper base uses the ordinary polymorphic-source
 requirement for checked object access.
