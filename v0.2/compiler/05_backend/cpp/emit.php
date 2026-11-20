@@ -726,9 +726,10 @@ CPP;
 	{
 		$type = $condition->type_def();
 		$direct = false;
-		$operand = $this->value($condition, $global_references, $declarations, $headers, $direct, logical_root: true);
 		$logical_parent = $condition->parent;
 		$negated = $logical_parent instanceof ast_not_expression;
+		$operand = $this->value($condition, $global_references, $declarations, $headers, $direct,
+			logical_root: true, bare_comparison: !$negated);
 		if ($condition instanceof ast_binary_expression && $condition->operator->lazy()
 			&& ($negated || ($logical_parent instanceof ast_binary_expression && $logical_parent->operator->lazy()
 				&& $logical_parent->operator !== $condition->operator))) {
@@ -1627,6 +1628,7 @@ CPP;
 	 * Only the root of an identity initializer may rely on its destination for the native result type.
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
 	 * $logical_root: the caller supplies any required grouping for a logical expression.
+	 * $bare_comparison: the condition accepts an unparenthesized comparison (not the operand of !).
 	 * $reorderable: output proof for this subtree, computed during lowering, never retained in preparation.
 	 * True permits unsequenced evaluation only alongside other proven subtrees; calls always remain false.
 	 * @param ast_function_declaration[] $declarations
@@ -1635,7 +1637,7 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false): string
 	{
 		$reorderable = false;
 		$value_type = $value->type_def();
@@ -1861,7 +1863,7 @@ CPP;
 			if ($reorderable || $type->cpp_value_helper($value->operator) || ($value->left_conversion === value_conversion::identity
 				&& $value->right_conversion === value_conversion::identity
 				&& (($literal_peer && $native) || $type->cpp_direct_binary($value, $operands_safe, $same_spelling)))) {
-				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer);
+				return $type->lower_prepared_binary($value, $left, $right, $typed_initializer, $bare_comparison);
 			}
 			// Snapshot before RHS effects, including writes through reference parameters. Nested lambdas own their names.
 			return '([&]() -> ' . $value->type_def()->cpp_type() . ' { const auto binary_left = ' . $left

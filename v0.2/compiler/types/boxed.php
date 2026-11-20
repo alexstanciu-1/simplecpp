@@ -92,7 +92,8 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		$value->settle_binary($this->boxed_result($value->operator) ?? throw new \LogicException('Missing boxed result'), $this);
 	}
 
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
+		bool $bare_comparison = false): string
 	{
 		return 'scpp::boxed_' . $expr->operator->name . '_' . $expr->left->type_def()->name . '_'
 			. $expr->right->type_def()->name . '(' . $left . ', ' . $right . ', ' . $this->flavor_mask($expr) . ')';

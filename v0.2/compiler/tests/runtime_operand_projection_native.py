@@ -37,6 +37,10 @@ def fixture(flavor, cases):
                      f'if ({v}offset == -1 && {v}i == 0) {{return {receiver};}}'
                      f'return {written}[{v}i + {v}offset];')
     main = ''.join(infer(key, 'new TypeMarker()' if key == 'T' else 'new Node()') for key in 'RABT')
+    main += infer('aliasNode', v+'A')
+    main += f'if ({v}aliasNode !== {v}A) {{return 91;}}'
+    main += f'if (!({v}A === {v}aliasNode)) {{return 92;}}'
+    main += f'if (!({v}A === {v}aliasNode && {v}A !== {v}B)) {{return 93;}}'
     for receiver_key, arguments, name, qualified in cases:
         main += '{' + infer('call', 'new CallSyntax()')
         if receiver_key:
@@ -48,8 +52,7 @@ def fixture(flavor, cases):
         main += f'echo {v}n,":"; for (' + s['infer']('i', '0') + f'{v}i < {v}n; {v}i++) {{'
         main += infer('operand', f'operand_at({v}call,{v}offset,{v}i)')
         for key in 'RABT':
-            main += infer('same' + key, f'{v}operand === {v}{key}')
-            main += f'if ({v}same{key}) {{echo "{key}";}}'
+            main += f'if ({v}operand === {v}{key}) {{echo "{key}";}}'
         main += '} echo ";";}'
     return {'types': types, 'projection': projection, 'main': main + 'return 8;'}
 

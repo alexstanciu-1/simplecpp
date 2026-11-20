@@ -707,11 +707,13 @@ final class shared_record_type_definition extends record_handle_definition
 	}
 
 	/** Preserve effects of a null-valued expression and evaluate operands once in source order. */
-	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false): string
+	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
+		bool $bare_comparison = false): string
 	{
 		if ($expr->left->type_def() instanceof self && $expr->right->type_def() instanceof self) {
 			$op = in_array($expr->operator, [binary_operator::equal, binary_operator::identical], true) ? '==' : '!=';
-			return "(($left).ptr $op ($right).ptr)";
+			$comparison = "($left).ptr $op ($right).ptr";
+			return $bare_comparison ? $comparison : '(' . $comparison . ')';
 		}
 		$owner_first = $expr->left->type_def() === $this;
 		$test = ($expr->operator === binary_operator::equal || $expr->operator === binary_operator::identical ? '!' : '')
