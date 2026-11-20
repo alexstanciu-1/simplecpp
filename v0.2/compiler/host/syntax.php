@@ -237,7 +237,7 @@ final class Syntax_Inspection
 	private static function statement(ast_statement $statement): array /** array<string,mixed> */
 	{
 		if ($statement instanceof ast_loop_transfer) {
-			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)];
+			return ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue', 'span' => self::span($statement)] + ($statement->numbered() ? ['depth' => $statement->depth()] : []);
 		}
 		if ($statement instanceof ast_foreach_statement) {
 			return ['kind' => 'foreach', 'span' => self::span($statement), 'source' => self::expression($statement->source_value),

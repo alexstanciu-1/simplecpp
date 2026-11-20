@@ -50,13 +50,14 @@ def prove(work, flavor, library):
     ctor = {'php':'public function __construct(int $x)', 'cpp':'Box(int x)', 'js':'constructor(x:int)'}[flavor]
     write = f'{v}this{a}x=1;'
     cases = f'switch({v}x){{case 1:{write}break;default:{v}this{a}x=2;}}'
+    outward = f'switch({v}x){{case 1:switch({v}x){{default:{write}break 2;}}default:{v}this{a}x=2;}}'
     def box(body):
         return s['klass']('Box',readonly + ctor + '{' + body + '}')
     initialized = local('box','new Box(1)') + f'echo {v}box{a}x;'
     main = f'text("run");text("a\\0b");text("a\\0c");text("");echo number(-1),number(0);enumerated(Kind{sep}A);enumerated(Kind{sep}B);none();flow();outer();lifetime();failure();{initialized}nested();return 8;'
     expected = b'S23S23S3SE12ASSDIFLIFDLBFLFXTC1NZ'
     app, out = work/flavor, work/(flavor+'-out')
-    write_app(app,flavor,dict(box=box(cases),api=api,node=node,observe=observe,nested=nested,labels=label,kinds=kind,main=main))
+    write_app(app,flavor,dict(box=box(outward),api=api,node=node,observe=observe,nested=nested,labels=label,kinds=kind,main=main))
     session = service(app,out)
     try:
         for rev,(unit,source,error,stdout) in enumerate([
@@ -103,6 +104,7 @@ def prove(work, flavor, library):
         got=fresh(bad,work/f'{flavor}-bad-out-{index}')
         assert message.lower() in got.get('error','').lower(),(index,got)
     for index,(source,diagnostic) in enumerate([
+        (outward.replace(write, ''), 'not initialized'),
         (cases.replace('break;', ''), 'exactly once'),
         (cases.replace('default:', 'case 2:'), 'not initialized'),
     ]):

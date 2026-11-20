@@ -11,6 +11,8 @@ final class Cpp_Finally_Exit
 	private readonly string $result;
 	private readonly ?string $type;
 	private readonly string $outcome;
+	/** Nonlocal destinations crossing this protected callable, collected during private lowering. @var ast_loop_transfer[] */
+	public array $routes = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_try_statement $region, ?string $type)
@@ -27,10 +29,29 @@ final class Cpp_Finally_Exit
 		return $exit === statement_completion::breaks ? $this->region->break_target : $this->region->continue_target;
 	}
 
+	/** An outward transfer leaves this protected callable if its destination encloses the region. */
+	public function crosses(ast_loop_transfer $transfer): bool
+	{
+		return $transfer->target->start < $this->region->start;
+	}
+
+	public function save_route(string $label, ast_loop_transfer $transfer): string
+	{
+		$this->routes[$label] = $transfer;
+		return 'return {.kind = ' . $this->outcome . '::' . $label . '};';
+	}
+
+	public function selected(string $label): string
+	{
+		return 'if (' . $this->result . '.kind == ' . $this->outcome . '::' . $label . ') ';
+	}
+
 	/** Only a saved value activates the named union; all other exits have empty storage. */
 	public function declaration(): string
 	{
-		$tag = 'enum Kind : unsigned char { completed, exit_return, exit_break, exit_continue }; ';
+		$base = $this->routes === [] ? 'unsigned char' : 'unsigned';
+		$names = implode(', ', ['completed', 'exit_return', 'exit_break', 'exit_continue', ...array_keys($this->routes)]);
+		$tag = "enum Kind : $base { $names }; ";
 		$value = $this->type === null ? '' : 'using Value = ' . $this->type . '; '
 			. 'union Storage { unsigned char empty = 0; Value value; ~Storage() {} } slot{}; ';
 		$cleanup = $this->type === null ? '' : ' ~' . $this->outcome . '() { if (kind == exit_return) slot.value.~Value(); }';
