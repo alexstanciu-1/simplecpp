@@ -1,0 +1,168 @@
+enum Global_Flavor: int {
+	case Cpp = 1;
+	case Php = 2;
+	case Js = 3;
+}
+
+enum Global_Token_Kind: int {
+	case Keyword = 1;
+	case Identifier = 2;
+	case Variable = 3;
+	case Assign = 4;
+	case Colon = 5;
+	case Plus = 6;
+	case Minus = 7;
+	case Integer = 8;
+	case Semicolon = 9;
+}
+
+// Token kind and spelling projected from the production lexer for this proof.
+struct Global_Token {
+	public Global_Token_Kind $kind = Global_Token_Kind::Keyword;
+	public string $text;
+
+	public function __construct(Global_Token_Kind $kind, string $text) {
+		$this->kind = $kind;
+		$this->text = $text;
+	}
+}
+
+final class Global_Written_Type {
+	public readonly string $name;
+	public readonly int $start;
+
+	public function __construct(string $name, int $start) {
+		$this->name = $name;
+		$this->start = $start;
+	}
+}
+
+// Only the fields used by the bounded top-level global syntax port.
+final class Parsed_Global {
+	public readonly string $name;
+	public readonly ?Global_Written_Type $written_type;
+	public readonly string $initializer;
+	public readonly int $start;
+	public readonly int $end;
+	public readonly int $initializer_start;
+	public readonly int $initializer_end;
+
+	public function __construct(string $name, ?Global_Written_Type $written_type, string $initializer,
+		int $start, int $end, int $initializer_start, int $initializer_end) {
+		$this->name = $name;
+		$this->written_type = $written_type;
+		$this->initializer = $initializer;
+		$this->start = $start;
+		$this->end = $end;
+		$this->initializer_start = $initializer_start;
+		$this->initializer_end = $initializer_end;
+	}
+}
+
+// Supplies the cursor operations used by Global_Syntax for named integer globals.
+final class Global_Cursor {
+	private readonly vector<Global_Token> $tokens;
+	private int $index = 0;
+
+	public function __construct(vector<Global_Token> $tokens) {
+		$this->tokens = $tokens;
+	}
+
+	public function position(): int {
+		return $this->index;
+	}
+
+	public function is_kind(Global_Token_Kind $kind): bool {
+		return $this->index < count($this->tokens) && $this->tokens[$this->index]->kind === $kind;
+	}
+
+	public function keyword(string $word): bool {
+		return $this->is_kind(Global_Token_Kind::Keyword) && $this->tokens[$this->index]->text === $word;
+	}
+
+	public function consume(Global_Token_Kind $kind): string {
+		if (!$this->is_kind($kind)) {
+			throw Exception::make("Unexpected global declaration token");
+		}
+		$text = $this->tokens[$this->index]->text;
+		$this->index++;
+		return $text;
+	}
+
+	public function take_keyword(string $word): void {
+		if (!$this->keyword($word)) {
+			throw Exception::make("Unexpected global declaration keyword");
+		}
+		$this->consume(Global_Token_Kind::Keyword);
+	}
+
+	public function named_type(): Global_Written_Type {
+		$start = $this->index;
+		$kind = $this->is_kind(Global_Token_Kind::Keyword) ? Global_Token_Kind::Keyword : Global_Token_Kind::Identifier;
+		return new Global_Written_Type($this->consume($kind), $start);
+	}
+
+	public function integer_literal(): string {
+		$sign = "";
+		if ($this->is_kind(Global_Token_Kind::Plus)) {
+			$sign = $this->consume(Global_Token_Kind::Plus);
+		} elseif ($this->is_kind(Global_Token_Kind::Minus)) {
+			$sign = $this->consume(Global_Token_Kind::Minus);
+		}
+		return $sign . $this->consume(Global_Token_Kind::Integer);
+	}
+}
+
+// Port of the non-static branches in Global_Syntax::read.
+function read_global(Global_Cursor $cursor, Global_Flavor $flavor): Parsed_Global {
+	$start = $cursor->position();
+	$cursor->take_keyword("global");
+	$type ?Global_Written_Type = null;
+	$name string = "";
+	switch ($flavor) {
+		case Global_Flavor::Cpp:
+			if ($cursor->keyword("auto")) {
+				$cursor->take_keyword("auto");
+			} else {
+				$type = $cursor->named_type();
+			}
+			$name = $cursor->consume(Global_Token_Kind::Identifier);
+			break;
+		case Global_Flavor::Js:
+			$cursor->take_keyword("let");
+			$name = $cursor->consume(Global_Token_Kind::Identifier);
+			if ($cursor->is_kind(Global_Token_Kind::Colon)) {
+				$cursor->consume(Global_Token_Kind::Colon);
+				$type = $cursor->named_type();
+			}
+			break;
+		case Global_Flavor::Php:
+			$name = substr($cursor->consume(Global_Token_Kind::Variable), 1);
+			if (!$cursor->is_kind(Global_Token_Kind::Assign)) {
+				$type = $cursor->named_type();
+			}
+			break;
+	}
+	$cursor->consume(Global_Token_Kind::Assign);
+	$initializer_start = $cursor->position();
+	$initializer = $cursor->integer_literal();
+	$initializer_end = $cursor->position();
+	$cursor->consume(Global_Token_Kind::Semicolon);
+	return new Parsed_Global($name, $type, $initializer, $start, $cursor->position(), $initializer_start, $initializer_end);
+}
+
+function print_globals(vector<Global_Token> $tokens, Global_Flavor $flavor): void {
+	$cursor = new Global_Cursor($tokens);
+	$size = count($tokens);
+	while ($cursor->position() < $size) {
+		$global = read_global($cursor, $flavor);
+		$type = $global->written_type;
+		echo $global->name, "|", $global->start, "|", $global->end, "|";
+		if ($type === null) {
+			echo "absent";
+		} else {
+			echo $type->name, "@", $type->start;
+		}
+		echo "|", $global->initializer, "|", $global->initializer_start, "|", $global->initializer_end, "\n";
+	}
+}

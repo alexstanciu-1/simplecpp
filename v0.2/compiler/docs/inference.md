@@ -60,6 +60,20 @@ For now `$value = null; $value = 8;` rejects at the initializer. Do not infer fr
 later writes or silently introduce nullable storage. This slice does not change
 existing explicit-global literal inference or implement nullable types.
 
+## Bootstrap parser proof for fixed locals
+
+The [translated global declaration parser](../examples/global_declaration/parser.php.scpp)
+ports the non-static flavor branches of `Global_Syntax::read` with one explicit
+nullable written-type local. It consumes a kind-and-spelling projection of the
+production token stream. The proof uses integer initializers and simple written
+type names. A missing annotation stays absent, and a written name stays attached
+to its token position, even when that name has yet to resolve.
+
+The [native proof](../tests/global_declaration_native.py) compares declaration
+and initializer ranges, type presence and spelling against the production PHP
+frontend for C++, PHP and JS source. It changes the annotation in a retained
+compiler, verifies fresh-equivalent output and checks parser-unit reuse.
+
 ## Verification
 
 `tests/inference.php` checks all flavors, literal/reference types, byte inference,
