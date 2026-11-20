@@ -50,6 +50,8 @@ final readonly class cpp_inline_adapter
 	/** @var type_definition[] Native non-owning concrete types used only by the body; also part of specialization identity. */
 	public array $body_types /** list<type_definition> */;
 	public bool $requires_rtti;
+	/** The result borrows an adjusted pointer from the input owner. */
+	public bool $pointer_result;
 	public string $body;
 	public bool $noexcept;
 	/** @var string[] Explicit runtime provider headers needed by the pattern body. */
@@ -64,11 +66,12 @@ final readonly class cpp_inline_adapter
 	 */
 	public function __construct(string $pattern, array $parameters /** list<cpp_adapter_parameter> */, type_definition $result,
 		string $body, bool $noexcept, int $continuation /** uint16 */ = value_conversion::identity, array $headers /** list<string> */ = [],
-		array $body_types /** list<type_definition> */ = [], bool $requires_rtti = false)
+		array $body_types /** list<type_definition> */ = [], bool $requires_rtti = false, bool $pointer_result = false)
 	{
 		$this->pattern = $pattern;
 		$this->body_types = $body_types;
 		$this->requires_rtti = $requires_rtti;
+		$this->pointer_result = $pointer_result;
 		$this->parameters = $parameters;
 		$this->result = $result;
 		$this->body = $body;
@@ -87,6 +90,7 @@ final readonly class cpp_inline_adapter
 			$parts[] = $parameter->mode->name;
 		}
 		foreach ($this->body_types as $type) $parts[] = 'body:' . $type->cpp_type();
+		if ($this->pointer_result) $parts[] = 'pointer_result';
 		if ($this->requires_rtti) $parts[] = 'requires_rtti';
 		return implode("\0", $parts);
 	}
@@ -162,7 +166,7 @@ final class Cpp_Adapters
 	private function definition(string $key, cpp_inline_adapter $request): string
 	{
 		$parameters = array_map(static fn(cpp_adapter_parameter $parameter): string => $parameter->declaration(), $request->parameters);
-		return 'inline ' . $request->result->cpp_type() . ' scpp_adapter_' . $key . '(' . implode(', ', $parameters) . ')'
+		return 'inline ' . $request->result->cpp_type() . ($request->pointer_result ? '*' : '') . ' scpp_adapter_' . $key . '(' . implode(', ', $parameters) . ')'
 			. ($request->noexcept ? ' noexcept' : '') . " {\n" . $request->body . "}\n";
 	}
 }

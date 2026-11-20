@@ -41,6 +41,10 @@ final class Preparation
 	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
 	private array $latest_writes /** array<uint32,ast_assignment_statement|ast_local_declaration|null> */ = [];
+	/** Transient successful interface tests by local storage ID. @var ast_object_access_expression[] */
+	private array $guards /** array<uint32,ast_object_access_expression> */ = [];
+	/** Guarded argument reads in the current expression, indexed by slot with the first read position. @var int[] */
+	private array $guard_reads /** array<uint32,uint32> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
 	private int $expression_visits /** uint32 */ = 0;
 	private int $name_lookups /** uint32 */ = 0;
@@ -98,6 +102,8 @@ final class Preparation
 				($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
 				$syntax);
 		} finally {
+			$this->guards = [];
+			$this->guard_reads = [];
 			$this->readonly_initialization = null;
 		}
 		Last_Use_Transfer::prepare($syntax);
@@ -115,6 +121,7 @@ final class Preparation
 	{
 		$this->local_frames = [[]];
 		$this->in_lambda = $this->has_lambda_local = false;
+		$this->guards = [];
 		$this->unknown_initializers = false;
 		$this->latest_writes = [];
 		/** @var ast_function_declaration $function */
@@ -150,6 +157,7 @@ final class Preparation
 		foreach ($syntax as $statement)
 		{
 			$this->statement_visits++;
+			$this->guard_reads = [];
 			if (($completion & statement_completion::fallthrough) === 0) {
 				throw new diagnostic($statement->source(), $statement->byte_start(),
 					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
@@ -280,6 +288,7 @@ final class Preparation
 			elseif ($statement instanceof ast_echo_statement)
 			{
 				foreach ($statement->values as $value) {
+					$this->guard_reads = [];
 					$this->value($value);
 					if (!$value->type_def()->supports_output()) {
 						throw new diagnostic($value->source(), $value->byte_start(), 'Echo currently supports only int64 and string values');
@@ -406,6 +415,7 @@ final class Preparation
 	{
 		$this->latest_writes = [];
 		$this->unknown_initializers = true;
+		$this->guards = [];
 	}
 
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
@@ -416,11 +426,23 @@ final class Preparation
 		$has_else = false;
 		$before = $this->readonly_initialization?->states;
 		$joined = null;
+		$remaining = $this->guards;
+		$surviving = $remaining;
+		$after_guard = null;
 		foreach ($statement->arms as $arm) {
 			if ($before !== null) $this->readonly_initialization->states = $before;
 			$this->forget_values();
+			$this->guards = $remaining;
+			$guard = null;
 			if ($arm->condition !== null) {
+				$this->guard_reads = [];
 				$this->condition($arm->condition);
+				$remaining = $this->guards;
+				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
+				$guard = $this->interface_guard($arm->condition, $function);
+				if ($guard !== null && $guard === $arm->condition) {
+					$this->guards[$guard->operand->local_def()->storage_id()] = $guard;
+				}
 			}
 			else {
 				$has_else = true;
@@ -429,6 +451,14 @@ final class Preparation
 			$arm_completion = $this->sequence($arm->body->statements, $source, $target, $function);
 			array_pop($this->local_frames);
 			$completion |= $arm_completion;
+			if (($arm_completion & statement_completion::fallthrough) !== 0) {
+				foreach ($surviving as $id => $previous) {
+					if (($this->guards[$id] ?? null) !== $previous) unset($surviving[$id]);
+				}
+			} elseif ($guard !== null && $arm->condition instanceof ast_not_expression && count($statement->arms) === 1
+				&& ($arm_completion & ~(statement_completion::returns | statement_completion::throws)) === 0) {
+				$after_guard = $guard;
+			}
 			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
 				$states = $this->readonly_initialization->states;
 				if ($joined === null) $joined = $states;
@@ -443,7 +473,21 @@ final class Preparation
 			$this->readonly_initialization->states = $joined ?? $before;
 		}
 		$this->forget_values();
+		$this->guards = $surviving;
+		if ($after_guard !== null) $this->guards[$after_guard->operand->local_def()->storage_id()] = $after_guard;
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
+	}
+
+	/** Recognize a direct interface test on storage whose owner cannot be rebound through an alias. */
+	private function interface_guard(ast_expression $condition, ast_function_declaration $function): ?ast_object_access_expression
+	{
+		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
+		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
+			|| $test->target_type()->payload->declaration->kind !== record_kind::interface_type
+			|| $function->return_type_def() instanceof generator_type_definition) return null;
+		$local = $test->operand->declaration();
+		if ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::value) return $test;
+		return $local instanceof ast_local_declaration ? $test : null;
 	}
 
 	/** Shared generated condition admission; preparation evaluates no runtime condition. */
@@ -763,6 +807,7 @@ final class Preparation
 		else {
 			$statement->prepare_local_compound($local);
 		}
+		unset($this->guards[$local->storage_id()]);
 		$this->latest_writes[$local->storage_id()] = $statement;
 	}
 
@@ -1143,6 +1188,19 @@ final class Preparation
 		$writes[] = $storage->storage_id();
 	}
 
+	/** A callee can replace the slot only after its arguments are evaluated. @param int[] $writes */
+	private function invalidate_references(ast_expression $call, array $writes /** list<uint32> */): void
+	{
+		foreach ($writes as $id) {
+			$read = $this->guard_reads[$id] ?? null;
+			if ($read !== null && ($read < $call->start || $read >= $call->end)) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Separate guarded argument use and mutable reference access into different expressions');
+			}
+			unset($this->guards[$id]);
+			$this->latest_writes[$id] = null;
+		}
+	}
+
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
@@ -1187,9 +1245,7 @@ final class Preparation
 				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
 			}
 		}
-		foreach ($writes as $id) {
-			$this->latest_writes[$id] = null;
-		}
+		if ($writes !== []) $this->invalidate_references($call, $writes);
 		$call->settle_runtime($runtime);
 	}
 
@@ -1259,10 +1315,13 @@ final class Preparation
 		}
 		$frames = $this->local_frames;
 		$writes = $this->latest_writes;
+		$guards = $this->guards;
+		$guard_reads = $this->guard_reads;
 		$unknown = $this->unknown_initializers;
 		$in_lambda = $this->in_lambda;
 		$this->local_frames = [$locals];
 		$this->latest_writes = [];
+		$this->guards = $this->guard_reads = [];
 		$this->unknown_initializers = false;
 		$this->in_lambda = true;
 		try {
@@ -1272,6 +1331,8 @@ final class Preparation
 		} finally {
 			$this->local_frames = $frames;
 			$this->latest_writes = $writes;
+			$this->guards = $guards;
+			$this->guard_reads = $guard_reads;
 			$this->unknown_initializers = $unknown;
 			$this->in_lambda = $in_lambda;
 		}
@@ -1703,13 +1764,26 @@ final class Preparation
 			}
 			else {
 				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
+					&& ($local = $argument->declaration()) instanceof ast_local_binding
+					&& isset($this->guards[$local->storage_id()])) {
+					$id = $local->storage_id();
+					$guard = $this->guards[$id];
+					$from = $local->type_def();
+					if ($from instanceof shared_record_type_definition && $from->payload->derives_from($type->base->payload)
+						&& $guard->target_type()->payload->derives_from($type->capability->payload)
+						&& (!$from->required || !$from->payload->derives_from($type->capability->payload))) {
+						$argument->settle_guard($guard);
+						$this->guard_reads[$id] ??= $argument->start;
+						$conversions[] = value_conversion::guarded_intersection;
+						continue;
+					}
+				}
 				$conversions[] = $type->prepare_conversion($argument, conversion_context::typed_destination);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.
-		foreach ($writes as $id) {
-			$this->latest_writes[$id] = null;
-		}
+		if ($writes !== []) $this->invalidate_references($call, $writes);
 		return $conversions;
 	}
 
