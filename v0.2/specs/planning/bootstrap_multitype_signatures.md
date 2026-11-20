@@ -60,6 +60,12 @@ The [runtime lookup fixture](../../compiler/tests/bootstrap_runtime_lookup_nativ
 
 The native fixture binds `fixed(1)` and its edit `fixed(2)` in the same live session and checks shared identity. An unknown call leaves the entry count at one. A fresh session starts empty and constructs a distinct descriptor. The observable factory trace contains exactly one call per session. Separately, the resident compiler rebuilds the fixture after a factory-body edit, reuses the registry unit, and recovers from factory deletion. Each successful revision is compared with fresh emission and executed. This establishes a port shape using existing language operations. Porting the generated registry, including flavor aliases for canonical keys, remains separate.
 
+### Fixed input records and the temporary path index
+
+The [three-flavor proof](../../compiler/tests/input_records_native.py) covers the two fixed-shape spreads in [input capture and indexing](../../compiler/01_prepare_inputs/changes.php). A value constructor creates the saved flavor, mtime and size record. A second constructor accepts that record and the module identity and projects their fields into a flat row keyed by absolute path. The capture record stays keyed by relative path. The two sets of fields are disjoint, so ordinary constructors express the merge without an overwrite policy.
+
+The proof feeds observed filesystem stamps to the native programs and compares every saved row and index lookup with the PHP scanner on initial capture, edit, deletion and restoration. The fixture writes its typed hash in reverse path order and reads it in sorted path order for publication. The existing PHP bundle writer persists the native source rows in the captured state and its complete manifest must match byte for byte. Filesystem traversal, canonical key sorting and JSON serialization remain host responsibilities in this proof. Sizes cover the nonnegative range supplied by PHP's signed stat integers.
+
 ## Slice 7 nullable census at `89f091a5c`
 
 The refreshed PHP token scan counted 474 written nullable parameter and return positions under the original exclusions. Counts include anonymous functions and generated overrides. The groups below identify the payload to audit. Ownership depends on the use at each boundary, especially when a consumer retains an AST node, type descriptor or service beyond the call.
