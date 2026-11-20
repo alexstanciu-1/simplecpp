@@ -49,9 +49,15 @@ final class Record_Syntax
 			$base = $parser->named_type();
 		}
 		$interfaces = [];
-		if ($kind === record_kind::interface_type && $base !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
-		if ($c->keyword('implements') || ($flavor === flavor::cpp && $c->is(token_kind::comma))) {
-			if ($c->keyword('implements')) $c->take_keyword('implements');
+		if ($kind === record_kind::interface_type && $base !== null) {
+			$interfaces[] = $base;
+			$base = null;
+		}
+		if ($c->keyword('implements') || (($interfaces !== [] || ($flavor === flavor::cpp && $base !== null)) && $c->is(token_kind::comma))) {
+			if ($c->keyword('implements')) {
+				if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces extend other interfaces');
+				$c->take_keyword('implements');
+			}
 			else $c->take(token_kind::comma, ',');
 			do {
 				if ($flavor === flavor::cpp && $c->keyword('public')) $c->take_keyword('public');
@@ -60,7 +66,6 @@ final class Record_Syntax
 				$c->take(token_kind::comma, ',');
 			} while (true);
 		}
-		if ($kind === record_kind::interface_type && $interfaces !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
 		if ($trait && ($abstract || $final || $base !== null || $interfaces !== [])) throw new diagnostic($c->tokens->source, $c->offset(), 'Traits require an ordinary member body');
 		$body_start = $c->position();
 		$uses = [];

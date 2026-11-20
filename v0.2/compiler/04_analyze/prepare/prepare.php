@@ -1062,7 +1062,10 @@ final class Preparation
 				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
 					|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
 				$write = $this->latest_writes[$id] ?? null;
-				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown);
+				$type = $binding->type_def();
+				$view = $type instanceof intersection_type_definition
+					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
 			if ($syntax instanceof ast_interpolation_name) {
@@ -1259,7 +1262,7 @@ final class Preparation
 						throw new diagnostic($call->source(), $call->byte_start(), 'Struct methods use -> in the C++ flavor');
 					}
 					$symbol = $record instanceof record_type_definition
-						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies)
+						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call)
 						: $this->symbols->entry('method:' . $record->name . '::' . $name);
 					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
 					$method = $symbol?->declaration();
@@ -1424,7 +1427,7 @@ final class Preparation
 			}
 		}
 		if ($record instanceof ast_record_declaration) {
-			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
+			$symbol = $record->definition->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call);
 		}
 		else {
 			$symbol = $this->symbols->entry('method:' . Source_Names::resolve($qualified, $this->owner->scope->namespace));
@@ -1473,7 +1476,7 @@ final class Preparation
 				throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor qualification must name a strict base type');
 			}
 		}
-		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies);
+		$symbol = $selected ?? $lookup->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call);
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration) || $method->is_constructor()) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unknown ancestor method: ' . $name);

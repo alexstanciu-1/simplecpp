@@ -54,6 +54,9 @@ final class value_conversion
 	public const int owner_view /** uint16 */ = 23;
 	public const int require_owner_view /** uint16 */ = 24;
 
+	public const int intersection_base /** uint16 */ = 25;
+	public const int intersection_capability /** uint16 */ = 26;
+
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int|exit_conversion $code /** uint16|exit_conversion */): string
 	{
@@ -62,6 +65,8 @@ final class value_conversion
 		}
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::intersection_base => 'intersection_base',
+			self::intersection_capability => 'intersection_capability',
 			self::empty_owner => 'empty_owner',
 			self::require_owner => 'require_owner',
 			self::owner_view => 'owner_view',

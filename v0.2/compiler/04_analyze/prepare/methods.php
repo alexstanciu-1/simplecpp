@@ -11,7 +11,7 @@ final class Method_Preparation
 	{
 		if ($method->method_contract_ready || !($method->parent instanceof ast_record_declaration)) return;
 		$record = $method->parent->definition;
-		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
+		self::ancestor_contracts($record, $symbols, $dependencies);
 		// Inherited contracts still relay ancestry changes. A root static method observes its written signature and component types.
 		if (!$method->is_static || $record->base() !== null) $method->watch_signature($dependencies);
 		$dependencies?->watch($symbols->entry($method->parent->symbol_key()), $method);
@@ -30,7 +30,7 @@ final class Method_Preparation
 			$dependencies?->watch($symbols->entry($requirement->symbol_key()), $method);
 		}
 		if ($requirements !== []) {
-			if (!$method->is_override) self::fail($method, 'Interface implementation requires override');
+			if (!$method->is_override && $record->declaration->kind !== record_kind::interface_type) self::fail($method, 'Interface implementation requires override');
 			foreach ($requirements as $requirement) {
 				if (self::compatible($method, $requirement, $symbols, $dependencies, $method)) $exact_slot = true;
 			}
@@ -56,11 +56,18 @@ final class Method_Preparation
 		$method->method_contract_ready = true;
 	}
 
+	/** Validate parents before consumers so an invalid inherited signature has one diagnostic in every generation. */
+	private static function ancestor_contracts(record_type_definition $record, scope $symbols, ?Dependency_Watches $dependencies): void
+	{
+		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
+		foreach ($record->interfaces() as $interface) self::record_contract($interface, $symbols, $dependencies);
+	}
+
 	/** Scan nearest declarations once per invalidated record; no retained inherited-method inventory. */
 	public static function record_contract(record_type_definition $record, scope $symbols, ?Dependency_Watches $dependencies): void
 	{
 		if ($record->method_contract_ready) return;
-		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
+		self::ancestor_contracts($record, $symbols, $dependencies);
 		foreach ($record->declaration->methods as $method) self::contract($method, $symbols, $dependencies);
 		$slots = [];
 		foreach ($record->declaration->trait_hooks as $name => $hooks) {

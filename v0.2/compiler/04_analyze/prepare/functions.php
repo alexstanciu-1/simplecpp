@@ -237,6 +237,9 @@ final class Function_Preparation
 			if ($type instanceof generator_type_definition && $parameter_type instanceof callback_type_definition) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Callback parameters on yield producers are deferred');
 			}
+			if ($parameter_type instanceof intersection_type_definition && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $type instanceof generator_type_definition)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Intersection requires an ordinary required by-value parameter');
+			}
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}

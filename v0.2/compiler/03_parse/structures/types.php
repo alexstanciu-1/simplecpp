@@ -45,6 +45,27 @@ class ast_type_reference extends ast_node
 
 }
 
+/** The two written contracts of a by-value parameter such as Base&Readable $item. */
+final class ast_intersection_reference extends ast_type_reference
+{
+	public readonly ast_type_reference $left;
+	public readonly ast_type_reference $right;
+
+	public function __construct(ast_type_reference $left, ast_type_reference $right)
+	{
+		parent::__construct($left->start, $right->end, '&');
+		$this->left = $left;
+		$this->right = $right;
+		$left->attach($this);
+		$right->attach($this);
+	}
+
+	public function spelling(): string
+	{
+		return $this->left->spelling() . '&' . $this->right->spelling();
+	}
+}
+
 /** Factory target in new static(...), resolved from the called class during body preparation. */
 final class ast_called_type_reference extends ast_type_reference
 {

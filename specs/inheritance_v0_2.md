@@ -317,6 +317,18 @@ public, virtual and nonthrowing; implementing records use the existing polymorph
 cleanup/copy/move policy. This representation is not permission to slice an inline
 struct or implicitly allocate/box it as an interface value.
 
+### Class and interface intersection parameters
+
+An ordinary required by-value parameter may specify one required class and one
+ordinary interface joined by `&`, in either order. The argument’s declared type
+must guarantee both contracts. The parameter denotes one object with shared
+lifetime. Binding evaluates the argument once. A parameter may forward to either
+constituent or to another intersection guaranteed by its declared components.
+Member access uses the class fields and the methods of both components.
+Distinct unrelated same-name methods require selecting a constituent view.
+This slice supports static admission. A preceding `instanceof` test does not
+change a variable’s declared type.
+
 ## Trait composition
 
 Classes, structs and traits may compose traits using `use T, U;` in their member

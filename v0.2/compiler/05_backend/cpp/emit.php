@@ -126,6 +126,14 @@ final class Cpp_Emitter
 			}
 			foreach ($node->definition->effective_methods() as $method) {
 				if (!$method->has_virtual_dispatch()) continue;
+				if ($node->kind === record_kind::interface_type) {
+					$inherited = self::exact_interface_slot($node, $method);
+					if ($inherited !== null) {
+						// Defaults belong to the source declaration. Reuse the slot without adding a final overrider.
+						$layout[] = "\tusing " . $inherited->parent->definition->cpp_type() . '::' . self::virtual_name($method) . ';';
+						continue;
+					}
+				}
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$result = $this->member_type($type);
@@ -142,7 +150,7 @@ final class Cpp_Emitter
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
 				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
-					&& !self::has_exact_interface_slot($node, $method);
+					&& self::exact_interface_slot($node, $method) === null;
 				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
 					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
 				if ($method->is_final && $method->has_virtual_dispatch()) {
@@ -517,7 +525,7 @@ CPP;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies()] as $type) {
-			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
+			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
 		}
@@ -550,6 +558,7 @@ CPP;
 		ksort($declarations, \SORT_STRING);
 		$records = [];
 		$layouts = '';
+		$intersections = '';
 		$owners = [];
 		foreach ($declarations as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
@@ -557,6 +566,13 @@ CPP;
 		}
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_enum_declaration) continue;
+			if ($function instanceof intersection_type_definition) {
+				$owners[$function->base->payload->name] = $function->base;
+				$owners[$function->capability->payload->name] = $function->capability;
+				$intersections .= 'struct ' . $function->cpp_type() . ' { ' . $function->base->cpp_type() . ' base; '
+					. $function->capability->payload->cpp_type() . "* capability{}; };\n";
+				continue;
+			}
 			if ($function instanceof record_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
@@ -622,9 +638,9 @@ CPP;
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
 		$adapter_files = $this->adapter_files();
 		if ($adapter_files === []) {
-			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes . implode("\n", $definitions));
 		}
-		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes);
 		foreach ($adapter_files as $path => $body) {
 			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
 		}
@@ -1760,7 +1776,13 @@ CPP;
 			$global_references[$name] = $declaration;
 			return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
 		}
-		return $this->name($declaration);
+		$name = $this->name($declaration);
+		$type = $declaration->type_def();
+		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
+			if ($value->type_def() === $type->base) return $name . '.base';
+			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);
+		}
+		return $name;
 	}
 
 	/**
@@ -2029,7 +2051,9 @@ CPP;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
-			if ($type instanceof application_collection_type) {
+			if ($type instanceof intersection_type_definition) {
+				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof application_collection_type) {
 				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
 			} elseif ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
@@ -2083,7 +2107,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $type instanceof callback_type_definition ? null : $this->signature_type($type, $short_types);
-			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
+			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$name = $this->name($parameter);
@@ -2133,12 +2157,12 @@ CPP;
 	}
 
 	/** An inherited ordinary implementation may introduce its own dispatch slot alongside an adapted interface. */
-	private static function has_exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): bool
+	private static function exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): ?ast_function_declaration
 	{
 		foreach ($record->definition->interface_requirements($method->short_name) as $contract) {
-			if (self::virtual_name($contract) === self::virtual_name($method)) return true;
+			if (self::virtual_name($contract) === self::virtual_name($method)) return $contract;
 		}
-		return false;
+		return null;
 	}
 
 	/** Standalone inspection uses the same publication plan, embedding each generated header once. @param string[] $files */
@@ -2207,6 +2231,12 @@ CPP;
 		if ($type instanceof callback_type_definition) {
 			yield from self::signature_type_dependencies($type->result);
 			foreach ($type->inputs as $input) yield from self::signature_type_dependencies($input);
+			return;
+		}
+		if ($type instanceof intersection_type_definition) {
+			yield $type;
+			yield $type->base;
+			yield $type->capability;
 			return;
 		}
 		if ($type instanceof application_collection_type) {
