@@ -14,15 +14,23 @@ do { statements } while (condition);
 
 Bodies require braces. The do-while trailing semicolon is required. Loops may nest
 and may contain supported conditional statements. `do` and `while` are reserved
-keywords in every flavor. Numbered/labelled transfers, foreach, unbraced
-bodies, empty-semicolon bodies and alternative syntax remain deferred in this slice.
+keywords in every flavor. Loop bodies require braces.
 
-Bare `break;` exits the nearest enclosing loop. Bare `continue;` skips the rest of
-that loop's body and reaches its next condition evaluation. In a do-while this is
-the trailing condition, not an unconditional jump to the body. Break skips that
-condition. Both transfers may occur inside nested conditional arms. They require
-an enclosing loop within the same function; even unreachable outside-loop uses
-diagnose. This slice introduces no switch, labelled or numbered transfer semantics.
+### Exit destinations
+
+In all three flavors, `break;` exits the nearest loop or switch, and `continue;`
+advances the nearest loop. Ordinary functions and the implicit entry also accept
+`break N;` and `continue N;`, where N is a positive decimal integer literal.
+Count eligible enclosing statements from the transfer, starting at one. Break counts
+loops and switches. Continue counts only loops. Blocks, conditional arms and try
+regions do not count. A depth beyond the current function's eligible statements is
+a compilation error. Numbered exits in yield producers and named labels are deferred.
+
+Continue runs the target for-loop update, do-while test or next foreach advance.
+Break skips the target's update and test. Both leave intervening scopes and run each
+intervening finally once, from inner to outer. An exception from a finalizer replaces
+a pending transfer. A transfer originating inside a finally must target a statement
+inside that finally. Even unreachable outside-loop/switch uses diagnose.
 
 A while condition executes once before each attempted iteration, including the final
 false test. Its body may execute zero times. A do-while executes its body first and

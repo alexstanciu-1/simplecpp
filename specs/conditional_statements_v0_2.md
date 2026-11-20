@@ -76,8 +76,7 @@ an outer variable in the block invalidates any earlier narrowing of that variabl
 ## Scope boundary
 
 Single-statement bodies apply to conditional arms. The grammar excludes
-unbraced loop bodies, colon/endif alternative syntax, empty semicolon bodies,
-numbered break/continue, or otherwise unsupported statement/declaration forms.
+unbraced loop bodies, colon/endif alternative syntax and empty semicolon bodies.
 A conditional may contain an already-supported braced loop or another supported
 compound statement as its one statement. Runtime and builtin availability are
 independent of conditional syntax admission.

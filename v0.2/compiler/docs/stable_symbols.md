@@ -6,6 +6,12 @@ Functions, constants and explicit globals use the same general watch coordinator
 [Incremental executable emission](incremental_executable.md) consumes its invalidations;
 native concurrent publication remains deferred.
 
+## Immediate and retained lookup
+
+Import validation calls `scope::resolve($key)` for an immediate read. It returns the current declaration or null and leaves an unknown key unregistered. A native port can borrow the declaration for this read while publication is joined. Duplicate declarations still produce an ambiguity error.
+
+A prepared source call retains the stable `symbol_entry` and registers its body as a watcher. `function_def()` reads the current declaration from that entry. Replacing the provider can therefore reuse the caller AST. Deletion clears the head, and re-addition publishes the new declaration in the same entry. [Import validation](../04_analyze/prepare/imports.php) · [Three-flavor lifecycle test](../tests/imports.php)
+
 ## Structure and ownership
 
 ```text

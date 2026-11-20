@@ -50,12 +50,14 @@ final class Preparation
 	private int $name_lookups /** uint32 */ = 0;
 	/** Native non-owning innermost active loop within this callable. */
 	private ?ast_repeating_statement $loop = null;
+	/** Reachable nonlocal exits, keyed by destination token and direction. @var bool[] */
+	private array $outward = [];
 	/** Current finalizer boundary for lexical transfer checks. */
 	private ?ast_block $finalizer_block = null;
 	/** Nearest active switch; the later opening token selects the innermost break target. */
 	private ?ast_switch_statement $switch = null;
-	/** Joined readonly constructor states on breaks from the active switch, only while proving initialization. */
-	private ?array $switch_break_states = null;
+	/** Readonly constructor states joined at each destination switch. @var array<int,int>[] */
+	private array $switch_break_states = [];
 	/** Inherited by nested statements inside a finalizer. */
 	private bool $in_finalizer = false;
 	/** Permission is lexical and restored before each sibling finally region. */
@@ -142,6 +144,7 @@ final class Preparation
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
 		$this->loop = null;
+		$this->outward = $this->switch_break_states = [];
 		$completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
@@ -198,18 +201,7 @@ final class Preparation
 				$this->base_initialization($statement->value);
 			}
 			elseif ($statement instanceof ast_loop_transfer) {
-				$destination = $statement instanceof ast_break_statement ? $this->break_target() : $this->loop;
-				if ($destination === null) {
-					throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop or, for break, a switch');
-				}
-				if ($this->finalizer_block !== null && $destination->start < $this->finalizer_block->start) {
-					throw new diagnostic($source, $statement->byte_start(), 'Break/continue cannot leave a finally block');
-				}
-				if ($destination === $this->switch && $this->constructor_initialization !== null) {
-					$this->switch_break_states = self::join_initialization($this->switch_break_states, $this->constructor_initialization->states);
-				}
-				$statement->target = $destination;
-				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
+				$next = $this->transfer($statement, $source, $generator instanceof generator_type_definition);
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$next = $this->foreach_loop($statement, $source, $target, $function);
@@ -386,6 +378,8 @@ final class Preparation
 		$outer_finalizer = $this->finalizer_block;
 		$in_finalizer = $this->in_finalizer;
 		$outer_catch = $this->in_catch;
+		$prior = $this->outward;
+		if ($syntax->finalizer !== null) $this->outward = [];
 		try {
 			$completion = $this->lexical_block($syntax->body, $target, $function);
 			$seen = [];
@@ -403,15 +397,21 @@ final class Preparation
 			$this->in_catch = $outer_catch;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
+				if ($this->outward !== []) $syntax->protected_completion |= statement_completion::numbered;
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
 				if ($completion & statement_completion::continues) $syntax->continue_target = $this->loop;
 				$this->finalizer_block = $syntax->finalizer;
 				$this->in_finalizer = true;
 				$final = $this->lexical_block($syntax->finalizer, $target, $function);
+				if ($final & statement_completion::fallthrough) {
+					if ($this->outward !== []) $completion |= statement_completion::numbered;
+					$this->outward += $prior;
+				} else $this->outward = $prior;
 				$completion = ($final & ~statement_completion::fallthrough)
 					| (($final & statement_completion::fallthrough) !== 0 ? $completion : 0);
 			}
-			return $syntax->completion = $completion;
+			$syntax->completion = $completion;
+			return $completion & ~statement_completion::numbered;
 		} finally {
 			$this->finalizer_block = $outer_finalizer;
 			$this->in_finalizer = $in_finalizer;
@@ -431,6 +431,54 @@ final class Preparation
 		if ($shadowed) throw new diagnostic($handler->source(), $handler->byte_start(), 'Catch is shadowed by an earlier handler: ' . $caught->name);
 	}
 
+	/** Resolve one destination. Nonlocal completion becomes visible when its target is reached. */
+	private function transfer(ast_loop_transfer $statement, source_file $source, bool $generator): int
+	{
+		$destination = $statement instanceof ast_break_statement ? $this->break_target() : $this->loop;
+		$nonlocal = false;
+		if ($statement->numbered()) {
+			if ($generator) throw new diagnostic($source, $statement->byte_start(), 'Numbered exits in yield producers are deferred');
+			$depth = $statement->depth();
+			$nonlocal = $depth > 1;
+			for ($node = $statement->parent; !($node instanceof ast_function_body); $node = $node->parent) {
+				if ($node instanceof ast_repeating_statement || ($statement instanceof ast_break_statement && $node instanceof ast_switch_statement)) {
+					if (--$depth === 0) {
+						$destination = $node;
+						break;
+					}
+				}
+			}
+			if ($depth !== 0) throw new diagnostic($source, $statement->byte_start(), 'Exit depth exceeds enclosing eligible targets');
+		}
+		if ($destination === null) {
+			throw new diagnostic($statement->source(), $statement->byte_start(), 'Break/continue requires an enclosing loop or, for break, a switch');
+		}
+		if ($this->finalizer_block !== null && $destination->start < $this->finalizer_block->start) {
+			throw new diagnostic($source, $statement->byte_start(), 'Break/continue cannot leave a finally block');
+		}
+		if ($destination instanceof ast_switch_statement && $this->constructor_initialization !== null) {
+			$key = $destination->start;
+			$this->switch_break_states[$key] = self::join_initialization($this->switch_break_states[$key] ?? null, $this->constructor_initialization->states);
+		}
+		$statement->target = $destination;
+		$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
+		if ($nonlocal) {
+			$this->outward[2 * $destination->start + (int)($statement instanceof ast_continue_statement)] = true;
+			return 0;
+		}
+		return $next;
+	}
+
+	/** Consume only the nonlocal transfers arriving at this lexical destination. */
+	private function arriving(ast_statement $target): int
+	{
+		$key = 2 * $target->start;
+		$flags = (isset($this->outward[$key]) ? statement_completion::breaks : 0)
+			| (isset($this->outward[$key + 1]) ? statement_completion::continues : 0);
+		unset($this->outward[$key], $this->outward[$key + 1]);
+		return $flags;
+	}
+
 	private function break_target(): ast_repeating_statement|ast_switch_statement|null
 	{
 		if ($this->switch !== null && ($this->loop === null || $this->switch->start > $this->loop->start)) return $this->switch;
@@ -445,8 +493,6 @@ final class Preparation
 		$dispatch = $type->constant_dispatch();
 		if ($dispatch === null) throw new diagnostic($source, $syntax->byte_start(), 'Switch subject requires constant-label dispatch');
 		$outer = $this->switch;
-		$outer_break_states = $this->switch_break_states;
-		$this->switch_break_states = null;
 		$this->switch = $syntax;
 		$entry = $this->constructor_initialization?->states;
 		$seen = [];
@@ -472,16 +518,17 @@ final class Preparation
 				$exits |= $last & ~statement_completion::fallthrough;
 			}
 			if ($entry !== null) {
-				$after = $this->switch_break_states;
+				$after = $this->switch_break_states[$syntax->start] ?? null;
 				if (!$default) $after = self::join_initialization($after, $entry);
 				if ($last & statement_completion::fallthrough) $after = self::join_initialization($after, $this->constructor_initialization->states);
 				$this->constructor_initialization->states = $after ?? $entry;
 			}
 		} finally {
-			$this->switch_break_states = $outer_break_states;
+			if ($entry !== null) unset($this->switch_break_states[$syntax->start]);
 			$this->switch = $outer;
 		}
 		$this->forget_values();
+		if ($this->outward !== []) $exits |= $this->arriving($syntax);
 		$after = !$default || ($last & statement_completion::fallthrough) || ($exits & statement_completion::breaks);
 		return ($exits & ~statement_completion::breaks) | ($after ? statement_completion::fallthrough : 0);
 	}
@@ -686,6 +733,7 @@ final class Preparation
 			array_pop($this->local_frames);
 		}
 		$this->forget_values();
+		if ($this->outward !== []) $this->arriving($statement);
 		return ($completion & (statement_completion::returns | statement_completion::throws)) | statement_completion::fallthrough;
 	}
 
@@ -742,6 +790,7 @@ final class Preparation
 			$this->sequence($statement->updates, $source, $target, $function);
 			$this->forget_values();
 		}
+		if ($this->outward !== []) $completion |= $this->arriving($statement);
 		// A post-test loop enters its body once; return and throw are terminal exits.
 		$terminal = statement_completion::returns | statement_completion::throws;
 		if ($statement instanceof ast_for_statement && !$statement->conditions && !($completion & statement_completion::breaks)) {

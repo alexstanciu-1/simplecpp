@@ -79,8 +79,15 @@ foreach (flavor::cases() as $flavor)
 	foreach (['break;', 'continue;', 'if (false) { break; }', 'if (true) { continue; }'] as $bad) {
 		rejects(fn() => $prepare($bad . 'return 8;'), 'requires an enclosing loop');
 	}
-	foreach (['break 2;', 'continue 1;', 'break label;', 'continue label;'] as $bad) {
-		rejects(fn() => $prepare('while (true) {' . $bad . '} return 8;'), 'only unlabelled');
+	$prepare('while (true) { continue 1; } return 8;');
+	rejects(fn() => $prepare('while (true) { break 2; } return 8;'), 'exceeds');
+	rejects(fn() => $prepare('while (true) { break 0; } return 8;'), 'positive decimal');
+	rejects(fn() => $prepare('for (;;) { switch (1) { default: continue 2; } }'), 'exceeds');
+	rejects(fn() => $prepare('for (;;) { try {} finally { for (;;) { break 2; } } }'), 'cannot leave a finally');
+	rejects(fn() => $prepare($fn('stream', '', 'Iterator<int>', 'while (true) { yield 1; break 1; }') . 'return 8;'), 'yield producers');
+	rejects(fn() => $prepare('for (;;) { for (;;) { try { break 2; } finally { for (;;) {} } } } return 0;'), 'after unconditional');
+	foreach (['break label;', 'continue label;', 'continue -1;', 'break 1+2;'] as $bad) {
+		rejects(fn() => $prepare('while (true) {' . $bad . '} return 8;'), 'positive decimal exit depth');
 	}
 	foreach (['break;', 'continue;', 'if (true) { break; } else { continue; }'] as $transfer) {
 		rejects(fn() => $prepare('while (true) {' . $transfer . 'echo 1;} return 8;'), 'after unconditional control transfer');

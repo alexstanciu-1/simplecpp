@@ -66,6 +66,10 @@ def prove(work, flavor):
         ('children', child, b'77'),
         ('holders', holder(f'while ({v}flag) {{{assign}}}'), 'Required property must be initialized outside a loop'),
         ('holders', holder(f'if ({v}flag) {{{assign}}}' + assign), b'77'),
+        ('holders', holder('switch (1) {case 1:switch (2) {default:break 2;}default:' + assign + '}'),
+         'Required property is not initialized: child'),
+        ('holders', holder('switch (1) {case 1:switch (2) {default:' + assign + 'break 2;}default:' + assign + '}'),
+         b'77'),
     ], unaffected_source='idle.' + flavor)
     for revision, checked in [(0, False), (15, True), (17, False)]:
         units = (work / f'{flavor}-fresh-{revision}' / 'units').iterdir()

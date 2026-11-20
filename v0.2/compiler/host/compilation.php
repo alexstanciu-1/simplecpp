@@ -88,7 +88,7 @@ final class Compilation_Inspection
 		foreach ($program->statements as $statement)
 		{
 			if ($statement instanceof ast_loop_transfer) {
-				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'];
+				$statements[] = ['kind' => $statement instanceof ast_break_statement ? 'break' : 'continue'] + ($statement->numbered() ? ['depth' => $statement->depth()] : []);
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$statements[] = ['kind' => 'foreach', 'source' => self::value($statement->source_value),

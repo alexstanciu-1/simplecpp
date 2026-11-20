@@ -273,7 +273,14 @@ final class Parser
 			$is_break = $this->cursor->keyword('break');
 			$start = $this->cursor->position();
 			$this->cursor->take_keyword($is_break ? 'break' : 'continue');
-			$end = $this->cursor->take(token_kind::semicolon, '; (only unlabelled break/continue are supported)') + 1;
+			if ($this->cursor->is(token_kind::integer)) {
+				$at = $this->cursor->take(token_kind::integer, 'exit depth');
+				$text = $this->cursor->tokens->text_at($at);
+				if (!ctype_digit($text) || (int)$text === 0) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$at]->offset, 'Exit depth requires a positive decimal integer');
+				}
+			}
+			$end = $this->cursor->take(token_kind::semicolon, '; after optional positive decimal exit depth') + 1;
 			return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
 		}
 		if ($this->cursor->keyword('switch')) return $this->switch_statement($grammar, $collector);
