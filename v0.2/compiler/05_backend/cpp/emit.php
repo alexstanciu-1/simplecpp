@@ -31,6 +31,8 @@ final class Cpp_Emitter
 	private ?string $adapter_flavor = null;
 	/** Initializer expressions cannot use imports declared inside the constructor body. */
 	private bool $qualified_adapters = false;
+	/** Non-owning field whose checked descriptor is live in the current emitted function. */
+	private ?ast_field_expression $byte_view = null;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 	/** Private demand collected during this source unit’s existing lowering walk. */
@@ -696,6 +698,7 @@ CPP;
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
+			$this->byte_view = null;
 			/** @var ast_function_declaration $function */
 			$function = $body->parent;
 		}
@@ -903,6 +906,11 @@ CPP;
 				$lines[] = "\t" . ($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
+				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
+					$this->byte_view = $statement->initializer->arguments[0];
+					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
+					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
+				}
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
@@ -959,6 +967,7 @@ CPP;
 			$lines[] = $this->generator_cleanup($resume, count($resume->scopes) - 1);
 			array_pop($resume->scopes);
 		}
+		if ($body instanceof ast_function_body) $this->byte_view = null;
 		return $lines;
 	}
 
@@ -1249,6 +1258,7 @@ CPP;
 		foreach ($value_type->cpp_headers() as $header) {
 			$required_headers[$header] = true;
 		}
+		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
 		if ($value instanceof ast_match_expression) {
 			return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . $this->match_selection($value, $global_references, $declarations, $required_headers) . ' }())';
 		}
@@ -1317,7 +1327,13 @@ CPP;
 		if ($value instanceof ast_index_expression) {
 			/** @var index_read_type $type */
 			$type = $value->receiver->type_def();
-			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$field = $value->receiver;
+			if ($this->byte_view !== null && $field instanceof ast_field_expression
+				&& $field->field === $this->byte_view->field && $field->receiver instanceof ast_name_expression
+				&& $field->receiver->refers_to($this->byte_view->receiver->declaration())) {
+				return 'scpp_byte_view.read(' . $this->value($value->index, $global_references, $declarations, $required_headers) . ')';
+			}
+			$receiver = $this->value($field, $global_references, $declarations, $required_headers);
 			$index = $this->value($value->index, $global_references, $declarations, $required_headers);
 			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}

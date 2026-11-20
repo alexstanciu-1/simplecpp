@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use scpp\compiler\{Program_Frontend, Preparation, Last_Use_Transfer, Symbol_Publication, entry_target, source_file, flavor};
+use scpp\compiler\{Program_Frontend, Preparation, Scoped_Byte_View, Last_Use_Transfer, Symbol_Publication, entry_target, source_file, flavor};
 
 // Arguments: compiler directory, single-flavor scanner fixture directory, flavor.
 require $argv[1] . '/boot.php';
@@ -34,5 +34,9 @@ if (class_exists(Last_Use_Transfer::class)) {
     $times['candidate_us'] = median_microseconds(fn() => Last_Use_Transfer::prepare($body), 2000);
     $main = $program->files["main.$flavor->name"]->main()->body();
     $times['screen_us'] = median_microseconds(fn() => Last_Use_Transfer::prepare($main), 10000);
+}
+if (class_exists(Scoped_Byte_View::class)) {
+    $times['view_candidate_us'] = median_microseconds(fn() => Scoped_Byte_View::prepare($body), 2000);
+    $times['view_screen_us'] = median_microseconds(fn() => Scoped_Byte_View::prepare($main), 10000);
 }
 echo json_encode($times), "\n";

@@ -527,6 +527,29 @@ source/view integration, direct slot construction, cursor proofs and scanner
 classification changes are separate decisions. The first slice changes only the
 lowering of proven assignments.
 
+### 2.5 Scoped checked byte view — integrated
+
+The result retains its source copy. The Simple C++ scanner fixture takes the length and indexes the same
+private record field in each flavor. Preparation screens top-level local initializers
+for the published byte-length function. For the first eligible candidate it walks
+existing lexical references and statements once. A single non-owning body fact
+identifies the acquisition. A call exposing the owner, whole-owner replacement,
+field mutation after acquisition, suspension or an unsupported loop selects
+ordinary indexing. Sibling field assignments and early returns remain eligible.
+
+The checked descriptor captures pointer and size from the live field. Its internal
+`read(index)` uses the published key and result types. Ordinary indexing calls the
+method named in metadata. The scanner keeps its final vector
+move on the optimized path. The native proof covers inline and heap inputs,
+both exits, byte parity and invalid offsets. Resident edits switch from view to
+ordinary indexing and back, with fresh-equivalent output and unchanged caller reuse.
+CTest `compiler_scoped_byte_view_native` compiles and runs the lifetime fixture
+for cpp/php/js on Clang and GCC with both the default provider and its index
+method renamed to `checked_byte_view`. Each emitted scanner exercises both reads.
+
+[dev002 paired results and preparation cost](benchmarks/tokenizer/byte_access/scoped_view.md).
+Transferring the source parameter, general borrows and range-check elimination remain deferred.
+
 ## 3. Object relationships — a small AST family
 
 Discuss inheritance, handles and interfaces together before implementing this milestone.

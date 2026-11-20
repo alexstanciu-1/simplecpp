@@ -138,6 +138,13 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $read = $runtime['string_index_read'];
             requireThat(isset($definitions[$read['key']], $definitions[$read['result']]), 'Compiler string index requires key and result types');
             $indexInterface = ' implements index_read_type';
+            foreach ($runtime['string_functions'] ?? [] as $binding) {
+                if ($binding['implementation'] !== 'byte_length') continue;
+                $indexInterface = ' implements scoped_byte_read_type';
+                $methods .= "\n\tpublic function is_byte_length(runtime_function \$function): bool\n\t{\n"
+                    . "\t\treturn \$function->symbol === " . var_export($binding['symbol'], true) . ";\n\t}\n";
+                break;
+            }
             $methods .= "\n" . compilerIndexRead('String', 'type_' . $definitions[$read['key']]['class'],
                 'type_' . $definitions[$read['result']]['class'], $read['name']);
         }

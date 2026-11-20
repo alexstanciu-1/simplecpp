@@ -195,6 +195,8 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
+	/** Non-owning length initializer anchoring a proven scoped byte view. */
+	public ?ast_local_declaration $byte_view_length = null;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
 	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
@@ -261,6 +263,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	{
 		$this->prepared = false;
 		$this->queue_change();
+		$this->byte_view_length = null;
 		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
 

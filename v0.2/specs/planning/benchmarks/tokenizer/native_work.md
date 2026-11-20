@@ -29,3 +29,5 @@ For future findings, record the surviving native call, copy, allocation, load, s
 Using uint32 for token offset and length is a deferred storage-layout option. Its input-size limit and overflow behavior would need a decision before adoption.
 
 [Allocation and publication measurements](byte_access/report.md) · [Split-view loop inspection and throughput](byte_access/split_view.md) · [Handwritten baseline](baseline.cpp)
+
+The Simple C++ scanner fixture now copies the input to the result and acquires a checked byte view from that field once when its owner is stable. The dev002 pairs isolate byte access with both source copy and final vector move held fixed. [Measurements and parity checks](byte_access/scoped_view.md).

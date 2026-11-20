@@ -149,6 +149,12 @@ interface index_read_type
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
 }
 
+/** An immutable descriptor can reuse this provider's checked read while the owner is stable. */
+interface scoped_byte_read_type extends index_read_type
+{
+	public function is_byte_length(runtime_function $function): bool;
+}
+
 /** Indexed collections that can also be initialized with []. */
 interface indexed_collection_type extends index_read_type
 {

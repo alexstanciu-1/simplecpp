@@ -233,6 +233,8 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_keyed_initialization_ownership PROPERTIES DEPENDS compiler_keyed_initialization)
   set_tests_properties(compiler_keyed_initialization_native compiler_keyed_initialization_ownership keyed_initialization_providers PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_populated_vectors COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/populated_vectors.php)
+  add_test(NAME compiler_scoped_byte_view_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/scoped_byte_view_native.py ${native_facts} ${native_context})
   add_test(NAME compiler_last_use_transfer COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/last_use_transfer.py)
   add_test(NAME compiler_vector_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations.php)
   add_test(NAME compiler_vector_operations_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations_native.py)

@@ -47,6 +47,8 @@ final class Last_Use_Transfer
 			}
 			if ($read->refers_to($result)) {
 				if ($use instanceof ast_return_statement) continue;
+				if ($use instanceof ast_field_expression && $use->type_def() instanceof scoped_byte_read_type
+					&& (Scoped_Byte_View::indexed_read($use) || Scoped_Byte_View::length_read($use))) continue;
 				if ($use instanceof ast_field_expression && $use->parent instanceof ast_field_assignment
 					&& $use->parent->target === $use) continue;
 				return false;

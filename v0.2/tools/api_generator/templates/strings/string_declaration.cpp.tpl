@@ -1,5 +1,5 @@
 namespace scpp {
-namespace detail { struct string_access; }
+namespace detail { struct string_access;@view_forward@ }
 class @n@ final {
 public:
 @lh@    explicit @n@(const char*);

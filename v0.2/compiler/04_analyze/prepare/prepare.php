@@ -94,6 +94,7 @@ final class Preparation
 		} finally {
 			$this->readonly_initialization = null;
 		}
+		Scoped_Byte_View::prepare($syntax);
 		Last_Use_Transfer::prepare($syntax);
 		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups,
 			$target);

@@ -123,6 +123,15 @@ def prove(root):
         source_edit(main, main.read_text().replace('return 8;', f'echo count({var}r{member}tokens), {var}r{member}error; return 8;'))
         tail = f'{var}out{member}tokens={var}items;'
         infer = fixture(flavor)['infer']
+        owner = var + 'out'
+        source = owner + member + 'source'
+        length = 'strlen(' + source + ');'
+        replace_field = original.replace(length, length + source + '="@!";')
+        replace_owner = original.replace(length, length + fixture(flavor)['local']('other', 'Scan')
+                                         + var + 'other' + member + 'source="@!";' + owner + '=' + var + 'other;')
+        shadow_owner = original.replace(length, length + f'if ({var}size > 0) {{'
+                                        + fixture(flavor)['local']('out', 'Scan')
+                                        + source + '="@";' + f'if ({source}[0] != 64) {{return {owner};}} }}')
         optional = {'php': '$number nullable<int> = -1;', 'js': 'let number:nullable<int> = -1;',
                     'cpp': 'nullable<int> number = -1;'}[flavor]
         decl = {'php': '$copy vector<Token> = $items;', 'js': 'let copy:vector<Token> = items;',
@@ -139,6 +148,10 @@ def prove(root):
             key = flavor + '/scanner.' + flavor
             for label, text, move in [
                 ('move', original, True),
+                ('field-replaced', replace_field, True),
+                ('owner-replaced', replace_owner, True),
+                ('shadow-owner', shadow_owner, True),
+                ('view-restored', original, True),
                 ('later', original.replace(tail, tail + f'if (count({var}items) != count({var}out{member}tokens)) {{ {var}out{member}error=99; }}'), False),
                 ('restore', original, True),
                 ('reference', original.replace(tail, f'if ({var}size > 0) {{ touch({var}items); }}' + tail), False),
@@ -174,8 +187,9 @@ def prove(root):
                     assert flavor + '/main.' + flavor not in row['emitted_sources'], (label, row)
                     assert row['preparation'] == {'prepared': 1, 'reused': 2}, (label, row)
                 unit = json.loads((out / 'manifest.json').read_text())['sources'][key]
+                expected = {'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
                 for cc, lib in libraries.items():
-                    changed = incremental_native_build(out, root / (flavor + '-' + cc), cc, lib, b'0-1' if label == 'reference' else b'1-1')
+                    changed = incremental_native_build(out, root / (flavor + '-' + cc), cc, lib, expected)
                     if label != 'move':
                         paths = json.loads((out / 'manifest.json').read_text())['sources']
                         for name in ('main', 'records'):
@@ -183,6 +197,14 @@ def prove(root):
                 code = (out / unit).read_text()
                 assert ('.tokens = std::move(var_items_' in code) == move, (flavor, label)
                 assert ('#include <utility>' in code) == move
+                if label in ('move', 'field-replaced', 'owner-replaced', 'view-restored', 'original'):
+                    view = label not in ('field-replaced', 'owner-replaced')
+                    assert code.count('.checked_bytes()') == int(view), (flavor, label)
+                    assert ('scpp_byte_view.read(' in code) == view
+                    assert ('.source).byte_at(' in code) != view
+                    assert '.source = var_text_' in code
+                if label == 'shadow-owner':
+                    assert '.source).byte_at(' in code and 'scpp_byte_view.read(' in code
                 if label == 'conversion':
                     assert ').value()' in code
                 idle = invoke(resident)
