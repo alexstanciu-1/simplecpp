@@ -347,7 +347,7 @@ In the tokenizer, the successful tail `$out->tokens = $items; return $out;` emit
 return var_out_2;
 ```
 
-Published integer/string vectors use bulk construction; nested/application vectors retain generated append construction. Typed keyed locals support the four published integer/string hash combinations. User factories remain read-only and deferred; nested keyed input is not enabled.
+Published integer/string vectors use bulk construction; nested/application vectors retain generated append construction. Typed keyed locals support published runtime hashes and concrete application hashes with the keyed initialization capability. User factories remain read-only and deferred; nested keyed input is not enabled.
 
 ```text
 +----------------------------------------------------+--------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+

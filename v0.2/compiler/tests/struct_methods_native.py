@@ -383,12 +383,18 @@ def bare_this(work, flavor):
     entry.write_text(source + 'return 8;')
     expected = b'373839' * 2
     static = {'php':'public static function test():int', 'js':'static test():int', 'cpp':'static int test()'}[flavor]
+    qualified = 'Pair.invalid();' if flavor == 'js' else 'Pair::invalid();'
+    invalid_body = model.replace(method + '{', static.replace('test()', 'invalid()') + '{' + body + '}'
+                                 + method + '{' + qualified)
     out = work / ('this-out-' + flavor)
     with service(app, out) as resident:
         for rev, (path, text, error) in enumerate([
             (helper, function, None), (helper, mutate.replace(param, param.replace('Pair','Cell')) + '{return 8;}', 'conversion from Pair to Cell'),
             (helper, mutate.replace('Pair', 'shared<Pair>') + '{return 8;}', 'conversion from Pair to shared<Pair>'),
-            (helper, function, None), (record, model.replace(method,static), 'Static method has no this receiver'),
+            (helper, function, None),
+            # Isolate the invalid caller and invalid body so diagnostic order cannot choose the outcome.
+            (record, model.replace(method + '{' + body, static + '{return 1;'), 'Static method requires a type-qualified call'),
+            (record, invalid_body, 'Static method has no this receiver'),
             (record, model, None), (helper, '', 'Unknown function: mutate'), (helper, function, None),
         ]):
             path.write_text(text)

@@ -79,9 +79,23 @@ def proof(work):
                 result = subprocess.run([exe])
                 assert result.returncode == 9, (variant, cxx, flavor)
                 observations[f'{variant}-{cxx}-{flavor}'] = 'pass'
+            # A required constructor makes an accidental default construction observable at compile time.
+            if cxx == 'clang++':
+                app_source = ('struct Point { int x; Point(int n) { this->x=n; } }; Point p(7); '
+                              'hash<Point,int> table = [1 => p, 2 => p]; p->x=3; auto found=table[2]; return found->x;')
+                if variant == 'disabled':
+                    result = subprocess.run(['php', '-r', EMIT, str(boot), 'cpp', app_source], capture_output=True, text=True)
+                    assert result.returncode and 'published keyed destination' in result.stderr
+                else:
+                    cpp = run(['php', '-r', EMIT, boot, 'cpp', app_source])
+                    assert '::' + init.get('consume', init['read_only']) + '(input.data(), 2)' in cpp
+                    unit.write_text(cpp)
+                    run([cxx, '-std=c++23', '-Wall', '-Wextra', '-Werror', *inc, unit, obj, runtime_obj,
+                         ROOT / 'runtime/src/ownership/owner_access.cpp', ROOT / 'runtime/src/entry/entry.cpp', '-o', exe])
+                    assert subprocess.run([exe]).returncode == 7
     # Rejected metadata must leave the last complete export untouched.
     snapshot = {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*') if p.is_file()}
-    for field, value in [('consume','bad::name'), ('input','class'), ('entry','iteration_limit'), ('read_only','set'), ('read_only','storage_'), ('input','data'), ('entry','data_'), ('consume','int64'), ('presizing','none'), ('transfer','throwing'), ('stack_bytes',0), ('duplicates','replace')]:
+    for field, value in [('consume','bad::name'), ('input','class'), ('entry','iteration_limit'), ('entry','iteration_output'), ('read_only','get_or_null'), ('read_only','set'), ('read_only','storage_'), ('input','data'), ('entry','data_'), ('consume','int64'), ('presizing','none'), ('transfer','throwing'), ('stack_bytes',0), ('duplicates','replace')]:
         m = copy.deepcopy(metadata); m['hash']['initialization'][field] = value
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(publication))
         result = subprocess.run(['php', str(generator), 'emit-runtime', str(mp), str(pp), str(facts), str(context), str(output)], capture_output=True)

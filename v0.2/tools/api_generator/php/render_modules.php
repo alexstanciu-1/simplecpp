@@ -21,8 +21,8 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         if ($hash['initialization'] !== null) {
             $init = (array)$hash['initialization'];
             $input = $vars + $init + ['e' => $init['entry'], 'inline_limit' => $init['inline_entries']];
-            $h .= "    struct {$init['entry']} { $k key; $v value; };\n";
-            $h .= template('collections/initialization_input_declaration', $input);
+            $h .= template('collections/hash_input_entry', $input);
+            $h .= template('collections/initialization_input_declaration', $input + ['guard' => template('collections/initialization_input_guard', $input)]);
             $d .= template('collections/initialization_input_definition', $input);
             if (isset($init['consume'])) $h .= "    static $n {$init['consume']}({$init['entry']}* values, $count count);\n";
         }
@@ -34,10 +34,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         if ($hash['initialization'] !== null) {
             foreach (['read_only', 'consume'] as $mode) {
                 if (!isset($init[$mode])) continue;
-                $consume = $mode === 'consume';
-                $d .= template('collections/hash_input_factory', $input + ['factory' => $init[$mode], 'qualifier' => $consume ? '' : 'const ',
-                    'key_transfer' => $consume ? "static_cast<$k&&>(values[i].key)" : "$k(values[i].key)",
-                    'value_transfer' => $consume ? "static_cast<$v&&>(values[i].value)" : "$v(values[i].value)"]);
+                $d .= template('collections/hash_input_factory', $input + hashInputFactoryArguments($init, $mode, $k, $v));
             }
         }
         if($k === 'int64') {

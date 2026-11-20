@@ -5,6 +5,15 @@
     "v": {"alias": "value_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]}
   },
   "fragments": {
+    "input_declaration": [
+      {"template": "collections/hash_input_entry", "when": "enable_keyed_input"},
+      {"template": "collections/initialization_input_guard", "when": "enable_keyed_input"},
+      {"template": "collections/hash_factory_declaration", "when": "enable_keyed_input"}
+    ],
+    "input_definition": [
+      {"template": "collections/initialization_input_definition", "when": "enable_keyed_input"},
+      {"template": "collections/hash_input_factory", "when": "enable_keyed_input"}
+    ],
     "storage": ["collections/hash_table"],
     "lifecycle": ["core/concrete_owner_lifecycle"],
     "declaration": ["core/lifecycle_declaration", "collections/hash_value_methods_declaration", {"template": "collections/hash_shared_lookup_declaration", "when": "enable_shared_lookup"}],

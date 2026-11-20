@@ -83,14 +83,25 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 : "\t\tif (\$family === " . var_export($family, true) . " && \$second?->hash_key_supported() && \$element->concrete_storage_support('copy_constructible') === true) return new $app(\$element, \$second);\n";
             $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
             unset($recipe['enable_shared_lookup']); // The settled application value supplies this condition.
+            $appInitialization = '';
+            if ($hash['initialization'] !== null) {
+                $mode = isset($init['consume']) ? 'consume' : 'read_only';
+                $recipe = array_replace($recipe, [
+                    'enable_keyed_input' => '1', 'e' => $init['entry'], 'input' => $init['input'],
+                ], hashInputFactoryArguments($init, $mode, 'storage::key_type', 'storage::value_type'));
+                // Application layouts have no fixed entry-size bound at PHP preparation time.
+                $appInitialization = "\tpublic function keyed_initialization(): initialization_transport { return new initialization_transport("
+                    . "\$this->native_name . " . var_export('::' . $init['entry'], true) . ", \$this->native_name . "
+                    . var_export('::' . $init['input'], true) . ", \$this->native_name . " . var_export('::' . $init[$mode], true) . ", 0); }\n";
+            }
             if (!$append) $recipe = array_replace($recipe, ['enable_append' => '', 'append' => '']);
             $code .= strtr($template, array_replace($bindings, [
                 '@lookup_property@' => "\tprivate readonly ?runtime_function \$shared_lookup;",
-                '@lookup@' => "\tpublic function shared_lookup_function(): ?runtime_function { return \$this->shared_lookup; }\n", '@initialization@' => '',
+                '@lookup@' => "\tpublic function shared_lookup_function(): ?runtime_function { return \$this->shared_lookup; }\n", '@initialization@' => $appInitialization,
                 '@append_method@' => $append ? compilerHashAppend($hash) : '',
                 '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
-                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, shared_value_lookup_type, iterable_type' . $transfer . ($append ? ', appendable_collection_type' : ''),
+                '@class@' => $app, '@interfaces@' => ' implements application_collection_type, key_presence_type, shared_value_lookup_type, iterable_type' . ($appInitialization !== '' ? ', keyed_initializer_type' : '') . $transfer . ($append ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
                 '@identity@' => strtr(readFile(__DIR__ . '/../templates/collections/application_hash_identity.php.tpl'), [
                     '@family@' => var_export($family, true),

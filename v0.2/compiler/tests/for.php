@@ -59,6 +59,19 @@ foreach (flavor::cases() as $flavor)
 	verify(($for->initializers[0]->parent === $for) && ($for->updates[0]->parent === $for), 'Header ownership');
 	verify(($for->scope->parent === $entry->body()->scope) && ($for->body->scope->parent === $for->scope), 'Header scope hierarchy');
 	verify(count($for->scope->declarations) === 1 && count($entry->body()->scope->declarations) === 0, 'Header publication leaked');
+	// Statement spans include their own terminator. A for header owns the delimiters between actions.
+	$x = $var('x');
+	$ordinary = $decl('x', 'int', '0');
+	$header = 'for (' . $x . '=1,' . $x . '=2;false;' . $x . '=3) {}';
+	$file = (new Source_Frontend())->collect(new source_file('delimiters', $ordinary . $header, $flavor));
+	[$declaration, $loop_node] = $file->main()->body()->statements;
+	$tokens = $file->tokens;
+	verify($tokens->text_at($declaration->end - 1) === ';', 'Ordinary declaration must consume its semicolon');
+	verify($tokens->text_at($loop_node->initializers[0]->end) === ','
+		&& $tokens->text_at($loop_node->initializers[1]->end) === ';'
+		&& $tokens->text_at($loop_node->updates[0]->end) === ')', 'Header action consumed an enclosing delimiter');
+	rejects(fn() => $prepare(rtrim($ordinary, ';') . ' return 8;'), 'Expected ;');
+	rejects(fn() => $prepare($ordinary . str_replace('=2;false', '=2 false', $header)), 'Expected ; after for initialization');
 	$parameter = match ($flavor) {
 		flavor::php => 'int $v',
 		flavor::cpp => 'int v',

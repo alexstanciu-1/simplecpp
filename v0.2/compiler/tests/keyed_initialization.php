@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/../host/compilation.php';
+require_once __DIR__ . '/../host/syntax.php';
 
 use scpp\compiler\{flavor, Source_Frontend, source_file, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
-	Project_Compiler, Incremental_Preparation, Cpp_Program, Program_Frontend, prepared_program, prepared_entry};
+	Project_Compiler, Incremental_Preparation, Cpp_Program, Program_Frontend, prepared_program, prepared_entry, Compilation_Inspection, Syntax_Inspection};
 
 function check(bool $ok, string $message): void
 {
@@ -34,19 +36,16 @@ foreach (flavor::cases() as $flavor) {
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('keyed', $source, $flavor), new entry_target(31));
 	$emit = static function (string $source) use ($prepare): string {
 		$entry = $prepare($source);
-		$before = serialize($entry);
+		// Layout watches contain weak maps. Compare the authored syntax and the published body facts.
+		$snapshot = static fn(prepared_entry $entry): array => [Syntax_Inspection::file($entry->file), Compilation_Inspection::program($entry)];
+		$before = $snapshot($entry);
 		$cpp = (new Cpp_Emitter())->emit($entry);
-		check(serialize($entry) === $before, 'Emission mutated prepared syntax');
+		check($snapshot($entry) === $before, 'Emission mutated prepared syntax');
 		return $cpp;
 	};
 	$fixture = static function (string $name, string $source, string $expected, ?string $error = null) use (&$fixtures, $flavor, $emit): void {
 		$cpp = $emit($source);
-		if ($error !== null) {
-			$cpp = '#include <stdexcept>' . "\n#include <string_view>\n" . str_replace('int main()', 'int tested_entry()', $cpp);
-			$cpp .= '\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == "' . $error . '" ? 8 : 90;} return 91;}';
-			$cpp = str_replace('\\nint main', "\nint main", $cpp);
-		}
-		$fixtures[$flavor->name . '-' . $name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected)];
+		$fixtures[$flavor->name . '-' . $name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected), 'error' => $error];
 	};
 	$v = $var('values');
 	$const = static fn(string $type, string $name, string $literal) => $flavor === flavor::js ? "const $name: $type=$literal;" : "const $type $name=$literal;";
@@ -81,6 +80,21 @@ foreach (flavor::cases() as $flavor) {
 		};
 		$fixture('order-' . $mode, $source, in_array($mode, ['key_failure', 'key_conversion_failure'], true) ? 'K' : ($mode === 'value_failure' ? 'KV' : 'KVL'), $error);
 	}
+	$point = $flavor === flavor::cpp ? 'struct Point { int x=7; };' : ($flavor === flavor::php
+		? 'struct Point { public int $x=7; }' : 'struct Point { x:int=7; }');
+	$access = $flavor === flavor::js ? '.' : '->';
+	$local_point = match ($flavor) {
+		flavor::cpp => 'Point p;', flavor::php => '$p Point;', flavor::js => 'let p:Point;',
+	};
+	$node = $flavor === flavor::cpp ? 'class Node {};' : 'class Node {}';
+	$source = $node . $function('string', 'key', 'echo "K"; return "k\\0x";')
+		. $function('Node', 'node', 'echo "V";return new Node();');
+	$fixture('application-duplicate', $source . $decl('hash<Node,string>', 'values',
+		'[key() => node(), key() => node(), "later" => node()]') . 'return 8;', 'KVKVV', 'duplicate_initializer_key');
+	$fixture('application-copy', $point . $local_point
+		. $decl('hash<Point,string>', 'values', '["k\\0x" => ' . $var('p') . ']')
+		. $var('p') . $access . 'x=9;' . $decl('Point', 'stored', $v . '["k\\0x"]')
+		. 'echo ' . $var('stored') . $access . 'x;return 8;', '7');
 	$fixture('duplicate-spelling', $decl('hash<int,string>', 'values', "[\"a\" => 1, 'a' => 2]") . 'return 8;', '', 'duplicate_initializer_key');
 	$source = $decl('string', 'text', '"heap backed value with embedded\\0bytes for copy"')
 		. $decl('hash<string,string>', 'values', '["a" => ' . $var('text') . ', "b" => ' . $var('text') . ']')
