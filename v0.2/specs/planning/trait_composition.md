@@ -11,7 +11,7 @@ Every row is mandatory for porting the compiler. Status refers to the v0.2 proof
 | Capability | Compiler use and acceptance criterion | Status |
 | --- | --- | --- |
 | Compose trait fields and methods into a class | `ast_declaration` contributes name, namespace, duplicate storage and operations together. Each consumer owns its members. | Direct composition proven |
-| Preserve visibility, field types, defaults and readonly rules | Shared declaration fields and private specialization caches retain their authored contracts. Check ordinary readonly initialization and write rejection on contributed fields. | Typed private field and default proven; readonly proof pending |
+| Preserve visibility, field types, defaults and readonly rules | Shared declaration fields and private specialization caches retain their authored contracts. Check ordinary readonly initialization and write rejection on contributed fields. | Proven on all three flavors for constructor initialization, defaults, rejected writes, and public/private/protected access with incremental recovery |
 | Let trait methods use `$this` and host members | Collection traits call host hooks and `Cpp_Generator` uses host emitter state and methods. Check a private hook independently on two consumers. | Counter proof |
 | Declare required methods | `ordered_keyed_store` declares abstract hooks. Check the effective signature after composition and inheritance, including an inherited implementation. | Pending |
 | Resolve `parent::` through the containing class | `ast_string_part_range` extends its host’s inherited source-position behavior. Test one origin in hosts with different parents. | Pending |
