@@ -59,6 +59,15 @@ production decoder's single-byte switch as PHP++ and checks both flavor modes
 for all 256 input bytes. A decoded NUL is a present string. Unsupported escapes
 return null, and the escaped backtick produces a byte only in JS template mode.
 
+## Bootstrap C++ literal spelling proof
+
+The [translated byte emitter](../examples/cpp_literal_bytes/emitter.php.scpp)
+uses indexed byte reads and explicit widening to spell C++ string literals.
+The [native proof](../tests/cpp_literal_bytes_native.py) compares the spelling
+with the production PHP helper, then compiles the emitted literals with Clang
+and reads back the exact bytes. It covers every byte value, adjacent octal
+digits after NUL, and every trigraph ending.
+
 ## Explicit debt
 
 String globals remain rejected until initialization order and lifetime are designed;
