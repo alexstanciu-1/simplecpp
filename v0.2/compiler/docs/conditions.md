@@ -10,6 +10,12 @@ Full ternary selection reuses the same condition handler and emits a native C++ 
 Null conditions, constant-condition reachability and precise value merging remain deferred.
 Logical `!`, `&&` and `||` now reuse this generated truthiness; see [logical expressions](logical.md).
 
+A parenthesized condition assignment resolves one existing local and uses its ordinary
+assignment conversion. The target occurrence participates in the lexical reference
+index, including the ownership and stable-view analyses. Preparation invalidates
+the local's previous constant and narrowing proofs, including for a potentially
+skipped RHS. The C++ emitter can put the native assignment directly in the test.
+
 ## Type boundary
 
 Runtime metadata `compiler.conditions` admits bool identity and float nonzero,

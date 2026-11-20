@@ -559,7 +559,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		$value = parent::lower_scalar_conversion($conversion, $value, $syntax, $source_type);
 		if ($syntax instanceof ast_field_expression && ($syntax->parent instanceof ast_field_assignment
-			|| $syntax->parent instanceof ast_assignment_statement)) {
+			|| $syntax->parent instanceof ast_assignment_statement || $syntax->parent instanceof ast_condition_assignment)) {
 			for ($field = $syntax; $field instanceof ast_field_expression; $field = $field->receiver) {
 				if ($field->receiver->type_def() instanceof shared_record_type_definition) return $this->cpp_type() . '(' . $value . ')';
 			}

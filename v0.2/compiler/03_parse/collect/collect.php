@@ -59,7 +59,7 @@ final class Body_Collection
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
 	{
-		if ($statement instanceof ast_try_statement || $statement instanceof ast_block_statement) return;
+		if ($statement instanceof ast_rethrow_statement || $statement instanceof ast_try_statement || $statement instanceof ast_block_statement) return;
 		if ($statement instanceof ast_yield_statement) {
 			$this->expression($statement->value);
 			if ($statement->key !== null) $this->expression($statement->key);
@@ -168,6 +168,11 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_condition_assignment) {
+			$this->expression($value->target);
+			$this->expression($value->value);
+			return;
+		}
 		if ($value instanceof ast_ternary_expression) {
 			$this->expression($value->condition);
 			$this->expression($value->when_true);
