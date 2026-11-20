@@ -87,15 +87,28 @@ abstract class ast_node
 		return $node;
 	}
 
+	/** Token and import owner; a contributed member switches lexical roots at its boundary. */
+	public function lexical_root(): ast_file_node
+	{
+		$node = $this;
+		while (!($node instanceof ast_file_node)) {
+			if (($node instanceof ast_function_declaration || $node instanceof ast_instance_field || $node instanceof ast_literal_declaration) && $node->trait_origin !== null) {
+				return $node->trait_origin->root();
+			}
+			$node = $node->parent;
+		}
+		return $node;
+	}
+
 	public function source(): source_file
 	{
-		return $this->root()->tokens->source;
+		return $this->lexical_root()->tokens->source;
 	}
 
 	/** Return: source byte offset. */
 	public function byte_start(): int /** uint32 */
 	{
-		return $this->root()->byte_at($this->start);
+		return $this->lexical_root()->byte_at($this->start);
 	}
 
 	/**
@@ -105,7 +118,7 @@ abstract class ast_node
 	 */
 	public function byte_end(): int /** uint32 */
 	{
-		$root = $this->root();
+		$root = $this->lexical_root();
 		if ($this->start === $this->end) {
 			return $root->byte_at($this->start);
 		}
@@ -116,7 +129,7 @@ abstract class ast_node
 	/** Recover exact source bytes with one ownership walk; trivia between tokens is retained. */
 	public function source_text(): string
 	{
-		$root = $this->root();
+		$root = $this->lexical_root();
 		$start = $root->byte_at($this->start);
 		if ($this->start === $this->end) {
 			return '';

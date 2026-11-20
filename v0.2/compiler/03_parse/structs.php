@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Record_Syntax
 {
 	/** Parse members in source order. @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members */
-	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration
+	public static function read(Parser $parser, statement_grammar $grammar, array &$members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */): ast_record_declaration|ast_trait_declaration
 	{
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
@@ -21,9 +21,10 @@ final class Record_Syntax
 			else $final = true;
 			$c->take($c->tokens->tokens[$c->position()]->kind, $modifier);
 		}
+		$trait = $c->keyword('trait');
 		$kind = $c->keyword('interface') ? record_kind::interface_type
 			: ($c->keyword('class') ? record_kind::class_type : record_kind::structure);
-		$c->take_keyword(match ($kind) {
+		$c->take_keyword($trait ? 'trait' : match ($kind) {
 			record_kind::interface_type => 'interface',
 			record_kind::class_type => 'class',
 			default => 'struct',
@@ -60,11 +61,67 @@ final class Record_Syntax
 			} while (true);
 		}
 		if ($kind === record_kind::interface_type && $interfaces !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface inheritance is deferred');
+		if ($trait && ($abstract || $final || $base !== null || $interfaces !== [])) throw new diagnostic($c->tokens->source, $c->offset(), 'Traits require an ordinary member body');
+		$body_start = $c->position();
+		$uses = [];
+		$aliases = [];
+		$fields = self::members($parser, $grammar, $name, $kind, $base !== null || $trait, $trait, $members, $uses, $aliases);
+		if ($trait) return new ast_trait_declaration($name, $parser->source_namespace(), $start, $c->position(), $body_start, $fields, $members, $uses);
+		$hooks = [];
+		$parser->contribute($name, $uses, $aliases, $fields, $members, $hooks);
+		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final, $hooks);
+		foreach ($uses as $use) $use->attach($record);
+		return $record;
+	}
+
+	/**
+	 * @param ast_node[] $members
+	 * @param array<string,list<array{string,string,int}>> $aliases Original name, private alias and adaptation token position.
+	 * @param ast_type_reference[] $uses
+	 * @return ast_instance_field[]
+	 */
+	public static function members(Parser $parser, statement_grammar $grammar, string $name, record_kind $kind,
+		bool $derived, bool $trait, array &$members /** list<ast_node> */, array &$uses /** array<string,ast_type_reference> */, array &$aliases /** array<string,list<array{string,string,int}>> */ = [], ?string $origin_name = null): array /** array<string,ast_instance_field> */
+	{
+		$c = $parser->cursor;
+		$flavor = $c->tokens->source->flavor;
 		$c->take(token_kind::lbrace, '{');
 		$fields = [];
 		$private_section = false;
 		$protected_section = false;
 		while (!$c->is(token_kind::rbrace)) {
+			if ($c->keyword('use')) {
+				if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces cannot compose traits');
+				$c->take_keyword('use');
+				$group = false;
+				do {
+					$use = $parser->named_type();
+					if ($use->first_child !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a trait name');
+					if (isset($uses[$use->name])) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate trait use: ' . $use->name);
+					$uses[$use->name] = $use;
+					if (!$c->is(token_kind::comma)) break;
+					$c->take(token_kind::comma, ',');
+					$group = true;
+				} while (true);
+				if ($c->is(token_kind::lbrace)) {
+					if ($trait || $group) throw new diagnostic($c->tokens->source, $c->offset(), 'Trait aliases require one direct use in a class or struct');
+					$c->take(token_kind::lbrace, '{');
+					while (!$c->is(token_kind::rbrace)) {
+						$at = $c->position();
+						$original = $c->name(token_kind::identifier);
+						foreach (['as', 'private'] as $word) {
+							if ($c->at_end() || $c->tokens->text_at($c->position()) !== $word) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected ' . $word . ' in trait alias');
+							$c->take($c->tokens->tokens[$c->position()]->kind, $word);
+						}
+						$alias = $c->name(token_kind::identifier);
+						if (in_array($alias, ['__construct', '__destruct'], true) || ($flavor === flavor::js && in_array($alias, ['constructor', 'destructor'], true)) || ($flavor === flavor::cpp && $alias === $name)) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected ordinary trait method alias');
+						$aliases[$use->name][] = [$original, $alias, $at];
+						$c->take(token_kind::semicolon, '; after trait alias');
+					}
+					$c->take(token_kind::rbrace, '}');
+				} else $c->take(token_kind::semicolon, '; after trait use');
+				continue;
+			}
 			$field_start = $c->position();
 			$modifiers = [];
 			self::modifiers($c, $modifiers, true);
@@ -109,11 +166,27 @@ final class Record_Syntax
 			}
 			$constructor = match ($flavor) {
 				flavor::php => $c->keyword('function') && $c->tokens->text_at($c->position() + 1) === '__construct',
-				flavor::cpp => $c->tokens->text_at($c->position()) === $name && $c->next_is(token_kind::lparen),
+				flavor::cpp => $c->tokens->text_at($c->position()) === ($origin_name ?? $name) && $c->next_is(token_kind::lparen),
 				flavor::js => $c->tokens->text_at($c->position()) === 'constructor' && $c->next_is(token_kind::lparen),
 			};
+			$destructor = match ($flavor) {
+				flavor::php => $c->keyword('function') && $c->tokens->text_at($c->position() + 1) === '__destruct',
+				flavor::cpp => $c->tokens->text_at($c->position()) === '~',
+				flavor::js => $c->tokens->text_at($c->position()) === 'destructor' && $c->next_is(token_kind::lparen),
+			};
 			if ($constructor && $kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface constructors are forbidden');
-			if ($constructor) {
+			if ($destructor) {
+				if ($static || $kind === record_kind::interface_type || $modifiers !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Expected ordinary instance destructor');
+				if ($flavor === flavor::php) $c->take_keyword('function');
+				elseif ($flavor === flavor::cpp) $c->take($c->tokens->tokens[$c->position()]->kind, '~');
+				$at = $c->position();
+				$written = $c->name(token_kind::identifier);
+				if ($flavor === flavor::cpp && $written !== ($origin_name ?? $name)) throw new diagnostic($c->tokens->source, $c->offset(), 'Destructor must name the declaring record or trait');
+				$c->take(token_kind::lparen, '(');
+				$c->take(token_kind::rparen, ') after zero destructor parameters');
+				$method = new ast_function_declaration('__destruct', new ast_type_reference($at, $at, 'void'),
+					$field_start, $c->position(), false, $parser->source_namespace(), private: $private, protected: $protected);
+			} elseif ($constructor) {
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Constructor cannot be static');
 				if ($flavor === flavor::php) $c->take_keyword('function');
 				$at = $c->position();
@@ -131,6 +204,7 @@ final class Record_Syntax
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
 				$method = $js_method ? $parser->named_function_header(false, $static, $private, $protected)
 					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private, $protected) : null);
+				if ($method?->short_name === '__destruct') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a destructor declaration');
 				if ($method?->short_name === '__construct' || ($flavor === flavor::js && $method?->short_name === 'constructor')) {
 					throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a constructor declaration');
 				}
@@ -151,11 +225,18 @@ final class Record_Syntax
 					$c->take(token_kind::integer, '0');
 					$method->is_abstract = true;
 				}
+				if ($trait) {
+					$allowed = $method->is_abstract ? ($flavor === flavor::cpp ? 'virtual' : 'abstract') : null;
+					if (($method->is_abstract && ($private || $static || $constructor))
+						|| ($modifiers !== [] && array_keys($modifiers) !== [$allowed])) {
+						throw new diagnostic($c->tokens->source, $c->offset(), 'Trait hooks require public or protected abstract instance methods');
+					}
+				}
 				if ($kind === record_kind::interface_type) $method->is_abstract = true;
 				if ($method->is_abstract) {
 					$method->complete_abstract($c->take(token_kind::semicolon, '; after abstract method') + 1);
 					$members[] = $method;
-				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $base !== null);
+				} else $members[] = $parser->callable_body($grammar, $method, $name, $constructor && $derived);
 				continue;
 			}
 			if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface fields are forbidden');
@@ -189,8 +270,9 @@ final class Record_Syntax
 		}
 		$c->take(token_kind::rbrace, '}');
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
-		return new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final);
+		return $fields;
 	}
+
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
 	{

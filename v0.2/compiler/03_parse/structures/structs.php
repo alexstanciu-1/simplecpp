@@ -17,6 +17,8 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 	use ast_declaration;
 
 	/** PROPERTIES */
+	/** Native non-owning authored trait; null for an ordinary member. */
+	public ?ast_trait_declaration $trait_origin = null;
 	/** Native owning written field type. */
 	public readonly ast_type_reference $type_reference;
 	/** Native owning optional literal or enum-case default written on the field. */
@@ -64,6 +66,17 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 	{
 		return $this->short_name;
 	}
+
+	/** STATIC METHODS */
+	/** Attach each declared field, including erroneous duplicates retained for diagnostics. @param ast_instance_field[] $fields */
+	public static function attach_all(array $fields /** array<string,ast_instance_field> */, ast_record_declaration|ast_trait_declaration $owner): void
+	{
+		foreach ($fields as $field) {
+			for ($node = $field; $node !== null; $node = $node->duplicate_element()) {
+				$node->attach($owner);
+			}
+		}
+	}
 }
 
 /** Source-owned class or struct, with one nominal payload and original member owners. */
@@ -73,6 +86,8 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	use ast_methods;
 
 	/** PROPERTIES */
+	/** @var array<string,list<ast_function_declaration>> Bodyless trait requirements grouped by effective method name. */
+	public readonly array $trait_hooks /** array<string,list<ast_function_declaration>> */;
 	/** @var ast_instance_field[] Fields in layout order, indexed by spelling. */
 	public readonly array $fields /** array<string,ast_instance_field> */;
 	/** @var ast_constant_declaration[] Public constants indexed independently of fields and methods. */
@@ -91,17 +106,22 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 
 	/** CONSTRUCTOR */
 	/**
+	 * @param array<string,list<ast_function_declaration>> $hooks
 	 * @param ast_type_reference[] $interface_references
 	 * @param ast_instance_field[] $fields
 	 * @param (ast_function_declaration|ast_constant_declaration|ast_global_declaration)[] $members All occurrences in source order before duplicate publication.
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_instance_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false, array $interface_references /** list<ast_type_reference> */ = [], bool $final = false)
+		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false, array $interface_references /** list<ast_type_reference> */ = [], bool $final = false, array $hooks /** array<string,list<ast_function_declaration>> */ = [])
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
 		$this->namespace = $namespace;
+		$this->trait_hooks = $hooks;
+		foreach ($hooks as $requirements) {
+			foreach ($requirements as $requirement) $requirement->attach($this);
+		}
 		$methods = [];
 		$constants = [];
 		$properties = [];
@@ -115,11 +135,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 		$this->constants = $constants;
 		$this->static_properties = $properties;
 		$this->fields = $fields;
-		foreach ($fields as $field) {
-			for ($node = $field; $node !== null; $node = $node->duplicate_element()) {
-				$node->attach($this);
-			}
-		}
+		ast_instance_field::attach_all($fields, $this);
 		$this->base_reference = $base_reference;
 		$base_reference?->attach($this);
 		$this->interface_references = $interface_references;

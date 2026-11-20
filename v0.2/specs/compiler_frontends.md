@@ -382,13 +382,34 @@ returns the required target class/interface view or a present `shared<TargetStru
 No virtual member is introduced solely for casting. Same-type/upward operations use
 presence checks and pointer adjustment and do not require RTTI.
 
+## Record and trait destructors
+
+PHP spells the zero-argument method `function __destruct() {}`, C++ spells it
+`~Name() {}`, and JS spells it `destructor() {}`. In a C++ trait, `Name` is the
+authored trait name. Each consumer emits its selected destructor on its own native
+record. Ordinary member visibility, access and nonthrowing cleanup apply.
+[Destructor contract](../../specs/destructors_v0_2.md)
+
+## Abstract trait hooks
+
+A PHP trait can declare `abstract protected function step(): int;`. JS uses
+`protected abstract step(): int;` and C++ uses `protected: virtual int step() = 0;`.
+After inheritance and composition settle, a concrete consumer must supply a concrete
+instance method with compatible parameters, return and visibility. The implementation
+can be local, inherited, or contributed by another trait. Each obligation is checked
+even when no body calls it. Multiple traits may require the same method.
+An ordinary implementation keeps its existing dispatch. An abstract consumer reuses a compatible existing method or carries an unresolved hook
+as one pure virtual slot. Same-name obligations share the slot, with public visibility
+taking precedence. Concrete descendants implement it through ordinary override rules.
+
 ## Explicit ancestor member access
 
 PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
-The C++ flavor uses the actual ancestor type name, such as `Node::evaluate(...)`,
-including ordinary namespace/import qualification. `Parent` is not a special alias.
-C++ may name a more distant strict ancestor to select that lookup starting point.
+The C++ flavor accepts `Parent::evaluate(...)` for a lexical parent method call.
+It also accepts an actual ancestor type name, such as `Node::evaluate(...)`, including
+ordinary namespace/import qualification, to select a particular strict ancestor.
+Inside a contributed trait method the lexical declaring record is the consuming class or struct.
 
 For instance methods these forms select the resolved ancestor implementation on the current object and
 suppress virtual redispatch for that call. Virtual calls made inside that body still

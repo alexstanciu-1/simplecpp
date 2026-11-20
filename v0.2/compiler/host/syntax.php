@@ -28,7 +28,7 @@ final class Syntax_Inspection
 				], $function->parameters),
 				'return_type' => self::name($function, $function->return_type_reference?->spelling(), $function->return_type_position()),
 				'qualified_name' => $function->name(), 'namespace' => $function->namespace,
-				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
+				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->lexical_root()->byte_at($function->header_end)],
 				'body_span' => $function->optional_body() === null ? null : self::span($function->body())];
 			if ($function->is_private) $functions[array_key_last($functions)]['visibility'] = 'private';
 			if ($function->is_protected) $functions[array_key_last($functions)]['visibility'] = 'protected';
@@ -86,8 +86,8 @@ final class Syntax_Inspection
 	 */
 	private static function name(ast_node $owner, string $name, int $position /** uint32 */, ?int $end /** uint32 */ = null): array /** array{text:string,span:array{start:uint32,end:uint32}} */
 	{
-		$token = $owner->root()->tokens->tokens[$position];
-		$last = $owner->root()->tokens->tokens[($end ?? ($position + 1)) - 1];
+		$token = $owner->lexical_root()->tokens->tokens[$position];
+		$last = $owner->lexical_root()->tokens->tokens[($end ?? ($position + 1)) - 1];
 		return ['text' => $name, 'span' => ['start' => $token->offset, 'end' => $last->offset + $last->length]];
 	}
 
@@ -178,7 +178,7 @@ final class Syntax_Inspection
 					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 			}
 			$name_end = $expression->start;
-			while ($expression->root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
+			while ($expression->lexical_root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
 				$name_end++;
 			}
 			return ['kind' => 'call', 'name' => self::name($expression, $expression->name, $expression->start,

@@ -45,6 +45,9 @@ final class ast_file_node extends ast_node
 	/** @var ast_import[] Native non-owning constant binding index into imports. */
 	private readonly array $constant_imports /** array<string,ast_import> */;
 
+	/** Optional source trait declarations and direct use sites, owned by this parse. */
+	public ?trait_file_context $trait_context = null;
+
 	/** PREP FACTS */
 	/** Preparation state: run identity invalidates old emission handles even if reanalysis later succeeds. */
 	private int $preparation_revision /** uint32 */ = 0;

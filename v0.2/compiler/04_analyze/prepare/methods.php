@@ -34,7 +34,7 @@ final class Method_Preparation
 				if (self::compatible($method, $requirement, $symbols, $dependencies, $method)) $exact_slot = true;
 			}
 		}
-		if (!$method->is_constructor()) {
+		if (!$method->is_constructor() && !$method->is_destructor()) {
 			$base = $record->base()?->method_symbol($method->short_name, $symbols, $method, $dependencies)?->declaration();
 			if ($base !== null) {
 				self::contract($base, $symbols, $dependencies);
@@ -61,6 +61,38 @@ final class Method_Preparation
 		if ($record->method_contract_ready) return;
 		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
 		foreach ($record->declaration->methods as $method) self::contract($method, $symbols, $dependencies);
+		$slots = [];
+		foreach ($record->declaration->trait_hooks as $name => $hooks) {
+			$implementation = $record->method_symbol($name, $symbols, $record, $dependencies)?->declaration();
+			$selected = $hooks[0];
+			foreach ($hooks as $hook) {
+				if ($hook->return_type_ready()) $hook->reset_preparation();
+				Function_Preparation::signature($hook, $symbols, $record, $dependencies);
+				if ($selected->is_protected && !$hook->is_protected) $selected = $hook;
+			}
+			$synthesize = $implementation === null && $record->declaration->is_abstract;
+			if ($synthesize) {
+				// Prefer the first signature at the required visibility that satisfies every obligation.
+				foreach ($hooks as $candidate) {
+					if ($candidate->is_protected !== $selected->is_protected) continue;
+					foreach ($hooks as $hook) {
+						if ($candidate !== $hook && self::signature_match($candidate, $hook, $symbols, $dependencies, $record) === null) continue 2;
+					}
+					$selected = $candidate;
+					break;
+				}
+				$implementation = $selected;
+			}
+			if ($implementation === null || ($implementation->is_abstract && !$record->declaration->is_abstract) || $implementation->is_static) {
+				self::fail($selected, 'Trait hook requires a concrete instance method');
+			}
+			foreach ($hooks as $hook) self::compatible($implementation, $hook, $symbols, $dependencies, $record, 'Trait hook');
+			if ($synthesize) {
+				// The record owns signature dependencies; descendants use the normal abstract override contract.
+				$selected->method_contract_ready = true;
+				$slots[$name] = $selected;
+			}
+		}
 		$forwards = [];
 		$adaptations = [];
 		$requirements = [];
@@ -100,7 +132,7 @@ final class Method_Preparation
 		if (!$record->declaration->is_abstract) {
 			$seen = [];
 			for ($type = $record; $type !== null; $type = $type->base()) {
-				foreach ($type->declaration->methods as $name => $method) {
+				foreach ($type->effective_methods() as $name => $method) {
 					if (isset($seen[$name])) continue;
 					$seen[$name] = true;
 					if ($method->is_abstract) throw new diagnostic($record->declaration->source(), $record->declaration->byte_start(),
@@ -108,14 +140,15 @@ final class Method_Preparation
 				}
 			}
 		}
+		if ($slots !== []) $record->settle_hook_slots($slots);
 		$record->method_contract_ready = true;
 	}
 
 	/** Validate a directional contract and report whether its native slot is exact. */
 	private static function compatible(ast_function_declaration $method, ast_function_declaration $base, scope $symbols,
-		?Dependency_Watches $dependencies, dependency_watcher $watcher): bool
+		?Dependency_Watches $dependencies, dependency_watcher $watcher, ?string $contract = null): bool
 	{
-		$contract = $method->is_static ? 'Static redeclaration' : 'Override';
+		$contract ??= $method->is_static ? 'Static redeclaration' : 'Override';
 		if (($method->is_private && !$base->is_private) || ($method->is_protected && !$base->is_private && !$base->is_protected)) self::fail($method, $contract . ' cannot narrow visibility');
 		return self::signature_match($method, $base, $symbols, $dependencies, $watcher)
 			?? self::fail($method, $contract . ' signature must match exactly' . ($method->is_static ? '' : ' except for compatible shared values'));
@@ -151,6 +184,6 @@ final class Method_Preparation
 
 	private static function fail(ast_function_declaration $method, string $message): never
 	{
-		throw new diagnostic($method->source(), $method->root()->byte_at($method->modifier_start ?? $method->start), $message . ': ' . $method->name());
+		throw new diagnostic($method->source(), $method->lexical_root()->byte_at($method->modifier_start ?? $method->start), $message . ': ' . $method->name());
 	}
 }

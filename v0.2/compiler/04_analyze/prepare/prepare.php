@@ -569,7 +569,7 @@ final class Preparation
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
-		$root = $declaration->root();
+		$root = $declaration->lexical_root();
 		if (isset($this->local_frames[count($this->local_frames) - 1][$name])) {
 			throw new diagnostic($source, $root->byte_at($declaration->name_position()),
 				'Duplicate local: ' . $name);
@@ -615,6 +615,7 @@ final class Preparation
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
+			if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $declaration);
 			if (!$type->supports_inferred_local()) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
@@ -641,7 +642,7 @@ final class Preparation
 	/** Resolve a qualified data name once; PHP spells properties separately from constants. */
 	private function bind_static_data(ast_name_expression $syntax, string $qualifier, string $name): bool
 	{
-		$type = $this->symbols->entry($syntax->root()->type_key($qualifier));
+		$type = $this->symbols->entry($syntax->lexical_root()->type_key($qualifier));
 		$this->dependencies?->watch($type, $this->owner);
 		$record = $type->declaration();
 		if (!($record instanceof ast_record_declaration)) return false;
@@ -728,7 +729,7 @@ final class Preparation
 		$local = $this->find_local($statement->name);
 		if ($local === null) {
 			if (($statement->source()->flavor !== flavor::php)
-				&& ($this->symbols->resolve($statement->root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
+				&& ($this->symbols->resolve($statement->lexical_root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Cannot assign to a constant');
 			}
 			throw new diagnostic($statement->source(), $statement->byte_start(),
@@ -873,6 +874,7 @@ final class Preparation
 			$parent = $syntax->parent;
 			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
 				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->owner->parent->is_destructor()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during destruction is forbidden');
 			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 			}
@@ -1078,14 +1080,14 @@ final class Preparation
 				}
 			}
 			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
-				$symbol = $this->symbols->entry($syntax->root()->constant_key($name));
+				$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
 				if ($this->bind_literal($syntax, $symbol)) return;
 				// C++ and JS share the namespace separator with type-qualified members.
 				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
 					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
 				}
 				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-					$constant = runtime_constants::integer($syntax->root()->runtime_constant_key($name));
+					$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
 					if ($constant !== null) {
 						$syntax->settle_runtime_constant($constant);
 						return;
@@ -1171,7 +1173,7 @@ final class Preparation
 	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */
 	private function has_receiver(ast_name_expression $receiver): bool
 	{
-		$file = $receiver->root();
+		$file = $receiver->lexical_root();
 		$prefix = '';
 		foreach (explode('\\', $receiver->name) as $part) {
 			$local = $prefix === '' && $this->find_local($part) !== null;
@@ -1283,7 +1285,7 @@ final class Preparation
 			}
 		}
 		$this->name_lookups++;
-		$file = $call->root();
+		$file = $call->lexical_root();
 		if ($call->member_separator === token_kind::scope) {
 			$this->qualified_call($call, $call->name, $initializing, true);
 			return;
@@ -1391,12 +1393,12 @@ final class Preparation
 		} else {
 			$separator = strrpos($qualified, '::');
 			$written_type = substr($qualified, 0, $separator);
-			$type_symbol = $this->symbols->entry($call->root()->type_key($written_type));
+			$type_symbol = $this->symbols->entry($call->lexical_root()->type_key($written_type));
 			$this->dependencies?->watch($type_symbol, $this->owner);
 			$record = $type_symbol->declaration();
 			$name = substr($qualified, $separator + 2);
 			if ($record === null) {
-				$core = Type_Resolution::core_class($call->root(), $written_type);
+				$core = Type_Resolution::core_class($call->lexical_root(), $written_type);
 				if ($core !== null && $name === $core->factory->name()) {
 					$this->runtime_call($call, $core->factory);
 					return true;
@@ -1477,7 +1479,10 @@ final class Preparation
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
 	{
+		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
+		$result = $function->return_type_def();
+		if ($result instanceof record_type_definition) $this->require_inline_cleanup($result, $call);
 		$receiver = null;
 		if ($function->is_protected && !$function->is_static) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
@@ -1498,7 +1503,7 @@ final class Preparation
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site);
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $site instanceof ast_new_expression);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
@@ -1538,6 +1543,13 @@ final class Preparation
 		}
 	}
 
+	/** Value temporaries and inferred copies watch the payload even when its name is absent at the call site. */
+	private function require_inline_cleanup(record_type_definition $type, ast_node $site): void
+	{
+		$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+		$type->require_destruction($site);
+	}
+
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
 	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration $function,
 		?string $initializing): array /** list<uint16> */
@@ -1556,7 +1568,9 @@ final class Preparation
 				$conversions[] = value_conversion::identity;
 			}
 			else {
-				$conversions[] = $parameter->type_def()->prepare_conversion($argument, conversion_context::typed_destination);
+				$type = $parameter->type_def();
+				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+				$conversions[] = $type->prepare_conversion($argument, conversion_context::typed_destination);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.

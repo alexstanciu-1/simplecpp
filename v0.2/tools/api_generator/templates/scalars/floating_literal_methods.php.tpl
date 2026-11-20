@@ -5,7 +5,7 @@
 			parent::prepare_literal($syntax);
 			return;
 		}
-		$tokens = $syntax->root()->tokens;
+		$tokens = $syntax->lexical_root()->tokens;
 		$negative = $tokens->tokens[$syntax->start]->kind === token_kind::minus;
 		$decimal = ($negative ? '-' : '') . $tokens->text_at($syntax->end - 1);
 		$value = (float) $decimal;

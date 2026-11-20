@@ -15,11 +15,13 @@ final class Import_Preparation
 	public static function files(array $files /** array<string,ast_file_node> */, scope $symbols): void
 	{
 		$errors = [];
+		$traits = [];
+		foreach ($files as $file) $traits += $file->trait_context->origins ?? [];
 		foreach ($files as $file)
 		{
 			foreach ($file->imports as $import)
 			{
-				$message = self::error($file, $import, $symbols);
+				$message = self::error($file, $import, $symbols, $traits);
 				if ($message !== null) {
 					$errors[] = new diagnostic($file->source(), $import->byte_start(), $message);
 				}
@@ -30,8 +32,8 @@ final class Import_Preparation
 		}
 	}
 
-	/** Check the supported kind, absolute target and namespace-body binding conflicts. */
-	private static function error(ast_file_node $file, ast_import $import, scope $symbols): ?string
+	/** Check the supported kind, absolute target and namespace-body binding conflicts. @param ast_trait_declaration[] $traits */
+	private static function error(ast_file_node $file, ast_import $import, scope $symbols, array $traits /** array<string,ast_trait_declaration> */): ?string
 	{
 		$found = false;
 		$kinds = match ($import->kind) {
@@ -41,7 +43,7 @@ final class Import_Preparation
 		};
 		foreach ($kinds as $kind) {
 			$key = $kind . ':' . $import->target;
-			if ($symbols->resolve($key) === null) {
+			if (!isset($traits[$key]) && $symbols->resolve($key) === null) {
 				$runtime = match ($kind) {
 					'func' => runtime_functions::free($key, $file->source()->flavor) !== null,
 					'const' => $file->source()->flavor === flavor::php && runtime_constants::integer($key) !== null,
@@ -62,7 +64,7 @@ final class Import_Preparation
 				return 'Conflicting ' . $label . ' import: ' . $import->local_name;
 			}
 			$local_key = $kind . ':' . Source_Names::resolve($import->local_name, $file->scope->namespace);
-			if (($local_key !== $key) && ($symbols->resolve($local_key) !== null)) {
+			if (($local_key !== $key) && (isset($traits[$local_key]) || $symbols->resolve($local_key) !== null)) {
 				return ucfirst($label) . ' import conflicts with namespace declaration: ' . $import->local_name;
 			}
 		}

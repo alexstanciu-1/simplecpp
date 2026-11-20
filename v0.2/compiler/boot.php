@@ -46,6 +46,8 @@ require_once __DIR__ . '/03_parse/cursor.php';
 require_once __DIR__ . '/03_parse/namespaces.php';
 require_once __DIR__ . '/03_parse/imports.php';
 require_once __DIR__ . '/03_parse/globals.php';
+require_once __DIR__ . '/03_parse/structures/traits.php';
+require_once __DIR__ . '/compiler/traits.php';
 require_once __DIR__ . '/03_parse/structs.php';
 require_once __DIR__ . '/03_parse/enums.php';
 require_once __DIR__ . '/03_parse/constants.php';
