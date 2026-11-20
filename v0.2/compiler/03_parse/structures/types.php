@@ -10,9 +10,9 @@ namespace scpp\compiler;
 class ast_type_reference extends ast_node
 {
 	public readonly string $name;
-	/** Native owning first argument; null for a simple type. */
+	/** Native owning first argument or compound operand; null for a simple type. */
 	public readonly ?ast_type_reference $first_child;
-	/** Native owning next argument in the same chain; all siblings attach to the containing type. */
+	/** Native owning next type in written order; all siblings attach to the containing type. */
 	public readonly ?ast_type_reference $next_sibling;
 
 	/** $start/$end: token boundaries; an empty range anchors an implicit type. Build sibling chains from the end. */
@@ -45,24 +45,18 @@ class ast_type_reference extends ast_node
 
 }
 
-/** The two written contracts of a by-value parameter such as Base&Readable $item. */
-final class ast_intersection_reference extends ast_type_reference
+/** Infix type syntax such as Base&Readable; the children form one chain in written order. */
+final class ast_compound_type_reference extends ast_type_reference
 {
-	public readonly ast_type_reference $left;
-	public readonly ast_type_reference $right;
-
-	public function __construct(ast_type_reference $left, ast_type_reference $right)
-	{
-		parent::__construct($left->start, $right->end, '&');
-		$this->left = $left;
-		$this->right = $right;
-		$left->attach($this);
-		$right->attach($this);
-	}
-
+	/** Render written operands with their infix separator for diagnostics and signature inspection. */
 	public function spelling(): string
 	{
-		return $this->left->spelling() . '&' . $this->right->spelling();
+		$first = $this->first_child;
+		$text = $first->spelling();
+		for ($part = $first->next_sibling; $part !== null; $part = $part->next_sibling) {
+			$text .= $this->name . $part->spelling();
+		}
+		return $text;
 	}
 }
 
