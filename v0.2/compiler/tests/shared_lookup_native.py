@@ -51,6 +51,7 @@ def prove(work, flavor, library):
     main += f'{v}held=null;if (lock({v}watch) !== null) {{return 3;}}return 8;'
 
     indexed = empty_hash('indexed', 'Node', 'int')
+    main = 'prove_previous_source_lookup();' + main
     main = indexed + f'{v}indexed[42]=new Node();if (hash_get_or_null({v}indexed,42) !== {v}indexed[42]) {{return 4;}}' + main
     # Native insertion can create a present-empty slot even though source insertion checks required owners.
     bag = s['klass']('Bag', s['field']('items', 'hash<Node,string>'))
@@ -59,6 +60,8 @@ def prove(work, flavor, library):
     app, out = work / flavor, work / (flavor + '-out')
     write_app(app, flavor, dict(node=node, generation=previous, factory=factory, choose=choose, bag=bag, query=query,
                                 actions=key + argument + visit + attach, main=main))
+    previous_lookup = ROOT / 'compiler/examples/previous_sources/lookup.php.scpp'
+    source_edit(app / 'previous_sources.php', previous_lookup.read_text())
     resident = service(app, out)
     path = app / ('choose.' + flavor)
     edited = choose.replace('return newScope();', 'echo "E";return newScope();')

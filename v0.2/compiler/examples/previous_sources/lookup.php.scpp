@@ -1,0 +1,71 @@
+// Path metadata used by the guarded previous-generation index.
+final class Previous_Source_Module {
+	public readonly string $root;
+
+	public function __construct(string $root) {
+		$this->root = $root;
+	}
+}
+
+final class Previous_Source_Unit {
+	public readonly Previous_Source_Module $module;
+	public readonly string $path;
+
+	public function __construct(Previous_Source_Module $module, string $path) {
+		$this->module = $module;
+		$this->path = $path;
+	}
+}
+
+final class Previous_Source_Entry {
+	public readonly vector<Previous_Source_Unit> $sources;
+
+	public function __construct(vector<Previous_Source_Unit> $sources) {
+		$this->sources = $sources;
+	}
+}
+
+final class Previous_Source_Session {
+	public readonly Previous_Source_Entry $entry;
+
+	public function __construct(Previous_Source_Entry $entry) {
+		$this->entry = $entry;
+	}
+}
+
+// Translate the previous-generation guard and path index from Incremental_Frontend::collect.
+function index_previous_sources(?Previous_Source_Session $previous): hash<Previous_Source_Unit, string> {
+	$old hash<Previous_Source_Unit, string> = [];
+	if ($previous !== null) {
+		foreach ($previous->entry->sources as $unit) {
+			$old[$unit->module->root . "/" . $unit->path] = $unit;
+		}
+	}
+	return $old;
+}
+
+function prove_previous_source_lookup(): void {
+	$cold = index_previous_sources(null);
+	if (hash_get_or_null($cold, "/project/main.php") !== null || count($cold) !== 0) {
+		throw Exception::make("Cold previous-source lookup must leave an empty index");
+	}
+
+	$module = new Previous_Source_Module("/project");
+	$main = new Previous_Source_Unit($module, "main.php");
+	$helper = new Previous_Source_Unit($module, "sub/helper.php");
+	$sources vector<Previous_Source_Unit> = [$main, $helper];
+	$previous = new Previous_Source_Session(new Previous_Source_Entry($sources));
+	$old = index_previous_sources($previous);
+	if (count($old) !== 2 || hash_get_or_null($old, "/project/main.php") !== $main
+		|| hash_get_or_null($old, "/project/sub/helper.php") !== $helper) {
+		throw Exception::make("Previous-source hit must retain the original unit identity");
+	}
+
+	$missing_path = "/project/missing.php";
+	if (hash_get_or_null($old, $missing_path) !== null || hash_get_or_null($old, $missing_path) !== null
+		|| hash_contains($old, $missing_path) || count($old) !== 2
+		|| hash_get_or_null($old, "/project/main.php") !== $main
+		|| hash_get_or_null($old, "/project/sub/helper.php") !== $helper) {
+		throw Exception::make("A missing path must leave the previous-source index unchanged");
+	}
+}

@@ -62,6 +62,12 @@ the method when the settled hash type publishes its shared lookup binding.
 Presence-preserving nullable-returning `find()` is deferred rather than generating a new
 application carrier implicitly. Runtime-specialization behavior remains unchanged.
 
+The [previous-source lookup proof](../examples/previous_sources/lookup.php.scpp)
+ports the optional prior-session guard and path index from the incremental
+frontend. It checks an empty cold-start index, original unit identity on hits,
+and unchanged membership and values after repeated misses. The shared lookup
+native suite runs the proof through entry points in all three flavors.
+
 `application_hashes_native.py` reuses the vector by-value signature/recovery harness
 for both key types and all three flavors with Clang/GCC: independent struct copies,
 shared class identity, cross-file functions/methods, type/default/layout/signature edits,
