@@ -188,6 +188,13 @@ foreach (flavor::cases() as $flavor)
 		file_put_contents($lib_path, '// removed global');
 		$session = $compiler->frontend($directory, $session);
 		verify($slot->status === change_status::removed, 'Removed global lacks tombstone');
+		try {
+			$read->declaration();
+			throw new RuntimeException('Removed global is still readable');
+		}
+		catch (LogicException $error) {
+			verify($error->getMessage() === 'Name reference is not settled or was removed', $error->getMessage());
+		}
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'local/global');
 		verify($session->dependency_watches->observer_count($slot) === 1, 'Missing global lost watcher');
 		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '12')));

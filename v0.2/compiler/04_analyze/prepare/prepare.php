@@ -299,7 +299,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
-					if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
+					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
 				}
@@ -592,7 +592,7 @@ final class Preparation
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
 			|| $function->return_type_def() instanceof generator_type_definition) return null;
-		$local = $test->operand->declaration();
+		$local = $test->operand->local_binding();
 		if ($local instanceof ast_parameter_declaration && $local->type_def() instanceof class_union_type_definition) {
 			return ($paired || $condition === $test) && $test->operand->type_def() === $local->type_def() ? $test : null;
 		}
@@ -621,7 +621,7 @@ final class Preparation
 				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
 			}
 			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
-			if (!(($receiver instanceof ast_name_expression && $receiver->declaration() instanceof ast_local_binding)
+			if (!(($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)
 				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
 			}
@@ -865,7 +865,7 @@ final class Preparation
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
 		if (!($root instanceof ast_this_expression)
-			&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
+			&& (!($root instanceof ast_name_expression) || $root->local_binding() === null)) {
 			throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
 		}
 		return $field;
@@ -1907,7 +1907,7 @@ final class Preparation
 				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
 				if ($type instanceof class_union_type_definition) $this->watch_union_source($argument);
 				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
-					&& ($local = $argument->declaration()) instanceof ast_local_binding
+					&& ($local = $argument->local_binding()) !== null
 					&& isset($this->guards[$local->storage_id()])) {
 					$id = $local->storage_id();
 					$guard = $this->guards[$id];

@@ -162,8 +162,14 @@ interface ast_declaration_site
 	public function lexical_root(): ast_file_node;
 }
 
+/** Identity of a prepared value name, including runtime constants such as STR_PAD_LEFT. */
+interface name_binding
+{
+	public function symbol_key(): string;
+}
+
 /** Shared mutable body storage contract for local declarations and by-value parameters. */
-interface ast_local_binding extends ast_declaration_interface, ast_declaration_site {
+interface ast_local_binding extends ast_declaration_interface, ast_declaration_site, name_binding {
 	public function storage_id(): int /** uint32 */;
 	public function type_def(): type_definition;
 	public function constant(): int|float|bool|null /** int64|float64|bool|null */;

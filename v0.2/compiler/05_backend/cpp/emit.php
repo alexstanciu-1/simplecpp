@@ -1099,7 +1099,7 @@ CPP;
 		$lines = [];
 		$owns_subject = false;
 		if ($dispatch === constant_dispatch::byte_equality) {
-			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->declaration() instanceof ast_local_binding;
+			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->local_binding() !== null;
 			$place = $local ? $subject : 'switch_subject';
 			$tests = [];
 			foreach ($syntax->arms as $i => $arm) {
@@ -1260,7 +1260,7 @@ CPP;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
 		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
-			&& $statement->value->declaration() instanceof ast_local_binding);
+			&& $statement->value->local_binding() !== null);
 		$steps = [];
 		if ($destination instanceof ast_qualified_data) {
 			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
@@ -1413,7 +1413,7 @@ CPP;
 			if (!$conditional) {
 				$subject = $this->value($match->subject, $globals, $declarations, $headers);
 				if (count($match->arms) === 1) $code = '(void)(' . $subject . '); ';
-				elseif (!($match->subject instanceof ast_name_expression && $match->subject->declaration() instanceof ast_local_binding)) {
+				elseif (!($match->subject instanceof ast_name_expression && $match->subject->local_binding() !== null)) {
 					$scope = true;
 					// A field may borrow a temporary receiver that dies at this semicolon. Own the selected bytes.
 					$code = 'const auto dispatch_subject = ' . $subject . '; ';
@@ -1537,7 +1537,7 @@ CPP;
 			$value = $statement->value;
 			$prefix = $this->name($statement->local_def());
 			if (($conversion === value_conversion::identity) && ($value instanceof ast_name_expression)
-				&& ($value->declaration() === $statement->local_def())) {
+				&& $value->refers_to($statement->local_def())) {
 				return '(void)' . $prefix;
 			}
 		}
@@ -1622,7 +1622,7 @@ CPP;
 		}
 		if ($value instanceof ast_field_expression) {
 			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
-				&& ($local = $value->receiver->declaration()) instanceof ast_local_binding && $local->type_def() instanceof class_union_type_definition) {
+				&& ($local = $value->receiver->local_binding()) !== null && $local->type_def() instanceof class_union_type_definition) {
 				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
 				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
@@ -1669,7 +1669,7 @@ CPP;
 			$field = $value->receiver;
 			if ($this->byte_view !== null && $field instanceof ast_field_expression
 				&& $field->field === $this->byte_view->field && $field->receiver instanceof ast_name_expression
-				&& $field->receiver->refers_to($this->byte_view->receiver->declaration())) {
+				&& $field->receiver->refers_to($this->byte_view->receiver->local_def())) {
 				return 'scpp_byte_view.read(' . $this->value($value->index, $global_references, $declarations, $required_headers) . ')';
 			}
 			$receiver = $this->value($field, $global_references, $declarations, $required_headers);
@@ -1748,7 +1748,7 @@ CPP;
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
 				if (!$value->operator->lazy()) {
 					if ($value->left instanceof ast_name_expression && $value->right instanceof ast_name_expression
-						&& $value->left->declaration() instanceof ast_local_binding && $value->right->declaration() instanceof ast_local_binding
+						&& $value->left->local_binding() !== null && $value->right->local_binding() !== null
 						&& $value->left->type_def() === type_bool::instance() && $value->right->type_def() === type_bool::instance()
 						&& $left !== $right) {
 						return '(' . $left . ' != ' . $right . ')';
@@ -1853,7 +1853,7 @@ CPP;
 						$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 						$arguments[] = $function->parameters[$index + 1]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand);
 						$direct = $direct && ($safe || $argument instanceof ast_string_expression
-							|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
+							|| ($argument instanceof ast_name_expression && $argument->local_binding() !== null));
 					}
 					$steps = [];
 					$receiver = $direct
@@ -1902,7 +1902,7 @@ CPP;
 					}
 					// Reading a local string or literal cannot mutate another argument.
 					$direct = $direct && ($safe || $argument instanceof ast_string_expression
-						|| ($argument instanceof ast_name_expression && $argument->declaration() instanceof ast_local_binding));
+						|| ($argument instanceof ast_name_expression && $argument->local_binding() !== null));
 				}
 				$steps = [];
 				$direct = $direct || (count($capture_indices) <= 1 && $this->record_expressions === $records_before);
@@ -2045,7 +2045,7 @@ CPP;
 		// still needs the named receiver binding for the non-const reference parameter.
 		$inline_storage = $base->type_def() instanceof record_type_definition
 			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
-				&& $base->declaration() instanceof ast_local_binding));
+				&& $base->local_binding() !== null));
 		$operand = $this->value($base, $globals, $declarations, $headers);
 		if ($base->type_def() instanceof shared_record_type_definition) {
 			$steps[] = 'auto receiver_owner = ' . $operand . ';';

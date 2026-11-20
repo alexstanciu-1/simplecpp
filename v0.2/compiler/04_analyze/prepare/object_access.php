@@ -17,7 +17,7 @@ final class Object_Access_Preparation
 		}
 		$source = $site->operand->type_def();
 		if ($source instanceof class_union_type_definition && $site->test && $site->operand instanceof ast_name_expression
-			&& $site->operand->declaration() instanceof ast_parameter_declaration && $source->has_arm($target->payload)) {
+			&& $site->operand->local_binding() instanceof ast_parameter_declaration && $source->has_arm($target->payload)) {
 			$source = $source->base;
 		}
 		if (!($source instanceof shared_record_type_definition)) {

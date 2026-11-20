@@ -14,7 +14,7 @@ final class Scoped_Byte_View
 			$field = $call->arguments[0] ?? null;
 			if (!($field instanceof ast_field_expression) || !self::length_read($field)
 				|| !($field->receiver instanceof ast_name_expression)
-				|| !($field->receiver->declaration() instanceof ast_local_declaration)
+				|| !($field->receiver->local_binding() instanceof ast_local_declaration)
 				|| !($field->receiver->type_def() instanceof record_type_definition)
 				|| $body->parent->return_type_def() instanceof generator_type_definition) continue;
 			$loop_read = false;
@@ -42,7 +42,7 @@ final class Scoped_Byte_View
 
 	private static function stable(ast_statement_block $block, ast_field_expression $field, bool $loop, bool &$loop_read): bool
 	{
-		$owner = $field->receiver->declaration();
+		$owner = $field->receiver->local_binding();
 		foreach ($block->references as $ref) {
 			if (!$ref->refers_to($owner)) continue;
 			$use = $ref->parent;
