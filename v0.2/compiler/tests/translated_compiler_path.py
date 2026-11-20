@@ -56,23 +56,41 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     bad = b'\n  return missing_2();\n'
     fixed = b'\n  return answer_2();\n'
     incomplete = b'\n  return answer_2()'
+    unclosed = updated[:updated.index(b'}')]
     samples = {'definition.php': definition, 'initial.source': initial, 'bad.source': bad,
                'fixed.source': fixed, 'updated.source': updated, 'incomplete.source': incomplete,
-               'overflow.source': overflow}
+               'overflow.source': overflow, 'unclosed.source': unclosed}
     for name, data in samples.items():
         (work / name).write_bytes(data)
 
     translated = run(executable, cwd=work)
-    diagnostics = translated.stdout.decode().splitlines()
-    assert len(diagnostics) == 9, translated.stdout
+    parsed, *diagnostics = translated.stdout.decode().splitlines()
+    assert len(diagnostics) == 12, translated.stdout
     oracle = work / 'oracle'
     oracle.mkdir()
     (oracle / 'module.json').write_text('{}')
+
+    (oracle / 'definition.php').write_bytes(definition)
+    (oracle / 'main.php').write_bytes(initial)
+    production_ast = run(PHP, '-r', r"""
+require $argv[1];
+$session = (new \scpp\compiler\Project_Compiler())->frontend($argv[2]);
+$function = $session->scope->resolve('func:answer_2');
+$body = $function->body();
+$return = $body->statements[0];
+if ($body->parent !== $function || $return->parent !== $body || $return->value->parent !== $return) {
+    throw new LogicException('Unexpected production ownership');
+}
+echo implode('|', [$function->symbol_key(), $function->start, $function->header_end, $function->end,
+    $body->start, $body->end, $return->start, $return->end, $return->value->start]);
+""", ROOT / 'compiler/boot.php', oracle)
+    assert parsed == production_ast.stdout.decode(), (parsed, production_ast.stdout)
 
     errors = [
         ('incomplete', definition, incomplete, 'main.php', len(incomplete)),
         ('bad', updated, bad, 'main.php', bad.index(b'missing_2')),
         ('overflow', overflow, initial, 'definition.php', overflow.index(b'9223372036854775808')),
+        ('unclosed', unclosed, fixed, 'definition.php', len(unclosed)),
     ]
     for index, (name, current_definition, entry, expected_path, expected_offset) in enumerate(errors):
         path, offset, message = diagnostics[index * 3:index * 3 + 3]
@@ -106,4 +124,4 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
         actual = run(generated, expected=status)
         assert (actual.stdout, actual.stderr) == (expected.stdout, expected.stderr)
 
-print('Translated parse, preparation, diagnostics, recovery, and executable behavior match the PHP oracle.')
+print('Translated function ranges, diagnostics, recovery, and executable behavior match the PHP oracle.')

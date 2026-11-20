@@ -18,9 +18,9 @@ final class Prepared_Call {
 	}
 }
 
-function prepare_literal(Function_Syntax $syntax): int {
-	$source = $syntax->source;
-	$token = $syntax->literal;
+function prepare_literal(Translation_Scope $scope): int {
+	$source = $scope->source;
+	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
 		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
 	}
@@ -36,16 +36,19 @@ function prepare_literal(Function_Syntax $syntax): int {
 	return $value;
 }
 
-// Owns and resolves the single collected declaration in this grammar.
+// The collected definition owns the source generation and its completed function.
 final class Translation_Scope {
-	public readonly Function_Syntax $declaration;
+	public readonly Translation_Source $source;
+	public readonly Function_Declaration $declaration;
 
-	public function __construct(Function_Syntax $declaration) {
+	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
+		$declaration->body();
+		$this->source = $source;
 		$this->declaration = $declaration;
 	}
 
-	public function resolve(string $name): ?Function_Syntax {
-		if ($this->declaration->name === $name) {
+	public function resolve(string $key): ?Function_Declaration {
+		if ($this->declaration->symbol_key() === $key) {
 			return $this->declaration;
 		}
 		return null;
@@ -53,14 +56,14 @@ final class Translation_Scope {
 }
 
 function prepare_call(Prepared_Declaration $candidate, Call_Syntax $call): Prepared_Call {
-	if ($candidate->scope->resolve($call->name) === null) {
+	if ($candidate->scope->resolve("func:" . $call->name) === null) {
 		throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
 	}
 	return new Prepared_Call($candidate);
 }
 
 function emit_translation(Prepared_Call $entry): string {
-	$name = "source_" . bin2hex($entry->target->scope->declaration->name);
+	$name = "source_" . bin2hex($entry->target->scope->declaration->short_name);
 	$value = (string)$entry->target->value;
 	return "#include <scpp/core/scalars.hpp>\n#include <scpp/entry.hpp>\n"
 		. "SCPP_REQUIRE_ENTRY_TARGET(31);\n"
@@ -72,28 +75,37 @@ function emit_translation(Prepared_Call $entry): string {
 // The last successful preparation and emission belong to one retained compiler.
 final class Translation {
 	private ?Prepared_Declaration $definition = null;
+	private ?Call_Syntax $entry_syntax = null;
 	private string $output = "";
 
 	public function compile(string $definition_text, string $entry_text): string {
 		$definition = $this->definition;
-		if ($definition === null || $definition_text !== $definition->scope->declaration->source->text) {
-			$parser = new Translation_Parser(new Translation_Source("definition.php", $definition_text));
-			$scope = new Translation_Scope($parser->parse_declaration());
-			$value = prepare_literal($scope->declaration);
-			$definition = new Prepared_Declaration($scope, $value);
+		if ($definition === null || $definition_text !== $definition->scope->source->text) {
+			$source = new Translation_Source("definition.php", $definition_text);
+			$parser = new Translation_Parser($source);
+			$scope = new Translation_Scope($source, $parser->parse_declaration());
+			$definition = new Prepared_Declaration($scope, prepare_literal($scope));
 		}
 
-		$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
-		$call = $parser->parse_entry();
+		$call = $this->entry_syntax;
+		if ($call === null || $entry_text !== $call->source->text) {
+			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
+			$call = $parser->parse_entry();
+		}
 		$entry = prepare_call($definition, $call);
 		$output = emit_translation($entry);
 		$this->definition = $definition;
+		$this->entry_syntax = $call;
 		$this->output = $output;
 		return $output;
 	}
 
 	public function declaration(): ?Prepared_Declaration {
 		return $this->definition;
+	}
+
+	public function entry_syntax(): ?Call_Syntax {
+		return $this->entry_syntax;
 	}
 
 	public function published_output(): string {
