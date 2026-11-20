@@ -6,7 +6,7 @@ from application_vectors_native import measure
 from extends_native import source_edit
 
 
-def revisions(work,flavor,sources,edits, *, unaffected_source=None):
+def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_revisions=None):
     app=work/flavor;app.mkdir();out=work/(flavor+'-out');rows=[]
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
     for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
@@ -30,7 +30,7 @@ def revisions(work,flavor,sources,edits, *, unaffected_source=None):
                 continue
             assert 'error' not in got and 'error' not in clean,(flavor,revision,got,clean)
             assert artifacts(out)==artifacts(fresh),(flavor,revision)
-            if revision and unaffected_source:
+            if revision and unaffected_source and (unaffected_revisions is None or revision in unaffected_revisions):
                 assert got['preparation']['reused'] and not any(p.endswith('/'+unaffected_source) for p in got['emitted_sources']), got
             row={'revision':revision,'php_ms':got['php_ms'],'prepared':got['preparation']['prepared']}
             if revision==1 and name is None:assert got['preparation']['prepared']==0

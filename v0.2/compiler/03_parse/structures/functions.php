@@ -421,6 +421,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		return $this->short_name === '__construct' && ($this->parent ?? null) instanceof ast_record_declaration;
 	}
 
+	public function is_destructor(): bool
+	{
+		return $this->short_name === '__destruct' && ($this->parent ?? null) instanceof ast_record_declaration;
+	}
+
 	/** Borrow the settled signature and lexical parent. Only the new executable subtree owns mutable body facts. */
 	public function instantiate(called_method_instance $instance): self
 	{
@@ -537,7 +542,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Return: token position. */
 	public function name_position(): int /** uint32 */
 	{
-		if ($this->is_constructor()) return $this->return_type_reference->start;
+		if ($this->is_constructor() || $this->is_destructor()) return $this->return_type_reference->start;
 		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
 			&& $this->lexical_root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start

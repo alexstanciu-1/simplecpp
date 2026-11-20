@@ -65,7 +65,7 @@ final class Cpp_Headers
 					continue;
 				}
 				if ($node instanceof ast_function_declaration) {
-					if ($node->is_constructor()) continue;
+					if ($node->is_constructor() || $node->is_destructor()) continue;
 					if ($node->has_virtual_dispatch()) {
 						$this->declarations[$node->symbol_key()] = $this->publish_record($node->parent, $emitter, $program->session?->cpp_namespace ?? 'App');
 						continue;

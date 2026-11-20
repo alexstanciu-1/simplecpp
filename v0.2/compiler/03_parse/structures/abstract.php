@@ -92,7 +92,7 @@ abstract class ast_node
 	{
 		$node = $this;
 		while (!($node instanceof ast_file_node)) {
-			if (($node instanceof ast_function_declaration || $node instanceof ast_instance_field) && $node->trait_origin !== null) {
+			if (($node instanceof ast_function_declaration || $node instanceof ast_instance_field || $node instanceof ast_literal_declaration) && $node->trait_origin !== null) {
 				return $node->trait_origin->root();
 			}
 			$node = $node->parent;

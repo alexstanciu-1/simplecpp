@@ -26,6 +26,8 @@ final class record_type_definition extends type_definition implements dependency
 	/** PREP FACTS */
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private bool $ready = false;
+	/** Prepared fact: callable entries for unresolved trait hooks owned by this abstract record. @var symbol_entry[] */
+	private array $hook_slots /** array<string,symbol_entry> */ = [];
 	/** Prepared fact: abstract/interface obligations checked after signatures; cleared with nominal layout invalidation. */
 	public bool $method_contract_ready = false;
 	/** Prepared fact: non-owning resolved base, null for no base or invalidated layout. */
@@ -66,6 +68,7 @@ final class record_type_definition extends type_definition implements dependency
 		$this->dependencies?->forget($this);
 		$this->ready = false;
 		$this->method_contract_ready = false;
+		$this->hook_slots = [];
 		$this->base_type = null;
 		$this->iterator = null;
 		$this->interfaces = [];
@@ -87,6 +90,7 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->ready) $this->dependencies->changed($this->symbol);
 		$this->ready = false;
 		$this->method_contract_ready = false;
+		$this->hook_slots = [];
 		$this->base_type = null;
 		$this->iterator = null;
 		$this->interfaces = [];
@@ -131,6 +135,7 @@ final class record_type_definition extends type_definition implements dependency
 				if ($base->declaration->is_final) throw new diagnostic($written->source(), $written->byte_start(), 'Cannot extend final class: ' . $base->name);
 				$base->prepare_layout($symbols, $active, $work);
 				$this->base_type = $base;
+				$base->require_destruction($written);
 				$this->validate_inherited_members();
 			}
 		}
@@ -316,6 +321,24 @@ final class record_type_definition extends type_definition implements dependency
 		return null;
 	}
 
+	/** Publish only after the entire record contract succeeds. @param ast_function_declaration[] $hooks */
+	public function settle_hook_slots(array $hooks /** array<string,ast_function_declaration> */): void
+	{
+		foreach ($hooks as $name => $hook) {
+			$entry = new symbol_entry();
+			$entry->publish($hook);
+			$this->hook_slots[$name] = $entry;
+		}
+	}
+
+	/** Authored methods and the selected abstract declarations native layout and descendant checks must see. @return ast_function_declaration[] */
+	public function effective_methods(): array /** array<string,ast_function_declaration> */
+	{
+		$methods = $this->declaration->methods;
+		foreach ($this->hook_slots as $name => $entry) $methods[$name] = $entry->declaration();
+		return $methods;
+	}
+
 	/** Follow settled ancestry while observing absent nearer methods as well as the selected contract. */
 	public function method_symbol(string $name, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): ?symbol_entry
 	{
@@ -324,6 +347,7 @@ final class record_type_definition extends type_definition implements dependency
 			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
 			$dependencies?->watch($symbol, $watcher);
 			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
+			if (isset($type->hook_slots[$name])) return $type->hook_slots[$name];
 		}
 		foreach ($this->interface_requirements($name) as $method) {
 			$symbol = $symbols->entry($method->symbol_key());
@@ -336,7 +360,7 @@ final class record_type_definition extends type_definition implements dependency
 	/** Native layout follows validated written virtual contracts, including inherited ones. */
 	public function polymorphic(): bool
 	{
-		if ($this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
+		if ($this->hook_slots !== [] || $this->declaration->kind === record_kind::interface_type || $this->interfaces !== []) return true;
 		foreach ($this->declaration->methods as $method) if ($method->has_virtual_dispatch()) return true;
 		return $this->base_type?->polymorphic() ?? false;
 	}
@@ -393,11 +417,27 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */
-	public function require_complete_value(ast_node $site): void
+	public function require_complete_value(ast_node $site, bool $runtime_owned = false): void
 	{
+		$this->require_destruction($site, $runtime_owned);
 		if (!$this->declaration->is_abstract) return;
 		throw new diagnostic($site->source(), $site->byte_start(), $this->declaration->kind === record_kind::structure
 			? 'Abstract struct cannot be used as a complete value: ' . $this->name : 'Cannot instantiate an abstract class');
+	}
+
+	/** An inline value cleans up in its lexical scope; native allocation and container helpers require public access. */
+	public function require_destruction(ast_node $site, bool $runtime_owned = false): void
+	{
+		$method = $this->declaration->methods['__destruct'] ?? null;
+		if ($method === null || (!$method->is_private && !$method->is_protected)) return;
+		if (!$runtime_owned) {
+			for ($context = $site; isset($context->parent); $context = $context->parent) {
+				if (!($context instanceof ast_record_declaration)) continue;
+				if ($context === $this->declaration || ($method->is_protected && $this->permits_protected_access($context))) return;
+				break;
+			}
+		}
+		throw new diagnostic($site->source(), $site->byte_start(), 'Inaccessible destructor: ' . $this->name);
 	}
 
 	public function supports_inferred_local(): bool

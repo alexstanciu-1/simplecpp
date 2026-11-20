@@ -182,51 +182,7 @@ final class Function_Preparation
 				continue;
 			}
 			$dependencies?->forget($declaration);
-			$type = $declaration->return_type_reference === null ? null
-				: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true);
-			if ($type === null) {
-				throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
-					'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
-			}
-			$optional = false;
-			foreach ($declaration->parameters as $parameter) {
-				if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
-				}
-				$parameter->reset_preparation();
-				$parameter_type = Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies);
-				if ($parameter_type === null) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
-				}
-				if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
-				}
-				$parameter->settle_type($parameter_type);
-				$default = $parameter->default_value;
-				if ($default !== null) {
-					if ($parameter->mode === passing_mode::reference) {
-						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
-					}
-					if ($parameter_type instanceof enum_type_definition) {
-						if (!($default instanceof ast_name_expression)
-							|| !Enum_Preparation::reference($default, $symbols, $declaration, $dependencies)) {
-							throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
-						}
-					} else {
-						if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
-							|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
-							throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
-						}
-						type_registry::prepare_literal($default);
-					}
-					$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
-					$optional = true;
-				}
-				elseif ($optional) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
-				}
-			}
-			$declaration->settle_return_type($type);
+			self::signature($declaration, $symbols, $declaration, $dependencies);
 		}
 		foreach ($symbols->declarations as $declaration) {
 			if ($declaration instanceof ast_function_declaration) Method_Preparation::contract($declaration, $symbols, $dependencies);
@@ -236,6 +192,56 @@ final class Function_Preparation
 		}
 		foreach ($iterators as $iterator) $iterator->prepare_iterator($symbols);
 		return $symbols;
+	}
+
+	/** Settle ordinary callable syntax. Trait hook type dependencies belong to the consuming record contract. */
+	public static function signature(ast_function_declaration $declaration, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): void
+	{
+		$type = $declaration->return_type_reference === null ? null
+			: Type_Resolution::signature($declaration->return_type_reference, $symbols, $declaration, $dependencies, true, $watcher);
+		if ($type === null) {
+			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
+				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
+		}
+		$optional = false;
+		foreach ($declaration->parameters as $parameter) {
+			if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
+			}
+			$parameter->reset_preparation();
+			$parameter_type = Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
+			if ($parameter_type === null) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
+			}
+			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
+			}
+			$parameter->settle_type($parameter_type);
+			$default = $parameter->default_value;
+			if ($default !== null) {
+				if ($parameter->mode === passing_mode::reference) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
+				}
+				if ($parameter_type instanceof enum_type_definition) {
+					if (!($default instanceof ast_name_expression)
+						|| !Enum_Preparation::reference($default, $symbols, $watcher, $dependencies)) {
+						throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
+					}
+				} else {
+					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
+						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
+						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+					}
+					type_registry::prepare_literal($default);
+				}
+				$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
+				$optional = true;
+			}
+			elseif ($optional) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
+			}
+		}
+		$declaration->settle_return_type($type);
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */

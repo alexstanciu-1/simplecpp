@@ -536,6 +536,7 @@ final class Preparation
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
+			if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $declaration);
 			if (!$type->supports_inferred_local()) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
@@ -777,6 +778,7 @@ final class Preparation
 			$parent = $syntax->parent;
 			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
 				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->owner->parent->is_destructor()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during destruction is forbidden');
 			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
 			}
@@ -1365,7 +1367,10 @@ final class Preparation
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
 	{
+		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
+		$result = $function->return_type_def();
+		if ($result instanceof record_type_definition) $this->require_inline_cleanup($result, $call);
 		$receiver = null;
 		if ($function->is_protected && !$function->is_static) {
 			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
@@ -1386,7 +1391,7 @@ final class Preparation
 	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
 	{
 		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site);
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $site instanceof ast_new_expression);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
@@ -1426,6 +1431,13 @@ final class Preparation
 		}
 	}
 
+	/** Value temporaries and inferred copies watch the payload even when its name is absent at the call site. */
+	private function require_inline_cleanup(record_type_definition $type, ast_node $site): void
+	{
+		$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner);
+		$type->require_destruction($site);
+	}
+
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
 	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration $function,
 		?string $initializing): array /** list<uint16> */
@@ -1444,7 +1456,9 @@ final class Preparation
 				$conversions[] = value_conversion::identity;
 			}
 			else {
-				$conversions[] = $parameter->type_def()->prepare_conversion($argument, conversion_context::typed_destination);
+				$type = $parameter->type_def();
+				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+				$conversions[] = $type->prepare_conversion($argument, conversion_context::typed_destination);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.

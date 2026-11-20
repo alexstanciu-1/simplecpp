@@ -111,16 +111,18 @@ final class Cpp_Emitter
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
 			}
-			if ($node->definition->polymorphic()) {
+			$virtual = $node->definition->polymorphic();
+			$authored = isset($node->methods['__destruct']);
+			if ($virtual || $authored) {
 				$name = Cpp_Identifier::source($node->short_name);
-				$layout[] = "\tvirtual ~$name() noexcept = default;";
+				$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
 				if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
 				$layout[] = "\t$name(const $name&) = default;";
 				$layout[] = "\t$name($name&&) = default;";
 				$layout[] = "\t$name& operator=(const $name&) = default;";
 				$layout[] = "\t$name& operator=($name&&) = default;";
 			}
-			foreach ($node->methods as $method) {
+			foreach ($node->definition->effective_methods() as $method) {
 				if (!$method->has_virtual_dispatch()) continue;
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
@@ -476,7 +478,7 @@ CPP;
 					$name = Cpp_Identifier::source($function->parent->short_name);
 					$definitions[] = $owner->payload->cpp_type() . '::' . $name . '() : ' . $name . '(' . implode(', ', $defaults) . ") {}\n";
 				}
-			} else {
+			} elseif (!$function->is_destructor()) {
 				$declarations[$name] = $function;
 			}
 			$this->adapter_flavor = null;
@@ -486,7 +488,7 @@ CPP;
 				continue;
 			}
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
-			if ($function->is_constructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
 			if ($first instanceof ast_base_statement) {
@@ -1869,7 +1871,7 @@ CPP;
 		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
 			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
 		}
-		foreach (array_merge($record->methods, $record->definition->interface_forwards) as $method) {
+		foreach (array_merge($record->definition->effective_methods(), $record->definition->interface_forwards) as $method) {
 			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
@@ -1898,6 +1900,7 @@ CPP;
 	 */
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
+		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);
 		if ($function->is_constructor()) {
 			if (self::self_value_constructor($function)) array_unshift($parameters, 'int');
