@@ -64,9 +64,9 @@ final class Function_Preparation
 				$statement->protected_completion = $statement->completion = null;
 				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
-				if ($statement->handler !== null) {
-					$statement->handler->binding->reset_preparation();
-					self::reset_block($statement->handler->body);
+				foreach ($statement->handlers as $handler) {
+					$handler->binding->reset_preparation();
+					self::reset_block($handler->body);
 				}
 				if ($statement->finalizer !== null) self::reset_block($statement->finalizer);
 				continue;
@@ -135,6 +135,11 @@ final class Function_Preparation
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
 			self::expression($value->body);
+			return;
+		}
+		if ($value instanceof ast_condition_assignment) {
+			self::expression($value->target);
+			self::expression($value->value);
 			return;
 		}
 		if ($value instanceof ast_ternary_expression) {

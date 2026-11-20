@@ -58,9 +58,15 @@ final class ast_keyword_expression extends ast_expression
 		$this->word = $word;
 	}
 
-	public function settle_scalar(type_definition $type, bool|null $value): void
+	public function settle_boolean(type_definition $type, bool $value): void
 	{
 		$this->settle_value($type, $value, true);
+	}
+
+	/** Null and explicit carrier sentinels are known by their literal type alone. */
+	public function settle_keyword(type_definition $type): void
+	{
+		$this->settle_value($type, null, true);
 	}
 }
 
@@ -165,7 +171,7 @@ class ast_name_expression extends ast_expression
 	}
 
 	/** Resolve a published declaration through its live identity; direct local links stay within the owning body. */
-	public function declaration(): ast_local_binding|ast_global_declaration|ast_constant_declaration|runtime_integer_constant|ast_enum_case
+	public function declaration(): name_binding
 	{
 		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->declaration();
 		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof ast_enum_case) {
@@ -183,11 +189,16 @@ class ast_name_expression extends ast_expression
 		return $this->binding === $local || ($this->binding instanceof ast_object_access_expression && $this->binding->operand->refers_to($local));
 	}
 
+	/** Return local storage for this occurrence, following a narrowing guard to its original variable. */
+	public function local_binding(): ?ast_local_binding
+	{
+		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->local_binding();
+		return $this->binding instanceof ast_local_binding ? $this->binding : null;
+	}
+
 	public function local_def(): ast_local_binding
 	{
-		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->local_def();
-		return $this->binding instanceof ast_local_binding
-			? $this->binding : throw new \LogicException('Local reference is not settled');
+		return $this->local_binding() ?? throw new \LogicException('Local reference is not settled');
 	}
 
 	public function reset_preparation(): void

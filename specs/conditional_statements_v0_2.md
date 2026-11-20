@@ -39,6 +39,29 @@ Existing condition conversion, return completion, exception and control-transfer
 rules apply unchanged. A supported `break` or `continue` inside an unbraced
 conditional arm still requires a suitable enclosing construct.
 
+## Parenthesized local assignment in a condition
+
+All three flavors accept a plain assignment to a previously declared local in
+an `if`/`elseif`, `while`, `do ... while`, or final `for` test. The assignment
+requires its own parentheses, as in `while (($x = nextInt()) >= 0)`. Its result
+may be tested directly, compared using an existing equality or ordering operator,
+tested with `isset`, negated, or combined with `&&` and `||`.
+
+Each time evaluation reaches the assignment, evaluate the RHS once, apply the
+ordinary assignment conversion, then store and test the converted value. A failed
+RHS or conversion skips the final store. Short-circuiting skips the entire
+assignment. A loop's final false test still stores its value. A break skips the
+next test. The local retains its existing lexical scope.
+
+In PHP flavor, `strpos` returns `result_or_false<int>`. Use
+`while (isset(($pos = strpos($text, $needle, $offset))))` to accept offset zero
+and stop on a miss. The existing carrier comparison rules still apply:
+`!== false` compares the extracted payload and can throw on a miss.
+
+Declarations, parameter/global writes, field and index writes, chained assignments,
+compound assignments and using an assignment as a general expression remain deferred
+for this form.
+
 ## Standalone lexical blocks
 
 A braced block `{ statements }` may itself appear wherever an executable statement

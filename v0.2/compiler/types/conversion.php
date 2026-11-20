@@ -59,11 +59,8 @@ final class value_conversion
 	public const int guarded_intersection /** uint16 */ = 27;
 
 	/** Inspection only; preparation and lowering use numeric operations directly. */
-	public static function name(int|exit_conversion $code /** uint16|exit_conversion */): string
+	public static function name(int $code /** uint16 */): string
 	{
-		if ($code instanceof exit_conversion) {
-			return $code->name;
-		}
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
 			self::guarded_intersection => 'guarded_intersection',

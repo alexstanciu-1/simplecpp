@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published integer literal from runtime metadata, e.g. PHP STR_PAD_LEFT. */
-final readonly class runtime_integer_constant
+final readonly class runtime_integer_constant implements name_binding
 {
 	private string $key;
 	public int $value /** int64 */;

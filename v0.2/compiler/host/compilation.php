@@ -100,16 +100,15 @@ final class Compilation_Inspection
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
 				$statements[] = $row;
 			}
+			elseif ($statement instanceof ast_rethrow_statement) $statements[] = ['kind' => 'rethrow'];
 			elseif ($statement instanceof ast_throw_statement) {
 				$statements[] = self::value($statement->operation);
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				$row = ['kind' => 'try', 'body' => self::body($statement->body)];
-				if ($statement->handler !== null) {
-					$row['catch_type'] = $statement->handler->binding->type_def()->name;
-					$row['binding'] = $statement->handler->binding->short_name;
-					$row['handler'] = self::body($statement->handler->body);
-				}
+				$row['handlers'] = array_map(static fn(ast_catch_clause $handler): array => [
+					'catch_type' => $handler->binding->type_def()->name, 'binding' => $handler->binding->short_name,
+					'body' => self::body($handler->body)], $statement->handlers);
 				if ($statement->finalizer !== null) $row['finally'] = self::body($statement->finalizer);
 				$statements[] = $row;
 			}
@@ -129,7 +128,12 @@ final class Compilation_Inspection
 				$statements[] = self::binding($statement);
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$statements[] = ['kind' => 'return', 'conversion' => value_conversion::name($statement->conversion()),
+				// Inspection also accepts a nested block directly. Recover its enclosing return destination.
+				$owner = $program;
+				while (!($owner instanceof ast_function_body)) $owner = $owner->parent;
+				$code = $statement->conversion();
+				$statements[] = ['kind' => 'return', 'conversion' => $owner->parent->is_implicit_entry
+					? exit_conversion::from($code)->name : value_conversion::name($code),
 					'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_return_statement) {
@@ -232,6 +236,10 @@ final class Compilation_Inspection
 		if ($value instanceof ast_unary_expression) {
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
+		}
+		if ($value instanceof ast_condition_assignment) {
+			$row += ['kind' => 'condition_assignment', 'target' => $value->target->local_def()->storage_id(),
+				'conversion' => value_conversion::name($value->conversion), 'value' => self::value($value->value)];
 		}
 		if ($value instanceof ast_ternary_expression) {
 			$row += ['condition' => self::value($value->condition), 'when_true' => self::value($value->when_true), 'when_false' => self::value($value->when_false)];

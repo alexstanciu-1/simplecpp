@@ -58,6 +58,8 @@ final class Preparation
 	private ?array $switch_break_states = null;
 	/** Inherited by nested statements inside a finalizer. */
 	private bool $in_finalizer = false;
+	/** Permission is lexical and restored before each sibling finally region. */
+	private bool $in_catch = false;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
@@ -218,6 +220,10 @@ final class Preparation
 			elseif ($statement instanceof ast_loop_statement) {
 				$next = $this->loop($statement, $source, $target, $function);
 			}
+			elseif ($statement instanceof ast_rethrow_statement) {
+				if (!$this->in_catch) throw new diagnostic($source, $statement->byte_start(), 'Bare throw requires an enclosing catch body');
+				$next = statement_completion::throws;
+			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$this->prepare_throw($statement->operation);
 				$next = statement_completion::throws;
@@ -299,7 +305,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
-					if (!($statement->receiver->declaration() instanceof ast_local_binding)) {
+					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
 				}
@@ -358,7 +364,7 @@ final class Preparation
 					$this->value($statement->value);
 					$this->require_integer($statement->value, 'Entry return requires int64');
 					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(),
-							$target, $statement->value));
+							$target, $statement->value)->value);
 				}
 				$next = statement_completion::returns;
 			}
@@ -379,15 +385,22 @@ final class Preparation
 		}
 		$outer_finalizer = $this->finalizer_block;
 		$in_finalizer = $this->in_finalizer;
+		$outer_catch = $this->in_catch;
 		try {
-			$handler = $syntax->handler;
-			if ($handler !== null) {
+			$completion = $this->lexical_block($syntax->body, $target, $function);
+			$seen = [];
+			foreach ($syntax->handlers as $handler) {
 				$caught = Type_Resolution::local($handler->type, $this->symbols, $this->owner, $this->dependencies);
 				$this->require_exception($caught, $handler->type, true);
+				if (count($syntax->handlers) > 1) {
+					$this->check_catch_order($handler, $caught, $seen);
+					$seen[spl_object_id($caught)] = true;
+				}
 				$handler->binding->settle_type($caught);
+				$this->in_catch = true;
+				$completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
 			}
-			$completion = $this->lexical_block($syntax->body, $target, $function);
-			if ($handler !== null) $completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
+			$this->in_catch = $outer_catch;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
@@ -402,7 +415,20 @@ final class Preparation
 		} finally {
 			$this->finalizer_block = $outer_finalizer;
 			$this->in_finalizer = $in_finalizer;
+			$this->in_catch = $outer_catch;
 		}
+	}
+
+	/** A previous catch of this type, an ancestor or the runtime root covers the entire arm. @param bool[] $seen */
+	private function check_catch_order(ast_catch_clause $handler, type_definition $caught, array $seen /** array<int,bool> */): void
+	{
+		if ($seen === []) return;
+		$shadowed = isset($seen[spl_object_id(type_registry::exception())]);
+		for ($record = $caught instanceof shared_record_type_definition ? $caught->payload : null;
+			!$shadowed && $record !== null; $record = $record->base()) {
+			$shadowed = isset($seen[spl_object_id($record->required)]);
+		}
+		if ($shadowed) throw new diagnostic($handler->source(), $handler->byte_start(), 'Catch is shadowed by an earlier handler: ' . $caught->name);
 	}
 
 	private function break_target(): ast_repeating_statement|ast_switch_statement|null
@@ -592,7 +618,7 @@ final class Preparation
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
 			|| $function->return_type_def() instanceof generator_type_definition) return null;
-		$local = $test->operand->declaration();
+		$local = $test->operand->local_binding();
 		if ($local instanceof ast_parameter_declaration && $local->type_def() instanceof class_union_type_definition) {
 			return ($paired || $condition === $test) && $test->operand->type_def() === $local->type_def() ? $test : null;
 		}
@@ -621,7 +647,7 @@ final class Preparation
 				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
 			}
 			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
-			if (!(($receiver instanceof ast_name_expression && $receiver->declaration() instanceof ast_local_binding)
+			if (!(($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)
 				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
 			}
@@ -865,10 +891,33 @@ final class Preparation
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
 		if (!($root instanceof ast_this_expression)
-			&& (!($root instanceof ast_name_expression) || !($root->declaration() instanceof ast_local_binding))) {
+			&& (!($root instanceof ast_name_expression) || $root->local_binding() === null)) {
 			throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
 		}
 		return $field;
+	}
+
+	/** Resolve a local write without introducing a binding or applying a read-time narrowed type. */
+	private function assignment_local(ast_node $site, string $name): ast_local_binding
+	{
+		$this->name_lookups++;
+		$local = $this->find_local($name);
+		if ($local === null) {
+			if (($site->source()->flavor !== flavor::php)
+				&& ($this->symbols->resolve($site->lexical_root()->constant_key($name)) instanceof ast_constant_declaration)) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot assign to a constant');
+			}
+			throw new diagnostic($site->source(), $site->byte_start(),
+				'Assignment requires an existing local; global writes are deferred: ' . $name);
+		}
+		return $local;
+	}
+
+	/** A conditional write may be skipped, so it cannot publish a latest-value proof. */
+	private function record_assignment(ast_local_binding $local, ?ast_assignment_statement $write): void
+	{
+		unset($this->guards[$local->storage_id()]);
+		$this->latest_writes[$local->storage_id()] = $write;
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
@@ -888,16 +937,7 @@ final class Preparation
 			$statement->require_update_type($statement->target->type_def());
 			return;
 		}
-		$this->name_lookups++;
-		$local = $this->find_local($statement->name);
-		if ($local === null) {
-			if (($statement->source()->flavor !== flavor::php)
-				&& ($this->symbols->resolve($statement->lexical_root()->constant_key($statement->name)) instanceof ast_constant_declaration)) {
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'Cannot assign to a constant');
-			}
-			throw new diagnostic($statement->source(), $statement->byte_start(),
-				'Assignment requires an existing local; global writes are deferred: ' . $statement->name);
-		}
+		$local = $this->assignment_local($statement, $statement->name);
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
 			$statement->require_update_type($type);
@@ -921,8 +961,7 @@ final class Preparation
 		else {
 			$statement->prepare_local_compound($local);
 		}
-		unset($this->guards[$local->storage_id()]);
-		$this->latest_writes[$local->storage_id()] = $statement;
+		$this->record_assignment($local, $statement);
 	}
 
 	/** Prepare ordered elements once using the destination contract; nested literals inherit their element destination. */
@@ -979,6 +1018,15 @@ final class Preparation
 		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
 		if ($syntax instanceof ast_collection_expression) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
+		}
+		if ($syntax instanceof ast_condition_assignment) {
+			if (!$syntax->in_condition()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Parenthesized assignment requires a control-statement condition');
+			$local = $this->assignment_local($syntax, $syntax->target->name);
+			if (!($local instanceof ast_local_declaration)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Condition assignment requires a declared local');
+			$this->value($syntax->value, $initializing);
+			$syntax->settle_assignment($local, $local->type_def()->prepare_conversion($syntax->value, conversion_context::assignment));
+			$this->record_assignment($local, null);
+			return;
 		}
 		if ($syntax instanceof ast_ternary_expression) {
 			$this->condition($syntax->condition, $initializing);
@@ -1907,7 +1955,7 @@ final class Preparation
 				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
 				if ($type instanceof class_union_type_definition) $this->watch_union_source($argument);
 				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
-					&& ($local = $argument->declaration()) instanceof ast_local_binding
+					&& ($local = $argument->local_binding()) !== null
 					&& isset($this->guards[$local->storage_id()])) {
 					$id = $local->storage_id();
 					$guard = $this->guards[$id];

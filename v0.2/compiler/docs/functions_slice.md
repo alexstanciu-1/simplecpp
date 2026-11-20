@@ -35,8 +35,8 @@ separate native exit-status conversion.
 - `ast_call_expression` owns source-ordered arguments and prepared positional
   conversion decisions, plus the stable callee symbol. `ast_call_statement` owns
   one such expression; it does not duplicate the call's name or semantic facts.
-- `ast_return_statement` retains either a generated `value_conversion` or the
-  existing entry `exit_conversion`; void returns need neither. No second return
+- `ast_return_statement` retains one numeric conversion code. The enclosing entry interprets integer
+  narrowing through its target-aware exit binding; ordinary functions use their result type. Void returns need no code. No second return
   record or prepared signature model is introduced.
 - Signature preparation settles parameter and return types before any executable
   body. Body preparation reads foreign signatures only. Reset and collection walk

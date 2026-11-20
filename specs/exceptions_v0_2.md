@@ -75,14 +75,20 @@ try {
 }
 ```
 
-Each try requires a catch, a finally, or both in that order. At most one typed catch
-is supported, with a simple local variable typed as the registered Exception or a
-shared source descendant. A base handler accepts a thrown descendant. A narrower
-handler accepts the object only when its dynamic type matches that class or a
-descendant; unmatched language exceptions propagate. The handler binding is local to the handler and
-can shadow an outer local; it is unavailable after the handler. Protected-block
-locals are unavailable in the handler. Nested try/catch is supported. A handler can
-propagate the same object outward with `throw $e;`; it does not catch its own throws.
+A try requires at least one catch or a finally. The v0.2 compiler accepts ordered
+typed catch arms followed by an optional finally. Each arm binds the registered
+Exception or a shared source descendant. The first arm whose type accepts the
+thrown object's dynamic type runs. If none matches, the exception propagates.
+Preparation rejects a later arm covered by an earlier arm of the same type or an
+ancestor type. A root Exception arm can therefore only appear last.
+
+Each binding is local to its arm and can shadow an outer local. Protected-block
+locals are unavailable in the handlers. A throw from a handler skips its siblings
+and runs the enclosing finally. Within a handler, `throw $e;` throws the current
+value of the binding. Bare `throw;` propagates the object originally caught by the
+nearest lexically enclosing handler, even after reassignment. A nested finally
+inside that handler retains this meaning. The try's own sibling finally does not
+gain a rethrow context from the try's handlers.
 
 Completion conservatively combines the protected and handler paths. A handler that
 can fall through prevents an enclosing non-void function from being classified as
@@ -187,7 +193,7 @@ non-standard foreign exceptions, fatal signals or destructor termination.
 ## Excluded from this slice
 
 Reference returns crossing finally, returns/transfers escaping finally,
-multiple catch arms, union catches, arbitrary source-to-runtime inheritance, direct runtime construction (`new Exception`),
-general throw expressions, bare rethrow, exception chaining and static exception-effect
+union catches, arbitrary source-to-runtime inheritance, direct runtime construction (`new Exception`),
+general throw expressions, exception chaining and static exception-effect
 analysis remain deferred. Runtime-handle identity operators and ownership transformations
 such as `weak(Exception)` are not added by this slice. LLVM remains deferred.

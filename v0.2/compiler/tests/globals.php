@@ -93,7 +93,7 @@ foreach (flavor::cases() as $flavor)
 	verify($body->statements[3]->values[0]->declaration() === $program->files['lib']->globals()[0], 'Cross-source global link');
 	verify($file->functions()[0]->body()->statements[0]->values[0]->declaration() === $file->globals()[0], 'Function captured main local');
 	verify($body->statements[3]->values[0]->constant() === null, 'Global initializer folded into a mutable read');
-	verify($body->statements[9]->conversion() === exit_conversion::checked, 'Global exit lacks runtime check');
+	verify($body->statements[9]->conversion() === exit_conversion::checked->value, 'Global exit lacks runtime check');
 	verify($program->files['root']->main() === null, 'Globals invented executable statements');
 	verify($program->files['root']->globals()[2]->initializer->integer() === PHP_INT_MIN, 'Minimum int64 lost');
 	verify($program->files['root']->globals()[3]->initializer->integer() === PHP_INT_MAX, 'Maximum int64 lost');
@@ -188,6 +188,13 @@ foreach (flavor::cases() as $flavor)
 		file_put_contents($lib_path, '// removed global');
 		$session = $compiler->frontend($directory, $session);
 		verify($slot->status === change_status::removed, 'Removed global lacks tombstone');
+		try {
+			$read->declaration();
+			throw new RuntimeException('Removed global is still readable');
+		}
+		catch (LogicException $error) {
+			verify($error->getMessage() === 'Name reference is not settled or was removed', $error->getMessage());
+		}
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'local/global');
 		verify($session->dependency_watches->observer_count($slot) === 1, 'Missing global lost watcher');
 		file_put_contents($lib_path, wrap($flavor, 'Lib', global_text($flavor, 'value', '12')));

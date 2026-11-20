@@ -24,7 +24,7 @@ final class Last_Use_Transfer
 		$return = $body->statements[$count - 1];
 		if (!($return instanceof ast_return_statement) || !($return->value instanceof ast_name_expression)
 			|| $return->conversion() !== value_conversion::identity || !$return->value->refers_to($result)) return;
-		$source = $write->value->declaration();
+		$source = $write->value->local_binding();
 		if ($source instanceof ast_local_declaration && $source !== $result) {
 			$write->transfer = self::private_uses($body, $write, $source, $result);
 		}
@@ -39,7 +39,7 @@ final class Last_Use_Transfer
 			|| $write->value->type_def() !== $write->target->type_def()) return null;
 		$receiver = $write->target->receiver;
 		if (!($receiver instanceof ast_name_expression) || !($receiver->type_def() instanceof record_type_definition)) return null;
-		$result = $receiver->declaration();
+		$result = $receiver->local_binding();
 		return $result instanceof ast_local_declaration ? $result : null;
 	}
 
@@ -50,7 +50,7 @@ final class Last_Use_Transfer
 		$candidates = [];
 		foreach ($body->statements as $write) {
 			if (self::destination($write) === null) continue;
-			$source = $write->value->declaration();
+			$source = $write->value->local_binding();
 			if ($source instanceof ast_parameter_declaration && $source->mode === passing_mode::value) {
 				$candidates[$source->name()] = $write;
 			}

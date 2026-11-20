@@ -176,7 +176,10 @@ the resolved type of each throw operand and handler binding. A typed catch
 binds one local in a sibling lexical scope. PHP uses
 `catch (Type $value)`, C++ uses `catch (Type value)`, and JS uses
 `catch (value: Type)`. `throw value;` propagates the same shared allocation.
-A narrower handler matches the dynamic type. Runtime guard failures unwind
+Arms are tried in source order. A previous arm covering the entire type of a later
+arm is a preparation error. Bare `throw;` within a handler propagates its original
+object, including after the binding changes. Union catch types remain deferred.
+Runtime guard failures unwind
 through source frames and are reported by the generated entry boundary.
 
 A throwing `??` fallback and a throwing `match` default use the same transport.
@@ -184,7 +187,7 @@ Only the selected fallback evaluates its operand. A coalescing expression retain
 the carrier payload type, while a match gets its type from the value arms.
 Both forms check the exception operand during preparation.
 
-A braced `finally` may follow the try body directly or follow its catch.
+A braced `finally` may follow the try body directly or follow its last catch.
 It runs once after the protected operation has unwound or finished, including
 after runtime guards and exceptions escaping a handler. A saved value or void
 return resumes after cleanup. Nested finalizers finish from inner to outer.

@@ -38,7 +38,7 @@ foreach ([['$ret int = 8; return $ret;', flavor::php], ['int ret = 8; return ret
 		'Exact binding');
 	verify($local === $collected->main()->body()->locals[0], 'Semantic binding uses collected identity');
 	verify($local->type_def() === type_int64::instance(), 'Canonical default int identity');
-	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven),
+	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven->value),
 		'Known exit proof');
 	verify(($program->body()->statement_visits === 2) && ($program->body()->expression_visits === 2)
 		&& ($program->body()->name_lookups === 1), 'Single-pass work counts');
