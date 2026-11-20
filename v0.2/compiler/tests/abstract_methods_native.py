@@ -91,7 +91,7 @@ def ownership(work,flavor,libraries,memcheck):
     v,acc=s['v'],s['access']
     ctor={'cpp':'Node(int x=3) {this->x=x;}','php':'public function __construct(int $x=3) {$this->x=$x;}','js':'constructor(x:int=3) {this.x=x;}'}[flavor]
     base='abstract '+klass('Node',s['field']('x','int')+ctor+abstract())
-    leaf=klass('Leaf',s['field']('hold','Token')+evaluate('override',v+'this'+acc+'x + '+v+'delta',default='1'),'Node')
+    leaf=klass('Leaf',s['field']('hold','?Token')+evaluate('override',v+'this'+acc+'x + '+v+'delta',default='1'),'Node')
     api=s['function']('view','Node',[('n','Leaf')],f'return {v}n;')
     api+=s['function']('read','int',[('n','Node')],f'return {v}n{acc}evaluate();')
     marker='Leaf.class' if flavor=='js' else 'Leaf::class'

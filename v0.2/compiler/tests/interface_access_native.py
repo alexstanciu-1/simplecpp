@@ -32,7 +32,7 @@ def behavior(work, flavor, libraries, memcheck):
     v, access, fn = s['v'], s['access'], s['function']
     types = interface('Left')+interface('Right')+interface('Missing')+klass('Token')
     types += klass('Node', s['field']('x','int','8')+evaluate('virtual',v+'this'+access+'x + '+v+'delta'))
-    types += implementation('Leaf',s['field']('hold','Token'),'Node',('Left','Right'))
+    types += implementation('Leaf',s['field']('hold','?Token'),'Node',('Left','Right'))
     types += klass('Twig','','Leaf')+implementation('OnlyLeft','','Node',('Left',))
     # A class need not itself implement the interface to overlap it through a descendant.
     types += klass('Plain')+implementation('PlainLeaf',evaluate('override'),'Plain',('Left',))

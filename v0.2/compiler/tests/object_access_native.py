@@ -35,7 +35,7 @@ def behavior(work, flavor, libraries, memcheck):
     s, method, klass, cast = syntax(flavor)
     v, access, fn = s['v'], s['access'], s['function']
     base = klass('Node', s['field']('x','int','3')+method('virtual','7'))
-    leaf = klass('Leaf', s['field']('hold','Token'), 'Node')
+    leaf = klass('Leaf', s['field']('hold','?Token'), 'Node')
     definitions = base+klass('Token')+leaf+klass('Twig','','Leaf')+klass('Other','','Node')
     api = fn('down','Leaf',[('n','?Node')], 'return '+cast(v+'n')+';')
     api += fn('same','Node',[('n','?Node')], 'return '+cast(v+'n','Node')+';')

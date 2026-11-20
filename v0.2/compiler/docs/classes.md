@@ -16,7 +16,7 @@ additional required identity. Written type references remain unchanged.
 
 ```php
 class Node { public int $start = 3; }
-class Addition { public Node $left; }
+class Addition { public ?Node $left; }
 function start_of(Node $node): int { return $node->start; }
 $a = new Addition();
 $a->left = new Node();
@@ -24,11 +24,14 @@ echo start_of($a->left);
 $a->left = null;
 ```
 
-Instance-field preparation resolves a shared class field to the optional identity
-under the temporary relaxed property policy, including when its spelling omits
-`?`. Reads, assignments and null resets use ordinary owner operations. There is no
-field definite-assignment walk, extra presence flag or presence check on copying.
-The [normative contract](../../../specs/type_use_modifiers.md) owns this exception.
+A class instance field written as `Node` retains the required identity. A default
+or a direct write by its declaring constructor must establish initialization
+before normal exit. Constructor preparation uses its existing readonly
+initialization flow to check early reads and method calls. A mutable required
+field still admits reassignment at the ordinary required destination boundary.
+Use `?Node` for a field that may be empty after construction, as above. Struct
+instance fields and static fields retain their respective bootstrap exceptions.
+The [normative contract](../../../specs/type_use_modifiers.md) defines the rules.
 
 Existing conversion preparation rejects known null at required destinations and
 selects `require_owner` for potentially empty values. Lowering emits the owner's

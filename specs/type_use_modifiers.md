@@ -15,7 +15,7 @@ unique handles remain empty-but-valid after an admitted explicit move.
 
 `Class` and `?Class` now retain distinct frontend identities while sharing the same
 native shared-handle storage. Known null to a required object assignment, argument,
-return or ordinary value default rejects (the temporary field-storage exception below is separate). Optional objects accept null. Optional-to-required value
+return or ordinary value default rejects (the remaining field-storage exceptions below are separate). Optional objects accept null. Optional-to-required value
 boundaries check presence before entry/replacement and preserve object identity;
 permitted derived-to-base adaptation composes with that check. References remain
 invariant, including nullability. Interfaces follow the same contract.
@@ -23,33 +23,43 @@ invariant, including nullability. Interfaces follow the same contract.
 By-value override parameters may broaden required to optional, and results may
 strengthen optional to required, composed with admitted ancestry. Reverse directions
 reject; an override bridge never inserts a potentially failing absence check.
-### Temporary required-field storage exception — 2026-10-25
+### Required shared fields in classes
 
-For the compiler bootstrap milestone, nominal shared-object **instance** fields
-have a relaxed absence contract, including fields written without `?`. They may
-start empty (without an initializer or with literal `null`), receive an object,
-and later be reset to null. This applies in class and struct owners and to
-inherited instance fields. Reads and copies do not introduce presence checks or
-field initialization analysis. Existing shared dereference guards remain.
+An instance field in a class with a source-declared class or interface type
+retains its written presence contract. A required field rejects a null default or assignment.
+An optional value assigned to it uses the ordinary presence check before
+the field is written. Optional fields may start empty and be reset to null.
 
-Written type syntax is retained. Preparation treats these field values as
-potentially empty; passing or returning one through a required function boundary
-checks presence. Required and optional function contracts remain distinct, and
-a null parameter default still requires an optional parameter. The exception
-does not broaden ordinary local values, inline struct payloads or enums.
+A required field needs a valid declaration default or initialization by its
+declaring class's constructor. An inherited constructor initializes the base's
+fields. A child with new required fields lacking defaults must declare its own
+constructor. Each direct assignment to a field of the current instance
+establishes initialization only after its right-hand side and conversion succeed.
 
-Static fields retain the earlier initialization-only exception: empty backing
-storage or a literal null initializer does not authorize later null assignments
-to a required static field. Authored callable inputs retain their own contracts;
-an empty field initializer does not supply a required parameter default.
+A constructor must initialize its required fields on every normal exit, including
+explicit returns. A path that throws does not have to finish initialization.
+A read of a tracked field on the current object requires that field to be
+initialized. An ordinary instance method call on the current object requires
+all its tracked fields to be initialized. In the
+bounded implementation, direct writes and structured branches can establish
+initialization. Loops cannot establish it, and protected regions with pending
+fields are deferred. Mutable required fields can be reassigned after
+initialization. Readonly fields retain their single-write rules.
 
-This temporary policy supersedes the initialization-only restriction for instance
-fields. Track its eventual review under CH15-REQUIRED-FIELD-INIT-01. No valid
-object or dummy identity is manufactured for empty storage.
+Native shared-handle storage may be empty during construction. The
+constructor checks introduce no separate runtime field state.
 
-Remaining ownership/cleanup consumers and the presence guarantees of registered
-runtime APIs remain blocking NULL-01/OWN-01 work. The execution ledger records
-precise current proof scope.
+### Temporary field storage exceptions
+
+Nominal shared-object instance fields in **struct** owners may still start empty,
+receive an object and later be reset to null, including fields written without
+`?`. Preparation treats these field values as potentially empty. Passing or
+returning one through a required boundary checks presence. Existing shared
+dereference guards remain.
+
+Static fields retain the initialization-only exception. Empty backing storage or
+a literal null initializer does not authorize later null assignments to a
+required static field. Authored callable inputs retain their own contracts.
 
 ### Required class locals — v0.2, 2026-10-23
 

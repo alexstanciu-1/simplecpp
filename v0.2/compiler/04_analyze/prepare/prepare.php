@@ -63,7 +63,7 @@ final class Preparation
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
-	private ?Readonly_Initialization $readonly_initialization = null;
+	private ?Constructor_Initialization $constructor_initialization = null;
 	/** Native non-owning context for this body's variable lookup and dependency registration. */
 	private scope $symbols;
 	/** Native non-owning owner of the facts being prepared. */
@@ -110,7 +110,7 @@ final class Preparation
 		} finally {
 			$this->guards = [];
 			$this->guard_reads = [];
-			$this->readonly_initialization = null;
+			$this->constructor_initialization = null;
 		}
 		Scoped_Byte_View::prepare($syntax);
 		Last_Use_Transfer::prepare($syntax);
@@ -133,8 +133,8 @@ final class Preparation
 		$this->latest_writes = [];
 		/** @var ast_function_declaration $function */
 		$function = $owner->parent;
-		$this->readonly_initialization = $function->is_constructor() && $function->parent instanceof ast_record_declaration
-			? new Readonly_Initialization($function->parent) : null;
+		$this->constructor_initialization = $function->is_constructor() && $function->parent instanceof ast_record_declaration
+			? new Constructor_Initialization($function->parent) : null;
 		foreach ($function->parameters as $parameter) {
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
@@ -143,7 +143,7 @@ final class Preparation
 		$this->name_lookups = 0;
 		$this->loop = null;
 		$completion = $this->sequence($syntax, $source, $target, $function);
-		if (($completion & statement_completion::fallthrough) !== 0) $this->readonly_initialization?->complete($owner);
+		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
@@ -205,8 +205,8 @@ final class Preparation
 				if ($this->finalizer_block !== null && $destination->start < $this->finalizer_block->start) {
 					throw new diagnostic($source, $statement->byte_start(), 'Break/continue cannot leave a finally block');
 				}
-				if ($destination === $this->switch && $this->readonly_initialization !== null) {
-					$this->switch_break_states = self::join_initialization($this->switch_break_states, $this->readonly_initialization->states);
+				if ($destination === $this->switch && $this->constructor_initialization !== null) {
+					$this->switch_break_states = self::join_initialization($this->switch_break_states, $this->constructor_initialization->states);
 				}
 				$statement->target = $destination;
 				$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
@@ -265,7 +265,7 @@ final class Preparation
 					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 				}
-				if ($initializing_field !== null) $this->readonly_initialization->states[$initializing_field->short_name] = 1;
+				if ($initializing_field !== null) $this->constructor_initialization->states[$initializing_field->short_name] = 1;
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
@@ -338,7 +338,7 @@ final class Preparation
 				if ($this->in_finalizer) {
 					throw new diagnostic($source, $statement->byte_start(), 'Return cannot leave a finally block');
 				}
-				$this->readonly_initialization?->complete($statement);
+				$this->constructor_initialization?->complete($statement);
 				if ($target === null) {
 					$return_type = $function->return_type_def();
 					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
@@ -380,8 +380,8 @@ final class Preparation
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
 		ast_function_declaration $function): int /** uint8 */
 	{
-		if (array_filter($this->readonly_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
-			throw new diagnostic($source, $syntax->byte_start(), 'Try during readonly field initialization is deferred');
+		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
+			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
 		}
 		$outer_finalizer = $this->finalizer_block;
 		$in_finalizer = $this->in_finalizer;
@@ -448,7 +448,7 @@ final class Preparation
 		$outer_break_states = $this->switch_break_states;
 		$this->switch_break_states = null;
 		$this->switch = $syntax;
-		$entry = $this->readonly_initialization?->states;
+		$entry = $this->constructor_initialization?->states;
 		$seen = [];
 		$default = false;
 		$exits = 0;
@@ -464,8 +464,8 @@ final class Preparation
 					$default = true;
 				}
 				if ($entry !== null) {
-					$this->readonly_initialization->states = $last & statement_completion::fallthrough
-						? self::join_initialization($entry, $this->readonly_initialization->states) : $entry;
+					$this->constructor_initialization->states = $last & statement_completion::fallthrough
+						? self::join_initialization($entry, $this->constructor_initialization->states) : $entry;
 				}
 				$last = $this->lexical_block($arm->body, $target, $function);
 				$arm->falls_through = (bool)($last & statement_completion::fallthrough);
@@ -474,8 +474,8 @@ final class Preparation
 			if ($entry !== null) {
 				$after = $this->switch_break_states;
 				if (!$default) $after = self::join_initialization($after, $entry);
-				if ($last & statement_completion::fallthrough) $after = self::join_initialization($after, $this->readonly_initialization->states);
-				$this->readonly_initialization->states = $after ?? $entry;
+				if ($last & statement_completion::fallthrough) $after = self::join_initialization($after, $this->constructor_initialization->states);
+				$this->constructor_initialization->states = $after ?? $entry;
 			}
 		} finally {
 			$this->switch_break_states = $outer_break_states;
@@ -552,13 +552,13 @@ final class Preparation
 	{
 		$completion = 0;
 		$has_else = false;
-		$before = $this->readonly_initialization?->states;
+		$before = $this->constructor_initialization?->states;
 		$joined = null;
 		$remaining = $this->guards;
 		$surviving = $remaining;
 		$paired = count($statement->arms) === 2 && $statement->arms[1]->condition === null;
 		foreach ($statement->arms as $arm) {
-			if ($before !== null) $this->readonly_initialization->states = $before;
+			if ($before !== null) $this->constructor_initialization->states = $before;
 			$this->forget_values();
 			$this->guards = $remaining;
 			$guard = null;
@@ -597,7 +597,7 @@ final class Preparation
 				}
 			}
 			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
-				$states = $this->readonly_initialization->states;
+				$states = $this->constructor_initialization->states;
 				$joined = self::join_initialization($joined, $states);
 			}
 		}
@@ -605,7 +605,7 @@ final class Preparation
 			if (!$has_else) {
 				$joined = self::join_initialization($joined, $before);
 			}
-			$this->readonly_initialization->states = $joined ?? $before;
+			$this->constructor_initialization->states = $joined ?? $before;
 		}
 		$this->forget_values();
 		$this->guards = $surviving;
@@ -886,7 +886,7 @@ final class Preparation
 			return null;
 		}
 		$this->value($root);
-		$field = $initialize ? $this->readonly_initialization?->assignment($root, $this->loop !== null) : null;
+		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
@@ -1137,7 +1137,7 @@ final class Preparation
 			$field_type = $field->type_def();
 			$syntax->settle_field($field_type instanceof class_union_type_definition ? ($field_type->receiver_view($syntax) ?? $field_type) : $field_type);
 			if (!(($syntax->parent instanceof ast_field_assignment) && $syntax->parent->target === $syntax)) {
-				$this->readonly_initialization?->read($syntax);
+				$this->constructor_initialization?->read($syntax, $field);
 			}
 			return;
 		}
@@ -1561,7 +1561,7 @@ final class Preparation
 					if ($method === null && !$static && $record instanceof record_type_definition && $record->exception_descendant()) {
 						$binding = type_registry::exception()->runtime_method($name);
 						if ($binding !== null) {
-							if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+							if ($receiver instanceof ast_this_expression) $this->constructor_initialization?->complete($call);
 							$this->runtime_call($call, $binding);
 							return;
 						}
@@ -1573,7 +1573,7 @@ final class Preparation
 					}
 					if (!$static) {
 						Readonly_Access::write($receiver, true);
-						if ($receiver instanceof ast_this_expression) $this->readonly_initialization?->complete($call);
+						if ($receiver instanceof ast_this_expression) $this->constructor_initialization?->complete($call);
 					}
 					$this->source_call($call, $symbol, $method, $initializing, called: $static ? $record : null);
 					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
@@ -1789,6 +1789,7 @@ final class Preparation
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
 		if ($method->is_abstract) throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call an abstract ancestor implementation');
+		$this->constructor_initialization?->complete($call);
 		$this->source_call($call, $symbol, $method, $initializing, true);
 	}
 

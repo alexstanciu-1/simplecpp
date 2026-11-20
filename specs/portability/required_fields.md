@@ -2,8 +2,9 @@
 Doc Status: supporting
 
 The omitted-initializer checkpoint below describes structural conversion and the
-legacy route. v0.2 now has a temporary field-only empty-storage exception under
-[type-use modifiers](../type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25).
+legacy route. v0.2 enforces required class instance fields at construction and
+retains temporary exceptions for struct instance fields and static fields. See
+[type-use modifiers](../type_use_modifiers.md#required-shared-fields-in-classes).
 Executable PHP should omit the initializer on required typed fields: PHP itself
 does not permit a literal null default on a nonnullable object property. The PHS
 exception does not change PHP validation. Assign before any use on both routes.

@@ -68,7 +68,7 @@ def prove(work, flavor, library):
     source_edit(app / f'diagnostic.{flavor}',
                 klass('Snapshot', field('path', 'string', '"input.phs"') +
                       field('content', 'string', snapshot_literal)) +
-                klass('Diagnostic', field('origin', 'Snapshot') + field('offset', 'int') +
+                klass('Diagnostic', field('origin', '?Snapshot') + field('offset', 'int') +
                       field('marker', 'int', '0'), 'DiagnosticBase'))
     source_edit(app / f'quiet.{flavor}', s['function']('quiet', 'int', [], 'return 42;'))
     def nullable_local(name, type_name, value):

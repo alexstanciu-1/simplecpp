@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def prove(work, flavor, library):
     s = fixture(flavor)
     v, a, fn = s['v'], s['access'], s['function']
-    previous = s['klass']('Generation', s['field']('scope', 'Node') + s['field']('sources', 'vector<Node>'))
+    previous = s['klass']('Generation', s['field']('scope', '?Node') + s['field']('sources', 'vector<Node>'))
     factory = fn('newScope', 'Node', [], 'echo "F";return new Node();')
     key = fn('path', 'string', [], 'echo "K";return "unit";')
     argument = fn('argument', 'int', [], 'echo "A";return 6;')
