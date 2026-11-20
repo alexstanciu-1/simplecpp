@@ -750,13 +750,13 @@ final class Parser
 	}
 
 	/** Type keywords and identifiers share generated registration; preparation owns argument admission. */
-	public function named_type(): ast_type_reference
+	public function named_type(bool $allow_union = false): ast_type_reference
 	{
-		return $this->type_reference();
+		return $this->type_reference(allow_union: $allow_union);
 	}
 
 	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
-	private function type_reference(bool $argument = false, bool $allow_void = false, bool $parameter = false): ast_type_reference
+	private function type_reference(bool $argument = false, bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
 		$child = null;
@@ -779,7 +779,7 @@ final class Parser
 			}
 		}
 		$end = $this->cursor->position();
-		if ($parameter && ($this->cursor->is(token_kind::pipe) || $this->intersection_follows())) {
+		if ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows())) {
 			$operator = $this->cursor->tokens->tokens[$end]->kind;
 			$separator = $operator === token_kind::pipe ? '|' : '&';
 			$this->cursor->take($operator, $separator);

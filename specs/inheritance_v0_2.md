@@ -335,7 +335,7 @@ reference to its source because all argument bindings finish before the callee r
 Keep a separate call that can rebind the local outside the guarded use's expression
 when the two evaluations can occur in either order.
 
-### Closed class unions in parameter declarations
+### Closed class unions in parameters and readonly instance fields
 
 A required by-value parameter on an ordinary callable may name two distinct
 required classes separated by `|` when their concrete class chains share an
@@ -346,6 +346,12 @@ may access the nearest common class's members and forward the value to the
 same union or a compatible base-class parameter. Passing preserves shared
 allocation identity and lifetime. Override signatures distinguish different
 arm pairs, including pairs whose nearest common class is identical.
+
+A readonly instance field may declare the same two-arm union. The constructor
+must initialize the field exactly once with a member of the union. Reading the
+field preserves its union type. Common-base methods and fields are accessible
+through it, and readonly protects the stored owner from replacement while
+allowing mutation of the referenced object.
 
 ## Trait composition
 

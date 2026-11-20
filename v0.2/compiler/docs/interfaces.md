@@ -139,3 +139,9 @@ use the same owner. Shared-view conversions use the existing native adapters.
 The [union parameter proof](../tests/union_parameters_native.py) covers cross-unit
 calls, constructor and virtual method parameters, reversed signatures, rejected
 siblings, and ancestry edits that change the native owner.
+
+Readonly instance fields use the same union resolver. Layout preparation settles
+ancestry first and then resolves pending union fields. The field retains the
+source union for admission and exposes its common-base owner for native storage
+and header dependencies. The [field proof](../tests/readonly_union_fields_native.py)
+covers constructor initialization, payload lifetime and incremental ancestry edits.

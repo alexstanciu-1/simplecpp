@@ -100,7 +100,11 @@ final class Program_Preparation
 			}
 		}
 		$active = [];
-		foreach ($layouts as $layout) $layout->prepare_layout($symbols, $active, $work);
+		$pending = [];
+		foreach ($layouts as $layout) {
+			if ($layout->prepare_layout($symbols, $active, $work) === record_layout_state::awaiting_union_fields) $pending[] = $layout;
+		}
+		foreach ($pending as $layout) $layout->finish_union_fields($symbols);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

@@ -108,7 +108,7 @@ final class Cpp_Emitter
 			$base = $node->definition->base();
 			foreach ($node->fields as $field) {
 				foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$type = $field->type_def();
+				$type = $field->storage_type();
 				$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 				$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 					$type, $field->initializer, $field->conversion, $includes);
@@ -683,7 +683,7 @@ CPP;
 			$this->type_prototypes($interface->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
 		}
 		foreach ($record->fields as $field) {
-			$type = $field->type_def();
+			$type = $field->storage_type();
 			if ($type instanceof record_type_definition || $type instanceof enum_type_definition) {
 				$this->type_prototypes($type->declaration, $seen, $unit_headers, $runtime_headers, $text, $owners);
 			} elseif ($type instanceof record_handle_definition) {
