@@ -151,11 +151,11 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'base_initialization', 'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_call_statement) {
-				$statements[] = ['kind' => 'call', 'target' => $statement->value->target_name(),
-					'return_type' => $statement->value->type_def()->name,
-					'arguments' => array_map(self::value(...), $statement->value->cardinality === null && $statement->value->callable_binding() === null
-						&& $statement->value->function_def() instanceof runtime_function
-					? $statement->value->runtime_operands() : $statement->value->arguments)];
+				$call = $statement->value;
+				$signature = $call->cardinality === null && $call->callable_binding() === null ? $statement->function_def() : null;
+				$statements[] = ['kind' => 'call', 'target' => $signature?->name() ?? $call->target_name(),
+					'return_type' => ($signature?->return_type_def() ?? $call->type_def())->name,
+					'arguments' => array_map(self::value(...), $signature instanceof runtime_function ? $call->runtime_operands() : $call->arguments)];
 			}
 		}
 		return ['statements' => $statements,

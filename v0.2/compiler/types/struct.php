@@ -614,6 +614,8 @@ abstract class record_handle_definition extends type_definition
 /** Observer of an exact struct allocation, e.g. weak<Point>. Only lock() exposes its payload. */
 final class weak_record_type_definition extends record_handle_definition
 {
+	private ?runtime_function $emptiness = null;
+
 	public function __construct(record_type_definition $payload)
 	{
 		parent::__construct('weak', $payload);
@@ -622,6 +624,14 @@ final class weak_record_type_definition extends record_handle_definition
 	public function cpp_type(): string
 	{
 		return 'weak_' . Cpp_Emitter::qualified_name($this->payload->declaration);
+	}
+
+	/** Observe the handle's control block without attempting to lock the payload. */
+	public function runtime_method(string $name): ?runtime_function
+	{
+		if ($name !== 'is_empty') return null;
+		return $this->emptiness ??= new runtime_function('is_empty', [$this], type_bool::instance(),
+			'is_empty', 'scpp/owner_access.hpp', receiver_method: true, retains_receiver: false);
 	}
 }
 
@@ -807,6 +817,17 @@ final class class_union_type_definition extends type_definition
 	public function mutates_referenced_value(): bool
 	{
 		return true;
+	}
+
+	public function has_arm(record_type_definition $record): bool
+	{
+		return $record === $this->first || $record === $this->second;
+	}
+
+	/** The tested arm was admitted by object-access preparation. */
+	public function remaining_arm(record_type_definition $tested): shared_record_type_definition
+	{
+		return ($tested === $this->first ? $this->second : $this->first)->required;
 	}
 
 	/** Test membership before choosing the existing shared-owner conversion. */

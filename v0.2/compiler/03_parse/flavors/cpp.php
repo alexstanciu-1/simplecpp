@@ -41,6 +41,7 @@ final class Cpp_Grammar implements statement_grammar
 				$position++;
 			} while ($depth > 0);
 		}
+		if (($tokens[$position]->kind ?? null) === token_kind::pipe && ($tokens[$position + 1]->kind ?? null) === token_kind::identifier) $position += 2;
 		if (($tokens[$position]->kind ?? null) !== token_kind::identifier || ($tokens[$position + 1]->kind ?? null) !== token_kind::lparen) return false;
 		// Type name(arguments); is a local. A function definition has a braced body after its parameter list.
 		$depth = 1;
@@ -57,7 +58,7 @@ final class Cpp_Grammar implements statement_grammar
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration
 	{
 		$start = $parser->cursor->position();
-		$type = $parser->return_type();
+		$type = $parser->return_type(allow_union: true);
 		$name = $parser->cursor->name(token_kind::identifier);
 		$parameters = $parser->parameters();
 		return new ast_function_declaration($alias ?? $name, $type,

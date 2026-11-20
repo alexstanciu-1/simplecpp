@@ -53,6 +53,7 @@ def emit(work):
         assert suffix == signature(reversed(arms))
         names['FREE_'+key] = 'scpp_function_read_'+suffix
         names['SLOT_'+key] = 'scpp_slot_read_'+suffix
+        names['RETURN_'+key] = 'scpp_slot_choose_'+'|'.join(sorted(arms)).encode().hex()
     (work/'names.hpp').write_text(''.join(f'#define {key} {value}\n' for key,value in names.items()))
     return units, report['php_ms'], names
 

@@ -61,6 +61,16 @@ foreach ([
 	verify($first->source_text() === 'Base' && $second->source_text() === 'Readable' && $second->next_sibling === null,
 		'Intersection operand order and ranges');
 
+	$union_source = $flavor === flavor::cpp ? 'RecordDecl | TraitDecl readDecl() {}' : 'function readDecl(): RecordDecl | TraitDecl {}';
+	$return_owner = $frontend->parse(new source_file('union', $union_source, $flavor))->declarations['func:readDecl'];
+	$union = $return_owner->return_type_reference;
+	$first = $union->first_child;
+	$second = $first->next_sibling;
+	verify($union->name === '|' && $union->parent === $return_owner && $first->parent === $union && $second->parent === $union,
+		'Union return ownership');
+	verify($first->source_text() === 'RecordDecl' && $second->source_text() === 'TraitDecl' && $second->next_sibling === null,
+		'Union return siblings in written order');
+
 	// Synthetic nested shape only: this does not admit generic source syntax.
 	$integer = new ast_type_reference(0, 0, 'int');
 	$vector = new ast_type_reference(0, 0, 'vector', $integer);

@@ -41,8 +41,8 @@ final class Preparation
 	 * @var (ast_assignment_statement|ast_local_declaration|null)[]
 	 */
 	private array $latest_writes /** array<uint32,ast_assignment_statement|ast_local_declaration|null> */ = [];
-	/** Transient successful interface tests by local storage ID. @var ast_object_access_expression[] */
-	private array $guards /** array<uint32,ast_object_access_expression> */ = [];
+	/** Dominating test or remaining union arm by local storage ID. @var (ast_object_access_expression|shared_record_type_definition)[] */
+	private array $guards /** array<uint32,ast_object_access_expression|shared_record_type_definition> */ = [];
 	/** Guarded argument reads in the current expression, indexed by slot with the first read position. @var int[] */
 	private array $guard_reads /** array<uint32,uint32> */ = [];
 	private int $statement_visits /** uint32 */ = 0;
@@ -321,6 +321,7 @@ final class Preparation
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
 						$this->value($statement->value);
+						if ($return_type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
 					}
 				}
@@ -432,7 +433,7 @@ final class Preparation
 		$joined = null;
 		$remaining = $this->guards;
 		$surviving = $remaining;
-		$after_guard = null;
+		$paired = count($statement->arms) === 2 && $statement->arms[1]->condition === null;
 		foreach ($statement->arms as $arm) {
 			if ($before !== null) $this->readonly_initialization->states = $before;
 			$this->forget_values();
@@ -443,8 +444,13 @@ final class Preparation
 				$this->condition($arm->condition);
 				$remaining = $this->guards;
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
-				$guard = $this->interface_guard($arm->condition, $function);
-				if ($guard !== null && $guard === $arm->condition) {
+				$guard = $this->branch_guard($arm->condition, $function, $paired);
+				if ($guard !== null && $paired && ($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
+					$id = $guard->operand->local_def()->storage_id();
+					$other = $union->remaining_arm($guard->target_type()->payload);
+					$this->guards[$id] = $guard === $arm->condition ? $guard : $other;
+					$remaining[$id] = $guard === $arm->condition ? $other : $guard;
+				} elseif ($guard !== null && $guard === $arm->condition) {
 					$this->guards[$guard->operand->local_def()->storage_id()] = $guard;
 				}
 			}
@@ -459,9 +465,13 @@ final class Preparation
 				foreach ($surviving as $id => $previous) {
 					if (($this->guards[$id] ?? null) !== $previous) unset($surviving[$id]);
 				}
-			} elseif ($guard !== null && $arm->condition instanceof ast_not_expression && count($statement->arms) === 1
+			} elseif ($guard !== null && count($statement->arms) === 1
 				&& ($arm_completion & ~(statement_completion::returns | statement_completion::throws)) === 0) {
-				$after_guard = $guard;
+				$id = $guard->operand->local_def()->storage_id();
+				if ($arm->condition instanceof ast_not_expression) $surviving[$id] = $guard;
+				elseif (($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
+					$surviving[$id] = $union->remaining_arm($guard->target_type()->payload);
+				}
 			}
 			if ($before !== null && ($arm_completion & statement_completion::fallthrough) !== 0) {
 				$states = $this->readonly_initialization->states;
@@ -478,18 +488,20 @@ final class Preparation
 		}
 		$this->forget_values();
 		$this->guards = $surviving;
-		if ($after_guard !== null) $this->guards[$after_guard->operand->local_def()->storage_id()] = $after_guard;
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
-	/** Recognize a direct interface test on storage whose owner cannot be rebound through an alias. */
-	private function interface_guard(ast_expression $condition, ast_function_declaration $function): ?ast_object_access_expression
+	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
+	private function branch_guard(ast_expression $condition, ast_function_declaration $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
-			|| $test->target_type()->payload->declaration->kind !== record_kind::interface_type
 			|| $function->return_type_def() instanceof generator_type_definition) return null;
 		$local = $test->operand->declaration();
+		if ($local instanceof ast_parameter_declaration && $local->type_def() instanceof class_union_type_definition) {
+			return ($paired || $condition === $test) && $test->operand->type_def() === $local->type_def() ? $test : null;
+		}
+		if ($test->target_type()->payload->declaration->kind !== record_kind::interface_type) return null;
 		if ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::value) return $test;
 		return $local instanceof ast_local_declaration ? $test : null;
 	}
@@ -1127,7 +1139,14 @@ final class Preparation
 				$type = $binding->type_def();
 				$view = $type instanceof intersection_type_definition
 					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
-				if ($type instanceof class_union_type_definition) $view = $type->receiver_view($syntax);
+				if ($type instanceof class_union_type_definition) {
+					$guard = $this->guards[$id] ?? null;
+					if ($guard instanceof ast_object_access_expression) {
+						$syntax->settle_guard($guard, narrow: true);
+						return;
+					}
+					$view = $guard ?? $type->receiver_view($syntax);
+				}
 				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
@@ -1186,7 +1205,7 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
-		if ($argument->type_def() !== $type) {
+		if ($storage->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
 		$writes[] = $storage->storage_id();
@@ -1419,7 +1438,7 @@ final class Preparation
 				if ($runtime->receiver_method) {
 					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
-						throw new diagnostic($call->source(), $call->byte_start(), 'Collection methods use -> in PHP/C++ and . in JS');
+						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS');
 					}
 				}
 				elseif ($call->member_separator === token_kind::member) {

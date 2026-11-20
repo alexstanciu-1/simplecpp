@@ -3,6 +3,13 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Read-only declaration queries shared by source functions and published runtime bindings. */
+interface callable_signature
+{
+	public function name(): string;
+	public function return_type_def(): type_definition;
+}
+
 /** Statement-position invocation owns the same call expression used in value positions: ping(); */
 final class ast_call_statement extends ast_statement
 {
@@ -23,7 +30,7 @@ final class ast_call_statement extends ast_statement
 	}
 
 	/** Inspection requires completion of the enclosing function, including calls inside nested arms. */
-	public function function_def(): ast_function_declaration|runtime_function
+	public function function_def(): callable_signature
 	{
 		$owner = $this->parent;
 		while (!($owner instanceof ast_function_body)) {
@@ -173,7 +180,8 @@ final class ast_call_expression extends ast_expression
 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
 			throw new \LogicException('Invalid settled call');
 		}
-		$this->settle_value($function->return_type_def(), null);
+		$result = $function->return_type_def();
+		$this->settle_value($result instanceof class_union_type_definition ? ($result->receiver_view($this) ?? $result) : $result, null);
 		$this->function_symbol = $instance ?? $symbol;
 		$this->ancestor_dispatch = $ancestor_dispatch;
 		$this->conversions = $conversions;
@@ -369,7 +377,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, dependency_watcher, callable_signature
 {
 	use ast_declaration { name as private namespace_name; }
 
@@ -511,7 +519,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Attach the completed body once and settle the function token boundary. */
 	public function complete_body(ast_function_body $body): void
 	{
-		if (($this->body !== null) || ($body->start < $this->start)) {
+		if ($this->is_abstract || isset($this->end) || $body->start < $this->header_end) {
 			throw new \LogicException('Invalid function body publication');
 		}
 		$body->attach($this);
@@ -522,7 +530,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Complete a bodyless declaration without inventing executable syntax. */
 	public function complete_abstract(int $end /** uint32 */): void
 	{
-		if (!$this->is_abstract || $this->body !== null) throw new \LogicException('Invalid abstract method completion');
+		if (!$this->is_abstract || isset($this->end) || $end < $this->header_end) {
+			throw new \LogicException('Invalid abstract method completion');
+		}
 		$this->end = $end;
 	}
 

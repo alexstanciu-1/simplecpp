@@ -1,0 +1,102 @@
+function require_state(bool $valid, string $message): void {
+	if (!$valid) {
+		throw Exception::make($message);
+	}
+}
+
+function generation_for(int $end): Source_Generation {
+	$declaration = new Function_Declaration(4, false);
+	Function_Declaration::complete_body($declaration, new Function_Body(4, $end));
+	return new Source_Generation($declaration);
+}
+
+function prove_staged_ownership(): void {
+	$index = new Declaration_Index();
+	$entry = $index->entry();
+	$old ?Source_Generation = generation_for(12);
+	$entry->publish($old->declaration);
+	$reader ?Source_Generation = $old;
+	$old_observer = weak($old->declaration);
+	$retained_body = $old->declaration->body();
+	require_state($retained_body->parent_node() === $old->declaration, "body backlink identity");
+
+	$next = new Function_Declaration(4, false);
+	$unpublished = false;
+	try {
+		$entry->publish($next);
+	} catch (Exception $failure) {
+		$unpublished = $failure->get_message() === "Cannot publish an unfinished function";
+	}
+	require_state($unpublished && $entry->declaration() === $old->declaration, "early publication changed the entry");
+
+	$early = new Function_Body(3, 7);
+	$rejected_range = false;
+	try {
+		Function_Declaration::complete_body($next, $early);
+	} catch (Exception $failure) {
+		$rejected_range = $failure->get_message() === "Invalid body completion";
+	}
+	require_state($rejected_range && !$next->completed() && $early->parent_node() === null, "failed range changed syntax");
+
+	$occupied = new Function_Body(4, 9);
+	$other_parent = new Syntax_Node();
+	Syntax_Node::attach_parent($occupied, $other_parent);
+	$rejected_attached = false;
+	try {
+		Function_Declaration::complete_body($next, $occupied);
+	} catch (Exception $failure) {
+		$rejected_attached = $failure->get_message() === "Parent already attached";
+	}
+	require_state($rejected_attached && !$next->completed() && $next->body() === null
+		&& $occupied->parent_node() === $other_parent, "failed attachment changed syntax");
+
+	$body = new Function_Body(4, 16);
+	Function_Declaration::complete_body($next, $body);
+	require_state($next->body() === $body && $next->end() === 16 && $body->parent_node() === $next,
+		"completion lost body identity or range");
+	$extra = new Function_Body(4, 20);
+	$rejected_second = false;
+	try {
+		Function_Declaration::complete_body($next, $extra);
+	} catch (Exception $failure) {
+		$rejected_second = $failure->get_message() === "Invalid body completion";
+	}
+	require_state($rejected_second && $extra->parent_node() === null && $next->end() === 16, "second completion changed syntax");
+	$rejected_cycle = false;
+	try {
+		Syntax_Node::attach_parent($next, $body);
+	} catch (Exception $failure) {
+		$rejected_cycle = $failure->get_message() === "Ownership cycle";
+	}
+	require_state($rejected_cycle && $next->parent_node() === null, "cycle changed the parent");
+
+	$new_generation = new Source_Generation($next);
+	$old = null;
+	$entry->publish($new_generation->declaration);
+	require_state($index->entry() === $entry && $entry->declaration() === $next, "republication replaced the entry");
+	require_state(lock($old_observer) === $reader->declaration && $reader->declaration->end() === 12,
+		"retained reader lost its declaration");
+	$reader = null;
+	require_state(lock($old_observer) === null && $retained_body->parent_node() === null, "observer retained old source");
+	$rejected_expired = false;
+	try {
+		Syntax_Node::attach_parent($retained_body, $next);
+	} catch (Exception $failure) {
+		$rejected_expired = $failure->get_message() === "Parent already attached";
+	}
+	require_state($rejected_expired && $retained_body->parent_node() === null, "expired parent permitted reattachment");
+
+	$abstract = new Function_Declaration(4, true);
+	$abstract->complete_abstract(5);
+	$entry->publish($abstract);
+	require_state($entry->declaration() === $abstract && $abstract->completed()
+		&& $abstract->end() === 5 && $abstract->body() === null, "bodyless publication failed");
+	$entry->withdraw();
+	require_state($entry->declaration() === null && $index->entry() === $entry, "missing declaration removed its stable entry");
+
+	$transient ?Source_Generation = generation_for(18);
+	$entry->publish($transient->declaration);
+	$transient = null;
+	require_state($entry->declaration() === null, "the index kept a declaration alive");
+	echo "staged ownership";
+}

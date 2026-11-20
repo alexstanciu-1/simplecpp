@@ -598,7 +598,7 @@ final class Parser
 		$name = $this->cursor->name(token_kind::identifier);
 		$parameters = $this->parameters();
 		$this->cursor->take(token_kind::colon, ': (explicit return type)');
-		$type = $this->return_type();
+		$type = $this->return_type(allow_union: true);
 		return new ast_function_declaration($alias ?? $name, $type,
 			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
 	}
@@ -735,9 +735,9 @@ final class Parser
 		return $arguments;
 	}
 
-	public function return_type(): ast_type_reference
+	public function return_type(bool $allow_union = false): ast_type_reference
 	{
-		return $this->type_reference(false, true);
+		return $this->type_reference(allow_void: true, allow_union: $allow_union);
 	}
 
 	/** Explicit outputs only; delegation and implicit keys are separate slices. */

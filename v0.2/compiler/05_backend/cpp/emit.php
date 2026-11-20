@@ -320,6 +320,7 @@ struct $weak {
 		return *this;
 	}
 	void retain() noexcept;
+	bool is_empty() const noexcept { return ptr == nullptr; }
 	$owner lock() const noexcept;
 	~$weak();
 };
@@ -1504,6 +1505,11 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
+			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
+				&& ($local = $value->receiver->declaration()) instanceof ast_local_binding && $local->type_def() instanceof class_union_type_definition) {
+				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
+				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
+			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
@@ -1851,11 +1857,25 @@ CPP;
 		}
 		$name = $this->name($declaration);
 		$type = $declaration->type_def();
+		if ($type instanceof class_union_type_definition && ($pointer = $this->union_pointer($value, $declaration, $declarations)) !== null) {
+			return $this->inline_adapters->call(Cpp_Object_Access::guarded_owner($type, $value->type_def()), [$name, '*' . $pointer]);
+		}
 		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
 			if ($value->type_def() === $type->base) return $name . '.base';
 			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);
 		}
 		return $name;
+	}
+
+	/** Project a prepared union read through the successful guard or its proven complement. @param ast_declaration_interface[] $declarations */
+	private function union_pointer(ast_name_expression $value, ast_local_binding $local, array &$declarations /** array<string,ast_declaration_interface> */): ?string
+	{
+		if (($guard = $value->guard()) !== null) return 'scpp_guard_' . $guard->start;
+		$arm = $value->type_def();
+		if (!($arm instanceof shared_record_type_definition) || $arm === $local->type_def()->base) return null;
+		$record = $arm->payload->declaration;
+		$declarations[$record->symbol_key()] = $record;
+		return 'static_cast<' . $arm->payload->cpp_type() . '*>(' . $this->name($local) . '.view)';
 	}
 
 	/**
@@ -2192,6 +2212,7 @@ CPP;
 	/** Payload member declarations live inside scpp_records; qualify application signature types. */
 	private function member_type(type_definition $type): string
 	{
+		if ($type instanceof class_union_type_definition) $type = $type->base;
 		return ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type)
 			? '::' . ($this->root === '' ? '' : $this->root . '::') . $type->cpp_type() : $this->signature_type($type, false);
 	}
@@ -2289,7 +2310,7 @@ CPP;
 	{
 		$name = self::name_component($method->short_name);
 		$result = $method->return_type_def();
-		$variant = $result instanceof shared_record_type_definition;
+		$variant = $result instanceof shared_record_type_definition || $result instanceof class_union_type_definition;
 		foreach ($method->parameters as $parameter) {
 			if ($parameter->mode === passing_mode::value && ($parameter->type_def() instanceof shared_record_type_definition
 				|| $parameter->type_def() instanceof class_union_type_definition)) $variant = true;

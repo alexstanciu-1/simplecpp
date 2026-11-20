@@ -13,10 +13,16 @@ void* operator new(std::size_t size) {
 void operator delete(void* p) noexcept { if (p) ++disposals; std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { ::operator delete(p); }
 
+namespace App {
+NameOrField make_field() { auto value = owner_FieldExpr::make(); value->mark = 2; return UP_FIELD(value); }
+NameOrLiteral make_literal() { auto value = owner_LiteralExpr::make(); value->mark = 3; return UP_LITERAL(value); }
+}
+
 int main() {
     using namespace App;
     static_assert(std::is_same_v<NameOrField, NameOrLiteral>);
     static_assert(sizeof(NameOrField) == 2 * sizeof(void*));
+    assert(reader().RETURN_FIELD()->mark == 2 && reader().RETURN_LITERAL()->mark == 3);
     const unsigned initial = allocations;
     const unsigned freed = disposals;
     {

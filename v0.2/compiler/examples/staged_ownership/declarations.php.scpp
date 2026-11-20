@@ -1,0 +1,121 @@
+class Syntax_Node {
+	private weak<Syntax_Node> $parent;
+
+	public function parent_node(): ?Syntax_Node {
+		return lock($this->parent);
+	}
+
+	public static function attach_parent(Syntax_Node $child, Syntax_Node $parent): void {
+		if (!$child->parent->is_empty()) {
+			throw Exception::make("Parent already attached");
+		}
+		$ancestor ?Syntax_Node = $parent;
+		while ($ancestor !== null) {
+			$would_cycle = $ancestor === $child;
+			if ($would_cycle) {
+				throw Exception::make("Ownership cycle");
+			}
+			$ancestor = $ancestor->parent_node();
+		}
+		$child->parent = weak($parent);
+	}
+}
+
+final class Function_Body extends Syntax_Node {
+	public readonly int $start;
+	public readonly int $end;
+
+	public function __construct(int $start, int $end) {
+		if ($start < 0 || $end < $start) {
+			throw Exception::make("Invalid body range");
+		}
+		$this->start = $start;
+		$this->end = $end;
+	}
+}
+
+final class Function_Declaration extends Syntax_Node {
+	private readonly int $header_end;
+	private readonly bool $abstract_declaration;
+	private ?Function_Body $body = null;
+	private int $end = 0;
+	private bool $completed = false;
+
+	public function __construct(int $header_end, bool $abstract_declaration) {
+		$this->header_end = $header_end;
+		$this->abstract_declaration = $abstract_declaration;
+	}
+
+	public static function complete_body(Function_Declaration $declaration, Function_Body $body): void {
+		if ($declaration->completed || $declaration->abstract_declaration || $body->start < $declaration->header_end) {
+			throw Exception::make("Invalid body completion");
+		}
+		Syntax_Node::attach_parent($body, $declaration);
+		$declaration->body = $body;
+		$declaration->end = $body->end;
+		$declaration->completed = true;
+	}
+
+	public function complete_abstract(int $end): void {
+		if ($this->completed || !$this->abstract_declaration || $end < $this->header_end) {
+			throw Exception::make("Invalid abstract completion");
+		}
+		$this->end = $end;
+		$this->completed = true;
+	}
+
+	public function completed(): bool {
+		return $this->completed;
+	}
+
+	public function body(): ?Function_Body {
+		return $this->body;
+	}
+
+	public function end(): int {
+		if (!$this->completed) {
+			throw Exception::make("Function declaration is incomplete");
+		}
+		return $this->end;
+	}
+}
+
+final class Source_Generation {
+	public readonly Function_Declaration $declaration;
+
+	public function __construct(Function_Declaration $declaration) {
+		$this->declaration = $declaration;
+	}
+}
+
+final class Symbol_Entry {
+	private weak<Function_Declaration> $head;
+
+	public function publish(Function_Declaration $declaration): void {
+		if (!$declaration->completed()) {
+			throw Exception::make("Cannot publish an unfinished function");
+		}
+		$this->head = weak($declaration);
+	}
+
+	public function declaration(): ?Function_Declaration {
+		return lock($this->head);
+	}
+
+	public function withdraw(): void {
+		$absent ?Function_Declaration = null;
+		$this->head = weak($absent);
+	}
+}
+
+final class Declaration_Index {
+	private Symbol_Entry $entry;
+
+	public function __construct() {
+		$this->entry = new Symbol_Entry();
+	}
+
+	public function entry(): Symbol_Entry {
+		return $this->entry;
+	}
+}
