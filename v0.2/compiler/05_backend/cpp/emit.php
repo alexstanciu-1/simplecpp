@@ -116,6 +116,8 @@ final class Cpp_Emitter
 	{
 		$layout = [];
 		$base = $node->definition->base();
+		$has_local_constructor = isset($node->methods['__construct']);
+		$inherited_constructor = $has_local_constructor ? null : $base?->constructor();
 		foreach ($node->fields as $field) {
 			foreach ($field->type_def()->cpp_headers() as $header) $includes[$header] = true;
 			$type = $field->storage_type();
@@ -134,7 +136,9 @@ final class Cpp_Emitter
 		if ($virtual || $authored) {
 			$name = Cpp_Identifier::source($node->short_name);
 			$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
-			if (!isset($node->methods['__construct'])) $layout[] = "\t$name() = default;";
+			if (!$has_local_constructor && ($inherited_constructor?->accepts_argument_count(0) ?? true)) {
+				$layout[] = "\t$name() = default;";
+			}
 			$layout[] = "\t$name(const $name&) = default;";
 			$layout[] = "\t$name($name&&) = default;";
 			$layout[] = "\t$name& operator=(const $name&) = default;";
@@ -176,7 +180,7 @@ final class Cpp_Emitter
 				$layout[] = $slot . ';';
 			}
 		}
-		if (isset($node->methods['__construct'])) {
+		if ($has_local_constructor) {
 			$constructor = $node->methods['__construct'];
 			$params = $this->constructor_parameters($constructor, $includes);
 			if (self::self_value_constructor($constructor)) $params = 'int, ' . $params;
@@ -184,7 +188,7 @@ final class Cpp_Emitter
 			$layout[] = "\t" . $name . '(' . $params . ');';
 			if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
 		}
-		if ($base !== null && !isset($node->methods['__construct']) && $base->constructor() !== null) {
+		if ($inherited_constructor !== null) {
 			$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
 		}
 		$bases = $base === null ? [] : ['public ' . $base->cpp_type()];

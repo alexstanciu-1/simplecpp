@@ -1,0 +1,64 @@
+enum Duplicate_Category: int {
+	case Local_Binding = 1;
+	case Type_Declaration = 2;
+	case Global_Declaration = 3;
+	case Instance_Field = 4;
+	case Enum_Case = 5;
+}
+
+// A declaring scope owns both declarations. The link only observes its successor.
+abstract class Declaration {
+	public readonly string $symbol_key;
+	private weak<Declaration> $duplicate;
+
+	public function __construct(string $symbol_key) {
+		$this->symbol_key = $symbol_key;
+	}
+
+	public abstract function duplicate_category(): Duplicate_Category;
+
+	public function duplicate_element(): ?Declaration {
+		return lock($this->duplicate);
+	}
+
+	public static function link_duplicate(Declaration $head, Declaration $element): void {
+		if (!$head->duplicate->is_empty() || $element === $head || !$element->duplicate->is_empty()
+			|| $head->duplicate_category() !== $element->duplicate_category() || $element->symbol_key !== $head->symbol_key) {
+			throw Exception::make("Invalid duplicate declaration link");
+		}
+		$head->duplicate = weak($element);
+	}
+
+	public function clear_duplicate(): void {
+		$absent ?Declaration = null;
+		$this->duplicate = weak($absent);
+	}
+}
+
+final class Local_Declaration extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Local_Binding; }
+}
+
+final class Parameter_Declaration extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Local_Binding; }
+}
+
+final class Record_Declaration extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Type_Declaration; }
+}
+
+final class Enum_Declaration extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Type_Declaration; }
+}
+
+final class Global_Declaration extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Global_Declaration; }
+}
+
+final class Instance_Field extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Instance_Field; }
+}
+
+final class Enum_Case extends Declaration {
+	public override function duplicate_category(): Duplicate_Category { return Duplicate_Category::Enum_Case; }
+}

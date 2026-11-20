@@ -1,0 +1,43 @@
+function print_link_result(Declaration $head, Declaration $element): void {
+	$before = $head->duplicate_element();
+	try {
+		Declaration::link_duplicate($head, $element);
+		if ($head->duplicate_element() !== $element) {
+			throw Exception::make("Link did not preserve declaration identity");
+		}
+		echo "1";
+	} catch (Exception $failure) {
+		if ($failure->get_message() !== "Invalid duplicate declaration link" || $head->duplicate_element() !== $before) {
+			throw $failure;
+		}
+		echo "0";
+	}
+}
+
+function prove_duplicate_links(): void {
+	$local = new Local_Declaration("var:item");
+	$parameter = new Parameter_Declaration("var:item");
+	$record = new Record_Declaration("class:Item");
+	$enumeration = new Enum_Declaration("class:Item");
+	$global = new Global_Declaration("var:item");
+	$field = new Instance_Field("item");
+	$case = new Enum_Case("item");
+	$other = new Local_Declaration("var:other");
+	$replacement = candidate_declaration();
+
+	print_link_result($local, $local);
+	print_link_result($local, $global);
+	print_link_result($field, $case);
+	print_link_result($local, $other);
+	print_link_result($local, $parameter);
+	print_link_result($local, $parameter);
+	print_link_result(new Local_Declaration("var:item"), $local);
+	print_link_result($record, $enumeration);
+
+	// A successful publication clears old links before connecting reused and new declarations.
+	$local->clear_duplicate();
+	print_link_result($local, $replacement);
+	if ($parameter->duplicate_element() !== null) {
+		throw Exception::make("Previous successor was changed");
+	}
+}

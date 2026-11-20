@@ -50,6 +50,12 @@ function publication_gate_case(string $work, string $flavor): void
 	$project = new Incremental_Project($app, $output, $target);
 	$project->run();
 	$reader = $project->session();
+	$old_session = \WeakReference::create($reader);
+	$files = $reader->files();
+	$key = $reader->entry_key();
+	$handle = new prepared_program($key, $files, new prepared_entry($files[$key], $target), $reader);
+	unset($files);
+	$handle->require_prepared();
 	$entry = $reader->scope->entry('func:value');
 	$unchanged = $reader->entry->sources[$main_name]->ast;
 	$old_root = \WeakReference::create($reader->entry->sources[$library_name]->ast);
@@ -77,6 +83,18 @@ function publication_gate_case(string $work, string $flavor): void
 	}
 	unset($reader);
 	gc_collect_cycles();
+	gate_check($old_session->get() === $handle->session && $old_root->get() !== null,
+		'Prepared reader lost its source generation');
+	try {
+		Cpp_Program::emit($handle);
+		throw new \RuntimeException('Stale prepared reader emitted code');
+	}
+	catch (\LogicException $error) {
+		gate_check($error->getMessage() === 'Stale module compilation', 'Wrong stale-reader failure');
+	}
+	unset($handle);
+	gc_collect_cycles();
+	gate_check($old_session->get() === null, 'Released prepared reader retained its session');
 	gate_check($old_root->get() === null && $old_declaration->get() === null,
 		'Published index kept the replaced declaration or source alive');
 

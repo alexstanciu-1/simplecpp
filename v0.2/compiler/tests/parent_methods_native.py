@@ -155,10 +155,15 @@ def boundaries(work,flavor,libraries):
     unrelated=klass('Other',method('get','return 9;'))
     app,out=work/(flavor+'-boundaries'),work/(flavor+'-boundaries-out')
     write_app(app,flavor,{'base':base,'child':child,'main':main,'other':unrelated})
-    static=method('run','return '+call+';').replace('public: ','public: static ',1) if flavor=='cpp' else method('run','return '+call+';').replace('function ','static function ',1) if flavor=='php' else 'static '+method('run','return '+call+';')
+    probe=method('probe','return '+call+';')
+    static={'cpp':probe.replace('public: ','public: static ',1),
+            'php':probe.replace('function ','static function ',1),
+            'js':'static '+probe}[flavor]
+    qualifier='.' if flavor=='js' else '::'
+    through_type=method('run',f'return Child{qualifier}probe();')
     cases=[('base',klass('Base'), 'method'),('base',klass('Base',method('get','return 3;',access='private')),'private'),
         ('child',klass('Child',method('run','return '+call+';')),'base' if flavor!='cpp' else 'strict base'),
-        ('child',klass('Child',static,'Base'),'current instance'),
+        ('child',klass('Child',static+through_type,'Base'),'current instance'),
         ('child',klass('Child',method('run','return '+parent('get','1',base='Base')+';'),'Base'),'argument'),
         ('main',s['function']('outside','int',[],'return '+call+';')+main,'current instance' if flavor=='cpp' else 'declaring record'),
         ('child',klass('Child',method('run','return '+parent('missing',base='Base')+';'),'Base'),'method')]
