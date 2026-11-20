@@ -440,6 +440,38 @@ an unrelated edit preserves the plan and that changing the initializer or
 destination contract forces a fresh decision. Establish those results before
 investing in an idle scheduler or persistent cache.
 
+#### Accepted tokenizer performance baseline
+
+On dev002 with Clang 18.1.3, the bounded scanner at revision `0886aac46`
+reached 91.0% of handwritten throughput with `--optimize-function=scan` and
+44.4% with ordinary lowering, aggregated across the nine flavor/input pairs.
+Accept this performance for v0.2. When revisiting it, repeat the same comparison
+and investigate operator-heavy input first: selected throughput there was
+74.6–76.0% of handwritten across the three flavors.
+[Report, raw measurements and reproduction](benchmarks/tokenizer/current_native.md)
+
+#### Fixed byte patterns at an offset
+
+The reference compiler's [fixed-array fixture](../../../compiler/reference/pre-rewrite/tests/integration/fixed_arrays.php)
+covers record fields with fixed extents and checked indexing. The first byte-match
+experiment exercises a separate operation: matching a known sequence at an offset
+without copying a source slice. The scanner still checks the full identifier length
+before matching a keyword, so identifiers such as `while2` remain distinct.
+
+The [isolated Clang proof](benchmarks/tokenizer/byte_access/fixed_match.py) substitutes
+only the keyword condition in temporary cpp/php/js scanner output. All 11 oracle
+inputs per flavor and a four-input edit/failure/recovery sequence matched the PHP
+tokenizer. A native boundary fixture checks a fixed binary pattern containing NUL and
+0xff against a runtime string and a native byte vector. The prototype returns false
+for negative and out-of-range offsets and accepts an empty pattern at end of input.
+These are candidate semantics. Native vector storage is a control fixture;
+Simple C++ vector provider registration and source syntax remain open.
+The [pinned Clang whole-scanner comparison](benchmarks/tokenizer/byte_access/fixed_match.md)
+found no consistent identifier-heavy speedup. Moving pointer acquisition outside
+the loop gave 0.9–1.4% higher mixed-input throughput, below the 2.6% change in
+the operator-only control. Keep the ordinary scanner and evaluate a general
+byte-match API against a concrete consumer.
+
 #### Production boundary for direct-slot construction
 
 Two source units using the same application vector request the same concrete
