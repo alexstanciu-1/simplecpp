@@ -17,6 +17,17 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
+		if ($syntax instanceof ast_intersection_reference) {
+			$left = self::signature($syntax->left, $symbols, $function, $dependencies, watcher: $watcher);
+			$right = self::signature($syntax->right, $symbols, $function, $dependencies, watcher: $watcher);
+			if ($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition && $left->required && $right->required) {
+				if ($left->payload->declaration->kind === record_kind::interface_type) [$left, $right] = [$right, $left];
+				if ($left->payload->declaration->kind === record_kind::class_type && $right->payload->declaration->kind === record_kind::interface_type) {
+					return $left->payload->intersection($right);
+				}
+			}
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Intersection requires one required class and one interface');
+		}
 		if ($allow_void && $syntax->name === Iterator_Contract::NAME) {
 			if ($function->parent instanceof ast_method_owner) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Yield producers must be free functions');

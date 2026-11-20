@@ -97,3 +97,21 @@ Deferred: struct implementers and broader reference
 returns, interface data/static/default members, trait use in interfaces, unique, borrows and native
 threading. Sequential tests do not prove thread safety
 or a preparation-speed improvement.
+
+## Class and interface parameter intersections
+
+A required by-value parameter can name one class and one interface. PHP writes
+`Base&Readable $item`, C++ writes `Base&Readable item`, and JS writes
+`item: Base&Readable`. Either order names the same contract. An argument's declared
+type must guarantee both components. An intersection can forward to another pair
+when both requirements follow from its declared components.
+
+One concrete native pair retains the class owner and an adjusted interface pointer.
+Member preparation selects the appropriate view on the existing name occurrence.
+Fields use the class view. Distinct same-name methods on independent contracts require
+selecting a constituent explicitly, for example by passing the argument to a helper
+with that constituent as its parameter type. Calls and returns using either constituent
+reuse ordinary shared ownership. Conversions use compile-time pointer adjustments.
+Intersection reference parameters, defaults, producer parameters, written storage
+and return types, and narrowing after an `instanceof` guard are outside this slice.
+[Native and incremental proof](../tests/intersection_parameters_native.py)

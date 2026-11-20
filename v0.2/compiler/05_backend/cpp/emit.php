@@ -518,7 +518,7 @@ CPP;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies()] as $type) {
-			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
+			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
 		}
@@ -551,6 +551,7 @@ CPP;
 		ksort($declarations, \SORT_STRING);
 		$records = [];
 		$layouts = '';
+		$intersections = '';
 		$owners = [];
 		foreach ($declarations as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
@@ -558,6 +559,13 @@ CPP;
 		}
 		foreach ($declarations as $function) {
 			if ($function instanceof ast_enum_declaration) continue;
+			if ($function instanceof intersection_type_definition) {
+				$owners[$function->base->payload->name] = $function->base;
+				$owners[$function->capability->payload->name] = $function->capability;
+				$intersections .= 'struct ' . $function->cpp_type() . ' { ' . $function->base->cpp_type() . ' base; '
+					. $function->capability->payload->cpp_type() . "* capability{}; };\n";
+				continue;
+			}
 			if ($function instanceof record_handle_definition) {
 				$owners[$function->payload->name] = $function->payload->shared;
 				continue;
@@ -623,9 +631,9 @@ CPP;
 		$imports = $unit_flavor !== null && $this->root !== '' ? self::imports($unit_flavor) : '';
 		$adapter_files = $this->adapter_files();
 		if ($adapter_files === []) {
-			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $prototypes . implode("\n", $definitions));
+			return $header . self::namespace_body($this->root, $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes . implode("\n", $definitions));
 		}
-		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $prototypes);
+		$text = $header . self::namespace_body($this->root, $this->concrete_collections->forwards() . $imports . $owner_types . $layouts . $owner_methods . $intersections . $prototypes);
 		foreach ($adapter_files as $path => $body) {
 			$text .= $this->headers === null ? $body : '#include "' . basename($path) . "\"\n";
 		}
@@ -1619,7 +1627,13 @@ CPP;
 			$global_references[$name] = $declaration;
 			return '::' . ($this->root === '' ? '' : $this->root . '::') . $name;
 		}
-		return $this->name($declaration);
+		$name = $this->name($declaration);
+		$type = $declaration->type_def();
+		if ($type instanceof intersection_type_definition && $value->type_def() !== $type) {
+			if ($value->type_def() === $type->base) return $name . '.base';
+			return $this->inline_adapters->call($type->project($type->capability, value_conversion::intersection_capability), [$name]);
+		}
+		return $name;
 	}
 
 	/**
@@ -1884,7 +1898,9 @@ CPP;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
 		}
 		foreach ($types as $type) {
-			if ($type instanceof application_collection_type) {
+			if ($type instanceof intersection_type_definition) {
+				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof application_collection_type) {
 				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
 			} elseif ($type instanceof enum_type_definition) {
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
@@ -1938,7 +1954,7 @@ CPP;
 		foreach ($function->parameters as $parameter) {
 			$type = $parameter->type_def();
 			$native = $this->signature_type($type, $short_types);
-			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition)) {
+			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
 			$parameters[] = '[[maybe_unused]] ' . $native . ' '
@@ -2058,6 +2074,12 @@ CPP;
 	/** A concrete signature needs its nominal element too; retain no additional dependency inventory. @return \Generator<type_definition> */
 	private static function signature_type_dependencies(type_definition $type): \Generator
 	{
+		if ($type instanceof intersection_type_definition) {
+			yield $type;
+			yield $type->base;
+			yield $type->capability;
+			return;
+		}
 		if ($type instanceof application_collection_type) {
 			yield $type;
 			foreach ($type->concrete_types() as $argument) yield from self::signature_type_dependencies($argument);

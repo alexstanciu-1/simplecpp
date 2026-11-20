@@ -960,7 +960,10 @@ final class Preparation
 				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
 					|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
 				$write = $this->latest_writes[$id] ?? null;
-				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown);
+				$type = $binding->type_def();
+				$view = $type instanceof intersection_type_definition
+					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 				return;
 			}
 			if ($syntax instanceof ast_interpolation_name) {

@@ -104,13 +104,13 @@ class ast_name_expression extends ast_expression
 
 	/** METHODS */
 	/** Snapshot the latest write or initializer; unknown suppresses stale facts after borrowing or through aliases. */
-	public function settle_local(ast_local_binding $local, ?ast_assignment_statement $write = null, bool $unknown = false): void
+	public function settle_local(ast_local_binding $local, ?ast_assignment_statement $write = null, bool $unknown = false, ?type_definition $view = null): void
 	{
 		if (($write !== null) && ($write->local_def() !== $local)) {
 			throw new \LogicException('Read and latest write must refer to the same local');
 		}
 		$current = $write ?? $local;
-		$this->settle_value($local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
+		$this->settle_value($view ?? $local->type_def(), $unknown ? null : $current->constant(), !$unknown && $current->constant_known());
 		$this->binding = $local;
 	}
 

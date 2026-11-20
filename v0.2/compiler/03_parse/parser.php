@@ -572,10 +572,10 @@ final class Parser
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
-				$type = $this->return_type();
+				$type = $this->parameter_type();
 			}
 			else {
-				$type = $this->return_type();
+				$type = $this->parameter_type();
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
@@ -596,6 +596,18 @@ final class Parser
 		}
 		$this->cursor->take(token_kind::rparen, ') (typed parameters)');
 		return $parameters;
+	}
+
+	/** Distinguish a C++ reference declarator (Base &name) from Base & Capability name. */
+	private function parameter_type(): ast_type_reference
+	{
+		$type = $this->return_type();
+		$c = $this->cursor;
+		if (!$c->is(token_kind::ampersand) || !$c->next_is(token_kind::identifier)) return $type;
+		if ($c->tokens->source->flavor === flavor::cpp
+			&& !in_array($c->tokens->tokens[$c->position() + 2]->kind ?? null, [token_kind::identifier, token_kind::ampersand], true)) return $type;
+		$c->take(token_kind::ampersand, '&');
+		return new ast_intersection_reference($type, $this->named_type());
 	}
 
 	/** The reference marker precedes the parameter name in each flavor. */
