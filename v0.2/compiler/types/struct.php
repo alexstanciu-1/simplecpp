@@ -36,6 +36,11 @@ final class record_type_definition extends type_definition implements dependency
 	private array $interfaces /** list<record_type_definition> */ = [];
 	/** Prepared fact: native non-owning forwarding targets; original methods remain at their declaring owner. @var ast_function_declaration[] */
 	public array $interface_forwards /** array<string,ast_function_declaration> */ = [];
+	/**
+	 * Prepared fact: distinct interface contracts paired with their selected implementation; native non-owning.
+	 * @var list<array{ast_function_declaration,ast_function_declaration}>
+	 */
+	public array $interface_adaptations /** list<array{ast_function_declaration,ast_function_declaration}> */ = [];
 
 	/** CONSTRUCTOR */
 	public function __construct(ast_record_declaration $declaration)
@@ -65,6 +70,7 @@ final class record_type_definition extends type_definition implements dependency
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		$this->symbol = $symbol;
 		$this->source_key = $source_key;
 		$this->dependencies = $dependencies;
@@ -85,6 +91,7 @@ final class record_type_definition extends type_definition implements dependency
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		foreach ($this->declaration->fields as $field) $field->settle_type(null);
 	}
 
@@ -108,6 +115,7 @@ final class record_type_definition extends type_definition implements dependency
 		$this->iterator = null;
 		$this->interfaces = [];
 		$this->interface_forwards = [];
+		$this->interface_adaptations = [];
 		$interface_references = $this->declaration->interface_references;
 		if ($this->declaration->base_reference !== null) {
 			$written = $this->declaration->base_reference;

@@ -390,7 +390,7 @@ Bodyless public instance methods use these spellings:
 Abstract methods participate in virtual dispatch. Every replacement requires the
 existing override marker (including PHP `#[\Override]`). A bodyless replacement
 uses `abstract override` in PHP/JS or trailing `override = 0` in C++.
-Signatures follow the existing exact override rules. Abstract methods cannot have
+Signatures follow the shared-value override rules. Abstract methods cannot have
 bodies or be final, static, private, constructors or destructors. PHP/JS abstract
 methods do not also take an explicit virtual marker.
 
@@ -402,8 +402,7 @@ calls cannot select a bodyless abstract method. Constructors and fields in an
 abstract base remain usable through concrete descendants.
 
 Lowering uses native pure virtual declarations and existing shared ownership.
-Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Callable variance,
-unique ownership and borrows remain deferred. Class interfaces are covered below. See the
+Abstract structs use the same method markers and obligations. A concrete inline descendant remains exactly copyable when its fields allow it. Abstract structs cannot be complete inline values, including in fields, callable signatures and collection payloads. Explicit shared handles may name them. Shared-value callable variance applies to explicitly shared structs. Unique ownership and borrows remain deferred. Class interfaces are covered below. See the
 [implementation and verification](../compiler/docs/abstract_methods.md).
 
 Static method lookup starts at the qualified type and follows its base chain. Lexical
@@ -429,9 +428,7 @@ Interfaces cannot be constructed.
 
 The concrete base is optional. C++ places it first when present; the remaining colon
 edges are interfaces. PHP/JS use a comma-separated implements list. Multiple independent
-interfaces may have compatible same-name requirements. Signature compatibility remains
-exact in this slice, including modes/nullability/optional positions; default values
-and parameter names may differ. The static callable determines defaults.
+interfaces may have compatible same-name requirements. A fixed shared-value parameter may widen and a shared result may narrow along settled ancestry. Modes, presence and optional positions remain exact. Default values and parameter names may differ. The static callable determines defaults.
 
 Every locally authored implementation needs the existing Override marker, including
 PHP `#[\Override]`. An unchanged compatible inherited public method fulfills an
@@ -441,7 +438,7 @@ Abstract implementers may retain outstanding obligations; concrete types must fu
 them. Nonvirtual source hiding restrictions still apply.
 
 An inherited public final class method can fulfill a newly introduced interface.
-Interface inheritance/diamonds, struct implementers, variance and broader reference returns remain deferred.
+Interface inheritance/diamonds, struct implementers and broader reference returns remain deferred.
 Interface fields, constants, static methods, constructors, destructors and method
 bodies are not admitted. Unique, borrows and threading are outside this slice.
 See [implementation and verification](../compiler/docs/interfaces.md).

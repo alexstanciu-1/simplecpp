@@ -23,12 +23,16 @@ final class Method_Preparation
 			|| ($method->is_abstract && $method->is_virtual && $method->source()->flavor !== flavor::cpp)) self::fail($method, 'Abstract method requires an abstract class or struct and cannot be final or explicitly virtual');
 		if ($method->is_virtual && ($method->is_override || $method->is_final)) self::fail($method, 'Conflicting virtual method modifiers');
 		$requirements = $record->interface_requirements($method->short_name);
+		$exact_slot = false;
+		$method->adapted_base = null;
 		foreach ($requirements as $requirement) {
 			$dependencies?->watch($symbols->entry($requirement->symbol_key()), $method);
 		}
 		if ($requirements !== []) {
 			if (!$method->is_override) self::fail($method, 'Interface implementation requires override');
-			foreach ($requirements as $requirement) self::compatible($method, $requirement);
+			foreach ($requirements as $requirement) {
+				if (self::compatible($method, $requirement, $symbols, $dependencies, $method)) $exact_slot = true;
+			}
 		}
 		if (!$method->is_constructor()) {
 			$base = $record->base()?->method_symbol($method->short_name, $symbols, $method, $dependencies)?->declaration();
@@ -43,9 +47,11 @@ final class Method_Preparation
 					if (!$base->has_virtual_dispatch() && !$record->base()->interface_dispatch($method->short_name)) self::fail($method, 'Nonvirtual method hiding is forbidden');
 					if (!$method->is_override) self::fail($method, 'Inherited virtual method requires override');
 				}
-				self::compatible($method, $base);
+				if (self::compatible($method, $base, $symbols, $dependencies, $method)) $exact_slot = true;
+				else $method->adapted_base = $base;
 			} elseif ($method->is_override && $requirements === []) self::fail($method, 'Override has no inherited virtual target');
 		}
+		$method->introduces_slot = $method->is_override && !$exact_slot;
 		$method->method_contract_ready = true;
 	}
 
@@ -56,17 +62,25 @@ final class Method_Preparation
 		if ($record->base() !== null) self::record_contract($record->base(), $symbols, $dependencies);
 		foreach ($record->declaration->methods as $method) self::contract($method, $symbols, $dependencies);
 		$forwards = [];
+		$adaptations = [];
 		$requirements = [];
 		foreach ($record->interface_requirements() as $requirement) {
 			$name = $requirement->short_name;
 			$dependencies?->watch($symbols->entry($requirement->symbol_key()), $record);
-			if (isset($requirements[$name])) self::compatible($requirement, $requirements[$name]);
-			$requirements[$name] = $requirement;
+			foreach ($requirements[$name] ?? [] as $other) {
+				if (self::signature_match($requirement, $other, $symbols, $dependencies, $record) === null) {
+					self::compatible($other, $requirement, $symbols, $dependencies, $record);
+				}
+			}
+			$requirements[$name][] = $requirement;
 			$implementation = $record->method_symbol($name, $symbols, $record, $dependencies)?->declaration();
 			// An abstract implementation may defer its body, but not its callable contract.
 			if ($implementation !== null && $implementation->parent->kind !== record_kind::interface_type) {
 				self::contract($implementation, $symbols, $dependencies);
-				self::compatible($implementation, $requirement);
+				$exact = self::compatible($implementation, $requirement, $symbols, $dependencies, $record);
+				if (!$exact && ($implementation->parent === $record->declaration || !$record->base()?->derives_from($requirement->parent->definition))) {
+					$adaptations[] = [$requirement, $implementation];
+				}
 				if ($implementation->is_private || $implementation->is_protected || $implementation->is_static) self::fail($implementation, 'Interface implementation must be public and nonstatic');
 			}
 			if ($implementation === null || $implementation->parent->kind === record_kind::interface_type || $implementation->is_abstract) {
@@ -76,10 +90,13 @@ final class Method_Preparation
 			if ($implementation->parent !== $record->declaration) {
 				// Reuse an already inherited interface slot without a redundant bridge.
 				if ($record->base()?->derives_from($requirement->parent->definition)) continue;
-				$forwards[$name] = $implementation;
+				if ($exact || (!$implementation->has_virtual_dispatch() && !$record->base()?->interface_dispatch($name))) {
+					$forwards[$name] = $implementation;
+				}
 			}
 		}
 		$record->interface_forwards = $forwards;
+		$record->interface_adaptations = $adaptations;
 		if (!$record->declaration->is_abstract) {
 			$seen = [];
 			for ($type = $record; $type !== null; $type = $type->base()) {
@@ -94,17 +111,42 @@ final class Method_Preparation
 		$record->method_contract_ready = true;
 	}
 
-	/** Share the exact callable contract check across static redeclarations, overrides and interface obligations. */
-	private static function compatible(ast_function_declaration $method, ast_function_declaration $base): void
+	/** Validate a directional contract and report whether its native slot is exact. */
+	private static function compatible(ast_function_declaration $method, ast_function_declaration $base, scope $symbols,
+		?Dependency_Watches $dependencies, dependency_watcher $watcher): bool
 	{
 		$contract = $method->is_static ? 'Static redeclaration' : 'Override';
 		if (($method->is_private && !$base->is_private) || ($method->is_protected && !$base->is_private && !$base->is_protected)) self::fail($method, $contract . ' cannot narrow visibility');
-		if ($method->return_type_def() !== $base->return_type_def() || count($method->parameters) !== count($base->parameters)) self::fail($method, $contract . ' signature must match exactly');
+		return self::signature_match($method, $base, $symbols, $dependencies, $watcher)
+			?? self::fail($method, $contract . ' signature must match exactly' . ($method->is_static ? '' : ' except for compatible shared values'));
+	}
+
+	/** True for identical slots, false for an admitted adaptation, null for incompatible contracts. */
+	private static function signature_match(ast_function_declaration $method, ast_function_declaration $base, scope $symbols,
+		?Dependency_Watches $dependencies, dependency_watcher $watcher): ?bool
+	{
+		if (count($method->parameters) !== count($base->parameters)) return null;
+		$exact = $method->return_type_def() === $base->return_type_def();
+		if (!$exact && ($method->is_static || !self::widens($method->return_type_def(), $base->return_type_def(), $symbols, $dependencies, $watcher))) return null;
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];
-			if ($parameter->type_def() !== $original->type_def() || $parameter->mode !== $original->mode
-				|| ($parameter->default_value === null) !== ($original->default_value === null)) self::fail($method, $contract . ' signature must match exactly');
+			if ($parameter->mode !== $original->mode || ($parameter->default_value === null) !== ($original->default_value === null)) return null;
+			if ($parameter->type_def() === $original->type_def()) continue;
+			if ($method->is_static || $parameter->mode !== passing_mode::value
+				|| !self::widens($original->type_def(), $parameter->type_def(), $symbols, $dependencies, $watcher)) return null;
+			$exact = false;
 		}
+		return $exact;
+	}
+
+	/** Only a distinct shared-value pair needs an ancestry dependency. Presence is invariant. */
+	private static function widens(type_definition $from, type_definition $to, scope $symbols,
+		?Dependency_Watches $dependencies, dependency_watcher $watcher): bool
+	{
+		if (!($from instanceof shared_record_type_definition) || !($to instanceof shared_record_type_definition)
+			|| $from->required !== $to->required) return false;
+		$dependencies?->watch($symbols->entry($from->payload->declaration->symbol_key()), $watcher);
+		return $from->payload->derives_from($to->payload);
 	}
 
 	private static function fail(ast_function_declaration $method, string $message): never

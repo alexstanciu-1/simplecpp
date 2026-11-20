@@ -331,6 +331,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public private(set) ?called_method_instance $instance = null;
 	/** Prepared fact: inherited callable contract validated after signature settlement. */
 	public bool $method_contract_ready = false;
+	/** Prepared fact: nearest overridden declaration needing a shared-value bridge; native non-owning. */
+	public ?self $adapted_base = null;
+	/** Prepared fact: this override introduces its own signature alongside the inherited slots. */
+	public bool $introduces_slot = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
 
@@ -471,6 +475,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		$this->return_type_def = null;
 		$this->method_contract_ready = false;
+		$this->adapted_base = null;
+		$this->introduces_slot = false;
 		foreach ($this->parameters as $parameter) {
 			$parameter->reset_preparation();
 		}
@@ -509,6 +515,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		$this->return_type_def = null;
 		$this->method_contract_ready = false;
+		$this->adapted_base = null;
+		$this->introduces_slot = false;
 		$this->body?->invalidate_dependencies();
 		$this->root()->begin_preparation();
 		$this->signature_dependencies?->changed($this->root()->scope->parent->entry($this->symbol_key()));

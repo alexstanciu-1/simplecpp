@@ -125,15 +125,22 @@ final class Cpp_Emitter
 				$type = $method->return_type_def();
 				foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 				$result = $this->member_type($type);
-				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
+				$layout[] = "\t" . (($method->is_virtual || $method->is_abstract || $method->introduces_slot) ? 'virtual ' : '') . $result . ' ' . self::virtual_name($method)
 					. '(' . implode(', ', $this->parameters($method, $includes, false)) . ')'
-					. ($method->is_override ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
+					. ($method->is_override && !$method->introduces_slot ? ' override' : '') . ($method->is_final ? ' final' : '') . ($method->is_abstract ? ' = 0' : '') . ';';
+			}
+			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+				foreach ($contract->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
+				$layout[] = "\t" . $this->member_type($contract->return_type_def()) . ' ' . self::virtual_name($contract)
+					. '(' . implode(', ', $this->parameters($contract, $includes, false, true)) . ') override;';
 			}
 			$final_slots = [];
 			foreach ($node->definition->interface_forwards as $method) {
 				foreach ($method->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
-				$slot = "\t" . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
-					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ') override';
+				$new_slot = !$method->has_virtual_dispatch() && !$base?->interface_dispatch($method->short_name)
+					&& !self::has_exact_interface_slot($node, $method);
+				$slot = "\t" . ($new_slot ? 'virtual ' : '') . $this->member_type($method->return_type_def()) . ' ' . self::virtual_name($method)
+					. '(' . implode(', ', $this->parameters($method, $includes, false, true)) . ')' . ($new_slot ? '' : ' override');
 				if ($method->is_final && $method->has_virtual_dispatch()) {
 					$final_slots[] = $slot . ' final;';
 					$layout[] = "\tusing " . $base->cpp_type() . '::' . self::virtual_name($method) . ';';
@@ -434,6 +441,11 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
+				$this->collect_signature_types($contract, $declarations);
+				$this->collect_signature_types($implementation, $declarations);
+				$definitions[] = $this->variance_forward($node, $contract, $implementation, $required_headers);
+			}
 			foreach ($node->definition->interface_forwards as $method) {
 				$declarations[self::function_name($method)] = $method;
 				$this->collect_signature_types($method, $declarations);
@@ -1798,14 +1810,37 @@ CPP;
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
 	}
 
+	/** Adapt agreed value positions and dispatch once through the implementation slot. @param bool[] $headers */
+	private function variance_forward(ast_record_declaration $record, ast_function_declaration $contract,
+		ast_function_declaration $method, array &$headers /** array<string,bool> */): string
+	{
+		$arguments = [];
+		foreach ($contract->parameters as $i => $parameter) {
+			$type = $parameter->type_def();
+			$value = $this->forward_argument($parameter);
+			$target = $method->parameters[$i]->type_def();
+			$arguments[] = $target === $type ? $value : $this->conversion($target, value_conversion::owner_view, $value, null, $type);
+		}
+		$result = 'this->' . self::virtual_name($method) . '(' . implode(', ', $arguments) . ')';
+		$type = $contract->return_type_def();
+		if ($type !== $method->return_type_def()) $result = $this->conversion($type, value_conversion::owner_view, $result, null, $method->return_type_def());
+		return $this->member_type($type) . ' ' . $record->definition->cpp_type() . '::' . self::virtual_name($contract)
+			. '(' . implode(', ', $this->parameters($contract, $headers, false, true)) . ') { return ' . $result . "; }\n";
+	}
+
+	private function forward_argument(ast_parameter_declaration $parameter): string
+	{
+		$value = $this->name($parameter);
+		return $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
+			: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
+	}
+
 	/** Emit only a settled bridge; forward values by move and references unchanged, without visiting the source body. @param bool[] $headers */
 	private function interface_forward(ast_record_declaration $record, ast_function_declaration $method, array &$headers /** array<string,bool> */): string
 	{
 		$arguments = [];
 		foreach ($method->parameters as $parameter) {
-			$value = $this->name($parameter);
-			$arguments[] = $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
-				: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
+			$arguments[] = $this->forward_argument($parameter);
 		}
 		$owner = $record->definition->cpp_type();
 		$receiver = 'this';
@@ -1829,6 +1864,9 @@ CPP;
 		$forwards = [];
 		$types = [];
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) $types[] = $parameter->type_def();
+		foreach (self::variance_bridges($record) as [$contract, $implementation]) {
+			foreach (self::signature_application_types($contract) as $type) $types[] = $type;
+		}
 		foreach (array_merge($record->methods, $record->definition->interface_forwards) as $method) {
 			if (!$method->has_virtual_dispatch() && !isset($record->definition->interface_forwards[$method->short_name])) continue;
 			foreach (self::signature_application_types($method) as $type) $types[] = $type;
@@ -1919,6 +1957,31 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** Each distinct inherited signature needs one override, even when multiple interfaces introduce it. */
+	private static function variance_bridges(ast_record_declaration $record): \Generator
+	{
+		$bridges = $record->definition->interface_adaptations;
+		foreach ($record->methods as $method) {
+			if ($method->adapted_base !== null) $bridges[] = [$method->adapted_base, $method];
+		}
+		$seen = [];
+		foreach ($bridges as [$contract, $method]) {
+			$key = self::virtual_name($contract);
+			if (isset($seen[$key])) continue;
+			$seen[$key] = true;
+			yield [$contract, $method];
+		}
+	}
+
+	/** An inherited ordinary implementation may introduce its own dispatch slot alongside an adapted interface. */
+	private static function has_exact_interface_slot(ast_record_declaration $record, ast_function_declaration $method): bool
+	{
+		foreach ($record->definition->interface_requirements($method->short_name) as $contract) {
+			if (self::virtual_name($contract) === self::virtual_name($method)) return true;
+		}
+		return false;
+	}
+
 	/** Standalone inspection uses the same publication plan, embedding each generated header once. @param string[] $files */
 	private static function inline_headers(string $text, array $files /** array<string,string> */): string
 	{
@@ -1944,7 +2007,16 @@ CPP;
 	/** A virtual slot has the same native member name throughout its inheritance chain. */
 	private static function virtual_name(ast_function_declaration $method): string
 	{
-		return 'scpp_virtual_' . self::name_component($method->short_name);
+		$name = self::name_component($method->short_name);
+		$result = $method->return_type_def();
+		$variant = $result instanceof shared_record_type_definition;
+		foreach ($method->parameters as $parameter) {
+			if ($parameter->mode === passing_mode::value && $parameter->type_def() instanceof shared_record_type_definition) $variant = true;
+		}
+		if (!$variant) return 'scpp_virtual_' . $name;
+		$parts = [$result->name];
+		foreach ($method->parameters as $parameter) $parts[] = $parameter->mode->name . ':' . $parameter->type_def()->name;
+		return 'scpp_slot_' . $name . '_' . bin2hex(implode("\0", $parts));
 	}
 
 	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */

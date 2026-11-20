@@ -15,15 +15,14 @@ edge as either a concrete base or an interface; later edges must be interfaces.
 Interface prototypes have no body or body preparation job. Declaration preparation
 reuses signature and override compatibility checks. An authored implementation needs
 Override, while an unchanged inherited implementation needs no new source declaration.
-Contracts remain exact in this slice; defaults are selected from the static callable.
+The static callable selects defaults. Fixed shared-value parameters allow contravariance and shared results allow covariance.
 Abstract implementers may leave bodies outstanding; an existing inherited abstract
-method must still satisfy the exact callable contract.
+method must still satisfy the directional callable contract.
 
 Each invalidated record validates its obligations through existing ancestry and direct
 interface edges. The existing record readiness flag now covers abstract and interface
 contracts. Temporary requirement lists reference original declarations; method queries
-select only the requested name. The only retained method map contains required
-forwarding targets. No synthetic source method, copied body or flattened member table
+select only the requested name. Preparation retains forwarding targets and the distinct contracts needing shared-view adapters. No synthetic source method, copied body or flattened member table
 is added. Unchanged contracts retain their readiness and no-op builds reuse prepared
 bodies and native objects.
 
@@ -55,6 +54,19 @@ Header publication includes interface layouts; depfiles rebuild affected native
 consumers even if emitted caller C++ is unchanged. Source-owned adapter demand is
 retained on reuse and retired when its final consumer disappears.
 
+## Shared-value dispatch
+
+Only a virtual signature with a by-value shared parameter or shared result uses a
+signature-based C++ slot. The slot encodes the canonical return and parameter types
+and passing modes, so independently compiled descendants agree on its name. A variant
+override introduces an implementation slot and forwards inherited slots to it. The
+bridge moves each changed argument or result through the existing shared-view adapter.
+This preserves allocation identity and empty owners. An explicit ancestor call still
+selects the ancestor implementation. Rebuild affected native units when adopting this ABI.
+
+The [shared variance test](../tests/shared_variance_native.py) compares retained
+and fresh builds through ancestry, presence, signature and deletion edits in all three flavors.
+
 ## Verification
 
 ```sh
@@ -75,7 +87,7 @@ Interface capability tests and checked casts now reuse the
 [shared-object access path](object_access.md), preserving control blocks and adjusted views.
 
 Deferred: interface inheritance/diamonds,
-struct implementers, variance and broader reference
+struct implementers and broader reference
 returns, interface data/static/default members, traits, unique, borrows and native
 threading. Sequential tests do not prove thread safety
 or a preparation-speed improvement.
