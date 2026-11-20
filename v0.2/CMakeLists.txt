@@ -479,6 +479,12 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    if(UNIX)
+      add_test(NAME compiler_translated_publisher_cleanup COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_publisher_cleanup.py
+        ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+        $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    endif()
   endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
   add_test(NAME compiler_constant_evaluation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/constant_evaluation.php)

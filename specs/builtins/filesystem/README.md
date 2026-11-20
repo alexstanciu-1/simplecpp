@@ -41,6 +41,10 @@ The current strict prefixed surface is specified in [Strict IO handles](strict_i
 
 See also: `specs/builtins/filesystem/first_pass.md`.
 
+## Exclusive staging
+
+[Exclusive file reservation for publication](fs_stage.md).
+
 ## Checked source reads
 
 Managed advisory locking is defined in [file_locks.md](file_locks.md), with

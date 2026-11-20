@@ -92,11 +92,12 @@ bindings. Implementations are compiled privately into the filesystem archive.
 | `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
 | `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
 | `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
+| `fs_stage(string) -> result<string>` | Exclusively reserves an empty file in an existing POSIX directory. |
 
 The result-returning operations report structured errors on invalid paths and
 operational failure. Rename and remove return false on those failures. A publisher
-owns temporary-path reservation and cleanup. It can write to a stage and use
-rename to promote that stage after a successful write.
+can reserve a stage with `fs_stage` and owns cleanup after reservation. It can
+write to the stage and use rename to promote it after a successful write.
 
 ## Application discovery and inventory
 

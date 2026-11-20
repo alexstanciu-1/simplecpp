@@ -819,6 +819,11 @@
         "native_name": "remove",
         "parameters": [{"type": "string", "native_passing": "const_reference"}],
         "result": "bool_t"
+      },
+      "fs_stage": {
+        "native_name": "stage",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "result": "result<string>"
       }
     }
   },
