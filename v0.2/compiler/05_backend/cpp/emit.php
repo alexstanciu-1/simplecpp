@@ -1122,7 +1122,7 @@ CPP;
 				$required_headers['scpp/async_timer.hpp'] = true;
 				$lines[] = "\tco_await ::scpp::async::delay_ms(" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');';
 			}
-			elseif ($statement instanceof ast_call_statement) {
+			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement) {
 				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
 			}
 			else {

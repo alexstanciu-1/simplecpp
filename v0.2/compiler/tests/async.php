@@ -64,6 +64,9 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
 	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
 
+	rejects(fn() => $prepare($child . 'await read_value();return 0;'), 'Await requires');
+	rejects(fn() => $prepare($child . 'if (await read_value()) {return 1;}return 0;'), 'Await requires');
+
 	$directory = sys_get_temp_dir() . '/scpp-async-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
 		$paths = array_map(fn($name) => $name . '.' . $flavor->name, ['main', 'parent', 'child']);
@@ -86,6 +89,12 @@ foreach (flavor::cases() as $flavor) {
 		$loud = str_replace('return 4294967297;', 'echo "R";return 4294967297;', $child);
 		$conditions = 'if (false && await read_value()) {return 90;}if (true || await read_value()) {echo "S";}';
 		$taken = 'if (true && await read_value()) {echo "A";}if (false || await read_value()) {echo "B";}return 7;';
+		$initial = match ($flavor) {
+			flavor::php => '$n int = 9;', flavor::cpp => 'int n = 9;', flavor::js => 'let n:int = 9;',
+		};
+		$name = $flavor === flavor::php ? '$n' : 'n';
+		$ordinary = $initial . 'await read_value();echo "D";if (await read_value()) {'
+			. $name . ' = await read_value();}return ' . $name . ';';
 		$short = [
 			// Parent body, child, diagnostic, stdout after the caller's prefix, exception, rebuilt objects.
 			[$conditions . 'return 7;', $throwing, null, 'S7:after', false, 1],
@@ -95,6 +104,11 @@ foreach (flavor::cases() as $flavor) {
 			[$conditions . $taken, $throwing, null, 'S', true, 1],
 			['if (false || await read_value()) {return 99;}return 0;', $throwing, null, '', true, 1],
 			[$conditions . $taken, str_replace('4294967297', '0', $loud), null, 'SRR7:after', false, 2],
+			[$ordinary, $child, null, 'D4294967297:after', false, 2],
+			[$ordinary, str_replace('4294967297', '0', $loud), null, 'RDR9:after', false, 1],
+			[$ordinary, $throwing, null, '', true, 1],
+			[$ordinary, $signature('read_value') . '{return 1;}', 'Await requires an async function', '', false, 0],
+			[$ordinary, $loud, null, 'RDRR4294967297:after', false, 1],
 		];
 		foreach ($short as $case) $steps[] = [$case[1], $case[2]];
 		foreach ($steps as $i => [$source, $error]) {

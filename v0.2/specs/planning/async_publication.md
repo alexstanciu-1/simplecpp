@@ -25,6 +25,11 @@ may appear in a chain of && or || used as a local initializer, echo operand, ret
 value or branch condition. Both sides are prepared and watched. The emitted native
 logical operator evaluates its RHS only when needed.
 
+Inside an async function, a direct await can also supply an if/elseif condition or the
+right side of a plain local assignment. These forms use ordinary truthiness and assignment
+conversion. A standalone `await work();` resumes after the child completes and propagates
+a child exception even when the caller discards its result.
+
 The ordinary function symbol and dependency watches carry the async signature bit.
 For a zero-argument call, a synchronous caller sees the incomplete task declaration and passes the producer
 address to one out-of-line runtime bridge. Async units see the concrete task header

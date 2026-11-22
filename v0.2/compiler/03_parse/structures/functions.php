@@ -63,6 +63,19 @@ final class ast_await_expression extends ast_expression
 	}
 }
 
+/** Complete an awaited call and discard its result, as in await flush(); */
+final class ast_await_statement extends ast_statement
+{
+	public readonly ast_await_expression $value;
+
+	public function __construct(ast_await_expression $value, int $end /** uint32 */)
+	{
+		parent::__construct($value->start, $end);
+		$this->value = $value;
+		$value->attach($this);
+	}
+}
+
 /** Await the timer at statement position: await async_sleep_ms(1); */
 final class ast_delay_statement extends ast_statement
 {

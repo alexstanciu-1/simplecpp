@@ -157,6 +157,9 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'append', 'receiver' => self::value($statement->receiver),
 					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
+			elseif ($statement instanceof ast_await_statement) {
+				$statements[] = ['kind' => 'discard', 'value' => self::value($statement->value)];
+			}
 			elseif ($statement instanceof ast_base_statement) {
 				$statements[] = ['kind' => 'base_initialization', 'value' => self::value($statement->value)];
 			}
@@ -215,6 +218,7 @@ final class Compilation_Inspection
 			return ['kind' => 'throw', 'value' => self::value($value->operand)];
 		}
 		$row = ['type' => $value->type_def()->name];
+		if ($value instanceof ast_await_expression) $row += ['kind' => 'await', 'operand' => self::value($value->operand)];
 		self::write_scalar($row, 'constant', $value->constant());
 		$row['constant_known'] = $value->constant_known();
 		if ($value instanceof ast_construction_expression) {

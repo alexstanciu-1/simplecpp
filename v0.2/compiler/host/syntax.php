@@ -102,6 +102,7 @@ final class Syntax_Inspection
 	 */
 	private static function expression(ast_expression $expression): array /** array<string,mixed> */
 	{
+		if ($expression instanceof ast_await_expression) return ['kind' => 'await', 'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		if ($expression instanceof ast_throw_expression) {
 			return ['kind' => 'throw', 'span' => self::span($expression), 'value' => self::expression($expression->operand)];
 		}
@@ -302,7 +303,7 @@ final class Syntax_Inspection
 		if ($statement instanceof ast_append_statement) {
 			return ['kind' => 'append', 'receiver' => self::expression($statement->receiver), 'value' => self::expression($statement->value)];
 		}
-		if ($statement instanceof ast_call_statement || $statement instanceof ast_base_statement) {
+		if ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement || $statement instanceof ast_base_statement) {
 			return self::expression($statement->value) + ['statement_span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_local_declaration) {

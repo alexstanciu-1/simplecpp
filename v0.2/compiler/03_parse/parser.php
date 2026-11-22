@@ -308,6 +308,10 @@ final class Parser
 			$c->take(token_kind::rparen, ')');
 			return new ast_delay_statement($start, $c->take(token_kind::semicolon, ';') + 1, $duration);
 		}
+		if ($this->cursor->keyword('await')) {
+			$value = $this->await_expression();
+			return new ast_await_statement($value, $this->cursor->take(token_kind::semicolon, '; after awaited call') + 1);
+		}
 		if ($this->cursor->keyword('yield')) return $this->yield_statement();
 		if ($this->cursor->keyword('echo')) {
 			return $this->echo_statement();
@@ -1263,17 +1267,22 @@ final class Parser
 		}
 	}
 
+	/** Parse direct task consumption in either expression or statement position. */
+	private function await_expression(): ast_await_expression
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		$c->take_keyword('await');
+		$call = $this->call();
+		if (!($call instanceof ast_call_expression)) throw new diagnostic($c->tokens->source, $c->offset(), 'Await requires a direct async call');
+		return new ast_await_expression($start, $call);
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
-		if ($c->keyword('await')) {
-			$start = $c->position();
-			$c->take_keyword('await');
-			$call = $this->call();
-			if (!($call instanceof ast_call_expression)) throw new diagnostic($c->tokens->source, $c->offset(), 'Await requires a direct async call');
-			return new ast_await_expression($start, $call);
-		}
+		if ($c->keyword('await')) return $this->await_expression();
 		if ($this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
