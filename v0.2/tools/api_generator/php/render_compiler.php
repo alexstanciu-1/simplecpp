@@ -217,13 +217,21 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
     foreach ($runtime['vectors'] ?? [] as $vector) {
-        if (isset($definitions[$vector['element']])) $runtimeTypes[$vector['source_type']] = $vector['name'];
+        if (isset($definitions[$vector['element']])) {
+            $runtimeTypes[$vector['name']] = $runtimeTypes[$vector['source_type']] = $vector['name'];
+        }
     }
     foreach ($runtime['carriers'] ?? [] as $carrier) {
         if (isset($definitions[$carrier['payload']])) {
             $runtimeTypes[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $carrier['name'];
             $runtimeTypes[$carrier['name']] = $carrier['name'];
         }
+    }
+    foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
+        if (isset($definitions[$hash['key']], $definitions[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];
+    }
+    if (isset($runtime['boxed_dispatch'])) {
+        foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = [];
     // Published aliases delegate to the same canonical type-owned signatures as application concrete types.
@@ -346,10 +354,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $asyncResults = [];
     foreach ($runtime['async_results'] ?? [] as $identity => $binding) {
-        requireThat($identity === 'void' || isset($definitions[$identity]), 'Missing compiler async result: ' . $identity);
-        $class = $identity === 'void' ? 'void' : $definitions[$identity]['class'];
+        requireThat($identity === 'void' || isset($runtimeTypes[$identity]), 'Missing compiler async result: ' . $identity);
+        $class = $identity === 'void' ? 'void' : $runtimeTypes[$identity];
         $symbol = '::scpp::async::' . $binding['task'];
-        $asyncResults[] = "\t\t\ttype_{$class}::class => ['cpp' => '$symbol', 'header' => '{$binding['header']}'],";
+        $asyncResults[] = "\t\t\ttype_{$class}::class => ['cpp' => '$symbol', 'header' => '{$binding['header']}', 'wait_header' => '{$binding['wait_header']}'],";
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',

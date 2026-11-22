@@ -192,26 +192,27 @@ function render(array $plan): array {
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
     if (isset($plan['async_results'])) {
         $forwards = $waits = $methods = $includes = '';
-        $waitHeaders = [];
-        foreach ($plan['async_results'] as $identity => ['task' => $task, 'header' => $header]) {
+        foreach ($plan['async_results'] as $identity => ['task' => $task, 'header' => $header, 'wait_header' => $waitHeader]) {
             $value = $identity !== 'void';
             $type = $value ? new RuntimeConcreteType($plan, $identity) : new VoidConcreteType();
             $headers = $type->headers();
             $parts = concreteTemplate('core/async_task', ['result' => $type], [
                 'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
                 'includes' => implode('', array_map(includeHeader(...), $headers)),
-                'extract' => $value ? '    return promise.value;' : '',
+                'extract' => $value ? '    return static_cast<' . $type->cppType('scpp') . '&&>(promise.value);' : '',
             ], 'scpp');
             $files['public/' . $header] = BANNER . $parts['declaration'];
             $forwards .= "class $task;\n";
-            $waits .= $type->cppType('scpp') . " wait_for($task (*factory)());\n";
-            foreach ($headers as $dependency) $waitHeaders[$dependency] = true;
+            $files['public/' . $waitHeader] = BANNER . template('core/async_wait', [
+                'includes' => implode('', array_map(includeHeader(...), $headers)),
+                'waits' => $type->cppType('scpp') . " wait_for($task (*factory)());\n",
+            ]);
+            $waits .= includeHeader($waitHeader);
             $includes .= "#include <$header>\n";
             $methods .= $parts['implementation'];
         }
         $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd', ['forwards' => $forwards]);
-        $files['public/scpp/async_wait.hpp'] = BANNER . template('core/async_wait',
-            ['includes' => implode('', array_map(includeHeader(...), array_keys($waitHeaders))), 'waits' => $waits]);
+        $files['public/scpp/async_wait.hpp'] = BANNER . "#pragma once\n" . $waits;
         $timerType = new RuntimeConcreteType($plan, 'int64');
         $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer', ['scalar_header' => $timerType->headers()[0]]);
         $files['private/async_task_headers.hpp'] = BANNER . $includes;

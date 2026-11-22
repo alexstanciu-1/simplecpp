@@ -18,3 +18,9 @@ for unit in ('caller', 'parent', 'child'):
         raise AssertionError(f'{unit}: missing concrete task header')
     if names & forbidden:
         raise AssertionError(f'{unit}: unexpected dependencies {names & forbidden}')
+
+# An integer-only blocking client must remain independent of other published results.
+result = subprocess.check_output([compiler, '-std=c++23', '-stdlib=libc++', '-I', public, '-x', 'c++', '-M', '-'],
+                                 input='#include <scpp/async/wait_int64.hpp>\n', text=True)
+headers = {Path(word).name for word in shlex.split(result.replace('\\\n', ' '))[1:]}
+assert headers.isdisjoint({'string.hpp', 'vectors.hpp', 'hashes.hpp', 'boxed.hpp', 'coroutine'}), headers

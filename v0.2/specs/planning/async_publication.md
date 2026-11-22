@@ -3,7 +3,7 @@
 Doc Status: planning
 
 **Runtime prerequisite implemented.** The default v0.2 publication supplies concrete
-bool, int64 and void tasks in separate headers. The runtime archive owns frame destruction, exception
+tasks for the selected results in separate headers. The runtime archive owns frame destruction, exception
 propagation and a cooperative loop for direct nested awaits. One waiting chain needs
 one pending continuation and timer. A positive delay suspends the coroutine, and the
 synchronous driver waits before resuming it. Independent runnable tasks, external wakeups,
@@ -13,7 +13,31 @@ The publication's `async_results` list selects concrete tasks. The generator res
 value's native type through the existing concrete-type contract. One recipe supplies
 the value or void promise and the shared frame operations. The same plan generates the
 compiler lookup from canonical result type to C++ task name and header. A function keeps
-its existing return-type fact. Nontrivial result transfers require a separate lifetime proof.
+its existing return-type fact. Each non-void promise owns an initially empty payload.
+Native compile-time checks require nonthrowing default construction, move construction,
+move assignment and destruction. The return hook takes its argument by value, so the
+source expression keeps its ordinary copy semantics. It moves that argument into the
+promise. After checking for failure, await-resume moves the payload into the caller.
+The source protocol consumes each task once. Blocking callers include only the wait
+declaration for the selected result. The umbrella wait header remains available to C++.
+
+### Async result categories and representative proofs
+
+| Category | Samples | Status and owner |
+| --- | --- | --- |
+| Completion and trivial values | `void`, `bool`, `int64` | Published. Void omits storage. Scalars use the value recipe. |
+| Owned runtime values | `string` | Published. Empty, inline and heap-backed strings cover both wait paths and throwing producers. |
+| Published concrete collections | `vector<int>`, `hash<int,int>` | Published. Use the same move contract and their existing concrete identities. |
+| Published carriers | `nullable<int>` | Published. The payload includes its presence state. Another carrier specialization needs its own publication and proof. |
+| Boxed runtime values | `mixed`, `dynamic` | Published. Frame transfer preserves existing copy-on-write and shared-container semantics. |
+| Application-defined values | `TokenKind` enum, inline `Point` | Next publication prerequisite. The app owns the complete definition and type identity. A class-keyed runtime registry cannot distinguish two app enums or records. |
+| Application-owned specializations and handles | `vector<Point>`, `shared<Point>` | Reuse application publication once available. Prove aggregate copy independence and handle identity/lifetime. A weak handle additionally needs an expiry proof. |
+| Inline arrays and values without an empty state | `fixed_array<byte,4>`, a record requiring constructor arguments | Require a returnable representation or construction-on-return storage. Raw C++ arrays cannot be returned by value. |
+| Borrowed or execution-bound values | capturing callback, live yield cursor | Require an escape/lifetime or single-consumer contract first. Application publication alone cannot establish safety. |
+
+Application publication must connect resolved type identity, generated headers, affected
+source dependencies and incremental retirement. The prebuilt runtime cannot compile a
+task implementation that needs an application-defined payload before that payload exists.
 
 The ordinary caller sees the blocking function signature. Coroutine units see the concrete
 promise and await operations. Scheduler, clock and thread headers remain private to the
@@ -23,7 +47,7 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-free functions with bool, void or int/int64 results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
+free functions with published results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
 The ordinary argument binder checks conversions. The blocking bridge transfers its owned string into the coroutine frame.
 The frame keeps it alive across suspension and releases it on completion or exception.
 An async void producer completes through an empty return or fallthrough. A standalone

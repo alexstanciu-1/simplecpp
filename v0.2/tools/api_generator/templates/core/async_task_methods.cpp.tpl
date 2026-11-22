@@ -28,7 +28,7 @@ void @task@::await_suspend(std::coroutine_handle<> parent) {
 
 @result@ @task@::await_resume() const {
     if (!frame_ || !frame_.done()) throw std::logic_error("async task has no completed result");
-    const auto& promise = frame_.promise();
+    auto& promise = frame_.promise();
     if (promise.failure) std::rethrow_exception(promise.failure);
 @extract@
 }

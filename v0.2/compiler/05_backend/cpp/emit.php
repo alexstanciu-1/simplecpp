@@ -1702,16 +1702,16 @@ CPP;
 		if ($value instanceof ast_await_expression) {
 			$callee = $value->operand->function_def();
 			$name = self::function_name($callee);
-			$task = $value->suspends ? type_registry::async_result($callee->return_type_def()) : null;
-			if ($task !== null) $required_headers[$task['header']] = true;
+			$task = type_registry::async_result($callee->return_type_def());
+			if ($value->suspends) $required_headers[$task['header']] = true;
 			$declarations[$name] = $callee;
 			if (!$value->suspends && $callee->parameters === []) {
-				$required_headers['scpp/async_wait.hpp'] = true;
+				$required_headers[$task['wait_header']] = true;
 				return '::scpp::async::wait_for(&' . $name . ')';
 			}
 			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
-				$task['cpp'] ?? null);
+				$value->suspends ? $task['cpp'] : null);
 			return $value->suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_postfix_update_expression) {

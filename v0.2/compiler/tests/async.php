@@ -59,7 +59,7 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare($child . 'read_value();return 8;'), 'Async call requires await');
 	rejects(fn() => $prepare('await async_sleep_ms(1);return 8;'), 'requires an async function');
 	rejects(fn() => $prepare(str_replace('async_sleep_ms(1)', 'async_sleep_ms("bad")', $child) . 'return 8;'), 'int64 milliseconds');
-	rejects(fn() => $prepare(str_replace('int', 'string', $child) . 'return 8;'), 'Unpublished async result: string');
+	rejects(fn() => $prepare(str_replace('int', 'float', $child) . 'return 8;'), 'Unpublished async result: float64');
 
 	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
 	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
@@ -247,6 +247,32 @@ foreach (flavor::cases() as $flavor) {
 		$bool_entry = match ($flavor) {
 			flavor::php => '$ok bool', flavor::cpp => 'bool ok', flavor::js => 'let ok:bool',
 		} . '=await relay();if (' . $v('ok') . ') {echo "T";}await notify(0);return 8;';
+		$decl = static fn(string $type, string $name, string $init): string => match ($flavor) {
+			flavor::php => '$' . "$name $type = $init;", flavor::cpp => "$type $name=$init;", flavor::js => "let $name:$type = $init;",
+		};
+		$results_child = $results_parent = $results_entry = '';
+		$samples = [
+			['string', $literal, ''], ['vector<int>', '[31]', '[0]'], ['hash<int,int>', '[4 => 32]', '[4]'],
+			['nullable<int>', '33', ''], ['mixed', '34', '[0]'], ['dynamic', '35', '[0]'],
+		];
+		foreach ($samples as $k => [$type, $init, $index]) {
+			$sig = static fn(string $name): string => $flavor === flavor::cpp ? "$type $name()" : "function $name(): $type";
+			$boxed = in_array($type, ['mixed', 'dynamic'], true);
+			if ($boxed) {
+				$results_child .= $sig("make$k") . '{' . $decl($type, 'item', '[]') . $v('item') . "[0]=$init;return " . $v('item') . ';}';
+				$init = "make$k()";
+			}
+			$results_child .= 'async ' . $sig("leaf$k") . '{' . $decl($type, 'item', $init)
+				. 'await async_sleep_ms(1);return ' . $v('item') . ';}';
+			$results_parent .= 'async ' . $sig("relay$k") . "{return await leaf$k();}";
+			$results_entry .= $decl($type, "value$k", "await relay$k()") . 'echo '
+				. ($boxed ? '(int)' : '') . ($k === 3 ? '(' : '') . $v("value$k") . $index . ($k === 3 ? ' ?? 0)' : '') . ';';
+			if ($boxed) {
+				$results_entry .= $decl($type, "copy$k", $v("value$k")) . $v("copy$k") . '[0]=9;echo (int)' . $v("value$k") . '[0];';
+			}
+		}
+		$results_entry .= 'return 8;';
+		$results_output = $bytes . '3132333434359';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -279,6 +305,9 @@ foreach (flavor::cases() as $flavor) {
 			[$bool_parent, $bool_child, $bool_entry, null, 'T', 3],
 			[$bool_parent, $notify, $bool_entry, 'Void call cannot be used as a value', '', 0],
 			[$bool_parent, str_replace('>0;', '<0;', $bool_child), $bool_entry, null, '', 1],
+			[$results_parent, $results_child, $results_entry, null, $results_output, 3],
+			[$results_parent, '', $results_entry, 'Unknown', '', 0],
+			[$results_parent, str_replace('[31]', '[41]', $results_child), $results_entry, null, str_replace('31', '41', $results_output), 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {

@@ -72,7 +72,7 @@ if(async_result_count GREATER 0)
   math(EXPR last_async_result "${async_result_count} - 1")
   foreach(index RANGE 0 ${last_async_result})
     string(JSON result GET "${runtime_profile}" async_results ${index})
-    list(APPEND runtime_outputs ${runtime_generated}/public/scpp/async_${result}.hpp)
+    list(APPEND runtime_outputs ${runtime_generated}/public/scpp/async_${result}.hpp ${runtime_generated}/public/scpp/async/wait_${result}.hpp)
   endforeach()
 endif()
 list(APPEND runtime_outputs

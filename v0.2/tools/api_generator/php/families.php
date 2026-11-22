@@ -87,12 +87,17 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
         requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $name) === 1 && !in_array($name, ['fwd', 'timer', 'wait'], true), 'Invalid async result name');
         $identity = $metadata->source_types->{$name} ?? ($plan['aliases']->{$name} ?? $name);
         if ($name !== 'void') {
-            requireThat(in_array($identity, array_column(array_merge($plan['types'], $plan['values']), 'name'), true)
-                && ($metadata->compiler->value_types->{$identity}->copy_semantics ?? null) === 'trivial', 'Async result requires published trivial scalar storage: ' . $name);
+            if (isset($metadata->compiler->value_types->{$identity})) {
+                requireThat(hasType($plan, $identity) || hasValue($plan, $identity) || ($plan['string']['name'] ?? null) === $identity,
+                    'Async result requires a published value: ' . $name);
+            }
+            $export = typeExport($plan['submodules'], $identity);
+            requireThat(in_array($export['provider'], $plan['submodules']['published'], true), 'Unpublished async result provider: ' . $name);
         }
         requireThat(!isset($seen[$identity]), 'Duplicate canonical async result: ' . $identity);
         $seen[$identity] = true;
-        $plan['async_results'][$identity] = ['task' => $name . '_task', 'header' => 'scpp/async_' . $name . '.hpp'];
+        $plan['async_results'][$identity] = ['task' => $name . '_task', 'header' => 'scpp/async_' . $name . '.hpp',
+            'wait_header' => 'scpp/async/wait_' . $name . '.hpp'];
     }
     return $plan;
 }
