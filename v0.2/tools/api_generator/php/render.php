@@ -190,6 +190,11 @@ function render(array $plan): array {
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
+    if (isset($plan['async_int64'])) {
+        requireThat(!isset($files['public/scpp/async_int64.hpp']), 'The async int64 header path is reserved');
+        $files['public/scpp/async_int64.hpp'] = BANNER . template('core/async_int64',
+            ['scalar_header' => $plan['async_int64']]);
+    }
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";

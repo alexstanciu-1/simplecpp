@@ -40,9 +40,17 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'async_int64']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
+    if (property_exists($publication, 'async_int64')) {
+        requireThat(is_bool($publication->async_int64), 'Expected boolean async_int64 demand');
+        if ($publication->async_int64) {
+            requireThat(in_array('int64', array_column($plan['types'], 'name'), true), 'Async tasks require published int64');
+            $export = typeExport($plan['submodules'], 'int64');
+            $plan['async_int64'] = providerHeader($plan['submodules'], $export['provider']);
+        }
+    }
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
     $exception = coreExceptionBinding($metadata);

@@ -1,7 +1,21 @@
 # Publishing async calls across source files
 
-1. **Native proof.** Compile the synchronous caller, awaiting parent and suspending child separately. The public header declares a concrete synchronous entry. A private declaration names the concrete integer task used by the awaiting parent. Only async implementation units include the coroutine runtime. The fixture uses the existing runtime as the oracle for suspension, exception propagation and destruction.
-2. **Compiler integration.** Record the logical result on the async function declaration. At an await site use normal cross-unit symbol resolution and select the asynchronous entry. Emit the private declaration only for units that use it. Emit a blocking bridge only at an explicitly supported synchronous boundary. A private body edit should leave unrelated callers eligible for reuse.
-3. **Compile-cost check.** Measure public callers and private implementations separately before extending result families. The private integer task alias still exposes the runtime template definition to async implementation units. If that cost warrants it, prove a concrete out-of-line task implementation before expanding publication.
+Doc Status: planning
 
-The first proof covers an integer result. Scheduling policy, cancellation and user-stored tasks are separate decisions.
+**Runtime prerequisite implemented.** The default v0.2 publication supplies a concrete
+int64 task in its own header. The runtime archive owns frame destruction, exception
+propagation and a cooperative loop for direct nested awaits. One waiting chain needs
+one pending continuation and timer. A positive delay suspends the coroutine, and the
+synchronous driver waits before resuming it. Independent runnable tasks, external wakeups,
+cancellation and user-stored tasks are separate contracts.
+
+The ordinary caller sees the blocking function signature. Coroutine units see the concrete
+promise and await operations. Scheduler, clock and thread headers remain private to the
+runtime object. The async header stays outside scalar, output, entry and PCH headers.
+The archive acceptance fixture is in `tests/async_runtime/`. Earlier cross-file
+experiments are historical comparisons using the legacy scheduler.
+
+**Next compiler slice.** Record async on the function declaration, reuse ordinary cross-unit
+lookup and signature watches, and prepare direct await as the eventual int64 result. Emit
+the task entry for awaiting callers and a concrete integer bridge at a synchronous boundary.
+Verify that a private body edit permits reuse of unrelated native objects.

@@ -65,6 +65,10 @@ include(cmake/ProviderOutputs.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
 scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication})
+string(JSON async_int64_enabled ERROR_VARIABLE async_int64_error GET "${runtime_profile}" async_int64)
+if(async_int64_enabled)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/async_int64.hpp)
+endif()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
@@ -133,6 +137,9 @@ target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
   PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/hash)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
+if(async_int64_enabled)
+  target_sources(scpp_runtime PRIVATE runtime/src/async/int64_task.cpp)
+endif()
 
 if(SCPP_ENABLE_DATETIME)
   scpp_add_datetime(scpp_datetime scpp_runtime ${runtime_generated})
@@ -499,6 +506,14 @@ if(BUILD_TESTING)
     endif()
   endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
+  if(async_int64_enabled)
+    add_executable(async_runtime_test tests/async_runtime/caller.cpp tests/async_runtime/parent.cpp tests/async_runtime/child.cpp)
+    target_link_libraries(async_runtime_test PRIVATE scpp_runtime)
+    add_test(NAME async_runtime COMMAND async_runtime_test)
+    add_test(NAME async_header_isolation COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/async_runtime/header_isolation.py
+      ${CMAKE_CXX_COMPILER} ${runtime_generated}/public)
+  endif()
   add_executable(compiler_fixed_array_storage_test compiler/tests/fixed_array_storage.cpp)
   target_compile_features(compiler_fixed_array_storage_test PRIVATE cxx_std_20)
   target_include_directories(compiler_fixed_array_storage_test PRIVATE ${runtime_generated}/public)
