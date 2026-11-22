@@ -887,6 +887,7 @@
     ]
   },
   "compiler": {
+    "generic_syntax": { "fixed_array": ["type", "integer_extent"] },
     "exception": {
       "name": "Exception",
       "header": "scpp/exception.hpp",

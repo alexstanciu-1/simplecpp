@@ -71,7 +71,32 @@ foreach ([
 	verify($first->source_text() === 'RecordDecl' && $second->source_text() === 'TraitDecl' && $second->next_sibling === null,
 		'Union return siblings in written order');
 
-	// Synthetic nested shape only: this does not admit generic source syntax.
+	// Each dimension owns its own literal sibling, including in a C++ return-type lookahead.
+	$matrix = 'fixed_array<fixed_array<byte, 0x5>, 3>';
+	$source = $flavor === flavor::cpp ? "$matrix grid() {}" : "function grid(): $matrix {}";
+	$grid = $frontend->parse(new source_file('grid', $source, $flavor))->declarations['func:grid']->return_type_reference;
+	$row = $grid->first_child;
+	foreach ([[$grid, '3'], [$row, '0x5']] as [$dimension, $literal]) {
+		$extent = $dimension->first_child->next_sibling;
+		verify($extent instanceof scpp\compiler\ast_extent_literal && $extent->source_text() === $literal
+			&& $extent->extent === ($dimension === $grid ? 3 : 5) && $extent->parent === $dimension && $extent->next_sibling === null, 'Fixed-array extent ownership');
+	}
+	verify($row->first_child->name === 'byte' && $grid->spelling() === str_replace(' ', '', $matrix), 'Matrix shape');
+	foreach (['0' => 0, '0o10' => 8, '008' => 8, '0x7fffffffffffffff' => PHP_INT_MAX] as $literal => $expected) {
+		$text = str_replace($matrix, 'fixed_array<byte,' . $literal . '>', $source);
+		$type = $frontend->parse(new source_file('extent', $text, $flavor))->declarations['func:grid']->return_type_reference;
+		verify($type->first_child->next_sibling->extent === $expected, 'Checked extent value');
+	}
+	foreach (['byte, 9223372036854775808', 'byte, 0x8000000000000000', 'byte', 'byte, -1', 'byte, CAP', 'byte, 1+1', 'byte, 2, 3'] as $invalid) {
+		try {
+			$text = str_replace($matrix, 'fixed_array<' . $invalid . '>', $source);
+			$frontend->parse(new source_file('invalid-grid', $text, $flavor));
+			throw new RuntimeException('Invalid fixed-array arguments accepted: ' . $invalid);
+		} catch (diagnostic) {
+		}
+	}
+
+	// Manually constructed argument chains obey the same ownership contract.
 	$integer = new ast_type_reference(0, 0, 'int');
 	$vector = new ast_type_reference(0, 0, 'vector', $integer);
 	$string = new ast_type_reference(0, 0, 'string', null, $vector);

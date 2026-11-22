@@ -38,6 +38,8 @@ final class record_type_definition extends type_definition implements dependency
 	private ?\WeakMap $parameter_contracts = null;
 
 	/** PREP FACTS */
+	/** Prepared fact: fixed-array bytes embedded in this record through bases and inline fields. */
+	private int $array_bytes /** uint32 */ = 0;
 	/** Prepared fact: the base relation and local field names/types have been validated. */
 	private record_layout_state $layout_state = record_layout_state::pending;
 	/** Prepared fact: callable entries for unresolved trait hooks owned by this abstract record. @var symbol_entry[] */
@@ -114,6 +116,7 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->layout_state = record_layout_state::pending;
+		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
 		$this->base_type = null;
@@ -136,6 +139,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->layout_state !== record_layout_state::pending) $this->dependencies->changed($this->symbol);
 		$this->layout_state = record_layout_state::pending;
+		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
 		$this->base_type = null;
@@ -201,6 +205,7 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
+		$bytes = $this->base_type?->array_bytes() ?? 0;
 		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
@@ -217,7 +222,7 @@ final class record_type_definition extends type_definition implements dependency
 				$state = record_layout_state::awaiting_union_fields;
 				continue;
 			}
-			$type = Type_Resolution::named($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			$type = Type_Resolution::storage($field->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
 			if ($type instanceof shared_record_type_definition && $type->required) {
 				if ($this->declaration->kind === record_kind::structure) {
 					// Struct storage retains the bootstrap exception.
@@ -254,9 +259,12 @@ final class record_type_definition extends type_definition implements dependency
 				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
 			}
+			$bytes += $type instanceof self ? $type->array_bytes() : ($type instanceof fixed_array_type ? $type->bytes : 0);
+			if ($bytes > fixed_array_type::FRAME_LIMIT) throw new diagnostic($field->source(), $field->byte_start(), 'Record fixed-array storage exceeds 64 KiB');
 			$field->settle_type($type);
 		}
 		unset($active[$this->name]);
+		$this->array_bytes = $bytes;
 		$this->layout_state = $state;
 		// A declaration-only unit may emit dependent constructor or owner declarations.
 		$work?->change_source($this->source_key);
@@ -373,6 +381,11 @@ final class record_type_definition extends type_definition implements dependency
 	public function interface_dispatch(string $name): bool
 	{
 		return isset($this->interface_forwards[$name]) || ($this->base()?->interface_dispatch($name) ?? false);
+	}
+
+	public function array_bytes(): int /** uint32 */
+	{
+		return $this->array_bytes;
 	}
 
 	public function base(): ?self

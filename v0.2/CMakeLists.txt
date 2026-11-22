@@ -68,6 +68,7 @@ scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
+  ${runtime_generated}/public/scpp/fixed_array.hpp
   ${runtime_generated}/public/scpp/exception.hpp
   ${runtime_generated}/public/scpp/entry.hpp
   ${runtime_generated}/private/output_provider.hpp
@@ -108,7 +109,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/entry/exception.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
+add_library(scpp_runtime STATIC runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/entry/exception.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
 if(hash_publication_type STREQUAL "OBJECT")
   target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/hash.cpp)
 endif()
@@ -480,6 +481,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions.php)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py)
+  add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py)
   if(SCPP_ENABLE_FILESYSTEM)
     add_test(NAME compiler_filesystem_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
@@ -497,6 +499,12 @@ if(BUILD_TESTING)
     endif()
   endif()
   add_test(NAME compiler_module_availability COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/module_availability.py)
+  add_executable(compiler_fixed_array_storage_test compiler/tests/fixed_array_storage.cpp)
+  target_compile_features(compiler_fixed_array_storage_test PRIVATE cxx_std_20)
+  target_include_directories(compiler_fixed_array_storage_test PRIVATE ${runtime_generated}/public)
+  target_link_libraries(compiler_fixed_array_storage_test PRIVATE scpp_runtime)
+  add_test(NAME compiler_fixed_array_storage COMMAND compiler_fixed_array_storage_test)
+
   add_executable(compiler_scalar_result_test compiler/tests/scalar_result.cpp)
   target_compile_features(compiler_scalar_result_test PRIVATE cxx_std_20)
   add_test(NAME compiler_scalar_result_transport COMMAND compiler_scalar_result_test)

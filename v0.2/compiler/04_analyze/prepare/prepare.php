@@ -34,6 +34,8 @@ final class Preparation
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
 	private bool $in_lambda = false;
+	/** Conservative sum across lexical scopes; reset at every body preparation. */
+	private int $array_bytes /** uint32 */ = 0;
 	private bool $has_lambda_local = false;
 	/**
 	 * Latest completed writes; null means unknown after a mutable borrow or update, absent means original initializer.
@@ -129,6 +131,7 @@ final class Preparation
 		source_file $source, int $end /** uint32 */, ?entry_target $target, ast_function_body $owner): void
 	{
 		$this->local_frames = [[]];
+		$this->array_bytes = 0;
 		$this->in_lambda = $this->has_lambda_local = false;
 		$this->guards = [];
 		$this->unknown_initializers = false;
@@ -138,6 +141,10 @@ final class Preparation
 		$this->constructor_initialization = $function->is_constructor() && $function->parent instanceof ast_record_declaration
 			? new Constructor_Initialization($function->parent) : null;
 		foreach ($function->parameters as $parameter) {
+			if ($parameter->type_def() instanceof record_type_definition && $parameter->mode === passing_mode::value) {
+				$this->dependencies?->watch($symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
+				$this->reserve_array_bytes($parameter->type_def()->array_bytes(), $parameter);
+			}
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
 		$this->statement_visits = 0;
@@ -272,7 +279,19 @@ final class Preparation
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;
 				$receiver = $statement->receiver;
-				if ($receiver instanceof ast_field_expression) {
+				if ($receiver instanceof ast_index_expression) {
+					$this->value($receiver);
+					$root = $receiver;
+					while ($root instanceof ast_index_expression) {
+						if (!($root->receiver->type_def() instanceof fixed_array_type)) throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage');
+						$root = $root->receiver;
+					}
+					if (!($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
+						throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires local or field storage');
+					}
+					Readonly_Access::write($root, true);
+				}
+				elseif ($receiver instanceof ast_field_expression) {
 					$this->writable_property($receiver, payload: true);
 				} else {
 					$this->value($receiver);
@@ -704,7 +723,12 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
-		$statement->value->settle_type($type->iteration_value_type());
+		$output = $type->iteration_value_type();
+		if ($output instanceof record_type_definition) {
+			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
+			$this->reserve_array_bytes($output->array_bytes(), $statement->value);
+		}
+		$statement->value->settle_type($output);
 		$statement->destination = $destination ?? $statement->value;
 		$statement->conversion = $statement->destination->type_def()->prepare_conversion($statement->value,
 			$destination === null ? conversion_context::inference : conversion_context::assignment);
@@ -801,6 +825,15 @@ final class Preparation
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
+	private function reserve_array_bytes(int $bytes /** uint32 */, ast_node $site): void
+	{
+		if ($bytes > fixed_array_type::FRAME_LIMIT - $this->array_bytes) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Function fixed-array storage exceeds 64 KiB');
+		}
+		$this->array_bytes += $bytes;
+	}
+
+	/** Prepare one local, account for inline storage and publish it after its initializer succeeds. */
 	private function declaration(ast_local_declaration $declaration): void
 	{
 		$name = $declaration->declaration_key();
@@ -819,7 +852,12 @@ final class Preparation
 					'Unknown or unsupported type: ' . $declaration->type_reference?->spelling());
 			}
 		}
-		if ($declaration->initializer instanceof ast_struct_default) {
+		if ($declaration->initializer instanceof ast_struct_default && $type instanceof fixed_array_type) {
+			if ($declaration->initializer->arguments !== []) throw new diagnostic($source, $declaration->byte_start(), 'Fixed arrays take no constructor arguments');
+			$this->expression_visits++;
+			$declaration->initializer->settle_construction($type, []);
+		}
+		elseif ($declaration->initializer instanceof ast_struct_default) {
 			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception)) {
 				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
 			}
@@ -853,11 +891,18 @@ final class Preparation
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
 			if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $declaration);
-			if (!$type->supports_inferred_local()) {
+			if (!$type->supports_inferred_local() && !($type instanceof fixed_array_type)) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
+		if ($type instanceof fixed_array_type) {
+			if ($declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($source, $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
+			}
+			$this->reserve_array_bytes($type->bytes, $declaration);
+		}
+		elseif ($type instanceof record_type_definition) $this->reserve_array_bytes($type->array_bytes(), $declaration);
 		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
@@ -1020,11 +1065,14 @@ final class Preparation
 	private function collection(ast_collection_expression $syntax, type_definition&indexed_collection_type $type, ?string $initializing): void
 	{
 		$this->expression_visits++;
+		if ($type instanceof fixed_array_type && count($syntax->elements) !== $type->extent) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array initializer must match extent ' . $type->extent);
+		}
 		if ($syntax->elements === []) {
 			$syntax->settle_collection($type);
 			return;
 		}
-		if (!($type instanceof sequence_initializer_type)) {
+		if (!($type instanceof sequence_initializer_type || $type instanceof fixed_array_type)) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Populated literal requires a sequence-initializable destination');
 		}
 		$destination = $type->write_type();
@@ -1192,6 +1240,13 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot access protected field ' . $syntax->field);
 			}
 			$field_type = $field->type_def();
+			if ($field_type instanceof fixed_array_type) {
+				$base = $syntax->receiver;
+				while ($base instanceof ast_field_expression && $base->type_def() instanceof record_type_definition) $base = $base->receiver;
+				if (!($base instanceof ast_name_expression && $base->local_binding() !== null && $base->type_def() instanceof record_type_definition)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array field access requires a named inline record');
+				}
+			}
 			$syntax->settle_field($field_type instanceof class_union_type_definition ? ($field_type->receiver_view($syntax) ?? $field_type) : $field_type);
 			if (!(($syntax->parent instanceof ast_field_assignment) && $syntax->parent->target === $syntax)) {
 				$this->constructor_initialization?->read($syntax, $field);

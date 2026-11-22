@@ -32,15 +32,14 @@ final class type_@name@ extends type_definition
 			parent::prepare_literal($syntax);
 			return;
 		}
-		$syntax->settle_integer($this->literal_value($syntax));
+		$syntax->settle_integer($this->literal_value($syntax->lexical_root()->tokens, $syntax->start, $syntax->end - 1));
 	}
 
 	/** Return: exact signed int64; reject overflow rather than relying on host casts or negation. */
-	private function literal_value(ast_integer_expression $syntax): int /** int64 */
+	public function literal_value(token_list $tokens, int $start /** uint32 */, int $digits /** uint32 */): int /** int64 */
 	{
-		$tokens = $syntax->lexical_root()->tokens;
-		$negative = $tokens->tokens[$syntax->start]->kind === token_kind::minus;
-		$text = $tokens->text_at($syntax->end - 1);
+		$negative = $tokens->tokens[$start]->kind === token_kind::minus;
+		$text = $tokens->text_at($digits);
 		if (strlen($text) >= 2 && $text[0] === '0' && str_contains('xXoO', $text[1])) {
 			$radix = match (strtolower(substr($text, 0, 2))) { @radix_cases@ };
 			// Accumulate negatively so the signed minimum never needs a positive host representation.
@@ -53,7 +52,7 @@ final class type_@name@ extends type_definition
 				$digit = ord($text[$index]);
 				$digit = $digit <= 57 ? $digit - 48 : ($digit | 32) - 87;
 				if ($value < $quotient || ($value === $quotient && $digit > $remainder)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Integer literal is outside @name@ range');
+					throw new diagnostic($tokens->source, $tokens->tokens[$start]->offset, 'Integer literal is outside @name@ range');
 				}
 				$value = $value * $radix - $digit;
 			}
@@ -63,7 +62,7 @@ final class type_@name@ extends type_definition
 		$limit = $negative ? '@magnitude@' : '@maximum@';
 		if ((strlen($decimal) > strlen($limit))
 			|| ((strlen($decimal) === strlen($limit)) && (strcmp($decimal, $limit) > 0))) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Integer literal is outside @name@ range');
+			throw new diagnostic($tokens->source, $tokens->tokens[$start]->offset, 'Integer literal is outside @name@ range');
 		}
 		if ($negative && ($decimal === $limit)) {
 			return self::MINIMUM;

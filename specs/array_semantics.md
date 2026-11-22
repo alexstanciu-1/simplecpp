@@ -499,6 +499,22 @@ Current rules:
 - `empty(...)` is true only when `N` is zero
 - append, unset, resize, keyed literals, and mixed/dynamic fixed-array conversion are not part of the first slice
 
+### v0.2 inline storage budget
+
+For byte arrays and rectangular arrays of byte arrays, the compiler accepts up to
+65,536 bytes of declared fixed-array storage per function. Each local counts once,
+including copies and declarations in mutually exclusive branches. Inline record locals
+and by-value record parameters contribute their embedded array bytes, including
+inherited and nested inline fields. A shared handle does not embed the pointee.
+The budget applies to each call individually and measures array payload storage;
+native stack bookkeeping, other fields and recursion have their own costs.
+
+Preparation checks each dimension before multiplying. Native storage uses one
+physical slot for a zero dimension, charged to the budget. Its logical extent is
+zero, so every index fails. Each signed index is checked once against the extent
+of its own dimension before subscripting. A failing access raises
+`sequence_index_out_of_range` through the runtime exception boundary.
+
 ### 9.3 Other unsupported append targets
 
 If the target is not array/hash compatible and is not the null-state `mixed` bootstrap case:

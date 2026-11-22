@@ -124,6 +124,10 @@ final class Cpp_Emitter
 			$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 			$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 				$type, $field->initializer, $field->conversion, $includes);
+			if ($type instanceof fixed_array_type) {
+				$layout[] = "\t" . $type->declarator(Cpp_Identifier::source($field->short_name)) . '{};';
+				continue;
+			}
 			$layout[] = "\t" . $qualifier . '::' . $type->cpp_type() . ' ' . Cpp_Identifier::source($field->short_name) . $default . ';';
 		}
 		foreach ($node->static_properties as $property) {
@@ -1584,6 +1588,14 @@ CPP;
 			if ($type instanceof record_handle_definition) $declarations[$type->name] = $type;
 			$conversion = $statement->initialization();
 			$value = $statement->initializer;
+			if ($type instanceof fixed_array_type) {
+				foreach ($type->cpp_headers() as $header) $headers[$header] = true;
+				$initializer = $value instanceof ast_struct_default ? '{}' : $this->value($value, $global_references, $declarations, $headers);
+				$name = $this->name($statement);
+				$storage = '[[maybe_unused]] ' . $type->declarator($name);
+				if ($value instanceof ast_struct_default || $value instanceof ast_collection_expression) return $storage . ' = ' . $initializer;
+				return $storage . '; __builtin_memmove(' . $name . ', ' . $initializer . ', sizeof(' . $name . '))';
+			}
 			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
 			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
@@ -1607,6 +1619,7 @@ CPP;
 		$operand = $this->value($value, $global_references, $declarations, $headers,
 			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity),
 			logical_root: $conversion === value_conversion::identity);
+		if ($type instanceof fixed_array_type) return '__builtin_memmove(' . $prefix . ', ' . $operand . ', sizeof(' . $prefix . '))';
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
@@ -1730,6 +1743,17 @@ CPP;
 			/** @var indexed_collection_type $type */
 			$type = $value->type_def();
 			if ($value->elements === []) return $type->lower_cpp_empty();
+			if ($type instanceof fixed_array_type) {
+				$items = [];
+				foreach ($value->elements as $i => $element) {
+					$operand = $this->value($element, $global_references, $declarations, $required_headers);
+					$conversion = $value->element_conversion($i);
+					foreach ($type->element->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+					$items[] = $type->element instanceof fixed_array_type ? $operand
+						: $type->element->lower_cpp_exact_argument($element, $conversion, $operand, $this->inline_adapters);
+				}
+				return '{' . implode(', ', $items) . '}';
+			}
 			if (!($type instanceof sequence_initializer_type)) throw new \LogicException('Unprepared sequence initializer');
 			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 			$binding = $type->list_initialization();

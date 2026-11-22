@@ -861,7 +861,7 @@ final class Parser
 	}
 
 	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
-	private function type_reference(bool $argument = false, bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
+	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
 		$child = null;
@@ -879,7 +879,7 @@ final class Parser
 			}
 			if ($this->cursor->is(token_kind::less)) {
 				$this->cursor->take(token_kind::less, '<');
-				$child = $this->type_reference(true, true);
+				$child = $this->type_reference($word, true);
 				$this->cursor->take(token_kind::greater, '>');
 			}
 		}
@@ -893,9 +893,13 @@ final class Parser
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
 		$next = null;
-		if ($argument && $this->cursor->is(token_kind::comma)) {
+		if ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
+			$this->cursor->take(token_kind::comma, ", before $argument_of extent");
+			$at = $this->cursor->take(token_kind::integer, "non-negative integer literal for $argument_of extent");
+			$next = new ast_extent_literal($this->cursor->tokens, $at);
+		} elseif ($argument_of !== '' && $this->cursor->is(token_kind::comma)) {
 			$this->cursor->take(token_kind::comma, ',');
-			$next = $this->type_reference(true, true);
+			$next = $this->type_reference($argument_of, true);
 		}
 		return new ast_type_reference($start, $end, $word, $child, $next);
 	}
@@ -1080,7 +1084,10 @@ final class Parser
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-		if ($index !== null && ($this->cursor->is(token_kind::scope) || $this->cursor->is(token_kind::lbracket)
+		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
+			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end));
+		}
+		if ($index !== null && ($this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
 			if ($target instanceof ast_qualified_data) return $this->property_write($target);
@@ -1105,7 +1112,7 @@ final class Parser
 			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
 				$this->cursor->take(token_kind::semicolon, ';') + 1);
 		}
-		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression)) {
+		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || ($index !== null && $receiver instanceof ast_index_expression))) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
 		$this->cursor->take(token_kind::assign, '=');
