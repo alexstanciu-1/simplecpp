@@ -135,3 +135,37 @@ foreach ([
 			&& str_contains($failure->getMessage(), 'Python logical operand requires bool'), $failure->getMessage());
 	}
 }
+
+$text = "value: int = (1 + 2) if not False and True or False else 4 if True else (5 + 6)\nreturn value";
+$file = $frontend->parse(new source_file('selection.py', $text, flavor::python));
+$selection = $file->main()->body()->statements[0]->initializer;
+check($selection instanceof scpp\compiler\ast_ternary_expression
+	&& $selection->condition instanceof ast_binary_expression && $selection->condition->operator === binary_operator::logical_or
+	&& $selection->when_false instanceof scpp\compiler\ast_ternary_expression
+	&& $selection->when_false->source_text() === '4 if True else (5 + 6)'
+	&& $selection->source_text() === '(1 + 2) if not False and True or False else 4 if True else (5 + 6)',
+	'Python conditional precedence, right association and complete source span');
+
+$text = "if True:\r\n    pass\r\nreturn 8";
+$file = $frontend->parse(new source_file('pass.py', $text, flavor::python));
+$pass = $file->main()->body()->statements[0]->arms[0]->body->statements[0];
+check($pass instanceof scpp\compiler\ast_block_statement && $pass->body->statements === []
+	&& $pass->byte_start() === strpos($text, 'pass') && $pass->source_text() === "pass\r\n",
+	'Pass-only suite retains its original statement span');
+
+foreach ([
+	["return 8 if True else False", 'Ternary result types must be identical'],
+	["break\nreturn 8", 'requires an enclosing loop'],
+	["continue\nreturn 8", 'requires an enclosing loop'],
+	["while True:\n    break 2\nreturn 8", 'Expected NEWLINE'],
+	["while True:\n    continue 2\nreturn 8", 'Expected NEWLINE'],
+	["def missing() -> int:\n    return\nreturn missing()", 'Non-void function requires a value return'],
+	["return", 'Entry requires a value return'],
+] as [$text, $message]) {
+	try {
+		$frontend->prepare(new source_file('body.py', $text, flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection: ' . $text);
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}

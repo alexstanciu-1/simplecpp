@@ -35,9 +35,9 @@ final class ast_ternary_expression extends ast_selection_expression
 	public const int PRECEDENCE = 1;
 
 	public function __construct(public readonly ast_expression $condition, public readonly ast_expression $when_true,
-		public readonly ast_expression $when_false)
+		public readonly ast_expression $when_false, int $start /** uint32 */, int $end /** uint32 */)
 	{
-		parent::__construct($condition->start, $when_false->end);
+		parent::__construct($start, $end);
 		$condition->attach($this);
 		$when_true->attach($this);
 		$when_false->attach($this);

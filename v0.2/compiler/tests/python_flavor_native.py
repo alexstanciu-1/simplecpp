@@ -109,6 +109,93 @@ def logical(work, flavor, library):
         assert resident.wait() == 0
 
 
+BODY_ENTRY = """def completed() -> void:
+    if True:
+        pass
+    if left(True):
+        return
+    mark(0)
+
+completed()
+outer: int = 0
+count: int = 0
+while outer < 2:
+    outer = outer + 1
+    inner: int = 0
+    while inner < 3:
+        inner = inner + 1
+        if inner == 1:
+            continue
+        count = count + inner
+        break
+if count != 4:
+    return 1
+if (1 if True else 2 if False else 3) != 1:
+    return 2
+selected: int = mark(0) if left(False) else mark(6)
+if selected != 6:
+    return 3
+return mark(8) if not False and left(True) or False else fallback()
+"""
+BODY_CALLEES = {
+    'cpp': 'int mark(int value) { echo value; return value; }',
+    'php': 'function mark(int $value): int { echo $value; return $value; }',
+    'js': 'function mark(value: int): int { echo value; return value; }',
+}
+
+
+def everyday_bodies(work, flavor, library):
+    app, bundle = work/'bodies', work/'bodies-bundle'
+    write_app(app, 'py', {'main': BODY_ENTRY})
+    peer = app/f'peer.{flavor}'
+    peer_body = LOGICAL_CALLEES[flavor] + BODY_CALLEES[flavor]
+
+    def with_fallback(result, value):
+        signature = f'{result} fallback()' if flavor == 'cpp' else f'function fallback(): {result}'
+        return peer_body + signature + f' {{ echo "F"; return {value}; }}'
+
+    valid_peer = with_fallback('int', '0')
+    source_edit(peer, valid_peer)
+    entry = app/'main.py'
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'bodies-initial', (8, b'LL6L8', b''), library)
+
+        edited = BODY_ENTRY.replace('mark(8)', 'mark(9)')
+        source_edit(entry, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == ['main.py'], changed
+        native(bundle, work/'bodies-edited', (9, b'LL6L9', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        for path, invalid, valid, label in [
+            (entry, edited.replace('else fallback()', 'else False'), edited, 'branch'),
+            (peer, with_fallback('bool', 'false'), valid_peer, 'signature'),
+        ]:
+            source_edit(path, invalid)
+            failure = invoke(resident)
+            fresh_failure = fresh_build(app, work/f'bodies-failure-{label}')
+            expected_error = f'main.py:{len(edited.splitlines())}:'
+            assert expected_error in failure.get('error', '') and 'Ternary result types must be identical' in failure['error'], failure
+            assert failure['error'] == fresh_failure.get('error'), (failure, fresh_failure)
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+            source_edit(path, valid)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            fresh = work/f'bodies-fresh-{label}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'bodies-recovered-{label}', (9, b'LL6L9', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def prove(work, library):
     work.mkdir()
     for flavor, bridge in BRIDGES.items():
@@ -125,6 +212,7 @@ def prove(work, library):
         native(bundle, case/'control-run', (8, b'bridge', b''), library)
         incremental(case, flavor, app, output, library)
         logical(case, flavor, library)
+        everyday_bodies(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):

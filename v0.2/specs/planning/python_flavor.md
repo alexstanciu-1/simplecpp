@@ -55,3 +55,35 @@ Keep `/` and `//` deferred. Python true division of integers produces a floating
 - [x] Verify that the Python frontend still rejects both division spellings. Run the existing Python frontend and mixed-flavor regressions and the shared logical-expression tests.
 
 The Python frontend and mixed-flavor native proofs passed along with the existing shared logical and native logical regressions.
+
+## Batch backlog after the boolean slice
+
+The C++ flavor adapter is 3,712 bytes. Most grammar lives in the shared parser, namespace parser and record parser. Judge additions by whether they reuse established AST and semantics. Keep Python layout in the tokenizer, spelling and precedence in parsing, type checks in preparation and native execution in shared lowering.
+
+| Batch | Scope | Readiness |
+| --- | --- | --- |
+| 1. Everyday bodies | Conditional expression, pass, unlabelled break/continue, and bare return in explicitly void functions | Reuse the shared ternary with Python precedence and right association. Preserve shared branch type agreement and selected-arm evaluation. Represent pass with an empty statement span. Reuse loop exits and void-return checks. Keep typed declarations and block-local scope. |
+| 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, then for name in collection for published typed collections | Reuse compound assignment and foreach preparation. Verify one value binding and the published iteration contract. Range, general iterators, loop else clauses and Python's after-loop binding lifetime need separate decisions. |
+| 3. Records and typed failures | Bounded dot access and class construction, followed by raise, typed except and finally | Settle constructor and self spelling and typed exception binding before implementation. Reuse shared class identity, typed catches, rethrow and cleanup. Dynamic attributes and interpreter exception behavior are outside this batch. |
+
+### Decisions before widening semantics
+
+- Division and modulo stay deferred. Agree floating quotient precision, bounded integer floor division, zero divisors and minimum-integer overflow before exposing the Python operators. Consider modulo with floor division because Python couples quotient and remainder.
+- Keep typed declarations and shared block scope. Bare first assignments, optional-value spelling, operand-valued and/or and chained comparisons require explicit contracts. Chains need short-circuiting and single evaluation of the middle operand.
+- Keep project discovery and ordinary symbol lookup. Decide Python import spelling and module mapping together. If we add print syntax, settle separators, newline, formatting and evaluation before selecting an existing output binding.
+- Defer comprehensions, decorators, generators, pattern matching and Python package interoperability until an application needs them.
+
+### Batch 1 ownership notes
+
+- The shared ternary uses parser-owned start and end token positions so its source span includes the true arm and closing parentheses on a grouped false arm. Preparation and emission still evaluate the condition first.
+- Pass uses an empty shared block statement. Its scope contains no declarations or effects, and its source span includes the pass token and newline.
+- Construct the existing break, continue and return nodes after consuming NEWLINE. Share loop-depth and return-contract diagnostics with preparation. Keep Python exits unlabelled and use the existing void return annotation.
+
+### Batch 1 acceptance
+
+- [x] Check conditional expression precedence with not/and/or, right association, grouping, complete source spans and single evaluation of each selected arm. Reject mismatched branch types.
+- [x] Check a pass-only suite and its source span, nested loop exits with an observable skipped iteration, invalid exits outside a loop, and bare return acceptance in void functions and rejection in value-returning functions.
+- [x] Run a common native matrix with cpp/php/js peers, including a body edit, preservation of the prior bundle after an invalid edit, and recovery matching a fresh build. Run the affected shared regressions and confirm division remains deferred.
+- [x] Review the batch together. Pause for a new language contract or cross-owner refactor that requires agreement.
+
+Batch 1 passed 10 focused CTests with Clang, covering the Python frontend, the native cpp/php/js peer matrix, and shared ternary, logical, loop and transfer behavior. The resident matrix verified unchanged peer reuse after a Python edit, execution of both conditional arms, and publication preservation after a Python branch-type error or a peer signature edit. Both failure paths recovered to fresh-equivalent artifacts and native behavior. The remaining batches and semantic decisions above stay deferred.
