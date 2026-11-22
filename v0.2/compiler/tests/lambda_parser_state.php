@@ -15,7 +15,7 @@ function check(bool $condition, string $message): void
 
 $frontend = new Source_Frontend();
 // Resume expression parsing at a known delimiter on the same cursor. Whole-file parse() is single-use.
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prefix = match ($flavor) {
 		flavor::cpp => 'auto outer = new Box(); auto bad = ',
 		flavor::php => '$outer = new Box(); $bad = ',

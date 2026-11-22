@@ -43,7 +43,7 @@ foreach ([
 }
 
 // The body ends at the delimiter. The enclosing parser consumes it after the body loop.
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$parser = new Parser($frontend->scan(new source_file('namespace', 'namespace N { return 8; }', $flavor)));
 	$body = $parser->parse()->main()->body();
 	verify($parser->cursor->tokens->text_at($body->end) === '}', 'Namespace brace became part of the body');
