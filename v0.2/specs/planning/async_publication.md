@@ -18,9 +18,12 @@ experiments are historical comparisons using the legacy scheduler.
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
 no-argument free functions with int/int64 results. Direct local initializers, return
-values and echo operands can consume the result. The straight-line producer body accepts
+values and echo operands can consume the result. The producer body accepts braced if/else branches,
 locals, timer statements, echo, throw and return. Task storage, general nested await
-expressions, async methods and parameters are deferred.
+expressions, async methods and parameters are deferred. In an async body, awaited calls
+may appear in a chain of && or || used as a local initializer, echo operand, return
+value or branch condition. Both sides are prepared and watched. The emitted native
+logical operator evaluates its RHS only when needed.
 
 The ordinary function symbol and dependency watches carry the async signature bit.
 A synchronous caller sees the incomplete task declaration and passes the producer

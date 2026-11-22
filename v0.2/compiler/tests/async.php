@@ -61,6 +61,9 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare(str_replace('async_sleep_ms(1)', 'async_sleep_ms("bad")', $child) . 'return 8;'), 'int64 milliseconds');
 	rejects(fn() => $prepare(str_replace('int', 'string', $child) . 'return 8;'), 'int64 result');
 
+	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
+	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
+
 	$directory = sys_get_temp_dir() . '/scpp-async-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
 		$paths = array_map(fn($name) => $name . '.' . $flavor->name, ['main', 'parent', 'child']);
@@ -79,7 +82,30 @@ foreach (flavor::cases() as $flavor) {
 			[$child, null],
 			[$failure . 'async ' . $signature('read_value') . '{throw new Failure();}', null],
 		];
+		$throwing = $steps[6][0];
+		$loud = str_replace('return 4294967297;', 'echo "R";return 4294967297;', $child);
+		$conditions = 'if (false && await read_value()) {return 90;}if (true || await read_value()) {echo "S";}';
+		$taken = 'if (true && await read_value()) {echo "A";}if (false || await read_value()) {echo "B";}return 7;';
+		$short = [
+			// Parent body, child, diagnostic, stdout after the caller's prefix, exception, rebuilt objects.
+			[$conditions . 'return 7;', $throwing, null, 'S7:after', false, 1],
+			[$conditions . $taken, $loud, null, 'SRARB7:after', false, 2],
+			[$conditions . $taken, $signature('read_value') . '{return 9;}', 'Await requires an async function', '', false, 0],
+			[$conditions . $taken, $child, null, 'SAB7:after', false, 1],
+			[$conditions . $taken, $throwing, null, 'S', true, 1],
+			['if (false || await read_value()) {return 99;}return 0;', $throwing, null, '', true, 1],
+			[$conditions . $taken, str_replace('4294967297', '0', $loud), null, 'SRR7:after', false, 2],
+		];
+		foreach ($short as $case) $steps[] = [$case[1], $case[2]];
 		foreach ($steps as $i => [$source, $error]) {
+			$case = $short[$i - 7] ?? null;
+			if ($case !== null) {
+				$body = 'async ' . $signature('report') . '{' . $case[0] . '}';
+				if (file_get_contents("$directory/$paths[1]") !== $body) {
+					file_put_contents("$directory/$paths[1]", $body);
+					touch("$directory/$paths[1]", time() + $i);
+				}
+			}
 			if ($i === 5) {
 				file_put_contents("$directory/$paths[1]", 'async ' . $signature('report') . '{' . $local . '}');
 				touch("$directory/$paths[1]", time() + $i);
@@ -109,8 +135,9 @@ foreach (flavor::cases() as $flavor) {
 			}
 			verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
 			$fixtures[$flavor->name . '_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $elapsed,
-				'exit' => $i === 6 ? 1 : 8, 'stderr' => $i === 6 ? "Exception\n" : '',
-				'stdout_hex' => bin2hex($i === 6 ? 'before:' : 'before:' . ($i === 1 ? '4294967299' : '4294967297') . ':after')];
+				'objects' => $case[5] ?? ($i === 0 ? 4 : 1),
+				'exit' => ($case[4] ?? ($i === 6)) ? 1 : 8, 'stderr' => ($case[4] ?? ($i === 6)) ? "Exception\n" : '',
+				'stdout_hex' => bin2hex('before:' . ($case[3] ?? ($i === 6 ? '' : ($i === 1 ? '4294967299' : '4294967297') . ':after')))];
 		}
 	} finally {
 		remove_tree($directory);

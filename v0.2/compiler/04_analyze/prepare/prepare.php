@@ -181,8 +181,8 @@ final class Preparation
 					: 'Statements after unconditional control transfer are not supported');
 			}
 			if ($function->is_async && !($statement instanceof ast_delay_statement || $statement instanceof ast_return_statement
-				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement)) {
-				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports timer, locals, echo, throw and return');
+				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement || $statement instanceof ast_if_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports timer, locals, conditionals, echo, throw and return');
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
@@ -1374,8 +1374,14 @@ final class Preparation
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
 		if ($syntax instanceof ast_await_expression) {
-			if ($this->in_lambda || !($syntax->parent instanceof ast_local_declaration || $syntax->parent instanceof ast_return_statement || $syntax->parent instanceof ast_echo_statement)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand');
+			$context = $syntax->parent;
+			if ($this->owner->parent->is_async) {
+				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
+				while ($context instanceof ast_binary_expression && $context->operator->lazy()) $context = $context->parent;
+			}
+			$condition = $context instanceof ast_if_arm && $context !== $syntax->parent;
+			if ($this->in_lambda || !($condition || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or an async short-circuit expression in one of those contexts or an if condition');
 			}
 			$this->call($syntax->operand, $initializing);
 			$call = $syntax->operand;

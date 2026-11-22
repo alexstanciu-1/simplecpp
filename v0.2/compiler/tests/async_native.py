@@ -66,7 +66,7 @@ def prove(work):
     for key, fixture in json.loads(path.read_text()).items():
         flavor, step = key.split('_')
         report[key] = build(work / flavor, fixture)
-        assert report[key]['objects'] == (4 if step == '0' else 1), report[key]
+        assert report[key]['objects'] == fixture['objects'], report[key]
         build(work / ('fresh-' + key), {**fixture, 'files': fixture['fresh_files']})
     (work / 'timings.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
