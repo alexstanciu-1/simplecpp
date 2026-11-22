@@ -102,6 +102,7 @@ final class Tokenizer
 			throw new diagnostic($source, 0, 'Tokenizer regular expression failed: ' . preg_last_error_msg());
 		}
 		$tokens = [];
+		$layout = $source->flavor === flavor::python ? new Python_Layout($source) : null;
 		$end = 0;
 		foreach ($matches[0] as [$word, $start])
 		{
@@ -111,6 +112,10 @@ final class Tokenizer
 			$length = strlen($word);
 			$end = $start + $length;
 			$first = $word[0];
+			if ($layout !== null && ($first === '#' || str_contains(" \t\r\n", $first))) {
+				$layout->trivia($tokens, $word, $start);
+				continue;
+			}
 			if (str_contains(" \t\r\n", $first) || str_starts_with($word, '//')
 				|| (($source->flavor === flavor::php) && ($first === '#') && (!str_starts_with($word,
 							'#[')))) {
@@ -160,6 +165,11 @@ final class Tokenizer
 				$kind = $prefixed || strpbrk($word, '.eE') === false ? token_kind::integer : token_kind::floating;
 			}
 			elseif (isset(self::$punctuation[$word]) && (($first !== '#') || ($source->flavor === flavor::php))) {
+				if ($source->flavor === flavor::python && !in_array($word, [
+					'(', ')', '[', ']', '{', '}', ':', ',', '->', '=', '+', '-', '*', '==', '!=', '<', '<=', '>', '>=',
+				], true)) {
+					throw new diagnostic($source, $start, 'Unsupported punctuation in Python flavor');
+				}
 				$kind = self::$punctuation[$word];
 			}
 			elseif (self::letter($first) || (($first === '$') && ($source->flavor === flavor::js))) {
@@ -171,11 +181,13 @@ final class Tokenizer
 			if ($length > 16777215) {
 				throw new diagnostic($source, $start, 'Token length exceeds 24-bit capacity');
 			}
+			$layout?->before_token($tokens, $kind, $word, $start);
 			$tokens[] = new token($start, $length, $kind);
 		}
 		if ($end !== strlen($source->content)) {
 			throw new diagnostic($source, $end, 'Unsupported token');
 		}
+		$layout?->finish($tokens, $end);
 		return new token_list($source, $tokens);
 	}
 
@@ -209,12 +221,16 @@ final class Tokenizer
 		foreach (self::PUNCTUATION as $kind) {
 			$spelling = $kind->label();
 			self::$punctuation[$spelling] = $kind;
+			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
 			if (($kind !== token_kind::attribute) || ($flavor === flavor::php)) {
 				$parts[] = preg_quote($spelling, '~');
 			}
 		}
 		$trivia = '[ \t\r\n]++|//[^\r\n]*+|/\*[^*]*+(?:\*(?!/)[^*]*+)*+\*/|/\*[\s\S]*+\z';
-		if ($flavor === flavor::php) {
+		if ($flavor === flavor::python) {
+			$trivia = '[ \t]++|\r?\n|\\#[^\r\n]*+';
+		}
+		elseif ($flavor === flavor::php) {
 			$trivia .= '|\#(?!\[)[^\r\n]*+';
 		}
 		$strings = <<<'REGEX'
@@ -228,7 +244,7 @@ REGEX;
 		}
 		$names = match ($flavor) {
 			flavor::php => '\$[A-Za-z_][A-Za-z_0-9]*+|[A-Za-z_][A-Za-z_0-9]*+',
-				flavor::cpp => '[A-Za-z_][A-Za-z_0-9]*+',
+				flavor::cpp, flavor::python => '[A-Za-z_][A-Za-z_0-9]*+',
 				flavor::js => '[A-Za-z_$][A-Za-z_$0-9]*+',
 		};
 		$numbers = '0[xX][0-9a-fA-F]*+|0[oO][0-7]*+|(?:[0-9]++(?:\.[0-9]*+)?|\.[0-9]++)(?:[eE][+-]?[0-9]*+)?';

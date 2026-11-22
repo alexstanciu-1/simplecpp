@@ -21,6 +21,7 @@ final class Namespace_Syntax
 			flavor::php => token_kind::backslash,
 			flavor::cpp => token_kind::scope,
 			flavor::js => token_kind::dot,
+			flavor::python => token_kind::scope,
 		};
 		$this->root_marker = $cursor->tokens->source->flavor === flavor::cpp ? token_kind::scope : token_kind::backslash;
 	}

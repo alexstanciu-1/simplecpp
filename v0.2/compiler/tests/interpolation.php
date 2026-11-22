@@ -50,7 +50,7 @@ function reset_expression(scpp\compiler\ast_expression $node): void
 
 $fixtures = [];
 $target = new entry_target(31);
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('main', $source, $flavor), $target);
 	$prepared = $prepare('echo "old"; return 8;');
 	$node = $prepared->body()->statements[0]->values[0];

@@ -5,7 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/yield.php';
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, Incremental_Project};
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$v = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$member = $flavor === flavor::js ? '.' : '->';
 	$decl = static fn(string $type, string $name, string $value): string => match ($flavor) {

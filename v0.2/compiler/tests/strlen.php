@@ -29,7 +29,7 @@ function rejects(Closure $action, string $message): void
 
 $fixtures = [];
 $target = new entry_target(31);
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('main', $source, $flavor), $target);
 	$local = match ($flavor) {
 		flavor::cpp => 'string s = "é中😀";', flavor::php => '$s string = "é中😀";', flavor::js => 'let s: string = "é中😀";',

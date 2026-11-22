@@ -12,7 +12,7 @@ function verify(bool $ok, string $message): void
 	if (!$ok) throw new RuntimeException($message);
 }
 
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$source = match ($flavor) {
 		flavor::php => '$a nullable<int> = null; $b nullable<int> = 0; $r=$a ?? $b ?? 8;return 8;',
 		flavor::cpp => 'nullable<int> a = null; nullable<int> b = 0; auto r=a ?? b ?? 8;return 8;',

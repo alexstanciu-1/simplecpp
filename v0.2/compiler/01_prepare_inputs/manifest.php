@@ -292,7 +292,7 @@ final class Module_Loader
 		$extension = pathinfo($path, \PATHINFO_EXTENSION);
 		return $type === 'c++' ? (in_array($extension, ['cpp', 'cc', 'cxx'], true) ? flavor::cpp : null)
 			: match ($extension) {
-			'cpp' => flavor::cpp, 'php' => flavor::php, 'js' => flavor::js, default => null
+			'cpp' => flavor::cpp, 'php' => flavor::php, 'js' => flavor::js, 'py' => flavor::python, default => null
 		};
 	}
 

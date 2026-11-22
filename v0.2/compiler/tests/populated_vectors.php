@@ -5,7 +5,7 @@ require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter};
 
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$source = match ($flavor) {
 		flavor::php => '$values vector<int> = [true, 9.75, 8]; echo $values[0], $values[1]; return 8;',
 		flavor::cpp => 'vector<int> values = [true, 9.75, 8]; echo values[0], values[1]; return 8;',

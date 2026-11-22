@@ -253,6 +253,7 @@ final class Parser
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
+		if ($grammar instanceof Python_Grammar) return $this->python_statement($grammar, $collector);
 		if ($this->cursor->keyword('global') || $this->cursor->keyword('const')) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				($this->cursor->keyword('const') ? 'Constant' : 'Global') . ' declarations are only allowed at file/namespace level');
@@ -261,7 +262,7 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				'Nested/additional namespaces, body-local use and export are not supported in this slice');
 		}
-		if ($this->cursor->is(token_kind::lbrace)) return new ast_block_statement($this->braced_block($grammar, $collector, '{'));
+		if ($this->cursor->is(token_kind::lbrace)) return new ast_block_statement($this->lexical_block($grammar, $collector, '{'));
 		if ($this->cursor->keyword('foreach')) return $this->foreach_loop($grammar, $collector);
 		if ($this->cursor->keyword('for')) {
 			return $this->for_loop($grammar, $collector);
@@ -341,6 +342,22 @@ final class Parser
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
 
+	/** Dispatch only the statements admitted by the initial Python surface. */
+	private function python_statement(Python_Grammar $grammar, Body_Collection $collector): ast_statement
+	{
+		$c = $this->cursor;
+		if ($c->is(token_kind::indent)) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Unexpected Python indentation');
+		}
+		if ($c->keyword('if')) return $this->conditional($grammar, $collector);
+		if ($c->keyword('while')) return $this->loop($grammar, $collector);
+		if ($c->keyword('return')) return $this->return_statement(token_kind::newline);
+		if ($c->is(token_kind::identifier) && $c->next_is(token_kind::lparen)) {
+			return $this->call_statement($this->call(), token_kind::newline);
+		}
+		return $grammar->statement($this, $collector, token_kind::newline);
+	}
+
 	/** Parse alternatives in source order. Recursion binds each else to the nearest unmatched if. */
 	private function conditional(statement_grammar $grammar, Body_Collection $collector): ast_if_statement
 	{
@@ -348,25 +365,27 @@ final class Parser
 		$this->cursor->take_keyword('if');
 		$arms = [];
 		$conditional = true;
+		$python = $grammar instanceof Python_Grammar;
+		$else_if = $python ? 'elif' : 'elseif';
 		do {
 			$arm_start = $this->cursor->position();
 			$condition = null;
 			if ($conditional) {
-				$this->cursor->take(token_kind::lparen, '(');
+				if (!$python) $this->cursor->take(token_kind::lparen, '(');
 				$condition = $this->value();
-				$this->cursor->take(token_kind::rparen, ')');
+				if (!$python) $this->cursor->take(token_kind::rparen, ')');
 			}
 			$body = $this->arm_body($grammar, $collector);
 			$arms[] = new ast_if_arm($arm_start, $body->end, $condition, $body);
 			if (!$conditional) {
 				break;
 			}
-			if ($this->cursor->keyword('elseif')) {
-				$this->cursor->take_keyword('elseif');
+			if ($this->cursor->keyword($else_if)) {
+				$this->cursor->take_keyword($else_if);
 			}
 			elseif ($this->cursor->keyword('else')) {
 				$this->cursor->take_keyword('else');
-				$conditional = $this->cursor->keyword('if');
+				$conditional = !$python && $this->cursor->keyword('if');
 				if ($conditional) {
 					$this->cursor->take_keyword('if');
 				}
@@ -425,13 +444,13 @@ final class Parser
 	{
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('try');
-		$body = $this->braced_block($grammar, $collector, '{ after try');
+		$body = $this->lexical_block($grammar, $collector, '{ after try');
 		$handlers = [];
 		while ($this->cursor->keyword('catch')) $handlers[] = $this->catch_clause($grammar, $collector);
 		$finalizer = null;
 		if ($this->cursor->keyword('finally')) {
 			$this->cursor->take_keyword('finally');
-			$finalizer = $this->braced_block($grammar, $collector, '{ after finally');
+			$finalizer = $this->lexical_block($grammar, $collector, '{ after finally');
 		}
 		if ($handlers === [] && $finalizer === null) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Try requires catch or finally');
@@ -459,14 +478,14 @@ final class Parser
 		$this->cursor->take(token_kind::rparen, ')');
 		$child = $collector->child();
 		$binding = $child->produced_binding($name, $position, true);
-		$handler = $this->braced_block($grammar, $collector, '{ after catch', $child);
+		$handler = $this->lexical_block($grammar, $collector, '{ after catch', $child);
 		return new ast_catch_clause($start, $type, $binding, $handler);
 	}
 
 	/** A single-statement arm uses the same lexical scope and block representation as a braced arm. */
 	private function arm_body(statement_grammar $grammar, Body_Collection $collector): ast_block
 	{
-		if ($this->cursor->is(token_kind::lbrace)) return $this->braced_block($grammar, $collector, '{');
+		if ($grammar instanceof Python_Grammar || $this->cursor->is(token_kind::lbrace)) return $this->lexical_block($grammar, $collector, '{');
 		$start = $this->cursor->position();
 		$this->lexical = $child = $collector->child();
 		$statement = $this->statement($grammar, $child);
@@ -476,13 +495,14 @@ final class Parser
 	}
 
 	/** Parse a lexical block once, optionally with an existing header binding. */
-	private function braced_block(statement_grammar $grammar, Body_Collection $collector, string $expected, ?Body_Collection $child = null): ast_block
+	private function lexical_block(statement_grammar $grammar, Body_Collection $collector, string $expected, ?Body_Collection $child = null): ast_block
 	{
-		$start = $this->cursor->take(token_kind::lbrace, $expected);
+		$start = $this->open_suite($grammar, $expected);
+		$close = $grammar instanceof Python_Grammar ? token_kind::dedent : token_kind::rbrace;
 		$child ??= $collector->child();
 		$this->lexical = $child;
 		$statements = [];
-		while (!$this->cursor->is(token_kind::rbrace)) {
+		while (!$this->cursor->is($close)) {
 			if ($this->cursor->at_end()) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected }');
 			}
@@ -490,9 +510,28 @@ final class Parser
 			$child->statement($statement, count($statements));
 			$statements[] = $statement;
 		}
-		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		$end = $this->close_suite($close, $statements);
 		$this->lexical = $collector;
 		return $child->block($start, $end, $statements);
+	}
+
+	/** Consume the opening layout of a callable body or nested suite. */
+	private function open_suite(statement_grammar $grammar, string $expected): int /** uint32 */
+	{
+		if (!($grammar instanceof Python_Grammar)) return $this->cursor->take(token_kind::lbrace, $expected);
+		$start = $this->cursor->take(token_kind::colon, ': before Python suite');
+		$this->cursor->take(token_kind::newline, 'NEWLINE before Python suite');
+		$this->cursor->take(token_kind::indent, 'INDENT for Python suite');
+		return $start;
+	}
+
+	/** Consume the terminator and exclude Python dedent lookahead from the source span.
+	 * @param ast_statement[] $statements
+	 */
+	private function close_suite(token_kind $close, array $statements): int /** uint32 */
+	{
+		$position = $this->cursor->take($close, $close->label());
+		return $close === token_kind::dedent ? $statements[array_key_last($statements)]->end : $position + 1;
 	}
 
 	/** All flavors normalize a bounded foreach header to the same produced bindings. */
@@ -517,7 +556,7 @@ final class Parser
 		}
 		$value = $header->produced_binding($first, $first_pos, !$collector->has_local($first));
 		$this->cursor->take(token_kind::rparen, ')');
-		$body = $this->braced_block($grammar, $header, '{ (braced foreach body)');
+		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
 	}
@@ -543,7 +582,7 @@ final class Parser
 		$c->take(token_kind::semicolon, '; after for conditions');
 		$updates = $this->for_actions($grammar, $header, false);
 		$c->take(token_kind::rparen, ') after for updates');
-		$body = $this->braced_block($grammar, $header, '{ (braced for body)');
+		$body = $this->lexical_block($grammar, $header, '{ (braced for body)');
 		$this->lexical = $collector;
 		return new ast_for_statement($start, $initializers, $conditions, $updates, $body, $header->publish_scope());
 	}
@@ -578,20 +617,21 @@ final class Parser
 	private function loop(statement_grammar $grammar, Body_Collection $collector): ast_loop_statement
 	{
 		$start = $this->cursor->position();
+		$python = $grammar instanceof Python_Grammar;
 		$post_test = $this->cursor->keyword('do');
 		$this->cursor->take_keyword($post_test ? 'do' : 'while');
 		if ($post_test) {
-			$body = $this->braced_block($grammar, $collector, '{ (braced loop body)');
+			$body = $this->lexical_block($grammar, $collector, '{ (braced loop body)');
 			$this->cursor->take_keyword('while');
 		}
-		$this->cursor->take(token_kind::lparen, '(');
+		if (!$python) $this->cursor->take(token_kind::lparen, '(');
 		$condition = $this->value();
-		$this->cursor->take(token_kind::rparen, ')');
+		if (!$python) $this->cursor->take(token_kind::rparen, ')');
 		if ($post_test) {
 			$end = $this->cursor->take(token_kind::semicolon, '; (do-while terminator)') + 1;
 			return new ast_do_while_statement($start, $end, $condition, $body);
 		}
-		$body = $this->braced_block($grammar, $collector, '{ (braced loop body)');
+		$body = $this->lexical_block($grammar, $collector, '{ (braced loop body)');
 		return new ast_while_statement($start, $body->end, $condition, $body);
 	}
 
@@ -615,6 +655,7 @@ final class Parser
 			flavor::cpp => new Cpp_Grammar(),
 			flavor::php => new Php_Grammar(),
 			flavor::js => new Js_Grammar(),
+			flavor::python => new Python_Grammar(),
 		};
 	}
 
@@ -637,7 +678,8 @@ final class Parser
 			$arguments = $this->arguments();
 			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target);
 		}
-		$body_start = $this->cursor->take(token_kind::lbrace, '{');
+		$body_start = $this->open_suite($grammar, '{');
+		$close = $grammar instanceof Python_Grammar ? token_kind::dedent : token_kind::rbrace;
 		$previous = $this->lexical;
 		$body_collector = new Body_Collection($this->root->scope, $function->parameters);
 		$this->lexical = $body_collector;
@@ -663,7 +705,7 @@ final class Parser
 			$body_collector->statement($statement, 0);
 			$statements[] = $statement;
 		}
-		while (!$this->cursor->is(token_kind::rbrace))
+		while (!$this->cursor->is($close))
 		{
 			if ($this->cursor->at_end()) {
 				throw new diagnostic($source, $this->cursor->offset(), 'Expected }');
@@ -672,20 +714,21 @@ final class Parser
 			$body_collector->statement($statement, count($statements));
 			$statements[] = $statement;
 		}
-		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		$end = $this->close_suite($close, $statements);
 		$this->lexical = $previous;
 		$this->declaring_type = null;
 		return $body_collector->body($body_start, $end, $statements, $signature_shared);
 	}
 
-	/** PHP and JS share the explicit function-keyword/colon-return header grammar. */
+	/** Read named headers with the flavor's function keyword and return separator. */
 	public function named_function_header(bool $keyword = true, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration
 	{
 		$start = $this->cursor->position();
-		if ($keyword) $this->cursor->take_keyword('function');
+		$python = $this->cursor->tokens->source->flavor === flavor::python;
+		if ($keyword) $this->cursor->take_keyword($python ? 'def' : 'function');
 		$name = $this->cursor->name(token_kind::identifier);
 		$parameters = $this->parameters();
-		$this->cursor->take(token_kind::colon, ': (explicit return type)');
+		$this->cursor->take($python ? token_kind::member : token_kind::colon, $python ? '-> (explicit return type)' : ': (explicit return type)');
 		$type = $this->return_type(allow_union: true);
 		return new ast_function_declaration($alias ?? $name, $type,
 			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
@@ -706,7 +749,7 @@ final class Parser
 		$parameters = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
 			$start = $this->cursor->position();
-			if ($this->cursor->tokens->source->flavor === flavor::js) {
+			if (in_array($this->cursor->tokens->source->flavor, [flavor::js, flavor::python], true)) {
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
@@ -756,9 +799,9 @@ final class Parser
 	}
 
 	/** Finish a discarded ordinary or member call. */
-	private function call_statement(ast_call_expression $call): ast_call_statement
+	private function call_statement(ast_call_expression $call, token_kind $terminator = token_kind::semicolon): ast_call_statement
 	{
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$end = $this->statement_end($terminator);
 		return new ast_call_statement($call->start, $end, $call);
 	}
 
@@ -845,12 +888,12 @@ final class Parser
 	}
 
 	/** All flavors share return syntax; analysis distinguishes void bodies from the integer entry. */
-	private function return_statement(): ast_return_statement
+	private function return_statement(token_kind $terminator = token_kind::semicolon): ast_return_statement
 	{
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('return');
-		$value = $this->cursor->is(token_kind::semicolon) ? null : $this->value();
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$value = $this->cursor->is($terminator) && $terminator !== token_kind::newline ? null : $this->value();
+		$end = $this->statement_end($terminator);
 		return new ast_return_statement($start, $end, $value);
 	}
 
@@ -929,6 +972,8 @@ final class Parser
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
 	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
 	{
+		$python = $this->cursor->tokens->source->flavor === flavor::python;
+		$comparison_seen = false;
 		$left = $this->primary();
 		while (!$this->cursor->at_end()) {
 			if ($this->cursor->keyword('instanceof') && $minimum_precedence <= binary_operator::power->precedence()) {
@@ -974,21 +1019,28 @@ final class Parser
 				token_kind::greater_equal => binary_operator::greater_equal,
 				default => null,
 			};
-			$shift = (($kind === token_kind::less) || ($kind === token_kind::greater))
+			$shift = !$python && (($kind === token_kind::less) || ($kind === token_kind::greater))
 				? $this->cursor->tokens->operator_text_at($this->cursor->position()) : '';
 			if ($shift === '<<' || $shift === '>>') {
 				$operator = $shift === '<<' ? binary_operator::shift_left : binary_operator::shift_right;
 			}
-			if (($operator === null) || ($operator->precedence() < $minimum_precedence)) {
-				break;
+			$comparison = $python && in_array($kind, [
+				token_kind::equal, token_kind::not_equal, token_kind::less, token_kind::less_equal,
+				token_kind::greater, token_kind::greater_equal,
+			], true);
+			$precedence = $comparison ? binary_operator::equal->precedence() : $operator?->precedence();
+			if ($operator === null || $precedence < $minimum_precedence) break;
+			if ($comparison && $comparison_seen) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons are deferred');
 			}
+			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
 			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
 				? $this->throw_expression()
-				: $this->value($operator->precedence() + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
+				: $this->value($precedence + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
 			$left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
@@ -1133,6 +1185,7 @@ final class Parser
 	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
+			if ($flavor === flavor::python) break;
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
 				$property = $flavor === flavor::php && $this->cursor->is(token_kind::variable);
@@ -1186,6 +1239,7 @@ final class Parser
 				'Parent' => ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::lparen ? call_qualifier::lexical_parent : null,
 				default => null,
 			},
+			flavor::python => null,
 			flavor::js => $scope ? null : match ($name) {
 				'class' => call_qualifier::lexical_self, 'super' => call_qualifier::lexical_parent, default => null,
 			},
@@ -1252,7 +1306,7 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
-		if ($this->lambda_start()) return $this->lambda_expression();
+		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
 		}
@@ -1372,7 +1426,7 @@ final class Parser
 			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_not_expression($start, $this->cursor->position(), $operand);
 		}
-		if ($this->cast_ahead()) {
+		if ($this->cursor->tokens->source->flavor !== flavor::python && $this->cast_ahead()) {
 			$start = $this->cursor->take(token_kind::lparen, '(');
 			$type = $this->cursor->tokens->text_at($this->cursor->position());
 			$type_start = $this->cursor->position();
@@ -1438,6 +1492,9 @@ final class Parser
 		}
 		$start = $this->cursor->position();
 		$word = $this->cursor->at_end() ? '' : $this->cursor->tokens->text_at($start);
+		if ($this->cursor->tokens->source->flavor === flavor::python) {
+			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'true', 'false', 'null' => '', default => $word };
+		}
 		if (type_registry::literal($word) !== null) {
 			$kind = $this->cursor->tokens->tokens[$start]->kind;
 			$this->cursor->take($kind, 'scalar literal');

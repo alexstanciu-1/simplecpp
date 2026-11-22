@@ -25,7 +25,7 @@ function rejects(Closure $action, ?string $message = null): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$var = static fn(string $name) => ($flavor === flavor::php ? '$' : '') . $name;
 	$decl = static fn(string $type, string $name, string $value) => match ($flavor) {
 		flavor::cpp => "$type $name = $value;", flavor::php => '$' . "$name $type = $value;", flavor::js => "let $name: $type = $value;",
