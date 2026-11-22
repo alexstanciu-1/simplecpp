@@ -36,13 +36,13 @@ for flavor in (('cpp', 'php', 'js') if imports or globals_proof else ('cpp', 'ph
     directory = work / flavor
     directory.mkdir(exist_ok=True)
     units = sorted((work / 'generated' / flavor).rglob('*.cpp'))
-    assert len(units) == (4 if globals_proof else (3 if imports else 6))
+    assert len(units) == (4 if globals_proof or imports else 6)
     command = write_build(directory, units, 'O2', False)
     command[command.index('-j') + 1] = '8'
     native_ms, out, err = run(command, directory)
     (directory / 'build.log').write_bytes(out + err)
     _, stdout, _ = run([directory / 'program'], expected=8)
-    expected_stdout = b'5\n10\n10\n20\n42\n' if globals_proof else (b'ping\npong\n' if imports else b'app\nlib\nlib\nroot\n')
+    expected_stdout = b'5\n10\n10\n20\n42\n' if globals_proof else (b'ping\npong\nping\n20\n5\n20\n7\n' if imports else b'app\nlib\nlib\nroot\n')
     assert stdout == expected_stdout
     _, sections, _ = run(['readelf', '-S', directory / 'program'])
     assert b'.debug_' not in sections

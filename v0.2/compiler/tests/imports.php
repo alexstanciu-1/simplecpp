@@ -69,7 +69,31 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	verify(serialize($program) === $before, 'Emission mutated imported facts');
 	$outputs[] = $output->files;
 	if (isset($argv[1])) {
-		foreach ($output->files as $path => $text) {
+		// One native program combines file-local imports, rooted and relative lookup, and a shadowed global.
+		$value = $flavor === flavor::php ? '$value' : 'value';
+		$global = match ($flavor) {
+			flavor::php => 'global $value int = 20;',
+			flavor::cpp => 'global int value = 20;',
+			flavor::js => 'global let value: int = 20;',
+		};
+		$local = match ($flavor) {
+			flavor::php => '$value int = 5;',
+			flavor::cpp => 'int value = 5;',
+			flavor::js => 'let value: int = 5;',
+		};
+		$constant = $flavor === flavor::js ? 'const number: int = 7;' : 'const int number = 7;';
+		$namespace = 'App' . $separator . 'Tools';
+		$case = $sources;
+		$case['lib'] = new source_file('lib', body($flavor, 'Lib', $constant
+			. definition($flavor, 'ping', 'echo "ping\n";') . definition($flavor, 'pong', 'echo "pong\n";')), $flavor);
+		$case['tools'] = new source_file('tools', body($flavor, $namespace, $global
+			. definition($flavor, 'show', 'echo ' . $value . ', "\n";')
+			. definition($flavor, 'shadow', $local . 'echo ' . $value . ', "\n";')), $flavor);
+		$entry = 'use const Lib' . $separator . 'number as imported; run(); pong(); '
+			. $root . $target . '(); Tools' . $separator . 'show(); '
+			. $root . $namespace . $separator . 'shadow(); Tools' . $separator . 'show(); echo imported, "\n"; return 8;';
+		$case['main'] = new source_file('main', str_replace('run(); pong(); return 8;', $entry, $main), $flavor);
+		foreach (Cpp_Program::emit($prepare($case))->files as $path => $text) {
 			$dest = $argv[1] . '/' . $flavor->value . '/' . $path;
 			if (!is_dir(dirname($dest))) {
 				mkdir(dirname($dest), 0777, true);
@@ -102,6 +126,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		rejects(fn() => $prepare($case), $message);
 	}
 	$parser = new Source_Frontend();
+	$namespace_error = 'Nested/additional namespaces';
+	rejects(fn() => $parser->parse(new source_file('nested', 'namespace A { namespace B {} return 8; }', $flavor)),
+		$namespace_error);
+	$additional = $flavor === flavor::php ? 'namespace A; namespace B; return 8;' : 'namespace A {} namespace B { return 8; }';
+	rejects(fn() => $parser->parse(new source_file('additional', $additional, $flavor)),
+		$flavor === flavor::php ? $namespace_error : 'Only one namespace body per file');
 	foreach (['use Lib{ping}; return 8;', 'use Lib' . $separator . '{}; return 8;',
 		definition($flavor, 'bad', 'use ' . $target . ';')] as $text) {
 		rejects(fn() => $parser->parse(new source_file('bad', $text, $flavor)),
