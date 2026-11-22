@@ -321,6 +321,13 @@ For donor parity, use the [typed trailing pack](../../../compiler/my-try/docs/ca
 for functions and methods. Evaluate arguments left to right, convert each
 element, and pass an owned `vector<T>`. Call-site unpacking is separate work.
 
+**Untyped parameter rejection (`FUNC-DECL-005`).** PHP-flavor named functions
+and methods require a type before each parameter name, including writable
+references. A default supplies a value when the caller omits the argument.
+It does not supply the parameter type. The [parser regression](../../compiler/tests/functions.php)
+checks that a bare parameter, a later defaulted parameter, and an untyped method
+reference parameter all report the missing explicit type.
+
 **Source overload rejection (`FUNC-OVERLOAD-001`, `CLASS-MEMBER-015`).**
 Verified for PHP-flavor bootstrap declarations. Two unused free functions named
 `pick` in separate files, one taking `int` and one taking `string`, produced

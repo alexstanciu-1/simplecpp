@@ -784,6 +784,11 @@ final class Parser
 				$type = $this->type_reference(allow_void: true, parameter: true);
 			}
 			else {
+				if ($this->cursor->tokens->source->flavor === flavor::php
+					&& ($this->cursor->is(token_kind::variable)
+						|| ($this->cursor->is(token_kind::ampersand) && $this->cursor->next_is(token_kind::variable)))) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected explicit parameter type before parameter name');
+				}
 				$type = $this->type_reference(allow_void: true, parameter: true);
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
