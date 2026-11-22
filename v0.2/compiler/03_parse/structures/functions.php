@@ -191,7 +191,8 @@ final class ast_call_expression extends ast_expression
 	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
 	{
 		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
-		if ($binding?->name() === 'enum_from_value' && ($this->arguments[0] ?? null) instanceof ast_type_marker) {
+		if (($this->arguments[0] ?? null) instanceof ast_type_marker
+			&& ($binding?->name() === 'enum_from_value' || $binding?->name() === 'enum_try_from_value')) {
 			return array_slice($this->arguments, 1);
 		}
 		return $this->receiver === null || $binding?->type_qualified ? $this->arguments : [$this->receiver, ...$this->arguments];
