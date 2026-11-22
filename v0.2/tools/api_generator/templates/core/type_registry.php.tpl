@@ -14,6 +14,15 @@ final class type_registry
 	/** The selected runtime publishes the concrete int64 task ABI. */
 	public const bool ASYNC_INT64 = @async_int64@;
 
+	/** Default scalar values admitted as owned coroutine-frame parameters. */
+	public static function accepts_async_parameter(type_definition $type): bool
+	{
+		return match ($type::class) {
+@async_parameter_cases@
+			default => false,
+		};
+	}
+
 	/** Type names introduced by the active providers into scpp::types. */
 	public static function has_cpp_type_alias(string $name): bool
 	{

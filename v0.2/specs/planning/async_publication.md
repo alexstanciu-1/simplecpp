@@ -17,7 +17,9 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-free functions with int/int64 results and by-value int/int64 parameters, including trailing literal defaults. Direct local initializers, return
+free functions with int/int64 results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
+The ordinary argument binder checks conversions. The blocking bridge transfers its owned string into the coroutine frame.
+The frame keeps it alive across suspension and releases it on completion or exception. Direct local initializers, return
 values and echo operands can consume the result. The producer body accepts braced if/else branches,
 locals, timer statements, echo, throw and return. Task storage, general nested await
 expressions, async methods, and reference parameters are deferred. In an async body, awaited calls

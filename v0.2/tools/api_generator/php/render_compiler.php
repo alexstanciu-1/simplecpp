@@ -334,13 +334,18 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }
     $moduleCases = [];
+    $asyncValueTypes = [];
     foreach ($definitions as $definition) {
+        if ($definition['required_module'] === null && in_array($definition['strategy'], ['integer', 'floating', 'boolean', 'string'], true)) {
+            $asyncValueTypes[] = 'type_' . $definition['class'] . '::class';
+        }
         if ($definition['required_module'] === null) continue;
         $aliases = implode(', ', array_map(static fn(string $name): string => var_export($name, true), $definition['aliases']));
         $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',
         '@async_int64@' => isset($runtime['async_int64']) ? 'true' : 'false',
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',

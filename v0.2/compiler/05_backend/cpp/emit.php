@@ -234,6 +234,7 @@ final class Cpp_Emitter
 	/** An ordinary blocking entry shares the producer's prepared parameter declarations. @param bool[] $headers */
 	private function wait_signature(ast_function_declaration $node, array &$headers): string
 	{
+		foreach ($node->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
 		return $node->return_type_def()->cpp_type() . ' ' . self::function_name($node) . 'wait(' . implode(', ', $this->parameters($node, $headers, false)) . ')';
 	}
 
@@ -569,7 +570,7 @@ CPP;
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 			if ($function->is_async && $function->parameters !== [] && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
-				$arguments = array_map($this->name(...), $function->parameters);
+				$arguments = array_map($this->forward_argument(...), $function->parameters);
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn ::scpp::async::sync_wait("
 					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
 			}

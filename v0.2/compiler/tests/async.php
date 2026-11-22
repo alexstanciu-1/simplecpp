@@ -177,8 +177,8 @@ foreach (flavor::cases() as $flavor) {
 				'stdout_hex' => bin2hex('before:' . ($case[3] ?? ($i === 6 ? '' : ($i === 1 ? '4294967299' : '4294967297') . ':after')))];
 		}
 		// Independent parameter project. Keep each successful generation for native/fresh execution.
-		$parameter = static fn(string $n): string => match ($flavor) {
-			flavor::php => 'int $' . $n, flavor::js => $n . ':int', flavor::cpp => 'int ' . $n,
+		$parameter = static fn(string $n, string $type = 'int'): string => match ($flavor) {
+			flavor::php => $type . ' $' . $n, flavor::js => $n . ':' . $type, flavor::cpp => $type . ' ' . $n,
 		};
 		$v = static fn(string $n): string => ($flavor === flavor::php ? '$' : '') . $n;
 		$fn = static fn(string $n, array $params): string => str_replace('()', '(' . implode(',', array_map($parameter, $params)) . ')', $signature($n));
@@ -199,9 +199,9 @@ foreach (flavor::cases() as $flavor) {
 		$never = 'async ' . $signature('forever') . '{for (;;) {}}';
 		$native = (new Cpp_Emitter())->emit($prepare($never . 'return 0;'));
 		verify(str_contains($native, 'co_return'), 'Infinite async body must still construct a coroutine');
-		foreach (['string', 'reference'] as $bad) {
+		foreach (['vector', 'reference'] as $bad) {
 			$param = match ($bad) {
-				'string' => str_replace('int', 'string', $parameter('x')),
+				'vector' => $parameter('x', 'vector<int>'),
 				'reference' => match ($flavor) {
 					flavor::php => 'int &$x', flavor::cpp => 'int &x', flavor::js => '&x:int',
 				},
@@ -216,6 +216,22 @@ foreach (flavor::cases() as $flavor) {
 		$default_report = 'async ' . $signature('report') . '{echo await read_value(42), ",";return await read_value();}';
 		$default_entry = 'echo await read_value(), ",", await read_value(42), ",", await report();return 8;';
 		rejects(fn() => $prepare('async ' . $defaults('=7', '') . $body . 'return 0;'), 'Required parameter follows optional parameter');
+		$bytes = "abcdefghijklmnopqrstuvwxyz\0XYZ";
+		$literal = '"abcdefghijklmnopqrstuvwxyz\0XYZ"';
+		$text = $v('text');
+		$declare_text = match ($flavor) {
+			flavor::php => "$text string", flavor::cpp => "string $text", flavor::js => "let $text:string",
+		};
+		$owned_params = implode(',', [$parameter('text', 'string') . '=' . $literal, $parameter('enabled', 'bool') . '=true',
+			$parameter('marker', 'uint8') . '=65', $parameter('scale', 'float64') . '=2.5']);
+		$owned_child = $failure . 'async ' . str_replace('()', '(' . $owned_params . ')', $signature('read_value'))
+			. '{await async_sleep_ms(1);echo ' . $text . ';if (' . $v('enabled') . ' && '
+			. $v('scale') . '>2.0) {' . $text . '="modified";return ' . $v('marker') . ';}throw new Failure();}';
+		$owned_parent = 'async ' . str_replace('()', '(' . $parameter('text', 'string') . ')', $signature('report'))
+			. '{try {return await read_value(' . $text . ',false,66,3.0);}' . $catch('Failure') . '{echo ' . $text . ';return 7;}}';
+		$owned_entry = $declare_text . '=' . $literal . ';echo await read_value(' . $text . '),await report(' . $text . '),' . $text . ';'
+			. 'try {echo await read_value(' . $text . ',false);}' . $catch('Failure') . '{echo "caught";}echo await read_value();return 8;';
+		$owned_output = $bytes . '65' . $bytes . $bytes . '7' . $bytes . $bytes . 'caught' . $bytes . '65';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -236,6 +252,9 @@ foreach (flavor::cases() as $flavor) {
 			[str_replace(['read_value()', 'read_value(42)'], ['read_value(7,false)', 'read_value(42,false)'], $default_report),
 				$reader('=7'), str_replace(['read_value()', 'read_value(42)'], ['read_value(7,false)', 'read_value(42,false)'], $default_entry),
 				null, '7,42,42,7', 0],
+			[$owned_parent, $owned_child, $owned_entry, null, $owned_output, 3],
+			[$owned_parent, str_replace('=65', '=256', $owned_child), $owned_entry, 'range', '', 0],
+			[$owned_parent, str_replace('=65', '=64', $owned_child), $owned_entry, null, str_replace('65', '64', $owned_output), 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -262,6 +281,7 @@ foreach (flavor::cases() as $flavor) {
 			}
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
+			if ($i >= 15) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
 			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
 				'objects' => $objects, 'exit' => 8, 'stderr' => '', 'stdout_hex' => bin2hex($stdout)];
