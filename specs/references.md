@@ -118,18 +118,19 @@ The following are not native-reference bindable in the current safe subset:
 
 The PHP-flavor bootstrap accepts `$alias =& $value` and
 `$alias T =& $value` in ordinary statement blocks. The target must resolve
-to a previously initialized whole local in the same or an enclosing block.
-Alias chains resolve to that same local. A written type must match the storage
+to a previously initialized whole local in the same or an enclosing block,
+or to a writable reference parameter of the enclosing free function.
+Alias chains resolve to the original binding. A written type must match the storage
 exactly. The alias name must be new in the visible scope and is usable only
 inside its declaring block. Ordinary assignment through it writes the original
 slot. Binding creates no runtime storage and does not extend the target's lifetime.
-Parameters, properties, elements, temporaries, lambda capture and generator
+By-value parameters, properties, elements, temporaries, lambda capture and generator
 aliases are outside this bootstrap slice.
 
 The PHP-flavor bootstrap also accepts free functions declared
 `function &select(T &$slot): T`. Exactly one parameter is writable by
-reference and its type must match the result. Each value return must directly
-name that parameter. An ordinary call result is a value copy. In
+reference and its type must match the result. Each value return must name that
+parameter or a visible local alias of it. An ordinary call result is a value copy. In
 `$alias =& select($value)`, the call runs once and the new name binds to
 the supplied whole local slot after the call succeeds. Methods, forwarding a
 reference return, reference-returning callbacks, and returns across finally

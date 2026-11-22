@@ -357,7 +357,7 @@ final class Preparation
 					$origin = $function->parameters[$function->reference_return_origin];
 					$value = $statement->value;
 					if (!($value instanceof ast_name_expression) || $value->constant_only || $this->find_local($value->name) !== $origin) {
-						throw new diagnostic($source, $statement->byte_start(), 'Reference return must directly select its writable parameter');
+						throw new diagnostic($source, $statement->byte_start(), 'Reference return must select its writable parameter or a local alias of it');
 					}
 					++$this->expression_visits;
 					$value->settle_local($origin, unknown: true);
@@ -881,11 +881,16 @@ final class Preparation
 			if ($origin === null) {
 				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
 			}
+			if (!($origin instanceof ast_local_declaration)) {
+				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a previously initialized named local as its origin');
+			}
 		} else {
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
-		}
-		if (!($origin instanceof ast_local_declaration)) {
-			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local');
+			$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
+				&& !($this->owner->parent->parent instanceof ast_method_owner);
+			if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
+				throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable free-function parameter');
+			}
 		}
 		$type = $origin->type_def();
 		if ($declaration->type_reference !== null
