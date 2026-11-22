@@ -57,6 +57,18 @@ Normal full compilation uses the same entries and the same preparation worker.
 The previous separate bare-name callable map is gone. Collection and publication
 now use the [common scope mechanism](scopes.md).
 
+## Lazy static-method demands
+
+The dependency coordinator owns an optional called-method cache across successive
+frontend generations. A static call initializes it on first demand. The accessor,
+observer notification and retirement paths use it only when present. Successful
+preparation retires unreachable called-method pairs and their private bodies. An
+empty cache remains available to the owner for later demands.
+
+The [lifecycle proof](../tests/called_method_lifetime.php) checks cold preparation,
+the first and later calls, incremental edits, release of retired entries and
+bodies, and reuse after removing every caller.
+
 ## Grouped observer access
 
 The observer index groups each symbol's live watchers by source key. It retains all

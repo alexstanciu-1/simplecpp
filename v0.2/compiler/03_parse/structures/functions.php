@@ -456,6 +456,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 			? $this->parent->name() . '::' . $this->short_name : $this->namespace_name();
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::function_declaration;
+	}
+
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{

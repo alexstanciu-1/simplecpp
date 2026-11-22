@@ -40,6 +40,11 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	}
 
 	/** METHODS */
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::local_binding;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();

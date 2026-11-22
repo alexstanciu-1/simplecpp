@@ -54,6 +54,21 @@ def prove(work, flavor):
             with service(app, work / ('invalid-fresh-' + flavor)) as oracle:
                 assert message in failure.get('error', '') and failure['error'] == invoke(oracle)['error'], failure
                 oracle.stdin.close()
+        signature = {'php': 'function accept(Envelope $packet):void', 'cpp': 'void accept(Envelope packet)',
+                     'js': 'function accept(packet:Envelope):void'}[flavor]
+        source_edit(main, signature + '{' + local('scratch', 'fixed_array<byte,32772>') + '} return 8;')
+        for rev, n in enumerate((8191, 8192, 8191)):
+            source_edit(provider, model(n))
+            result = invoke(resident)
+            fresh_dir = work / f'parameter-{flavor}-{rev}'
+            with service(app, fresh_dir) as fresh:
+                oracle = invoke(fresh)
+                fresh.stdin.close()
+            if n == 8192:
+                assert '64 KiB' in result.get('error', '') and result['error'] == oracle.get('error'), (result, oracle)
+            else:
+                assert 'error' not in result and 'error' not in oracle, (result, oracle)
+                assert artifacts(output) == artifacts(fresh_dir)
         zero = local('z', 'fixed_array<byte,0>').removesuffix(';') + ' = [];'
         zero += f'echo count({v}z),(int)empty({v}z); return 8;'
         source_edit(main, zero)

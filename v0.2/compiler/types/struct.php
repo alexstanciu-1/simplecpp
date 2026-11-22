@@ -205,7 +205,7 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
-		$bytes = $this->base_type?->array_bytes() ?? 0;
+		$bytes = $this->base()?->array_bytes() ?? 0;
 		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
