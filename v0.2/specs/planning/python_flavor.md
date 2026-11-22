@@ -36,3 +36,22 @@ Defer single-line suites, semicolon-separated statements, backslash continuation
 - [x] Run existing tokenizer and parser regressions for cpp, php and js.
 
 The first slice uses .py for project discovery and py for explicit CLI selection. CTest registers compiler_python_frontend and compiler_python_flavor_native. Existing syntax fixtures explicitly select the flavors they generate source for.
+
+## Second slice: boolean expressions
+
+Admit Python `not`, `and` and `or` with canonical `bool` operands and a `bool` result. Reuse the shared comparison and logical AST nodes. Keep Python spelling and precedence in the frontend. Shared preparation checks both operands of a binary expression, including a right operand that runtime short-circuiting would skip. Require boolean types without applying the wider shared truth conversions. Existing lowering preserves single evaluation and short-circuiting. [Shared logical contract](../../compiler/docs/logical.md)
+
+Comparisons bind tighter than `not`, then `and`, then `or`. Thus `not a < b and ready` means `(not (a < b)) and ready`. Grouping can override precedence. Python returns the selected operand from `and` and `or`; for boolean operands the shared result has the same value. Operand-valued expressions such as `name or "fallback"` are deferred. [Python boolean operations](https://docs.python.org/3/reference/expressions.html#boolean-operations)
+
+Keep `/` and `//` deferred. Python true division of integers produces a floating result and floor division rounds toward negative infinity. The existing shared integer quotient truncates toward zero. Decide precision, rounding, and failure rules in a separate numeric slice. [Shared arithmetic contract](../../compiler/docs/arithmetic.md)
+
+### Verification checklist
+
+- [x] Check the AST and native results for comparison under `not`, `not` under `and`, `and` under `or`, and parentheses that override precedence.
+- [x] Run Python callers with a boolean probe supplied by each of the cpp, php and js flavors. Verify that `False and probe()` and `True or probe()` skip the probe, while the complementary forms call it exactly once. Use an effectful left operand to verify it runs once and before any selected right operand.
+- [x] Reject non-bool operands of `not` and on either side of `and` or `or`. Include decisive left operands such as `False and 1` and `True or "fallback"`, and check diagnostics point to the offending operand.
+- [x] Store a selected false RHS from each existing flavor in a typed Python bool local. Verify the callee runs once and the local retains false.
+- [x] Edit a skipped RHS callee from bool to int for cpp, php and js. Check that the unchanged Python caller reports the error at the call operand, the last good manifest and C++ artifacts survive, and restoring bool matches a fresh build and restores native behavior.
+- [x] Verify that the Python frontend still rejects both division spellings. Run the existing Python frontend and mixed-flavor regressions and the shared logical-expression tests.
+
+The Python frontend and mixed-flavor native proofs passed along with the existing shared logical and native logical regressions.

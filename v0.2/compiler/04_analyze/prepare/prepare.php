@@ -700,6 +700,16 @@ final class Preparation
 		$condition->type_def()->prepare_condition($condition);
 	}
 
+	/** Check an already prepared logical operand against its source flavor's admission rule. */
+	private function logical_operand(ast_expression $operand): void
+	{
+		$type = $operand->type_def();
+		if ($type !== type_bool::instance() && ($source = $operand->source())->flavor === flavor::python) {
+			throw new diagnostic($source, $operand->byte_start(), 'Python logical operand requires bool');
+		}
+		$type->prepare_condition($operand);
+	}
+
 	/** Resolve produced types and ordinary assignments once; no iteration-dependent analysis or snapshots. */
 	private function foreach_loop(ast_foreach_statement $statement, source_file $source, ?entry_target $target,
 		ast_function_declaration $function): int /** uint8 */
@@ -1301,7 +1311,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_not_expression) {
 			$this->value($syntax->operand, $initializing);
-			$syntax->operand->type_def()->prepare_condition($syntax->operand);
+			$this->logical_operand($syntax->operand);
 			$syntax->settle_not();
 			return;
 		}
@@ -1321,8 +1331,8 @@ final class Preparation
 				return;
 			}
 			if ($syntax->operator->logical()) {
-				$syntax->left->type_def()->prepare_condition($syntax->left);
-				$syntax->right->type_def()->prepare_condition($syntax->right);
+				$this->logical_operand($syntax->left);
+				$this->logical_operand($syntax->right);
 				$syntax->settle_binary(type_bool::instance());
 				return;
 			}

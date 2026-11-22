@@ -974,7 +974,8 @@ final class Parser
 	{
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
 		$comparison_seen = false;
-		$left = $this->primary();
+		$left = $python && $this->cursor->keyword('not')
+			? $this->python_not($minimum_precedence) : $this->primary();
 		while (!$this->cursor->at_end()) {
 			if ($this->cursor->keyword('instanceof') && $minimum_precedence <= binary_operator::power->precedence()) {
 				$this->cursor->take_keyword('instanceof');
@@ -994,7 +995,12 @@ final class Parser
 				continue;
 			}
 			$operator = match ($kind) {
-				token_kind::keyword => $this->cursor->keyword('xor') ? binary_operator::logical_xor : null,
+				token_kind::keyword => match (true) {
+					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
+					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
+					$this->cursor->keyword('xor') => binary_operator::logical_xor,
+					default => null,
+				},
 				token_kind::coalesce => binary_operator::coalesce,
 				token_kind::logical_and => binary_operator::logical_and,
 				token_kind::logical_or => binary_operator::logical_or,
@@ -1044,6 +1050,19 @@ final class Parser
 			$left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
+	}
+
+	/** Python not binds below comparisons and above and. */
+	private function python_not(int $minimum_precedence /** uint8 */): ast_not_expression
+	{
+		$precedence = binary_operator::logical_and->precedence() + 1;
+		if ($minimum_precedence > $precedence) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Parenthesize not in this Python operand');
+		}
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword('not');
+		$operand = $this->value($precedence);
+		return new ast_not_expression($start, $this->cursor->position(), $operand);
 	}
 
 	/** Bounded scalar cast lookahead; preserve grouping when no unary operand follows, e.g. (null). */

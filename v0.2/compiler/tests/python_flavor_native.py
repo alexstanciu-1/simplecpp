@@ -38,6 +38,77 @@ CONTROLS = {
 }
 
 
+LOGICAL_ENTRY = """if left(False) and probe():
+    return 1
+if not (left(True) or probe()):
+    return 2
+if not (left(True) and probe()):
+    return 3
+if not (left(False) or probe()):
+    return 4
+if not 1 < 2 and True:
+    return 5
+if not (False or True) and True:
+    return 6
+if not (True or False and False) or not not False:
+    return 7
+selected: bool = True and falseProbe()
+if selected:
+    return 9
+if False and skipped():
+    return 10
+return 8
+"""
+LOGICAL_CALLEES = {
+    'cpp': ('bool left(bool v) { echo "L"; return v; } bool probe() { echo "R"; return true; } '
+            'bool falseProbe() { echo "F"; return false; }'),
+    'php': ('function left(bool $v): bool { echo "L"; return $v; } function probe(): bool { echo "R"; return true; } '
+            'function falseProbe(): bool { echo "F"; return false; }'),
+    'js': ('function left(v: bool): bool { echo "L"; return v; } function probe(): bool { echo "R"; return true; } '
+           'function falseProbe(): bool { echo "F"; return false; }'),
+}
+
+
+def logical(work, flavor, library):
+    app, bundle = work/'logical', work/'logical-bundle'
+    write_app(app, 'py', {'main': LOGICAL_ENTRY})
+    source_edit(app/f'probe.{flavor}', LOGICAL_CALLEES[flavor])
+    skipped = app/f'skipped.{flavor}'
+    def skipped_body(result, value):
+        signature = f'{result} skipped()' if flavor == 'cpp' else f'function skipped(): {result}'
+        return signature + f' {{ echo "S"; return {value}; }}'
+
+    valid = skipped_body('bool', 'false')
+    source_edit(skipped, valid)
+    expected = (8, b'LLLRLRF', b'')
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'logical-run', expected, library)
+        manifest = (bundle/'manifest.json').read_bytes()
+        previous = artifacts(bundle)
+
+        source_edit(skipped, skipped_body('int', '1'))
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'logical-failure')
+        line = next(number for number, text in enumerate(LOGICAL_ENTRY.splitlines(), 1) if 'skipped()' in text)
+        assert f'main.py:{line}:14: Python logical operand requires bool' in failed.get('error', ''), failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(skipped, valid)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'logical-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'logical-recovered', expected, library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def prove(work, library):
     work.mkdir()
     for flavor, bridge in BRIDGES.items():
@@ -53,6 +124,7 @@ def prove(work, library):
         assert 'error' not in result, result
         native(bundle, case/'control-run', (8, b'bridge', b''), library)
         incremental(case, flavor, app, output, library)
+        logical(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):

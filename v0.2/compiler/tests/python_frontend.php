@@ -3,7 +3,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
-use scpp\compiler\{diagnostic, flavor, source_file, Source_Frontend, token_kind};
+use scpp\compiler\{ast_binary_expression, ast_not_expression, binary_operator, diagnostic, entry_target,
+	flavor, source_file, Source_Frontend, token_kind};
 
 function check(bool $ok, string $message): void
 {
@@ -52,6 +53,7 @@ foreach ([
 	["if True\n    return 1", 7, ': before Python suite'],
 	["if True:\nreturn 1", 9, 'INDENT for Python suite'],
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
+	["return 8 // 2", 9, 'Unsupported punctuation'],
 	["return \"\u{03c0}\" / 2", 12, 'Unsupported punctuation'],
 	["return 1 == 2 < 3", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
@@ -63,7 +65,7 @@ foreach ([
 		check($failure->source === $source && $failure->offset === $offset
 			&& str_contains($failure->getMessage(), $message), $failure->getMessage() . ' offset ' . $failure->offset);
 		if ($message === 'Unsupported punctuation') {
-			check(str_starts_with($failure->getMessage(), 'invalid.py:1:13:'), 'Byte column after UTF-8');
+			check(str_starts_with($failure->getMessage(), 'invalid.py:1:' . ($offset + 1) . ':'), 'Division diagnostic byte column');
 		}
 	}
 }
@@ -103,3 +105,33 @@ check($arm->body->source_text() === ":\n        return 1\n"
 	&& $arm->byte_end() === strpos($text, '    # Before sibling'), 'Suite excludes next sibling trivia');
 check($function->source_text() === "def choose() -> int:\n    if True:\n        return 1\n    # Before sibling\n    return 2\n"
 	&& $body->byte_end() === strpos($text, '# Before entry'), 'Function excludes next declaration trivia');
+
+$logic = new source_file('logic.py', "flag: bool = not 1 < 2 and False or True\nreturn 8", flavor::python);
+$value = $frontend->parse($logic)->main()->body()->statements[0]->initializer;
+check($value instanceof ast_binary_expression && $value->operator === binary_operator::logical_or
+	&& $value->left instanceof ast_binary_expression && $value->left->operator === binary_operator::logical_and
+	&& $value->left->left instanceof ast_not_expression && $value->left->left->operand instanceof ast_binary_expression
+	&& $value->left->left->operand->operator === binary_operator::less, 'Python logical precedence');
+$grouped = new source_file('grouped.py', "flag: bool = not (True or False) and True\nreturn 8", flavor::python);
+$value = $frontend->parse($grouped)->main()->body()->statements[0]->initializer;
+check($value instanceof ast_binary_expression && $value->operator === binary_operator::logical_and
+	&& $value->left instanceof ast_not_expression && $value->left->operand instanceof ast_binary_expression
+	&& $value->left->operand->operator === binary_operator::logical_or, 'Grouping overrides Python logical precedence');
+
+foreach ([
+	['not 1', '1'],
+	['0 and False', '0'],
+	['False and 1', '1'],
+	['"text" or False', '"text"'],
+	['True or "fallback"', '"fallback"'],
+] as [$expression, $operand]) {
+	$text = 'flag: bool = ' . $expression . "\nreturn 8";
+	$source = new source_file('logic-type.py', $text, flavor::python);
+	try {
+		$frontend->prepare($source, new entry_target(31));
+		throw new RuntimeException('Expected non-bool rejection: ' . $expression);
+	} catch (diagnostic $failure) {
+		check($failure->source === $source && $failure->offset === strpos($text, $operand)
+			&& str_contains($failure->getMessage(), 'Python logical operand requires bool'), $failure->getMessage());
+	}
+}
