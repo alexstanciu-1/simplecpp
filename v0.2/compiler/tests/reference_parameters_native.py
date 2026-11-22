@@ -201,12 +201,39 @@ def prove_method_returns(work):
     ])
 
 
+def prove_override_modes(work):
+    contract = 'interface Update { public function apply(int &$n): int; }'
+    implementation = """
+        class Increment implements Update {
+            public override function apply(int &$n): int { $n += 1; return $n; }
+        }
+    """
+    main = """
+        function run_update(Update $op, int &$n): int { return $op->apply($n); }
+        $n int = 10;
+        $result = run_update(new Increment(), $n);
+        echo $result, ":", $n;
+        return 8;
+    """
+    mismatch = 'signature must match exactly'
+    work.mkdir(parents=True)
+    revisions(work, 'php', dict(main=main, contract=contract, impl=implementation), [
+        (None, None, b'11:11'),
+        (None, None, b'11:11'),
+        ('impl', implementation.replace('int &', 'int '), mismatch),
+        ('contract', contract.replace('int &', 'int '), b'11:10'),
+        ('impl', implementation, mismatch),
+        ('contract', contract, b'11:11'),
+    ])
+
+
 def run(work):
     prove(work, 'reference_parameters.php', check_copy=False)
     prove_local_aliases(work / 'aliases')
     prove_reference_returns(work / 'returns')
     prove_forwarding(work / 'forwarding')
     prove_method_returns(work / 'methods')
+    prove_override_modes(work / 'override-modes')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

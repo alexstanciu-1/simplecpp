@@ -259,6 +259,18 @@ See [G05 verification](#g05-verification) for the typed migration paths.
 
 ### G07 · References and lifetime
 
+**Bootstrap decision.** Interface reference returns are donor-proven and deferred.
+The compiler inventory found no production caller binding an interface method result
+with `=&`. Free functions and final non-overriding instance methods already cover
+whole-parameter reference returns in the bootstrap.
+
+If donor parity becomes a priority, port the two cases in
+[the donor interface-handle fixture](../../../compiler/my-try/tests/interface_handles.php).
+The exact-signature case writes through an interface call and observes the caller’s
+original slot. Its incremental companion introduces a cycle by editing only the
+implementation, retries without an edit, and repairs it in the same compiler.
+Take abstract-base forwarding and variance as separate follow-ups.
+
 **Missing (5)**
 
 - `FUNC-REF-002` — Function reference return
@@ -286,6 +298,20 @@ See [G05 verification](#g05-verification) for the typed migration paths.
 - `CLASS-MEMBER-018E` — Untyped field reference return
 
 ### G08 · Function and method signatures
+
+**Override parameter modes (`TYPE-PARAM-003G`).** The bootstrap supports value
+and writable-reference source parameters. Method contract preparation compares
+the mode at each parameter position for overrides and interface implementations.
+The [PHP native proof](../../compiler/tests/reference_parameters_native.py)
+exercises both matching modes through an interface and both mismatch directions
+across edits. The donor row remains Partial because its interface declares
+`const string &$s`, a third source mode. The exact donor and a control with
+matching read-only declarations both stop at `const` during parsing
+(`Expected identifier`). Replacing the contract with `string &$s` and
+using an explicit override reaches the signature-mismatch diagnostic. Matching
+by-value strings emit successfully. The [donor regression](../../../compiler/my-try/tests/interfaces.php)
+checks incompatibility during preparation. Revisit source read-only borrows
+when a bootstrap caller needs them or donor parity takes priority.
 
 **Missing (3)**
 
