@@ -893,9 +893,9 @@ final class Preparation
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
 		$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
-			&& !($this->owner->parent->parent instanceof ast_method_owner);
+			&& (!($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
 		if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
-			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable free-function parameter');
+			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
 		$type = $origin->type_def();
 		if ($declaration->type_reference !== null
@@ -2041,6 +2041,7 @@ final class Preparation
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
 		$conversions = $this->bind_arguments($call, $function, $initializing);
+		if (!$this->in_lambda && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;

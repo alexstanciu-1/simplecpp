@@ -273,7 +273,7 @@ final class Dependency_Watches
 	}
 }
 
-/** Tarjan's strongly connected components over the current generation's resolved free-function calls. */
+/** Tarjan's strongly connected components over the current generation's resolved free-function and final instance-method calls. */
 final class Reference_Call_Cycles
 {
 	private array $order = [];

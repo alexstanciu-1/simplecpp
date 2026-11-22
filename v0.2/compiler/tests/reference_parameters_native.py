@@ -99,7 +99,7 @@ def prove_reference_returns(work):
         ('select', 'function &select(int &$slot): int { { $alias =& $slot; } return $alias; }', return_error),
         ('select', 'function &select(int &$slot, vector<int> $values): int { return $values[0]; }', return_error),
         ('select', 'function &select(int &$slot): int { try { return $slot; } finally {} }', 'Reference returns across finally are deferred'),
-        ('select', 'class Ops { public function &select(int &$slot): int { return $slot; } }', 'Method reference returns are deferred'),
+        ('select', 'class Ops { public function &select(int &$slot): int { return $slot; } }', 'Method reference return requires a final non-overriding instance method'),
         ('select', 'function &select(vector<int> &$slot): int { return $slot[0]; }', signature_error),
         ('select', 'function &select(int $slot): int { return $slot; }', signature_error),
         ('select', 'function &select(int &$slot, int &$other): int { return $slot; }', signature_error),
@@ -143,11 +143,70 @@ def prove_forwarding(work):
     ])
 
 
+def prove_method_returns(work):
+    selector = """
+        class Selector {
+            public int $field = 99;
+            public final function &select(int &$slot): int {
+                echo "S";
+                $alias =& $slot;
+                $alias += 1;
+                return $alias;
+            }
+        }
+    """
+    derived = 'class Derived extends Selector {}'
+    forward = """
+        function &forward(int &$slot): int {
+            $selector = new Derived();
+            return $selector->select($slot);
+        }
+    """
+    main = """
+        $selector = new Derived();
+        $n int = 10;
+        $copy = $selector->select($n);
+        $alias =& forward($n);
+        $alias += 8;
+        $direct =& $selector->select($n);
+        $direct += 1;
+        echo $n, ":", $copy;
+        return 8;
+    """
+    result = b'SSS22:11'
+    origin_error = 'Reference return must originate in its writable parameter'
+    method_error = 'Method reference return requires a final non-overriding instance method'
+    cycle_error = 'Recursive reference return is unsupported'
+    work.mkdir(parents=True)
+    revisions(work, 'php', dict(main=main, selector=selector, derived=derived, forward=forward), [
+        (None, None, result),
+        (None, None, result),
+        ('selector', selector.replace('return $alias;', 'return $this->field;'), origin_error),
+        ('selector', selector.replace('return $alias;', '$local int = 7; return $local;'), origin_error),
+        ('selector', selector.replace('public final function', 'public function'), method_error),
+        ('selector', selector.replace('public final function', 'public final static function'), method_error),
+        ('selector', selector.replace('return $alias;', 'return forward($alias);'), cycle_error),
+        (None, None, cycle_error),
+        ('selector', selector, result),
+        ('selector', selector.replace('return $alias;', 'return $this->helper($alias);')
+         .replace('public int $field', 'public final function &helper(int &$v): int { return forward($v); } public int $field'),
+         cycle_error),
+        ('selector', selector.replace('return $alias;', '$this->helper($alias); return $alias;')
+         .replace('public int $field', 'public final function helper(int &$v): int { return forward($v); } public int $field'),
+         cycle_error),
+        ('selector', selector, result),
+        ('derived', 'interface I {public function select(int &$slot): int;} class Derived extends Selector implements I {}',
+         'signature must match exactly'),
+        ('derived', derived, result),
+    ])
+
+
 def run(work):
     prove(work, 'reference_parameters.php', check_copy=False)
     prove_local_aliases(work / 'aliases')
     prove_reference_returns(work / 'returns')
     prove_forwarding(work / 'forwarding')
+    prove_method_returns(work / 'methods')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

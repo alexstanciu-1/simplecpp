@@ -294,8 +294,8 @@ final class Function_Preparation
 	/** A reference result borrows exactly one fixed writable parameter of the same type. */
 	private static function reference_return_origin(ast_function_declaration $declaration, type_definition $type): int /** uint32 */
 	{
-		if ($declaration->parent instanceof ast_method_owner) {
-			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference returns are deferred');
+		if ($declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference return requires a final non-overriding instance method');
 		}
 		$origin = null;
 		foreach ($declaration->parameters as $index => $parameter) {

@@ -487,6 +487,13 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		return $this->is_virtual || $this->is_override || $this->is_abstract;
 	}
 
+	/** An explicitly final instance method with a single concrete implementation and no virtual slot. */
+	public function is_direct_final_method(): bool
+	{
+		return $this->is_final && !$this->is_static && !$this->has_virtual_dispatch()
+			&& $this->parent instanceof ast_record_declaration && $this->parent->kind !== record_kind::interface_type;
+	}
+
 	public function has_receiver(): bool
 	{
 		return $this->parent instanceof ast_method_owner && !$this->is_static;
