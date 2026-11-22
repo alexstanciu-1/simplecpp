@@ -549,6 +549,12 @@ CPP;
 			if ($function->is_async) $required_headers['scpp/async_int64.hpp'] = true;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
+			if ($function->is_async) {
+				$body = $function->body()->statements;
+				$last = $body[array_key_last($body)] ?? null;
+				// A terminal infinite loop may contain no coroutine keyword. Preparation has ruled out fallthrough.
+				if (!($last instanceof ast_return_statement || $last instanceof ast_throw_statement)) $lines[] = "\tco_return 0;";
+			}
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
 			if ($first instanceof ast_base_statement) {

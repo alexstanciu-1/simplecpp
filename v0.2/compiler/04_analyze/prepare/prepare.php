@@ -181,9 +181,10 @@ final class Preparation
 					: 'Statements after unconditional control transfer are not supported');
 			}
 			if ($function->is_async && !($statement instanceof ast_delay_statement || $statement instanceof ast_await_statement || $statement instanceof ast_return_statement
-				|| ($statement instanceof ast_assignment_statement && $statement->operator === null)
+				|| $statement::class === ast_assignment_statement::class || $statement::class === ast_update_statement::class
+				|| $statement instanceof ast_call_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_loop_transfer
 				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement || $statement instanceof ast_if_statement)) {
-				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports timer, awaited calls, locals, plain assignments, conditionals, echo, throw and return');
+				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports calls, locals, local writes, branches, loops, echo, throw and return');
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
@@ -1383,7 +1384,7 @@ final class Preparation
 				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
 				while ($context instanceof ast_binary_expression && $context->operator->lazy()) $context = $context->parent;
 			}
-			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_await_statement
+			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement || $context instanceof ast_await_statement
 				|| ($context instanceof ast_assignment_statement && $context->operator === null));
 			if ($this->in_lambda || !($async_context || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment or discarded call in an async function');

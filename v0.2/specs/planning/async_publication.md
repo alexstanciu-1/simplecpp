@@ -30,6 +30,12 @@ right side of a plain local assignment. These forms use ordinary truthiness and 
 conversion. A standalone `await work();` resumes after the child completes and propagates
 a child exception even when the caller discards its result.
 
+Async producers can use ordinary statement calls, local compound assignments and
+increments/decrements inside braced while, do-while and for loops. Loop conditions
+accept direct and short-circuit awaits. Break and continue use the ordinary resolved
+loop targets. Locals that survive suspension live in the native coroutine frame.
+A terminal infinite loop still produces a coroutine even if its body never awaits.
+
 The ordinary function symbol and dependency watches carry the async signature bit.
 For a zero-argument call, a synchronous caller sees the incomplete task declaration and passes the producer
 address to one out-of-line runtime bridge. Async units see the concrete task header

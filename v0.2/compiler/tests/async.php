@@ -164,8 +164,18 @@ foreach (flavor::cases() as $flavor) {
 		$args = 'mark(' . $v('v') . '),mark(true)';
 		$report = $mark . 'async ' . $fn('report', ['v']) . '{if (false && await sum(' . $args . ')) {return 0;}return await sum(' . $args . ');}';
 		$entry = 'echo await report(4294967297);return 8;';
+		$n = $v('n');
+		$loop_report = $mark . 'async ' . $fn('report', ['v']) . '{' . str_replace('9;', '0;', $initial)
+			. 'while (' . $n . '<2 && await sum(1,0)) {mark(' . $n . ');' . $n . '++;}'
+			. 'do {await sum(1,0);' . $n . '+=1;} while (await sum(0,0));'
+			. 'for (; ' . $n . '<6 && await sum(1,0);' . $n . '++) {'
+			. 'if (' . $n . '==3) {continue;}if (' . $n . '==5) {break;}await sum(1,0);mark(' . $n . ');}'
+			. 'return ' . $v('v') . '+' . $n . ';}';
 		$extra = str_replace($parameter('y') . ')', $parameter('y') . ',' . $parameter('z') . ')', $sum);
 		$fixed = str_replace($args, $args . ',0', $report);
+		$never = 'async ' . $signature('forever') . '{for (;;) {}}';
+		$native = (new Cpp_Emitter())->emit($prepare($never . 'return 0;'));
+		verify(str_contains($native, 'co_return'), 'Infinite async body must still construct a coroutine');
 		foreach (['string', 'default', 'reference'] as $bad) {
 			$param = match ($bad) {
 				'string' => str_replace('int', 'string', $parameter('x')),
@@ -185,6 +195,9 @@ foreach (flavor::cases() as $flavor) {
 			[$report, $sum, $entry, null, 'MM4294967298', 2],
 			[$report, $sum, 'echo await sum(10,2);' . $entry, null, '12MM4294967298', 3],
 			[$report, $sum, $entry, null, 'MM4294967298', 3],
+			[$loop_report, $sum, $entry, null, 'MMM4294967302', 1],
+			[$loop_report, $extra, $entry, 'Argument count mismatch', '', 0],
+			[$loop_report, str_replace('1);return', '0);return', $sum), $entry, null, 'MMM4294967302', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
