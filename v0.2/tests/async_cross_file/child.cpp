@@ -1,6 +1,5 @@
 #include "child_private.hpp"
 
-#include <chrono>
 #include <stdexcept>
 
 async_proof::int_task read_value(AsyncTrace& trace, bool fail) {
@@ -10,7 +9,7 @@ async_proof::int_task read_value(AsyncTrace& trace, bool fail) {
     } cleanup{trace};
 
     trace.events = trace.events * 10 + 2;
-    co_await scpp::async_core::sleep_for(std::chrono::milliseconds{1});
+    co_await async_proof::delay_ms(1);
     trace.events = trace.events * 10 + 3;
     if (fail) throw std::runtime_error("child failed");
     co_return 42;

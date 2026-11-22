@@ -15,5 +15,5 @@ async_proof::int_task report_async(AsyncTrace& trace, bool fail) {
 }
 
 int report(AsyncTrace& trace, bool fail) {
-    return scpp::async_core::sync_wait(report_async(trace, fail));
+    return async_proof::sync_wait(report_async(trace, fail));
 }
