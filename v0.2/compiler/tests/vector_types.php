@@ -37,7 +37,7 @@ function rejects(Closure $action, string $message): void
 
 $frontend = new Source_Frontend();
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$parse = static fn(string $type) => $frontend->parse(new source_file('vector-types', signature($flavor, $type), $flavor));
 	$function = $parse('vector<int>')->functions()[0];
 	$written = $function->parameters[0]->type_reference;

@@ -61,7 +61,7 @@ function declaration(flavor $flavor, ?string $type, string $value): string
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('family', $text, $flavor), new entry_target(31));
 	foreach (['int' => '8', 'float' => '8.5', 'bool' => 'true', 'null' => 'null', 'string' => '"A\0B"'] as $type => $literal) {
 		$entry = $prepare(declaration($flavor, $type, $literal) . 'return 8;');

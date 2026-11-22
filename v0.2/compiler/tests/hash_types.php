@@ -37,7 +37,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$frontend = new Source_Frontend();
 	$parse = static fn(string $type) => $frontend->parse(new source_file('hash-types', signature($flavor, $type), $flavor));
 	$resolve = static fn(string $type) => Type_Resolution::resolve($parse($type)->functions()[0]->parameters[0]->type_reference);

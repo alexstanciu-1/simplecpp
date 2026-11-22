@@ -75,6 +75,9 @@ enum token_kind: int /** uint8 */
 	case keyword = 62;
 	case template_string = 63;
 	case coalesce_assign = 64;
+	case newline = 65;
+	case indent = 66;
+	case dedent = 67;
 
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
@@ -145,6 +148,9 @@ enum token_kind: int /** uint8 */
 				self::backslash => '\\',
 				self::assign => '=',
 				self::keyword => 'keyword',
+				self::newline => 'NEWLINE',
+				self::indent => 'INDENT',
+				self::dedent => 'DEDENT',
 		};
 	}
 
@@ -168,7 +174,7 @@ final readonly class token
 	/**
 	 * Validate the token span before retaining its source offset, length and kind.
 	 *
-	 * $length: range 1..0xFFFFFF.
+	 * $length: range 1..0xFFFFFF, with zero reserved for synthetic layout boundaries.
 	 */
 	public function __construct(int $offset /** uint32 */, int $length /** uint32 */,
 		token_kind $kind)
@@ -177,7 +183,11 @@ final readonly class token
 		$this->length = $length;
 		$this->kind = $kind;
 
-		if (($offset < 0) || ($offset > 4294967295) || ($length < 1) || ($length > 16777215)) {
+		$minimum_length = match ($kind) {
+			token_kind::newline, token_kind::indent, token_kind::dedent => 0,
+			default => 1,
+		};
+		if (($offset < 0) || ($offset > 4294967295) || ($length < $minimum_length) || ($length > 16777215)) {
 			throw new \InvalidArgumentException('Invalid token span');
 		}
 	}

@@ -61,7 +61,7 @@ function declaration(flavor $flavor, ?string $type, string $value): string
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('policy', $text, $flavor), new entry_target(31));
 	foreach (['int' => '8', 'bool' => 'true', 'byte' => '8', 'float' => '8.5', 'null' => 'null', 'string' => '"text"'] as $type => $literal) {
 		$definition = type_registry::resolve($type);

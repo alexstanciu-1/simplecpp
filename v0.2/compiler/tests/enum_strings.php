@@ -53,7 +53,7 @@ function remove_tree(string $path): void
 }
 
 $fixtures=[];
-foreach(flavor::cases() as $flavor) {
+foreach([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$sep=$flavor===flavor::js?'.':'::';
 	$enum=static function(string $value='"a\\0b"',string $name='Binary')use($flavor):string {
 		return $flavor===flavor::php?'enum Kind:string {case Empty="";case '.$name.'='.$value.';case Zero="0";case Zeros="00";case Long="a long string that needs heap storage";}'

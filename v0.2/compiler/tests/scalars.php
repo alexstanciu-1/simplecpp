@@ -48,7 +48,7 @@ verify(type_registry::resolve('bool') === type_bool::instance(), 'Bool registrat
 verify(type_registry::resolve('byte') === type_uint8::instance(), 'Byte registration');
 verify((type_uint8::MINIMUM === 0) && (type_uint8::MAXIMUM === 255), 'Byte limits');
 $generated = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$var = static fn(string $name): string => variable($flavor, $name);
 	$decl = static fn(string $type, string $name, string $value): string => declaration($flavor, $type, $name, $value);

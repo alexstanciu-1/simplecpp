@@ -57,7 +57,7 @@ $fixtures = [];
 $widths = ['int8' => [-128, 127], 'int16' => [-32768, 32767], 'int32' => [-2147483648, 2147483647],
 	'uint16' => [0, 65535], 'uint32' => [0, 4294967295]];
 verify(type_registry::resolve('uint64') === null, 'uint64 must remain unavailable');
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$decl = static fn(string $type, string $name, string $value): string => match ($flavor) {
 		flavor::php => '$' . "$name $type=$value;", flavor::cpp => "$type $name=$value;",

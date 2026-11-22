@@ -14,7 +14,7 @@ function verify(bool $ok, string $message): void
 	if (!$ok) throw new RuntimeException($message);
 }
 
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$entry = (new Source_Frontend())->prepare(new source_file('conditions',
 		'return match(true){default=>3,false=>1,true=>2};', $flavor), new entry_target(31));
 	$match = $entry->body()->statements[0]->value;

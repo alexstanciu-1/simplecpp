@@ -15,6 +15,7 @@ require_once __DIR__ . '/01_prepare_inputs/modules.php';
 require_once __DIR__ . '/01_prepare_inputs/file.php';
 require_once __DIR__ . '/compiler/diagnostics.php';
 require_once __DIR__ . '/02_tokenize/structures.php';
+require_once __DIR__ . '/02_tokenize/python_layout.php';
 require_once __DIR__ . '/02_tokenize/tokens.php';
 require_once __DIR__ . '/03_parse/structures/abstract.php';
 require_once __DIR__ . '/03_parse/structures/types.php';
@@ -56,6 +57,7 @@ require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/03_parse/flavors/cpp.php';
 require_once __DIR__ . '/03_parse/flavors/php.php';
 require_once __DIR__ . '/03_parse/flavors/js.php';
+require_once __DIR__ . '/03_parse/flavors/python.php';
 require_once __DIR__ . '/compiler/frontend.php';
 
 require_once __DIR__ . '/04_analyze/prepare/structures.php';

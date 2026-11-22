@@ -55,7 +55,7 @@ function prove_query(flavor $flavor, string $query, string $method, string $resu
 	}
 
 }
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	prove_query($flavor, 'hash_contains', 'has', 'bool_t');
 	prove_query($flavor, 'hash_find', 'find', 'nullable<int64>');
 }

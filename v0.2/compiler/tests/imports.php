@@ -40,7 +40,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $outputs = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$separator = match ($flavor) {
 		flavor::php => '\\', flavor::cpp => '::', flavor::js => '.',

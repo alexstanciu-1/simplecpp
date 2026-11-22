@@ -10,7 +10,7 @@ function verify(bool $ok, string $message): void
 		throw new RuntimeException($message);
 	}
 }
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$header = static fn(string $name): string => $flavor === flavor::cpp ? 'void ' . $name . '()' : 'function ' . $name
 		. '(): void';

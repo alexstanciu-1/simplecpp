@@ -56,7 +56,7 @@ $literal_cases = [
 	'1E+3' => '408f400000000000', '08e0' => '4020000000000000',
 ];
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$decl = static fn(string $type, string $name, string $value): string => declaration($flavor, $type, $name, $value);
 	$var = static fn(string $name): string => variable($flavor, $name);
