@@ -344,9 +344,16 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
+    $numericScalars = [];
+    foreach ($definitions as $definition) {
+        if ($definition['strategy'] === 'integer' || $definition['strategy'] === 'floating') {
+            $numericScalars[] = 'type_' . $definition['class'] . '::instance()';
+        }
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
+        '@numeric_scalar_cases@' => $numericScalars === [] ? '' : "\t\t\t" . implode(', ', $numericScalars) . ' => true,',
         '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],

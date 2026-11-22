@@ -135,3 +135,62 @@ foreach ([
 			&& str_contains($failure->getMessage(), 'Python logical operand requires bool'), $failure->getMessage());
 	}
 }
+
+$text = "value: int = (1 + 2) if not False and True or False else 4 if True else (5 + 6)\nreturn value";
+$file = $frontend->parse(new source_file('selection.py', $text, flavor::python));
+$selection = $file->main()->body()->statements[0]->initializer;
+check($selection instanceof scpp\compiler\ast_ternary_expression
+	&& $selection->condition instanceof ast_binary_expression && $selection->condition->operator === binary_operator::logical_or
+	&& $selection->when_false instanceof scpp\compiler\ast_ternary_expression
+	&& $selection->when_false->source_text() === '4 if True else (5 + 6)'
+	&& $selection->source_text() === '(1 + 2) if not False and True or False else 4 if True else (5 + 6)',
+	'Python conditional precedence, right association and complete source span');
+
+$text = "if True:\r\n    pass\r\nreturn 8";
+$file = $frontend->parse(new source_file('pass.py', $text, flavor::python));
+$pass = $file->main()->body()->statements[0]->arms[0]->body->statements[0];
+check($pass instanceof scpp\compiler\ast_block_statement && $pass->body->statements === []
+	&& $pass->byte_start() === strpos($text, 'pass') && $pass->source_text() === "pass\r\n",
+	'Pass-only suite retains its original statement span');
+
+foreach ([
+	["return 8 if True else False", 'Ternary result types must be identical'],
+	["break\nreturn 8", 'requires an enclosing loop'],
+	["continue\nreturn 8", 'requires an enclosing loop'],
+	["while True:\n    break 2\nreturn 8", 'Expected NEWLINE'],
+	["while True:\n    continue 2\nreturn 8", 'Expected NEWLINE'],
+	["def missing() -> int:\n    return\nreturn missing()", 'Non-void function requires a value return'],
+	["return", 'Entry requires a value return'],
+] as [$text, $message]) {
+	try {
+		$frontend->prepare(new source_file('body.py', $text, flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection: ' . $text);
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}
+
+foreach ([
+	["for item in 1:\n    pass\nreturn 8", 'Python for requires a typed vector'],
+	["def probe(items: vector<int>) -> int:\n    for item in items:\n        pass\n    return item\nreturn 8", 'Unknown or not-yet-initialized local/global: item'],
+	["def probe(items: vector<int>) -> int:\n    item: string = \"sentinel\"\n    for item in items:\n        pass\n    return 8\nreturn 8", 'conversion'],
+	["missing += 1\nreturn 8", 'local'],
+	["text: string = \"a\"\ntext += \"b\"\nreturn 8", 'Python compound destination requires a numeric scalar'],
+	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
+	["value: int = 1\nvalue /= 2\nreturn 8", 'Unsupported punctuation'],
+] as [$text, $message]) {
+	try {
+		$frontend->prepare(new source_file('traversal.py', $text, flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection: ' . $text);
+	} catch (diagnostic $failure) {
+		check(str_contains(strtolower($failure->getMessage()), strtolower($message)), $failure->getMessage());
+	}
+}
+
+$text = "def sum(items: vector<int>) -> int:\n    count: int = 0\n    for item in items:\n        count += item\n    return count\nreturn 8";
+$file = $frontend->parse(new source_file('traversal.py', $text, flavor::python));
+$functions = array_values(array_filter($file->declaration_nodes, static fn($node) => $node->short_name === 'sum'));
+$loop = $functions[0]->body()->statements[1];
+check($loop instanceof scpp\compiler\ast_foreach_statement && $loop->key === null
+	&& $loop->value->short_name === 'item' && $loop->source_text() === "for item in items:\n        count += item\n",
+	'Python traversal uses the shared value binding and retains its suite span');

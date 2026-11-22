@@ -715,7 +715,11 @@ final class Preparation
 		ast_function_declaration $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
-		$type = $statement->source_value->type_def()->iteration();
+		$source_type = $statement->source_value->type_def();
+		if ($source->flavor === flavor::python && !($source_type instanceof vector_type_definition)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector');
+		}
+		$type = $source_type->iteration();
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
@@ -1066,6 +1070,15 @@ final class Preparation
 			$statement->settle_assignment($local, $conversion);
 		}
 		else {
+			$source = $statement->source();
+			if ($source->flavor === flavor::python) {
+				if (!type_registry::is_numeric_scalar($type)) {
+					throw new diagnostic($source, $statement->byte_start(), 'Python compound destination requires a numeric scalar');
+				}
+				if (!type_registry::is_numeric_scalar($statement->value->type_def())) {
+					throw new diagnostic($source, $statement->value->byte_start(), 'Python compound operand requires a numeric scalar');
+				}
+			}
 			$statement->prepare_local_compound($local);
 		}
 		$this->record_assignment($local, $statement);

@@ -109,8 +109,235 @@ def logical(work, flavor, library):
         assert resident.wait() == 0
 
 
+BODY_ENTRY = """def completed() -> void:
+    if True:
+        pass
+    if left(True):
+        return
+    mark(0)
+
+completed()
+outer: int = 0
+count: int = 0
+while outer < 2:
+    outer = outer + 1
+    inner: int = 0
+    while inner < 3:
+        inner = inner + 1
+        if inner == 1:
+            continue
+        count = count + inner
+        break
+if count != 4:
+    return 1
+if (1 if True else 2 if False else 3) != 1:
+    return 2
+selected: int = mark(0) if left(False) else mark(6)
+if selected != 6:
+    return 3
+return mark(8) if not False and left(True) or False else fallback()
+"""
+BODY_CALLEES = {
+    'cpp': 'int mark(int value) { echo value; return value; }',
+    'php': 'function mark(int $value): int { echo $value; return $value; }',
+    'js': 'function mark(value: int): int { echo value; return value; }',
+}
+
+
+def everyday_bodies(work, flavor, library):
+    app, bundle = work/'bodies', work/'bodies-bundle'
+    write_app(app, 'py', {'main': BODY_ENTRY})
+    peer = app/f'peer.{flavor}'
+    peer_body = LOGICAL_CALLEES[flavor] + BODY_CALLEES[flavor]
+
+    def with_fallback(result, value):
+        signature = f'{result} fallback()' if flavor == 'cpp' else f'function fallback(): {result}'
+        return peer_body + signature + f' {{ echo "F"; return {value}; }}'
+
+    valid_peer = with_fallback('int', '0')
+    source_edit(peer, valid_peer)
+    entry = app/'main.py'
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'bodies-initial', (8, b'LL6L8', b''), library)
+
+        edited = BODY_ENTRY.replace('mark(8)', 'mark(9)')
+        source_edit(entry, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == ['main.py'], changed
+        native(bundle, work/'bodies-edited', (9, b'LL6L9', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        for path, invalid, valid, label in [
+            (entry, edited.replace('else fallback()', 'else False'), edited, 'branch'),
+            (peer, with_fallback('bool', 'false'), valid_peer, 'signature'),
+        ]:
+            source_edit(path, invalid)
+            failure = invoke(resident)
+            fresh_failure = fresh_build(app, work/f'bodies-failure-{label}')
+            expected_error = f'main.py:{len(edited.splitlines())}:'
+            assert expected_error in failure.get('error', '') and 'Ternary result types must be identical' in failure['error'], failure
+            assert failure['error'] == fresh_failure.get('error'), (failure, fresh_failure)
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+            source_edit(path, valid)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            fresh = work/f'bodies-fresh-{label}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'bodies-recovered-{label}', (9, b'LL6L9', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+TRAVERSAL_ENTRY = """def keep(last: int, enabled: bool) -> int:
+    for last in items(enabled):
+        pass
+    return last
+
+last: int = -1
+for last in items(False):
+    pass
+if last != -1:
+    return 1
+for last in items(True):
+    last += 10
+    if last > 13:
+        break
+if last != 14:
+    return 2
+if keep(-2, False) != -2 or keep(-2, True) != 9:
+    return 3
+
+total: int = 2
+for item in items(True):
+    if item == 2:
+        continue
+    total += item
+    if item > 5:
+        break
+total -= 3
+total *= 2
+
+fraction: float = 1.5
+fraction += 2
+fraction -= 0.5
+fraction *= 2.0
+if fraction != 6.0:
+    return 4
+return total - 8
+"""
+
+
+def traversal_provider(flavor, element='int'):
+    v = '$' if flavor == 'php' else ''
+    signature_type = 'hash<int,int>' if element == 'hash' else f'vector<{element}>'
+    signature = {
+        'cpp': f'{signature_type} items(bool enabled)',
+        'php': f'function items(bool $enabled): {signature_type}',
+        'js': f'function items(enabled: bool): {signature_type}',
+    }[flavor]
+    declaration = {
+        'cpp': f'{signature_type} output = [];',
+        'php': f'$output {signature_type} = [];',
+        'js': f'let output: {signature_type} = [];',
+    }[flavor]
+    values = {'int': ('2', '4', '7', '9'), 'string': ('"first"', '"second"'), 'hash': ()}[element]
+    fill = ''.join(f'{v}output[]={value};' for value in values)
+    return signature + f' {{ echo "V"; {declaration} if ({v}enabled) {{ {fill} }} return {v}output; }}'
+
+
+def typed_updates_and_traversal(work, flavor, library):
+    app, bundle = work/'traversal', work/'traversal-bundle'
+    write_app(app, 'py', {'main': TRAVERSAL_ENTRY})
+    peer = app/f'provider.{flavor}'
+    provider = traversal_provider(flavor)
+    source_edit(peer, provider)
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'traversal-initial', (12, b'VVVVV', b''), library)
+
+        edited = provider.replace('[]=7;', '[]=8;')
+        source_edit(peer, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'traversal-edited', (14, b'VVVVV', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        source_edit(peer, traversal_provider(flavor, 'hash'))
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'traversal-failure')
+        assert 'Python for requires a typed vector' in failed.get('error', ''), failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(peer, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'traversal-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'traversal-recovered', (14, b'VVVVV', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+def compatible_element_edit(work, flavor, library):
+    app, bundle = work/'element-edit', work/'element-bundle'
+    caller = "count: int = 0\nfor item in items(True):\n    count += 1\nreturn count"
+    write_app(app, 'py', {'main': caller})
+    peer = app/f'provider.{flavor}'
+    source_edit(peer, traversal_provider(flavor))
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'element-initial', (4, b'V', b''), library)
+
+        source_edit(peer, traversal_provider(flavor, 'string'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['prepared'] >= 2, changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {'main.py', peer.name}, changed
+        fresh = work/'element-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh)
+        native(bundle, work/'element-changed', (2, b'V', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+def narrow_compound(work, library):
+    function = """def update(delta: int) -> int:
+    value: uint8 = 254
+    value += delta
+    if value != 255:
+        return 2
+    return 8
+"""
+    for delta, expected in [(1, (8, b'', b'')), (2, (1, b'', b'integer_cast_out_of_range\n'))]:
+        app, bundle = work/f'narrow-{delta}', work/f'narrow-bundle-{delta}'
+        write_app(app, 'py', {'main': function + f'return update({delta})'})
+        result = fresh_build(app, bundle)
+        assert 'error' not in result, result
+        assert any(b'scpp::checked_int64_to_uint8(' in content for content in artifacts(bundle).values())
+        native(bundle, work/f'narrow-run-{delta}', expected, library)
+
+
 def prove(work, library):
     work.mkdir()
+    narrow_compound(work, library)
     for flavor, bridge in BRIDGES.items():
         case = work/flavor
         case.mkdir()
@@ -125,6 +352,9 @@ def prove(work, library):
         native(bundle, case/'control-run', (8, b'bridge', b''), library)
         incremental(case, flavor, app, output, library)
         logical(case, flavor, library)
+        everyday_bodies(case, flavor, library)
+        typed_updates_and_traversal(case, flavor, library)
+        compatible_element_edit(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):

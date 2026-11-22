@@ -271,18 +271,7 @@ final class Parser
 			return $this->loop($grammar, $collector);
 		}
 		if ($this->cursor->keyword('break') || $this->cursor->keyword('continue')) {
-			$is_break = $this->cursor->keyword('break');
-			$start = $this->cursor->position();
-			$this->cursor->take_keyword($is_break ? 'break' : 'continue');
-			if ($this->cursor->is(token_kind::integer)) {
-				$at = $this->cursor->take(token_kind::integer, 'exit depth');
-				$text = $this->cursor->tokens->text_at($at);
-				if (!ctype_digit($text) || (int)$text === 0) {
-					throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$at]->offset, 'Exit depth requires a positive decimal integer');
-				}
-			}
-			$end = $this->cursor->take(token_kind::semicolon, '; after optional positive decimal exit depth') + 1;
-			return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
+			return $this->loop_transfer(token_kind::semicolon);
 		}
 		if ($this->cursor->keyword('switch')) return $this->switch_statement($grammar, $collector);
 		if ($this->cursor->keyword('if')) {
@@ -351,11 +340,37 @@ final class Parser
 		}
 		if ($c->keyword('if')) return $this->conditional($grammar, $collector);
 		if ($c->keyword('while')) return $this->loop($grammar, $collector);
+		if ($c->keyword('for')) return $this->foreach_loop($grammar, $collector);
 		if ($c->keyword('return')) return $this->return_statement(token_kind::newline);
+		if ($c->keyword('break') || $c->keyword('continue')) return $this->loop_transfer(token_kind::newline);
+		if ($c->keyword('pass')) {
+			$start = $c->position();
+			$c->take_keyword('pass');
+			$end = $this->statement_end(token_kind::newline);
+			return new ast_block_statement($collector->child()->block($start, $end, []));
+		}
 		if ($c->is(token_kind::identifier) && $c->next_is(token_kind::lparen)) {
 			return $this->call_statement($this->call(), token_kind::newline);
 		}
 		return $grammar->statement($this, $collector, token_kind::newline);
+	}
+
+	/** Other flavors accept an exit depth; Python only accepts an unlabelled transfer. */
+	private function loop_transfer(token_kind $terminator): ast_loop_transfer
+	{
+		$is_break = $this->cursor->keyword('break');
+		$start = $this->cursor->position();
+		$this->cursor->take_keyword($is_break ? 'break' : 'continue');
+		if ($terminator === token_kind::semicolon && $this->cursor->is(token_kind::integer)) {
+			$at = $this->cursor->take(token_kind::integer, 'exit depth');
+			$text = $this->cursor->tokens->text_at($at);
+			if (!ctype_digit($text) || (int)$text === 0) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$at]->offset, 'Exit depth requires a positive decimal integer');
+			}
+		}
+		$expected = $terminator === token_kind::semicolon ? '; after optional positive decimal exit depth' : $terminator->label();
+		$end = $this->cursor->take($terminator, $expected) + 1;
+		return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
 	}
 
 	/** Parse alternatives in source order. Recursion binds each else to the nearest unmatched if. */
@@ -537,25 +552,36 @@ final class Parser
 	/** All flavors normalize a bounded foreach header to the same produced bindings. */
 	private function foreach_loop(statement_grammar $grammar, Body_Collection $collector): ast_foreach_statement
 	{
-		$start = $this->cursor->position();
-		$this->cursor->take_keyword('foreach');
-		$this->cursor->take(token_kind::lparen, '(');
-		$source = $this->value();
-		$this->cursor->take_keyword('as');
-		$kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		$first_pos = $this->cursor->position();
-		$first = $this->cursor->name($kind);
-		$header = $collector->child();
+		$c = $this->cursor;
+		$start = $c->position();
+		$python = $grammar instanceof Python_Grammar;
 		$key = null;
-		if ($this->cursor->is(token_kind::arrow)) {
-			$this->cursor->take(token_kind::arrow, '=>');
-			$key = $header->produced_binding($first, $first_pos, true);
-			$first_pos = $this->cursor->position();
-			$first = $this->cursor->name($kind);
-			if ($first === $key->short_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Foreach key and value must have different names');
+		$header = $collector->child();
+		if ($python) {
+			$c->take_keyword('for');
+			$value_pos = $c->position();
+			$name = $c->name(token_kind::identifier);
+			$c->take_keyword('in');
+			$source = $this->value();
 		}
-		$value = $header->produced_binding($first, $first_pos, !$collector->has_local($first));
-		$this->cursor->take(token_kind::rparen, ')');
+		else {
+			$c->take_keyword('foreach');
+			$c->take(token_kind::lparen, '(');
+			$source = $this->value();
+			$c->take_keyword('as');
+			$kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+			$value_pos = $c->position();
+			$name = $c->name($kind);
+			if ($c->is(token_kind::arrow)) {
+				$c->take(token_kind::arrow, '=>');
+				$key = $header->produced_binding($name, $value_pos, true);
+				$value_pos = $c->position();
+				$name = $c->name($kind);
+				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->offset(), 'Foreach key and value must have different names');
+			}
+			$c->take(token_kind::rparen, ')');
+		}
+		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name));
 		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
@@ -892,7 +918,7 @@ final class Parser
 	{
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword('return');
-		$value = $this->cursor->is($terminator) && $terminator !== token_kind::newline ? null : $this->value();
+		$value = $this->cursor->is($terminator) ? null : $this->value();
 		$end = $this->statement_end($terminator);
 		return new ast_return_statement($start, $end, $value);
 	}
@@ -974,6 +1000,7 @@ final class Parser
 	{
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
 		$comparison_seen = false;
+		$start = $this->cursor->position();
 		$left = $python && $this->cursor->keyword('not')
 			? $this->python_not($minimum_precedence) : $this->primary();
 		while (!$this->cursor->at_end()) {
@@ -983,6 +1010,13 @@ final class Parser
 				$left = new ast_object_access_expression($left->start, $this->cursor->position(), $left, $target, true);
 				continue;
 			}
+			if ($python && $minimum_precedence <= ast_ternary_expression::PRECEDENCE && $this->cursor->keyword('if')) {
+				$this->cursor->take_keyword('if');
+				$condition = $this->value(ast_ternary_expression::PRECEDENCE + 1);
+				$this->cursor->take_keyword('else');
+				$when_false = $this->value(ast_ternary_expression::PRECEDENCE);
+				return new ast_ternary_expression($condition, $left, $when_false, $start, $this->cursor->position());
+			}
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			if ($kind === token_kind::question && $minimum_precedence <= ast_ternary_expression::PRECEDENCE) {
 				$this->cursor->take(token_kind::question, '?');
@@ -991,7 +1025,8 @@ final class Parser
 				}
 				$when_true = $this->value();
 				$this->cursor->take(token_kind::colon, ': after ternary true branch');
-				$left = new ast_ternary_expression($left, $when_true, $this->value(ast_ternary_expression::PRECEDENCE));
+				$when_false = $this->value(ast_ternary_expression::PRECEDENCE);
+				$left = new ast_ternary_expression($left, $when_true, $when_false, $start, $this->cursor->position());
 				continue;
 			}
 			$operator = match ($kind) {
