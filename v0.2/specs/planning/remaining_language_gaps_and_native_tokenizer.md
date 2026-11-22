@@ -321,6 +321,16 @@ For donor parity, use the [typed trailing pack](../../../compiler/my-try/docs/ca
 for functions and methods. Evaluate arguments left to right, convert each
 element, and pass an owned `vector<T>`. Call-site unpacking is separate work.
 
+**Source overload rejection (`FUNC-OVERLOAD-001`, `CLASS-MEMBER-015`).**
+Verified for PHP-flavor bootstrap declarations. Two unused free functions named
+`pick` in separate files, one taking `int` and one taking `string`, produced
+`Duplicate function: pick`. The same parameter change between two methods in
+one class produced `Duplicate method: Box::pick`. Each diagnostic located both
+declarations. In both probes, the resident compiler and a fresh compiler agreed,
+a no-edit retry preserved the diagnostic and the last good output, and removing
+the duplicate restored output identical to a fresh build. No compiler change
+was needed for these donor cases.
+
 **Override parameter modes (`TYPE-PARAM-003G`).** The bootstrap supports value
 and writable-reference source parameters. Method contract preparation compares
 the mode at each parameter position for overrides and interface implementations.
