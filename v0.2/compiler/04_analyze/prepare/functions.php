@@ -244,8 +244,8 @@ final class Function_Preparation
 		if ($declaration->is_async && !type_registry::ASYNC_INT64) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Runtime publication does not provide async int64');
 		}
-		if ($declaration->is_async && ($type !== type_registry::integer() || $declaration->parameters !== [])) {
-			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Async functions require no parameters and an int64 result');
+		if ($declaration->is_async && $type !== type_registry::integer()) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Async functions require an int64 result');
 		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {
@@ -258,6 +258,9 @@ final class Function_Preparation
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
 			if ($parameter_type === null) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
+			}
+			if ($declaration->is_async && ($parameter_type !== type_registry::integer() || $parameter->mode !== passing_mode::value || $parameter->default_value !== null)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Async parameters require a by-value int64 without a default');
 			}
 			if ($type instanceof generator_type_definition && $parameter_type instanceof callback_type_definition) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Callback parameters on yield producers are deferred');

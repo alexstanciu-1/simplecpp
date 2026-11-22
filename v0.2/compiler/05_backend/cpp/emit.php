@@ -221,8 +221,20 @@ final class Cpp_Emitter
 	public function function_declaration(ast_function_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		if ($node->has_virtual_dispatch()) return '';
+		if ($node->is_async && $node->parameters !== []) {
+			$lines = [];
+			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_task)) $lines[] = $this->signature($node, $includes) . ';';
+			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_wait)) $lines[] = $this->wait_signature($node, $includes) . ';';
+			return implode("\n", $lines);
+		}
 		return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
 			. $this->signature($node, $includes) . ';';
+	}
+
+	/** An ordinary blocking entry shares the producer's prepared parameter declarations. @param bool[] $headers */
+	private function wait_signature(ast_function_declaration $node, array &$headers): string
+	{
+		return $node->return_type_def()->cpp_type() . ' ' . self::function_name($node) . 'wait(' . implode(', ', $this->parameters($node, $headers, false)) . ')';
 	}
 
 	/** Spell the extern declaration shared by private units and published headers. @param bool[] $includes */
@@ -236,7 +248,7 @@ final class Cpp_Emitter
 
 	private function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
 	{
-		return $this->headers?->needs_enum_helper($enum, $use)
+		return $this->headers?->uses_helper($enum, $use)
 			?? ((($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0);
 	}
 
@@ -550,6 +562,11 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+			if ($function->is_async && $function->parameters !== [] && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
+				$arguments = array_map($this->name(...), $function->parameters);
+				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn ::scpp::async::sync_wait("
+					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
+			}
 		}
 		if ($entry !== null) {
 			$this->adapter_flavor = null;
@@ -1678,8 +1695,14 @@ CPP;
 			$callee = $value->operand->function_def();
 			$name = self::function_name($callee);
 			$declarations[$name] = $callee;
-			if (!$value->suspends) $required_headers['scpp/async_wait.hpp'] = true;
-			return $value->suspends ? '(co_await ' . $name . '())' : '::scpp::async::wait_for(&' . $name . ')';
+			if (!$value->suspends && $callee->parameters === []) {
+				$required_headers['scpp/async_wait.hpp'] = true;
+				return '::scpp::async::wait_for(&' . $name . ')';
+			}
+			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
+				$callee->return_type_def(), $global_references, $declarations, $required_headers,
+				$value->suspends ? '::scpp::async::int64_task' : null);
+			return $value->suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_postfix_update_expression) {
 			return $this->local_update($value->update);
@@ -2184,7 +2207,7 @@ CPP;
 	 */
 	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|callback_type_definition $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null): string
 	{
 		$steps = [];
 		$arguments = [];
@@ -2274,7 +2297,7 @@ CPP;
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
-		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
+		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type()) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}
 
@@ -2434,7 +2457,7 @@ CPP;
 	{
 		if ($function->is_async) {
 			$headers['scpp/async_fwd.hpp'] = true;
-			return '::scpp::async::int64_task ' . self::function_name($function) . '()';
+			return '::scpp::async::int64_task ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
 		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);

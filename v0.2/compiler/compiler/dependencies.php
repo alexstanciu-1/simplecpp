@@ -18,6 +18,8 @@ enum dependency_use: int
 	case enum_from_value = 1;
 	case enum_name = 2;
 	case enum_value = 4;
+	case async_wait = 8;
+	case async_task = 16;
 }
 
 /**

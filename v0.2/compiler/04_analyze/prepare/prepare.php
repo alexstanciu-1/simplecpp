@@ -1965,6 +1965,10 @@ final class Preparation
 			$instance = $this->dependencies->static_call($this->owner, $symbol,
 				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
 		}
+		if ($function->is_async && $function->parameters !== []) {
+			$use = $this->owner->parent->is_async ? dependency_use::async_task : dependency_use::async_wait;
+			$this->dependencies?->watch($symbol, $this->owner, $use->value);
+		}
 		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}
 

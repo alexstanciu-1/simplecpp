@@ -16,21 +16,24 @@ final class Cpp_Headers
 	private array $files /** array<string,string> */ = [];
 
 	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
-	private array $enum_helpers /** array<string,uint8> */ = [];
+	private ?array $helper_uses /** array<string,uint8>|null */ = null;
 
 	/** CONSTRUCTOR */
 	/** Plan completed declarations; null creates an empty standalone planner. @param cpp_generator_layout[] $layouts */
 	public function __construct(?prepared_program $program = null, array $layouts /** array<string,cpp_generator_layout> */ = [])
 	{
 		if ($program === null) return;
+		$this->helper_uses = [];
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
-				if (!($node instanceof ast_enum_declaration)) continue;
+				if ($node instanceof ast_enum_declaration) $uses = [dependency_use::enum_from_value, dependency_use::enum_name, dependency_use::enum_value];
+				elseif ($node instanceof ast_function_declaration && $node->is_async && $node->parameters !== []) $uses = [dependency_use::async_wait, dependency_use::async_task];
+				else continue;
 				$symbol = $file->scope->parent->entry($node->symbol_key());
-				foreach (dependency_use::cases() as $use) {
+				foreach ($uses as $use) {
 					if ($program->dependencies->has_use($symbol, $use)) {
 						$key = $node->symbol_key();
-						$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
+						$this->helper_uses[$key] = ($this->helper_uses[$key] ?? 0) | $use->value;
 					}
 				}
 			}
@@ -129,9 +132,10 @@ final class Cpp_Headers
 	}
 
 	/** METHODS */
-	public function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
+	public function uses_helper(ast_function_declaration|ast_enum_declaration $node, dependency_use $use): bool
 	{
-		return (($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0;
+		if ($this->helper_uses === null) return $node instanceof ast_function_declaration;
+		return (($this->helper_uses[$node->symbol_key()] ?? 0) & $use->value) !== 0;
 	}
 
 	/** Publish one nominal enum header for signatures and foreign case references. */

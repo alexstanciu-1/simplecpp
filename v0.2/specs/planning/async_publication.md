@@ -17,22 +17,26 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-no-argument free functions with int/int64 results. Direct local initializers, return
+free functions with int/int64 results and zero or more required by-value int/int64 parameters. Direct local initializers, return
 values and echo operands can consume the result. The producer body accepts braced if/else branches,
 locals, timer statements, echo, throw and return. Task storage, general nested await
-expressions, async methods and parameters are deferred. In an async body, awaited calls
+expressions, async methods, reference parameters and defaults are deferred. In an async body, awaited calls
 may appear in a chain of && or || used as a local initializer, echo operand, return
 value or branch condition. Both sides are prepared and watched. The emitted native
 logical operator evaluates its RHS only when needed.
 
 The ordinary function symbol and dependency watches carry the async signature bit.
-A synchronous caller sees the incomplete task declaration and passes the producer
+For a zero-argument call, a synchronous caller sees the incomplete task declaration and passes the producer
 address to one out-of-line runtime bridge. Async units see the concrete task header
 and emit direct co_await/co_return. The app emits no task templates. The all-flavor
 acceptance test is in `compiler/tests/async_native.py`.
 
-Async exports include only the task forward declaration. Blocking consumers add the
-wait bridge. Coroutine definitions include the promise header, and timer expressions
+For parameterized producers the ordinary argument binder handles conversions and argument
+evaluation. Value parameters belong to the coroutine frame across suspension. A blocking
+call requests an ordinary scalar-returning wrapper defined in the producer's unit.
+A suspending call requests the task signature. Two bits on existing watches select the
+required entries and retire unused wrappers as callers change. A blocking-only export
+contains just the scalar signature. A task signature needs only the task forward declaration. Coroutine definitions include the promise header, and timer expressions
 separately request the timer header. The native dependency test verifies the split.
 When the panel PCH option is enabled for an async application, only coroutine-producing
 units use the cached promise header. The timer and scheduler are outside that PCH.

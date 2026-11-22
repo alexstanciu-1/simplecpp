@@ -139,6 +139,68 @@ foreach (flavor::cases() as $flavor) {
 				'exit' => ($case[4] ?? ($i === 6)) ? 1 : 8, 'stderr' => ($case[4] ?? ($i === 6)) ? "Exception\n" : '',
 				'stdout_hex' => bin2hex('before:' . ($case[3] ?? ($i === 6 ? '' : ($i === 1 ? '4294967299' : '4294967297') . ':after')))];
 		}
+		// Independent parameter project. Keep each successful generation for native/fresh execution.
+		$parameter = static fn(string $n): string => match ($flavor) {
+			flavor::php => 'int $' . $n, flavor::js => $n . ':int', flavor::cpp => 'int ' . $n,
+		};
+		$v = static fn(string $n): string => ($flavor === flavor::php ? '$' : '') . $n;
+		$fn = static fn(string $n, array $params): string => str_replace('()', '(' . implode(',', array_map($parameter, $params)) . ')', $signature($n));
+		$sum = 'async ' . $fn('sum', ['x','y']) . '{await async_sleep_ms(1);return ' . $v('x') . '+' . $v('y') . ';}';
+		$mark = $fn('mark', ['x']) . '{echo "M";return ' . $v('x') . ';}';
+		$args = 'mark(' . $v('v') . '),mark(true)';
+		$report = $mark . 'async ' . $fn('report', ['v']) . '{if (false && await sum(' . $args . ')) {return 0;}return await sum(' . $args . ');}';
+		$entry = 'echo await report(4294967297);return 8;';
+		$extra = str_replace($parameter('y') . ')', $parameter('y') . ',' . $parameter('z') . ')', $sum);
+		$fixed = str_replace($args, $args . ',0', $report);
+		foreach (['string', 'default', 'reference'] as $bad) {
+			$param = match ($bad) {
+				'string' => str_replace('int', 'string', $parameter('x')),
+				'default' => $parameter('x') . '=1',
+				'reference' => match ($flavor) {
+					flavor::php => 'int &$x', flavor::cpp => 'int &x', flavor::js => '&x:int',
+				},
+			};
+			rejects(fn() => $prepare('async ' . str_replace('()', '(' . $param . ')', $signature('bad')) . '{return 1;}return 0;'), 'Async parameters require');
+		}
+		$project = new Incremental_Project($directory, "$directory/params", $target);
+		$steps = [
+			[$report, $sum, $entry, null, 'MM4294967298', 4],
+			[$report, $extra, $entry, 'Argument count mismatch', '', 0],
+			[$fixed, $extra, $entry, null, 'MM4294967298', 2],
+			[$fixed, '', $entry, 'Unknown', '', 0],
+			[$report, $sum, $entry, null, 'MM4294967298', 2],
+			[$report, $sum, 'echo await sum(10,2);' . $entry, null, '12MM4294967298', 3],
+			[$report, $sum, $entry, null, 'MM4294967298', 3],
+		];
+		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
+			foreach ([$caller,$body,$leaf] as $j => $text) {
+				$path = "$directory/$paths[$j]";
+				if (file_get_contents($path) === $text) continue;
+				file_put_contents($path, $text); touch($path, time() + 60 + $i);
+			}
+			$fresh = new Incremental_Project($directory, "$directory/fresh-params", $target);
+			if ($error !== null) {
+				rejects(fn() => $project->run(), $error);
+				rejects(fn() => $project->run(), $error);
+				rejects(fn() => $fresh->run(), $error);
+				continue;
+			}
+			$start = hrtime(true); $project->run(); $ms = (hrtime(true) - $start) / 1e6;
+			$fresh->run();
+			$files = artifacts("$directory/params");
+			$fresh_files = artifacts("$directory/fresh-params");
+			verify($files === $fresh_files, 'Async parameter artifacts differ from fresh compilation');
+			foreach ($files as $path => $text) {
+				if (str_ends_with($path, '.hpp') && str_contains($text, 'report_wait(')) {
+					verify(!str_contains($text, 'async_'), 'Blocking-only export leaks async declarations');
+				}
+			}
+			$all = implode("\n", $files);
+			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
+			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
+			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
+				'objects' => $objects, 'exit' => 8, 'stderr' => '', 'stdout_hex' => bin2hex($stdout)];
+		}
 	} finally {
 		remove_tree($directory);
 	}
