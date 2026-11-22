@@ -83,7 +83,7 @@ def prove_reference_returns(work):
         return 8;
     """
     expected = b'SABABS21:15:2:1'
-    return_error = 'Reference return must select its writable parameter or a local alias of it'
+    return_error = 'Reference return must originate in its writable parameter'
     signature_error = 'Reference return requires exactly one writable parameter of the return type'
     work.mkdir(parents=True, exist_ok=True)
     revisions(work, 'php', dict(main=main, select=select, after=after), [
@@ -94,7 +94,7 @@ def prove_reference_returns(work):
         ('select', select.replace('return $nested;', '$local int = 7; $unsafe =& $local; return $unsafe;'), return_error),
         ('select', select.replace('return $nested;', 'return 7;'), return_error),
         ('select', select.replace('return $nested;', '$local int = 7; return $local;'), return_error),
-        ('select', 'function &select(int &$slot): int { $r =& select($slot); return $r; }', 'Local alias call requires a previously initialized named local'),
+        ('select', 'function &select(int &$slot): int { $r =& select($slot); return $r; }', 'Recursive reference return is unsupported'),
         ('select', 'function &select(int &$slot, int $copy): int { return $copy; }', return_error),
         ('select', 'function &select(int &$slot): int { { $alias =& $slot; } return $alias; }', return_error),
         ('select', 'function &select(int &$slot, vector<int> $values): int { return $values[0]; }', return_error),
@@ -110,10 +110,44 @@ def prove_reference_returns(work):
     ])
 
 
+def prove_forwarding(work):
+    main = """
+        $value int = 10;
+        $alias =& forward($value);
+        $copy = forward($value);
+        $alias += 8;
+        echo $value, ":", $copy;
+        return 8;
+    """
+    forward = 'function &forward(int &$slot): int { $r =& middle($slot); return $r; }'
+    middle = 'function &middle(int &$slot): int { $a =& $slot; return leaf($a); }'
+    leaf = 'function &leaf(int &$v): int { echo "L"; $v += 1; return $v; }'
+    expected = b'LL20:12'
+    origin_error = 'Reference return must originate in its writable parameter'
+    cycle_error = 'Recursive reference return is unsupported'
+    work.mkdir(parents=True)
+    revisions(work, 'php', dict(main=main, forward=forward, middle=middle, leaf=leaf), [
+        (None, None, expected),
+        (None, None, expected),
+        ('middle', middle.replace('$a =& $slot;', '$a int = 1;'), origin_error),
+        ('middle', middle.replace('$a =& $slot; return leaf($a);', '$v int = 1; $a =& leaf($v); return $a;'), origin_error),
+        ('middle', middle, expected),
+        ('leaf', leaf.replace('return $v;', 'return forward($v);'), cycle_error),
+        (None, None, cycle_error),
+        ('leaf', leaf, expected),
+        ('leaf', leaf.replace('return $v;', 'helper($v); return $v;') +
+         ' function helper(int &$v): int { return forward($v); }', cycle_error),
+        ('leaf', leaf, expected),
+        ('leaf', leaf.replace('return $v;', 'step(2); return $v;') +
+         ' function step(int $n): int { if ($n > 0) { return step($n - 1); } return 0; }', expected),
+    ])
+
+
 def run(work):
     prove(work, 'reference_parameters.php', check_copy=False)
     prove_local_aliases(work / 'aliases')
     prove_reference_returns(work / 'returns')
+    prove_forwarding(work / 'forwarding')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

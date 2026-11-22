@@ -130,10 +130,12 @@ aliases are outside this bootstrap slice.
 The PHP-flavor bootstrap also accepts free functions declared
 `function &select(T &$slot): T`. Exactly one parameter is writable by
 reference and its type must match the result. Each value return must name that
-parameter or a visible local alias of it. An ordinary call result is a value copy. In
+parameter, a visible alias of it, or a free-function call whose reference result\noriginates in that parameter. An ordinary call result is a value copy. In
 `$alias =& select($value)`, the call runs once and the new name binds to
-the supplied whole local slot after the call succeeds. Methods, forwarding a
-reference return, reference-returning callbacks, and returns across finally
+the supplied whole slot after the call succeeds. A chain of named free-function
+calls may forward the slot directly or through aliases. Preparation rejects a
+direct-call cycle containing a reference-returning function, including cycles
+through by-value free functions. Methods, reference-returning callbacks, and returns across finally
 are deferred in the bootstrap.
 
 The `compiler/my-try` implementation accepts both inferred and explicitly typed

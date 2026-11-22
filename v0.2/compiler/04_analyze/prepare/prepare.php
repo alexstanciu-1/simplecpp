@@ -356,11 +356,19 @@ final class Preparation
 				if ($function->reference_return_origin !== null) {
 					$origin = $function->parameters[$function->reference_return_origin];
 					$value = $statement->value;
-					if (!($value instanceof ast_name_expression) || $value->constant_only || $this->find_local($value->name) !== $origin) {
-						throw new diagnostic($source, $statement->byte_start(), 'Reference return must select its writable parameter or a local alias of it');
+					if ($value instanceof ast_call_expression) {
+						$this->value($value);
+						$selected = $value->reference_origin();
+					} else {
+						$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
 					}
-					++$this->expression_visits;
-					$value->settle_local($origin, unknown: true);
+					if ($selected !== $origin) {
+						throw new diagnostic($source, $statement->byte_start(), 'Reference return must originate in its writable parameter');
+					}
+					if ($value instanceof ast_name_expression) {
+						++$this->expression_visits;
+						$value->settle_local($origin, unknown: true);
+					}
 					$statement->settle_conversion(value_conversion::identity);
 				}
 				elseif ($target === null) {
@@ -881,16 +889,13 @@ final class Preparation
 			if ($origin === null) {
 				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
 			}
-			if (!($origin instanceof ast_local_declaration)) {
-				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a previously initialized named local as its origin');
-			}
 		} else {
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
-			$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
-				&& !($this->owner->parent->parent instanceof ast_method_owner);
-			if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
-				throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable free-function parameter');
-			}
+		}
+		$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
+			&& !($this->owner->parent->parent instanceof ast_method_owner);
+		if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
+			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable free-function parameter');
 		}
 		$type = $origin->type_def();
 		if ($declaration->type_reference !== null
@@ -1818,8 +1823,12 @@ final class Preparation
 		}
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
-		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
+		if ($function instanceof ast_function_declaration && !$this->in_lambda) {
+			$this->dependencies?->watch_call($symbol, $this->owner);
+		} else {
+			$this->dependencies?->watch($symbol, $this->owner);
+		}
 		if (!($function instanceof ast_function_declaration)) {
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {

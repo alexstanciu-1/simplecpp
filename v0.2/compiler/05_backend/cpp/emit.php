@@ -1093,7 +1093,7 @@ CPP;
 				}
 				else {
 					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
-						logical_root: $conversion === value_conversion::identity);
+						logical_root: $conversion === value_conversion::identity, borrow_result: $function->returns_reference);
 					$type = $function->return_type_def();
 					$value = $this->conversion($type, $conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {

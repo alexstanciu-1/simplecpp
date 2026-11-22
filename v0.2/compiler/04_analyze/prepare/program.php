@@ -79,6 +79,7 @@ final class Program_Preparation
 		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
 		$instances = $dependencies->called_methods();
 		if ($instances !== null) $instances->prepare($symbols, $dependencies);
+		$dependencies->validate_reference_calls();
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}

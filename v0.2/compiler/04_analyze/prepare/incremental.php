@@ -74,6 +74,7 @@ final class Incremental_Preparation
 			$report['prepared'] += $prepared;
 			$report['reused'] += $instances->count() - $prepared;
 		}
+		$session->dependency_watches->validate_reference_calls();
 		foreach ($work->emission_sources() as $key => $_) {
 			if (isset($files[$key])) {
 				$files[$key]->settle_preparation();
