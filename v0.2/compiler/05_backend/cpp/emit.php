@@ -534,6 +534,7 @@ CPP;
 				$unit_flavor ??= $this->adapter_flavor;
 				continue;
 			}
+			if ($function->is_async) $required_headers['scpp/async_int64.hpp'] = true;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			$base_initializer = '';
@@ -967,7 +968,9 @@ CPP;
 				$lines[] = "\t" . $rethrow;
 			}
 			elseif ($statement instanceof ast_throw_statement) {
-				$lines[] = "\t" . $this->throw_call($statement->operation, $global_references, $declarations, $required_headers) . ';';
+				$raise = $this->throw_call($statement->operation, $global_references, $declarations, $required_headers);
+				// A throw-only async body must still create a lazy coroutine frame.
+				$lines[] = $function->is_async ? "\tco_return (" . $raise . ", 0);" : "\t" . $raise . ';';
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
@@ -1063,7 +1066,7 @@ CPP;
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
-				if ($this->finally_exit === null && $statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
+				if (!$function->is_async && $this->finally_exit === null && $statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
 					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
 					continue;
 				}
@@ -1081,7 +1084,7 @@ CPP;
 						$required_headers[$header] = true;
 					}
 				}
-				$lines[] = "\t" . ($this->finally_exit?->save(statement_completion::returns, $value) ?? ('return ' . $value . ';'));
+				$lines[] = "\t" . ($this->finally_exit?->save(statement_completion::returns, $value) ?? (($function->is_async ? 'co_return ' : 'return ') . $value . ';'));
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -1097,6 +1100,10 @@ CPP;
 			}
 			elseif ($statement instanceof ast_return_statement) {
 				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? 'return;') : "close(); return false;";
+			}
+			elseif ($statement instanceof ast_delay_statement) {
+				$required_headers['scpp/async_timer.hpp'] = true;
+				$lines[] = "\tco_await ::scpp::async::delay_ms(" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');';
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
@@ -1667,6 +1674,13 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
+		if ($value instanceof ast_await_expression) {
+			$callee = $value->operand->function_def();
+			$name = self::function_name($callee);
+			$declarations[$name] = $callee;
+			if (!$value->suspends) $required_headers['scpp/async_wait.hpp'] = true;
+			return $value->suspends ? '(co_await ' . $name . '())' : '::scpp::async::wait_for(&' . $name . ')';
+		}
 		if ($value instanceof ast_postfix_update_expression) {
 			return $this->local_update($value->update);
 		}
@@ -2418,6 +2432,10 @@ CPP;
 	 */
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
+		if ($function->is_async) {
+			$headers['scpp/async_fwd.hpp'] = true;
+			return '::scpp::async::int64_task ' . self::function_name($function) . '()';
+		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);
 		if ($function->is_constructor()) {

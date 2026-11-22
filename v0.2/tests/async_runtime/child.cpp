@@ -1,3 +1,4 @@
+#include <scpp/async_timer.hpp>
 #include "child.hpp"
 
 scpp::async::int64_task read_value(trace& log, bool fail) {

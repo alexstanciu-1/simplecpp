@@ -180,6 +180,10 @@ final class Preparation
 					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
 					: 'Statements after unconditional control transfer are not supported');
 			}
+			if ($function->is_async && !($statement instanceof ast_delay_statement || $statement instanceof ast_return_statement
+				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports timer, locals, echo, throw and return');
+			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
 					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
@@ -339,6 +343,11 @@ final class Preparation
 						throw new diagnostic($value->source(), $value->byte_start(), 'Echo currently supports only int64 and string values');
 					}
 				}
+			}
+			elseif ($statement instanceof ast_delay_statement) {
+				if (!$function->is_async) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires an async function');
+				$this->value($statement->value);
+				if ($statement->value->type_def() !== type_registry::integer()) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires int64 milliseconds');
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$this->expression_visits++;
@@ -1364,6 +1373,17 @@ final class Preparation
 		if ($syntax instanceof ast_callable_reference) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
+		if ($syntax instanceof ast_await_expression) {
+			if ($this->in_lambda || !($syntax->parent instanceof ast_local_declaration || $syntax->parent instanceof ast_return_statement || $syntax->parent instanceof ast_echo_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand');
+			}
+			$this->call($syntax->operand, $initializing);
+			$call = $syntax->operand;
+			$target = $call->cardinality === null && $call->callable_binding() === null ? $call->function_def() : null;
+			if (!($target instanceof ast_function_declaration) || !$target->is_async) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires an async function');
+			$syntax->settle($this->owner->parent->is_async);
+			return;
+		}
 		if ($syntax instanceof ast_call_expression) {
 			$this->call($syntax, $initializing);
 			if ($syntax->type_def() === type_void::instance()) {
@@ -1921,6 +1941,7 @@ final class Preparation
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
 	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
 	{
+		if ($function->is_async && !($call->parent instanceof ast_await_expression)) throw new diagnostic($call->source(), $call->byte_start(), 'Async call requires await');
 		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
 		$result = $function->return_type_def();
@@ -2036,7 +2057,7 @@ final class Preparation
 			}
 		}
 		if (!($target instanceof ast_function_declaration) || $target->has_receiver()
-			|| $target->is_implicit_entry || $target->is_constructor() || $target->is_destructor()) {
+			|| $target->is_async || $target->is_implicit_entry || $target->is_constructor() || $target->is_destructor()) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback requires a source free function or static method: ' . $site->name);
 		}
 		$target->require_access($this->owner->parent->parent, $site, null, $this->access_watcher());

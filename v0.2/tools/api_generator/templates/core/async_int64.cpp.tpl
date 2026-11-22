@@ -39,13 +39,5 @@ private:
     friend int64 sync_wait(int64_task root);
 };
 
-struct timer {
-    int64 milliseconds;
-    bool await_ready() const noexcept { return milliseconds <= 0; }
-    void await_suspend(std::coroutine_handle<> continuation) const;
-    void await_resume() const noexcept {}
-};
-
-inline timer delay_ms(int64 milliseconds) noexcept { return {milliseconds}; }
 int64 sync_wait(int64_task root);
 }

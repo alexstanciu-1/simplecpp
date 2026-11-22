@@ -41,6 +41,41 @@ final class ast_call_statement extends ast_statement
 	}
 }
 
+/** Direct task consumption, such as return await read_value(). */
+final class ast_await_expression extends ast_expression
+{
+	public readonly ast_call_expression $operand;
+
+	/** Prepared fact: suspend this coroutine or wait at the synchronous boundary; set during each preparation. */
+	public private(set) bool $suspends = false;
+
+	public function __construct(int $start /** uint32 */, ast_call_expression $operand)
+	{
+		parent::__construct($start, $operand->end);
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	public function settle(bool $suspends): void
+	{
+		$this->suspends = $suspends;
+		$this->settle_value($this->operand->type_def(), null);
+	}
+}
+
+/** Await the timer at statement position: await async_sleep_ms(1); */
+final class ast_delay_statement extends ast_statement
+{
+	public readonly ast_expression $value;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $value)
+	{
+		parent::__construct($start, $end);
+		$this->value = $value;
+		$value->attach($this);
+	}
+}
+
 /** Lexical self and parent calls forward the enclosing static implementation's called type. */
 enum call_qualifier: int /** uint8 */
 {
@@ -386,6 +421,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public ?ast_trait_declaration $trait_origin = null;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
+	/** Written free-function modifier; the return type names the eventual value. */
+	public bool $is_async = false;
 	public readonly bool $is_implicit_entry;
 	public readonly bool $is_static;
 	/** Written method intent, populated by Record_Syntax before publication. */
@@ -395,7 +432,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	private string $source_key = '';
 	public bool $is_override = false;
 	public bool $is_final = false;
-	/** First method modifier token, null for unmarked declarations. */
+	/** First callable modifier token, null for unmarked declarations. */
 	public ?int $modifier_start /** uint32|null */ = null;
 	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
 	public readonly ?ast_type_reference $return_type_reference;

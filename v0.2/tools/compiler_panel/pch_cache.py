@@ -27,10 +27,10 @@ def clear_application_outputs(directory):
 
 
 @contextmanager
-def runtime_pch(cache_root, work, optimization):
+def runtime_pch(cache_root, work, optimization, async_profile=False):
     probe = Path(work) / 'pch-plan'
     probe.mkdir()
-    write_build(probe, [], optimization, True)
+    write_build(probe, [], optimization, True, async_units=set() if async_profile else None)
     graph = (probe / 'build.ninja').read_text()
     header = (probe / 'runtime_pch.hpp').read_text()
     identity = {**signature(optimization), 'layout': 2, 'graph': graph, 'header': header}

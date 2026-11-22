@@ -54,7 +54,21 @@ def shell(value):
     return shlex.quote(str(value)).replace('$', '$$')
 
 
-def write_build(work, units, optimization='O2', pch=False, cached_pch=None, validate_pch=True):
+def async_producers(units):
+    """The emitter lists direct runtime dependencies in the include preamble."""
+    selected = set()
+    for unit in units:
+        with Path(unit).open() as source:
+            for line in source:
+                if line.strip() == '#include <scpp/async_int64.hpp>':
+                    selected.add(Path(unit))
+                    break
+                if line.lstrip().startswith('namespace '):
+                    break
+    return selected
+
+
+def write_build(work, units, optimization='O2', pch=False, cached_pch=None, validate_pch=True, async_units=None):
     if optimization not in ('O0', 'O1', 'O2') or not isinstance(pch, bool):
         raise ValueError('Invalid native build options')
     cxx = shutil.which('clang++')
@@ -80,6 +94,9 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
     if pch and cached_pch is None:
         header = work / 'runtime_pch.hpp'
         text = '#include <scpp/output.hpp>\n#include <scpp/entry.hpp>\n'
+        if async_units is not None:
+            # Clang 18 needs va_list loaded before serializing this libc++ coroutine PCH.
+            text = '#include <cstdarg>\n#include <scpp/async_int64.hpp>\n'
         if not header.exists() or header.read_text() != text:
             header.write_text(text)
         lines.append('build runtime.pch: pch runtime_pch.hpp || qualify-native')
@@ -87,7 +104,8 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
     pch_flags = ['-include-pch', pch_path]
     if not validate_pch:
         pch_flags += ['-Xclang', '-fno-validate-pch']
-    if pch and any(Path(unit).name != 'entry.cpp' for unit in units):
+    selected = async_units if async_units is not None else {Path(u) for u in units if Path(u).name != 'entry.cpp'}
+    if pch and selected:
         lines.extend([f'build qualify-pch: qualify force-qualification | {ninja_path(pch_path)}',
                       '  probe_flags = ' + ' '.join(shell('--flag=' + flag) for flag in pch_flags)])
     objects = []
@@ -95,7 +113,7 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
         obj = 'unit-' + hashlib.sha256(str(Path(unit).resolve()).encode()).hexdigest() + '.o'
         objects.append(obj)
         # The tiny entry adapter uses no runtime headers and does not benefit from this PCH.
-        use_pch = pch and Path(unit).name != 'entry.cpp'
+        use_pch = pch and Path(unit) in selected
         dependency = f' | {ninja_path(pch_path)} || qualify-pch' if use_pch else ' || qualify-native'
         lines.append(f'build {obj}: compile {ninja_path(Path(unit).resolve())}{dependency}')
         lines.append('  pchflag = ' + (' '.join(map(shell, pch_flags)) if use_pch else ''))

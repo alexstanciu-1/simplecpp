@@ -341,6 +341,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@async_int64@' => isset($runtime['async_int64']) ? 'true' : 'false',
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
         '@module_cases@' => implode("\n", $moduleCases),

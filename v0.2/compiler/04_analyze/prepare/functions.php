@@ -120,7 +120,7 @@ final class Function_Preparation
 				}
 			}
 			elseif (($statement instanceof ast_return_statement)
-				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
+				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_delay_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 				if ($statement->value !== null) {
 					self::expression($statement->value);
 				}
@@ -174,7 +174,7 @@ final class Function_Preparation
 			}
 			return;
 		}
-		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_await_expression) || ($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
 			self::expression($value->operand);
 		}
@@ -240,6 +240,12 @@ final class Function_Preparation
 		if ($type === null) {
 			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
+		}
+		if ($declaration->is_async && !type_registry::ASYNC_INT64) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Runtime publication does not provide async int64');
+		}
+		if ($declaration->is_async && ($type !== type_registry::integer() || $declaration->parameters !== [])) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Async functions require no parameters and an int64 result');
 		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {

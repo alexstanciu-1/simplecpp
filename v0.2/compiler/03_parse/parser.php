@@ -107,7 +107,7 @@ final class Parser
 				}
 				continue;
 			}
-			if ($grammar->function_start($this)) {
+			if ($this->cursor->keyword('async') || $grammar->function_start($this)) {
 				$function = $this->function_declaration($grammar);
 				$declarations->import($function);
 				$nodes[] = $function;
@@ -297,6 +297,16 @@ final class Parser
 			$operation = $this->throw_expression();
 			$end = $this->cursor->take(token_kind::semicolon, '; after throw') + 1;
 			return new ast_throw_statement($operation, $end);
+		}
+		if ($this->cursor->keyword('await') && $this->cursor->next_is(token_kind::identifier) && $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'async_sleep_ms') {
+			$c = $this->cursor;
+			$start = $c->position();
+			$c->take_keyword('await');
+			$c->take(token_kind::identifier, 'async_sleep_ms');
+			$c->take(token_kind::lparen, '(');
+			$duration = $this->value();
+			$c->take(token_kind::rparen, ')');
+			return new ast_delay_statement($start, $c->take(token_kind::semicolon, ';') + 1, $duration);
 		}
 		if ($this->cursor->keyword('yield')) return $this->yield_statement();
 		if ($this->cursor->keyword('echo')) {
@@ -598,7 +608,12 @@ final class Parser
 	/** Discover the stable header before parsing its body; local collection never enters the global index. */
 	private function function_declaration(statement_grammar $grammar): ast_function_declaration
 	{
+		$modifier = $this->cursor->position();
+		$async = $this->cursor->keyword('async');
+		if ($async) $this->cursor->take_keyword('async');
 		$function = $grammar->function_header($this);
+		$function->is_async = $async;
+		if ($async) $function->modifier_start = $modifier;
 		$function->attach($this->root);
 		$source = $this->cursor->tokens->source;
 		if ($function->short_name === 'main') {
@@ -1252,6 +1267,13 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($c->keyword('await')) {
+			$start = $c->position();
+			$c->take_keyword('await');
+			$call = $this->call();
+			if (!($call instanceof ast_call_expression)) throw new diagnostic($c->tokens->source, $c->offset(), 'Await requires a direct async call');
+			return new ast_await_expression($start, $call);
+		}
 		if ($this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');

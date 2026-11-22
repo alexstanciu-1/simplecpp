@@ -1,3 +1,5 @@
+#include <scpp/async_timer.hpp>
+#include <scpp/async_wait.hpp>
 #include <scpp/async_int64.hpp>
 
 #include <chrono>
@@ -81,6 +83,10 @@ void timer::await_suspend(std::coroutine_handle<> continuation) const {
     auto& loop = active_loop();
     loop.delay = milliseconds;
     loop.next = continuation;
+}
+
+int64 wait_for(int64_task (*factory)()) {
+    return sync_wait(factory());
 }
 
 int64 sync_wait(int64_task root) {

@@ -192,6 +192,14 @@ function render(array $plan): array {
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
     if (isset($plan['async_int64'])) {
         requireThat(!isset($files['public/scpp/async_int64.hpp']), 'The async int64 header path is reserved');
+        requireThat(!isset($files['public/scpp/async_wait.hpp']), 'The async wait header path is reserved');
+        requireThat(!isset($files['public/scpp/async_timer.hpp']), 'The async timer header path is reserved');
+        $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer',
+            ['scalar_header' => $plan['async_int64']]);
+        requireThat(!isset($files['public/scpp/async_fwd.hpp']), 'The async forward header path is reserved');
+        $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd');
+        $files['public/scpp/async_wait.hpp'] = BANNER . template('core/async_wait',
+            ['scalar_header' => $plan['async_int64']]);
         $files['public/scpp/async_int64.hpp'] = BANNER . template('core/async_int64',
             ['scalar_header' => $plan['async_int64']]);
     }
