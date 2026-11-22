@@ -205,9 +205,20 @@ $write = $class->methods['__construct']->body()->statements[0];
 check($write instanceof scpp\compiler\ast_field_assignment
 	&& $write->target->receiver instanceof scpp\compiler\ast_this_expression, 'Self uses the shared receiver node');
 
+$derived = "class Child(Base):\n    def __init__(self, value: int):\n        super().__init__(value)\n    @override\n    def read(self) -> int:\n        return 8\n";
+$file = $frontend->parse(new source_file('derived.py', $derived . 'return 8', flavor::python));
+$class = array_values(array_filter($file->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
+$base = $class->methods['__construct']->body()->statements[0];
+$read = $class->methods['read'];
+check($class->source_text() === $derived && $class->base_reference?->name === 'Base'
+	&& $base instanceof scpp\compiler\ast_base_statement && $base->value->explicit
+	&& $base->source_text() === "super().__init__(value)\n"
+	&& $read->is_override && $file->tokens->text_at($read->modifier_start) === '@',
+	'Python inheritance preserves source spans on the shared record, base initializer and method marker');
+
 foreach ([
 	["class Box:\n    def read() -> int:\n        return 1\nreturn 8", 'Expected self'],
-	["class Box(Base):\n    pass\nreturn 8", ': before Python suite'],
+	["class Box(Base):\n    pass\nreturn 8", 'Base must be a class'],
 	["class Box:\n    def __init__(self):\n        return 1\nreturn 8", 'Void function cannot return a value'],
 	[$record . "def Box(value: int) -> int:\n    return value\nreturn Box(8)", 'both function and class'],
 	[$record . "box: Box = Box(8)\nbox.unknown = 4\nreturn 8", 'Unknown field'],

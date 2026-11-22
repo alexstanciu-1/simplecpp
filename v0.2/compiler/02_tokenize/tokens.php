@@ -17,6 +17,7 @@ final class Tokenizer
 		token_kind::not_identical,
 		token_kind::spaceship,
 		token_kind::attribute,
+		token_kind::at_sign,
 		token_kind::equal,
 		token_kind::not_equal,
 		token_kind::less_equal,
@@ -164,9 +165,10 @@ final class Tokenizer
 				}
 				$kind = $prefixed || strpbrk($word, '.eE') === false ? token_kind::integer : token_kind::floating;
 			}
-			elseif (isset(self::$punctuation[$word]) && (($first !== '#') || ($source->flavor === flavor::php))) {
+			elseif (isset(self::$punctuation[$word]) && ($first !== '#' || $source->flavor === flavor::php)
+				&& ($first !== '@' || $source->flavor === flavor::python)) {
 				if ($source->flavor === flavor::python && !in_array($word, [
-					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '=', '+', '-', '*', '+=', '-=', '*=', '==', '!=', '<', '<=', '>', '>=',
+					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '==', '!=', '<', '<=', '>', '>=',
 				], true)) {
 					throw new diagnostic($source, $start, 'Unsupported punctuation in Python flavor');
 				}
@@ -222,6 +224,7 @@ final class Tokenizer
 			$spelling = $kind->label();
 			self::$punctuation[$spelling] = $kind;
 			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
+			if ($kind === token_kind::at_sign && $flavor !== flavor::python) continue;
 			if (($kind !== token_kind::attribute) || ($flavor === flavor::php)) {
 				$parts[] = preg_quote($spelling, '~');
 			}

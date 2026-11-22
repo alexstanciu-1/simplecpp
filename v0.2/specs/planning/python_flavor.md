@@ -120,3 +120,14 @@ Verification checklist
 All six focused CTests passed with Clang. Peer cleanup body edits re-emitted only their own unit. Replacing a Python class after a method-body edit refreshed dependent callers because prepared facts retain the canonical type on the record declaration. Fresh-equivalent output and native recovery were verified for all three peer flavors.
 
 The review regressions passed in the Python frontend and native CTests. Across cpp/php/js peers, adding a same-name function invalidated the unchanged constructor caller and preserved the previous native bundle and manifest. Removing the function restored fresh-equivalent output and native behavior. The native matrix also verified Python finally on normal fallthrough, continue and break.
+
+### Batch 4 contract and verification
+
+Python spells a single base as class Child(Base). A derived constructor can begin with super().__init__(args), which supplies the shared base initializer. When that statement is omitted, the ordinary default base-initialization rules apply. Inherited fields and shared handle upcasts use the existing class model.
+
+Standalone @virtual and @override lines mark instance methods at compile time. The shared method contract requires @override when replacing an inherited virtual method, including a method declared in another flavor. The markers take no arguments. General decorators, multiple bases, Python interface declarations and other super forms are deferred.
+
+- [x] Check the shared record, initializer and method flags and their source spans.
+- [x] With cpp, php and js base classes on Clang, run Python derived construction, observe one base-constructor effect, read and write inherited storage, and dispatch the Python override through a base handle.
+- [x] In each mixed-flavor resident session, edit an inherited method body, observe the new result, and retain the unrelated Python unit. The base declaration replacement still refreshes dependent units under the shared canonical record identity contract.
+- [x] Reject a missing or duplicate override marker, multiple bases, a misplaced base initializer and a nonvirtual base contract. Preserve the last good bundle and manifest on failure, including base source deletion. After restoring the base, compare with fresh emitted artifacts and run the recovered native executable.

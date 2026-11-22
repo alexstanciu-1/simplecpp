@@ -78,6 +78,7 @@ enum token_kind: int /** uint8 */
 	case newline = 65;
 	case indent = 66;
 	case dedent = 67;
+	case at_sign = 68;
 
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
@@ -99,6 +100,7 @@ enum token_kind: int /** uint8 */
 				self::not_identical => '!==',
 				self::spaceship => '<=>',
 				self::attribute => '#[',
+				self::at_sign => '@',
 				self::equal => '==',
 				self::not_equal => '!=',
 				self::less_equal => '<=',

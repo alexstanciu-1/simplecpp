@@ -41,7 +41,11 @@ final class Record_Syntax
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
 		}
 		$base = null;
-		if ($flavor === flavor::cpp ? $c->is(token_kind::colon) : $c->keyword('extends')) {
+		if ($flavor === flavor::python && $c->is(token_kind::lparen)) {
+			$c->take(token_kind::lparen, '(');
+			$base = $parser->named_type();
+			$c->take(token_kind::rparen, ') after a single base class');
+		} elseif ($flavor !== flavor::python && ($flavor === flavor::cpp ? $c->is(token_kind::colon) : $c->keyword('extends'))) {
 			if ($flavor === flavor::cpp) {
 				$c->take(token_kind::colon, ':');
 				if ($c->keyword('public')) $c->take_keyword('public');
@@ -53,7 +57,7 @@ final class Record_Syntax
 			$interfaces[] = $base;
 			$base = null;
 		}
-		if ($c->keyword('implements') || (($interfaces !== [] || ($flavor === flavor::cpp && $base !== null)) && $c->is(token_kind::comma))) {
+		if ($flavor !== flavor::python && ($c->keyword('implements') || (($interfaces !== [] || ($flavor === flavor::cpp && $base !== null)) && $c->is(token_kind::comma)))) {
 			if ($c->keyword('implements')) {
 				if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces extend other interfaces');
 				$c->take_keyword('implements');
@@ -296,10 +300,16 @@ final class Record_Syntax
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
 	{
-		if ($c->tokens->source->flavor === flavor::python) return;
+		$python = $c->tokens->source->flavor === flavor::python;
 		while (true) {
 			$at = $c->position();
-			if ($attributes && $c->is(token_kind::attribute)) {
+			if ($python) {
+				if (!$attributes || !$c->is(token_kind::at_sign)) return;
+				$c->take(token_kind::at_sign, '@');
+				$name = $c->name(token_kind::identifier);
+				if (!in_array($name, ['virtual', 'override'], true)) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Unsupported method marker');
+				$c->take(token_kind::newline, 'NEWLINE after method marker');
+			} elseif ($attributes && $c->is(token_kind::attribute)) {
 				$c->take(token_kind::attribute, '#[');
 				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
 				$name = $c->name(token_kind::identifier);

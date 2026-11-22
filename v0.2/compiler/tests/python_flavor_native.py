@@ -6,6 +6,7 @@ from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
 from extends_native import runtime, source_edit
 from parent_methods_native import write_app
+from virtual_methods_native import forms
 
 
 PYTHON_ENTRY = "result: int = bridge(\n    3)\nreturn result"
@@ -497,6 +498,108 @@ def records_and_exceptions(work, flavor, library):
         assert resident.wait() == 0
 
 
+INHERITANCE = """class Child(Base):
+    extra: int = 1
+
+    def __init__(self, start: int):
+        super().__init__(start)
+        self.value = self.value + self.extra
+
+    @override
+    def evaluate(self) -> int:
+        return self.value + self.extra
+
+    @virtual
+    def other(self) -> int:
+        return self.value
+"""
+BASE_CONSTRUCTORS = {
+    'cpp': 'Base(int start) { echo "B"; this->value = start; }',
+    'php': 'public function __construct(int $start) { echo "B"; $this->value = $start; }',
+    'js': 'constructor(start: int) { echo "B"; this.value = start; }',
+}
+
+
+def inheritance(work, flavor, library):
+    syntax, _, klass = forms(flavor)
+    field = {'cpp': 'public: int value = 0;', 'php': 'public int $value = 0;', 'js': 'value: int = 0;'}[flavor]
+    virtual = {
+        'cpp': 'virtual int evaluate() { return 0; }',
+        'php': 'public virtual function evaluate(): int { return 0; }',
+        'js': 'virtual evaluate(): int { return 0; }',
+    }[flavor]
+    inherited = {
+        'cpp': 'int bonus() { return 0; }',
+        'php': 'public function bonus(): int { return 0; }',
+        'js': 'bonus(): int { return 0; }',
+    }[flavor]
+    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited)
+    v = syntax['v']
+    access = syntax['access']
+    api = syntax['function']('viaBase', 'int', [('obj', 'Base')],
+                             f'return {v}obj{access}evaluate() + {v}obj{access}bonus();')
+    app, bundle = work/'inheritance', work/'inheritance-bundle'
+    write_app(app, 'py', {
+        'main': 'child: Child = Child(3)\nreturn viaBase(child) + child.other()',
+        'child': INHERITANCE,
+        'idle': 'def idle() -> int:\n    return 17',
+    })
+    peer = app/f'base.{flavor}'
+    source_edit(peer, base)
+    source_edit(app/f'api.{flavor}', api)
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'inheritance-initial', (9, b'B', b''), library)
+
+        edited = base.replace(inherited, inherited.replace('return 0', 'return 1'))
+        source_edit(peer, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {
+            peer.name, f'api.{flavor}', 'child.py', 'main.py',
+        }, changed
+        native(bundle, work/'inheritance-edited', (10, b'B', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        child = app/'child.py'
+        for name, path, invalid, diagnostic in [
+            ('missing-marker', child, INHERITANCE.replace('    @override\n', ''), 'requires override'),
+            ('duplicate-marker', child, INHERITANCE.replace('@override', '@override\n    @override'), 'Duplicate method modifier'),
+            ('multi-base', child, INHERITANCE.replace('Child(Base)', 'Child(Base, Base)'), 'single base class'),
+            ('late-super', child, INHERITANCE.replace('        super().__init__(start)', '        pass\n        super().__init__(start)'), 'super'),
+            ('base-contract', peer, edited.replace('virtual ', ''), 'Nonvirtual method hiding'),
+        ]:
+            source_edit(path, invalid)
+            failed = invoke(resident)
+            fresh = fresh_build(app, work/f'inheritance-{name}')
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh.get('error'), (failed, fresh)
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(path, edited if path == peer else INHERITANCE)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            assert artifacts(bundle) == previous
+
+        peer.unlink()
+        failed = invoke(resident)
+        fresh = fresh_build(app, work/'inheritance-deleted')
+        assert 'error' in failed and failed['error'] == fresh.get('error'), (failed, fresh)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+        source_edit(peer, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'inheritance-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'inheritance-recovered', (10, b'B', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def prove(work, library):
     work.mkdir()
     narrow_compound(work, library)
@@ -518,6 +621,7 @@ def prove(work, library):
         typed_updates_and_traversal(case, flavor, library)
         compatible_element_edit(case, flavor, library)
         records_and_exceptions(case, flavor, library)
+        inheritance(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):

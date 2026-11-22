@@ -342,6 +342,7 @@ final class Parser
 		}
 		if ($c->keyword('try')) return $this->try_statement($grammar, $collector);
 		if ($c->keyword('raise')) return $this->throw_statement('raise', token_kind::newline);
+		if ($c->keyword('super')) throw new diagnostic($c->tokens->source, $c->offset(), 'super().__init__ must start a derived constructor');
 		if ($c->keyword('self') || ($c->is(token_kind::identifier)
 			&& ($c->next_is(token_kind::lparen) || $c->next_is(token_kind::dot)))) {
 			$value = $this->primary(field_target: true);
@@ -721,7 +722,16 @@ final class Parser
 			$c = $this->cursor;
 			$start = $c->position();
 			$spelling = $c->tokens->text_at($start);
-			if (($source->flavor === flavor::php && $spelling === 'parent'
+			if ($source->flavor === flavor::python && $c->keyword('super')) {
+				$c->take_keyword('super');
+				$c->take(token_kind::lparen, '(');
+				$c->take(token_kind::rparen, ') after super');
+				$c->take(token_kind::dot, '.');
+				if ($c->name(token_kind::identifier) !== '__init__') throw new diagnostic($source, $c->offset(), 'Expected base constructor');
+				$args = $this->arguments();
+				$end = $c->take(token_kind::newline, 'NEWLINE') + 1;
+				$base = new ast_base_initialization($start, $end, $args, true);
+			} elseif (($source->flavor === flavor::php && $spelling === 'parent'
 					&& $c->tokens->text_at($start + 2) === '__construct')
 				|| ($source->flavor === flavor::js && $spelling === 'super' && $c->next_is(token_kind::lparen))) {
 				$c->name(token_kind::identifier);
