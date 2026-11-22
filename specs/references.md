@@ -116,6 +116,16 @@ The following are not native-reference bindable in the current safe subset:
 
 ## v0.2 bounded local aliases and reference returns
 
+The PHP-flavor bootstrap accepts `$alias =& $value` and
+`$alias T =& $value` in ordinary statement blocks. The target must resolve
+to a previously initialized whole local in the same or an enclosing block.
+Alias chains resolve to that same local. A written type must match the storage
+exactly. The alias name must be new in the visible scope and is usable only
+inside its declaring block. Ordinary assignment through it writes the original
+slot. Binding creates no runtime storage and does not extend the target's lifetime.
+Parameters, properties, elements, temporaries, lambda capture and generator
+aliases are outside this bootstrap slice.
+
 The `compiler/my-try` implementation accepts both inferred and explicitly typed
 local bindings:
 

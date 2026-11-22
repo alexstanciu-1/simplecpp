@@ -241,7 +241,7 @@ final class ast_ancestor_name extends ast_name_expression
  * ```
  * short_name is value, type_reference names int, and the initializer is an integer expression.
  */
-final class ast_local_declaration extends ast_statement implements ast_local_binding
+class ast_local_declaration extends ast_statement implements ast_local_binding
 {
 	use ast_declaration;
 
@@ -371,6 +371,11 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 		return $this->type_reference->start;
 	}
 
+}
+
+/** Lexical alias declaration. Preparation publishes the original binding under this name. */
+final class ast_local_alias extends ast_local_declaration
+{
 }
 
 /**

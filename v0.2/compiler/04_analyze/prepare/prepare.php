@@ -249,6 +249,9 @@ final class Preparation
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);
 			}
+			elseif ($statement instanceof ast_local_alias) {
+				$this->local_alias($statement);
+			}
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 				if ($generator instanceof generator_type_definition && $statement->type_def() instanceof generator_type_definition) {
@@ -845,6 +848,33 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Function fixed-array storage exceeds 64 KiB');
 		}
 		$this->array_bytes += $bytes;
+	}
+
+	/** Publish a second lexical name for already-live storage without reading or copying it. */
+	private function local_alias(ast_local_alias $declaration): void
+	{
+		$name = $declaration->declaration_key();
+		$source = $declaration->source();
+		if ($this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local aliases are deferred in lambdas and generators');
+		}
+		if ($this->find_local($name) !== null) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local alias must introduce a new name: ' . $name);
+		}
+		$target = $declaration->initializer;
+		$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+		if (!($origin instanceof ast_local_declaration)) {
+			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local');
+		}
+		$type = $origin->type_def();
+		if ($declaration->type_reference !== null
+			&& Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies) !== $type) {
+			throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
+		}
+		++$this->expression_visits;
+		$target->settle_local($origin, unknown: true);
+		$declaration->settle_type($type, constant_evaluation::unavailable);
+		$this->local_frames[count($this->local_frames) - 1][$name] = $origin;
 	}
 
 	/** Prepare one local, account for inline storage and publish it after its initializer succeeds. */

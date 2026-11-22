@@ -797,7 +797,7 @@ CPP;
 				}
 				continue;
 			}
-			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_base_statement || $statement instanceof ast_local_alias) continue;
 			if ($statement instanceof ast_block_statement) {
 				$lines[] = "\t{";
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {

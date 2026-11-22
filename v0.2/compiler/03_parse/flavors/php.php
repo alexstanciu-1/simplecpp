@@ -34,7 +34,7 @@ final class Php_Grammar implements statement_grammar
 			return $parser->assignment($start, $name, assignment_intent::existing_binding, $terminator);
 		}
 		if ($cursor->is(token_kind::assign)) {
-			if (!$collector->has_local($name)) {
+			if ($cursor->next_is(token_kind::ampersand) || !$collector->has_local($name)) {
 				return $parser->declaration($start, $name, null, $terminator);
 			}
 			return $parser->assignment($start, $name, assignment_intent::declare_or_assign, $terminator);

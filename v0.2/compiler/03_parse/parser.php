@@ -1584,6 +1584,14 @@ final class Parser
 			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, new ast_struct_default($at, $at));
 		}
 		$this->cursor->take(token_kind::assign, '=');
+		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ampersand)) {
+			if ($terminator !== token_kind::semicolon) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Local aliases require an ordinary statement block');
+			}
+			$this->cursor->take(token_kind::ampersand, '&');
+			$target = $this->assignment_value();
+			return new ast_local_alias($start, $this->statement_end($terminator), $name, $type_reference, $target);
+		}
 		$value = $terminator === token_kind::semicolon ? $this->local_assignment_value() : $this->assignment_value();
 		$end = $this->statement_end($terminator);
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);
