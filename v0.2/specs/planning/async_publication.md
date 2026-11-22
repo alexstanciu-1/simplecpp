@@ -36,6 +36,12 @@ accept direct and short-circuit awaits. Break and continue use the ordinary reso
 loop targets. Locals that survive suspension live in the native coroutine frame.
 A terminal infinite loop still produces a coroutine even if its body never awaits.
 
+Async producers may await inside a try block and handle language exceptions with the
+ordinary ordered typed catches. A handler can return, throw or rethrow. A subsequent
+await may run after control leaves the handler. Suspension inside a handler and async
+finally blocks are diagnosed during preparation. The existing task rethrows the saved
+child exception at await-resume, preserving its identity for typed dispatch.
+
 The ordinary function symbol and dependency watches carry the async signature bit.
 For a zero-argument call, a synchronous caller sees the incomplete task declaration and passes the producer
 address to one out-of-line runtime bridge. Async units see the concrete task header

@@ -67,6 +67,18 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare($child . 'await read_value();return 0;'), 'Await requires');
 	rejects(fn() => $prepare($child . 'if (await read_value()) {return 1;}return 0;'), 'Await requires');
 
+	$catch = static fn(string $type): string => 'catch (' . match ($flavor) {
+		flavor::php => $type . ' $e', flavor::cpp => $type . ' e', flavor::js => 'e:' . $type,
+	} . ')';
+	$protected = 'try {return await read_value();}';
+	$fallback = $protected . $catch('Failure') . '{return 7;}';
+	foreach (['return await read_value();', 'await async_sleep_ms(1);return 0;'] as $handler) {
+		rejects(fn() => $prepare($failure . $child . 'async ' . $signature('report') . '{' . $protected
+			. $catch('Failure') . '{' . $handler . '}}return 0;'), 'Cannot suspend inside an async catch handler');
+	}
+	rejects(fn() => $prepare($child . 'async ' . $signature('report') . '{' . $protected . 'finally {echo 1;}}return 0;'),
+		'Finally in async functions is deferred');
+
 	$directory = sys_get_temp_dir() . '/scpp-async-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
 		$paths = array_map(fn($name) => $name . '.' . $flavor->name, ['main', 'parent', 'child']);
@@ -95,6 +107,9 @@ foreach (flavor::cases() as $flavor) {
 		$name = $flavor === flavor::php ? '$n' : 'n';
 		$ordinary = $initial . 'await read_value();echo "D";if (await read_value()) {'
 			. $name . ' = await read_value();}return ' . $name . ';';
+		$types = $failure . str_replace('Failure', 'OtherFailure', $failure);
+		$delayed = $types . str_replace('return 4294967297;', 'echo "T";throw new Failure();', $child);
+		$resume = 'async ' . $signature('recover') . '{await async_sleep_ms(1);return 11;}';
 		$short = [
 			// Parent body, child, diagnostic, stdout after the caller's prefix, exception, rebuilt objects.
 			[$conditions . 'return 7;', $throwing, null, 'S7:after', false, 1],
@@ -109,6 +124,14 @@ foreach (flavor::cases() as $flavor) {
 			[$ordinary, $throwing, null, '', true, 1],
 			[$ordinary, $signature('read_value') . '{return 1;}', 'Await requires an async function', '', false, 0],
 			[$ordinary, $loud, null, 'RDRR4294967297:after', false, 1],
+			['return await read_value();', $types . $child, null, '4294967297:after', false, 2],
+			[$fallback, $types . $child, null, '4294967297:after', false, 2],
+			[$fallback, $delayed, null, 'T7:after', false, 1],
+			[str_replace($catch('Failure'), $catch('OtherFailure'), $fallback), $delayed, null, 'T', true, 2],
+			[$protected . $catch('Failure') . '{echo "R";throw;}', $delayed, null, 'TR', true, 2],
+			[$protected . $catch('Failure') . '{echo "C";}return await recover();', $delayed . $resume, null, 'TC11:after', false, 2],
+			[str_replace($catch('Failure'), $catch('MissingFailure'), $fallback), $delayed, 'Throw and catch require', '', false, 0],
+			[$fallback, $delayed, null, 'T7:after', false, 2],
 		];
 		foreach ($short as $case) $steps[] = [$case[1], $case[2]];
 		foreach ($steps as $i => [$source, $error]) {

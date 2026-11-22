@@ -183,8 +183,9 @@ final class Preparation
 			if ($function->is_async && !($statement instanceof ast_delay_statement || $statement instanceof ast_await_statement || $statement instanceof ast_return_statement
 				|| $statement::class === ast_assignment_statement::class || $statement::class === ast_update_statement::class
 				|| $statement instanceof ast_call_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_loop_transfer
+				|| $statement instanceof ast_try_statement || $statement instanceof ast_rethrow_statement
 				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement || $statement instanceof ast_if_statement)) {
-				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports calls, locals, local writes, branches, loops, echo, throw and return');
+				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports calls, locals, local writes, branches, loops, typed catches, echo, throw and return');
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
@@ -351,6 +352,7 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_delay_statement) {
 				if (!$function->is_async) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires an async function');
+				if ($this->in_catch) throw new diagnostic($source, $statement->byte_start(), 'Cannot suspend inside an async catch handler');
 				$this->value($statement->value);
 				if ($statement->value->type_def() !== type_registry::integer()) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires int64 milliseconds');
 			}
@@ -405,6 +407,9 @@ final class Preparation
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
 		ast_function_declaration $function): int /** uint8 */
 	{
+		if ($function->is_async && $syntax->finalizer !== null) {
+			throw new diagnostic($source, $syntax->finalizer->byte_start(), 'Finally in async functions is deferred');
+		}
 		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
 		}
@@ -1379,6 +1384,9 @@ final class Preparation
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
 		if ($syntax instanceof ast_await_expression) {
+			if ($this->in_catch && $this->owner->parent->is_async) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot suspend inside an async catch handler');
+			}
 			$context = $syntax->parent;
 			if ($this->owner->parent->is_async) {
 				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
