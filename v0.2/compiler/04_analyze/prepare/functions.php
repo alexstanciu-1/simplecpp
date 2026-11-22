@@ -241,11 +241,8 @@ final class Function_Preparation
 			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 		}
-		if ($declaration->is_async && !type_registry::ASYNC_INT64) {
-			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Runtime publication does not provide async int64');
-		}
-		if ($declaration->is_async && $type !== type_registry::integer()) {
-			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Async functions require an int64 result');
+		if ($declaration->is_async && type_registry::async_result($type) === null) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Unpublished async result: ' . $type->name);
 		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {

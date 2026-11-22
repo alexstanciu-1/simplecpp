@@ -56,11 +56,15 @@ def shell(value):
 
 def async_producers(units):
     """The emitter lists direct runtime dependencies in the include preamble."""
+    inventory = ROOT / 'runtime/generated/private/async_task_headers.hpp'
+    if not inventory.exists():
+        return set()
+    includes = {line for line in inventory.read_text().splitlines() if line.startswith('#include ')}
     selected = set()
     for unit in units:
         with Path(unit).open() as source:
             for line in source:
-                if line.strip() == '#include <scpp/async_int64.hpp>':
+                if line.strip() in includes:
                     selected.add(Path(unit))
                     break
                 if line.lstrip().startswith('namespace '):
@@ -96,7 +100,7 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
         text = '#include <scpp/output.hpp>\n#include <scpp/entry.hpp>\n'
         if async_units is not None:
             # Clang 18 needs va_list loaded before serializing this libc++ coroutine PCH.
-            text = '#include <cstdarg>\n#include <scpp/async_int64.hpp>\n'
+            text = '#include <cstdarg>\n#include <coroutine>\n#include <exception>\n'
         if not header.exists() or header.read_text() != text:
             header.write_text(text)
         lines.append('build runtime.pch: pch runtime_pch.hpp || qualify-native')

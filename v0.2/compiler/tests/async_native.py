@@ -50,7 +50,7 @@ def build(directory, fixture):
         assert ('async_timer.hpp' in headers) == ('::delay_ms(' in body)
         assert ('async_wait.hpp' in headers) == ('::wait_for(' in body)
         if 'co_return' not in body:
-            assert 'coroutine' not in headers and 'async_int64.hpp' not in headers
+            assert 'coroutine' not in headers and not headers.intersection({'async_void.hpp', 'async_int64.hpp', 'async_bool.hpp'})
     links = [line.split('\t') for line in (directory / '.ninja_log').read_text().splitlines()[1:]
              if line.split('\t')[3] == 'program']
     link = links[-1]

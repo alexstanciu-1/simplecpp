@@ -11,8 +11,14 @@ require_once __DIR__ . '/hashes.php';
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
-	/** The selected runtime publishes the concrete int64 task ABI. */
-	public const bool ASYNC_INT64 = @async_int64@;
+	/** Selected task ABI keyed by canonical result type. @return array{cpp:string,header:string}|null */
+	public static function async_result(type_definition $type): ?array
+	{
+		return match ($type::class) {
+@async_results@
+			default => null,
+		};
+	}
 
 	/** Default scalar values admitted as owned coroutine-frame parameters. */
 	public static function accepts_async_parameter(type_definition $type): bool

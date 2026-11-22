@@ -13,6 +13,14 @@ interface ConcreteType {
     public function supports(string $requirement): ?bool;
 }
 
+/** The native void result has a spelling and no storage or lifetime capabilities. */
+final class VoidConcreteType implements ConcreteType {
+    public function identity(): string { return 'void'; }
+    public function cppType(string $namespace): string { return 'void'; }
+    public function headers(): array { return []; }
+    public function supports(string $requirement): ?bool { return false; }
+}
+
 /** Nonthrowing key operations; equality must imply equal hashes and remain stable while stored. */
 interface ConcreteHashKey {
     public function hashExpression(string $key): ?string;

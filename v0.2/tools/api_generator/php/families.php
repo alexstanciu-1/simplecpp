@@ -40,17 +40,9 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'async_int64']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'async_results', 'async_int64']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
-    if (property_exists($publication, 'async_int64')) {
-        requireThat(is_bool($publication->async_int64), 'Expected boolean async_int64 demand');
-        if ($publication->async_int64) {
-            requireThat(in_array('int64', array_column($plan['types'], 'name'), true), 'Async tasks require published int64');
-            $export = typeExport($plan['submodules'], 'int64');
-            $plan['async_int64'] = providerHeader($plan['submodules'], $export['provider']);
-        }
-    }
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
     $exception = coreExceptionBinding($metadata);
@@ -85,6 +77,23 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
+    $seen = [];
+    $requested = $publication->async_results ?? [];
+    if (property_exists($publication, 'async_int64')) {
+        requireThat(is_bool($publication->async_int64) && !property_exists($publication, 'async_results'), 'Conflicting or invalid legacy async publication');
+        $requested = $publication->async_int64 ? ['int64', 'void'] : [];
+    }
+    foreach (names($requested, 'Duplicate async result') as $name) {
+        requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $name) === 1 && !in_array($name, ['fwd', 'timer', 'wait'], true), 'Invalid async result name');
+        $identity = $metadata->source_types->{$name} ?? ($plan['aliases']->{$name} ?? $name);
+        if ($name !== 'void') {
+            requireThat(in_array($identity, array_column(array_merge($plan['types'], $plan['values']), 'name'), true)
+                && ($metadata->compiler->value_types->{$identity}->copy_semantics ?? null) === 'trivial', 'Async result requires published trivial scalar storage: ' . $name);
+        }
+        requireThat(!isset($seen[$identity]), 'Duplicate canonical async result: ' . $identity);
+        $seen[$identity] = true;
+        $plan['async_results'][$identity] = ['task' => $name . '_task', 'header' => 'scpp/async_' . $name . '.hpp'];
+    }
     return $plan;
 }
 

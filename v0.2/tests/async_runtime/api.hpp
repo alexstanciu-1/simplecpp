@@ -9,3 +9,4 @@ struct trace {
 
 struct child_error { scpp::int64 code; };
 scpp::int64 report(trace& log, bool fail);
+void notify(trace& log, bool fail);

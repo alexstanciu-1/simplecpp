@@ -1,4 +1,5 @@
 #include "child.hpp"
+#include <scpp/async_void.hpp>
 
 namespace {
 scpp::async::int64_task report_async(trace& log, bool fail) {
@@ -16,4 +17,15 @@ scpp::async::int64_task report_async(trace& log, bool fail) {
 
 scpp::int64 report(trace& log, bool fail) {
     return scpp::async::sync_wait(report_async(log, fail));
+}
+
+namespace {
+scpp::async::void_task notify_async(trace& log, bool fail) {
+    static_cast<void>(co_await report_async(log, fail));
+    co_return;
+}
+}
+
+void notify(trace& log, bool fail) {
+    scpp::async::sync_wait(notify_async(log, fail));
 }

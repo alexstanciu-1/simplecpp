@@ -547,14 +547,16 @@ CPP;
 				$unit_flavor ??= $this->adapter_flavor;
 				continue;
 			}
-			if ($function->is_async) $required_headers['scpp/async_int64.hpp'] = true;
+			if ($function->is_async) $required_headers[type_registry::async_result($function->return_type_def())['header']] = true;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			if ($function->is_async) {
 				$body = $function->body()->statements;
 				$last = $body[array_key_last($body)] ?? null;
-				// A terminal infinite loop may contain no coroutine keyword. Preparation has ruled out fallthrough.
-				if (!($last instanceof ast_return_statement || $last instanceof ast_throw_statement)) $lines[] = "\tco_return 0;";
+				// Even an empty, throw-only or nonterminating body must create a coroutine frame.
+				if (!($last instanceof ast_return_statement)) {
+					$lines[] = $function->return_type_def() === type_void::instance() ? "\tco_return;" : "\tco_return {};";
+				}
 			}
 			$base_initializer = '';
 			$first = $function->body()->statements[0] ?? null;
@@ -993,8 +995,7 @@ CPP;
 			}
 			elseif ($statement instanceof ast_throw_statement) {
 				$raise = $this->throw_call($statement->operation, $global_references, $declarations, $required_headers);
-				// A throw-only async body must still create a lazy coroutine frame.
-				$lines[] = $function->is_async ? "\tco_return (" . $raise . ", 0);" : "\t" . $raise . ';';
+				$lines[] = "\t" . $raise . ';';
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($lines, ...$this->exception_region($statement, $function, $declarations, $global_references, $required_headers));
@@ -1123,7 +1124,7 @@ CPP;
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
-				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? 'return;') : "close(); return false;";
+				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? ($function->is_async ? 'co_return;' : 'return;')) : "close(); return false;";
 			}
 			elseif ($statement instanceof ast_delay_statement) {
 				$required_headers['scpp/async_timer.hpp'] = true;
@@ -1701,6 +1702,8 @@ CPP;
 		if ($value instanceof ast_await_expression) {
 			$callee = $value->operand->function_def();
 			$name = self::function_name($callee);
+			$task = $value->suspends ? type_registry::async_result($callee->return_type_def()) : null;
+			if ($task !== null) $required_headers[$task['header']] = true;
 			$declarations[$name] = $callee;
 			if (!$value->suspends && $callee->parameters === []) {
 				$required_headers['scpp/async_wait.hpp'] = true;
@@ -1708,7 +1711,7 @@ CPP;
 			}
 			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
-				$value->suspends ? '::scpp::async::int64_task' : null);
+				$task['cpp'] ?? null);
 			return $value->suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_postfix_update_expression) {
@@ -2464,7 +2467,7 @@ CPP;
 	{
 		if ($function->is_async) {
 			$headers['scpp/async_fwd.hpp'] = true;
-			return '::scpp::async::int64_task ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
+			return type_registry::async_result($function->return_type_def())['cpp'] . ' ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
 		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);

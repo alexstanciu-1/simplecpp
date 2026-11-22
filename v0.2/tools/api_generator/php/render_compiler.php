@@ -344,9 +344,16 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
+    $asyncResults = [];
+    foreach ($runtime['async_results'] ?? [] as $identity => $binding) {
+        requireThat($identity === 'void' || isset($definitions[$identity]), 'Missing compiler async result: ' . $identity);
+        $class = $identity === 'void' ? 'void' : $definitions[$identity]['class'];
+        $symbol = '::scpp::async::' . $binding['task'];
+        $asyncResults[] = "\t\t\ttype_{$class}::class => ['cpp' => '$symbol', 'header' => '{$binding['header']}'],";
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',
-        '@async_int64@' => isset($runtime['async_int64']) ? 'true' : 'false',
+        '@async_results@' => implode("\n", $asyncResults),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
         '@module_cases@' => implode("\n", $moduleCases),

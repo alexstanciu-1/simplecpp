@@ -190,18 +190,32 @@ function render(array $plan): array {
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
-    if (isset($plan['async_int64'])) {
-        requireThat(!isset($files['public/scpp/async_int64.hpp']), 'The async int64 header path is reserved');
-        requireThat(!isset($files['public/scpp/async_wait.hpp']), 'The async wait header path is reserved');
-        requireThat(!isset($files['public/scpp/async_timer.hpp']), 'The async timer header path is reserved');
-        $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer',
-            ['scalar_header' => $plan['async_int64']]);
-        requireThat(!isset($files['public/scpp/async_fwd.hpp']), 'The async forward header path is reserved');
-        $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd');
+    if (isset($plan['async_results'])) {
+        $forwards = $waits = $methods = $includes = '';
+        $waitHeaders = [];
+        foreach ($plan['async_results'] as $identity => ['task' => $task, 'header' => $header]) {
+            $value = $identity !== 'void';
+            $type = $value ? new RuntimeConcreteType($plan, $identity) : new VoidConcreteType();
+            $headers = $type->headers();
+            $parts = concreteTemplate('core/async_task', ['result' => $type], [
+                'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
+                'includes' => implode('', array_map(includeHeader(...), $headers)),
+                'extract' => $value ? '    return promise.value;' : '',
+            ], 'scpp');
+            $files['public/' . $header] = BANNER . $parts['declaration'];
+            $forwards .= "class $task;\n";
+            $waits .= $type->cppType('scpp') . " wait_for($task (*factory)());\n";
+            foreach ($headers as $dependency) $waitHeaders[$dependency] = true;
+            $includes .= "#include <$header>\n";
+            $methods .= $parts['implementation'];
+        }
+        $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd', ['forwards' => $forwards]);
         $files['public/scpp/async_wait.hpp'] = BANNER . template('core/async_wait',
-            ['scalar_header' => $plan['async_int64']]);
-        $files['public/scpp/async_int64.hpp'] = BANNER . template('core/async_int64',
-            ['scalar_header' => $plan['async_int64']]);
+            ['includes' => implode('', array_map(includeHeader(...), array_keys($waitHeaders))), 'waits' => $waits]);
+        $timerType = new RuntimeConcreteType($plan, 'int64');
+        $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer', ['scalar_header' => $timerType->headers()[0]]);
+        $files['private/async_task_headers.hpp'] = BANNER . $includes;
+        $files['private/async_task_methods.hpp'] = BANNER . $methods;
     }
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);

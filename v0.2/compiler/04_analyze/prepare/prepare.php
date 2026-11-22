@@ -1392,15 +1392,18 @@ final class Preparation
 				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
 				while ($context instanceof ast_binary_expression && $context->operator->lazy()) $context = $context->parent;
 			}
-			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement || $context instanceof ast_await_statement
+			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
 				|| ($context instanceof ast_assignment_statement && $context->operator === null));
-			if ($this->in_lambda || !($async_context || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment or discarded call in an async function');
+			if ($this->in_lambda || !($async_context || $context instanceof ast_await_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
 			}
 			$this->call($syntax->operand, $initializing);
 			$call = $syntax->operand;
 			$target = $call->cardinality === null && $call->callable_binding() === null ? $call->function_def() : null;
 			if (!($target instanceof ast_function_declaration) || !$target->is_async) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires an async function');
+			if ($target->return_type_def() === type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
+			}
 			$syntax->settle($this->owner->parent->is_async);
 			return;
 		}

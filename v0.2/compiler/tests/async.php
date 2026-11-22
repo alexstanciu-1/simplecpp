@@ -59,12 +59,12 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare($child . 'read_value();return 8;'), 'Async call requires await');
 	rejects(fn() => $prepare('await async_sleep_ms(1);return 8;'), 'requires an async function');
 	rejects(fn() => $prepare(str_replace('async_sleep_ms(1)', 'async_sleep_ms("bad")', $child) . 'return 8;'), 'int64 milliseconds');
-	rejects(fn() => $prepare(str_replace('int', 'string', $child) . 'return 8;'), 'int64 result');
+	rejects(fn() => $prepare(str_replace('int', 'string', $child) . 'return 8;'), 'Unpublished async result: string');
 
 	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
 	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
 
-	rejects(fn() => $prepare($child . 'await read_value();return 0;'), 'Await requires');
+	$prepare($child . 'await read_value();return 0;');
 	rejects(fn() => $prepare($child . 'if (await read_value()) {return 1;}return 0;'), 'Await requires');
 
 	$catch = static fn(string $type): string => 'catch (' . match ($flavor) {
@@ -232,6 +232,21 @@ foreach (flavor::cases() as $flavor) {
 		$owned_entry = $declare_text . '=' . $literal . ';echo await read_value(' . $text . '),await report(' . $text . '),' . $text . ';'
 			. 'try {echo await read_value(' . $text . ',false);}' . $catch('Failure') . '{echo "caught";}echo await read_value();return 8;';
 		$owned_output = $bytes . '65' . $bytes . $bytes . '7' . $bytes . $bytes . 'caught' . $bytes . '65';
+		$void_sig = static fn(string $sig): string => $flavor === flavor::cpp ? preg_replace('/^int /', 'void ', $sig) : str_replace('): int', '): void', $sig);
+		$notify_sig = $fn('notify', ['x']);
+		$notify_body = '{await async_sleep_ms(1);echo ' . $v('x') . ';';
+		$notify = 'async ' . $void_sig($notify_sig) . $notify_body . 'if (' . $v('x') . ') {return;}}';
+		$int_notify = 'async ' . $notify_sig . $notify_body . 'return 3;}';
+		$relay = 'async ' . $void_sig($signature('relay')) . '{await notify(1);}';
+		rejects(fn() => $prepare('async ' . $void_sig($signature('invalid')) . '{return 1;}return 0;'), 'Void function cannot return a value');
+		$discard = 'await relay();await notify(0);return 8;';
+		$consume = 'await relay();echo await notify(0);return 8;';
+		$bool_sig = static fn(string $sig): string => str_replace('void', 'bool', $void_sig($sig));
+		$bool_child = 'async ' . $bool_sig($notify_sig) . '{await async_sleep_ms(1);return ' . $v('x') . '>0;}';
+		$bool_parent = 'async ' . $bool_sig($signature('relay')) . '{return await notify(1);}';
+		$bool_entry = match ($flavor) {
+			flavor::php => '$ok bool', flavor::cpp => 'bool ok', flavor::js => 'let ok:bool',
+		} . '=await relay();if (' . $v('ok') . ') {echo "T";}await notify(0);return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -255,6 +270,15 @@ foreach (flavor::cases() as $flavor) {
 			[$owned_parent, $owned_child, $owned_entry, null, $owned_output, 3],
 			[$owned_parent, str_replace('=65', '=256', $owned_child), $owned_entry, 'range', '', 0],
 			[$owned_parent, str_replace('=65', '=64', $owned_child), $owned_entry, null, str_replace('65', '64', $owned_output), 1],
+			[$relay, $int_notify, $consume, null, '103', 3],
+			[$relay, $notify, $consume, 'Void call cannot be used as a value', '', 0],
+			[$relay, $notify, $discard, null, '10', 3],
+			[$relay, $int_notify, $consume, null, '103', 3],
+			[$relay, $failure . 'async ' . $void_sig($notify_sig) . '{throw new Failure();}',
+				'try {await relay();}' . $catch('Failure') . '{echo "caught";}return 8;', null, 'caught', 3],
+			[$bool_parent, $bool_child, $bool_entry, null, 'T', 3],
+			[$bool_parent, $notify, $bool_entry, 'Void call cannot be used as a value', '', 0],
+			[$bool_parent, str_replace('>0;', '<0;', $bool_child), $bool_entry, null, '', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -279,9 +303,16 @@ foreach (flavor::cases() as $flavor) {
 					verify(!str_contains($text, 'async_'), 'Blocking-only export leaks async declarations');
 				}
 			}
+			if ($body === $bool_parent) {
+				foreach ($files as $text) {
+					verify(!str_contains($text, '#include <scpp/async_int64.hpp>') && !str_contains($text, '#include <scpp/async_void.hpp>'),
+						'Bool project included an unrelated concrete promise');
+					if (str_contains($text, 'co_return')) verify(str_contains($text, '#include <scpp/async_bool.hpp>'), 'Bool producer missing its promise');
+				}
+			}
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
-			if ($i >= 15) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
+			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
 			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
 				'objects' => $objects, 'exit' => 8, 'stderr' => '', 'stdout_hex' => bin2hex($stdout)];

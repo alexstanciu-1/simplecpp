@@ -9,6 +9,7 @@ require_once __DIR__ . '/../php/render_compiler.php';
 require_once __DIR__ . '/../php/families.php';
 require_once __DIR__ . '/../php/render.php';
 require_once __DIR__ . '/../php/render_sequences.php';
+require_once __DIR__ . '/../php/render_modules.php';
 
 /** Locate a normalized test row by canonical identity, independent of family expansion order. */
 function conversion_row(object $metadata, string $from, string $to): object {
@@ -58,6 +59,18 @@ $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
+$asyncDemand = clone $demand;
+unset($asyncDemand->async_int64);
+foreach ([[], ['bool']] as $results) {
+    $asyncDemand->async_results = $results;
+    $asyncPlan = prepareRuntime($functionMetadata, $asyncDemand, $facts);
+    $asyncRuntime = render($asyncPlan);
+    $asyncRegistry = renderCompiler($functionMetadata, $facts, $asyncPlan)['types/registry.php'];
+    requireThat(isset($asyncRuntime['public/scpp/async_bool.hpp']) === ($results !== [])
+        && str_contains($asyncRegistry, '::scpp::async::bool_task') === ($results !== [])
+        && !isset($asyncRuntime['public/scpp/async_int64.hpp']) && !str_contains($asyncRegistry, '::scpp::async::int64_task'),
+        'Runtime and compiler async result publications differ');
+}
 $functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "async_int64": true,
+  "async_results": ["int64", "void", "bool"],
   "modules": ["numeric"],
   "boxed": {"header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",

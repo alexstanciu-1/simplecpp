@@ -2,12 +2,18 @@
 
 Doc Status: planning
 
-**Runtime prerequisite implemented.** The default v0.2 publication supplies a concrete
-int64 task in its own header. The runtime archive owns frame destruction, exception
+**Runtime prerequisite implemented.** The default v0.2 publication supplies concrete
+bool, int64 and void tasks in separate headers. The runtime archive owns frame destruction, exception
 propagation and a cooperative loop for direct nested awaits. One waiting chain needs
 one pending continuation and timer. A positive delay suspends the coroutine, and the
 synchronous driver waits before resuming it. Independent runnable tasks, external wakeups,
 cancellation and user-stored tasks are separate contracts.
+
+The publication's `async_results` list selects concrete tasks. The generator resolves each
+value's native type through the existing concrete-type contract. One recipe supplies
+the value or void promise and the shared frame operations. The same plan generates the
+compiler lookup from canonical result type to C++ task name and header. A function keeps
+its existing return-type fact. Nontrivial result transfers require a separate lifetime proof.
 
 The ordinary caller sees the blocking function signature. Coroutine units see the concrete
 promise and await operations. Scheduler, clock and thread headers remain private to the
@@ -17,9 +23,13 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-free functions with int/int64 results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
+free functions with bool, void or int/int64 results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
 The ordinary argument binder checks conversions. The blocking bridge transfers its owned string into the coroutine frame.
-The frame keeps it alive across suspension and releases it on completion or exception. Direct local initializers, return
+The frame keeps it alive across suspension and releases it on completion or exception.
+An async void producer completes through an empty return or fallthrough. A standalone
+await can discard any published result in synchronous and async bodies. Using a void result as
+a value produces the ordinary void-call diagnostic. All task results use one scheduler
+and the same generated implementation for continuation, frame destruction and exceptions. Direct local initializers, return
 values and echo operands can consume the result. The producer body accepts braced if/else branches,
 locals, timer statements, echo, throw and return. Task storage, general nested await
 expressions, async methods, and reference parameters are deferred. In an async body, awaited calls
@@ -58,5 +68,5 @@ required entries and retire unused wrappers as callers change. A blocking-only e
 contains just the scalar signature. A task signature needs only the task forward declaration. Coroutine definitions include the promise header, and timer expressions
 separately request the timer header. The native dependency test verifies the split.
 When the panel PCH option is enabled for an async application, only coroutine-producing
-units use the cached promise header. The timer and scheduler are outside that PCH.
+units use the cached coroutine and exception headers. The timer and scheduler are outside that PCH.
 The cache retains the existing compiler qualification, dependency tracking and locking.
