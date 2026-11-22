@@ -64,6 +64,27 @@ def prove(work, flavor):
     guard(work, flavor, 'qualifier-failure', base+child+box+second+failing, 'ownership_empty_access')
 
 
+def donor_declared_qualifier(work, flavor):
+    # Port compiler/my-try/tests/late_static.php's declared_qualifier case.
+    _, (s, klass, _, static, sep) = sources(flavor)
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    base = klass('Base', static('pick', 'return 2;')
+                 + static('run', f'return {late}pick();'))
+    child = klass('Child', static('pick', 'return 9;'), 'Base')
+    setup, qualifier = {
+        'php': ('$b Base=new Child();', '$b'),
+        'cpp': ('Base b=new Child();', '(b)'),
+        'js': ('let b:Base=new Child();', 'b'),
+    }[flavor]
+    main = setup + f'echo {qualifier}::run(),Child{sep}run();return 8;'
+    work.mkdir(exist_ok=True)
+    revisions(work, flavor, dict(base=base, child=child, main=main), [
+        (None, None, b'29'),
+        (None, None, b'29'),
+    ])
+
+
+
 def data_members(work, flavor):
     work.mkdir(exist_ok=True)
     _, (s, klass, _, _, sep) = sources(flavor)
@@ -152,4 +173,5 @@ if __name__ == '__main__':
         work.mkdir(exist_ok=True)
         for flavor in ['php', 'cpp', 'js']:
             prove(work, flavor)
+            donor_declared_qualifier(work / "donor", flavor)
             data_members(work/"data", flavor)
