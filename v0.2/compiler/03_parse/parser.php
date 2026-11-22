@@ -1078,13 +1078,14 @@ final class Parser
 		return $value;
 	}
 
-	/** A bare postfix update is allowed only as the complete RHS of a plain local statement. */
+	/** A bare prefix or postfix update is allowed only as the complete RHS of a plain local statement. */
 	private function local_assignment_value(): ast_expression
 	{
 		$cursor = $this->cursor;
 		$name = $cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		if ($cursor->is($name) && ($cursor->next_is(token_kind::increment) || $cursor->next_is(token_kind::decrement))) {
-			return new ast_postfix_update_expression($this->update_statement(null));
+		if ($cursor->is(token_kind::increment) || $cursor->is(token_kind::decrement)
+			|| ($cursor->is($name) && ($cursor->next_is(token_kind::increment) || $cursor->next_is(token_kind::decrement)))) {
+			return new ast_update_expression($this->update_statement(null));
 		}
 		return $this->assignment_value();
 	}
@@ -1570,7 +1571,7 @@ final class Parser
 		return new ast_property_update($start, $end, $target, $operator, $postfix);
 	}
 
-	/** Recognize discarded-value update syntax only at statement and header boundaries. */
+	/** Recognize update syntax at discarded-value statement and header boundaries. */
 	private function update_start(): bool
 	{
 		return $this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)

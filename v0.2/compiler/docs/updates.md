@@ -63,17 +63,17 @@ operator edits with a changed mtime, and no-op reuse. Native recovery uses a fre
 multifile preparation; incremental native emission remains deferred.
 
 
-## Postfix results in plain local statements
+## Prefix and postfix results in plain local statements
 
-The parser admits a bare postfix update as the complete RHS of a plain local
-assignment or initializer. The expression owns the existing update node. The
+The parser admits a bare prefix or postfix update as the complete RHS of a
+plain local assignment or initializer. The expression owns the existing update node. The
 update still resolves and invalidates one storage binding, and the expression
 publishes its int64 type without a constant fact. Reset clears both nodes.
 
-C++ emits native postfix directly. C++17 and later sequence the outer assignment's
-RHS before the store, including self-assignment. The assignment's conversion
-consumes the old value after the update. The focused proof covers both directions
-in all flavors, self-assignment, and incremental failure and recovery with the
+C++ emits native prefix or postfix directly. C++17 and later sequence the outer
+assignment's RHS before the store, including self-assignment. Conversion consumes
+the updated value for prefix or the original value for postfix after the mutation.
+The focused proof covers both directions in C++, PHP, and JS, self-assignment, and incremental failure and recovery with the
 same caller AST. It compares recovered lowering with fresh lowering.
 
 ## Recorded proof — 2026-11-05

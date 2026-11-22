@@ -262,8 +262,8 @@ final class ast_isset_expression extends ast_expression
 	}
 }
 
-/** A complete assignment RHS that consumes a local update's old value. */
-final class ast_postfix_update_expression extends ast_expression
+/** A complete assignment RHS that consumes the value of a local update. */
+final class ast_update_expression extends ast_expression
 {
 	public function __construct(public readonly ast_update_statement $update)
 	{

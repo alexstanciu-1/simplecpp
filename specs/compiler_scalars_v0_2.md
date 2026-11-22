@@ -222,10 +222,10 @@ implicit result-to-destination conversions remain deferred. Body statements and 
 use the ordinary shared assignment path.
 
 
-## Postfix int64 assignment RHS — 2026-11-20
+## Prefix and postfix int64 assignment RHS
 
-In all flavors, a bare initialized `int64` local followed by `++` or `--` can
-be the entire RHS of an ordinary plain local assignment or local initializer.
+In C++, PHP, and JS, a prefix or postfix `++` or `--` on a bare initialized
+`int64` local can be the entire RHS of an ordinary plain local assignment or local initializer.
 This includes PHP's first-write inference and the canonical `int` alias.
 
 ```php
@@ -233,14 +233,17 @@ $index int64 = 10;
 $escape = $index++; // escape = 10, index = 11
 $escape = $index--; // escape = 11, index = 10
 $index = $index++;  // index = 10
+$escape = ++$index; // escape = 11, index = 11
+$index = --$index;  // index = 10
 ```
 
-Postfix yields the old value by value and applies the update once, before any
-assignment conversion and store. When the assignment targets the same local,
-the store writes the old value back. The existing signed-overflow policy applies.
+Prefix yields the updated value and postfix yields the original value. Both apply
+the update once before any assignment conversion and store. When the assignment
+targets the same local, prefix stores the updated value and postfix restores the
+original value. The existing signed-overflow policy applies.
 This amendment is limited to ordinary local statements, with parameter, property,
-and indexed operands, loop headers, compound assignments, prefix results, and
-postfix results inside larger expressions deferred.
+and indexed operands, loop headers, compound and chained assignments, and
+update results inside larger expressions deferred.
 
 ## Discarded-value int64 updates — 2026-11-05
 
@@ -261,8 +264,8 @@ are explicit runtime metadata capabilities, independent of arithmetic admission.
 Native signed-overflow behavior is unchanged; no checked, wrapping or saturating
 policy is added. Runtime execution tests stay within representable int64 bounds.
 
-This slice discards results. The bounded postfix RHS amendment above admits old-value
-results on simple locals. The general value-snapshot contract is that prefix yields
+This slice discards results. The bounded update RHS amendment above admits
+value results on simple locals. The general value-snapshot contract is that prefix yields
 the new value and postfix yields the old value, neither addressable. Repeated
 updates such as `++x++` and non-simple targets (calls, casts, literals, fields, indexes) are rejected.
 Constants, direct global writes, other types and parenthesized-target spelling
