@@ -199,16 +199,23 @@ foreach (flavor::cases() as $flavor) {
 		$never = 'async ' . $signature('forever') . '{for (;;) {}}';
 		$native = (new Cpp_Emitter())->emit($prepare($never . 'return 0;'));
 		verify(str_contains($native, 'co_return'), 'Infinite async body must still construct a coroutine');
-		foreach (['string', 'default', 'reference'] as $bad) {
+		foreach (['string', 'reference'] as $bad) {
 			$param = match ($bad) {
 				'string' => str_replace('int', 'string', $parameter('x')),
-				'default' => $parameter('x') . '=1',
 				'reference' => match ($flavor) {
 					flavor::php => 'int &$x', flavor::cpp => 'int &x', flavor::js => '&x:int',
 				},
 			};
 			rejects(fn() => $prepare('async ' . str_replace('()', '(' . $param . ')', $signature('bad')) . '{return 1;}return 0;'), 'Async parameters require');
 		}
+		$default_sig = $fn('read_value', ['x','y']);
+		$defaults = static fn(string $x, string $y): string => str_replace(
+			[$parameter('x'), $parameter('y')], [$parameter('x') . $x, $parameter('y') . $y], $default_sig);
+		$body = '{await async_sleep_ms(1);return ' . $v('x') . '+' . $v('y') . ';}';
+		$reader = static fn(string $x): string => 'async ' . $defaults($x, '=false') . $body;
+		$default_report = 'async ' . $signature('report') . '{echo await read_value(42), ",";return await read_value();}';
+		$default_entry = 'echo await read_value(), ",", await read_value(42), ",", await report();return 8;';
+		rejects(fn() => $prepare('async ' . $defaults('=7', '') . $body . 'return 0;'), 'Required parameter follows optional parameter');
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -221,6 +228,14 @@ foreach (flavor::cases() as $flavor) {
 			[$loop_report, $sum, $entry, null, 'MMM4294967302', 1],
 			[$loop_report, $extra, $entry, 'Argument count mismatch', '', 0],
 			[$loop_report, str_replace('1);return', '0);return', $sum), $entry, null, 'MMM4294967302', 1],
+			[$default_report, $reader('=7'), $default_entry, null, '7,42,42,7', 3],
+			[$default_report, $reader('=4294967297'), $default_entry, null, '4294967297,42,42,4294967297', 2],
+			[$default_report, $reader(''), $default_entry, 'Argument count mismatch', '', 0],
+			[$default_report, $reader('=7'), $default_entry, null, '7,42,42,7', 2],
+			// Writing the same arguments explicitly should keep every native artifact reusable.
+			[str_replace(['read_value()', 'read_value(42)'], ['read_value(7,false)', 'read_value(42,false)'], $default_report),
+				$reader('=7'), str_replace(['read_value()', 'read_value(42)'], ['read_value(7,false)', 'read_value(42,false)'], $default_entry),
+				null, '7,42,42,7', 0],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
