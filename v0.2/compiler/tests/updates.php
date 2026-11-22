@@ -7,7 +7,7 @@ require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
 	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program,
-	Syntax_Inspection, Compilation_Inspection, ast_update_statement, ast_postfix_update_expression, update_operator,
+	Syntax_Inspection, Compilation_Inspection, ast_update_statement, ast_update_expression, update_operator,
 	prepared_entry, prepared_program};
 
 function verify(bool $ok, string $message): void
@@ -100,19 +100,31 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		. 'echo ","; echo ' . $escape . '; echo ","; echo ' . $x . ';'
 		. $escape . '=' . $x . '--; echo ","; echo ' . $escape . '; echo ","; echo ' . $x . ';'
 		. $x . '=' . $x . '++; echo ","; echo ' . $x . ';'
-		. $x . '=' . $x . '--; echo ","; echo ' . $x . '; return 8;';
+		. $x . '=' . $x . '--; echo ","; echo ' . $x . ';';
+	$prefix = $var('prefix');
+	$code .= ($flavor === flavor::php ? $prefix . '=++' . $x . ';' : $decl('prefix', 'int64', '++' . $x))
+		. 'echo ","; echo ' . $prefix . '; echo ","; echo ' . $x . ';'
+		. $prefix . '=--' . $x . '; echo ","; echo ' . $prefix . '; echo ","; echo ' . $x . ';'
+		. $x . '=++' . $x . '; echo ","; echo ' . $x . ';'
+		. $x . '=--' . $x . '; echo ","; echo ' . $x . '; return 8;';
 	$entry = $prepare($code);
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated update facts');
 	Syntax_Inspection::file($entry->file);
 	Compilation_Inspection::body($entry->body());
-	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . '2120230151510234,10,11,11,10,10,10')];
+	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . '2120230151510234,10,11,11,10,10,10,11,11,10,10,11,10')];
 	$postfix_entry = $prepare($decl('x', 'int64', '10') . $decl('escape', 'int64', $x . '++') . 'return 8;');
 	$postfix = $postfix_entry->body()->statements[1]->initializer;
-	verify($postfix instanceof ast_postfix_update_expression && $postfix->update->local_def() === $postfix_entry->body()->statements[0]
-		&& !$postfix->constant_known(), 'Postfix result must bind the initialized local without publishing a constant');
+	verify($postfix instanceof ast_update_expression && $postfix->update->local_def() === $postfix_entry->body()->statements[0]
+		&& $postfix->update->postfix && !$postfix->constant_known(), 'Postfix result must bind the initialized local without publishing a constant');
 	verify(str_contains((new Cpp_Emitter())->emit($postfix_entry), '= var_x_0++;'), 'Postfix RHS should lower directly');
+	$prefix_entry = $prepare($decl('x', 'int64', '10') . $decl('result', 'int64', '--' . $x) . 'return 8;');
+	$prefix_update = $prefix_entry->body()->statements[1]->initializer;
+	verify($prefix_update instanceof ast_update_expression && !$prefix_update->update->postfix
+		&& $prefix_update->update->local_def() === $prefix_entry->body()->statements[0]
+		&& !$prefix_update->constant_known(), 'Prefix result must bind the initialized local without publishing a constant');
+	verify(str_contains((new Cpp_Emitter())->emit($prefix_entry), '= --var_x_0;'), 'Prefix RHS should lower directly');
 	Function_Preparation::reset_body($entry->body());
 	$again = (new Preparation())->prepare($entry->file, new entry_target(31));
 	verify((new Cpp_Emitter())->emit($again) === $cpp, 'Update reset/reprepare differs');
@@ -128,11 +140,18 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		rejects(fn() => $prepare($decl('x', 'int', '1') . $invalid . 'return 8;'), 'Expected');
 	}
 	rejects(fn() => $prepare($decl('escape', 'int64', $x . '++') . 'return 8;'), 'existing local');
-	rejects(fn() => $prepare($decl('x', 'byte', '10') . $decl('escape', 'int64', $x . '--') . 'return 8;'), 'Postfix RHS requires an initialized int64 local');
+	rejects(fn() => $prepare($decl('x', 'byte', '10') . $decl('escape', 'int64', $x . '--') . 'return 8;'), 'Update RHS requires an initialized int64 local');
 	rejects(fn() => $prepare($fn('copied', $param, 'int', $decl('escape', 'int64', $var('v') . '++') . 'return ' . $escape . ';')
-		. 'return copied(1);'), 'Postfix RHS requires an initialized int64 local');
+		. 'return copied(1);'), 'Update RHS requires an initialized int64 local');
 	rejects(fn() => $prepare($decl('x', 'int64', '10') . $decl('escape', 'int64', $x . '++ + 1') . 'return 8;'), 'Expected');
 	rejects(fn() => $prepare($decl('x', 'int64', '10') . $decl('escape', 'int64', '0') . $escape . '+=' . $x . '++; return 8;'), 'Expected');
+	foreach (['++', '--'] as $operator) {
+		$form = $operator . $x;
+		rejects(fn() => $prepare($decl('escape', 'int64', $form) . 'return 8;'), 'existing local');
+		rejects(fn() => $prepare($decl('x', 'byte', '10') . $decl('escape', 'int64', $form) . 'return 8;'),
+			'Update RHS requires an initialized int64 local');
+		rejects(fn() => $prepare($decl('x', 'int64', '10') . $decl('escape', 'int64', $form . ' + 1') . 'return 8;'), 'Expected');
+	}
 	$constant = $flavor === flavor::js ? 'const VALUE: int = 1;' : 'const int VALUE = 1;';
 	rejects(fn() => $prepare($constant . $var('VALUE') . '++; return 8;'), $flavor === flavor::php ? 'existing local' : 'constant');
 	$global = match ($flavor) {
@@ -149,6 +168,11 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 			. 'echo (int)' . $var('old') . ';' . $decl('narrow', 'byte', $x) . 'return 8;';
 		$fixtures[$flavor->name . '_range_' . $initial] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'stdout_hex' => bin2hex((string) $initial), 'catch_out_of_range' => true];
+	}
+	foreach (['255' => '++', '0' => '--'] as $initial => $operator) {
+		$source = $decl('x', 'int', (string) $initial) . $decl('updated', 'byte', $operator . $x) . 'return 8;';
+		$fixtures[$flavor->name . '_prefix_range_' . $initial] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
+			'stdout_hex' => '', 'catch_out_of_range' => true];
 	}
 	$directory = sys_get_temp_dir() . '/scpp-updates-' . bin2hex(random_bytes(8));
 	mkdir($directory);
@@ -172,7 +196,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$tokens = $caller->tokens;
 		file_put_contents($lib, $fn('source', '', 'bool', 'return true;'));
 		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Postfix RHS requires an initialized int64 local');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Update RHS requires an initialized int64 local');
 		file_put_contents($lib, $fn('source', '', 'int64', 'return 10;'));
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Update recovery failed');
@@ -207,4 +231,4 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 if (isset($argv[1])) {
 	file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 }
-echo "Generated int64 updates, postfix old values, shared storage writes and incremental recovery passed\n";
+echo "Generated int64 updates, prefix and postfix results, shared storage writes and incremental recovery passed\n";

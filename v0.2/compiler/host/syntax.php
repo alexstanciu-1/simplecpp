@@ -150,9 +150,11 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
-		if ($expression instanceof ast_postfix_update_expression) {
+		if ($expression instanceof ast_update_expression) {
 			$update = $expression->update;
-			return ['kind' => 'postfix_update', 'name' => self::name($update, $update->name, $update->start),
+			$name_position = $update->postfix ? $update->start : $update->start + 1;
+			return ['kind' => $update->postfix ? 'postfix_update' : 'prefix_update',
+				'name' => self::name($update, $update->name, $name_position),
 				'operator' => $update->operator->name, 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_condition_assignment) {

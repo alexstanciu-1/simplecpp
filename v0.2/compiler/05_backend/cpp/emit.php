@@ -1667,7 +1667,7 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
-		if ($value instanceof ast_postfix_update_expression) {
+		if ($value instanceof ast_update_expression) {
 			return $this->local_update($value->update);
 		}
 		if ($value instanceof ast_condition_assignment) {

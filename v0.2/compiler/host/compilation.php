@@ -242,8 +242,9 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
-		if ($value instanceof ast_postfix_update_expression) {
-			$row += ['kind' => 'postfix_update', 'id' => $value->update->local_def()->storage_id(),
+		if ($value instanceof ast_update_expression) {
+			$row += ['kind' => $value->update->postfix ? 'postfix_update' : 'prefix_update',
+				'id' => $value->update->local_def()->storage_id(),
 				'operator' => $value->update->operator->name];
 		}
 		if ($value instanceof ast_condition_assignment) {

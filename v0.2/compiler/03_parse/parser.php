@@ -1088,7 +1088,7 @@ final class Parser
 		return new ast_not_expression($start, $this->cursor->position(), $operand);
 	}
 
-	/** Bounded scalar cast lookahead; preserve grouping when no unary operand follows, e.g. (null). */
+	/** Recognize cast syntax and diagnose historical PHP cast targets at their source span. */
 	private function cast_ahead(): bool
 	{
 		$tokens = $this->cursor->tokens;
@@ -1098,15 +1098,20 @@ final class Parser
 			return false;
 		}
 		$type = $tokens->text_at($start + 1);
-		if ((type_registry::resolve($type) === null) && ($type !== 'void')) {
+		$historical_cast = $tokens->source->flavor === flavor::php && ($type === 'object' || $type === 'array');
+		if (!$historical_cast && (type_registry::resolve($type) === null) && ($type !== 'void')) {
 			return false;
 		}
 		$kind = $tokens->tokens[$start + 3]->kind ?? null;
-		return in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
+		$has_operand = in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
 			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string,
 			token_kind::lparen, token_kind::bang, token_kind::tilde, token_kind::backslash, token_kind::scope], true)
-			|| ((($kind === token_kind::minus) || ($kind === token_kind::plus))
+			|| (!$historical_cast && (($kind === token_kind::minus) || ($kind === token_kind::plus))
 				&& in_array($tokens->tokens[$start + 4]->kind ?? null, [token_kind::integer, token_kind::floating], true));
+		if ($historical_cast && $has_operand) {
+			throw new diagnostic($tokens->source, $this->cursor->offset(), 'Unsupported PHP (' . $type . ') cast');
+		}
+		return $has_operand;
 	}
 
 	/** Low-precedence xor requires grouping until value-producing assignments are implemented. */
@@ -1120,13 +1125,14 @@ final class Parser
 		return $value;
 	}
 
-	/** A bare postfix update is allowed only as the complete RHS of a plain local statement. */
+	/** A bare prefix or postfix update is allowed only as the complete RHS of a plain local statement. */
 	private function local_assignment_value(): ast_expression
 	{
 		$cursor = $this->cursor;
 		$name = $cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		if ($cursor->is($name) && ($cursor->next_is(token_kind::increment) || $cursor->next_is(token_kind::decrement))) {
-			return new ast_postfix_update_expression($this->update_statement(null));
+		if ($cursor->is(token_kind::increment) || $cursor->is(token_kind::decrement)
+			|| ($cursor->is($name) && ($cursor->next_is(token_kind::increment) || $cursor->next_is(token_kind::decrement)))) {
+			return new ast_update_expression($this->update_statement(null));
 		}
 		return $this->assignment_value();
 	}
@@ -1612,7 +1618,7 @@ final class Parser
 		return new ast_property_update($start, $end, $target, $operator, $postfix);
 	}
 
-	/** Recognize discarded-value update syntax only at statement and header boundaries. */
+	/** Recognize update syntax at discarded-value statement and header boundaries. */
 	private function update_start(): bool
 	{
 		return $this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)
