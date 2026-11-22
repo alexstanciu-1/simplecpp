@@ -162,7 +162,7 @@ final class Compilation_Inspection
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$call = $statement->value;
-				$signature = $call->cardinality === null && $call->callable_binding() === null ? $statement->function_def() : null;
+				$signature = $call->cardinality === null && $call->callable_binding() === null && $call->constructed_record() === null ? $statement->function_def() : null;
 				$statements[] = ['kind' => 'call', 'target' => $signature?->name() ?? $call->target_name(),
 					'return_type' => ($signature?->return_type_def() ?? $call->type_def())->name,
 					'arguments' => array_map(self::value(...), $signature instanceof runtime_function ? $call->runtime_operands() : $call->arguments)];
@@ -295,7 +295,7 @@ final class Compilation_Inspection
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
-			$row['arguments'] = array_map(self::value(...), $value->cardinality === null && $value->callable_binding() === null && $value->function_def() instanceof runtime_function
+			$row['arguments'] = array_map(self::value(...), $value->runtime_binding() !== null
 					? $value->runtime_operands() : $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {

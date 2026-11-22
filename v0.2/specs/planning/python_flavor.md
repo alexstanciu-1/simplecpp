@@ -64,7 +64,7 @@ The C++ flavor adapter is 3,712 bytes. Most grammar lives in the shared parser, 
 | --- | --- | --- |
 | 1. Everyday bodies | Conditional expression, pass, unlabelled break/continue, and bare return in explicitly void functions | Reuse the shared ternary with Python precedence and right association. Preserve shared branch type agreement and selected-arm evaluation. Represent pass with an empty statement span. Reuse loop exits and void-return checks. Keep typed declarations and block-local scope. |
 | 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, and for name in vector | Implemented using shared assignment and foreach nodes. Hash traversal, range, general iterators and loop else clauses remain deferred. |
-| 3. Records and typed failures | Bounded dot access and class construction, followed by raise, typed except and finally | Settle constructor and self spelling and typed exception binding before implementation. Reuse shared class identity, typed catches, rethrow and cleanup. Dynamic attributes and interpreter exception behavior are outside this batch. |
+| 3. Records and typed failures | Concrete classes, dot fields and methods, construction, raise, typed except and finally | Reuses shared class identity, typed catches, rethrow and cleanup. Dynamic attributes and interpreter exception behavior remain deferred. |
 
 ### Decisions before widening semantics
 
@@ -101,4 +101,22 @@ A fresh target is local to the loop. An existing local or parameter is assigned 
 - [x] Verify a uint8 compound assignment reaches the generated checked int64-to-uint8 write-back. Storing 255 succeeds and attempting to store 256 raises integer_cast_out_of_range in native execution.
 - [x] Run the relevant shared foreach, integer and floating compound, and generator parity checks.
 
-Hash iteration spelling remains deferred because Python dictionary iteration defaults to keys. Range, general iterators, loop else and the later record and exception batch stay outside this slice.
+Hash iteration spelling remains deferred because Python dictionary iteration defaults to keys. Range, general iterators and loop else stay outside this slice.
+
+### Batch 3 contract and verification
+
+- A Python class suite declares fixed typed instance fields and ordinary methods. A method takes self as its first written receiver marker, with no ordinary argument slot. The parser emits the shared receiver, field and call nodes. An unannotated __init__ method supplies the shared constructor signature and body.
+- The shared call node retains the written call and its arguments. Preparation resolves the stable function and class entries, diagnoses a callable and class with the same visible name, and selects the ordinary shared constructor contract. Lowering uses the same factory and argument path as explicit shared construction.
+- Raise maps to shared throw and bare rethrow. Except Type as name binds the same shared exception object for that clause. Finally uses the shared protected-exit rules, including running during native guard failure without making the failure catchable as a source exception.
+- Authored Python inheritance, value structs, super, dynamic attributes, bare and tuple handlers, try else and exception chaining remain outside this batch.
+
+Verification checklist
+
+- [x] Check complete class source spans, fixed field access, receiver exclusion from callable signatures, call/class ambiguity, and rejection of invalid constructors, member writes and exception syntax.
+- [x] Across cpp/php/js peers, construct and mutate a Python class and observe the shared alias. Preserve typed diagnostic identity through a bare rethrow after handler-local reassignment. Verify cleanup on value return, rethrow and native guard unwind.
+- [x] Verify reuse on a free-function body-only peer edit, refresh of class dependents on a Python method-body edit, last good publication preservation on an incompatible constructor edit and recovery matching a fresh build. Retain the existing class-identity invalidation contract.
+- [x] Run the Python frontend and native matrix and the existing shared class, exception and finally suites.
+
+All six focused CTests passed with Clang. Peer cleanup body edits re-emitted only their own unit. Replacing a Python class after a method-body edit refreshed dependent callers because prepared facts retain the canonical type on the record declaration. Fresh-equivalent output and native recovery were verified for all three peer flavors.
+
+The review regressions passed in the Python frontend and native CTests. Across cpp/php/js peers, adding a same-name function invalidated the unchanged constructor caller and preserved the previous native bundle and manifest. Removing the function restored fresh-equivalent output and native behavior. The native matrix also verified Python finally on normal fallthrough, continue and break.

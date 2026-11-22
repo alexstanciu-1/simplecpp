@@ -1655,6 +1655,16 @@ final class Preparation
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null): void
 	{
+		$type_symbol = null;
+		$class = null;
+		if ($call->source()->flavor === flavor::python && $call->receiver === null && $call->member_separator === null) {
+			$type_symbol = $this->symbols->entry($call->lexical_root()->type_key($call->name));
+			$this->dependencies?->watch($type_symbol, $this->owner);
+			$candidate = $type_symbol->declaration();
+			if ($candidate instanceof ast_record_declaration && $candidate->kind === record_kind::class_type) {
+				$class = $candidate;
+			}
+		}
 		$binding = null;
 		if ($call->receiver === null && $call->member_separator === null
 			&& ($call->qualifier === call_qualifier::local || ($call->qualifier === call_qualifier::ordinary && $call->source()->flavor !== flavor::php))) {
@@ -1664,6 +1674,7 @@ final class Preparation
 		$type = $binding?->type_def();
 		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
+			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
 			return;
@@ -1727,9 +1738,9 @@ final class Preparation
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
 				if ($runtime->receiver_method) {
-					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
+					$expected = in_array($call->source()->flavor, [flavor::js, flavor::python], true) ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
-						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS');
+						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS/Python');
 					}
 				}
 				elseif ($call->member_separator === token_kind::member) {
@@ -1749,6 +1760,7 @@ final class Preparation
 		$symbol = $this->symbols->entry($key);
 		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
+		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
@@ -1756,7 +1768,10 @@ final class Preparation
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
-			if ($runtime !== null) {
+			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
+				$this->ambiguous_construction($call);
+			}
+			if ($runtime !== null && $class === null) {
 				if ($runtime instanceof runtime_function && !$file->type_availability->allows($runtime->required_module)) {
 					throw new diagnostic($call->source(), $call->byte_start(),
 						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
@@ -1766,6 +1781,7 @@ final class Preparation
 			}
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
 			if ($builtin === 'hash_contains' || $builtin === 'hash_find' || $builtin === 'hash_get_or_null') {
+				if ($class !== null) $this->ambiguous_construction($call);
 				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
 				$receiver = $call->arguments[0];
 				$this->value($receiver, $initializing);
@@ -1784,6 +1800,7 @@ final class Preparation
 				return;
 			}
 			if ($builtin === 'enum_from_value') {
+				if ($class !== null) $this->ambiguous_construction($call);
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
 				}
@@ -1805,6 +1822,7 @@ final class Preparation
 				return;
 			}
 			if ($builtin === 'enum_value' || $builtin === 'enum_name') {
+				if ($class !== null) $this->ambiguous_construction($call);
 				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires one enum argument');
 				$argument = $call->arguments[0];
 				$this->value($argument, $initializing);
@@ -1822,8 +1840,13 @@ final class Preparation
 				default => null,
 			};
 			if ($operation === null) {
+				if ($class !== null) {
+					$this->construction($call, $class->definition->required, $initializing, $type_symbol);
+					return;
+				}
 				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
 			}
+			if ($class !== null) $this->ambiguous_construction($call);
 			if (count($call->arguments) !== 1) {
 				throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires one collection argument');
 			}
@@ -1837,6 +1860,11 @@ final class Preparation
 			return;
 		}
 		$this->source_call($call, $symbol, $function, $initializing);
+	}
+
+	private function ambiguous_construction(ast_call_expression $call): never
+	{
+		throw new diagnostic($call->source(), $call->byte_start(), 'Ambiguous Python call: both function and class named ' . $call->name);
 	}
 
 	/** Read the called type attached to this prepared static body. */
@@ -1965,10 +1993,12 @@ final class Preparation
 	}
 
 	/** Inline and shared construction use the same published signature and argument checks. */
-	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
+	private function construction(ast_construction_expression|ast_call_expression $site, type_definition $type, ?string $initializing,
+		?symbol_entry $target = null): void
 	{
-		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $site instanceof ast_new_expression);
+		$shared = $site instanceof ast_new_expression || $site instanceof ast_call_expression;
+		$payload = $type instanceof shared_record_type_definition && $shared ? $type->payload : $type;
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $shared);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
@@ -1977,7 +2007,11 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
 			$constructor->require_access($this->owner->parent->parent, $site, watcher: $this->access_watcher());
 		}
-		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
+		$conversions = $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing);
+		if ($site instanceof ast_call_expression) {
+			$site->settle_construction($target, $type, $conversions);
+		}
+		else $site->settle_construction($type, $conversions);
 	}
 
 	/** Base arguments use the ordinary call boundary, before the current instance becomes available. */

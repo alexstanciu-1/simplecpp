@@ -1703,9 +1703,9 @@ CPP;
 			return $value->lock ? '(' . $operand . ').lock()' : $type->cpp_type() . '(' . $operand . ')';
 		}
 		if ($value instanceof ast_this_expression) return 'scpp_self';
-		if ($value instanceof ast_construction_expression) {
+		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
-			$shared = $value instanceof ast_new_expression;
+			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
@@ -2176,7 +2176,7 @@ CPP;
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$parameters = $callback ? $function->inputs : $function->parameters;
-		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver();
+		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -2240,7 +2240,8 @@ CPP;
 			$arguments[0] = 'enum_receiver';
 			$direct = false;
 		}
-		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($callback || !$function->is_constructor())
+			&& !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call

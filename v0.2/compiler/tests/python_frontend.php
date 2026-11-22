@@ -194,3 +194,33 @@ $loop = $functions[0]->body()->statements[1];
 check($loop instanceof scpp\compiler\ast_foreach_statement && $loop->key === null
 	&& $loop->value->short_name === 'item' && $loop->source_text() === "for item in items:\n        count += item\n",
 	'Python traversal uses the shared value binding and retains its suite span');
+
+$record = "class Box:\n    value: int = 0\n    def __init__(self, initial: int):\n        self.value = initial\n    def read(self) -> int:\n        return self.value\n";
+$text = $record . "box: Box = Box(8)\nreturn box.read()";
+$file = $frontend->parse(new source_file('record.py', $text, flavor::python));
+$class = array_values(array_filter($file->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
+check($class->source_text() === $record && count($class->methods['__construct']->parameters) === 1
+	&& $class->methods['read']->parameters === [], 'Python class preserves its span and excludes self from signatures');
+$write = $class->methods['__construct']->body()->statements[0];
+check($write instanceof scpp\compiler\ast_field_assignment
+	&& $write->target->receiver instanceof scpp\compiler\ast_this_expression, 'Self uses the shared receiver node');
+
+foreach ([
+	["class Box:\n    def read() -> int:\n        return 1\nreturn 8", 'Expected self'],
+	["class Box(Base):\n    pass\nreturn 8", ': before Python suite'],
+	["class Box:\n    def __init__(self):\n        return 1\nreturn 8", 'Void function cannot return a value'],
+	[$record . "def Box(value: int) -> int:\n    return value\nreturn Box(8)", 'both function and class'],
+	[$record . "box: Box = Box(8)\nbox.unknown = 4\nreturn 8", 'Unknown field'],
+	["raise\nreturn 8", 'enclosing catch'],
+	["raise 3\nreturn 8", 'shared descendant'],
+	["try:\n    pass\nexcept Exception:\n    pass\nreturn 8", 'Expected as'],
+	["try:\n    pass\nexcept:\n    pass\nreturn 8", 'type'],
+	["try:\n    return 8\nfinally:\n    return 9\n", 'Return cannot leave a finally block'],
+] as [$text, $message]) {
+	try {
+		$frontend->prepare(new source_file('record-errors.py', $text, flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection: ' . $text);
+	} catch (diagnostic $failure) {
+		check(str_contains(strtolower($failure->getMessage()), strtolower($message)), $failure->getMessage());
+	}
+}

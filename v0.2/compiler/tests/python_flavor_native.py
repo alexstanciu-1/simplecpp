@@ -335,6 +335,168 @@ def narrow_compound(work, library):
         native(bundle, work/f'narrow-run-{delta}', expected, library)
 
 
+RECORD_SOURCE = """class Counter:
+    value: int = 0
+    def __init__(self, start: int):
+        self.value = start
+
+    def bump(self, delta: int) -> int:
+        self.value = self.value + delta
+        return self.value
+
+class Empty:
+    pass
+"""
+RECORD_ENTRY = """def exercise(fail: bool) -> int:
+    original: Diagnostic = failure()
+    try:
+        try:
+            if fail:
+                raise original
+            return 8
+        except Diagnostic as inner:
+            inner.marker = 9
+            inner = failure()
+            raise
+        finally:
+            cleaned()
+    except Diagnostic as outer:
+        if not sameFailure(original, outer) or outer.marker != 9:
+            return 1
+        return 9
+
+if exercise(False) != 8 or exercise(True) != 9:
+    return 2
+try:
+    pass
+finally:
+    cleaned()
+index: int = 0
+while index < 2:
+    index += 1
+    try:
+        if index == 1:
+            continue
+        break
+    finally:
+        cleaned()
+Counter(1)
+empty: Empty = Empty()
+counter: Counter = Counter(3)
+alias: Counter = counter
+touch(alias, 5)
+if counter.value != alias.value:
+    return 3
+return counter.value
+"""
+RECORD_PEERS = {
+    'cpp': ('class Diagnostic : public Exception { public: int marker = 7; }; '
+            'Diagnostic failure() { return new Diagnostic(); } '
+            'bool sameFailure(Diagnostic a, Diagnostic b) { return a === b; } '
+            'void touch(Counter c, int n) { c->bump(n); } '
+            'int guard(int divisor) { return 8 / divisor; }'),
+    'php': ('class Diagnostic extends Exception { public int $marker = 7; } '
+            'function failure(): Diagnostic { return new Diagnostic(); } '
+            'function sameFailure(Diagnostic $a, Diagnostic $b): bool { return $a === $b; } '
+            'function touch(Counter $c, int $n): void { $c->bump($n); } '
+            'function guard(int $divisor): int { return 8 / $divisor; }'),
+    'js': ('class Diagnostic extends Exception { marker:int = 7; } '
+           'function failure(): Diagnostic { return new Diagnostic(); } '
+           'function sameFailure(a: Diagnostic, b: Diagnostic): bool { return a === b; } '
+           'function touch(c: Counter, n: int): void { c.bump(n); } '
+           'function guard(divisor: int): int { return 8 / divisor; }'),
+}
+RECORD_CLEANUP = {
+    'cpp': 'void cleaned() { echo "F"; }',
+    'php': 'function cleaned(): void { echo "F"; }',
+    'js': 'function cleaned(): void { echo "F"; }',
+}
+CONSTRUCTOR_COLLISIONS = {
+    'cpp': 'int Counter(int start) { return start; }',
+    'php': 'function Counter(int $start): int { return $start; }',
+    'js': 'function Counter(start: int): int { return start; }',
+}
+EXCEPTION_GUARD = """try:
+    return guard(0)
+except Exception as missed:
+    return 2
+finally:
+    cleaned()
+"""
+
+
+def records_and_exceptions(work, flavor, library):
+    app, bundle = work/'records', work/'records-bundle'
+    write_app(app, 'py', {'main': RECORD_ENTRY, 'records': RECORD_SOURCE})
+    peer = app/f'peer.{flavor}'
+    source_edit(peer, RECORD_PEERS[flavor])
+    cleanup = app/f'cleanup.{flavor}'
+    source_edit(cleanup, RECORD_CLEANUP[flavor])
+    records = app/'records.py'
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'records-initial', (8, b'FFFFF', b''), library)
+
+        source_edit(cleanup, RECORD_CLEANUP[flavor].replace('echo "F"', 'echo "G"'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [cleanup.name], changed
+        native(bundle, work/'peer-edited', (8, b'GGGGG', b''), library)
+
+        edited = RECORD_SOURCE.replace('self.value + delta', 'self.value + delta + 1')
+        source_edit(records, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {'main.py', peer.name, 'records.py'}, changed
+        fresh_edited = work/'records-fresh-edited'
+        assert 'error' not in fresh_build(app, fresh_edited)
+        assert artifacts(bundle) == artifacts(fresh_edited)
+        native(bundle, work/'records-edited', (9, b'GGGGG', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        source_edit(records, edited.replace('self, start: int', 'self, start: int, extra: int'))
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'records-failure')
+        assert 'main.py:' in failed.get('error', '') and 'Argument count mismatch' in failed['error'], failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(records, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'records-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'records-recovered', (9, b'GGGGG', b''), library)
+
+        collision = app/f'collision.{flavor}'
+        source_edit(collision, CONSTRUCTOR_COLLISIONS[flavor])
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'collision-failure')
+        assert 'both function and class named Counter' in failed.get('error', ''), failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous
+        assert (bundle/'manifest.json').read_bytes() == manifest
+
+        collision.unlink()
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        assert 'error' not in fresh_build(app, work/'collision-fresh')
+        assert artifacts(bundle) == artifacts(work/'collision-fresh') == previous
+        native(bundle, work/'collision-recovered', (9, b'GGGGG', b''), library)
+
+        source_edit(app/'main.py', EXCEPTION_GUARD)
+        guarded = invoke(resident)
+        assert 'error' not in guarded, guarded
+        native(bundle, work/'native-guard', (1, b'G', b'division_by_zero\n'), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def prove(work, library):
     work.mkdir()
     narrow_compound(work, library)
@@ -355,6 +517,7 @@ def prove(work, library):
         everyday_bodies(case, flavor, library)
         typed_updates_and_traversal(case, flavor, library)
         compatible_element_edit(case, flavor, library)
+        records_and_exceptions(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):
