@@ -63,7 +63,7 @@ The C++ flavor adapter is 3,712 bytes. Most grammar lives in the shared parser, 
 | Batch | Scope | Readiness |
 | --- | --- | --- |
 | 1. Everyday bodies | Conditional expression, pass, unlabelled break/continue, and bare return in explicitly void functions | Reuse the shared ternary with Python precedence and right association. Preserve shared branch type agreement and selected-arm evaluation. Represent pass with an empty statement span. Reuse loop exits and void-return checks. Keep typed declarations and block-local scope. |
-| 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, then for name in collection for published typed collections | Reuse compound assignment and foreach preparation. Verify one value binding and the published iteration contract. Range, general iterators, loop else clauses and Python's after-loop binding lifetime need separate decisions. |
+| 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, and for name in vector | Implemented using shared assignment and foreach nodes. Hash traversal, range, general iterators and loop else clauses remain deferred. |
 | 3. Records and typed failures | Bounded dot access and class construction, followed by raise, typed except and finally | Settle constructor and self spelling and typed exception binding before implementation. Reuse shared class identity, typed catches, rethrow and cleanup. Dynamic attributes and interpreter exception behavior are outside this batch. |
 
 ### Decisions before widening semantics
@@ -86,4 +86,19 @@ The C++ flavor adapter is 3,712 bytes. Most grammar lives in the shared parser, 
 - [x] Run a common native matrix with cpp/php/js peers, including a body edit, preservation of the prior bundle after an invalid edit, and recovery matching a fresh build. Run the affected shared regressions and confirm division remains deferred.
 - [x] Review the batch together. Pause for a new language contract or cross-owner refactor that requires agreement.
 
-Batch 1 passed 10 focused CTests with Clang, covering the Python frontend, the native cpp/php/js peer matrix, and shared ternary, logical, loop and transfer behavior. The resident matrix verified unchanged peer reuse after a Python edit, execution of both conditional arms, and publication preservation after a Python branch-type error or a peer signature edit. Both failure paths recovered to fresh-equivalent artifacts and native behavior. The remaining batches and semantic decisions above stay deferred.
+Batch 1 passed 10 focused CTests with Clang, covering the Python frontend, the native cpp/php/js peer matrix, and shared ternary, logical, loop and transfer behavior. The resident matrix verified unchanged peer reuse after a Python edit, execution of both conditional arms, and publication preservation after a Python branch-type error or a peer signature edit. Both failure paths recovered to fresh-equivalent artifacts and native behavior. The semantic decisions above remain separate from the verified slice.
+
+### Batch 2 contract and verification
+
+The Python parser adds the three numeric compound spellings and the value-only for name in source suite. The common parser constructs the existing assignment and foreach AST nodes. Preparation admits integer and floating scalar operands through a generated query over active metadata providers, then delegates promotions and write-back checks to ordinary compound preparation. Vector admission is checked on the resolved source type before querying its published traversal capability.
+
+A fresh target is local to the loop. An existing local or parameter is assigned on each successful iteration using normal assignment conversion. Empty traversal leaves an existing target unchanged. Break leaves the current value in place, including a body write. The source expression runs once and temporary vector lifetime follows the shared foreach path.
+
+- [x] Verify shared foreach AST and source spans, fresh-name scope, an incompatible destination, undeclared compound destinations, nonnumeric compound operands and continued rejection of division.
+- [x] Run numeric integer and mixed floating/integer compound operations, empty and populated vectors, reused locals and parameters, and break and continue in the Clang matrix with cpp/php/js peers. Observe one effect per vector-producing call.
+- [x] For each peer flavor, edit the vector provider body and verify reuse of the unchanged Python caller. Change the return signature to a typed hash and confirm that the unchanged caller rejects it, the last bundle survives, and restoring the vector matches fresh output and native behavior.
+- [x] Change a peer's return type from vector<int> to vector<string> across cpp/php/js. Verify that the unchanged Python caller is prepared and re-emitted, native traversal sees the new contents, and the bundle matches a fresh build.
+- [x] Verify a uint8 compound assignment reaches the generated checked int64-to-uint8 write-back. Storing 255 succeeds and attempting to store 256 raises integer_cast_out_of_range in native execution.
+- [x] Run the relevant shared foreach, integer and floating compound, and generator parity checks.
+
+Hash iteration spelling remains deferred because Python dictionary iteration defaults to keys. Range, general iterators, loop else and the later record and exception batch stay outside this slice.

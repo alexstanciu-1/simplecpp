@@ -169,3 +169,28 @@ foreach ([
 		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
 	}
 }
+
+foreach ([
+	["for item in 1:\n    pass\nreturn 8", 'Python for requires a typed vector'],
+	["def probe(items: vector<int>) -> int:\n    for item in items:\n        pass\n    return item\nreturn 8", 'Unknown or not-yet-initialized local/global: item'],
+	["def probe(items: vector<int>) -> int:\n    item: string = \"sentinel\"\n    for item in items:\n        pass\n    return 8\nreturn 8", 'conversion'],
+	["missing += 1\nreturn 8", 'local'],
+	["text: string = \"a\"\ntext += \"b\"\nreturn 8", 'Python compound destination requires a numeric scalar'],
+	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
+	["value: int = 1\nvalue /= 2\nreturn 8", 'Unsupported punctuation'],
+] as [$text, $message]) {
+	try {
+		$frontend->prepare(new source_file('traversal.py', $text, flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection: ' . $text);
+	} catch (diagnostic $failure) {
+		check(str_contains(strtolower($failure->getMessage()), strtolower($message)), $failure->getMessage());
+	}
+}
+
+$text = "def sum(items: vector<int>) -> int:\n    count: int = 0\n    for item in items:\n        count += item\n    return count\nreturn 8";
+$file = $frontend->parse(new source_file('traversal.py', $text, flavor::python));
+$functions = array_values(array_filter($file->declaration_nodes, static fn($node) => $node->short_name === 'sum'));
+$loop = $functions[0]->body()->statements[1];
+check($loop instanceof scpp\compiler\ast_foreach_statement && $loop->key === null
+	&& $loop->value->short_name === 'item' && $loop->source_text() === "for item in items:\n        count += item\n",
+	'Python traversal uses the shared value binding and retains its suite span');

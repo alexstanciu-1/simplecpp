@@ -340,6 +340,7 @@ final class Parser
 		}
 		if ($c->keyword('if')) return $this->conditional($grammar, $collector);
 		if ($c->keyword('while')) return $this->loop($grammar, $collector);
+		if ($c->keyword('for')) return $this->foreach_loop($grammar, $collector);
 		if ($c->keyword('return')) return $this->return_statement(token_kind::newline);
 		if ($c->keyword('break') || $c->keyword('continue')) return $this->loop_transfer(token_kind::newline);
 		if ($c->keyword('pass')) {
@@ -551,25 +552,36 @@ final class Parser
 	/** All flavors normalize a bounded foreach header to the same produced bindings. */
 	private function foreach_loop(statement_grammar $grammar, Body_Collection $collector): ast_foreach_statement
 	{
-		$start = $this->cursor->position();
-		$this->cursor->take_keyword('foreach');
-		$this->cursor->take(token_kind::lparen, '(');
-		$source = $this->value();
-		$this->cursor->take_keyword('as');
-		$kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
-		$first_pos = $this->cursor->position();
-		$first = $this->cursor->name($kind);
-		$header = $collector->child();
+		$c = $this->cursor;
+		$start = $c->position();
+		$python = $grammar instanceof Python_Grammar;
 		$key = null;
-		if ($this->cursor->is(token_kind::arrow)) {
-			$this->cursor->take(token_kind::arrow, '=>');
-			$key = $header->produced_binding($first, $first_pos, true);
-			$first_pos = $this->cursor->position();
-			$first = $this->cursor->name($kind);
-			if ($first === $key->short_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Foreach key and value must have different names');
+		$header = $collector->child();
+		if ($python) {
+			$c->take_keyword('for');
+			$value_pos = $c->position();
+			$name = $c->name(token_kind::identifier);
+			$c->take_keyword('in');
+			$source = $this->value();
 		}
-		$value = $header->produced_binding($first, $first_pos, !$collector->has_local($first));
-		$this->cursor->take(token_kind::rparen, ')');
+		else {
+			$c->take_keyword('foreach');
+			$c->take(token_kind::lparen, '(');
+			$source = $this->value();
+			$c->take_keyword('as');
+			$kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+			$value_pos = $c->position();
+			$name = $c->name($kind);
+			if ($c->is(token_kind::arrow)) {
+				$c->take(token_kind::arrow, '=>');
+				$key = $header->produced_binding($name, $value_pos, true);
+				$value_pos = $c->position();
+				$name = $c->name($kind);
+				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->offset(), 'Foreach key and value must have different names');
+			}
+			$c->take(token_kind::rparen, ')');
+		}
+		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name));
 		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
