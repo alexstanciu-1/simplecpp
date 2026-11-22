@@ -1020,7 +1020,7 @@ CPP;
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$receiver = $statement->receiver instanceof ast_field_expression
+				$receiver = $statement->receiver instanceof ast_field_expression || $type instanceof fixed_array_type
 					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
 					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
@@ -1708,6 +1708,10 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
+			if ($value_type instanceof fixed_array_type) {
+				$steps = [];
+				return $this->retained_place($value, $global_references, $declarations, $required_headers, $steps, full_expression: true);
+			}
 			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
 				&& ($local = $value->receiver->local_binding()) !== null && $local->type_def() instanceof class_union_type_definition) {
 				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
@@ -2131,8 +2135,14 @@ CPP;
 	 */
 	private function retained_place(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
-		array &$steps /** list<string> */, ?bool &$inline_storage = null): string
+		array &$steps /** list<string> */, ?bool &$inline_storage = null, bool $full_expression = false): string
 	{
+		if ($receiver instanceof ast_index_expression && $receiver->receiver->type_def() instanceof fixed_array_type) {
+			$type = $receiver->receiver->type_def();
+			$place = $this->retained_place($receiver->receiver, $globals, $declarations, $headers, $steps);
+			$key = $this->value($receiver->index, $globals, $declarations, $headers);
+			return $type->lower_cpp_index($receiver->index, $place, $key);
+		}
 		$fields = [];
 		$base = $receiver;
 		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
@@ -2146,9 +2156,15 @@ CPP;
 				&& $base->local_binding() !== null));
 		$operand = $this->value($base, $globals, $declarations, $headers);
 		if ($base->type_def() instanceof shared_record_type_definition) {
-			$steps[] = 'auto receiver_owner = ' . $operand . ';';
-			if ($fields === []) return '*receiver_owner.operator->()';
-			$operand = 'receiver_owner->' . array_pop($fields);
+			$owner = 'receiver_owner';
+			if ($full_expression) {
+				// Keep the payload alive through the final index or array copy in this expression.
+				$owner = $base->type_def()->cpp_type() . '(' . $operand . ')';
+			} else {
+				$steps[] = 'auto receiver_owner = ' . $operand . ';';
+			}
+			if ($fields === []) return '*' . $owner . '.operator->()';
+			$operand = $owner . '->' . array_pop($fields);
 		}
 		foreach (array_reverse($fields) as $field) $operand .= '.' . $field;
 		return $operand;

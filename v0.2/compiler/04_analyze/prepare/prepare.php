@@ -1235,8 +1235,9 @@ final class Preparation
 			if ($field_type instanceof fixed_array_type) {
 				$base = $syntax->receiver;
 				while ($base instanceof ast_field_expression && $base->type_def() instanceof record_type_definition) $base = $base->receiver;
-				if (!($base instanceof ast_name_expression && $base->local_binding() !== null && $base->type_def() instanceof record_type_definition)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array field access requires a named inline record');
+				if (!($base instanceof ast_name_expression && $base->local_binding() !== null
+				&& ($base->type_def() instanceof record_type_definition || $base->type_def() instanceof shared_record_type_definition))) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array field access requires a named record or shared owner');
 				}
 			}
 			$syntax->settle_field($field_type instanceof class_union_type_definition ? ($field_type->receiver_view($syntax) ?? $field_type) : $field_type);
