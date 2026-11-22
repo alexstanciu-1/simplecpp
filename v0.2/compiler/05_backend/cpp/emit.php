@@ -1722,6 +1722,10 @@ CPP;
 		if ($value instanceof ast_construction_expression) {
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression;
+			if ($shared && $type instanceof type_exception) {
+				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
+				return $type->factory->symbol . '(' . $message . ')';
+			}
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;

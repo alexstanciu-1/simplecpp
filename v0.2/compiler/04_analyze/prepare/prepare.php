@@ -1237,6 +1237,19 @@ final class Preparation
 			} else {
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
 			}
+			if ($payload instanceof type_exception) {
+				$factory = $payload->factory;
+				if (count($syntax->arguments) !== count($factory->parameters)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Argument count mismatch for Exception constructor');
+				}
+				$message = $syntax->arguments[0];
+				$this->value($message, $initializing);
+				if ($message->type_def() !== $factory->parameters[0]) {
+					throw new diagnostic($message->source(), $message->byte_start(), 'Exception constructor requires ' . $factory->parameters[0]->name);
+				}
+				$syntax->settle_construction($factory->return_type_def(), [value_conversion::identity]);
+				return;
+			}
 			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
 			if (!($payload instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->target->byte_start(), 'Shared construction requires a record: ' . $syntax->target->name);
