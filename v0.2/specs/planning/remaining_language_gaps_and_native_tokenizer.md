@@ -299,6 +299,18 @@ Take abstract-base forwarding and variance as separate follow-ups.
 
 ### G08 · Function and method signatures
 
+**Omitted return types (`FUNC-DECL-001`).** Use an explicit result type for named
+functions. The v0.1 donor defaulted an omitted type to `void`; my-try adopted
+[explicit returns](../../../compiler/my-try/docs/catalog/04_functions.md#func-decl-001).
+Bootstrap probes rejected both an empty body and a value-returning body at the
+missing colon. Writing `: void` and `: int`, respectively, emitted C++.
+The [parser regression](../../compiler/tests/functions.php) covers the empty body.
+A token scan of compiler implementation PHP, excluding constructors and destructors,
+found one omission in the bootstrap and none in my-try. The bootstrap occurrence
+is a private [`__clone` guard](../../compiler/05_backend/cpp/bundle.php) for a
+single-owner manifest stream. Its port needs to preserve copy prevention.
+Classify the historical spelling as an intentional rejection for bootstrap.
+
 **Override parameter modes (`TYPE-PARAM-003G`).** The bootstrap supports value
 and writable-reference source parameters. Method contract preparation compares
 the mode at each parameter position for overrides and interface implementations.
