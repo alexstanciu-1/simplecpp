@@ -287,7 +287,26 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
 			}
 		}
-		$declaration->settle_return_type($type);
+		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
+		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** A reference result borrows exactly one fixed writable parameter of the same type. */
+	private static function reference_return_origin(ast_function_declaration $declaration, type_definition $type): int /** uint32 */
+	{
+		if ($declaration->parent instanceof ast_method_owner) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference returns are deferred');
+		}
+		$origin = null;
+		foreach ($declaration->parameters as $index => $parameter) {
+			if ($parameter->mode !== passing_mode::reference) continue;
+			if ($origin !== null || $parameter->type_def() !== $type) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
+			}
+			$origin = $index;
+		}
+		return $origin ?? throw new diagnostic($declaration->source(), $declaration->byte_start(),
+			'Reference return requires exactly one writable parameter of the return type');
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */

@@ -353,7 +353,17 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Return cannot leave a finally block');
 				}
 				$this->constructor_initialization?->complete($statement);
-				if ($target === null) {
+				if ($function->reference_return_origin !== null) {
+					$origin = $function->parameters[$function->reference_return_origin];
+					$value = $statement->value;
+					if (!($value instanceof ast_name_expression) || $value->constant_only || $this->find_local($value->name) !== $origin) {
+						throw new diagnostic($source, $statement->byte_start(), 'Reference return must directly select its writable parameter');
+					}
+					++$this->expression_visits;
+					$value->settle_local($origin, unknown: true);
+					$statement->settle_conversion(value_conversion::identity);
+				}
+				elseif ($target === null) {
 					$return_type = $function->return_type_def();
 					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
 						if ($statement->value !== null) {
@@ -419,6 +429,9 @@ final class Preparation
 			$this->in_catch = $outer_catch;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
+				if ($function->returns_reference && ($completion & statement_completion::returns)) {
+					throw new diagnostic($source, $syntax->byte_start(), 'Reference returns across finally are deferred');
+				}
 				if ($this->outward !== []) $syntax->protected_completion |= statement_completion::numbered;
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
 				if ($completion & statement_completion::continues) $syntax->continue_target = $this->loop;
@@ -862,7 +875,15 @@ final class Preparation
 			throw new diagnostic($source, $declaration->byte_start(), 'Local alias must introduce a new name: ' . $name);
 		}
 		$target = $declaration->initializer;
-		$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+		if ($target instanceof ast_call_expression) {
+			$this->value($target, $name);
+			$origin = $target->reference_origin();
+			if ($origin === null) {
+				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
+			}
+		} else {
+			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+		}
 		if (!($origin instanceof ast_local_declaration)) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local');
 		}
@@ -871,8 +892,10 @@ final class Preparation
 			&& Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies) !== $type) {
 			throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
 		}
-		++$this->expression_visits;
-		$target->settle_local($origin, unknown: true);
+		if ($target instanceof ast_name_expression) {
+			++$this->expression_visits;
+			$target->settle_local($origin, unknown: true);
+		}
 		$declaration->settle_type($type, constant_evaluation::unavailable);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $origin;
 	}

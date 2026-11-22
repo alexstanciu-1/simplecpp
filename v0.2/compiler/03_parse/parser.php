@@ -752,12 +752,14 @@ final class Parser
 		$start = $this->cursor->position();
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
 		if ($keyword) $this->cursor->take_keyword($python ? 'def' : 'function');
+		$returns_reference = $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ampersand);
+		if ($returns_reference) $this->cursor->take(token_kind::ampersand, '&');
 		$name = $this->cursor->name(token_kind::identifier);
 		$parameters = $this->parameters();
 		$this->cursor->take($python ? token_kind::member : token_kind::colon, $python ? '-> (explicit return type)' : ': (explicit return type)');
 		$type = $this->return_type(allow_union: true);
 		return new ast_function_declaration($alias ?? $name, $type,
-			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
+			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected, $returns_reference);
 	}
 
 	public function source_namespace(): ?string

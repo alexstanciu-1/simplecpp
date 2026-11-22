@@ -126,6 +126,15 @@ slot. Binding creates no runtime storage and does not extend the target's lifeti
 Parameters, properties, elements, temporaries, lambda capture and generator
 aliases are outside this bootstrap slice.
 
+The PHP-flavor bootstrap also accepts free functions declared
+`function &select(T &$slot): T`. Exactly one parameter is writable by
+reference and its type must match the result. Each value return must directly
+name that parameter. An ordinary call result is a value copy. In
+`$alias =& select($value)`, the call runs once and the new name binds to
+the supplied whole local slot after the call succeeds. Methods, forwarding a
+reference return, reference-returning callbacks, and returns across finally
+are deferred in the bootstrap.
+
 The `compiler/my-try` implementation accepts both inferred and explicitly typed
 local bindings:
 

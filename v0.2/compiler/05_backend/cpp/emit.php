@@ -797,7 +797,13 @@ CPP;
 				}
 				continue;
 			}
-			if ($statement instanceof ast_base_statement || $statement instanceof ast_local_alias) continue;
+			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_local_alias) {
+				if ($statement->initializer instanceof ast_call_expression) {
+					$lines[] = "\t" . $this->value($statement->initializer, $global_references, $declarations, $required_headers, borrow_result: true) . ';';
+				}
+				continue;
+			}
 			if ($statement instanceof ast_block_statement) {
 				$lines[] = "\t{";
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
@@ -1668,7 +1674,7 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false): string
 	{
 		$reorderable = false;
 		$value_type = $value->type_def();
@@ -2050,7 +2056,9 @@ CPP;
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			return $this->invocation($value, $function, $name, $function->return_type_def(), $global_references, $declarations, $required_headers);
+			$result = $function->return_type_def();
+			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers);
+			return $function->returns_reference && !$borrow_result ? 'static_cast<' . $result->cpp_type() . '>(' . $call . ')' : $call;
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
@@ -2285,7 +2293,8 @@ CPP;
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
-		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
+		$return_reference = !$callback && $function->returns_reference ? '&' : '';
+		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . $return_reference . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}
 
@@ -2455,7 +2464,7 @@ CPP;
 				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
+		return $this->signature_type($function->return_type_def(), $short_types) . ($function->returns_reference ? '& ' : ' ') . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
 			. '(' . implode(', ', $parameters) . ')';
 	}
 

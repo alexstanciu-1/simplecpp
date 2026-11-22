@@ -55,9 +55,59 @@ def prove_local_aliases(work):
     assert all(label not in generated for label in ('var_alias_', 'var_inside_', 'var_vectorAlias_'))
 
 
+def prove_reference_returns(work):
+    """Exercise the reference ABI and the caller-side slot through incremental builds."""
+    select = 'function &select(int &$slot): int { echo "S"; $slot += 1; return $slot; }'
+    after = """
+        function &select_after(string $first, int &$slot, string $second): int {
+            echo $first, $second;
+            $slot += 2;
+            return $slot;
+        }
+        function &select_vector(vector<int> &$slot): vector<int> { return $slot; }
+    """
+    main = """
+        function tag(string $text): string { echo $text; return $text; }
+        $value int = 10;
+        $unused =& select($value);
+        $alias =& select_after(tag("A"), $value, tag("B"));
+        $copy = select($value);
+        $alias = 20;
+        $vector vector<int> = [1];
+        $vectorAlias =& select_vector($vector);
+        $vectorCopy = select_vector($vector);
+        $vectorAlias[] = 2;
+        echo $value, ":", $copy, ":", count($vector), ":", count($vectorCopy);
+        return 8;
+    """
+    expected = b'SABABS20:14:2:1'
+    return_error = 'Reference return must directly select its writable parameter'
+    signature_error = 'Reference return requires exactly one writable parameter of the return type'
+    work.mkdir(parents=True, exist_ok=True)
+    revisions(work, 'php', dict(main=main, select=select, after=after), [
+        (None, None, expected),
+        (None, None, expected),
+        ('select', select.replace('+= 1', '+= 2'), b'SABABS20:16:2:1'),
+        ('select', select.replace('function &', 'function '), 'Local alias call requires a reference return'),
+        ('select', select.replace('return $slot;', '$local int = 7; return $local;'), return_error),
+        ('select', select.replace('return $slot;', 'return 7;'), return_error),
+        ('select', 'function &select(int &$slot, vector<int> $values): int { return $values[0]; }', return_error),
+        ('select', 'function &select(int &$slot): int { try { return $slot; } finally {} }', 'Reference returns across finally are deferred'),
+        ('select', 'class Ops { public function &select(int &$slot): int { return $slot; } }', 'Method reference returns are deferred'),
+        ('select', 'function &select(vector<int> &$slot): int { return $slot[0]; }', signature_error),
+        ('select', 'function &select(int $slot): int { return $slot; }', signature_error),
+        ('select', 'function &select(int &$slot, int &$other): int { return $slot; }', signature_error),
+        ('select', None, 'Unknown function: select'),
+        ('select', select, expected),
+        ('main', main.replace('select($value)', 'select(1)', 1), 'Reference argument requires stable variable storage'),
+        ('main', main, expected),
+    ])
+
+
 def run(work):
     prove(work, 'reference_parameters.php', check_copy=False)
     prove_local_aliases(work / 'aliases')
+    prove_reference_returns(work / 'returns')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

@@ -59,7 +59,7 @@ final class callback_type_definition extends type_definition
 
 	public function require_target(ast_callable_reference $site, ast_function_declaration $target): void
 	{
-		$matches = $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
+		$matches = !$target->returns_reference && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
 				if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
