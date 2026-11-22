@@ -311,6 +311,16 @@ is a private [`__clone` guard](../../compiler/05_backend/cpp/bundle.php) for a
 single-owner manifest stream. Its port needs to preserve copy prevention.
 Classify the historical spelling as an intentional rejection for bootstrap.
 
+**Variadic declarations (`FUNC-CALL-004`, `CLASS-MEMBER-017`).** Defer for
+bootstrap. The scan of production PHP found no variadic declarations in the
+current compiler or my-try. The four historical PHP generator methods iterate
+over line or diagnostic collections. Current uses such as
+`array_push($errors, ...$group->diagnostics)` unpack existing collections at
+the call site and can use an ordered append loop during translation.
+For donor parity, use the [typed trailing pack](../../../compiler/my-try/docs/catalog/04_functions.md#func-call-004)
+for functions and methods. Evaluate arguments left to right, convert each
+element, and pass an owned `vector<T>`. Call-site unpacking is separate work.
+
 **Override parameter modes (`TYPE-PARAM-003G`).** The bootstrap supports value
 and writable-reference source parameters. Method contract preparation compares
 the mode at each parameter position for overrides and interface implementations.
