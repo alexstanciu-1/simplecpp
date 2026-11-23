@@ -32,9 +32,14 @@ final readonly class async_task_binding
 		return 'class ' . $this->cpp_name($root);
 	}
 
-	private function cpp_name(string $root): string
+	public function cpp_name(string $root): string
 	{
 		return 'scpp_async_task_' . hash('sha256', $root . "\0" . $this->identity);
+	}
+
+	public static function header_path(string $task): string
+	{
+		return 'units/' . hash('sha256', $task) . '.hpp';
 	}
 }
 

@@ -1,6 +1,6 @@
 # Out-of-line async task methods
 
-The production compiler emits a concrete inline task header per demanded result.
+The production compiler defaults to a concrete inline task header per demanded result. Applications can select `"async_task_methods": "grouped"` in `module.json`. The production path uses the recipe fragments directly; this directory retains the original placement experiment.
 This benchmark uses its three-flavor, 23-result fixture and tests a different placement:
 keep the complete promise declaration in the header and collect the recipe's out-of-class
 method definitions in one application translation unit. Methods defined inside the promise

@@ -10,13 +10,14 @@ function verify(bool $condition, string $message): void
 	if (!$condition) throw new RuntimeException($message);
 }
 
-/** Require a source diagnostic, not a late C++ failure. */
-function rejects(Closure $action, string $message): void
+/** Require the expected frontend diagnostic or manifest validation error before native compilation. */
+function rejects(Closure $action, string $message, bool $manifest = false): void
 {
 	try {
 		$action();
 	}
-	catch (diagnostic|diagnostic_group $error) {
+	catch (RuntimeException $error) {
+		if (!$manifest && !($error instanceof diagnostic || $error instanceof diagnostic_group)) throw $error;
 		verify(str_contains($error->getMessage(), $message), $error->getMessage());
 		return;
 	}
@@ -530,10 +531,28 @@ foreach (flavor::cases() as $flavor) {
 			[$point_relay_only, $common . $point_leaf_only, $point_read . 'return 8;', null, '7', 3],
 			['', '', 'return 8;', null, '', 3],
 			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 3],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 3, false, 'grouped'],
+			[$combined_relay, str_replace('x=7;', 'x=8;', $hash_leaf) . $point_leaf_only, $point_read . $hash_entry, null, '88:42', 1],
+			[$combined_relay, $edited_hash . $point_leaf_only, $point_read . $hash_entry, null, '88:42', 4],
+			[$combined_relay, str_replace($point, '', $hash_leaf) . $point_leaf_only, $point_read . $hash_entry, 'Unknown', '', 0],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 4],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 2, false, 'inline'],
+			[$byte_parent, $byte_child, $byte_entry, null, '17', 4, false, 'grouped'],
+			['', $byte_child, str_replace('relaySample()', 'sample()', $byte_entry), null, '17', 3],
+			['', '', 'return 8;', null, '', 2],
+			[$byte_parent, $byte_child, $byte_entry, null, '17', 4],
+			[$enum_parent, $enum_child, $enum_entry, null, '7', 4],
+			[$three_parent, $three_leaf, $three_entry, null, '77:42:1V19LXES', 4],
+			[$weak_parent, $weak_leaf . $weak_empty, $weak_entry, null, 'LIDLDXNNE', 4],
+			[$group_parent, $group_child, $group_entry, null, $group_output, 4, true, 'grouped'],
+			[$relay, $notify, $discard, null, '10', 4],
+			[$relay, $notify, $discard, 'async_task_methods must be inline or grouped', '', 0, false, 'invalid'],
+			[$relay, $notify, $discard, null, '10', 2, false, 'inline'],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
-				$config = json_encode(['entry' => $paths[0], 'sources' => $paths,
+				$options = isset($steps[$i][7]) ? ['async_task_methods' => $steps[$i][7]] : [];
+				$config = json_encode($options + ['entry' => $paths[0], 'sources' => $paths,
 					'dependencies' => ['runtime' => ['modules' => $steps[$i][6] ? ['numeric'] : []]]]);
 				if (file_get_contents("$directory/module.json") !== $config) {
 					file_put_contents("$directory/module.json", $config);
@@ -547,9 +566,10 @@ foreach (flavor::cases() as $flavor) {
 			}
 			$fresh = new Incremental_Project($directory, "$directory/fresh-params", $target);
 			if ($error !== null) {
-				rejects(fn() => $project->run(), $error);
-				rejects(fn() => $project->run(), $error);
-				rejects(fn() => $fresh->run(), $error);
+				$invalid_mode = ($steps[$i][7] ?? null) === 'invalid';
+				rejects(fn() => $project->run(), $error, $invalid_mode);
+				rejects(fn() => $project->run(), $error, $invalid_mode);
+				rejects(fn() => $fresh->run(), $error, $invalid_mode);
 				continue;
 			}
 			$start = hrtime(true); $project->run(); $ms = (hrtime(true) - $start) / 1e6;
@@ -562,7 +582,13 @@ foreach (flavor::cases() as $flavor) {
 					verify(!str_contains($text, 'async_'), 'Blocking-only export leaks async declarations');
 				}
 			}
-			$tasks = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
+			$tasks = array_filter($files, static fn(string $text): bool => str_contains($text, 'struct promise_type final'));
+			$group = 'units/' . hash('sha256', 'async:grouped-methods') . '.cpp';
+			$grouped = $project->session()->group_async_methods;
+			verify(isset($files[$group]) === ($grouped && $tasks !== []), 'Grouped unit demand differs');
+			foreach ($tasks as $task) verify(str_contains($task, '#include <scpp/async/frame.hpp>') !== $grouped, 'Task linkage differs');
+			$manifest = json_decode(file_get_contents("$directory/params/manifest.json"), true);
+			verify(in_array($group, $manifest['translation_units'], true) === isset($files[$group]), 'Grouped native input differs');
 			$expected = match ($body) {
 				$group_parent => 23, $three_parent => 3, $combined_relay => 2, $point_relay_only => 1, $enum_parent . $second_parent, $both => 2,
 				$bool_parent, $weak_parent, $hash_parent, $byte_parent, $float_parent, $enum_parent, $point_parent, $vector_relay => 1,

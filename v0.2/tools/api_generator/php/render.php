@@ -204,14 +204,20 @@ function render(array $plan): array {
 
 /** One consumer-owned header per demanded result, including its inline calls to the erased frame ABI. */
 function asyncTaskHeader(ConcreteType $type, string $task, bool $value, string $namespace): string {
+    $parts = asyncTaskParts($type, $task, $value, $namespace, true);
+    return $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n" . $parts['implementation'];
+}
+
+/** Shared recipe fragments for inline headers and application-owned out-of-line definitions. */
+function asyncTaskParts(ConcreteType $type, string $task, bool $value, string $namespace, bool $inline): array {
     $parts = concreteTemplate('core/async_task', ['result' => $type], [
         'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
         'includes' => implode('', array_map(includeHeader(...), $type->headers())),
         'extract' => $value ? '    return static_cast<' . $type->cppType($namespace) . '&&>(promise.value);' : '',
         'open' => $namespace === '' ? '' : "namespace $namespace {",
-        'close' => $namespace === '' ? '' : '}', 'inline' => 'inline ',
+        'close' => $namespace === '' ? '' : '}', 'inline' => $inline ? 'inline ' : '',
     ], $namespace);
     $methods = $parts['implementation'];
     if ($namespace !== '') $methods = "namespace $namespace {\n" . $methods . "}\n";
-    return $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n" . $methods;
+    return ['declaration' => $parts['declaration'], 'implementation' => $methods];
 }

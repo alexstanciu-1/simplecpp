@@ -17,6 +17,9 @@ def build(directory, fixture):
     for old in (directory / 'units').glob('*'):
         if old.suffix in {'.cpp', '.hpp'} and old.relative_to(directory).as_posix() not in fixture['files']:
             old.unlink()
+    group = directory / 'units' / (hashlib.sha256(b'async:grouped-methods').hexdigest() + '.cpp')
+    group_obj = directory / ('unit-' + hashlib.sha256(str(group.resolve()).encode()).hexdigest() + '.o')
+    prior_stamp = group_obj.stat().st_mtime_ns if group_obj.exists() else None
     units = []
     for name, text in fixture['files'].items():
         path = directory / name
@@ -53,12 +56,13 @@ def build(directory, fixture):
         body = src.read_text()
         assert ('async_timer.hpp' in headers) == ('::delay_ms(' in body)
         assert not any(h.startswith('wait_') and h.endswith('.hpp') for h in headers)
-        if 'co_return' not in body:
+        if 'co_return' not in body and src != group:
             assert 'coroutine' not in headers
     links = [line.split('\t') for line in (directory / '.ninja_log').read_text().splitlines()[1:]
              if line.split('\t')[3] == 'program']
     link = links[-1]
-    return dict(compiler_ms=fixture['compiler_ms'], native_ms=wall, objects=len(compiled),
+    return dict(group_reused=group in units and prior_stamp == group_obj.stat().st_mtime_ns,
+                compiler_ms=fixture['compiler_ms'], native_ms=wall, objects=len(compiled),
                 frontend_ms=totals['Frontend'], llvm_ms=totals['Backend'], link_ms=int(link[1])-int(link[0]))
 
 
@@ -70,7 +74,12 @@ def prove(work):
     for key, fixture in json.loads(path.read_text()).items():
         flavor, step = key.split('_')
         report[key] = build(work / flavor, fixture)
-        assert report[key]['objects'] == fixture['objects'], report[key]
+        assert report[key]['objects'] == fixture['objects'], (key, report[key])
+        if flavor.endswith('params') and int(step) in (83, 89):
+            assert report[key]['group_reused'], (key, 'expected grouped object reuse')
+        if flavor.endswith('params') and int(step) == 90:
+            symbols = success(run(['nm', '-C', work / flavor / 'program'])).stdout
+            assert 'scpp_async_task_' not in symbols
         build(work / ('fresh-' + key), {**fixture, 'files': fixture['fresh_files']})
     (work / 'timings.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))

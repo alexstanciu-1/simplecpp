@@ -89,7 +89,8 @@ final class Cpp_Emitter
 	{
 		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
 		foreach ($this->async_results as $task => $type) {
-			$files['units/' . hash('sha256', $task) . '.hpp'] = \Scpp\Api\asyncTaskHeader(
+			$path = async_task_binding::header_path($task);
+			$files[$path] = $this->headers?->grouped_declaration($path) ?? \Scpp\Api\asyncTaskHeader(
 				new cpp_concrete_type($type, $this->root), $task, $type !== type_void::instance(), $this->root);
 		}
 		return $files;
