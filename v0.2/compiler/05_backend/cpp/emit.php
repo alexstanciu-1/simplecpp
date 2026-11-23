@@ -1031,6 +1031,7 @@ CPP;
 				array_push($lines, ...$this->switch_lines($statement, $function, $declarations, $global_references, $required_headers));
 			}
 			elseif ($statement instanceof ast_if_statement) {
+				$nested_else_blocks = 0;
 				foreach ($statement->arms as $index => $arm) {
 					$head = $index === 0 ? 'if' : 'else';
 					if ($arm->condition !== null) {
@@ -1048,12 +1049,17 @@ CPP;
 						} else {
 							$test = $this->condition($arm->condition, $global_references, $declarations, $required_headers);
 							if ($this->async_steps !== []) {
+								if ($index !== 0) {
+									$lines[] = "\telse {";
+									++$nested_else_blocks;
+								}
+								$head = 'if';
 								$guard_name = 'condition_' . $arm->start;
 								$lines[] = "\tbool $guard_name;";
 								$lines[] = $this->async_statement("$guard_name = $test;");
 								$test = $guard_name;
-							}
-							$head = ($index === 0 ? 'if' : 'else if') . ' (' . $test . ')';
+							} elseif ($index !== 0) $head = 'else if';
+							$head .= ' (' . $test . ')';
 						}
 					}
 					$lines[] = "\t" . $head . ' {';
@@ -1062,6 +1068,7 @@ CPP;
 					}
 					$lines[] = "\t}";
 				}
+				while ($nested_else_blocks-- > 0) $lines[] = "\t}";
 			}
 			elseif ($statement instanceof ast_field_assignment) {
 				if ($statement->target instanceof ast_qualified_data) {

@@ -542,8 +542,9 @@ foreach (flavor::cases() as $flavor) {
 			. $catch('Failure') . '{echo "C";return 7;}}';
 		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('branch')
 			. '{return true ? ' . $ordered_call . ' : 0;}return 8;'), 'ternary');
-		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('laterTest')
-			. '{if (false) {return 0;}else if (' . $ordered_call . ') {return 1;}return 0;}return 8;'), 'first if');
+		$later_tests = $pair . 'async ' . $signature('compute') . '{if (false) {return 1;}'
+			. 'else if (' . $ordered_call . ' == 24) {return 2;}'
+			. 'else if (' . $ordered_call . ' == 23) {return 3;}else {return 4;}}';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -687,6 +688,11 @@ foreach (flavor::cases() as $flavor) {
 			[$text_parent, $strings . $right_child, $eager_main, null, 'Bheap-backed string long enough to allocate3', 3],
 			[$lifetime, $guard_child . $right_child, $eager_main, null, 'DBF13', 3],
 			[$unwind, $failure . $guard_child . $throw_child, $eager_main, null, 'TDC7', 2],
+			[str_replace('if (false)', 'if (true)', $later_tests), $left_child . $right_child, $eager_main, null, '1', 3],
+			[$later_tests, $left_child . $right_child, $eager_main, null, 'ABFABF3', 1],
+			[$later_tests, $left_child, $eager_main, 'Unknown', '', 0],
+			[$later_tests, $left_child . str_replace('return 3;', 'return 4;', $right_child), $eager_main, null, 'ABF2', 1],
+			[$later_tests, $left_child . str_replace('return 3;', 'return 5;', $right_child), $eager_main, null, 'ABFABF4', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
