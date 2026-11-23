@@ -584,9 +584,16 @@ final class Parser
 			if ($requires_key) $c->take(token_kind::lparen, '(');
 			$value_pos = $c->position();
 			$name = $c->name(token_kind::identifier);
+			if ($python && $c->is(token_kind::comma)) {
+				$c->take(token_kind::comma, ',');
+				$key = $header->produced_binding($name, $value_pos, true);
+				$value_pos = $c->position();
+				$name = $c->name(token_kind::identifier);
+				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$value_pos]->offset, 'Foreach key and value must have different names');
+			}
 			if ($python) $c->take_keyword('in');
 			else $c->take(token_kind::identifier, 'in');
-			$source = $this->value();
+			$source = $key === null ? $this->value() : $this->python_items_receiver();
 			if ($requires_key) $c->take(token_kind::rparen, ')');
 		}
 		else {
@@ -1325,6 +1332,34 @@ final class Parser
 			: new ast_index_assignment($receiver, $index, $value, $end);
 	}
 
+	/** Read the receiver of a paired Python loop without constructing an items call. */
+	private function python_items_receiver(): ast_expression
+	{
+		$c = $this->cursor;
+		$receiver = $this->postfix($this->atom(), false, stop_before_items: true);
+		if (!$this->python_items_suffix_ahead()) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Python paired traversal requires terminal .items()');
+		}
+		$c->take(token_kind::dot, '.');
+		$c->name(token_kind::identifier);
+		$c->take(token_kind::lparen, '(');
+		$c->take(token_kind::rparen, ')');
+		return $receiver;
+	}
+
+	/** Recognize the contextual suffix only when it ends the loop header. */
+	private function python_items_suffix_ahead(): bool
+	{
+		$c = $this->cursor;
+		$at = $c->position();
+		$tokens = $c->tokens->tokens;
+		return $c->is(token_kind::dot) && $c->next_is(token_kind::identifier)
+			&& $c->tokens->text_at($at + 1) === 'items'
+			&& ($tokens[$at + 2]->kind ?? null) === token_kind::lparen
+			&& ($tokens[$at + 3]->kind ?? null) === token_kind::rparen
+			&& ($tokens[$at + 4]->kind ?? null) === token_kind::colon;
+	}
+
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(bool $field_target = false): ast_expression
 	{
@@ -1332,7 +1367,7 @@ final class Parser
 	}
 
 	/** Continue member calls and indexing on the expression already parsed. */
-	private function postfix(ast_expression $value, bool $field_target): ast_expression
+	private function postfix(ast_expression $value, bool $field_target, bool $stop_before_items = false): ast_expression
 	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
@@ -1354,6 +1389,7 @@ final class Parser
 				continue;
 			}
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
+				if ($stop_before_items && $this->python_items_suffix_ahead()) break;
 				$this->cursor->take(token_kind::dot, '.');
 				$name = $this->cursor->name(token_kind::identifier);
 				$value = ($flavor === flavor::js || $flavor === flavor::python) && !$this->cursor->is(token_kind::lparen)

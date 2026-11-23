@@ -136,7 +136,7 @@ Standalone @virtual and @override lines mark instance methods at compile time. T
 
 Python for name in source binds an element for a typed vector and a key for a typed hash. JS for (name in source) with a braced body selects the same key-only capability. Both reuse the existing foreach destination rule. A new name is local to the loop, an existing local or parameter receives each key through ordinary assignment conversion, and an empty hash leaves it unchanged. Traversal order has no source guarantee.
 
-The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. General slot reuse, boxed traversal with these spellings, Python items and destructuring are deferred.
+The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. General slot reuse and boxed traversal with these spellings are deferred. Paired Python traversal uses the [typed hash items slice](#python-typed-hash-items-traversal).
 
 - [x] Verify that both spellings lower through iteration_next_key, that temporary sources execute once per loop and that key-only code has no value output slot. Verify empty input preserves an existing destination and a fresh binding stays loop-local.
 - [x] With cpp/php/js providers, change the key type from int to string and compare the resident emission with a fresh build. Verify unrelated source reuse, reject a vector in JS for-in, preserve the last good output on failure or provider deletion, and run native code after recovery.
@@ -220,7 +220,7 @@ CLI acceptance passed with Clang at fb77a0487:
 - Python-authored interface declarations, super calls beyond base
   construction, general decorators and dynamic attributes remain deferred.
 - General truthiness, operand-valued and/or, chained comparisons, first-write
-  inference, range, general iterators, items, destructuring, comprehensions
+  inference, range, general iterators, standalone items views, destructuring, comprehensions
   and generator syntax remain deferred. Broader hash slot reuse belongs to
   the compiler optimization backlog.
 - CPython execution and packages are outside the v0.2 flavor scope. Native
@@ -308,3 +308,56 @@ binding the default truncating helper to Python floor remainder and rejects
 the reverse swap. The UBSan differential fixture includes INT64_MIN with -1
 and checks true division returns 2^63, floor division reports division_overflow,
 and floor remainder returns zero.
+
+## Python typed hash items traversal
+
+Python accepts for key, value in mapping.items(): with two distinct bare names
+and a terminal zero-argument items suffix in the loop header. The parser stores
+the receiver expression and the two bindings in the existing foreach AST.
+The suffix is contextual syntax for paired traversal. It creates no method call,
+tuple, view, or additional loop node. Retain the authored loop and name spans.
+A receiver such as make_mapping() runs once under the shared traversal lifetime
+rules.
+
+Preparation resolves the receiver once and requires a published typed-hash
+traversal capability. The existing optional key slot distinguishes paired
+traversal from key-only hash traversal. Settle both produced types from the
+provider, use ordinary assignment conversion for the value destination, and
+prepare the body once. No new AST fields, retained dependency inventory or
+body scan are needed. The shared emitter uses the generated keyed advance and
+publishes both outputs from the same selected entry.
+
+The key is a fresh loop-local binding, including when its name shadows an
+outer local. The value uses the existing foreach rule: reuse a compatible
+visible local or parameter, otherwise infer a fresh loop-local binding.
+Empty traversal leaves an existing destination unchanged. Values follow the
+shared copy contract, including retention of shared object identity. Hash
+visitation order has no source guarantee.
+
+Standalone items views, general tuple destructuring, by-reference iteration,
+boxed receivers and arbitrary iterator pairs remain deferred.
+
+### Verification checklist
+
+- [x] Check shared AST shape and authored source spans. Reject duplicate targets, wrong target counts, items arguments, standalone items calls on hashes and unsupported receivers. Preserve existing Python key-only hash and vector traversal.
+- [x] Verify one evaluation and correct lifetime for a temporary hash receiver. Check that key and value come from the same entry, the fresh key cannot escape the loop and only shadows an outer name inside the loop, and existing value destinations and empty traversal follow the shared binding rule.
+- [x] Verify copied values and retained shared-object identity, including application-valued hashes. Keep the generated keyed advance and check that paired traversal emits no redundant lookup.
+- [x] Run resident mixed projects with cpp/php/js providers on Clang. Verify reuse on peer body-only edits, refresh the unchanged Python caller on a compatible key or value type change, and reject a provider value-type edit that is incompatible with an existing destination while the Python caller is unchanged. Reject non-hash providers.
+- [x] Preserve the last good bundle on a failed edit or provider deletion. Restore the source, compare the artifacts with a fresh build, and verify recovered native behavior for each peer flavor.
+- [x] Run the shared foreach and existing Python traversal regressions.
+
+The dedicated Clang native matrix passed with cpp, php and js providers. A
+body-only edit re-emitted only the peer. Compatible key and value type edits
+re-emitted the peer and Python entry while retaining the unrelated unit.
+Incompatible conversions, non-hash receivers and deletion retained the last
+good publication. Each restoration recovered the prior artifacts. The final
+restored bundle matched a fresh build and ran successfully.
+The paired matrix has its own CTest entry. The broader Python matrix uses a
+180-second ceiling after exceeding 120 seconds under parallel test load.
+
+The review regression keeps an explicitly typed Python value destination
+unchanged while each cpp/php/js provider changes from integer to string
+values. The resident failure matches a fresh diagnostic at the loop binding
+and preserves the previous bundle and manifest. Restoring the provider
+recovers fresh-equivalent output and native behavior. Frontend checks reject
+a fresh key used after the loop and a standalone items call on a typed hash.

@@ -1,4 +1,5 @@
 """Compare mixed Python-flavor execution with the existing flavors and check edit recovery."""
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -411,6 +412,141 @@ def key_traversal(work, flavor, library):
             assert 'error' not in recovered, recovered
             assert artifacts(bundle) == previous
         native(bundle, work/'keys-recovered', (2, b'HHa', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+
+ITEMS_ENTRY = """class Cell:
+    field: int = 0
+
+    def __init__(self, start: int):
+        self.field = start
+
+key: int = 99
+total: int = 0
+for key, value in makePairs().items():
+    weight: int = keyWeight(key)
+    if weight != valueWeight(value):
+        return 1
+    total += weight
+if key != 99 or total != 6:
+    return 2
+
+held: int = 17
+empty: hash<int,int> = {}
+for k, held in empty.items():
+    pass
+if held != 17:
+    return 3
+one: hash<int,int> = {1: 8}
+for k, held in one.items():
+    if k != 1:
+        return 4
+if held != 8:
+    return 5
+
+cells: hash<Cell,int> = {1: Cell(7)}
+for k, item in cells.items():
+    item.field = 8
+    item = Cell(9)
+if cells[1].field != 8:
+    return 6
+return held
+"""
+
+
+def items_provider(flavor, key='int', value='int', trace='A', vector=False):
+    v = '$' if flavor == 'php' else ''
+    type_name = 'vector<int>' if vector else f'hash<{value},{key}>'
+    signature, declaration = {
+        'cpp': (f'{type_name} makePairs()', f'{type_name} h = [];'),
+        'php': (f'function makePairs(): {type_name}', f'$h {type_name} = [];'),
+        'js': (f'function makePairs(): {type_name}', f'let h: {type_name} = [];'),
+    }[flavor]
+    data = {'int': ('2', '4'), 'string': ('"a"', '"b"')}
+    payload = {'int': ('20', '40'), 'string': ('"twenty"', '"forty"')}
+    fill = '' if vector else ''.join(f'{v}h[{k}] = {x};' for k, x in zip(data[key], payload[value]))
+    provider = f'{signature} {{ echo "{trace}"; {declaration} {fill} return {v}h; }}'
+
+    def weight(name, operand, first, int_result):
+        head = {
+            'cpp': f'int {name}({operand} arg)',
+            'php': f'function {name}({operand} $arg): int',
+            'js': f'function {name}(arg: {operand}): int',
+        }[flavor]
+        if operand == 'int':
+            return f'{head} {{ return {int_result}; }}'
+        return f'{head} {{ if ({v}arg == {first}) {{ return 2; }} return 4; }}'
+
+    return provider + weight('keyWeight', key, '"a"', v+'arg') + weight('valueWeight', value, '"twenty"', v+'arg / 10')
+
+
+def paired_items(work, flavor, library):
+    app, bundle = work/'items', work/'items-bundle'
+    write_app(app, 'py', {'main': ITEMS_ENTRY, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'items-peer.{flavor}'
+    source_edit(peer, items_provider(flavor))
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'items-initial', (8, b'A', b''), library)
+        cpp = b'\n'.join(artifacts(bundle).values())
+        assert cpp.count(b'.iteration_next(') == 4 and b'.iteration_next_key(' not in cpp
+        assert b'.iteration_current_value(' not in cpp and cpp.count(b'.at(') == 1
+
+        source_edit(peer, items_provider(flavor, trace='B'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'items-body-edit', (8, b'B', b''), library)
+
+        for key, value in [('string', 'int'), ('string', 'string')]:
+            source_edit(peer, items_provider(flavor, key, value, 'B'))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(path).name for path in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            native(bundle, work/f'items-{key}-{value}', (8, b'B', b''), library)
+
+        main = app/'main.py'
+        typed_destination = ITEMS_ENTRY.replace('total: int = 0', 'total: int = 0\nvalue: int = 0')
+        source_edit(main, typed_destination)
+        provider = items_provider(flavor, 'string', 'int', 'B')
+        source_edit(peer, provider)
+        checked = invoke(resident)
+        assert 'error' not in checked, checked
+        native(bundle, work/'items-existing-destination', (8, b'B', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        caller_stamp = main.stat().st_mtime_ns
+        loop_line = next(i for i, line in enumerate(typed_destination.splitlines(), 1)
+                         if line.startswith('for key, value'))
+        for name, edit, diagnostic in [
+            ('incompatible', items_provider(flavor, 'string', 'string', 'B'), 'conversion'),
+            ('vector', items_provider(flavor, vector=True), 'items traversal requires a typed hash'),
+            ('deleted', None, 'makePairs'),
+        ]:
+            if edit is None:
+                peer.unlink()
+            else:
+                source_edit(peer, edit)
+            failed = invoke(resident)
+            fresh = fresh_build(app, work/f'items-{name}-failure')
+            assert diagnostic in failed.get('error', '') and failed['error'] == fresh.get('error'), (failed, fresh)
+            if name == 'incompatible':
+                assert f'main.py:{loop_line}:' in failed['error'], failed
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, provider)
+            recovered = invoke(resident)
+            assert 'error' not in recovered and artifacts(bundle) == previous, recovered
+            assert main.stat().st_mtime_ns == caller_stamp and main.read_text() == typed_destination
+
+        fresh = work/'items-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'items-recovered', (8, b'B', b''), library)
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
@@ -989,6 +1125,16 @@ def incremental(work, flavor, app, output, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--items', action='store_true', help='run the paired hash traversal matrix')
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
-        prove(work/'proof', runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp']))
+        library = runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
+        if args.items:
+            for flavor in BRIDGES:
+                case = work/flavor
+                case.mkdir()
+                paired_items(case, flavor, library)
+        else:
+            prove(work/'proof', library)

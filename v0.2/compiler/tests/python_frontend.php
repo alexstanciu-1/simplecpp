@@ -205,6 +205,44 @@ foreach ([
 	}
 }
 
+
+$text = "for key, value in make_mapping().items():\r\n    pass\r\nreturn 8";
+$file = $frontend->parse(new source_file('items.py', $text, flavor::python));
+$loop = $file->main()->body()->statements[0];
+check($loop instanceof scpp\compiler\ast_foreach_statement && $loop->key?->source_text() === 'key'
+	&& $loop->value->source_text() === 'value'
+	&& $loop->source_value instanceof scpp\compiler\ast_call_expression
+	&& $loop->source_value->source_text() === 'make_mapping()'
+	&& $loop->source_text() === "for key, value in make_mapping().items():\r\n    pass\r\n",
+	'Python items uses existing foreach ownership and retains source spans');
+foreach ([
+	['for x, x in h.items():', 'different names'],
+	['for x, y, z in h.items():', 'Expected in'],
+	['for x, y in h.items(1):', 'requires terminal .items()'],
+	['for x, y in h:', 'requires terminal .items()'],
+	['for x, y in h.items().extra():', 'requires terminal .items()'],
+] as [$head, $message]) {
+	try {
+		$frontend->parse(new source_file('items.py', "$head\n    pass\nreturn 8", flavor::python));
+		throw new RuntimeException('Expected Python items rejection');
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}
+
+
+foreach ([
+	["for fresh, value in h.items():\n    pass\nreturn fresh", 'Unknown or not-yet-initialized local/global: fresh'],
+	["h.items()\nreturn 8", 'unknown method items'],
+] as [$body, $message]) {
+	try {
+		$frontend->prepare(new source_file('items.py', "h: hash<int,int> = {1: 2}\n$body", flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection of fresh key escape or standalone items');
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}
+
 $text = "items: vector<int> = [1, 2,]\r\nmapping: hash<int,string> = {\r\n    \"k\": items[0],\r\n}\r\nitems[1] = mapping[\"k\"]\r\nreturn items[1]";
 $file = $frontend->parse(new source_file('collections.py', $text, flavor::python));
 [$vector, $hash, $write] = $file->main()->body()->statements;

@@ -745,11 +745,14 @@ final class Preparation
 		$source_type = $statement->source_value->type_def();
 		$type = $source_type->iteration();
 		$python = $source->flavor === flavor::python;
-		$statement->keys_only = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
-		if ($statement->requires_key && !$statement->keys_only) {
-			throw new diagnostic($source, $statement->source_value->byte_start(), 'JS for-in requires a typed hash');
+		$paired = $python && $statement->key !== null;
+		$hash = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		$statement->keys_only = $hash && !$paired;
+		if (!$hash && ($paired || $statement->requires_key)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(),
+				$paired ? 'Python items traversal requires a typed hash' : 'JS for-in requires a typed hash');
 		}
-		if ($python && !$statement->keys_only && !($source_type instanceof vector_type_definition)) {
+		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
 		}
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
