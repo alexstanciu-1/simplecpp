@@ -531,7 +531,7 @@ foreach (flavor::cases() as $flavor) {
 		$guard_child = $guard . 'async ' . $typed_fn('temporaryOwner', 'shared<Guard>') . '{await async_sleep_ms(1);return new Guard();}';
 		$lifetime = $pair . 'async ' . $signature('compute') . '{return pair(await temporaryOwner() !== null,await rightValue());}';
 		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('loopTest')
-			. '{for (; ' . $ordered_call . ';) {return 1;}return 0;}return 8;'), 'Suspending operand steps');
+			. '{for (;; ' . $ordered_call . ') {return 1;}}return 8;'), 'Suspending operand steps');
 		rejects(fn() => $prepare($left_child . $strings . $text_pair . 'async ' . $signature('localText')
 			. '{' . $decl('string', 'label', 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()')
 			. 'return 0;}return 8;'), 'scoped result storage');
@@ -551,6 +551,13 @@ foreach (flavor::cases() as $flavor) {
 		$post_test = $pair . 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
 			. 'do {' . $v('n') . '++;echo ' . $v('n') . ';if (' . $v('n') . '==1) {continue;}'
 			. 'if (' . $v('n') . '==3) {break;}} while (' . $v('n') . '+20 < ' . $ordered_call . ');return ' . $v('n') . ';}';
+		$for_test = $pair . 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
+			. 'for (;pair(0,0),' . $ordered_call . ',' . $v('n') . '+21 < ' . $ordered_call . ';' . $v('n') . '++) {'
+			. 'echo ' . $v('n') . ';if (' . $v('n') . '==0) {continue;}echo ":";}return ' . $v('n') . ';}';
+		$for_init = $pair . 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
+			. 'for (' . rtrim($decl('int', 'start', $ordered_call), ';') . ',pair(' . $v('start') . ',await rightValue()),'
+			. $v('n') . '=' . $ordered_call . ';' . $v('n') . '<25;' . $v('n') . '++) {'
+			. 'echo ' . $v('start') . ',' . $v('n') . ';continue;}return ' . $v('n') . ';}';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -705,6 +712,12 @@ foreach (flavor::cases() as $flavor) {
 			[$post_test, $left_child . $right_child, $eager_main, null, '1ABF2ABF33', 2],
 			[$post_test, $left_child, $eager_main, 'Unknown', '', 0],
 			[$post_test, $left_child . str_replace('return 3;', 'return 1;', $right_child), $eager_main, null, '1ABF1', 1],
+			[$for_test, $left_child . $right_child, $eager_main, null, 'FABFABF0FABFABF1:FABFABF2', 2],
+			[$for_test, $left_child, $eager_main, 'Unknown', '', 0],
+			[$for_test, $left_child . str_replace('return 3;', 'return 1;', $right_child), $eager_main, null, 'FABFABF0', 1],
+			[$for_init, $left_child . $right_child, $eager_main, null, 'ABFBFABF2323232425', 2],
+			[$for_init, $left_child, $eager_main, 'Unknown', '', 0],
+			[$for_init, $left_child . str_replace('return 3;', 'return 5;', $right_child), $eager_main, null, 'ABFBFABF25', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

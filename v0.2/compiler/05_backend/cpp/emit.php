@@ -950,17 +950,26 @@ CPP;
 				$resume_updates = [];
 				if ($statement instanceof ast_for_statement) {
 					$tests = [];
+					$staged_tests = [];
 					$last = array_key_last($statement->conditions);
 					foreach ($statement->conditions as $i => $test) {
-						$tests[] = $i === $last ? $this->condition($test, $global_references, $declarations, $required_headers)
+						$tests[$i] = $i === $last ? $this->condition($test, $global_references, $declarations, $required_headers)
 							: '(void)(' . $this->value($test, $global_references, $declarations, $required_headers) . ')';
+						if ($this->async_steps !== []) {
+							$staged_tests[$i] = $this->async_statement($i === $last ? "if (!($tests[$i])) break;" : "$tests[$i];");
+						}
 					}
-					$condition = implode(', ', $tests);
+					$condition = $staged_tests === [] ? implode(', ', $tests) : '';
 					$init = [];
 					$separate_init = $resume !== null;
 					foreach ($statement->initializers as $item) {
 						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot);
-						if ($snapshot !== null || ($item instanceof ast_local_declaration && count($statement->initializers) > 1)) $separate_init = true;
+						// A coroutine header declaration can include a scoped assignment from binding().
+						if ($snapshot !== null || ($item instanceof ast_local_declaration && ($function?->is_async || count($statement->initializers) > 1))) $separate_init = true;
+						if ($this->async_steps !== []) {
+							$separate_init = true;
+							$text = $this->async_statement($text . ';');
+						}
 						$init[] = $snapshot === null ? $text : "{ const auto $snapshot; $text; }";
 					}
 					$initializer = $separate_init ? '' : implode(', ', $init);
@@ -986,6 +995,11 @@ CPP;
 						$lines[] = "\twhile (" . ($condition === '' ? 'true' : $condition) . ') {';
 					} else $lines[] = "\tfor (" . $initializer . ';' . ($condition === '' ? '' : ' ' . $condition) . ';'
 						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
+					if ($staged_tests !== []) {
+						foreach ($tests as $i => $test) {
+							$lines[] = "\t" . ($staged_tests[$i] ?? ($i === $last ? "if (!($test)) break;" : "$test;"));
+						}
+					}
 				} else {
 					$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
 					if ($this->async_steps !== []) {
