@@ -1708,15 +1708,18 @@ CPP;
 			$required_headers[$header] = true;
 		}
 		if ($this->byte_view !== null && $value === $this->byte_view->parent) return 'scpp_byte_view.size()';
-		if ($value instanceof ast_await_expression) {
-			$callee = $value->operand->function_def();
+		$producer = $value instanceof ast_await_expression ? $value->operand
+			: ($value instanceof ast_call_expression ? $value->blocking_producer() : null);
+		if ($producer !== null) {
+			$suspends = $value instanceof ast_await_expression && $value->suspends;
+			$callee = $producer->function_def();
 			$name = self::function_name($callee);
-			$task_name = $value->suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
+			$task_name = $suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
 			$declarations[$name] = $callee;
-			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
+			$call = $this->invocation($producer, $callee, $suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
 				$task_name);
-			return $value->suspends ? '(co_await ' . $call . ')' : $call;
+			return $suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_postfix_update_expression) {
 			return $this->local_update($value->update);

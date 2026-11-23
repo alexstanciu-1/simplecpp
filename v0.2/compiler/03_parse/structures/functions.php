@@ -173,8 +173,8 @@ final class ast_call_expression extends ast_expression
 	public bool $interface_dispatch = false;
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
-	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|null $function_symbol = null;
+	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
+	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -216,8 +216,26 @@ final class ast_call_expression extends ast_expression
 		$this->settle_value($receiver->cardinality_result($operation), null);
 	}
 
+	/** The explicit bridge reuses its existing operand and its checked argument conversions. */
+	public function settle_blocking_wait(ast_call_expression $producer): void
+	{
+		$this->function_symbol = $producer;
+		$this->settle_value($producer->type_def(), null);
+	}
+
+	public function blocking_producer(): ?ast_call_expression
+	{
+		return $this->function_symbol instanceof ast_call_expression ? $this->function_symbol : null;
+	}
+
+	public function has_direct_signature(): bool
+	{
+		return $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null;
+	}
+
 	public function target_name(): string
 	{
+		if ($this->blocking_producer() !== null) return 'async_wait';
 		return $this->cardinality?->name ?? $this->callable_binding()?->name() ?? $this->function_def()->name();
 	}
 

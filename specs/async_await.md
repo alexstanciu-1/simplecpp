@@ -38,7 +38,7 @@ Lowering contract:
 - `return` inside an async function lowers to `co_return`.
 - `await async_sleep_ms(ms)` inside an async function lowers to `co_await scpp::async_core::sleep_ms(...)`.
 - Expression-level `await expr` suspends inside an async function. At synchronous/top-level sites it waits synchronously. Nested calls, lazy branches and operand snapshots preserve source evaluation order across suspension.
-- `async_wait(task_expr)` lowers to `scpp::async_core::sync_wait(task_expr)`.
+- In v0.2, the built-in `async_wait(producer(...))` calls the producer’s blocking bridge, including inside an async function. Ordinary source lookup wins before argument checking. A bare unimported name uses the built-in if its namespace has no matching declaration. A root-qualified call tries the root declaration first. Other qualified names and explicit imports bind to their exact targets. A discarded wait may consume an async void result.
 
 For the bounded v0.2 source slice, task-producing calls must be consumed directly
 by `await` or `async_wait`; task variables, task parameters and async callable

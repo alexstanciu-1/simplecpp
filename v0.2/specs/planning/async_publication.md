@@ -121,7 +121,7 @@ from native constraints and design questions.
 
 #### Explicit blocking calls
 
-All three frontends accept a user function named async_wait. Without a declaration, async_wait(leaf()) reports Unknown function even when leaf is async. The source spec defines a blocking bridge and the runtime already implements nested waits. Settle whether this name is reserved, namespace-qualified or a fallback after ordinary lookup. An explicit block inside a producer must request the blocking bridge dependency through the existing publisher.
+Implemented in all three flavors. Ordinary function lookup watches the source entry first. A missing bare unimported or root-qualified `async_wait` can bind the direct producer operand to its blocking bridge. Explicit imports and other qualified paths keep exact lookup. Keyword `await` still selects suspension from the enclosing function. Both forms use the same producer binding and C++ invocation path. The retained-session fixture exercises adding and deleting a shadow, import deletion and recovery, and sibling-namespace object reuse.
 
 #### Eager expressions and call arguments
 

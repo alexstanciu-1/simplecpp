@@ -1400,14 +1400,13 @@ final class Preparation
 			if ($this->in_lambda || ($this->owner->parent->is_async && !($async_context || $context instanceof ast_await_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
 			}
-			$this->call($syntax->operand, $initializing);
-			$call = $syntax->operand;
-			$target = $call->cardinality === null && $call->callable_binding() === null ? $call->function_def() : null;
-			if (!($target instanceof ast_function_declaration) || !$target->is_async) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires an async function');
+			$suspends = $this->owner->parent->is_async;
+			$target = $this->async_producer($syntax->operand, $initializing,
+				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
 			if ($target->return_type_def() === type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
-			$syntax->settle($this->owner->parent->is_async);
+			$syntax->settle($suspends);
 			return;
 		}
 		if ($syntax instanceof ast_call_expression) {
@@ -1675,8 +1674,19 @@ final class Preparation
 		}
 	}
 
+	/** Bind a consumed producer and request the native entry selected by its consumer. */
+	private function async_producer(ast_call_expression $producer, ?string $initializing, dependency_use $use,
+		ast_await_expression|ast_call_expression $site): ast_function_declaration
+	{
+		$this->call($producer, $initializing, $use);
+		$target = $producer->has_direct_signature() ? $producer->function_def() : null;
+		if ($target instanceof ast_function_declaration && $target->is_async) return $target;
+		throw new diagnostic($site->source(), $site->byte_start(),
+			($site instanceof ast_await_expression ? 'Await' : 'async_wait') . ' requires an async function');
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
-	private function call(ast_call_expression $call, ?string $initializing = null): void
+	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
 	{
 		$binding = null;
 		if ($call->receiver === null && $call->member_separator === null
@@ -1806,6 +1816,15 @@ final class Preparation
 				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}
+			if ($builtin === 'async_wait') {
+				$producer = $call->arguments[0] ?? null;
+				if (count($call->arguments) !== 1 || !($producer instanceof ast_call_expression)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'async_wait requires one direct async call');
+				}
+				$this->async_producer($producer, $initializing, dependency_use::async_wait, $call);
+				$call->settle_blocking_wait($producer);
+				return;
+			}
 			if ($builtin === 'enum_from_value') {
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
@@ -1859,7 +1878,7 @@ final class Preparation
 			$call->settle_cardinality($operation, $type);
 			return;
 		}
-		$this->source_call($call, $symbol, $function, $initializing);
+		$this->source_call($call, $symbol, $function, $initializing, async_use: $async_use);
 	}
 
 	/** Read the called type attached to this prepared static body. */
@@ -1965,9 +1984,9 @@ final class Preparation
 	}
 
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
-	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
+	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null, ?dependency_use $async_use = null): void
 	{
-		if ($function->is_async && !($call->parent instanceof ast_await_expression)) throw new diagnostic($call->source(), $call->byte_start(), 'Async call requires await');
+		if ($function->is_async && $async_use === null) throw new diagnostic($call->source(), $call->byte_start(), 'Async call requires await');
 		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
 		$result = $function->return_type_def();
@@ -1986,8 +2005,7 @@ final class Preparation
 				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
 		}
 		if ($function->is_async) {
-			$use = $this->owner->parent->is_async ? dependency_use::async_task : dependency_use::async_wait;
-			$this->dependencies?->watch($symbol, $this->owner, $use->value);
+			$this->dependencies?->watch($symbol, $this->owner, $async_use->value);
 		}
 		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}

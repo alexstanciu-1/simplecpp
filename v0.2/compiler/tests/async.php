@@ -478,6 +478,28 @@ foreach (flavor::cases() as $flavor) {
 			. 'async ' . $signature('noValue') . '{await async_sleep_ms(1);echo "N";return 2;}';
 		$choice_parent = 'async ' . $signature('choose') . '{return !await yesValue() ? await yesValue() : await noValue();}';
 		$block_parent = 'async ' . $signature('choose') . '{{echo "B";await noValue();}return 3;}';
+		$ns = static fn(string $name, string $body): string => "namespace $name { $body }";
+		$root = $flavor === flavor::cpp ? '::' : '\\';
+		$sep = match ($flavor) { flavor::cpp => '::', flavor::js => '.', flavor::php => '\\' };
+		$job = $signature('job') . '{return 4;}';
+		$shadow = $fn('async_wait', ['x']) . '{return 10+' . $v('x') . ';}';
+		$nested = 'async ' . $signature('relayJob') . '{await async_sleep_ms(1);return async_wait(job());}';
+		$near = $ns('Jobs', 'echo await relayJob(),' . $root . 'Other' . $sep . 'sibling();return 8;' . $nested);
+		$sibling = $ns('Other', 'async ' . $job . $signature('sibling') . '{return async_wait(job());}');
+		$rooted = $ns('Jobs', $shadow . 'async ' . $job . 'echo ' . $root . 'async_wait(job());return 0;');
+		$prepare($rooted);
+		rejects(fn() => $prepare($ns('Jobs', 'async ' . $job . 'echo ' . $root . 'Missing' . $sep . 'async_wait(job());return 0;')), 'Unknown');
+		rejects(fn() => $prepare('use function Missing' . $sep . 'async_wait; return async_wait(job());' . 'async ' . $job), 'Unknown function import');
+		rejects(fn() => $prepare('return async_wait(3);'), 'one direct async call');
+		rejects(fn() => $prepare('return async_wait();'), 'one direct async call');
+		rejects(fn() => $prepare($job . 'return async_wait(job());'), 'requires an async function');
+		rejects(fn() => $prepare('async ' . $job . 'return await async_wait(job());'), 'Await requires an async function');
+		$prepare('async ' . $void_sig($signature('flush')) . '{return;}async_wait(flush());return 0;');
+		rejects(fn() => $prepare('async ' . $void_sig($signature('flush')) . '{return;}echo async_wait(flush());return 0;'), 'Void call');
+		$root_job = 'async ' . $job;
+		$import_entry = $ns('Jobs', 'use function Other' . $sep . 'async_wait;'
+			. 'echo async_wait(1),' . $root . 'async_wait(' . $root . 'job());return 8;');
+		$root_shadow_entry = $ns('Jobs', 'echo ' . $root . 'async_wait(3);return 8;');
 		$choice_entry = 'echo await choose();return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
@@ -603,6 +625,15 @@ foreach (flavor::cases() as $flavor) {
 			[$block_parent, $choice_leaf, $choice_entry, null, 'BN3', 2],
 			[$block_parent, '', $choice_entry, 'Unknown', '', 0],
 			[$block_parent, str_replace('echo "N";', 'echo "R";', $choice_leaf), $choice_entry, null, 'BR3', 1],
+			[$ns('Jobs', 'async ' . $job), $sibling, $near, null, '44', 3],
+			[$ns('Jobs', 'async ' . $job . $shadow), $sibling, $near, 'Async call requires await', '', 0],
+			[$ns('Jobs', $job . $shadow), $sibling, $near, null, '144', 2],
+			[$ns('Jobs', $job), $sibling, $near, 'requires an async function', '', 0],
+			[$ns('Jobs', 'async ' . $job), $sibling, $near, null, '44', 2],
+			[$root_job, $ns('Other', $shadow), $import_entry, null, '114', 3],
+			[$root_job, $ns('Other', ''), $import_entry, 'Unknown function import', '', 0],
+			[$root_job, $ns('Other', str_replace('10+', '20+', $shadow)), $import_entry, null, '214', 1],
+			[$shadow, $ns('Other', ''), $root_shadow_entry, null, '13', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
@@ -651,6 +682,8 @@ foreach (flavor::cases() as $flavor) {
 			};
 			if ($expected !== null) verify(count($tasks) === $expected, "Task count $i: " . count($tasks));
 			$all = implode("\n", $files);
+			if ($caller === $near) verify(str_contains($all, 'co_return Jobs_ns_job_wait();') === ($body === $ns('Jobs', 'async ' . $job)),
+				'Explicit wait in a coroutine must select the watched producer blocking bridge');
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
