@@ -35,6 +35,13 @@ final class Cpp_Emitter
 	private ?ast_field_expression $byte_view = null;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
+	/** Incremented when this recursive lowering walk emits a native suspension. */
+	private int $suspensions = 0;
+	/** A staged owner needs destruction at the end of its consuming operand before a sibling runs. */
+	private int $async_owned_steps = 0;
+	private bool $async_body = false;
+	/** Ordered statements pending in the current coroutine full expression. */
+	private array $async_steps /** list<string> */ = [];
 	/** Owning lowering context for the innermost protected callable collecting exits. */
 	private ?Cpp_Finally_Exit $finally_exit = null;
 	/** Labels requested only by emitted transfers and consumed at their lexical destinations. @var bool[] */
@@ -557,7 +564,9 @@ CPP;
 				continue;
 			}
 			if ($function->is_async) $this->require_task($function->return_type_def(), $required_headers);
+			$this->async_body = $function->is_async;
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
+			$this->async_body = false;
 			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			if ($function->is_async) {
 				$body = $function->body()->statements;
@@ -784,6 +793,15 @@ CPP;
 			$headers[$header] = true;
 		}
 		return $type->lower_cpp_condition($operand, $negated);
+	}
+
+	/** Keep staged values in the full expression's scope on success and exception. */
+	private function async_statement(string $statement): string
+	{
+		if ($this->async_steps === []) return "\t" . $statement;
+		$steps = implode("\n\t\t", $this->async_steps);
+		$this->async_steps = [];
+		return "\t{\n\t\t" . $steps . "\n\t\t" . $statement . "\n\t}";
 	}
 
 	/**
@@ -1027,8 +1045,16 @@ CPP;
 								$lines[] = "\t" . $init . ';';
 								$head = 'if (' . $test . ')';
 							} else $head = 'else if (' . $init . '; ' . $test . ')';
-						} else $head = ($index === 0 ? 'if' : 'else if') . ' ('
-							. $this->condition($arm->condition, $global_references, $declarations, $required_headers) . ')';
+						} else {
+							$test = $this->condition($arm->condition, $global_references, $declarations, $required_headers);
+							if ($this->async_steps !== []) {
+								$guard_name = 'condition_' . $arm->start;
+								$lines[] = "\tbool $guard_name;";
+								$lines[] = $this->async_statement("$guard_name = $test;");
+								$test = $guard_name;
+							}
+							$head = ($index === 0 ? 'if' : 'else if') . ' (' . $test . ')';
+						}
 					}
 					$lines[] = "\t" . $head . ' {';
 					foreach ($this->statements($arm->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
@@ -1096,7 +1122,7 @@ CPP;
 					/** @var carrier_type_definition $type */
 					$type = $statement->local_def()->type_def();
 					$lines[] = "\tif (!(" . $type->lower_cpp_presence($this->name($statement->local_def())) . ')) { ' . $write . '; }';
-				} else $lines[] = "\t" . ($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
+				} else $lines[] = $this->async_statement($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
 				$conversion = $statement->conversion();
@@ -1118,7 +1144,7 @@ CPP;
 						$required_headers[$header] = true;
 					}
 				}
-				$lines[] = "\t" . ($this->finally_exit?->save(statement_completion::returns, $value) ?? (($function->is_async ? 'co_return ' : 'return ') . $value . ';'));
+				$lines[] = $this->async_statement($this->finally_exit?->save(statement_completion::returns, $value) ?? (($function->is_async ? 'co_return ' : 'return ') . $value . ';'));
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
@@ -1129,7 +1155,7 @@ CPP;
 					}
 					$operand = $value instanceof ast_string_expression ? null
 						: $this->value($value, $global_references, $declarations, $required_headers);
-					$lines[] = "\t" . $type->lower_cpp_output($value, $operand);
+					$lines[] = $this->async_statement($type->lower_cpp_output($value, $operand));
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
@@ -1140,7 +1166,7 @@ CPP;
 				$lines[] = "\tco_await ::scpp::async::delay_ms(" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');';
 			}
 			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement) {
-				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
+				$lines[] = $this->async_statement($this->value($statement->value, $global_references, $declarations, $required_headers) . ';');
 			}
 			else {
 				throw new \LogicException('Unhandled prepared statement');
@@ -1664,6 +1690,11 @@ CPP;
 		foreach ($type->conversion_headers($conversion) as $header) {
 			$headers[$header] = true;
 		}
+		if ($statement instanceof ast_local_declaration && $this->async_steps !== []) {
+			// Declare trivial storage in the source scope; operand temporaries end immediately after the assignment.
+			$assignment = $this->name($statement) . ' = ' . $this->conversion($type, $conversion, $operand, $value) . ';';
+			return $prefix . ";\n" . $this->async_statement($assignment);
+		}
 		return $this->binding_initialization($statement, $prefix, $this->conversion($type, $conversion, $operand, $value));
 	}
 
@@ -1683,6 +1714,24 @@ CPP;
 		return $prefix . ' = ' . $value;
 	}
 
+	/** Release a nested operand's staged owners before evaluating the next sibling. */
+	private function scoped_async_operand(ast_expression $value, array &$global_references, array &$declarations, array &$required_headers,
+		bool &$reorderable, bool $typed_initializer, bool $logical_root, bool $bare_comparison): string
+	{
+		$start = count($this->async_steps);
+		$owned = $this->async_owned_steps;
+		$operand = $this->value($value, $global_references, $declarations, $required_headers, $reorderable,
+			$typed_initializer, $logical_root, $bare_comparison, inside_scope: true);
+		if ($owned === $this->async_owned_steps || $start === count($this->async_steps) || !$value->type_def()->cpp_trivial_value()) return $operand;
+		$name = 'result_' . $value->start . '_' . $value->end;
+		$inner = array_splice($this->async_steps, $start);
+		$this->async_steps[] = $value->type_def()->cpp_type() . " $name;";
+		$this->async_steps[] = '{ ' . implode(' ', $inner) . " $name = $operand; }";
+		$this->async_owned_steps = $owned;
+		$reorderable = false;
+		return $name;
+	}
+
 	/**
 	 * Only the root of an identity initializer may rely on its destination for the native result type.
 	 * Typed values carry normalized constants or settled bindings; no source-name lookup occurs here.
@@ -1696,8 +1745,13 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $inside_scope = false): string
 	{
+		if ($this->async_body && !$inside_scope && $value->parent instanceof ast_expression
+			&& ($value instanceof ast_call_expression || $value instanceof ast_binary_expression || $value instanceof ast_await_expression)) {
+			return $this->scoped_async_operand($value, $global_references, $declarations, $required_headers, $reorderable,
+				$typed_initializer, $logical_root, $bare_comparison);
+		}
 		$reorderable = false;
 		$value_type = $value->type_def();
 		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
@@ -1712,6 +1766,7 @@ CPP;
 			: ($value instanceof ast_call_expression ? $value->blocking_producer() : null);
 		if ($producer !== null) {
 			$suspends = $value instanceof ast_await_expression && $value->suspends;
+			if ($suspends) ++$this->suspensions;
 			$callee = $producer->function_def();
 			$name = self::function_name($callee);
 			$task_name = $suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
@@ -1903,9 +1958,23 @@ CPP;
 					. '; if (' . $carrier->lower_cpp_presence('coalesce_value') . ') { return '
 					. $carrier->lower_cpp_extract('coalesce_value') . '; } ' . $fallback . ' }())';
 			}
+			$before = $this->suspensions;
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
+				$right_start = count($this->async_steps);
 				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
+				if ($before !== $this->suspensions && (!$value->operator->lazy() || count($this->async_steps) !== $right_start)) {
+					$rhs = array_splice($this->async_steps, $right_start);
+					$temp = 'logical_' . $value->start . '_' . $value->end;
+					$this->async_steps[] = "bool $temp = $left;";
+					if ($value->operator->lazy()) {
+						$guard = $value->operator === binary_operator::logical_and ? $temp : '!' . $temp;
+						$this->async_steps[] = "if ($guard) { " . implode(' ', $rhs) . " $temp = $right; }";
+						return $temp;
+					}
+					array_push($this->async_steps, ...$rhs);
+					return "($temp != ($right))";
+				}
 				if (!$value->operator->lazy()) {
 					if ($value->left instanceof ast_name_expression && $value->right instanceof ast_name_expression
 						&& $value->left->local_binding() !== null && $value->right->local_binding() !== null
@@ -1923,6 +1992,7 @@ CPP;
 			$left_safe = false;
 			$right_safe = false;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
+			$right_start = count($this->async_steps);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->left_conversion !== value_conversion::identity) {
 				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
@@ -1938,6 +2008,16 @@ CPP;
 			}
 			foreach ($type->binary_headers($value->operator) as $header) {
 				$required_headers[$header] = true;
+			}
+			if ($before !== $this->suspensions) {
+				$rhs = array_splice($this->async_steps, $right_start);
+				if (!$value->left->type_def()->cpp_trivial_value() || !$value->right->type_def()->cpp_trivial_value()
+					|| !$type->cpp_trivial_value()) ++$this->async_owned_steps;
+				$prefix = 'operand_' . $value->start . '_' . $value->end;
+				$this->async_steps[] = "[[maybe_unused]] const auto {$prefix}_left = $left;";
+				array_push($this->async_steps, ...$rhs);
+				$this->async_steps[] = "[[maybe_unused]] const auto {$prefix}_right = $right;";
+				return $type->lower_prepared_binary($value, $prefix . '_left', $prefix . '_right', $typed_initializer, $bare_comparison);
 			}
 			$same_spelling = $left === $right;
 			$operands_safe = $left_safe && $right_safe;
@@ -2258,6 +2338,8 @@ CPP;
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
+		$before = $this->suspensions;
+		$argument_steps = [];
 		foreach ($parameters as $index => $parameter) {
 			$argument = $value->arguments[$index] ?? $parameter->default_value;
 			$conversion = isset($value->arguments[$index]) ? $value->conversion($index) : $parameter->default_conversion();
@@ -2265,8 +2347,12 @@ CPP;
 			$by_value = $callback || $parameter->mode === passing_mode::value;
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
+			$step_start = count($this->async_steps);
 			$operand = $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
 				logical_root: $conversion === value_conversion::identity);
+			if (count($parameters) > 1 && count($this->async_steps) !== $step_start) {
+				$argument_steps[$index] = array_splice($this->async_steps, $step_start);
+			}
 			foreach ($type->conversion_headers($conversion) as $header) {
 				$required_headers[$header] = true;
 			}
@@ -2294,7 +2380,7 @@ CPP;
 			$arguments[0] = 'enum_receiver';
 			$direct = false;
 		}
-		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1))) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -2302,6 +2388,7 @@ CPP;
 		foreach ($parameters as $index => $parameter) {
 			$type = $callback ? $parameter : $parameter->type_def();
 			$operand = $direct_arguments[$index];
+			if (isset($argument_steps[$index])) array_push($steps, ...$argument_steps[$index]);
 			if (!isset($order_sensitive[$index]) || $index === $inline_index) {
 				$arguments[] = $operand;
 				continue;
@@ -2310,10 +2397,15 @@ CPP;
 			$temporary = 'argument_' . $value->start . '_' . $index;
 			$declaration = $type instanceof callback_type_definition ? $type->cpp_declarator($temporary) : $type->cpp_type() . ' ' . $temporary;
 			$steps[] = $declaration . ' = ' . $operand . ';';
+			if ($before !== $this->suspensions && !$type->cpp_trivial_value()) ++$this->async_owned_steps;
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
+		if ($before !== $this->suspensions) {
+			array_push($this->async_steps, ...$steps);
+			return $call;
+		}
 		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type()) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}

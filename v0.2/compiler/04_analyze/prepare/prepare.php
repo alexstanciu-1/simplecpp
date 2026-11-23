@@ -34,6 +34,10 @@ final class Preparation
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
 	private bool $in_lambda = false;
+	/** Pending source argument lists encountered while walking upward from an await. */
+	private array $async_calls /** array<int,ast_call_expression> */ = [];
+	/** Temporary nested expression sites that must transfer a result across an operand cleanup boundary. */
+	private array $async_nested /** array<int,ast_expression|ast_local_declaration> */ = [];
 	/** Conservative sum across lexical scopes; reset at every body preparation. */
 	private int $array_bytes /** uint32 */ = 0;
 	private bool $has_lambda_local = false;
@@ -152,7 +156,14 @@ final class Preparation
 		$this->name_lookups = 0;
 		$this->loop = null;
 		$this->outward = $this->switch_break_states = [];
-		$completion = $this->sequence($syntax, $source, $target, $function);
+		if ($function->is_async) {
+			try {
+				$completion = $this->sequence($syntax, $source, $target, $function);
+				$this->validate_suspending_operands();
+			} finally {
+				$this->async_calls = $this->async_nested = [];
+			}
+		} else $completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
@@ -1387,19 +1398,7 @@ final class Preparation
 			if ($this->in_catch && $this->owner->parent->is_async) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot suspend inside an async catch handler');
 			}
-			$context = $syntax->parent;
-			if ($this->owner->parent->is_async) {
-				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
-				while (($context instanceof ast_binary_expression && $context->operator->lazy())
-					|| $context instanceof ast_not_expression || $context instanceof ast_ternary_expression) {
-					$context = $context->parent;
-				}
-			}
-			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
-				|| ($context instanceof ast_assignment_statement && $context->operator === null));
-			if ($this->in_lambda || ($this->owner->parent->is_async && !($async_context || $context instanceof ast_await_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement))) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
-			}
+			$this->require_await_context($syntax);
 			$suspends = $this->owner->parent->is_async;
 			$target = $this->async_producer($syntax->operand, $initializing,
 				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
@@ -1671,6 +1670,67 @@ final class Preparation
 			$this->guard_reads = $guard_reads;
 			$this->unknown_initializers = $unknown;
 			$this->in_lambda = $in_lambda;
+		}
+	}
+
+	/** Check only the call and storage boundaries discovered at await sites, once their ordinary facts have settled. */
+	private function validate_suspending_operands(): void
+	{
+		foreach ($this->async_calls as $call) {
+			$target = $call->has_direct_signature() ? $call->function_def() : null;
+			if (!($target instanceof ast_function_declaration && $target->parent instanceof ast_file_node)) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Suspending arguments require an ordinary source function');
+			}
+			foreach ($target->parameters as $parameter) {
+				if ($parameter->mode !== passing_mode::value) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Suspending arguments require by-value parameters');
+				}
+			}
+		}
+		foreach ($this->async_nested as $site) {
+			if (!$site->type_def()->cpp_trivial_value()) throw new diagnostic($site->source(), $site->byte_start(),
+				'Nontrivial suspending intermediates and initializers require scoped result storage');
+		}
+	}
+
+	/** Only a suspension examines its parent path. Eligibility uses the facts from the ordinary binder. */
+	private function require_await_context(ast_await_expression $syntax): void
+	{
+		$context = $syntax->parent;
+		if ($this->owner->parent->is_async) {
+			$split = false;
+			$staged = null;
+			while ($context instanceof ast_expression) {
+				if ($staged !== null && ($context instanceof ast_call_expression || $context instanceof ast_binary_expression)) {
+					$this->async_nested[spl_object_id($staged)] = $staged;
+				}
+				if ($context instanceof ast_binary_expression && $context->operator !== binary_operator::coalesce) {
+					if (!$context->operator->lazy()) $staged = $context;
+					$split = $split || !$context->operator->lazy();
+				} elseif ($context instanceof ast_call_expression) {
+					$staged = $context;
+					$this->async_calls[spl_object_id($context)] = $context;
+					$split = true;
+				} elseif ($context instanceof ast_ternary_expression && $split) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps inside ternary arms are deferred');
+				} elseif (!($context instanceof ast_not_expression || $context instanceof ast_ternary_expression
+					|| $context instanceof ast_await_expression)) break;
+				$context = $context->parent;
+			}
+			if ($split && $context instanceof ast_local_declaration && !($context->parent instanceof ast_for_statement)) {
+				$this->async_nested[spl_object_id($context)] = $context;
+			} elseif ($split && !($context instanceof ast_return_statement || $context instanceof ast_echo_statement
+				|| (($context instanceof ast_call_statement || $context instanceof ast_await_statement
+					|| ($context::class === ast_assignment_statement::class && $context->operator === null))
+					&& !($context->parent instanceof ast_for_statement))
+				|| ($context instanceof ast_if_arm && $context === $context->parent->arms[0]))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps require a statement or first if condition');
+			}
+		}
+		$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
+			|| ($context instanceof ast_assignment_statement && $context->operator === null));
+		if ($this->in_lambda || ($this->owner->parent->is_async && !($async_context || $context instanceof ast_await_statement || $context instanceof ast_call_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement))) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
 		}
 	}
 

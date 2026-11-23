@@ -82,7 +82,7 @@ foreach (flavor::cases() as $flavor) {
 	$prepare(str_replace('int', 'float', $child) . 'return 8;');
 
 	$prepare($child . 'if (false && await read_value()) {return 1;}return 0;');
-	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
+	$prepare($child . 'async ' . $signature('nested') . '{return 1 + await read_value();}return 0;');
 
 	$prepare($child . 'await read_value();return 0;');
 	$prepare($child . 'if (await read_value()) {return 1;}return 0;');
@@ -501,6 +501,49 @@ foreach (flavor::cases() as $flavor) {
 			. 'echo async_wait(1),' . $root . 'async_wait(' . $root . 'job());return 8;');
 		$root_shadow_entry = $ns('Jobs', 'echo ' . $root . 'async_wait(3);return 8;');
 		$choice_entry = 'echo await choose();return 8;';
+		$left_child = 'async ' . $signature('leftValue') . '{await async_sleep_ms(1);echo "A";return 2;}';
+		$right_child = 'async ' . $signature('rightValue') . '{await async_sleep_ms(1);echo "B";return 3;}';
+		// Both arithmetic operands emit the same marker; their distinct values still prove once-only evaluation.
+		$numbers = str_replace(['leftValue', 'rightValue', '"A"', '"B"'], ['numberOne', 'numberTwo', '"E"', '"E"'], $left_child . $right_child);
+		$pair = $fn('pair', ['x','y']) . '{echo "F";return ' . $v('x') . '*10+' . $v('y') . ';}';
+		$ordered_call = 'pair(await leftValue(),await rightValue())';
+		$eager = $pair . 'async ' . $signature('compute') . '{if (false && ' . $ordered_call . ') {return 0;}'
+			. 'echo ' . $ordered_call . ',":";return await numberOne()+await numberTwo();}';
+		$eager_main = 'echo await compute();return 8;';
+		$mutate = 'async ' . str_replace('()', '(' . $parameter('p', 'shared<Point>') . ')', $signature('change'))
+			. '{await async_sleep_ms(1);' . $p . 'x=9;return 4;}';
+		$snapshot = $pair . 'async ' . $signature('observe') . '{' . $decl('shared<Point>', 'p', 'new Point()') . $p . 'x=7;'
+			. $decl('int', 'seen', 'pair(' . $p . 'x,await change(' . $v('p') . '))')
+			. 'echo ' . $p . 'x,":";return ' . $v('seen') . ';}';
+		$snapshot_main = 'echo await observe();return 8;';
+		$narrow = str_replace($parameter('x') . ',', $parameter('x', 'byte') . ',', $pair);
+		$narrow_parent = $narrow . 'async ' . $signature('compute') . '{return ' . $ordered_call . ';}';
+		$large = str_replace('return 2;', 'return 256;', $left_child);
+		$nested_parent = $pair . 'async ' . $signature('compute') . '{'
+			. $decl('int', 'n', 'await numberOne()+await numberTwo()')
+			. $v('n') . '=pair(' . $v('n') . ',pair(await leftValue(),await rightValue()));'
+			. 'if (true || ' . $ordered_call . ') {echo ":";}if (true && ' . $ordered_call . ') {echo ":";}'
+			. 'pair(await leftValue(),await rightValue());return ' . $v('n') . ';}';
+		$strings = 'async ' . $typed_fn('textPart', 'string') . '{await async_sleep_ms(1);return "heap-backed string long enough to allocate";}';
+		$text_pair = str_replace('()', '(' . $parameter('s', 'string') . ',' . $parameter('n') . ')', $signature('render'))
+			. '{echo ' . $v('s') . ';return ' . $v('n') . ';}';
+		$text_parent = $text_pair . 'async ' . $signature('compute') . '{return render(await textPart(),await rightValue());}';
+		$guard_child = $guard . 'async ' . $typed_fn('temporaryOwner', 'shared<Guard>') . '{await async_sleep_ms(1);return new Guard();}';
+		$lifetime = $pair . 'async ' . $signature('compute') . '{return pair(await temporaryOwner() !== null,await rightValue());}';
+		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('loopTest')
+			. '{while (' . $ordered_call . ') {return 1;}return 0;}return 8;'), 'Suspending operand steps');
+		rejects(fn() => $prepare($left_child . $strings . $text_pair . 'async ' . $signature('localText')
+			. '{' . $decl('string', 'label', 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()')
+			. 'return 0;}return 8;'), 'scoped result storage');
+		$accept_owner = str_replace('()', '(' . $parameter('p', 'shared<Guard>') . ',' . $parameter('n') . ')', $signature('finish'))
+			. '{echo "F";return ' . $v('n') . ';}';
+		$throw_child = 'async ' . $signature('failLater') . '{await async_sleep_ms(1);echo "T";throw new Failure();}';
+		$unwind = $accept_owner . 'async ' . $signature('compute') . '{try {return finish(await temporaryOwner(),await failLater());}'
+			. $catch('Failure') . '{echo "C";return 7;}}';
+		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('branch')
+			. '{return true ? ' . $ordered_call . ' : 0;}return 8;'), 'ternary');
+		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('laterTest')
+			. '{if (false) {return 0;}else if (' . $ordered_call . ') {return 1;}return 0;}return 8;'), 'first if');
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -634,6 +677,16 @@ foreach (flavor::cases() as $flavor) {
 			[$root_job, $ns('Other', ''), $import_entry, 'Unknown function import', '', 0],
 			[$root_job, $ns('Other', str_replace('10+', '20+', $shadow)), $import_entry, null, '214', 1],
 			[$shadow, $ns('Other', ''), $root_shadow_entry, null, '13', 3],
+			[$eager, $left_child . $right_child . $numbers, $eager_main, null, 'ABF23:EE5', 4],
+			[$eager, $left_child, $eager_main, 'Unknown', '', 0],
+			[$eager, $left_child . str_replace('return 3;', 'return 4;', $right_child) . $numbers, $eager_main, null, 'ABF24:EE5', 1],
+			[$snapshot, $point . $mutate, $snapshot_main, null, 'F9:74', 3],
+			[$narrow_parent, $large . $right_child, $eager_main, null, 'A', 3],
+			[$narrow_parent, $left_child . $right_child, $eager_main, null, 'ABF23', 1],
+			[$nested_parent, $left_child . $right_child . $numbers, $eager_main, null, 'EEABFF:ABF:ABF73', 2],
+			[$text_parent, $strings . $right_child, $eager_main, null, 'Bheap-backed string long enough to allocate3', 3],
+			[$lifetime, $guard_child . $right_child, $eager_main, null, 'DBF13', 3],
+			[$unwind, $failure . $guard_child . $throw_child, $eager_main, null, 'TDC7', 2],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
@@ -688,7 +741,8 @@ foreach (flavor::cases() as $flavor) {
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
 			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
-				'objects' => $objects, 'exit' => 8, 'stderr' => '', 'stdout_hex' => bin2hex($stdout)];
+				'objects' => $objects, 'exit' => $leaf === ($large . $right_child) ? 1 : 8,
+				'stderr' => $leaf === ($large . $right_child) ? "integer_cast_out_of_range\n" : '', 'stdout_hex' => bin2hex($stdout)];
 			if ($i >= 74 && $i <= 81 && isset($argv[1])) {
 				$publication = publish_task_payloads($project);
 				verify($publication == publish_task_payloads($fresh), 'Payload publication differs from fresh compilation');
