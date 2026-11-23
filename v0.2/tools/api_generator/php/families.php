@@ -737,8 +737,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $traversal = collectionTraversalPlan() + ['next_key_method' => 'iteration_next_key'];
-        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method']]);
+        $traversal = collectionTraversalPlan() + ['next_key_method' => 'iteration_next_key', 'current_value_method' => 'iteration_current_value'];
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
         requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
         $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }

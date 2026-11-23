@@ -170,8 +170,23 @@ foreach ([
 	}
 }
 
+$text = "items: vector<int> = [1, 2,]\r\nmapping: hash<int,string> = {\r\n    \"k\": items[0],\r\n}\r\nitems[1] = mapping[\"k\"]\r\nreturn items[1]";
+$file = $frontend->parse(new source_file('collections.py', $text, flavor::python));
+[$vector, $hash, $write] = $file->main()->body()->statements;
+check($vector->initializer instanceof scpp\compiler\ast_collection_expression
+	&& $hash->initializer instanceof scpp\compiler\ast_keyed_collection_expression
+	&& $hash->initializer->source_text() === "{\r\n    \"k\": items[0],\r\n}"
+	&& $hash->initializer->entries[0]->value instanceof scpp\compiler\ast_index_expression
+	&& $write instanceof scpp\compiler\ast_index_assignment
+	&& $write->source_text() === "items[1] = mapping[\"k\"]\r\n",
+	'Python collections and indexed writes use shared nodes and retain source spans');
+
 foreach ([
 	["for item in 1:\n    pass\nreturn 8", 'Python for requires a typed vector'],
+	["text: string = \"a\"\nreturn text[0]", 'Python indexed read requires a typed vector or hash'],
+	["text: string = \"a\"\ntext[0] = 2\nreturn 8", 'Python indexed write requires a typed vector or hash'],
+	["items: vector<int> = []\nitems[] = 1\nreturn 8", 'Python indexed write requires one key and ='],
+	["items: vector<int> = {}\nreturn 8", 'Keyed initializer requires an explicitly typed published keyed destination'],
 	["def probe(items: vector<int>) -> int:\n    for item in items:\n        pass\n    return item\nreturn 8", 'Unknown or not-yet-initialized local/global: item'],
 	["def probe(items: vector<int>) -> int:\n    item: string = \"sentinel\"\n    for item in items:\n        pass\n    return 8\nreturn 8", 'conversion'],
 	["missing += 1\nreturn 8", 'local'],

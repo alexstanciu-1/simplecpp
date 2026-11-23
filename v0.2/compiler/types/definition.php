@@ -127,6 +127,7 @@ interface iterable_type
 interface key_iterable_type extends iterable_type
 {
 	public function lower_cpp_iteration_next_key(string $receiver, string $output, string $prefix = ''): string;
+	public function lower_cpp_iteration_current_value(string $receiver): string;
 }
 
 /** Unary observations on a published collection. Native uint8. */

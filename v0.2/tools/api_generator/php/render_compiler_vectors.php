@@ -138,7 +138,7 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
     $publish = $boxed ? " . ' && ((' . \$key . ' = ' . \$prefix . 'iteration_key_index < 0 ? scpp::mixed::from_string(' . \$prefix . 'iteration_key_text) : scpp::mixed::from_integer(' . \$prefix . 'iteration_key_index)), true)'" : '';
     $output = $constructed ? "\n\tpublic function iteration_output_type(): ?string { return \$this->cpp_type() . '::iteration_output'; }\n" : '';
     $keys = isset($plan['next_key_method']) ? strtr(readFile(__DIR__ . '/../templates/collections/compiler_key_iteration.php.tpl'), [
-        '@next_key@' => $plan['next_key_method'],
+        '@next_key@' => $plan['next_key_method'], '@current_value@' => $plan['current_value_method'],
     ]) : '';
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),

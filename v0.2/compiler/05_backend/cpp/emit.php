@@ -775,7 +775,7 @@ CPP;
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$required_headers /** array<string,bool> */, ?statement_return_target $function = null,
-		?cpp_resume_context $resume = null): array /** list<string> */
+		?cpp_resume_context $resume = null, ?string $first_initializer = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
@@ -902,7 +902,9 @@ CPP;
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => null];
-				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
+				$first_initializer = $resume === null && $statement->keys_only && $type instanceof key_iterable_type
+					&& $this->matches_first_hash_read($statement) ? $type->lower_cpp_iteration_current_value($iteration_source) : null;
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume, $first_initializer) as $line) $lines[] = "\t" . $line;
 				$lines[] = "\t}";
 				if ($resume !== null) {
 					array_pop($resume->loops);
@@ -1076,7 +1078,8 @@ CPP;
 					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
-				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
+				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot,
+					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
 					$type = $statement->local_def()->type_def();
@@ -1150,6 +1153,19 @@ CPP;
 		return 'goto ' . $label . ';';
 	}
 
+	/** Match just the first initializer using settled local identities, before any body effect. */
+	private function matches_first_hash_read(ast_foreach_statement $loop): bool
+	{
+		$first = $loop->body->statements[0] ?? null;
+		if (!$first instanceof ast_local_declaration || $first->initialization() !== value_conversion::identity
+			|| !($first->initializer instanceof ast_index_expression) || $loop->destination !== $loop->value) return false;
+		$source = $loop->source_value;
+		$read = $first->initializer;
+		return $source instanceof ast_name_expression && ($local = $source->local_binding()) instanceof ast_local_declaration
+			&& $read->receiver instanceof ast_name_expression && $read->receiver->local_binding() === $local
+			&& $read->index instanceof ast_name_expression && $read->index->local_binding() === $loop->value;
+	}
+
 	/** Keep a continue landing outside body locals, immediately before the native update or test.
 	 * @param ast_function_declaration[] $declarations
 	 * @param ast_global_declaration[] $globals
@@ -1157,9 +1173,9 @@ CPP;
 	 * @return string[]
 	 */
 	private function loop_body_lines(ast_repeating_statement $loop, array &$declarations, array &$globals, array &$headers,
-		statement_return_target $function, ?cpp_resume_context $resume): array
+		statement_return_target $function, ?cpp_resume_context $resume, ?string $first_initializer = null): array
 	{
-		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume);
+		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume, $first_initializer);
 		if ($this->transfer_labels === []) return $body;
 		$label = 'scpp_continue_' . $loop->start;
 		if (!isset($this->transfer_labels[$label])) return $body;
@@ -1585,7 +1601,7 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous', ?string $operand_override = null): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
@@ -1638,7 +1654,7 @@ CPP;
 				return '(void)' . $prefix;
 			}
 		}
-		$operand = $this->value($value, $global_references, $declarations, $headers,
+		$operand = $operand_override ?? $this->value($value, $global_references, $declarations, $headers,
 			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity),
 			logical_root: $conversion === value_conversion::identity);
 		if ($type instanceof fixed_array_type) return '__builtin_memmove(' . $prefix . ', ' . $operand . ', sizeof(' . $prefix . '))';
@@ -1755,8 +1771,9 @@ CPP;
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if ($value instanceof ast_keyed_collection_expression) {
-			/** @var type_definition&keyed_initializer_type $type */
 			$type = $value->type_def();
+			if ($value->entries === []) return $type->lower_cpp_empty();
+			/** @var type_definition&keyed_initializer_type $type */
 			$elements = [];
 			foreach ($value->entries as $entry) {
 				$key = $this->value($entry->key, $global_references, $declarations, $required_headers);
