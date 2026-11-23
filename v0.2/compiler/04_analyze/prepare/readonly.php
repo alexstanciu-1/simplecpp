@@ -13,6 +13,14 @@ final class Readonly_Access
 		return $type->field($site->field) ?? throw new \LogicException('Unresolved field');
 	}
 
+	/** Local aliases resolve to their original parameter binding. */
+	public static function require_writable(ast_node $site, ?ast_local_binding $binding): void
+	{
+		if ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through read-only reference: ' . $binding->short_name);
+		}
+	}
+
 	/** Validate a mutation path; only a direct, approved constructor initialization can bypass its own field. */
 	public static function write(ast_expression $site, bool $payload = false, ?ast_instance_field $initializing = null): void
 	{
@@ -25,6 +33,7 @@ final class Readonly_Access
 			$site = $site->receiver;
 			if ($site->type_def()->mutates_referenced_value()) return;
 		}
+		if ($site instanceof ast_name_expression) self::require_writable($site, $site->local_binding());
 	}
 }
 

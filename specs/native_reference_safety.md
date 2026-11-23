@@ -113,6 +113,8 @@ Mutable storage and existing read-only borrows may both supply the argument.
 Temporary values, conversions and container-interior references remain rejected;
 `const` does not relax the existing native-reference eligibility rules.
 
+The active v0.2 PHP flavor supports this spelling on synchronous free functions for typed vector and hash parameters. Both lower to native const references.
+
 Reads, ordinary value copies (where the type is copyable), and forwarding to another
 read-only reference parameter are allowed. Local `=&` aliases inherit read-only
 access, including alias chains and direct stable field projections. Copying an

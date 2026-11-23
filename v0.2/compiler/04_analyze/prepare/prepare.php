@@ -301,6 +301,7 @@ final class Preparation
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
+					Readonly_Access::write($receiver, true);
 					if (!($binding instanceof ast_local_binding)
 						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_record_declaration)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
@@ -324,6 +325,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
+					Readonly_Access::write($statement->receiver, true);
 					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
@@ -788,6 +790,7 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
+		Readonly_Access::require_writable($statement->value, $destination);
 		$output = $statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type();
 		if ($output instanceof record_type_definition) {
 			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
@@ -919,9 +922,9 @@ final class Preparation
 		} else {
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
-		$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
+		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& (!($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
-		if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
+		if (!($origin instanceof ast_local_declaration) && !$reference_parameter) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
 		$type = $origin->type_def();
@@ -1092,6 +1095,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $name);
 		}
+		Readonly_Access::require_writable($site, $local);
 		return $local;
 	}
 
@@ -1590,8 +1594,8 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
 			}
 			$id = $binding->storage_id();
-			// Reference parameters can alias each other or globals; never propagate their write constants.
-			$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
+			// Reference parameters may observe writes through other aliases.
+			$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode !== passing_mode::value))
 				|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
 			$write = $this->latest_writes[$id] ?? null;
 			$type = $binding->type_def();
@@ -1647,13 +1651,13 @@ final class Preparation
 	}
 
 	/**
-	 * Validate mutable storage and defer invalidation until every argument has been evaluated.
+	 * Bind exact stable storage. Only a writable reference can invalidate the caller’s value facts.
 	 * @param int[] $writes Local storage IDs invalidated by the call.
 	 */
-	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */): void
+	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */, bool $readonly = false): void
 	{
 		$storage = $argument instanceof ast_name_expression ? $argument->declaration() : null;
-		if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
+		if (!$readonly && ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
 		}
 		if (!($storage instanceof ast_local_binding)) {
@@ -1663,7 +1667,10 @@ final class Preparation
 		if ($storage->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
-		$writes[] = $storage->storage_id();
+		if (!$readonly) {
+			Readonly_Access::require_writable($argument, $storage);
+			$writes[] = $storage->storage_id();
+		}
 	}
 
 	/** A callee can replace the slot only after its arguments are evaluated. @param int[] $writes */
@@ -2308,8 +2315,8 @@ final class Preparation
 			} else {
 				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			}
-			if ($parameter?->mode === passing_mode::reference) {
-				$this->bind_reference($argument, $parameter->type_def(), $writes);
+			if ($parameter !== null && $parameter->mode !== passing_mode::value) {
+				$this->bind_reference($argument, $parameter->type_def(), $writes, $parameter->mode === passing_mode::readonly_reference);
 				$conversions[] = value_conversion::identity;
 			}
 			else {

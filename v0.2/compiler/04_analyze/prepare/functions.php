@@ -245,7 +245,7 @@ final class Function_Preparation
 		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {
-			if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
+			if ($type instanceof generator_type_definition && $parameter->mode !== passing_mode::value) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
@@ -264,10 +264,14 @@ final class Function_Preparation
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
+			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
+				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
+			}
 			$parameter->settle_type($parameter_type);
 			$default = $parameter->default_value;
 			if ($default !== null) {
-				if ($parameter->mode === passing_mode::reference) {
+				if ($parameter->mode !== passing_mode::value) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
 				}
 				if ($parameter_type instanceof enum_type_definition) {

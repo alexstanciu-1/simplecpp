@@ -2468,7 +2468,7 @@ CPP;
 	private function forward_argument(ast_parameter_declaration $parameter): string
 	{
 		$value = $this->name($parameter);
-		return $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
+		return $parameter->mode !== passing_mode::value || $parameter->type_def()->cpp_trivial_value() ? $value
 			: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
 	}
 
@@ -2571,9 +2571,10 @@ CPP;
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
+			if ($parameter->mode === passing_mode::readonly_reference) $native = 'const ' . $native;
 			$name = $this->name($parameter);
 			$parameters[] = '[[maybe_unused]] ' . ($type instanceof callback_type_definition
-				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $name);
+				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode !== passing_mode::value ? '&' : '') . $name);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}

@@ -843,8 +843,13 @@ final class Parser
 						|| ($this->cursor->is(token_kind::ampersand) && $this->cursor->next_is(token_kind::variable)))) {
 					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected explicit parameter type before parameter name');
 				}
+				$readonly = $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->keyword('const');
+				if ($readonly) $this->cursor->take_keyword('const');
 				$type = $this->type_reference(allow_void: true, parameter: true);
-				$mode = $this->parameter_mode();
+				if ($readonly) {
+					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
+					$mode = passing_mode::readonly_reference;
+				} else $mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
 			}
