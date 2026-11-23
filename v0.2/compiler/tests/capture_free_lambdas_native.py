@@ -95,6 +95,18 @@ def prove_block_callback_result(work):
     ], unaffected_source='consumer.php', unaffected_revisions={3})
 
 
+def prove_block_local_scope(work):
+    declaration = '$g = function ():int { return 1; };'
+    inside = f'if (true) {{ {declaration} echo $g(); }} return 8;'
+    outside = f'if (true) {{ {declaration} }} echo $g(); return 8;'
+    work.mkdir()
+    revisions(work, 'php', dict(main=inside), [
+        (None, None, b'1'),
+        ('main', outside, 'Invocation requires a typed callable local: g'),
+        ('main', inside, b'1'),
+    ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -103,6 +115,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_block_local_scope(root / 'block-local-scope')
         prove_block_callback_result(root / 'block-callback-result')
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)

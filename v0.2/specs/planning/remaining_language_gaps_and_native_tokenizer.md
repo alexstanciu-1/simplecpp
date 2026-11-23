@@ -428,6 +428,11 @@ the published bundle. Repairing the closure to return a string in the same
 compiler instance produces fresh-build-equivalent output and invokes the
 repaired callback. Historical callable-local spelling and captures remain deferred.
 
+**Block-local callable visibility (`SCOPE-VAR-002`).** The native closure fixture
+declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
+call just past the closing brace reports `Invocation requires a typed callable local: g`.
+Moving it back in the same compiler instance reproduces the fresh build and prints `1` again.
+
 The original audit classifications follow.
 
 **Missing (7)**
