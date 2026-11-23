@@ -445,6 +445,11 @@ Removing the second argument reports `Argument count mismatch for function: h`.
 Restoring the call in the same compiler instance prints `12` again and matches a fresh build.
 Closure parameter defaults and captures remain deferred.
 
+**Explicit closure result type (`CLOSURE-REJECT-001`, partial).** A capture-free
+`function () { return 1; }` reports `Expected : (lambda result type)`.
+Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
+The donor's `use ($a)` form remains deferred with the other capture cases.
+
 The original audit classifications follow.
 
 **Missing (7)**

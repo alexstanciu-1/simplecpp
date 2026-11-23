@@ -134,6 +134,16 @@ def prove_block_call_arity(work):
     ])
 
 
+def prove_block_requires_result_type(work):
+    missing = '$f = function () { return 1; }; echo $f(); return 8;'
+    repaired = missing.replace('function ()', 'function (): int')
+    work.mkdir()
+    revisions(work, 'php', dict(main=missing), [
+        (None, None, 'Expected : (lambda result type)'),
+        ('main', repaired, b'1'),
+    ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -142,6 +152,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')
         prove_block_local_scope(root / 'block-local-scope')
