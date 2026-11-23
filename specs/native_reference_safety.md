@@ -240,7 +240,7 @@ usable and native aliases to that storage remain bound.
   [array semantics](array_semantics.md#10-unsetak). Its existing lazy/no-creation rules
   remain unchanged, including when the root variable is a native alias.
 
-The initial compiler slice accepts a single variable operand as a statement.
+The active v0.2 PHP-flavor compiler accepts `unset($variable);` on a nullable value, optional shared owner or weak handle. A required owner rejects reset. Repeating a reset preserves absence. Callable storage is deferred in this compiler.
 Direct property resets, indexed `clean` and value-producing forms
 await their own admission/model work. An already valid local alias to a
 stable field can be cleaned according to its selected storage type. These limits

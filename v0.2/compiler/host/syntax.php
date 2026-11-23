@@ -322,6 +322,10 @@ final class Syntax_Inspection
 			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::expression($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
+		if ($statement instanceof ast_unset_statement) {
+			return ['kind' => 'unset', 'name' => self::name($statement, $statement->name, $statement->start + 2),
+				'span' => self::span($statement)];
+		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'name' => self::name($statement, $statement->name,
 				$statement->start + ($statement->postfix ? 0 : 1)), 'operator' => $statement->operator->name,

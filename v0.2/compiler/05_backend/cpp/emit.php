@@ -1646,6 +1646,10 @@ CPP;
 			$target = $this->value($statement->target, $global_references, $declarations, $headers);
 			return $statement->target->type_def()->lower_cpp_update($statement->operator, $target, $statement->postfix);
 		}
+		if ($statement instanceof ast_unset_statement) {
+			$local = $statement->local_def();
+			return $this->name($local) . ' = ' . $local->type_def()->cpp_type() . '{}';
+		}
 		if ($statement instanceof ast_update_statement) {
 			return $this->local_update($statement);
 		}

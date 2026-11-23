@@ -1120,6 +1120,11 @@ final class Preparation
 			return;
 		}
 		$local = $this->assignment_local($statement, $statement->name);
+		if ($statement instanceof ast_unset_statement) {
+			$statement->prepare_reset($local);
+			$this->record_assignment($local, null);
+			return;
+		}
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
 			if ($consumes_result && ($local instanceof ast_parameter_declaration || $type !== type_registry::integer())) {

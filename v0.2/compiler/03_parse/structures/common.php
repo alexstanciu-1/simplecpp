@@ -378,6 +378,26 @@ final class ast_local_alias extends ast_local_declaration
 {
 }
 
+/** Reset the existing slot to its type's absent state. */
+final class ast_unset_statement extends ast_storage_write
+{
+	public function prepare_reset(ast_local_binding $local): void
+	{
+		// Aliases always introduce a new name and resolve to their original slot.
+		if ($this->name !== $local->declaration_key()
+			|| ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::reference)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset a native alias or reference parameter');
+		}
+		$type = $local->type_def();
+		if (!(($type instanceof carrier_type_definition && $type->accepts_empty())
+			|| ($type instanceof shared_record_type_definition && !$type->required)
+			|| $type instanceof weak_record_type_definition)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset storage of type ' . $type->name);
+		}
+		$this->settle_binding($local);
+	}
+}
+
 /**
  * An authored write to an existing local; preparation attaches its binding and approved conversion.
  *

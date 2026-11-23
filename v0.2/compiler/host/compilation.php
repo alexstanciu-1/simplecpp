@@ -185,6 +185,9 @@ final class Compilation_Inspection
 			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::value($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
+		if ($statement instanceof ast_unset_statement) {
+			return ['kind' => 'unset', 'id' => $statement->local_def()->storage_id()];
+		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];

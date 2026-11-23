@@ -254,6 +254,14 @@ final class Parser
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
 		if ($grammar instanceof Python_Grammar) return $this->python_statement($grammar, $collector);
+		if ($this->cursor->keyword('unset')) {
+			$start = $this->cursor->position();
+			$this->cursor->take_keyword('unset');
+			$this->cursor->take(token_kind::lparen, '(');
+			$name = $this->cursor->name(token_kind::variable);
+			$this->cursor->take(token_kind::rparen, ') after a single whole-variable unset operand');
+			return new ast_unset_statement($start, $this->statement_end(token_kind::semicolon), $name);
+		}
 		if ($this->cursor->keyword('global') || $this->cursor->keyword('const')) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
 				($this->cursor->keyword('const') ? 'Constant' : 'Global') . ' declarations are only allowed at file/namespace level');
