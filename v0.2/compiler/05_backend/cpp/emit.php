@@ -795,6 +795,22 @@ CPP;
 		return $type->lower_cpp_condition($operand, $negated);
 	}
 
+	/**
+	 * Keep a branch operand's prerequisite statements with its expression until the caller places the branch.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @return array{string,list<string>}
+	 */
+	private function branch_operand(ast_expression $operand, array &$globals, array &$declarations, array &$headers,
+		bool $condition = false): array
+	{
+		$start = count($this->async_steps);
+		$text = $condition ? $this->condition($operand, $globals, $declarations, $headers)
+			: $this->value($operand, $globals, $declarations, $headers);
+		return [$text, count($this->async_steps) === $start ? [] : array_splice($this->async_steps, $start)];
+	}
+
 	/** Keep staged values in the full expression's scope on success and exception. */
 	private function async_statement(string $statement): string
 	{
@@ -1828,20 +1844,20 @@ CPP;
 		}
 		if ($value instanceof ast_ternary_expression) {
 			$test = $this->condition($value->condition, $global_references, $declarations, $required_headers);
-			$true_start = count($this->async_steps);
-			$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
-			$false_start = count($this->async_steps);
-			$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
-			if (count($this->async_steps) !== $true_start) {
-				// Keep each arm's suspension and cleanup inside its selected branch.
-				$false_steps = array_splice($this->async_steps, $false_start);
-				$true_steps = array_splice($this->async_steps, $true_start);
-				$result = 'selection_' . $value->start . '_' . $value->end;
-				$this->async_steps[] = $value_type->cpp_type() . " $result;";
-				$true_steps[] = "$result = $yes;";
-				$false_steps[] = "$result = $no;";
-				$this->async_steps[] = "if ($test) { " . implode(' ', $true_steps) . ' } else { ' . implode(' ', $false_steps) . ' }';
-				return $result;
+			if ($this->async_body) {
+				[$yes, $true_steps] = $this->branch_operand($value->when_true, $global_references, $declarations, $required_headers);
+				[$no, $false_steps] = $this->branch_operand($value->when_false, $global_references, $declarations, $required_headers);
+				if ($true_steps !== [] || $false_steps !== []) {
+					$result = 'selection_' . $value->start . '_' . $value->end;
+					$this->async_steps[] = $value_type->cpp_type() . " $result;";
+					$true_steps[] = "$result = $yes;";
+					$false_steps[] = "$result = $no;";
+					$this->async_steps[] = "if ($test) { " . implode(' ', $true_steps) . ' } else { ' . implode(' ', $false_steps) . ' }';
+					return $result;
+				}
+			} else {
+				$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
+				$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
 			}
 			$selection = '(' . $test . ' ? ' . $yes . ' : ' . $no . ')';
 			// Two native lvalue arms can yield a reference. Publish an owned value at an untyped use site.
@@ -2012,20 +2028,20 @@ CPP;
 			$before = $this->suspensions;
 			if ($value->operator->logical()) {
 				$left = $this->condition($value->left, $global_references, $declarations, $required_headers);
-				$right_start = count($this->async_steps);
-				$right = $this->condition($value->right, $global_references, $declarations, $required_headers);
-				if ($before !== $this->suspensions && (!$value->operator->lazy() || count($this->async_steps) !== $right_start)) {
-					$rhs = array_splice($this->async_steps, $right_start);
-					$temp = 'logical_' . $value->start . '_' . $value->end;
-					$this->async_steps[] = "bool $temp = $left;";
-					if ($value->operator->lazy()) {
-						$guard = $value->operator === binary_operator::logical_and ? $temp : '!' . $temp;
-						$this->async_steps[] = "if ($guard) { " . implode(' ', $rhs) . " $temp = $right; }";
-						return $temp;
+				if ($this->async_body) {
+					[$right, $rhs] = $this->branch_operand($value->right, $global_references, $declarations, $required_headers, condition: true);
+					if ($before !== $this->suspensions && (!$value->operator->lazy() || $rhs !== [])) {
+						$temp = 'logical_' . $value->start . '_' . $value->end;
+						$this->async_steps[] = "bool $temp = $left;";
+						if ($value->operator->lazy()) {
+							$guard = $value->operator === binary_operator::logical_and ? $temp : '!' . $temp;
+							$this->async_steps[] = "if ($guard) { " . implode(' ', $rhs) . " $temp = $right; }";
+							return $temp;
+						}
+						array_push($this->async_steps, ...$rhs);
+						return "($temp != ($right))";
 					}
-					array_push($this->async_steps, ...$rhs);
-					return "($temp != ($right))";
-				}
+				} else $right = $this->condition($value->right, $global_references, $declarations, $required_headers);
 				if (!$value->operator->lazy()) {
 					if ($value->left instanceof ast_name_expression && $value->right instanceof ast_name_expression
 						&& $value->left->local_binding() !== null && $value->right->local_binding() !== null
