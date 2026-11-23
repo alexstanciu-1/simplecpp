@@ -1744,6 +1744,7 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
+		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
@@ -1926,7 +1927,7 @@ final class Preparation
 		$type = $binding?->type_def();
 		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
-			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
@@ -1947,7 +1948,6 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
-				if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$static = $call->expression_qualified();
 				if ($static) $record = $this->static_qualifier($receiver, $initializing);
@@ -1963,7 +1963,8 @@ final class Preparation
 					$symbol = $record instanceof record_type_definition
 						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call)
 						: $this->symbols->entry('method:' . $record->name . '::' . $name);
-					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
+					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner,
+						$call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0);
 					$method = $symbol?->declaration();
 					if ($method === null && !$static && $record instanceof record_type_definition && $record->exception_descendant()) {
 						$binding = type_registry::exception()->runtime_method($name);
@@ -1974,6 +1975,10 @@ final class Preparation
 						}
 					}
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
+					$interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
+					if ($call instanceof ast_named_call && ($static || $method->has_virtual_dispatch() || $interface_dispatch)) {
+						throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+					}
 					if ($static !== $method->is_static) {
 						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
 						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
@@ -1983,7 +1988,7 @@ final class Preparation
 						if ($receiver instanceof ast_this_expression) $this->constructor_initialization?->complete($call);
 					}
 					$this->source_call($call, $symbol, $method, $initializing, called: $static ? $record : null);
-					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
+					$call->interface_dispatch = $interface_dispatch;
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
@@ -2021,7 +2026,7 @@ final class Preparation
 		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
-			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);

@@ -2862,6 +2862,7 @@ CPP;
 		$before = $this->suspensions;
 		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
 		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
+		$receiver_reorderable = true;
 		$method = $runtime ? $function->receiver_method : !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
@@ -2874,7 +2875,7 @@ CPP;
 			unset($operands[0], $parameters[0]);
 		} elseif ($method && $function->parent instanceof ast_enum_declaration) {
 			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
-			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers, $receiver_reorderable);
 			if ($function->parameters === []) return $name . '(' . $receiver . ')';
 			$arguments[] = $receiver;
 		} elseif ($method) {
@@ -2892,7 +2893,7 @@ CPP;
 			return $name . '()';
 		}
 		$direct_arguments = [];
-		$direct = $steps === [];
+		$direct = $steps === [] && $receiver_reorderable;
 		$has_reference = false;
 		$order_sensitive = [];
 		$inline_index = null;
@@ -2961,7 +2962,6 @@ CPP;
 			$operand = $direct_arguments[$index];
 			if (isset($argument_steps[$index])) array_push($steps, ...$argument_steps[$index]);
 			if (isset($constructed_arguments[$index]) || !isset($order_sensitive[$index]) || $index === $inline_index) {
-				$arguments[] = $operand;
 				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
@@ -2969,10 +2969,11 @@ CPP;
 			$declaration = $type instanceof callback_type_definition ? $type->cpp_declarator($temporary) : $type->cpp_type() . ' ' . $temporary;
 			$steps[] = $declaration . ' = ' . $operand . ';';
 			if ($before !== $this->suspensions && !$type->cpp_trivial_value()) ++$this->async_owned_steps;
-			$arguments[] = $type->cpp_trivial_value() ? $temporary
+			$direct_arguments[$index] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
-		if ($value instanceof ast_named_call) $arguments = $value->parameter_order($arguments);
+		if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
+		array_push($arguments, ...$direct_arguments);
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		if ($before !== $this->suspensions) {
 			array_push($this->async_steps, ...$steps);

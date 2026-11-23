@@ -943,8 +943,7 @@ final class Parser
 			}
 			return new ast_callable_reference($name, $start, $end);
 		}
-		$labels = ($qualifier === call_qualifier::ordinary && ($separator === null
-			|| ($separator === token_kind::dot && str_contains($name, '\\')))) ? [] : null;
+		$labels = $qualifier === call_qualifier::ordinary && $separator !== token_kind::scope ? [] : null;
 		$arguments = $this->arguments($labels);
 		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
@@ -962,7 +961,7 @@ final class Parser
 		while (!$this->cursor->is(token_kind::rparen)) {
 			if ($this->cursor->is(token_kind::identifier) && ($this->cursor->next_is(token_kind::colon)
 				|| ($this->cursor->tokens->source->flavor === flavor::python && $this->cursor->next_is(token_kind::assign)))) {
-				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Named arguments require a direct source function');
+				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), ast_named_call::UNSUPPORTED_TARGET);
 				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
 			} elseif ($labels) {

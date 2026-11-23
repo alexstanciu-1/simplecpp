@@ -379,6 +379,8 @@ class ast_call_expression extends ast_expression
 /** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
 final class ast_named_call extends ast_call_expression
 {
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function or nonvirtual instance method';
+
 	/** PROPERTIES */
 	/** @var string[] Written label keyed by the argument's source position. */
 	public readonly array $labels /** array<uint32,string> */;
