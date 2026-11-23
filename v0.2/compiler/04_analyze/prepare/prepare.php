@@ -1797,6 +1797,7 @@ final class Preparation
 		$type = $binding?->type_def();
 		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
@@ -1817,6 +1818,7 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
+				if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$static = $call->expression_qualified();
 				if ($static) $record = $this->static_qualifier($receiver, $initializing);
@@ -1882,13 +1884,15 @@ final class Preparation
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
 		$function = $symbol->declaration();
+		$uses = $call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0;
 		if ($function instanceof ast_function_declaration && !$this->in_lambda) {
-			$this->dependencies?->watch_call($symbol, $this->owner);
+			$this->dependencies?->watch_call($symbol, $this->owner, $uses);
 		} else {
-			$this->dependencies?->watch($symbol, $this->owner);
+			$this->dependencies?->watch($symbol, $this->owner, $uses);
 		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
@@ -2244,13 +2248,18 @@ final class Preparation
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
+		$slots = null;
+		if ($call instanceof ast_named_call) {
+			$call->bind_slots($function);
+			$slots = $call->slots;
+		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($callback ? $call->name : $function->name()));
 		}
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
-			$parameter = $callback ? null : $function->parameters[$index];
+			$parameter = $callback ? null : $function->parameters[$slots[$index] ?? $index];
 			$type = $parameter === null ? $function->inputs[$index] : $parameter->type_def();
 			if ($type instanceof callback_type_definition && $argument instanceof ast_callable_reference) {
 				$this->expression_visits++;

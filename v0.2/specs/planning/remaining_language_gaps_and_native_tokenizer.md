@@ -376,7 +376,9 @@ Take abstract-base forwarding and variance as separate follow-ups.
 
 ### G08 · Function and method signatures
 
-**Named Arguments · open language feature.** `myFunction(paramName: $value);` binds the argument to its declared parameter name. The audit rejected this syntax and executed the equivalent positional call with defaults. Decide whether parameter names are part of the public call contract, how names interact with positional arguments and defaults, and how unknown or duplicate names are diagnosed. Prove that reordered names evaluate arguments once in written order, including after a parameter rename in a resident compiler.
+**Named arguments · direct source functions implemented.** Written operands and their conversions run once in source order. Preparation binds labels to by-value parameters and supplies omitted defaults. The native proof covers all four flavors, a throwing conversion, diagnostics, and parameter-rename recovery against a fresh build. Reference parameters, methods, constructors and runtime callables are deferred. [Language contract](../../../specs/compiler_entry_v0_2.md#typed-value-parameters-and-returns) · [Native proof](../../compiler/tests/named_arguments_native.py)
+
+Preparation-only measurement on a PHP-flavor fixture with eight functions making 32 calls each, a target function and an entry body. Ten measured samples followed two warm-ups. Median fresh preparation was 7.431 ms positional and 7.985 ms named (10 prepared). Editing one function body took 1.008 ms positional and 1.102 ms named (1 prepared, 9 reused). These timings exclude the frontend, C++ emission and Clang.
 
 
 **Omitted return types (`FUNC-DECL-001`).** Use an explicit result type for named

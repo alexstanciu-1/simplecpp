@@ -915,16 +915,31 @@ final class Parser
 			}
 			return new ast_callable_reference($name, $start, $end);
 		}
-		$arguments = $this->arguments();
+		$labels = ($qualifier === call_qualifier::ordinary && ($separator === null
+			|| ($separator === token_kind::dot && str_contains($name, '\\')))) ? [] : null;
+		$arguments = $this->arguments($labels);
+		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
 
-	/** Parse ordinary or constructor arguments in source order. @return ast_expression[] */
-	private function arguments(): array /** list<ast_expression> */
+	/**
+	 * Parse operands in written order. A direct call can also collect labels by operand index.
+	 * @param string[]|null $labels
+	 * @return ast_expression[]
+	 */
+	private function arguments(?array &$labels = null): array /** list<ast_expression> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
+			if ($this->cursor->is(token_kind::identifier) && ($this->cursor->next_is(token_kind::colon)
+				|| ($this->cursor->tokens->source->flavor === flavor::python && $this->cursor->next_is(token_kind::assign)))) {
+				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Named arguments require a direct source function');
+				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
+				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
+			} elseif ($labels) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
+			}
 			$arguments[] = $this->value();
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;

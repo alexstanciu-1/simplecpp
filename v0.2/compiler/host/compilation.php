@@ -299,6 +299,10 @@ final class Compilation_Inspection
 		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if ($value instanceof ast_call_expression) {
+			if ($value instanceof ast_named_call) {
+				$row['labels'] = $value->labels;
+				$row['parameter_slots'] = $value->slots;
+			}
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
 			$row['arguments'] = array_map(self::value(...), $value->runtime_binding() !== null

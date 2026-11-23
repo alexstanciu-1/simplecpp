@@ -29,6 +29,10 @@ enum dependency_use: int
  */
 final class Dependency_Watches
 {
+	/** CONSTANTS */
+	/** Subscription mask for source-name binding, separate from enum helper emission uses. */
+	public const int PARAMETER_NAMES = 16;
+
 	/** PROPERTIES */
 	/**
 	 * Native non-owning symbols/watchers, grouped by stable source key. Owning buckets never escape this coordinator.
@@ -103,9 +107,9 @@ final class Dependency_Watches
 	}
 
 	/** Register the ordinary symbol watch and distinguish an invocation from a name lookup. */
-	public function watch_call(symbol_entry $symbol, ast_function_body $caller): void
+	public function watch_call(symbol_entry $symbol, ast_function_body $caller, int $uses /** uint8 */ = 0): void
 	{
-		$this->watch($symbol, $caller);
+		$this->watch($symbol, $caller, $uses);
 		$this->targets[$caller][$symbol] = true;
 		$this->reference_cycles_checked = false;
 		if ($caller->parent->returns_reference) $this->reference_callers[spl_object_id($caller)] = $caller;
@@ -178,7 +182,7 @@ final class Dependency_Watches
 	}
 
 	/** Queue observers; publication decides which semantic changes matter and explicitly ends the batch. */
-	public function changed(symbol_entry $symbol): void
+	public function changed(symbol_entry $symbol, int $only /** uint8 */ = 0): void
 	{
 		if (!$this->observers->offsetExists($symbol)) {
 			return;
@@ -186,6 +190,7 @@ final class Dependency_Watches
 		foreach ($this->observers[$symbol] as $watchers) {
 			foreach ($watchers as $watcher) {
 				/** @var dependency_watcher $watcher */
+				if ($only !== 0 && ($watchers[$watcher] & $only) === 0) continue;
 				$this->pending[$watcher] = null;
 			}
 		}

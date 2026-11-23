@@ -2272,6 +2272,9 @@ CPP;
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$parameters = $callback ? $function->inputs : $function->parameters;
+		if ($value instanceof ast_named_call) {
+			$parameters = $value->evaluation_parameters($parameters);
+		}
 		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
@@ -2338,6 +2341,7 @@ CPP;
 		}
 		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($callback || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1)) {
+			if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -2356,6 +2360,7 @@ CPP;
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
+		if ($value instanceof ast_named_call) $arguments = $value->parameter_order($arguments);
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		$return_reference = !$callback && $function->returns_reference ? '&' : '';
 		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . $return_reference . ' { ' . implode(' ', $steps)
