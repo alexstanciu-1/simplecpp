@@ -596,7 +596,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     requireThat(hasValue($plan, 'bool_t'), 'Carriers require published boolean type');
     $carriers = [];
     foreach(listValue(at($p, 'specializations')) as $item) {
-        fields($item, ['family', 'payload']);
+        fields($item, ['family', 'payload', 'instance_field']);
         $family = textValue(at($item, 'family'));
         at($families, $family);
         $payload = textValue(at($item, 'payload'));
@@ -608,6 +608,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
         $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['payload_access' => $payloadAccess, 'presence' => object($m->presence)] + $familyPlans[$family] + [ 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'cpp_payload_conversion_rules', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
+        $carriers[$name]['instance_field'] = property_exists($item, 'instance_field') && boolean($item->instance_field);
         if ($payloadInfo['kind'] === 'boxed') {
             $carriers[$name]['payload_header'] = $payloadInfo['header'];
             $carriers[$name]['payload_copy'] = $payloadInfo['copy'];

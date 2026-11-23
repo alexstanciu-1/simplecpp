@@ -27,7 +27,7 @@ CASES = [
      (1, b'', b'division_by_zero\n')),
     ('nullable-string-field',
      'class A {public ?string $x;} $a=new A(); echo (int)isset($a->x); return 8;',
-     'main.php:1:17: Unsupported instance field type: nullable<string>'),
+     (8, b'0', b'')),
     ('nullable-class-field',
      'class B {} class A {public ?B $b;} $a=new A(); if ($a->b===null) {echo 1;} return 8;',
      (8, b'1', b'')),

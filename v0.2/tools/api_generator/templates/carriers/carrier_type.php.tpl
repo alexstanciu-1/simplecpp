@@ -9,6 +9,11 @@ final class @class@ extends carrier_type_definition
 		parent::__construct(@family@ . '<' . @payload@::instance()->name . '>', @payload@::instance());
 	}
 
+	public function supports_instance_field(): bool
+	{
+		return @instance_field@;
+	}
+
 	public function accepts_empty(): bool
 	{
 		return @empty@;
