@@ -545,15 +545,26 @@ final class record_type_definition extends type_definition implements dependency
 		}
 	}
 
-	/** The task eagerly owns an empty payload. Only passive aggregate initialization is admitted here. */
+	public function supports_async_parameter(): bool
+	{
+		return $this->supports_async_record(false);
+	}
+
 	protected function supports_async_storage(): bool
+	{
+		return $this->supports_async_record(true);
+	}
+
+	/** Only the result promise eagerly constructs an empty record. Inputs arrive as initialized values. */
+	private function supports_async_record(bool $empty_result): bool
 	{
 		$node = $this->declaration;
 		if ($node->kind !== record_kind::structure || $node->is_abstract || $node->base_reference !== null
-			|| $node->interface_references !== [] || isset($node->methods['__construct']) || isset($node->methods['__destruct'])) return false;
+			|| $node->interface_references !== [] || isset($node->methods['__destruct'])
+			|| ($empty_result && isset($node->methods['__construct']))) return false;
 		foreach ($node->fields as $field) {
 			$type = $field->storage_type();
-			if ($field->initializer !== null) return false;
+			if ($empty_result && $field->initializer !== null) return false;
 			if (!($type instanceof enum_type_definition) && !type_registry::accepts_async_parameter($type)
 				&& !type_registry::async_value($type)) return false;
 		}

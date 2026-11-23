@@ -277,6 +277,12 @@ abstract class type_definition
 		return $this::class . ':' . $this->name;
 	}
 
+	/** A by-value parameter must own its storage until its coroutine frame releases it. */
+	public function supports_async_parameter(): bool
+	{
+		return type_registry::accepts_async_parameter($this);
+	}
+
 	/** Cache a binding only for an eligible canonical runtime value requested by a producer. */
 	public function async_task(): ?async_task_binding
 	{

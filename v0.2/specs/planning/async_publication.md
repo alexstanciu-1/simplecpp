@@ -45,7 +45,7 @@ waits and cleanup on failure.
 Inline struct results use the existing eagerly initialized promise payload. Signature
 preparation checks the direct fields once per prepared producer signature. Each field
 must have an implicit empty default and an enum or runtime type already admitted as
-an async value parameter or result. The aggregate has no base, interface, authored
+a published runtime async scalar parameter or runtime result. The aggregate has no base, interface, authored
 constructor or destructor. This keeps starting and abandoning a task free of
 user-authored payload lifecycle calls. Native recipe assertions still check nonthrowing
 default construction, move construction, move assignment and destruction. A heap-backed
@@ -63,9 +63,13 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-free functions with eligible results and by-value default scalar parameters (bool, byte/uint8, int/int64, float/float64 and string), including trailing literal defaults.
-The ordinary argument binder checks conversions. The blocking bridge transfers its owned string into the coroutine frame.
-The frame keeps it alive across suspension and releases it on completion or exception.
+free functions with eligible results and owned by-value parameters. The generated runtime scalar admissions
+(bool, byte/uint8, int/int64, float/float64 and string) also support trailing literal defaults.
+Enums and concrete inline structs with eligible fields can cross the same parameter boundary.
+Inline structs use the field and lifecycle checks above, but may declare a constructor and field defaults:
+the frame receives an initialized value. Plain field assignments use ordinary write checks in an async body.
+The ordinary argument binder checks conversions. The blocking bridge moves nontrivial owned values into the coroutine frame.
+The frame keeps its arguments alive across suspension and releases them on completion or exception.
 An async void producer completes through an empty return or fallthrough. A standalone
 await can discard any eligible result in synchronous and async bodies. Using a void result as
 a value produces the ordinary void-call diagnostic. All task results use one scheduler

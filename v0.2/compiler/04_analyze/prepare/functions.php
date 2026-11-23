@@ -256,8 +256,8 @@ final class Function_Preparation
 			if ($parameter_type === null) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
 			}
-			if ($declaration->is_async && ($parameter->mode !== passing_mode::value || !type_registry::accepts_async_parameter($parameter_type))) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Async parameters require a by-value bool, byte, int, float or string');
+			if ($declaration->is_async && ($parameter->mode !== passing_mode::value || !$parameter_type->supports_async_parameter())) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Async parameters require a supported owned by-value type: ' . $parameter_type->name);
 			}
 			if ($type instanceof generator_type_definition && $parameter_type instanceof callback_type_definition) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Callback parameters on yield producers are deferred');

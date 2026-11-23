@@ -83,6 +83,11 @@ final class enum_type_definition extends type_definition
 		return $this->cpp_type() . '::' . Cpp_Identifier::source($case->short_name);
 	}
 
+	public function supports_async_parameter(): bool
+	{
+		return true;
+	}
+
 	public function cpp_trivial_value(): bool
 	{
 		return true;

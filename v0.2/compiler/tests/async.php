@@ -332,6 +332,28 @@ foreach (flavor::cases() as $flavor) {
 			flavor::cpp => $type . ' ' . $name . '(' . ($flag ? 'bool fail' : '') . ')',
 			flavor::js => 'function ' . $name . '(' . ($flag ? 'fail:bool' : '') . '):' . $type,
 		};
+		// Both bridges take the same owned arguments. Only the callee mutates its Point copy.
+		$arg_list = implode(',', [$parameter('p', 'Point'), $parameter('kind', 'TokenKind'), $parameter('fail', 'bool')]);
+		$arg_signature = static fn(string $name): string => 'async ' . str_replace('()', '(' . $arg_list . ')', $typed_fn($name, 'int'));
+		$arg_leaf = $failure . $guard . $point . $enum_decl . $arg_signature('mutatePoint') . '{' . $empty_guard
+			. 'await async_sleep_ms(1);' . $p . 'x=9;' . $p . 'label="X heap-backed string owned by the frame";if (' . $v('fail') . ') {throw new Failure();}'
+			. 'return ' . $p . 'x+(int)' . $p . 'label[0]+enum_value(' . $v('kind') . ');}';
+		$arg_relay = $arg_signature('forwardPoint') . '{return await mutatePoint(' . $v('p') . ',' . $v('kind') . ',' . $v('fail') . ');}';
+		$arg_entry = $empty_point . $p . 'x=7;' . $p . 'label="' . $label . '";';
+		foreach (['mutatePoint', 'forwardPoint'] as $name) {
+			$call = $name . '(' . $v('p') . ',' . $enum_case . ',';
+			$arg_entry .= 'echo await ' . $call . 'false);try {await ' . $call . 'true);}' . $catch('Failure') . '{echo "C";}'
+				. 'echo ' . $p . 'x,(int)' . $p . 'label[0];';
+		}
+		$arg_entry .= 'return 8;';
+		// Parameter storage already has a value. This Point cannot serve as an eagerly initialized async result.
+		[$required_ctor, $constructed_point] = match ($flavor) {
+			flavor::php => ['public function __construct(int $n) {$this->x=$n;}', '$p Point(7);'],
+			flavor::cpp => ['Point(int n) {this->x=n;}', 'Point p(7);'],
+			flavor::js => ['constructor(n:int) {this.x=n;}', 'let p:Point(7);'],
+		};
+		$constructed_decl = str_replace('{', '{' . $required_ctor, $point);
+		$arg_output = 'D104DC7104D104DC7104';
 		$families = [];
 		foreach (['points' => 'vector<Point>', 'owner' => 'shared<Point>'] as $name => $type) {
 			$factory = $name === 'points'
@@ -548,6 +570,13 @@ foreach (flavor::cases() as $flavor) {
 			[$relay, $notify, $discard, null, '10', 4],
 			[$relay, $notify, $discard, 'async_task_methods must be inline or grouped', '', 0, false, 'invalid'],
 			[$relay, $notify, $discard, null, '10', 2, false, 'inline'],
+			[$arg_relay, $arg_leaf, $arg_entry, null, $arg_output, 3],
+			[$arg_relay, str_replace('Word=7', 'Word=512', $arg_leaf), $arg_entry, null, str_replace('D104D', 'D609D', $arg_output), 3],
+			[$arg_relay, str_replace($point, '', $arg_leaf), $arg_entry, 'Unknown', '', 0],
+			[$arg_relay, str_replace($point, str_replace('{', '{' . $z, $point), $arg_leaf), $arg_entry, null, $arg_output, 3],
+			[$arg_relay, $arg_leaf, $arg_entry, null, $arg_output, 4, false, 'grouped'],
+			[$arg_relay, str_replace($point, $constructed_decl, $arg_leaf), str_replace($empty_point, $constructed_point, $arg_entry), null, $arg_output, 3],
+
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
