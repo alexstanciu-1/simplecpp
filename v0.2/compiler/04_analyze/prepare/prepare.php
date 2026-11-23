@@ -1394,7 +1394,7 @@ final class Preparation
 			}
 			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
 				|| ($context instanceof ast_assignment_statement && $context->operator === null));
-			if ($this->in_lambda || !($async_context || $context instanceof ast_await_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement)) {
+			if ($this->in_lambda || ($this->owner->parent->is_async && !($async_context || $context instanceof ast_await_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
 			}
 			$this->call($syntax->operand, $initializing);

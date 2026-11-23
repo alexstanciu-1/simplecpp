@@ -81,11 +81,11 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare(str_replace('async_sleep_ms(1)', 'async_sleep_ms("bad")', $child) . 'return 8;'), 'int64 milliseconds');
 	$prepare(str_replace('int', 'float', $child) . 'return 8;');
 
-	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
+	$prepare($child . 'if (false && await read_value()) {return 1;}return 0;');
 	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
 
 	$prepare($child . 'await read_value();return 0;');
-	rejects(fn() => $prepare($child . 'if (await read_value()) {return 1;}return 0;'), 'Await requires');
+	$prepare($child . 'if (await read_value()) {return 1;}return 0;');
 
 	$catch = static fn(string $type): string => 'catch (' . match ($flavor) {
 		flavor::php => $type . ' $e', flavor::cpp => $type . ' e', flavor::js => 'e:' . $type,
@@ -472,6 +472,8 @@ foreach (flavor::cases() as $flavor) {
 			. $decl('vector<int>','numbers','[7,8]') . $decl('shared<Point>','first','new Point()')
 			. $decl('weak<Point>','watch','weak(' . $v('first') . ')') . 'echo await passValues(' . $collection_args . '),'
 			. $v('first') . $access . 'x;return 8;';
+		$nested_waits = 'if (false && await sample()) {return 0;}'
+			. 'echo mark(1 + await sample()),":",mark(await sample());return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -587,6 +589,9 @@ foreach (flavor::cases() as $flavor) {
 			[$collection_parent, $collection_child, $collection_entry, null, '49', 3],
 			[$collection_parent, str_replace('consumeValues(', 'missingValues(', $collection_child), $collection_entry, 'Unknown', '', 0],
 			[$collection_parent, str_replace('x=9;', 'x=6;', $collection_child), $collection_entry, null, '46', 1],
+			[$mark, $byte_child, $nested_waits, null, 'M18:M17', 4],
+			[$mark, '', $nested_waits, 'Unknown', '', 0],
+			[$mark, str_replace('17;', '18;', $byte_child), $nested_waits, null, 'M19:M18', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

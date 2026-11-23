@@ -82,6 +82,9 @@ may appear in a chain of && or || used as a local initializer, echo operand, ret
 value or branch condition. Both sides are prepared and watched. The emitted native
 logical operator evaluates its RHS only when needed.
 
+In ordinary synchronous bodies and at top level, a direct async call consumed by await is a blocking
+expression. It can participate in arithmetic, arguments and lazy branches using ordinary expression lowering.
+
 Inside an async function, a direct await can also supply an if/elseif condition or the
 right side of a plain local assignment. These forms use ordinary truthiness and assignment
 conversion. A standalone `await work();` resumes after the child completes and propagates
