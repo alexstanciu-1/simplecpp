@@ -5,13 +5,13 @@ Status: alpha
 
 Purpose: define the current lightweight async/await contract for Prism++ / Simple C++ source surfaces.
 
-This document covers the stackless async/await slice implemented for PHS/PHP++ and JSS. Fibers and the thread-backed `tasks` bridge are intentionally out of scope for this contract.
+This document covers stackless async/await in the legacy PHS/PHP++ and JSS frontends and the v0.2 PHP, C++ and JS syntax flavors. Fibers and the thread-backed `tasks` bridge are intentionally out of scope for this contract.
 
 ## Model
 
 Async/await is cooperative, stackless control flow backed by the shared runtime async core.
 
-- An `async function` returns an internal `scpp::async_core::task<T>` in generated C++.
+- An async free function produces a task carrying its declared result. The legacy frontend uses `scpp::async_core::task<T>`. In v0.2, the compiler publishes a concrete task for each demanded result type.
 - `await` on an async task suspends the current async function, or blocks a synchronous caller through `async_wait(...)` when used at synchronous/top-level source sites.
 - `await async_sleep_ms(ms)` is a timer suspension point and is valid only inside an async function.
 - Async/await does not imply parallel execution and does not create an operating-system thread per async operation.
@@ -40,12 +40,48 @@ Lowering contract:
 - Expression-level `await expr` suspends inside an async function. At synchronous/top-level sites it waits synchronously. Nested calls, lazy branches and operand snapshots preserve source evaluation order across suspension.
 - In v0.2, the built-in `async_wait(producer(...))` calls the producer’s blocking bridge, including inside an async function. Ordinary source lookup wins before argument checking. A bare unimported name uses the built-in if its namespace has no matching declaration. A root-qualified call tries the root declaration first. Other qualified names and explicit imports bind to their exact targets. A discarded wait may consume an async void result.
 
-For the bounded v0.2 source slice, task-producing calls must be consumed directly
+## v0.2 direct-call contract
+
+In all three v0.2 syntax flavors, task-producing calls must be consumed directly
 by `await` or `async_wait`; task variables, task parameters and async callable
 adaptation remain separate work. Async parameters must be owned values; reference
 parameters and reference results reject. Local values and their cleanup remain
 alive across suspension. The `tasks` module's cross-thread transfer rules do not
 apply to cooperative async calls.
+
+An ordinary call inside an async body may suspend while evaluating its receiver
+or arguments. A selected method receiver remains alive across later arguments.
+A mutable reference parameter binds the same named storage across an awaited
+sibling. Required conversions, ordered effects and local cleanup follow the
+ordinary expression contract. A lazy operator or selection evaluates only the
+chosen operand or arm. Collection literals complete entries in source order
+and destroy completed entries if a later input fails.
+
+A field write retains the selected owner. An indexed compound update preserves
+the selected collection storage, key and converted old value across the right
+operand, then checks the destination on write-back. Synchronous iteration can
+continue after an await in the loop body under the receiver's ordinary traversal
+and lifetime rules. Async iteration, nested generator cursors, cancellation,
+cross-thread execution, async method declarations and standalone fixed-array
+results are outside this milestone.
+
+A v0.2 producer constructs its owned result on successful return. Starting or
+abandoning a task does not default-construct a result. If evaluating the return
+value throws, both await and the blocking bridge propagate the exception. Native
+transfer and destruction of an admitted payload must be nonthrowing. For an inline
+record, its fields and base subobjects travel with the value. A class handle
+preserves allocation identity and the presence contract of the declared result.
+
+In v0.2 a typed catch handler can suspend. Its binding and locals survive the
+await. Bare `throw;` propagates the exception originally caught by that handler,
+including after reassignment of the binding.
+
+A v0.2 `finally` block may suspend. Protected locals leave scope before the
+finalizer starts. A return saves its converted value before cleanup, and a loop
+transfer retains its resolved destination. A finalizer that completes normally
+resumes the pending exit. An exception escaping the finalizer replaces it and
+releases any saved value. Nested finalizers run from inner to outer. The ordinary
+rules for exits from a finalizer continue to apply. [Exception contract](exceptions_v0_2.md)
 
 Default prelowering keeps coroutine implementations behind the compiled boundary
 and exports concrete task storage to template-free application units. Snapshot
@@ -69,7 +105,7 @@ let value: int = await computeValue();
 print(value, "\n");
 ```
 
-JSS lowers through the PHS async surface:
+The legacy JSS frontend lowers through the PHS async surface:
 
 - `async function` emits the PHS `@async` representation.
 - `await async_sleep_ms(...)` emits the PHS timer statement form.
@@ -79,7 +115,7 @@ This is not JavaScript promise compatibility. There is no JavaScript event loop,
 
 ## Runtime Surface
 
-The shared runtime substrate lives under `scpp::async_core` and currently includes:
+The legacy runtime substrate lives under `scpp::async_core` and currently includes:
 
 - `scheduler`
 - `task<T>` and `task<void>`
