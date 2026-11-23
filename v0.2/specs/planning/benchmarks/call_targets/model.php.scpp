@@ -1,0 +1,39 @@
+// The runner substitutes the interface declaration and override markers for each alternative.
+struct Selection { public int $role; public int $signature; public int $operand; }
+function selection(int $role, int $signature, int $operand):Selection {
+    $s Selection;
+    $s->role = $role; $s->signature = $signature; $s->operand = $operand;
+    return $s;
+}
+INTERFACE_DECL
+final class SymbolEntry IMPLEMENTS {
+    public int $role;
+    public int $signature;
+    public int $head;
+    public OVERRIDE function resolve():Selection {
+        return selection($this->role, $this->signature, $this->head);
+    }
+}
+final class RuntimeBinding IMPLEMENTS {
+    public int $signature;
+    public int $nativeSymbol;
+    public OVERRIDE function resolve():Selection {
+        return selection(2, $this->signature, $this->nativeSymbol);
+    }
+}
+final class MethodInstance IMPLEMENTS {
+    public weak<SymbolEntry> $authored;
+    public int $implementation;
+    public OVERRIDE function resolve():Selection {
+        $symbol = lock($this->authored);
+        if ($symbol === null) { return selection(0, 0, 0); }
+        return selection(3, $symbol->signature, $this->implementation);
+    }
+}
+final class LocalBinding IMPLEMENTS {
+    public int $signature;
+    public int $binding;
+    public OVERRIDE function resolve():Selection {
+        return selection(4, $this->signature, $this->binding);
+    }
+}
