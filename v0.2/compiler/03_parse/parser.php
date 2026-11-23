@@ -511,7 +511,8 @@ final class Parser
 	{
 		if ($grammar instanceof Python_Grammar || $this->cursor->is(token_kind::lbrace)) return $this->lexical_block($grammar, $collector, '{');
 		$start = $this->cursor->position();
-		$this->lexical = $child = $collector->child();
+		$child = $collector->child();
+		$this->lexical = $child;
 		$statement = $this->statement($grammar, $child);
 		$child->statement($statement, 0);
 		$this->lexical = $collector;
@@ -625,7 +626,8 @@ final class Parser
 		$start = $c->position();
 		$c->take_keyword('for');
 		$c->take(token_kind::lparen, '(');
-		$this->lexical = $header = $collector->child();
+		$header = $collector->child();
+		$this->lexical = $header;
 		$initializers = $this->for_actions($grammar, $header, true);
 		$c->take(token_kind::semicolon, '; after for initialization');
 		$conditions = [];
