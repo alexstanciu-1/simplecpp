@@ -2,7 +2,7 @@ Doc Status: planning
 
 # Remaining language work and native tokenizer integration
 
-The short list groups the 23 Missing and 154 Partial records from the donor audit. Use G01–G18 for implementation discussions. Keep the native tokenizer as a parallel integration track and finish the review with the deferred-commit decisions below. The external audit directory `2026-11-22-language-6ff5ff42c` contains `donor-record-audit.md` and `donor-record-audit.json`.
+The short list groups the 23 Missing and 154 Partial records from the donor audit. Use G01–G18 for implementation discussions. Track native tokenizer integration after language closure and finish the review with the deferred-commit decisions below. The external audit directory `2026-11-22-language-6ff5ff42c` contains `donor-record-audit.md` and `donor-record-audit.json`.
 
 ## Evidence and short list
 
@@ -35,6 +35,21 @@ The two postfix rows were Missing in that audit. Development commit `0a41e4cae` 
 
 The example column includes companion-audit topics. The short list tracks only the supplied 177 donor rows. A group can therefore have work without a row in that list.
 
+## Language closure before tokenizer integration
+
+Language closure is the next milestone. G18 async/await is tracked separately and excluded here. The six-batch review settled observations for 36 donor IDs. The 177 historical Missing/Partial rows in the appendix still need a current per-ID disposition before they can supply a remaining-work count.
+
+| Groups | Current disposition and remaining work |
+| --- | --- |
+| G01 | Prefix and postfix updates on initialized int64 locals have bounded RHS and initializer support. Settle chained assignment and discarded arithmetic expressions separately. For each, decide whether bootstrap needs the expression or can use ordinary statements. |
+| G02–G03 | Scalar casts, interpolation, byte indexing, presence, emptiness and coalescing have evidence. Word-form and/or, short ternary and nullsafe access were deferred. Reconcile the grouped xor rule against its exact donor spelling. |
+| G04–G07 | Explicit annotation migrations, typed collections, value/keyed iteration and bounded references have evidence. Keep writable iteration, ownership annotations and interface reference returns deferred. Map remaining historical array, reference and annotation rows to their exact restrictions or migrations. |
+| G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Captures, closure defaults and separately declared callable locals remain deferred. The historical array-callable form has a generic collection diagnostic. |
+| G10–G13 | Namespace and member lookup, construction, visibility, typed enum lookup, exceptions and destructor restrictions have evidence. Reconcile outstanding member/trait and enum cases, especially unbacked enums and enum interfaces. Include execution and nullsafe chaining stay deferred. |
+| G14–G17 | The bootstrap uses the exact int64 literal. Compare constant expressions, generics/layout, source-native declarations, configurable policy and synchronous generator forms with current contracts and actual compiler call sites. Record a supported equivalent or explicit disposition per topic. The recursive traversal visitor already supplies a bootstrap alternative to generator delegation. |
+
+Close each remaining row with a proof, an accepted source migration, an intentional rejection, or an explicit deferral and revisit condition. Identify any genuine bootstrap blocker separately. Resume scanner integration, helpers and library work after this language review.
+
 ## Implementation order
 
 | Order | Groups | Reason |
@@ -46,7 +61,7 @@ The example column includes companion-audit topics. The short list tracks only t
 | 5 | **G06, G09 · Writable traversal and closures** | Build writable foreach and reference captures on G07. Verify value iteration and capture-free cases earlier when useful. |
 | 6 | **G17 and G18 · Generators and async/await** | Give each its own implementation group. Async design can start early if prioritized. Implementation can proceed once callable, lifetime, and cleanup contracts are settled, independently of generator delegation. |
 
-Review G14–G16 on a separate design track. Schedule an implementation slice when a concrete consumer or policy decision supplies its scope. The tokenizer can proceed in parallel with language work.
+Review G14–G16 on a separate design track. Schedule an implementation slice when a concrete consumer or policy decision supplies its scope. Tokenizer integration follows language closure.
 
 ## Verification goal queue
 
@@ -103,12 +118,12 @@ Use one initialized local to compare the intended results and stores. These exam
 | Form | Example from an initial value of 10 | Result and write to decide |
 | --- | --- | --- |
 | Postfix | `$old = $index++;` | Existing bounded form. The result is 10, then the local holds 11. |
-| Prefix | `$new = ++$index;` | Candidate to review. The result would be the updated value, 11. |
+| Prefix | `$new = ++$index;` | Implemented for an initialized int64 local in an assignment RHS or initializer. The result is 11. |
 | Aliasing the destination | `$index = $index++;` | Existing bounded form. The update runs once, then the outer assignment writes 10 back. |
 | Chained assignment | `$a = $b = 1;` | Decide the expression result, write order, and where conversions and failures occur. |
 | Discarded expression | `$a + 1;` | Decide which expressions are admissible as statements and which checks or effects must run. |
 
-Proposed first discussion: choose whether the prefix slice should mirror the current postfix boundary for initialized int64 locals. Settle the result and mutation contract before taking on chained assignments or broader expression statements.
+Prefix updates landed in `5c8e7f6f7`. The remaining G01 decisions concern chained assignments and discarded expressions.
 
 ## G02 verification
 
@@ -184,6 +199,10 @@ The historical `declared_qualifier` case in the [my-try late-static suite](../..
 The PHP-flavor destructor probes emitted C++ for an instance destructor reading its field. `CLASS-ABS-003` rejected a value return with `Void function cannot return a value`, and `CLASS-ABS-004` rejected an unused static destructor with `Expected ordinary instance destructor`. Explicit destructor invocation is separately tracked by `CLASS-CALL-011`. [Destructor contract](../../../specs/destructors_v0_2.md)
 
 ## Native tokenizer slice
+
+**Accepted generated-scanner baseline.** The checked-in Simple C++ scanner at `0886aac46` reached 91.04% of handwritten C++ throughput with `--optimize-function=scan` and 44.42% with ordinary lowering. Commit `32a450dc8` archived the comparison. The aggregate uses summed median times for nine preloaded identifier, operator and mixed workloads across C++, PHP and JS. JS mixed input alone reached 95.4%; operator-heavy inputs reached 74.6–76.0%. Scans include source ownership, token storage and destruction and use an accurate reserve hint. I/O, hint generation and parsing are outside the timing. [Report](benchmarks/tokenizer/current_native.md) · [Raw measurements](benchmarks/tokenizer/current_native.dev002.json)
+
+The measured scanner handles whitespace, ASCII identifiers, a few keywords and equals operators. The nine-real-file experiment achieved a 1.5% aggregate gap on Clang using extra lexical rules and benchmark-only transformations. Production parity still needs the full flavor vocabularies, numbers, strings, comments, UTF-8 and diagnostic precedence, Python layout, and publication through the parser's token-list path. Keep the bounded benchmark as the performance control when integration resumes. [Whole-file experiment](benchmarks/tokenizer/byte_access/source_native.md) · [Production tokenizer](../../compiler/02_tokenize/tokens.php)
 
 The selected native design is a direct byte scanner. Use the existing PHP bootstrap tokenizer as the oracle for the PHP, C++, and JS parity corpus. The audit branch contains borrowed classification `d3b03bcbf`, a direct-scanner comparison `a2e3c382c`, and archived real-source results plus the design decision `b6189c140`. The comparison harness uses the deferred bulk PCRE2 API. Reuse the relevant cases and the measured baseline when designing the production integration.
 
