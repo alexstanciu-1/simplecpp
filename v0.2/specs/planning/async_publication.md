@@ -78,7 +78,8 @@ and the same generated implementation for continuation, frame destruction and ex
 values and echo operands can consume the result. The producer body accepts braced if/else branches,
 locals, timer statements, echo, throw and return. Task storage, general nested await
 expressions, async methods, and reference parameters are deferred. In an async body, awaited calls
-may appear in a chain of && or || used as a local initializer, echo operand, return
+may appear under logical negation, in either conditional-expression arm or its condition,
+or in a chain of && or || used as a local initializer, echo operand, return
 value or branch condition. Both sides are prepared and watched. The emitted native
 logical operator evaluates its RHS only when needed.
 

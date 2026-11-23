@@ -474,6 +474,10 @@ foreach (flavor::cases() as $flavor) {
 			. $v('first') . $access . 'x;return 8;';
 		$nested_waits = 'if (false && await sample()) {return 0;}'
 			. 'echo mark(1 + await sample()),":",mark(await sample());return 8;';
+		$choice_leaf = 'async ' . $signature('yesValue') . '{await async_sleep_ms(1);echo "Y";return 1;}'
+			. 'async ' . $signature('noValue') . '{await async_sleep_ms(1);echo "N";return 2;}';
+		$choice_parent = 'async ' . $signature('choose') . '{return !await yesValue() ? await yesValue() : await noValue();}';
+		$choice_entry = 'echo await choose();return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -592,6 +596,9 @@ foreach (flavor::cases() as $flavor) {
 			[$mark, $byte_child, $nested_waits, null, 'M18:M17', 4],
 			[$mark, '', $nested_waits, 'Unknown', '', 0],
 			[$mark, str_replace('17;', '18;', $byte_child), $nested_waits, null, 'M19:M18', 1],
+			[$choice_parent, $choice_leaf, $choice_entry, null, 'YN2', 4],
+			[$choice_parent, str_replace('noValue()', 'missing()', $choice_leaf), $choice_entry, 'Unknown', '', 0],
+			[$choice_parent, str_replace('return 1;', 'return 0;', $choice_leaf), $choice_entry, null, 'YY0', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

@@ -1390,7 +1390,10 @@ final class Preparation
 			$context = $syntax->parent;
 			if ($this->owner->parent->is_async) {
 				// Only these enclosing operators lower directly in the coroutine, including their lazy RHS.
-				while ($context instanceof ast_binary_expression && $context->operator->lazy()) $context = $context->parent;
+				while (($context instanceof ast_binary_expression && $context->operator->lazy())
+					|| $context instanceof ast_not_expression || $context instanceof ast_ternary_expression) {
+					$context = $context->parent;
+				}
 			}
 			$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
 				|| ($context instanceof ast_assignment_statement && $context->operator === null));
