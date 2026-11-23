@@ -146,3 +146,7 @@ Bare task-producing calls reject on all three flavors. Task variables, parameter
 #### Remaining payload storage
 
 The current promise eagerly default-constructs its payload. A record with required constructor arguments or an authored destructor needs construction on successful return and destruction only when initialized. Reuse the concrete recipe with explicitly tracked storage lifetime if approved. A fixed_array result separately needs a returnable native representation; raw arrays cannot be returned by value. Class owners need a proof that required presence survives frame transfer, distinct from the existing empty shared struct handle. Nested passive record layouts need transitive eligibility and invalidation before the direct-field restriction can be relaxed.
+
+#### Statement coverage
+
+The async preparation whitelist still excludes foreach and several ordinary storage-write and control-flow forms. Ordinary foreach can retain a reference to a source place through the loop. Before lifting the whitelist as a group, establish which traversal receivers remain owned across a suspension and which writes introduce expression snapshots. Prove mutation through another owner during an await. Keep synchronous yield and coroutine suspension as separate execution protocols.
