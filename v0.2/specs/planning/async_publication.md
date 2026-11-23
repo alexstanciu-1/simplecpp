@@ -122,3 +122,7 @@ from native constraints and design questions.
 #### Explicit blocking calls
 
 All three frontends accept a user function named async_wait. Without a declaration, async_wait(leaf()) reports Unknown function even when leaf is async. The source spec defines a blocking bridge and the runtime already implements nested waits. Settle whether this name is reserved, namespace-qualified or a fallback after ordinary lookup. An explicit block inside a producer must request the blocking bridge dependency through the existing publisher.
+
+#### Eager expressions and call arguments
+
+A producer returning await leaf() + await leaf() rejects in all three frontends. Cpp_Emitter::value and argument lowering can introduce an ordinary lambda to snapshot operands before side effects. Suspension must remain inside the enclosing coroutine. A common expression lowering that can place ordered temporaries in the coroutine would also cover argument lists, match arms and expressions embedded in writes. Verify throwing operands, skipped branches and receiver replacement before widening admission.
