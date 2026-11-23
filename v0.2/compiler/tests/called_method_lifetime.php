@@ -32,14 +32,23 @@ check($project->session()->dependency_watches === $watches, 'First call replaced
 check($project->run()['preparation']['prepared'] === 0, 'Unchanged bodies were prepared');
 check($watches->called_methods() === $cache, 'No-op preparation replaced the demand graph');
 
+$origin = $project->session()->scope->resolve('method:Base::read');
+$first = $origin->root()->static_implementations($origin);
+$right_key = array_key_first($first);
+$right = $first[$right_key];
+check($right->instance->called->declaration()->short_name === 'Right'
+	&& $right_key === spl_object_id($right->instance->called), 'Expected Right first under its called-type key');
+unset($first);
+
 file_put_contents($caller_path, $caller_source);
 $project->run();
 check($watches->called_methods() === $cache && $cache->count() === 2, 'Second caller did not reuse the demand graph');
-$origin = $project->session()->scope->resolve('method:Base::read');
 $instances = $origin->root()->static_implementations($origin);
 check(count($instances) === 2, 'Expected two sibling demands');
-[$left, $right] = array_values($instances);
-check($left->instance->called->declaration()->short_name === 'Left', 'Expected stable called-type order');
+$left = reset($instances);
+check($left->instance->called->declaration()->short_name === 'Left', 'Expected Left before the earlier Right demand');
+$left_key = spl_object_id($left->instance->called);
+check($instances === [$left_key => $left, $right_key => $right], 'Sorting changed called-type keys or published order');
 check($left->body() !== $right->body() && $left->body()->statements[0] !== $right->body()->statements[0], 'Sibling facts share executable syntax');
 check(!$origin->body()->is_prepared(), 'Authored body acquired private facts');
 check($left->root()->tokens === $origin->root()->tokens, 'Private body copied tokens');
@@ -61,7 +70,7 @@ $project->run();
 gc_collect_cycles();
 check($left_entry->get() === null && $left_body->get() === null, 'Retired left demand or body still held by the session');
 check($watches->called_methods() === $cache && $cache->count() === 1, 'Retirement replaced the cache or discarded the surviving demand');
-check(array_values($origin->root()->static_implementations($origin)) === [$right], 'Surviving sibling was replaced');
+check($origin->root()->static_implementations($origin) === [$right_key => $right], 'Retiring Left failed to preserve Right under its original key');
 
 $right_entry = WeakReference::create($right->instance);
 $right_body = WeakReference::create($right->body());
