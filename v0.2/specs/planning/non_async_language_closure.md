@@ -13,6 +13,12 @@ The inventory pass is complete. Direct translation still has language gaps. The 
 3. **Expression results (G01).** Recommend ordinary assignments for the parser's child-collector chains and the preparation reset chains. A local holding the RHS result preserves single evaluation, write order and identity for these ordinary destinations. A standalone call retains effects; a temporary retains checked arithmetic failure. Drop only expressions proven pure and total. Chained assignment and general expression statements would be language features if exact donor syntax is required.
 4. **Collections and references (G05/G07).** Choose concrete records or typed nested containers for each heterogeneous table, with explicit write-back on copied reads. For historical indexed emptiness, distinguish a missing key from a present zero/empty payload. Nullable assignment and typed empty replacement cover specific local resets; they do not establish all unset/clean semantics. By-value parameters suffice for a read-only count; a required zero-copy borrow needs a separate lifetime decision. None of these choices permits borrowing a relocatable element.
 
+### Call-target storage and conversion follow-up
+
+Defer byte-to-int widening in the translated constant evaluator until a bootstrap consumer needs a known byte to remain known. Decimal token decoding already exercises the runtime conversion.
+
+In a resident PHP compiler trace, the caller contained both `answer()` and `strlen($text)`. Editing only the body of `answer` prepared one body and reused two. Both call nodes survived. The source call retained the same symbol entry and resolved its replacement declaration. Changing its return type from int to bool prepared two bodies and reused one. The caller saw the new return type. The runtime descriptor kept its identity throughout and supplied `scpp::str::byte_length` and `scpp/string.hpp`. A separate source-shadowing check added a declaration named `strlen` and removed it again. Preparation rebound the same spelling to the source declaration, then to the original runtime descriptor. Preserve the source-name watch even when lookup falls back to runtime. [Resolution](../../compiler/04_analyze/prepare/prepare.php) · [Prepared call](../../compiler/03_parse/structures/functions.php)
+
 ### Companion topics beyond the donor rows
 
 | Group | Current evidence and bootstrap disposition |
