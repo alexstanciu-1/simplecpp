@@ -11,6 +11,8 @@ require_once __DIR__ . '/hashes.php';
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
+	public const bool HAS_ASYNC_FRAMES = @async_available@;
+
 	/** Selected task ABI keyed by canonical result type. @return array{cpp:string,header:string,wait_header:string}|null */
 	public static function async_result(type_definition $type): ?array
 	{

@@ -57,7 +57,12 @@ void detail::schedule_continuation(std::coroutine_handle<> parent) noexcept {
     event_loop::current->next = parent;
 }
 
+void detail::incomplete_result() {
+    throw std::logic_error("async task has no completed result");
+}
+
 void detail::run_until_complete(std::coroutine_handle<> root) {
+    if (!root) throw std::logic_error("async wait requires a valid task");
     event_loop loop;
     loop.run(root);
 }

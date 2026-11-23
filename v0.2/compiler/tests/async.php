@@ -273,6 +273,18 @@ foreach (flavor::cases() as $flavor) {
 		}
 		$results_entry .= 'return 8;';
 		$results_output = $bytes . '3132333434359';
+		$enum_decl = $flavor === flavor::php ? 'enum TokenKind {case Word=7;}' : 'enum TokenKind {Word=7,}';
+		$enum_case = $flavor === flavor::js ? 'TokenKind.Word' : 'TokenKind::Word';
+		$enum_sig = static fn(string $name): string => $flavor === flavor::cpp
+			? "async TokenKind $name()" : "async function $name():TokenKind";
+		$enum_child = $enum_decl . $enum_sig('read_kind') . "{await async_sleep_ms(1);return $enum_case;}";
+		$enum_parent = $enum_sig('relay') . '{return await read_kind();}';
+		$enum_entry = $decl('TokenKind', 'kind', 'await relay()') . 'echo enum_value(' . $v('kind') . ');return 8;';
+		$second_child = str_replace(['TokenKind', 'read_kind'], ['OtherKind', 'read_other'], $enum_child);
+		$second_parent = str_replace(['TokenKind', 'relay', 'read_kind'], ['OtherKind', 'relay_other', 'read_other'], $enum_parent);
+		$two_entries = str_replace('return 8;', '', $enum_entry)
+			. str_replace(['TokenKind', 'relay()', $v('kind')], ['OtherKind', 'relay_other()', $v('other')], $enum_entry);
+
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -308,6 +320,13 @@ foreach (flavor::cases() as $flavor) {
 			[$results_parent, $results_child, $results_entry, null, $results_output, 3],
 			[$results_parent, '', $results_entry, 'Unknown', '', 0],
 			[$results_parent, str_replace('[31]', '[41]', $results_child), $results_entry, null, str_replace('31', '41', $results_output), 1],
+			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
+			[$enum_parent, str_replace('=7', '=512', $enum_child), $enum_entry, null, '512', 3],
+			[$enum_parent, str_replace($enum_decl, '', $enum_child), $enum_entry, 'Unknown', '', 0],
+			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
+			[$bool_parent, $bool_child, $bool_entry, null, 'T', 3],
+			[$enum_parent . $second_parent, $enum_child . $second_child, $two_entries, null, '77', 3],
+			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -339,6 +358,8 @@ foreach (flavor::cases() as $flavor) {
 					if (str_contains($text, 'co_return')) verify(str_contains($text, '#include <scpp/async_bool.hpp>'), 'Bool producer missing its promise');
 				}
 			}
+			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
+			verify(count($task_headers) === ($body === $enum_parent ? 1 : ($body === $enum_parent . $second_parent ? 2 : 0)), 'Unexpected application task demand or retirement');
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');

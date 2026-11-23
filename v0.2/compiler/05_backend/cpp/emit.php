@@ -45,6 +45,8 @@ final class Cpp_Emitter
 	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
 	private Cpp_Concrete_Collections $concrete_collections;
+	/** Concrete application task demand for the current unit. @var enum_type_definition[] */
+	private array $async_results = [];
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
 	private array $enum_helpers /** array<string,uint8> */ = [];
@@ -85,7 +87,13 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		return $this->inline_adapters->files() + $this->concrete_collections->files();
+		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
+		foreach ($this->async_results as $task => $type) {
+			$parts = \Scpp\Api\asyncTaskRecipe(new cpp_concrete_type($type, $this->root), $task, true, $this->root, $this->root, true);
+			$files['units/' . hash('sha256', $task) . '.hpp'] = $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n"
+				. self::namespace_body($this->root, $parts['implementation']);
+		}
+		return $files;
 	}
 
 	/** Spell an enum definition and its requested helper prototypes. @param bool[] $includes */
@@ -221,7 +229,7 @@ final class Cpp_Emitter
 	public function function_declaration(ast_function_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		if ($node->has_virtual_dispatch()) return '';
-		if ($node->is_async && $node->parameters !== []) {
+		if ($node->has_async_wait_bridge()) {
 			$lines = [];
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_task)) $lines[] = $this->signature($node, $includes) . ';';
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_wait)) $lines[] = $this->wait_signature($node, $includes) . ';';
@@ -485,6 +493,7 @@ CPP;
 		$this->enum_helpers = [];
 		$this->inline_adapters = new Cpp_Adapters($this->root);
 		$this->concrete_collections = new Cpp_Concrete_Collections($this->root);
+		$this->async_results = [];
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -547,7 +556,7 @@ CPP;
 				$unit_flavor ??= $this->adapter_flavor;
 				continue;
 			}
-			if ($function->is_async) $required_headers[type_registry::async_result($function->return_type_def())['header']] = true;
+			if ($function->is_async) $this->require_task($function->return_type_def(), $required_headers);
 			$lines = $this->statements($function->body(), $declarations, $global_references, $required_headers);
 			if ($function->is_constructor() || $function->is_destructor() || $function->has_virtual_dispatch()) array_unshift($lines, "\t[[maybe_unused]] auto& scpp_self = *this;");
 			if ($function->is_async) {
@@ -571,9 +580,10 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
-			if ($function->is_async && $function->parameters !== [] && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
+			if ($function->has_async_wait_bridge() && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
-				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn ::scpp::async::sync_wait("
+				$wait = $function->return_type_def() instanceof enum_type_definition ? 'sync_wait' : '::scpp::async::sync_wait';
+				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn $wait("
 					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
 			}
 		}
@@ -583,7 +593,7 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}
-		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies()] as $type) {
+		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies(), ...$this->async_results] as $type) {
 			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
 			elseif ($type instanceof record_type_definition || $type instanceof enum_type_definition) $declarations[$type->declaration->symbol_key()] = $type->declaration;
 			foreach ($type->cpp_headers() as $include) $required_headers[$include] = true;
@@ -1702,16 +1712,15 @@ CPP;
 		if ($value instanceof ast_await_expression) {
 			$callee = $value->operand->function_def();
 			$name = self::function_name($callee);
-			$task = type_registry::async_result($callee->return_type_def());
-			if ($value->suspends) $required_headers[$task['header']] = true;
+			$task_name = $value->suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
 			$declarations[$name] = $callee;
-			if (!$value->suspends && $callee->parameters === []) {
-				$required_headers[$task['wait_header']] = true;
+			if (!$value->suspends && !$callee->has_async_wait_bridge()) {
+				$required_headers[type_registry::async_result($callee->return_type_def())['wait_header']] = true;
 				return '::scpp::async::wait_for(&' . $name . ')';
 			}
 			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
-				$value->suspends ? $task['cpp'] : null);
+				$task_name);
 			return $value->suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_postfix_update_expression) {
@@ -2453,6 +2462,26 @@ CPP;
 		return implode('', $forwards);
 	}
 
+	/** Namespace and canonical declaration distinguish enums with identical native backing widths. */
+	private function application_task_name(enum_type_definition $type): string
+	{
+		return 'scpp_async_task_' . hash('sha256', $this->root . "\0" . $type->declaration->symbol_key());
+	}
+
+	/** Request the complete promise only for a suspending unit. @param bool[] $headers */
+	private function require_task(type_definition $result, array &$headers): string
+	{
+		if ($result instanceof enum_type_definition) {
+			$name = $this->application_task_name($result);
+			$this->async_results[$name] = $result;
+			$headers['coroutine'] = true;
+			return $name;
+		}
+		$binding = type_registry::async_result($result);
+		$headers[$binding['header']] = true;
+		return $binding['cpp'];
+	}
+
 	/** Format a native constructor declaration or allocation factory. @param bool[] $headers */
 	private function constructor_parameters(?ast_function_declaration $constructor, array &$headers /** array<string,bool> */): string
 	{
@@ -2466,8 +2495,13 @@ CPP;
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
 		if ($function->is_async) {
-			$headers['scpp/async_fwd.hpp'] = true;
-			return type_registry::async_result($function->return_type_def())['cpp'] . ' ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
+			$result = $function->return_type_def();
+			if ($result instanceof enum_type_definition) $task = 'class ' . $this->application_task_name($result);
+			else {
+				$headers['scpp/async_fwd.hpp'] = true;
+				$task = type_registry::async_result($result)['cpp'];
+			}
+			return $task . ' ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
 		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';
 		$parameters = $this->parameters($function, $headers, $short_types);

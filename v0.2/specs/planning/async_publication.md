@@ -46,7 +46,7 @@ archive, then link the test object, standalone methods object and archive in tha
 | Published concrete collections | `vector<int>`, `hash<int,int>` | Published. Use the same move contract and their existing concrete identities. |
 | Published carriers | `nullable<int>` | Published. The payload includes its presence state. Another carrier specialization needs its own publication and proof. |
 | Boxed runtime values | `mixed`, `dynamic` | Published. Frame transfer preserves existing copy-on-write and shared-container semantics. |
-| Application-defined values | `TokenKind` enum, inline `Point` | Next publication prerequisite. The app owns the complete definition and type identity. A class-keyed runtime registry cannot distinguish two app enums or records. |
+| Application-defined values | `TokenKind` enum, inline `Point` | Enums use the shared task recipe and an application-owned task keyed by namespace and declaration. Inline records remain pending. |
 | Application-owned specializations and handles | `vector<Point>`, `shared<Point>` | Reuse application publication once available. Prove aggregate copy independence and handle identity/lifetime. A weak handle additionally needs an expiry proof. |
 | Inline arrays and values without an empty state | `fixed_array<byte,4>`, a record requiring constructor arguments | Require a returnable representation or construction-on-return storage. Raw C++ arrays cannot be returned by value. |
 | Borrowed or execution-bound values | capturing callback, live yield cursor | Require an escape/lifetime or single-consumer contract first. Application publication alone cannot establish safety. |

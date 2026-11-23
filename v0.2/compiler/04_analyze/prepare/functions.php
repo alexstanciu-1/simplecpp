@@ -241,7 +241,8 @@ final class Function_Preparation
 			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 		}
-		if ($declaration->is_async && type_registry::async_result($type) === null) {
+		if ($declaration->is_async && type_registry::async_result($type) === null
+			&& !(type_registry::HAS_ASYNC_FRAMES && $type instanceof enum_type_definition)) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Unpublished async result: ' . $type->name);
 		}
 		$optional = false;

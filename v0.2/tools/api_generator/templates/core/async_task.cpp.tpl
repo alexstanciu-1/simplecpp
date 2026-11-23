@@ -4,7 +4,7 @@
 #include <coroutine>
 #include <exception>
 
-namespace scpp::async {
+@open@
 class @task@ final {
 public:
     struct promise_type;

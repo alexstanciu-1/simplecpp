@@ -25,4 +25,4 @@ private:
 };
 
 @result@ sync_wait(@task@ root);
-}
+@close@

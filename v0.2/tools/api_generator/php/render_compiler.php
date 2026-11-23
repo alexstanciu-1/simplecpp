@@ -361,6 +361,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',
+        '@async_available@' => $asyncResults === [] ? 'false' : 'true',
         '@async_results@' => implode("\n", $asyncResults),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',

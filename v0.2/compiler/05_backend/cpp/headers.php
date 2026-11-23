@@ -27,7 +27,7 @@ final class Cpp_Headers
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_enum_declaration) $uses = [dependency_use::enum_from_value, dependency_use::enum_name, dependency_use::enum_value];
-				elseif ($node instanceof ast_function_declaration && $node->is_async && $node->parameters !== []) $uses = [dependency_use::async_wait, dependency_use::async_task];
+				elseif ($node instanceof ast_function_declaration && $node->has_async_wait_bridge()) $uses = [dependency_use::async_wait, dependency_use::async_task];
 				else continue;
 				$symbol = $file->scope->parent->entry($node->symbol_key());
 				foreach ($uses as $use) {

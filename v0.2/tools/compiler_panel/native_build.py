@@ -60,6 +60,8 @@ def async_producers(units):
     if not inventory.exists():
         return set()
     includes = {line for line in inventory.read_text().splitlines() if line.startswith('#include ')}
+    # Application-owned promises include the coroutine dependency directly.
+    includes.add('#include <coroutine>')
     selected = set()
     for unit in units:
         with Path(unit).open() as source:
