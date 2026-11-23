@@ -1401,6 +1401,10 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_unary_expression) {
 			$this->value($syntax->operand, $initializing);
+			if ($syntax->operator === unary_operator::bit_not && $syntax->source()->flavor === flavor::python
+				&& !type_registry::is_numeric_scalar($syntax->operand->type_def())) {
+				throw new diagnostic($syntax->source(), $syntax->operand->byte_start(), 'Unsupported unary operand: Python bitwise operators require integer scalars');
+			}
 			if ($syntax->operand->type_def() instanceof carrier_type_definition) {
 				$syntax->operand->type_def()->require_extraction($syntax->operand, conversion_context::assignment);
 			}
@@ -1444,6 +1448,11 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)
+				&& $syntax->source()->flavor === flavor::python
+				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands: Python bitwise operators require integer scalars');
+			}
 			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
 				$owner = $left instanceof shared_record_type_definition ? $left : $right;
 				$owner->prepare_binary($syntax);

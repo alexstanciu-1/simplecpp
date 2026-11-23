@@ -770,6 +770,100 @@ def division(work, flavor, library):
         native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
 
 
+def integer_bitwise(work, flavor, library):
+    syntax, _, _ = forms(flavor)
+    function = syntax['function']
+    mutate = {
+        'cpp': 'int change(int &value) { value = 100; return 3; }',
+        'php': 'function change(int &$value): int { $value = 100; return 3; }',
+        'js': 'function change(&value: int): int { value = 100; return 3; }',
+    }[flavor]
+    caller = """flags: int = 12
+flags ^= change(flags)
+if flags != 15:
+    return 3
+flags &= 6
+flags |= 8
+small: uint8 = 255
+if ~small != 0:
+    return 4
+small &= 7
+small ^= 4
+small |= mask()
+if not flags & 6 == 6 or 8 | 3 ^ 6 & 2 != 9:
+    return 1
+if ~flags != -15 or flags != 14 or small != 11:
+    return 2
+return 8
+"""
+    app, bundle = work/'bitwise', work/'bitwise-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 7'})
+    peer = app/f'masks.{flavor}'
+
+    def provider(result, value):
+        return mutate + function('mask', result, [], f'echo "M"; return {value};')
+
+    def verify_mask_writeback(checked):
+        units = json.loads((bundle/'manifest.json').read_text())['sources']
+        main_unit, = (unit for path, unit in units.items() if Path(path).name == 'main.py')
+        assignment, = (line for line in (bundle/main_unit).read_text().splitlines() if 'mask_()' in line)
+        assert 'var_small_' in assignment and ' | mask_()' in assignment, assignment
+        assert ('scpp::checked_int64_to_uint8(' in assignment) == checked, assignment
+
+    valid = provider('int', '8')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        previous = artifacts(bundle)
+        verify_mask_writeback(checked=True)
+        native(bundle, work/'bitwise-valid', (8, b'M', b''), library)
+
+        for result in ('uint8', 'int'):
+            source_edit(peer, provider(result, '8'))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            verify_mask_writeback(checked=result == 'int')
+            fresh = work/f'bitwise-signature-{result}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'bitwise-signature-run-{result}', (8, b'M', b''), library)
+        assert artifacts(bundle) == previous
+
+        source_edit(peer, provider('int', '256'))
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'bitwise-overflow', (1, b'M', b'integer_cast_out_of_range\n'), library)
+
+        last_good = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        source_edit(peer, provider('float', '2.5'))
+        failed = invoke(resident)
+        assert 'error' in failed and failed['error'] == fresh_build(app, work/'bitwise-invalid').get('error'), failed
+        assert artifacts(bundle) == last_good and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(peer, valid)
+        restored = invoke(resident)
+        assert 'error' not in restored, restored
+        fresh = work/'bitwise-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert previous == artifacts(bundle) == artifacts(fresh)
+        native(bundle, work/'bitwise-recovered', (8, b'M', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+    source_edit(peer, provider('int', '256'))
+    for operator, expected in [('&', (8, b'M', b'')), ('^', (1, b'M', b'integer_cast_out_of_range\n'))]:
+        source_edit(app/'main.py', f'small: uint8 = 255\nsmall {operator}= mask()\nreturn 8 if small == 0 else 2')
+        target = work/('bitwise-boundary-' + ('and' if operator == '&' else 'xor'))
+        built = fresh_build(app, target)
+        assert 'error' not in built, built
+        native(target, target/'program', expected, library)
+
+
 def narrow_compound(work, library):
     function = """def update(delta: int) -> int:
     value: uint8 = 254
@@ -1104,6 +1198,7 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        integer_bitwise(case, flavor, library)
         division(case, flavor, library)
         records_and_exceptions(case, flavor, library)
         inheritance(case, flavor, library)

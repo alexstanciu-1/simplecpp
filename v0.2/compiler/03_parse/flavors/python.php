@@ -6,6 +6,9 @@ namespace scpp\compiler;
 /** Recognizes Python typed declarations and existing-local writes. */
 final class Python_Grammar implements statement_grammar
 {
+	/** Python comparisons sit between prefix not and the three bitwise levels. */
+	public const COMPARISON_PRECEDENCE = 6;
+
 	public function function_start(Parser $parser): bool
 	{
 		return $parser->cursor->keyword('def');
@@ -31,5 +34,18 @@ final class Python_Grammar implements statement_grammar
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Python local requires an initializer');
 		}
 		return $parser->declaration($start, $name, $type, $terminator);
+	}
+
+	/** Use Python binding powers for bitwise operations and comparisons. */
+	public static function precedence(binary_operator $operator): int /** uint8 */
+	{
+		return match ($operator) {
+			binary_operator::equal, binary_operator::not_equal, binary_operator::less, binary_operator::less_equal,
+			binary_operator::greater, binary_operator::greater_equal => self::COMPARISON_PRECEDENCE,
+			binary_operator::bit_or => self::COMPARISON_PRECEDENCE + 1,
+			binary_operator::bit_xor => self::COMPARISON_PRECEDENCE + 2,
+			binary_operator::bit_and => self::COMPARISON_PRECEDENCE + 3,
+			default => $operator->precedence(),
+		};
 	}
 }

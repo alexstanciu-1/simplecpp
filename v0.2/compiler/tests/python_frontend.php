@@ -71,6 +71,17 @@ foreach ([
 }
 
 
+$bitwise = $frontend->parse(new source_file('flags.py',
+	'return not 1 | 2 ^ 3 & ~4 + 5 == 6 or False', flavor::python));
+$logic = $bitwise->main()->body()->statements[0]->value;
+$comparison = $logic->left->operand;
+$bits = $comparison->left;
+check($logic->operator === binary_operator::logical_or && $logic->left instanceof ast_not_expression
+	&& $comparison->operator === binary_operator::equal && $bits->operator === binary_operator::bit_or
+	&& $bits->right->operator === binary_operator::bit_xor && $bits->right->right->operator === binary_operator::bit_and
+	&& $bits->right->right->right->operator === binary_operator::add
+	&& $bits->right->right->right->left->source_text() === '~4', 'Python bitwise precedence on the shared tree');
+
 $division = "fraction: float = 7 / 2 # keep the newline\nfloor: int = 1 + 20 // 3 % 2 * 4\nmixed: float = 7 / 2.0\nreturn floor";
 $source = new source_file('division.py', $division, flavor::python);
 $file = $frontend->parse($source);
@@ -265,6 +276,15 @@ foreach ([
 	["missing += 1\nreturn 8", 'local'],
 	["text: string = \"a\"\ntext += \"b\"\nreturn 8", 'Python compound destination requires a numeric scalar'],
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
+	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
+	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
+	["return ~False", 'Unsupported unary'],
+	["return 1 ^ 2.0", 'Unsupported binary'],
+	["return True | False", 'Unsupported binary'],
+	["return 1 & 2 == 3 < 4", 'chained comparisons'],
+	["def bad(&x: int) -> int:\n    return x\nreturn 0", 'identifier'],
+	["def bad(x: A & B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
+	["def bad(x: A | B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
 	["value: int = 1\nvalue /= 2\nreturn 8", 'Unsupported punctuation'],
 ] as [$text, $message]) {
 	try {

@@ -49,6 +49,8 @@ literal keys. Typed hash writes insert or replace. Boolean operators require
 bool operands. Local scopes follow Simple C++ blocks, and every new ordinary
 local needs a type and initializer.
 
+Python integer scalars support unary `~`, binary `&`, `^` and `|`, and corresponding compound assignments on existing locals and parameters. Bitwise operations bind more tightly than comparisons. Narrow destinations use the shared checked write-back rules.
+
 Python binary / yields float64 for supported int64 and float64 operands.
 Integer // rounds down and integer % uses the divisor's sign. These spellings
 select separate operations from the cpp/php/js integer division and remainder.

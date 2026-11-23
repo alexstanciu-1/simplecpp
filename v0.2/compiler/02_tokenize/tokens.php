@@ -170,6 +170,7 @@ final class Tokenizer
 				&& ($first !== '@' || $source->flavor === flavor::python)) {
 				if ($source->flavor === flavor::python && !in_array($word, [
 					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '/', '//', '%', '==', '!=', '<', '<=', '>', '>=',
+					'~', '&', '^', '|', '&=', '^=', '|=',
 				], true)) {
 					throw new diagnostic($source, $start, 'Unsupported punctuation in Python flavor');
 				}

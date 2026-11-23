@@ -820,7 +820,7 @@ final class Parser
 		while (!$this->cursor->is(token_kind::rparen)) {
 			$start = $this->cursor->position();
 			if (in_array($this->cursor->tokens->source->flavor, [flavor::js, flavor::python], true)) {
-				$mode = $this->parameter_mode();
+				$mode = $this->cursor->tokens->source->flavor === flavor::python ? passing_mode::value : $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
 				$type = $this->type_reference(allow_void: true, parameter: true);
@@ -1002,7 +1002,8 @@ final class Parser
 			}
 		}
 		$end = $this->cursor->position();
-		if ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows())) {
+		if ($this->cursor->tokens->source->flavor !== flavor::python
+			&& ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows()))) {
 			$operator = $this->cursor->tokens->tokens[$end]->kind;
 			$separator = $operator === token_kind::pipe ? '|' : '&';
 			$this->cursor->take($operator, $separator);
@@ -1128,12 +1129,10 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$operator = $shift === '<<' ? binary_operator::shift_left : binary_operator::shift_right;
 			}
-			$comparison = $python && in_array($kind, [
-				token_kind::equal, token_kind::not_equal, token_kind::less, token_kind::less_equal,
-				token_kind::greater, token_kind::greater_equal,
-			], true);
-			$precedence = $comparison ? binary_operator::equal->precedence() : $operator?->precedence();
-			if ($operator === null || $precedence < $minimum_precedence) break;
+			if ($operator === null) break;
+			$precedence = $python ? Python_Grammar::precedence($operator) : $operator->precedence();
+			if ($precedence < $minimum_precedence) break;
+			$comparison = $python && $precedence === Python_Grammar::COMPARISON_PRECEDENCE;
 			if ($comparison && $comparison_seen) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons are deferred');
 			}
