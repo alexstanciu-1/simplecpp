@@ -123,6 +123,12 @@ interface iterable_type
 	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
+/** Published traversal that can advance without materializing a value. */
+interface key_iterable_type extends iterable_type
+{
+	public function lower_cpp_iteration_next_key(string $receiver, string $output, string $prefix = ''): string;
+}
+
 /** Unary observations on a published collection. Native uint8. */
 enum collection_cardinality: int
 {
@@ -723,7 +729,7 @@ abstract class type_definition
 	protected static function independent_local_call(ast_expression $local, ast_expression $operand): bool
 	{
 		if (!($local instanceof ast_name_expression && $local->local_binding() instanceof ast_local_declaration
-			&& $operand instanceof ast_call_expression && $operand->cardinality === null && $operand->callable_binding() === null)) {
+			&& $operand instanceof ast_call_expression && $operand->cardinality === null && $operand->callable_binding() === null && $operand->constructed_record() === null)) {
 			return false;
 		}
 		$function = $operand->function_def();

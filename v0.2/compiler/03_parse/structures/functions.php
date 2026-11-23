@@ -170,7 +170,28 @@ final class ast_call_expression extends ast_expression
 
 	public function target_name(): string
 	{
-		return $this->cardinality?->name ?? $this->callable_binding()?->name() ?? $this->function_def()->name();
+		return $this->cardinality?->name ?? $this->callable_binding()?->name()
+			?? $this->constructed_record()?->name() ?? $this->function_def()->name();
+	}
+
+	/** A call-shaped construction watches the same stable class entry as type resolution. */
+	public function constructed_record(): ?ast_record_declaration
+	{
+		$target = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
+		return $target instanceof ast_record_declaration ? $target : null;
+	}
+
+	/** @param int[] $conversions */
+	public function settle_construction(symbol_entry $target, shared_record_type_definition $type, array $conversions /** list<uint16> */): void
+	{
+		$this->function_symbol = $target;
+		$this->conversions = $conversions;
+		$this->settle_value($type, null);
+	}
+
+	public function runtime_binding(): ?runtime_function
+	{
+		return $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
 	}
 
 	/** @param int[] $conversions */

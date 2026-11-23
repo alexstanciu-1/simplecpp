@@ -136,6 +136,11 @@ int main() {
         assert(!values.iteration_next(position, 0, output) && !output.active);
         values.set(0, Probe{10}); values.set(1, Probe{11}); values.set(2, Probe{12}); values.remove(0);
         Probe::copy_budget = 0;
+        assert(values.iteration_next_key(position, 3, key) && position == 2 && key == 1);
+        assert(values.iteration_next_key(position, 3, key) && position == 3 && key == 2);
+        assert(!values.iteration_next_key(position, 3, key) && key == 2 && !output.active);
+        position = 0;
+        key = -1;
         try { values.iteration_next(position, 3, key, output); assert(false); } catch (int) {}
         assert(position == 0 && key == -1 && !output.active && Probe::live == 2);
         Probe::copy_budget = -1;

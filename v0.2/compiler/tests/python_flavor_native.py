@@ -4,8 +4,9 @@ from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
-from extends_native import runtime, source_edit
+from extends_native import ROOT, runtime, source_edit
 from parent_methods_native import write_app
+from virtual_methods_native import forms
 
 
 PYTHON_ENTRY = "result: int = bridge(\n    3)\nreturn result"
@@ -237,18 +238,20 @@ return total - 8
 
 def traversal_provider(flavor, element='int'):
     v = '$' if flavor == 'php' else ''
-    signature_type = 'hash<int,int>' if element == 'hash' else f'vector<{element}>'
+    signature_type = 'int' if element == 'invalid' else f'vector<{element}>'
     signature = {
         'cpp': f'{signature_type} items(bool enabled)',
         'php': f'function items(bool $enabled): {signature_type}',
         'js': f'function items(enabled: bool): {signature_type}',
     }[flavor]
+    if element == 'invalid':
+        return signature + ' { return 0; }'
     declaration = {
         'cpp': f'{signature_type} output = [];',
         'php': f'$output {signature_type} = [];',
         'js': f'let output: {signature_type} = [];',
     }[flavor]
-    values = {'int': ('2', '4', '7', '9'), 'string': ('"first"', '"second"'), 'hash': ()}[element]
+    values = {'int': ('2', '4', '7', '9'), 'string': ('"first"', '"second"')}[element]
     fill = ''.join(f'{v}output[]={value};' for value in values)
     return signature + f' {{ echo "V"; {declaration} if ({v}enabled) {{ {fill} }} return {v}output; }}'
 
@@ -274,7 +277,7 @@ def typed_updates_and_traversal(work, flavor, library):
         previous = artifacts(bundle)
         manifest = (bundle/'manifest.json').read_bytes()
 
-        source_edit(peer, traversal_provider(flavor, 'hash'))
+        source_edit(peer, traversal_provider(flavor, 'invalid'))
         failed = invoke(resident)
         fresh_failure = fresh_build(app, work/'traversal-failure')
         assert 'Python for requires a typed vector' in failed.get('error', ''), failed
@@ -318,6 +321,82 @@ def compatible_element_edit(work, flavor, library):
         assert resident.wait() == 0
 
 
+def hash_provider(flavor, key='int'):
+    v = '$' if flavor == 'php' else ''
+    type_name = f'hash<int,{key}>'
+    head, decl = {
+        'cpp': (f'{type_name} mapping()', f'{type_name} h = [];'),
+        'php': (f'function mapping(): {type_name}', f'$h {type_name} = [];'),
+        'js': (f'function mapping(): {type_name}', f'let h: {type_name} = [];'),
+    }[flavor]
+    if key == 'invalid':
+        return head.replace(type_name, 'vector<int>') + ' { ' + decl.replace(type_name, 'vector<int>') + f' return {v}h; }}'
+    literal = '2' if key == 'int' else '"a"'
+    return head + f' {{ echo "H"; {decl} {v}h[{literal}] = 40; return {v}h; }}'
+
+
+def key_traversal(work, flavor, library):
+    app, bundle = work/'keys', work/'keys-bundle'
+    caller = ("empty: hash<int,int> = []\nlast: int = 7\nfor last in empty:\n    pass\n"
+              "if last != 7:\n    return 10\n"
+              "count: int = 0\nfor key in mapping():\n    count += 1\n"
+              "return count + jsKeys()")
+    write_app(app, 'py', {
+        'main': caller,
+        'idle': 'def idle() -> int:\n    return 17',
+    })
+    source_edit(app/'bridge.js', 'function jsKeys(): int { let count: int = 0; '
+                'for (key in mapping()) { echo key; count += 1; } return count; }')
+    peer = app/f'provider.{flavor}'
+    source_edit(peer, hash_provider(flavor))
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        units = artifacts(bundle).values()
+        emitted = b'\n'.join(unit for unit in units if b'.iteration_next_key(' in unit)
+        assert emitted.count(b'.iteration_next_key(') == 3, emitted
+        assert b'.iteration_next(' not in emitted and b'iteration_output' not in emitted
+        native(bundle, work/'keys-int', (2, b'HH2', b''), library)
+
+        source_edit(peer, hash_provider(flavor, 'string'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {
+            peer.name, 'main.py', 'bridge.js',
+        }, changed
+        fresh = work/'keys-string-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh)
+        native(bundle, work/'keys-string', (2, b'HHa', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        for name, path, edit, recovery in [
+            ('provider', peer, hash_provider(flavor, 'invalid'), hash_provider(flavor, 'string')),
+            ('scope', app/'main.py', caller.replace('return count + jsKeys()', 'return key'), caller),
+            ('deleted', peer, None, hash_provider(flavor, 'string')),
+        ]:
+            if edit is None:
+                path.unlink()
+            else:
+                source_edit(path, edit)
+            failed = invoke(resident)
+            fresh_failure = fresh_build(app, work/f'keys-{name}-failure')
+            assert 'error' in failed and failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+            if name == 'provider':
+                assert 'JS for-in requires a typed hash' in failed['error'], failed
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(path, recovery)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            assert artifacts(bundle) == previous
+        native(bundle, work/'keys-recovered', (2, b'HHa', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def narrow_compound(work, library):
     function = """def update(delta: int) -> int:
     value: uint8 = 254
@@ -333,6 +412,270 @@ def narrow_compound(work, library):
         assert 'error' not in result, result
         assert any(b'scpp::checked_int64_to_uint8(' in content for content in artifacts(bundle).values())
         native(bundle, work/f'narrow-run-{delta}', expected, library)
+
+
+RECORD_SOURCE = """class Counter:
+    value: int = 0
+    def __init__(self, start: int):
+        self.value = start
+
+    def bump(self, delta: int) -> int:
+        self.value = self.value + delta
+        return self.value
+
+class Empty:
+    pass
+"""
+RECORD_ENTRY = """def exercise(fail: bool) -> int:
+    original: Diagnostic = failure()
+    try:
+        try:
+            if fail:
+                raise original
+            return 8
+        except Diagnostic as inner:
+            inner.marker = 9
+            inner = failure()
+            raise
+        finally:
+            cleaned()
+    except Diagnostic as outer:
+        if not sameFailure(original, outer) or outer.marker != 9:
+            return 1
+        return 9
+
+if exercise(False) != 8 or exercise(True) != 9:
+    return 2
+try:
+    pass
+finally:
+    cleaned()
+index: int = 0
+while index < 2:
+    index += 1
+    try:
+        if index == 1:
+            continue
+        break
+    finally:
+        cleaned()
+Counter(1)
+empty: Empty = Empty()
+counter: Counter = Counter(3)
+alias: Counter = counter
+touch(alias, 5)
+if counter.value != alias.value:
+    return 3
+return counter.value
+"""
+RECORD_PEERS = {
+    'cpp': ('class Diagnostic : public Exception { public: int marker = 7; }; '
+            'Diagnostic failure() { return new Diagnostic(); } '
+            'bool sameFailure(Diagnostic a, Diagnostic b) { return a === b; } '
+            'void touch(Counter c, int n) { c->bump(n); } '
+            'int guard(int divisor) { return 8 / divisor; }'),
+    'php': ('class Diagnostic extends Exception { public int $marker = 7; } '
+            'function failure(): Diagnostic { return new Diagnostic(); } '
+            'function sameFailure(Diagnostic $a, Diagnostic $b): bool { return $a === $b; } '
+            'function touch(Counter $c, int $n): void { $c->bump($n); } '
+            'function guard(int $divisor): int { return 8 / $divisor; }'),
+    'js': ('class Diagnostic extends Exception { marker:int = 7; } '
+           'function failure(): Diagnostic { return new Diagnostic(); } '
+           'function sameFailure(a: Diagnostic, b: Diagnostic): bool { return a === b; } '
+           'function touch(c: Counter, n: int): void { c.bump(n); } '
+           'function guard(divisor: int): int { return 8 / divisor; }'),
+}
+RECORD_CLEANUP = {
+    'cpp': 'void cleaned() { echo "F"; }',
+    'php': 'function cleaned(): void { echo "F"; }',
+    'js': 'function cleaned(): void { echo "F"; }',
+}
+CONSTRUCTOR_COLLISIONS = {
+    'cpp': 'int Counter(int start) { return start; }',
+    'php': 'function Counter(int $start): int { return $start; }',
+    'js': 'function Counter(start: int): int { return start; }',
+}
+EXCEPTION_GUARD = """try:
+    return guard(0)
+except Exception as missed:
+    return 2
+finally:
+    cleaned()
+"""
+
+
+def records_and_exceptions(work, flavor, library):
+    app, bundle = work/'records', work/'records-bundle'
+    write_app(app, 'py', {'main': RECORD_ENTRY, 'records': RECORD_SOURCE})
+    peer = app/f'peer.{flavor}'
+    source_edit(peer, RECORD_PEERS[flavor])
+    cleanup = app/f'cleanup.{flavor}'
+    source_edit(cleanup, RECORD_CLEANUP[flavor])
+    records = app/'records.py'
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'records-initial', (8, b'FFFFF', b''), library)
+
+        source_edit(cleanup, RECORD_CLEANUP[flavor].replace('echo "F"', 'echo "G"'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [cleanup.name], changed
+        native(bundle, work/'peer-edited', (8, b'GGGGG', b''), library)
+
+        edited = RECORD_SOURCE.replace('self.value + delta', 'self.value + delta + 1')
+        source_edit(records, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {'main.py', peer.name, 'records.py'}, changed
+        fresh_edited = work/'records-fresh-edited'
+        assert 'error' not in fresh_build(app, fresh_edited)
+        assert artifacts(bundle) == artifacts(fresh_edited)
+        native(bundle, work/'records-edited', (9, b'GGGGG', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        source_edit(records, edited.replace('self, start: int', 'self, start: int, extra: int'))
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'records-failure')
+        assert 'main.py:' in failed.get('error', '') and 'Argument count mismatch' in failed['error'], failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(records, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'records-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'records-recovered', (9, b'GGGGG', b''), library)
+
+        collision = app/f'collision.{flavor}'
+        source_edit(collision, CONSTRUCTOR_COLLISIONS[flavor])
+        failed = invoke(resident)
+        fresh_failure = fresh_build(app, work/'collision-failure')
+        assert 'both function and class named Counter' in failed.get('error', ''), failed
+        assert failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+        assert artifacts(bundle) == previous
+        assert (bundle/'manifest.json').read_bytes() == manifest
+
+        collision.unlink()
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        assert 'error' not in fresh_build(app, work/'collision-fresh')
+        assert artifacts(bundle) == artifacts(work/'collision-fresh') == previous
+        native(bundle, work/'collision-recovered', (9, b'GGGGG', b''), library)
+
+        source_edit(app/'main.py', EXCEPTION_GUARD)
+        guarded = invoke(resident)
+        assert 'error' not in guarded, guarded
+        native(bundle, work/'native-guard', (1, b'G', b'division_by_zero\n'), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+INHERITANCE = """class Child(Base):
+    extra: int = 1
+
+    def __init__(self, start: int):
+        super().__init__(start)
+        self.value = self.value + self.extra
+
+    @override
+    def evaluate(self) -> int:
+        return self.value + self.extra
+
+    @virtual
+    def other(self) -> int:
+        return self.value
+"""
+BASE_CONSTRUCTORS = {
+    'cpp': 'Base(int start) { echo "B"; this->value = start; }',
+    'php': 'public function __construct(int $start) { echo "B"; $this->value = $start; }',
+    'js': 'constructor(start: int) { echo "B"; this.value = start; }',
+}
+
+
+def inheritance(work, flavor, library):
+    syntax, _, klass = forms(flavor)
+    field = {'cpp': 'public: int value = 0;', 'php': 'public int $value = 0;', 'js': 'value: int = 0;'}[flavor]
+    virtual = {
+        'cpp': 'virtual int evaluate() { return 0; }',
+        'php': 'public virtual function evaluate(): int { return 0; }',
+        'js': 'virtual evaluate(): int { return 0; }',
+    }[flavor]
+    inherited = {
+        'cpp': 'int bonus() { return 0; }',
+        'php': 'public function bonus(): int { return 0; }',
+        'js': 'bonus(): int { return 0; }',
+    }[flavor]
+    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited)
+    v = syntax['v']
+    access = syntax['access']
+    api = syntax['function']('viaBase', 'int', [('obj', 'Base')],
+                             f'return {v}obj{access}evaluate() + {v}obj{access}bonus();')
+    app, bundle = work/'inheritance', work/'inheritance-bundle'
+    write_app(app, 'py', {
+        'main': 'child: Child = Child(3)\nreturn viaBase(child) + child.other()',
+        'child': INHERITANCE,
+        'idle': 'def idle() -> int:\n    return 17',
+    })
+    peer = app/f'base.{flavor}'
+    source_edit(peer, base)
+    source_edit(app/f'api.{flavor}', api)
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'inheritance-initial', (9, b'B', b''), library)
+
+        edited = base.replace(inherited, inherited.replace('return 0', 'return 1'))
+        source_edit(peer, edited)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {
+            peer.name, f'api.{flavor}', 'child.py', 'main.py',
+        }, changed
+        native(bundle, work/'inheritance-edited', (10, b'B', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        child = app/'child.py'
+        for name, path, invalid, diagnostic in [
+            ('missing-marker', child, INHERITANCE.replace('    @override\n', ''), 'requires override'),
+            ('duplicate-marker', child, INHERITANCE.replace('@override', '@override\n    @override'), 'Duplicate method modifier'),
+            ('multi-base', child, INHERITANCE.replace('Child(Base)', 'Child(Base, Base)'), 'single base class'),
+            ('late-super', child, INHERITANCE.replace('        super().__init__(start)', '        pass\n        super().__init__(start)'), 'super'),
+            ('base-contract', peer, edited.replace('virtual ', ''), 'Nonvirtual method hiding'),
+        ]:
+            source_edit(path, invalid)
+            failed = invoke(resident)
+            fresh = fresh_build(app, work/f'inheritance-{name}')
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh.get('error'), (failed, fresh)
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(path, edited if path == peer else INHERITANCE)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            assert artifacts(bundle) == previous
+
+        peer.unlink()
+        failed = invoke(resident)
+        fresh = fresh_build(app, work/'inheritance-deleted')
+        assert 'error' in failed and failed['error'] == fresh.get('error'), (failed, fresh)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+        source_edit(peer, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh = work/'inheritance-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'inheritance-recovered', (10, b'B', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
 
 
 def prove(work, library):
@@ -355,6 +698,9 @@ def prove(work, library):
         everyday_bodies(case, flavor, library)
         typed_updates_and_traversal(case, flavor, library)
         compatible_element_edit(case, flavor, library)
+        key_traversal(case, flavor, library)
+        records_and_exceptions(case, flavor, library)
+        inheritance(case, flavor, library)
 
 
 def incremental(work, flavor, app, output, library):
@@ -408,4 +754,4 @@ def incremental(work, flavor, app, output, library):
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
-        prove(work/'proof', runtime(work, 'clang++'))
+        prove(work/'proof', runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp']))

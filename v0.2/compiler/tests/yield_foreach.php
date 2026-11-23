@@ -32,6 +32,11 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		verify(serialize($entry) === $before, 'Lowering mutated preparation');
 		$fixtures[$flavor->name . '_' . $name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected), 'compiler_ms' => $elapsed / 1e6];
 	};
+	if ($flavor === flavor::js) {
+		$emit('hash_keys', 'function make():hash<int,string>{let items:hash<int,string> = []; items["only"]=10; return items;}'
+			. 'function stream():Iterator<string>{for (key in make()) {yield key;}}'
+			. 'foreach(stream() as key){echo key;} return 8;', 'only');
+	}
 	foreach (['vector<int>', 'hash<int,string>', 'mixed', 'dynamic'] as $family => $type) {
 		$setup = $decl($type, 'items', '[]') . $v('items') . ($family === 0 ? '[]' : '["a"]') . '=10;'
 			. $v('items') . ($family === 0 ? '[]' : '["b"]') . '=20;';

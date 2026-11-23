@@ -861,7 +861,8 @@ CPP;
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
 				$direct = $this->iteration_direct($statement);
-				$output_type = $type->iteration_output_type();
+				$output_type = $statement->keys_only ? null : $type->iteration_output_type();
+				if (!$direct) foreach ($destination->type_def()->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
 				$output = $output_type !== null ? ($resume === null ? 'iteration_output' : $prefix . 'output')
 					: ($direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output'));
 				if ($resume === null && $output_type !== null) {
@@ -883,6 +884,8 @@ CPP;
 						if ($resume === null) $lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
 					}
 					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
+				} elseif ($statement->keys_only) {
+					$next = $type->lower_cpp_iteration_next_key($iteration_source, $output, $prefix);
 				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
 				if ($output_type !== null) {
@@ -1725,9 +1728,9 @@ CPP;
 			return $value->lock ? '(' . $operand . ').lock()' : $type->cpp_type() . '(' . $operand . ')';
 		}
 		if ($value instanceof ast_this_expression) return 'scpp_self';
-		if ($value instanceof ast_construction_expression) {
+		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
-			$shared = $value instanceof ast_new_expression;
+			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
 			if ($shared && $type instanceof type_exception) {
 				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 				return $type->factory->symbol . '(' . $message . ')';
@@ -2209,7 +2212,7 @@ CPP;
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$parameters = $callback ? $function->inputs : $function->parameters;
-		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver();
+		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -2273,7 +2276,8 @@ CPP;
 			$arguments[0] = 'enum_receiver';
 			$direct = false;
 		}
-		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1)) {
+		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($callback || !$function->is_constructor())
+			&& !$has_reference && count($order_sensitive) <= 1)) {
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
