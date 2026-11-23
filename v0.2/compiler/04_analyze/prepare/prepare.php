@@ -535,7 +535,7 @@ final class Preparation
 		statement_return_target $function): int
 	{
 		$this->value($syntax->subject);
-		$type = $syntax->subject->type_def();
+		$type = $syntax->subject->type_def()->dispatch_label_type();
 		$dispatch = $type->constant_dispatch();
 		if ($dispatch === null) throw new diagnostic($source, $syntax->byte_start(), 'Switch subject requires constant-label dispatch');
 		$outer = $this->switch;
@@ -1254,7 +1254,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_match_expression) {
 			$this->value($syntax->subject, $initializing);
-			$type = $syntax->subject->type_def();
+			$type = $syntax->subject->type_def()->dispatch_label_type();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
 			$dispatch = $type->constant_dispatch();
 			if (!$conditional && $dispatch === null) {

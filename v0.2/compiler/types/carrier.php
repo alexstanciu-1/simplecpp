@@ -105,6 +105,11 @@ final class nullable_enum_type_definition extends carrier_type_definition
 		parent::__construct('nullable<' . $payload->name . '>', $payload);
 	}
 
+	public function dispatch_label_type(): type_definition
+	{
+		return $this->payload_type;
+	}
+
 	public function accepts_empty(): bool
 	{
 		return true;

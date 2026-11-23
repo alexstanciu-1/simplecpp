@@ -9,6 +9,11 @@ final class @class@ extends carrier_type_definition
 		parent::__construct(@family@ . '<' . @payload@::instance()->name . '>', @payload@::instance());
 	}
 
+	public function dispatch_label_type(): type_definition
+	{
+		return @dispatch_label_type@;
+	}
+
 	public function supports_instance_field(): bool
 	{
 		return @instance_field@;

@@ -23,6 +23,15 @@ literals or named constants of exactly the subject type. Locals, calls and other
 computed labels are rejected even when their value can be inferred. Duplicate
 values (including aliases), duplicate defaults and missing defaults are errors.
 
+With a one-layer nullable or result subject, the payload type supplies the label
+domain for both constant-label match and switch. It must itself support constant
+dispatch. Evaluate the subject once and test for a payload before extraction.
+Present zero and present empty bytes participate in ordinary label comparison.
+An absent nullable or a stored result error selects default directly. In switch,
+execution then follows ordinary fallthrough, or continues after the switch if
+default is omitted. An exception raised while evaluating the subject propagates.
+Explicit alternate-state labels and the boolean-sentinel carrier families remain deferred.
+
 All value arms must produce the same canonical type. A default of the form
 `default => throw expression` contributes no result type and requires at
 least one non-default value arm. See [throwing fallbacks](exceptions_v0_2.md#throwing-fallbacks).

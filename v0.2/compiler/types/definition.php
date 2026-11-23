@@ -289,6 +289,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Exact label domain for a single constant selection. */
+	public function dispatch_label_type(): type_definition
+	{
+		return $this;
+	}
+
 	public function constant_dispatch(): ?constant_dispatch
 	{
 		return null;
