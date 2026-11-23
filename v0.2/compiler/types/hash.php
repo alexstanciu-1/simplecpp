@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements indexed_mutation_type, counted_collection_type
+abstract class hash_type_definition extends type_definition implements indexed_mutation_type, counted_collection_type, membership_type
 {
 	use checked_indexed_mutation;
 	use collection_specializations;
@@ -43,6 +43,24 @@ abstract class hash_type_definition extends type_definition implements indexed_m
 	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
 		return $this->key_type->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
+	}
+
+	abstract public function presence_function(): runtime_function;
+
+	public function prepare_membership(ast_binary_expression $site): void
+	{
+		if ($site->left->type_def() !== $this->key_type) {
+			throw new diagnostic($site->source(), $site->left->byte_start(), 'Membership requires key type ' . $this->key_type->name);
+		}
+		$site->settle_binary(type_bool::instance(), $this);
+	}
+
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string
+	{
+		$binding = $this->presence_function();
+		$headers[$binding->header] = true;
+		return '(' . $receiver . ').' . $binding->symbol . '(' . $this->lower_cpp_key($needle, $key) . ')';
 	}
 
 	public function prepare_index(ast_index_expression $value): void

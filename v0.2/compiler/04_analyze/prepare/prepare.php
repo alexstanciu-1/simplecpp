@@ -1470,8 +1470,18 @@ final class Preparation
 			$syntax->settle_not();
 			return;
 		}
+		if ($syntax instanceof ast_comparison_chain) {
+			foreach ($syntax->links as $link) {
+				$this->value($link, $initializing);
+				if ($link->type_def() !== type_bool::instance()) {
+					throw new diagnostic($link->source(), $link->byte_start(), 'Comparison chain requires a boolean comparison');
+				}
+			}
+			$syntax->settle_chain();
+			return;
+		}
 		if ($syntax instanceof ast_binary_expression) {
-			$this->value($syntax->left, $initializing);
+			if (!($syntax instanceof ast_continued_comparison)) $this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			if ($syntax instanceof ast_key_comparison) {
 				$this->expression_visits++;
@@ -1504,10 +1514,25 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if ($syntax->operator->membership()) {
+				if (!($right instanceof membership_type)) throw new diagnostic($syntax->source(), $syntax->right->byte_start(), 'Receiver does not support Python membership');
+				$right->prepare_membership($syntax);
+				return;
+			}
 			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)
 				&& $syntax->source()->flavor === flavor::python
 				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands: Python bitwise operators require integer scalars');
+			}
+			// A Python owner identity test accepts any two shared views of an allocation.
+			if (($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical)
+				&& $syntax->source()->flavor === flavor::python && !($syntax instanceof ast_key_comparison)
+				&& !($syntax->right instanceof ast_keyword_expression && $syntax->right->word === 'null')) {
+				if (!($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python identity requires two shared handles or a literal None on the right');
+				}
+				$syntax->settle_binary(type_bool::instance(), $left);
+				return;
 			}
 			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
 				$owner = $left instanceof shared_record_type_definition ? $left : $right;

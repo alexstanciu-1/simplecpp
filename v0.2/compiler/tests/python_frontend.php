@@ -55,7 +55,6 @@ foreach ([
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
 	["return 8 %= 2", 9, 'Unsupported punctuation'],
 	["return \"\u{03c0}\" /= 2", 12, 'Unsupported punctuation'],
-	["return 1 == 2 < 3", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
 	try {
 		$source = new source_file('invalid.py', $text, flavor::python);
@@ -71,6 +70,18 @@ foreach ([
 }
 
 
+$chain = $frontend->parse(new source_file('chain.py', 'return not 1 & 3 < 2 <= 4 or False', flavor::python))
+	->main()->body()->statements[0]->value->left->operand;
+[$first, $second] = $chain->links;
+check($chain->source_text() === '1 & 3 < 2 <= 4' && $first->left->operator === binary_operator::bit_and
+	&& $first->operator === binary_operator::less && $second->operator === binary_operator::less_equal
+	&& $first->right === $second->left && $second->left->parent === $first, 'Comparison chain precedence, span and ownership');
+
+$grouped = '(1 + 2) < 4 <= (5 + 6)';
+$chain = $frontend->parse(new source_file('grouped.py', 'return ' . $grouped, flavor::python))
+	->main()->body()->statements[0]->value;
+check($chain->source_text() === $grouped, 'Chain span includes grouping at both ends');
+
 $bitwise = $frontend->parse(new source_file('flags.py',
 	'return not 1 | 2 ^ 3 & ~4 + 5 == 6 or False', flavor::python));
 $logic = $bitwise->main()->body()->statements[0]->value;
@@ -81,6 +92,25 @@ check($logic->operator === binary_operator::logical_or && $logic->left instanceo
 	&& $bits->right->operator === binary_operator::bit_xor && $bits->right->right->operator === binary_operator::bit_and
 	&& $bits->right->right->right->operator === binary_operator::add
 	&& $bits->right->right->right->left->source_text() === '~4', 'Python bitwise precedence on the shared tree');
+
+$membership = $frontend->parse(new source_file('membership.py',
+	'return not a | b not in mapping and ok', flavor::python))->main()->body()->statements[0]->value;
+$test = $membership->left->operand;
+check($membership->operator === binary_operator::logical_and && $membership->left instanceof ast_not_expression
+	&& $test->operator === binary_operator::key_not_in && $test->left->operator === binary_operator::bit_or
+	&& $test->source_text() === 'a | b not in mapping', 'Membership shares comparison precedence and preserves the source span');
+
+$chain = $frontend->parse(new source_file('links.py', 'return a not in b in c', flavor::python))
+	->main()->body()->statements[0]->value;
+[$first, $second] = $chain->links;
+check($first->operator === binary_operator::key_not_in && $second->operator === binary_operator::key_in
+	&& $first->right === $second->left, 'Membership can start and continue a comparison chain');
+
+$chain = $frontend->parse(new source_file('identity_chain.py', 'return a is not b is None', flavor::python))
+	->main()->body()->statements[0]->value;
+[$first, $second] = $chain->links;
+check($first->operator === binary_operator::not_identical && $second->operator === binary_operator::identical
+	&& $first->right === $second->left && $chain->source_text() === 'a is not b is None', 'Chained identity keeps its middle operand');
 
 $identity = $frontend->parse(new source_file('presence.py',
 	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
@@ -110,6 +140,21 @@ foreach (['#include <scpp/arithmetic.hpp>', 'scpp::int64_true_divide(', 'scpp::f
 	check(str_contains($cpp, $expected), 'Missing generated division binding: ' . $expected);
 }
 foreach ([flavor::cpp, flavor::php, flavor::js] as $peer) {
+	$ordinary = $frontend->parse(new source_file('ordinary', 'return 1 < 2 < 3;', $peer))
+		->main()->body()->statements[0]->value;
+	check($ordinary instanceof ast_binary_expression && $ordinary->left instanceof ast_binary_expression
+		&& $ordinary->operator === binary_operator::less && $ordinary->left->operator === binary_operator::less,
+		$peer->value . ' retains left-associated binary comparisons');
+	foreach (['in', 'not in'] as $operator) {
+		$source = new source_file('ordinary', "return 1 < 2 $operator 3;", $peer);
+		try {
+			$frontend->parse($source);
+			throw new RuntimeException($peer->value . ' accepted Python membership');
+		} catch (diagnostic $failure) {
+			check($failure->offset === 13, $failure->getMessage());
+		}
+	}
+
 	$tokens = $frontend->scan(new source_file('ordinary', "return 8 / 2 % 3; // 1 // 2\n", $peer));
 	$operators = array_filter($tokens->tokens, static fn($token) => in_array($token->kind,
 		[token_kind::slash, token_kind::percent, token_kind::double_slash], true));
@@ -286,17 +331,24 @@ foreach ([
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
 	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
 	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
+	["return 8 if 1 in 42 else 0", 'does not support Python membership'],
+	["h: hash<int,string> = {}\nreturn 8 if 1 not in h else 0", 'key type string'],
+	["h: hash<int,int> = {}\nreturn 8 if 1 in h is None else 0", 'Python None test'],
 	["return 1 is None", 'Python None test'],
 	["return None is False", 'literal None'],
-	["return None is None + 1", 'literal None'],
-	["return None is None is None", 'chained comparisons'],
+	["return None is None + 1", 'Unsupported binary'],
+	["return 1 is 1", 'two shared handles'],
+	['return "same" is not "same"', 'two shared handles'],
+	["v: vector<int> = []\nreturn v is v", 'two shared handles'],
+	["def same(a: nullable<int>, b: nullable<int>) -> bool:\n    return a is b\nreturn 0", 'two shared handles'],
+	["return 1 == 2 is None", 'Python None test'],
+	["class Item:\n    pass\na: Item = Item()\nreturn a is not a is 3", 'two shared handles'],
 	["def f(x: mixed) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
 	["def f(x: result_or_bool<int>) -> bool:\n    return x is not None\nreturn 0", 'Python None test'],
 	["def f(x: result_or_false<int>) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
 	["return ~False", 'Unsupported unary'],
 	["return 1 ^ 2.0", 'Unsupported binary'],
 	["return True | False", 'Unsupported binary'],
-	["return 1 & 2 == 3 < 4", 'chained comparisons'],
 	["def bad(&x: int) -> int:\n    return x\nreturn 0", 'identifier'],
 	["def bad(x: A & B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
 	["def bad(x: A | B) -> int:\n    return 0\nreturn 0", 'typed parameters'],

@@ -283,6 +283,8 @@ final class Compilation_Inspection
 			$row['receiver'] = self::value($value->receiver);
 			$row['index'] = self::value($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) $row['links'] = array_map(self::value(...), $value->links);
+
 		if ($value instanceof ast_key_comparison && $value->tests_key()) {
 			$row['operator'] = $value->operator === binary_operator::identical ? 'key_missing' : 'key_present';
 			$row['receiver'] = self::value($value->left->receiver);
@@ -296,7 +298,7 @@ final class Compilation_Inspection
 				$row['right_conversion'] = value_conversion::name($value->right_conversion);
 			}
 			$row['operator'] = $value->operator->name;
-			$row['left'] = self::value($value->left);
+			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
 		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);

@@ -57,7 +57,9 @@ associative mode is checked on every boxed advance. Replacing a boxed source wit
 scalar/null throws `boxed_expected_container`, even after the old limit is reached.
 Valid empty typed/boxed containers simply return false.
 
-Mutation has no stable visitation promise: entries may shift, disappear, change or
+Across source flavors, traversal of an unmodified typed hash visits live entries in key insertion order. This applies to key-only, value-only and paired traversal. Replacing a value keeps its position. Erasing a key and inserting it again places it last.
+
+Mutation during traversal has no stable visitation promise: entries may shift, disappear, change or
 be replaced. Bounds and hole checks prevent invalid slot access; no old entry
 sequence is preserved. Independent loops have independent integer positions.
 Concurrent mutation, escaping element references and by-reference foreach are not

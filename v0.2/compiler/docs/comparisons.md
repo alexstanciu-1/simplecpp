@@ -24,7 +24,7 @@ no separate prepared expression, copied operands, conversion list or allocated
 operation record. For this slice, the syntax operator plus the prepared operand
 type completely identifies the approved native operation.
 
-The parser supports parentheses and relational precedence above equality, with
+The cpp/php/js parser supports parentheses and relational precedence above equality, with
 left association within each level. Grouping changes tree shape without adding a
 wrapper node; leaves retain their original token spans. `1 < 2 < 3` fails because
 its second comparison would mix bool and int, rather than behaving as a chained

@@ -4,8 +4,24 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
-abstract class boxed_type_definition extends type_definition implements indexed_mutation_type
+abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
 {
+	public function prepare_membership(ast_binary_expression $site): void
+	{
+		$needle = $site->left->type_def();
+		if ($needle !== $this && !$this->accepts_scalar($needle)) {
+			throw new diagnostic($site->source(), $site->left->byte_start(), 'Unsupported boxed membership operand');
+		}
+		$site->settle_binary(type_bool::instance(), $this);
+	}
+
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string
+	{
+		if ($needle->type_def() !== $this) $key = $this->box_cpp($needle, $key);
+		return '(' . $receiver . ').python_contains(' . $key . ')';
+	}
+
 	public function prepare_key(ast_expression $key): void
 	{
 		$type = $key->type_def();

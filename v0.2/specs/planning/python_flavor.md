@@ -134,7 +134,7 @@ Standalone @virtual and @override lines mark instance methods at compile time. T
 
 ### Typed hash key traversal
 
-Python for name in source binds an element for a typed vector and a key for a typed hash. JS for (name in source) with a braced body selects the same key-only capability. Both reuse the existing foreach destination rule. A new name is local to the loop, an existing local or parameter receives each key through ordinary assignment conversion, and an empty hash leaves it unchanged. Traversal order has no source guarantee.
+Python for name in source binds an element for a typed vector and a key for a typed hash. JS for (name in source) with a braced body selects the same key-only capability. Both reuse the existing foreach destination rule. A new name is local to the loop, an existing local or parameter receives each key through ordinary assignment conversion, and an empty hash leaves it unchanged. Typed hashes traverse live keys in insertion order.
 
 The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. General slot reuse and boxed traversal with these spellings are deferred. Paired Python traversal uses the [typed hash items slice](#python-typed-hash-items-traversal).
 
@@ -330,8 +330,7 @@ The key is a fresh loop-local binding, including when its name shadows an
 outer local. The value uses the existing foreach rule: reuse a compatible
 visible local or parameter, otherwise infer a fresh loop-local binding.
 Empty traversal leaves an existing destination unchanged. Values follow the
-shared copy contract, including retention of shared object identity. Hash
-visitation order has no source guarantee.
+shared copy contract, including retention of shared object identity. Pairs follow key insertion order.
 
 Standalone items views, general tuple destructuring, by-reference iteration,
 boxed receivers and arbitrary iterator pairs remain deferred.

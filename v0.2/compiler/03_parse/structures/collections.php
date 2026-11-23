@@ -75,7 +75,7 @@ final class ast_keyed_collection_expression extends ast_expression
 		foreach ($entries as $entry) $entry->attach($this);
 	}
 
-	public function settle_collection(type_definition&keyed_initializer_type $type): void
+	public function settle_collection((type_definition&keyed_initializer_type)|boxed_type_definition $type): void
 	{
 		$this->settle_value($type, null);
 	}

@@ -11,6 +11,8 @@ public:
     static @n@ from_floating(float64 value) noexcept;
     static @n@ from_string(const string& value);
     static @n@ container();
+    static @n@ python_list();
+    bool_t python_contains(const @n@& needle) const;
     boxed_kind kind() const noexcept;
     bool_t get_boolean() const;
     int64 get_integer() const;

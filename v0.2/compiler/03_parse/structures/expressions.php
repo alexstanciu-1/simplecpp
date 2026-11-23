@@ -34,6 +34,13 @@ enum binary_operator: int
 	case true_divide = 26;
 	case floor_divide = 27;
 	case floor_remainder = 28;
+	case key_in = 29;
+	case key_not_in = 30;
+
+	public function membership(): bool
+	{
+		return $this === self::key_in || $this === self::key_not_in;
+	}
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
@@ -78,7 +85,7 @@ enum binary_operator: int
 			self::bit_or => 5,
 			self::bit_xor => 6,
 			self::bit_and => 7,
-			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 8,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare, self::key_in, self::key_not_in => 8,
 			self::less, self::less_equal, self::greater, self::greater_equal => 9,
 			self::concatenate => 10,
 			self::shift_left, self::shift_right => 11,
@@ -86,6 +93,22 @@ enum binary_operator: int
 			self::multiply, self::divide, self::remainder, self::true_divide, self::floor_divide, self::floor_remainder => 13,
 			self::power => 14,
 		};
+	}
+}
+
+/** Ordered links. Each interior operand belongs to its preceding link. */
+final class ast_comparison_chain extends ast_expression
+{
+	/** @param list<ast_binary_expression> $links */
+	public function __construct(int $start, int $end, public readonly array $links)
+	{
+		parent::__construct($start, $end);
+		foreach ($links as $link) $link->attach($this);
+	}
+
+	public function settle_chain(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
 	}
 }
 
@@ -116,7 +139,7 @@ class ast_binary_expression extends ast_expression
 		$this->left = $left;
 		$this->right = $right;
 		$this->operator = $operator;
-		$left->attach($this);
+		if (!($this instanceof ast_continued_comparison)) $left->attach($this);
 		$right->attach($this);
 	}
 
@@ -147,6 +170,9 @@ class ast_binary_expression extends ast_expression
 		$this->right_conversion = value_conversion::identity;
 	}
 }
+
+/** Its left operand is a non-owning link to the previous comparison's right operand. */
+final class ast_continued_comparison extends ast_binary_expression {}
 
 /** Strict indexed comparison whose bare RHS can bind to a declaration or denote a missing key. */
 final class ast_key_comparison extends ast_binary_expression

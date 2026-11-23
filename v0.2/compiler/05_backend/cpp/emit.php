@@ -82,6 +82,58 @@ final class Cpp_Emitter
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
+	/** Apply the prepared conversions and publish the operation's runtime dependencies. */
+	private function binary_operands(ast_binary_expression $value, string &$left, string &$right, array &$required_headers): void
+	{
+		$type = $value->execution_type();
+		if ($value->left_conversion !== value_conversion::identity) {
+			$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
+			foreach ($type->conversion_headers($value->left_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		if ($value->right_conversion !== value_conversion::identity) {
+			$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
+			foreach ($type->conversion_headers($value->right_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		foreach ($type->binary_headers($value->operator) as $header) {
+			$required_headers[$header] = true;
+		}
+	}
+
+	/**
+	 * Evaluate the needle once before the receiver. A chain already holds the needle.
+	 * @param array<string,bool> $required_headers
+	 */
+	private function membership_test(ast_binary_expression $value, string $left, string $right, array &$required_headers /** array<string,bool> */, bool $key_captured): string
+	{
+		/** @var membership_type $type */
+		$type = $value->execution_type();
+		$literal = $value->left instanceof ast_integer_expression || $value->left instanceof ast_float_expression
+			|| $value->left instanceof ast_keyword_expression;
+		$local_pair = $value->left instanceof ast_name_expression && $value->left->local_binding() !== null
+			&& $value->right instanceof ast_name_expression && $value->right->local_binding() !== null;
+		$capture = !$key_captured && !$literal && !$local_pair;
+		$key = $capture ? 'membership_key' : $left;
+		$test = $type->lower_cpp_membership($value->left, $key, $right, $required_headers);
+		if ($value->operator === binary_operator::key_not_in) $test = '!(' . $test . ')';
+		return $capture ? '([&]() { const auto membership_key = ' . $left . '; return ' . $test . '; }())' : $test;
+	}
+
+	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
+	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
+		array &$declarations, array &$required_headers): string
+	{
+		$expression = $this->value($operand, $global_references, $declarations, $required_headers);
+		if ($operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
+			|| $operand instanceof ast_keyword_expression) return $expression;
+		$name = 'chain_' . $index;
+		$steps .= 'const auto ' . $name . ' = ' . $expression . '; ';
+		return $name;
+	}
+
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
@@ -1811,6 +1863,28 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
+			&& $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
+			$list = $value instanceof ast_collection_expression;
+			$factory = $value_type->cpp_type() . ($list ? '::python_list()' : '::container()');
+			$items = $list ? $value->elements : $value->entries;
+			if ($items === []) return $factory;
+			$code = '([&]() { auto boxed = ' . $factory . '; ';
+			foreach ($items as $i => $item) {
+				$operand = $list ? $item : $item->value;
+				$conversion = $list ? $value->element_conversion($i) : $item->conversion;
+				foreach ($value_type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$input = $this->value($operand, $global_references, $declarations, $required_headers);
+				$input = $value_type->lower_cpp_exact_argument($operand, $conversion, $input, $this->inline_adapters);
+				if ($list) $code .= 'boxed.append(' . $input . '); ';
+				else {
+					$key = $this->value($item->key, $global_references, $declarations, $required_headers);
+					$key = $item->key->type_def()->lower_cpp_exact_argument($item->key, value_conversion::identity, $key);
+					$code .= '{ const auto key = ' . $key . '; boxed.set(key, ' . $input . '); } ';
+				}
+			}
+			return $code . 'return boxed; }())';
+		}
 		if ($value instanceof ast_keyed_collection_expression) {
 			$type = $value->type_def();
 			if ($value->entries === []) return $type->lower_cpp_empty();
@@ -1925,6 +1999,27 @@ CPP;
 			$expression = '!' . $this->condition($value->operand, $global_references, $declarations, $required_headers);
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
+		if ($value instanceof ast_comparison_chain) {
+			$steps = '';
+			$middle = $this->chain_operand($value->links[0]->left, 0, $steps, $global_references, $declarations, $required_headers);
+			$last = array_key_last($value->links);
+			foreach ($value->links as $index => $link) {
+				$left = $middle;
+				$membership = $link->operator->membership();
+				$middle = $membership && $index === $last
+					? $this->value($link->right, $global_references, $declarations, $required_headers)
+					: $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
+				$right = $middle;
+				if ($membership) {
+					$test = $this->membership_test($link, $left, $right, $required_headers, true);
+				} else {
+					$this->binary_operands($link, $left, $right, $required_headers);
+					$test = $link->execution_type()->lower_prepared_binary($link, $left, $right);
+				}
+				$steps .= $index === $last ? 'return ' . $test . ';' : 'if (!(' . $test . ')) return false; ';
+			}
+			return '([&]() -> bool { ' . $steps . ' }())';
+		}
 		if ($value instanceof ast_key_comparison && $value->tests_key()) {
 			$index = $value->left;
 			$receiver = $this->value($index->receiver, $global_references, $declarations, $required_headers);
@@ -1968,21 +2063,10 @@ CPP;
 			$right_safe = false;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
-			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
-				foreach ($type->conversion_headers($value->left_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
+			if ($value->operator->membership()) {
+				return $this->membership_test($value, $left, $right, $required_headers, false);
 			}
-			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
-				foreach ($type->conversion_headers($value->right_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
-			}
-			foreach ($type->binary_headers($value->operator) as $header) {
-				$required_headers[$header] = true;
-			}
+			$this->binary_operands($value, $left, $right, $required_headers);
 			$same_spelling = $left === $right;
 			$operands_safe = $left_safe && $right_safe;
 			$native = $type->cpp_binary_reorderable($value->operator, $same_spelling);

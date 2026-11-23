@@ -771,6 +771,241 @@ def division(work, flavor, library):
         native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
 
 
+def hash_membership(work, flavor, library):
+    syntax, _, _ = forms(flavor)
+    fn = syntax['function']
+    caller = """class Entry:
+    pass
+
+def hash_contains() -> bool:
+    return False
+
+h: hash<string,string> = {"": "", "one": "1"}
+if "" not in h or "missing" in h:
+    return 1
+records: hash<Entry,string> = {}
+records["one"] = Entry()
+if "one" not in records or "absent" in records:
+    return 4
+if not (key() in mapping()):
+    return 2
+selected: int = 2
+if selected not in replaceKey(selected) or selected != 7:
+    return 5
+return 8 if key() + 1 not in mapping() else 3
+"""
+    app, bundle = work/'membership', work/'membership-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'provider.{flavor}'
+    replace = {
+        'cpp': 'hash<int,int> replaceKey(int &k) { k = 7; return mapping(); }',
+        'php': 'function replaceKey(int &$k): hash<int,int> { $k = 7; return mapping(); }',
+        'js': 'function replaceKey(&k: int): hash<int,int> { k = 7; return mapping(); }',
+    }[flavor]
+
+    def provider(key_type, literal):
+        return (fn('key', key_type, [], f'echo "K"; return {literal};')
+                + hash_provider(flavor).replace('= 40;', '= 0;') + replace)
+
+    valid = provider('int', '2')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        first = invoke(resident)
+        assert 'error' not in first, first
+        units = json.loads((bundle/'manifest.json').read_text())['sources']
+        main_unit, = (unit for path, unit in units.items() if Path(path).name == 'main.py')
+        emitted = (bundle/main_unit).read_text()
+        assert emitted.count('.has(') == 7, emitted
+        assert all(op not in emitted for op in ('.at(', '.find(', '.iteration_next')), emitted
+        native(bundle, work/'membership-hit', (8, b'KHHKH', b''), library)
+        changed_body = provider('int', '7')
+        source_edit(peer, changed_body)
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'membership-miss', (2, b'KH', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        for stage, invalid, diagnostic in [('key', provider('string', '"2"'), 'Membership requires key type'),
+                                           ('deleted', None, 'Unknown function: key')]:
+            if invalid is None:
+                peer.unlink()
+            else:
+                source_edit(peer, invalid)
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'membership-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, changed_body)
+            restored = invoke(resident)
+            assert 'error' not in restored, restored
+            fresh = work/f'membership-fresh-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'membership-recovered-{stage}', (2, b'KH', b''), library)
+
+        source_edit(app/'main.py', """local: hash<int,int> = {2: 0}
+if 3 < key() in mapping():
+    return 1
+if 0 < key() not in mapping():
+    return 2
+if 0 < key() + 1 in mapping():
+    return 3
+selected: int = 2
+if 0 < selected not in replaceKey(selected) or selected != 7:
+    return 6
+words: hash<int,string> = {"x": 0}
+if not ("a" < "x" in words):
+    return 7
+if 0 < key() + 1 not in mapping():
+    return 8 if 0 < key() in local else 4
+return 5""")
+        source_edit(peer, valid)
+        chain = invoke(resident)
+        assert 'error' not in chain, chain
+        emitted = (bundle/main_unit).read_text()
+        assert emitted.count('.has(') == 7, emitted
+        assert 'const auto membership_key' not in emitted, emitted
+        native(bundle, work/'membership-chain', (8, b'KKHKHHKHK', b''), library)
+        chain_artifacts = artifacts(bundle)
+        source_edit(peer, fn('key', 'int', [], 'echo "K"; return 2;') + hash_provider(flavor, 'string'))
+        failed = invoke(resident)
+        assert 'Membership requires key type string' in failed.get('error', ''), failed
+        assert fresh_build(app, work/'chain-invalid').get('error') == failed['error']
+        peer.unlink()
+        assert 'Unknown function: key' in invoke(resident).get('error', '')
+        source_edit(peer, valid)
+        assert 'error' not in invoke(resident)
+        fresh = work/'chain-recovered'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(fresh) == artifacts(bundle) == chain_artifacts
+
+        source_edit(app/'main.py', 'return 8 if key() // 0 in mapping() else 2')
+        checked = invoke(resident)
+        assert 'error' not in checked, checked
+        native(bundle, work/'membership-key-failure', (1, b'K', b'division_by_zero\n'), library)
+
+        # Keep the caller unchanged while the receiver switches between hash and vector.
+        source_edit(app/'main.py', """class Item:
+    pass
+item: Item = Item()
+objects: vector<Item> = [item]
+words: vector<string> = ["", "same"]
+if item not in objects or Item() in objects or "same" not in words:
+    return 11
+empty: vector<int> = []
+if key() in empty:
+    return 12
+return 8 if 0 < key() in mapping() else 2""")
+        vector_head = {
+            'cpp': 'vector<int> mapping() { vector<int> v = [3, 2];',
+            'php': 'function mapping(): vector<int> { $v vector<int> = [3, 2];',
+            'js': 'function mapping(): vector<int> { let v: vector<int> = [3, 2];',
+        }[flavor]
+        vector = vector_head + f' echo "V"; return {syntax["v"]}v; }}'
+        key_fn = fn('key', 'int', [], 'echo "K"; return 2;')
+        for stage, collection, status, trace in [
+                ('vector', vector, 8, b'KKV'), ('miss', vector.replace('[3, 2]', '[3, 5]'), 2, b'KKV'),
+                ('hash', hash_provider(flavor), 8, b'KKH')]:
+            source_edit(peer, key_fn + collection)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'vector-membership-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'vector-membership-run-{stage}', (status, trace, b''), library)
+        peer.unlink()
+        failed = invoke(resident)
+        assert 'Unknown function: key' in failed.get('error', ''), failed
+        source_edit(peer, key_fn + vector)
+        assert 'error' not in invoke(resident)
+        assert artifacts(bundle) == artifacts(work/'vector-membership-vector')
+        native(bundle, work/'vector-membership-recovered', (8, b'KKV', b''), library)
+
+        # The same caller can bind to two different published hash/key signatures.
+        source_edit(app/'main.py', 'return 8 if key() in mapping() else 2')
+        for stage, (key_type, literal, status) in enumerate([('int', '2', 8), ('string', '"absent"', 2), ('int', '2', 8)]):
+            source_edit(peer, fn('key', key_type, [], f'echo "K"; return {literal};') + hash_provider(flavor, key_type))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            fresh = work/f'membership-compatible-{stage}'
+            fresh_result = fresh_build(app, fresh)
+            assert 'error' not in fresh_result, fresh_result
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'membership-compatible-run-{key_type}', (status, b'KH', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+def comparison_chains(work, flavor, library):
+    fn = forms(flavor)[0]['function']
+    app, bundle = work/'chains', work/'chains-bundle'
+    caller = """if not low() <= middle() < high() == 3 != 4 >= 4 > 1:
+    return 1
+if high() < middle() < skipped():
+    return 2
+if low() < high() < middle() < skipped():
+    return 5
+if not (1 < 2) == True:
+    return 3
+value: int = 2
+if not 1 < value < replaceValue(value) or value != 100:
+    return 4
+return 8
+"""
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 0'})
+    replace = {
+        'cpp': 'int replaceValue(int &v) { v = 100; return 3; }',
+        'php': 'function replaceValue(int &$v): int { $v = 100; return 3; }',
+        'js': 'function replaceValue(&v: int): int { v = 100; return 3; }',
+    }[flavor]
+    calls = app/f'calls.{flavor}'
+    providers = replace + ''.join(
+        fn(name, 'int', [], f'echo "{mark}"; return {value};')
+        for name, mark, value in [('low', 'L', 1), ('middle', 'M', 2), ('high', 'H', 3)])
+    source_edit(calls, providers)
+    peer = app/f'last.{flavor}'
+    valid = fn('skipped', 'int', [], 'echo "X"; return 4;')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        expected = (8, b'LMHHMLHM', b'')
+        native(bundle, work/'chains-run', expected, library)
+        source_edit(calls, providers.replace('echo "M"', 'echo "m"'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(p).name for p in changed['emitted_sources']] == [calls.name], changed
+        expected = (8, b'LmHHmLHm', b'')
+        native(bundle, work/'chains-body-edit', expected, library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        for stage in ('signature', 'deleted'):
+            if stage == 'signature':
+                source_edit(peer, fn('skipped', 'string', [], 'return "wrong";'))
+            else:
+                peer.unlink()
+            failed = invoke(resident)
+            diagnostic = 'Unsupported binary' if stage == 'signature' else 'Unknown function: skipped'
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'bad-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, valid)
+            recovered = invoke(resident)
+            assert 'error' not in recovered and recovered['preparation']['reused'], recovered
+            assert {Path(path).name for path in recovered['emitted_sources']} == {peer.name, 'main.py'}, recovered
+            fresh = work/f'restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'chains-{stage}', expected, library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def none_identity(work, flavor, library):
     syntax, evaluate, _, _, interface, implementation = interface_forms(flavor)
     fn = syntax['function']
@@ -803,6 +1038,11 @@ return 8 if probe() is None else 9
     records += fn('view', 'Readable', [], 'echo "V"; return new Node();')
     records += fn('absentOwner', 'shared<Payload>', [], 'echo "E"; return null;')
     records += fn('owner', 'shared<Payload>', [], 'echo "O"; return new Payload();')
+    records += {
+        'cpp': 'Node replaceNode(Node &node) { node = new Node(); return node; }',
+        'php': 'function replaceNode(Node &$node): Node { $node = new Node(); return $node; }',
+        'js': 'function replaceNode(&node: Node): Node { node = new Node(); return node; }',
+    }[flavor]
     case = 'case Empty = "";' if flavor == 'php' else 'Empty = ""'
     records += 'enum Kind:string {' + case + '}'
     separator = '.' if flavor == 'js' else '::'
@@ -855,6 +1095,68 @@ return 8 if probe() is None else 9
             assert 'error' not in fresh_build(app, fresh)
             assert artifacts(bundle) == artifacts(fresh) == previous
             native(bundle, work/f'none-recovered-{stage}', (9, b'NMLAVEOKKP', b''), library)
+        # Compare the same allocation through both its concrete and interface views.
+        source_edit(app/'main.py', """node: Node = live()
+alias: Readable = node
+if node is not alias or alias is not node:
+    return 1
+if node is live() or live() is view():
+    return 2
+if absentOwner() is not missing() or missing() is not absentView():
+    return 3
+if owner() is node or node is absentView():
+    return 4
+if node is replaceNode(node) or node is alias:
+    return 5
+seen: hash<int,Node> = {}
+seen[node] = 1
+if not (node is node in seen):
+    return 12
+if not None is None is None:
+    return 6
+if missing() is absentView() is not None:
+    return 7
+if node is live() is view():
+    return 10
+if node is not alias is view():
+    return 11
+return 8 if node is probe(node) is not None else 9""")
+        alias = fn('probe', 'Readable', [('node', 'Node')], f'echo "P"; return {syntax["v"]}node;')
+        other = alias.replace(f'return {syntax["v"]}node;', 'return new Node();')
+        expected_trace = b'LLLVEMMAOAMALVP'
+        for stage, provider, status in [('alias', alias, 8), ('separate', other, 9)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'identity-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'identity-run-{stage}', (status, expected_trace, b''), library)
+
+        previous = artifacts(bundle)
+        for stage, invalid, diagnostic in [
+                ('scalar', fn('probe', 'int', [('node', 'Node')], 'return 1;'), 'two shared handles'),
+                ('deleted', None, 'Unknown function: probe')]:
+            if invalid is None:
+                peer.unlink()
+            else:
+                source_edit(peer, invalid)
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'identity-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous
+            source_edit(peer, alias)
+            assert 'error' not in invoke(resident)
+            fresh = work/f'identity-restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'identity-recovered-{stage}', (8, expected_trace, b''), library)
+            previous = artifacts(bundle)
+
+        # Peer equality keeps its existing related-type requirement.
+        source_edit(peer, alias + fn('unrelated', 'bool', [('left', 'Node'), ('right', 'shared<Payload>')],
+                                    f'return {syntax["v"]}left === {syntax["v"]}right;'))
+        assert 'related shared types' in invoke(resident).get('error', '')
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
@@ -1288,6 +1590,7 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        hash_membership(case, flavor, library)
         none_identity(case, flavor, library)
         integer_bitwise(case, flavor, library)
         division(case, flavor, library)
@@ -1346,14 +1649,16 @@ def incremental(work, flavor, app, output, library):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--items', action='store_true', help='run the paired hash traversal matrix')
+    parser.add_argument('--chains', action='store_true', help='run the comparison chain matrix')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
         library = runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
-        if args.items:
+        if args.items or args.chains:
             for flavor in BRIDGES:
                 case = work/flavor
                 case.mkdir()
-                paired_items(case, flavor, library)
+                proof = paired_items if args.items else comparison_chains
+                proof(case, flavor, library)
         else:
             prove(work/'proof', library)
