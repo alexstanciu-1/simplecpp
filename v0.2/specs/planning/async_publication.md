@@ -138,3 +138,7 @@ The tracked frontend fixture rejects even a finally containing only echo. Cpp_Em
 #### Methods and callable adaptation
 
 Free-function task and blocking entry points are published by producer and dependency role. Instance methods additionally need a receiver that survives suspension. Decide whether inline receivers copy or borrow, and whether shared receivers pin their allocation. Static methods avoid the receiver question but need dual entry publication through existing static-method specialization. Interface/virtual calls and async callable adaptation also need async signature compatibility. Start with one cross-file static method proof before changing instance dispatch.
+
+#### Task values and references
+
+Bare task-producing calls reject on all three flavors. Task variables, parameters, capturing callbacks and live cursors would expose the frame outside direct consumption. Define single-consumer transfer, abandoned-frame cleanup and borrowing before adding these forms. The current source contract expressly requires owned parameters and rejects reference results. The all-flavor reference-parameter rejection is a regression check. Scheduler cancellation, cross-thread tasks and fibers are separate language/runtime contracts.
