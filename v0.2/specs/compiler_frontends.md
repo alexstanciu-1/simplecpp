@@ -49,7 +49,12 @@ literal keys. Typed hash writes insert or replace. Boolean operators require
 bool operands. Local scopes follow Simple C++ blocks, and every new ordinary
 local needs a type and initializer.
 
-Deferred Python spellings and semantics include division, floor division and
+Python binary / yields float64 for supported int64 and float64 operands.
+Integer // rounds down and integer % uses the divisor's sign. These spellings
+select separate operations from the cpp/php/js integer division and remainder.
+See the [arithmetic contract](planning/python_flavor.md#python-division-floor-division-and-modulo).
+
+Deferred Python spellings and semantics include floating floor division and
 modulo, operand-valued boolean operators, chained comparisons, type inference
 on first assignment, general iteration and range, items and destructuring,
 comprehensions, generator syntax, import and print, general decorators, dynamic

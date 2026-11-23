@@ -531,6 +531,107 @@ def typed_collections(work, flavor, library):
         native(output, work/f'collections-{label}-run', expected, library)
 
 
+DIVISION_PEERS = {
+    'cpp': ('int inputNumber() { echo "I"; return 7; } '
+            'int markNumber(int n) { echo "M"; return n; } '
+            'bool oldMath() { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+    'php': ('function inputNumber(): int { echo "I"; return 7; } '
+            'function markNumber(int $n): int { echo "M"; return $n; } '
+            'function oldMath(): bool { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+    'js': ('function inputNumber(): int { echo "I"; return 7; } '
+           'function markNumber(n: int): int { echo "M"; return n; } '
+           'function oldMath(): bool { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+}
+DIVISION_ENTRY = """if not oldMath():
+    return 1
+if -7 // 3 != -3 or 7 // -3 != -3 or -7 // -3 != 2 or 7 // 3 != 2:
+    return 2
+if -7 % 3 != 2 or 7 % -3 != -2 or -7 % -3 != -1 or 7 % 3 != 1 or -6 % 3 != 0:
+    return 3
+if (-9223372036854775807 - 1) % -1 != 0 or (-9223372036854775807 - 1) / -1 != 9223372036854775808.0:
+    return 4
+if 9007199254740993 / 3 != 3002399751580331.0 or 9007199254740993 / 1 != 9007199254740992.0:
+    return 5
+if 7 / 2.0 != 3.5 or 7.0 / 2 != 3.5 or 7.0 / 2.0 != 3.5:
+    return 6
+if markNumber(7) / markNumber(2) != 3.5:
+    return 7
+return 8
+"""
+
+
+def division(work, flavor, library):
+    app, bundle = work/'division', work/'division-bundle'
+    caller = "q: float = inputNumber() / 2\nreturn 8 if q > 3.0 else 1"
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'division-peer.{flavor}'
+    provider = DIVISION_PEERS[flavor]
+    source_edit(peer, provider)
+    main = app/'main.py'
+    resident = service(app, bundle)
+    try:
+        first = invoke(resident)
+        assert 'error' not in first, first
+        native(bundle, work/'division-int', (8, b'I', b''), library)
+        body_edit = provider.replace('echo "I"', 'echo "J"')
+        source_edit(peer, body_edit)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'division-body-edit', (8, b'J', b''), library)
+
+        floating = body_edit.replace('int inputNumber', 'float inputNumber').replace('inputNumber(): int', 'inputNumber(): float')
+        floating = floating.replace('return 7;', 'return 7.5;', 1)
+        source_edit(peer, floating)
+        compatible = invoke(resident)
+        assert 'error' not in compatible and compatible['preparation']['reused'], compatible
+        assert {Path(path).name for path in compatible['emitted_sources']} == {peer.name, 'main.py'}, compatible
+        assert any(b'scpp::float64_divide(' in part for part in artifacts(bundle).values())
+        native(bundle, work/'division-float', (8, b'J', b''), library)
+
+        for index, operator in enumerate(('//', '%')):
+            floor = f'q: int = inputNumber() {operator} 2\nreturn 8'
+            source_edit(peer, body_edit)
+            source_edit(main, floor)
+            assert 'error' not in invoke(resident)
+            previous = artifacts(bundle)
+            manifest = (bundle/'manifest.json').read_bytes()
+            source_edit(peer, floating)
+            failed = invoke(resident)
+            fresh_invalid = fresh_build(app, work/f'division-bad-{index}')
+            assert 'Unsupported binary operands or operator' in failed.get('error', ''), failed
+            assert failed['error'] == fresh_invalid.get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, body_edit)
+            assert 'error' not in invoke(resident)
+            fresh = work/f'division-fresh-{index}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'division-recovered-{index}', (8, b'J', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+    source_edit(main, DIVISION_ENTRY)
+    full = work/'division-combinations'
+    assert 'error' not in fresh_build(app, full)
+    native(full, work/'division-combinations-run', (8, b'MM', b''), library)
+
+    for index, (expression, output, error) in enumerate([
+        ('markNumber(7) / markNumber(0)', b'MM', b'division_by_zero'),
+        ('7 // 0', b'', b'division_by_zero'),
+        ('7 % 0', b'', b'modulo_by_zero'),
+        ('7 / -0.0', b'', b'division_by_zero'),
+        ('7.0 / 0.0', b'', b'division_by_zero'),
+        ('(-9223372036854775807 - 1) // -1', b'', b'division_overflow'),
+    ]):
+        source_edit(main, f'q: {"float" if " / " in expression else "int"} = {expression}\nreturn markNumber(8)')
+        target = work/f'division-error-{index}'
+        result = fresh_build(app, target)
+        assert 'error' not in result, result
+        native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
+
+
 def narrow_compound(work, library):
     function = """def update(delta: int) -> int:
     value: uint8 = 254
@@ -834,6 +935,7 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        division(case, flavor, library)
         records_and_exceptions(case, flavor, library)
         inheritance(case, flavor, library)
 

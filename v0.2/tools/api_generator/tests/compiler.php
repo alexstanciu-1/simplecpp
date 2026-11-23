@@ -225,11 +225,12 @@ foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $
 // Mixed operators expand from active families, with independently removable compound permission.
 $definitions = compilerTypePlan(compilerProviderMetadata($rawMetadata), $facts, $integerTypes);
 $expanded = compilerMixedNumericOperations(clone $rawMetadata->compiler, $definitions);
-requireThat(count($expanded->promotions) === 8, 'Expected both integer representations in mixed groups');
+requireThat(count(array_filter($expanded->promotions, static fn($row) => $row->operators !== ['true_divide'])) === 8, 'Expected both integer representations in mixed groups');
 $subset = unserialize(serialize($rawMetadata));
 $subset->compiler->mixed_numeric_operators->arithmetic = [];
 $subset->compiler->mixed_numeric_operators->compound_operators = [];
-$rows = compilerMixedNumericOperations($subset->compiler, $definitions)->promotions;
+$rows = array_filter(compilerMixedNumericOperations($subset->compiler, $definitions)->promotions,
+    static fn($row) => $row->operators !== ['true_divide']);
 requireThat(count($rows) === 4, 'Arithmetic removal changed mixed comparisons');
 foreach ($rows as $row) requireThat($row->result === 'bool_t' && !isset($row->compound_operators), 'Comparison admitted arithmetic writes');
 foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conversion'] as $change) {
@@ -246,6 +247,27 @@ foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conver
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid mixed numeric family admitted: ' . $change);
     } catch (\RuntimeException $expected) {
+    }
+}
+// Alternative division operations can be removed without altering the default bindings.
+$withoutDivision = unserialize(serialize($rawMetadata));
+unset($withoutDivision->compiler->division);
+$defaultMath = renderCompiler($withoutDivision, $facts);
+requireThat(str_contains($defaultMath['types/int64.php'], 'scpp::int64_divide(')
+    && str_contains($defaultMath['types/float64.php'], 'scpp::float64_divide(')
+    && !str_contains($defaultMath['types/int64.php'], 'binary_operator::floor_divide')
+    && !str_contains($defaultMath['types/float64.php'], 'binary_operator::true_divide'),
+    'Removing the division exception changed default math or retained its bindings');
+// Equal signatures do not make floor and truncating remainder interchangeable.
+foreach (['floor', 'default'] as $operation) {
+    $swapped = unserialize(serialize($rawMetadata));
+    if ($operation === 'floor') $swapped->compiler->division->int64->floor_remainder = 'int64_remainder';
+    else $swapped->compiler->integer_operators->bindings->int64->remainder = 'int64_floor_remainder';
+    try {
+        renderCompiler($swapped, $facts);
+        throw new \LogicException('Swapped remainder binding accepted: ' . $operation);
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains($error->getMessage(), 'strategy'), 'Expected remainder strategy mismatch');
     }
 }
 // Integer single-operand capabilities share one family owner and remain independently removable.
@@ -814,7 +836,7 @@ foreach (['arithmetic', 'unary'] as $section) {
     unset($without->compiler->$section->float64);
     if ($section === 'arithmetic') $without->compiler->promotions = array_values(array_filter($without->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
     $limited = renderCompiler($without, $facts)['types/float64.php'];
-    requireThat(!str_contains($limited, $section === 'arithmetic' ? 'scpp::float64_divide' : 'public function prepare_unary'), 'Removed float capability still generated');
+    requireThat(!str_contains($limited, $section === 'arithmetic' ? 'binary_operator::divide =>' : 'public function prepare_unary'), 'Removed float capability still generated');
 }
 foreach (['remainder', 'unchecked_division', 'compound_policy'] as $change) {
     $bad = unserialize(serialize($metadata));
@@ -1010,7 +1032,7 @@ try {
 }
 $without->compiler->promotions = array_values(array_filter($without->compiler->promotions,
     static fn($row) => $row->result === 'bool_t'));
-requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'scpp::float64_divide('), 'Missing division still lowered');
+requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'binary_operator::divide =>'), 'Missing default division still lowered');
 
 // Compound permission is explicit, directional and independently removable.
 $without = unserialize(serialize($metadata));

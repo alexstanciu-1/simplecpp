@@ -31,6 +31,9 @@ enum binary_operator: int
 	case compare = 23;
 	case power = 24;
 	case coalesce = 25;
+	case true_divide = 26;
+	case floor_divide = 27;
+	case floor_remainder = 28;
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
@@ -80,7 +83,7 @@ enum binary_operator: int
 			self::concatenate => 10,
 			self::shift_left, self::shift_right => 11,
 			self::add, self::subtract => 12,
-			self::multiply, self::divide, self::remainder => 13,
+			self::multiply, self::divide, self::remainder, self::true_divide, self::floor_divide, self::floor_remainder => 13,
 			self::power => 14,
 		};
 	}

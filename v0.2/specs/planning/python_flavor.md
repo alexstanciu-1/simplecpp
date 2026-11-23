@@ -215,8 +215,7 @@ CLI acceptance passed with Clang at fb77a0487:
 
 ### Deferred work
 
-- Division, floor division and modulo need a common decision on quotient
-  type, rounding, remainder sign, zero and bounded overflow.
+- Binary division, floor division and modulo have a [arithmetic batch](#python-division-floor-division-and-modulo). Floating floor division and modulo remain deferred.
 - Imports and print need explicit module-mapping and output contracts.
 - Python-authored interface declarations, super calls beyond base
   construction, general decorators and dynamic attributes remain deferred.
@@ -252,3 +251,60 @@ outside this batch.
 - [x] Run Python against cpp/php/js peers with Clang. Check ordered literal effects, vector copy independence, field replacement, and application vectors and hashes.
 - [x] Check negative reads, out-of-range writes, missing keys, and duplicate rejection after input effects. Reject invalid key types, value conversions and unsupported indexed targets.
 - [x] Verify body-only peer edits re-emit only the peer. Preserve the last good bundle and manifest after invalid source edits or peer deletion, and compare the restored artifacts and native behavior with a fresh build.
+
+## Python division, floor division and modulo
+
+C++ arithmetic remains the default. The existing cpp/php/js operations keep
+their bindings and semantics, including integer division truncating toward zero
+and remainder taking the dividend's sign. Python maps the three binary spellings
+to explicit operations in the shared binary AST. Generated metadata owns
+admission, result types, conversions, helper bindings and required headers.
+Preparation reuses settled operand types and the existing binary preparation
+path. The runtime owns rounding, sign adjustment and checked failures.
+
+| Python spelling | First-batch operands | Result |
+| --- | --- | --- |
+| a / b | int64 and float64, including mixed pairs | float64. For two int64 operands, round the exact quotient once to float64, using nearest with ties to even. For mixed and float64 pairs, apply the shared numeric conversion and floating division contract. |
+| a // b | Two int64 operands | int64 quotient rounded toward negative infinity. |
+| a % b | Two int64 operands | int64 remainder with the divisor's sign unless the result is zero. |
+
+All three operators associate left at multiplication precedence. Keep the shared
+eager operand evaluation contract and evaluate each operand once. In Python,
+double slash is an operator and hash starts a comment. Keep comment and operator
+tokenization in the other flavors unchanged.
+
+A zero divisor fails with division_by_zero for / and // or modulo_by_zero for %.
+Floating division also rejects negative zero. Other floating results follow
+the shared float64 contract. With INT64_MIN and -1, floor division raises checked
+overflow before a native division, modulo returns zero without invoking native
+remainder, and true division returns the representable float64 value 2^63.
+The integer floor quotient and modulo must agree for all other valid pairs, using
+widened arithmetic in tests when checking the quotient-remainder identity.
+
+The batch adds only these binary numeric forms. Float or mixed floor division
+and modulo, bool operands, augmented spellings, string formatting with % and
+user-defined operator dispatch remain deferred.
+
+### Verification checklist
+
+- [x] Verify Python operator tokens, source spans, multiplication precedence and left association. Verify hash comments and existing cpp/php/js slash comments and operators.
+- [x] Check result types and generated bindings for integer, floating and mixed true division and integer floor division and modulo. Verify deferred forms reject and generated C++ uses the selected metadata binding and headers.
+- [x] Check all sign combinations, exact multiples and zero remainders. For example, -7 // 3 is -3 with remainder 2, and 7 // -3 is -3 with remainder -2.
+- [x] Verify zero-divisor errors, both floating zero signs, INT64_MIN with -1, and large integer ratios near rounding boundaries. Include 9007199254740993 / 3 to catch rounding operands before division.
+- [x] Build mixed projects with cpp/php/js peers on Clang. Verify Python -7 // 3 and -7 % 3 alongside each peer's default -7 / 3 and -7 % 3. Check single operand evaluation and failure propagation under the shared eager order contract.
+- [x] In each mixed-flavor resident session, verify reuse on a peer body-only edit. Change a peer operand type from int64 to float64, verify true division accepts it and integer-only floor division and modulo reject it. Preserve the last good bundle on failure, then restore the type and compare emitted artifacts and native behavior with a fresh build.
+- [x] Run the shared integer and floating arithmetic and generator checks. Confirm that preparation adds no traversal or retained AST facts.
+
+The Clang matrix preserved cpp/php/js truncating division and signed remainder.
+Python integer true division uses native floating division when both integer
+operands are exactly representable in binary64. Other integer ratios use a
+widened runtime calculation that rounds the significand once. The runtime
+test compares binary64 result bits and integer quotient/remainder against
+Python across a deterministic boundary and varied-magnitude corpus under
+UBSan. The alternate operators add no preparation traversal or AST facts.
+
+Floor remainder has its own validated runtime strategy. The generator rejects
+binding the default truncating helper to Python floor remainder and rejects
+the reverse swap. The UBSan differential fixture includes INT64_MIN with -1
+and checks true division returns 2^63, floor division reports division_overflow,
+and floor remainder returns zero.

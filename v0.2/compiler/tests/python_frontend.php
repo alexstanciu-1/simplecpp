@@ -53,8 +53,8 @@ foreach ([
 	["if True\n    return 1", 7, ': before Python suite'],
 	["if True:\nreturn 1", 9, 'INDENT for Python suite'],
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
-	["return 8 // 2", 9, 'Unsupported punctuation'],
-	["return \"\u{03c0}\" / 2", 12, 'Unsupported punctuation'],
+	["return 8 %= 2", 9, 'Unsupported punctuation'],
+	["return \"\u{03c0}\" /= 2", 12, 'Unsupported punctuation'],
 	["return 1 == 2 < 3", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
 	try {
@@ -67,6 +67,41 @@ foreach ([
 		if ($message === 'Unsupported punctuation') {
 			check(str_starts_with($failure->getMessage(), 'invalid.py:1:' . ($offset + 1) . ':'), 'Division diagnostic byte column');
 		}
+	}
+}
+
+
+$division = "fraction: float = 7 / 2 # keep the newline\nfloor: int = 1 + 20 // 3 % 2 * 4\nmixed: float = 7 / 2.0\nreturn floor";
+$source = new source_file('division.py', $division, flavor::python);
+$file = $frontend->parse($source);
+[$fraction, $floor] = $file->main()->body()->statements;
+$remainder = $floor->initializer->right->left;
+check($fraction->initializer->operator === binary_operator::true_divide && $fraction->initializer->source_text() === '7 / 2'
+	&& $floor->initializer->operator === binary_operator::add && $floor->initializer->right->operator === binary_operator::multiply
+	&& $remainder->operator === binary_operator::floor_remainder && $remainder->left->operator === binary_operator::floor_divide
+	&& $remainder->source_text() === '20 // 3 % 2', 'Python division operators preserve precedence, association and spans');
+$prepared = $frontend->prepare($source, new entry_target(31));
+[$fraction, $floor, $mixed] = $prepared->file->main()->body()->statements;
+check($fraction->initializer->type_def() === scpp\compiler\type_float64::instance()
+	&& $mixed->initializer->type_def() === scpp\compiler\type_float64::instance()
+	&& $floor->initializer->type_def() === scpp\compiler\type_int64::instance(), 'Python division result types');
+$cpp = (new scpp\compiler\Cpp_Emitter())->emit($prepared);
+foreach (['#include <scpp/arithmetic.hpp>', 'scpp::int64_true_divide(', 'scpp::float64_divide(',
+	'scpp::int64_floor_divide(', 'scpp::int64_floor_remainder('] as $expected) {
+	check(str_contains($cpp, $expected), 'Missing generated division binding: ' . $expected);
+}
+foreach ([flavor::cpp, flavor::php, flavor::js] as $peer) {
+	$tokens = $frontend->scan(new source_file('ordinary', "return 8 / 2 % 3; // 1 // 2\n", $peer));
+	$operators = array_filter($tokens->tokens, static fn($token) => in_array($token->kind,
+		[token_kind::slash, token_kind::percent, token_kind::double_slash], true));
+	check(array_values(array_column($operators, 'kind')) === [token_kind::slash, token_kind::percent], 'Default slash comments and operators');
+}
+foreach (['1.0 // 2', '1 % 2.0', 'True / 2', '"fmt" % 2'] as $expression) {
+	try {
+		$frontend->prepare(new source_file('division.py', "return $expression", flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected division rejection: ' . $expression);
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), 'Unsupported binary operands or operator'), $failure->getMessage());
 	}
 }
 
