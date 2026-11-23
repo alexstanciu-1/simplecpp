@@ -1,5 +1,6 @@
 // With no arguments this checks nested wait restoration. With a count it times immediate awaits.
 #include "tasks/int64.hpp"
+#include "tasks/tracked.hpp"
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -39,6 +40,31 @@ int64_task outer(bool fail, int& drops) {
     co_return co_await leaf(value + 1);
 }
 
+scpp::async::tracked_task produce(lifetime_counts& counts, bool fail) {
+    if (fail) throw failure{};
+    co_return tracked_result(counts);
+}
+
+scpp::async::tracked_task relay(lifetime_counts& counts, bool fail) {
+    co_return co_await produce(counts, fail);
+}
+
+bool result_lifetimes() {
+    lifetime_counts counts;
+    { auto abandoned = produce(counts, false); }
+    if (counts.constructed || counts.destroyed || counts.released) return false;
+    try {
+        sync_wait(relay(counts, true));
+        return false;
+    } catch (const failure&) {}
+    if (counts.constructed || counts.destroyed || counts.released) return false;
+    {
+        auto delivered = sync_wait(relay(counts, false));
+        if (!delivered.owns || counts.constructed != counts.destroyed + 1 || counts.released) return false;
+    }
+    return counts.constructed == counts.destroyed && counts.released == 1;
+}
+
 int64_task repeat(int count) {
     scpp::int64 sum = 0;
     for (int i = 0; i < count; ++i) sum += co_await leaf(i);
@@ -47,6 +73,7 @@ int64_task repeat(int count) {
 }
 
 int main(int argc, char** argv) {
+    if (!result_lifetimes()) return 4;
     for (bool fail : {false, true}) {
         int drops = 0;
         if (sync_wait(outer(fail, drops)) != 4294967298 || drops != 2) return 1;

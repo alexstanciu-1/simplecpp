@@ -212,7 +212,7 @@ function asyncTaskHeader(ConcreteType $type, string $task, bool $value, string $
 function asyncTaskParts(ConcreteType $type, string $task, bool $value, string $namespace, bool $inline): array {
     $parts = concreteTemplate('core/async_task', ['result' => $type], [
         'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
-        'includes' => implode('', array_map(includeHeader(...), $type->headers())),
+        'includes' => implode('', array_map(includeHeader(...), $type->headers())) . ($value ? "#include <new>\n" : ''),
         'extract' => $value ? '    return static_cast<' . $type->cppType($namespace) . '&&>(promise.value);' : '',
         'open' => $namespace === '' ? '' : "namespace $namespace {",
         'close' => $namespace === '' ? '' : '}', 'inline' => $inline ? 'inline ' : '',

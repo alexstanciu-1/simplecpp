@@ -18,3 +18,10 @@ foreach (['int64', 'void', 'string', 'result_int64'] as $name) {
     $type = $value ? new RuntimeConcreteType($plan, $name) : new VoidConcreteType();
     file_put_contents("$directory/$name.hpp", asyncTaskHeader($type, $name . '_task', $value, 'scpp::async'));
 }
+$tracked = new class implements ConcreteType {
+    public function identity(): string { return 'tracked_result'; }
+    public function cppType(string $namespace): string { return '::tracked_result'; }
+    public function headers(): array { return ['tracked_result.hpp']; }
+    public function supports(string $requirement): ?bool { return null; }
+};
+file_put_contents("$directory/tracked.hpp", asyncTaskHeader($tracked, 'tracked_task', true, 'scpp::async'));
