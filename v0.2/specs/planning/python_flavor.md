@@ -63,7 +63,7 @@ The C++ flavor adapter is 3,712 bytes. Most grammar lives in the shared parser, 
 | Batch | Scope | Readiness |
 | --- | --- | --- |
 | 1. Everyday bodies | Conditional expression, pass, unlabelled break/continue, and bare return in explicitly void functions | Reuse the shared ternary with Python precedence and right association. Preserve shared branch type agreement and selected-arm evaluation. Represent pass with an empty statement span. Reuse loop exits and void-return checks. Keep typed declarations and block-local scope. |
-| 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, and for name in vector | Implemented using shared assignment and foreach nodes. Hash traversal, range, general iterators and loop else clauses remain deferred. |
+| 2. Typed updates and traversal | Numeric +=, -= and *= on existing locals, and for name in vector | Implemented using shared assignment and foreach nodes. The later typed hash slice adds key traversal. Range, general iterators and loop else clauses remain deferred. |
 | 3. Records and typed failures | Concrete classes, dot fields and methods, construction, raise, typed except and finally | Reuses shared class identity, typed catches, rethrow and cleanup. Dynamic attributes and interpreter exception behavior remain deferred. |
 
 ### Decisions before widening semantics
@@ -101,7 +101,7 @@ A fresh target is local to the loop. An existing local or parameter is assigned 
 - [x] Verify a uint8 compound assignment reaches the generated checked int64-to-uint8 write-back. Storing 255 succeeds and attempting to store 256 raises integer_cast_out_of_range in native execution.
 - [x] Run the relevant shared foreach, integer and floating compound, and generator parity checks.
 
-Hash iteration spelling remains deferred because Python dictionary iteration defaults to keys. Range, general iterators and loop else stay outside this slice.
+Batch 2 deferred hash iteration until the key-only capability was available. The later typed hash slice adds that form. Range, general iterators and loop else remain deferred.
 
 ### Batch 3 contract and verification
 
@@ -189,3 +189,28 @@ are insufficient to attribute a preparation or emission speedup to this slice.
 | --- | ---: | ---: | ---: | ---: |
 | 160 eligible hash loops | 18.18 | 17.45 | 7.89 | 6.83 |
 | 160 ordinary vector reads | 7.14 | 6.98 | 4.35 | 4.25 |
+
+## Proposed v0.2 Python closeout
+
+Close this milestone as a typed Simple C++ source flavor. The remaining list is a
+proposal for the closeout scope, with semantic decisions called out separately.
+
+| Order | Item | Exit criterion |
+| --- | --- | --- |
+| 1 | Typed collection expressions and updates | Decide the small usable surface for vector indexing, typed indexed writes and populated literals. Reuse shared indexed mutation and initialization contracts with existing bounds, duplicate-key and conversion behavior. Keep key/value destructuring and general iteration outside this batch. |
+| 2 | Project and native build acceptance | Run a standalone Python-flavor project and one representative mixed cpp/php/js/py program through the supported CLI build and run path. Check diagnostics, compatible and incompatible edits, deletion/restoration, reuse, and comparisons with fresh output. Keep the existing per-file project selection. |
+| 3 | Documentation and explicit deferrals | Update the shared frontend contract and compiler README for the fourth flavor, publish a supported-syntax example and list intentional differences from Python. Check that the deferred forms are rejected with useful source diagnostics. |
+
+Decide separately whether the first intended consumer needs division and modulo,
+bounded output spelling, import spelling, or Python-authored interface and
+nonconstructor super calls. Treat division and modulo as one numeric decision
+covering quotient type, floor rounding, remainder sign, zero and overflow.
+Import spelling needs an explicit mapping to Simple C++ modules. Python print
+needs a contract for formatting, separators, newline and evaluation.
+
+General truthiness and operand-returning boolean operations, chained comparisons,
+range and iterator protocols, comprehension and generator syntax, decorators,
+dynamic attributes, CPython compatibility and package interoperability remain
+follow-up work. Broader hash slot reuse is a compiler optimization follow-up.
+
+Native tokenizer cutover is a separate milestone. Before claiming Python support there, run the same token/span parity tests against native layout handling. [Native tokenizer backlog](remaining_language_gaps_and_native_tokenizer.md)
