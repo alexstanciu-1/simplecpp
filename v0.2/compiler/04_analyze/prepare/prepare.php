@@ -202,7 +202,7 @@ final class Preparation
 					$this->value($statement->key);
 					$statement->key_conversion = $generator->iteration_key_type()->prepare_conversion($statement->key, conversion_context::typed_destination);
 				}
-				$this->value($statement->value);
+				$this->value($statement->value, destination: $generator->iteration_value_type());
 				$statement->conversion = $generator->iteration_value_type()->prepare_conversion($statement->value, conversion_context::typed_destination);
 				$this->forget_values();
 			}
@@ -262,8 +262,8 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
-				$this->value($statement->value);
 				$type = $statement->target->type_def();
+				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
 				else {
 					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
@@ -315,7 +315,7 @@ final class Preparation
 				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
-				$this->value($statement->value);
+				$this->collection_element($statement->value, $type->write_type(), null);
 				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
@@ -332,7 +332,7 @@ final class Preparation
 				if (!($type instanceof appendable_collection_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires an appendable collection');
 				}
-				$this->value($statement->value);
+				$this->collection_element($statement->value, $type->write_type(), null);
 				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 			}
 			elseif ($statement instanceof ast_storage_write) {
@@ -387,7 +387,7 @@ final class Preparation
 						if ($statement->value === null) {
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
-						$this->value($statement->value);
+						$this->value($statement->value, destination: $return_type);
 						if ($return_type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
 					}
@@ -971,29 +971,10 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
-		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
-			if (!($type instanceof keyed_initializer_type)
-				&& !($declaration->initializer->entries === [] && $type instanceof hash_type_definition)) {
-				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
-			}
-			$this->expression_visits++;
-			foreach ($declaration->initializer->entries as $entry) {
-				$this->value($entry->key, $name);
-				$type->prepare_key($entry->key);
-				$this->value($entry->value, $name);
-				$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
-			}
-			$declaration->initializer->settle_collection($type);
-		}
-		elseif (($declaration->initializer instanceof ast_collection_expression) && $type !== null) {
-			if (!($type instanceof indexed_collection_type)) {
-				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Destination has no published collection initialization capability');
-			}
-			$this->collection($declaration->initializer, $type, $name);
-		}
 		else {
 			$this->value($declaration->initializer, $name,
-				allow_callback: $type === null && $declaration->initializer instanceof ast_lambda_expression);
+				allow_callback: $type === null && $declaration->initializer instanceof ast_lambda_expression,
+				destination: $type);
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
@@ -1149,7 +1130,7 @@ final class Preparation
 			$this->latest_writes[$local->storage_id()] = null;
 			return;
 		}
-		$this->value($statement->value);
+		$this->value($statement->value, destination: $statement->calculates_value() ? null : $type);
 		if ($statement->operator === binary_operator::coalesce) {
 			if (!($local instanceof ast_local_declaration) || $statement->parent instanceof ast_for_statement) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a plain local statement');
@@ -1180,7 +1161,6 @@ final class Preparation
 	/** Prepare ordered elements once using the destination contract; nested literals inherit their element destination. */
 	private function collection(ast_collection_expression $syntax, type_definition&indexed_collection_type $type, ?string $initializing): void
 	{
-		$this->expression_visits++;
 		if ($type instanceof fixed_array_type && count($syntax->elements) !== $type->extent) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array initializer must match extent ' . $type->extent);
 		}
@@ -1194,12 +1174,51 @@ final class Preparation
 		$destination = $type->write_type();
 		$conversions = [];
 		foreach ($syntax->elements as $element) {
-			if ($element instanceof ast_collection_expression && $destination instanceof indexed_collection_type) {
-				$this->collection($element, $destination, $initializing);
-			} else $this->value($element, $initializing);
+			$this->collection_element($element, $destination, $initializing);
 			$conversions[] = $destination->prepare_conversion($element, conversion_context::typed_destination);
 		}
 		$syntax->settle_collection($type, $conversions);
+	}
+
+	/** A nested keyed literal with a family-specific spelling keeps that family. */
+	private function collection_element(ast_expression $element, type_definition $destination, ?string $initializing): void
+	{
+		if ($destination instanceof boxed_type_definition && $element instanceof ast_keyed_collection_expression
+			&& in_array($element->source()->flavor, [flavor::php, flavor::js], true)) {
+			$this->value($element, $initializing);
+		} else $this->value($element, $initializing, destination: $destination);
+	}
+
+	/** Resolve a contextual construction target before applying PHP/JS defaults. */
+	private function literal(ast_collection_expression|ast_keyed_collection_expression $syntax, ?type_definition $type, ?string $initializing): void
+	{
+		$flavor = $syntax->source()->flavor;
+		if ($type === null && ($flavor === flavor::php || $flavor === flavor::js)) {
+			$dynamic = $syntax instanceof ast_keyed_collection_expression
+				? $syntax->lexical_root()->tokens->tokens[$syntax->start]->kind === token_kind::lbrace : $flavor === flavor::js;
+			$type = type_registry::resolve($dynamic ? 'dynamic' : 'mixed');
+		}
+		if ($syntax instanceof ast_collection_expression) {
+			if (!($type instanceof indexed_collection_type)) {
+				$message = $type === null ? 'Collection requires an explicitly typed local initializer' : 'Destination has no published collection initialization capability';
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), $message);
+			}
+			if ($type instanceof fixed_array_type && !($syntax->parent instanceof ast_local_declaration || $syntax->parent instanceof ast_collection_expression)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array literal requires a local initializer');
+			}
+			$this->collection($syntax, $type, $initializing);
+			return;
+		}
+		if (!($type instanceof keyed_initializer_type)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
+		}
+		foreach ($syntax->entries as $entry) {
+			$this->value($entry->key, $initializing);
+			$type->prepare_key($entry->key);
+			$this->collection_element($entry->value, $type->write_type(), $initializing);
+			$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
+		}
+		$syntax->settle_collection($type);
 	}
 
 	/** Statement and fallback throws use the same admission and settled root conversion. */
@@ -1223,7 +1242,7 @@ final class Preparation
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
-	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false): void
+	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
 	{
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup or object_cast target');
 		$this->expression_visits++;
@@ -1231,9 +1250,9 @@ final class Preparation
 			$this->prepare_throw($syntax, $initializing);
 			return;
 		}
-		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
-		if ($syntax instanceof ast_collection_expression) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
+		if ($syntax instanceof ast_keyed_collection_expression || $syntax instanceof ast_collection_expression) {
+			$this->literal($syntax, $destination, $initializing);
+			return;
 		}
 		if ($syntax instanceof ast_update_expression) {
 			$this->write($syntax->update, consumes_result: true);
@@ -1244,7 +1263,7 @@ final class Preparation
 			if (!$syntax->in_condition()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Parenthesized assignment requires a control-statement condition');
 			$local = $this->assignment_local($syntax, $syntax->target->name);
 			if (!($local instanceof ast_local_declaration)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Condition assignment requires a declared local');
-			$this->value($syntax->value, $initializing);
+			$this->value($syntax->value, $initializing, destination: $local->type_def());
 			$syntax->settle_assignment($local, $local->type_def()->prepare_conversion($syntax->value, conversion_context::assignment));
 			$this->record_assignment($local, null);
 			return;
@@ -1408,8 +1427,8 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_cast_expression) {
-			$this->value($syntax->operand, $initializing);
 			$type = Type_Resolution::resolve($syntax->type_reference);
+			$this->value($syntax->operand, $initializing, destination: $type instanceof boxed_type_definition ? $type : null);
 			if ($type === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
@@ -1681,10 +1700,10 @@ final class Preparation
 		}
 		$writes = [];
 		foreach ($operands as $index => $argument) {
-			if ($argument !== $prepared && $argument !== $call->receiver) {
-				$this->value($argument);
-			}
 			$type = $runtime->parameters[$index];
+			if ($argument !== $prepared && $argument !== $call->receiver) {
+				$this->value($argument, destination: $type);
+			}
 			if ($index === 0 && $runtime->receiver_method) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
@@ -1784,7 +1803,7 @@ final class Preparation
 					'Non-void closure requires a value return');
 			}
 		} else {
-			$scope->value($lambda->body);
+			$scope->value($lambda->body, destination: $result);
 			$lambda->settle_lambda($type, $result->prepare_conversion($lambda->body, conversion_context::typed_destination));
 		}
 		$this->statement_visits += $scope->statement_visits;
@@ -2282,7 +2301,7 @@ final class Preparation
 				$this->expression_visits++;
 				$this->callback_reference($argument, $type);
 			} else {
-				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition);
+				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			}
 			if ($parameter?->mode === passing_mode::reference) {
 				$this->bind_reference($argument, $parameter->type_def(), $writes);

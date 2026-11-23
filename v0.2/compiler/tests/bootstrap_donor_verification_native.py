@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
-from extends_native import runtime, source_edit
+from extends_native import ROOT, runtime, source_edit
 
 
 # Revisions of main.php in one compiler. Error strings include the source location.
@@ -25,6 +25,14 @@ CASES = [
     ('unused-result-still-checked',
      '$x=2; $divisor=0; $unused=$x / $divisor; return 8;',
      (1, b'', b'division_by_zero\n')),
+    ('integer-hash-indexed-empty',
+     'function missingOrZero(hash<int,string> &$counts, string $key):bool {'
+     'return !hash_contains($counts,$key) || $counts[$key]===0;} '
+     '$counts hash<int,string> = []; $counts["zero"]=0; $counts["negative"]=-3; '
+     'echo (int)missingOrZero($counts,"absent"), (int)missingOrZero($counts,"zero"), '
+     '(int)missingOrZero($counts,"negative"), count($counts), (int)hash_contains($counts,"absent"); '
+     'return 8;',
+     (8, b'11020', b'')),
     ('nullable-string-field',
      'class A {public ?string $x;} $a=new A(); echo (int)isset($a->x); return 8;',
      (8, b'0', b'')),
@@ -122,7 +130,7 @@ def prove(work):
     source_edit(app / 'f.php', r'namespace A\B; function f():void {echo "func";}')
     source_edit(app / 'deep.php', r'namespace A\B\A\B; class X { public int $n=7; }')
     output = work / 'out'
-    library = runtime(work, 'clang++')
+    library = runtime(work, 'clang++', [ROOT / 'runtime/generated/src/hash.cpp'])
     resident = service(app, output)
     try:
         for label, source, expected in CASES:

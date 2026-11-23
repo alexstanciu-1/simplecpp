@@ -44,13 +44,13 @@ def rejection(work, flavor, src):
     s = fixture(flavor)
     try:
         invalid = [
-            (s['infer']('x', '[1]'), 'explicitly typed local'),
             (declaration(flavor, 'x', 'hash<int,string>', '[1]'), 'sequence-initializable'),
-            (declaration(flavor, 'x', 'mixed', '[1]'), 'sequence-initializable'),
             (declaration(flavor, 'x', 'vector<int>', '["bad"]'), None),
             (declaration(flavor, 'x', 'vector<int>', '['+s['v']+'x]'), None),
             (declaration(flavor, 'x', 'vector<int>', '["key" => 1]'), None),
         ]
+        if flavor == 'cpp':
+            invalid.append((s['infer']('x', '[1]'), 'explicitly typed local'))
         for text, message in invalid:
             source_edit(app/('main.'+flavor), text+'return 8;')
             got = invoke(p)

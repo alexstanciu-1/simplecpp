@@ -87,7 +87,6 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		. 'echo count(' . $v . '), ' . $v . '[128]; return 8;'), 'stdout_hex' => bin2hex('129' . $actual)];
 	foreach ([$decl('vector<int>', 'values', '["bad"]'), $decl('vector<int>', 'values', '[1e100]'),
 		$decl('vector<int>', 'values', '[[1]]'), $decl('hash<int,int>', 'values', '[1]'),
-		$decl('mixed', 'values', '[1]'), $decl('dynamic', 'values', '[1]'),
 		$decl('vector<int>', 'values', '[1 => 2]'), 'echo [1];'] as $source) rejects(fn() => $prepare($source . 'return 8;'));
 
 	$directory = sys_get_temp_dir() . '/scpp-list-incremental-' . bin2hex(random_bytes(8));

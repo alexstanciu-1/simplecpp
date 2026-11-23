@@ -869,6 +869,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
     "providers": {"mixed": "core.mixed", "dynamic": "core.dynamic"},

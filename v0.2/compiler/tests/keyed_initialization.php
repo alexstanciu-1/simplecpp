@@ -109,8 +109,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	foreach ([$decl('hash<int,int>', 'values', '["bad" => 1]'), $decl('hash<int,string>', 'values', '["k" => "bad"]'),
 		$decl('hash<int,int>', 'values', '[true => 1]'), $decl('hash<int,int>', 'values', '[1 => 1e100]'),
 		$decl('hash<int,int>', 'values', '[1 => 2, 3]'), $decl('hash<int,int>', 'values', '[1, 2 => 3]'),
-		$decl('vector<int>', 'values', '[1 => 2]'), $decl('mixed', 'values', '[1 => 2]'),
-		$decl('hash<int,int>', 'values', '[1 => [2 => 3]]'), $decl('vector<hash<int,int>>', 'values', '[[1 => 2]]'),
+		$decl('vector<int>', 'values', '[1 => 2]'), $decl('mixed', 'values', '[true => 2]'),
+		$decl('hash<int,int>', 'values', '[1 => [2 => 3]]'), $decl('vector<hash<int,int>>', 'values', '[[1 => "bad"]]'),
 		$decl('hash<int,int>', 'values', '[1 => ' . $v . '[1]]'), 'echo [1 => 2];'] as $source) rejects(fn() => $prepare($source . 'return 8;'));
 	$directory = sys_get_temp_dir() . '/scpp-keyed-incremental-' . bin2hex(random_bytes(8));
 	mkdir($directory);

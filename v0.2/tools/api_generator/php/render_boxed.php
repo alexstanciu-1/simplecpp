@@ -48,6 +48,19 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $sourceMembers .= "    bool_t $binding(int64 key)$const { return $operation(boxed_key(key)); }\n"
                 . "    bool_t $binding(const string& key)$const { auto normalized = boxed_key(key); return normalized.index < 0 ? $operation(normalized.text) : $operation(normalized.index); }\n";
         }
+        $literalEntry = '';
+        if ($split && $box['initialization'] === 'ordered_family_literals') {
+            $sourceMembers .= "    struct keyed_entry;\n";
+            foreach (['keyed_input' => 'keyed_entry', 'list_input' => $n] as $input => $element) {
+                $transport = ['input' => $input, 'e' => $element, 'n' => $n, 'inline' => ''];
+                $sourceMembers .= template('collections/initialization_input_guard', $transport);
+                $d .= template('collections/initialization_input_definition', $transport);
+            }
+            $sourceMembers .= "    static $n from_entries(keyed_entry* entries, int64 count);\n"
+                . "    static $n from_list($n* values, int64 count);\n";
+            $literalEntry = "struct $n::keyed_entry { boxed_text_key key; $n value; };\n";
+            $d .= template('boxed/literal_factories', $vars);
+        }
         $decl = template('boxed/boxed_declaration', $vars + ['fences' => $sourceMembers . $fences]);
         if ($split) {
             $provider = typeExport($plan['submodules'], $n)['provider'];
@@ -55,7 +68,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             [$api, $impl] = renderBoxedDispatch($plan['boxed_dispatch'], $n);
             $forward = $box['scalar_conversions'] ? "class $peer; " : '';
             $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
-                includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $api . "}\n"];
+                includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . "}\n"];
             $d .= $impl . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"
                 . "void $n::source_set(const boxed_text_key& key, const $n& value) { if (key.index < 0) set(key.text, value); else set(key.index, value); }\n";
         } else {

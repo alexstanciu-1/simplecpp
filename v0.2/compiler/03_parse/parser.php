@@ -1203,11 +1203,13 @@ final class Parser
 			return false;
 		}
 		$type = $tokens->text_at($start + 1);
+		$kind = $tokens->tokens[$start + 3]->kind ?? null;
+		if (($type === 'mixed' || $type === 'dynamic') && $kind === token_kind::lbracket) return true;
+		if ($tokens->source->flavor === flavor::python) return false;
 		$historical_cast = $tokens->source->flavor === flavor::php && ($type === 'object' || $type === 'array');
 		if (!$historical_cast && (type_registry::resolve($type) === null) && ($type !== 'void')) {
 			return false;
 		}
-		$kind = $tokens->tokens[$start + 3]->kind ?? null;
 		$has_operand = in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::keyword,
 			token_kind::integer, token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string,
 			token_kind::lparen, token_kind::bang, token_kind::tilde, token_kind::backslash, token_kind::scope], true)
@@ -1283,7 +1285,7 @@ final class Parser
 		return new ast_field_assignment($target, $value, $end);
 	}
 
-	/** Parse ordered positional or keyed input, using Python braces and colons for dictionaries. */
+	/** Parse ordered bracket entries, Python dictionary keys or PHP/JS brace property names. */
 	private function collection_literal(bool $dictionary): ast_collection_expression|ast_keyed_collection_expression
 	{
 		$c = $this->cursor;
@@ -1294,7 +1296,16 @@ final class Parser
 		$elements = [];
 		$entries = [];
 		while (!$c->is($close)) {
-			$element = $this->value();
+			if ($dictionary && $c->tokens->source->flavor !== flavor::python) {
+				$at = $c->position();
+				if ($c->is(token_kind::identifier) || $c->is(token_kind::keyword)) {
+					$c->take($c->tokens->tokens[$at]->kind, 'property name');
+					$element = new ast_property_name_string($at, $at + 1);
+				} elseif ($c->is(token_kind::single_string) || $c->is(token_kind::double_string)) {
+					$element = $this->atom();
+					if (!($element instanceof ast_string_expression)) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Expected literal property name');
+				} else throw new diagnostic($c->tokens->source, $c->offset(), 'Expected property name');
+			} else $element = $this->value();
 			if ($dictionary || $c->is($separator)) {
 				if ($elements !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Cannot mix positional and keyed entries');
 				$c->take($separator, $separator->label());
@@ -1628,7 +1639,7 @@ final class Parser
 			return new ast_isset_expression($start, $this->cursor->position(), $operand);
 		}
 		if ($this->cursor->is(token_kind::lbracket)) return $this->collection_literal(false);
-		if ($this->cursor->is(token_kind::lbrace) && $this->cursor->tokens->source->flavor === flavor::python) {
+		if ($this->cursor->is(token_kind::lbrace) && $this->cursor->tokens->source->flavor !== flavor::cpp) {
 			return $this->collection_literal(true);
 		}
 		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
@@ -1654,14 +1665,14 @@ final class Parser
 			$operand = $this->value(binary_operator::power->precedence());
 			return new ast_not_expression($start, $this->cursor->position(), $operand);
 		}
-		if ($this->cursor->tokens->source->flavor !== flavor::python && $this->cast_ahead()) {
+		if ($this->cast_ahead()) {
 			$start = $this->cursor->take(token_kind::lparen, '(');
 			$type = $this->cursor->tokens->text_at($this->cursor->position());
 			$type_start = $this->cursor->position();
 			$this->cursor->take($this->cursor->tokens->tokens[$type_start]->kind, 'cast type');
 			$type = new ast_type_reference($type_start, $this->cursor->position(), $type);
 			$this->cursor->take(token_kind::rparen, ')');
-			$operand = $this->value(binary_operator::power->precedence());
+			$operand = $c->is(token_kind::lbracket) ? $this->collection_literal(false) : $this->value(binary_operator::power->precedence());
 			return new ast_cast_expression($start, $this->cursor->position(), $type, $operand);
 		}
 		if ($this->cursor->is(token_kind::lparen)) {

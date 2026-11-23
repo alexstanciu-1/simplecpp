@@ -10,6 +10,7 @@ final class String_Literals
 	public static function decode(ast_string_expression $syntax): string
 	{
 		$text = $syntax->source_text();
+		if ($syntax instanceof ast_property_name_string) return $text;
 		$part = $syntax instanceof ast_interpolation_text;
 		$cpp = $part ? $syntax->source()->flavor === flavor::cpp : str_starts_with($text, 'f"');
 		$js = $part ? $syntax->source()->flavor === flavor::js : $text[0] === '`';

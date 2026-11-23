@@ -12,8 +12,7 @@ and contextual `set:` parameters. Source-written sequence factories remain gated
 
 This is the Simple C++ language standard for data notation and opt-in construction,
 not a compiler-local design. It supersedes older implicit literal-construction
-defaults for v0.2. Existing v0.1 generator examples remain evidence of that version,
-not permission to infer an unresolved v0.2 construction target as mixed.
+defaults for v0.2. The family defaults below apply to PHP and JS literals.
 
 See [the authority map](spec_map.md), [dynamic values](dynamic_types.md),
 [array operations](array_semantics.md) and
@@ -45,7 +44,7 @@ Values are expressions, including nested constructions. One trailing comma after
 the final entry is optional in every form. Omitted elements, repeated separators,
 spread, property shorthand and method definitions are not introduced by this standard.
 `[]` is an empty bracket initializer whose target protocol must be resolved;
-`{}` is an empty keyed initializer. Empty input still requires a known target type.
+`{}` is an empty keyed initializer. Empty input follows the same target-selection rules as populated input.
 
 ### Typed empty parameter defaults
 
@@ -81,8 +80,8 @@ Representation is derived on demand from the opening source token, not retained 
 a duplicate flag. In my-try, `source_representation(token_list)` supplies that query
 using the caller's retained token snapshot, including after span moves/compaction.
 Separator spelling is enforced during parsing and remains recoverable from source;
-generic semantic stages consume the normalized entries rather than branching on
-PHP-like versus JS-like spelling. Semantically deferred mixed positional/keyed input
+preparation consults the spelling when choosing a boxed family, then uses the
+selected type’s initialization protocol for the normalized entries. Semantically deferred mixed positional/keyed input
 may be represented faithfully by syntax; it must not acquire preparation support.
 
 ### Function-valued entries — deferred
@@ -98,9 +97,21 @@ syntax, method shorthand, automatic binding of a receiver, or new mixed callable
 The compiler must identify the target type and its applicable initialization
 interface before lowering construction. It may obtain that type from an explicit
 typed destination, an applicable interface input type, or explicit construction
-notation. It must not guess a class by matching property names. If the target cannot
-be identified unambiguously, compilation fails; there is no silent mixed/dynamic
-fallback based only on bracket or brace spelling.
+notation. It must not guess a class by matching property names.
+
+Without a target, PHP positional brackets (including `[]`) construct `mixed`
+and JS positional brackets construct `dynamic`. In both flavors, bracket-keyed
+`["name" => "Alex", "age" => 12]` selects `mixed` and brace-keyed
+`{name: "Alex", "age": 12}` selects `dynamic`. C++ and Python require a
+construction target. All four flavors accept `(mixed)[...]` and `(dynamic)[...]`
+as explicit family constructors. They construct directly in the selected family.
+
+Within a boxed literal, positional children inherit the parent family.
+Family-specific keyed children keep their own spelling's family in PHP and JS.
+Each child must be storable in its parent: same-family values and scalars admitted
+by its boxing contract qualify. A cross-family child is a preparation error.
+Ordinary typed destinations such as `vector<string>` retain their initialization
+protocol.
 
 Explicit construction notation is `Type::[...]` or `Type::{...}`:
 
@@ -162,9 +173,8 @@ the annotation can be omitted. An interface accepting mixed values does not reve
 that a key named `address` denotes an `Address` object. The compiler does not inspect
 factory bodies or member names to invent that association.
 
-Uncontextualized `$x = [];` or `$x = {name: "Alex"};` does not acquire a type merely
-from the old v0.1 dynamic default. Use an explicit target when no applicable typing
-context establishes one.
+For example, PHP `$x = [];` constructs an empty mixed container, while
+`$x = {name: "Alex"};` constructs a dynamic container.
 
 ## 3. Recognized opt-in interfaces
 
@@ -613,8 +623,9 @@ supersedes the earlier mixed-only entry proposal. Implementation is still migrat
 - Arbitrary objects are not automatically boxed or converted into property bags.
 
 Construction type and stored entry type are separate concepts. For nested,
-unannotated data constructions, a mixed construction supplies the default target
-`mixed`; a dynamic construction supplies `dynamic`, recursively. This contextual
+ambiguous positional literals, a mixed construction supplies the default target
+`mixed`; a dynamic construction supplies `dynamic`, recursively. PHP and JS
+keyed children retain their family-specific spelling. This contextual
 rule makes the target known at compile time; it is not runtime type inference.
 
 ```php
