@@ -1771,8 +1771,9 @@ CPP;
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if ($value instanceof ast_keyed_collection_expression) {
-			/** @var type_definition&keyed_initializer_type $type */
 			$type = $value->type_def();
+			if ($value->entries === []) return $type->lower_cpp_empty();
+			/** @var type_definition&keyed_initializer_type $type */
 			$elements = [];
 			foreach ($value->entries as $entry) {
 				$key = $this->value($entry->key, $global_references, $declarations, $required_headers);

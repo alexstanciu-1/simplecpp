@@ -416,6 +416,121 @@ def key_traversal(work, flavor, library):
         assert resident.wait() == 0
 
 
+COLLECTION_PEERS = {
+    'cpp': ('int mark(int n) { echo n; return n; } '
+            'string key(int n) { echo n; if (n == 4) { return "a"; } return "b"; }'),
+    'php': ('function mark(int $n): int { echo $n; return $n; } '
+            'function key(int $n): string { echo $n; if ($n == 4) { return "a"; } return "b"; }'),
+    'js': ('function mark(n: int): int { echo n; return n; } '
+           'function key(n: int): string { echo n; if (n == 4) { return "a"; } return "b"; }'),
+}
+COLLECTION_ENTRY = """class Item:
+    value: int = 0
+
+    def __init__(self, value: int):
+        self.value = value
+
+class Holder:
+    values: vector<int>
+
+values: vector<int> = [
+    mark(1),
+    mark(2),
+]
+copy: vector<int> = values
+values[mark(0)] = 3
+mapping: hash<int,string> = {
+    key(4): mark(5),
+    key(6): mark(7),
+}
+mapping["a"] = mark(8)
+mapping["new"] = mark(9)
+empty: hash<int,string> = {}
+empty["insert"] = 1
+vector_items: vector<Item> = [Item(10)]
+vector_items[0] = Item(11)
+hash_items: hash<Item,string> = {"item": vector_items[0]}
+hash_items["another"] = Item(12)
+holder: Holder = Holder()
+field_values: vector<int> = [13]
+holder.values = field_values
+holder.values[0] = 14
+if copy[0] != 1 or values[0] != 3 or values[1] != 2:
+    return 1
+if mapping["a"] != 8 or mapping["b"] != 7 or mapping["new"] != 9 or empty["insert"] != 1:
+    return 2
+if vector_items[0].value != 11 or hash_items["item"].value != 11 or hash_items["another"].value != 12:
+    return 3
+if holder.values[0] != 14:
+    return 4
+return 8
+"""
+
+
+def typed_collections(work, flavor, library):
+    app, bundle = work/'collections', work/'collections-bundle'
+    write_app(app, 'py', {'main': COLLECTION_ENTRY})
+    main = app/'main.py'
+    peer = app/f'collection-peer.{flavor}'
+    provider = COLLECTION_PEERS[flavor]
+    source_edit(peer, provider)
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'collections-initial', (8, b'120456789', b''), library)
+
+        edited = provider.replace('echo ', 'echo "X", ', 1)
+        source_edit(peer, edited)
+        result = invoke(resident)
+        assert 'error' not in result and result['preparation']['reused'], result
+        assert [Path(path).name for path in result['emitted_sources']] == [peer.name], result
+        native(bundle, work/'collections-body-edit', (8, b'X1X2X04X56X7X8X9', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        for name, source, diagnostic in [
+            ('key-type', COLLECTION_ENTRY.replace('key(4):', '4:'), 'key'),
+            ('bad-write', COLLECTION_ENTRY.replace('values[mark(0)] = 3', 'values[0] = "bad"'), 'conversion'),
+        ]:
+            source_edit(main, source)
+            failure = invoke(resident)
+            fresh = fresh_build(app, work/f'collections-{name}-failure')
+            assert diagnostic in failure.get('error', '').lower() and failure['error'] == fresh.get('error'), (failure, fresh)
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(main, COLLECTION_ENTRY)
+            assert 'error' not in invoke(resident)
+
+        peer.unlink()
+        failure = invoke(resident)
+        fresh = fresh_build(app, work/'collections-missing-peer')
+        assert 'error' in failure and failure['error'] == fresh.get('error'), (failure, fresh)
+        assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+        source_edit(peer, edited)
+        recovered = invoke(resident)
+        assert 'error' not in recovered, recovered
+        fresh_bundle = work/'collections-fresh'
+        assert 'error' not in fresh_build(app, fresh_bundle)
+        assert artifacts(bundle) == artifacts(fresh_bundle) == previous
+        native(bundle, work/'collections-recovered', (8, b'X1X2X04X56X7X8X9', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+    for label, source, expected in [
+        ('negative-read', 'x: vector<int> = [1]\nreturn x[-1]', (1, b'', b'sequence_index_out_of_range\n')),
+        ('past-end-write', 'x: vector<int> = [1]\nx[1] = 8\nreturn 8', (1, b'', b'sequence_index_out_of_range\n')),
+        ('missing-key', 'x: hash<int,string> = {"a": 1}\nreturn x["b"]', (1, b'', b'hash_missing_key\n')),
+        ('duplicate', 'x: hash<int,string> = {key(4): mark(5), key(4): mark(6), key(7): mark(8)}\nreturn 8',
+         (1, b'4X54X67X8', b'duplicate_initializer_key\n')),
+    ]:
+        source_edit(main, source)
+        output = work/f'collections-{label}'
+        result = fresh_build(app, output)
+        assert 'error' not in result, result
+        native(output, work/f'collections-{label}-run', expected, library)
+
+
 def narrow_compound(work, library):
     function = """def update(delta: int) -> int:
     value: uint8 = 254
@@ -718,6 +833,7 @@ def prove(work, library):
         typed_updates_and_traversal(case, flavor, library)
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
+        typed_collections(case, flavor, library)
         records_and_exceptions(case, flavor, library)
         inheritance(case, flavor, library)
 

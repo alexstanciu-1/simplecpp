@@ -197,7 +197,7 @@ proposal for the closeout scope, with semantic decisions called out separately.
 
 | Order | Item | Exit criterion |
 | --- | --- | --- |
-| 1 | Typed collection expressions and updates | Decide the small usable surface for vector indexing, typed indexed writes and populated literals. Reuse shared indexed mutation and initialization contracts with existing bounds, duplicate-key and conversion behavior. Keep key/value destructuring and general iteration outside this batch. |
+| 1 | Typed collection expressions and updates | Accept vector indexing, typed indexed replacement and keyed writes, and populated typed local literals through the shared collection contracts. Keep key/value destructuring and general iteration outside this batch. |
 | 2 | Project and native build acceptance | Run a standalone Python-flavor project and one representative mixed cpp/php/js/py program through the supported CLI build and run path. Check diagnostics, compatible and incompatible edits, deletion/restoration, reuse, and comparisons with fresh output. Keep the existing per-file project selection. |
 | 3 | Documentation and explicit deferrals | Update the shared frontend contract and compiler README for the fourth flavor, publish a supported-syntax example and list intentional differences from Python. Check that the deferred forms are rejected with useful source diagnostics. |
 
@@ -214,3 +214,28 @@ dynamic attributes, CPython compatibility and package interoperability remain
 follow-up work. Broader hash slot reuse is a compiler optimization follow-up.
 
 Native tokenizer cutover is a separate milestone. Before claiming Python support there, run the same token/span parity tests against native layout handling. [Native tokenizer backlog](remaining_language_gaps_and_native_tokenizer.md)
+
+### Typed collection expressions and updates
+
+Python accepts checked reads on typed vectors and hashes and single indexed
+assignments on writable local and field storage. A vector assignment replaces
+an existing element. A hash assignment replaces or inserts using the strict
+key contract. Negative vector indexes retain the shared bounds behavior.
+
+Explicitly typed locals accept list input as [value, ...] and keyed hash input
+as {key: value, ...}, including multiline input and trailing commas. An empty
+dictionary constructs an empty typed hash. Populated input uses the shared
+initialization transport and existing left-to-right evaluation. Equal keys
+reject after input materialization. Ordinary reads and writes of application
+collections use the same contracts as runtime specializations.
+
+The parser produces the existing collection and indexed-access AST nodes.
+Preparation uses the existing contextual type, key and conversion checks,
+without another pass or additional retained facts. Indexed compounds, empty
+subscript appends, nested writes and general dictionary expressions remain
+outside this batch.
+
+- [x] Check the shared AST and CRLF spans for list input, dictionary input, reads and writes.
+- [x] Run Python against cpp/php/js peers with Clang. Check ordered literal effects, vector copy independence, field replacement, and application vectors and hashes.
+- [x] Check negative reads, out-of-range writes, missing keys, and duplicate rejection after input effects. Reject invalid key types, value conversions and unsupported indexed targets.
+- [x] Verify body-only peer edits re-emit only the peer. Preserve the last good bundle and manifest after invalid source edits or peer deletion, and compare the restored artifacts and native behavior with a fresh build.

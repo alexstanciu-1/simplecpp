@@ -308,6 +308,9 @@ final class Preparation
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
+				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $source->flavor === flavor::python) {
+					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash');
+				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
 				$this->value($statement->value);
@@ -950,7 +953,10 @@ final class Preparation
 			$this->construction($declaration->initializer, $type, $name);
 		}
 		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
-			if (!($type instanceof keyed_initializer_type)) throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
+			if (!($type instanceof keyed_initializer_type)
+				&& !($declaration->initializer->entries === [] && $type instanceof hash_type_definition)) {
+				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
+			}
 			$this->expression_visits++;
 			foreach ($declaration->initializer->entries as $entry) {
 				$this->value($entry->key, $name);
@@ -1363,8 +1369,8 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if (!($type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed hash');
+			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
 			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);

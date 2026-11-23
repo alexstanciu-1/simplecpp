@@ -345,8 +345,9 @@ final class Parser
 		if ($c->keyword('raise')) return $this->throw_statement('raise', token_kind::newline);
 		if ($c->keyword('super')) throw new diagnostic($c->tokens->source, $c->offset(), 'super().__init__ must start a derived constructor');
 		if ($c->keyword('self') || ($c->is(token_kind::identifier)
-			&& ($c->next_is(token_kind::lparen) || $c->next_is(token_kind::dot)))) {
+			&& ($c->next_is(token_kind::lparen) || $c->next_is(token_kind::dot) || $c->next_is(token_kind::lbracket)))) {
 			$value = $this->primary(field_target: true);
+			if ($c->is(token_kind::lbracket)) return $this->indexed_write($value, token_kind::newline);
 			if ($value instanceof ast_call_expression) return $this->call_statement($value, token_kind::newline);
 			if ($value instanceof ast_field_expression) {
 				$c->take(token_kind::assign, '= after Python field');
@@ -1248,12 +1249,43 @@ final class Parser
 		return new ast_field_assignment($target, $value, $end);
 	}
 
+	/** Parse ordered positional or keyed input, using Python braces and colons for dictionaries. */
+	private function collection_literal(bool $dictionary): ast_collection_expression|ast_keyed_collection_expression
+	{
+		$c = $this->cursor;
+		$open = $dictionary ? token_kind::lbrace : token_kind::lbracket;
+		$close = $dictionary ? token_kind::rbrace : token_kind::rbracket;
+		$separator = $dictionary ? token_kind::colon : token_kind::arrow;
+		$start = $c->take($open, $open->label());
+		$elements = [];
+		$entries = [];
+		while (!$c->is($close)) {
+			$element = $this->value();
+			if ($dictionary || $c->is($separator)) {
+				if ($elements !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Cannot mix positional and keyed entries');
+				$c->take($separator, $separator->label());
+				$entries[] = new ast_keyed_entry($element, $this->value());
+			} else {
+				if ($entries !== []) throw new diagnostic($c->tokens->source, $c->offset(), 'Cannot mix keyed and positional entries');
+				$elements[] = $element;
+			}
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		}
+		$end = $c->take($close, $close->label()) + 1;
+		return $dictionary || $entries !== [] ? new ast_keyed_collection_expression($start, $end, $entries)
+			: new ast_collection_expression($start, $end, $elements);
+	}
+
 	/** Parse a keyed write or append on a named local or field; preparation checks writability. */
-	private function indexed_write(ast_expression $receiver): ast_statement
+	private function indexed_write(ast_expression $receiver, token_kind $terminator = token_kind::semicolon): ast_statement
 	{
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+		if ($terminator === token_kind::newline && ($index === null || !$this->cursor->is(token_kind::assign))) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
+		}
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
 			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end));
 		}
@@ -1287,7 +1319,7 @@ final class Parser
 		}
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
-		$end = $this->cursor->take(token_kind::semicolon, ';') + 1;
+		$end = $this->statement_end($terminator);
 		return $index === null ? new ast_append_statement($receiver, $value, $end)
 			: new ast_index_assignment($receiver, $index, $value, $end);
 	}
@@ -1515,25 +1547,9 @@ final class Parser
 			$this->cursor->take(token_kind::rparen, ')');
 			return new ast_isset_expression($start, $this->cursor->position(), $operand);
 		}
-		if ($this->cursor->is(token_kind::lbracket)) {
-			$start = $this->cursor->take(token_kind::lbracket, '[');
-			$elements = [];
-			$entries = [];
-			while (!$this->cursor->is(token_kind::rbracket)) {
-				$element = $this->value();
-				if ($this->cursor->is(token_kind::arrow)) {
-					if ($elements !== []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Cannot mix positional and keyed entries');
-					$this->cursor->take(token_kind::arrow, '=>');
-					$entries[] = new ast_keyed_entry($element, $this->value());
-				} else {
-					if ($entries !== []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Cannot mix keyed and positional entries');
-					$elements[] = $element;
-				}
-				if (!$this->cursor->is(token_kind::comma)) break;
-				$this->cursor->take(token_kind::comma, ',');
-			}
-			$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-			return $entries === [] ? new ast_collection_expression($start, $end, $elements) : new ast_keyed_collection_expression($start, $end, $entries);
+		if ($this->cursor->is(token_kind::lbracket)) return $this->collection_literal(false);
+		if ($this->cursor->is(token_kind::lbrace) && $this->cursor->tokens->source->flavor === flavor::python) {
+			return $this->collection_literal(true);
 		}
 		if ($this->cursor->is(token_kind::tilde) || (($this->cursor->is(token_kind::plus) || $this->cursor->is(token_kind::minus))
 			&& !$this->cursor->next_is(token_kind::floating))) {
