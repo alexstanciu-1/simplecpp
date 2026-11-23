@@ -69,7 +69,7 @@ final class Body_Collection
 			$this->expression($statement->target);
 			return;
 		}
-		if ($statement instanceof ast_loop_transfer || $statement instanceof ast_unset_statement || $statement instanceof ast_update_statement) {
+		if ($statement instanceof ast_loop_transfer || $statement instanceof ast_reset_statement || $statement instanceof ast_update_statement) {
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {

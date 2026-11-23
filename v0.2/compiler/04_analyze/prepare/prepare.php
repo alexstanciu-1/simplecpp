@@ -1120,7 +1120,7 @@ final class Preparation
 			return;
 		}
 		$local = $this->assignment_local($statement, $statement->name);
-		if ($statement instanceof ast_unset_statement) {
+		if ($statement instanceof ast_reset_statement) {
 			$statement->prepare_reset($local);
 			$this->record_assignment($local, null);
 			return;

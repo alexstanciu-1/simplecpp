@@ -378,9 +378,32 @@ final class ast_local_alias extends ast_local_declaration
 {
 }
 
-/** Reset the existing slot to its type's absent state. */
-final class ast_unset_statement extends ast_storage_write
+/** A single whole-slot write. Both operations assign a prepared type's native default. */
+abstract class ast_reset_statement extends ast_storage_write
 {
+	abstract public function prepare_reset(ast_local_binding $local): void;
+}
+
+final class ast_clean_statement extends ast_reset_statement
+{
+	public const string OPERATION = 'clean';
+
+	public function prepare_reset(ast_local_binding $local): void
+	{
+		$type = $local->type_def();
+		if (!(type_registry::is_numeric_scalar($type) || $type === type_bool::instance() || $type === type_string::instance()
+			|| $type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof boxed_type_definition)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot clean storage of type ' . $type->name);
+		}
+		$this->settle_binding($local);
+	}
+}
+
+/** Reset the existing slot to its type's absent state. */
+final class ast_unset_statement extends ast_reset_statement
+{
+	public const string OPERATION = 'unset';
+
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		// Aliases always introduce a new name and resolve to their original slot.
