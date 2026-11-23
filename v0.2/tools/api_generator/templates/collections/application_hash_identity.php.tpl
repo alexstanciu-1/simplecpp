@@ -1,3 +1,5 @@
+	use concrete_async_task;
+
 	private readonly string $native_name;
 
 	public function __construct(type_definition $value, type_definition $key)

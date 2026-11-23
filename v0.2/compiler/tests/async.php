@@ -373,6 +373,15 @@ foreach (flavor::cases() as $flavor) {
 			$weak_entry .= 'if (lock(' . $v($name) . ') === null) {echo "N";}if (' . $v($name) . $access . 'is_empty()) {echo "E";}';
 		}
 		$weak_entry .= 'return 8;';
+		$hash = 'hash<Point,string>';
+		$hash_leaf = $common . 'async ' . $typed_fn('buildTable', $hash) . '{'
+			. $decl($hash, 'table', '["key" => buildPoint()]') . 'await async_sleep_ms(1);return ' . $v('table') . ';}';
+		$hash_parent = 'async ' . $typed_fn('getTable', $hash) . '{return await buildTable();}';
+		$hash_entry = $decl($hash, 'original', 'await getTable()') . $decl($hash, 'copy', $v('original'))
+			. $decl('Point', 'p', $v('copy') . '["key"]') . $p . 'x=42;' . $v('copy') . '["key"]=' . $v('p') . ';'
+			. $decl('Point', 'a', $v('original') . '["key"]') . $decl('Point', 'b', $v('copy') . '["key"]')
+			. 'echo ' . $v('a') . $access . 'x,":",' . $v('b') . $access . 'x;return 8;';
+		$edited_hash = str_replace([$point, 'x=7;'], [str_replace('{', '{' . $z, $point), 'x=8;'], $hash_leaf);
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -435,6 +444,10 @@ foreach (flavor::cases() as $flavor) {
 			[$weak_parent, str_replace('"X"', '"Y"', $weak_leaf) . $weak_empty, $weak_entry, null, 'LIDLDYNNE', 1],
 			[$weak_parent, $tracked . $weak_empty, $weak_entry, 'Unknown', '', 0],
 			[$weak_parent, $weak_leaf . $weak_empty, $weak_entry, null, 'LIDLDXNNE', 1],
+			[$hash_parent, $hash_leaf, $hash_entry, null, '7:42', 3],
+			[$hash_parent, $edited_hash, $hash_entry, null, '8:42', 3],
+			[$hash_parent, str_replace($point, '', $hash_leaf), $hash_entry, 'Unknown', '', 0],
+			[$hash_parent, $hash_leaf, $hash_entry, null, '7:42', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -469,7 +482,7 @@ foreach (flavor::cases() as $flavor) {
 			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
 			$expected_tasks = match ($body) {
 				$three_parent => 3, $enum_parent . $second_parent, $both => 2,
-				$enum_parent, $point_parent, $vector_relay, $weak_parent => 1, default => 0,
+				$enum_parent, $point_parent, $vector_relay, $weak_parent, $hash_parent => 1, default => 0,
 			};
 			verify(count($task_headers) === $expected_tasks, 'Unexpected application task demand or retirement');
 			$all = implode("\n", $files);
