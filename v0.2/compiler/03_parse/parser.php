@@ -786,12 +786,14 @@ final class Parser
 		$start = $this->cursor->position();
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
 		if ($keyword) $this->cursor->take_keyword($python ? 'def' : 'function');
+		$returns_reference = $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ampersand);
+		if ($returns_reference) $this->cursor->take(token_kind::ampersand, '&');
 		$name = $this->cursor->name(token_kind::identifier);
 		$parameters = $this->parameters($python_receiver);
 		$this->cursor->take($python ? token_kind::member : token_kind::colon, $python ? '-> (explicit return type)' : ': (explicit return type)');
 		$type = $this->return_type(allow_union: true);
 		return new ast_function_declaration($alias ?? $name, $type,
-			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected);
+			$start, $this->cursor->position(), false, $this->root->scope->namespace, $parameters, $static, $private, $protected, $returns_reference);
 	}
 
 	public function source_namespace(): ?string
@@ -820,6 +822,11 @@ final class Parser
 				$type = $this->type_reference(allow_void: true, parameter: true);
 			}
 			else {
+				if ($this->cursor->tokens->source->flavor === flavor::php
+					&& ($this->cursor->is(token_kind::variable)
+						|| ($this->cursor->is(token_kind::ampersand) && $this->cursor->next_is(token_kind::variable)))) {
+					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected explicit parameter type before parameter name');
+				}
 				$type = $this->type_reference(allow_void: true, parameter: true);
 				$mode = $this->parameter_mode();
 				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
@@ -1395,13 +1402,26 @@ final class Parser
 		return false;
 	}
 
-	private function lambda_expression(): ast_lambda_expression
+	private function lambda_expression(bool $block = false): ast_lambda_expression
 	{
 		$c = $this->cursor;
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
 		$parameters = $this->parameters();
 		$c->take(token_kind::colon, ': (lambda result type)');
 		$result = $this->return_type();
+		if ($block) {
+			$outer_scope = $this->lexical;
+			$outer_type = $this->declaring_type;
+			$collector = new Body_Collection($this->root->scope, $parameters);
+			$this->declaring_type = null;
+			try {
+				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
+				return new ast_lambda_expression($start, $parameters, $result, $body);
+			} finally {
+				$this->lexical = $outer_scope;
+				$this->declaring_type = $outer_type;
+			}
+		}
 		$c->take(token_kind::arrow, '=>');
 		$outer = $this->lambda_names;
 		$this->lambda_names = [];
@@ -1417,6 +1437,7 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($c->tokens->source->flavor === flavor::php && $c->keyword('function')) return $this->lambda_expression(true);
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
@@ -1639,6 +1660,14 @@ final class Parser
 			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, new ast_struct_default($at, $at));
 		}
 		$this->cursor->take(token_kind::assign, '=');
+		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ampersand)) {
+			if ($terminator !== token_kind::semicolon) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Local aliases require an ordinary statement block');
+			}
+			$this->cursor->take(token_kind::ampersand, '&');
+			$target = $this->assignment_value();
+			return new ast_local_alias($start, $this->statement_end($terminator), $name, $type_reference, $target);
+		}
 		$value = $terminator === token_kind::semicolon ? $this->local_assignment_value() : $this->assignment_value();
 		$end = $this->statement_end($terminator);
 		return new ast_local_declaration($start, $end, $name, $type_reference, $value);

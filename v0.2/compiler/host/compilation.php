@@ -290,7 +290,7 @@ final class Compilation_Inspection
 			$row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
-		if ($value instanceof ast_lambda_expression) $row['body'] = self::value($value->body);
+		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();

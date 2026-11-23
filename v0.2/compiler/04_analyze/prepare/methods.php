@@ -166,7 +166,7 @@ final class Method_Preparation
 	private static function signature_match(ast_function_declaration $method, ast_function_declaration $base, scope $symbols,
 		?Dependency_Watches $dependencies, dependency_watcher $watcher): ?bool
 	{
-		if (count($method->parameters) !== count($base->parameters)) return null;
+		if ($method->returns_reference !== $base->returns_reference || count($method->parameters) !== count($base->parameters)) return null;
 		$exact = $method->return_type_def() === $base->return_type_def();
 		if (!$exact && ($method->is_static || !self::widens($method->return_type_def(), $base->return_type_def(), $symbols, $dependencies, $watcher))) return null;
 		foreach ($method->parameters as $i => $parameter) {

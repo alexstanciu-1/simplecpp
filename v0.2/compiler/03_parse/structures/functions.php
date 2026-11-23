@@ -81,20 +81,40 @@ final class ast_callable_reference extends ast_expression
 	}
 }
 
-/** An expression-bodied lambda owns only its written parameters, result type and expression. */
-final class ast_lambda_expression extends ast_expression
+/** The callable whose result contract applies to returns in a statement block. */
+interface statement_return_target
+{
+	/** @var ast_parameter_declaration[] */
+	public array $parameters { get; }
+	public bool $returns_reference { get; }
+	public ?int $reference_return_origin { get; }
+	public bool $is_implicit_entry { get; }
+	public function return_type_def(): type_definition;
+}
+
+/** Owns the signature and body while its enclosing function owns incremental preparation. */
+final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
 	/** @param ast_parameter_declaration[] $parameters */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ast_type_reference $result, public readonly ast_expression $body)
+		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body)
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
 		$result->attach($this);
 		$body->attach($this);
+	}
+
+	public bool $returns_reference { get => false; }
+	public ?int $reference_return_origin { get => null; }
+	public bool $is_implicit_entry { get => false; }
+
+	public function return_type_def(): type_definition
+	{
+		return $this->type_def()->signature->result;
 	}
 
 	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
@@ -249,6 +269,15 @@ final class ast_call_expression extends ast_expression
 		return ($this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
 	}
 
+	/** Return the caller's bound slot when this call yields a reference to one argument. */
+	public function reference_origin(): ?ast_local_binding
+	{
+		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
+		if (!($function instanceof ast_function_declaration) || $function->reference_return_origin === null) return null;
+		$argument = $this->arguments[$function->reference_return_origin];
+		return $argument instanceof ast_name_expression ? $argument->local_binding() : null;
+	}
+
 	/** Lower only after the coordinator has settled all reachable implementations. */
 	public function implementation(): ast_function_declaration|runtime_function
 	{
@@ -399,7 +428,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
 
@@ -441,6 +470,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public bool $introduces_slot = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
+	/** Prepared fact: ordinal of the sole writable parameter supplying returned storage. */
+	public private(set) ?int $reference_return_origin /** uint32|null */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -452,7 +483,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 */
 	public function __construct(string $name, ?ast_type_reference $return_type_reference, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false, bool $protected = false)
+		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false, bool $protected = false,
+		public readonly bool $returns_reference = false)
 	{
 		$this->is_static = $static;
 		$this->is_protected = $protected;
@@ -494,6 +526,13 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function has_virtual_dispatch(): bool
 	{
 		return $this->is_virtual || $this->is_override || $this->is_abstract;
+	}
+
+	/** An explicitly final instance method with a single concrete implementation and no virtual slot. */
+	public function is_direct_final_method(): bool
+	{
+		return $this->is_final && !$this->is_static && !$this->has_virtual_dispatch()
+			&& $this->parent instanceof ast_record_declaration && $this->parent->kind !== record_kind::interface_type;
 	}
 
 	public function has_receiver(): bool
@@ -590,6 +629,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function reset_preparation(): void
 	{
 		$this->return_type_def = null;
+		$this->reference_return_origin = null;
 		$this->method_contract_ready = false;
 		$this->adapted_base = null;
 		$this->introduces_slot = false;
@@ -599,11 +639,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->body?->reset_preparation();
 	}
 
-	public function settle_return_type(type_definition $type): void
+	public function settle_return_type(type_definition $type, ?int $reference_origin /** uint32|null */ = null): void
 	{
 		if ($this->return_type_def !== null) {
 			throw new \LogicException('Function return type is already settled');
 		}
+		$this->reference_return_origin = $reference_origin;
 		$this->return_type_def = $type;
 	}
 
@@ -637,6 +678,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function invalidate_dependencies(): void
 	{
 		$this->return_type_def = null;
+		$this->reference_return_origin = null;
 		$this->method_contract_ready = false;
 		$this->adapted_base = null;
 		$this->introduces_slot = false;
@@ -662,7 +704,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
 			&& $this->lexical_root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
-			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
+			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + ($this->returns_reference ? 2 : 1));
 	}
 
 	/** Return: token position. */

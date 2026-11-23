@@ -1,4 +1,4 @@
-"""Concrete arrow lambdas and pointer conversion across all source flavors."""
+"""Capture-free arrow lambdas, PHP block closures and callback conversion."""
 import argparse
 from pathlib import Path
 import tempfile
@@ -45,6 +45,40 @@ def prove(work, flavor):
     assert b'std::function' not in generated and b'#include <functional>' not in generated
 
 
+def prove_block(work):
+    worker = """function select_text(int $flag):string {
+        $outer = 9;
+        $choose = function(int $value):int {
+            $outer = $value + 1;
+            if ($value > 0) { return $outer; }
+            return helper();
+        };
+        echo $choose($flag), ":", $outer;
+        return "!";
+    }"""
+    entry = 'echo select_text(2), select_text(0); return 8;'
+    helper = 'function helper():int { return 7; }'
+    expected = b'3:9!7:9!'
+    missing = worker.replace('return helper();', '')
+    protected = worker.replace('$choose =', 'try { $choose =').replace(
+        'return "!";', 'return "!"; } finally { echo "."; }')
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, worker=worker, helper=helper), [
+        (None, None, expected),
+        (None, None, expected),
+        ('worker', missing, 'Non-void closure requires a value return'),
+        (None, None, 'Non-void closure requires a value return'),
+        ('worker', worker, expected),
+        ('worker', worker.replace('$outer = $value + 1;', ''),
+         'Unknown or not-yet-initialized local/global: outer'),
+        ('worker', worker, expected),
+        ('helper', helper.replace('helper()', 'helper(int $required)'), 'Argument count mismatch'),
+        ('helper', helper, expected),
+        ('worker', worker.replace('return "!";', ''), 'Non-void function requires a value return'),
+        ('worker', protected, b'3:9.!7:9.!'),
+    ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -52,6 +86,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='scpp-capture-free-lambdas-') as temporary:
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
+        prove_block(root / 'block')
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)
 

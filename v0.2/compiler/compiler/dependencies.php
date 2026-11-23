@@ -37,14 +37,18 @@ final class Dependency_Watches
 	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,uint8>>> */;
 	/**
 	 * Native non-owning reverse index for watcher retirement and subscription replacement.
-	 * @var \SplObjectStorage<dependency_watcher,\SplObjectStorage<symbol_entry,null>>
+	 * @var \SplObjectStorage<dependency_watcher,\SplObjectStorage<symbol_entry,bool>>
 	 */
-	private \SplObjectStorage $targets /** SplObjectStorage<dependency_watcher,SplObjectStorage<symbol_entry,null>> */;
+	private \SplObjectStorage $targets /** SplObjectStorage<dependency_watcher,SplObjectStorage<symbol_entry,bool>> */;
 	/**
 	 * Native non-owning pending notifications; retired watchers must remain alive until dispatch completes.
 	 * @var \SplObjectStorage<dependency_watcher,null>
 	 */
 	private \SplObjectStorage $pending /** SplObjectStorage<dependency_watcher,null> */;
+
+	/** @var array<int,ast_function_body> Reference-returning bodies with outgoing direct calls. */
+	private array $reference_callers = [];
+	private bool $reference_cycles_checked = false;
 
 	/** Session-owned demand graph, allocated only by programs that call static methods. */
 	private ?Called_Methods $called_method_cache = null;
@@ -94,7 +98,26 @@ final class Dependency_Watches
 		}
 		$group = $groups[$source_key];
 		$group[$watcher] = ($group->offsetExists($watcher) ? $group[$watcher] : 0) | $uses;
-		$this->targets[$watcher][$symbol] = null;
+		$targets = $this->targets[$watcher];
+		if (!$targets->offsetExists($symbol)) $targets[$symbol] = false;
+	}
+
+	/** Register the ordinary symbol watch and distinguish an invocation from a name lookup. */
+	public function watch_call(symbol_entry $symbol, ast_function_body $caller): void
+	{
+		$this->watch($symbol, $caller);
+		$this->targets[$caller][$symbol] = true;
+		$this->reference_cycles_checked = false;
+		if ($caller->parent->returns_reference) $this->reference_callers[spl_object_id($caller)] = $caller;
+	}
+
+	/** Check direct calls reachable from reference-returning functions. Removing edges cannot create a cycle. */
+	public function validate_reference_calls(): void
+	{
+		if ($this->reference_cycles_checked || $this->reference_callers === []) return;
+		$cycles = new Reference_Call_Cycles($this->targets);
+		$cycles->validate($this->reference_callers);
+		$this->reference_cycles_checked = true;
 	}
 
 	/** Replace a signature in its existing source bucket before delivering this publication's changes. */
@@ -132,6 +155,7 @@ final class Dependency_Watches
 	/** Remove all subscriptions and any queued notification before rebuilding or abandoning a watcher. */
 	public function forget(dependency_watcher $watcher): void
 	{
+		unset($this->reference_callers[spl_object_id($watcher)]);
 		$cache = $this->called_method_cache;
 		if ($watcher instanceof ast_function_body && $cache !== null) $cache->forget($watcher);
 		$this->pending->offsetUnset($watcher);
@@ -246,5 +270,56 @@ final class Dependency_Watches
 			}
 		}
 		return false;
+	}
+}
+
+/** Tarjan's strongly connected components over the current generation's resolved free-function and final instance-method calls. */
+final class Reference_Call_Cycles
+{
+	private array $order = [];
+	private array $active = [];
+	private array $stack = [];
+	private array $errors = [];
+
+	public function __construct(private readonly \SplObjectStorage $targets) {}
+
+	public function validate(array $roots): void
+	{
+		foreach ($roots as $body) {
+			if (!isset($this->order[spl_object_id($body)])) $this->visit($body);
+		}
+		if ($this->errors !== []) throw new diagnostic_group(Declaration_Diagnostics::ordered($this->errors));
+	}
+
+	private function visit(ast_function_body $body): int
+	{
+		$id = spl_object_id($body);
+		$low = $this->order[$id] = count($this->order);
+		$this->stack[] = $body;
+		$this->active[$id] = true;
+		$self_call = false;
+		$targets = $this->targets[$body] ?? null;
+		if ($targets !== null) foreach ($targets as $symbol) {
+			if (!$targets[$symbol]) continue;
+			$callee = $symbol->declaration()?->optional_body();
+			if ($callee === null) continue;
+			$next = spl_object_id($callee);
+			if ($next === $id) $self_call = true;
+			if (!isset($this->order[$next])) $low = min($low, $this->visit($callee));
+			elseif (isset($this->active[$next])) $low = min($low, $this->order[$next]);
+		}
+		if ($low === $this->order[$id]) {
+			$cyclic = $self_call || end($this->stack) !== $body;
+			do {
+				$member = array_pop($this->stack);
+				unset($this->active[spl_object_id($member)]);
+				$function = $member->parent;
+				if ($cyclic && $function->returns_reference) {
+					$this->errors[] = new diagnostic($function->source(), $function->byte_start(),
+						'Recursive reference return is unsupported: ' . $function->name());
+				}
+			} while ($member !== $body);
+		}
+		return $low;
 	}
 }

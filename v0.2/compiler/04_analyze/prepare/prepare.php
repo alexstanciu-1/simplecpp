@@ -167,7 +167,7 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
-		?entry_target $target, ast_function_declaration $function): int /** uint8 */
+		?entry_target $target, statement_return_target $function): int /** uint8 */
 	{
 		$generator = $function->return_type_def();
 		$completion = statement_completion::fallthrough;
@@ -248,6 +248,9 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);
+			}
+			elseif ($statement instanceof ast_local_alias) {
+				$this->local_alias($statement);
 			}
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
@@ -350,7 +353,25 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Return cannot leave a finally block');
 				}
 				$this->constructor_initialization?->complete($statement);
-				if ($target === null) {
+				if ($function->reference_return_origin !== null) {
+					$origin = $function->parameters[$function->reference_return_origin];
+					$value = $statement->value;
+					if ($value instanceof ast_call_expression) {
+						$this->value($value);
+						$selected = $value->reference_origin();
+					} else {
+						$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
+					}
+					if ($selected !== $origin) {
+						throw new diagnostic($source, $statement->byte_start(), 'Reference return must originate in its writable parameter');
+					}
+					if ($value instanceof ast_name_expression) {
+						++$this->expression_visits;
+						$value->settle_local($origin, unknown: true);
+					}
+					$statement->settle_conversion(value_conversion::identity);
+				}
+				elseif ($target === null) {
 					$return_type = $function->return_type_def();
 					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
 						if ($statement->value !== null) {
@@ -389,7 +410,7 @@ final class Preparation
 
 	/** Compose protected exits with the independent finalizer, whose abrupt exits replace pending exits. */
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
@@ -416,6 +437,9 @@ final class Preparation
 			$this->in_catch = $outer_catch;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
+				if ($function->returns_reference && ($completion & statement_completion::returns)) {
+					throw new diagnostic($source, $syntax->byte_start(), 'Reference returns across finally are deferred');
+				}
 				if ($this->outward !== []) $syntax->protected_completion |= statement_completion::numbered;
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
 				if ($completion & statement_completion::continues) $syntax->continue_target = $this->loop;
@@ -505,7 +529,7 @@ final class Preparation
 	}
 
 	private function switch_statement(ast_switch_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int
+		statement_return_target $function): int
 	{
 		$this->value($syntax->subject);
 		$type = $syntax->subject->type_def();
@@ -570,7 +594,7 @@ final class Preparation
 	}
 
 	/** Prepare a separate lexical frame; facts from its writes are forgotten on exit. */
-	private function lexical_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
+	private function lexical_block(ast_block $body, ?entry_target $target, statement_return_target $function,
 		?ast_produced_binding $binding = null): int /** uint8 */
 	{
 		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
@@ -614,7 +638,7 @@ final class Preparation
 
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
 	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$completion = 0;
 		$has_else = false;
@@ -679,7 +703,7 @@ final class Preparation
 	}
 
 	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
-	private function branch_guard(ast_expression $condition, ast_function_declaration $function, bool $paired): ?ast_object_access_expression
+	private function branch_guard(ast_expression $condition, statement_return_target $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
@@ -712,7 +736,7 @@ final class Preparation
 
 	/** Resolve produced types and ordinary assignments once; no iteration-dependent analysis or snapshots. */
 	private function foreach_loop(ast_foreach_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
@@ -782,7 +806,7 @@ final class Preparation
 
 	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
 	private function for_loop(ast_for_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->local_frames[] = [];
 		try {
@@ -796,7 +820,7 @@ final class Preparation
 
 	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
 	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
@@ -850,6 +874,45 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Function fixed-array storage exceeds 64 KiB');
 		}
 		$this->array_bytes += $bytes;
+	}
+
+	/** Publish a second lexical name for already-live storage without reading or copying it. */
+	private function local_alias(ast_local_alias $declaration): void
+	{
+		$name = $declaration->declaration_key();
+		$source = $declaration->source();
+		if ($this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local aliases are deferred in lambdas and generators');
+		}
+		if ($this->find_local($name) !== null) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local alias must introduce a new name: ' . $name);
+		}
+		$target = $declaration->initializer;
+		if ($target instanceof ast_call_expression) {
+			$this->value($target, $name);
+			$origin = $target->reference_origin();
+			if ($origin === null) {
+				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
+			}
+		} else {
+			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+		}
+		$writable_parameter = $origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::reference
+			&& (!($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
+		if (!($origin instanceof ast_local_declaration) && !$writable_parameter) {
+			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
+		}
+		$type = $origin->type_def();
+		if ($declaration->type_reference !== null
+			&& Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies) !== $type) {
+			throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
+		}
+		if ($target instanceof ast_name_expression) {
+			++$this->expression_visits;
+			$target->settle_local($origin, unknown: true);
+		}
+		$declaration->settle_type($type, constant_evaluation::unavailable);
+		$this->local_frames[count($this->local_frames) - 1][$name] = $origin;
 	}
 
 	/** Prepare one local, account for inline storage and publish it after its initializer succeeds. */
@@ -1648,29 +1711,29 @@ final class Preparation
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
-		$frames = $this->local_frames;
-		$writes = $this->latest_writes;
-		$guards = $this->guards;
-		$guard_reads = $this->guard_reads;
-		$unknown = $this->unknown_initializers;
-		$in_lambda = $this->in_lambda;
-		$this->local_frames = [$locals];
-		$this->latest_writes = [];
-		$this->guards = $this->guard_reads = [];
-		$this->unknown_initializers = false;
-		$this->in_lambda = true;
-		try {
-			$this->value($lambda->body);
-			$conversion = $result->prepare_conversion($lambda->body, conversion_context::typed_destination);
-			$lambda->settle_lambda(new lambda_type_definition(new callback_type_definition($result, $inputs)), $conversion);
-		} finally {
-			$this->local_frames = $frames;
-			$this->latest_writes = $writes;
-			$this->guards = $guards;
-			$this->guard_reads = $guard_reads;
-			$this->unknown_initializers = $unknown;
-			$this->in_lambda = $in_lambda;
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs));
+		$scope = new self();
+		$scope->owner = $this->owner;
+		$scope->symbols = $this->symbols;
+		$scope->dependencies = $this->dependencies;
+		$scope->local_frames = [$locals];
+		$scope->in_lambda = true;
+		if ($lambda->body instanceof ast_block) {
+			$errors = Declaration_Diagnostics::locals($lambda->body);
+			if ($errors !== []) throw new diagnostic_group($errors);
+			$lambda->settle_lambda($type, value_conversion::identity);
+			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
+			if (($completion & statement_completion::fallthrough) !== 0) {
+				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
+					'Non-void closure requires a value return');
+			}
+		} else {
+			$scope->value($lambda->body);
+			$lambda->settle_lambda($type, $result->prepare_conversion($lambda->body, conversion_context::typed_destination));
 		}
+		$this->statement_visits += $scope->statement_visits;
+		$this->expression_visits += $scope->expression_visits;
+		$this->name_lookups += $scope->name_lookups;
 	}
 
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
@@ -1779,8 +1842,12 @@ final class Preparation
 		}
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
-		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
+		if ($function instanceof ast_function_declaration && !$this->in_lambda) {
+			$this->dependencies?->watch_call($symbol, $this->owner);
+		} else {
+			$this->dependencies?->watch($symbol, $this->owner);
+		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
@@ -2010,6 +2077,7 @@ final class Preparation
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
 		$conversions = $this->bind_arguments($call, $function, $initializing);
+		if (!$this->in_lambda && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;

@@ -195,7 +195,7 @@ final class Symbol_Publication implements declaration_sink
 				/** @var ast_function_declaration $head */
 				// A generator return type retains its producer declaration.
 				$producer = $head->return_type_reference?->name === Iterator_Contract::NAME ? spl_object_id($head) : null;
-				$contracts[$key] = json_encode([$producer, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, self::signature_type($head->return_type_reference), array_map(
+				$contracts[$key] = json_encode([$producer, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->returns_reference, self::signature_type($head->return_type_reference), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [self::signature_type($parameter->type_reference), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}

@@ -774,7 +774,7 @@ CPP;
 	 */
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null,
+		array &$required_headers /** array<string,bool> */, ?statement_return_target $function = null,
 		?cpp_resume_context $resume = null, ?string $first_initializer = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
@@ -798,6 +798,12 @@ CPP;
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_local_alias) {
+				if ($statement->initializer instanceof ast_call_expression) {
+					$lines[] = "\t" . $this->value($statement->initializer, $global_references, $declarations, $required_headers, borrow_result: true) . ';';
+				}
+				continue;
+			}
 			if ($statement instanceof ast_block_statement) {
 				$lines[] = "\t{";
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
@@ -1093,7 +1099,7 @@ CPP;
 				}
 				else {
 					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
-						logical_root: $conversion === value_conversion::identity);
+						logical_root: $conversion === value_conversion::identity, borrow_result: $function->returns_reference);
 					$type = $function->return_type_def();
 					$value = $this->conversion($type, $conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
@@ -1167,7 +1173,7 @@ CPP;
 	 * @return string[]
 	 */
 	private function loop_body_lines(ast_repeating_statement $loop, array &$declarations, array &$globals, array &$headers,
-		ast_function_declaration $function, ?cpp_resume_context $resume, ?string $first_initializer = null): array
+		statement_return_target $function, ?cpp_resume_context $resume, ?string $first_initializer = null): array
 	{
 		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume, $first_initializer);
 		if ($this->transfer_labels === []) return $body;
@@ -1178,7 +1184,7 @@ CPP;
 	}
 
 	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
-	private function switch_lines(ast_switch_statement $syntax, ast_function_declaration $function,
+	private function switch_lines(ast_switch_statement $syntax, statement_return_target $function,
 		array &$declarations, array &$globals, array &$headers): array
 	{
 		$dispatch = $syntax->subject->type_def()->constant_dispatch();
@@ -1244,7 +1250,7 @@ CPP;
 	 * @param bool[] $headers
 	 * @return string[]
 	 */
-	private function exception_region(ast_try_statement $syntax, ast_function_declaration $function,
+	private function exception_region(ast_try_statement $syntax, statement_return_target $function,
 		array &$declarations /** array<string,ast_function_declaration> */,
 		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
 	{
@@ -1305,7 +1311,7 @@ CPP;
 	 * @param bool[] $headers
 	 * @return string[]
 	 */
-	private function protected_region(ast_try_statement $syntax, ast_function_declaration $function,
+	private function protected_region(ast_try_statement $syntax, statement_return_target $function,
 		array &$declarations /** array<string,ast_function_declaration> */,
 		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
 	{
@@ -1687,7 +1693,7 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false): string
 	{
 		$reorderable = false;
 		$value_type = $value->type_def();
@@ -2069,7 +2075,9 @@ CPP;
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			return $this->invocation($value, $function, $name, $function->return_type_def(), $global_references, $declarations, $required_headers);
+			$result = $function->return_type_def();
+			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers);
+			return $function->returns_reference && !$borrow_result ? 'static_cast<' . $result->cpp_type() . '>(' . $call . ')' : $call;
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
@@ -2305,7 +2313,8 @@ CPP;
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
-		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . ' { ' . implode(' ', $steps)
+		$return_reference = !$callback && $function->returns_reference ? '&' : '';
+		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . $return_reference . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}
 
@@ -2325,9 +2334,20 @@ CPP;
 		foreach ($lambda->parameters as $parameter) {
 			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
 		}
+		$header = '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
+		if ($lambda->body instanceof ast_block) {
+			$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels];
+			[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = [null, null, null, []];
+			try {
+				$lines = $this->statements($lambda->body, $declarations, $globals, $headers, $lambda);
+				return $header . " {\n" . implode("\n", $lines) . "\n}";
+			} finally {
+				[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = $outer;
+			}
+		}
 		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
 		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
-		return '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ' { return ' . $result . '; }';
+		return $header . ' { return ' . $result . '; }';
 	}
 
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
@@ -2475,7 +2495,7 @@ CPP;
 				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
+		return $this->signature_type($function->return_type_def(), $short_types) . ($function->returns_reference ? '& ' : ' ') . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
 			. '(' . implode(', ', $parameters) . ')';
 	}
 
