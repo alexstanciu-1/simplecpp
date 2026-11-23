@@ -975,16 +975,21 @@ CPP;
 					$initializer = $separate_init ? '' : implode(', ', $init);
 					$prelude = $separate_init ? array_map(static fn(string $text): string => $text . ';', $init) : [];
 					$updates = [];
+					$staged_updates = [];
 					foreach ($statement->updates as $index => $item) {
 						$name = $index === 0 ? 'compound_previous' : 'compound_previous_' . $index;
 						$text = $this->for_action($item, $global_references, $declarations, $required_headers, $snapshot, $name);
 						if ($resume !== null) $resume_updates[] = $snapshot === null ? "$text;" : "{ const auto $snapshot; $text; }";
-						elseif ($snapshot === null) $updates[] = $text;
+						elseif ($this->async_steps !== []) {
+							$staged_updates[$index] = $this->async_statement("$text;");
+							$updates[] = $text;
+						} elseif ($snapshot === null) $updates[] = $text;
 						else {
 							$prelude[] = $item->local_def()->type_def()->cpp_type() . " $name;";
 							$updates[] = "($snapshot, $text)";
 						}
 					}
+					if ($staged_updates !== []) $prelude[] = 'bool scpp_first = true;';
 					$header_scope = $prelude !== [];
 					if ($header_scope) {
 						$lines[] = "\t{";
@@ -993,6 +998,12 @@ CPP;
 					if ($resume !== null) {
 						if ($resume_updates !== []) $update_label = 'loop_update_' . ++$resume->loop_id;
 						$lines[] = "\twhile (" . ($condition === '' ? 'true' : $condition) . ') {';
+					} elseif ($staged_updates !== []) {
+						$lines[] = "\tfor (" . $initializer . ';; scpp_first = false) {';
+						$lines[] = "\t\tif (!scpp_first) {";
+						foreach ($updates as $i => $update) $lines[] = "\t\t" . ($staged_updates[$i] ?? "$update;");
+						$lines[] = "\t\t}";
+						if ($condition !== '') $lines[] = "\t\tif (!(" . $condition . ")) break;";
 					} else $lines[] = "\tfor (" . $initializer . ';' . ($condition === '' ? '' : ' ' . $condition) . ';'
 						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
 					if ($staged_tests !== []) {

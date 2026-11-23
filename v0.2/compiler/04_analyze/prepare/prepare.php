@@ -1720,9 +1720,8 @@ final class Preparation
 			if ($split && $context instanceof ast_local_declaration) {
 				$this->async_nested[spl_object_id($context)] = $context;
 			} elseif ($split && !($context instanceof ast_return_statement || $context instanceof ast_echo_statement
-				|| (($context instanceof ast_call_statement || $context instanceof ast_await_statement
-					|| ($context::class === ast_assignment_statement::class && $context->operator === null))
-					&& (!($context->parent instanceof ast_for_statement) || in_array($context, $context->parent->initializers, true)))
+				|| $context instanceof ast_call_statement || $context instanceof ast_await_statement
+					|| ($context::class === ast_assignment_statement::class && $context->operator === null)
 				|| $context instanceof ast_if_arm || $context instanceof ast_tested_loop || $context instanceof ast_for_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps require a statement, if condition or loop condition');
 			}

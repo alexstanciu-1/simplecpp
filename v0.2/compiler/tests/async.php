@@ -530,8 +530,6 @@ foreach (flavor::cases() as $flavor) {
 		$text_parent = $text_pair . 'async ' . $signature('compute') . '{return render(await textPart(),await rightValue());}';
 		$guard_child = $guard . 'async ' . $typed_fn('temporaryOwner', 'shared<Guard>') . '{await async_sleep_ms(1);return new Guard();}';
 		$lifetime = $pair . 'async ' . $signature('compute') . '{return pair(await temporaryOwner() !== null,await rightValue());}';
-		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('loopTest')
-			. '{for (;; ' . $ordered_call . ') {return 1;}}return 8;'), 'Suspending operand steps');
 		rejects(fn() => $prepare($left_child . $strings . $text_pair . 'async ' . $signature('localText')
 			. '{' . $decl('string', 'label', 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()')
 			. 'return 0;}return 8;'), 'scoped result storage');
@@ -558,6 +556,10 @@ foreach (flavor::cases() as $flavor) {
 			. 'for (' . rtrim($decl('int', 'start', $ordered_call), ';') . ',pair(' . $v('start') . ',await rightValue()),'
 			. $v('n') . '=' . $ordered_call . ';' . $v('n') . '<25;' . $v('n') . '++) {'
 			. 'echo ' . $v('start') . ',' . $v('n') . ';continue;}return ' . $v('n') . ';}';
+		$for_update = $pair . 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
+			. 'for (;' . $v('n') . '<' . $ordered_call . ';pair(0,0),' . $ordered_call . ','
+			. $v('n') . '=' . $v('n') . '+await leftValue()) {echo ' . $v('n') . ';'
+			. 'if (' . $v('n') . '==0) {continue;}if (' . $v('n') . '==4) {break;}}return ' . $v('n') . ';}';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -718,6 +720,10 @@ foreach (flavor::cases() as $flavor) {
 			[$for_init, $left_child . $right_child, $eager_main, null, 'ABFBFABF2323232425', 2],
 			[$for_init, $left_child, $eager_main, 'Unknown', '', 0],
 			[$for_init, $left_child . str_replace('return 3;', 'return 5;', $right_child), $eager_main, null, 'ABFBFABF25', 1],
+			[$for_update, $left_child . $right_child, $eager_main, null, 'ABF0FABFAABF2FABFAABF44', 2],
+			[$for_update, $left_child, $eager_main, 'Unknown', '', 0],
+			[$for_update, str_replace('return 2;', 'return 0;', $left_child) . str_replace('return 3;', 'return 0;', $right_child), $eager_main, null, 'ABF0', 1],
+			[str_replace('<' . $ordered_call, '<3', $for_update), $left_child . $right_child, $eager_main, null, '0FABFA2FABFA4', 2],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
