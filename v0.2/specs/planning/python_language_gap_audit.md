@@ -44,6 +44,16 @@ The cpp/php/js Clang matrix covers present zero and empty-string values, missing
 
 The Python entry emits one presence call per membership expression (seven sites), with no value read or traversal. A separate unchanged caller follows int-key to string-key to int-key hash signatures in the same resident session for each peer flavor. Only the provider and caller re-emit. The three stages match fresh C++ artifacts and produce hit, miss and hit with one key call before one mapping call.
 
+### Python membership conformance baseline
+
+Run `XDEBUG_MODE=off python3 -B v0.2/compiler/tests/python_membership_conformance.py` from the repository root. This standalone comparison exits nonzero while any observed result differs from the host Python interpreter. It checks both operators on typed receivers and on the same literals assigned to mixed and dynamic. A native program must catch TypeError to match a Python TypeError. A compilation rejection is recorded separately.
+
+Before vector and boxed membership, six of 78 cases matched CPython 3.12.3. All six were exact-type dictionary-key tests executed by Clang-built programs. The other 72 were rejected before native execution. At baseline, vector and string receivers lacked membership admission, typed hashes required an exact key type, and boxed list and dictionary literals failed during initialization.
+
+A separate native probe using the public boxed APIs found that appending 7 and setting integer key 0 to 7 produced the same container kind and packed status in both families. Writing keys 1 and "1" through the source-key adapter produced one entry in each family. Python membership needs the receiver's sequence or mapping identity to survive construction and copying, and Python dictionary construction must preserve distinct integer and string keys. A packed-storage check or a lookup on already normalized keys cannot recover either distinction. [Executable comparison](../../compiler/tests/python_membership_conformance.py) · [Boxed storage](../../runtime/src/boxed/boxed_value.hpp) · [Source-key generation](../../tools/api_generator/php/render_boxed.php)
+
+The vector and boxed implementation matches 64 of those 78 observations. The remaining cases exercise typed-hash probes with different key types, unboxed substring membership, and catchable TypeError for a scalar receiver. The peer-provider checks exercise mixed and dynamic from cpp/php/js as mappings even with packed keys, alongside Python-origin lists and dictionaries.
+
 ## Expression and collection gaps
 
 | Python feature | Closest implemented peer | Decision and reason |

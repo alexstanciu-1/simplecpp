@@ -885,6 +885,43 @@ return 5""")
         assert 'error' not in checked, checked
         native(bundle, work/'membership-key-failure', (1, b'K', b'division_by_zero\n'), library)
 
+        # Keep the caller unchanged while the receiver switches between hash and vector.
+        source_edit(app/'main.py', """class Item:
+    pass
+item: Item = Item()
+objects: vector<Item> = [item]
+words: vector<string> = ["", "same"]
+if item not in objects or Item() in objects or "same" not in words:
+    return 11
+empty: vector<int> = []
+if key() in empty:
+    return 12
+return 8 if 0 < key() in mapping() else 2""")
+        vector_head = {
+            'cpp': 'vector<int> mapping() { vector<int> v = [3, 2];',
+            'php': 'function mapping(): vector<int> { $v vector<int> = [3, 2];',
+            'js': 'function mapping(): vector<int> { let v: vector<int> = [3, 2];',
+        }[flavor]
+        vector = vector_head + f' echo "V"; return {syntax["v"]}v; }}'
+        key_fn = fn('key', 'int', [], 'echo "K"; return 2;')
+        for stage, collection, status, trace in [
+                ('vector', vector, 8, b'KKV'), ('miss', vector.replace('[3, 2]', '[3, 5]'), 2, b'KKV'),
+                ('hash', hash_provider(flavor), 8, b'KKH')]:
+            source_edit(peer, key_fn + collection)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'vector-membership-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'vector-membership-run-{stage}', (status, trace, b''), library)
+        peer.unlink()
+        failed = invoke(resident)
+        assert 'Unknown function: key' in failed.get('error', ''), failed
+        source_edit(peer, key_fn + vector)
+        assert 'error' not in invoke(resident)
+        assert artifacts(bundle) == artifacts(work/'vector-membership-vector')
+        native(bundle, work/'vector-membership-recovered', (8, b'KKV', b''), library)
+
         # The same caller can bind to two different published hash/key signatures.
         source_edit(app/'main.py', 'return 8 if key() in mapping() else 2')
         for stage, (key_type, literal, status) in enumerate([('int', '2', 8), ('string', '"absent"', 2), ('int', '2', 8)]):

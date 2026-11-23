@@ -104,21 +104,22 @@ final class Cpp_Emitter
 	}
 
 	/**
-	 * Emit the published presence call. Chain lowering has already evaluated the key.
+	 * Evaluate the needle once before the receiver. A chain already holds the needle.
 	 * @param array<string,bool> $required_headers
 	 */
 	private function membership_test(ast_binary_expression $value, string $left, string $right, array &$required_headers /** array<string,bool> */, bool $key_captured): string
 	{
-		/** @var key_presence_type $type */
+		/** @var membership_type $type */
 		$type = $value->execution_type();
-		$binding = $type->presence_function();
-		$required_headers[$binding->header] = true;
-		$key = $binding->parameters[1]->lower_cpp_exact_argument($value->left, value_conversion::identity, $left);
-		$probe = ($value->operator === binary_operator::key_not_in ? '!' : '') . '(' . $right . ').' . $binding->symbol;
-		// A plain local receiver has stable storage. Otherwise capture the key before evaluating the mapping.
-		if ($key_captured || ($value->right instanceof ast_name_expression && $value->right->local_binding() !== null)
-			|| $value->left instanceof ast_integer_expression) return $probe . '(' . $key . ')';
-		return '([&]() { const auto membership_key = ' . $key . '; return ' . $probe . '(membership_key); }())';
+		$literal = $value->left instanceof ast_integer_expression || $value->left instanceof ast_float_expression
+			|| $value->left instanceof ast_keyword_expression;
+		$local_pair = $value->left instanceof ast_name_expression && $value->left->local_binding() !== null
+			&& $value->right instanceof ast_name_expression && $value->right->local_binding() !== null;
+		$capture = !$key_captured && !$literal && !$local_pair;
+		$key = $capture ? 'membership_key' : $left;
+		$test = $type->lower_cpp_membership($value->left, $key, $right, $required_headers);
+		if ($value->operator === binary_operator::key_not_in) $test = '!(' . $test . ')';
+		return $capture ? '([&]() { const auto membership_key = ' . $left . '; return ' . $test . '; }())' : $test;
 	}
 
 	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
@@ -1853,6 +1854,28 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
+			&& $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
+			$list = $value instanceof ast_collection_expression;
+			$factory = $value_type->cpp_type() . ($list ? '::python_list()' : '::container()');
+			$items = $list ? $value->elements : $value->entries;
+			if ($items === []) return $factory;
+			$code = '([&]() { auto boxed = ' . $factory . '; ';
+			foreach ($items as $i => $item) {
+				$operand = $list ? $item : $item->value;
+				$conversion = $list ? $value->element_conversion($i) : $item->conversion;
+				foreach ($value_type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$input = $this->value($operand, $global_references, $declarations, $required_headers);
+				$input = $value_type->lower_cpp_exact_argument($operand, $conversion, $input, $this->inline_adapters);
+				if ($list) $code .= 'boxed.append(' . $input . '); ';
+				else {
+					$key = $this->value($item->key, $global_references, $declarations, $required_headers);
+					$key = $item->key->type_def()->lower_cpp_exact_argument($item->key, value_conversion::identity, $key);
+					$code .= '{ const auto key = ' . $key . '; boxed.set(key, ' . $input . '); } ';
+				}
+			}
+			return $code . 'return boxed; }())';
+		}
 		if ($value instanceof ast_keyed_collection_expression) {
 			$type = $value->type_def();
 			if ($value->entries === []) return $type->lower_cpp_empty();
@@ -1973,7 +1996,7 @@ CPP;
 			$last = array_key_last($value->links);
 			foreach ($value->links as $index => $link) {
 				$left = $middle;
-				$membership = $link->operator->key_membership();
+				$membership = $link->operator->membership();
 				$middle = $membership && $index === $last
 					? $this->value($link->right, $global_references, $declarations, $required_headers)
 					: $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
@@ -2031,7 +2054,7 @@ CPP;
 			$right_safe = false;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
-			if ($value->operator->key_membership()) {
+			if ($value->operator->membership()) {
 				return $this->membership_test($value, $left, $right, $required_headers, false);
 			}
 			$this->binary_operands($value, $left, $right, $required_headers);

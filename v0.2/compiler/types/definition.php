@@ -144,6 +144,14 @@ interface counted_collection_type
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string;
 }
 
+/** Python membership uses the receiver's containment semantics for a prepared needle. */
+interface membership_type
+{
+	public function prepare_membership(ast_binary_expression $site): void;
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string;
+}
+
 /** Published key existence query, independent of payload representation or null state. */
 interface key_presence_type
 {

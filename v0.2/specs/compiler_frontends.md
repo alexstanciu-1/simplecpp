@@ -51,6 +51,10 @@ local needs a type and initializer.
 
 Python `key in mapping` and `key not in mapping` test key presence at comparison precedence. The mapping must publish a typed key-presence binding, and the key must match its declared key type. Both operands evaluate once, key first. A failed key expression skips the mapping expression. The result is independent of the stored value and traversal order.
 
+Python `in` on a typed vector scans elements in order and stops at the first match. It compares supported scalars by value and shared handles by allocation identity. Integer/float membership compares the exact numeric values, including integers above 2⁵³. A boolean needle compares numerically to integer elements. The needle evaluates once before the vector expression, including for an empty vector.
+
+For `mixed` and `dynamic` receivers, Python list literals retain their sequence identity through copies. Dictionary literals and existing containers received from cpp, php, or js test keys, even when all keys are consecutive integers starting at zero. Python dictionary literals preserve integer and string keys separately within the boxed storage's supported key range. A boxed string supports substring membership. In each case `not in` negates the result.
+
 Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. Result errors do not represent absence.
 
 Python `a is b` and `a is not b` also accept two shared record handles, including optional handles and interface views. The operands evaluate once in source order. Identity compares the allocation retained by each operand. Two empty handles compare identical, including when their declared payload types differ. Scalar and collection values do not support this two-handle form.
@@ -62,7 +66,7 @@ Integer // rounds down and integer % uses the divisor's sign. These spellings
 select separate operations from the cpp/php/js integer division and remainder.
 See the [arithmetic contract](planning/python_flavor.md#python-division-floor-division-and-modulo).
 
-Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, `in` and `not in` for exact keys of typed hashes, and `is` and `is not` for the handle and literal-None tests above. The unbound `undefined` missing-key marker is available only in a standalone indexed test. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
+Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, `in` and `not in` for supported collection receivers, and `is` and `is not` for the handle and literal-None tests above. The unbound `undefined` missing-key marker is available only in a standalone indexed test. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
 
 Deferred Python spellings and semantics include floating floor division and
 modulo, operand-valued boolean operators, type inference

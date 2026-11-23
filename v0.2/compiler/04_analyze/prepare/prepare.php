@@ -972,7 +972,7 @@ final class Preparation
 			$this->construction($declaration->initializer, $type, $name);
 		}
 		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
-			if (!($type instanceof keyed_initializer_type)
+			if (!($type instanceof keyed_initializer_type) && !($type instanceof boxed_type_definition && $source->flavor === flavor::python)
 				&& !($declaration->initializer->entries === [] && $type instanceof hash_type_definition)) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
 			}
@@ -1188,7 +1188,8 @@ final class Preparation
 			$syntax->settle_collection($type);
 			return;
 		}
-		if (!($type instanceof sequence_initializer_type || $type instanceof fixed_array_type)) {
+		if (!($type instanceof sequence_initializer_type || $type instanceof fixed_array_type)
+			&& !($type instanceof boxed_type_definition && $syntax->source()->flavor === flavor::python)) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Populated literal requires a sequence-initializable destination');
 		}
 		$destination = $type->write_type();
@@ -1486,11 +1487,9 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
-			if ($syntax->operator->key_membership()) {
-				if (!($right instanceof key_presence_type)) throw new diagnostic($syntax->source(), $syntax->right->byte_start(), 'Membership requires a mapping with key presence');
-				$binding = $right->presence_function();
-				if ($left !== $binding->parameters[1]) throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Membership requires key type ' . $binding->parameters[1]->name);
-				$syntax->settle_binary($binding->return_type_def(), $right);
+			if ($syntax->operator->membership()) {
+				if (!($right instanceof membership_type)) throw new diagnostic($syntax->source(), $syntax->right->byte_start(), 'Receiver does not support Python membership');
+				$right->prepare_membership($syntax);
 				return;
 			}
 			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)

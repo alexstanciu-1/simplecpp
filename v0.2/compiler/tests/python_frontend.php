@@ -331,7 +331,7 @@ foreach ([
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
 	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
 	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
-	["v: vector<int> = [1]\nreturn 8 if 1 in v else 0", 'mapping with key presence'],
+	["return 8 if 1 in 42 else 0", 'does not support Python membership'],
 	["h: hash<int,string> = {}\nreturn 8 if 1 not in h else 0", 'key type string'],
 	["h: hash<int,int> = {}\nreturn 8 if 1 in h is None else 0", 'Python None test'],
 	["return 1 is None", 'Python None test'],

@@ -37,7 +37,7 @@ enum binary_operator: int
 	case key_in = 29;
 	case key_not_in = 30;
 
-	public function key_membership(): bool
+	public function membership(): bool
 	{
 		return $this === self::key_in || $this === self::key_not_in;
 	}

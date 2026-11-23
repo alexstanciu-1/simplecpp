@@ -17,6 +17,8 @@ static_assert(sizeof(@native@) == @size@ && alignof(@native@) == @alignment@);
 @n@ @n@::from_floating(float64 value) noexcept { @n@ result; @result@ = @native@::floating(value); return result; }
 @n@ @n@::from_string(const string& value) { @n@ result; @result@ = @native@::string({value.data(), static_cast<std::size_t>(value.size())}); return result; }
 @n@ @n@::container() { @n@ result; @result@ = @native@::container(); return result; }
+@n@ @n@::python_list() { @n@ result; @result@ = @native@::python_list(); return result; }
+bool_t @n@::python_contains(const @n@& needle) const { return @self@.python_contains(detail::ownership_access::get<@native@>(needle)); }
 boxed_kind @n@::kind() const noexcept { return static_cast<boxed_kind>(@self@.type()); }
 bool_t @n@::get_boolean() const { return bool_t{@self@.get_boolean()}; }
 int64 @n@::get_integer() const { return int64{static_cast<long long>(@self@.get_integer())}; }
