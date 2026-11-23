@@ -130,3 +130,7 @@ A producer returning await leaf() + await leaf() rejects in all three frontends.
 #### Suspending catch handlers
 
 The frontend tests reject both timer and child suspension inside a handler. Clang and GCC independently rejected a native co_await in catch (...). Move execution outside the native catch and retain the selected exception with its original identity across suspension. Exercise typed dispatch, rethrow and replacement exceptions.
+
+#### Finally
+
+The tracked frontend fixture rejects even a finally containing only echo. Cpp_Emitter::exception_region emits a finalizer lambda and may run the protected region inside a pending-exit lambda. Existing replay targets ordinary returns. Supporting the general form requires coroutine-aware exit replay and cleanup, including a finalizer that throws or suspends. Verify nested returns, break/continue and destruction after failure.
