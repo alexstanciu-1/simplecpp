@@ -626,6 +626,15 @@ foreach (flavor::cases() as $flavor) {
 		$counter_walk = 'async ' . $signature('compute') . '{' . $decl('int', 'item', '8') . $each('counter()')
 			. '{await async_sleep_ms(1);echo ' . $v('item') . ';}return ' . $v('item') . ';}';
 
+		$switch_walk = $mark . 'async ' . $signature('compute') . '{'
+			. $decl('shared<Point>', 'p', 'new Point()') . $decl('vector<int>', 'data', '[]') . $decl('int', 'n', '0')
+			. 'while (' . $v('n') . '<2) {switch (mark(' . $v('n') . ')) {case 0:' . $empty_guard
+			. $v('data') . '[]=4;' . $decl('int', 'step', 'await leftValue()') . $v('data') . '[0]=5;'
+			. $v('data') . '[0]+=' . $v('step') . ';' . $v('data') . '[0]++;' . $p . 'x+=2;'
+			. 'case 1:' . $p . 'x++;echo "F";break;default:echo "X";}echo "L";' . $v('n') . '++;}'
+			. 'echo ' . $v('data') . '[0];return ' . $p . 'x;}';
+		$switch_leaf = $point . $guard . $left_child;
+
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -807,6 +816,9 @@ foreach (flavor::cases() as $flavor) {
 			[$counter_walk, $counter . $counter_factory, $eager_main, null, '011', 2],
 			[$counter_walk, $counter, $eager_main, 'Unknown', '', 0],
 			[$counter_walk, str_replace('>=2', '>=3', $counter) . $counter_factory, $eager_main, null, '0122', 1],
+			[$switch_walk, $switch_leaf, $eager_main, null, 'MADFLMFL84', 2],
+			[$switch_walk, $point . $guard, $eager_main, 'Unknown', '', 0],
+			[$switch_walk, str_replace('return 2;', 'return 3;', $switch_leaf), $eager_main, null, 'MADFLMFL94', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
