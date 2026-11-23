@@ -55,7 +55,6 @@ foreach ([
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
 	["return 8 %= 2", 9, 'Unsupported punctuation'],
 	["return \"\u{03c0}\" /= 2", 12, 'Unsupported punctuation'],
-	["return 1 == 2 is None", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
 	try {
 		$source = new source_file('invalid.py', $text, flavor::python);
@@ -106,6 +105,12 @@ $chain = $frontend->parse(new source_file('links.py', 'return a not in b in c', 
 [$first, $second] = $chain->links;
 check($first->operator === binary_operator::key_not_in && $second->operator === binary_operator::key_in
 	&& $first->right === $second->left, 'Membership can start and continue a comparison chain');
+
+$chain = $frontend->parse(new source_file('identity_chain.py', 'return a is not b is None', flavor::python))
+	->main()->body()->statements[0]->value;
+[$first, $second] = $chain->links;
+check($first->operator === binary_operator::not_identical && $second->operator === binary_operator::identical
+	&& $first->right === $second->left && $chain->source_text() === 'a is not b is None', 'Chained identity keeps its middle operand');
 
 $identity = $frontend->parse(new source_file('presence.py',
 	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
@@ -328,7 +333,7 @@ foreach ([
 	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
 	["v: vector<int> = [1]\nreturn 8 if 1 in v else 0", 'mapping with key presence'],
 	["h: hash<int,string> = {}\nreturn 8 if 1 not in h else 0", 'key type string'],
-	["h: hash<int,int> = {}\nreturn 8 if 1 in h is None else 0", 'chained comparisons'],
+	["h: hash<int,int> = {}\nreturn 8 if 1 in h is None else 0", 'Python None test'],
 	["return 1 is None", 'Python None test'],
 	["return None is False", 'literal None'],
 	["return None is None + 1", 'Unsupported binary'],
@@ -336,7 +341,8 @@ foreach ([
 	['return "same" is not "same"', 'two shared handles'],
 	["v: vector<int> = []\nreturn v is v", 'two shared handles'],
 	["def same(a: nullable<int>, b: nullable<int>) -> bool:\n    return a is b\nreturn 0", 'two shared handles'],
-	["return None is None is None", 'chained comparisons'],
+	["return 1 == 2 is None", 'Python None test'],
+	["class Item:\n    pass\na: Item = Item()\nreturn a is not a is 3", 'two shared handles'],
 	["def f(x: mixed) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
 	["def f(x: result_or_bool<int>) -> bool:\n    return x is not None\nreturn 0", 'Python None test'],
 	["def f(x: result_or_false<int>) -> bool:\n    return x is None\nreturn 0", 'Python None test'],

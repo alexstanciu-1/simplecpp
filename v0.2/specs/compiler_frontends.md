@@ -53,7 +53,7 @@ Python `key in mapping` and `key not in mapping` test key presence at comparison
 
 Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. Result errors do not represent absence.
 
-Standalone Python `a is b` and `a is not b` also accept two shared record handles, including optional handles and interface views. The operands evaluate once in source order. Identity compares the allocation retained by each operand. Two empty handles compare identical, including when their declared payload types differ. Scalar and collection values do not support this two-handle form.
+Python `a is b` and `a is not b` also accept two shared record handles, including optional handles and interface views. The operands evaluate once in source order. Identity compares the allocation retained by each operand. Two empty handles compare identical, including when their declared payload types differ. Scalar and collection values do not support this two-handle form.
 
 Python integer scalars support unary `~`, binary `&`, `^` and `|`, and corresponding compound assignments on existing locals and parameters. Bitwise operations bind more tightly than comparisons. Narrow destinations use the shared checked write-back rules.
 
@@ -62,10 +62,10 @@ Integer // rounds down and integer % uses the divisor's sign. These spellings
 select separate operations from the cpp/php/js integer division and remainder.
 See the [arithmetic contract](planning/python_flavor.md#python-division-floor-division-and-modulo).
 
-Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, and `in` and `not in` for exact keys of typed hashes. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
+Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, `in` and `not in` for exact keys of typed hashes, and `is` and `is not` for the handle and literal-None tests above. The unbound `undefined` missing-key marker is available only in a standalone indexed test. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
 
 Deferred Python spellings and semantics include floating floor division and
-modulo, operand-valued boolean operators, chains containing identity tests, type inference
+modulo, operand-valued boolean operators, type inference
 on first assignment, general iteration and range, standalone items views and general destructuring,
 comprehensions, generator syntax, import and print, general decorators, dynamic
 attributes, Python-authored interfaces, and general super proxies. Package interoperability and CPython execution are outside the

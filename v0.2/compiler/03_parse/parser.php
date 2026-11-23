@@ -1079,7 +1079,6 @@ final class Parser
 	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
 	{
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
-		$comparison_seen = false;
 		$start = $this->cursor->position();
 		$left = $python && $this->cursor->keyword('not')
 			? $this->python_not($minimum_precedence) : $this->primary();
@@ -1111,11 +1110,10 @@ final class Parser
 			}
 			$operator = match ($kind) {
 				token_kind::keyword => match (true) {
-					$python && $this->cursor->keyword('is') => binary_operator::identical,
 					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
 					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
 					$this->cursor->keyword('xor') => binary_operator::logical_xor,
-					default => $python ? $this->python_membership_operator() : null,
+					default => $python ? $this->python_word_comparison() : null,
 				},
 				token_kind::coalesce => binary_operator::coalesce,
 				token_kind::logical_and => binary_operator::logical_and,
@@ -1145,17 +1143,7 @@ final class Parser
 			$precedence = $python ? Python_Grammar::precedence($operator) : $operator->precedence();
 			if ($precedence < $minimum_precedence) break;
 			$comparison = $python && $precedence === Python_Grammar::COMPARISON_PRECEDENCE;
-			if ($comparison && $comparison_seen) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons with identity are deferred');
-			}
-			$comparison_seen = $comparison_seen || $comparison;
-			$this->cursor->take($kind, 'binary operator');
-			if ($operator === binary_operator::key_not_in) $this->cursor->take_keyword('in');
-			$python_identity = $python && $operator === binary_operator::identical;
-			if ($python_identity && $this->cursor->keyword('not')) {
-				$this->cursor->take_keyword('not');
-				$operator = binary_operator::not_identical;
-			}
+			$this->take_binary_operator($kind, $operator);
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
@@ -1167,28 +1155,43 @@ final class Parser
 				&& ($operator === binary_operator::identical || $operator === binary_operator::not_identical)
 				&& $right->name === 'undefined' && $this->cursor->position() === $rhs_start + 1
 				&& $this->cursor->tokens->text_at($rhs_start) === 'undefined';
-			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
-			if ($comparison && (self::comparison_operator($kind) !== null || $operator->key_membership())) {
-				$links = null;
+			$links = null;
+			if ($comparison) {
 				while (!$this->cursor->at_end()) {
 					$next = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
-					$continuation = $next === token_kind::keyword ? $this->python_membership_operator() : self::comparison_operator($next);
+					$continuation = $next === token_kind::keyword ? $this->python_word_comparison() : self::comparison_operator($next);
 					if ($continuation === null) break;
-					$this->cursor->take($next, 'comparison operator');
-					if ($continuation === binary_operator::key_not_in) $this->cursor->take_keyword('in');
+					// Every interior operand is a value. The unbound missing-key marker belongs to standalone tests.
+					$links ??= [new ast_binary_expression($left, $operator, $right)];
+					$this->take_binary_operator($next, $continuation);
 					$middle = $right;
 					$right = $this->value($precedence + 1);
-					$links ??= [$left];
 					$links[] = new ast_continued_comparison($middle, $continuation, $right);
 				}
-				if ($links !== null) $left = new ast_comparison_chain($start, $this->cursor->position(), $links);
 			}
+			if ($links !== null) $left = new ast_comparison_chain($start, $this->cursor->position(), $links);
+			elseif ($key_test) $left = new ast_key_comparison($left, $operator, $right);
+			else $left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
 	}
 
-	private function python_membership_operator(): ?binary_operator
+	/** Consume a binary operator, including the second keyword of Python's two-word comparisons. */
+	private function take_binary_operator(token_kind $kind, binary_operator $operator): void
 	{
+		$this->cursor->take($kind, 'binary operator');
+		if ($kind !== token_kind::keyword) return;
+		if ($operator === binary_operator::key_not_in) $this->cursor->take_keyword('in');
+		if ($operator === binary_operator::not_identical) $this->cursor->take_keyword('not');
+	}
+
+	/** Recognize both words of an identity or membership operator before consuming either. */
+	private function python_word_comparison(): ?binary_operator
+	{
+		if ($this->cursor->keyword('is')) {
+			return $this->cursor->next_is(token_kind::keyword) && $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'not'
+				? binary_operator::not_identical : binary_operator::identical;
+		}
 		if ($this->cursor->keyword('in')) return binary_operator::key_in;
 		if ($this->cursor->keyword('not') && $this->cursor->next_is(token_kind::keyword)
 			&& $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'in') return binary_operator::key_not_in;

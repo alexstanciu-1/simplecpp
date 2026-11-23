@@ -48,9 +48,9 @@ The Python entry emits one presence call per membership expression (seven sites)
 
 | Python feature | Closest implemented peer | Decision and reason |
 | --- | --- | --- |
-| General `a is b` | Shared object allocation identity | **Implemented** for standalone shared-handle `is` and `is not`. An alias retains allocation identity through an interface view. Two empty handles compare identical across declared types. Scalar and copied collection identity have no general equivalent. |
+| General `a is b` | Shared object allocation identity | **Implemented** for shared-handle `is` and `is not`. An alias retains allocation identity through an interface view. Two empty handles compare identical across declared types. Scalar and copied collection identity have no general equivalent. |
 | Membership in sequences, strings, sets, arbitrary objects | Vector traversal and byte strings supply partial building blocks | **Discuss** equality and substring semantics for typed sequences. **No peer** for user-defined containment/iteration fallback. |
-| Comparison chains | Shared typed comparisons | **Implemented** for adjacent pairs admitted by `== != < <= > >=` and typed-hash `in` / `not in`. Each operand executes once in source order until a comparison fails. Each pair is prepared even on a skipped path. Chains involving identity remain deferred. |
+| Comparison chains | Shared typed comparisons | **Implemented** for adjacent pairs admitted by `== != < <= > >=`, typed-hash `in` / `not in`, and shared-handle or literal-None `is` / `is not`. Each operand executes once in source order until a comparison fails. Each pair is prepared even on a skipped path. |
 | Truth testing, operand-valued and/or | Shared conditional truth tests and lazy bool expressions | **Contract.** Python logical operands currently require bool. Operand-valued branches need result types, lifetimes and short-circuiting. |
 | Shifts and shift updates | Checked fixed-width shift helpers | **Discuss.** Large counts, negatives and signed width differ. Decide bounded semantics and verify Python shift precedence alongside angle-bracket types. |
 | Power and power update | Shared power operator/helper | **Discuss.** A negative integer exponent can change result type in Python. Power binds differently on either side of unary minus. |

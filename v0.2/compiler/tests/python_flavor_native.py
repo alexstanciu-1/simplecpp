@@ -1071,10 +1071,22 @@ if owner() is node or node is absentView():
     return 4
 if node is replaceNode(node) or node is alias:
     return 5
-return 8 if node is probe(node) else 9""")
+seen: hash<int,Node> = {}
+seen[node] = 1
+if not (node is node in seen):
+    return 12
+if not None is None is None:
+    return 6
+if missing() is absentView() is not None:
+    return 7
+if node is live() is view():
+    return 10
+if node is not alias is view():
+    return 11
+return 8 if node is probe(node) is not None else 9""")
         alias = fn('probe', 'Readable', [('node', 'Node')], f'echo "P"; return {syntax["v"]}node;')
         other = alias.replace(f'return {syntax["v"]}node;', 'return new Node();')
-        expected_trace = b'LLLVEMMAOAP'
+        expected_trace = b'LLLVEMMAOAMALVP'
         for stage, provider, status in [('alias', alias, 8), ('separate', other, 9)]:
             source_edit(peer, provider)
             changed = invoke(resident)
