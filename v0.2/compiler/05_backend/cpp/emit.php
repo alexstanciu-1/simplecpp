@@ -1455,13 +1455,14 @@ CPP;
 	{
 		$cases = [];
 		foreach ($arms as $index => $arm) {
-			$label = $arm instanceof ast_switch_arm ? $arm->condition : $arm->label;
-			if ($label === null) continue;
-			if ($dispatch === constant_dispatch::byte_equality) {
-				$test = Cpp_String_Literals::equal_bytes('payload', constant_dispatch::string_label_bytes($label), $headers);
-				$cases[] = 'if (' . $test . ') return ' . $index . ';';
-			} else {
-				$cases[] = 'case ' . $this->native_case($label, $dispatch, $globals, $declarations, $headers) . ': return ' . $index . ';';
+			$labels = $arm instanceof ast_switch_arm ? ($arm->condition === null ? [] : [$arm->condition]) : $arm->labels;
+			foreach ($labels as $label) {
+				if ($dispatch === constant_dispatch::byte_equality) {
+					$test = Cpp_String_Literals::equal_bytes('payload', constant_dispatch::string_label_bytes($label), $headers);
+					$cases[] = 'if (' . $test . ') return ' . $index . ';';
+				} else {
+					$cases[] = 'case ' . $this->native_case($label, $dispatch, $globals, $declarations, $headers) . ': return ' . $index . ';';
+				}
 			}
 		}
 		if ($cases === []) return '((void)(' . $operand . '), -1)';
@@ -1839,12 +1840,12 @@ CPP;
 			}
 			$default = null;
 			foreach ($match->arms as $arm) {
-				if ($arm->label === null) {
+				if ($arm->labels === []) {
 					$default = $arm;
 					continue;
 				}
 				if ($conditional) {
-					[$test, $prerequisites] = $this->staged_operand($arm->label, $globals, $declarations, $headers, condition: true);
+					[$test, $prerequisites] = $this->staged_operand($arm->labels[0], $globals, $declarations, $headers, condition: true);
 					if ($prerequisites !== []) {
 						$name = 'match_condition_' . $arm->start;
 						$code .= "bool $name; { " . implode(' ', $prerequisites) . " $name = $test; } ";
@@ -1852,8 +1853,12 @@ CPP;
 					}
 				}
 				else {
-					$bytes = constant_dispatch::string_label_bytes($arm->label);
-					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
+					$tests = [];
+					foreach ($arm->labels as $label) {
+						$bytes = constant_dispatch::string_label_bytes($label);
+						$tests[] = '(' . Cpp_String_Literals::equal_bytes($subject, $bytes, $headers) . ')';
+					}
+					$test = implode(' || ', $tests);
 				}
 				$code .= 'if (' . $test . ') { '
 					. $this->selection_exit($arm->result, $globals, $declarations, $headers, $result) . ' } ';
@@ -1865,8 +1870,11 @@ CPP;
 		if ($labels !== $type) $subject = $this->carrier_clause_index($type, $dispatch, $subject, $match->arms, $globals, $declarations, $headers);
 		$code = 'switch (' . $subject . ') { ';
 		foreach ($match->arms as $index => $arm) {
-			if ($arm->label === null) $code .= 'default: ';
-			else $code .= 'case ' . ($labels !== $type ? $index : $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers)) . ': ';
+			if ($arm->labels === []) $code .= 'default: ';
+			elseif ($labels !== $type) $code .= 'case ' . $index . ': ';
+			else foreach ($arm->labels as $label) {
+				$code .= 'case ' . $this->native_case($label, $dispatch, $globals, $declarations, $headers) . ': ';
+			}
 			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers, $result) . ' ';
 		}
 		return $code . '}';

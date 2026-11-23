@@ -168,7 +168,9 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_match_expression) {
-			return ['kind' => 'match', 'subject' => self::expression($expression->subject), 'arms' => array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::expression($arm->label), 'result' => self::expression($arm->result)], $expression->arms), 'span' => self::span($expression)];
+			return ['kind' => 'match', 'subject' => self::expression($expression->subject), 'arms' => array_map(static fn(ast_match_arm $arm): array => (count($arm->labels) > 1
+				? ['labels' => array_map(self::expression(...), $arm->labels)]
+				: ['label' => $arm->labels === [] ? null : self::expression($arm->labels[0])]) + ['result' => self::expression($arm->result)], $expression->arms), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_object_access_expression) {
 			return ['kind' => $expression->test ? 'instanceof' : 'object_cast', 'target' => $expression->target->spelling(),

@@ -27,7 +27,7 @@ def prove(work, flavor, libraries):
     api += fn('selected', 'int', [], 'echo "A";return 4;')
     api += fn('fail', 'int', [('x','int')], f'return match ({v}x) {{1=>8/0,default=>7}};')
     api += fn('limit', 'int', [('x','int')], f'return match ({v}x) {{-9223372036854775808=>1,9223372036854775807=>2,default=>3}};')
-    api += fn('named', 'int', [('x','Kind')], f'return match ({v}x) {{Kind{sep}One=>1,default=>2}};')
+    api += fn('named', 'int', [('x','Kind')], f'return match ({v}x) {{Kind{sep}Two,Kind{sep}One=>1,default=>2}};')
     api += fn('textual', 'int', [('x','Text')], f'return match ({v}x) {{Text{sep}One=>3,default=>4}};')
     api += fn('labelled','int',[('x','int')],f'return match({v}x){{LABEL=>6,default=>0}};')
     api += fn('small','int',[('x','byte')],f'return match({v}x){{SMALL=>7,default=>0}};')
@@ -38,13 +38,13 @@ def prove(work, flavor, libraries):
     api += fn('extension', 'string', [], 'echo "T";return "a\\0b";')
     api += fn('selectText', 'int', [('x','string')],
               f'return match({v}x){{default=>9,EXT=>1,"a"=>2,""=>3,"01"=>4,"1"=>5}};')
-    api += fn('lazyText', 'int', [], 'return match(extension()){default=>fail(1),EXT=>selected()};')
+    api += fn('lazyText', 'int', [], 'return match(extension()){default=>fail(1),"unused",EXT=>selected()};')
     api += fn('onlyDefault', 'int', [], 'return match(extension()){default=>7};')
     field = 'this field belongs to a temporary shared owner'
     holder = s['klass']('Holder', s['field']('text', 'string', '"' + field + '"'))
     api += fn('owner', 'Holder', [], 'echo "H";return new Holder();')
     api += fn('temporaryField', 'int', [], 'return match(owner()' + s['access'] + 'text){"' + field + '"=>2,default=>0};')
-    main = s['infer']('n','match (subject()) { 1=>selected(),default=>fail(1)}')
+    main = s['infer']('n','match (subject()) { 400,1,404=>selected(),default=>fail(1)}')
     main += f'echo {v}n,choose(1),fail(0),limit((-9223372036854775807 - 1)),limit(9223372036854775807);'
     main += f'echo named(Kind{sep}One),textual(Text{sep}Two);'
     main += 'if (false && match(subject()){1=>true,default=>false}) {echo "BAD";}'
@@ -81,6 +81,11 @@ def prove(work, flavor, libraries):
            ('types',enum+textenum,None,expected),('api',api,None,expected),
            ('labels',labels.replace('=1;', '=2;', 1),None,expected.replace(b'4675',b'4075')),
            ('labels',labels.replace('a\\0b','a'),'Duplicate match label',None),('labels',None,'Unknown',None),('labels',labels,None,expected),('api',api,None,expected)]
+    edits.extend([
+        ('api', api.replace('LABEL=>6', '2,LABEL=>6'), None, expected),
+        ('labels', labels.replace('=1;', '=2;', 1), 'Duplicate match label', None),
+        ('labels', labels, None, expected),
+    ])
     try:
         for i,(name,source,error,stdout) in enumerate(edits):
             before=artifacts(out)
@@ -101,7 +106,9 @@ def prove(work, flavor, libraries):
                 if i in [7,12]:assert not changed,changed
                 if i==1:assert changed=={units['api']},changed
     finally:resident.stdin.close();resident.wait()
-    invalid=[('match("x"){EXT=>1,"a\\0b"=>2,default=>3}','Duplicate match label'),
+    invalid=[('match(1){1,2=>2,2,3=>3,default=>4}', 'Duplicate match label'),
+             ('match(true){true,false=>1,default=>2}', '=>'),
+             ('match("x"){EXT=>1,"a\\0b"=>2,default=>3}','Duplicate match label'),
              ('match("x"){1=>1,default=>2}','label type'),
              ('match("x"){extension()=>1,default=>2}','literal, named constant'),
              ('match(1){LABEL=>2,ALIAS=>3,default=>4}','Duplicate match label'),('match(1){1=>2}','default arm'),('match(1){default=>2,default=>3}','Duplicate match default'),

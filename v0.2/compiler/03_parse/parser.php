@@ -1677,12 +1677,19 @@ final class Parser
 			$arms = [];
 			while (!$c->is(token_kind::rbrace)) {
 				$arm_start = $c->position();
-				$label = null;
+				$labels = [];
 				if ($c->keyword('default')) $c->take_keyword('default');
-				else $label = ast_match_expression::is_condition_subject($subject) ? $this->value() : $this->constant_label();
+				elseif (ast_match_expression::is_condition_subject($subject)) $labels[] = $this->value();
+				else {
+					$labels[] = $this->constant_label();
+					while ($c->is(token_kind::comma)) {
+						$c->take(token_kind::comma, ',');
+						$labels[] = $this->constant_label();
+					}
+				}
 				$c->take(token_kind::arrow, '=>');
-				$result = $label === null && $c->keyword('throw') ? $this->throw_expression() : $this->value();
-				$arms[] = new ast_match_arm($label, $result, $arm_start, $c->position());
+				$result = $labels === [] && $c->keyword('throw') ? $this->throw_expression() : $this->value();
+				$arms[] = new ast_match_arm($labels, $result, $arm_start, $c->position());
 				if (!$c->is(token_kind::comma)) break;
 				$c->take(token_kind::comma, ',');
 			}

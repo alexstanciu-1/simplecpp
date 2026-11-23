@@ -182,7 +182,7 @@ final class Body_Collection
 		if ($value instanceof ast_match_expression) {
 			$this->expression($value->subject);
 			foreach ($value->arms as $arm) {
-				if ($arm->label !== null) $this->expression($arm->label);
+				foreach ($arm->labels as $label) $this->expression($label);
 				$this->expression($arm->result);
 			}
 			return;

@@ -1312,14 +1312,16 @@ final class Preparation
 			$default = null;
 			$result = null;
 			foreach ($syntax->arms as $arm) {
-				if ($arm->label === null) {
+				if ($arm->labels === []) {
 					if ($default !== null) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match default');
 					$default = $arm;
 					continue;
 				}
-				$this->value($arm->label, $initializing);
-				if (!$conditional) $this->case_label($arm->label, $type, $dispatch, $seen, 'Match');
-				elseif ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
+				foreach ($arm->labels as $label) {
+					$this->value($label, $initializing);
+					if (!$conditional) $this->case_label($label, $type, $dispatch, $seen, 'Match');
+					elseif ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), 'Match label type must equal subject type');
+				}
 				$this->selection_result($arm->result, $result, $initializing, 'Match');
 			}
 			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');

@@ -263,7 +263,9 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_match_expression) {
 			$row['subject'] = self::value($value->subject);
-			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::value($arm->label), 'result' => self::value($arm->result)], $value->arms);
+			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => (count($arm->labels) > 1
+				? ['labels' => array_map(self::value(...), $arm->labels)]
+				: ['label' => $arm->labels === [] ? null : self::value($arm->labels[0])]) + ['result' => self::value($arm->result)], $value->arms);
 		}
 		if ($value instanceof ast_object_access_expression) {
 			$row['operator'] = $value->test ? 'instanceof' : 'object_cast';

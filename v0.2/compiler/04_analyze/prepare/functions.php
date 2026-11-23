@@ -154,7 +154,7 @@ final class Function_Preparation
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {
-				if ($arm->label !== null) self::expression($arm->label);
+				foreach ($arm->labels as $label) self::expression($label);
 				self::expression($arm->result);
 			}
 			return;
