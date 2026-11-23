@@ -339,14 +339,23 @@ def key_traversal(work, flavor, library):
     app, bundle = work/'keys', work/'keys-bundle'
     caller = ("empty: hash<int,int> = []\nlast: int = 7\nfor last in empty:\n    pass\n"
               "if last != 7:\n    return 10\n"
+              "fixed: hash<int,int> = fixedMapping()\nfixed_total: int = 0\n"
+              "for fixed_key in fixed:\n    fixed_value: int = fixed[fixed_key]\n    fixed_total += fixed_value\n"
+              "if fixed_total != 17:\n    return 11\n"
               "count: int = 0\nfor key in mapping():\n    count += 1\n"
               "return count + jsKeys()")
     write_app(app, 'py', {
         'main': caller,
         'idle': 'def idle() -> int:\n    return 17',
     })
-    source_edit(app/'bridge.js', 'function jsKeys(): int { let count: int = 0; '
-                'for (key in mapping()) { echo key; count += 1; } return count; }')
+    bridge = app/'bridge.js'
+    bridge_source = ('function fixedMapping(): hash<int,int> { let local: hash<int,int> = []; '
+                     'local[5] = 17; return local; } '
+                     'function jsKeys(): int { let count: int = 0; let h = mapping(); '
+                     'for (key in h) { let value: int = h[key]; h[key] = 41; '
+                     'if (value != 40 || h[key] != 41) { return 9; } '
+                     'echo key; count += 1; } return count; }')
+    source_edit(bridge, bridge_source)
     peer = app/f'provider.{flavor}'
     source_edit(peer, hash_provider(flavor))
     resident = service(app, bundle)
@@ -355,8 +364,9 @@ def key_traversal(work, flavor, library):
         assert 'error' not in initial, initial
         units = artifacts(bundle).values()
         emitted = b'\n'.join(unit for unit in units if b'.iteration_next_key(' in unit)
-        assert emitted.count(b'.iteration_next_key(') == 3, emitted
+        assert emitted.count(b'.iteration_next_key(') == 4, emitted
         assert b'.iteration_next(' not in emitted and b'iteration_output' not in emitted
+        assert emitted.count(b'.iteration_current_value(') == 2 and b'.at(' in emitted
         native(bundle, work/'keys-int', (2, b'HH2', b''), library)
 
         source_edit(peer, hash_provider(flavor, 'string'))
@@ -369,6 +379,15 @@ def key_traversal(work, flavor, library):
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(bundle) == artifacts(fresh)
         native(bundle, work/'keys-string', (2, b'HHa', b''), library)
+        source_edit(bridge, bridge_source.replace('let value:', 'count += 0; let value:'))
+        fallback = invoke(resident)
+        assert 'error' not in fallback and fallback['preparation']['reused'], fallback
+        assert [Path(path).name for path in fallback['emitted_sources']] == [bridge.name], fallback
+        assert sum(part.count(b'.iteration_current_value(') for part in artifacts(bundle).values()) == 1
+        native(bundle, work/'keys-fallback', (2, b'HHa', b''), library)
+        source_edit(bridge, bridge_source)
+        restored = invoke(resident)
+        assert 'error' not in restored and artifacts(bundle) == artifacts(fresh), restored
         previous = artifacts(bundle)
         manifest = (bundle/'manifest.json').read_bytes()
 

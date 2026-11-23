@@ -1300,6 +1300,9 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
+			if (!($type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed hash');
+			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);
 			return;

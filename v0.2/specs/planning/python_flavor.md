@@ -136,8 +136,56 @@ Standalone @virtual and @override lines mark instance methods at compile time. T
 
 Python for name in source binds an element for a typed vector and a key for a typed hash. JS for (name in source) with a braced body selects the same key-only capability. Both reuse the existing foreach destination rule. A new name is local to the loop, an existing local or parameter receives each key through ordinary assignment conversion, and an empty hash leaves it unchanged. Traversal order has no source guarantee.
 
-The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. Direct slot reads, boxed traversal with these spellings, Python items and destructuring are deferred.
+The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. General slot reuse, boxed traversal with these spellings, Python items and destructuring are deferred.
 
 - [x] Verify that both spellings lower through iteration_next_key, that temporary sources execute once per loop and that key-only code has no value output slot. Verify empty input preserves an existing destination and a fresh binding stays loop-local.
 - [x] With cpp/php/js providers, change the key type from int to string and compare the resident emission with a fresh build. Verify unrelated source reuse, reject a vector in JS for-in, preserve the last good output on failure or provider deletion, and run native code after recovery.
 - [x] Run shared foreach and JS resumable traversal, generated provider relocation, generator parity and concrete-template tests. Verify that application-hash key advancement succeeds with a payload that throws on copy, and run the runtime traversal fixture with Clang ASan, UBSan and leak detection.
+
+#### First-statement hash slot read
+
+Lowering inspects only the first statement of a normal key-only loop. The initializer
+must be a complete indexed read with identity initialization, on the same plain local
+hash and the fresh loop key. It uses existing prepared binding identities and requests
+the generated slot read at the original initializer. The cursor still copies only the
+key. The value copy can fail at the read, and no table reference escapes.
+
+Python now admits typed hash reads through the shared indexed-read syntax and preparation. The slot proof adds no preparation work, AST fields or incremental watches. A preceding statement,
+nonlocal receiver, reused key, conversion, or resumable loop uses ordinary indexing.
+The mixed-flavor proof checks native Python and JS reads with cpp/php/js providers,
+including a key-type edit, an inserted statement that demotes the fast path,
+a post-write lookup, and fresh-equivalent incremental recovery. The concrete hash
+probe checks a throwing value copy and exactly one copy when the read succeeds.
+
+Local measurements used Clang 18.1.3 on WSL, pinned to CPU 2. The native input
+was one JS unit that populated 8,192 distinct int keys and accumulated their
+values over 1,500 passes. Both versions produced the same checksum. The baseline
+used the previous emitter. Twenty timed pairs alternated order after four warmup
+pairs. Native medians include startup and hash construction.
+
+| Path | Native execution (ms) | C++ bytes |
+| --- | ---: | ---: |
+| Checked hash lookup | 278.82 | 1,160 |
+| Slot read | 60.26 | 1,201 |
+
+Median paired speedup was 4.59x for this fixture. Seven warm build pairs used
+Clang O3/g0, libc++, mold, one translation unit, no PCH or LTO, and the same
+prebuilt runtime. Compile and link were timed separately. Frontend and backend
+durations are from Clang traces and are included in compile wall time.
+
+| Path | Compile wall (ms) | Frontend (ms) | LLVM backend (ms) | Link wall (ms) | Native build wall (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Checked hash lookup | 82.81 | 31.28 | 12.52 | 62.75 | 145.17 |
+| Slot read | 86.05 | 38.39 | 12.19 | 63.60 | 155.90 |
+
+The PHP measurement compared the prior preparation and emitter with the current
+pair. Each sample prepared a fresh 160-function AST after tokenizing, parsing
+and publishing symbols, then measured emission separately. There were 144 warm
+samples per variant and workload, with Xdebug disabled and process order
+alternated. No preparation increase was observed. The small median differences
+are insufficient to attribute a preparation or emission speedup to this slice.
+
+| Workload | Prior prepare (ms) | Current prepare (ms) | Prior emit (ms) | Current emit (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| 160 eligible hash loops | 18.18 | 17.45 | 7.89 | 6.83 |
+| 160 ordinary vector reads | 7.14 | 6.98 | 4.35 | 4.25 |

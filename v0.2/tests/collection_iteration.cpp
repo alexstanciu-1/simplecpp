@@ -62,6 +62,9 @@ template<class Hash, class Value, class Key> static void hash_proof() {
     const auto limit = source.iteration_limit(); check(limit == 512 && source.size() == 1);
     int64 key_position = 0;
     check(source.iteration_next_key(key_position, limit, key) && key == item<Key>(511));
+    check(source.iteration_current_value(key_position) == item<Value>(511));
+    bounds([&] { (void)source.iteration_current_value(1); }); // removed slot
+    bounds([&] { (void)source.iteration_current_value(0); });
     check(key_position == limit && !source.iteration_next_key(key_position, limit, key) && key == item<Key>(511));
     key_position = -1;
     bounds([&] { source.iteration_next_key(key_position, limit, key); });

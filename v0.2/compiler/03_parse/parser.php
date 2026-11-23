@@ -1296,7 +1296,7 @@ final class Parser
 	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
-			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot)) break;
+			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
 				$property = $flavor === flavor::php && $this->cursor->is(token_kind::variable);

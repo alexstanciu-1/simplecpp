@@ -172,6 +172,7 @@ foreach ([
 
 foreach ([
 	["for item in 1:\n    pass\nreturn 8", 'Python for requires a typed vector'],
+	["items: vector<int> = []\nreturn items[0]", 'Python indexed read requires a typed hash'],
 	["def probe(items: vector<int>) -> int:\n    for item in items:\n        pass\n    return item\nreturn 8", 'Unknown or not-yet-initialized local/global: item'],
 	["def probe(items: vector<int>) -> int:\n    item: string = \"sentinel\"\n    for item in items:\n        pass\n    return 8\nreturn 8", 'conversion'],
 	["missing += 1\nreturn 8", 'local'],

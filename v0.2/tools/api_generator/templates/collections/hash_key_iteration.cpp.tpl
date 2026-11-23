@@ -8,3 +8,10 @@
     position = selected_position + 1;
     return true;
 }
+
+@inline@@v@ @n@::@current_value_method@(@count@ position) const {
+    if (position <= 0 || !storage_) throw std::out_of_range("iteration_bounds");
+    const auto slot = static_cast<std::uint64_t>(position - 1);
+    if (slot >= storage_->used || !storage_->live[slot]) throw std::out_of_range("iteration_bounds");
+    return storage_->at_slot(slot).value;
+}
