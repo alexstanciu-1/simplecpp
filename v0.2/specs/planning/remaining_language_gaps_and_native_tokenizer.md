@@ -48,6 +48,54 @@ The example column includes companion-audit topics. The short list tracks only t
 
 Review G14–G16 on a separate design track. Schedule an implementation slice when a concrete consumer or policy decision supplies its scope. The tokenizer can proceed in parallel with language work.
 
+## Verification goal queue
+
+Use one goal for the batches below. Compare the exact PHP donor specimen with existing
+assertions first. Cite and run a matching fixture when it already proves the rule.
+Add a focused assertion only for missing evidence. For positive cases check the
+observable result. For negative cases check the reason and location. Use a resident
+compiler and fresh-build comparison where an edit changes lookup or preparation.
+Record each donor ID as verified, verified through a migration, partial, or requiring
+a design decision. Continue through independent batches and collect decisions for one review.
+
+| Order | Donor records | What settles the question |
+| --- | --- | --- |
+| 1 · G09 callable storage | `SCOPE-VAR-003` | Probe the outer annotated local assigned a capture-free closure inside a block and invoked afterward. Record whether the spelling, storage declaration, assignment or later read is the first barrier. Existing inferred-local invocation is the control. |
+| 2 · G06 iteration | `CTRL-FOREACH-001`, `CTRL-FOREACH-002` | Match native vector and hash fixtures to the donor's value and keyed iteration. Check the visited values and key/value pairing. Writable iteration stays deferred. |
+| 3 · G10 lookup and execution | `VAR-ORDER-001`, `NS-USE-003`, `NS-QUALIFIED-003`, `NS-EXEC-001` through `003` and `005`, `RESOLVE-001`, `CLASS-NS-001` through `004` | Start with scopes, namespaces and imports. Check which declaration resolves, execution and return order, and which source location rejects. Reuse the recorded import and multi-block evidence. |
+| 4 · G11 member lookup | `CLASS-CONST-001` through `005`, `CLASS-PROP-002B/C/D`, `CLASS-PROP-006B/C`, `CLASS-PROP-007`, `CLASS-STATIC-NS-001` through `003` | Check selected declarations and observable reads or writes with distinct base and child values. Start with protected static data and expression-qualified static fixtures. |
+| 5 · G11/G13 member restrictions | `CLASS-PROP-009/010`, `CLASS-CALL-009/011`, `CLASS-MEMBER-009` | Probe undeclared and dynamic members, explicit destructor calls, and abstract static methods. Confirm the intended restriction before classifying a rejection. |
+| 6 · G12/G14 existing equivalents | `ENUM-003`, `LIT-CONST-001` | Link the existing typed enum lookup hit/miss evidence and retain the deferred nullsafe syntax. Probe source-level `PHP_INT_MAX` and compare with the exact int64 limit. A host PHP assertion alone cannot settle source spelling. |
+
+The goal ends with one donor-by-donor result table and a short list of decisions.
+A missing language feature can be recorded and the batch can advance. Captures,
+closure defaults, callable-local storage design, new diagnostics, and other language
+changes need separate decisions. The original audit counts below are historical.
+
+### Verification results at 76c8e86ea
+
+All 36 queued donor IDs were checked. Migration means that the indicated v0.2 spelling or entry convention reproduced the behavior. The [PHP donor regression](../../compiler/tests/bootstrap_donor_verification_native.py) checks diagnostic locations and compares resident and fresh builds. Its positive cases assert native output and exit status. The [foreach](../../compiler/tests/foreach.php), [static data](../../compiler/tests/protected_static_data_native.py), [expression qualification](../../compiler/tests/expression_static_native.py) and [string enum](../../compiler/tests/enum_strings.php) fixtures provide the other runtime assertions.
+
+| Batch | Donor IDs | Result | Observation |
+| --- | --- | --- | --- |
+| 1 | SCOPE-VAR-003 | Deferred for bootstrap | The comment-annotated declaration reports `Expected identifier` at its semicolon. The explicit donor callable-local declaration also fails at the type. An immediately initialized closure prints 6. Defer separately declared callable locals until a bootstrap consumer needs them. |
+| 2 | CTRL-FOREACH-001, CTRL-FOREACH-002 | Verified | Value iteration visits 10 and 20. The vector prints `0:10;1:20;` and the hash prints `a:10;b:20;` with keyed iteration. |
+| 3 | VAR-ORDER-001, NS-QUALIFIED-003 | Verified | Reading `$b` before its declaration diagnoses `b` at the read. Calling `g()` from `App\f` selects `App\g` and prints `local`. |
+| 3 | NS-USE-003 | Verified v0.2 rule | `use Lib\X;` makes `new X()` construct the imported class and its field reads as 7. The later donor catalog supersedes the historical rejection. |
+| 3 | NS-EXEC-001, NS-EXEC-003 | Migration | Standalone entries require an explicit value return. With the return supplied the single call prints `1`, and calls separated by a class declaration print `12` in source order. |
+| 3 | NS-EXEC-002, NS-EXEC-005 | Verified | The entry prints `1` and exits with status 1. A nested namespace rejects at its declaration. |
+| 3 | RESOLVE-001, CLASS-NS-001/002/003 | Verified with typed fixtures | The constructor and qualified function print `ctorfunc`. Local and rooted construction both produce the namespaced class with field value 7. |
+| 3 | CLASS-NS-004 | Verified v0.2 rule | Inside `A\B`, `new A\B\X()` selects `A\B\A\B\X` (7) despite a competing `A\B\X` (99). With the deeper provider absent, construction rejects. This matches donor checkpoint CS347. |
+| 4 | CLASS-CONST-001 | Migration | `public const X = 1` fails at `=`. With `public const int X = 1`, `A::X` prints `1`. |
+| 4 | CLASS-CONST-002/003/004/005, CLASS-PROP-002B/002C/002D, CLASS-PROP-006B/006C | Verified | Class, self, parent and called-type constant reads and the corresponding static field operations select the expected declarations. Changing the ancestor switches `771` to `919`. Changing the left child's constant switches `277` to `499`. |
+| 4 | CLASS-PROP-007, CLASS-STATIC-NS-001/002/003 | Verified | Expression-qualified writes change the selected storage. Local, rooted and object-qualified static calls each return 9. The differing-runtime-class fixture distinguishes declared-type selection (2) from explicit child selection (9). |
+| 5 | CLASS-PROP-009, CLASS-CALL-011, CLASS-MEMBER-009 | Verified rejection | Diagnostics identify the undeclared field `A.y`, forbid explicit destructor invocation and restrict virtual modifiers to instance methods, respectively. |
+| 5 | CLASS-PROP-010, CLASS-CALL-009 | Verified rejection | Variable member names after `->` report `Expected identifier` at the computed name. Literal-name controls succeed. The catalog specifies rejection during parsing. |
+| 6 | ENUM-003 | Migration, partial | `enum_try_from_value` returns the typed case on a hit and null on a miss. The native trace `!Zeros!Zero` checks single evaluation. Nullsafe chaining stays deferred. |
+| 6 | LIT-CONST-001 | Bootstrap migration | Source `PHP_INT_MAX` reports `Unknown constant: PHP_INT_MAX`. Use the exact int64 literal `9223372036854775807` in bootstrap source. The native probe prints that value. |
+
+Captures, closure defaults and writable iteration stay deferred.
+
 ## First discussion · G01
 
 Use one initialized local to compare the intended results and stores. These examples describe cases to review, with nested uses still requiring a separate admission decision.
@@ -419,6 +467,44 @@ Its returns use the declared result and the usual statement completion check.
 The enclosing function body owns dependency watches and incremental preparation.
 `compiler_capture_free_lambdas_native` exercises both branches, same-name locals,
 an uncaptured read, and repair after a missing return or a changed callee signature.
+
+**Callback result mismatch (`CLOSURE-STAN-001`).** Verified at a typed parameter
+using the current `callback<string>` spelling. The native closure fixture passes
+a zero-argument, `int`-returning block closure and checks
+`Expected exact callback signature callback<string>`. A failed build preserves
+the published bundle. Repairing the closure to return a string in the same
+compiler instance produces fresh-build-equivalent output and invokes the
+repaired callback. Historical callable-local spelling and captures remain deferred.
+
+**Block-local callable visibility (`SCOPE-VAR-002`).** The native closure fixture
+declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
+call just past the closing brace reports `Invocation requires a typed callable local: g`.
+Moving it back in the same compiler instance reproduces the fresh build and prints `1` again.
+
+**Direct closure append (`CLOSURE-REJECT-002`).** Appending a capture-free block
+closure directly to a `vector<int>` reports `Lambda requires an inferred local initializer or typed callback argument`.
+The native fixture retries in the same compiler instance with the closure bound to
+`$g` and `$items[] = $g();`. It checks that the vector has one element and that
+`$items[0]` equals `1`.
+
+**Exact-arity closure invocation (`CLOSURE-CALL-001`, partial).** The native fixture calls
+a two-parameter addition closure as `$h(3, 9)` and checks that it prints `12`.
+Removing the second argument reports `Argument count mismatch for function: h`.
+Restoring the call in the same compiler instance prints `12` again and matches a fresh build.
+Closure parameter defaults and captures remain deferred.
+
+**Explicit closure result type (`CLOSURE-REJECT-001`, partial).** A capture-free
+`function () { return 1; }` reports `Expected : (lambda result type)`.
+Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
+The donor's `use ($a)` form remains deferred with the other capture cases.
+
+**Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
+to a `callback<int,int>` parameter reports `Populated collection requires an explicitly typed local initializer`
+at the opening bracket. This is the collection-literal diagnostic. In the named callback
+fixture, changing only the argument to `Arithmetic::twice(...)` in the same compiler
+instance lets the consumer invoke it with `4` and return `8`. A callback-specific
+diagnostic remains an open decision.
+
 The original audit classifications follow.
 
 **Missing (7)**
