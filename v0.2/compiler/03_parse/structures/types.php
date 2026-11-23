@@ -45,8 +45,13 @@ class ast_type_reference extends ast_node
 
 }
 
+/** A fixed-array dimension. A named dimension uses the namespace constant path in name. */
+class ast_extent_reference extends ast_type_reference
+{
+}
+
 /** Written integer argument, e.g. 0x4 in fixed_array<byte, 0x4>. Its token range preserves the authored radix. */
-final class ast_extent_literal extends ast_type_reference
+final class ast_extent_literal extends ast_extent_reference
 {
 	public readonly int $extent /** int64 */;
 

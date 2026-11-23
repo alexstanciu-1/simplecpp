@@ -1047,8 +1047,14 @@ final class Parser
 		$next = null;
 		if ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
 			$this->cursor->take(token_kind::comma, ", before $argument_of extent");
-			$at = $this->cursor->take(token_kind::integer, "non-negative integer literal for $argument_of extent");
-			$next = new ast_extent_literal($this->cursor->tokens, $at);
+			$at = $this->cursor->position();
+			if ($this->cursor->is(token_kind::integer)) {
+				$this->cursor->take(token_kind::integer, 'extent');
+				$next = new ast_extent_literal($this->cursor->tokens, $at);
+			} else {
+				$name = $this->names->path(true);
+				$next = new ast_extent_reference($at, $this->cursor->position(), $name);
+			}
 		} elseif ($argument_of !== '' && $this->cursor->is(token_kind::comma)) {
 			$this->cursor->take(token_kind::comma, ',');
 			$next = $this->type_reference($argument_of, true);

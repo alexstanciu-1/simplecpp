@@ -17,12 +17,26 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies): ?type_definition
 	{
 		$bound = $syntax->first_child?->next_sibling;
-		if ($bound instanceof ast_extent_literal) {
+		if ($bound instanceof ast_extent_reference) {
 			$element = self::storage($syntax->first_child, $symbols, $namespace, $watcher, $dependencies);
 			if ($element !== type_uint8::instance() && !($element instanceof fixed_array_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Inline fixed-array storage requires byte elements');
 			}
-			return fixed_array_type::resolve($element, $bound);
+			if ($bound instanceof ast_extent_literal) {
+				$extent = $bound->extent;
+			} else {
+				$entry = $symbols->entry($bound->lexical_root()->constant_key($bound->name));
+				$dependencies?->watch($entry, $watcher);
+				$constant = $entry->declaration();
+				if (!($constant instanceof ast_constant_declaration) || $constant->type_def() !== type_int64::instance()) {
+					throw new diagnostic($bound->source(), $bound->byte_start(), 'Fixed-array extent requires a namespace integer constant: ' . $bound->name);
+				}
+				$extent = $constant->constant();
+				if ($extent < 0) {
+					throw new diagnostic($bound->source(), $bound->byte_start(), 'Fixed-array extent must be non-negative');
+				}
+			}
+			return fixed_array_type::resolve($element, $bound, $extent);
 		}
 		return self::named($syntax, $symbols, $namespace, $watcher, $dependencies);
 	}
@@ -200,7 +214,7 @@ final class Type_Resolution
 		$arity = type_registry::generic_arity($syntax->name);
 		$child = $syntax->first_child;
 		if ($arity === null) {
-			if ($child?->next_sibling instanceof ast_extent_literal) {
+			if ($child?->next_sibling instanceof ast_extent_reference) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed arrays require inline local or instance-field storage');
 			}
 			if ($child !== null) {

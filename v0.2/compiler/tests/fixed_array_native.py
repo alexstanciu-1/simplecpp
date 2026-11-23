@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service, write_build
 from application_vectors_native import measure
+from collection_goal_native import revisions
 from extends_native import source_edit
 from extends_regressions import forms
 from structs_native import build
@@ -89,7 +90,42 @@ def prove(work, flavor):
         resident.stdin.close()
 
 
+def named_extents(work, flavor):
+    v, access, record, field, _, local, _ = forms(flavor)
+    sep = {'php': '\\', 'cpp': '::', 'js': '.'}[flavor]
+
+    def constant(name, value, kind='int'):
+        return f'const {name}: {kind} = {value};' if flavor == 'js' else f'const {kind} {name} = {value};'
+
+    def units(value):
+        return 'namespace Units {' + constant('UNIT', value) + '}'
+
+    size = constant('PAGE_SIZE', '2 * N')
+    prefix = f'use const Units{sep}UNIT as N;'
+    packet = record('Packet', field('bytes', 'fixed_array<byte,CAP>'))
+    envelope = record('Envelope', field('packet', 'Packet'))
+    signature = 'int localSize()' if flavor == 'cpp' else 'function localSize():int'
+    local_size = signature + '{' + local('pad', f'fixed_array<byte,Sizes{sep}PAGE_SIZE>') + f'return count({v}pad);}}'
+    main = local('box', 'Envelope') + f'echo count({v}box{access}packet{access}bytes),localSize(); return 8;'
+    sources = dict(main=main, local_size=local_size, units=units(2), sizes='namespace Sizes {' + prefix + size + '}',
+                   packet=f'use const Sizes{sep}PAGE_SIZE as CAP;' + packet, envelope=envelope)
+    revisions(work, flavor, sources, [
+        (None, None, b'44'),
+        (None, None, b'44'),
+        ('units', units(3), b'66'),
+        ('units', units(-1), 'extent must be non-negative'),
+        ('units', units(32769), '64 KiB'),
+        ('units', units(0), b'00'),
+        ('sizes', 'namespace Sizes {' + constant('PAGE_SIZE', 'true', 'bool') + '}', 'requires a namespace integer constant'),
+        ('sizes', None, 'requires a namespace integer constant'),
+        ('sizes', sources['sizes'], b'00'),
+    ])
+
+
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-fixed-array-') as tmp:
+        named = Path(tmp) / 'named'
+        named.mkdir()
         for language in ('php', 'cpp', 'js'):
+            named_extents(named, language)
             prove(Path(tmp), language)

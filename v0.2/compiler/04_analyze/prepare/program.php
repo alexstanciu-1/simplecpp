@@ -60,9 +60,9 @@ final class Program_Preparation
 				}
 			}
 		}
+		Literal_Declaration_Preparation::declarations($symbols, $dependencies);
 		self::layouts($files, $symbols, $dependencies);
 		Function_Preparation::declarations($symbols, $dependencies);
-		Literal_Declaration_Preparation::declarations($symbols, $dependencies);
 		Import_Preparation::files($files, $symbols);
 		foreach ($files as $file) {
 			$main = $file->main();
