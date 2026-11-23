@@ -180,7 +180,7 @@ final class Preparation
 					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
 					: 'Statements after unconditional control transfer are not supported');
 			}
-			if ($function->is_async && !($statement instanceof ast_delay_statement || $statement instanceof ast_await_statement || $statement instanceof ast_return_statement
+			if ($function->is_async && !($statement instanceof ast_block_statement || $statement instanceof ast_delay_statement || $statement instanceof ast_await_statement || $statement instanceof ast_return_statement
 				|| $statement::class === ast_assignment_statement::class || $statement::class === ast_update_statement::class || $statement instanceof ast_field_assignment
 				|| $statement instanceof ast_call_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_loop_transfer
 				|| $statement instanceof ast_try_statement || $statement instanceof ast_rethrow_statement
