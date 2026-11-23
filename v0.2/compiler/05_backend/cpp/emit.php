@@ -1220,18 +1220,22 @@ CPP;
 	private function switch_lines(ast_switch_statement $syntax, statement_return_target $function,
 		array &$declarations, array &$globals, array &$headers): array
 	{
-		$dispatch = $syntax->subject->type_def()->constant_dispatch();
+		$type = $syntax->subject->type_def();
+		$labels = $type->dispatch_label_type();
+		$dispatch = $labels->constant_dispatch();
 		$subject = $this->value($syntax->subject, $globals, $declarations, $headers);
 		if ($syntax->arms === []) return ["\t(void)(" . $subject . ');'];
 		$lines = [];
 		$owns_subject = false;
-		if ($dispatch === constant_dispatch::byte_equality) {
+		if ($labels !== $type) {
+			$subject = $this->carrier_clause_index($type, $dispatch, $subject, $syntax->arms, $globals, $declarations, $headers);
+		} elseif ($dispatch === constant_dispatch::byte_equality) {
 			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->local_binding() !== null;
 			$place = $local ? $subject : 'switch_subject';
 			$tests = [];
 			foreach ($syntax->arms as $i => $arm) {
 				if ($arm->condition === null) continue;
-				$bytes = $dispatch->label_key($arm->condition);
+				$bytes = constant_dispatch::string_label_bytes($arm->condition);
 				$tests[] = Cpp_String_Literals::equal_bytes($place, $bytes, $headers) . ' ? ' . $i . ' : ';
 			}
 			if ($tests === []) $lines[] = "\t(void)(" . $subject . ');';
@@ -1250,7 +1254,7 @@ CPP;
 				$has_default = true;
 				$label = 'default';
 			} else {
-				$label = 'case ' . ($dispatch === constant_dispatch::byte_equality ? $i
+				$label = 'case ' . ($labels !== $type || $dispatch === constant_dispatch::byte_equality ? $i
 					: $this->native_case($arm->condition, $dispatch, $globals, $declarations, $headers));
 			}
 			if ($arm->body->statements === []) {
@@ -1269,10 +1273,34 @@ CPP;
 		return $lines;
 	}
 
+	/** Select a clause before executing its body. A miss index is outside the clause index domain. */
+	private function carrier_clause_index(carrier_type_definition $carrier, constant_dispatch $dispatch, string $operand,
+		array $arms, array &$globals, array &$declarations, array &$headers): string
+	{
+		$cases = [];
+		foreach ($arms as $index => $arm) {
+			$label = $arm instanceof ast_switch_arm ? $arm->condition : $arm->label;
+			if ($label === null) continue;
+			if ($dispatch === constant_dispatch::byte_equality) {
+				$test = Cpp_String_Literals::equal_bytes('payload', constant_dispatch::string_label_bytes($label), $headers);
+				$cases[] = 'if (' . $test . ') return ' . $index . ';';
+			} else {
+				$cases[] = 'case ' . $this->native_case($label, $dispatch, $globals, $declarations, $headers) . ': return ' . $index . ';';
+			}
+		}
+		if ($cases === []) return '((void)(' . $operand . '), -1)';
+		$selection = implode(' ', $cases);
+		if ($dispatch !== constant_dispatch::byte_equality) $selection = 'switch (payload) { ' . $selection . ' default: break; }';
+		// The call keeps a temporary field receiver alive while the selector borrows its carrier.
+		return '([](const ' . $carrier->cpp_type() . ' &carrier_subject) { if (!' . $carrier->lower_cpp_presence('carrier_subject')
+			. ') return -1; const auto &payload = ' . $carrier->lower_cpp_extract('carrier_subject') . '; '
+			. $selection . ' return -1; }(' . $operand . '))';
+	}
+
 	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
-		$integer = $label->constant();
+		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
@@ -1545,8 +1573,10 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
 		$conditional = ast_match_expression::is_condition_subject($match->subject);
-		$dispatch = $match->subject->type_def()->constant_dispatch();
-		if ($conditional || $dispatch === constant_dispatch::byte_equality) {
+		$type = $match->subject->type_def();
+		$labels = $type->dispatch_label_type();
+		$dispatch = $labels->constant_dispatch();
+		if ($conditional || ($labels === $type && $dispatch === constant_dispatch::byte_equality)) {
 			$code = '';
 			$scope = false;
 			if (!$conditional) {
@@ -1567,7 +1597,7 @@ CPP;
 				}
 				if ($conditional) $test = $this->condition($arm->label, $globals, $declarations, $headers);
 				else {
-					$bytes = $dispatch->label_key($arm->label);
+					$bytes = constant_dispatch::string_label_bytes($arm->label);
 					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
 				}
 				$code .= 'if (' . $test . ') { '
@@ -1576,10 +1606,12 @@ CPP;
 			$code .= $this->selection_exit($default->result, $globals, $declarations, $headers);
 			return $scope ? '{ ' . $code . ' }' : $code;
 		}
-		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
-		foreach ($match->arms as $arm) {
+		$subject = $this->value($match->subject, $globals, $declarations, $headers);
+		if ($labels !== $type) $subject = $this->carrier_clause_index($type, $dispatch, $subject, $match->arms, $globals, $declarations, $headers);
+		$code = 'switch (' . $subject . ') { ';
+		foreach ($match->arms as $index => $arm) {
 			if ($arm->label === null) $code .= 'default: ';
-			else $code .= 'case ' . $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers) . ': ';
+			else $code .= 'case ' . ($labels !== $type ? $index : $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers)) . ': ';
 			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers) . ' ';
 		}
 		return $code . '}';
@@ -1931,6 +1963,17 @@ CPP;
 			}
 			return '([&]() -> bool { ' . $steps . ' }())';
 		}
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$index = $value->left;
+			$receiver = $this->value($index->receiver, $global_references, $declarations, $required_headers);
+			$key_safe = false;
+			$key = $this->value($index->index, $global_references, $declarations, $required_headers, $key_safe);
+			$type = $index->receiver->type_def();
+			// Capture the boxed value before a key call can replace its source storage.
+			if (!$key_safe) $receiver = $type->cpp_type() . '(' . $receiver . ')';
+			$test = $type->lower_cpp_key_presence($receiver, $key);
+			return $value->operator === binary_operator::identical ? '(!' . $test . ')' : $test;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator === binary_operator::coalesce) {
 				/** @var carrier_type_definition $carrier */
@@ -2273,6 +2316,9 @@ CPP;
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$parameters = $callback ? $function->inputs : $function->parameters;
+		if ($value instanceof ast_named_call) {
+			$parameters = $value->evaluation_parameters($parameters);
+		}
 		$method = !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if ($value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
@@ -2339,6 +2385,7 @@ CPP;
 		}
 		if ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($callback || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1)) {
+			if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -2357,6 +2404,7 @@ CPP;
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
+		if ($value instanceof ast_named_call) $arguments = $value->parameter_order($arguments);
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		$return_reference = !$callback && $function->returns_reference ? '&' : '';
 		return $steps === [] ? $call : '([&]() -> ' . $result->cpp_type() . $return_reference . ' { ' . implode(' ', $steps)

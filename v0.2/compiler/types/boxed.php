@@ -38,6 +38,12 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_read(scpp::boxed_key(' . $index . '))';
 	}
 
+	/** Generated source_has applies the same source-key normalization as indexed reads. */
+	public function lower_cpp_key_presence(string $receiver, string $key): string
+	{
+		return '(' . $receiver . ').source_has(' . $key . ')';
+	}
+
 	public function lower_cpp_mutation_read(ast_expression $key, string $receiver, string $index): string
 	{
 		return $receiver . '.source_require(scpp::boxed_key(' . $index . '))';

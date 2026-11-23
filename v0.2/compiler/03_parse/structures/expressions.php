@@ -174,6 +174,21 @@ class ast_binary_expression extends ast_expression
 /** Its left operand is a non-owning link to the previous comparison's right operand. */
 final class ast_continued_comparison extends ast_binary_expression {}
 
+/** Strict indexed comparison whose bare RHS can bind to a declaration or denote a missing key. */
+final class ast_key_comparison extends ast_binary_expression
+{
+	public function settle_key_test(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+
+	/** A bound RHS takes the ordinary binary settlement path and has an execution type. */
+	public function tests_key(): bool
+	{
+		return $this->type_def !== null && $this->execution_type === null;
+	}
+}
+
 /** Numeric prefix syntax identities, independent of token IDs; native uint8. */
 enum unary_operator: int
 {

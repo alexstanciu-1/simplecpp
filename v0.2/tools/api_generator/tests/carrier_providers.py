@@ -43,6 +43,7 @@ def proof(work):
 
     default = emit(metadata, publication)
     assert len(default['carriers']) == 16
+    assert [c['name'] for c in default['carriers'] if c['instance_field']] == ['nullable_string']
     assert default['carrier_families']['result']['default_state'] == 'value'
     assert default['carrier_families']['result_or_bool']['states'] == {'value': 'payload', 'false': None, 'true': None}
     for carrier in default['carriers']:
@@ -51,6 +52,8 @@ def proof(work):
     capability = work / 'capability.php'
     capability.write_text(runner.read_text().split('echo json_encode')[0]
         + "$r=\\scpp\\compiler\\type_registry::specialize('result',\\scpp\\compiler\\type_registry::integer());\n"
+        + "$s=\\scpp\\compiler\\type_registry::specialize('nullable',\\scpp\\compiler\\type_registry::string());\n"
+        + "if (!$s->supports_instance_field() || $s->supports_static_property() || $t->supports_instance_field()) throw new RuntimeException('Carrier field capability mismatch');\n"
         + "if (!$t->supports_coalescing() || $r->supports_coalescing()) throw new RuntimeException('Carrier capability mismatch');\n")
     run(['php', capability, compiler])
     before = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}

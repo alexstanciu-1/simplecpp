@@ -125,7 +125,7 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 }
 
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
-final class ast_call_expression extends ast_expression
+class ast_call_expression extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly string $name;
@@ -302,6 +302,86 @@ final class ast_call_expression extends ast_expression
 		$this->interface_dispatch = false;
 		$this->cardinality = null;
 		$this->conversions = [];
+	}
+}
+
+/** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
+final class ast_named_call extends ast_call_expression
+{
+	/** PROPERTIES */
+	/** @var string[] Written label keyed by the argument's source position. */
+	public readonly array $labels /** array<uint32,string> */;
+
+	/** PREP FACTS */
+	/** @var int[] Prepared fact: parameter positions in evaluation order, followed by omitted defaults in declaration order. */
+	public private(set) array $slots /** list<uint32> */ = [];
+
+	/** CONSTRUCTOR */
+	/**
+	 * @param ast_expression[] $arguments
+	 * @param string[] $labels
+	 */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */)
+	{
+		parent::__construct($start, $end, $name, $separator, $arguments, $receiver);
+		$this->labels = $labels;
+	}
+
+	/** METHODS */
+	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
+	public function bind_slots(ast_function_declaration $function): void
+	{
+		$names = [];
+		foreach ($function->parameters as $slot => $parameter) {
+			if ($parameter->mode !== passing_mode::value) {
+				throw new diagnostic($this->source(), $this->byte_start(), 'Named arguments require by-value parameters');
+			}
+			$names[$parameter->name()] = $slot;
+		}
+		$slots = [];
+		$used = [];
+		foreach ($this->arguments as $position => $argument) {
+			$label = $this->labels[$position] ?? null;
+			$slot = $label === null ? $position : ($names[$label] ?? null);
+			if ($slot === null) throw new diagnostic($this->source(), $argument->byte_start(), 'Unknown named argument: ' . $label);
+			if (!isset($function->parameters[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Too many positional arguments');
+			if (isset($used[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $function->parameters[$slot]->name());
+			$used[$slot] = true;
+			$slots[] = $slot;
+		}
+		foreach ($function->parameters as $slot => $parameter) {
+			if (isset($used[$slot])) continue;
+			if ($parameter->default_value === null) throw new diagnostic($this->source(), $this->byte_start(), 'Missing required argument: ' . $parameter->name());
+			$slots[] = $slot;
+		}
+		$this->slots = $slots;
+	}
+
+	/**
+	 * @param ast_parameter_declaration[] $parameters
+	 * @return ast_parameter_declaration[]
+	 */
+	public function evaluation_parameters(array $parameters): array
+	{
+		return array_map(static fn(int $slot) => $parameters[$slot], $this->slots);
+	}
+
+	/**
+	 * @param string[] $operands
+	 * @return string[]
+	 */
+	public function parameter_order(array $operands): array
+	{
+		$ordered = $operands;
+		foreach ($this->slots as $index => $slot) $ordered[$slot] = $operands[$index];
+		return $ordered;
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->slots = [];
 	}
 }
 

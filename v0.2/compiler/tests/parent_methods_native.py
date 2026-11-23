@@ -104,22 +104,21 @@ def prepared_string_reset(work, flavor, libraries):
                  method('resetPreparation', f'{this}preparedType=null;', result='void', intent='virtual'))
     params = {'php': 'Descriptor $type, string $bytes', 'js': 'type:Descriptor, bytes:string',
               'cpp': 'Descriptor type, string bytes'}[flavor]
-    # Scalar nullable strings are not supported as instance fields; empty bytes can still be prepared.
-    string_node = klass('StringExpression', field('decoded', 'string', '""') + field('hasDecoded', 'bool', 'false') +
-                        method('prepareBytes', f'{this}preparedType={v}type; {this}decoded={v}bytes; {this}hasDecoded=true;',
+    string_node = klass('StringExpression', field('decoded', '?string') +
+                        method('prepareBytes', f'{this}preparedType={v}type; {this}decoded={v}bytes;',
                                result='void', params=params) +
                         method('resetPreparation', parent('resetPreparation', base='Expression') +
-                               f'; {this}decoded=""; {this}hasDecoded=false;', result='void', intent='override'), 'Expression')
+                               f'; {this}decoded=null;', result='void', intent='override'), 'Expression')
     reset = s['function']('resetNode', 'void', [('node', 'Expression')], f'{v}node{access}resetPreparation();')
     main = s['infer']('node', 'new StringExpression()') + s['infer']('type', 'new Descriptor()')
     node = v + 'node' + access
     main += (f'{node}prepareBytes({v}type,"old bytes");'
-             f'if ({node}preparedType !== {v}type || {node}decoded !== "old bytes" || !{node}hasDecoded) {{return 91;}}'
+             f'if ({node}preparedType !== {v}type || ({node}decoded ?? "absent") !== "old bytes") {{return 91;}}'
              f'resetNode({v}node);'
-             f'if ({node}preparedType !== null || {node}decoded !== "" || {node}hasDecoded) {{return 92;}}'
+             f'if ({node}preparedType !== null || {node}decoded !== null) {{return 92;}}'
              f'{node}prepareBytes({v}type,"new\\0bytes");'
-             f'if ({node}preparedType !== {v}type || !{node}hasDecoded) {{return 93;}}'
-             f'echo {node}decoded; return 8;')
+             f'if ({node}preparedType !== {v}type || {node}decoded === null) {{return 93;}}'
+             f'echo ({node}decoded ?? "absent"); return 8;')
     app, out = work / (flavor + '-reset'), work / (flavor + '-reset-out')
     write_app(app, flavor, {'types': klass('Descriptor') + base + string_node, 'reset': reset, 'main': main})
     proc = service(app, out)

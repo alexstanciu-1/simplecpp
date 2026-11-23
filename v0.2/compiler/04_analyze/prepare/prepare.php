@@ -535,7 +535,7 @@ final class Preparation
 		statement_return_target $function): int
 	{
 		$this->value($syntax->subject);
-		$type = $syntax->subject->type_def();
+		$type = $syntax->subject->type_def()->dispatch_label_type();
 		$dispatch = $type->constant_dispatch();
 		if ($dispatch === null) throw new diagnostic($source, $syntax->byte_start(), 'Switch subject requires constant-label dispatch');
 		$outer = $this->switch;
@@ -582,10 +582,24 @@ final class Preparation
 	private function case_label(ast_expression $label, type_definition $type, constant_dispatch $dispatch, array &$seen, string $construct): void
 	{
 		if ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label type must equal subject type');
-		$key = $dispatch->label_key($label);
-		if ($key === null) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
-		if (isset($seen[$key])) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
-		$seen[$key] = true;
+		if ($dispatch === constant_dispatch::integer_switch) {
+			$integer = constant_dispatch::integer_label($label) ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$integer]);
+			$seen[$integer] = true;
+		} else {
+			$key = match ($dispatch) {
+				constant_dispatch::enum_switch => constant_dispatch::enum_case_name($label),
+				constant_dispatch::byte_equality => constant_dispatch::string_label_bytes($label),
+			} ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$key]);
+			$seen[$key] = true;
+		}
+		if ($duplicate) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
+	}
+
+	private function invalid_case_label(ast_expression $label, string $construct): diagnostic
+	{
+		return new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
 	}
 
 	/** Keep definite constructor states only where all paths agree. */
@@ -1243,7 +1257,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_match_expression) {
 			$this->value($syntax->subject, $initializing);
-			$type = $syntax->subject->type_def();
+			$type = $syntax->subject->type_def()->dispatch_label_type();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
 			$dispatch = $type->constant_dispatch();
 			if (!$conditional && $dispatch === null) {
@@ -1372,7 +1386,8 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python) {
+			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python
+				&& !($type instanceof boxed_type_definition && $syntax->parent instanceof ast_key_comparison)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
 			}
 			$this->value($syntax->index, $initializing);
@@ -1438,7 +1453,18 @@ final class Preparation
 		if ($syntax instanceof ast_binary_expression) {
 			if (!($syntax instanceof ast_continued_comparison)) $this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
-			$this->value($syntax->right, $initializing);
+			if ($syntax instanceof ast_key_comparison) {
+				$this->expression_visits++;
+				if (!$this->resolve_value_name($syntax->right, $initializing, false)) {
+					if (!($syntax->left->receiver->type_def() instanceof boxed_type_definition)) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Missing-key test requires mixed or dynamic');
+					}
+					$syntax->settle_key_test();
+					return;
+				}
+			} else {
+				$this->value($syntax->right, $initializing);
+			}
 			if ($syntax->operator === binary_operator::coalesce) {
 				$carrier = $syntax->left->type_def();
 				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
@@ -1481,7 +1507,7 @@ final class Preparation
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
-				if ($syntax->source()->flavor === flavor::python && $left !== type_null::instance()) {
+				if ($syntax->source()->flavor === flavor::python && $syntax->right instanceof ast_keyword_expression && $left !== type_null::instance()) {
 					throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Python None test requires a nullable value, shared handle or None');
 				}
 			}
@@ -1521,87 +1547,94 @@ final class Preparation
 			type_registry::prepare_literal($syntax);
 			return;
 		}
-		if ($syntax instanceof ast_name_expression)
-		{
-			$this->name_lookups++;
+		if ($syntax instanceof ast_name_expression) {
+			if ($this->resolve_value_name($syntax, $initializing, $allow_callback)) return;
 			$name = $syntax->name;
-			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
-				$lookup = match (true) {
-					$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
-					$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
-					default => $this->static_qualifier($syntax->receiver, $initializing),
-				};
-				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
-				return;
-			}
-			if (!$syntax->constant_only && ($name === $initializing)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(),
-					'Cannot read local during its initialization: ' . $name);
-			}
-			$binding = $syntax->constant_only ? null : $this->find_local($name);
-			if ($binding !== null) {
-				$type = $binding->type_def();
-				if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
-				}
-				$id = $binding->storage_id();
-				// Reference parameters can alias each other or globals; never propagate their write constants.
-				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
-					|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
-				$write = $this->latest_writes[$id] ?? null;
-				$type = $binding->type_def();
-				$view = $type instanceof intersection_type_definition
-					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
-				if ($type instanceof class_union_type_definition) {
-					$guard = $this->guards[$id] ?? null;
-					if ($guard instanceof ast_object_access_expression) {
-						$syntax->settle_guard($guard, narrow: true);
-						return;
-					}
-					$view = $guard ?? $type->receiver_view($syntax);
-				}
-				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
-				return;
-			}
-			if ($syntax instanceof ast_interpolation_name) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
-			}
-			$separator = strpos($name, '\\');
-			if ($syntax->member_syntax && ($separator !== false)
-				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
-			}
-			if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return;
-			$scope_separator = strrpos($name, '::');
-			if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
-				substr($name, $scope_separator + 2))) return;
-			if (!$syntax->constant_only) {
-				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
-				$symbol = $this->symbols->entry($key);
-				if ($this->bind_literal($syntax, $symbol)) return;
-				if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
-				}
-			}
-			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
-				$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
-				if ($this->bind_literal($syntax, $symbol)) return;
-				// C++ and JS share the namespace separator with type-qualified members.
-				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
-					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
-				}
-				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-					$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
-					if ($constant !== null) {
-						$syntax->settle_runtime_constant($constant);
-						return;
-					}
-				}
-			}
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Watch each candidate symbol, including misses. Invalid bindings retain their own diagnostic. */
+	private function resolve_value_name(ast_name_expression $syntax, ?string $initializing, bool $allow_callback): bool
+	{
+		$this->name_lookups++;
+		$name = $syntax->name;
+		if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
+			$lookup = match (true) {
+				$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
+				$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
+				default => $this->static_qualifier($syntax->receiver, $initializing),
+			};
+			$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
+			return true;
+		}
+		if (!$syntax->constant_only && ($name === $initializing)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(),
+				'Cannot read local during its initialization: ' . $name);
+		}
+		$binding = $syntax->constant_only ? null : $this->find_local($name);
+		if ($binding !== null) {
+			$type = $binding->type_def();
+			if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
+			}
+			$id = $binding->storage_id();
+			// Reference parameters can alias each other or globals; never propagate their write constants.
+			$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
+				|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
+			$write = $this->latest_writes[$id] ?? null;
+			$type = $binding->type_def();
+			$view = $type instanceof intersection_type_definition
+				? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+			if ($type instanceof class_union_type_definition) {
+				$guard = $this->guards[$id] ?? null;
+				if ($guard instanceof ast_object_access_expression) {
+					$syntax->settle_guard($guard, narrow: true);
+					return true;
+				}
+				$view = $guard ?? $type->receiver_view($syntax);
+			}
+			$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
+			return true;
+		}
+		if ($syntax instanceof ast_interpolation_name) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
+		}
+		$separator = strpos($name, '\\');
+		if ($syntax->member_syntax && ($separator !== false)
+			&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
+		}
+		if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return true;
+		$scope_separator = strrpos($name, '::');
+		if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
+			substr($name, $scope_separator + 2))) return true;
+		if (!$syntax->constant_only) {
+			$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
+			$symbol = $this->symbols->entry($key);
+			if ($this->bind_literal($syntax, $symbol)) return true;
+			if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
+			}
+		}
+		if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
+			$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
+			if ($this->bind_literal($syntax, $symbol)) return true;
+			// C++ and JS share the namespace separator with type-qualified members.
+			if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
+				if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return true;
+			}
+			if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
+				$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
+				if ($constant !== null) {
+					$syntax->settle_runtime_constant($constant);
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1796,6 +1829,7 @@ final class Preparation
 		$type = $binding?->type_def();
 		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
@@ -1816,6 +1850,7 @@ final class Preparation
 				$member = $this->has_receiver($receiver);
 			}
 			if ($member) {
+				if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 				$name = $separator === false ? $call->name : substr($call->name, $separator + 1);
 				$static = $call->expression_qualified();
 				if ($static) $record = $this->static_qualifier($receiver, $initializing);
@@ -1881,13 +1916,15 @@ final class Preparation
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
 		$function = $symbol->declaration();
+		$uses = $call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0;
 		if ($function instanceof ast_function_declaration && !$this->in_lambda) {
-			$this->dependencies?->watch_call($symbol, $this->owner);
+			$this->dependencies?->watch_call($symbol, $this->owner, $uses);
 		} else {
-			$this->dependencies?->watch($symbol, $this->owner);
+			$this->dependencies?->watch($symbol, $this->owner, $uses);
 		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), 'Named arguments require a direct source function');
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
@@ -2243,13 +2280,18 @@ final class Preparation
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
+		$slots = null;
+		if ($call instanceof ast_named_call) {
+			$call->bind_slots($function);
+			$slots = $call->slots;
+		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($callback ? $call->name : $function->name()));
 		}
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
-			$parameter = $callback ? null : $function->parameters[$index];
+			$parameter = $callback ? null : $function->parameters[$slots[$index] ?? $index];
 			$type = $parameter === null ? $function->inputs[$index] : $parameter->type_def();
 			if ($type instanceof callback_type_definition && $argument instanceof ast_callable_reference) {
 				$this->expression_visits++;

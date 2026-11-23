@@ -41,10 +41,12 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
             : "'(' . \$value . ').{$valuePresence}()'";
         $code .= strtr(readFile(__DIR__ . '/../templates/carriers/carrier_type.php.tpl'), [
+            '@instance_field@' => $carrier['instance_field'] ? 'true' : 'false',
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
+            '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',
             '@coalesce@' => $carrier['family'] === 'nullable' && count($carrier['states']) === 2 && array_key_exists('value', $carrier['states']) && array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@empty@' => array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@implicit@' => $carrier['extraction'] === 'implicit_checked_one_layer_value_copy' ? 'true' : 'false',

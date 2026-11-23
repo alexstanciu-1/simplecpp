@@ -27,6 +27,12 @@ abstract class carrier_type_definition extends type_definition
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** Instance-field publication does not grant static carrier storage. */
+	final public function supports_static_property(): bool
+	{
+		return false;
+	}
+
 	/** A strict null comparison operates on the carrier itself and reads only presence. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
@@ -97,6 +103,11 @@ final class nullable_enum_type_definition extends carrier_type_definition
 	public function __construct(enum_type_definition $payload)
 	{
 		parent::__construct('nullable<' . $payload->name . '>', $payload);
+	}
+
+	public function dispatch_label_type(): type_definition
+	{
+		return $this->payload_type;
 	}
 
 	public function accepts_empty(): bool

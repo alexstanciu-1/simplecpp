@@ -918,16 +918,31 @@ final class Parser
 			}
 			return new ast_callable_reference($name, $start, $end);
 		}
-		$arguments = $this->arguments();
+		$labels = ($qualifier === call_qualifier::ordinary && ($separator === null
+			|| ($separator === token_kind::dot && str_contains($name, '\\')))) ? [] : null;
+		$arguments = $this->arguments($labels);
+		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
 
-	/** Parse ordinary or constructor arguments in source order. @return ast_expression[] */
-	private function arguments(): array /** list<ast_expression> */
+	/**
+	 * Parse operands in written order. A direct call can also collect labels by operand index.
+	 * @param string[]|null $labels
+	 * @return ast_expression[]
+	 */
+	private function arguments(?array &$labels = null): array /** list<ast_expression> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
+			if ($this->cursor->is(token_kind::identifier) && ($this->cursor->next_is(token_kind::colon)
+				|| ($this->cursor->tokens->source->flavor === flavor::python && $this->cursor->next_is(token_kind::assign)))) {
+				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Named arguments require a direct source function');
+				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
+				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
+			} elseif ($labels) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
+			}
 			$arguments[] = $this->value();
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
@@ -1145,13 +1160,18 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
+			$rhs_start = $this->cursor->position();
 			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
 				? $this->throw_expression()
 				: $this->value($precedence + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
-			if ($python_identity && !($right instanceof ast_keyword_expression && $right->word === 'null')) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None on the right');
+			$key_test = $left instanceof ast_index_expression && $right instanceof ast_name_expression
+				&& ($operator === binary_operator::identical || $operator === binary_operator::not_identical)
+				&& $right->name === 'undefined' && $this->cursor->position() === $rhs_start + 1
+				&& $this->cursor->tokens->text_at($rhs_start) === 'undefined';
+			if ($python_identity && !$key_test && !($right instanceof ast_keyword_expression && $right->word === 'null')) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None or an indexed comparison with undefined');
 			}
-			$left = new ast_binary_expression($left, $operator, $right);
+			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
 			if ($comparison && self::comparison_operator($kind) !== null) {
 				$links = null;
 				while (!$this->cursor->at_end()) {
