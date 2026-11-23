@@ -450,6 +450,13 @@ Closure parameter defaults and captures remain deferred.
 Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 The donor's `use ($a)` form remains deferred with the other capture cases.
 
+**Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
+to a `callback<int,int>` parameter reports `Populated collection requires an explicitly typed local initializer`
+at the opening bracket. This is the collection-literal diagnostic. In the named callback
+fixture, changing only the argument to `Arithmetic::twice(...)` in the same compiler
+instance lets the consumer invoke it with `4` and return `8`. A callback-specific
+diagnostic remains an open decision.
+
 The original audit classifications follow.
 
 **Missing (7)**
