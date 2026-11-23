@@ -7,6 +7,9 @@ the [native protocol](../../specs/collection_traversal.md) owns storage safety.
 
 PHP uses `foreach ($items as $key => $value) { ... }`; C++ and JS use
 `foreach (items as key => value) { ... }`. The key is optional. Braces are required.
+Python uses an indented for name in source suite for typed vector elements or typed hash keys.
+JS also supports for (name in source) with a braced body for typed hash keys.
+Both key-only forms share the existing destination and loop scope rules and materialize only the key.
 Reference bindings, destructuring and nullable unwrapping are deferred.
 Concrete [yield producers](yield.md) reuse this traversal path.
 [Iterator<T> and Iterator<T,K> structs](iterator.md) support custom traversal. Scalar/null

@@ -131,3 +131,13 @@ Standalone @virtual and @override lines mark instance methods at compile time. T
 - [x] With cpp, php and js base classes on Clang, run Python derived construction, observe one base-constructor effect, read and write inherited storage, and dispatch the Python override through a base handle.
 - [x] In each mixed-flavor resident session, edit an inherited method body, observe the new result, and retain the unrelated Python unit. The base declaration replacement still refreshes dependent units under the shared canonical record identity contract.
 - [x] Reject a missing or duplicate override marker, multiple bases, a misplaced base initializer and a nonvirtual base contract. Preserve the last good bundle and manifest on failure, including base source deletion. After restoring the base, compare with fresh emitted artifacts and run the recovered native executable.
+
+### Typed hash key traversal
+
+Python for name in source binds an element for a typed vector and a key for a typed hash. JS for (name in source) with a braced body selects the same key-only capability. Both reuse the existing foreach destination rule. A new name is local to the loop, an existing local or parameter receives each key through ordinary assignment conversion, and an empty hash leaves it unchanged. Traversal order has no source guarantee.
+
+The generated typed hash capability publishes only keys and uses the existing physical cursor. Both ordinary and resumable lowering use the selected key type for output storage. Each advance copies only the selected key and keeps no table or entry reference across the body. An indexed read still uses ordinary lookup. Direct slot reads, boxed traversal with these spellings, Python items and destructuring are deferred.
+
+- [x] Verify that both spellings lower through iteration_next_key, that temporary sources execute once per loop and that key-only code has no value output slot. Verify empty input preserves an existing destination and a fresh binding stays loop-local.
+- [x] With cpp/php/js providers, change the key type from int to string and compare the resident emission with a fresh build. Verify unrelated source reuse, reject a vector in JS for-in, preserve the last good output on failure or provider deletion, and run native code after recovery.
+- [x] Run shared foreach and JS resumable traversal, generated provider relocation, generator parity and concrete-template tests. Verify that application-hash key advancement succeeds with a payload that throws on copy, and run the runtime traversal fixture with Clang ASan, UBSan and leak detection.

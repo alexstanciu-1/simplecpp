@@ -265,6 +265,7 @@ final class Parser
 		if ($this->cursor->is(token_kind::lbrace)) return new ast_block_statement($this->lexical_block($grammar, $collector, '{'));
 		if ($this->cursor->keyword('foreach')) return $this->foreach_loop($grammar, $collector);
 		if ($this->cursor->keyword('for')) {
+			if ($this->js_key_loop_ahead()) return $this->foreach_loop($grammar, $collector);
 			return $this->for_loop($grammar, $collector);
 		}
 		if ($this->cursor->keyword('while') || $this->cursor->keyword('do')) {
@@ -557,20 +558,35 @@ final class Parser
 		return $close === token_kind::dedent ? $statements[array_key_last($statements)]->end : $position + 1;
 	}
 
+	/** Distinguish JS for (name in source) from the three-clause for header. */
+	private function js_key_loop_ahead(): bool
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		return $c->tokens->source->flavor === flavor::js && $c->next_is(token_kind::lparen)
+			&& ($c->tokens->tokens[$start + 2]->kind ?? null) === token_kind::identifier
+			&& ($c->tokens->tokens[$start + 3]->kind ?? null) === token_kind::identifier
+			&& $c->tokens->text_at($start + 3) === 'in';
+	}
+
 	/** All flavors normalize a bounded foreach header to the same produced bindings. */
 	private function foreach_loop(statement_grammar $grammar, Body_Collection $collector): ast_foreach_statement
 	{
 		$c = $this->cursor;
 		$start = $c->position();
 		$python = $grammar instanceof Python_Grammar;
+		$requires_key = !$python && $c->keyword('for');
 		$key = null;
 		$header = $collector->child();
-		if ($python) {
+		if ($python || $requires_key) {
 			$c->take_keyword('for');
+			if ($requires_key) $c->take(token_kind::lparen, '(');
 			$value_pos = $c->position();
 			$name = $c->name(token_kind::identifier);
-			$c->take_keyword('in');
+			if ($python) $c->take_keyword('in');
+			else $c->take(token_kind::identifier, 'in');
 			$source = $this->value();
+			if ($requires_key) $c->take(token_kind::rparen, ')');
 		}
 		else {
 			$c->take_keyword('foreach');
@@ -592,7 +608,7 @@ final class Parser
 		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name));
 		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
-		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope());
+		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope(), $requires_key);
 	}
 
 	/** The header owns its separators; nested calls and constructors consume their own commas. */

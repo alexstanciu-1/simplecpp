@@ -17,7 +17,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $lh = template('core/lifecycle_declaration', ['n' => $n]);
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => ''];
         $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
-        $h .= template('collections/hash_declaration', $vars);
+        $h .= template('collections/hash_declaration', $vars) . template('collections/hash_key_iteration_declaration', $vars);
         if ($hash['initialization'] !== null) {
             $init = (array)$hash['initialization'];
             $input = $vars + $init + ['e' => $init['entry'], 'inline_limit' => $init['inline_entries']];

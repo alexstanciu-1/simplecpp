@@ -4,7 +4,7 @@ from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
-from extends_native import runtime, source_edit
+from extends_native import ROOT, runtime, source_edit
 from parent_methods_native import write_app
 from virtual_methods_native import forms
 
@@ -238,18 +238,20 @@ return total - 8
 
 def traversal_provider(flavor, element='int'):
     v = '$' if flavor == 'php' else ''
-    signature_type = 'hash<int,int>' if element == 'hash' else f'vector<{element}>'
+    signature_type = 'int' if element == 'invalid' else f'vector<{element}>'
     signature = {
         'cpp': f'{signature_type} items(bool enabled)',
         'php': f'function items(bool $enabled): {signature_type}',
         'js': f'function items(enabled: bool): {signature_type}',
     }[flavor]
+    if element == 'invalid':
+        return signature + ' { return 0; }'
     declaration = {
         'cpp': f'{signature_type} output = [];',
         'php': f'$output {signature_type} = [];',
         'js': f'let output: {signature_type} = [];',
     }[flavor]
-    values = {'int': ('2', '4', '7', '9'), 'string': ('"first"', '"second"'), 'hash': ()}[element]
+    values = {'int': ('2', '4', '7', '9'), 'string': ('"first"', '"second"')}[element]
     fill = ''.join(f'{v}output[]={value};' for value in values)
     return signature + f' {{ echo "V"; {declaration} if ({v}enabled) {{ {fill} }} return {v}output; }}'
 
@@ -275,7 +277,7 @@ def typed_updates_and_traversal(work, flavor, library):
         previous = artifacts(bundle)
         manifest = (bundle/'manifest.json').read_bytes()
 
-        source_edit(peer, traversal_provider(flavor, 'hash'))
+        source_edit(peer, traversal_provider(flavor, 'invalid'))
         failed = invoke(resident)
         fresh_failure = fresh_build(app, work/'traversal-failure')
         assert 'Python for requires a typed vector' in failed.get('error', ''), failed
@@ -314,6 +316,82 @@ def compatible_element_edit(work, flavor, library):
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(bundle) == artifacts(fresh)
         native(bundle, work/'element-changed', (2, b'V', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+def hash_provider(flavor, key='int'):
+    v = '$' if flavor == 'php' else ''
+    type_name = f'hash<int,{key}>'
+    head, decl = {
+        'cpp': (f'{type_name} mapping()', f'{type_name} h = [];'),
+        'php': (f'function mapping(): {type_name}', f'$h {type_name} = [];'),
+        'js': (f'function mapping(): {type_name}', f'let h: {type_name} = [];'),
+    }[flavor]
+    if key == 'invalid':
+        return head.replace(type_name, 'vector<int>') + ' { ' + decl.replace(type_name, 'vector<int>') + f' return {v}h; }}'
+    literal = '2' if key == 'int' else '"a"'
+    return head + f' {{ echo "H"; {decl} {v}h[{literal}] = 40; return {v}h; }}'
+
+
+def key_traversal(work, flavor, library):
+    app, bundle = work/'keys', work/'keys-bundle'
+    caller = ("empty: hash<int,int> = []\nlast: int = 7\nfor last in empty:\n    pass\n"
+              "if last != 7:\n    return 10\n"
+              "count: int = 0\nfor key in mapping():\n    count += 1\n"
+              "return count + jsKeys()")
+    write_app(app, 'py', {
+        'main': caller,
+        'idle': 'def idle() -> int:\n    return 17',
+    })
+    source_edit(app/'bridge.js', 'function jsKeys(): int { let count: int = 0; '
+                'for (key in mapping()) { echo key; count += 1; } return count; }')
+    peer = app/f'provider.{flavor}'
+    source_edit(peer, hash_provider(flavor))
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        units = artifacts(bundle).values()
+        emitted = b'\n'.join(unit for unit in units if b'.iteration_next_key(' in unit)
+        assert emitted.count(b'.iteration_next_key(') == 3, emitted
+        assert b'.iteration_next(' not in emitted and b'iteration_output' not in emitted
+        native(bundle, work/'keys-int', (2, b'HH2', b''), library)
+
+        source_edit(peer, hash_provider(flavor, 'string'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {
+            peer.name, 'main.py', 'bridge.js',
+        }, changed
+        fresh = work/'keys-string-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh)
+        native(bundle, work/'keys-string', (2, b'HHa', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+
+        for name, path, edit, recovery in [
+            ('provider', peer, hash_provider(flavor, 'invalid'), hash_provider(flavor, 'string')),
+            ('scope', app/'main.py', caller.replace('return count + jsKeys()', 'return key'), caller),
+            ('deleted', peer, None, hash_provider(flavor, 'string')),
+        ]:
+            if edit is None:
+                path.unlink()
+            else:
+                source_edit(path, edit)
+            failed = invoke(resident)
+            fresh_failure = fresh_build(app, work/f'keys-{name}-failure')
+            assert 'error' in failed and failed['error'] == fresh_failure.get('error'), (failed, fresh_failure)
+            if name == 'provider':
+                assert 'JS for-in requires a typed hash' in failed['error'], failed
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(path, recovery)
+            recovered = invoke(resident)
+            assert 'error' not in recovered, recovered
+            assert artifacts(bundle) == previous
+        native(bundle, work/'keys-recovered', (2, b'HHa', b''), library)
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
@@ -620,6 +698,7 @@ def prove(work, library):
         everyday_bodies(case, flavor, library)
         typed_updates_and_traversal(case, flavor, library)
         compatible_element_edit(case, flavor, library)
+        key_traversal(case, flavor, library)
         records_and_exceptions(case, flavor, library)
         inheritance(case, flavor, library)
 
@@ -675,4 +754,4 @@ def incremental(work, flavor, app, output, library):
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
-        prove(work/'proof', runtime(work, 'clang++'))
+        prove(work/'proof', runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp']))

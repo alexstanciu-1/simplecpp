@@ -45,6 +45,7 @@ final class Function_Preparation
 			if ($statement instanceof ast_foreach_statement) {
 				$statement->destination = null;
 				$statement->conversion = null;
+				$statement->keys_only = false;
 				$statement->key?->reset_preparation();
 				$statement->value->reset_preparation();
 				self::expression($statement->source_value);

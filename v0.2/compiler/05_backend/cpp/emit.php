@@ -842,7 +842,8 @@ CPP;
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
 				$direct = $this->iteration_direct($statement);
-				$output_type = $type->iteration_output_type();
+				$output_type = $statement->keys_only ? null : $type->iteration_output_type();
+				if (!$direct) foreach ($destination->type_def()->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
 				$output = $output_type !== null ? ($resume === null ? 'iteration_output' : $prefix . 'output')
 					: ($direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output'));
 				if ($resume === null && $output_type !== null) {
@@ -864,6 +865,8 @@ CPP;
 						if ($resume === null) $lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
 					}
 					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
+				} elseif ($statement->keys_only) {
+					$next = $type->lower_cpp_iteration_next_key($iteration_source, $output, $prefix);
 				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
 				if ($output_type !== null) {

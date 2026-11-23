@@ -30,7 +30,9 @@ normally. Supported element moves are nonthrowing. Negative position/limit throw
 `std::out_of_range("iteration_bounds")`.
 
 Value-only overloads avoid key materialization. Vector keys are int64; typed hash
-keys retain their declared type. Mixed/dynamic keyed overloads return int64
+keys retain their declared type. Typed hashes also publish iteration_next_key,
+which copies only the selected key and commits the cursor after publication.
+Mixed/dynamic keyed overloads return int64
 `key_index` plus string `key_text`: -1 denotes text; nonnegative denotes an integer
 key. Integer keys clear key_text. This follows their existing normalized key domain
 and does not make dynamic depend on mixed. Text keys preserve all bytes, including

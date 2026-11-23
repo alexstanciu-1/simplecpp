@@ -716,10 +716,15 @@ final class Preparation
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
-		if ($source->flavor === flavor::python && !($source_type instanceof vector_type_definition)) {
-			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector');
-		}
 		$type = $source_type->iteration();
+		$python = $source->flavor === flavor::python;
+		$statement->keys_only = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		if ($statement->requires_key && !$statement->keys_only) {
+			throw new diagnostic($source, $statement->source_value->byte_start(), 'JS for-in requires a typed hash');
+		}
+		if ($python && !$statement->keys_only && !($source_type instanceof vector_type_definition)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
+		}
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
@@ -737,7 +742,7 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
-		$output = $type->iteration_value_type();
+		$output = $statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type();
 		if ($output instanceof record_type_definition) {
 			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
 			$this->reserve_array_bytes($output->array_bytes(), $statement->value);

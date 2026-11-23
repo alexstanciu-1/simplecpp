@@ -123,6 +123,12 @@ interface iterable_type
 	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
+/** Published traversal that can advance without materializing a value. */
+interface key_iterable_type extends iterable_type
+{
+	public function lower_cpp_iteration_next_key(string $receiver, string $output, string $prefix = ''): string;
+}
+
 /** Unary observations on a published collection. Native uint8. */
 enum collection_cardinality: int
 {
