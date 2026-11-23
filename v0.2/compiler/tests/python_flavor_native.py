@@ -771,6 +771,101 @@ def division(work, flavor, library):
         native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
 
 
+def hash_membership(work, flavor, library):
+    syntax, _, _ = forms(flavor)
+    fn = syntax['function']
+    caller = """class Entry:
+    pass
+
+def hash_contains() -> bool:
+    return False
+
+h: hash<string,string> = {"": "", "one": "1"}
+if "" not in h or "missing" in h:
+    return 1
+records: hash<Entry,string> = {}
+records["one"] = Entry()
+if "one" not in records or "absent" in records:
+    return 4
+if not (key() in mapping()):
+    return 2
+selected: int = 2
+if selected not in replaceKey(selected) or selected != 7:
+    return 5
+return 8 if key() + 1 not in mapping() else 3
+"""
+    app, bundle = work/'membership', work/'membership-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'provider.{flavor}'
+    replace = {
+        'cpp': 'hash<int,int> replaceKey(int &k) { k = 7; return mapping(); }',
+        'php': 'function replaceKey(int &$k): hash<int,int> { $k = 7; return mapping(); }',
+        'js': 'function replaceKey(&k: int): hash<int,int> { k = 7; return mapping(); }',
+    }[flavor]
+
+    def provider(key_type, literal):
+        return (fn('key', key_type, [], f'echo "K"; return {literal};')
+                + hash_provider(flavor).replace('= 40;', '= 0;') + replace)
+
+    valid = provider('int', '2')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        first = invoke(resident)
+        assert 'error' not in first, first
+        units = json.loads((bundle/'manifest.json').read_text())['sources']
+        main_unit, = (unit for path, unit in units.items() if Path(path).name == 'main.py')
+        emitted = (bundle/main_unit).read_text()
+        assert emitted.count('.has(') == 7, emitted
+        assert all(op not in emitted for op in ('.at(', '.find(', '.iteration_next')), emitted
+        native(bundle, work/'membership-hit', (8, b'KHHKH', b''), library)
+        changed_body = provider('int', '7')
+        source_edit(peer, changed_body)
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'membership-miss', (2, b'KH', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        for stage, invalid, diagnostic in [('key', provider('string', '"2"'), 'Membership requires key type'),
+                                           ('deleted', None, 'Unknown function: key')]:
+            if invalid is None:
+                peer.unlink()
+            else:
+                source_edit(peer, invalid)
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'membership-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, changed_body)
+            restored = invoke(resident)
+            assert 'error' not in restored, restored
+            fresh = work/f'membership-fresh-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'membership-recovered-{stage}', (2, b'KH', b''), library)
+
+        source_edit(app/'main.py', 'return 8 if key() // 0 in mapping() else 2')
+        checked = invoke(resident)
+        assert 'error' not in checked, checked
+        native(bundle, work/'membership-key-failure', (1, b'K', b'division_by_zero\n'), library)
+
+        # The same caller can bind to two different published hash/key signatures.
+        source_edit(app/'main.py', 'return 8 if key() in mapping() else 2')
+        for stage, (key_type, literal, status) in enumerate([('int', '2', 8), ('string', '"absent"', 2), ('int', '2', 8)]):
+            source_edit(peer, fn('key', key_type, [], f'echo "K"; return {literal};') + hash_provider(flavor, key_type))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            fresh = work/f'membership-compatible-{stage}'
+            fresh_result = fresh_build(app, fresh)
+            assert 'error' not in fresh_result, fresh_result
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'membership-compatible-run-{key_type}', (status, b'KH', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def none_identity(work, flavor, library):
     syntax, evaluate, _, _, interface, implementation = interface_forms(flavor)
     fn = syntax['function']
@@ -1288,6 +1383,7 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        hash_membership(case, flavor, library)
         none_identity(case, flavor, library)
         integer_bitwise(case, flavor, library)
         division(case, flavor, library)

@@ -1916,6 +1916,17 @@ CPP;
 			$right_safe = false;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
+			if ($value->operator->key_membership()) {
+				/** @var key_presence_type $type */
+				$binding = $type->presence_function();
+				$required_headers[$binding->header] = true;
+				$key = $binding->parameters[1]->lower_cpp_exact_argument($value->left, value_conversion::identity, $left);
+				$probe = ($value->operator === binary_operator::key_not_in ? '!' : '') . '(' . $right . ').' . $binding->symbol;
+				// A plain local receiver has stable storage. Otherwise capture the key before evaluating the mapping.
+				if (($value->right instanceof ast_name_expression && $value->right->local_binding() !== null)
+					|| $value->left instanceof ast_integer_expression) return $probe . '(' . $key . ')';
+				return '([&]() { const auto membership_key = ' . $key . '; return ' . $probe . '(membership_key); }())';
+			}
 			if ($value->left_conversion !== value_conversion::identity) {
 				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
 				foreach ($type->conversion_headers($value->left_conversion) as $header) {

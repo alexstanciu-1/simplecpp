@@ -38,12 +38,17 @@ The Clang regression tests nullable scalars and backed enums, required and optio
 
 With the same Python caller, the cpp, php and js providers each changed from a present zero in nullable<int> to an empty ?Node and back. The native exit status followed 9, 8, 9, with one probe call per run. Each signature edit re-emitted only the provider and caller, reused the unrelated units and produced the same generated C++ and headers as a fresh build. Removing the provider file produced the same unknown-function diagnostic as a fresh build and preserved the last good manifest and artifacts. Restoring it re-emitted only the provider and caller, reproduced the previous and fresh artifacts, and ran with the original output and exit status.
 
+Python typed-hash membership uses the shared binary AST and the mapping's published key-presence signature. Both spellings require the exact key type and evaluate key before mapping. Generated C++ calls the published member directly for a local receiver and captures the key when a mapping expression could change it. Source functions named hash_contains do not affect the operator. No traversal, value lookup or additional preparation pass is involved.
+
+The cpp/php/js Clang matrix covers present zero and empty-string values, missing keys, application-valued hashes, observable operand order and a mapping call that changes the key local. A failing key skips the mapping. A provider body edit reuses the caller; changing the key type or removing the provider gives the fresh-build diagnostic and retains the last good publication. Restoration recovers fresh-equivalent C++ and native behavior. [Mixed native regression](../../compiler/tests/python_flavor_native.py)
+
+The Python entry emits one presence call per membership expression (seven sites), with no value read or traversal. A separate unchanged caller follows int-key to string-key to int-key hash signatures in the same resident session for each peer flavor. Only the provider and caller re-emit. The three stages match fresh C++ artifacts and produce hit, miss and hit with one key call before one mapping call.
+
 ## Expression and collection gaps
 
 | Python feature | Closest implemented peer | Decision and reason |
 | --- | --- | --- |
 | General `a is b` | Shared object allocation identity | **Discuss.** Shared handles have an identity. Scalar or copied collection identity has no general equivalent. Keep literal singleton tests separate. |
-| `key in h`, `key not in h` | Published typed-hash key presence in cpp/php/js | **Discuss first.** The capability and strict key conversion exist. Shared named-call lookup can be shadowed; an operator must select the capability directly. The written key precedes the mapping while the binding takes the receiver first. Decide effect order and operands before choosing the AST route. |
 | Membership in sequences, strings, sets, arbitrary objects | Vector traversal and byte strings supply partial building blocks | **Discuss** equality and substring semantics for typed sequences. **No peer** for user-defined containment/iteration fallback. |
 | Chained comparisons, including mixed identity/membership | Individual comparisons and lazy bool operators | **Discuss.** Evaluate each interior operand once and skip all later operands on failure. Rewriting a chain as two independent compares duplicates calls. |
 | Truth testing, operand-valued and/or | Shared conditional truth tests and lazy bool expressions | **Contract.** Python logical operands currently require bool. Operand-valued branches need result types, lifetimes and short-circuiting. |
@@ -125,7 +130,7 @@ These are compatibility decisions even if no token is missing. Keep them visible
 | --- | --- | --- |
 | Two effectful operands or arguments | Shared eager expressions can permit either evaluation order. Python specifies left-to-right expression evaluation and RHS before assignment targets. | Audit each new desugaring for effects, failure, single evaluation and retained lifetime. A native compiler probe cannot establish source semantics. |
 | Assign or pass a list/dict, then mutate it | Typed value collections copy; shared object elements retain identity. | Python aliasing differs. Membership, augmented assignment and view lifetime cannot silently assume Python object identity. |
-| Duplicate dict keys, iterate a hash, use a freshly bound key after a loop | Typed literals reject duplicates, hash traversal lacks an insertion-order promise and fresh loop names are scoped. | Python overwrite, iteration ordering and binding lifetime are separately observable. Preserve the published contract until explicitly changed. |
+| Duplicate dict keys, iterate a hash, use a freshly bound key after a loop | Typed literals reject duplicates, typed hashes traverse in insertion order and fresh loop names are scoped. | Traversal order agrees for unmodified mappings. Duplicate-key handling and binding lifetime still differ. Preserve the published contract until explicitly changed. |
 | Omit a type, mix branch result types, overflow a scalar or index below zero | Typed boundaries, bounded scalars, checked accesses and prepared conversions | A spelling may work on a subset of values. Test the rejection boundary and the successful values separately. |
 | Inherit/replace a method or mutate class state | Typed record layout, explicit override on virtual replacement, shared class handles | Python late lookup and arbitrary method replacement would change dispatch, invalidation and ABI assumptions. |
 
@@ -137,4 +142,4 @@ These are compatibility decisions even if no token is missing. Keep them visible
 2. For an Implement item, show the shared AST and spans, identify the existing capability or binding, and use the existing preparation traversal. A new public symbol dependency, binding lifetime or prepared fact reopens the design decision.
 3. Run native Python with cpp/php/js providers as applicable. Check results, effects and failures. Use small Python differential examples only where equivalence is promised.
 4. Check body-only reuse, an affecting signature/capability change, failure and recovery against fresh output. For lexical-only changes, test offsets, stable unaffected units and unchanged peer tokens. Measure preparation cost if the work adds a traversal or retained state.
-5. Promote to covered only after the frontend contract and tests agree. Discuss the remaining rows one at a time, starting with typed-hash membership. Keep deliberate language differences separate from missing implementation.
+5. Promote to covered only after the frontend contract and tests agree. Discuss the remaining rows one at a time. Keep deliberate language differences separate from missing implementation.

@@ -34,6 +34,13 @@ enum binary_operator: int
 	case true_divide = 26;
 	case floor_divide = 27;
 	case floor_remainder = 28;
+	case key_in = 29;
+	case key_not_in = 30;
+
+	public function key_membership(): bool
+	{
+		return $this === self::key_in || $this === self::key_not_in;
+	}
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
@@ -78,7 +85,7 @@ enum binary_operator: int
 			self::bit_or => 5,
 			self::bit_xor => 6,
 			self::bit_and => 7,
-			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 8,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare, self::key_in, self::key_not_in => 8,
 			self::less, self::less_equal, self::greater, self::greater_equal => 9,
 			self::concatenate => 10,
 			self::shift_left, self::shift_right => 11,

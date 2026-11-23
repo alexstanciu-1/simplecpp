@@ -1094,6 +1094,9 @@ final class Parser
 			}
 			$operator = match ($kind) {
 				token_kind::keyword => match (true) {
+					$python && $this->cursor->keyword('in') => binary_operator::key_in,
+					$python && $this->cursor->keyword('not') && $this->cursor->next_is(token_kind::keyword)
+						&& $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'in' => binary_operator::key_not_in,
 					$python && $this->cursor->keyword('is') => binary_operator::identical,
 					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
 					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
@@ -1139,6 +1142,7 @@ final class Parser
 			}
 			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
+			if ($operator === binary_operator::key_not_in) $this->cursor->take_keyword('in');
 			$python_identity = $python && $operator === binary_operator::identical;
 			if ($python_identity && $this->cursor->keyword('not')) {
 				$this->cursor->take_keyword('not');

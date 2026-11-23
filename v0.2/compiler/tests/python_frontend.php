@@ -82,6 +82,13 @@ check($logic->operator === binary_operator::logical_or && $logic->left instanceo
 	&& $bits->right->right->right->operator === binary_operator::add
 	&& $bits->right->right->right->left->source_text() === '~4', 'Python bitwise precedence on the shared tree');
 
+$membership = $frontend->parse(new source_file('membership.py',
+	'return not a | b not in mapping and ok', flavor::python))->main()->body()->statements[0]->value;
+$test = $membership->left->operand;
+check($membership->operator === binary_operator::logical_and && $membership->left instanceof ast_not_expression
+	&& $test->operator === binary_operator::key_not_in && $test->left->operator === binary_operator::bit_or
+	&& $test->source_text() === 'a | b not in mapping', 'Membership shares comparison precedence and preserves the source span');
+
 $identity = $frontend->parse(new source_file('presence.py',
 	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
 check($identity->operator === binary_operator::logical_or && $identity->left instanceof ast_not_expression
@@ -286,6 +293,9 @@ foreach ([
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
 	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
 	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
+	["v: vector<int> = [1]\nreturn 8 if 1 in v else 0", 'mapping with key presence'],
+	["h: hash<int,string> = {}\nreturn 8 if 1 not in h else 0", 'key type string'],
+	["h: hash<int,int> = {}\nreturn 8 if 1 in h is None else 0", 'chained comparisons'],
 	["return 1 is None", 'Python None test'],
 	["return None is False", 'literal None'],
 	["return None is None + 1", 'literal None'],

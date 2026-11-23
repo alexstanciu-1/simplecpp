@@ -1448,6 +1448,13 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if ($syntax->operator->key_membership()) {
+				if (!($right instanceof key_presence_type)) throw new diagnostic($syntax->source(), $syntax->right->byte_start(), 'Membership requires a mapping with key presence');
+				$binding = $right->presence_function();
+				if ($left !== $binding->parameters[1]) throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Membership requires key type ' . $binding->parameters[1]->name);
+				$syntax->settle_binary($binding->return_type_def(), $right);
+				return;
+			}
 			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)
 				&& $syntax->source()->flavor === flavor::python
 				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
