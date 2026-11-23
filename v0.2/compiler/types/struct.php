@@ -565,8 +565,7 @@ final class record_type_definition extends type_definition implements dependency
 		foreach ($node->fields as $field) {
 			$type = $field->storage_type();
 			if ($empty_result && $field->initializer !== null) return false;
-			if (!($type instanceof enum_type_definition) && !type_registry::accepts_async_parameter($type)
-				&& !type_registry::async_value($type)) return false;
+			if (!($type instanceof enum_type_definition) && !type_registry::async_value($type)) return false;
 		}
 		return true;
 	}
@@ -653,6 +652,11 @@ abstract class record_handle_definition extends type_definition
 	{
 		parent::__construct($name ?? $family . '<' . $payload->name . '>');
 		$this->payload = $payload;
+	}
+
+	public function supports_async_parameter(): bool
+	{
+		return $this->payload->declaration->kind === record_kind::structure;
 	}
 
 	/** Strong and weak struct handles can occupy a task result slot. */

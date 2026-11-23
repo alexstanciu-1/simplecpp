@@ -337,11 +337,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }
     $moduleCases = [];
-    $asyncValueTypes = [];
     foreach ($definitions as $definition) {
-        if ($definition['required_module'] === null && in_array($definition['strategy'], ['integer', 'floating', 'boolean', 'string'], true)) {
-            $asyncValueTypes[] = 'type_' . $definition['class'] . '::class';
-        }
         if ($definition['required_module'] === null) continue;
         $aliases = implode(', ', array_map(static fn(string $name): string => var_export($name, true), $definition['aliases']));
         $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
@@ -349,7 +345,6 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $asyncTypes = array_map(static fn(string $name): string => 'type_' . $name . '::class', array_unique($runtimeTypes));
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
-        '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("

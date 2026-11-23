@@ -63,8 +63,9 @@ experiments are historical comparisons using the legacy scheduler.
 
 **First compiler slice implemented.** PHP and JS accept `async function answer(): int`;
 C++ accepts `async int answer()`. All three use `await answer()`. The slice covers
-free functions with eligible results and owned by-value parameters. The generated runtime scalar admissions
-(bool, byte/uint8, int/int64, float/float64 and string) also support trailing literal defaults.
+free functions with eligible results and owned by-value parameters. Published runtime values reuse their existing owned value representation for parameters, including active numeric
+widths, collections, carriers and boxed values. Application collections and strong/weak struct handles also pass
+by value. Collection copies and handle identity follow ordinary call semantics. Defaults use ordinary binding rules.
 Enums and concrete inline structs with eligible fields can cross the same parameter boundary.
 Inline structs use the field and lifecycle checks above, but may declare a constructor and field defaults:
 the frame receives an initialized value. Plain field assignments use ordinary write checks in an async body.

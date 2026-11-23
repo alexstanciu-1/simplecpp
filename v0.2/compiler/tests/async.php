@@ -217,15 +217,10 @@ foreach (flavor::cases() as $flavor) {
 		$never = 'async ' . $signature('forever') . '{for (;;) {}}';
 		$native = (new Cpp_Emitter())->emit($prepare($never . 'return 0;'));
 		verify(str_contains($native, 'co_return'), 'Infinite async body must still construct a coroutine');
-		foreach (['vector', 'reference'] as $bad) {
-			$param = match ($bad) {
-				'vector' => $parameter('x', 'vector<int>'),
-				'reference' => match ($flavor) {
-					flavor::php => 'int &$x', flavor::cpp => 'int &x', flavor::js => '&x:int',
-				},
-			};
-			rejects(fn() => $prepare('async ' . str_replace('()', '(' . $param . ')', $signature('bad')) . '{return 1;}return 0;'), 'Async parameters require');
-		}
+		$reference = match ($flavor) {
+			flavor::php => 'int &$x', flavor::cpp => 'int &x', flavor::js => '&x:int',
+		};
+		rejects(fn() => $prepare('async ' . str_replace('()', '(' . $reference . ')', $signature('bad')) . '{return 1;}return 0;'), 'Async parameters require');
 		$default_sig = $fn('read_value', ['x','y']);
 		$defaults = static fn(string $x, string $y): string => str_replace(
 			[$parameter('x'), $parameter('y')], [$parameter('x') . $x, $parameter('y') . $y], $default_sig);
@@ -465,6 +460,18 @@ foreach (flavor::cases() as $flavor) {
 		$float_child = 'async ' . $typed_fn('sample', 'float') . '{await async_sleep_ms(1);return 18.5;}';
 		$float_parent = 'async ' . $typed_fn('relaySample', 'float64') . '{return await sample();}';
 
+		$collection_parameters = implode(',', [$parameter('items','vector<Point>'), $parameter('map',$hash),
+			$parameter('numbers','vector<int>'), $parameter('first','shared<Point>'), $parameter('watch','weak<Point>')]);
+		$collection_sig = static fn(string $name): string => 'async ' . str_replace('()', '(' . $collection_parameters . ')', $signature($name));
+		$collection_args = implode(',', array_map($v, ['items','map','numbers','first','watch']));
+		$collection_child = $common . $collection_sig('consumeValues') . '{await async_sleep_ms(1);'
+			. 'if (lock(' . $v('watch') . ') !== ' . $v('first') . ') {return 0;}'
+			. $v('first') . $access . 'x=9;return count(' . $v('items') . ')+count(' . $v('map') . ')+count(' . $v('numbers') . ');}';
+		$collection_parent = $collection_sig('passValues') . '{return await consumeValues(' . $collection_args . ');}';
+		$collection_entry = $decl('vector<Point>','items','[buildPoint()]') . $decl($hash,'map','["k" => buildPoint()]')
+			. $decl('vector<int>','numbers','[7,8]') . $decl('shared<Point>','first','new Point()')
+			. $decl('weak<Point>','watch','weak(' . $v('first') . ')') . 'echo await passValues(' . $collection_args . '),'
+			. $v('first') . $access . 'x;return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -577,6 +584,9 @@ foreach (flavor::cases() as $flavor) {
 			[$arg_relay, $arg_leaf, $arg_entry, null, $arg_output, 4, false, 'grouped'],
 			[$arg_relay, str_replace($point, $constructed_decl, $arg_leaf), str_replace($empty_point, $constructed_point, $arg_entry), null, $arg_output, 3],
 
+			[$collection_parent, $collection_child, $collection_entry, null, '49', 3],
+			[$collection_parent, str_replace('consumeValues(', 'missingValues(', $collection_child), $collection_entry, 'Unknown', '', 0],
+			[$collection_parent, str_replace('x=9;', 'x=6;', $collection_child), $collection_entry, null, '46', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

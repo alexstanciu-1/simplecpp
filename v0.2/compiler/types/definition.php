@@ -280,7 +280,7 @@ abstract class type_definition
 	/** A by-value parameter must own its storage until its coroutine frame releases it. */
 	public function supports_async_parameter(): bool
 	{
-		return type_registry::accepts_async_parameter($this);
+		return $this instanceof application_collection_type || ($this !== type_void::instance() && type_registry::async_value($this));
 	}
 
 	/** Cache a binding only for an eligible canonical runtime value requested by a producer. */
