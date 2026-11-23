@@ -280,6 +280,12 @@ final class Compilation_Inspection
 			$row['receiver'] = self::value($value->receiver);
 			$row['index'] = self::value($value->index);
 		}
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$row['operator'] = $value->operator === binary_operator::identical ? 'key_missing' : 'key_present';
+			$row['receiver'] = self::value($value->left->receiver);
+			$row['index'] = self::value($value->left->index);
+			return $row;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if (!$value->operator->lazy()) {
 				$row['execution_type'] = $value->execution_type()->name;

@@ -300,10 +300,9 @@ The supplied labels appear once below. The status headings retain the original l
 
 ### G05 · Collection construction and access
 
-**Missing keyed element (`undefined`) · open design.** For `mixed` and `dynamic`, support a presence test such as `if ($data["key_1"] === undefined) {}` in PHP flavor and `if (data["key_1"] === undefined) {}` in cpp/js. A missing key should compare equal; a present key holding null, false, zero, or empty bytes should compare unequal. Today's ordinary boxed read produces null on a miss. The comparison needs a key-presence query using the same key normalization, evaluating receiver and key once without inserting. The compiler's unavailable constant fact is internal to preparation.
+**Missing keyed element (`undefined`) · implemented for boxed indexing.** For `mixed` and `dynamic`, PHP uses `$data[$key] === undefined` and `!== undefined`. C++ and JS flavors use the same operators with bare variable names. Python uses `data[key] is undefined` and `is not undefined`. The comparison checks normalized key membership. Stored null, false, zero and empty bytes all count as present. Receiver and key evaluate once in source order. A miss leaves the container unchanged.
 
-**Spelling decision.** All three flavors currently resolve a declared constant named `undefined`. An unbound use reports an unknown name in each. The JS spelling also resembles JavaScript's existing `undefined` value. Prefer a contextual missing-key test where ordinary name resolution wins for a declared `undefined`; decide whether a dedicated `has_key` operation would be clearer in scopes with that collision. A globally reserved literal would require a migration decision. First proof should cover both boxed types, stored null versus missing, single evaluation, and a user-defined `undefined` in each flavor. First-class storage of the sentinel is a separate decision.
-
+A declaration named `undefined` uses ordinary value lookup and comparison admission. Adding or removing that declaration invalidates an unchanged caller. Standalone unbound names retain the ordinary lookup diagnostic. The native proof exercises both boxed families, side effects, shadowing and fresh-build equivalence. [Native proof](../../compiler/tests/undefined_key_native.py)
 
 **Partial (7)**
 

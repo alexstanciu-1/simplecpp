@@ -87,7 +87,7 @@ enum binary_operator: int
 }
 
 /** Owns operands of e.g. value < limit or ready && valid; inherited type readiness records successful admission. */
-final class ast_binary_expression extends ast_expression
+class ast_binary_expression extends ast_expression
 {
 	/** PROPERTIES */
 	/** Native owning left operand; lazy operators test its truthiness or presence before deciding whether to evaluate the RHS. */
@@ -142,6 +142,21 @@ final class ast_binary_expression extends ast_expression
 		$this->execution_type = null;
 		$this->left_conversion = value_conversion::identity;
 		$this->right_conversion = value_conversion::identity;
+	}
+}
+
+/** Strict indexed comparison whose bare RHS can bind to a declaration or denote a missing key. */
+final class ast_key_comparison extends ast_binary_expression
+{
+	public function settle_key_test(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+
+	/** A bound RHS takes the ordinary binary settlement path and has an execution type. */
+	public function tests_key(): bool
+	{
+		return $this->type_def !== null && $this->execution_type === null;
 	}
 }
 

@@ -1916,6 +1916,17 @@ CPP;
 			$expression = '!' . $this->condition($value->operand, $global_references, $declarations, $required_headers);
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$index = $value->left;
+			$receiver = $this->value($index->receiver, $global_references, $declarations, $required_headers);
+			$key_safe = false;
+			$key = $this->value($index->index, $global_references, $declarations, $required_headers, $key_safe);
+			$type = $index->receiver->type_def();
+			// Capture the boxed value before a key call can replace its source storage.
+			if (!$key_safe) $receiver = $type->cpp_type() . '(' . $receiver . ')';
+			$test = $type->lower_cpp_key_presence($receiver, $key);
+			return $value->operator === binary_operator::identical ? '(!' . $test . ')' : $test;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator === binary_operator::coalesce) {
 				/** @var carrier_type_definition $carrier */

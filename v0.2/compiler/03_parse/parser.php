@@ -1124,7 +1124,10 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$operator = $shift === '<<' ? binary_operator::shift_left : binary_operator::shift_right;
 			}
-			$comparison = $python && in_array($kind, [
+			$python_identity = $python && $left instanceof ast_index_expression
+				&& $this->cursor->tokens->text_at($this->cursor->position()) === 'is';
+			if ($python_identity) $operator = binary_operator::identical;
+			$comparison = $python_identity || $python && in_array($kind, [
 				token_kind::equal, token_kind::not_equal, token_kind::less, token_kind::less_equal,
 				token_kind::greater, token_kind::greater_equal,
 			], true);
@@ -1138,10 +1141,23 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
+			if ($python_identity && $this->cursor->keyword('not')) {
+				$this->cursor->take_keyword('not');
+				$operator = binary_operator::not_identical;
+			}
+			$rhs_start = $this->cursor->position();
 			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
 				? $this->throw_expression()
 				: $this->value($precedence + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
-			$left = new ast_binary_expression($left, $operator, $right);
+			$key_test = $left instanceof ast_index_expression && $right instanceof ast_name_expression
+				&& ($operator === binary_operator::identical || $operator === binary_operator::not_identical)
+				&& $right->name === 'undefined' && $this->cursor->position() === $rhs_start + 1
+				&& $this->cursor->tokens->text_at($rhs_start) === 'undefined';
+			if ($python_identity && !$key_test) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$rhs_start]->offset,
+					'Indexed Python identity test requires bare undefined');
+			}
+			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
 	}
