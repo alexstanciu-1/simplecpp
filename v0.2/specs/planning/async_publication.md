@@ -126,3 +126,7 @@ All three frontends accept a user function named async_wait. Without a declarati
 #### Eager expressions and call arguments
 
 A producer returning await leaf() + await leaf() rejects in all three frontends. Cpp_Emitter::value and argument lowering can introduce an ordinary lambda to snapshot operands before side effects. Suspension must remain inside the enclosing coroutine. A common expression lowering that can place ordered temporaries in the coroutine would also cover argument lists, match arms and expressions embedded in writes. Verify throwing operands, skipped branches and receiver replacement before widening admission.
+
+#### Suspending catch handlers
+
+The frontend tests reject both timer and child suspension inside a handler. Clang and GCC independently rejected a native co_await in catch (...). Move execution outside the native catch and retain the selected exception with its original identity across suspension. Exercise typed dispatch, rethrow and replacement exceptions.
