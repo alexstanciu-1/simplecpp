@@ -584,8 +584,47 @@ foreach (flavor::cases() as $flavor) {
 			. 'await replaceItems(' . $v('p') . ');' . $v('p') . '=null;continue;}break;}echo "B";'
 			. 'try {' . $each('makeBox()' . $access . 'items') . '{await failLater();}}' . $catch('Failure') . '{echo "C";}return 7;}';
 		$walk_leaf = $failure . $throw_child . $box . $items . $box_factory . $change_items;
-		rejects(fn() => $prepare('async ' . $signature('bad') . '{' . $decl('vector<string>', 'data', '["x"]')
-			. $each($v('data')) . '{await async_sleep_ms(1);}return 0;}return 8;'), 'Async foreach requires vector<int>');
+		$original = 'first original heap-backed string across await';
+		$replacement = 'second replacement heap-backed string across await';
+		$string_leaf = str_replace(['vector<int>', '[1,2,3]', '[4,5,6]'],
+			['vector<string>', '["' . $original . '","old"]', '["new","' . $replacement . '"]'], $box . $items . $box_factory . $change_items);
+		$string_walk = 'async ' . $signature('compute') . '{' . $decl('shared<Box>', 'p', 'makeBox()')
+			. 'foreach (' . $p . 'items as ' . $v('key') . '=>' . $v('item') . ') {if (' . $v('key') . '==0) {await replaceItems(' . $v('p') . ');}'
+			. 'echo ' . $v('item') . ',"|";}return 7;}';
+		// The loop element becomes the only owner when the source vector is cleared.
+		$entry_record = 'struct Entry {' . $link . '}' . ($flavor === flavor::cpp ? ';' : '');
+		$records = $typed_fn('records', 'vector<Entry>') . '{' . str_replace('Guard', 'Entry', $empty_guard)
+			. $v('g') . $access . 'keep=new Guard();' . $decl('vector<Entry>', 'data', '[' . $v('g') . ']') . 'return ' . $v('data') . ';}';
+		$record_loop = $decl('vector<Entry>', 'data', 'records()') . $each($v('data')) . '{' . $v('data') . $access . 'clear();';
+		$record_walk = 'async ' . $signature('compute') . '{{' . $record_loop . 'await async_sleep_ms(1);'
+			. 'if (' . $v('item') . $access . 'keep !== null) {echo "L";}break;}}echo "B";try {'
+			. $record_loop . 'await failLater();}}' . $catch('Failure') . '{echo "C";}return 7;}';
+		$record_leaf = $failure . $throw_child . $guard . $entry_record . $records;
+		$keyed_walk = 'foreach (' . $p . 'items as ' . $v('key') . '=>' . $v('item') . ') {';
+		$table_setup = $decl('int', 'item', '0') . $decl('shared<Box>', 'p', 'makeBox()');
+		$initial_table = $decl('TABLE', 'data', '[]') . $v('data') . '[0]=10;' . $v('data') . '[1]=20;' . $v('data') . '[2]=30;';
+		$table_factory = $typed_fn('items', 'TABLE') . '{' . $initial_table . 'return ' . $v('data') . ';}';
+		$table_leaf = str_replace('vector<int>', 'TABLE', $box) . $table_factory . $box_factory;
+		$change_table = 'async ' . str_replace('()', '(' . $parameter('p', 'shared<Box>') . ')', $signature('changeTable'))
+			. '{await async_sleep_ms(1);';
+		$hash_walk_leaf = str_replace('TABLE', 'hash<int,int>', $table_leaf) . $change_table . $p . 'items' . $access . 'remove(1);return 0;}';
+		$hash_walk = 'async ' . $signature('compute') . '{' . $table_setup . $keyed_walk . 'await changeTable(' . $v('p') . ');'
+			. 'echo ' . $v('key') . ',' . $v('item') . ';}return 7;}';
+		$boxed_leaf = $table_leaf . $change_table . $p . 'items=3;return 0;}';
+		$boxed_walk = 'async ' . $signature('compute') . '{' . $table_setup . $keyed_walk . 'await changeTable(' . $v('p') . ');'
+			. $v('p') . '=null;echo (int)' . $v('key') . ',' . $v('item') . ';}return 7;}';
+		[$field, $next] = match ($flavor) {
+			flavor::php => ['public int $position=0;', 'public function next(int &$value):bool'],
+			flavor::cpp => ['int position=0;', 'bool next(int &value)'],
+			flavor::js => ['position:int=0;', 'next(&value:int):bool'],
+		};
+		$position = $v('this') . $access . 'position';
+		$counter = 'struct Counter implements Iterator<int>{' . $field . $next . '{if (' . $position . '>=2) {'
+			. $v('value') . '=99;return false;}' . $v('value') . '=' . $position . ';' . $position . '++;return true;}}'
+			. ($flavor === flavor::cpp ? ';' : '');
+		$counter_factory = $typed_fn('counter', 'Counter') . '{' . str_replace('Point', 'Counter', $empty_point) . 'return ' . $v('p') . ';}';
+		$counter_walk = 'async ' . $signature('compute') . '{' . $decl('int', 'item', '8') . $each('counter()')
+			. '{await async_sleep_ms(1);echo ' . $v('item') . ';}return ' . $v('item') . ';}';
 
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
@@ -758,6 +797,16 @@ foreach (flavor::cases() as $flavor) {
 			[$walk, $walk_leaf, $eager_main, null, '0812315DBTDC7', 3],
 			[$walk, str_replace($change_items, '', $walk_leaf), $eager_main, 'Unknown', '', 0],
 			[$walk, str_replace('[4,5,6]', '[4,9,6]', $walk_leaf), $eager_main, null, '0812319DBTDC7', 1],
+			[$string_walk, $string_leaf, $eager_main, null, "$original|$replacement|D7", 2],
+			[$record_walk, $record_leaf, $eager_main, null, 'LDBTDC7', 2],
+			[$record_walk, str_replace($records, '', $record_leaf), $eager_main, 'Unknown', '', 0],
+			[$record_walk, str_replace('echo "T"', 'echo "R"', $record_leaf), $eager_main, null, 'LDBRDC7', 1],
+			[$hash_walk, $hash_walk_leaf, $eager_main, null, '010230D7', 2],
+			[$boxed_walk, str_replace('TABLE', 'mixed', $boxed_leaf), $eager_main, null, '010D', 2],
+			[$boxed_walk, str_replace('TABLE', 'dynamic', $boxed_leaf), $eager_main, null, '010D', 2],
+			[$counter_walk, $counter . $counter_factory, $eager_main, null, '011', 2],
+			[$counter_walk, $counter, $eager_main, 'Unknown', '', 0],
+			[$counter_walk, str_replace('>=2', '>=3', $counter) . $counter_factory, $eager_main, null, '0122', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
@@ -811,9 +860,14 @@ foreach (flavor::cases() as $flavor) {
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
+			$runtime_error = match (true) {
+				$body === $boxed_walk => "boxed_expected_container\n",
+				$leaf === ($large . $right_child) => "integer_cast_out_of_range\n",
+				default => '',
+			};
 			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
-				'objects' => $objects, 'exit' => $leaf === ($large . $right_child) ? 1 : 8,
-				'stderr' => $leaf === ($large . $right_child) ? "integer_cast_out_of_range\n" : '', 'stdout_hex' => bin2hex($stdout)];
+				'objects' => $objects, 'exit' => $runtime_error === '' ? 8 : 1,
+				'stderr' => $runtime_error, 'stdout_hex' => bin2hex($stdout)];
 			if ($i >= 74 && $i <= 81 && isset($argv[1])) {
 				$publication = publish_task_payloads($project);
 				verify($publication == publish_task_payloads($fresh), 'Payload publication differs from fresh compilation');

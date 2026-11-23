@@ -740,9 +740,6 @@ final class Preparation
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
-			if ($function->is_async && !($source_type instanceof vector_type_definition && $source_type->element_type === type_registry::integer())) {
-				throw new diagnostic($source, $receiver->byte_start(), 'Async foreach requires vector<int> storage');
-			}
 			if ($source_type instanceof generator_type_definition) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
 			}
