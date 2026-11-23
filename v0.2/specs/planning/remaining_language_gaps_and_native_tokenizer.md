@@ -300,6 +300,11 @@ The supplied labels appear once below. The status headings retain the original l
 
 ### G05 · Collection construction and access
 
+**Missing keyed element (`undefined`) · open design.** For `mixed` and `dynamic`, support a presence test such as `if ($data["key_1"] === undefined) {}` in PHP flavor and `if (data["key_1"] === undefined) {}` in cpp/js. A missing key should compare equal; a present key holding null, false, zero, or empty bytes should compare unequal. Today's ordinary boxed read produces null on a miss. The comparison needs a key-presence query using the same key normalization, evaluating receiver and key once without inserting. The compiler's unavailable constant fact is internal to preparation.
+
+**Spelling decision.** All three flavors currently resolve a declared constant named `undefined`. An unbound use reports an unknown name in each. The JS spelling also resembles JavaScript's existing `undefined` value. Prefer a contextual missing-key test where ordinary name resolution wins for a declared `undefined`; decide whether a dedicated `has_key` operation would be clearer in scopes with that collision. A globally reserved literal would require a migration decision. First proof should cover both boxed types, stored null versus missing, single evaluation, and a user-defined `undefined` in each flavor. First-class storage of the sentinel is a separate decision.
+
+
 **Partial (7)**
 
 - `ARR-INIT-002` — Untyped empty array
@@ -371,6 +376,9 @@ Take abstract-base forwarding and variance as separate follow-ups.
 - `CLASS-MEMBER-018E` — Untyped field reference return
 
 ### G08 · Function and method signatures
+
+**Named Arguments · open language feature.** `myFunction(paramName: $value);` binds the argument to its declared parameter name. The audit rejected this syntax and executed the equivalent positional call with defaults. Decide whether parameter names are part of the public call contract, how names interact with positional arguments and defaults, and how unknown or duplicate names are diagnosed. Prove that reordered names evaluate arguments once in written order, including after a parameter rename in a resident compiler.
+
 
 **Omitted return types (`FUNC-DECL-001`).** Use an explicit result type for named
 functions. The v0.1 donor defaulted an omitted type to `void`; my-try adopted
