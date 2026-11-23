@@ -309,6 +309,45 @@ foreach (flavor::cases() as $flavor) {
 		$point_entry = $decl('Point', 'p', 'await relayPoint(false)') . $decl('Point', 'q', $v('p'))
 			. $q . 'x=9;' . $q . 'label[0]=88;echo ' . $p . 'x,' . $q . 'x,(int)' . $p . 'label[0],(int)' . $q . 'label[0];'
 			. 'try {await relayPoint(true);}' . $catch('Failure') . '{echo "caught";}return 8;';
+		$typed_fn = static fn(string $name, string $type, bool $flag = false): string => match ($flavor) {
+			flavor::php => 'function ' . $name . '(' . ($flag ? 'bool $fail' : '') . '):' . $type,
+			flavor::cpp => $type . ' ' . $name . '(' . ($flag ? 'bool fail' : '') . ')',
+			flavor::js => 'function ' . $name . '(' . ($flag ? 'fail:bool' : '') . '):' . $type,
+		};
+		$families = [];
+		foreach (['points' => 'vector<Point>', 'owner' => 'shared<Point>'] as $name => $type) {
+			$factory = $name === 'points'
+				? $decl($type, 'item', '[buildPoint()]')
+				: $decl($type, 'item', 'new Point()') . $v('item') . $access . 'x=7;';
+			$leaf = $typed_fn('build_' . $name, $type) . '{' . $factory . 'return ' . $v('item') . ';}'
+				. 'async ' . $typed_fn('leaf_' . $name, $type, true) . '{' . $decl($type, 'item', 'build_' . $name . '()')
+				. 'await async_sleep_ms(1);if (' . $v('fail') . ') {throw new Failure();}return ' . $v('item') . ';}';
+			$relay_source = 'async ' . $typed_fn('get_' . $name, $type, true) . '{return await leaf_' . $name . '(' . $v('fail') . ');}';
+			$families[$name] = [$leaf, $relay_source];
+		}
+		[$vector_leaf, $vector_relay] = $families['points'];
+		[$owner_leaf, $owner_relay] = $families['owner'];
+		$owner_leaf .= 'async ' . $typed_fn('emptyOwner', 'shared<Point>') . '{return null;}';
+		$vec_checks = $decl('vector<Point>', 'items', 'await get_points(false)') . $decl('vector<Point>', 'dup', $v('items'))
+			. $decl('Point', 'replacement', 'buildPoint()') . $v('replacement') . $access . 'x=42;'
+			. $v('dup') . '[0]=' . $v('replacement') . ';' . $decl('Point', 'a', $v('items') . '[0]')
+			. $decl('Point', 'b', $v('dup') . '[0]') . $v('dup') . $access . 'clear();'
+			. 'echo ' . $v('a') . $access . 'x,":",' . $v('b') . $access . 'x,":",count(' . $v('items') . ');'
+			. 'try {await get_points(true);}' . $catch('Failure') . '{echo "V";}';
+		$owner_checks = $decl('shared<Point>', 'first', 'await get_owner(false)') . $decl('shared<Point>', 'alias', $v('first'))
+			. $decl('weak<Point>', 'watch', 'weak(' . $v('first') . ')') . $v('alias') . $access . 'x=19;'
+			. 'if (' . $v('alias') . ' === ' . $v('first') . ') {echo ' . $v('first') . $access . 'x;}'
+			. $v('first') . '=null;if (lock(' . $v('watch') . ') !== null) {echo "L";}'
+			. $v('alias') . '=null;if (lock(' . $v('watch') . ') === null) {echo "X";}'
+			. $decl('shared<Point>', 'empty_result', 'await emptyOwner()') . 'if (' . $v('empty_result') . ' === null) {echo "E";}'
+			. 'try {await get_owner(true);}' . $catch('Failure') . '{echo "S";}';
+		$common = $failure . $point . $point_factory . '{' . $empty_point . $p . 'x=7;return ' . $v('p') . ';}';
+		$both = $vector_relay . $owner_relay;
+		$all_leaf = $common . $vector_leaf . $owner_leaf;
+		$checks = $vec_checks . $owner_checks . 'return 8;';
+		$three_parent = $both . 'async ' . $typed_fn('get_value', 'Point') . '{return await leaf_value();}';
+		$three_leaf = $all_leaf . 'async ' . $typed_fn('leaf_value', 'Point') . '{return buildPoint();}';
+		$three_entry = $decl('Point', 'value_result', 'await get_value()') . 'echo ' . $v('value_result') . $access . 'x;' . $checks;
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -359,6 +398,14 @@ foreach (flavor::cases() as $flavor) {
 			[$point_parent, str_replace($point, str_replace('{', '{' . $ctor, $point), $point_child), $point_entry, 'Unpublished async result: Point', '', 0],
 			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 3],
 			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
+			[$both, $all_leaf, $checks, null, '7:42:1V19LXES', 3],
+			[$both, str_replace('x=7;', 'x=8;', $all_leaf), $checks, null, '8:42:1V19LXES', 1],
+			[$both, $common . $vector_leaf, $checks, 'Unknown', '', 0],
+			[$both, $all_leaf, $checks, null, '7:42:1V19LXES', 1],
+			[$vector_relay, $common . $vector_leaf, $vec_checks . 'return 8;', null, '7:42:1V', 3],
+			[$both, $all_leaf, $checks, null, '7:42:1V19LXES', 3],
+			[$three_parent, $three_leaf, $three_entry, null, '77:42:1V19LXES', 3],
+			[$both, str_replace($point, str_replace('{', '{' . $ctor, $point), $all_leaf), $checks, null, '7:42:1V19LXES', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -391,7 +438,11 @@ foreach (flavor::cases() as $flavor) {
 				}
 			}
 			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
-			verify(count($task_headers) === ($body === $enum_parent || $body === $point_parent ? 1 : ($body === $enum_parent . $second_parent ? 2 : 0)), 'Unexpected application task demand or retirement');
+			$expected_tasks = match ($body) {
+				$three_parent => 3, $enum_parent . $second_parent, $both => 2,
+				$enum_parent, $point_parent, $vector_relay => 1, default => 0,
+			};
+			verify(count($task_headers) === $expected_tasks, 'Unexpected application task demand or retirement');
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');

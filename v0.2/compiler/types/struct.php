@@ -677,6 +677,7 @@ final class weak_record_type_definition extends record_handle_definition
 final class shared_record_type_definition extends record_handle_definition
 {
 	use hash_key_specializations;
+	use concrete_async_task;
 
 	/** PROPERTIES */
 	/** Semantic presence contract; both variants use the same native owner. */
@@ -694,6 +695,12 @@ final class shared_record_type_definition extends record_handle_definition
 	public function mutates_referenced_value(): bool
 	{
 		return true;
+	}
+
+	/** Explicit shared struct owners start empty; class presence contracts are separate. */
+	protected function supports_async_storage(): bool
+	{
+		return $this->payload->declaration->kind === record_kind::structure;
 	}
 
 	/** Borrow the payload's settled traversal while the emitter retains this shared allocation. */

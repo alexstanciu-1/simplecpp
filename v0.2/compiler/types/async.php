@@ -67,18 +67,37 @@ final readonly class async_task_binding
 	}
 }
 
-/** Nominal types supply their existing declaration key to the concrete task recipe. */
-trait nominal_async_task
+/** A concrete value with passive empty storage can publish the shared async recipe on demand. */
+trait concrete_async_task
 {
 	/** Prepared fact: successful task binding for this layout generation, populated only on demand. */
 	private ?async_task_binding $task_binding = null;
 
-	abstract protected function supports_async_storage(): bool;
+	protected function supports_async_storage(): bool
+	{
+		return true;
+	}
+
+	protected function async_task_identity(): string
+	{
+		return $this->concrete_identity();
+	}
 
 	public function async_task(): ?async_task_binding
 	{
 		if ($this->task_binding !== null) return $this->task_binding;
 		if (!type_registry::HAS_ASYNC_FRAMES || !$this->supports_async_storage()) return null;
-		return $this->task_binding = async_task_binding::application($this->declaration->symbol_key());
+		return $this->task_binding = async_task_binding::application($this->async_task_identity());
+	}
+}
+
+/** Nominal value tasks keep their original declaration-based publication keys. */
+trait nominal_async_task
+{
+	use concrete_async_task;
+
+	protected function async_task_identity(): string
+	{
+		return $this->declaration->symbol_key();
 	}
 }

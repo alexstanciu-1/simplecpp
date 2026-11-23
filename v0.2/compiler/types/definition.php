@@ -271,6 +271,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Stable identity for concrete recipes, including resolved specialization arguments. */
+	public function concrete_identity(): string
+	{
+		return $this::class . ':' . $this->name;
+	}
+
 	/** Resolve the task exported for this result by the active runtime publication. */
 	public function async_task(): ?async_task_binding
 	{

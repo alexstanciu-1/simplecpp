@@ -104,7 +104,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $code .= strtr($template, $bindings);
         if (!$application) {
             $application = true;
-            $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
+            $identity = "\tuse concrete_async_task;\n\n\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element->concrete_identity());\n\t}\n";
             $destination = concreteRecipe(vectorConcreteRecipe($vector))->destination_append ?? null;
             $destinationInterface = $destination === null ? '' : ', destination_append_type';
             $destinationMethod = '';

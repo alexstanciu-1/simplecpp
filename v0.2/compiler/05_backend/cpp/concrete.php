@@ -24,7 +24,7 @@ final readonly class cpp_concrete_type implements \Scpp\Api\ConcreteType, \Scpp\
 	/** METHODS */
 	public function identity(): string
 	{
-		return $this->type::class . ':' . $this->type->name;
+		return $this->type->concrete_identity();
 	}
 
 	/** Application declarations are emitted inside the same root namespace as the concrete recipe. */
