@@ -19,6 +19,16 @@ Defer byte-to-int widening in the translated constant evaluator until a bootstra
 
 In a resident PHP compiler trace, the caller contained both `answer()` and `strlen($text)`. Editing only the body of `answer` prepared one body and reused two. Both call nodes survived. The source call retained the same symbol entry and resolved its replacement declaration. Changing its return type from int to bool prepared two bodies and reused one. The caller saw the new return type. The runtime descriptor kept its identity throughout and supplied `scpp::str::byte_length` and `scpp/string.hpp`. A separate source-shadowing check added a declaration named `strlen` and removed it again. Preparation rebound the same spelling to the source declaration, then to the original runtime descriptor. Preserve the source-name watch even when lookup falls back to runtime. [Resolution](../../compiler/04_analyze/prepare/prepare.php) · [Prepared call](../../compiler/03_parse/structures/functions.php)
 
+Additional resolved call targets in the same PHP field:
+
+| Example | Lifetime and edit behavior | Consumer |
+| --- | --- | --- |
+| Inherited static `Right::read()` | The demand graph interns the method-entry/called-type-entry pair. An edit retaining the same demand reused the private implementation. After successful preparation, removing the last reachable demand released its instance and private body while a sibling demand survived. | Signature queries follow the method entry. Emission selects the instance implementation prepared for the called type. [Lifetime proof](../../compiler/tests/called_method_lifetime.php) |
+| Callable local `$g()` | Preparation retains the lexical binding. A no-op reused the exact call and declaration. Editing the enclosing function replaced both; the new call bound to the new declaration. Moving an invocation outside the block fails lookup. | The emitter obtains the signature from the binding type and invokes the local value by its generated name. [Callable scope proof](../../compiler/tests/capture_free_lambdas_native.py) |
+| Python-flavor `Counter(7)` | The call holds the stable type entry. Editing the constructor body preserved call and entry identity, replaced the record declaration and prepared both bodies. Adding a required parameter failed at the caller; repair reused the same entry. | Preparation watches the type and selected constructor and binds argument conversions. The emitter uses the shared result type and current constructor signature to generate the owner factory invocation. [Construction lowering](../../compiler/05_backend/cpp/emit.php) |
+
+These traces establish lookup and ownership requirements. A physical call-node representation still needs a translated layout and preparation-cost measurement.
+
 ### Companion topics beyond the donor rows
 
 | Group | Current evidence and bootstrap disposition |
