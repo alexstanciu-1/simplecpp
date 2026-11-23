@@ -245,22 +245,33 @@ enum constant_dispatch
 	case enum_switch;
 	case byte_equality;
 
-	/** Return a duplicate key only for an admitted constant label of the subject's exact type. */
-	public function label_key(ast_expression $label): int|string|null
+	/** A receiver-dependent name is an expression, even when it resolves to a constant. */
+	private static function static_binding(ast_expression $label): ?name_binding
 	{
-		// An expression-qualified constant has a receiver to evaluate; a case label is static data.
 		if ($label instanceof ast_qualified_data || $label instanceof ast_called_type_name) return null;
-		$binding = $label instanceof ast_name_expression ? $label->declaration() : null;
-		return match ($this) {
-			self::enum_switch => $binding instanceof ast_enum_case ? $binding->short_name : null,
-			self::integer_switch => ($label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration
-				|| $binding instanceof runtime_integer_constant) && is_int($label->constant()) ? $label->constant() : null,
-			self::byte_equality => self::bytes($binding instanceof ast_constant_declaration ? $binding->initializer : $label),
-		};
+		return $label instanceof ast_name_expression ? $label->declaration() : null;
 	}
 
-	private static function bytes(ast_expression $literal): ?string
+	public static function integer_label(ast_expression $label): ?int
 	{
+		if (!($label instanceof ast_integer_expression)) {
+			$binding = self::static_binding($label);
+			if (!($binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)) return null;
+		}
+		$value = $label->constant();
+		return is_int($value) ? $value : null;
+	}
+
+	public static function enum_case_name(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		return $binding instanceof ast_enum_case ? $binding->short_name : null;
+	}
+
+	public static function string_label_bytes(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		$literal = $binding instanceof ast_constant_declaration ? $binding->initializer : $label;
 		return $literal instanceof ast_string_expression ? $literal->bytes() : null;
 	}
 }

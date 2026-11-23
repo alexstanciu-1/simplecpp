@@ -1198,7 +1198,7 @@ CPP;
 			$tests = [];
 			foreach ($syntax->arms as $i => $arm) {
 				if ($arm->condition === null) continue;
-				$bytes = $dispatch->label_key($arm->condition);
+				$bytes = constant_dispatch::string_label_bytes($arm->condition);
 				$tests[] = Cpp_String_Literals::equal_bytes($place, $bytes, $headers) . ' ? ' . $i . ' : ';
 			}
 			if ($tests === []) $lines[] = "\t(void)(" . $subject . ');';
@@ -1239,7 +1239,7 @@ CPP;
 	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
-		$integer = $label->constant();
+		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
@@ -1534,7 +1534,7 @@ CPP;
 				}
 				if ($conditional) $test = $this->condition($arm->label, $globals, $declarations, $headers);
 				else {
-					$bytes = $dispatch->label_key($arm->label);
+					$bytes = constant_dispatch::string_label_bytes($arm->label);
 					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
 				}
 				$code .= 'if (' . $test . ') { '

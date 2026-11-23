@@ -582,10 +582,24 @@ final class Preparation
 	private function case_label(ast_expression $label, type_definition $type, constant_dispatch $dispatch, array &$seen, string $construct): void
 	{
 		if ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label type must equal subject type');
-		$key = $dispatch->label_key($label);
-		if ($key === null) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
-		if (isset($seen[$key])) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
-		$seen[$key] = true;
+		if ($dispatch === constant_dispatch::integer_switch) {
+			$integer = constant_dispatch::integer_label($label) ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$integer]);
+			$seen[$integer] = true;
+		} else {
+			$key = match ($dispatch) {
+				constant_dispatch::enum_switch => constant_dispatch::enum_case_name($label),
+				constant_dispatch::byte_equality => constant_dispatch::string_label_bytes($label),
+			} ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$key]);
+			$seen[$key] = true;
+		}
+		if ($duplicate) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
+	}
+
+	private function invalid_case_label(ast_expression $label, string $construct): diagnostic
+	{
+		return new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
 	}
 
 	/** Keep definite constructor states only where all paths agree. */
