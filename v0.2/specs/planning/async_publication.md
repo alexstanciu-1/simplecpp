@@ -45,7 +45,7 @@ waits and cleanup on failure.
 Inline struct results use the existing eagerly initialized promise payload. Signature
 preparation checks the direct fields once per prepared producer signature. Each field
 must have an implicit empty default and an enum or runtime type already admitted as
-a published runtime async scalar parameter or runtime result. The aggregate has no base, interface, authored
+an owned runtime async value. The aggregate has no base, interface, authored
 constructor or destructor. This keeps starting and abandoning a task free of
 user-authored payload lifecycle calls. Native recipe assertions still check nonthrowing
 default construction, move construction, move assignment and destruction. A heap-backed
@@ -76,7 +76,7 @@ await can discard any eligible result in synchronous and async bodies. Using a v
 a value produces the ordinary void-call diagnostic. All task results use one scheduler
 and the same generated implementation for continuation, frame destruction and exceptions. Direct local initializers, return
 values and echo operands can consume the result. The producer body accepts braced if/else branches,
-locals, timer statements, echo, throw and return. Task storage, general nested await
+locals, lexical blocks, timer statements, echo, throw and return. Task storage, general nested await
 expressions, async methods, and reference parameters are deferred. In an async body, awaited calls
 may appear under logical negation, in either conditional-expression arm or its condition,
 or in a chain of && or || used as a local initializer, echo operand, return
@@ -110,3 +110,15 @@ roles select the required entries and retire unused wrappers as callers change.
 Coroutine units include their promise headers and use the selective coroutine PCH.
 Timer expressions separately request the timer header. The all-flavor acceptance
 test is in `compiler/tests/async_native.py`.
+
+### Remaining source and storage contracts
+
+The following review concerns the v0.2 cooperative, direct-call contract. The executable
+proofs for owned arguments, blocking expressions, lazy expressions and lexical blocks
+are in `compiler/tests/async.php`, with incremental and independent fresh executables
+built by `compiler/tests/async_native.py`. The entries below distinguish source probes
+from native constraints and design questions.
+
+#### Explicit blocking calls
+
+All three frontends accept a user function named async_wait. Without a declaration, async_wait(leaf()) reports Unknown function even when leaf is async. The source spec defines a blocking bridge and the runtime already implements nested waits. Settle whether this name is reserved, namespace-qualified or a fallback after ordinary lookup. An explicit block inside a producer must request the blocking bridge dependency through the existing publisher.
