@@ -37,7 +37,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception']);
+    fields($compiler, ['generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $extentFamilies = [];
     foreach (object($compiler->generic_syntax ?? new \stdClass()) as $family => $arguments) {
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $family) && $arguments === ['type', 'integer_extent'], 'Unsupported generic syntax: ' . $family);
@@ -721,7 +721,7 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $guard = in_array($operation['spelling'], ['==', '!=', '<', '<=', '>', '>=', '^'], true) ? '!$same_spelling' : 'true';
             $reorderable[$guard][] = "binary_operator::$op";
         }
-        if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
+        if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power', 'checked_floor_divide', 'checked_floor_remainder'], true)) {
             // These validated scalar strategies call a runtime helper with two value parameters.
             $valueHelpers[] = "binary_operator::$op";
         } elseif ($definitions[$identity]['strategy'] === 'integer') {

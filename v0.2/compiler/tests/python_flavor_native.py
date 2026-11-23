@@ -1,11 +1,15 @@
 """Compare mixed Python-flavor execution with the existing flavors and check edit recovery."""
+import argparse
+import json
 import tempfile
 from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
 from extends_native import ROOT, runtime, source_edit
-from parent_methods_native import write_app
+from interfaces_native import forms as interface_forms
+from inline_adapters_native import incremental_native_build
+from parent_methods_native import syntax as ancestor_syntax, write_app
 from virtual_methods_native import forms
 
 
@@ -416,6 +420,141 @@ def key_traversal(work, flavor, library):
         assert resident.wait() == 0
 
 
+
+ITEMS_ENTRY = """class Cell:
+    field: int = 0
+
+    def __init__(self, start: int):
+        self.field = start
+
+key: int = 99
+total: int = 0
+for key, value in makePairs().items():
+    weight: int = keyWeight(key)
+    if weight != valueWeight(value):
+        return 1
+    total += weight
+if key != 99 or total != 6:
+    return 2
+
+held: int = 17
+empty: hash<int,int> = {}
+for k, held in empty.items():
+    pass
+if held != 17:
+    return 3
+one: hash<int,int> = {1: 8}
+for k, held in one.items():
+    if k != 1:
+        return 4
+if held != 8:
+    return 5
+
+cells: hash<Cell,int> = {1: Cell(7)}
+for k, item in cells.items():
+    item.field = 8
+    item = Cell(9)
+if cells[1].field != 8:
+    return 6
+return held
+"""
+
+
+def items_provider(flavor, key='int', value='int', trace='A', vector=False):
+    v = '$' if flavor == 'php' else ''
+    type_name = 'vector<int>' if vector else f'hash<{value},{key}>'
+    signature, declaration = {
+        'cpp': (f'{type_name} makePairs()', f'{type_name} h = [];'),
+        'php': (f'function makePairs(): {type_name}', f'$h {type_name} = [];'),
+        'js': (f'function makePairs(): {type_name}', f'let h: {type_name} = [];'),
+    }[flavor]
+    data = {'int': ('2', '4'), 'string': ('"a"', '"b"')}
+    payload = {'int': ('20', '40'), 'string': ('"twenty"', '"forty"')}
+    fill = '' if vector else ''.join(f'{v}h[{k}] = {x};' for k, x in zip(data[key], payload[value]))
+    provider = f'{signature} {{ echo "{trace}"; {declaration} {fill} return {v}h; }}'
+
+    def weight(name, operand, first, int_result):
+        head = {
+            'cpp': f'int {name}({operand} arg)',
+            'php': f'function {name}({operand} $arg): int',
+            'js': f'function {name}(arg: {operand}): int',
+        }[flavor]
+        if operand == 'int':
+            return f'{head} {{ return {int_result}; }}'
+        return f'{head} {{ if ({v}arg == {first}) {{ return 2; }} return 4; }}'
+
+    return provider + weight('keyWeight', key, '"a"', v+'arg') + weight('valueWeight', value, '"twenty"', v+'arg / 10')
+
+
+def paired_items(work, flavor, library):
+    app, bundle = work/'items', work/'items-bundle'
+    write_app(app, 'py', {'main': ITEMS_ENTRY, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'items-peer.{flavor}'
+    source_edit(peer, items_provider(flavor))
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        native(bundle, work/'items-initial', (8, b'A', b''), library)
+        cpp = b'\n'.join(artifacts(bundle).values())
+        assert cpp.count(b'.iteration_next(') == 4 and b'.iteration_next_key(' not in cpp
+        assert b'.iteration_current_value(' not in cpp and cpp.count(b'.at(') == 1
+
+        source_edit(peer, items_provider(flavor, trace='B'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'items-body-edit', (8, b'B', b''), library)
+
+        for key, value in [('string', 'int'), ('string', 'string')]:
+            source_edit(peer, items_provider(flavor, key, value, 'B'))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(path).name for path in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            native(bundle, work/f'items-{key}-{value}', (8, b'B', b''), library)
+
+        main = app/'main.py'
+        typed_destination = ITEMS_ENTRY.replace('total: int = 0', 'total: int = 0\nvalue: int = 0')
+        source_edit(main, typed_destination)
+        provider = items_provider(flavor, 'string', 'int', 'B')
+        source_edit(peer, provider)
+        checked = invoke(resident)
+        assert 'error' not in checked, checked
+        native(bundle, work/'items-existing-destination', (8, b'B', b''), library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        caller_stamp = main.stat().st_mtime_ns
+        loop_line = next(i for i, line in enumerate(typed_destination.splitlines(), 1)
+                         if line.startswith('for key, value'))
+        for name, edit, diagnostic in [
+            ('incompatible', items_provider(flavor, 'string', 'string', 'B'), 'conversion'),
+            ('vector', items_provider(flavor, vector=True), 'items traversal requires a typed hash'),
+            ('deleted', None, 'makePairs'),
+        ]:
+            if edit is None:
+                peer.unlink()
+            else:
+                source_edit(peer, edit)
+            failed = invoke(resident)
+            fresh = fresh_build(app, work/f'items-{name}-failure')
+            assert diagnostic in failed.get('error', '') and failed['error'] == fresh.get('error'), (failed, fresh)
+            if name == 'incompatible':
+                assert f'main.py:{loop_line}:' in failed['error'], failed
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, provider)
+            recovered = invoke(resident)
+            assert 'error' not in recovered and artifacts(bundle) == previous, recovered
+            assert main.stat().st_mtime_ns == caller_stamp and main.read_text() == typed_destination
+
+        fresh = work/'items-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(bundle) == artifacts(fresh) == previous
+        native(bundle, work/'items-recovered', (8, b'B', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 COLLECTION_PEERS = {
     'cpp': ('int mark(int n) { echo n; return n; } '
             'string key(int n) { echo n; if (n == 4) { return "a"; } return "b"; }'),
@@ -529,6 +668,290 @@ def typed_collections(work, flavor, library):
         result = fresh_build(app, output)
         assert 'error' not in result, result
         native(output, work/f'collections-{label}-run', expected, library)
+
+
+DIVISION_PEERS = {
+    'cpp': ('int inputNumber() { echo "I"; return 7; } '
+            'int markNumber(int n) { echo "M"; return n; } '
+            'bool oldMath() { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+    'php': ('function inputNumber(): int { echo "I"; return 7; } '
+            'function markNumber(int $n): int { echo "M"; return $n; } '
+            'function oldMath(): bool { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+    'js': ('function inputNumber(): int { echo "I"; return 7; } '
+           'function markNumber(n: int): int { echo "M"; return n; } '
+           'function oldMath(): bool { return -7 / 3 == -2 && -7 % 3 == -1; }'),
+}
+DIVISION_ENTRY = """if not oldMath():
+    return 1
+if -7 // 3 != -3 or 7 // -3 != -3 or -7 // -3 != 2 or 7 // 3 != 2:
+    return 2
+if -7 % 3 != 2 or 7 % -3 != -2 or -7 % -3 != -1 or 7 % 3 != 1 or -6 % 3 != 0:
+    return 3
+if (-9223372036854775807 - 1) % -1 != 0 or (-9223372036854775807 - 1) / -1 != 9223372036854775808.0:
+    return 4
+if 9007199254740993 / 3 != 3002399751580331.0 or 9007199254740993 / 1 != 9007199254740992.0:
+    return 5
+if 7 / 2.0 != 3.5 or 7.0 / 2 != 3.5 or 7.0 / 2.0 != 3.5:
+    return 6
+if markNumber(7) / markNumber(2) != 3.5:
+    return 7
+return 8
+"""
+
+
+def division(work, flavor, library):
+    app, bundle = work/'division', work/'division-bundle'
+    caller = "q: float = inputNumber() / 2\nreturn 8 if q > 3.0 else 1"
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
+    peer = app/f'division-peer.{flavor}'
+    provider = DIVISION_PEERS[flavor]
+    source_edit(peer, provider)
+    main = app/'main.py'
+    resident = service(app, bundle)
+    try:
+        first = invoke(resident)
+        assert 'error' not in first, first
+        native(bundle, work/'division-int', (8, b'I', b''), library)
+        body_edit = provider.replace('echo "I"', 'echo "J"')
+        source_edit(peer, body_edit)
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(path).name for path in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'division-body-edit', (8, b'J', b''), library)
+
+        floating = body_edit.replace('int inputNumber', 'float inputNumber').replace('inputNumber(): int', 'inputNumber(): float')
+        floating = floating.replace('return 7;', 'return 7.5;', 1)
+        source_edit(peer, floating)
+        compatible = invoke(resident)
+        assert 'error' not in compatible and compatible['preparation']['reused'], compatible
+        assert {Path(path).name for path in compatible['emitted_sources']} == {peer.name, 'main.py'}, compatible
+        assert any(b'scpp::float64_divide(' in part for part in artifacts(bundle).values())
+        native(bundle, work/'division-float', (8, b'J', b''), library)
+
+        for index, operator in enumerate(('//', '%')):
+            floor = f'q: int = inputNumber() {operator} 2\nreturn 8'
+            source_edit(peer, body_edit)
+            source_edit(main, floor)
+            assert 'error' not in invoke(resident)
+            previous = artifacts(bundle)
+            manifest = (bundle/'manifest.json').read_bytes()
+            source_edit(peer, floating)
+            failed = invoke(resident)
+            fresh_invalid = fresh_build(app, work/f'division-bad-{index}')
+            assert 'Unsupported binary operands or operator' in failed.get('error', ''), failed
+            assert failed['error'] == fresh_invalid.get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, body_edit)
+            assert 'error' not in invoke(resident)
+            fresh = work/f'division-fresh-{index}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'division-recovered-{index}', (8, b'J', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+    source_edit(main, DIVISION_ENTRY)
+    full = work/'division-combinations'
+    assert 'error' not in fresh_build(app, full)
+    native(full, work/'division-combinations-run', (8, b'MM', b''), library)
+
+    for index, (expression, output, error) in enumerate([
+        ('markNumber(7) / markNumber(0)', b'MM', b'division_by_zero'),
+        ('7 // 0', b'', b'division_by_zero'),
+        ('7 % 0', b'', b'modulo_by_zero'),
+        ('7 / -0.0', b'', b'division_by_zero'),
+        ('7.0 / 0.0', b'', b'division_by_zero'),
+        ('(-9223372036854775807 - 1) // -1', b'', b'division_overflow'),
+    ]):
+        source_edit(main, f'q: {"float" if " / " in expression else "int"} = {expression}\nreturn markNumber(8)')
+        target = work/f'division-error-{index}'
+        result = fresh_build(app, target)
+        assert 'error' not in result, result
+        native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
+
+
+def none_identity(work, flavor, library):
+    syntax, evaluate, _, _, interface, implementation = interface_forms(flavor)
+    fn = syntax['function']
+    caller = """empty: nullable<int> = None
+zero: nullable<int> = 0
+flag: nullable<bool> = False
+text: nullable<string> = ""
+if empty is not None or zero is None or flag is None or text is None:
+    return 1
+if not None is None or None is not None:
+    return 2
+if nothing() is not None or missing() is not None or live() is None:
+    return 3
+if absentView() is not None or view() is None:
+    return 4
+if absentOwner() is not None or owner() is None:
+    return 5
+if findKind("missing") is not None or findKind("") is None:
+    return 6
+return 8 if probe() is None else 9
+"""
+    app, bundle = work/'none', work/'none-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 7'})
+    records = interface() + implementation('Node', evaluate('override', '1', default='1'))
+    records += syntax['record']('Payload', '')
+    records += fn('nothing', 'null', [], 'echo "N"; return null;')
+    records += fn('missing', '?Node', [], 'echo "M"; return null;')
+    records += fn('live', 'Node', [], 'echo "L"; return new Node();')
+    records += fn('absentView', '?Readable', [], 'echo "A"; return null;')
+    records += fn('view', 'Readable', [], 'echo "V"; return new Node();')
+    records += fn('absentOwner', 'shared<Payload>', [], 'echo "E"; return null;')
+    records += fn('owner', 'shared<Payload>', [], 'echo "O"; return new Payload();')
+    case = 'case Empty = "";' if flavor == 'php' else 'Empty = ""'
+    records += 'enum Kind:string {' + case + '}'
+    separator = '.' if flavor == 'js' else '::'
+    records += fn('findKind', 'nullable<Kind>', [('text', 'string')],
+                  f'echo "K"; return enum_try_from_value(Kind{separator}class, {syntax["v"]}text);')
+    source_edit(app/f'owners.{flavor}', records)
+    peer = app/f'probe.{flavor}'
+    empty = fn('probe', 'nullable<int>', [], 'echo "P"; return null;')
+    present = empty.replace('return null;', 'return 0;')
+    source_edit(peer, empty)
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'none-empty', (8, b'NMLAVEOKKP', b''), library)
+        source_edit(peer, present)
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'none-present', (9, b'NMLAVEOKKP', b''), library)
+
+        previous = artifacts(bundle)
+        optional = fn('probe', '?Node', [], 'echo "P"; return null;')
+        for stage, provider, status in [('handle', optional, 8), ('nullable', present, 9)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            fresh = work/f'none-fresh-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'none-{stage}', (status, b'NMLAVEOKKP', b''), library)
+        assert artifacts(bundle) == previous
+
+        for stage, diagnostic in [('result', 'Python None test'), ('deleted', 'Unknown function: probe')]:
+            manifest = (bundle/'manifest.json').read_bytes()
+            if stage == 'deleted':
+                peer.unlink()
+            else:
+                source_edit(peer, present.replace('nullable<int>', 'result<int>'))
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'none-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+            source_edit(peer, present)
+            restored = invoke(resident)
+            assert 'error' not in restored and restored['preparation']['reused'], restored
+            assert {Path(p).name for p in restored['emitted_sources']} == {peer.name, 'main.py'}, restored
+            fresh = work/f'none-restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'none-recovered-{stage}', (9, b'NMLAVEOKKP', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
+def integer_bitwise(work, flavor, library):
+    syntax, _, _ = forms(flavor)
+    function = syntax['function']
+    mutate = {
+        'cpp': 'int change(int &value) { value = 100; return 3; }',
+        'php': 'function change(int &$value): int { $value = 100; return 3; }',
+        'js': 'function change(&value: int): int { value = 100; return 3; }',
+    }[flavor]
+    caller = """flags: int = 12
+flags ^= change(flags)
+if flags != 15:
+    return 3
+flags &= 6
+flags |= 8
+small: uint8 = 255
+if ~small != 0:
+    return 4
+small &= 7
+small ^= 4
+small |= mask()
+if not flags & 6 == 6 or 8 | 3 ^ 6 & 2 != 9:
+    return 1
+if ~flags != -15 or flags != 14 or small != 11:
+    return 2
+return 8
+"""
+    app, bundle = work/'bitwise', work/'bitwise-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 7'})
+    peer = app/f'masks.{flavor}'
+
+    def provider(result, value):
+        return mutate + function('mask', result, [], f'echo "M"; return {value};')
+
+    def verify_mask_writeback(checked):
+        units = json.loads((bundle/'manifest.json').read_text())['sources']
+        main_unit, = (unit for path, unit in units.items() if Path(path).name == 'main.py')
+        assignment, = (line for line in (bundle/main_unit).read_text().splitlines() if 'mask_()' in line)
+        assert 'var_small_' in assignment and ' | mask_()' in assignment, assignment
+        assert ('scpp::checked_int64_to_uint8(' in assignment) == checked, assignment
+
+    valid = provider('int', '8')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        previous = artifacts(bundle)
+        verify_mask_writeback(checked=True)
+        native(bundle, work/'bitwise-valid', (8, b'M', b''), library)
+
+        for result in ('uint8', 'int'):
+            source_edit(peer, provider(result, '8'))
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            verify_mask_writeback(checked=result == 'int')
+            fresh = work/f'bitwise-signature-{result}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'bitwise-signature-run-{result}', (8, b'M', b''), library)
+        assert artifacts(bundle) == previous
+
+        source_edit(peer, provider('int', '256'))
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'bitwise-overflow', (1, b'M', b'integer_cast_out_of_range\n'), library)
+
+        last_good = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        source_edit(peer, provider('float', '2.5'))
+        failed = invoke(resident)
+        assert 'error' in failed and failed['error'] == fresh_build(app, work/'bitwise-invalid').get('error'), failed
+        assert artifacts(bundle) == last_good and (bundle/'manifest.json').read_bytes() == manifest
+
+        source_edit(peer, valid)
+        restored = invoke(resident)
+        assert 'error' not in restored, restored
+        fresh = work/'bitwise-fresh'
+        assert 'error' not in fresh_build(app, fresh)
+        assert previous == artifacts(bundle) == artifacts(fresh)
+        native(bundle, work/'bitwise-recovered', (8, b'M', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+    source_edit(peer, provider('int', '256'))
+    for operator, expected in [('&', (8, b'M', b'')), ('^', (1, b'M', b'integer_cast_out_of_range\n'))]:
+        source_edit(app/'main.py', f'small: uint8 = 255\nsmall {operator}= mask()\nreturn 8 if small == 0 else 2')
+        target = work/('bitwise-boundary-' + ('and' if operator == '&' else 'xor'))
+        built = fresh_build(app, target)
+        assert 'error' not in built, built
+        native(target, target/'program', expected, library)
 
 
 def narrow_compound(work, library):
@@ -719,7 +1142,8 @@ INHERITANCE = """class Child(Base):
 
     @override
     def evaluate(self) -> int:
-        return self.value + self.extra
+        super().mark()
+        return super().evaluate() + super().score(self.value) + self.extra
 
     @virtual
     def other(self) -> int:
@@ -733,7 +1157,7 @@ BASE_CONSTRUCTORS = {
 
 
 def inheritance(work, flavor, library):
-    syntax, _, klass = forms(flavor)
+    syntax, _, klass, _, method = ancestor_syntax(flavor)
     field = {'cpp': 'public: int value = 0;', 'php': 'public int $value = 0;', 'js': 'value: int = 0;'}[flavor]
     virtual = {
         'cpp': 'virtual int evaluate() { return 0; }',
@@ -745,8 +1169,16 @@ def inheritance(work, flavor, library):
         'php': 'public function bonus(): int { return 0; }',
         'js': 'bonus(): int { return 0; }',
     }[flavor]
-    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited)
+    marker = {
+        'cpp': 'void mark() { echo "M"; }',
+        'php': 'public function mark(): void { echo "M"; }',
+        'js': 'mark(): void { echo "M"; }',
+    }[flavor]
     v = syntax['v']
+    parameter = {'cpp': 'int amount', 'php': 'int $amount', 'js': 'amount: int'}[flavor]
+    far_score = method('score', f'return {v}amount + 20;', params=parameter, intent='virtual')
+    near_score = method('score', f'return {v}amount;', params=parameter, intent='override')
+    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited + marker + near_score, 'Grandparent')
     access = syntax['access']
     api = syntax['function']('viaBase', 'int', [('obj', 'Base')],
                              f'return {v}obj{access}evaluate() + {v}obj{access}bonus();')
@@ -757,24 +1189,45 @@ def inheritance(work, flavor, library):
         'idle': 'def idle() -> int:\n    return 17',
     })
     peer = app/f'base.{flavor}'
+    source_edit(app/f'grandparent.{flavor}', klass('Grandparent', far_score))
     source_edit(peer, base)
     source_edit(app/f'api.{flavor}', api)
     resident = service(app, bundle)
     try:
         result = invoke(resident)
         assert 'error' not in result, result
-        native(bundle, work/'inheritance-initial', (9, b'B', b''), library)
+        native_dir = work/'inheritance-native'
+        incremental_native_build(bundle, native_dir, 'clang++', library, b'BM', expected_status=9)
+        units = {Path(path).name: Path(unit) for path, unit in json.loads((bundle/'manifest.json').read_text())['sources'].items()}
+        base_unit = units[peer.name]
+        initial = artifacts(bundle)
+        stamps = {path: (bundle/path).stat().st_mtime_ns for path in initial}
 
-        edited = base.replace(inherited, inherited.replace('return 0', 'return 1'))
+        edited = base.replace(virtual, virtual.replace('return 0', 'return 1')).replace(marker, marker.replace('"M"', '"E"'))
         source_edit(peer, edited)
         changed = invoke(resident)
         assert 'error' not in changed and changed['preparation']['reused'], changed
         assert {Path(path).name for path in changed['emitted_sources']} == {
             peer.name, f'api.{flavor}', 'child.py', 'main.py',
         }, changed
-        native(bundle, work/'inheritance-edited', (10, b'B', b''), library)
         previous = artifacts(bundle)
+        assert previous.keys() == initial.keys()
+        assert {path for path in initial if initial[path] != previous[path]} == {base_unit}
+        assert {path for path in initial if stamps[path] != (bundle/path).stat().st_mtime_ns} == {base_unit}
+        rebuilt = incremental_native_build(bundle, native_dir, 'clang++', library, b'BE', expected_status=10)
+        assert rebuilt == {str(base_unit)}, rebuilt
         manifest = (bundle/'manifest.json').read_bytes()
+
+        for owner, provider, status in [('Grandparent', edited.replace(near_score, ''), 30), ('Base', edited, 10)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'inheritance-rebind-{owner}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            assert f'.scpp_records::{owner}::scpp_virtual_score(' in (bundle/units['child.py']).read_text()
+            incremental_native_build(bundle, native_dir, 'clang++', library, b'BE', expected_status=status)
+        assert artifacts(bundle) == previous
 
         child = app/'child.py'
         for name, path, invalid, diagnostic in [
@@ -782,6 +1235,7 @@ def inheritance(work, flavor, library):
             ('duplicate-marker', child, INHERITANCE.replace('@override', '@override\n    @override'), 'Duplicate method modifier'),
             ('multi-base', child, INHERITANCE.replace('Child(Base)', 'Child(Base, Base)'), 'single base class'),
             ('late-super', child, INHERITANCE.replace('        super().__init__(start)', '        pass\n        super().__init__(start)'), 'super'),
+            ('removed-super-method', peer, edited.replace(marker.replace('"M"', '"E"'), ''), 'mark'),
             ('base-contract', peer, edited.replace('virtual ', ''), 'Nonvirtual method hiding'),
         ]:
             source_edit(path, invalid)
@@ -806,7 +1260,7 @@ def inheritance(work, flavor, library):
         fresh = work/'inheritance-fresh'
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(bundle) == artifacts(fresh) == previous
-        native(bundle, work/'inheritance-recovered', (10, b'B', b''), library)
+        native(bundle, work/'inheritance-recovered', (10, b'BE', b''), library)
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
@@ -834,6 +1288,9 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        none_identity(case, flavor, library)
+        integer_bitwise(case, flavor, library)
+        division(case, flavor, library)
         records_and_exceptions(case, flavor, library)
         inheritance(case, flavor, library)
 
@@ -887,6 +1344,16 @@ def incremental(work, flavor, app, output, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--items', action='store_true', help='run the paired hash traversal matrix')
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
-        prove(work/'proof', runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp']))
+        library = runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
+        if args.items:
+            for flavor in BRIDGES:
+                case = work/flavor
+                case.mkdir()
+                paired_items(case, flavor, library)
+        else:
+            prove(work/'proof', library)

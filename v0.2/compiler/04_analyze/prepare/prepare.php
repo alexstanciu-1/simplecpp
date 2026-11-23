@@ -759,11 +759,14 @@ final class Preparation
 		$source_type = $statement->source_value->type_def();
 		$type = $source_type->iteration();
 		$python = $source->flavor === flavor::python;
-		$statement->keys_only = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
-		if ($statement->requires_key && !$statement->keys_only) {
-			throw new diagnostic($source, $statement->source_value->byte_start(), 'JS for-in requires a typed hash');
+		$paired = $python && $statement->key !== null;
+		$hash = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		$statement->keys_only = $hash && !$paired;
+		if (!$hash && ($paired || $statement->requires_key)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(),
+				$paired ? 'Python items traversal requires a typed hash' : 'JS for-in requires a typed hash');
 		}
-		if ($python && !$statement->keys_only && !($source_type instanceof vector_type_definition)) {
+		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
 		}
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
@@ -1413,6 +1416,10 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_unary_expression) {
 			$this->value($syntax->operand, $initializing);
+			if ($syntax->operator === unary_operator::bit_not && $syntax->source()->flavor === flavor::python
+				&& !type_registry::is_numeric_scalar($syntax->operand->type_def())) {
+				throw new diagnostic($syntax->source(), $syntax->operand->byte_start(), 'Unsupported unary operand: Python bitwise operators require integer scalars');
+			}
 			if ($syntax->operand->type_def() instanceof carrier_type_definition) {
 				$syntax->operand->type_def()->require_extraction($syntax->operand, conversion_context::assignment);
 			}
@@ -1467,14 +1474,14 @@ final class Preparation
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)
+				&& $syntax->source()->flavor === flavor::python
+				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands: Python bitwise operators require integer scalars');
+			}
 			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
 				$owner = $left instanceof shared_record_type_definition ? $left : $right;
 				$owner->prepare_binary($syntax);
-				return;
-			}
-			$box = $left instanceof boxed_type_definition ? $left : $right;
-			if ($box instanceof boxed_type_definition) {
-				$box->prepare_binary($syntax);
 				return;
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
@@ -1483,6 +1490,14 @@ final class Preparation
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
+				if ($syntax->source()->flavor === flavor::python && $syntax->right instanceof ast_keyword_expression && $left !== type_null::instance()) {
+					throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Python None test requires a nullable value, shared handle or None');
+				}
+			}
+			$box = $left instanceof boxed_type_definition ? $left : $right;
+			if ($box instanceof boxed_type_definition) {
+				$box->prepare_binary($syntax);
+				return;
 			}
 			if ($left instanceof carrier_type_definition) {
 				$left->require_extraction($syntax->left, conversion_context::assignment);

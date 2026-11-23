@@ -304,7 +304,7 @@ function compilerConversionPlan(mixed $metadata, array $definitions, array $type
         $promotion = names(at($row, 'promotion_operators'), 'Duplicate conversion promotion operator');
         // Lossless integer widening and integer-to-float rounding need no occurrence-level checks.
         requireThat($promotion === [] || (in_array($operation, ['numeric_floating', 'integer_widen'], true) && $sourceKind === 'integer'), 'Conversion strategy does not support promotion');
-        foreach ($promotion as $operator) requireThat(in_array($operator, ['compare', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide', 'remainder', 'bit_and', 'bit_or', 'bit_xor'], true) && (!in_array($operator, ['remainder', 'bit_and', 'bit_or', 'bit_xor'], true) || $operation === 'integer_widen'), 'Unsupported promotion operator');
+        foreach ($promotion as $operator) requireThat(in_array($operator, ['compare', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'add', 'subtract', 'multiply', 'divide', 'true_divide', 'remainder', 'bit_and', 'bit_or', 'bit_xor'], true) && (!in_array($operator, ['remainder', 'bit_and', 'bit_or', 'bit_xor'], true) || $operation === 'integer_widen'), 'Unsupported promotion operator');
         $binding = null;
         if (in_array($operation, ['checked_integer', 'floating_integer'], true)) {
             $binding = $bindings[$key] ?? null;
@@ -359,7 +359,7 @@ function compilerArithmeticBinding(mixed $compiler, string $name, string $operan
 function compilerLoweringSafety(mixed $compiler): array {
     $safety = [];
     foreach (object(at($compiler, 'lowering_strategies')) as $strategy => $row) {
-        requireThat(in_array($strategy, ['native', 'runtime_compare', 'zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'runtime_concat', 'canonical_identity', 'native_three_way', 'checked_three_way', 'string_three_way', 'checked_power'], true), 'Unsupported lowering safety strategy');
+        requireThat(in_array($strategy, ['native', 'runtime_compare', 'zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'runtime_concat', 'canonical_identity', 'native_three_way', 'checked_three_way', 'string_three_way', 'checked_power', 'checked_floor_divide', 'checked_floor_remainder'], true), 'Unsupported lowering safety strategy');
         fields($row, ['reorderable']);
         $safe = boolean(at($row, 'reorderable'));
         requireThat(!$safe || $strategy === 'native', 'Checked lowering cannot be reorderable');
@@ -446,6 +446,20 @@ function compilerBinaryPlan(mixed $compiler, array $definitions, array $comparis
                 $binding = compilerArithmeticBinding($compiler, textValue(at(at($row, 'bindings'), $op)), $name, textValue(at($row, 'result')), $lowering);
             }
             $plan[$name][$op] = ['result' => textValue(at($row, 'result')), 'lowering' => $lowering, 'spelling' => $arithmeticSpelling[$op], 'binding' => $binding];
+        }
+    }
+    foreach (object($compiler->division ?? (object)[]) as $operand => $bindings) {
+        requireThat(in_array($operand, ['int64', 'float64'], true) && isset($definitions[$operand]), 'Unsupported division operand');
+        fields($bindings, $operand === 'int64' ? ['true_divide', 'floor_divide', 'floor_remainder'] : ['true_divide']);
+        foreach (object($bindings) as $operator => $binding) {
+            [$result, $strategy] = match ($operator) {
+                'true_divide' => ['float64', 'zero_checked_divide'],
+                'floor_divide' => ['int64', 'checked_floor_divide'],
+                'floor_remainder' => ['int64', 'checked_floor_remainder'],
+            };
+            requireThat(isset($definitions[$result]), 'Inactive division result');
+            $plan[$operand][$operator] = ['result' => $result, 'lowering' => $strategy, 'compound' => false,
+                'binding' => compilerArithmeticBinding($compiler, textValue($binding), $operand, $result, $strategy)];
         }
     }
     foreach (object($compiler->shifts ?? (object)[]) as $name => $row) {

@@ -53,8 +53,8 @@ foreach ([
 	["if True\n    return 1", 7, ': before Python suite'],
 	["if True:\nreturn 1", 9, 'INDENT for Python suite'],
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
-	["return 8 // 2", 9, 'Unsupported punctuation'],
-	["return \"\u{03c0}\" / 2", 12, 'Unsupported punctuation'],
+	["return 8 %= 2", 9, 'Unsupported punctuation'],
+	["return \"\u{03c0}\" /= 2", 12, 'Unsupported punctuation'],
 	["return 1 == 2 < 3", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
 	try {
@@ -67,6 +67,60 @@ foreach ([
 		if ($message === 'Unsupported punctuation') {
 			check(str_starts_with($failure->getMessage(), 'invalid.py:1:' . ($offset + 1) . ':'), 'Division diagnostic byte column');
 		}
+	}
+}
+
+
+$bitwise = $frontend->parse(new source_file('flags.py',
+	'return not 1 | 2 ^ 3 & ~4 + 5 == 6 or False', flavor::python));
+$logic = $bitwise->main()->body()->statements[0]->value;
+$comparison = $logic->left->operand;
+$bits = $comparison->left;
+check($logic->operator === binary_operator::logical_or && $logic->left instanceof ast_not_expression
+	&& $comparison->operator === binary_operator::equal && $bits->operator === binary_operator::bit_or
+	&& $bits->right->operator === binary_operator::bit_xor && $bits->right->right->operator === binary_operator::bit_and
+	&& $bits->right->right->right->operator === binary_operator::add
+	&& $bits->right->right->right->left->source_text() === '~4', 'Python bitwise precedence on the shared tree');
+
+$identity = $frontend->parse(new source_file('presence.py',
+	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
+check($identity->operator === binary_operator::logical_or && $identity->left instanceof ast_not_expression
+	&& $identity->left->operand->operator === binary_operator::not_identical
+	&& $identity->left->operand->source_text() === 'value is not None'
+	&& $identity->right->operator === binary_operator::identical && $identity->right->right->word === 'null',
+	'Python identity uses the shared strict comparison at comparison precedence');
+
+$division = "fraction: float = 7 / 2 # keep the newline\nfloor: int = 1 + 20 // 3 % 2 * 4\nmixed: float = 7 / 2.0\nreturn floor";
+$source = new source_file('division.py', $division, flavor::python);
+$file = $frontend->parse($source);
+[$fraction, $floor] = $file->main()->body()->statements;
+$remainder = $floor->initializer->right->left;
+check($fraction->initializer->operator === binary_operator::true_divide && $fraction->initializer->source_text() === '7 / 2'
+	&& $floor->initializer->operator === binary_operator::add && $floor->initializer->right->operator === binary_operator::multiply
+	&& $remainder->operator === binary_operator::floor_remainder && $remainder->left->operator === binary_operator::floor_divide
+	&& $remainder->source_text() === '20 // 3 % 2', 'Python division operators preserve precedence, association and spans');
+$prepared = $frontend->prepare($source, new entry_target(31));
+[$fraction, $floor, $mixed] = $prepared->file->main()->body()->statements;
+check($fraction->initializer->type_def() === scpp\compiler\type_float64::instance()
+	&& $mixed->initializer->type_def() === scpp\compiler\type_float64::instance()
+	&& $floor->initializer->type_def() === scpp\compiler\type_int64::instance(), 'Python division result types');
+$cpp = (new scpp\compiler\Cpp_Emitter())->emit($prepared);
+foreach (['#include <scpp/arithmetic.hpp>', 'scpp::int64_true_divide(', 'scpp::float64_divide(',
+	'scpp::int64_floor_divide(', 'scpp::int64_floor_remainder('] as $expected) {
+	check(str_contains($cpp, $expected), 'Missing generated division binding: ' . $expected);
+}
+foreach ([flavor::cpp, flavor::php, flavor::js] as $peer) {
+	$tokens = $frontend->scan(new source_file('ordinary', "return 8 / 2 % 3; // 1 // 2\n", $peer));
+	$operators = array_filter($tokens->tokens, static fn($token) => in_array($token->kind,
+		[token_kind::slash, token_kind::percent, token_kind::double_slash], true));
+	check(array_values(array_column($operators, 'kind')) === [token_kind::slash, token_kind::percent], 'Default slash comments and operators');
+}
+foreach (['1.0 // 2', '1 % 2.0', 'True / 2', '"fmt" % 2'] as $expression) {
+	try {
+		$frontend->prepare(new source_file('division.py', "return $expression", flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected division rejection: ' . $expression);
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), 'Unsupported binary operands or operator'), $failure->getMessage());
 	}
 }
 
@@ -170,6 +224,44 @@ foreach ([
 	}
 }
 
+
+$text = "for key, value in make_mapping().items():\r\n    pass\r\nreturn 8";
+$file = $frontend->parse(new source_file('items.py', $text, flavor::python));
+$loop = $file->main()->body()->statements[0];
+check($loop instanceof scpp\compiler\ast_foreach_statement && $loop->key?->source_text() === 'key'
+	&& $loop->value->source_text() === 'value'
+	&& $loop->source_value instanceof scpp\compiler\ast_call_expression
+	&& $loop->source_value->source_text() === 'make_mapping()'
+	&& $loop->source_text() === "for key, value in make_mapping().items():\r\n    pass\r\n",
+	'Python items uses existing foreach ownership and retains source spans');
+foreach ([
+	['for x, x in h.items():', 'different names'],
+	['for x, y, z in h.items():', 'Expected in'],
+	['for x, y in h.items(1):', 'requires terminal .items()'],
+	['for x, y in h:', 'requires terminal .items()'],
+	['for x, y in h.items().extra():', 'requires terminal .items()'],
+] as [$head, $message]) {
+	try {
+		$frontend->parse(new source_file('items.py', "$head\n    pass\nreturn 8", flavor::python));
+		throw new RuntimeException('Expected Python items rejection');
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}
+
+
+foreach ([
+	["for fresh, value in h.items():\n    pass\nreturn fresh", 'Unknown or not-yet-initialized local/global: fresh'],
+	["h.items()\nreturn 8", 'unknown method items'],
+] as [$body, $message]) {
+	try {
+		$frontend->prepare(new source_file('items.py', "h: hash<int,int> = {1: 2}\n$body", flavor::python), new entry_target(31));
+		throw new RuntimeException('Expected rejection of fresh key escape or standalone items');
+	} catch (diagnostic $failure) {
+		check(str_contains($failure->getMessage(), $message), $failure->getMessage());
+	}
+}
+
 $text = "items: vector<int> = [1, 2,]\r\nmapping: hash<int,string> = {\r\n    \"k\": items[0],\r\n}\r\nitems[1] = mapping[\"k\"]\r\nreturn items[1]";
 $file = $frontend->parse(new source_file('collections.py', $text, flavor::python));
 [$vector, $hash, $write] = $file->main()->body()->statements;
@@ -192,6 +284,22 @@ foreach ([
 	["missing += 1\nreturn 8", 'local'],
 	["text: string = \"a\"\ntext += \"b\"\nreturn 8", 'Python compound destination requires a numeric scalar'],
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
+	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
+	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
+	["return 1 is None", 'Python None test'],
+	["return None is False", 'literal None'],
+	["return None is None + 1", 'literal None'],
+	["return None is None is None", 'chained comparisons'],
+	["def f(x: mixed) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
+	["def f(x: result_or_bool<int>) -> bool:\n    return x is not None\nreturn 0", 'Python None test'],
+	["def f(x: result_or_false<int>) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
+	["return ~False", 'Unsupported unary'],
+	["return 1 ^ 2.0", 'Unsupported binary'],
+	["return True | False", 'Unsupported binary'],
+	["return 1 & 2 == 3 < 4", 'chained comparisons'],
+	["def bad(&x: int) -> int:\n    return x\nreturn 0", 'identifier'],
+	["def bad(x: A & B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
+	["def bad(x: A | B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
 	["value: int = 1\nvalue /= 2\nreturn 8", 'Unsupported punctuation'],
 ] as [$text, $message]) {
 	try {
@@ -220,7 +328,7 @@ $write = $class->methods['__construct']->body()->statements[0];
 check($write instanceof scpp\compiler\ast_field_assignment
 	&& $write->target->receiver instanceof scpp\compiler\ast_this_expression, 'Self uses the shared receiver node');
 
-$derived = "class Child(Base):\n    def __init__(self, value: int):\n        super().__init__(value)\n    @override\n    def read(self) -> int:\n        return 8\n";
+$derived = "class Child(Base):\n    def __init__(self, value: int):\n        super().__init__(value)\n    @override\n    def read(self) -> int:\n        super().mark(2)\n        return super().read()\n";
 $file = $frontend->parse(new source_file('derived.py', $derived . 'return 8', flavor::python));
 $class = array_values(array_filter($file->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
 $base = $class->methods['__construct']->body()->statements[0];
@@ -231,7 +339,25 @@ check($class->source_text() === $derived && $class->base_reference?->name === 'B
 	&& $read->is_override && $file->tokens->text_at($read->modifier_start) === '@',
 	'Python inheritance preserves source spans on the shared record, base initializer and method marker');
 
+[$statement, $returned] = $read->body()->statements;
+foreach ([[$statement->value, 'super().mark(2)'], [$returned->value, 'super().read()']] as [$call, $spelling]) {
+	check($call instanceof scpp\compiler\ast_call_expression && $call->receiver === null
+		&& $call->qualifier === scpp\compiler\call_qualifier::lexical_parent && $call->source_text() === $spelling,
+		'Python ancestor calls retain their authored spans and shared lexical qualifier');
+}
+
+$implicit = $frontend->parse(new source_file('implicit.py',
+	str_replace('super().__init__(value)', 'super().mark(value)', $derived), flavor::python));
+$child = array_values(array_filter($implicit->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
+[$initializer, $mark] = $child->methods['__construct']->body()->statements;
+check(!$initializer->value->explicit && $mark->value->qualifier === scpp\compiler\call_qualifier::lexical_parent,
+	'A first ordinary super method call follows implicit base initialization');
+
 foreach ([
+	["return super().read()", 'requires a declaring record'],
+	["class Box:\n    def read(self) -> int:\n        return super().read()\nreturn 8", 'requires a base type'],
+	["return super(1).read()", ') after super'],
+	["return super().field", 'Expected ('],
 	["class Box:\n    def read() -> int:\n        return 1\nreturn 8", 'Expected self'],
 	["class Box(Base):\n    pass\nreturn 8", 'Base must be a class'],
 	["class Box:\n    def __init__(self):\n        return 1\nreturn 8", 'Void function cannot return a value'],

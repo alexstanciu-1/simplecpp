@@ -1200,6 +1200,8 @@
         "reorderable": true
       },
       "checked_power": { "reorderable": false },
+      "checked_floor_divide": { "reorderable": false },
+      "checked_floor_remainder": { "reorderable": false },
       "native_three_way": { "reorderable": false },
       "checked_three_way": { "reorderable": false },
       "string_three_way": { "reorderable": false },
@@ -1260,6 +1262,27 @@
         "result": "int64",
         "strategy": "zero_checked_remainder",
         "symbol": "scpp::int64_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_true_divide": {
+        "operand": "int64",
+        "result": "float64",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int64_true_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_floor_divide": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "checked_floor_divide",
+        "symbol": "scpp::int64_floor_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_floor_remainder": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "checked_floor_remainder",
+        "symbol": "scpp::int64_floor_remainder",
         "header": "scpp/arithmetic.hpp"
       },
       "int64_power": {
@@ -1619,6 +1642,14 @@
           "divide": "float64_divide"
         }
       }
+    },
+    "division": {
+      "int64": {
+        "true_divide": "int64_true_divide",
+        "floor_divide": "int64_floor_divide",
+        "floor_remainder": "int64_floor_remainder"
+      },
+      "float64": { "true_divide": "float64_divide" }
     },
     "mixed_numeric_operators": {
       "promotion": "floating_operand",

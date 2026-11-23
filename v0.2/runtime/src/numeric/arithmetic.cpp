@@ -1,5 +1,6 @@
 #include <scpp/arithmetic.hpp>
 #include "scalar_semantics.hpp"
+#include <bit>
 #include <cmath>
 
 namespace scpp {
@@ -46,6 +47,69 @@ double float64_divide(double left, double right)
 {
     return detail::floating_divide(left, right);
 }
+namespace {
+::uint64_t magnitude(::int64_t value)
+{
+    const auto bits = static_cast<::uint64_t>(value);
+    return value < 0 ? ::uint64_t{0} - bits : bits;
+}
+
+// Scale the exact ratio to a binary64 significand before rounding it once.
+double rounded_ratio(::uint64_t numerator, ::uint64_t denominator)
+{
+    constexpr int fraction_bits = 52;
+    using Wide = __uint128_t;
+    int exponent = static_cast<int>(std::bit_width(numerator)) - static_cast<int>(std::bit_width(denominator));
+    const bool below_power = exponent >= 0
+        ? Wide{numerator} < (Wide{denominator} << exponent)
+        : (Wide{numerator} << -exponent) < denominator;
+    if (below_power) --exponent;
+
+    const int shift = fraction_bits - exponent;
+    Wide dividend = numerator;
+    Wide divisor = denominator;
+    if (shift >= 0) dividend <<= shift;
+    else divisor <<= -shift;
+
+    auto significand = static_cast<::uint64_t>(dividend / divisor);
+    const auto twice_remainder = (dividend % divisor) * 2;
+    if (twice_remainder > divisor || (twice_remainder == divisor && (significand & 1U))) ++significand;
+    return std::ldexp(static_cast<double>(significand), exponent - fraction_bits);
+}
+}
+
+double int64_true_divide(::int64_t left, ::int64_t right)
+{
+    if (right == 0) throw std::domain_error("division_by_zero");
+    const auto numerator = magnitude(left);
+    const auto denominator = magnitude(right);
+    constexpr auto exact_limit = ::uint64_t{1} << std::numeric_limits<double>::digits;
+    if (numerator <= exact_limit && denominator <= exact_limit) {
+        return static_cast<double>(left) / static_cast<double>(right);
+    }
+    const double quotient = numerator == 0 ? 0.0 : rounded_ratio(numerator, denominator);
+    return (left < 0) != (right < 0) ? -quotient : quotient;
+}
+
+::int64_t int64_floor_divide(::int64_t left, ::int64_t right)
+{
+    if (right == 0) throw std::domain_error("division_by_zero");
+    if (left == std::numeric_limits<::int64_t>::min() && right == -1) {
+        throw std::overflow_error("division_overflow");
+    }
+    const auto quotient = left / right;
+    const auto remainder = left % right;
+    return remainder != 0 && (remainder < 0) != (right < 0) ? quotient - 1 : quotient;
+}
+
+::int64_t int64_floor_remainder(::int64_t left, ::int64_t right)
+{
+    if (right == 0) throw std::domain_error("modulo_by_zero");
+    if (right == -1) return 0;
+    const auto remainder = left % right;
+    return remainder != 0 && (remainder < 0) != (right < 0) ? remainder + right : remainder;
+}
+
 ::int64_t float64_compare(double left, double right)
 {
     if (std::isnan(left) || std::isnan(right)) throw std::domain_error("unordered_comparison");

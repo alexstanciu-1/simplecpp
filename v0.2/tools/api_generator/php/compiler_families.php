@@ -29,6 +29,13 @@ function compilerMixedNumericOperations(object $compiler, array $definitions): o
             }
         }
     }
+    if (isset($compiler->division->float64->true_divide, $definitions['int64'], $definitions['float64'])) {
+        foreach ([['int64', 'float64'], ['float64', 'int64']] as [$left, $right]) {
+            $row = (object)['left' => $left, 'right' => $right, 'operators' => ['true_divide'],
+                'execution_type' => 'float64', 'result' => 'float64'];
+            $compiler->promotions[] = $row;
+        }
+    }
     unset($compiler->mixed_numeric_operators);
     return $compiler;
 }

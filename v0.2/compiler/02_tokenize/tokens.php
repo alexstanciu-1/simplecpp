@@ -56,6 +56,7 @@ final class Tokenizer
 		token_kind::plus,
 		token_kind::minus,
 		token_kind::star,
+		token_kind::double_slash,
 		token_kind::slash,
 		token_kind::percent,
 		token_kind::dot,
@@ -117,7 +118,7 @@ final class Tokenizer
 				$layout->trivia($tokens, $word, $start);
 				continue;
 			}
-			if (str_contains(" \t\r\n", $first) || str_starts_with($word, '//')
+			if (str_contains(" \t\r\n", $first) || ($layout === null && str_starts_with($word, '//'))
 				|| (($source->flavor === flavor::php) && ($first === '#') && (!str_starts_with($word,
 							'#[')))) {
 				continue;
@@ -168,7 +169,8 @@ final class Tokenizer
 			elseif (isset(self::$punctuation[$word]) && ($first !== '#' || $source->flavor === flavor::php)
 				&& ($first !== '@' || $source->flavor === flavor::python)) {
 				if ($source->flavor === flavor::python && !in_array($word, [
-					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '==', '!=', '<', '<=', '>', '>=',
+					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '/', '//', '%', '==', '!=', '<', '<=', '>', '>=',
+					'~', '&', '^', '|', '&=', '^=', '|=',
 				], true)) {
 					throw new diagnostic($source, $start, 'Unsupported punctuation in Python flavor');
 				}
@@ -224,7 +226,7 @@ final class Tokenizer
 			$spelling = $kind->label();
 			self::$punctuation[$spelling] = $kind;
 			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
-			if ($kind === token_kind::at_sign && $flavor !== flavor::python) continue;
+			if (($kind === token_kind::at_sign || $kind === token_kind::double_slash) && $flavor !== flavor::python) continue;
 			if (($kind !== token_kind::attribute) || ($flavor === flavor::php)) {
 				$parts[] = preg_quote($spelling, '~');
 			}

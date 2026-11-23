@@ -343,8 +343,7 @@ final class Parser
 		}
 		if ($c->keyword('try')) return $this->try_statement($grammar, $collector);
 		if ($c->keyword('raise')) return $this->throw_statement('raise', token_kind::newline);
-		if ($c->keyword('super')) throw new diagnostic($c->tokens->source, $c->offset(), 'super().__init__ must start a derived constructor');
-		if ($c->keyword('self') || ($c->is(token_kind::identifier)
+		if ($c->keyword('super') || $c->keyword('self') || ($c->is(token_kind::identifier)
 			&& ($c->next_is(token_kind::lparen) || $c->next_is(token_kind::dot) || $c->next_is(token_kind::lbracket)))) {
 			$value = $this->primary(field_target: true);
 			if ($c->is(token_kind::lbracket)) return $this->indexed_write($value, token_kind::newline);
@@ -584,9 +583,16 @@ final class Parser
 			if ($requires_key) $c->take(token_kind::lparen, '(');
 			$value_pos = $c->position();
 			$name = $c->name(token_kind::identifier);
+			if ($python && $c->is(token_kind::comma)) {
+				$c->take(token_kind::comma, ',');
+				$key = $header->produced_binding($name, $value_pos, true);
+				$value_pos = $c->position();
+				$name = $c->name(token_kind::identifier);
+				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$value_pos]->offset, 'Foreach key and value must have different names');
+			}
 			if ($python) $c->take_keyword('in');
 			else $c->take(token_kind::identifier, 'in');
-			$source = $this->value();
+			$source = $key === null ? $this->value() : $this->python_items_receiver();
 			if ($requires_key) $c->take(token_kind::rparen, ')');
 		}
 		else {
@@ -739,12 +745,9 @@ final class Parser
 			$c = $this->cursor;
 			$start = $c->position();
 			$spelling = $c->tokens->text_at($start);
-			if ($source->flavor === flavor::python && $c->keyword('super')) {
-				$c->take_keyword('super');
-				$c->take(token_kind::lparen, '(');
-				$c->take(token_kind::rparen, ') after super');
-				$c->take(token_kind::dot, '.');
-				if ($c->name(token_kind::identifier) !== '__init__') throw new diagnostic($source, $c->offset(), 'Expected base constructor');
+			if ($source->flavor === flavor::python && $c->keyword('super')
+				&& isset($c->tokens->tokens[$start + 4]) && $c->tokens->text_at($start + 4) === '__init__') {
+				$this->python_super_member();
 				$args = $this->arguments();
 				$end = $c->take(token_kind::newline, 'NEWLINE') + 1;
 				$base = new ast_base_initialization($start, $end, $args, true);
@@ -817,7 +820,7 @@ final class Parser
 		while (!$this->cursor->is(token_kind::rparen)) {
 			$start = $this->cursor->position();
 			if (in_array($this->cursor->tokens->source->flavor, [flavor::js, flavor::python], true)) {
-				$mode = $this->parameter_mode();
+				$mode = $this->cursor->tokens->source->flavor === flavor::python ? passing_mode::value : $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
 				$type = $this->type_reference(allow_void: true, parameter: true);
@@ -1014,7 +1017,8 @@ final class Parser
 			}
 		}
 		$end = $this->cursor->position();
-		if ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows())) {
+		if ($this->cursor->tokens->source->flavor !== flavor::python
+			&& ((($parameter || $allow_union) && $this->cursor->is(token_kind::pipe)) || ($parameter && $this->intersection_follows()))) {
 			$operator = $this->cursor->tokens->tokens[$end]->kind;
 			$separator = $operator === token_kind::pipe ? '|' : '&';
 			$this->cursor->take($operator, $separator);
@@ -1105,6 +1109,7 @@ final class Parser
 			}
 			$operator = match ($kind) {
 				token_kind::keyword => match (true) {
+					$python && $this->cursor->keyword('is') => binary_operator::identical,
 					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
 					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
 					$this->cursor->keyword('xor') => binary_operator::logical_xor,
@@ -1117,8 +1122,9 @@ final class Parser
 			token_kind::dot => $this->cursor->tokens->source->flavor === flavor::php ? binary_operator::concatenate : null,
 				token_kind::minus => binary_operator::subtract,
 				token_kind::star => binary_operator::multiply,
-				token_kind::slash => binary_operator::divide,
-				token_kind::percent => binary_operator::remainder,
+				token_kind::slash => $python ? binary_operator::true_divide : binary_operator::divide,
+				token_kind::double_slash => binary_operator::floor_divide,
+				token_kind::percent => $python ? binary_operator::floor_remainder : binary_operator::remainder,
 				token_kind::ampersand => binary_operator::bit_and,
 				token_kind::pipe => binary_operator::bit_or,
 				token_kind::caret => binary_operator::bit_xor,
@@ -1139,26 +1145,22 @@ final class Parser
 			if ($shift === '<<' || $shift === '>>') {
 				$operator = $shift === '<<' ? binary_operator::shift_left : binary_operator::shift_right;
 			}
-			$python_identity = $python && $left instanceof ast_index_expression
-				&& $this->cursor->tokens->text_at($this->cursor->position()) === 'is';
-			if ($python_identity) $operator = binary_operator::identical;
-			$comparison = $python_identity || $python && in_array($kind, [
-				token_kind::equal, token_kind::not_equal, token_kind::less, token_kind::less_equal,
-				token_kind::greater, token_kind::greater_equal,
-			], true);
-			$precedence = $comparison ? binary_operator::equal->precedence() : $operator?->precedence();
-			if ($operator === null || $precedence < $minimum_precedence) break;
+			if ($operator === null) break;
+			$precedence = $python ? Python_Grammar::precedence($operator) : $operator->precedence();
+			if ($precedence < $minimum_precedence) break;
+			$comparison = $python && $precedence === Python_Grammar::COMPARISON_PRECEDENCE;
 			if ($comparison && $comparison_seen) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons are deferred');
 			}
 			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
-			if ($shift === '<<' || $shift === '>>') {
-				$this->cursor->take($kind, 'shift operator');
-			}
+			$python_identity = $python && $operator === binary_operator::identical;
 			if ($python_identity && $this->cursor->keyword('not')) {
 				$this->cursor->take_keyword('not');
 				$operator = binary_operator::not_identical;
+			}
+			if ($shift === '<<' || $shift === '>>') {
+				$this->cursor->take($kind, 'shift operator');
 			}
 			$rhs_start = $this->cursor->position();
 			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
@@ -1168,9 +1170,8 @@ final class Parser
 				&& ($operator === binary_operator::identical || $operator === binary_operator::not_identical)
 				&& $right->name === 'undefined' && $this->cursor->position() === $rhs_start + 1
 				&& $this->cursor->tokens->text_at($rhs_start) === 'undefined';
-			if ($python_identity && !$key_test) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$rhs_start]->offset,
-					'Indexed Python identity test requires bare undefined');
+			if ($python_identity && !$key_test && !($right instanceof ast_keyword_expression && $right->word === 'null')) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None or an indexed comparison with undefined');
 			}
 			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
 		}
@@ -1355,6 +1356,34 @@ final class Parser
 			: new ast_index_assignment($receiver, $index, $value, $end);
 	}
 
+	/** Read the receiver of a paired Python loop without constructing an items call. */
+	private function python_items_receiver(): ast_expression
+	{
+		$c = $this->cursor;
+		$receiver = $this->postfix($this->atom(), false, stop_before_items: true);
+		if (!$this->python_items_suffix_ahead()) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Python paired traversal requires terminal .items()');
+		}
+		$c->take(token_kind::dot, '.');
+		$c->name(token_kind::identifier);
+		$c->take(token_kind::lparen, '(');
+		$c->take(token_kind::rparen, ')');
+		return $receiver;
+	}
+
+	/** Recognize the contextual suffix only when it ends the loop header. */
+	private function python_items_suffix_ahead(): bool
+	{
+		$c = $this->cursor;
+		$at = $c->position();
+		$tokens = $c->tokens->tokens;
+		return $c->is(token_kind::dot) && $c->next_is(token_kind::identifier)
+			&& $c->tokens->text_at($at + 1) === 'items'
+			&& ($tokens[$at + 2]->kind ?? null) === token_kind::lparen
+			&& ($tokens[$at + 3]->kind ?? null) === token_kind::rparen
+			&& ($tokens[$at + 4]->kind ?? null) === token_kind::colon;
+	}
+
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
 	private function primary(bool $field_target = false): ast_expression
 	{
@@ -1362,7 +1391,7 @@ final class Parser
 	}
 
 	/** Continue member calls and indexing on the expression already parsed. */
-	private function postfix(ast_expression $value, bool $field_target): ast_expression
+	private function postfix(ast_expression $value, bool $field_target, bool $stop_before_items = false): ast_expression
 	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
@@ -1384,6 +1413,7 @@ final class Parser
 				continue;
 			}
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
+				if ($stop_before_items && $this->python_items_suffix_ahead()) break;
 				$this->cursor->take(token_kind::dot, '.');
 				$name = $this->cursor->name(token_kind::identifier);
 				$value = ($flavor === flavor::js || $flavor === flavor::python) && !$this->cursor->is(token_kind::lparen)
@@ -1400,6 +1430,17 @@ final class Parser
 			$value = new ast_index_expression($value, $index, $end);
 		}
 		return $value;
+	}
+
+	/** Consume the zero-argument ancestor qualifier and its named member. */
+	private function python_super_member(): string
+	{
+		$c = $this->cursor;
+		$c->take_keyword('super');
+		$c->take(token_kind::lparen, '(');
+		$c->take(token_kind::rparen, ') after super');
+		$c->take(token_kind::dot, '. after super()');
+		return $c->name(token_kind::identifier);
 	}
 
 	/** Recognize contextual member qualifiers according to flavor, separator and supported syntax. */
@@ -1504,6 +1545,12 @@ final class Parser
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
+		}
+		if ($c->keyword('super') && $c->tokens->source->flavor === flavor::python) {
+			$start = $c->position();
+			$name = $this->python_super_member();
+			if ($name === '__init__') throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start]->offset, 'super().__init__ must start a derived constructor');
+			return $this->call_arguments($start, $name, token_kind::dot, null, call_qualifier::lexical_parent);
 		}
 		$qualifier = $this->member_qualifier();
 		if ($qualifier !== null) return $this->qualified_member($qualifier);
@@ -1676,7 +1723,7 @@ final class Parser
 		$start = $this->cursor->position();
 		$word = $this->cursor->at_end() ? '' : $this->cursor->tokens->text_at($start);
 		if ($this->cursor->tokens->source->flavor === flavor::python) {
-			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'true', 'false', 'null' => '', default => $word };
+			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'None' => 'null', 'true', 'false', 'null' => '', default => $word };
 		}
 		if (type_registry::literal($word) !== null) {
 			$kind = $this->cursor->tokens->tokens[$start]->kind;
