@@ -83,6 +83,11 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$body = $decl('int', 'value', '99') . $loop($v('items'), 'echo ' . $v('value') . ';') . 'echo ' . $v('value') . ';return 8;';
 		$emit('family_' . $index, $setup . $body, '102020');
 		$emit('keys_' . $index, $setup . $loop($v('items'), 'echo (string)' . $v('key') . ';', true) . 'return 8;', $keyed ? 'ab' : '01');
+		if ($index < 2) {
+			$pairs = 'echo ' . $v('key') . ',":",' . $v('value') . ',";";';
+			$emit('pairs_' . $index, $setup . $loop($v('items'), $pairs, true) . 'return 8;',
+				$keyed ? 'a:10;b:20;' : '0:10;1:20;');
+		}
 		// Capture the initial physical limit; appended entries do not extend this traversal.
 		$emit('grow_' . $index, $setup . $decl('int', 'value', '0')
 			. $loop($v('items'), 'echo ' . $v('value') . ';' . $put('items', 'extra', 30)) . 'return 8;', '1020');

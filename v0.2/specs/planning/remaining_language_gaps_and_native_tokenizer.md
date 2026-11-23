@@ -72,6 +72,30 @@ A missing language feature can be recorded and the batch can advance. Captures,
 closure defaults, callable-local storage design, new diagnostics, and other language
 changes need separate decisions. The original audit counts below are historical.
 
+### Verification results at 76c8e86ea
+
+All 36 queued donor IDs were checked. Migration means that the indicated v0.2 spelling or entry convention reproduced the behavior. The [PHP donor regression](../../compiler/tests/bootstrap_donor_verification_native.py) checks diagnostic locations and compares resident and fresh builds. Its positive cases assert native output and exit status. The [foreach](../../compiler/tests/foreach.php), [static data](../../compiler/tests/protected_static_data_native.py), [expression qualification](../../compiler/tests/expression_static_native.py) and [string enum](../../compiler/tests/enum_strings.php) fixtures provide the other runtime assertions.
+
+| Batch | Donor IDs | Result | Observation |
+| --- | --- | --- | --- |
+| 1 | SCOPE-VAR-003 | Deferred for bootstrap | The comment-annotated declaration reports `Expected identifier` at its semicolon. The explicit donor callable-local declaration also fails at the type. An immediately initialized closure prints 6. Defer separately declared callable locals until a bootstrap consumer needs them. |
+| 2 | CTRL-FOREACH-001, CTRL-FOREACH-002 | Verified | Value iteration visits 10 and 20. The vector prints `0:10;1:20;` and the hash prints `a:10;b:20;` with keyed iteration. |
+| 3 | VAR-ORDER-001, NS-QUALIFIED-003 | Verified | Reading `$b` before its declaration diagnoses `b` at the read. Calling `g()` from `App\f` selects `App\g` and prints `local`. |
+| 3 | NS-USE-003 | Verified v0.2 rule | `use Lib\X;` makes `new X()` construct the imported class and its field reads as 7. The later donor catalog supersedes the historical rejection. |
+| 3 | NS-EXEC-001, NS-EXEC-003 | Migration | Standalone entries require an explicit value return. With the return supplied the single call prints `1`, and calls separated by a class declaration print `12` in source order. |
+| 3 | NS-EXEC-002, NS-EXEC-005 | Verified | The entry prints `1` and exits with status 1. A nested namespace rejects at its declaration. |
+| 3 | RESOLVE-001, CLASS-NS-001/002/003 | Verified with typed fixtures | The constructor and qualified function print `ctorfunc`. Local and rooted construction both produce the namespaced class with field value 7. |
+| 3 | CLASS-NS-004 | Verified v0.2 rule | Inside `A\B`, `new A\B\X()` selects `A\B\A\B\X` (7) despite a competing `A\B\X` (99). With the deeper provider absent, construction rejects. This matches donor checkpoint CS347. |
+| 4 | CLASS-CONST-001 | Migration | `public const X = 1` fails at `=`. With `public const int X = 1`, `A::X` prints `1`. |
+| 4 | CLASS-CONST-002/003/004/005, CLASS-PROP-002B/002C/002D, CLASS-PROP-006B/006C | Verified | Class, self, parent and called-type constant reads and the corresponding static field operations select the expected declarations. Changing the ancestor switches `771` to `919`. Changing the left child's constant switches `277` to `499`. |
+| 4 | CLASS-PROP-007, CLASS-STATIC-NS-001/002/003 | Verified | Expression-qualified writes change the selected storage. Local, rooted and object-qualified static calls each return 9. The differing-runtime-class fixture distinguishes declared-type selection (2) from explicit child selection (9). |
+| 5 | CLASS-PROP-009, CLASS-CALL-011, CLASS-MEMBER-009 | Verified rejection | Diagnostics identify the undeclared field `A.y`, forbid explicit destructor invocation and restrict virtual modifiers to instance methods, respectively. |
+| 5 | CLASS-PROP-010, CLASS-CALL-009 | Verified rejection | Variable member names after `->` report `Expected identifier` at the computed name. Literal-name controls succeed. The catalog specifies rejection during parsing. |
+| 6 | ENUM-003 | Migration, partial | `enum_try_from_value` returns the typed case on a hit and null on a miss. The native trace `!Zeros!Zero` checks single evaluation. Nullsafe chaining stays deferred. |
+| 6 | LIT-CONST-001 | Bootstrap migration | Source `PHP_INT_MAX` reports `Unknown constant: PHP_INT_MAX`. Use the exact int64 literal `9223372036854775807` in bootstrap source. The native probe prints that value. |
+
+Captures, closure defaults and writable iteration stay deferred.
+
 ## First discussion · G01
 
 Use one initialized local to compare the intended results and stores. These examples describe cases to review, with nested uses still requiring a separate admission decision.
