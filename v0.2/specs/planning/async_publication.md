@@ -142,3 +142,7 @@ Free-function task and blocking entry points are published by producer and depen
 #### Task values and references
 
 Bare task-producing calls reject on all three flavors. Task variables, parameters, capturing callbacks and live cursors would expose the frame outside direct consumption. Define single-consumer transfer, abandoned-frame cleanup and borrowing before adding these forms. The current source contract expressly requires owned parameters and rejects reference results. The all-flavor reference-parameter rejection is a regression check. Scheduler cancellation, cross-thread tasks and fibers are separate language/runtime contracts.
+
+#### Remaining payload storage
+
+The current promise eagerly default-constructs its payload. A record with required constructor arguments or an authored destructor needs construction on successful return and destruction only when initialized. Reuse the concrete recipe with explicitly tracked storage lifetime if approved. A fixed_array result separately needs a returnable native representation; raw arrays cannot be returned by value. Class owners need a proof that required presence survives frame transfer, distinct from the existing empty shared struct handle. Nested passive record layouts need transitive eligibility and invalidation before the direct-field restriction can be relaxed.
