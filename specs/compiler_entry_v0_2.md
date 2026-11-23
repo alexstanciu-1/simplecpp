@@ -190,7 +190,8 @@ not inferred declarations. Parameters are initialized on entry, with unknown
 caller values during body preparation, and are mutable local storage. Value parameters own copies; explicit references bind caller storage.
 
 Positional calls can omit a trailing suffix with declared defaults. Direct calls to
-source functions and directly resolved instance methods with by-value parameters also accept labels.
+source functions, directly resolved instance methods and explicitly type-qualified static methods
+with by-value parameters also accept labels.
 An instance call evaluates its receiver once and retains it through the call, before evaluating arguments. PHP, C++ and JS
 use `difference(right: nextRight(), left: nextLeft())`. Python uses
 `difference(right=nextRight(), left=nextLeft())`. Positional arguments can precede
@@ -226,7 +227,7 @@ parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Named arguments on virtual, interface-dispatched and static methods, constructors and runtime calls, variadics, read-only references, reference returns, overloads, signature inference,
+Named arguments on virtual or interface-dispatched methods, other static call forms, constructors and runtime calls, variadics, read-only references, reference returns, overloads, signature inference,
 first-class callables, methods and trailing parameter/argument commas are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 

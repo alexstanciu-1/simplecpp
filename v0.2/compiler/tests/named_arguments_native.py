@@ -92,6 +92,41 @@ def prove_methods(work, flavor):
     revisions(work, flavor, {'main': main, 'target': target, 'effects': effects}, edits)
 
 
+def prove_static_methods(work, flavor):
+    forms = fixture(flavor)
+    fn, v = forms['function'], forms['v']
+    access = '.' if flavor == 'js' else '::'
+    signature = {'php': 'public static function make(int $offset, int $count=2):int',
+                 'cpp': 'public: static int make(int offset, int count=2)',
+                 'js': 'static make(offset:int, count:int=2):int'}[flavor]
+    base = forms['klass']('Window', signature + f' {{return {v}offset * 10 + {v}count;}}')
+    child = {'cpp': 'class Child : public Window {};', 'php': 'class Child extends Window {}',
+             'js': 'class Child extends Window {}'}[flavor]
+    effects = (fn('countFirst', 'int', [], 'echo "C";return 3;')
+               + fn('offsetSecond', 'int', [], 'echo "O";return 4;'))
+    positional = fn('plain', 'int', [], f'return Child{access}make(0, 8);')
+    main = (f'echo Child{access}make(count: countFirst(), offset: offsetSecond()),'
+            f'Window{access}make(offset: 1); return plain();')
+    renamed = base.replace('offset', 'start')
+    edits = [(None, None, b'CO4312'), (None, None, b'CO4312'),
+             ('base', renamed, 'Unknown named argument: offset'),
+             ('main', 'return plain();', b''),
+             ('main', main.replace('offset:', 'start:'), b'CO4312')]
+    collision = 'namespace Window {' + fn('make', 'int', [('start', 'int')], 'return 66;') + '}'
+    edits.extend([('collision', collision, b'CO4312' if flavor == 'php' else b'CO4366'),
+                  ('collision', None, b'CO4312')])
+    if flavor == 'php':
+        for qualifier in ('self', 'static'):
+            edits.append(('base', renamed.replace('public static function',
+                          f'public static function probe():int {{return {qualifier}::make(start: 1);}} public static function'),
+                          'Named arguments require a direct source function'))
+        edits += [('base', renamed, b'CO4312'),
+                  ('main', '$w=new Child();return $w::make(start: 1);',
+                   'Named arguments require a direct source function')]
+    revisions(work, flavor, {'main': main, 'base': base, 'child': child,
+                             'effects': effects, 'positional': positional}, edits)
+
+
 if __name__ == '__main__':
     with TemporaryDirectory(prefix='scpp-named-arguments-') as tmp:
         for flavor in ('php', 'cpp', 'js'):
@@ -100,6 +135,17 @@ if __name__ == '__main__':
                   'target': 'def difference(left: int, right: int) -> int:\n    return left - right'}, [
                       (None, None, b''), ('target', 'def difference(left: int, offset: int) -> int:\n    return left - offset', 'Unknown named argument: right'),
                       ('main', 'return difference(offset=3, left=11)', b'')])
+
+        static_methods = Path(tmp) / 'static-methods'
+        static_methods.mkdir()
+        for flavor in ('php', 'cpp', 'js'):
+            prove_static_methods(static_methods, flavor)
+
+        guard(static_methods, 'php', 'static-conversion-order',
+              'class Window {public static function make(int $offset, byte $count):int {echo "X";return 8;}} '
+              'function first():int {echo "C";return 999;} function later():int {echo "O";return 1;} '
+              'return Window::make(count: first(), offset: later());',
+              'integer_cast_out_of_range', expected_stdout=b'C')
 
         methods = Path(tmp) / 'methods'
         methods.mkdir()

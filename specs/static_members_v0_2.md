@@ -35,7 +35,11 @@ Public static struct methods accept the same parameters, defaults, writable refe
 and returns as ordinary struct methods. PHP and C++ call `Type::method(args)`; JS calls
 `Type.method(args)`. In JS a visible local or parameter selects instance lookup first.
 Where a namespace function and a static method share the same written C++ or JS path,
-the existing namespace function takes precedence. A static method body has no `this` receiver.
+the existing namespace function takes precedence. An explicit type name admits named arguments
+on static methods with by-value parameters, including inherited methods. For example,
+`Child::make(count: first(), offset: second())` binds labels against the selected declaration,
+evaluates and converts `first()` before `second()`, and passes the results in parameter order.
+A static method body has no `this` receiver.
 
 Inside a struct method or constructor, PHP `self::`, C++ `Self::` and JS `class.`
 qualify the declaring struct directly. They support static calls, constant reads

@@ -943,7 +943,7 @@ final class Parser
 			}
 			return new ast_callable_reference($name, $start, $end);
 		}
-		$labels = $qualifier === call_qualifier::ordinary && $separator !== token_kind::scope ? [] : null;
+		$labels = $qualifier === call_qualifier::ordinary && ($separator !== token_kind::scope || $receiver === null) ? [] : null;
 		$arguments = $this->arguments($labels);
 		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);

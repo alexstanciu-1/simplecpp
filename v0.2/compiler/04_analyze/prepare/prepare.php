@@ -2026,12 +2026,12 @@ final class Preparation
 		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
-			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
+			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
@@ -2191,6 +2191,10 @@ final class Preparation
 			}
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
+		}
+		if ($call instanceof ast_named_call) {
+			if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
 		}
 		if (!$method->is_static && !$late && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
