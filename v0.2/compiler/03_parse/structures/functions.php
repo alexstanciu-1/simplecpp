@@ -81,20 +81,40 @@ final class ast_callable_reference extends ast_expression
 	}
 }
 
-/** An expression-bodied lambda owns only its written parameters, result type and expression. */
-final class ast_lambda_expression extends ast_expression
+/** The callable whose result contract applies to returns in a statement block. */
+interface statement_return_target
+{
+	/** @var ast_parameter_declaration[] */
+	public array $parameters { get; }
+	public bool $returns_reference { get; }
+	public ?int $reference_return_origin { get; }
+	public bool $is_implicit_entry { get; }
+	public function return_type_def(): type_definition;
+}
+
+/** Owns the signature and body while its enclosing function owns incremental preparation. */
+final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
 	/** @param ast_parameter_declaration[] $parameters */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ast_type_reference $result, public readonly ast_expression $body)
+		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body)
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
 		$result->attach($this);
 		$body->attach($this);
+	}
+
+	public bool $returns_reference { get => false; }
+	public ?int $reference_return_origin { get => null; }
+	public bool $is_implicit_entry { get => false; }
+
+	public function return_type_def(): type_definition
+	{
+		return $this->type_def()->signature->result;
 	}
 
 	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
@@ -408,7 +428,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
 

@@ -167,7 +167,7 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
-		?entry_target $target, ast_function_declaration $function): int /** uint8 */
+		?entry_target $target, statement_return_target $function): int /** uint8 */
 	{
 		$generator = $function->return_type_def();
 		$completion = statement_completion::fallthrough;
@@ -410,7 +410,7 @@ final class Preparation
 
 	/** Compose protected exits with the independent finalizer, whose abrupt exits replace pending exits. */
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
@@ -529,7 +529,7 @@ final class Preparation
 	}
 
 	private function switch_statement(ast_switch_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int
+		statement_return_target $function): int
 	{
 		$this->value($syntax->subject);
 		$type = $syntax->subject->type_def();
@@ -594,7 +594,7 @@ final class Preparation
 	}
 
 	/** Prepare a separate lexical frame; facts from its writes are forgotten on exit. */
-	private function lexical_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
+	private function lexical_block(ast_block $body, ?entry_target $target, statement_return_target $function,
 		?ast_produced_binding $binding = null): int /** uint8 */
 	{
 		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
@@ -638,7 +638,7 @@ final class Preparation
 
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
 	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$completion = 0;
 		$has_else = false;
@@ -703,7 +703,7 @@ final class Preparation
 	}
 
 	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
-	private function branch_guard(ast_expression $condition, ast_function_declaration $function, bool $paired): ?ast_object_access_expression
+	private function branch_guard(ast_expression $condition, statement_return_target $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
@@ -736,7 +736,7 @@ final class Preparation
 
 	/** Resolve produced types and ordinary assignments once; no iteration-dependent analysis or snapshots. */
 	private function foreach_loop(ast_foreach_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
@@ -806,7 +806,7 @@ final class Preparation
 
 	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
 	private function for_loop(ast_for_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->local_frames[] = [];
 		try {
@@ -820,7 +820,7 @@ final class Preparation
 
 	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
 	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
@@ -1708,29 +1708,29 @@ final class Preparation
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
-		$frames = $this->local_frames;
-		$writes = $this->latest_writes;
-		$guards = $this->guards;
-		$guard_reads = $this->guard_reads;
-		$unknown = $this->unknown_initializers;
-		$in_lambda = $this->in_lambda;
-		$this->local_frames = [$locals];
-		$this->latest_writes = [];
-		$this->guards = $this->guard_reads = [];
-		$this->unknown_initializers = false;
-		$this->in_lambda = true;
-		try {
-			$this->value($lambda->body);
-			$conversion = $result->prepare_conversion($lambda->body, conversion_context::typed_destination);
-			$lambda->settle_lambda(new lambda_type_definition(new callback_type_definition($result, $inputs)), $conversion);
-		} finally {
-			$this->local_frames = $frames;
-			$this->latest_writes = $writes;
-			$this->guards = $guards;
-			$this->guard_reads = $guard_reads;
-			$this->unknown_initializers = $unknown;
-			$this->in_lambda = $in_lambda;
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs));
+		$scope = new self();
+		$scope->owner = $this->owner;
+		$scope->symbols = $this->symbols;
+		$scope->dependencies = $this->dependencies;
+		$scope->local_frames = [$locals];
+		$scope->in_lambda = true;
+		if ($lambda->body instanceof ast_block) {
+			$errors = Declaration_Diagnostics::locals($lambda->body);
+			if ($errors !== []) throw new diagnostic_group($errors);
+			$lambda->settle_lambda($type, value_conversion::identity);
+			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
+			if (($completion & statement_completion::fallthrough) !== 0) {
+				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
+					'Non-void closure requires a value return');
+			}
+		} else {
+			$scope->value($lambda->body);
+			$lambda->settle_lambda($type, $result->prepare_conversion($lambda->body, conversion_context::typed_destination));
 		}
+		$this->statement_visits += $scope->statement_visits;
+		$this->expression_visits += $scope->expression_visits;
+		$this->name_lookups += $scope->name_lookups;
 	}
 
 	/** Resolve only the published signature, then validate and convert arguments in source order. */

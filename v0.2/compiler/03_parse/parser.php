@@ -1402,13 +1402,26 @@ final class Parser
 		return false;
 	}
 
-	private function lambda_expression(): ast_lambda_expression
+	private function lambda_expression(bool $block = false): ast_lambda_expression
 	{
 		$c = $this->cursor;
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
 		$parameters = $this->parameters();
 		$c->take(token_kind::colon, ': (lambda result type)');
 		$result = $this->return_type();
+		if ($block) {
+			$outer_scope = $this->lexical;
+			$outer_type = $this->declaring_type;
+			$collector = new Body_Collection($this->root->scope, $parameters);
+			$this->declaring_type = null;
+			try {
+				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
+				return new ast_lambda_expression($start, $parameters, $result, $body);
+			} finally {
+				$this->lexical = $outer_scope;
+				$this->declaring_type = $outer_type;
+			}
+		}
 		$c->take(token_kind::arrow, '=>');
 		$outer = $this->lambda_names;
 		$this->lambda_names = [];
@@ -1424,6 +1437,7 @@ final class Parser
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		if ($c->tokens->source->flavor === flavor::php && $c->keyword('function')) return $this->lambda_expression(true);
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
