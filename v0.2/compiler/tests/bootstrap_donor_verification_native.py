@@ -9,6 +9,28 @@ from extends_native import runtime, source_edit
 
 # Revisions of main.php in one compiler. Error strings include the source location.
 CASES = [
+    ('chained-assignment',
+     '$a = $b = 1; return 8;',
+     'main.php:1:9: Expected ;'),
+    ('split-assignment',
+     'class Box {public int $n=7;} function makeBox():Box {echo "M"; return new Box();} '
+     '$b=makeBox(); $a=$b; $b->n=9; echo $a->n; return 8;',
+     (8, b'M9', b'')),
+    ('discarded-arithmetic',
+     '$a=1; $b=2; $c=3; $a + 1; return 8;',
+     'main.php:1:22: Expected identifier'),
+    ('discarded-call-result',
+     'function observed():int {echo "C"; return 2;} observed(); return 8;',
+     (8, b'C', b'')),
+    ('unused-result-still-checked',
+     '$x=2; $divisor=0; $unused=$x / $divisor; return 8;',
+     (1, b'', b'division_by_zero\n')),
+    ('nullable-string-field',
+     'class A {public ?string $x;} $a=new A(); echo (int)isset($a->x); return 8;',
+     'main.php:1:17: Unsupported instance field type: nullable<string>'),
+    ('nullable-class-field',
+     'class B {} class A {public ?B $b;} $a=new A(); if ($a->b===null) {echo 1;} return 8;',
+     (8, b'1', b'')),
     ('scope',
      '$f /** function<int(int)> */; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5); return 8;',
      'main.php:1:29: Expected identifier'),

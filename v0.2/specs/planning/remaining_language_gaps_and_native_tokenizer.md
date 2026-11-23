@@ -37,7 +37,7 @@ The example column includes companion-audit topics. The short list tracks only t
 
 ## Language closure before tokenizer integration
 
-Language closure is the next milestone. G18 async/await is tracked separately and excluded here. The six-batch review settled observations for 36 donor IDs. The 177 historical Missing/Partial rows in the appendix still need a current per-ID disposition before they can supply a remaining-work count.
+The [non-async closure pass](non_async_language_closure.md) reconciles all 177 historical Missing/Partial records, records their dispositions and identifies remaining bootstrap decisions. G18 async/await is tracked separately.
 
 | Groups | Current disposition and remaining work |
 | --- | --- |

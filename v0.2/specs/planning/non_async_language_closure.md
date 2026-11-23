@@ -1,0 +1,110 @@
+# Non-async bootstrap language closure
+
+Reviewed at `7c8560abc` in simple_cpp_03. Scope: G01–G17 of the [language-first plan](remaining_language_gaps_and_native_tokenizer.md#language-closure-before-tokenizer-integration). Async, tokenizer integration, helpers and libraries have separate workstreams.
+
+## Result
+
+The inventory pass is complete. Direct translation still has language gaps. The 177 historical Missing/Partial records comprise 93 with bounded evidence, 46 with a migration, 26 deferred, and 12 requiring a decision. These categories describe the **bootstrap disposition of each record**. For composite donor records the notes state which parts remain deferred. The appendix in the earlier plan lists 164 IDs; its G05 and G13 evidence sections account for the other ten collection and three exception/destructor records. Companion families and additional findings in current compiler source are outside those counts.
+
+### Decisions before moving on
+
+1. **Nullable string fields (G11).** This is the clearest implementation candidate. The source uses them for [parser context](../../compiler/03_parse/parser.php) and [module manifests](../../compiler/01_prepare_inputs/modules.php). A nullable class field passes; an instance field of type `?string` fails at the field declaration. Empty bytes are valid data and cannot stand in for absence. Recommend supporting the existing nullable-string carrier in fields. Prove absent, present empty, present nonempty, replacement/reset and recovery across a changed field type.
+2. **Result and storage types (companion TYPE-UNION, REC-INIT).** [Constant dispatch](../../compiler/types/definition.php) returns `int|string|null` keys, and constant evaluation also distinguishes a sentinel from ordinary scalar values. [Resolved calls](../../compiler/03_parse/structures/functions.php) store several declaration categories or absence. Today's two-class common-base union does not represent these signatures. Choose a named tagged result per algorithm or expand the language. Prove the actual label-key consumer before generalizing. The PHP return-target contract in the same file uses interface getter properties; the target rejects interface fields. A getter-method control dispatched through the interface and printed 1. Prefer methods and private storage for this port; confirm who may write each staged field.
+3. **Enum representation (G12).** The production three-case unbacked `constant_dispatch` strategy uses case identity and methods. The no-value syntax fails at the first case; an explicitly numbered enum with a method passed natively. Recommend assigning explicit internal case values for bootstrap and deferring enum-interface support until an actual caller dispatches through that interface. Recheck if a port exposes backing values externally.
+4. **Expression results (G01).** Recommend ordinary assignments for the parser's child-collector chains and the preparation reset chains. A local holding the RHS result preserves single evaluation, write order and identity for these ordinary destinations. A standalone call retains effects; a temporary retains checked arithmetic failure. Drop only expressions proven pure and total. Chained assignment and general expression statements would be language features if exact donor syntax is required.
+5. **Collections and references (G05/G07).** Choose concrete records or typed nested containers for each heterogeneous table, with explicit write-back on copied reads. For historical indexed emptiness, distinguish a missing key from a present zero/empty payload. Nullable assignment and typed empty replacement cover specific local resets; they do not establish all unset/clean semantics. By-value parameters suffice for a read-only count; a required zero-copy borrow needs a separate lifetime decision. None of these choices permits borrowing a relocatable element.
+
+### Companion topics beyond the donor rows
+
+| Group | Current evidence and bootstrap disposition |
+| --- | --- |
+| G14 · Compile-time types/layout | Literal constants and cross-file dependency tracking exist. The computed declaration `const int N=2+3;` rejects; literal 5 printed 5. Fixed and nested byte arrays have native proofs; the int-element probe rejects. Keep literal values/metadata specializations for bootstrap. Source templates, restricted payload unions, packing and general layout queries require a concrete source/layout contract before implementation. |
+| G15 · Native interop | Source `extern function` rejects. The supported integration route uses registered metadata. No inline native syntax or new library dependency is needed for this pass. Recommend keeping raw extern/inline native source outside the bootstrap surface. |
+| G16 · Policy | The [frontend contract](../compiler_frontends.md) defines one language model across flavors. Existing preparation rejects invalid source; checked runtime failures remain observable. Keep diagnostic severity/profile design separate from language validity. No alternative strict/legacy language mode is needed. |
+| G17 · Synchronous producers | The [yield proof](../../compiler/docs/yield.md) covers free producers, suspended locals/loops/foreach and cleanup. Source delegation rejects. The production declaration and adapter walkers use member producers and delegation; the visitor alternative relies on exhaustive traversal and preserved order. Use a visitor for those walks; reopen producer methods, nested cursors or delegation if a consumer needs pull/lazy/early-abandonment behavior. |
+
+Other compound companion probes isolate important spelling limits. Parenthesized xor printed 0 for two truthy integers. Grouped match labels rejected; separate labels printed 7. Named arguments rejected; the equivalent positional call printed 4 for the supplied defaults. A reordered call with side effects needs temporaries in the original evaluation order. General nested indexed writes, asymmetric setters and nullsafe chaining still have separate bounds. A class/interface parameter intersection is already supported; it does not solve heterogeneous scalar results. The compound static-cache specimen failed type resolution at `Node`; this alone does not establish a cache-lifetime blocker. These are scoped observations, not production-wide equivalence proofs.
+
+### Verification
+
+Replayed all 30 runnable donor probes among the original 177 and all 21 non-async executable companion probes in the archived 2026-11-22 ledger. Successful emission alone is not evidence of correct native semantics. Contextual controls supplied native output or specific diagnostics where the donor fragment lacked declarations. The [retained G01 and field controls](../../compiler/tests/bootstrap_donor_verification_native.py) compare the resident compiler with fresh diagnostics/artifacts and run Clang executables, including the checked failure. The six-batch [results and linked fixtures](remaining_language_gaps_and_native_tokenizer.md#verification-results-at-76c8e86ea) remain the evidence for namespace lookup, member selection, enum lookup, and foreach. The [reference fixture](../../compiler/tests/reference_parameters_native.py) distinguishes same-origin returns from invalid element aliases.
+
+### Companion probe replay
+
+The archived snippets are multi-feature inputs. The table records only the first result for each input; a failure does not establish that later expressions were analyzed.
+
+| Probe | Current PHP-flavor result |
+| --- | --- |
+| TYPE-GENERIC | `main.php:1:1: Expected variable name` |
+| TYPE-LAYOUT | `main.php:1:4: Inline fixed-array storage requires byte elements` |
+| ANN-NATIVE | `main.php:1:1: Expected variable name` |
+| OP-ASSIGN | Emitted C++ |
+| OP-SELECT | `main.php:1:60: Expected variable name` |
+| FLOW-MATCH | `main.php:1:20: Expected =>` |
+| FN-SIGNATURE | `main.php:1:68: Expected )` |
+| FN-CLOSURE | `main.php:1:35: Unknown or not-yet-initialized local/global: base` |
+| REF-MUT | Emitted C++ |
+| TYPE-UNION | `main.php:1:15: Union requires two distinct required classes with a common class base` |
+| REC-INIT | `main.php:1:21: Expected identifier` |
+| VAR-GLOBAL | `main.php:1:29: Unknown or unsupported type: Node` |
+| VAR-CONST | `main.php:1:16: Constant initializer requires a literal` |
+| COLL-INDEX | `main.php:1:33: Nested indexed write requires inline fixed-array storage` |
+| FLOW-ITER | `main.php:1:38: Expected variable name` |
+| FLOW-YIELD | `main.php:1:86: Expected ;` |
+| INTR-PRESENCE | Emitted C++ |
+| ANN-TYPE | Emitted C++ |
+| ERR-TRY | Emitted C++ |
+| CTRL-CALLBACK | Emitted C++ |
+| CTRL-LITERAL | Emitted C++ |
+
+## Donor ledger
+
+Each original ID occurs once in this table. **Bounded evidence** includes supported behavior and intentional rejection; **migration** records the available target spelling or narrower equivalent; **deferred** preserves an explicit boundary; **decision** needs scope or representation agreement. A migration here does not authorize new language behavior.
+
+| Group | Donor records | Disposition | Evidence and limits |
+| --- | --- | --- | --- |
+| G01 | `VAR-CHAIN-001` | Decision | Split right to left and evaluate the RHS once. A native factory control printed M9 after copying a shared handle and editing through the copy. Approve the rewrite for ordinary local/field chains; side-effectful destinations need their own ordering proof. |
+|  | `EXPR-PREINC-001`, `EXPR-POSTINC-001`, `EXPR-PREDEC-001`, `EXPR-POSTDEC-001` | Bounded evidence | Initialized int64 locals in the full assignment RHS or initializer. All four donor sources emit. Existing native update proofs distinguish returned value from the final store. |
+|  | `STMT-EXPR-001` | Decision | Bare arithmetic statement rejects. Standalone calls preserve effects (native C). Keep an evaluated temporary when a check or failure is observable; only eliminate expressions proven pure and total. |
+| G02 | `EXPR-ANDWORD-001`, `EXPR-ORWORD-001` | Deferred | Historical low-precedence spellings remain deferred. Preserve grouping and lazy evaluation when using symbolic operators. |
+|  | `EXPR-XORWORD-001` | Migration | Bare RHS diagnoses the required parentheses. Grouped integer operands 2 and 3 printed 0; eager evaluation is covered by logical.php. |
+|  | `STR-INTERP-001`, `STR-INTERP-002`, `STR-INDEX-001`, `CAST-INT-001`, `CAST-FLOAT-001`, `CAST-BOOL-001`, `CAST-STRING-001`, `CAST-OBJECT-001`, `CAST-ARRAY-001` | Bounded evidence | Use the exact operand pairs, byte semantics and two unsupported-cast diagnostics in the G02 verification table. |
+| G03 | `LIT-NULL-001`, `VAR-ISSET-001`, `VAR-EMPTY-001`, `EXPR-COALESCE-001` | Bounded evidence | G03 verifies null-inference rejection, carrier presence, collection emptiness and lazy fallback with observable side effects. |
+|  | `EXPR-ELVIS-001` | Deferred | Short ternary and nullsafe access stay deferred; explicit branches preserve evaluation count. |
+| G04 | `TYPE-VAR-001`, `TYPE-VAR-005`, `TYPE-VAR-002`, `TYPE-VAR-006B`, `FUNC-DECL-003B`, `TYPE-PARAM-002`, `CLASS-MEMBER-001B`, `TYPE-VAR-003`, `TYPE-VAR-004`, `TYPE-PROP-001B`, `CLASS-PROP-001B` | Migration | Use inferred initialized locals or explicit scalar, nullable, class and vector types; spell method and field types in the declaration. Comments cannot establish a type or override a written type. The explicit nullable-class control printed 1. Historical spelling support and comment-conflict warnings are separate. |
+|  | `TYPE-VAR-006`, `TYPE-VAR-006A`, `TYPE-VAR-007` | Deferred | Historical value/optional-value annotations need an ownership choice per port. Use value structs only when copy behavior is intended. |
+|  | `CLASS-MEMBER-007`, `CLASS-INH-011`, `CLASS-MEMBER-010` | Bounded evidence | Override markers use the inherited method contract. Applying the marker to a static redeclaration rejects at the member. |
+| G05 | `ARR-INIT-001`, `ARR-INIT-003`, `ARR-INIT-004`, `ARR-READ-001`, `ARR-READ-002`, `ARR-WRITE-001`, `ARR-APPEND-001`, `ARR-EXIST-001`, `ARR-UNSET-001`, `ARR-KEY-SEM-001` | Migration | Explicit vector/hash destinations, typed access and append, hash_contains and remove. One declared key type per hash. The G05 native fixture checks presence independently of zero and distinguishes string keys. |
+|  | `ARR-INIT-002`, `ARR-INIT-002A`, `ARR-TYPE-001` | Migration | Give an empty collection an explicit element type. A null initializer needs an appropriate nullable carrier. Use an exact typed writable collection parameter for caller mutation. |
+|  | `ARR-EMPTY-001` | Decision | empty on a scalar hash element rejects. Presence alone differs from empty when a stored value is zero. Use an explicit missing-key branch plus the admitted payload's emptiness check if donor semantics are needed. |
+|  | `ARR-INIT-005`, `ARR-INIT-006`, `ARR-VALUE-001` | Decision | Typed nesting and explicit write-back have proofs. A heterogeneous keyed literal in mixed and storing a typed vector into dynamic both reject. Decide the representation per heterogeneous compiler table before porting; a homogeneous nested vector is insufficient evidence. |
+| G06 | `CTRL-FOREACH-001`, `CTRL-FOREACH-002` | Bounded evidence | Native vector and hash fixtures assert values and key/value pairing. |
+|  | `CTRL-FOREACH-003`, `CTRL-FOREACH-004` | Deferred | Writable iteration is deferred. The production preparation index uses key-preserving updates and has a retirement proof. |
+| G07 | `FUNC-REF-003`, `CLASS-MEMBER-018C`, `TYPE-PARAM-003`, `TYPE-PARAM-003B`, `CLASS-MEMBER-018D` | Bounded evidence | Writable named slots and same-origin returns are bounded. Functions and final non-overriding methods use exact types; reference_parameters_native.py covers storage identity and recovery. |
+|  | `TYPE-VAR-008` | Migration | An explicit lexical alias to initialized local storage uses the reference binder. Unrelated targets and scope escape reject. |
+|  | `FUNC-REF-002`, `FUNC-REF-004`, `CLASS-MEMBER-018B`, `CLASS-MEMBER-018E` | Bounded evidence | A reference-return declaration alone supplies no origin. Require explicit types and a writable parameter of the return type; arbitrary local, temporary and field returns do not qualify. Interface forwarding remains deferred. |
+|  | `REF-RETURN-001` | Migration | Forwarding the same whole vector through two reference-return functions preserved the caller's storage (native 9). The historical nested-element callee falls under the next row. |
+|  | `REF-RETURN-002`, `REF-BIND-001` | Deferred | No durable alias or reference return into a relocatable element. Use bounded reads and explicit write-back; general element borrows need lifetime rules. |
+|  | `TYPE-VAR-003A`, `TYPE-VAR-003B`, `TYPE-VAR-003C`, `TYPE-VAR-007A` | Deferred | Defer historical ownership annotation syntax. Existing shared and weak representations do not establish unique construction or implicit conversions. |
+|  | `VAR-UNSET-001`, `VAR-CLEAN-001`, `TYPE-PARAM-003F` | Decision | Local unset/clean reject; assigning null to nullable storage printed absent. Key removal is separate. Const collection borrowing rejects; a by-value read-only count printed 2 but does not establish zero-copy semantics. Decide only if lifetime or copying matters to the consumer. |
+| G08 | `FUNC-DECL-001`, `TYPE-PARAM-003A`, `TYPE-PARAM-003C`, `TYPE-PARAM-003E`, `WARN-TYPE-PARAM-001` | Migration | Use explicit result and collection types. Mutation or whole replacement of a by-value collection stays local. Historical warning is guidance. See G08's individual proofs. |
+|  | `FUNC-CALL-004`, `CLASS-MEMBER-017` | Deferred | Variadic declarations deferred; spread call sites require their own ordered translation. |
+|  | `FUNC-OVERLOAD-001`, `FUNC-DECL-005`, `FUNC-ARG-001`, `CLASS-MEMBER-015`, `TYPE-PARAM-004`, `TYPE-PARAM-003G` | Bounded evidence | Existing G08 proofs cover overload and untyped rejection, indexed value arguments, optional parameter identity/interface dispatch, and exact override modes within the supported boundary. |
+| G09 | `CLOSURE-USE-001`, `CLOSURE-USE-002`, `CLOSURE-CALLABLE-001`, `CLOSURE-CALLABLE-002`, `CLOSURE-RETURN-001`, `ARROW-001`, `SCOPE-VAR-003` | Deferred | Historical captures, implicit callable signatures and separately declared callable storage remain deferred. The populated-vector return donor also captures; capture-free scalar proofs do not cover it. |
+|  | `CLOSURE-001`, `CLOSURE-REJECT-002`, `SCOPE-VAR-002` | Bounded evidence | Native block closure, append-placement and lexical invocation proofs. |
+|  | `CLOSURE-STAN-001` | Migration | Exact callback result mismatch proved at a typed parameter; historical callable-local spelling deferred. |
+|  | `CLOSURE-REJECT-001`, `CLOSURE-CALL-001` | Bounded evidence | Only the explicit result annotation and exact-arity parts are verified. Donor capture and default arguments remain deferred. |
+|  | `CLASS-CALL-010` | Migration | Array spelling gets a collection diagnostic. Static callable syntax recovers and prints 8. Diagnostic refinement remains optional. |
+| G10 | `VAR-ORDER-001`, `SCOPE-SHADOW-001`, `NS-EXEC-006`, `NS-EXEC-005`, `NS-DECL-002`, `NS-USE-001`, `NS-USE-002`, `NS-USE-004`, `NS-USE-005`, `NS-QUALIFIED-001`, `NS-QUALIFIED-002`, `NS-QUALIFIED-003`, `NS-EXEC-002`, `NS-EXEC-004`, `NS-MULTI-BLOCK-001`, `RESOLVE-001`, `CLASS-NS-001`, `CLASS-NS-002`, `CLASS-NS-003` | Bounded evidence | Recorded imports/namespace and six-batch proofs, including intentional rejection of nested/additional namespace bodies. Supply the required entry result and typed declarations to isolate lookup. |
+|  | `SCOPE-GLOBAL-001`, `NS-SYMBOL-PATH-001`, `NS-VAR-001`, `NS-EXEC-001`, `NS-EXEC-003`, `NS-USE-003`, `CLASS-NS-004` | Migration | Use explicit global storage when needed across functions. Namespaced typed constant/function and entry-local controls each printed 1. Supply explicit entry return; type import and current-relative construction follow v0.2 lookup. |
+|  | `INC-REQUIRE-001`, `INC-INCLUDE-001`, `INC-ONCE-001` | Deferred | Use module membership for declarations. Effects at the inclusion site require an explicit ordered call; general include execution deferred. |
+| G11 | `CLASS-STATIC-NS-003`, `CLASS-STATIC-NS-002`, `CLASS-STATIC-NS-001`, `CLASS-PROP-006B`, `CLASS-PROP-006C`, `CLASS-PROP-007`, `CLASS-PROP-009`, `CLASS-PROP-010`, `CLASS-CALL-003`, `CLASS-CALL-005`, `CLASS-CALL-005A`, `CLASS-CALL-008A`, `CLASS-CALL-009`, `CLASS-CALL-012` | Bounded evidence | Six-batch qualifier/restriction checks and called_methods_native.py cover fixed and late dispatch, called-type construction and negative access paths. |
+|  | `CLASS-CONST-001` | Migration | Use an explicitly typed class constant. |
+|  | `CLASS-CONST-002`, `CLASS-CONST-003`, `CLASS-CONST-004`, `CLASS-CONST-005`, `CLASS-MEMBER-001`, `CLASS-MEMBER-009`, `CLASS-PROP-002B`, `CLASS-PROP-002C`, `CLASS-PROP-002D`, `CLASS-THIS-001`, `CLASS-NEW-002`, `TYPE-PROP-001`, `CLASS-INH-010`, `CLASS-ABS-008` | Bounded evidence | Typed members, constant and field qualifiers, visibility and base construction have bounded proofs. An abstract-base field read through a child printed 7. |
+|  | `TYPE-PROP-002` | Decision | The two-field donor rejects specifically on nullable<string>. A nullable class field alone held absence (native 1). Real parser, module and ABI fields require absent vs empty string. Decide first-class nullable string fields or a faithful representation with an absence tag. |
+|  | `CLASS-INH-003`, `CLASS-INH-007` | Migration | Use admitted source traits (storage, behavior and hooks have targeted fixtures). PHP-flavor C++-style declaration rejects; use new for a class. Trait conflict/adaptation is a separate contract. |
+| G12 | `ENUM-001` | Decision | Implicit case values reject. A three-case unbacked production policy enum exists; explicit unique integer cases with an enum method ran (79). Approve that migration or add unbacked enums. |
+|  | `ENUM-003` | Migration | Typed nullable lookup and single evaluation verified. Historical nullsafe chain deferred. |
+|  | `ENUM-004` | Decision | Even with an explicit case value, implements after the enum name rejects. Decide whether to defer enum interfaces until a real polymorphic consumer appears. |
+| G13 | `ERR-THROW-001`, `CLASS-ABS-003`, `CLASS-ABS-004`, `CLASS-CALL-011` | Bounded evidence | Exception construction/catch/rethrow and cleanup proofs; reject destructor value returns, static destructors and explicit invocation. |
+| G14 | `LIT-CONST-001` | Migration | Accepted migration: literal 9223372036854775807. No source PHP_INT_MAX is required for bootstrap. |
