@@ -633,6 +633,7 @@ final class record_type_definition extends type_definition implements dependency
 abstract class record_handle_definition extends type_definition
 {
 	use concrete_value_storage;
+	use concrete_async_task;
 
 	/** Native non-owning payload identity. */
 	public readonly record_type_definition $payload;
@@ -641,6 +642,12 @@ abstract class record_handle_definition extends type_definition
 	{
 		parent::__construct($name ?? $family . '<' . $payload->name . '>');
 		$this->payload = $payload;
+	}
+
+	/** Strong and weak struct handles can occupy a task result slot. */
+	protected function supports_async_storage(): bool
+	{
+		return $this->payload->declaration->kind === record_kind::structure;
 	}
 
 	public function supports_inferred_local(): bool
@@ -677,7 +684,6 @@ final class weak_record_type_definition extends record_handle_definition
 final class shared_record_type_definition extends record_handle_definition
 {
 	use hash_key_specializations;
-	use concrete_async_task;
 
 	/** PROPERTIES */
 	/** Semantic presence contract; both variants use the same native owner. */
@@ -695,12 +701,6 @@ final class shared_record_type_definition extends record_handle_definition
 	public function mutates_referenced_value(): bool
 	{
 		return true;
-	}
-
-	/** Explicit shared struct owners start empty; class presence contracts are separate. */
-	protected function supports_async_storage(): bool
-	{
-		return $this->payload->declaration->kind === record_kind::structure;
 	}
 
 	/** Borrow the payload's settled traversal while the emitter retains this shared allocation. */

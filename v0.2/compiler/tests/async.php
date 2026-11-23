@@ -348,6 +348,31 @@ foreach (flavor::cases() as $flavor) {
 		$three_parent = $both . 'async ' . $typed_fn('get_value', 'Point') . '{return await leaf_value();}';
 		$three_leaf = $all_leaf . 'async ' . $typed_fn('leaf_value', 'Point') . '{return buildPoint();}';
 		$three_entry = $decl('Point', 'value_result', 'await get_value()') . 'echo ' . $v('value_result') . $access . 'x;' . $checks;
+		// A self link supplies the external strong owner until the live-result caller releases it.
+		$link = match ($flavor) {
+			flavor::php => 'public shared<Guard> $keep;', flavor::cpp => 'public: shared<Guard> keep;', flavor::js => 'keep:shared<Guard>;',
+		};
+		$tracked = preg_replace('/\{/', '{' . $link, $guard, 1);
+		$observer = 'weak<Guard>';
+		$strong = 'shared<Guard>';
+		$keep = $p . 'keep';
+		$watch = $v('watch');
+		$pin = match ($flavor) {
+			flavor::php => 'function pin(shared<Guard> $p):void', flavor::cpp => 'void pin(shared<Guard> p)', flavor::js => 'function pin(p:shared<Guard>):void',
+		};
+		$weak_leaf = $tracked . $pin . '{' . $keep . '=' . $v('p') . ';}' . 'async ' . $typed_fn('observe', $observer, true) . '{'
+			. $decl($strong, 'p', 'new Guard()') . $decl($observer, 'watch', 'weak(' . $v('p') . ')')
+			. 'if (lock(' . $watch . ') === ' . $v('p') . ') {echo "L";}await async_sleep_ms(1);'
+			. 'if (' . $v('fail') . ') {' . $v('p') . '=null;echo "X";}else {pin(' . $v('p') . ');}return ' . $watch . ';}';
+		$weak_empty = 'async ' . $typed_fn('emptyWatch', $observer) . '{' . $decl($strong, 'p', 'null') . 'return weak(' . $v('p') . ');}';
+		$weak_parent = 'async ' . $typed_fn('relayWatch', $observer, true) . '{return await observe(' . $v('fail') . ');}';
+		$weak_entry = $decl($observer, 'watch', 'await relayWatch(false)') . $decl($strong, 'p', 'lock(' . $watch . ')')
+			. 'if (' . $v('p') . ' === ' . $keep . ') {echo "I";}' . $keep . '=null;' . $v('p') . '=null;'
+			. $decl($observer, 'expired', 'await relayWatch(true)') . $decl($observer, 'emptyWatchResult', 'await emptyWatch()');
+		foreach (['expired','emptyWatchResult'] as $name) {
+			$weak_entry .= 'if (lock(' . $v($name) . ') === null) {echo "N";}if (' . $v($name) . $access . 'is_empty()) {echo "E";}';
+		}
+		$weak_entry .= 'return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -406,6 +431,10 @@ foreach (flavor::cases() as $flavor) {
 			[$both, $all_leaf, $checks, null, '7:42:1V19LXES', 3],
 			[$three_parent, $three_leaf, $three_entry, null, '77:42:1V19LXES', 3],
 			[$both, str_replace($point, str_replace('{', '{' . $ctor, $point), $all_leaf), $checks, null, '7:42:1V19LXES', 3],
+			[$weak_parent, $weak_leaf . $weak_empty, $weak_entry, null, 'LIDLDXNNE', 3],
+			[$weak_parent, str_replace('"X"', '"Y"', $weak_leaf) . $weak_empty, $weak_entry, null, 'LIDLDYNNE', 1],
+			[$weak_parent, $tracked . $weak_empty, $weak_entry, 'Unknown', '', 0],
+			[$weak_parent, $weak_leaf . $weak_empty, $weak_entry, null, 'LIDLDXNNE', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -440,7 +469,7 @@ foreach (flavor::cases() as $flavor) {
 			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
 			$expected_tasks = match ($body) {
 				$three_parent => 3, $enum_parent . $second_parent, $both => 2,
-				$enum_parent, $point_parent, $vector_relay => 1, default => 0,
+				$enum_parent, $point_parent, $vector_relay, $weak_parent => 1, default => 0,
 			};
 			verify(count($task_headers) === $expected_tasks, 'Unexpected application task demand or retirement');
 			$all = implode("\n", $files);
