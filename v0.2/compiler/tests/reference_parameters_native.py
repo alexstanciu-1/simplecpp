@@ -2,7 +2,7 @@
 import argparse
 from pathlib import Path
 import tempfile
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 from strings_native import prove
 
 
@@ -227,6 +227,45 @@ def prove_override_modes(work):
     ])
 
 
+def prove_indexed_arguments(work):
+    worker = """
+        function next_index(int &$calls): int { $calls += 1; return $calls; }
+        function read_value(int $value): int { return $value; }
+        function bump(int &$value): void { $value += 1; }
+    """
+    main = """
+        $items vector<int> = [10, 20, 30];
+        $calls int = 0;
+        $value = read_value($items[next_index($calls)]);
+        echo $value, ":", $calls;
+        return 8;
+    """
+    invalid = '$items vector<int> = [10];\nbump($items[0]);\nreturn 8;'
+    diagnostic = 'main.php:2:6: Reference argument requires stable variable storage'
+    work.mkdir(parents=True)
+    revisions(work, 'php', dict(worker=worker, main=main), [
+        (None, None, b'20:1'),
+        ('main', invalid, diagnostic),
+        (None, None, diagnostic),
+        ('main', main, b'20:1'),
+    ])
+
+    # Inspect the same table while the missing-key exception unwinds.
+    for label, read in [('ordinary', '$value = $table["missing"];'),
+                        ('argument', 'consume($table["missing"]);')]:
+        source = """
+            function consume(int $value): void { echo "entered"; }
+            $table hash<int,string> = [];
+            $table["kept"] = 41;
+            try { """ + read + """ } finally {
+                if (hash_contains($table, "missing")) { echo "inserted"; }
+                echo count($table), ":", $table["kept"];
+            }
+            return 8;
+        """
+        guard(work, 'php', label, source, 'hash_missing_key', expected_stdout=b'1:41')
+
+
 def run(work):
     prove(work, 'reference_parameters.php', check_copy=False)
     prove_local_aliases(work / 'aliases')
@@ -234,6 +273,7 @@ def run(work):
     prove_forwarding(work / 'forwarding')
     prove_method_returns(work / 'methods')
     prove_override_modes(work / 'override-modes')
+    prove_indexed_arguments(work / 'indexed-arguments')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

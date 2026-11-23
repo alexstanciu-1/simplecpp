@@ -321,6 +321,32 @@ For donor parity, use the [typed trailing pack](../../../compiler/my-try/docs/ca
 for functions and methods. Evaluate arguments left to right, convert each
 element, and pass an owned `vector<T>`. Call-site unpacking is separate work.
 
+**Typed migration for array parameters (`TYPE-PARAM-003A`, `003C`, `003E`).**
+All three historical `array $a` signatures reject at the parameter with
+`Unknown or unsupported parameter type: array`. The bootstrap migration uses
+an explicit collection type. The [collection-reference fixture](../../compiler/tests/collection_references.php)
+passes a one-element vector by value, forwards the parameter to a writable append
+helper, and observes two elements locally and one in the caller. Forwarding the
+caller’s writable vector gives the caller two elements and the expected appended
+value. This covers typed usage. Admission of heterogeneous PHP arrays with runtime
+entry guards remains deferred, as in my-try.
+
+**By-value collection reassignment (`WARN-TYPE-PARAM-001`).** Guidance only.
+Replacing a typed vector or hash parameter changes the callee’s local value.
+The [native CLI proof](../../compiler/tests/collection_references_native.py)
+checks an empty compiler diagnostic stream, reads the replacement in the callee,
+and verifies the caller’s original size and contents after return.
+
+**Indexed arguments (`FUNC-ARG-001`).** Verified the my-try rule for PHP-flavor
+typed collections. Passing `$items[next_index($calls)]` by value reads the
+selected vector element and evaluates the index once. An absent hash key raises
+`hash_missing_key` before the callee runs. Both a standalone read and an argument
+read preserve the existing entry, count, and key absence during unwinding.
+Passing `$items[0]` to a writable reference parameter reports unstable storage
+at the indexed argument. A no-edit retry reproduces the diagnostic and repairing
+the input restores fresh-build output. See the [native proof](../../compiler/tests/reference_parameters_native.py).
+The historical v0.1 call-site insertion behavior remains outside the bootstrap contract.
+
 **Untyped parameter rejection (`FUNC-DECL-005`).** PHP-flavor named functions
 and methods require a type before each parameter name, including writable
 references. A default supplies a value when the caller omits the argument.
