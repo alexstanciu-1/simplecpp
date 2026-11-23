@@ -122,6 +122,18 @@ def prove_block_append_placement(work):
     ])
 
 
+def prove_block_call_arity(work):
+    declaration = '$h = function (int $x, int $y): int { return $x + $y; };'
+    valid = f'{declaration} echo $h(3, 9); return 8;'
+    missing_argument = f'{declaration} echo $h(3); return 8;'
+    work.mkdir()
+    revisions(work, 'php', dict(main=valid), [
+        (None, None, b'12'),
+        ('main', missing_argument, 'Argument count mismatch for function: h'),
+        ('main', valid, b'12'),
+    ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -130,6 +142,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')
         prove_block_local_scope(root / 'block-local-scope')
         prove_block_callback_result(root / 'block-callback-result')

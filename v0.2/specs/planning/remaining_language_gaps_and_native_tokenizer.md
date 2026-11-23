@@ -439,6 +439,12 @@ The native fixture retries in the same compiler instance with the closure bound 
 `$g` and `$items[] = $g();`. It checks that the vector has one element and that
 `$items[0]` equals `1`.
 
+**Exact-arity closure invocation (`CLOSURE-CALL-001`, partial).** The native fixture calls
+a two-parameter addition closure as `$h(3, 9)` and checks that it prints `12`.
+Removing the second argument reports `Argument count mismatch for function: h`.
+Restoring the call in the same compiler instance prints `12` again and matches a fresh build.
+Closure parameter defaults and captures remain deferred.
+
 The original audit classifications follow.
 
 **Missing (7)**
