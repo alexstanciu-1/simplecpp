@@ -229,6 +229,8 @@ final class ast_try_statement extends ast_statement
 	public readonly ?ast_block $finalizer;
 
 	/** PREP FACTS */
+	/** Prepared fact: a handler can suspend, so its dispatch must run outside the native catch. */
+	public bool $suspending_handlers = false;
 	/** Prepared fact: exits from the protected operation before the finalizer; null until settled. */
 	public ?int $protected_completion /** uint8 */ = null;
 	/** Prepared fact: exits remaining after the finalizer; null until settled. */

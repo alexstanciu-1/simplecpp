@@ -2,6 +2,8 @@
 /** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
 final class @class@ extends vector_type_definition@interfaces@
 {
+	use collection_keyed_store;
+
 	/** @var array<string,runtime_function|null> Canonical signatures cached on this type, never on each call. */
 	private array $runtime_methods = [];
 @identity@
@@ -49,16 +51,14 @@ final class @class@ extends vector_type_definition@interfaces@
 		return '(' . $receiver . ').@index@(' . $index . ')';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $index, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
-		$value = @element@->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
-		return $this->lower_cpp_replace($write->index, $receiver, $index, $value);
+		return @count@::instance()->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
 	}
 
-	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
+	public function lower_cpp_write(string $receiver, string $key, string $value): string
 	{
-		$index = @count@::instance()->lower_cpp_exact_argument($key, value_conversion::identity, $index);
-		return $receiver . '.@set@(' . $index . ', ' . $value . ');';
+		return $receiver . '.@set@(' . $key . ', ' . $value . ')';
 	}
 
 @cardinality@

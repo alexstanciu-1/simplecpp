@@ -2,6 +2,8 @@
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
 final class @class@ extends hash_type_definition@interfaces@
 {
+	use collection_keyed_store;
+
 	/** @var array<string,runtime_function|null> Canonical signatures cached on this type, never on each call. */
 	private array $runtime_methods = [];
 	/** Immutable canonical binding, shared by occurrences; its type references are non-owning. */
@@ -46,16 +48,9 @@ final class @class@ extends hash_type_definition@interfaces@
 		return $receiver . '.@index@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_write(string $receiver, string $key, string $value): string
 	{
-		$value = $this->value_type->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
-		return $this->lower_cpp_replace($write->index, $receiver, $key, $value);
-	}
-
-	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
-	{
-		$index = $this->lower_cpp_key($key, $index);
-		return $receiver . '.@set@(' . $index . ', ' . $value . ');';
+		return $receiver . '.@set@(' . $key . ', ' . $value . ')';
 	}
 
 @append_method@

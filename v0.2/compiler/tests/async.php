@@ -11,7 +11,7 @@ function verify(bool $condition, string $message): void
 }
 
 /** Require the expected frontend diagnostic or manifest validation error before native compilation. */
-function rejects(Closure $action, string $message, bool $manifest = false): void
+function rejects(Closure $action, string $message, bool $manifest = false): string
 {
 	try {
 		$action();
@@ -19,7 +19,7 @@ function rejects(Closure $action, string $message, bool $manifest = false): void
 	catch (RuntimeException $error) {
 		if (!$manifest && !($error instanceof diagnostic || $error instanceof diagnostic_group)) throw $error;
 		verify(str_contains($error->getMessage(), $message), $error->getMessage());
-		return;
+		return $error->getMessage();
 	}
 	throw new RuntimeException('Missing diagnostic: ' . $message);
 }
@@ -93,11 +93,10 @@ foreach (flavor::cases() as $flavor) {
 	$protected = 'try {return await read_value();}';
 	$fallback = $protected . $catch('Failure') . '{return 7;}';
 	foreach (['return await read_value();', 'await async_sleep_ms(1);return 0;'] as $handler) {
-		rejects(fn() => $prepare($failure . $child . 'async ' . $signature('report') . '{' . $protected
-			. $catch('Failure') . '{' . $handler . '}}return 0;'), 'Cannot suspend inside an async catch handler');
+		$prepare($failure . $child . 'async ' . $signature('report') . '{' . $protected
+			. $catch('Failure') . '{' . $handler . '}}return 0;');
 	}
-	rejects(fn() => $prepare($child . 'async ' . $signature('report') . '{' . $protected . 'finally {echo 1;}}return 0;'),
-		'Finally in async functions is deferred');
+	$prepare($child . 'async ' . $signature('report') . '{' . $protected . 'finally {echo 1;}}return 0;');
 
 	$directory = sys_get_temp_dir() . '/scpp-async-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
@@ -341,7 +340,7 @@ foreach (flavor::cases() as $flavor) {
 				. 'echo ' . $p . 'x,(int)' . $p . 'label[0];';
 		}
 		$arg_entry .= 'return 8;';
-		// Parameter storage already has a value. This Point cannot serve as an eagerly initialized async result.
+		// The same Point with a required constructor can be an owned parameter and an async result.
 		[$required_ctor, $constructed_point] = match ($flavor) {
 			flavor::php => ['public function __construct(int $n) {$this->x=$n;}', '$p Point(7);'],
 			flavor::cpp => ['Point(int n) {this->x=n;}', 'Point p(7);'],
@@ -530,9 +529,6 @@ foreach (flavor::cases() as $flavor) {
 		$text_parent = $text_pair . 'async ' . $signature('compute') . '{return render(await textPart(),await rightValue());}';
 		$guard_child = $guard . 'async ' . $typed_fn('temporaryOwner', 'shared<Guard>') . '{await async_sleep_ms(1);return new Guard();}';
 		$lifetime = $pair . 'async ' . $signature('compute') . '{return pair(await temporaryOwner() !== null,await rightValue());}';
-		rejects(fn() => $prepare($left_child . $strings . $text_pair . 'async ' . $signature('localText')
-			. '{' . $decl('string', 'label', 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()')
-			. 'return 0;}return 8;'), 'scoped result storage');
 		$accept_owner = str_replace('()', '(' . $parameter('p', 'shared<Guard>') . ',' . $parameter('n') . ')', $signature('finish'))
 			. '{echo "F";return ' . $v('n') . ';}';
 		$throw_child = 'async ' . $signature('failLater') . '{await async_sleep_ms(1);echo "T";throw new Failure();}';
@@ -543,9 +539,6 @@ foreach (flavor::cases() as $flavor) {
 				. ' : finish(await temporaryOwner(),await failLater())')
 			. 'echo "X";return ' . $v('selected') . ';}' . $catch('Failure') . '{echo "C";return 7;}}';
 		$ternary_leaf = $failure . $guard_child . $throw_child . $left_child . $right_child;
-		rejects(fn() => $prepare($strings . 'async ' . $typed_fn('selectText', 'string')
-			. '{return true ? await textPart() ' . ($flavor === flavor::php ? '.' : '+')
-			. ' await textPart() : "fallback";}return 8;'), 'scoped result storage');
 		$later_tests = $pair . 'async ' . $signature('compute') . '{if (false) {return 1;}'
 			. 'else if (' . $ordered_call . ' == 24) {return 2;}'
 			. 'else if (' . $ordered_call . ' == 23) {return 3;}else {return 4;}}';
@@ -635,6 +628,189 @@ foreach (flavor::cases() as $flavor) {
 			. 'echo ' . $v('data') . '[0];return ' . $p . 'x;}';
 		$switch_leaf = $point . $guard . $left_child;
 
+		$current_field = str_replace(['vector<int>', 'items'], ['shared<Point>', 'current'], $items_field);
+		$swap = 'async ' . str_replace('()', '(' . $parameter('p', 'shared<Box>') . ')', $signature('swapPoint'))
+			. '{await async_sleep_ms(1);' . $p . 'current=new Point();return 8;}';
+		$write_leaf = str_replace($items_field, $items_field . $current_field, $walk_leaf) . $left_child . $right_child . $point . $swap;
+		$removed_element = str_replace('[4,5,6]', '[]', $write_leaf);
+		$writes = $pair . $mark . 'async ' . $signature('compute') . '{'
+			. $decl('shared<Box>', 'p', 'makeBox()') . $decl('shared<Point>', 'q', 'new Point()')
+			. $decl('int', 'n', '1') . $v('n') . '+=' . $ordered_call . ';echo ' . $v('n') . ';'
+			. $p . 'items[mark(0)]+=pair(await replaceItems(' . $v('p') . '),0);echo ' . $p . 'items[0];'
+			. $p . 'items[await leftValue()]=' . $ordered_call . ';'
+			. $p . 'items[await leftValue()]++;' . $p . 'items[]=' . $ordered_call . ';echo ' . $p . 'items[2],' . $p . 'items[3];'
+			. $v('q') . $access . 'x=' . $ordered_call . ';' . $v('q') . $access . 'x+=await leftValue();'
+			. 'try {' . $p . 'items[0]=await failLater();}' . $catch('Failure') . '{echo ' . $p . 'items[0];}'
+			. 'echo ' . $v('q') . $access . 'x;' . $p . 'current=' . $v('q') . ';'
+			. $p . 'current' . $access . 'x=await swapPoint(' . $v('p') . ');'
+			. 'echo ' . $p . 'current' . $access . 'x;return ' . $v('q') . $access . 'x;}';
+		$grid = str_replace('Point', 'fixed_array<fixed_array<byte,3>,3>', $empty_point);
+		$grid_write = $pair . 'async ' . $signature('compute') . '{' . $grid
+			. $v('p') . '[await leftValue()][0]=' . $ordered_call . ';echo (int)' . $v('p') . '[2][0];'
+			. $v('p') . '[0][await rightValue()]=' . $ordered_call . ';return 0;}';
+		$boxed_write = $pair . 'async ' . $signature('compute') . '{' . $decl('mixed', 'table', '[]')
+			. $v('table') . '[-1]=' . $ordered_call . ';return 0;}';
+
+		$join = 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()';
+		$text = 'heap-backed string long enough to allocate';
+		$choose_text = $text_pair . 'async ' . $signature('compute') . '{'
+			. $decl('string', 'label', 'true ? ' . $join . ' : "fallback"')
+			. 'echo ' . $v('label') . ';return render(' . $join . ',await rightValue());}';
+		$destructor = substr($guard, strpos($guard, '{') + 1, strrpos($guard, '}') - strpos($guard, '{') - 1);
+		$record_decl = preg_replace('/\{/', '{' . str_replace('~Guard', '~Point', $destructor), $constructed_decl, 1);
+		$build_record = str_replace('()', '(' . $parameter('n') . ',' . $parameter('m') . ')', $typed_fn('buildRecord', 'Point'))
+			. '{' . $constructed_point . 'echo "K";return ' . $v('p') . ';}';
+		$record_sources = $record_decl . $build_record . $left_child . $right_child . $failure . $throw_child;
+		$good_arm = 'buildRecord(await leftValue(),await rightValue())';
+		$failing_arm = 'buildRecord(await leftValue(),await failLater())';
+		$record_case = static fn(string $choice): string => 'async ' . $signature('compute') . '{try {'
+			. $decl('Point', 'p', $choice) . 'echo "X";return ' . $p . 'x;}' . $catch('Failure') . '{echo "C";return 0;}}';
+		$choose_record = $record_case("true ? $good_arm : $failing_arm");
+
+		$consume_record = str_replace('()', '(' . $parameter('p', 'Point') . ',' . $parameter('n') . ')', $signature('inspectRecord'))
+			. '{echo "U";return ' . $p . 'x+' . $v('n') . ';}';
+		$build_owned = str_replace(['buildRecord', $parameter('n')], ['buildOwned', $parameter('g', 'shared<Guard>')], $build_record);
+		$nested_record = $consume_record . 'async ' . $signature('compute')
+			. '{return inspectRecord(buildOwned(await temporaryOwner(),await rightValue()),await leftValue());}';
+
+		$maybe = 'async ' . $typed_fn('maybe', 'nullable<int>') . '{await async_sleep_ms(1);echo "L";return null;}';
+		$lazy = $pair . 'async ' . $signature('compute') . '{' . $decl('nullable<int>', 'n', '0')
+			. $v('n') . '??=' . $ordered_call . ';echo (' . $v('n') . ' ?? await failLater());'
+			. $v('n') . '=null;' . $v('n') . '??=' . $ordered_call . ';echo (' . $v('n') . ' ?? await failLater());'
+			. 'await async_sleep_ms(pair(await leftValue(),0));return (await maybe()) ?? ' . $ordered_call . ';}';
+		$lazy_sources = $maybe . $left_child . $right_child . $failure . $throw_child;
+
+		$selections = $pair . 'async ' . $signature('compute') . '{switch (' . $ordered_call . ') {'
+			. 'case 23:echo "S";break;default:echo "X";}'
+			. 'echo match(true){default=>await failLater(),' . $ordered_call . '==24=>await failLater(),'
+			. $ordered_call . '==23=>await leftValue()};return match(' . $ordered_call
+			. '){23=>' . $ordered_call . ',default=>throw new Failure()};}';
+
+		$async_items = 'async ' . $typed_fn('asyncItems', 'vector<int>') . '{await async_sleep_ms(1);echo "I";return items();}';
+		$operand_sites = $pair . 'async ' . $signature('compute') . '{'
+			. $decl('shared<Point>', 'p', 'new Point(' . $ordered_call . ')') . 'echo ' . $p . 'x;'
+			. $each('await asyncItems()') . '{echo ' . $v('item') . ';}'
+			. 'return (await asyncItems())[await leftValue()];}';
+
+		$list_sites = $pair . 'async ' . $signature('compute') . '{'
+			. $decl('vector<int>', 'numbers', '[await leftValue(),' . $ordered_call . ',await rightValue()]')
+			. $decl('hash<int,int>', 'table', '[await leftValue()=>' . $ordered_call . ']')
+			. $decl('fixed_array<fixed_array<byte,2>,1>', 'grid', '[[await rightValue(),' . $ordered_call . ']]')
+			. 'echo ' . $v('numbers') . '[1],' . $v('table') . '[2],(int)' . $v('grid') . '[0][0];return (int)' . $v('grid') . '[0][1];}';
+		$large_list = $pair . 'async ' . $signature('compute') . '{'
+			. $decl('vector<int>', 'numbers', '[' . str_repeat('0,', 512) . $ordered_call . ']')
+			. 'return ' . $v('numbers') . '[512];}';
+
+		$partial_input = 'async ' . $signature('compute') . '{try {'
+			. $decl('hash<Point,int>', 'table', '[0=>' . $good_arm . ',await failLater()=>' . $good_arm . ']')
+			. 'return 0;}' . $catch('Failure') . '{echo "C";return 7;}}';
+
+		$problem = str_replace('()', '(' . $parameter('n') . ')', $typed_fn('problem', 'Failure'))
+			. '{echo "E";return new Failure();}';
+		$lazy_throw = $pair . 'async ' . $signature('compute') . '{try {return match(true){true=>4,'
+			. 'default=>throw problem(' . $ordered_call . ')};}' . $catch('Failure') . '{echo "C";return 7;}}';
+
+		$add_to = str_replace('()', '(' . $reference . ',' . $parameter('n') . ')', $signature('addTo'))
+			. '{' . $v('x') . '+=' . $v('n') . ';return ' . $v('x') . ';}';
+		$method = match ($flavor) {
+			flavor::php => 'public function add(int $n):int', flavor::cpp => 'int add(int n)', flavor::js => 'add(n:int):int',
+		} . '{' . $v('this') . $access . 'x+=' . $v('n') . ';return ' . $v('this') . $access . 'x;}';
+		$call_sources = str_replace($point, str_replace('{', '{' . $method, $point), $write_leaf);
+		$repeat = $flavor === flavor::php ? 'str_repeat("a",await rightValue())' : '"a".repeat(await rightValue())';
+		$calls = $add_to . $pair . 'async ' . $signature('compute') . '{'
+			. $decl('int', 'n', '1') . 'echo addTo(' . $v('n') . ',addTo(' . $v('n') . ',await rightValue()));'
+			. $decl('shared<Box>', 'p', 'makeBox()') . $decl('shared<Point>', 'q', 'new Point()') . $p . 'current=' . $v('q') . ';'
+			. 'echo ' . $p . 'current' . $access . 'add(pair(await swapPoint(' . $v('p') . '),await leftValue()));'
+			. 'echo ' . $p . 'current' . $access . 'x,' . $v('q') . $access . 'x;'
+			. $decl('hash<int,int>', 'table', '[2=>0]') . $v('table') . $access . 'remove(await leftValue());'
+			. 'echo count(' . $v('table') . '),' . $repeat . ';return ' . $v('n') . ';}';
+
+		$empty_receiver = $pair . 'async ' . $signature('compute') . '{' . $decl('shared<Point>', 'q', 'null')
+			. 'return ' . $v('q') . $access . 'add(pair(await leftValue(),await rightValue()));}';
+
+		// Keep the embedded layout in a different source from the async producer.
+		$nested_point = str_replace('Guard', 'Inner', str_replace('echo "D";',
+			'if (' . $v('this') . $access . 'x===99) {echo "D";}', $guard));
+		$field = match ($flavor) {
+			flavor::php => 'public int $x;', flavor::cpp => 'int x;', flavor::js => 'x:int;',
+		};
+		$nested_point = substr_replace($nested_point, $field, strpos($nested_point, '{') + 1, 0);
+		$envelope = match ($flavor) {
+			flavor::php => 'struct Envelope {public Inner $item;}',
+			flavor::cpp => 'struct Envelope {Inner item;};',
+			flavor::js => 'struct Envelope {item:Inner;}',
+		};
+		$nested_local = str_replace('Point', 'Envelope', $empty_point);
+		$member = $p . 'item' . $access . 'x';
+		$nested_factory = $envelope . 'async ' . $typed_fn('packet', 'Envelope', true) . '{' . $nested_local
+			. 'await async_sleep_ms(1);if (' . $v('fail') . ') {' . $member . '=99;throw new Failure();}'
+			. $member . '=7;return ' . $v('p') . ';}';
+		$nested_entry = $decl('Envelope', 'p', 'await packet(false)') . 'echo ' . $member . ';'
+			. 'try {await packet(true);}' . $catch('Failure') . '{echo "C";}return 8;';
+		$class_decl = str_replace('struct Point', 'class Ticket', $point);
+		if ($flavor === flavor::cpp) $class_decl = str_replace('{', '{public:', $class_decl);
+		$owner_fn = static fn(string $name, string $type): string => 'async ' . str_replace('()',
+			'(' . $parameter('p', $type) . ')', $typed_fn($name, $type));
+		$class_functions = $owner_fn('retain', 'Ticket') . '{await async_sleep_ms(1);return ' . $v('p') . ';}'
+			. $owner_fn('maybeTicket', 'nullable<Ticket>') . '{return ' . $v('p') . ';}';
+		$class_entry = $decl('Ticket', 'p', 'new Ticket()') . $decl('Ticket', 'q', 'await retain(' . $v('p') . ')')
+			. $q . 'x=11;echo ' . $p . 'x;' . $decl('nullable<Ticket>', 'absent', 'await maybeTicket(null)')
+			. 'if (' . $v('absent') . '===null) {echo "N";}return 8;';
+
+		$require_ticket = 'async ' . $typed_fn('requiredTicket', 'Ticket')
+			. '{return await maybeTicket(null);}';
+		$missing_ticket = 'await requiredTicket();return 8;';
+
+		$handler_fn = 'async ' . $typed_fn('handle', 'int', true) . '{'
+			. $decl('Failure', 'original', 'new Failure()') . 'try {try {throw ' . $v('original') . ';}'
+			. $catch('Failure') . '{' . $empty_guard . 'echo "H";' . $v('e') . '=new Failure();'
+			. 'await async_sleep_ms(1);echo await rightValue();if (' . $v('fail') . ') {throw ' . $v('e') . ';}throw;}'
+			. $catch('Exception') . '{echo "wrong";return 0;}}' . $catch('Failure') . '{'
+			. 'if (' . $v('e') . '===' . $v('original') . ') {return 1;}return 2;}}';
+		$unmatched = 'async ' . $signature('unmatched') . '{try {throw new OtherFailure();}'
+			. $catch('Failure') . '{return await rightValue();}}';
+		$handler_entry = 'echo await handle(false),await handle(true);try {await unmatched();}'
+			. $catch('OtherFailure') . '{echo "U";}return 8;';
+		$handler_replacement = 'try {await handle(false);}' . $catch('OtherFailure') . '{echo "R";}return 8;';
+		$handler_leaf = $guard . $failure . str_replace('Failure', 'OtherFailure', $failure) . $right_child;
+
+		$final_loop = 'async ' . $signature('loops') . '{' . $decl('int', 'n', '0')
+			. 'while (' . $n . '<3) {try {' . $empty_guard . $n . '+=1;await rightValue();'
+			. 'if (' . $n . '===2) {continue;}if (' . $n . '===3) {break;}echo "T";}finally {echo "F";}echo "X";}'
+			. 'return ' . $n . ';}';
+		$final_return = 'async ' . $typed_fn('finish', 'int', true) . '{try {try {' . $empty_guard
+			. 'if (' . $v('fail') . ') {throw new Failure();}return await rightValue();}finally {echo "I";}}finally {echo "O";}}';
+		$final_entry = 'echo await loops(),await finish(false);try {await finish(true);}'
+			. $catch('Failure') . '{echo "C";}return 8;';
+		$final_sources = $guard . $failure . $right_child;
+		$suspending_final = str_replace('echo "I";', 'echo "I";await rightValue();', $final_return);
+		$replaced_return = 'async ' . $typed_fn('owned', 'shared<Guard>') . '{try {return new Guard();}'
+			. 'finally {await rightValue();throw new Failure();}}';
+		$replaced_entry = 'try {await owned();}' . $catch('Failure') . '{echo "C";}return 8;';
+
+		$packet = 'async ' . $typed_fn('packetValue', 'Point') . '{' . $constructed_point
+			. $p . 'label="payload long enough for owned string storage";await async_sleep_ms(1);echo "P";return ' . $v('p') . ';}';
+		$packet_relay = 'async ' . $typed_fn('relayPacket', 'Point') . '{' . $decl('int', 'n', '0')
+			. 'for (;;) {try {' . $empty_guard . 'if (' . $n . '===0) {' . $n . '++;continue;}return await packetValue();}'
+			. 'finally {await rightValue();echo "F";}}}';
+		$packet_entry = $decl('Point', 'p', 'await relayPacket()') . 'echo ' . $p . 'x,' . $p . 'label;return 8;';
+		$packet_leaf = $constructed_decl . $guard . $right_child . $packet;
+		$packet_output = 'DBFPDBF7payload long enough for owned string storage';
+		$guard_failure = 'async ' . $signature('runtimeFailure') . '{try {' . $decl('vector<int>', 'items', '[]')
+			. 'return ' . $v('items') . '[await rightValue()];}' . $catch('Exception')
+			. '{echo "wrong";return 0;}finally {await rightValue();echo "F";}}';
+		$guard_entry = 'await runtimeFailure();return 8;';
+
+		$numbered_final = 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
+			. 'for (; ' . $n . '<3;' . $n . '++) {for (;;) {try {try {if (' . $n . '===0) {continue 2;}break 2;}'
+			. 'finally {await rightValue();echo "I";}}finally {echo "O";}}}return ' . $n . ';}';
+
+		$exception_final = 'async ' . $typed_fn('exceptionExit', 'void', true)
+			. '{try {throw new Failure();}finally {await rightValue();if (' . $v('fail') . ') {throw new OtherFailure();}'
+			. 'try {throw new OtherFailure();}' . $catch('OtherFailure') . '{echo "L";}}}';
+		$exception_entry = 'try {await exceptionExit(false);}' . $catch('Failure') . '{echo "O";}'
+			. 'try {await exceptionExit(true);}' . $catch('OtherFailure') . '{echo "R";}return 8;';
+
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -682,7 +858,7 @@ foreach (flavor::cases() as $flavor) {
 			[$point_parent, str_replace($point, '', $point_child), $point_entry, 'Unknown', '', 0],
 			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 1],
 			[$point_parent, str_replace($point, str_replace('{', '{' . $z, $point), $point_child), $point_entry, null, 'D7910488Dcaught', 3],
-			[$point_parent, str_replace($point, str_replace('{', '{' . $ctor, $point), $point_child), $point_entry, 'Unpublished async result: Point', '', 0],
+			[$point_parent, str_replace([$point, $empty_point], [$constructed_decl, $constructed_point], $point_child), $point_entry, null, 'D7910488Dcaught', 3],
 			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 3],
 			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
 			[$both, $all_leaf, $checks, null, '7:42:1V19LXES', 3],
@@ -819,6 +995,65 @@ foreach (flavor::cases() as $flavor) {
 			[$switch_walk, $switch_leaf, $eager_main, null, 'MADFLMFL84', 2],
 			[$switch_walk, $point . $guard, $eager_main, 'Unknown', '', 0],
 			[$switch_walk, str_replace('return 2;', 'return 3;', $switch_leaf), $eager_main, null, 'MADFLMFL94', 1],
+			[$writes, $write_leaf, $eager_main, null, 'ABF24MF1AABFAABF2423ABFAT1250D8', 2],
+			[$writes, str_replace($change_items, '', $write_leaf), $eager_main, 'Unknown', '', 0],
+			[$writes, str_replace('return 3;', 'return 4;', $write_leaf), $eager_main, null, 'ABF25MF1AABFAABF2524ABFAT1260D8', 1],
+			[$grid_write, $left_child . $right_child, $eager_main, null, 'AABF23B', 2],
+			[$boxed_write, $left_child . $right_child, $eager_main, null, '', 1],
+			[$writes, $removed_element, $eager_main, null, 'ABF24MFD', 2],
+			[$choose_text, $strings . $right_child, $eager_main, null, $text . $text . 'B' . $text . $text . '3', 3],
+			[$choose_record, $record_sources, $eager_main, null, 'ABKXD7', 3],
+			[$choose_record, str_replace($build_record, '', $record_sources), $eager_main, 'Unknown', '', 0],
+			[$choose_record, str_replace('echo "K"', 'echo "R"', $record_sources), $eager_main, null, 'ABRXD7', 1],
+			[str_replace('true ?', 'false ?', $choose_record), $record_sources, $eager_main, null, 'ATC0', 2],
+			[$record_case("true ? (false ? $failing_arm : $good_arm) : $failing_arm"), $record_sources, $eager_main, null, 'ABKXD7', 1],
+			[$nested_record, $record_sources . $guard_child . $build_owned, $eager_main, null, 'BKDAUDD9', 3],
+			[$lazy, $lazy_sources, $eager_main, null, '0ABF23AFLABF23', 3],
+			[$lazy, str_replace($right_child, '', $lazy_sources), $eager_main, 'Unknown', '', 0],
+			[$lazy, str_replace('return null;', 'return 7;', $lazy_sources), $eager_main, null, '0ABF23AFL7', 1],
+			[$selections, $lazy_sources, $eager_main, null, 'ABFSABFABFA2ABFABF23', 2],
+			[$operand_sites, $constructed_decl . $items . $async_items . $left_child . $right_child, $eager_main, null, 'ABF23I123IA3', 3],
+			[$list_sites, $left_child . $right_child, $eager_main, null, 'AABFBAABFBABF2323323', 3],
+			[$large_list, $left_child . $right_child, $eager_main, null, 'ABF23', 1],
+			[$partial_input, $record_sources, $eager_main, null, 'ABKTDC7', 2],
+			[$lazy_throw, $problem . $failure . $left_child . $right_child, $eager_main, null, '4', 2],
+			[str_replace('true=>4', 'false=>4', $lazy_throw), $problem . $failure . $left_child . $right_child, $eager_main, null, 'ABFEC7', 1],
+			[$calls, $call_sources, $eager_main, null, 'B8AF82082A0BaaaD8', 2],
+			[$calls, str_replace($swap, '', $call_sources), $eager_main, 'Unknown', '', 0],
+			[$calls, str_replace('return 8;', 'return 9;', $call_sources), $eager_main, null, 'B8AF92092A0BaaaD8', 1],
+			[$empty_receiver, $call_sources, $eager_main, null, '', 2],
+			[str_replace('echo addTo(' . $v('n'), 'echo addTo(1', $calls), $call_sources, $eager_main, 'stable variable storage', '', 0],
+			[$nested_factory, $failure . $nested_point, $nested_entry, null, '7DC', 4],
+			[$nested_factory, $failure . str_replace($field, $field . str_replace('float', 'fixed_array<byte,4>', $z), $nested_point), $nested_entry, null, '7DC', 4],
+			[$nested_factory, $failure, $nested_entry, 'Unsupported instance field type', '', 0],
+			[$nested_factory, $failure . $nested_point, $nested_entry, null, '7DC', 4],
+			[$class_functions, $class_decl, $class_entry, null, '11N', 4],
+			[$class_functions . $require_ticket, $class_decl, $missing_ticket, null, '', 2],
+			[$class_functions . str_replace('await maybeTicket(null)', 'null', $require_ticket), $class_decl,
+				$missing_ticket, 'Required object cannot be null', '', 0],
+			[str_replace('struct Envelope {', 'struct Envelope ' . ($flavor === flavor::cpp ? ': Inner' : 'extends Inner') . ' {',
+				$nested_factory), $failure . $nested_point, $nested_entry, null, '7DC', 4],
+			[$nested_factory, $failure . str_replace('public', 'private', $nested_point), $nested_entry, 'Inaccessible destructor', '', 0],
+			[$nested_factory, $failure . $nested_point, $nested_entry, null, '7DC', 3],
+			[$handler_fn . $unmatched, $handler_leaf, $handler_entry, null, 'HB3D1HB3D2U', 4],
+			[$handler_fn . $unmatched, str_replace($right_child, '', $handler_leaf), $handler_entry, 'Unknown', '', 0],
+			[$handler_fn . $unmatched, str_replace('return 3;', 'return 4;', $handler_leaf), $handler_entry, null, 'HB4D1HB4D2U', 1],
+			[$handler_fn . $unmatched, str_replace('return 3;', 'throw new OtherFailure();', $handler_leaf),
+				$handler_replacement, null, 'HBDR', 3],
+			[$final_loop . $final_return, $final_sources, $final_entry, null, 'BTDFXBDFBDF3BDIO3DIOC', 3],
+			[$final_loop . $final_return, str_replace($right_child, '', $final_sources), $final_entry, 'Unknown', '', 0],
+			[$final_loop . $final_return, str_replace('return 3;', 'return 4;', $final_sources), $final_entry, null, 'BTDFXBDFBDF3BDIO4DIOC', 1],
+			[$final_loop . $suspending_final, $final_sources, $final_entry, null, 'BTDFXBDFBDF3BDIBO3DIBOC', 2],
+			[$replaced_return, $final_sources, $replaced_entry, null, 'BDC', 3],
+			[$replaced_return, str_replace($right_child, '', $final_sources), $replaced_entry, 'Unknown', '', 0],
+			[$replaced_return, str_replace('echo "B";', 'echo "E";', $final_sources), $replaced_entry, null, 'EDC', 1],
+			[$guard_failure, $right_child, $guard_entry, null, 'BBF', 4],
+			[$packet_relay, $packet_leaf, $packet_entry, null, $packet_output, 4],
+			[$packet_relay, str_replace($packet, '', $packet_leaf), $packet_entry, 'Unknown', '', 0],
+			[$packet_relay, str_replace('echo "P";', 'echo "Q";', $packet_leaf), $packet_entry, null,
+				str_replace('P', 'Q', $packet_output), 1],
+			[$numbered_final, $right_child, $eager_main, null, 'BIOBIO1', 4],
+			[$exception_final, $handler_leaf, $exception_entry, null, 'BLOBR', 4],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
@@ -838,9 +1073,9 @@ foreach (flavor::cases() as $flavor) {
 			$fresh = new Incremental_Project($directory, "$directory/fresh-params", $target);
 			if ($error !== null) {
 				$invalid_mode = ($steps[$i][7] ?? null) === 'invalid';
-				rejects(fn() => $project->run(), $error, $invalid_mode);
-				rejects(fn() => $project->run(), $error, $invalid_mode);
-				rejects(fn() => $fresh->run(), $error, $invalid_mode);
+				$diagnostic = rejects(fn() => $project->run(), $error, $invalid_mode);
+				verify($diagnostic === rejects(fn() => $project->run(), $error, $invalid_mode), "Diagnostic changed on retry at step $i");
+				verify($diagnostic === rejects(fn() => $fresh->run(), $error, $invalid_mode), "Diagnostic differs from fresh compilation at step $i");
 				continue;
 			}
 			$start = hrtime(true); $project->run(); $ms = (hrtime(true) - $start) / 1e6;
@@ -873,6 +1108,9 @@ foreach (flavor::cases() as $flavor) {
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
 			$runtime_error = match (true) {
+				$caller === $missing_ticket || $body === $empty_receiver => "ownership_empty_access\n",
+				$body === $boxed_write => "packed_integer_key_limit\n",
+				$caller === $guard_entry || $body === $grid_write || $leaf === $removed_element => "sequence_index_out_of_range\n",
 				$body === $boxed_walk => "boxed_expected_container\n",
 				$leaf === ($large . $right_child) => "integer_cast_out_of_range\n",
 				default => '',

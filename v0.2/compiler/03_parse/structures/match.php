@@ -51,6 +51,9 @@ final class ast_match_expression extends ast_selection_expression
 	/** @var ast_match_arm[] Owning arms in written order, including erroneous duplicate labels/defaults. */
 	public readonly array $arms /** list<ast_match_arm> */;
 
+	/** Prepared fact: an operand suspends in the enclosing coroutine. */
+	public bool $suspends = false;
+
 	/** @param ast_match_arm[] $arms */
 	public function __construct(ast_expression $subject, array $arms /** list<ast_match_arm> */, int $start /** uint32 */, int $end /** uint32 */)
 	{

@@ -11,6 +11,8 @@ final class ast_collection_expression extends ast_expression
 	public readonly array $elements /** list<ast_expression> */;
 
 	/** PREP FACTS */
+	/** Prepared fact: an operand suspends in the enclosing coroutine. */
+	public bool $suspends = false;
 	/** @var int[] Prepared fact: approved element conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -64,8 +66,12 @@ final class ast_keyed_entry extends ast_node
 /** Nonempty bracket-keyed input; duplicates remain ordered syntax, never a PHP map. */
 final class ast_keyed_collection_expression extends ast_expression
 {
+
 	/** @var ast_keyed_entry[] Native owning entries. */
 	public readonly array $entries /** list<ast_keyed_entry> */;
+
+	/** Prepared fact: an operand suspends in the enclosing coroutine. */
+	public bool $suspends = false;
 
 	/** @param ast_keyed_entry[] $entries */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $entries /** list<ast_keyed_entry> */)

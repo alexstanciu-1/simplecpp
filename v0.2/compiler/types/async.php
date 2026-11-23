@@ -43,7 +43,7 @@ final readonly class async_task_binding
 	}
 }
 
-/** A concrete value with passive empty storage can publish the shared async recipe on demand. */
+/** An owned concrete value can publish the shared async recipe on demand. */
 trait concrete_async_task
 {
 	/** Prepared fact: successful task binding for this layout generation, populated only on demand. */

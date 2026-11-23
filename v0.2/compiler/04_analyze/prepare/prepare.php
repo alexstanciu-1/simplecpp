@@ -34,10 +34,6 @@ final class Preparation
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
 	private bool $in_lambda = false;
-	/** Pending source argument lists encountered while walking upward from an await. */
-	private array $async_calls /** array<int,ast_call_expression> */ = [];
-	/** Temporary nested expression sites that must transfer a result across an operand cleanup boundary. */
-	private array $async_nested /** array<int,ast_expression|ast_local_declaration> */ = [];
 	/** Conservative sum across lexical scopes; reset at every body preparation. */
 	private int $array_bytes /** uint32 */ = 0;
 	private bool $has_lambda_local = false;
@@ -68,6 +64,7 @@ final class Preparation
 	private bool $in_finalizer = false;
 	/** Permission is lexical and restored before each sibling finally region. */
 	private bool $in_catch = false;
+	private int $suspension_count = 0;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
@@ -156,14 +153,7 @@ final class Preparation
 		$this->name_lookups = 0;
 		$this->loop = null;
 		$this->outward = $this->switch_break_states = [];
-		if ($function->is_async) {
-			try {
-				$completion = $this->sequence($syntax, $source, $target, $function);
-				$this->validate_suspending_operands();
-			} finally {
-				$this->async_calls = $this->async_nested = [];
-			}
-		} else $completion = $this->sequence($syntax, $source, $target, $function);
+		$completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
@@ -356,7 +346,7 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_delay_statement) {
 				if (!$function->is_async) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires an async function');
-				if ($this->in_catch) throw new diagnostic($source, $statement->byte_start(), 'Cannot suspend inside an async catch handler');
+				++$this->suspension_count;
 				$this->value($statement->value);
 				if ($statement->value->type_def() !== type_registry::integer()) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires int64 milliseconds');
 			}
@@ -411,9 +401,6 @@ final class Preparation
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
 		ast_function_declaration $function): int /** uint8 */
 	{
-		if ($function->is_async && $syntax->finalizer !== null) {
-			throw new diagnostic($source, $syntax->finalizer->byte_start(), 'Finally in async functions is deferred');
-		}
 		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
 		}
@@ -425,6 +412,7 @@ final class Preparation
 		try {
 			$completion = $this->lexical_block($syntax->body, $target, $function);
 			$seen = [];
+			$before_handlers = $this->suspension_count;
 			foreach ($syntax->handlers as $handler) {
 				$caught = Type_Resolution::local($handler->type, $this->symbols, $this->owner, $this->dependencies);
 				$this->require_exception($caught, $handler->type, true);
@@ -437,6 +425,7 @@ final class Preparation
 				$completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
 			}
 			$this->in_catch = $outer_catch;
+			$syntax->suspending_handlers = $before_handlers !== $this->suspension_count;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
 				if ($this->outward !== []) $syntax->protected_completion |= statement_completion::numbered;
@@ -738,7 +727,8 @@ final class Preparation
 			}
 			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
 			if (!(($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)
-				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
+				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression
+				|| ($function->is_async && $receiver instanceof ast_await_expression))) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires local storage, a temporary or a retained shared field');
 			}
 		}
@@ -892,6 +882,7 @@ final class Preparation
 			$this->construction($declaration->initializer, $type, $name);
 		}
 		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
+			$declaration->initializer->suspends = false;
 			if (!($type instanceof keyed_initializer_type)) throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
 			$this->expression_visits++;
 			foreach ($declaration->initializer->entries as $entry) {
@@ -1088,6 +1079,7 @@ final class Preparation
 	/** Prepare ordered elements once using the destination contract; nested literals inherit their element destination. */
 	private function collection(ast_collection_expression $syntax, type_definition&indexed_collection_type $type, ?string $initializing): void
 	{
+		$syntax->suspends = false;
 		$this->expression_visits++;
 		if ($type instanceof fixed_array_type && count($syntax->elements) !== $type->extent) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array initializer must match extent ' . $type->extent);
@@ -1166,6 +1158,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_match_expression) {
+			$syntax->suspends = false;
 			$this->value($syntax->subject, $initializing);
 			$type = $syntax->subject->type_def();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
@@ -1389,11 +1382,9 @@ final class Preparation
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
 		if ($syntax instanceof ast_await_expression) {
-			if ($this->in_catch && $this->owner->parent->is_async) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Cannot suspend inside an async catch handler');
-			}
-			$this->require_await_context($syntax);
+			$this->prepare_await_context($syntax);
 			$suspends = $this->owner->parent->is_async;
+			if ($suspends) ++$this->suspension_count;
 			$target = $this->async_producer($syntax->operand, $initializing,
 				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
 			if ($target->return_type_def() === type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
@@ -1667,64 +1658,18 @@ final class Preparation
 		}
 	}
 
-	/** Check only the call and storage boundaries discovered at await sites, once their ordinary facts have settled. */
-	private function validate_suspending_operands(): void
-	{
-		foreach ($this->async_calls as $call) {
-			$target = $call->has_direct_signature() ? $call->function_def() : null;
-			if (!($target instanceof ast_function_declaration && $target->parent instanceof ast_file_node)) {
-				throw new diagnostic($call->source(), $call->byte_start(), 'Suspending arguments require an ordinary source function');
-			}
-			foreach ($target->parameters as $parameter) {
-				if ($parameter->mode !== passing_mode::value) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'Suspending arguments require by-value parameters');
-				}
-			}
-		}
-		foreach ($this->async_nested as $site) {
-			if (!$site->type_def()->cpp_trivial_value()) throw new diagnostic($site->source(), $site->byte_start(),
-				'Nontrivial suspending intermediates and initializers require scoped result storage');
-		}
-	}
-
 	/** Only a suspension examines its parent path. Eligibility uses the facts from the ordinary binder. */
-	private function require_await_context(ast_await_expression $syntax): void
+	private function prepare_await_context(ast_await_expression $syntax): void
 	{
-		$context = $syntax->parent;
-		if ($this->owner->parent->is_async) {
-			$split = false;
-			$staged = null;
-			while ($context instanceof ast_expression) {
-				if ($staged !== null && ($context instanceof ast_call_expression || $context instanceof ast_binary_expression
-					|| $context instanceof ast_ternary_expression)) {
-					$this->async_nested[spl_object_id($staged)] = $staged;
-				}
-				if ($context instanceof ast_binary_expression && $context->operator !== binary_operator::coalesce) {
-					if (!$context->operator->lazy()) $staged = $context;
-					$split = $split || !$context->operator->lazy();
-				} elseif ($context instanceof ast_call_expression) {
-					$staged = $context;
-					$this->async_calls[spl_object_id($context)] = $context;
-					$split = true;
-				} elseif ($context instanceof ast_ternary_expression && $split) {
-					$this->async_nested[spl_object_id($context)] = $context;
-				} elseif (!($context instanceof ast_not_expression || $context instanceof ast_ternary_expression
-					|| $context instanceof ast_await_expression)) break;
-				$context = $context->parent;
+		if ($this->in_lambda) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a function body outside a lambda');
+		if (!$this->owner->parent->is_async) return;
+		for ($context = $syntax->parent; $context instanceof ast_expression || $context instanceof ast_match_arm
+			|| $context instanceof ast_keyed_entry; $context = $context->parent) {
+			if ($context instanceof ast_match_expression || $context instanceof ast_collection_expression || $context instanceof ast_keyed_collection_expression) {
+				$context->suspends = true;
+			} elseif ($context instanceof ast_call_expression) {
+				$context->suspending_operands = true;
 			}
-			if ($split && $context instanceof ast_local_declaration) {
-				$this->async_nested[spl_object_id($context)] = $context;
-			} elseif ($split && !($context instanceof ast_return_statement || $context instanceof ast_echo_statement
-				|| $context instanceof ast_call_statement || $context instanceof ast_await_statement
-					|| ($context::class === ast_assignment_statement::class && $context->operator === null)
-				|| $context instanceof ast_if_arm || $context instanceof ast_tested_loop || $context instanceof ast_for_statement)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps require a statement, if condition or loop condition');
-			}
-		}
-		$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
-			|| ($context instanceof ast_assignment_statement && $context->operator === null));
-		if ($this->in_lambda || ($this->owner->parent->is_async && !($async_context || $context instanceof ast_await_statement || $context instanceof ast_call_statement || $context instanceof ast_local_declaration || $context instanceof ast_return_statement || $context instanceof ast_echo_statement))) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a direct local initializer, return or echo operand, or a supported condition, assignment in an async function, or a discarded call');
 		}
 	}
 

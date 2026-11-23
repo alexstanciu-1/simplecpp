@@ -195,7 +195,9 @@ interface index_write_type
 {
 	public function prepare_key(ast_expression $key): void;
 	public function write_type(): type_definition;
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string;
+	/** Null permits direct lowering. A staged RHS (including a bare await with no prelude) follows key selection. */
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value,
+		?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string;
 }
 
 /** Read/modify/write collections replace an approved element value without exposing an element reference. */
@@ -216,6 +218,28 @@ trait checked_indexed_mutation
 	}
 }
 
+/** Vectors, hashes and boxed collections normalize a key and replace through a runtime setter. */
+trait collection_keyed_store
+{
+	abstract public function write_type(): type_definition;
+	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
+
+	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
+	{
+		return $this->lower_cpp_write($receiver, $this->lower_cpp_key($key, $index), $value) . ';';
+	}
+
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value,
+		?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
+	{
+		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
+		if ($rhs_steps === null) return $this->lower_cpp_replace($write->index, $receiver, $key, $value);
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; ' . $rhs_steps . ' '
+			. $this->lower_cpp_write($receiver, 'write_key', $value) . '; }';
+	}
+}
+
 /** Ordered stores snapshot the normalized key and converted value before invoking the runtime member. */
 trait ordered_keyed_store
 {
@@ -223,10 +247,10 @@ trait ordered_keyed_store
 	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
 	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
 	{
 		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
-		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; const auto write_value = ' . $value . '; '
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; ' . ($rhs_steps === null ? '' : $rhs_steps . ' ') . 'const auto write_value = ' . $value . '; '
 			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
 	}
 }

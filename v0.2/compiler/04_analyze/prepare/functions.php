@@ -62,6 +62,7 @@ final class Function_Preparation
 			}
 			if ($statement instanceof ast_try_statement) {
 				$statement->protected_completion = $statement->completion = null;
+				$statement->suspending_handlers = false;
 				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
 				foreach ($statement->handlers as $handler) {

@@ -109,12 +109,12 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 		return '(' . $receiver . ')[scpp::fixed_array_index(' . $index . ', ' . $this->extent . ')]';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
 	{
 		$target = $this->lower_cpp_index($write->index, $receiver, $key);
 		$operand = $this->element->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		// Select and bounds-check the destination before evaluating a possibly effectful RHS.
-		return '{ auto& fixed_element = ' . $target . '; fixed_element = ' . $operand . '; }';
+		return '{ auto& fixed_element = ' . $target . '; ' . ($rhs_steps === null ? '' : $rhs_steps . ' ') . 'fixed_element = ' . $operand . '; }';
 	}
 
 	/** Admit exact shape copies only where lowering has an explicit array destination. */

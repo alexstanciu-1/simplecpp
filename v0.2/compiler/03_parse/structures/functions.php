@@ -173,6 +173,8 @@ final class ast_call_expression extends ast_expression
 	public bool $interface_dispatch = false;
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
+	/** Prepared fact: evaluating the receiver or an argument can suspend this coroutine. */
+	public bool $suspending_operands = false;
 	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
 	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
@@ -316,6 +318,7 @@ final class ast_call_expression extends ast_expression
 		$this->ancestor_dispatch = false;
 		$this->interface_dispatch = false;
 		$this->cardinality = null;
+		$this->suspending_operands = false;
 		$this->conversions = [];
 	}
 }

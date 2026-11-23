@@ -547,25 +547,23 @@ final class record_type_definition extends type_definition implements dependency
 
 	public function supports_async_parameter(): bool
 	{
-		return $this->supports_async_record(false);
+		return $this->async_task() !== null;
 	}
 
+	/** Check ownership of every base and embedded field before publishing its task binding. */
 	protected function supports_async_storage(): bool
 	{
-		return $this->supports_async_record(true);
-	}
-
-	/** Only the result promise eagerly constructs an empty record. Inputs arrive as initialized values. */
-	private function supports_async_record(bool $empty_result): bool
-	{
 		$node = $this->declaration;
-		if ($node->kind !== record_kind::structure || $node->is_abstract || $node->base_reference !== null
-			|| $node->interface_references !== [] || isset($node->methods['__destruct'])
-			|| ($empty_result && isset($node->methods['__construct']))) return false;
-		foreach ($node->fields as $field) {
-			$type = $field->storage_type();
-			if ($empty_result && $field->initializer !== null) return false;
-			if (!($type instanceof enum_type_definition) && !type_registry::async_value($type)) return false;
+		if ($node->kind !== record_kind::structure || $node->is_abstract) return false;
+		$destructor = $node->methods['__destruct'] ?? null;
+		if ($destructor !== null && ($destructor->is_private || $destructor->is_protected)) return false;
+		// Layout preparation already checks base destruction and rejects inline cycles.
+		for ($part = $this; $part !== null; $part = $part->base()) {
+			foreach ($part->declaration->fields as $field) {
+				$type = $field->storage_type();
+				// An inline byte array moves with its enclosing record.
+				if (!($type instanceof fixed_array_type) && !$type->supports_async_parameter()) return false;
+			}
 		}
 		return true;
 	}
@@ -656,13 +654,7 @@ abstract class record_handle_definition extends type_definition
 
 	public function supports_async_parameter(): bool
 	{
-		return $this->payload->declaration->kind === record_kind::structure;
-	}
-
-	/** Strong and weak struct handles can occupy a task result slot. */
-	protected function supports_async_storage(): bool
-	{
-		return $this->payload->declaration->kind === record_kind::structure;
+		return true;
 	}
 
 	public function supports_inferred_local(): bool
