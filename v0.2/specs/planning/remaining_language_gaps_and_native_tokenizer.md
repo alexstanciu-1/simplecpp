@@ -433,6 +433,12 @@ declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
 call just past the closing brace reports `Invocation requires a typed callable local: g`.
 Moving it back in the same compiler instance reproduces the fresh build and prints `1` again.
 
+**Direct closure append (`CLOSURE-REJECT-002`).** Appending a capture-free block
+closure directly to a `vector<int>` reports `Lambda requires an inferred local initializer or typed callback argument`.
+The native fixture retries in the same compiler instance with the closure bound to
+`$g` and `$items[] = $g();`. It checks that the vector has one element and that
+`$items[0]` equals `1`.
+
 The original audit classifications follow.
 
 **Missing (7)**

@@ -107,6 +107,21 @@ def prove_block_local_scope(work):
     ])
 
 
+def prove_block_append_placement(work):
+    closure = 'function ():int { return 1; }'
+
+    def entry(append):
+        return f'$items vector<int> = []; {append} echo count($items), ":", $items[0]; return 8;'
+
+    direct = entry(f'$items[] = {closure};')
+    repaired = entry(f'$g = {closure}; $items[] = $g();')
+    work.mkdir()
+    revisions(work, 'php', dict(main=direct), [
+        (None, None, 'Lambda requires an inferred local initializer or typed callback argument'),
+        ('main', repaired, b'1:1'),
+    ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -115,6 +130,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_block_append_placement(root / 'block-append-placement')
         prove_block_local_scope(root / 'block-local-scope')
         prove_block_callback_result(root / 'block-callback-result')
         for flavor in ('php', 'cpp', 'js'):
