@@ -41,7 +41,7 @@ the common type, ownership and evaluation rules. The shared backend emits C++.
 | Layout and functions | Indented multiline suites, comments, parenthesized continuations, typed def parameters and returns, typed initialized locals and subsequent assignment. |
 | Expressions and control | Core scalar literals and arithmetic, comparisons, bool-only not/and/or, conditional expressions, if/elif/else, while, pass, unlabelled break and continue, and return. |
 | Collections | Typed vector and hash local literals, checked indexed reads and single indexed writes. A for name in source loop binds vector elements or hash keys. A new loop name stays in the loop and an existing local receives the selected entries. Typed hashes also accept for key, value in mapping.items(). The key is loop-local and the value uses the shared foreach destination rule. Hash order has no source guarantee. |
-| Records and ownership | Typed class fields, self, dot access, construction with __init__, and one base class with an initial super().__init__ call. Compile-time @virtual and @override select the shared method contract, with an explicit override marker required. |
+| Records and ownership | Typed class fields, self, dot access, construction with __init__, and one base class with an initial super().__init__ call. Methods can call super().method(...) as a statement or expression. Compile-time @virtual and @override select the shared method contract, with an explicit override marker required. |
 | Typed failures | Raise, bare rethrow in a handler, typed except Type as name clauses and finally under the shared cleanup rules. |
 
 The shared collection contract rejects negative vector indexes and duplicate
@@ -58,8 +58,7 @@ Deferred Python spellings and semantics include floating floor division and
 modulo, operand-valued boolean operators, chained comparisons, type inference
 on first assignment, general iteration and range, standalone items views and general destructuring,
 comprehensions, generator syntax, import and print, general decorators, dynamic
-attributes, Python-authored interfaces, and super calls beyond base
-construction. Package interoperability and CPython execution are outside the
+attributes, Python-authored interfaces, and general super proxies. Package interoperability and CPython execution are outside the
 flavor scope. Native tokenizer layout parity is tracked as separate cutover work.
 See the [runnable example](../compiler/examples/python/main.py) and the
 [acceptance record](planning/python_flavor.md#v02-closeout).
@@ -452,7 +451,7 @@ taking precedence. Concrete descendants implement it through ordinary override r
 
 ## Explicit ancestor member access
 
-PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
+PHP uses `parent::evaluate(...)`, JS uses `super.evaluate(...)` and Python uses `super().evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
 The C++ flavor accepts `Parent::evaluate(...)` for a lexical parent method call.
 It also accepts an actual ancestor type name, such as `Node::evaluate(...)`, including

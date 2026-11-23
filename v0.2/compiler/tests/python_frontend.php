@@ -293,7 +293,7 @@ $write = $class->methods['__construct']->body()->statements[0];
 check($write instanceof scpp\compiler\ast_field_assignment
 	&& $write->target->receiver instanceof scpp\compiler\ast_this_expression, 'Self uses the shared receiver node');
 
-$derived = "class Child(Base):\n    def __init__(self, value: int):\n        super().__init__(value)\n    @override\n    def read(self) -> int:\n        return 8\n";
+$derived = "class Child(Base):\n    def __init__(self, value: int):\n        super().__init__(value)\n    @override\n    def read(self) -> int:\n        super().mark(2)\n        return super().read()\n";
 $file = $frontend->parse(new source_file('derived.py', $derived . 'return 8', flavor::python));
 $class = array_values(array_filter($file->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
 $base = $class->methods['__construct']->body()->statements[0];
@@ -304,7 +304,25 @@ check($class->source_text() === $derived && $class->base_reference?->name === 'B
 	&& $read->is_override && $file->tokens->text_at($read->modifier_start) === '@',
 	'Python inheritance preserves source spans on the shared record, base initializer and method marker');
 
+[$statement, $returned] = $read->body()->statements;
+foreach ([[$statement->value, 'super().mark(2)'], [$returned->value, 'super().read()']] as [$call, $spelling]) {
+	check($call instanceof scpp\compiler\ast_call_expression && $call->receiver === null
+		&& $call->qualifier === scpp\compiler\call_qualifier::lexical_parent && $call->source_text() === $spelling,
+		'Python ancestor calls retain their authored spans and shared lexical qualifier');
+}
+
+$implicit = $frontend->parse(new source_file('implicit.py',
+	str_replace('super().__init__(value)', 'super().mark(value)', $derived), flavor::python));
+$child = array_values(array_filter($implicit->declaration_nodes, static fn($node) => $node instanceof scpp\compiler\ast_record_declaration))[0];
+[$initializer, $mark] = $child->methods['__construct']->body()->statements;
+check(!$initializer->value->explicit && $mark->value->qualifier === scpp\compiler\call_qualifier::lexical_parent,
+	'A first ordinary super method call follows implicit base initialization');
+
 foreach ([
+	["return super().read()", 'requires a declaring record'],
+	["class Box:\n    def read(self) -> int:\n        return super().read()\nreturn 8", 'requires a base type'],
+	["return super(1).read()", ') after super'],
+	["return super().field", 'Expected ('],
 	["class Box:\n    def read() -> int:\n        return 1\nreturn 8", 'Expected self'],
 	["class Box(Base):\n    pass\nreturn 8", 'Base must be a class'],
 	["class Box:\n    def __init__(self):\n        return 1\nreturn 8", 'Void function cannot return a value'],

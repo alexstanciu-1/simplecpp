@@ -217,8 +217,7 @@ CLI acceptance passed with Clang at fb77a0487:
 
 - Binary division, floor division and modulo have a [arithmetic batch](#python-division-floor-division-and-modulo). Floating floor division and modulo remain deferred.
 - Imports and print need explicit module-mapping and output contracts.
-- Python-authored interface declarations, super calls beyond base
-  construction, general decorators and dynamic attributes remain deferred.
+- Python-authored interface declarations, general super proxies, general decorators and dynamic attributes remain deferred.
 - General truthiness, operand-valued and/or, chained comparisons, first-write
   inference, range, general iterators, standalone items views, destructuring, comprehensions
   and generator syntax remain deferred. Broader hash slot reuse belongs to
@@ -361,3 +360,5 @@ values. The resident failure matches a fresh diagnostic at the loop binding
 and preserves the previous bundle and manifest. Restoring the provider
 recovers fresh-equivalent output and native behavior. Frontend checks reject
 a fresh key used after the loop and a standalone items call on a typed hash.
+
+The [Python language gap audit](python_language_gap_audit.md) classifies follow-up work by peer implementation, semantic differences and compiler ownership.

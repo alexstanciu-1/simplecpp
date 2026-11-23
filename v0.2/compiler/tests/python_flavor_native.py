@@ -1,12 +1,14 @@
 """Compare mixed Python-flavor execution with the existing flavors and check edit recovery."""
 import argparse
+import json
 import tempfile
 from pathlib import Path
 
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
 from extends_native import ROOT, runtime, source_edit
-from parent_methods_native import write_app
+from inline_adapters_native import incremental_native_build
+from parent_methods_native import syntax as ancestor_syntax, write_app
 from virtual_methods_native import forms
 
 
@@ -956,7 +958,8 @@ INHERITANCE = """class Child(Base):
 
     @override
     def evaluate(self) -> int:
-        return self.value + self.extra
+        super().mark()
+        return super().evaluate() + super().score(self.value) + self.extra
 
     @virtual
     def other(self) -> int:
@@ -970,7 +973,7 @@ BASE_CONSTRUCTORS = {
 
 
 def inheritance(work, flavor, library):
-    syntax, _, klass = forms(flavor)
+    syntax, _, klass, _, method = ancestor_syntax(flavor)
     field = {'cpp': 'public: int value = 0;', 'php': 'public int $value = 0;', 'js': 'value: int = 0;'}[flavor]
     virtual = {
         'cpp': 'virtual int evaluate() { return 0; }',
@@ -982,8 +985,16 @@ def inheritance(work, flavor, library):
         'php': 'public function bonus(): int { return 0; }',
         'js': 'bonus(): int { return 0; }',
     }[flavor]
-    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited)
+    marker = {
+        'cpp': 'void mark() { echo "M"; }',
+        'php': 'public function mark(): void { echo "M"; }',
+        'js': 'mark(): void { echo "M"; }',
+    }[flavor]
     v = syntax['v']
+    parameter = {'cpp': 'int amount', 'php': 'int $amount', 'js': 'amount: int'}[flavor]
+    far_score = method('score', f'return {v}amount + 20;', params=parameter, intent='virtual')
+    near_score = method('score', f'return {v}amount;', params=parameter, intent='override')
+    base = klass('Base', field + BASE_CONSTRUCTORS[flavor] + virtual + inherited + marker + near_score, 'Grandparent')
     access = syntax['access']
     api = syntax['function']('viaBase', 'int', [('obj', 'Base')],
                              f'return {v}obj{access}evaluate() + {v}obj{access}bonus();')
@@ -994,24 +1005,45 @@ def inheritance(work, flavor, library):
         'idle': 'def idle() -> int:\n    return 17',
     })
     peer = app/f'base.{flavor}'
+    source_edit(app/f'grandparent.{flavor}', klass('Grandparent', far_score))
     source_edit(peer, base)
     source_edit(app/f'api.{flavor}', api)
     resident = service(app, bundle)
     try:
         result = invoke(resident)
         assert 'error' not in result, result
-        native(bundle, work/'inheritance-initial', (9, b'B', b''), library)
+        native_dir = work/'inheritance-native'
+        incremental_native_build(bundle, native_dir, 'clang++', library, b'BM', expected_status=9)
+        units = {Path(path).name: Path(unit) for path, unit in json.loads((bundle/'manifest.json').read_text())['sources'].items()}
+        base_unit = units[peer.name]
+        initial = artifacts(bundle)
+        stamps = {path: (bundle/path).stat().st_mtime_ns for path in initial}
 
-        edited = base.replace(inherited, inherited.replace('return 0', 'return 1'))
+        edited = base.replace(virtual, virtual.replace('return 0', 'return 1')).replace(marker, marker.replace('"M"', '"E"'))
         source_edit(peer, edited)
         changed = invoke(resident)
         assert 'error' not in changed and changed['preparation']['reused'], changed
         assert {Path(path).name for path in changed['emitted_sources']} == {
             peer.name, f'api.{flavor}', 'child.py', 'main.py',
         }, changed
-        native(bundle, work/'inheritance-edited', (10, b'B', b''), library)
         previous = artifacts(bundle)
+        assert previous.keys() == initial.keys()
+        assert {path for path in initial if initial[path] != previous[path]} == {base_unit}
+        assert {path for path in initial if stamps[path] != (bundle/path).stat().st_mtime_ns} == {base_unit}
+        rebuilt = incremental_native_build(bundle, native_dir, 'clang++', library, b'BE', expected_status=10)
+        assert rebuilt == {str(base_unit)}, rebuilt
         manifest = (bundle/'manifest.json').read_bytes()
+
+        for owner, provider, status in [('Grandparent', edited.replace(near_score, ''), 30), ('Base', edited, 10)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'inheritance-rebind-{owner}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            assert f'.scpp_records::{owner}::scpp_virtual_score(' in (bundle/units['child.py']).read_text()
+            incremental_native_build(bundle, native_dir, 'clang++', library, b'BE', expected_status=status)
+        assert artifacts(bundle) == previous
 
         child = app/'child.py'
         for name, path, invalid, diagnostic in [
@@ -1019,6 +1051,7 @@ def inheritance(work, flavor, library):
             ('duplicate-marker', child, INHERITANCE.replace('@override', '@override\n    @override'), 'Duplicate method modifier'),
             ('multi-base', child, INHERITANCE.replace('Child(Base)', 'Child(Base, Base)'), 'single base class'),
             ('late-super', child, INHERITANCE.replace('        super().__init__(start)', '        pass\n        super().__init__(start)'), 'super'),
+            ('removed-super-method', peer, edited.replace(marker.replace('"M"', '"E"'), ''), 'mark'),
             ('base-contract', peer, edited.replace('virtual ', ''), 'Nonvirtual method hiding'),
         ]:
             source_edit(path, invalid)
@@ -1043,7 +1076,7 @@ def inheritance(work, flavor, library):
         fresh = work/'inheritance-fresh'
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(bundle) == artifacts(fresh) == previous
-        native(bundle, work/'inheritance-recovered', (10, b'B', b''), library)
+        native(bundle, work/'inheritance-recovered', (10, b'BE', b''), library)
     finally:
         resident.stdin.close()
         assert resident.wait() == 0

@@ -343,8 +343,7 @@ final class Parser
 		}
 		if ($c->keyword('try')) return $this->try_statement($grammar, $collector);
 		if ($c->keyword('raise')) return $this->throw_statement('raise', token_kind::newline);
-		if ($c->keyword('super')) throw new diagnostic($c->tokens->source, $c->offset(), 'super().__init__ must start a derived constructor');
-		if ($c->keyword('self') || ($c->is(token_kind::identifier)
+		if ($c->keyword('super') || $c->keyword('self') || ($c->is(token_kind::identifier)
 			&& ($c->next_is(token_kind::lparen) || $c->next_is(token_kind::dot) || $c->next_is(token_kind::lbracket)))) {
 			$value = $this->primary(field_target: true);
 			if ($c->is(token_kind::lbracket)) return $this->indexed_write($value, token_kind::newline);
@@ -746,12 +745,9 @@ final class Parser
 			$c = $this->cursor;
 			$start = $c->position();
 			$spelling = $c->tokens->text_at($start);
-			if ($source->flavor === flavor::python && $c->keyword('super')) {
-				$c->take_keyword('super');
-				$c->take(token_kind::lparen, '(');
-				$c->take(token_kind::rparen, ') after super');
-				$c->take(token_kind::dot, '.');
-				if ($c->name(token_kind::identifier) !== '__init__') throw new diagnostic($source, $c->offset(), 'Expected base constructor');
+			if ($source->flavor === flavor::python && $c->keyword('super')
+				&& isset($c->tokens->tokens[$start + 4]) && $c->tokens->text_at($start + 4) === '__init__') {
+				$this->python_super_member();
 				$args = $this->arguments();
 				$end = $c->take(token_kind::newline, 'NEWLINE') + 1;
 				$base = new ast_base_initialization($start, $end, $args, true);
@@ -1408,6 +1404,17 @@ final class Parser
 		return $value;
 	}
 
+	/** Consume the zero-argument ancestor qualifier and its named member. */
+	private function python_super_member(): string
+	{
+		$c = $this->cursor;
+		$c->take_keyword('super');
+		$c->take(token_kind::lparen, '(');
+		$c->take(token_kind::rparen, ') after super');
+		$c->take(token_kind::dot, '. after super()');
+		return $c->name(token_kind::identifier);
+	}
+
 	/** Recognize contextual member qualifiers according to flavor, separator and supported syntax. */
 	private function member_qualifier(): ?call_qualifier
 	{
@@ -1510,6 +1517,12 @@ final class Parser
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
+		}
+		if ($c->keyword('super') && $c->tokens->source->flavor === flavor::python) {
+			$start = $c->position();
+			$name = $this->python_super_member();
+			if ($name === '__init__') throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start]->offset, 'super().__init__ must start a derived constructor');
+			return $this->call_arguments($start, $name, token_kind::dot, null, call_qualifier::lexical_parent);
 		}
 		$qualifier = $this->member_qualifier();
 		if ($qualifier !== null) return $this->qualified_member($qualifier);
