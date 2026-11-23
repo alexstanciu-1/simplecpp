@@ -134,3 +134,7 @@ The frontend tests reject both timer and child suspension inside a handler. Clan
 #### Finally
 
 The tracked frontend fixture rejects even a finally containing only echo. Cpp_Emitter::exception_region emits a finalizer lambda and may run the protected region inside a pending-exit lambda. Existing replay targets ordinary returns. Supporting the general form requires coroutine-aware exit replay and cleanup, including a finalizer that throws or suspends. Verify nested returns, break/continue and destruction after failure.
+
+#### Methods and callable adaptation
+
+Free-function task and blocking entry points are published by producer and dependency role. Instance methods additionally need a receiver that survives suspension. Decide whether inline receivers copy or borrow, and whether shared receivers pin their allocation. Static methods avoid the receiver question but need dual entry publication through existing static-method specialization. Interface/virtual calls and async callable adaptation also need async signature compatibility. Start with one cross-file static method proof before changing instance dispatch.
