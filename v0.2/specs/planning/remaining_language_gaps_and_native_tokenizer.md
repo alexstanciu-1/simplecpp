@@ -48,6 +48,30 @@ The example column includes companion-audit topics. The short list tracks only t
 
 Review G14–G16 on a separate design track. Schedule an implementation slice when a concrete consumer or policy decision supplies its scope. The tokenizer can proceed in parallel with language work.
 
+## Verification goal queue
+
+Use one goal for the batches below. Compare the exact PHP donor specimen with existing
+assertions first. Cite and run a matching fixture when it already proves the rule.
+Add a focused assertion only for missing evidence. For positive cases check the
+observable result. For negative cases check the reason and location. Use a resident
+compiler and fresh-build comparison where an edit changes lookup or preparation.
+Record each donor ID as verified, verified through a migration, partial, or requiring
+a design decision. Continue through independent batches and collect decisions for one review.
+
+| Order | Donor records | What settles the question |
+| --- | --- | --- |
+| 1 · G09 callable storage | `SCOPE-VAR-003` | Probe the outer annotated local assigned a capture-free closure inside a block and invoked afterward. Record whether the spelling, storage declaration, assignment or later read is the first barrier. Existing inferred-local invocation is the control. |
+| 2 · G06 iteration | `CTRL-FOREACH-001`, `CTRL-FOREACH-002` | Match native vector and hash fixtures to the donor's value and keyed iteration. Check the visited values and key/value pairing. Writable iteration stays deferred. |
+| 3 · G10 lookup and execution | `VAR-ORDER-001`, `NS-USE-003`, `NS-QUALIFIED-003`, `NS-EXEC-001` through `003` and `005`, `RESOLVE-001`, `CLASS-NS-001` through `004` | Start with scopes, namespaces and imports. Check which declaration resolves, execution and return order, and which source location rejects. Reuse the recorded import and multi-block evidence. |
+| 4 · G11 member lookup | `CLASS-CONST-001` through `005`, `CLASS-PROP-002B/C/D`, `CLASS-PROP-006B/C`, `CLASS-PROP-007`, `CLASS-STATIC-NS-001` through `003` | Check selected declarations and observable reads or writes with distinct base and child values. Start with protected static data and expression-qualified static fixtures. |
+| 5 · G11/G13 member restrictions | `CLASS-PROP-009/010`, `CLASS-CALL-009/011`, `CLASS-MEMBER-009` | Probe undeclared and dynamic members, explicit destructor calls, and abstract static methods. Confirm the intended restriction before classifying a rejection. |
+| 6 · G12/G14 existing equivalents | `ENUM-003`, `LIT-CONST-001` | Link the existing typed enum lookup hit/miss evidence and retain the deferred nullsafe syntax. Probe source-level `PHP_INT_MAX` and compare with the exact int64 limit. A host PHP assertion alone cannot settle source spelling. |
+
+The goal ends with one donor-by-donor result table and a short list of decisions.
+A missing language feature can be recorded and the batch can advance. Captures,
+closure defaults, callable-local storage design, new diagnostics, and other language
+changes need separate decisions. The original audit counts below are historical.
+
 ## First discussion · G01
 
 Use one initialized local to compare the intended results and stores. These examples describe cases to review, with nested uses still requiring a separate admission decision.
