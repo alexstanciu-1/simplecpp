@@ -364,6 +364,14 @@ a no-edit retry preserved the diagnostic and the last good output, and removing
 the duplicate restored output identical to a fresh build. No compiler change
 was needed for these donor cases.
 
+**Class, nullable class, and interface parameters (`TYPE-PARAM-004`).** Verified
+the PHP donor signature `function f(A $a, ?B $b, I $i): A` across source files.
+The [native interface fixture](../../compiler/tests/interfaces_native.py) passes
+literal null and a live B carrying 17, using `$b !== null` for presence. Calling
+the same interface method produces 11 and 22 from two concrete implementations.
+Writing 31 and then 42 through the two returned handles changes the original A
+on both calls. The native output is `absent:11:31;17:22:42`.
+
 **Override parameter modes (`TYPE-PARAM-003G`).** The bootstrap supports value
 and writable-reference source parameters. Method contract preparation compares
 the mode at each parameter position for overrides and interface implementations.
