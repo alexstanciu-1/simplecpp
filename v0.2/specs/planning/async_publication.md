@@ -21,6 +21,16 @@ promise. After checking for failure, await-resume moves the payload into the cal
 The source protocol consumes each task once. Blocking callers include only the wait
 declaration for the selected result. The umbrella wait header remains available to C++.
 
+### Compiler task lookup
+
+Preparation and lowering both call `async_task()` on the resolved return type. A
+missing binding rejects the signature during preparation. Runtime bindings come from
+the generated publication registry. Enums and eligible inline structs supply their
+canonical declaration key. A successful nominal binding belongs to that type generation;
+layout invalidation clears it before signatures are checked again. The binding selects
+the prototype, complete promise and blocking entry. Each suspending unit collects its
+own application task demand and feeds the existing concrete-type adapter and recipe.
+
 ### Task-to-runtime boundary
 
 The generator emits one implementation unit for each published task. Each task keeps its

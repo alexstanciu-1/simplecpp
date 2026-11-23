@@ -20,16 +20,6 @@ final class initialization_transport
 	}
 }
 
-/** A nominal application result uses its declaration identity for concrete task publication. */
-interface application_async_result
-{
-	/** Native non-owning link to the declaration that owns this task identity. */
-	public ast_type_declaration $declaration { get; }
-
-	/** Called during signature preparation, after field layout resolution. */
-	public function supports_async_storage(): bool;
-}
-
 /** Whole-value move assignment preserves source value semantics when a private source dies. */
 interface private_value_transfer_type
 {
@@ -281,6 +271,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Resolve the task exported for this result by the active runtime publication. */
+	public function async_task(): ?async_task_binding
+	{
+		return async_task_binding::published($this);
+	}
+
 	public function constant_dispatch(): ?constant_dispatch
 	{
 		return null;

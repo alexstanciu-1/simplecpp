@@ -554,7 +554,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Nullary runtime results use their provider wait_for. Application results use a producer-owned blocking entry. */
 	public function has_async_wait_bridge(): bool
 	{
-		return $this->is_async && ($this->parameters !== [] || $this->return_type_def() instanceof application_async_result);
+		return $this->is_async && ($this->parameters !== [] || $this->return_type_def()->async_task()->wait_header === null);
 	}
 
 	public function is_constructor(): bool

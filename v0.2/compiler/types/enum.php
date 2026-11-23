@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Nominal enum identity; storage and backing facts are shared by every occurrence of this declaration. */
-final class enum_type_definition extends type_definition implements application_async_result
+final class enum_type_definition extends type_definition
 {
+	use nominal_async_task;
+
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
 	public readonly ast_enum_declaration $declaration;
@@ -81,7 +83,7 @@ final class enum_type_definition extends type_definition implements application_
 		return $this->cpp_type() . '::' . Cpp_Identifier::source($case->short_name);
 	}
 
-	public function supports_async_storage(): bool
+	protected function supports_async_storage(): bool
 	{
 		return true;
 	}

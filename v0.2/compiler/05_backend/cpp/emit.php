@@ -45,7 +45,7 @@ final class Cpp_Emitter
 	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
 	private Cpp_Concrete_Collections $concrete_collections;
-	/** Concrete task demand for the current unit. @var array<string,application_async_result&type_definition> */
+	/** Concrete task demand for the current unit. @var array<string,type_definition> */
 	private array $async_results = [];
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
@@ -582,7 +582,7 @@ CPP;
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 			if ($function->has_async_wait_bridge() && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
-				$wait = $function->return_type_def() instanceof application_async_result ? 'sync_wait' : '::scpp::async::sync_wait';
+				$wait = $function->return_type_def()->async_task()->sync_wait;
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn $wait("
 					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
 			}
@@ -1715,7 +1715,7 @@ CPP;
 			$task_name = $value->suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
 			$declarations[$name] = $callee;
 			if (!$value->suspends && !$callee->has_async_wait_bridge()) {
-				$required_headers[type_registry::async_result($callee->return_type_def())['wait_header']] = true;
+				$required_headers[$callee->return_type_def()->async_task()->wait_header] = true;
 				return '::scpp::async::wait_for(&' . $name . ')';
 			}
 			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
@@ -2462,24 +2462,10 @@ CPP;
 		return implode('', $forwards);
 	}
 
-	/** Namespace and canonical declaration distinguish nominal application results. */
-	private function application_task_name(application_async_result $type): string
-	{
-		return 'scpp_async_task_' . hash('sha256', $this->root . "\0" . $type->declaration->symbol_key());
-	}
-
-	/** Request the complete promise only for a suspending unit. @param bool[] $headers */
+	/** Request the complete promise through the resolved type's task publication. @param bool[] $headers */
 	private function require_task(type_definition $result, array &$headers): string
 	{
-		if ($result instanceof application_async_result) {
-			$name = $this->application_task_name($result);
-			$this->async_results[$name] = $result;
-			$headers['coroutine'] = true;
-			return $name;
-		}
-		$binding = type_registry::async_result($result);
-		$headers[$binding['header']] = true;
-		return $binding['cpp'];
+		return $result->async_task()->require_definition($this->root, $result, $headers, $this->async_results);
 	}
 
 	/** Format a native constructor declaration or allocation factory. @param bool[] $headers */
@@ -2495,12 +2481,7 @@ CPP;
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
 		if ($function->is_async) {
-			$result = $function->return_type_def();
-			if ($result instanceof application_async_result) $task = 'class ' . $this->application_task_name($result);
-			else {
-				$headers['scpp/async_fwd.hpp'] = true;
-				$task = type_registry::async_result($result)['cpp'];
-			}
+			$task = $function->return_type_def()->async_task()->forward_name($this->root, $headers);
 			return $task . ' ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
 		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';

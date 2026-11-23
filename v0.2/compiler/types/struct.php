@@ -12,8 +12,9 @@ enum record_layout_state: int
 }
 
 /** Nominal record payload/layout identity, distinct from its source value storage contract. */
-final class record_type_definition extends type_definition implements dependency_watcher, iterable_type, application_async_result
+final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
+	use nominal_async_task;
 	use collection_specializations;
 	use concrete_value_storage;
 
@@ -116,6 +117,7 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->layout_state = record_layout_state::pending;
+		$this->task_binding = null;
 		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
@@ -139,6 +141,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->layout_state !== record_layout_state::pending) $this->dependencies->changed($this->symbol);
 		$this->layout_state = record_layout_state::pending;
+		$this->task_binding = null;
 		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
@@ -543,7 +546,7 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** The task eagerly owns an empty payload. Only passive aggregate initialization is admitted here. */
-	public function supports_async_storage(): bool
+	protected function supports_async_storage(): bool
 	{
 		$node = $this->declaration;
 		if ($node->kind !== record_kind::structure || $node->is_abstract || $node->base_reference !== null
@@ -552,7 +555,7 @@ final class record_type_definition extends type_definition implements dependency
 			$type = $field->storage_type();
 			if ($field->initializer !== null) return false;
 			if (!($type instanceof enum_type_definition) && !type_registry::accepts_async_parameter($type)
-				&& type_registry::async_result($type) === null) return false;
+				&& async_task_binding::published($type) === null) return false;
 		}
 		return true;
 	}
