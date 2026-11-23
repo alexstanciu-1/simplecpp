@@ -988,7 +988,10 @@ CPP;
 						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
 				} else {
 					$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
-					$lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
+					if ($statement instanceof ast_while_statement && $this->async_steps !== []) {
+						$lines[] = "\twhile (true) {";
+						$lines[] = "\t" . $this->async_statement("if (!($condition)) break;");
+					} else $lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => $update_label];
 				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume) as $line) {

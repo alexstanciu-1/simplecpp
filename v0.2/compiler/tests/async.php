@@ -531,7 +531,7 @@ foreach (flavor::cases() as $flavor) {
 		$guard_child = $guard . 'async ' . $typed_fn('temporaryOwner', 'shared<Guard>') . '{await async_sleep_ms(1);return new Guard();}';
 		$lifetime = $pair . 'async ' . $signature('compute') . '{return pair(await temporaryOwner() !== null,await rightValue());}';
 		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('loopTest')
-			. '{while (' . $ordered_call . ') {return 1;}return 0;}return 8;'), 'Suspending operand steps');
+			. '{do {echo 1;} while (' . $ordered_call . ');return 0;}return 8;'), 'Suspending operand steps');
 		rejects(fn() => $prepare($left_child . $strings . $text_pair . 'async ' . $signature('localText')
 			. '{' . $decl('string', 'label', 'await textPart() ' . ($flavor === flavor::php ? '.' : '+') . ' await textPart()')
 			. 'return 0;}return 8;'), 'scoped result storage');
@@ -545,6 +545,9 @@ foreach (flavor::cases() as $flavor) {
 		$later_tests = $pair . 'async ' . $signature('compute') . '{if (false) {return 1;}'
 			. 'else if (' . $ordered_call . ' == 24) {return 2;}'
 			. 'else if (' . $ordered_call . ' == 23) {return 3;}else {return 4;}}';
+		$while_tests = $pair . 'async ' . $signature('compute') . '{' . $decl('int', 'n', '0')
+			. 'while (' . $v('n') . '+21 < ' . $ordered_call . ') {' . $v('n') . '++;'
+			. 'if (' . $v('n') . '==1) {continue;}echo ":";}return ' . $v('n') . ';}';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -693,6 +696,9 @@ foreach (flavor::cases() as $flavor) {
 			[$later_tests, $left_child, $eager_main, 'Unknown', '', 0],
 			[$later_tests, $left_child . str_replace('return 3;', 'return 4;', $right_child), $eager_main, null, 'ABF2', 1],
 			[$later_tests, $left_child . str_replace('return 3;', 'return 5;', $right_child), $eager_main, null, 'ABFABF4', 1],
+			[$while_tests, $left_child . $right_child, $eager_main, null, 'ABFABF:ABF2', 2],
+			[$while_tests, $left_child, $eager_main, 'Unknown', '', 0],
+			[$while_tests, $left_child . str_replace('return 3;', 'return 1;', $right_child), $eager_main, null, 'ABF0', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
