@@ -169,6 +169,7 @@ final class Type_Resolution
 		if ($target instanceof record_handle_definition || $target instanceof record_type_definition) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullable record spelling requires a bare class type');
 		}
+		if ($target instanceof enum_type_definition) return $target->nullable;
 		return self::specialize($syntax, $target);
 	}
 

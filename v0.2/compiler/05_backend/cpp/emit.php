@@ -105,6 +105,7 @@ final class Cpp_Emitter
 			if (!$this->needs_enum_helper($node, $use)) continue;
 			$binding = $type->helper_function($use);
 			$includes[$binding->header] = true;
+			foreach ($binding->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
 			$helper .= $this->enum_helper_signature($binding) . ";\n";
 		}
 		return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
@@ -240,7 +241,7 @@ final class Cpp_Emitter
 			?? ((($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0);
 	}
 
-	/** Both concrete enum helpers have one runtime operand and no templates. */
+	/** Each enum helper has one runtime operand and a concrete signature. */
 	private function enum_helper_signature(runtime_function $binding): string
 	{
 		return $binding->return_type_def()->cpp_type() . ' ' . $binding->symbol . '(' . $binding->parameters[0]->cpp_type() . ' value)';
@@ -249,8 +250,17 @@ final class Cpp_Emitter
 	/** Emit from the single owning case inventory; preparation never builds another lookup table. */
 	private function enum_helper(enum_type_definition $type, dependency_use $use): string
 	{
+		$signature = $this->enum_helper_signature($type->helper_function($use));
+		$nullable = $use === dependency_use::enum_try_from_value;
+		$checked = $use === dependency_use::enum_from_value;
+		$failure = 'throw std::runtime_error("Invalid value for enum helper");';
+		if ($checked && $this->needs_enum_helper($type->declaration, dependency_use::enum_try_from_value)) {
+			$lookup = $type->helper_function(dependency_use::enum_try_from_value);
+			return $signature . " {\n\tauto found = " . $lookup->symbol . "(std::move(value));\n\tif (found.has_value()) return *found;\n\t"
+				. $failure . "\n}\n";
+		}
 		$lines = [];
-		$string_lookup = $use === dependency_use::enum_from_value && $type->backing() === type_string::instance();
+		$string_lookup = $nullable || ($checked && $type->backing() === type_string::instance());
 		foreach ($type->declaration->cases as $case) {
 			if ($string_lookup) {
 				$literal = type_string::instance()->lower_cpp_literal($case->initializer);
@@ -262,14 +272,14 @@ final class Cpp_Emitter
 			$result = match ($use) {
 				dependency_use::enum_name => type_string::instance()->cpp_type() . '{' . Cpp_String_Literals::bytes($case->short_name) . ', ' . strlen($case->short_name) . '}',
 				dependency_use::enum_value => type_string::instance()->lower_cpp_literal($case->initializer),
-				dependency_use::enum_from_value => $type->cpp_case($case),
+				dependency_use::enum_from_value, dependency_use::enum_try_from_value => $type->cpp_case($case),
 			};
 			$lines[] = "\tcase " . $match . ': return ' . $result . ';';
 		}
 		$body = implode("\n", $lines);
-		$failure = 'throw std::runtime_error("Invalid value for enum helper");';
+		if ($nullable) $failure = 'return {};';
 		$body = $string_lookup ? $body . "\n\t" . $failure : "\tswitch (value) {\n" . $body . "\n\tdefault: " . $failure . "\n\t}";
-		return $this->enum_helper_signature($type->helper_function($use)) . " {\n" . $body . "\n}\n";
+		return $signature . " {\n" . $body . "\n}\n";
 	}
 
 	/** Lower an approved declaration default and collect its public header dependencies. @param bool[] $headers */
@@ -582,7 +592,10 @@ CPP;
 			if (!($node instanceof ast_enum_declaration)) continue;
 			foreach (dependency_use::ordered_uses as $use) {
 				if (!$this->needs_enum_helper($node, $use)) continue;
-				$required_headers['stdexcept'] = true;
+				if ($use !== dependency_use::enum_try_from_value) $required_headers['stdexcept'] = true;
+				if ($use === dependency_use::enum_from_value && $this->needs_enum_helper($node, dependency_use::enum_try_from_value)) {
+					$required_headers['utility'] = true;
+				}
 				$required_headers[$node->definition->helper_function($use)->header] = true;
 				$definitions[] = $this->enum_helper($node->definition, $use);
 			}
@@ -1662,7 +1675,10 @@ CPP;
 	{
 		$reorderable = false;
 		$value_type = $value->type_def();
-		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
+		if ($value_type instanceof enum_type_definition || $value_type instanceof nullable_enum_type_definition) {
+			$enum = $value_type instanceof nullable_enum_type_definition ? $value_type->payload_type : $value_type;
+			$declarations[$enum->declaration->symbol_key()] = $enum->declaration;
+		}
 		if ($value_type instanceof record_handle_definition || $value_type instanceof record_type_definition) {
 			++$this->record_expressions;
 		}
@@ -1709,6 +1725,10 @@ CPP;
 		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+			if ($shared && $type instanceof type_exception) {
+				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
+				return $type->factory->symbol . '(' . $message . ')';
+			}
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
@@ -1934,12 +1954,17 @@ CPP;
 			if ($function instanceof runtime_function) {
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
+					'enum_try_from_value' => dependency_use::enum_try_from_value,
 					'enum_name' => dependency_use::enum_name,
 					'enum_value' => $value->type_def() === type_string::instance() ? dependency_use::enum_value : null,
 					default => null,
 				};
 				if ($use !== null) {
-					$type = $use === dependency_use::enum_from_value ? $value->type_def() : $value->arguments[0]->type_def();
+					$type = match ($use) {
+						dependency_use::enum_from_value => $value_type,
+						dependency_use::enum_try_from_value => $value_type->payload_type,
+						default => $value->arguments[0]->type_def(),
+					};
 					$key = $type->declaration->symbol_key();
 					$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
 				}
@@ -2595,6 +2620,7 @@ CPP;
 			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
+		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}
 

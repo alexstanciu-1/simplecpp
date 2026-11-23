@@ -91,6 +91,57 @@ abstract class carrier_type_definition extends type_definition
 	}
 }
 
+/** Canonical nullable transport for a source-declared enum, owned by that enum. */
+final class nullable_enum_type_definition extends carrier_type_definition
+{
+	public function __construct(enum_type_definition $payload)
+	{
+		parent::__construct('nullable<' . $payload->name . '>', $payload);
+	}
+
+	public function accepts_empty(): bool
+	{
+		return true;
+	}
+
+	public function supports_coalescing(): bool
+	{
+		return true;
+	}
+
+	public function implicit_extraction(): bool
+	{
+		return true;
+	}
+
+	public function sentinel_factory(string $state): ?string
+	{
+		return null;
+	}
+
+
+	public function lower_cpp_extract(string $value): string
+	{
+		return '(' . $value . ').value()';
+	}
+
+	public function lower_cpp_presence(string $value): string
+	{
+		return '(' . $value . ').has_value()';
+	}
+
+	public function cpp_type(): string
+	{
+		return 'std::optional<' . $this->payload_type->cpp_type() . '>';
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return ['optional', ...$this->payload_type->cpp_headers()];
+	}
+}
+
 /** Compiler-only literal identity for an explicit alternate state; e.g. false_sentinel is not the bool false. */
 abstract class carrier_sentinel_type_definition extends type_definition
 {

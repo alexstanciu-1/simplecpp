@@ -1137,7 +1137,7 @@ final class Preparation
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false): void
 	{
-		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
+		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup or object_cast target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_throw_expression) {
 			$this->prepare_throw($syntax, $initializing);
@@ -1241,6 +1241,19 @@ final class Preparation
 				$payload = $record->definition;
 			} else {
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			}
+			if ($payload instanceof type_exception) {
+				$factory = $payload->factory;
+				if (count($syntax->arguments) !== count($factory->parameters)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Argument count mismatch for Exception constructor');
+				}
+				$message = $syntax->arguments[0];
+				$this->value($message, $initializing);
+				if ($message->type_def() !== $factory->parameters[0]) {
+					throw new diagnostic($message->source(), $message->byte_start(), 'Exception constructor requires ' . $factory->parameters[0]->name);
+				}
+				$syntax->settle_construction($factory->return_type_def(), [value_conversion::identity]);
+				return;
 			}
 			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
 			if (!($payload instanceof record_type_definition)) {
@@ -1804,26 +1817,32 @@ final class Preparation
 				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}
-			if ($builtin === 'enum_from_value') {
+			if ($builtin === 'enum_from_value' || $builtin === 'enum_try_from_value') {
 				if ($class !== null) $this->ambiguous_construction($call);
+				$nullable = $builtin === 'enum_try_from_value';
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
+					throw new diagnostic($call->source(), $call->byte_start(),
+						$builtin . ' requires an enum type marker and one ' . ($nullable ? 'string' : 'integer'));
 				}
 				$marker = $call->arguments[0];
 				$entry = $this->symbols->entry($file->type_key($marker->name));
-				$this->dependencies?->watch($entry, $this->owner, dependency_use::enum_from_value->value);
+				$use = $nullable ? dependency_use::enum_try_from_value : dependency_use::enum_from_value;
+				$this->dependencies?->watch($entry, $this->owner, $use->value);
 				$enum = $entry->declaration();
-				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), 'enum_from_value target must be an enum');
+				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), $builtin . ' target must be an enum');
+				$string_backing = $enum->definition->backing() === type_string::instance();
+				if ($nullable && !$string_backing) throw new diagnostic($marker->source(), $marker->byte_start(), $builtin . ' requires a string-backed enum');
 				$argument = $call->arguments[1];
 				$this->value($argument, $initializing);
 				$input = $argument->type_def();
-				if ($enum->definition->backing() === type_string::instance()) {
-					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires a string');
+				if ($string_backing) {
+					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires a string');
 				} elseif (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires an integer');
+					throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an integer');
 				}
-				$conversion = $enum->definition->from_value_function()->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
-				$call->settle_runtime($enum->definition->from_value_function(), [$conversion]);
+				$binding = $enum->definition->helper_function($use);
+				$conversion = $binding->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
+				$call->settle_runtime($binding, [$conversion]);
 				return;
 			}
 			if ($builtin === 'enum_value' || $builtin === 'enum_name') {

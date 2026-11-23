@@ -8,7 +8,8 @@ The in-band [error value](error_values_and_take.md) remains a separate type.
 ## Construction and transport
 
 Core runtime metadata registers `Exception` as an opaque shared class handle.
-`Exception::make(string message): Exception` creates a present handle; the instance
+`new Exception(message)` requires one string and creates a present handle
+through the same native factory as `Exception::make(string message): Exception`. The instance
 method `get_message(): string` returns its message by value. Empty messages and embedded
 zero bytes are preserved.
 Default storage is absent. Ordinary shared copying retains the same object.
@@ -193,7 +194,7 @@ non-standard foreign exceptions, fatal signals or destructor termination.
 ## Excluded from this slice
 
 Reference returns crossing finally, returns/transfers escaping finally,
-union catches, arbitrary source-to-runtime inheritance, direct runtime construction (`new Exception`),
+union catches, arbitrary source-to-runtime inheritance,
 general throw expressions, exception chaining and static exception-effect
 analysis remain deferred. Runtime-handle identity operators and ownership transformations
 such as `weak(Exception)` are not added by this slice. LLVM remains deferred.

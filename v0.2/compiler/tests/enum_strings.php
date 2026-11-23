@@ -67,6 +67,24 @@ foreach([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	}
 	$start=hrtime(true);$cpp=(new Cpp_Emitter())->emit($prepare($enum().$body.'return 8;'));
 	$fixtures[$flavor->name]=['cpp'=>$cpp,'stdout_hex'=>bin2hex($expected),'compiler_ms'=>(hrtime(true)-$start)/1e6];
+
+	$lookup = 'enum_try_from_value(Kind' . $sep . 'class,';
+	$source = match ($flavor) {
+		flavor::php => 'function input(string $v):string {echo "!";return $v;} $hit ?Kind=',
+		flavor::cpp => 'string input(string v) {echo "!";return v;} ?Kind hit=',
+		flavor::js => 'function input(v:string):string {echo "!";return v;} let hit:?Kind=',
+	};
+	$hit = $flavor === flavor::php ? '$hit' : 'hit';
+	$source .= $lookup . 'input("00"));'
+		. 'echo enum_name(' . $hit . ' ?? Kind' . $sep . 'Empty);'
+		. 'if (' . $lookup . 'input("missing")) !== null) {return 3;}'
+		. 'echo enum_name(enum_from_value(Kind' . $sep . 'class,"0"));return 8;';
+	$cpp = (new Cpp_Emitter())->emit($prepare($enum() . $source));
+	verify(str_contains($cpp, 'auto found = scpp_enum_try_from_value_'), 'Checked lookup did not reuse nullable lookup');
+	$fixtures[$flavor->name . '_nullable'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('!Zeros!Zero')];
+	rejects(fn() => $prepare($enum() . $lookup . '1);return 8;'), 'enum_try_from_value requires a string');
+	$integers = $flavor === flavor::php ? 'enum Kind {case One=1;}' : 'enum Kind {One=1}';
+	rejects(fn() => $prepare($integers . $lookup . '"1");return 8;'), 'enum_try_from_value requires a string-backed enum');
 	$many = 'enum Kind:string {';
 	for ($index = 0; $index < 257; $index++) {
 		$many .= ($flavor === flavor::php ? 'case ' : '') . 'Case' . $index . '= "value' . $index . '"' . ($flavor === flavor::php ? ';' : ',');
@@ -94,7 +112,8 @@ foreach([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	try {
 		$main=$directory.'/main.'.$flavor->name;$provider=$directory.'/kind.'.$flavor->name;
 		file_put_contents($directory.'/module.json',json_encode(['entry'=>basename($main),'sources'=>[basename($main),basename($provider)]]));
-		file_put_contents($main,'echo enum_name(enum_from_value(Kind'.$sep.'class,enum_value(Kind'.$sep.'Binary))),":",enum_value(Kind'.$sep.'Binary);return 8;');
+		file_put_contents($main,'echo enum_name(enum_from_value(Kind'.$sep.'class,enum_value(Kind'.$sep.'Binary))),":",'
+			. 'enum_value(Kind'.$sep.'Binary),":",enum_name('.$lookup.'"a\\0b") ?? Kind'.$sep.'Empty);return 8;');
 		$project=new Incremental_Project($directory,$directory.'/out',new entry_target(31));$stamp=time();$caller=null;
 		foreach(['"a\\0b"','"é"',null,'"recovered"','"0"','"final"'] as $index=>$literal) {
 			file_put_contents($provider,$literal===null?'':$enum($literal));touch($provider,++$stamp);
@@ -107,7 +126,7 @@ foreach([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			verify($caller===$project->session()->entry->entry->ast,'Caller reparsed');
 			$files=artifacts($directory.'/out');verify($files===artifacts($directory.'/fresh'),'Fresh differs');
 			$payload=$index===0?"a\0b":substr($literal,1,-1);
-			$fixtures[$flavor->name.'_edit_'.$index]=['files'=>$files,'stdout_hex'=>bin2hex('Binary:'.$payload)];
+			$fixtures[$flavor->name.'_edit_'.$index]=['files'=>$files,'stdout_hex'=>bin2hex('Binary:'.$payload.($index===0?':Binary':':Empty'))];
 			verify($project->run()['preparation']['prepared']===0,'No-op prepares');
 		}
 	} finally {
