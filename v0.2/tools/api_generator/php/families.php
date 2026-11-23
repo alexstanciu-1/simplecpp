@@ -40,7 +40,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'async_results', 'async_int64']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'async_frames']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -77,28 +77,8 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
-    $seen = [];
-    $requested = $publication->async_results ?? [];
-    if (property_exists($publication, 'async_int64')) {
-        requireThat(is_bool($publication->async_int64) && !property_exists($publication, 'async_results'), 'Conflicting or invalid legacy async publication');
-        $requested = $publication->async_int64 ? ['int64', 'void'] : [];
-    }
-    foreach (names($requested, 'Duplicate async result') as $name) {
-        requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $name) === 1 && !in_array($name, ['fwd', 'timer', 'wait'], true), 'Invalid async result name');
-        $identity = $metadata->source_types->{$name} ?? ($plan['aliases']->{$name} ?? $name);
-        if ($name !== 'void') {
-            if (isset($metadata->compiler->value_types->{$identity})) {
-                requireThat(hasType($plan, $identity) || hasValue($plan, $identity) || ($plan['string']['name'] ?? null) === $identity,
-                    'Async result requires a published value: ' . $name);
-            }
-            $export = typeExport($plan['submodules'], $identity);
-            requireThat(in_array($export['provider'], $plan['submodules']['published'], true), 'Unpublished async result provider: ' . $name);
-        }
-        requireThat(!isset($seen[$identity]), 'Duplicate canonical async result: ' . $identity);
-        $seen[$identity] = true;
-        $plan['async_results'][$identity] = ['task' => $name . '_task', 'header' => 'scpp/async_' . $name . '.hpp',
-            'wait_header' => 'scpp/async/wait_' . $name . '.hpp'];
-    }
+    $plan['async_frames'] = $publication->async_frames ?? false;
+    requireThat(is_bool($plan['async_frames']), 'Invalid async frame selection');
     return $plan;
 }
 

@@ -56,17 +56,11 @@ def shell(value):
 
 def async_producers(units):
     """The emitter lists direct runtime dependencies in the include preamble."""
-    inventory = ROOT / 'runtime/generated/private/async_task_headers.hpp'
-    if not inventory.exists():
-        return set()
-    includes = {line for line in inventory.read_text().splitlines() if line.startswith('#include ')}
-    # Application-owned promises include the coroutine dependency directly.
-    includes.add('#include <coroutine>')
     selected = set()
     for unit in units:
         with Path(unit).open() as source:
             for line in source:
-                if line.strip() in includes:
+                if line.strip() == '#include <coroutine>':
                     selected.add(Path(unit))
                     break
                 if line.lstrip().startswith('namespace '):

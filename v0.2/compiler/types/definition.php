@@ -277,10 +277,13 @@ abstract class type_definition
 		return $this::class . ':' . $this->name;
 	}
 
-	/** Resolve the task exported for this result by the active runtime publication. */
+	/** Cache a binding only for an eligible canonical runtime value requested by a producer. */
 	public function async_task(): ?async_task_binding
 	{
-		return async_task_binding::published($this);
+		static $bindings = [];
+		if (isset($bindings[$this::class])) return $bindings[$this::class];
+		if (!type_registry::HAS_ASYNC_FRAMES || !type_registry::async_value($this)) return null;
+		return $bindings[$this::class] = new async_task_binding($this->concrete_identity());
 	}
 
 	public function constant_dispatch(): ?constant_dispatch

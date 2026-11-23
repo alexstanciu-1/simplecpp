@@ -89,9 +89,8 @@ final class Cpp_Emitter
 	{
 		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
 		foreach ($this->async_results as $task => $type) {
-			$parts = \Scpp\Api\asyncTaskRecipe(new cpp_concrete_type($type, $this->root), $task, true, $this->root, $this->root, true);
-			$files['units/' . hash('sha256', $task) . '.hpp'] = $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n"
-				. self::namespace_body($this->root, $parts['implementation']);
+			$files['units/' . hash('sha256', $task) . '.hpp'] = \Scpp\Api\asyncTaskHeader(
+				new cpp_concrete_type($type, $this->root), $task, $type !== type_void::instance(), $this->root);
 		}
 		return $files;
 	}
@@ -229,7 +228,7 @@ final class Cpp_Emitter
 	public function function_declaration(ast_function_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		if ($node->has_virtual_dispatch()) return '';
-		if ($node->has_async_wait_bridge()) {
+		if ($node->is_async) {
 			$lines = [];
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_task)) $lines[] = $this->signature($node, $includes) . ';';
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_wait)) $lines[] = $this->wait_signature($node, $includes) . ';';
@@ -580,10 +579,9 @@ CPP;
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
-			if ($function->has_async_wait_bridge() && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
+			if ($function->is_async && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
-				$wait = $function->return_type_def()->async_task()->sync_wait;
-				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn $wait("
+				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn sync_wait("
 					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
 			}
 		}
@@ -1714,10 +1712,6 @@ CPP;
 			$name = self::function_name($callee);
 			$task_name = $value->suspends ? $this->require_task($callee->return_type_def(), $required_headers) : null;
 			$declarations[$name] = $callee;
-			if (!$value->suspends && !$callee->has_async_wait_bridge()) {
-				$required_headers[$callee->return_type_def()->async_task()->wait_header] = true;
-				return '::scpp::async::wait_for(&' . $name . ')';
-			}
 			$call = $this->invocation($value->operand, $callee, $value->suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
 				$task_name);
@@ -2481,7 +2475,7 @@ CPP;
 	private function signature(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types = false): string
 	{
 		if ($function->is_async) {
-			$task = $function->return_type_def()->async_task()->forward_name($this->root, $headers);
+			$task = $function->return_type_def()->async_task()->forward_name($this->root);
 			return $task . ' ' . self::function_name($function) . '(' . implode(', ', $this->parameters($function, $headers, $short_types)) . ')';
 		}
 		if ($function->is_destructor()) return $function->parent->definition->cpp_type() . '::~' . Cpp_Identifier::source($function->parent->short_name) . '() noexcept';

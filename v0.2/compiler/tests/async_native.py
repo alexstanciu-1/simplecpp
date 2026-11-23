@@ -13,6 +13,10 @@ from native_build import qualified_ninja
 
 def build(directory, fixture):
     directory.mkdir(parents=True, exist_ok=True)
+    # Mirror publication retirement in the native fixture's incremental build directory.
+    for old in (directory / 'units').glob('*'):
+        if old.suffix in {'.cpp', '.hpp'} and old.relative_to(directory).as_posix() not in fixture['files']:
+            old.unlink()
     units = []
     for name, text in fixture['files'].items():
         path = directory / name
@@ -48,7 +52,7 @@ def build(directory, fixture):
         assert not headers.intersection({'async_core.hpp', 'thread', 'condition_variable', 'queue', 'mutex'})
         body = src.read_text()
         assert ('async_timer.hpp' in headers) == ('::delay_ms(' in body)
-        assert any(h.startswith('wait_') and h.endswith('.hpp') for h in headers) == ('::wait_for(' in body)
+        assert not any(h.startswith('wait_') and h.endswith('.hpp') for h in headers)
         if 'co_return' not in body:
             assert 'coroutine' not in headers
     links = [line.split('\t') for line in (directory / '.ninja_log').read_text().splitlines()[1:]

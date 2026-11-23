@@ -555,7 +555,7 @@ final class record_type_definition extends type_definition implements dependency
 			$type = $field->storage_type();
 			if ($field->initializer !== null) return false;
 			if (!($type instanceof enum_type_definition) && !type_registry::accepts_async_parameter($type)
-				&& async_task_binding::published($type) === null) return false;
+				&& !type_registry::async_value($type)) return false;
 		}
 		return true;
 	}

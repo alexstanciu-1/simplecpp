@@ -188,7 +188,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     [$vectorCode, $vectorCases, $vectorFamily, $applicationVectors] = compilerVectorTypes($metadata, $runtime, $definitions);
     $files['types/vectors.php'] = $vectorCode;
-    [$carrierCode, $carrierCases, $carrierLiterals] = compilerCarrierTypes($runtime, $definitions);
+    [$carrierCode, $carrierCases, $carrierLiterals, $carrierTypes] = compilerCarrierTypes($runtime, $definitions);
     $files['types/carriers.php'] = $carrierCode;
     $literalCases = array_merge($literalCases, $carrierLiterals);
     $genericCases = [];
@@ -221,12 +221,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $runtimeTypes[$vector['name']] = $runtimeTypes[$vector['source_type']] = $vector['name'];
         }
     }
-    foreach ($runtime['carriers'] ?? [] as $carrier) {
-        if (isset($definitions[$carrier['payload']])) {
-            $runtimeTypes[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $carrier['name'];
-            $runtimeTypes[$carrier['name']] = $carrier['name'];
-        }
-    }
+    $runtimeTypes += $carrierTypes;
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
         if (isset($definitions[$hash['key']], $definitions[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];
     }
@@ -352,17 +347,11 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $moduleCases[] = "\t\t\t$aliases => " . var_export($definition['required_module'], true) . ',';
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
-    $asyncResults = [];
-    foreach ($runtime['async_results'] ?? [] as $identity => $binding) {
-        requireThat($identity === 'void' || isset($runtimeTypes[$identity]), 'Missing compiler async result: ' . $identity);
-        $class = $identity === 'void' ? 'void' : $runtimeTypes[$identity];
-        $symbol = '::scpp::async::' . $binding['task'];
-        $asyncResults[] = "\t\t\ttype_{$class}::class => ['cpp' => '$symbol', 'header' => '{$binding['header']}', 'wait_header' => '{$binding['wait_header']}'],";
-    }
+    $asyncTypes = array_map(static fn(string $name): string => 'type_' . $name . '::class', array_unique($runtimeTypes));
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@async_parameter_cases@' => $asyncValueTypes === [] ? '' : "\t\t\t" . implode(', ', $asyncValueTypes) . ' => true,',
-        '@async_available@' => $asyncResults === [] ? 'false' : 'true',
-        '@async_results@' => implode("\n", $asyncResults),
+        '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
+        '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
         '@module_cases@' => implode("\n", $moduleCases),

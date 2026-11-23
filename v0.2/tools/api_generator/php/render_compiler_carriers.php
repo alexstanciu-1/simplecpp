@@ -14,6 +14,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     }
     $cases = [];
     $literals = [];
+    $typeNames = [];
     foreach ($runtime['carrier_sentinels'] ?? [] as $state => $sentinel) {
         $class = 'type_' . $sentinel['literal'];
         $name = var_export($sentinel['literal'], true);
@@ -28,6 +29,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         if ($payload === null) continue;
         $export = typeExport($runtime['submodules'], $carrier['name']);
         $class = 'type_' . $carrier['name'];
+        $typeNames[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $typeNames[$carrier['name']] = $carrier['name'];
         $sentinelCases = [];
         foreach ($runtime['carrier_sentinels'] ?? [] as $state => $sentinel) {
             if (array_key_exists($state, $carrier['states'])) {
@@ -55,5 +57,5 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         ]);
         $cases[$carrier['family']][] = "\t\t\t" . $payload['class'] . "::instance() => $class::instance(),";
     }
-    return [$code, $cases, $literals];
+    return [$code, $cases, $literals, $typeNames];
 }

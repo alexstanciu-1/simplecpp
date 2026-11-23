@@ -24,4 +24,5 @@ int main() {
     }
     if (void_failure.order != 123 || void_failure.parent_drops != 1 || void_failure.child_drops != 1) return 9;
     if (!verify_owned_text()) return 10;
+    if (!verify_error_result()) return 11;
 }

@@ -13,12 +13,12 @@ final class type_registry
 {
 	public const bool HAS_ASYNC_FRAMES = @async_available@;
 
-	/** Selected task ABI keyed by canonical result type. @return array{cpp:string,header:string,wait_header:string}|null */
-	public static function async_result(type_definition $type): ?array
+	/** Runtime concrete values eligible for task storage when requested by an application. */
+	public static function async_value(type_definition $type): bool
 	{
 		return match ($type::class) {
-@async_results@
-			default => null,
+			@async_value_types@ => true,
+			default => false,
 		};
 	}
 

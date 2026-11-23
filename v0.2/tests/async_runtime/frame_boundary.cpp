@@ -1,5 +1,5 @@
 // With no arguments this checks nested wait restoration. With a count it times immediate awaits.
-#include <scpp/async_int64.hpp>
+#include "tasks/int64.hpp"
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>

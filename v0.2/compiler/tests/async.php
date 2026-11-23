@@ -59,7 +59,7 @@ foreach (flavor::cases() as $flavor) {
 	rejects(fn() => $prepare($child . 'read_value();return 8;'), 'Async call requires await');
 	rejects(fn() => $prepare('await async_sleep_ms(1);return 8;'), 'requires an async function');
 	rejects(fn() => $prepare(str_replace('async_sleep_ms(1)', 'async_sleep_ms("bad")', $child) . 'return 8;'), 'int64 milliseconds');
-	rejects(fn() => $prepare(str_replace('int', 'float', $child) . 'return 8;'), 'Unpublished async result: float64');
+	$prepare(str_replace('int', 'float', $child) . 'return 8;');
 
 	rejects(fn() => $prepare($child . 'if (false && await read_value()) {return 1;}return 0;'), 'Await requires');
 	rejects(fn() => $prepare($child . 'async ' . $signature('invalid') . '{return 1 + (true && await read_value());}return 0;'), 'Await requires');
@@ -166,9 +166,7 @@ foreach (flavor::cases() as $flavor) {
 			verify($files === $fresh_files, 'Fresh build differs');
 			foreach ($files as $path => $text) {
 				verify(!preg_match('/\btemplate\s*<|async_core\.hpp/', $text), 'Unexpected template or scheduler include');
-				if (str_ends_with($path, '.hpp') || str_contains($text, 'wait_for(&')) {
-					verify(!str_contains($text, '#include <scpp/async_int64.hpp>'), 'Coroutine header leaked');
-				}
+				verify(!str_contains($text, '::scpp::async::wait_for('), 'Blocking call used a retired runtime bridge');
 			}
 			verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
 			$fixtures[$flavor->name . '_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $elapsed,
@@ -382,6 +380,45 @@ foreach (flavor::cases() as $flavor) {
 			. $decl('Point', 'a', $v('original') . '["key"]') . $decl('Point', 'b', $v('copy') . '["key"]')
 			. 'echo ' . $v('a') . $access . 'x,":",' . $v('b') . $access . 'x;return 8;';
 		$edited_hash = str_replace([$point, 'x=7;'], [str_replace('{', '{' . $z, $point), 'x=8;'], $hash_leaf);
+		$group_child = $group_parent = $group_entry = $group_output = '';
+		// Each public result crosses both a suspending call and a blocking call.
+		$cases = [
+			['null', 'null', '1'], ['byte', '255', '255'], ['float', '2.5', '2'],
+			['int8', '-8', '-8'], ['int16', '-16', '-16'], ['int32', '-32', '-32'],
+			['uint16', '65535', '65535'], ['uint32', '4294967295', '4294967295'],
+		];
+		foreach (['nullable', 'result', 'result_or_false', 'result_or_bool'] as $family) {
+			foreach (['bool' => 'false', 'int' => '21', 'string' => '"text"', 'vector<string>' => $v('items')] as $payload => $init) {
+				if ($family === 'nullable' && $payload === 'int') continue; // Already published.
+				$cases[] = ["$family<$payload>", $init, '1'];
+			}
+		}
+		$cases[] = ['result_or_false<bool>', 'false_sentinel', '0'];
+		foreach ($cases as $k => [$type, $init, $expected]) {
+			$is_carrier = str_contains($type, '<');
+			$is_vector = str_contains($type, 'vector<');
+			$leaf = "produce$k";
+			$relay_name = "forward$k";
+			$item = $v("received$k");
+			$group_child .= 'async ' . $typed_fn($leaf, $type) . '{' . ($is_vector ? $decl('vector<string>', 'items', '["first"]') : '')
+				. $decl($type, 'item', $init) . 'await async_sleep_ms(1);return ' . $v('item') . ';}';
+			$group_parent .= 'async ' . $typed_fn($relay_name, $type) . "{return await $leaf();}";
+			$group_entry .= $decl($type, "received$k", "await $relay_name()") . 'echo '
+				. ($is_carrier ? "(int)isset($item)" : ($type === 'null' ? "(int)($item === null)" : "(int)$item")) . ',"|";';
+			$group_output .= $expected . '|';
+			if ($is_vector && str_starts_with($type, 'nullable')) {
+				$group_entry .= $decl('vector<string>', 'copy', $item) . $v('copy') . '[0]="edited";'
+					. $decl('vector<string>', 'original', $item) . 'echo ' . $v('original') . '[0];';
+				$group_output .= 'first';
+			}
+		}
+		$group_entry .= 'return 8;';
+		$byte_child = 'async ' . $typed_fn('sample', 'byte') . '{await async_sleep_ms(1);return 17;}';
+		$byte_parent = 'async ' . $typed_fn('relaySample', 'uint8') . '{return await sample();}';
+		$byte_entry = $decl('int', 'answer', 'await relaySample()') . 'echo ' . $v('answer') . ';return 8;';
+		$float_child = 'async ' . $typed_fn('sample', 'float') . '{await async_sleep_ms(1);return 18.5;}';
+		$float_parent = 'async ' . $typed_fn('relaySample', 'float64') . '{return await sample();}';
+
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -448,8 +485,30 @@ foreach (flavor::cases() as $flavor) {
 			[$hash_parent, $edited_hash, $hash_entry, null, '8:42', 3],
 			[$hash_parent, str_replace($point, '', $hash_leaf), $hash_entry, 'Unknown', '', 0],
 			[$hash_parent, $hash_leaf, $hash_entry, null, '7:42', 3],
+			[$group_parent, $group_child, $group_entry, 'requires module runtime-numeric', '', 0],
+			[$group_parent, $group_child, $group_entry, null, $group_output, 3, true],
+			[$group_parent, str_replace('produce3()', 'missingWidth()', $group_child), $group_entry, 'Unknown', '', 0, true],
+			[$group_parent, str_replace('-8;', '-7;', $group_child), $group_entry, null, str_replace('-8|', '-7|', $group_output), 1, true],
+			[$group_parent, $group_child, $group_entry, 'requires module runtime-numeric', '', 0, false],
+			[$group_parent, $group_child, $group_entry, null, $group_output, 1, true],
+			[$byte_parent, $byte_child, $byte_entry, null, '17', 3],
+			[$byte_parent, '', $byte_entry, 'Unknown', '', 0],
+			[$float_parent, $float_child, $byte_entry, null, '18', 3],
+			['', '', 'return 8;', null, '', 3],
+			[$byte_parent, $byte_child, $byte_entry, null, '17', 3],
+			['', $byte_child, str_replace('relaySample()', 'sample()', $byte_entry), null, '17', 3],
+			['', '', 'return 8;', null, '', 2],
+			[$byte_parent, $byte_child, $byte_entry, null, '17', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
+			if (isset($steps[$i][6])) {
+				$config = json_encode(['entry' => $paths[0], 'sources' => $paths,
+					'dependencies' => ['runtime' => ['modules' => $steps[$i][6] ? ['numeric'] : []]]]);
+				if (file_get_contents("$directory/module.json") !== $config) {
+					file_put_contents("$directory/module.json", $config);
+					touch("$directory/module.json", time() + 60 + $i);
+				}
+			}
 			foreach ([$caller,$body,$leaf] as $j => $text) {
 				$path = "$directory/$paths[$j]";
 				if (file_get_contents($path) === $text) continue;
@@ -472,19 +531,13 @@ foreach (flavor::cases() as $flavor) {
 					verify(!str_contains($text, 'async_'), 'Blocking-only export leaks async declarations');
 				}
 			}
-			if ($body === $bool_parent) {
-				foreach ($files as $text) {
-					verify(!str_contains($text, '#include <scpp/async_int64.hpp>') && !str_contains($text, '#include <scpp/async_void.hpp>'),
-						'Bool project included an unrelated concrete promise');
-					if (str_contains($text, 'co_return')) verify(str_contains($text, '#include <scpp/async_bool.hpp>'), 'Bool producer missing its promise');
-				}
-			}
-			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
-			$expected_tasks = match ($body) {
-				$three_parent => 3, $enum_parent . $second_parent, $both => 2,
-				$enum_parent, $point_parent, $vector_relay, $weak_parent, $hash_parent => 1, default => 0,
+			$tasks = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
+			$expected = match ($body) {
+				$group_parent => 23, $three_parent => 3, $enum_parent . $second_parent, $both => 2,
+				$bool_parent, $weak_parent, $hash_parent, $byte_parent, $float_parent, $enum_parent, $point_parent, $vector_relay => 1,
+				'' => $leaf === '' ? 0 : 1, default => null,
 			};
-			verify(count($task_headers) === $expected_tasks, 'Unexpected application task demand or retirement');
+			if ($expected !== null) verify(count($tasks) === $expected, "Task count $i: " . count($tasks));
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');

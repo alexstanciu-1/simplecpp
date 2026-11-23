@@ -1,5 +1,6 @@
 #include "child.hpp"
-#include <scpp/async_void.hpp>
+#include "tasks/void.hpp"
+#include "tasks/result_int64.hpp"
 
 namespace {
 scpp::async::int64_task report_async(trace& log, bool fail) {
@@ -60,4 +61,26 @@ bool verify_owned_text() {
         }
     }
     return true;
+}
+
+namespace {
+scpp::async::result_int64_task error_result(bool fail) {
+    if (fail) throw child_error{23};
+    co_return scpp::result_int64{scpp::error_t{scpp::string{"returned error"}, scpp::int64{23}}};
+}
+
+scpp::async::result_int64_task relay_error(bool fail) {
+    co_return co_await error_result(fail);
+}
+}
+
+bool verify_error_result() {
+    auto value = scpp::async::sync_wait(relay_error(false));
+    if (value.has_value() || !value.has_error() || value.error().get_line() != 23) return false;
+    try {
+        scpp::async::sync_wait(relay_error(true));
+        return false;
+    } catch (const child_error& e) {
+        return e.code == 23;
+    }
 }

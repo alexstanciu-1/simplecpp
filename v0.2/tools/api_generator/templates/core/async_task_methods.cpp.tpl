@@ -34,10 +34,6 @@
 @extract@
 }
 
-@inline@@result@ wait_for(@task@ (*factory)()) {
-    return sync_wait(factory());
-}
-
 @inline@@result@ sync_wait(@task@ root) {
     ::scpp::async::detail::run_until_complete(root.frame_);
     return root.await_resume();

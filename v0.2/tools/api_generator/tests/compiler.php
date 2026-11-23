@@ -21,7 +21,8 @@ $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 // Keep the legacy core matrix fixture deliberately core-only; optional activation has its own proofs.
-foreach ($metadata->compiler->modules->{'runtime-numeric'}->types as $identity) {
+$optionalWidths = $metadata->compiler->modules->{'runtime-numeric'}->types;
+foreach ($optionalWidths as $identity) {
     unset($metadata->compiler->value_types->$identity, $metadata->compiler->three_way->types->$identity);
     $metadata->compiler->strict_identity->types = array_values(array_diff($metadata->compiler->strict_identity->types, [$identity]));
 }
@@ -60,16 +61,14 @@ $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
 $asyncDemand = clone $demand;
-unset($asyncDemand->async_int64);
-foreach ([[], ['bool']] as $results) {
-    $asyncDemand->async_results = $results;
+foreach ([false, true] as $enabled) {
+    $asyncDemand->async_frames = $enabled;
     $asyncPlan = prepareRuntime($functionMetadata, $asyncDemand, $facts);
     $asyncRuntime = render($asyncPlan);
-    $asyncRegistry = renderCompiler($functionMetadata, $facts, $asyncPlan)['types/registry.php'];
-    requireThat(isset($asyncRuntime['public/scpp/async_bool.hpp']) === ($results !== [])
-        && str_contains($asyncRegistry, '::scpp::async::bool_task') === ($results !== [])
-        && !isset($asyncRuntime['public/scpp/async_int64.hpp']) && !str_contains($asyncRegistry, '::scpp::async::int64_task'),
-        'Runtime and compiler async result publications differ');
+    $registry = renderCompiler($functionMetadata, $facts, $asyncPlan)['types/registry.php'];
+    requireThat(str_contains($registry, 'HAS_ASYNC_FRAMES = ' . ($enabled ? 'true;' : 'false;'))
+        && isset($asyncRuntime['public/scpp/async/frame.hpp']) === $enabled
+        && !isset($asyncRuntime['public/scpp/async_int64.hpp']), 'Frame selection emitted a concrete runtime task');
 }
 $functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];

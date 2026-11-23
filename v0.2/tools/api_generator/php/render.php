@@ -190,29 +190,9 @@ function render(array $plan): array {
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
-    if (isset($plan['async_results'])) {
-        $forwards = $waits = $includes = '';
-        foreach ($plan['async_results'] as $identity => ['task' => $task, 'header' => $header, 'wait_header' => $waitHeader]) {
-            $value = $identity !== 'void';
-            $type = $value ? new RuntimeConcreteType($plan, $identity) : new VoidConcreteType();
-            $headers = $type->headers();
-            $parts = asyncTaskRecipe($type, $task, $value, 'scpp', 'scpp::async');
-            $files['public/' . $header] = BANNER . $parts['declaration'];
-            $forwards .= "class $task;\n";
-            $files['public/' . $waitHeader] = BANNER . template('core/async_wait', [
-                'includes' => implode('', array_map(includeHeader(...), $headers)),
-                'waits' => $type->cppType('scpp') . " wait_for($task (*factory)());\n",
-            ]);
-            $waits .= includeHeader($waitHeader);
-            $includes .= "#include <$header>\n";
-            $files['src/' . basename($header, '.hpp') . '.cpp'] = BANNER . includeHeader($header) . includeHeader('scpp/async/frame.hpp')
-                . "\nnamespace scpp::async {\n" . $parts['implementation'] . "}\n";
-        }
-        $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd', ['forwards' => $forwards]);
-        $files['public/scpp/async_wait.hpp'] = BANNER . "#pragma once\n" . $waits;
+    if ($plan['async_frames'] ?? false) {
         $timerType = new RuntimeConcreteType($plan, 'int64');
         $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer', ['scalar_header' => $timerType->headers()[0]]);
-        $files['private/async_task_headers.hpp'] = BANNER . $includes;
         $files['public/scpp/async/frame.hpp'] = BANNER . template('core/async_frame');
     }
     assembleSubmodules($plan['submodules'], $groups, $files);
@@ -222,13 +202,16 @@ function render(array $plan): array {
     return $files;
 }
 
-/** Render the same concrete promise and frame operations for runtime and application results. */
-function asyncTaskRecipe(ConcreteType $type, string $task, bool $value, string $context, string $namespace, bool $inline = false): array {
-    return concreteTemplate('core/async_task', ['result' => $type], [
+/** One consumer-owned header per demanded result, including its inline calls to the erased frame ABI. */
+function asyncTaskHeader(ConcreteType $type, string $task, bool $value, string $namespace): string {
+    $parts = concreteTemplate('core/async_task', ['result' => $type], [
         'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
         'includes' => implode('', array_map(includeHeader(...), $type->headers())),
-        'extract' => $value ? '    return static_cast<' . $type->cppType($context) . '&&>(promise.value);' : '',
+        'extract' => $value ? '    return static_cast<' . $type->cppType($namespace) . '&&>(promise.value);' : '',
         'open' => $namespace === '' ? '' : "namespace $namespace {",
-        'close' => $namespace === '' ? '' : '}', 'inline' => $inline ? 'inline ' : '',
-    ], $context);
+        'close' => $namespace === '' ? '' : '}', 'inline' => 'inline ',
+    ], $namespace);
+    $methods = $parts['implementation'];
+    if ($namespace !== '') $methods = "namespace $namespace {\n" . $methods . "}\n";
+    return $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n" . $methods;
 }
