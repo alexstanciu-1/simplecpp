@@ -46,10 +46,19 @@ archive, then link the test object, standalone methods object and archive in tha
 | Published concrete collections | `vector<int>`, `hash<int,int>` | Published. Use the same move contract and their existing concrete identities. |
 | Published carriers | `nullable<int>` | Published. The payload includes its presence state. Another carrier specialization needs its own publication and proof. |
 | Boxed runtime values | `mixed`, `dynamic` | Published. Frame transfer preserves existing copy-on-write and shared-container semantics. |
-| Application-defined values | `TokenKind` enum, inline `Point` | Enums use the shared task recipe and an application-owned task keyed by namespace and declaration. Inline records remain pending. |
+| Application-defined values | `TokenKind` enum, inline `Point` | Enums and passive inline structs use the same application-owned task recipe, keyed by namespace and declaration. |
 | Application-owned specializations and handles | `vector<Point>`, `shared<Point>` | Reuse application publication once available. Prove aggregate copy independence and handle identity/lifetime. A weak handle additionally needs an expiry proof. |
 | Inline arrays and values without an empty state | `fixed_array<byte,4>`, a record requiring constructor arguments | Require a returnable representation or construction-on-return storage. Raw C++ arrays cannot be returned by value. |
 | Borrowed or execution-bound values | capturing callback, live yield cursor | Require an escape/lifetime or single-consumer contract first. Application publication alone cannot establish safety. |
+
+Inline struct results use the existing eagerly initialized promise payload. Signature
+preparation checks the direct fields once per prepared producer signature. Each field
+must have an implicit empty default and an enum or runtime type already admitted as
+an async value parameter or result. The aggregate has no base, interface, authored
+constructor or destructor. This keeps starting and abandoning a task free of
+user-authored payload lifecycle calls. Native recipe assertions still check nonthrowing
+default construction, move construction, move assignment and destruction. A heap-backed
+string field exercises ownership across suspension, copying and exception unwinding.
 
 Application publication must connect resolved type identity, generated headers, affected
 source dependencies and incremental retirement. The prebuilt runtime cannot compile a

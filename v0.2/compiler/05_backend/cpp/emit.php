@@ -45,7 +45,7 @@ final class Cpp_Emitter
 	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
 	private Cpp_Concrete_Collections $concrete_collections;
-	/** Concrete application task demand for the current unit. @var enum_type_definition[] */
+	/** Concrete task demand for the current unit. @var array<string,application_async_result&type_definition> */
 	private array $async_results = [];
 
 	/** @var int[] Private lowering requirements; no prepared AST mutation. */
@@ -582,7 +582,7 @@ CPP;
 				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 			if ($function->has_async_wait_bridge() && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
-				$wait = $function->return_type_def() instanceof enum_type_definition ? 'sync_wait' : '::scpp::async::sync_wait';
+				$wait = $function->return_type_def() instanceof application_async_result ? 'sync_wait' : '::scpp::async::sync_wait';
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn $wait("
 					. $name . '(' . implode(', ', $arguments) . "));\n}\n";
 			}
@@ -2462,8 +2462,8 @@ CPP;
 		return implode('', $forwards);
 	}
 
-	/** Namespace and canonical declaration distinguish enums with identical native backing widths. */
-	private function application_task_name(enum_type_definition $type): string
+	/** Namespace and canonical declaration distinguish nominal application results. */
+	private function application_task_name(application_async_result $type): string
 	{
 		return 'scpp_async_task_' . hash('sha256', $this->root . "\0" . $type->declaration->symbol_key());
 	}
@@ -2471,7 +2471,7 @@ CPP;
 	/** Request the complete promise only for a suspending unit. @param bool[] $headers */
 	private function require_task(type_definition $result, array &$headers): string
 	{
-		if ($result instanceof enum_type_definition) {
+		if ($result instanceof application_async_result) {
 			$name = $this->application_task_name($result);
 			$this->async_results[$name] = $result;
 			$headers['coroutine'] = true;
@@ -2496,7 +2496,7 @@ CPP;
 	{
 		if ($function->is_async) {
 			$result = $function->return_type_def();
-			if ($result instanceof enum_type_definition) $task = 'class ' . $this->application_task_name($result);
+			if ($result instanceof application_async_result) $task = 'class ' . $this->application_task_name($result);
 			else {
 				$headers['scpp/async_fwd.hpp'] = true;
 				$task = type_registry::async_result($result)['cpp'];

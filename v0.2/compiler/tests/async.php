@@ -285,6 +285,30 @@ foreach (flavor::cases() as $flavor) {
 		$two_entries = str_replace('return 8;', '', $enum_entry)
 			. str_replace(['TokenKind', 'relay()', $v('kind')], ['OtherKind', 'relay_other()', $v('other')], $enum_entry);
 
+		[$point, $guard, $make, $relay_point, $access, $empty_point, $empty_guard] = match ($flavor) {
+			flavor::php => ['struct Point {public int $x;public string $label;}', 'struct Guard {public function __destruct(){echo "D";}}',
+				'async function makePoint(bool $fail):Point', 'async function relayPoint(bool $fail):Point', '->', '$p Point;', '$g Guard;'],
+			flavor::cpp => ['struct Point {int x;string label;};', 'struct Guard {public: ~Guard(){echo "D";}};',
+				'async Point makePoint(bool fail)', 'async Point relayPoint(bool fail)', '->', 'Point p;', 'Guard g;'],
+			flavor::js => ['struct Point {x:int;label:string;}', 'struct Guard {public destructor(){echo "D";}}',
+				'async function makePoint(fail:bool):Point', 'async function relayPoint(fail:bool):Point', '.', 'let p:Point;', 'let g:Guard;'],
+		};
+		$z = match ($flavor) {
+			flavor::php => 'public float $z;', flavor::cpp => 'float z;', flavor::js => 'z:float;',
+		};
+		$ctor = match ($flavor) {
+			flavor::php => 'public function __construct(){}', flavor::cpp => 'Point(){}', flavor::js => 'constructor(){}',
+		};
+		$label = 'heap-backed Point label across await';
+		$p = $v('p') . $access;
+		$q = $v('q') . $access;
+		$point_factory = $flavor === flavor::cpp ? 'Point buildPoint()' : 'function buildPoint():Point';
+		$point_child = $failure . $point . $guard . $point_factory . '{' . $empty_point . $p . 'x=7;' . $p . 'label="' . $label . '";return ' . $v('p') . ';}'
+			. $make . '{' . $empty_guard . $decl('Point', 'p', 'buildPoint()') . 'await async_sleep_ms(1);if (' . $v('fail') . ') {throw new Failure();}return ' . $v('p') . ';}';
+		$point_parent = $relay_point . '{return await makePoint(' . $v('fail') . ');}';
+		$point_entry = $decl('Point', 'p', 'await relayPoint(false)') . $decl('Point', 'q', $v('p'))
+			. $q . 'x=9;' . $q . 'label[0]=88;echo ' . $p . 'x,' . $q . 'x,(int)' . $p . 'label[0],(int)' . $q . 'label[0];'
+			. 'try {await relayPoint(true);}' . $catch('Failure') . '{echo "caught";}return 8;';
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -327,6 +351,14 @@ foreach (flavor::cases() as $flavor) {
 			[$bool_parent, $bool_child, $bool_entry, null, 'T', 3],
 			[$enum_parent . $second_parent, $enum_child . $second_child, $two_entries, null, '77', 3],
 			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
+			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 3],
+			[$point_parent, str_replace('x=7;', 'x=8;', $point_child), $point_entry, null, 'D8910488Dcaught', 1],
+			[$point_parent, str_replace($point, '', $point_child), $point_entry, 'Unknown', '', 0],
+			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 1],
+			[$point_parent, str_replace($point, str_replace('{', '{' . $z, $point), $point_child), $point_entry, null, 'D7910488Dcaught', 3],
+			[$point_parent, str_replace($point, str_replace('{', '{' . $ctor, $point), $point_child), $point_entry, 'Unpublished async result: Point', '', 0],
+			[$point_parent, $point_child, $point_entry, null, 'D7910488Dcaught', 3],
+			[$enum_parent, $enum_child, $enum_entry, null, '7', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			foreach ([$caller,$body,$leaf] as $j => $text) {
@@ -359,7 +391,7 @@ foreach (flavor::cases() as $flavor) {
 				}
 			}
 			$task_headers = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
-			verify(count($task_headers) === ($body === $enum_parent ? 1 : ($body === $enum_parent . $second_parent ? 2 : 0)), 'Unexpected application task demand or retirement');
+			verify(count($task_headers) === ($body === $enum_parent || $body === $point_parent ? 1 : ($body === $enum_parent . $second_parent ? 2 : 0)), 'Unexpected application task demand or retirement');
 			$all = implode("\n", $files);
 			verify(str_contains($all, 'sum_wait(') === ($i === 5), 'Blocking bridge demand differs');
 			if ($i === 15 || $i === 17) verify(str_contains($all, 'read_value_(static_cast<::scpp::string&&>('), 'Blocking bridge must transfer its owned string');

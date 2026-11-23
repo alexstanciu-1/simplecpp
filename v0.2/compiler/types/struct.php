@@ -12,7 +12,7 @@ enum record_layout_state: int
 }
 
 /** Nominal record payload/layout identity, distinct from its source value storage contract. */
-final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
+final class record_type_definition extends type_definition implements dependency_watcher, iterable_type, application_async_result
 {
 	use collection_specializations;
 	use concrete_value_storage;
@@ -540,6 +540,21 @@ final class record_type_definition extends type_definition implements dependency
 				}
 			}
 		}
+	}
+
+	/** The task eagerly owns an empty payload. Only passive aggregate initialization is admitted here. */
+	public function supports_async_storage(): bool
+	{
+		$node = $this->declaration;
+		if ($node->kind !== record_kind::structure || $node->is_abstract || $node->base_reference !== null
+			|| $node->interface_references !== [] || isset($node->methods['__construct']) || isset($node->methods['__destruct'])) return false;
+		foreach ($node->fields as $field) {
+			$type = $field->storage_type();
+			if ($field->initializer !== null) return false;
+			if (!($type instanceof enum_type_definition) && !type_registry::accepts_async_parameter($type)
+				&& type_registry::async_result($type) === null) return false;
+		}
+		return true;
 	}
 
 	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Nominal enum identity; storage and backing facts are shared by every occurrence of this declaration. */
-final class enum_type_definition extends type_definition
+final class enum_type_definition extends type_definition implements application_async_result
 {
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
@@ -79,6 +79,11 @@ final class enum_type_definition extends type_definition
 	public function cpp_case(ast_enum_case $case): string
 	{
 		return $this->cpp_type() . '::' . Cpp_Identifier::source($case->short_name);
+	}
+
+	public function supports_async_storage(): bool
+	{
+		return true;
 	}
 
 	public function cpp_trivial_value(): bool

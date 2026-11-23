@@ -242,7 +242,7 @@ final class Function_Preparation
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 		}
 		if ($declaration->is_async && type_registry::async_result($type) === null
-			&& !(type_registry::HAS_ASYNC_FRAMES && $type instanceof enum_type_definition)) {
+			&& !(type_registry::HAS_ASYNC_FRAMES && $type instanceof application_async_result && $type->supports_async_storage())) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Unpublished async result: ' . $type->name);
 		}
 		$optional = false;
