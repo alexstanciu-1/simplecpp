@@ -10,6 +10,7 @@ from app_namespace_native import ROOT, invoke, service, write_build
 
 
 SOURCE = Path(__file__).with_name('constant_fact') / 'main.php'
+FACT = ROOT / 'compiler/examples/constant_evaluation/constant_fact.php.scpp'
 PREPARE = r'''
 require $argv[1];
 use scpp\compiler\{Parser, Preparation, Tokenizer, entry_target, flavor, source_file};
@@ -80,7 +81,8 @@ int main() {
 def prove(work):
     app = work / 'app'
     app.mkdir()
-    (app / 'main.php').write_bytes(SOURCE.read_bytes())
+    specimen = app / 'main.php'
+    specimen.write_bytes(FACT.read_bytes() + b'\n' + SOURCE.read_bytes())
     (app / 'module.json').write_text('{"entry":"main.php"}')
     out = work / 'out'
     with service(app, out) as proc:
@@ -95,10 +97,10 @@ def prove(work):
     cmd = write_build(work, [probe, *(u for u in units if u != body and u.name != 'entry.cpp')])
     subprocess.run(cmd, cwd=work, check=True)
     subprocess.run([work / 'program'], check=True)
-    output = subprocess.check_output(['php', '-r', PREPARE, ROOT / 'compiler/boot.php', SOURCE],
+    output = subprocess.check_output(['php', '-r', PREPARE, ROOT / 'compiler/boot.php', specimen],
                                      env={**os.environ, 'XDEBUG_MODE': 'off'})
     samples = json.loads(output)
-    print(f'{SOURCE.stat().st_size} bytes, {len(samples)} warm-process fresh preparations: '
+    print(f'{specimen.stat().st_size} bytes, {len(samples)} warm-process fresh preparations: '
           f'median {statistics.median(samples):.3f} ms, range {min(samples):.3f}–{max(samples):.3f} ms')
 
 
