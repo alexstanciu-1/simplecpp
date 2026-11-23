@@ -153,4 +153,6 @@ The current promise eagerly default-constructs its payload. A record with requir
 
 #### Statement coverage
 
-The async preparation whitelist still excludes foreach and several ordinary storage-write and control-flow forms. Ordinary foreach can retain a reference to a source place through the loop. Before lifting the whitelist as a group, establish which traversal receivers remain owned across a suspension and which writes introduce expression snapshots. Prove mutation through another owner during an await. Keep synchronous yield and coroutine suspension as separate execution protocols.
+Async producers admit ordinary foreach over an owned vector<int>, including keyed traversal, with suspension in the body. Preparation shares the generator receiver check for local storage, temporaries and retained fields. The existing foreach emitter binds the receiver once and uses the ordinary iteration protocol. Native coroutine locals keep the receiver and traversal state alive across await. The fixture checks a temporary vector, keyed local traversal, field replacement through an awaited child's shared owner, continue, break and child failure.
+
+Other iterable families, additional storage writes and control-flow statements still need individual review. Check receiver ownership and expression snapshots for each new form. Synchronous yield retains its concrete cursor protocol.

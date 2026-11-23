@@ -566,6 +566,27 @@ foreach (flavor::cases() as $flavor) {
 			. 'for (;' . $v('n') . '<' . $ordered_call . ';pair(0,0),' . $ordered_call . ','
 			. $v('n') . '=' . $v('n') . '+await leftValue()) {echo ' . $v('n') . ';'
 			. 'if (' . $v('n') . '==0) {continue;}if (' . $v('n') . '==4) {break;}}return ' . $v('n') . ';}';
+		$items_field = match ($flavor) {
+			flavor::php => 'public vector<int> $items;', flavor::cpp => 'public: vector<int> items;', flavor::js => 'items:vector<int>;',
+		};
+		$box = str_replace('Guard', 'Box', $guard);
+		$box = preg_replace('/\{/', '{' . $items_field, $box, 1);
+		$items = $typed_fn('items', 'vector<int>') . '{' . $decl('vector<int>', 'data', '[1,2,3]') . 'return ' . $v('data') . ';}';
+		$box_factory = $typed_fn('makeBox', 'shared<Box>') . '{' . $decl('shared<Box>', 'p', 'new Box()')
+			. $p . 'items=items();return ' . $v('p') . ';}';
+		$change_items = 'async ' . str_replace('()', '(' . $parameter('p', 'shared<Box>') . ')', $signature('replaceItems'))
+			. '{await async_sleep_ms(1);' . $decl('vector<int>', 'data', '[4,5,6]') . $p . 'items=' . $v('data') . ';return 0;}';
+		$each = static fn(string $receiver): string => 'foreach (' . $receiver . ' as ' . $v('item') . ')';
+		$walk = 'async ' . $signature('compute') . '{' . $decl('vector<int>', 'localItems', '[8]')
+			. 'foreach (' . $v('localItems') . ' as ' . $v('key') . '=>' . $v('item') . ') {await async_sleep_ms(1);echo ' . $v('key') . ',' . $v('item') . ';}'
+			. $each('items()') . '{await async_sleep_ms(1);echo ' . $v('item') . ';}'
+			. $decl('shared<Box>', 'p', 'makeBox()') . $each($p . 'items') . '{echo ' . $v('item') . ';if (' . $v('item') . '==1) {'
+			. 'await replaceItems(' . $v('p') . ');' . $v('p') . '=null;continue;}break;}echo "B";'
+			. 'try {' . $each('makeBox()' . $access . 'items') . '{await failLater();}}' . $catch('Failure') . '{echo "C";}return 7;}';
+		$walk_leaf = $failure . $throw_child . $box . $items . $box_factory . $change_items;
+		rejects(fn() => $prepare('async ' . $signature('bad') . '{' . $decl('vector<string>', 'data', '["x"]')
+			. $each($v('data')) . '{await async_sleep_ms(1);}return 0;}return 8;'), 'Async foreach requires vector<int>');
+
 		$project = new Incremental_Project($directory, "$directory/params", $target);
 		$steps = [
 			[$report, $sum, $entry, null, 'MM4294967298', 4],
@@ -734,6 +755,9 @@ foreach (flavor::cases() as $flavor) {
 			[$ternary, str_replace($throw_child, '', $ternary_leaf), $eager_main, 'Unknown', '', 0],
 			[$ternary, str_replace('return 2;', 'return 0;', $ternary_leaf), $eager_main, null, 'AMTDC7', 1],
 			[str_replace('await failLater()', 'await rightValue()', $ternary), str_replace('return 2;', 'return 0;', $ternary_leaf), $eager_main, null, 'AMBFDX3', 2],
+			[$walk, $walk_leaf, $eager_main, null, '0812315DBTDC7', 3],
+			[$walk, str_replace($change_items, '', $walk_leaf), $eager_main, 'Unknown', '', 0],
+			[$walk, str_replace('[4,5,6]', '[4,9,6]', $walk_leaf), $eager_main, null, '0812319DBTDC7', 1],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

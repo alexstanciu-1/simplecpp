@@ -193,7 +193,7 @@ final class Preparation
 			}
 			if ($function->is_async && !($statement instanceof ast_block_statement || $statement instanceof ast_delay_statement || $statement instanceof ast_await_statement || $statement instanceof ast_return_statement
 				|| $statement::class === ast_assignment_statement::class || $statement::class === ast_update_statement::class || $statement instanceof ast_field_assignment
-				|| $statement instanceof ast_call_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_loop_transfer
+				|| $statement instanceof ast_call_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_loop_statement || $statement instanceof ast_loop_transfer
 				|| $statement instanceof ast_try_statement || $statement instanceof ast_rethrow_statement
 				|| $statement instanceof ast_echo_statement || $statement instanceof ast_local_declaration || $statement instanceof ast_throw_statement || $statement instanceof ast_if_statement)) {
 				throw new diagnostic($source, $statement->byte_start(), 'Async slice supports calls, locals, local and field writes, branches, loops, typed catches, echo, throw and return');
@@ -735,17 +735,21 @@ final class Preparation
 		ast_function_declaration $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
-		$type = $statement->source_value->type_def()->iteration();
+		$source_type = $statement->source_value->type_def();
+		$type = $source_type->iteration();
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
-		if ($function->return_type_def() instanceof generator_type_definition) {
+		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
-			if ($receiver->type_def() instanceof generator_type_definition) {
+			if ($function->is_async && !($source_type instanceof vector_type_definition && $source_type->element_type === type_registry::integer())) {
+				throw new diagnostic($source, $receiver->byte_start(), 'Async foreach requires vector<int> storage');
+			}
+			if ($source_type instanceof generator_type_definition) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
 			}
 			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
 			if (!(($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)
 				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
-				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
+				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires local storage, a temporary or a retained shared field');
 			}
 		}
 		if (($method = $type->iteration_method()) !== null) {
