@@ -51,7 +51,9 @@ local needs a type and initializer.
 
 Python `key in mapping` and `key not in mapping` test key presence at comparison precedence. The mapping must publish a typed key-presence binding, and the key must match its declared key type. Both operands evaluate once, key first. A failed key expression skips the mapping expression. The result is independent of the stored value and traversal order.
 
-Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. General identity tests and interpreting result errors as absence are outside this contract.
+Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. Result errors do not represent absence.
+
+Standalone Python `a is b` and `a is not b` also accept two shared record handles, including optional handles and interface views. The operands evaluate once in source order. Identity compares the allocation retained by each operand. Two empty handles compare identical, including when their declared payload types differ. Scalar and collection values do not support this two-handle form.
 
 Python integer scalars support unary `~`, binary `&`, `^` and `|`, and corresponding compound assignments on existing locals and parameters. Bitwise operations bind more tightly than comparisons. Narrow destinations use the shared checked write-back rules.
 

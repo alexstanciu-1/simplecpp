@@ -48,7 +48,7 @@ The Python entry emits one presence call per membership expression (seven sites)
 
 | Python feature | Closest implemented peer | Decision and reason |
 | --- | --- | --- |
-| General `a is b` | Shared object allocation identity | **Discuss.** Shared handles have an identity. Scalar or copied collection identity has no general equivalent. Keep literal singleton tests separate. |
+| General `a is b` | Shared object allocation identity | **Implemented** for standalone shared-handle `is` and `is not`. An alias retains allocation identity through an interface view. Two empty handles compare identical across declared types. Scalar and copied collection identity have no general equivalent. |
 | Membership in sequences, strings, sets, arbitrary objects | Vector traversal and byte strings supply partial building blocks | **Discuss** equality and substring semantics for typed sequences. **No peer** for user-defined containment/iteration fallback. |
 | Comparison chains | Shared typed comparisons | **Implemented** for adjacent pairs admitted by `== != < <= > >=` and typed-hash `in` / `not in`. Each operand executes once in source order until a comparison fails. Each pair is prepared even on a skipped path. Chains involving identity remain deferred. |
 | Truth testing, operand-valued and/or | Shared conditional truth tests and lazy bool expressions | **Contract.** Python logical operands currently require bool. Operand-valued branches need result types, lifetimes and short-circuiting. |

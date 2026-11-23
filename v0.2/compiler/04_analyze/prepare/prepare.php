@@ -1498,6 +1498,16 @@ final class Preparation
 				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands: Python bitwise operators require integer scalars');
 			}
+			// A Python owner identity test accepts any two shared views of an allocation.
+			if (($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical)
+				&& $syntax->source()->flavor === flavor::python && !($syntax instanceof ast_key_comparison)
+				&& !($syntax->right instanceof ast_keyword_expression && $syntax->right->word === 'null')) {
+				if (!($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python identity requires two shared handles or a literal None on the right');
+				}
+				$syntax->settle_binary(type_bool::instance(), $left);
+				return;
+			}
 			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
 				$owner = $left instanceof shared_record_type_definition ? $left : $right;
 				$owner->prepare_binary($syntax);

@@ -1167,9 +1167,6 @@ final class Parser
 				&& ($operator === binary_operator::identical || $operator === binary_operator::not_identical)
 				&& $right->name === 'undefined' && $this->cursor->position() === $rhs_start + 1
 				&& $this->cursor->tokens->text_at($rhs_start) === 'undefined';
-			if ($python_identity && !$key_test && !($right instanceof ast_keyword_expression && $right->word === 'null')) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None or an indexed comparison with undefined');
-			}
 			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
 			if ($comparison && (self::comparison_operator($kind) !== null || $operator->key_membership())) {
 				$links = null;

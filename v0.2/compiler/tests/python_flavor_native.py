@@ -1001,6 +1001,11 @@ return 8 if probe() is None else 9
     records += fn('view', 'Readable', [], 'echo "V"; return new Node();')
     records += fn('absentOwner', 'shared<Payload>', [], 'echo "E"; return null;')
     records += fn('owner', 'shared<Payload>', [], 'echo "O"; return new Payload();')
+    records += {
+        'cpp': 'Node replaceNode(Node &node) { node = new Node(); return node; }',
+        'php': 'function replaceNode(Node &$node): Node { $node = new Node(); return $node; }',
+        'js': 'function replaceNode(&node: Node): Node { node = new Node(); return node; }',
+    }[flavor]
     case = 'case Empty = "";' if flavor == 'php' else 'Empty = ""'
     records += 'enum Kind:string {' + case + '}'
     separator = '.' if flavor == 'js' else '::'
@@ -1053,6 +1058,56 @@ return 8 if probe() is None else 9
             assert 'error' not in fresh_build(app, fresh)
             assert artifacts(bundle) == artifacts(fresh) == previous
             native(bundle, work/f'none-recovered-{stage}', (9, b'NMLAVEOKKP', b''), library)
+        # Compare the same allocation through both its concrete and interface views.
+        source_edit(app/'main.py', """node: Node = live()
+alias: Readable = node
+if node is not alias or alias is not node:
+    return 1
+if node is live() or live() is view():
+    return 2
+if absentOwner() is not missing() or missing() is not absentView():
+    return 3
+if owner() is node or node is absentView():
+    return 4
+if node is replaceNode(node) or node is alias:
+    return 5
+return 8 if node is probe(node) else 9""")
+        alias = fn('probe', 'Readable', [('node', 'Node')], f'echo "P"; return {syntax["v"]}node;')
+        other = alias.replace(f'return {syntax["v"]}node;', 'return new Node();')
+        expected_trace = b'LLLVEMMAOAP'
+        for stage, provider, status in [('alias', alias, 8), ('separate', other, 9)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed, changed
+            fresh = work/f'identity-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'identity-run-{stage}', (status, expected_trace, b''), library)
+
+        previous = artifacts(bundle)
+        for stage, invalid, diagnostic in [
+                ('scalar', fn('probe', 'int', [('node', 'Node')], 'return 1;'), 'two shared handles'),
+                ('deleted', None, 'Unknown function: probe')]:
+            if invalid is None:
+                peer.unlink()
+            else:
+                source_edit(peer, invalid)
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'identity-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous
+            source_edit(peer, alias)
+            assert 'error' not in invoke(resident)
+            fresh = work/f'identity-restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'identity-recovered-{stage}', (8, expected_trace, b''), library)
+            previous = artifacts(bundle)
+
+        # Peer equality keeps its existing related-type requirement.
+        source_edit(peer, alias + fn('unrelated', 'bool', [('left', 'Node'), ('right', 'shared<Payload>')],
+                                    f'return {syntax["v"]}left === {syntax["v"]}right;'))
+        assert 'related shared types' in invoke(resident).get('error', '')
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
