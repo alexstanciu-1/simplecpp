@@ -85,6 +85,30 @@ def receiver_edits(work, flavor):
     ])
 
 
+def constructed_field(work, flavor):
+    s, klass, method = forms(flavor)
+    v, access = s['v'], s['access']
+    base_ctor = s['constructor'].replace('Node(', 'Base(')
+    child_ctor = {
+        'cpp': 'public: Child() : Base(9) {}',
+        'php': 'public function __construct() {parent::__construct(9);}',
+        'js': 'constructor() {super(9);}',
+    }[flavor]
+    base = klass('Base', s['field']('x', 'int', '3', True) + base_ctor)
+    read = method('read', f'return {v}this{access}x;')
+    child = klass('Child', child_ctor + read, 'Base')
+    setup = s['infer']('item', 'new Child()')
+    valid = setup + f'echo {v}item{access}read();return 8;'
+    invalid = setup + f'echo {v}item{access}x;return 8;'
+    work.mkdir(exist_ok=True)
+    revisions(work, flavor, dict(base=base, child=child, main=valid), [
+        (None, None, b'9'),
+        ('main', invalid, 'Cannot access protected field'),
+        ('main', valid, b'9'),
+    ])
+
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
@@ -96,6 +120,7 @@ def main():
             ('base',src['base'],b'107389'),('base',None,None),('base',src['base'],b'107389')])
         rejects(args.output,flavor,src,call)
         receiver_edits(args.output/"receiver", flavor)
+        constructed_field(args.output/"constructed-field", flavor)
 
 
 if __name__=='__main__':main()

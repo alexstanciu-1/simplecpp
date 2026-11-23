@@ -206,8 +206,7 @@ availability; compile-time numeric signs are evaluated by constant preparation.
 
 ## PHP-first typed literal constants — 2026-11-04
 
-The active `v0.2/compiler/` starts with required explicit types and literal-only
-initializers. This is an amendment to the earlier inferred-constant delivery
+The active `v0.2/compiler/` requires explicit types. Initializers accept literals and bounded integer arithmetic. This is an amendment to the earlier inferred-constant delivery
 boundary above, not a claim that the donor implements these new forms:
 
 ```text
@@ -220,8 +219,13 @@ Declarations are allowed at file/namespace level. Supported default-runtime type
 are int/int64, bool, byte, null, float/float64 and string, subject to generated type
 registration and destination conversions. A written type authorizes the existing
 checked conversion rules. Literals include signed numeric spelling and decoded
-string bytes; initializers cannot refer to another constant or execute an operation
-or call. Parentheses around a literal do not introduce expression evaluation.
+string bytes. File and namespace `int`/`int64` constants also accept integer
+literals, names of integer constants, grouping, unary signs and binary
+`+`, `-`, `*`, `/`, `%`. Division truncates toward zero. Each intermediate
+must fit signed 64 bits. A zero divisor or the signed minimum divided by (or
+taken modulo) minus one is a source error. Names follow ordinary namespace and
+import lookup, including forward and cross-file references. Cycles are errors.
+Mutable storage, calls and non-integer operands cannot participate in a computation.
 All declarations are checked, including unused ones. Null and byte retain their
 existing distinct type contracts; constants add no new operator participation.
 
@@ -245,7 +249,7 @@ through the same stable symbol entry. Unrelated constant changes need not invali
 readers. Initializer spelling may conservatively trigger invalidation even when its
 normalized value is unchanged.
 
-Inferred constants, constant-expression evaluation, initializer references/cycles,
+Inferred constants, general constant-expression evaluation,
 local/class constants and named-constant parameter defaults remain deferred in this
 PHP-first slice. Existing function defaults remain literal-only.
 

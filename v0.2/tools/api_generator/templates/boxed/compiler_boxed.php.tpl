@@ -1,7 +1,8 @@
 
 /** Published @name@ scalar box and its generated admission and lowering bindings. */
-final class type_@name@ extends boxed_type_definition implements iterable_type, counted_collection_type, appendable_collection_type@transfer@
+final class type_@name@ extends boxed_type_definition implements iterable_type, counted_collection_type, appendable_collection_type@literal_interfaces@@transfer@
 {
+@literal_methods@
 @iteration@
 @append_method@
 	public function mutates_referenced_value(): bool { return @reference_mutation@; }

@@ -3,11 +3,11 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Typed, literal-only constants; namespace publication shares the existing declaration pipeline. */
+/** Typed constant syntax; namespace publication shares the existing declaration pipeline. */
 final class Constant_Syntax
 {
 	/** Normalize required flavor type/name spelling and retain one initializer node. */
-	public static function read(Parser $parser, member_visibility $visibility = member_visibility::public): ast_constant_declaration
+	public static function read(Parser $parser, member_visibility $visibility = member_visibility::public, bool $namespace_constant = false): ast_constant_declaration
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
@@ -30,8 +30,12 @@ final class Constant_Syntax
 			$name = $cursor->name(token_kind::identifier);
 		}
 		$cursor->take(token_kind::assign, '=');
-		$initializer = $parser->literal_initializer('Constant initializer requires a literal');
-		$end = $cursor->take(token_kind::semicolon, '; (constant initializer must be a literal)') + 1;
+		$initializer = $namespace_constant && type_int64::instance()->accepts_name($type->spelling())
+			? $parser->integer_initializer() : $parser->literal_initializer('Constant initializer requires a literal');
+		$end = $cursor->take(token_kind::semicolon, '; after constant initializer') + 1;
+		if (type_registry::literal_type($initializer) === null) {
+			return new ast_computed_integer_constant($start, $end, $name, $parser->source_namespace(), $type, $initializer, $visibility);
+		}
 		return new ast_constant_declaration($start, $end, $name, $parser->source_namespace(), $type, $initializer, $visibility);
 	}
 }

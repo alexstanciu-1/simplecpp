@@ -5,7 +5,7 @@ require $argv[1];
 use scpp\compiler\{Source_Frontend, source_file, flavor, entry_target, Cpp_Emitter};
 
 $rows = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	foreach (['int3' => ['int', 3], 'int512' => ['int', 512], 'heap16' => ['string', 16]] as $case => [$element, $count]) {
 		foreach (['bulk', 'append'] as $mode) {
 			$source = '';

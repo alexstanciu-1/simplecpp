@@ -37,7 +37,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception']);
+    fields($compiler, ['generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $extentFamilies = [];
     foreach (object($compiler->generic_syntax ?? new \stdClass()) as $family => $arguments) {
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $family) && $arguments === ['type', 'integer_extent'], 'Unsupported generic syntax: ' . $family);
@@ -314,19 +314,23 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
-    foreach ($runtime['filesystem']['functions'] ?? [] as $name => $binding) {
-        $types = array_column($binding['parameters'], 'type');
-        foreach ([...$types, $binding['result']] as $type) {
-            requireThat(isset($runtimeTypes[$type]), 'Filesystem signature requires a compiler type: ' . $type);
+    foreach (FUNCTION_MODULES as $family) {
+        foreach ($runtime[$family]['functions'] ?? [] as $name => $binding) {
+            $types = array_column($binding['parameters'], 'type');
+            foreach ([...$types, $binding['result']] as $type) {
+                requireThat(isset($runtimeTypes[$type]), 'Module function signature requires a compiler type: ' . $type);
+            }
+            $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
+            $result = $runtimeTypes[$binding['result']];
+            $symbol = var_export('::' . $runtime[$family]['namespace'] . '::' . $binding['native_name'], true);
+            $header = var_export($runtime[$family]['header'], true);
+            $module = var_export($runtime[$family]['module'], true);
+            $refs = $binding['reference_mask'] ? ', reference_mask: ' . $binding['reference_mask'] : '';
+            $mask = $binding['const_reference_mask'];
+            $key = ($binding['flavor'] === null ? '' : $binding['flavor'] . ':') . 'func:' . $name;
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
+                . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header$refs, const_reference_mask: $mask, required_module: $module),";
         }
-        $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
-        $result = $runtimeTypes[$binding['result']];
-        $symbol = var_export('::' . $runtime['filesystem']['namespace'] . '::' . $binding['native_name'], true);
-        $header = var_export($runtime['filesystem']['header'], true);
-        $module = var_export($runtime['filesystem']['module'], true);
-        $mask = $binding['const_reference_mask'];
-        $runtimeCases[] = "\t\t\t'func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
-            . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header, const_reference_mask: $mask, required_module: $module),";
     }
     $exportedNames = array_column(array_merge($runtime['types'] ?? [], $runtime['values'] ?? []), 'name');
     if (isset($runtime['string'])) $exportedNames[] = $runtime['string']['name'];
@@ -344,11 +348,18 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $asyncTypes = array_map(static fn(string $name): string => 'type_' . $name . '::class', array_unique($runtimeTypes));
+    $numericScalars = [];
+    foreach ($definitions as $definition) {
+        if ($definition['strategy'] === 'integer' || $definition['strategy'] === 'floating') {
+            $numericScalars[] = 'type_' . $definition['class'] . '::instance()';
+        }
+    }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
+        '@numeric_scalar_cases@' => $numericScalars === [] ? '' : "\t\t\t" . implode(', ', $numericScalars) . ' => true,',
         '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
@@ -716,7 +727,7 @@ function compilerBinary(mixed $compiler, array $definitions, string $identity, a
             $guard = in_array($operation['spelling'], ['==', '!=', '<', '<=', '>', '>=', '^'], true) ? '!$same_spelling' : 'true';
             $reorderable[$guard][] = "binary_operator::$op";
         }
-        if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power'], true)) {
+        if (in_array($operation['lowering'], ['zero_checked_divide', 'zero_checked_remainder', 'checked_shift', 'checked_power', 'checked_floor_divide', 'checked_floor_remainder'], true)) {
             // These validated scalar strategies call a runtime helper with two value parameters.
             $valueHelpers[] = "binary_operator::$op";
         } elseif ($definitions[$identity]['strategy'] === 'integer') {

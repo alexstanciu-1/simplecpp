@@ -56,9 +56,10 @@ preserves source entry order, single evaluation and suppression of later entries
 when evaluation/conversion fails. Runtime factories own allocation/population;
 lowering emits no per-element append calls.
 
-Deferred: bulk transport for nested/application element types, keyed literals, mixed/dynamic inputs,
-source user factories/non-escape enforcement, populated assignment RHS syntax,
-inference expansion, move-only/throwing-transfer input and provider hot reload.
+Boxed lists and keyed literals use their own published factories. See the
+[construction rules](../../../specs/data_initialization.md#2-construction-type-must-be-known).
+Bulk transport for application element types, user factories, move-only inputs
+and provider hot reload remain deferred.
 
 Focused checks are registered as `compiler_list_initialization`,
 `compiler_list_initialization_native`, `compiler_list_initialization_ownership`, and

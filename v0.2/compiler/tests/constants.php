@@ -50,7 +50,7 @@ function constant_decl(flavor $flavor, string $name, string $type, string $liter
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$fn = static fn(string $name, string $parameters, string $type, string $body): string => definition($flavor, $name, $parameters, $type, $body);
@@ -90,8 +90,21 @@ foreach (flavor::cases() as $flavor)
 	if ($flavor !== flavor::php) {
 		rejects(fn() => $prepare($const('VALUE', 'int', '8') . 'VALUE=9; return 8;'), 'Cannot assign to a constant');
 	}
-	foreach (['1+2', 'OTHER', 'read()'] as $bad) {
-		rejects(fn() => $prepare($const('VALUE', 'int', $bad) . 'return 8;'), 'Constant initializer requires a literal');
+	$fold = $prepare($const('VALUE', 'int', '-(BASE + 1) * 3 / 2 % 5') . $const('BASE', 'int64', '8') . 'echo VALUE; return 8;');
+	verify($fold->file->constants()[0]->constant() === -3, 'Signed integer arithmetic');
+	$fixtures[$flavor->name . '_computed'] = ['cpp' => (new Cpp_Emitter())->emit($fold), 'stdout_hex' => bin2hex('-3')];
+	foreach (['OTHER' => 'Unknown namespace integer constant', 'read()' => 'Unsupported integer constant expression',
+		'1 << 2' => 'Unsupported integer constant expression', '1 / 0' => 'Division by zero',
+		'9223372036854775807 + 1' => 'out of range', '-9223372036854775808 / -1' => 'out of range',
+		'VALUE + 1' => 'Cyclic integer constant dependency'] as $bad => $message) {
+		rejects(fn() => $prepare($const('VALUE', 'int', $bad) . 'return 8;'), $message);
+	}
+	$limits = $prepare($const('MIN', 'int64', '-9223372036854775807 - 1') . $const('ONE', 'int', '- -1')
+		. 'echo MIN, ONE; return 8;');
+	$fixtures[$flavor->name . '_computed_min'] = ['cpp' => (new Cpp_Emitter())->emit($limits), 'stdout_hex' => bin2hex('-92233720368547758081')];
+	rejects(fn() => $prepare($const('FLAG', 'bool', 'true') . $const('VALUE', 'int', 'FLAG + 1') . 'return 8;'), 'Integer constant operand required');
+	if ($flavor === flavor::php) {
+		rejects(fn() => $prepare($const('BASE', 'int', '2') . $const('VALUE', 'int', '$BASE + 1') . 'return 8;'), 'Unsupported integer constant expression');
 	}
 	rejects(fn() => $prepare($const('VALUE', 'byte', '256') . 'return 8;'), 'range');
 	rejects(fn() => $prepare($const('VALUE', 'int', '9223372036854775808') . 'return 8;'), 'range');

@@ -161,6 +161,13 @@ def prove(work, flavor):
         rejection('Callback target signature mismatch', 'wrong-arity')
         source_edit(source('main'), main.replace('relay(compute(...))', 'relay(2)'))
         rejection('Expected exact callback signature', 'numeric-argument')
+        if flavor == 'php':
+            source_edit(source('arithmetic'), static_method)
+            entry = '$receiver = new Arithmetic(); echo unary({}); return 8;'
+            source_edit(source('main'), entry.format("[$receiver, 'twice']"))
+            rejection('Destination has no published collection initialization capability', 'array-callable')
+            source_edit(source('main'), entry.format('Arithmetic::twice(...)'))
+            step('8')
         print(flavor, json.dumps(timings), flush=True)
     finally:
         resident.stdin.close()

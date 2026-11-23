@@ -54,6 +54,15 @@ final class type_registry
 		};
 	}
 
+	/** Canonical numeric scalar identities supplied by the active metadata providers. */
+	public static function is_numeric_scalar(type_definition $type): bool
+	{
+		return match ($type) {
+@numeric_scalar_cases@
+			default => false,
+		};
+	}
+
 	/** Syntactic argument contract, available before names and storage providers resolve. */
 	public const array EXTENT_FAMILIES = [@extent_families@];
 

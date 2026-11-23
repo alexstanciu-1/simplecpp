@@ -30,7 +30,13 @@ normally. Supported element moves are nonthrowing. Negative position/limit throw
 `std::out_of_range("iteration_bounds")`.
 
 Value-only overloads avoid key materialization. Vector keys are int64; typed hash
-keys retain their declared type. Mixed/dynamic keyed overloads return int64
+keys retain their declared type. Typed hashes also publish iteration_next_key,
+which copies only the selected key and commits the cursor after publication.
+An internal iteration_current_value operation copies from the slot immediately before
+that committed position. The caller must prove the same wrapper and selected entry
+remain valid between advance and read. Native bounds and live-slot checks remain in
+place. The read exposes no table pointer or reference.
+Mixed/dynamic keyed overloads return int64
 `key_index` plus string `key_text`: -1 denotes text; nonnegative denotes an integer
 key. Integer keys clear key_text. This follows their existing normalized key domain
 and does not make dynamic depend on mixed. Text keys preserve all bytes, including
@@ -51,7 +57,9 @@ associative mode is checked on every boxed advance. Replacing a boxed source wit
 scalar/null throws `boxed_expected_container`, even after the old limit is reached.
 Valid empty typed/boxed containers simply return false.
 
-Mutation has no stable visitation promise: entries may shift, disappear, change or
+Across source flavors, traversal of an unmodified typed hash visits live entries in key insertion order. This applies to key-only, value-only and paired traversal. Replacing a value keeps its position. Erasing a key and inserting it again places it last.
+
+Mutation during traversal has no stable visitation promise: entries may shift, disappear, change or
 be replaced. Bounds and hole checks prevent invalid slot access; no old entry
 sequence is preserved. Independent loops have independent integer positions.
 Concurrent mutation, escaping element references and by-reference foreach are not

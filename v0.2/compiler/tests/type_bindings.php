@@ -51,7 +51,7 @@ function remove_tree(string $path): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	foreach (['byte', 'int', 'string'] as $destination) {
 		$directory = sys_get_temp_dir() . '/scpp-type-bindings-' . bin2hex(random_bytes(8));
 		mkdir($directory);

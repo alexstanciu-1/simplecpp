@@ -790,6 +790,27 @@
     "optional_lookup": "nullable",
     "append": "max_live_nonnegative_plus_one"
   },
+  "regex": {
+    "provider": "regex.functions",
+    "namespace": "scpp::regex",
+    "functions": {
+      "regex_find_span": {
+        "native_name": "find_span",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
+        "result": "result<int64>"
+      },
+      "regex_test": {
+        "native_name": "test",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "result": "result<bool_t>"
+      },
+      "preg_match": {
+        "native_name": "preg_match", "flavor": "php",
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "result": "result_or_false<int64>"
+      }
+    }
+  },
   "filesystem": {
     "provider": "filesystem.functions",
     "namespace": "scpp::fs",
@@ -848,6 +869,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
     "providers": {"mixed": "core.mixed", "dynamic": "core.dynamic"},
@@ -1179,6 +1201,8 @@
         "reorderable": true
       },
       "checked_power": { "reorderable": false },
+      "checked_floor_divide": { "reorderable": false },
+      "checked_floor_remainder": { "reorderable": false },
       "native_three_way": { "reorderable": false },
       "checked_three_way": { "reorderable": false },
       "string_three_way": { "reorderable": false },
@@ -1239,6 +1263,27 @@
         "result": "int64",
         "strategy": "zero_checked_remainder",
         "symbol": "scpp::int64_remainder",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_true_divide": {
+        "operand": "int64",
+        "result": "float64",
+        "strategy": "zero_checked_divide",
+        "symbol": "scpp::int64_true_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_floor_divide": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "checked_floor_divide",
+        "symbol": "scpp::int64_floor_divide",
+        "header": "scpp/arithmetic.hpp"
+      },
+      "int64_floor_remainder": {
+        "operand": "int64",
+        "result": "int64",
+        "strategy": "checked_floor_remainder",
+        "symbol": "scpp::int64_floor_remainder",
         "header": "scpp/arithmetic.hpp"
       },
       "int64_power": {
@@ -1599,6 +1644,14 @@
         }
       }
     },
+    "division": {
+      "int64": {
+        "true_divide": "int64_true_divide",
+        "floor_divide": "int64_floor_divide",
+        "floor_remainder": "int64_floor_remainder"
+      },
+      "float64": { "true_divide": "float64_divide" }
+    },
     "mixed_numeric_operators": {
       "promotion": "floating_operand",
       "arithmetic": [
@@ -1711,6 +1764,7 @@
   "output": { "provider": "core.output" },
   "scalar_providers": {"core": "core.scalars", "numeric": "numeric.scalars"},
   "submodules": {
+    "regex.functions": {"module": "runtime-regex", "header": "scpp/regex.hpp", "requires": []},
     "filesystem.functions": {"module": "runtime-filesystem", "header": "scpp/filesystem.hpp", "requires": []},
     "core.mixed": {"module": "core", "header": "scpp/mixed.hpp", "requires": []},
     "core.dynamic": {"module": "core", "header": "scpp/dynamic.hpp", "requires": []},

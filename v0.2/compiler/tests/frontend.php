@@ -42,6 +42,22 @@ foreach ([
 	}
 }
 
+// The body ends at the delimiter. The enclosing parser consumes it after the body loop.
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
+	$parser = new Parser($frontend->scan(new source_file('namespace', 'namespace N { return 8; }', $flavor)));
+	$body = $parser->parse()->main()->body();
+	verify($parser->cursor->tokens->text_at($body->end) === '}', 'Namespace brace became part of the body');
+	verify($parser->cursor->position() === $body->end + 1 && $parser->cursor->at_end(), 'Namespace brace was not consumed once');
+	$parser = new Parser($frontend->scan(new source_file('missing', 'namespace N { return 8;', $flavor)));
+	try {
+		$parser->parse();
+		throw new RuntimeException('Accepted namespace without a closing brace');
+	}
+	catch (diagnostic $error) {
+		verify($parser->cursor->at_end() && str_ends_with($error->getMessage(), 'Expected }'), 'Expected closing brace at EOF');
+	}
+}
+
 // Collection retains duplicate candidates; semantic analysis still owns rejection.
 $duplicates = $frontend->collect(new source_file('duplicates', 'int a=8; int a=9; return a;', flavor::cpp));
 verify(count($duplicates->main()->body()->locals) === 2, 'Collection silently merged duplicate locals');

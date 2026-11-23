@@ -87,7 +87,7 @@ def prove(work, flavor, libraries):
         resident.wait()
 
 
-def incremental_native_build(output, native, compiler, library, expected_stdout=b'3'):
+def incremental_native_build(output, native, compiler, library, expected_stdout=b'3', *, expected_status=8):
     """Persistent, compiler-specific Ninja graph; stable object names and real compiler depfiles."""
     native.mkdir(exist_ok=True)
     manifest = json.loads((output / 'manifest.json').read_text())
@@ -109,7 +109,7 @@ def incremental_native_build(output, native, compiler, library, expected_stdout=
     assert result.returncode == 0, result.stdout + result.stderr
     changed = {unit for unit, obj in objects.items() if before.get(unit) != (native / obj).stat().st_mtime_ns}
     result = subprocess.run([native / 'program'], capture_output=True)
-    assert (result.returncode, result.stdout, result.stderr) == (8, expected_stdout, b''), result
+    assert (result.returncode, result.stdout, result.stderr) == (expected_status, expected_stdout, b''), result
     return changed
 
 

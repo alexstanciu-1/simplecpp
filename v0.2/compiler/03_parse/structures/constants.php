@@ -22,7 +22,7 @@ final readonly class runtime_integer_constant implements name_binding
 }
 
 /** Immutable namespace or struct constant with AST-owned literal facts, e.g. Point::LIMIT. */
-final class ast_constant_declaration extends ast_literal_declaration
+class ast_constant_declaration extends ast_literal_declaration
 {
 	public function name(): string
 	{
@@ -56,5 +56,33 @@ final class ast_constant_declaration extends ast_literal_declaration
 	public function constant_known(): bool
 	{
 		return $this->type_def()->evaluate_constant($this->initialization(), $this->initializer) !== constant_evaluation::unavailable;
+	}
+}
+
+/** A folded integer watches its inputs and propagates invalidation through its own published symbol. */
+final class ast_computed_integer_constant extends ast_constant_declaration implements dependency_watcher
+{
+	private ?Dependency_Watches $dependencies = null;
+	private ?symbol_entry $entry = null;
+
+	public function dependency_source_key(): string
+	{
+		return $this->source()->path;
+	}
+
+	/** Replace previous subscriptions only when re-preparing this declaration. */
+	public function begin_fold(scope $symbols, Dependency_Watches $dependencies): bool
+	{
+		$retry = $this->entry !== null;
+		if ($retry) $this->dependencies->forget($this);
+		$this->dependencies = $dependencies;
+		$this->entry = $symbols->entry($this->symbol_key());
+		return $retry;
+	}
+
+	public function invalidate_dependencies(): void
+	{
+		$this->reset_preparation();
+		$this->dependencies?->changed($this->entry);
 	}
 }

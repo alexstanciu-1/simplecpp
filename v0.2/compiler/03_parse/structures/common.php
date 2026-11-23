@@ -241,7 +241,7 @@ final class ast_ancestor_name extends ast_name_expression
  * ```
  * short_name is value, type_reference names int, and the initializer is an integer expression.
  */
-final class ast_local_declaration extends ast_statement implements ast_local_binding
+class ast_local_declaration extends ast_statement implements ast_local_binding
 {
 	use ast_declaration;
 
@@ -371,6 +371,54 @@ final class ast_local_declaration extends ast_statement implements ast_local_bin
 		return $this->type_reference->start;
 	}
 
+}
+
+/** Lexical alias declaration. Preparation publishes the original binding under this name. */
+final class ast_local_alias extends ast_local_declaration
+{
+}
+
+/** A single whole-slot write. Both operations assign a prepared type's native default. */
+abstract class ast_reset_statement extends ast_storage_write
+{
+	abstract public function prepare_reset(ast_local_binding $local): void;
+}
+
+final class ast_clean_statement extends ast_reset_statement
+{
+	public const string OPERATION = 'clean';
+
+	public function prepare_reset(ast_local_binding $local): void
+	{
+		$type = $local->type_def();
+		if (!(type_registry::is_numeric_scalar($type) || $type === type_bool::instance() || $type === type_string::instance()
+			|| $type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof boxed_type_definition)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot clean storage of type ' . $type->name);
+		}
+		$this->settle_binding($local);
+	}
+}
+
+/** Reset the existing slot to its type's absent state. */
+final class ast_unset_statement extends ast_reset_statement
+{
+	public const string OPERATION = 'unset';
+
+	public function prepare_reset(ast_local_binding $local): void
+	{
+		// Aliases always introduce a new name and resolve to their original slot.
+		if ($this->name !== $local->declaration_key()
+			|| ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::reference)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset a native alias or reference parameter');
+		}
+		$type = $local->type_def();
+		if (!(($type instanceof carrier_type_definition && $type->accepts_empty())
+			|| ($type instanceof shared_record_type_definition && !$type->required)
+			|| $type instanceof weak_record_type_definition)) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset storage of type ' . $type->name);
+		}
+		$this->settle_binding($local);
+	}
 }
 
 /**

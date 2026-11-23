@@ -62,7 +62,8 @@ final class Symbol_Publication implements declaration_sink
 		$this->collection->order(static fn(ast_node $a, ast_node $b): int /** int32 */ =>
 			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
 		// Capture the dependency role before publication rewrites links on reused AST declarations.
-		$old_contracts = ($dependencies !== null) && ($previous !== null) ? self::declaration_contracts($previous) : [];
+		$old_functions = [];
+		$old_contracts = ($dependencies !== null) && ($previous !== null) ? self::declaration_contracts($previous, old_functions: $old_functions) : [];
 		$scope = $this->collection->publish($previous);
 		ksort($scope->declarations, \SORT_STRING);
 		foreach ($files as $file) {
@@ -71,7 +72,7 @@ final class Symbol_Publication implements declaration_sink
 		if ($dependencies !== null)
 		{
 			$dependencies->retain(self::watchers($files));
-			self::notify($scope, $dependencies, $old_contracts, self::declaration_contracts($scope));
+			self::notify($scope, $dependencies, $old_contracts, self::declaration_contracts($scope), $old_functions);
 		}
 		return $scope;
 	}
@@ -116,7 +117,8 @@ final class Symbol_Publication implements declaration_sink
 				$keys[$node->symbol_key()] = true;
 			}
 		}
-		$old = self::declaration_contracts($scope, $keys);
+		$old_functions = [];
+		$old = self::declaration_contracts($scope, $keys, $old_functions);
 		$collection->publish_changes($removed, $keys, static fn(ast_node $a, ast_node $b): int /** int32 */ =>
 			strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start));
 		foreach ($files as $file) {
@@ -133,22 +135,25 @@ final class Symbol_Publication implements declaration_sink
 					$node->retire_signature($next instanceof ast_function_declaration && $next->root() === $replacement
 						&& $next->duplicate_element() === null ? $next : null);
 					if ($node->optional_body() !== null) $dependencies->retire($node->body());
+				} elseif ($node instanceof ast_computed_integer_constant) {
+					$dependencies->forget($node);
 				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
 				}
 			}
 		}
-		self::notify($scope, $dependencies, $old, self::declaration_contracts($scope, $keys));
+		self::notify($scope, $dependencies, $old, self::declaration_contracts($scope, $keys), $old_functions);
 		return $scope;
 	}
 
 	/**
 	 * Compare only supplied contracts and end the existing notification batch.
 	 * @param (string|null)[] $old
+	 * @param ast_function_declaration[] $old_functions
 	 * @param (string|null)[] $current
 	 */
 	private static function notify(scope $scope, Dependency_Watches $dependencies,
-		array $old /** array<string,?string> */, array $current /** array<string,?string> */): void
+		array $old /** array<string,?string> */, array $current /** array<string,?string> */, array $old_functions): void
 	{
 		foreach (array_unique(array_merge(array_keys($old), array_keys($current))) as $key) {
 			$entry = $scope->entry($key);
@@ -156,6 +161,15 @@ final class Symbol_Publication implements declaration_sink
 				|| (array_key_exists($key, $old) !== array_key_exists($key, $current))
 				|| (array_key_exists($key, $current) && ($current[$key] === null) && ($entry->status !== change_status::none))) {
 				$dependencies->changed($entry);
+			} elseif (isset($old_functions[$key]) && ($previous = $old_functions[$key]) !== ($next = $entry->declaration())
+				&& $next instanceof ast_function_declaration) {
+				// Equivalent positional contracts already establish matching arity and types.
+				foreach ($next->parameters as $index => $parameter) {
+					if ($parameter->name() !== $previous->parameters[$index]->name()) {
+						$dependencies->changed($entry, Dependency_Watches::PARAMETER_NAMES);
+						break;
+					}
+				}
 			}
 		}
 		$dependencies->dispatch();
@@ -169,8 +183,9 @@ final class Symbol_Publication implements declaration_sink
 	 *
 	 * @param bool[]|null $keys Null requests the complete inventory for full publication.
 	 * @return (string|null)[]
+	 * @param ast_function_declaration[]|null $old_functions
 	 */
-	private static function declaration_contracts(scope $scope, ?array $keys /** array<string,bool>|null */ = null): array /** array<string,?string> */
+	private static function declaration_contracts(scope $scope, ?array $keys /** array<string,bool>|null */ = null, ?array &$old_functions = null): array /** array<string,?string> */
 	{
 		$contracts = [];
 		foreach ($keys ?? $scope->declarations as $key => $_) {
@@ -185,6 +200,10 @@ final class Symbol_Publication implements declaration_sink
 				// Prepared locals link to the canonical type on this AST. Refresh them on any declaration replacement.
 				$contracts[$key] = 'type:' . spl_object_id($head);
 			}
+			elseif ($head instanceof ast_computed_integer_constant) {
+				// Identical initializer text can resolve differently after an import edit.
+				$contracts[$key] = 'computed:' . spl_object_id($head);
+			}
 			elseif ($head instanceof ast_constant_declaration) {
 				$contracts[$key] = json_encode([$head->visibility->value, $head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
@@ -193,9 +212,10 @@ final class Symbol_Publication implements declaration_sink
 			}
 			else {
 				/** @var ast_function_declaration $head */
+				if ($old_functions !== null && $head->parameters !== []) $old_functions[$key] = $head;
 				// A generator return type retains its producer declaration.
 				$producer = $head->return_type_reference?->name === Iterator_Contract::NAME ? spl_object_id($head) : null;
-				$contracts[$key] = json_encode([$producer, $head->is_async, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, self::signature_type($head->return_type_reference), array_map(
+				$contracts[$key] = json_encode([$producer, $head->is_async, $head->is_private, $head->is_protected, $head->is_static, $head->is_virtual, $head->is_override, $head->is_final, $head->is_abstract, $head->returns_reference, self::signature_type($head->return_type_reference), array_map(
 					static fn(ast_parameter_declaration $parameter): array => [self::signature_type($parameter->type_reference), $parameter->mode->value,
 						$parameter->default_value?->source_text()], $head->parameters)], \JSON_THROW_ON_ERROR);
 			}
@@ -234,6 +254,8 @@ final class Symbol_Publication implements declaration_sink
 				if ($function instanceof ast_function_declaration) {
 					$watchers[] = $function;
 					if ($function->optional_body() !== null) $watchers[] = $function->body();
+				} elseif ($function instanceof ast_computed_integer_constant) {
+					$watchers[] = $function;
 				} elseif ($function instanceof ast_record_declaration) {
 					$watchers[] = $function->definition;
 				}

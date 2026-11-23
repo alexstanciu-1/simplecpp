@@ -30,9 +30,7 @@ $rows vector<vector<vector<int>>> = [[[1, 2]], [], [[3]]];
 ```
 
 Existing record, class-owner and nested collection specializations use the same
-path. No additional element family is activated. Existing empty hash/boxed
-initializers remain supported; populated hash/boxed forms, inferred literals,
-call/return destination context and assignment/append literal context are deferred.
+path. For keyed hash and boxed input, see [keyed initialization](keyed_initialization.md).
 
 ## Owners and cost
 

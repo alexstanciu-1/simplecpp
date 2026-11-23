@@ -69,7 +69,7 @@ final class Body_Collection
 			$this->expression($statement->target);
 			return;
 		}
-		if ($statement instanceof ast_loop_transfer || $statement instanceof ast_update_statement) {
+		if ($statement instanceof ast_loop_transfer || $statement instanceof ast_reset_statement || $statement instanceof ast_update_statement) {
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {
@@ -215,8 +215,12 @@ final class Body_Collection
 			$this->expression($value->receiver);
 			$this->expression($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) {
+			foreach ($value->links as $link) $this->expression($link);
+			return;
+		}
 		if ($value instanceof ast_binary_expression) {
-			$this->expression($value->left);
+			if (!($value instanceof ast_continued_comparison)) $this->expression($value->left);
 			$this->expression($value->right);
 		}
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {

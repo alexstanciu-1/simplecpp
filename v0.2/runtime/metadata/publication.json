@@ -762,7 +762,8 @@
       },
       {
         "family": "nullable",
-        "payload": "string"
+        "payload": "string",
+        "instance_field": true
       },
       {
         "family": "nullable",

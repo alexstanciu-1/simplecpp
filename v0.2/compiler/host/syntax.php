@@ -151,9 +151,11 @@ final class Syntax_Inspection
 			return ['kind' => 'unary', 'operator' => $expression->operator->name,
 				'operand' => self::expression($expression->operand), 'span' => self::span($expression)];
 		}
-		if ($expression instanceof ast_postfix_update_expression) {
+		if ($expression instanceof ast_update_expression) {
 			$update = $expression->update;
-			return ['kind' => 'postfix_update', 'name' => self::name($update, $update->name, $update->start),
+			$name_position = $update->postfix ? $update->start : $update->start + 1;
+			return ['kind' => $update->postfix ? 'postfix_update' : 'prefix_update',
+				'name' => self::name($update, $update->name, $name_position),
 				'operator' => $update->operator->name, 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_condition_assignment) {
@@ -179,6 +181,12 @@ final class Syntax_Inspection
 			return ['kind' => $expression instanceof ast_isset_expression ? 'isset' : 'logical_not', 'operand' => self::expression($expression->operand),
 				'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_comparison_chain) {
+			return ['kind' => 'comparison_chain', 'first' => self::expression($expression->links[0]->left),
+				'links' => array_map(static fn(ast_binary_expression $link): array =>
+					['operator' => $link->operator->name, 'right' => self::expression($link->right)], $expression->links),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_binary_expression) {
 			return ['kind' => 'binary', 'operator' => $expression->operator->name,
 				'left' => self::expression($expression->left), 'right' => self::expression($expression->right),
@@ -187,10 +195,15 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_lambda_expression) {
 			return ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
 				['name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling()], $expression->parameters),
-				'result' => $expression->result->spelling(), 'body' => self::expression($expression->body), 'span' => self::span($expression)];
+				'result' => $expression->result->spelling(), 'body' => $expression->body instanceof ast_block
+					? array_map(self::statement(...), $expression->body->statements) : self::expression($expression->body), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_callable_reference) {
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
+		}
+		if ($expression instanceof ast_named_call) {
+			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->labels,
+				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
 			if ($expression->qualifier === call_qualifier::local) {
@@ -315,6 +328,10 @@ final class Syntax_Inspection
 		if ($statement instanceof ast_property_update || $statement instanceof ast_index_update) {
 			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::expression($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
+		}
+		if ($statement instanceof ast_reset_statement) {
+			return ['kind' => $statement::OPERATION, 'name' => self::name($statement, $statement->name, $statement->start + 2),
+				'span' => self::span($statement)];
 		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'name' => self::name($statement, $statement->name,

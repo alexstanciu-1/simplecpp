@@ -123,6 +123,13 @@ interface iterable_type
 	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
+/** Published traversal that can advance without materializing a value. */
+interface key_iterable_type extends iterable_type
+{
+	public function lower_cpp_iteration_next_key(string $receiver, string $output, string $prefix = ''): string;
+	public function lower_cpp_iteration_current_value(string $receiver): string;
+}
+
 /** Unary observations on a published collection. Native uint8. */
 enum collection_cardinality: int
 {
@@ -135,6 +142,14 @@ interface counted_collection_type
 {
 	public function cardinality_result(collection_cardinality $operation): type_definition;
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string;
+}
+
+/** Python membership uses the receiver's containment semantics for a prepared needle. */
+interface membership_type
+{
+	public function prepare_membership(ast_binary_expression $site): void;
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string;
 }
 
 /** Published key existence query, independent of payload representation or null state. */
@@ -262,22 +277,33 @@ enum constant_dispatch
 	case enum_switch;
 	case byte_equality;
 
-	/** Return a duplicate key only for an admitted constant label of the subject's exact type. */
-	public function label_key(ast_expression $label): int|string|null
+	/** A receiver-dependent name is an expression, even when it resolves to a constant. */
+	private static function static_binding(ast_expression $label): ?name_binding
 	{
-		// An expression-qualified constant has a receiver to evaluate; a case label is static data.
 		if ($label instanceof ast_qualified_data || $label instanceof ast_called_type_name) return null;
-		$binding = $label instanceof ast_name_expression ? $label->declaration() : null;
-		return match ($this) {
-			self::enum_switch => $binding instanceof ast_enum_case ? $binding->short_name : null,
-			self::integer_switch => ($label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration
-				|| $binding instanceof runtime_integer_constant) && is_int($label->constant()) ? $label->constant() : null,
-			self::byte_equality => self::bytes($binding instanceof ast_constant_declaration ? $binding->initializer : $label),
-		};
+		return $label instanceof ast_name_expression ? $label->declaration() : null;
 	}
 
-	private static function bytes(ast_expression $literal): ?string
+	public static function integer_label(ast_expression $label): ?int
 	{
+		if (!($label instanceof ast_integer_expression)) {
+			$binding = self::static_binding($label);
+			if (!($binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)) return null;
+		}
+		$value = $label->constant();
+		return is_int($value) ? $value : null;
+	}
+
+	public static function enum_case_name(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		return $binding instanceof ast_enum_case ? $binding->short_name : null;
+	}
+
+	public static function string_label_bytes(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		$literal = $binding instanceof ast_constant_declaration ? $binding->initializer : $label;
 		return $literal instanceof ast_string_expression ? $literal->bytes() : null;
 	}
 }
@@ -314,6 +340,12 @@ abstract class type_definition
 		if (isset($bindings[$this::class])) return $bindings[$this::class];
 		if (!type_registry::HAS_ASYNC_FRAMES || !type_registry::async_value($this)) return null;
 		return $bindings[$this::class] = new async_task_binding($this->concrete_identity());
+	}
+
+	/** Exact label domain for a single constant selection. */
+	public function dispatch_label_type(): type_definition
+	{
+		return $this;
 	}
 
 	public function constant_dispatch(): ?constant_dispatch
@@ -775,7 +807,8 @@ abstract class type_definition
 		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_record_declaration) {
 			return false;
 		}
-		foreach ($function->parameters as $index => $parameter) {
+		$parameters = $operand instanceof ast_named_call ? $operand->evaluation_parameters($function->parameters) : $function->parameters;
+		foreach ($parameters as $index => $parameter) {
 			$argument = $operand->arguments[$index] ?? $parameter->default_value;
 			if ($parameter->mode !== passing_mode::value || !$parameter->type_def()->cpp_trivial_value()
 				|| !self::stable_cpp_operand($argument) || !$argument->type_def()->cpp_trivial_value()) {

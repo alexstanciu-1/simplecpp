@@ -105,6 +105,6 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	public function name_position(): int /** uint32 */
 	{
 		return $this->start + ($this->source()->flavor === flavor::js ? 0 : $this->type_reference->end - $this->start)
-			+ ($this->mode === passing_mode::reference ? 1 : 0);
+			+ ($this->mode !== passing_mode::value ? 1 : 0);
 	}
 }

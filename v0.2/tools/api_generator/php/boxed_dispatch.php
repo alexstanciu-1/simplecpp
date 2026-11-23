@@ -220,6 +220,10 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
         foreach (['php', 'cpp', 'js'] as $flavor) $flavorCode .= "flavor::$flavor => " . boxedFlavorMask([$flavor]) . ', ';
         $code .= strtr(readFile(__DIR__ . '/../templates/boxed/compiler_boxed.php.tpl'), [
             '@compounds@' => implode(', ', $compounds), '@updates@' => implode(', ', $updateCases), '@results@' => $resultCode, '@flavor_mask@' => $flavorCode,
+            '@literal_methods@' => $runtime['boxed']['initialization'] === 'ordered_family_literals'
+                ? readFile(__DIR__ . '/../templates/boxed/compiler_literal_input.php.tpl') : '',
+            '@literal_interfaces@' => $runtime['boxed']['initialization'] === 'ordered_family_literals'
+                ? ', sequence_initializer_type, keyed_initializer_type' : '',
             '@transfer@' => $runtime['boxed']['transfer_assignment'] ? ', private_value_transfer_type' : '',
             '@reference_mutation@' => $family['copy'] === 'shared_container_identity' ? 'true' : 'false',
             '@field_admission@' => $family['source_collection']['instance_field_default'] === 'null' ? 'true' : 'false',

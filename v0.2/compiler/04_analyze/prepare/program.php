@@ -60,9 +60,9 @@ final class Program_Preparation
 				}
 			}
 		}
+		Literal_Declaration_Preparation::declarations($symbols, $dependencies);
 		self::layouts($files, $symbols, $dependencies);
 		Function_Preparation::declarations($symbols, $dependencies);
-		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
 		foreach ($files as $file) {
 			$main = $file->main();
@@ -79,6 +79,7 @@ final class Program_Preparation
 		(new Preparation())->entry($files[$entry_path], $target, $symbols, $dependencies);
 		$instances = $dependencies->called_methods();
 		if ($instances !== null) $instances->prepare($symbols, $dependencies);
+		$dependencies->validate_reference_calls();
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}

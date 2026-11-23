@@ -95,6 +95,43 @@ def incremental(work,flavor,libraries):
     finally:resident.stdin.close();resident.wait()
 
 
+def prepared_string_reset(work, flavor, libraries):
+    s, _, klass, parent, method = syntax(flavor)
+    v, access = s['v'], s['access']
+    field = s['field']
+    this = v + 'this' + access
+    base = klass('Expression', field('preparedType', '?Descriptor') +
+                 method('resetPreparation', f'{this}preparedType=null;', result='void', intent='virtual'))
+    params = {'php': 'Descriptor $type, string $bytes', 'js': 'type:Descriptor, bytes:string',
+              'cpp': 'Descriptor type, string bytes'}[flavor]
+    string_node = klass('StringExpression', field('decoded', '?string') +
+                        method('prepareBytes', f'{this}preparedType={v}type; {this}decoded={v}bytes;',
+                               result='void', params=params) +
+                        method('resetPreparation', parent('resetPreparation', base='Expression') +
+                               f'; {this}decoded=null;', result='void', intent='override'), 'Expression')
+    reset = s['function']('resetNode', 'void', [('node', 'Expression')], f'{v}node{access}resetPreparation();')
+    main = s['infer']('node', 'new StringExpression()') + s['infer']('type', 'new Descriptor()')
+    node = v + 'node' + access
+    main += (f'{node}prepareBytes({v}type,"old bytes");'
+             f'if ({node}preparedType !== {v}type || ({node}decoded ?? "absent") !== "old bytes") {{return 91;}}'
+             f'resetNode({v}node);'
+             f'if ({node}preparedType !== null || {node}decoded !== null) {{return 92;}}'
+             f'{node}prepareBytes({v}type,"new\\0bytes");'
+             f'if ({node}preparedType !== {v}type || {node}decoded === null) {{return 93;}}'
+             f'echo ({node}decoded ?? "absent"); return 8;')
+    app, out = work / (flavor + '-reset'), work / (flavor + '-reset-out')
+    write_app(app, flavor, {'types': klass('Descriptor') + base + string_node, 'reset': reset, 'main': main})
+    proc = service(app, out)
+    try:
+        result = invoke(proc)
+        assert 'error' not in result, result
+    finally:
+        proc.stdin.close()
+        proc.wait()
+    for cc, library in libraries.items():
+        incremental_native_build(out, work / (flavor + '-reset-' + cc), cc, library, b'new\0bytes')
+
+
 def behavior(work,flavor,libraries,memcheck):
     s,evaluate,klass,parent,method=syntax(flavor)
     v,acc=s['v'],s['access']
@@ -289,6 +326,7 @@ if __name__=='__main__':
         work=(args.output or Path(temporary)).resolve();work.mkdir(exist_ok=True)
         libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
         for flavor in ['cpp','php','js']:
+            prepared_string_reset(work,flavor,libraries)
             incremental(work,flavor,libraries)
             behavior(work,flavor,libraries,args.memcheck)
             boundaries(work,flavor,libraries)

@@ -54,7 +54,7 @@ final readonly class source_file
 		$high = count($this->line_starts);
 		while (($low + 1) < $high)
 		{
-			$middle = intdiv($low + $high, 2);
+			$middle = $low + (($high - $low) >> 1);
 			if ($this->line_starts[$middle] <= $offset) {
 				$low = $middle;
 			}

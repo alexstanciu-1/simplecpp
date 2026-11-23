@@ -91,6 +91,59 @@ final class Cpp_Emitter
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
+	/** Apply the prepared conversions and publish the operation's runtime dependencies. */
+	private function binary_operands(ast_binary_expression $value, string &$left, string &$right, array &$required_headers): void
+	{
+		$type = $value->execution_type();
+		if ($value->left_conversion !== value_conversion::identity) {
+			$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
+			foreach ($type->conversion_headers($value->left_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		if ($value->right_conversion !== value_conversion::identity) {
+			$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
+			foreach ($type->conversion_headers($value->right_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		foreach ($type->binary_headers($value->operator) as $header) {
+			$required_headers[$header] = true;
+		}
+	}
+
+	/**
+	 * Evaluate the needle once before the receiver. A chain already holds the needle.
+	 * @param array<string,bool> $required_headers
+	 */
+	private function membership_test(ast_binary_expression $value, string $left, string $right, array &$required_headers /** array<string,bool> */, bool $key_captured): string
+	{
+		/** @var membership_type $type */
+		$type = $value->execution_type();
+		$literal = $value->left instanceof ast_integer_expression || $value->left instanceof ast_float_expression
+			|| $value->left instanceof ast_keyword_expression;
+		$local_pair = $value->left instanceof ast_name_expression && $value->left->local_binding() !== null
+			&& $value->right instanceof ast_name_expression && $value->right->local_binding() !== null;
+		$capture = !$key_captured && !$literal && !$local_pair;
+		$key = $capture ? 'membership_key' : $left;
+		$test = $type->lower_cpp_membership($value->left, $key, $right, $required_headers);
+		if ($value->operator === binary_operator::key_not_in) $test = '!(' . $test . ')';
+		return $capture ? '([&]() { const auto membership_key = ' . $left . '; return ' . $test . '; }())' : $test;
+	}
+
+	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
+	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
+		array &$declarations, array &$required_headers): string
+	{
+		[$expression, $before] = $this->staged_operand($operand, $global_references, $declarations, $required_headers);
+		if ($before !== []) $steps .= implode(' ', $before) . ' ';
+		if ($operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
+			|| $operand instanceof ast_keyword_expression) return $expression;
+		$name = 'chain_' . $index;
+		$steps .= 'const auto ' . $name . ' = ' . $expression . '; ';
+		return $name;
+	}
+
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
@@ -116,10 +169,11 @@ final class Cpp_Emitter
 				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
 		$helper = '';
-		foreach (dependency_use::cases() as $use) {
+		foreach (dependency_use::ordered_uses as $use) {
 			if (!$this->needs_enum_helper($node, $use)) continue;
 			$binding = $type->helper_function($use);
 			$includes[$binding->header] = true;
+			foreach ($binding->return_type_def()->cpp_headers() as $header) $includes[$header] = true;
 			$helper .= $this->enum_helper_signature($binding) . ";\n";
 		}
 		return self::namespace_body($type->cpp_namespace(), 'enum class ' . Cpp_Identifier::source($node->short_name)
@@ -268,7 +322,7 @@ final class Cpp_Emitter
 			?? ((($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0);
 	}
 
-	/** Both concrete enum helpers have one runtime operand and no templates. */
+	/** Each enum helper has one runtime operand and a concrete signature. */
 	private function enum_helper_signature(runtime_function $binding): string
 	{
 		return $binding->return_type_def()->cpp_type() . ' ' . $binding->symbol . '(' . $binding->parameters[0]->cpp_type() . ' value)';
@@ -277,8 +331,17 @@ final class Cpp_Emitter
 	/** Emit from the single owning case inventory; preparation never builds another lookup table. */
 	private function enum_helper(enum_type_definition $type, dependency_use $use): string
 	{
+		$signature = $this->enum_helper_signature($type->helper_function($use));
+		$nullable = $use === dependency_use::enum_try_from_value;
+		$checked = $use === dependency_use::enum_from_value;
+		$failure = 'throw std::runtime_error("Invalid value for enum helper");';
+		if ($checked && $this->needs_enum_helper($type->declaration, dependency_use::enum_try_from_value)) {
+			$lookup = $type->helper_function(dependency_use::enum_try_from_value);
+			return $signature . " {\n\tauto found = " . $lookup->symbol . "(std::move(value));\n\tif (found.has_value()) return *found;\n\t"
+				. $failure . "\n}\n";
+		}
 		$lines = [];
-		$string_lookup = $use === dependency_use::enum_from_value && $type->backing() === type_string::instance();
+		$string_lookup = $nullable || ($checked && $type->backing() === type_string::instance());
 		foreach ($type->declaration->cases as $case) {
 			if ($string_lookup) {
 				$literal = type_string::instance()->lower_cpp_literal($case->initializer);
@@ -290,14 +353,14 @@ final class Cpp_Emitter
 			$result = match ($use) {
 				dependency_use::enum_name => type_string::instance()->cpp_type() . '{' . Cpp_String_Literals::bytes($case->short_name) . ', ' . strlen($case->short_name) . '}',
 				dependency_use::enum_value => type_string::instance()->lower_cpp_literal($case->initializer),
-				dependency_use::enum_from_value => $type->cpp_case($case),
+				dependency_use::enum_from_value, dependency_use::enum_try_from_value => $type->cpp_case($case),
 			};
 			$lines[] = "\tcase " . $match . ': return ' . $result . ';';
 		}
 		$body = implode("\n", $lines);
-		$failure = 'throw std::runtime_error("Invalid value for enum helper");';
+		if ($nullable) $failure = 'return {};';
 		$body = $string_lookup ? $body . "\n\t" . $failure : "\tswitch (value) {\n" . $body . "\n\tdefault: " . $failure . "\n\t}";
-		return $this->enum_helper_signature($type->helper_function($use)) . " {\n" . $body . "\n}\n";
+		return $signature . " {\n" . $body . "\n}\n";
 	}
 
 	/** Lower an approved declaration default and collect its public header dependencies. @param bool[] $headers */
@@ -626,9 +689,12 @@ CPP;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
-			foreach (dependency_use::cases() as $use) {
+			foreach (dependency_use::ordered_uses as $use) {
 				if (!$this->needs_enum_helper($node, $use)) continue;
-				$required_headers['stdexcept'] = true;
+				if ($use !== dependency_use::enum_try_from_value) $required_headers['stdexcept'] = true;
+				if ($use === dependency_use::enum_from_value && $this->needs_enum_helper($node, dependency_use::enum_try_from_value)) {
+					$required_headers['utility'] = true;
+				}
 				$required_headers[$node->definition->helper_function($use)->header] = true;
 				$definitions[] = $this->enum_helper($node->definition, $use);
 			}
@@ -832,8 +898,8 @@ CPP;
 	 */
 	private function statements(ast_statement_block $body, array &$declarations /** array<string,ast_function_declaration> */,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$required_headers /** array<string,bool> */, ?ast_function_declaration $function = null,
-		?cpp_resume_context $resume = null): array /** list<string> */
+		array &$required_headers /** array<string,bool> */, ?statement_return_target $function = null,
+		?cpp_resume_context $resume = null, ?string $first_initializer = null): array /** list<string> */
 	{
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
@@ -856,6 +922,12 @@ CPP;
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
+			if ($statement instanceof ast_local_alias) {
+				if ($statement->initializer instanceof ast_call_expression) {
+					$lines[] = "\t" . $this->value($statement->initializer, $global_references, $declarations, $required_headers, borrow_result: true) . ';';
+				}
+				continue;
+			}
 			if ($statement instanceof ast_block_statement) {
 				$lines[] = "\t{";
 				foreach ($this->statements($statement->body, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
@@ -915,7 +987,8 @@ CPP;
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
 				$direct = $this->iteration_direct($statement);
-				$output_type = $type->iteration_output_type();
+				$output_type = $statement->keys_only ? null : $type->iteration_output_type();
+				if (!$direct) foreach ($destination->type_def()->conversion_headers($statement->conversion) as $header) $required_headers[$header] = true;
 				$output = $output_type !== null ? ($resume === null ? 'iteration_output' : $prefix . 'output')
 					: ($direct ? $this->name($destination) : ($resume === null ? 'iteration_value' : $prefix . 'output'));
 				if ($resume === null && $output_type !== null) {
@@ -937,6 +1010,8 @@ CPP;
 						if ($resume === null) $lines[] = "\t" . $key_type->cpp_type() . ' ' . $key . '{};';
 					}
 					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
+				} elseif ($statement->keys_only) {
+					$next = $type->lower_cpp_iteration_next_key($iteration_source, $output, $prefix);
 				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
 				if ($output_type !== null) {
@@ -953,7 +1028,9 @@ CPP;
 					$lines[] = "\t" . $this->name($destination) . ' = ' . $converted . ';';
 				}
 				if ($resume !== null) $resume->loops[] = ['depth' => count($resume->scopes), 'update' => null];
-				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume) as $line) $lines[] = "\t" . $line;
+				$first_initializer = $resume === null && $statement->keys_only && $type instanceof key_iterable_type
+					&& $this->matches_first_hash_read($statement) ? $type->lower_cpp_iteration_current_value($iteration_source) : null;
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume, $first_initializer) as $line) $lines[] = "\t" . $line;
 				$lines[] = "\t}";
 				if ($resume !== null) {
 					array_pop($resume->loops);
@@ -1196,7 +1273,8 @@ CPP;
 					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
-				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot);
+				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot,
+					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
 					$type = $statement->local_def()->type_def();
@@ -1216,7 +1294,7 @@ CPP;
 				}
 				else {
 					$value = $this->value($statement->value, $global_references, $declarations, $required_headers,
-						logical_root: $conversion === value_conversion::identity);
+						logical_root: $conversion === value_conversion::identity, borrow_result: $function->returns_reference);
 					$type = $function->return_type_def();
 					$value = $this->conversion($type, $conversion, $value, $statement->value);
 					foreach ($type->conversion_headers($conversion) as $header) {
@@ -1274,6 +1352,19 @@ CPP;
 		return 'goto ' . $label . ';';
 	}
 
+	/** Match just the first initializer using settled local identities, before any body effect. */
+	private function matches_first_hash_read(ast_foreach_statement $loop): bool
+	{
+		$first = $loop->body->statements[0] ?? null;
+		if (!$first instanceof ast_local_declaration || $first->initialization() !== value_conversion::identity
+			|| !($first->initializer instanceof ast_index_expression) || $loop->destination !== $loop->value) return false;
+		$source = $loop->source_value;
+		$read = $first->initializer;
+		return $source instanceof ast_name_expression && ($local = $source->local_binding()) instanceof ast_local_declaration
+			&& $read->receiver instanceof ast_name_expression && $read->receiver->local_binding() === $local
+			&& $read->index instanceof ast_name_expression && $read->index->local_binding() === $loop->value;
+	}
+
 	/** Keep a continue landing outside body locals, immediately before the native update or test.
 	 * @param ast_function_declaration[] $declarations
 	 * @param ast_global_declaration[] $globals
@@ -1281,9 +1372,9 @@ CPP;
 	 * @return string[]
 	 */
 	private function loop_body_lines(ast_repeating_statement $loop, array &$declarations, array &$globals, array &$headers,
-		ast_function_declaration $function, ?cpp_resume_context $resume): array
+		statement_return_target $function, ?cpp_resume_context $resume, ?string $first_initializer = null): array
 	{
-		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume);
+		$body = $this->statements($loop->body, $declarations, $globals, $headers, $function, $resume, $first_initializer);
 		if ($this->transfer_labels === []) return $body;
 		$label = 'scpp_continue_' . $loop->start;
 		if (!isset($this->transfer_labels[$label])) return $body;
@@ -1292,10 +1383,12 @@ CPP;
 	}
 
 	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
-	private function switch_lines(ast_switch_statement $syntax, ast_function_declaration $function,
+	private function switch_lines(ast_switch_statement $syntax, statement_return_target $function,
 		array &$declarations, array &$globals, array &$headers): array
 	{
-		$dispatch = $syntax->subject->type_def()->constant_dispatch();
+		$type = $syntax->subject->type_def();
+		$labels = $type->dispatch_label_type();
+		$dispatch = $labels->constant_dispatch();
 		$subject = $this->value($syntax->subject, $globals, $declarations, $headers);
 		if ($syntax->arms === []) return [$this->async_statement('(void)(' . $subject . ');')];
 		$lines = [];
@@ -1308,13 +1401,15 @@ CPP;
 			$subject = $selected->operand();
 		}
 		$owns_subject = false;
-		if ($dispatch === constant_dispatch::byte_equality) {
+		if ($labels !== $type) {
+			$subject = $this->carrier_clause_index($type, $dispatch, $subject, $syntax->arms, $globals, $declarations, $headers);
+		} elseif ($dispatch === constant_dispatch::byte_equality) {
 			$local = $syntax->subject instanceof ast_name_expression && $syntax->subject->local_binding() !== null;
 			$place = $local ? $subject : 'switch_subject';
 			$tests = [];
 			foreach ($syntax->arms as $i => $arm) {
 				if ($arm->condition === null) continue;
-				$bytes = $dispatch->label_key($arm->condition);
+				$bytes = constant_dispatch::string_label_bytes($arm->condition);
 				$tests[] = Cpp_String_Literals::equal_bytes($place, $bytes, $headers) . ' ? ' . $i . ' : ';
 			}
 			if ($tests === []) $lines[] = "\t(void)(" . $subject . ');';
@@ -1333,7 +1428,7 @@ CPP;
 				$has_default = true;
 				$label = 'default';
 			} else {
-				$label = 'case ' . ($dispatch === constant_dispatch::byte_equality ? $i
+				$label = 'case ' . ($labels !== $type || $dispatch === constant_dispatch::byte_equality ? $i
 					: $this->native_case($arm->condition, $dispatch, $globals, $declarations, $headers));
 			}
 			if ($arm->body->statements === []) {
@@ -1353,10 +1448,39 @@ CPP;
 		return $lines;
 	}
 
+	/** Select a clause before executing its body. A miss index is outside the clause index domain. */
+	private function carrier_clause_index(carrier_type_definition $carrier, constant_dispatch $dispatch, string $operand,
+		array $arms, array &$globals, array &$declarations, array &$headers): string
+	{
+		$cases = [];
+		foreach ($arms as $index => $arm) {
+			$label = $arm instanceof ast_switch_arm ? $arm->condition : $arm->label;
+			if ($label === null) continue;
+			if ($dispatch === constant_dispatch::byte_equality) {
+				$test = Cpp_String_Literals::equal_bytes('payload', constant_dispatch::string_label_bytes($label), $headers);
+				$cases[] = 'if (' . $test . ') return ' . $index . ';';
+			} else {
+				$cases[] = 'case ' . $this->native_case($label, $dispatch, $globals, $declarations, $headers) . ': return ' . $index . ';';
+			}
+		}
+		if ($cases === []) return '((void)(' . $operand . '), -1)';
+		$selection = implode(' ', $cases);
+		if ($dispatch !== constant_dispatch::byte_equality) $selection = 'switch (payload) { ' . $selection . ' default: break; }';
+		// The call keeps a temporary field receiver alive while the selector borrows its carrier.
+		return '([](const ' . $carrier->cpp_type() . ' &carrier_subject) { if (!' . $carrier->lower_cpp_presence('carrier_subject')
+			. ') return -1; const auto &payload = ' . $carrier->lower_cpp_extract('carrier_subject') . '; '
+			. $selection . ' return -1; }(' . $operand . '))';
+	}
+
 	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
-		$integer = $label->constant();
+		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
+		return self::integer_spelling($integer);
+	}
+
+	private static function integer_spelling(int $integer /** int64 */): string
+	{
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
@@ -1367,7 +1491,7 @@ CPP;
 	 * @param bool[] $headers
 	 * @return string[]
 	 */
-	private function exception_region(ast_try_statement $syntax, ast_function_declaration $function,
+	private function exception_region(ast_try_statement $syntax, statement_return_target $function,
 		array &$declarations /** array<string,ast_function_declaration> */,
 		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
 	{
@@ -1444,7 +1568,7 @@ CPP;
 	 * @param bool[] $headers
 	 * @return string[]
 	 */
-	private function protected_region(ast_try_statement $syntax, ast_function_declaration $function,
+	private function protected_region(ast_try_statement $syntax, statement_return_target $function,
 		array &$declarations /** array<string,ast_function_declaration> */,
 		array &$globals /** array<string,ast_global_declaration> */, array &$headers /** array<string,bool> */): array /** list<string> */
 	{
@@ -1696,8 +1820,10 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?Cpp_Staged_Result $result = null): string
 	{
 		$conditional = ast_match_expression::is_condition_subject($match->subject);
-		$dispatch = $match->subject->type_def()->constant_dispatch();
-		if ($conditional || $dispatch === constant_dispatch::byte_equality) {
+		$type = $match->subject->type_def();
+		$labels = $type->dispatch_label_type();
+		$dispatch = $labels->constant_dispatch();
+		if ($conditional || ($labels === $type && $dispatch === constant_dispatch::byte_equality)) {
 			$code = '';
 			$scope = false;
 			if (!$conditional) {
@@ -1725,7 +1851,7 @@ CPP;
 					}
 				}
 				else {
-					$bytes = $dispatch->label_key($arm->label);
+					$bytes = constant_dispatch::string_label_bytes($arm->label);
 					$test = Cpp_String_Literals::equal_bytes($subject, $bytes, $headers);
 				}
 				$code .= 'if (' . $test . ') { '
@@ -1734,10 +1860,12 @@ CPP;
 			$code .= $this->selection_exit($default->result, $globals, $declarations, $headers, $result);
 			return $scope ? '{ ' . $code . ' }' : $code;
 		}
-		$code = 'switch (' . $this->value($match->subject, $globals, $declarations, $headers) . ') { ';
-		foreach ($match->arms as $arm) {
+		$subject = $this->value($match->subject, $globals, $declarations, $headers);
+		if ($labels !== $type) $subject = $this->carrier_clause_index($type, $dispatch, $subject, $match->arms, $globals, $declarations, $headers);
+		$code = 'switch (' . $subject . ') { ';
+		foreach ($match->arms as $index => $arm) {
 			if ($arm->label === null) $code .= 'default: ';
-			else $code .= 'case ' . $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers) . ': ';
+			else $code .= 'case ' . ($labels !== $type ? $index : $this->native_case($arm->label, $dispatch, $globals, $declarations, $headers)) . ': ';
 			$code .= $this->selection_exit($arm->result, $globals, $declarations, $headers, $result) . ' ';
 		}
 		return $code . '}';
@@ -1802,7 +1930,7 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous', ?string $operand_override = null): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
@@ -1814,6 +1942,10 @@ CPP;
 		if ($statement instanceof ast_property_update) {
 			$target = $this->value($statement->target, $global_references, $declarations, $headers);
 			return $statement->target->type_def()->lower_cpp_update($statement->operator, $target, $statement->postfix);
+		}
+		if ($statement instanceof ast_reset_statement) {
+			$local = $statement->local_def();
+			return $this->name($local) . ' = ' . $local->type_def()->cpp_type() . '{}';
 		}
 		if ($statement instanceof ast_update_statement) {
 			return $this->local_update($statement);
@@ -1865,7 +1997,7 @@ CPP;
 		$destination = $this->async_body && $statement instanceof ast_local_declaration && ($value instanceof ast_ternary_expression || $value instanceof ast_match_expression)
 			&& $conversion === value_conversion::identity && !$type->cpp_trivial_value()
 			? new Cpp_Staged_Result($type, $this->name($statement) . '_storage') : null;
-		$operand = $this->value($value, $global_references, $declarations, $headers,
+		$operand = $operand_override ?? $this->value($value, $global_references, $declarations, $headers,
 			typed_initializer: ($statement instanceof ast_local_declaration) && ($conversion === value_conversion::identity),
 			logical_root: $conversion === value_conversion::identity, destination: $destination);
 		if ($type instanceof fixed_array_type) return '__builtin_memmove(' . $prefix . ', ' . $operand . ', sizeof(' . $prefix . '))';
@@ -2010,7 +2142,7 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null): string
 	{
 		if ($this->async_body && !$inside_scope && ($value->parent instanceof ast_expression || $value->parent instanceof ast_foreach_statement)
 			&& ($value instanceof ast_call_expression || $value instanceof ast_binary_expression || $value instanceof ast_await_expression || $value instanceof ast_construction_expression)) {
@@ -2019,7 +2151,10 @@ CPP;
 		}
 		$reorderable = false;
 		$value_type = $value->type_def();
-		if ($value_type instanceof enum_type_definition) $declarations[$value_type->declaration->symbol_key()] = $value_type->declaration;
+		if ($value_type instanceof enum_type_definition || $value_type instanceof nullable_enum_type_definition) {
+			$enum = $value_type instanceof nullable_enum_type_definition ? $value_type->payload_type : $value_type;
+			$declarations[$enum->declaration->symbol_key()] = $enum->declaration;
+		}
 		if ($value_type instanceof record_handle_definition || $value_type instanceof record_type_definition) {
 			++$this->record_expressions;
 		}
@@ -2041,7 +2176,7 @@ CPP;
 				$task_name);
 			return $suspends ? '(co_await ' . $call . ')' : $call;
 		}
-		if ($value instanceof ast_postfix_update_expression) {
+		if ($value instanceof ast_update_expression) {
 			return $this->local_update($value->update);
 		}
 		if ($value instanceof ast_condition_assignment) {
@@ -2100,9 +2235,13 @@ CPP;
 			return $value->lock ? '(' . $operand . ').lock()' : $type->cpp_type() . '(' . $operand . ')';
 		}
 		if ($value instanceof ast_this_expression) return 'scpp_self';
-		if ($value instanceof ast_construction_expression) {
+		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
-			$shared = $value instanceof ast_new_expression;
+			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+			if ($shared && $type instanceof type_exception) {
+				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
+				return $type->factory->symbol . '(' . $message . ')';
+			}
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
@@ -2122,12 +2261,46 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
+			&& $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
+			$list = $value instanceof ast_collection_expression;
+			$factory = $value_type->cpp_type() . ($list ? '::python_list()' : '::container()');
+			$items = $list ? $value->elements : $value->entries;
+			if ($items === []) return $factory;
+			$box = $value->suspends ? 'boxed_' . $value->start . '_' . $value->end : 'boxed';
+			$code = "auto $box = $factory; ";
+			if ($value->suspends) $this->async_steps[] = $code;
+			foreach ($items as $i => $item) {
+				$operand = $list ? $item : $item->value;
+				$conversion = $list ? $value->element_conversion($i) : $item->conversion;
+				foreach ($value_type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$steps = [];
+				if (!$list) {
+					[$key, $steps] = $this->staged_operand($item->key, $global_references, $declarations, $required_headers);
+					$key = $item->key->type_def()->lower_cpp_exact_argument($item->key, value_conversion::identity, $key);
+					$steps[] = "const auto key = $key;";
+				}
+				[$input, $before] = $this->staged_operand($operand, $global_references, $declarations, $required_headers);
+				array_push($steps, ...$before);
+				$input = $value_type->lower_cpp_exact_argument($operand, $conversion, $input, $this->inline_adapters);
+				$steps[] = $list ? "$box.append($input);" : "$box.set(key, $input);";
+				$entry = '{ ' . implode(' ', $steps) . ' } ';
+				if ($value->suspends) $this->async_steps[] = $entry;
+				else $code .= $entry;
+			}
+			if ($value->suspends) {
+				++$this->async_owned_steps;
+				return 'static_cast<' . $value_type->cpp_type() . "&&>($box)";
+			}
+			return '([&]() { ' . $code . 'return boxed; }())';
+		}
 		if (($value instanceof ast_keyed_collection_expression || $value instanceof ast_collection_expression) && $value->suspends) {
 			return $this->suspending_collection($value, $global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_keyed_collection_expression) {
-			/** @var type_definition&keyed_initializer_type $type */
 			$type = $value->type_def();
+			if ($value->entries === []) return $type->lower_cpp_empty();
+			/** @var type_definition&keyed_initializer_type $type */
 			$elements = [];
 			foreach ($value->entries as $entry) {
 				$key = $this->value($entry->key, $global_references, $declarations, $required_headers);
@@ -2245,6 +2418,48 @@ CPP;
 			$expression = '!' . $this->condition($value->operand, $global_references, $declarations, $required_headers);
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
+		if ($value instanceof ast_comparison_chain) {
+			$steps = '';
+			$result = 'chain_result_' . $value->start . '_' . $value->end;
+			$middle = $this->chain_operand($value->links[0]->left, 0, $steps, $global_references, $declarations, $required_headers);
+			$last = array_key_last($value->links);
+			foreach ($value->links as $index => $link) {
+				$left = $middle;
+				$membership = $link->operator->membership();
+				$middle = !$value->suspends && $membership && $index === $last
+					? $this->value($link->right, $global_references, $declarations, $required_headers)
+					: $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
+				$right = $middle;
+				if ($membership) {
+					$test = $this->membership_test($link, $left, $right, $required_headers, true);
+				} else {
+					$this->binary_operands($link, $left, $right, $required_headers);
+					$test = $link->execution_type()->lower_prepared_binary($link, $left, $right);
+				}
+				if ($value->suspends) {
+					$steps .= "$result = $test; ";
+					if ($index !== $last) $steps .= "if (!$result) break; ";
+					continue;
+				}
+				$steps .= $index === $last ? 'return ' . $test . ';' : 'if (!(' . $test . ')) return false; ';
+			}
+			if ($value->suspends) {
+				$this->async_steps[] = "bool $result; do { $steps } while (false);";
+				return $result;
+			}
+			return '([&]() -> bool { ' . $steps . ' }())';
+		}
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$index = $value->left;
+			$receiver = $this->value($index->receiver, $global_references, $declarations, $required_headers);
+			$key_safe = false;
+			$key = $this->value($index->index, $global_references, $declarations, $required_headers, $key_safe);
+			$type = $index->receiver->type_def();
+			// Capture the boxed value before a key call can replace its source storage.
+			if (!$key_safe) $receiver = $type->cpp_type() . '(' . $receiver . ')';
+			$test = $type->lower_cpp_key_presence($receiver, $key);
+			return $value->operator === binary_operator::identical ? '(!' . $test . ')' : $test;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator === binary_operator::coalesce) {
 				/** @var carrier_type_definition $carrier */
@@ -2308,21 +2523,10 @@ CPP;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right_start = count($this->async_steps);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
-			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
-				foreach ($type->conversion_headers($value->left_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
+			if ($value->operator->membership() && $before === $this->suspensions) {
+				return $this->membership_test($value, $left, $right, $required_headers, false);
 			}
-			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
-				foreach ($type->conversion_headers($value->right_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
-			}
-			foreach ($type->binary_headers($value->operator) as $header) {
-				$required_headers[$header] = true;
-			}
+			$this->binary_operands($value, $left, $right, $required_headers);
 			if ($before !== $this->suspensions) {
 				$rhs = array_splice($this->async_steps, $right_start);
 				if (!$value->left->type_def()->cpp_trivial_value() || !$value->right->type_def()->cpp_trivial_value()
@@ -2331,6 +2535,7 @@ CPP;
 				$this->async_steps[] = "[[maybe_unused]] const auto {$prefix}_left = $left;";
 				array_push($this->async_steps, ...$rhs);
 				$this->async_steps[] = "[[maybe_unused]] const auto {$prefix}_right = $right;";
+				if ($value->operator->membership()) return $this->membership_test($value, $prefix . '_left', $prefix . '_right', $required_headers, true);
 				return $type->lower_prepared_binary($value, $prefix . '_left', $prefix . '_right', $typed_initializer, $bare_comparison);
 			}
 			$same_spelling = $left === $right;
@@ -2379,12 +2584,17 @@ CPP;
 			if ($function instanceof runtime_function) {
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
+					'enum_try_from_value' => dependency_use::enum_try_from_value,
 					'enum_name' => dependency_use::enum_name,
 					'enum_value' => $value->type_def() === type_string::instance() ? dependency_use::enum_value : null,
 					default => null,
 				};
 				if ($use !== null) {
-					$type = $use === dependency_use::enum_from_value ? $value->type_def() : $value->arguments[0]->type_def();
+					$type = match ($use) {
+						dependency_use::enum_from_value => $value_type,
+						dependency_use::enum_try_from_value => $value_type->payload_type,
+						default => $value->arguments[0]->type_def(),
+					};
 					$key = $type->declaration->symbol_key();
 					$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
 				}
@@ -2476,7 +2686,9 @@ CPP;
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
-			return $this->invocation($value, $function, $name, $function->return_type_def(), $global_references, $declarations, $required_headers);
+			$result = $function->return_type_def();
+			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers);
+			return $function->returns_reference && !$borrow_result ? 'static_cast<' . $result->cpp_type() . '>(' . $call . ')' : $call;
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
 			|| ($value instanceof ast_keyword_expression) || ($value instanceof ast_string_expression)) {
@@ -2517,6 +2729,7 @@ CPP;
 		if ($declaration instanceof runtime_integer_constant) {
 			return $declaration->value . 'LL';
 		}
+		if ($declaration instanceof ast_computed_integer_constant) return self::integer_spelling($declaration->constant());
 		if ($declaration instanceof ast_constant_declaration) {
 			$type = $declaration->type_def();
 			$conversion = $declaration->initialization();
@@ -2634,10 +2847,13 @@ CPP;
 		$runtime = $function instanceof runtime_function;
 		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
+		if ($value instanceof ast_named_call) {
+			$parameters = $value->evaluation_parameters($parameters);
+		}
 		$before = $this->suspensions;
 		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
 		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
-		$method = $runtime ? $function->receiver_method : !$callback && $value instanceof ast_call_expression && $function->has_receiver();
+		$method = $runtime ? $function->receiver_method : !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -2724,7 +2940,9 @@ CPP;
 			$arguments[0] = 'enum_receiver' . $suffix;
 			$direct = false;
 		}
-		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && !$has_reference && count($order_sensitive) <= 1))) {
+		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($runtime || $callback || !$function->is_constructor())
+			&& !$has_reference && count($order_sensitive) <= 1))) {
+			if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -2745,12 +2963,14 @@ CPP;
 			$arguments[] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
+		if ($value instanceof ast_named_call) $arguments = $value->parameter_order($arguments);
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		if ($before !== $this->suspensions) {
 			array_push($this->async_steps, ...$steps);
 			return $call;
 		}
-		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type()) . ' { ' . implode(' ', $steps)
+		$return_reference = $function instanceof ast_function_declaration && $function->returns_reference ? '&' : '';
+		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}
 
@@ -2770,9 +2990,20 @@ CPP;
 		foreach ($lambda->parameters as $parameter) {
 			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
 		}
+		$header = '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
+		if ($lambda->body instanceof ast_block) {
+			$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels];
+			[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = [null, null, null, []];
+			try {
+				$lines = $this->statements($lambda->body, $declarations, $globals, $headers, $lambda);
+				return $header . " {\n" . implode("\n", $lines) . "\n}";
+			} finally {
+				[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = $outer;
+			}
+		}
 		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
 		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
-		return '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ' { return ' . $result . '; }';
+		return $header . ' { return ' . $result . '; }';
 	}
 
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */
@@ -2840,7 +3071,7 @@ CPP;
 	private function forward_argument(ast_parameter_declaration $parameter): string
 	{
 		$value = $this->name($parameter);
-		return $parameter->mode === passing_mode::reference || $parameter->type_def()->cpp_trivial_value() ? $value
+		return $parameter->mode !== passing_mode::value || $parameter->type_def()->cpp_trivial_value() ? $value
 			: 'static_cast<' . $this->member_type($parameter->type_def()) . '&&>(' . $value . ')';
 	}
 
@@ -2930,7 +3161,7 @@ CPP;
 				. ($function->parent instanceof ast_enum_declaration ? ' scpp_self' : '& scpp_self'));
 		}
 		foreach ($function->return_type_def()->cpp_headers() as $header) $headers[$header] = true;
-		return $this->signature_type($function->return_type_def(), $short_types) . ' ' . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
+		return $this->signature_type($function->return_type_def(), $short_types) . ($function->returns_reference ? '& ' : ' ') . ($function->has_virtual_dispatch() ? $function->parent->definition->cpp_type() . '::' . self::virtual_name($function) : self::function_name($function))
 			. '(' . implode(', ', $parameters) . ')';
 	}
 
@@ -2953,9 +3184,10 @@ CPP;
 			if (($member || $function->is_constructor() || $function->has_virtual_dispatch()) && ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition || $type instanceof intersection_type_definition)) {
 				$native = '::' . ($this->root === '' ? '' : $this->root . '::') . $native;
 			}
+			if ($parameter->mode === passing_mode::readonly_reference) $native = 'const ' . $native;
 			$name = $this->name($parameter);
 			$parameters[] = '[[maybe_unused]] ' . ($type instanceof callback_type_definition
-				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $name);
+				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode !== passing_mode::value ? '&' : '') . $name);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -3091,6 +3323,7 @@ CPP;
 			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
+		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}
 

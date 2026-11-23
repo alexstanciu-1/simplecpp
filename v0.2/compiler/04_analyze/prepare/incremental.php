@@ -25,9 +25,9 @@ final class Incremental_Preparation
 		foreach ($files as $path => $file) {
 			Program_Preparation::admit($file, $path === $session->entry_key());
 		}
+		Literal_Declaration_Preparation::declarations($symbols, $session->dependency_watches);
 		Program_Preparation::layouts($files, $symbols, $session->dependency_watches, $session->preparation_work);
 		Function_Preparation::declarations($symbols, $session->dependency_watches);
-		Literal_Declaration_Preparation::declarations($symbols);
 		Import_Preparation::files($files, $symbols);
 		$work = $session->preparation_work;
 		$entry = $files[$session->entry_key()];
@@ -74,6 +74,7 @@ final class Incremental_Preparation
 			$report['prepared'] += $prepared;
 			$report['reused'] += $instances->count() - $prepared;
 		}
+		$session->dependency_watches->validate_reference_calls();
 		foreach ($work->emission_sources() as $key => $_) {
 			if (isset($files[$key])) {
 				$files[$key]->settle_preparation();

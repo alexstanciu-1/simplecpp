@@ -5,7 +5,7 @@ Status: alpha
 
 Purpose: define the current lightweight async/await contract for Prism++ / Simple C++ source surfaces.
 
-This document covers stackless async/await in the legacy PHS/PHP++ and JSS frontends and the v0.2 PHP, C++ and JS syntax flavors. Fibers and the thread-backed `tasks` bridge are intentionally out of scope for this contract.
+This document covers stackless async/await in the legacy PHS/PHP++ and JSS frontends and the v0.2 PHP, C++, JS and Python syntax flavors. Fibers and the thread-backed `tasks` bridge are intentionally out of scope for this contract.
 
 ## Model
 
@@ -42,12 +42,26 @@ Lowering contract:
 
 ## v0.2 direct-call contract
 
-In all three v0.2 syntax flavors, task-producing calls must be consumed directly
+In all four v0.2 syntax flavors, task-producing calls must be consumed directly
 by `await` or `async_wait`; task variables, task parameters and async callable
 adaptation remain separate work. Async parameters must be owned values; reference
 parameters and reference results reject. Local values and their cleanup remain
 alive across suspension. The `tasks` module's cross-thread transfer rules do not
 apply to cooperative async calls.
+
+The Python flavor uses typed `async def` declarations and indented suites. A
+top-level direct await uses the same blocking bridge as the other flavors.
+
+```python
+async def child(n: int) -> int:
+    await async_sleep_ms(1)
+    return n + 1
+
+async def parent() -> int:
+    return await child(41)
+
+return await parent()
+```
 
 An ordinary call inside an async body may suspend while evaluating its receiver
 or arguments. A selected method receiver remains alive across later arguments.

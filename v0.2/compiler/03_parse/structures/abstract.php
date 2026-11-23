@@ -16,6 +16,7 @@ enum passing_mode: int
 {
 	case value = 0;
 	case reference = 1;
+	case readonly_reference = 2;
 }
 
 /**

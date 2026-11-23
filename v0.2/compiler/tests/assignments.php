@@ -24,7 +24,7 @@ function declaration(flavor $flavor, string $type, string $name, string $value):
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$decl = static fn(string $type, string $name, string $value): string => declaration($flavor, $type, $name, $value);
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;

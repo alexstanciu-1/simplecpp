@@ -2184,6 +2184,16 @@ Proof: edit a file, retain an unchanged AST, invalidate appropriate bodies, reco
 | 7.2 | Runtime facilities | Files, paths, regex if retained, process invocation and other bindings from the early inventory. |
 | 7.3 | CLI compiler | Compile a project through the native compiler and compare artifacts and diagnostics. |
 | 7.4 | Resident service | Socket protocol, retained sessions, idle shutdown and repeated requests. |
+
+The [launcher proof](../../compiler/tests/launcher_native.py) links a PHP-flavor
+module with a qualified dispatcher call and a top-level status return. For
+`--help` and `frontend` without a path it compares stdout bytes, stderr bytes
+and exit status with the production PHP executable. The current generated
+`main()` accepts no process arguments. A [proof-only host adapter](../../compiler/examples/launcher/host.cpp)
+passes real argv including the executable name into a typed vector and writes
+explicit diagnostics to stderr. The dispatcher owns usage text, routing and
+status. Production argv and general stderr bindings remain host integration work.
+
 | 7.5 | Bootstrap verification | Build the native compiler using PHP, then assess compiling its source with the resulting native compiler. |
 
 Host dependencies must be inventoried early, not discovered only at milestone 7. Their implementation can proceed separately from language work.

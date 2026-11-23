@@ -45,6 +45,7 @@ final class Function_Preparation
 			if ($statement instanceof ast_foreach_statement) {
 				$statement->destination = null;
 				$statement->conversion = null;
+				$statement->keys_only = false;
 				$statement->key?->reset_preparation();
 				$statement->value->reset_preparation();
 				self::expression($statement->source_value);
@@ -135,7 +136,8 @@ final class Function_Preparation
 		$value->reset_preparation();
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
-			self::expression($value->body);
+			if ($value->body instanceof ast_block) self::reset_block($value->body);
+			else self::expression($value->body);
 			return;
 		}
 		if ($value instanceof ast_condition_assignment) {
@@ -186,8 +188,12 @@ final class Function_Preparation
 			self::expression($value->receiver);
 			self::expression($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) {
+			foreach ($value->links as $link) self::expression($link);
+			return;
+		}
 		if ($value instanceof ast_binary_expression) {
-			self::expression($value->left);
+			if (!($value instanceof ast_continued_comparison)) self::expression($value->left);
 			self::expression($value->right);
 		}
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
@@ -247,7 +253,7 @@ final class Function_Preparation
 		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {
-			if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
+			if ($type instanceof generator_type_definition && $parameter->mode !== passing_mode::value) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
@@ -269,10 +275,14 @@ final class Function_Preparation
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
+			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
+				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
+			}
 			$parameter->settle_type($parameter_type);
 			$default = $parameter->default_value;
 			if ($default !== null) {
-				if ($parameter->mode === passing_mode::reference) {
+				if ($parameter->mode !== passing_mode::value) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
 				}
 				if ($parameter_type instanceof enum_type_definition) {
@@ -294,7 +304,26 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
 			}
 		}
-		$declaration->settle_return_type($type);
+		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
+		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** A reference result borrows exactly one fixed writable parameter of the same type. */
+	private static function reference_return_origin(ast_function_declaration $declaration, type_definition $type): int /** uint32 */
+	{
+		if ($declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference return requires a final non-overriding instance method');
+		}
+		$origin = null;
+		foreach ($declaration->parameters as $index => $parameter) {
+			if ($parameter->mode !== passing_mode::reference) continue;
+			if ($origin !== null || $parameter->type_def() !== $type) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
+			}
+			$origin = $index;
+		}
+		return $origin ?? throw new diagnostic($declaration->source(), $declaration->byte_start(),
+			'Reference return requires exactly one writable parameter of the return type');
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */

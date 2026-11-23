@@ -113,6 +113,8 @@ Mutable storage and existing read-only borrows may both supply the argument.
 Temporary values, conversions and container-interior references remain rejected;
 `const` does not relax the existing native-reference eligibility rules.
 
+The active v0.2 PHP flavor supports this spelling on synchronous free functions for typed vector and hash parameters. Both lower to native const references.
+
 Reads, ordinary value copies (where the type is copyable), and forwarding to another
 read-only reference parameter are allowed. Local `=&` aliases inherit read-only
 access, including alias chains and direct stable field projections. Copying an
@@ -240,7 +242,7 @@ usable and native aliases to that storage remain bound.
   [array semantics](array_semantics.md#10-unsetak). Its existing lazy/no-creation rules
   remain unchanged, including when the root variable is a native alias.
 
-The initial compiler slice accepts a single variable operand as a statement.
+The active v0.2 PHP-flavor compiler accepts `unset($variable);` on a nullable value, optional shared owner or weak handle. A required owner rejects reset. Repeating a reset preserves absence. It also accepts `clean($variable);` on supported numeric, boolean, string, vector, hash, mixed and dynamic storage, including writes through native aliases and reference parameters. Callable storage is deferred in this compiler.
 Direct property resets, indexed `clean` and value-producing forms
 await their own admission/model work. An already valid local alias to a
 stable field can be cleaned according to its selected storage type. These limits

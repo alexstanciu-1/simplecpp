@@ -1,0 +1,384 @@
+--- a/03_parse/collect/structures.php
++++ b/03_parse/collect/structures.php
+@@ -12,8 +12,21 @@
+  * Stable identity within one scope; one head reference retains error-only duplicates through the
+  * declaring scope chain.
+  */
+-final class symbol_entry
++final class symbol_entry implements prepared_call_target
+ {
++	public function call_signature(): ?callable_signature
++	{
++		$head = $this->declaration();
++		if ($head instanceof ast_record_declaration) return $head->definition->constructor();
++		return $head instanceof ast_function_declaration ? $head : null;
++	}
++
++	public function lowering_operand(): ?call_operand
++	{
++		$head = $this->declaration();
++		return $head instanceof call_operand ? $head : null;
++	}
++
+ 	public change_status $status = change_status::removed;
+ 	/** Native non-owning; declaration lifetime belongs to its source AST. */
+ 	private ?ast_declaration_interface $head = null;
+--- a/03_parse/structures/abstract.php
++++ b/03_parse/structures/abstract.php
+@@ -181,7 +181,25 @@
+ }
+ 
+ /** Shared mutable body storage contract for local declarations and by-value parameters. */
+-interface ast_local_binding extends ast_declaration_interface, ast_declaration_site, name_binding {
++interface call_operand {}
++interface prepared_call_target
++{
++	public function call_signature(): ?callable_signature;
++	public function lowering_operand(): ?call_operand;
++}
++
++trait local_call_target
++{
++	public function call_signature(): ?callable_signature
++	{
++		$type = $this->type_def();
++		return $type instanceof lambda_type_definition ? $type->signature : ($type instanceof callback_type_definition ? $type : null);
++	}
++
++	public function lowering_operand(): call_operand { return $this; }
++}
++
++interface ast_local_binding extends call_operand, prepared_call_target, ast_declaration_interface, ast_declaration_site, name_binding {
+ 	public function storage_id(): int /** uint32 */;
+ 	public function type_def(): type_definition;
+ 	public function constant(): int|float|bool|null /** int64|float64|bool|null */;
+--- a/03_parse/structures/blocks.php
++++ b/03_parse/structures/blocks.php
+@@ -117,6 +117,8 @@
+ /** Lexical storage populated by a foreach or catch header. */
+ final class ast_produced_binding extends ast_expression implements ast_local_binding
+ {
++	use local_call_target;
++
+ 	use ast_declaration;
+ 
+ 	/** PROPERTIES */
+--- a/03_parse/structures/common.php
++++ b/03_parse/structures/common.php
+@@ -243,6 +243,8 @@
+  */
+ class ast_local_declaration extends ast_statement implements ast_local_binding
+ {
++	use local_call_target;
++
+ 	use ast_declaration;
+ 
+ 	/** PROPERTIES */
+--- a/03_parse/structures/functions.php
++++ b/03_parse/structures/functions.php
+@@ -146,7 +146,18 @@
+ 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
+ 	public private(set) ?collection_cardinality $cardinality = null;
+ 	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
+-	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|null $function_symbol = null;
++	private ?\WeakReference $function_symbol = null;
++
++	private function bind_target(prepared_call_target $target): void
++	{
++		$this->function_symbol = \WeakReference::create($target);
++	}
++
++	public function prepared_target(): ?prepared_call_target
++	{
++		if ($this->function_symbol === null) return null;
++		return $this->function_symbol->get() ?? throw new \LogicException('Prepared call target expired');
++	}
+ 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
+ 	private array $conversions /** list<uint16> */ = [];
+ 
+@@ -197,33 +208,34 @@
+ 	/** A call-shaped construction watches the same stable class entry as type resolution. */
+ 	public function constructed_record(): ?ast_record_declaration
+ 	{
+-		$target = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
++		$target = $this->prepared_target()?->lowering_operand();
+ 		return $target instanceof ast_record_declaration ? $target : null;
+ 	}
+ 
+ 	/** @param int[] $conversions */
+ 	public function settle_construction(symbol_entry $target, shared_record_type_definition $type, array $conversions /** list<uint16> */): void
+ 	{
+-		$this->function_symbol = $target;
++		$this->bind_target($target);
+ 		$this->conversions = $conversions;
+ 		$this->settle_value($type, null);
+ 	}
+ 
+ 	public function runtime_binding(): ?runtime_function
+ 	{
+-		return $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
++		$target = $this->prepared_target();
++		return $target instanceof runtime_function ? $target : null;
+ 	}
+ 
+ 	/** @param int[] $conversions */
+ 	public function settle_function(symbol_entry $symbol, array $conversions /** list<uint16> */, bool $ancestor_dispatch = false, ?called_method_instance $instance = null): void
+ 	{
+-		$function = $symbol->declaration();
++		$function = ($instance ?? $symbol)->call_signature();
+ 		if (!($function instanceof ast_function_declaration) || count($conversions) !== count($this->arguments)) {
+ 			throw new \LogicException('Invalid settled call');
+ 		}
+ 		$result = $function->return_type_def();
+ 		$this->settle_value($result instanceof class_union_type_definition ? ($result->receiver_view($this) ?? $result) : $result, null);
+-		$this->function_symbol = $instance ?? $symbol;
++		$this->bind_target($instance ?? $symbol);
+ 		$this->ancestor_dispatch = $ancestor_dispatch;
+ 		$this->conversions = $conversions;
+ 	}
+@@ -231,7 +243,7 @@
+ 	/** @return ast_expression[] Runtime operands in evaluation order; a type qualifier does not evaluate. */
+ 	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
+ 	{
+-		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
++		$binding ??= $this->runtime_binding();
+ 		if (($this->arguments[0] ?? null) instanceof ast_type_marker
+ 			&& ($binding?->name() === 'enum_from_value' || $binding?->name() === 'enum_try_from_value')) {
+ 			return array_slice($this->arguments, 1);
+@@ -243,7 +255,7 @@
+ 	public function settle_runtime(runtime_function $function, array $conversions /** list<uint16> */ = []): void
+ 	{
+ 		$this->settle_value($function->return_type_def(), null);
+-		$this->function_symbol = $function;
++		$this->bind_target($function);
+ 		$this->conversions = $conversions;
+ 	}
+ 
+@@ -251,28 +263,26 @@
+ 	public function settle_local_call(ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
+ 	{
+ 		$this->settle_value($signature->result, null);
+-		$this->function_symbol = $parameter;
++		$this->bind_target($parameter);
+ 		$this->conversions = $conversions;
+ 	}
+ 
+ 	public function callable_binding(): ?ast_local_binding
+ 	{
+-		return $this->function_symbol instanceof ast_local_binding ? $this->function_symbol : null;
++		$target = $this->prepared_target();
++		return $target instanceof ast_local_binding ? $target : null;
+ 	}
+ 
+ 	public function function_def(): ast_function_declaration|runtime_function
+ 	{
+-		if ($this->function_symbol instanceof runtime_function) {
+-			return $this->function_symbol;
+-		}
+-		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
+-		return ($this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
++		return $this->prepared_target()?->call_signature() ?? throw new \LogicException('Call target is not settled or was removed');
+ 	}
+ 
+ 	/** Return the caller's bound slot when this call yields a reference to one argument. */
+ 	public function reference_origin(): ?ast_local_binding
+ 	{
+-		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
++		$target = $this->prepared_target();
++		$function = $target instanceof symbol_entry ? $target->call_signature() : null;
+ 		if (!($function instanceof ast_function_declaration) || $function->reference_return_origin === null) return null;
+ 		$argument = $this->arguments[$function->reference_return_origin];
+ 		return $argument instanceof ast_name_expression ? $argument->local_binding() : null;
+@@ -281,13 +291,13 @@
+ 	/** Lower only after the coordinator has settled all reachable implementations. */
+ 	public function implementation(): ast_function_declaration|runtime_function
+ 	{
+-		return $this->function_symbol instanceof called_method_instance ? $this->function_symbol->implementation : $this->function_def();
++		return $this->prepared_target()?->lowering_operand() ?? throw new \LogicException('Missing prepared implementation');
+ 	}
+ 
+ 	/** $index: argument ordinal. */
+ 	public function conversion(int $index /** uint32 */): int /** uint16 */
+ 	{
+-		if ($this->function_symbol instanceof runtime_function && isset($this->function_symbol->parameters[$index])) {
++		if (isset($this->runtime_binding()->parameters[$index])) {
+ 			return $this->conversions[$index] ?? value_conversion::identity;
+ 		}
+ 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');
+@@ -428,7 +438,7 @@
+  * ```
+  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
+  */
+-final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
++final class ast_function_declaration extends ast_node implements call_operand, ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
+ {
+ 	use ast_declaration { name as private namespace_name; }
+ 
+--- a/03_parse/structures/parameters.php
++++ b/03_parse/structures/parameters.php
+@@ -6,6 +6,8 @@
+ /** A function-owned typed parameter, indexed as body storage: function f(int &$value): void. */
+ final class ast_parameter_declaration extends ast_node implements ast_local_binding
+ {
++	use local_call_target;
++
+ 	use ast_declaration;
+ 
+ 	/** PROPERTIES */
+--- a/03_parse/structures/structs.php
++++ b/03_parse/structures/structs.php
+@@ -92,7 +92,7 @@
+ }
+ 
+ /** Source-owned class or struct, with one nominal payload and original member owners. */
+-final class ast_record_declaration extends ast_node implements ast_method_owner
++final class ast_record_declaration extends ast_node implements ast_method_owner, call_operand
+ {
+ 	use ast_declaration;
+ 	use ast_methods;
+--- a/04_analyze/prepare/called_methods.php
++++ b/04_analyze/prepare/called_methods.php
+@@ -4,8 +4,11 @@
+ namespace scpp\compiler;
+ 
+ /** Interned (authored method, called type) pair. Both symbols survive declaration replacement. */
+-final class called_method_instance
++final class called_method_instance implements prepared_call_target
+ {
++	public function call_signature(): ?callable_signature { return $this->method->call_signature(); }
++	public function lowering_operand(): ?call_operand { return $this->implementation; }
++
+ 	public readonly symbol_entry $method;
+ 	public readonly symbol_entry $called;
+ 	/** Private working body, created by the defining-unit preparation pass on first reachable demand. */
+--- a/04_analyze/prepare/prepare.php
++++ b/04_analyze/prepare/prepare.php
+@@ -1643,12 +1643,13 @@
+ 		elseif (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
+ 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+ 		}
++		$signature = $runtime->call_signature();
+ 		$writes = [];
+ 		foreach ($operands as $index => $argument) {
+ 			if ($argument !== $prepared && $argument !== $call->receiver) {
+ 				$this->value($argument);
+ 			}
+-			$type = $runtime->parameters[$index];
++			$type = $signature->parameters[$index];
+ 			if ($index === 0 && $runtime->receiver_method) {
+ 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
+ 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
+@@ -1775,8 +1776,7 @@
+ 			$binding = ($this->has_lambda_local || $call->qualifier === call_qualifier::local)
+ 				? $this->find_local($call->name) : ($this->local_frames[0][$call->name] ?? null);
+ 		}
+-		$type = $binding?->type_def();
+-		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
++		$signature = $binding?->call_signature();
+ 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
+ 			if ($class !== null) $this->ambiguous_construction($call);
+ 			$this->name_lookups++;
+@@ -2096,7 +2096,7 @@
+ 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
+ 		}
+ 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
+-		$conversions = $this->bind_arguments($call, $function, $initializing);
++		$conversions = $this->bind_arguments($call, $symbol->call_signature(), $initializing);
+ 		if (!$this->in_lambda && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
+ 		$instance = null;
+ 		if ($called !== null && $this->dependencies !== null) {
+@@ -2114,7 +2114,7 @@
+ 		$shared = $site instanceof ast_new_expression || $site instanceof ast_call_expression;
+ 		$payload = $type instanceof shared_record_type_definition && $shared ? $type->payload : $type;
+ 		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $shared);
+-		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
++		$constructor = $target !== null ? $target->call_signature() : ($payload instanceof record_type_definition ? $payload->constructor() : null);
+ 		if ($constructor === null && $site->arguments !== []) {
+ 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
+ 		}
+--- a/05_backend/cpp/emit.php
++++ b/05_backend/cpp/emit.php
+@@ -1776,7 +1776,11 @@
+ 			return $value->lock ? '(' . $operand . ').lock()' : $type->cpp_type() . '(' . $operand . ')';
+ 		}
+ 		if ($value instanceof ast_this_expression) return 'scpp_self';
+-		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
++		if ($value instanceof ast_call_expression) {
++			$target = $value->prepared_target();
++			$call_operand = $target?->lowering_operand();
++		}
++		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $call_operand instanceof ast_record_declaration)) {
+ 			$type = $value->type_def();
+ 			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+ 			if ($shared && $type instanceof type_exception) {
+@@ -1786,7 +1790,7 @@
+ 			if ($shared) $declarations[$type->name] = $type;
+ 			if ($value->arguments === [] && !$shared) return '{}';
+ 			$record = $shared ? $type->payload : $type;
+-			$constructor = $record->constructor();
++			$constructor = $value instanceof ast_call_expression ? $target->call_signature() : $record->constructor();
+ 			if ($constructor === null) return $type->cpp_type() . '::make()';
+ 			$this->collect_signature_types($constructor, $declarations);
+ 			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
+@@ -1992,10 +1996,9 @@
+ 			return '&' . $name;
+ 		}
+ 		if ($value instanceof ast_call_expression) {
+-			$callback = $value->callable_binding();
+-			if ($callback !== null) {
+-				$type = $callback->type_def();
+-				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
++			if ($call_operand instanceof ast_local_binding) {
++				$callback = $call_operand;
++				$signature = $target->call_signature();
+ 				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
+ 			}
+ 			if ($value->cardinality !== null) {
+@@ -2005,7 +2008,7 @@
+ 				return $type->lower_cpp_cardinality($value->cardinality,
+ 					$this->value($receiver, $global_references, $declarations, $required_headers));
+ 			}
+-			$function = $value->implementation();
++			$function = $call_operand ?? throw new \LogicException('Missing prepared implementation');
+ 			if ($function instanceof runtime_function) {
+ 				$use = match ($function->name()) {
+ 					'enum_from_value' => dependency_use::enum_from_value,
+@@ -2033,7 +2036,7 @@
+ 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
+ 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+ 				}
+-				$operands = $value->runtime_operands();
++				$operands = $value->runtime_operands($function);
+ 				if ($function->receiver_method) {
+ 					$arguments = [];
+ 					$direct = true;
+--- a/types/callback.php
++++ b/types/callback.php
+@@ -4,8 +4,11 @@
+ namespace scpp\compiler;
+ 
+ /** A fixed by-value signature owned by its declaring parameter, with canonical component types. */
+-final class callback_type_definition extends type_definition
++final class callback_type_definition extends type_definition implements callable_signature
+ {
++	public function name(): string { return $this->name; }
++	public function return_type_def(): type_definition { return $this->result; }
++
+ 	/** @param type_definition[] $inputs */
+ 	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */)
+ 	{
+--- a/types/runtime.php
++++ b/types/runtime.php
+@@ -4,8 +4,11 @@
+ namespace scpp\compiler;
+ 
+ /** Immutable published function signature and C++ binding, e.g. strlen(string): int. */
+-final readonly class runtime_function implements callable_signature
++final readonly class runtime_function implements callable_signature, call_operand, prepared_call_target
+ {
++	public function call_signature(): callable_signature { return $this; }
++	public function lowering_operand(): call_operand { return $this; }
++
+ 	/** PROPERTIES */
+ 	private string $source_name;
+ 	/** @var type_definition[] Non-owning canonical parameter types in call order. */

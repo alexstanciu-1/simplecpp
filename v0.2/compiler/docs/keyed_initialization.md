@@ -98,7 +98,10 @@ Native and sanitizer proofs pass on dev002 with Clang 18.1.3 and GCC 13.3. See t
 [focused timing report](../../specs/planning/benchmarks/keyed_initialization/report.md)
 and [planning checklist](../../specs/planning/collection_initialization.md).
 
-Deferred: nested keyed construction, brace-keyed syntax, inferred or non-local target
-contexts, constants/static tables, additional key and value families,
+PHP and JS also support boxed keyed literals and recursively constructed values.
+Both families use ordered input and reject duplicate normalized keys. See the
+[literal family rules](../../../specs/data_initialization.md#2-construction-type-must-be-known).
+
+Deferred: constants/static tables, additional key and value families,
 integer-hash positional input, user factories, general moves/borrows and hot reload.
 Existing nested vector and append-based application-vector support is preserved.

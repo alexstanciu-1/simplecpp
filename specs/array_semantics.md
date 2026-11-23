@@ -490,7 +490,7 @@ If the target is `mixed` and currently in the null state:
 `fixed_array<T, N>` is the source-facing fixed-size sequential container.
 
 Current rules:
-- `N` must be a non-negative integer literal in the type expression
+- In v0.2 inline storage, `N` accepts a non-negative integer literal or the name of a non-negative namespace `int`/`int64` constant, including a computed constant. Names use ordinary namespace qualification and constant imports. Each dimension uses the resolved integer value.
 - array literals assigned or returned into `fixed_array<T, N>` are positional only
 - literal element count must exactly match `N`
 - indexed reads and writes are supported

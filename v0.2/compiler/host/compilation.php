@@ -188,6 +188,9 @@ final class Compilation_Inspection
 			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::value($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
 		}
+		if ($statement instanceof ast_reset_statement) {
+			return ['kind' => $statement::OPERATION, 'id' => $statement->local_def()->storage_id()];
+		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
@@ -246,8 +249,9 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
-		if ($value instanceof ast_postfix_update_expression) {
-			$row += ['kind' => 'postfix_update', 'id' => $value->update->local_def()->storage_id(),
+		if ($value instanceof ast_update_expression) {
+			$row += ['kind' => $value->update->postfix ? 'postfix_update' : 'prefix_update',
+				'id' => $value->update->local_def()->storage_id(),
 				'operator' => $value->update->operator->name];
 		}
 		if ($value instanceof ast_condition_assignment) {
@@ -283,6 +287,14 @@ final class Compilation_Inspection
 			$row['receiver'] = self::value($value->receiver);
 			$row['index'] = self::value($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) $row['links'] = array_map(self::value(...), $value->links);
+
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$row['operator'] = $value->operator === binary_operator::identical ? 'key_missing' : 'key_present';
+			$row['receiver'] = self::value($value->left->receiver);
+			$row['index'] = self::value($value->left->index);
+			return $row;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if (!$value->operator->lazy()) {
 				$row['execution_type'] = $value->execution_type()->name;
@@ -290,15 +302,19 @@ final class Compilation_Inspection
 				$row['right_conversion'] = value_conversion::name($value->right_conversion);
 			}
 			$row['operator'] = $value->operator->name;
-			$row['left'] = self::value($value->left);
+			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
-		if ($value instanceof ast_lambda_expression) $row['body'] = self::value($value->body);
+		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if ($value instanceof ast_call_expression) {
+			if ($value instanceof ast_named_call) {
+				$row['labels'] = $value->labels;
+				$row['parameter_slots'] = $value->slots;
+			}
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
-			$row['arguments'] = array_map(self::value(...), $value->has_direct_signature() && $value->function_def() instanceof runtime_function
+			$row['arguments'] = array_map(self::value(...), $value->runtime_binding() !== null
 					? $value->runtime_operands() : $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {

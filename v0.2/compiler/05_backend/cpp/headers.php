@@ -31,7 +31,7 @@ final class Cpp_Headers
 		$root = $program->session?->cpp_namespace ?? 'App';
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
-				if ($node instanceof ast_enum_declaration) $uses = [dependency_use::enum_from_value, dependency_use::enum_name, dependency_use::enum_value];
+				if ($node instanceof ast_enum_declaration) $uses = dependency_use::ordered_uses;
 				elseif ($node instanceof ast_function_declaration && $node->is_async) {
 					$uses = [dependency_use::async_wait, dependency_use::async_task];
 					if ($program->session?->group_async_methods) {

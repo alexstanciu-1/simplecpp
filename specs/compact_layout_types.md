@@ -613,8 +613,14 @@ markers and inputs of the wrong backing family reject during preparation.
 For integer backing, float, bool, string, mixed and dynamic inputs require an
 explicit prior integer boundary; these helpers do not introduce implicit coercion. Well-typed backing
 inputs without a matching case throw at runtime; this slice adds no constant-call
-evaluation. No nullable/Result alternative, general reflection or implicit
-enum/integer conversion is introduced.
+evaluation.
+
+The string-backed enum lookup `enum_try_from_value(E::class, input)` (PHP/C++) or
+`enum_try_from_value(E.class, input)` (JS) returns the nominal `?E` carrier.
+It evaluates the string operand once and returns a present case for a byte-exact
+match or an empty carrier on a miss. The same target and operand checks apply as
+for checked string lookup. Integer-backed nullable lookup, synthesized enum
+methods and implicit enum/integer conversions remain outside this slice.
 
 ## 4. Union Semantics
 

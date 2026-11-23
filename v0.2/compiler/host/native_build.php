@@ -227,13 +227,16 @@ final class Native_Build
 		return str_replace('$', '$$', implode(' ', array_map('escapeshellarg', $arguments)));
 	}
 
+	/** Escape literal dollars first so Ninja interprets the prefixes on spaces and colons exactly once. */
 	private static function ninja_path(string $path): string
 	{
 		// Quotes/backslashes in input names are not round-tripped by the current Ninja/Make depfile parser.
 		if (strpbrk($path, "\"'\\|\r\n\0") !== false) {
 			throw new \RuntimeException('Unsupported Ninja input path spelling: ' . $path);
 		}
-		return str_replace(['$', ' ', ':'], ['$$', '$ ', '$:'], $path);
+		$path = str_replace('$', '$$', $path);
+		$path = str_replace(' ', '$ ', $path);
+		return str_replace(':', '$:', $path);
 	}
 
 	private static function string(mixed $value, string $name): string

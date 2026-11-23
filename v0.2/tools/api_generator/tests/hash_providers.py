@@ -29,8 +29,9 @@ def proof(work):
     mp, pp = work / 'metadata.json', work / 'publication.json'
     runtime, compiler = work / 'runtime', work / 'compiler'
     runner = work / 'resolve.php'
-    runner.write_text('<?php\n' + ''.join('require ' + repr(str(ROOT / 'compiler/types' / (name + '.php'))) + ';\n'
-        for name in ['conversion', 'definition', 'runtime', 'vector', 'carrier', 'hash', 'boxed'])
+    compiler_root = ROOT / 'compiler'
+    boot = (compiler_root / 'boot.php').read_text().split("require_once __DIR__ . '/generated/", 1)[0]
+    runner.write_text(boot.replace('__DIR__', repr(str(compiler_root)))
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $name) require $argv[1].'/types/'.$name.'.php';\n"
         + "$t=\\scpp\\compiler\\type_registry::specialize('hash',\\scpp\\compiler\\type_registry::integer(),\\scpp\\compiler\\type_registry::string());\n"
         + "$queries = []; if ($t !== null) foreach (\\scpp\\compiler\\collection_cardinality::cases() as $op) {\n"
@@ -73,6 +74,8 @@ def proof(work):
         consumer.write_text(f'#include <{header}>\nvoid f(scpp::hash_int64_string, scpp::hash_string_int64, scpp::hash_int64_int64, scpp::hash_string_string) {{}}\n')
         run(['clang++', '-std=c++23', '-stdlib=libc++', '-Werror', '-fsyntax-only', '-I'+str(runtime / 'public'), consumer])
         assert 'template<' not in (runtime / 'public' / header).read_text()
+        assert 'iteration_next_key(' in (runtime / 'public' / header).read_text()
+        assert 'lower_cpp_iteration_next_key(' in (compiler / 'types/hashes.php').read_text()
         run(['clang++', '-std=c++23', '-stdlib=libc++', '-Werror', '-fsyntax-only',
              '-I'+str(runtime / 'public'), '-I'+str(ROOT / 'runtime/src/hash'),
              '-I'+str(ROOT / 'runtime/src/numeric'), runtime / 'src/hash.cpp'])

@@ -28,7 +28,7 @@ foreach ([['int count = 3;', flavor::cpp, ['identifier', 'identifier', '=', 'int
 		'Equivalent declaration tokens');
 	check($list->source->flavor === $flavor, 'Flavor retained per source');
 }
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$list = scan('echo auto let int true', $flavor);
 	$expected = match ($flavor) {
@@ -72,6 +72,18 @@ foreach ([['$', flavor::php, 0], ['$1', flavor::php, 0], ['$a', flavor::cpp, 0],
 $source = new source_file('lines', "a\r\nb\n", flavor::cpp);
 check($source->location(3) === ['line' => 2, 'column' => 1], 'LF lines');
 check($source->location(5) === ['line' => 3, 'column' => 1], 'EOF location');
+$content = "\né\r\n\n\0abc\n🙂";
+$snapshot = new source_file('byte-columns', $content, flavor::php);
+$line = $column = 1;
+for ($offset = 0; $offset <= strlen($content); ++$offset) {
+	check($snapshot->location($offset) === ['line' => $line, 'column' => $column], 'Location at byte ' . $offset);
+	if ($offset < strlen($content) && $content[$offset] === "\n") {
+		++$line;
+		$column = 1;
+	} else {
+		++$column;
+	}
+}
 $old = scan('old');
 scan('new', flavor::js);
 check(($old->text_at(0) === 'old') && ($old->source->flavor === flavor::php), 'Old generation stays intact');
@@ -107,7 +119,8 @@ foreach (token_kind::cases() as $kind)
 	check(is_int($kind->value) && ($kind->value > 0) && ($kind->value <= 127), 'Kind ID fits seven bits');
 	check(token_kind::from($kind->value) === $kind, 'Integer kind round trip');
 	if (!in_array($kind, [token_kind::identifier, token_kind::variable, token_kind::integer,
-				token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string, token_kind::keyword],
+				token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string, token_kind::keyword,
+				token_kind::newline, token_kind::indent, token_kind::dedent],
 			true)) {
 		$list = scan($kind->label());
 		check((count($list->tokens) === 1) && ($list->tokens[0]->kind === $kind),
@@ -115,7 +128,7 @@ foreach (token_kind::cases() as $kind)
 	}
 }
 // Consumers distinguish keywords by retained spelling, not by a separate token tag.
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$list = scan('if else return', $flavor);
 	foreach (['if', 'else', 'return'] as $index => $word) {
@@ -129,7 +142,7 @@ foreach (flavor::cases() as $flavor)
 }
 
 // UTF-8 is a whole-source precondition; token and diagnostic locations remain byte-based.
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$text = "// Ελληνικά 😀\n'Română 日本語 é\0' ;";
 	$list = scan($text, $flavor);

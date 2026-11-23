@@ -54,7 +54,7 @@ function remove_tree(string $path): void
 verify(Cpp_Exit::expression(exit_conversion::proven, 'value') === 'static_cast<int>(value)', 'Proven spelling changed');
 verify(Cpp_Exit::expression(exit_conversion::checked, 'value') === 'scpp::entry_exit_checked(value)', 'Checked spelling changed');
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$function = static fn(string $type, string $value): string =>
 		($flavor === flavor::cpp ? "$type result()" : "function result(): $type") . '{ return ' . $value . '; }';
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('entry', $text, $flavor), new entry_target(31));

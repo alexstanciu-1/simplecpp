@@ -390,10 +390,44 @@ def forwarding_removal(work, flavor, libraries):
     print(flavor,'forwarding binding removal/restoration and standalone declaration reuse passed',flush=True)
 
 
+def object_parameters(work):
+    """TYPE-PARAM-004: one signature exercises identity, nullable input and dispatch."""
+    types = """
+        class A { public int $value = 3; }
+        class B { public int $value = 5; }
+        interface I { public function code(): int; }
+        class First implements I { public override function code(): int { return 11; } }
+        class Second implements I { public override function code(): int { return 22; } }
+    """
+    api = """
+        function f(A $a, ?B $b, I $i): A {
+            if ($b !== null) { echo $b->value; } else { echo "absent"; }
+            echo ":", $i->code(), ":";
+            return $a;
+        }
+    """
+    main = """
+        $a = new A();
+        $first = f($a, null, new First());
+        $first->value = 31;
+        echo $a->value, ";";
+        $b = new B();
+        $b->value = 17;
+        $second = f($a, $b, new Second());
+        $second->value = 42;
+        echo $a->value;
+        return 8;
+    """
+    work.mkdir()
+    revisions(work, 'php', dict(main=main, types=types, api=api),
+              [(None, None, b'absent:11:31;17:22:42')])
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);parser.add_argument('--memcheck',action='store_true');args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-interfaces-') as temporary:
         work=(args.output or Path(temporary)).resolve();work.mkdir(exist_ok=True)
+        object_parameters(work/'object-parameters')
         libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
         for flavor in ['cpp','php','js']:
             incremental(work,flavor,libraries)

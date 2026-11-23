@@ -64,7 +64,7 @@ function remove_tree(string $path): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$signature = static fn(string $name): string => $flavor === flavor::cpp ? "int $name()" : "function $name(): int";
 	$failure = $flavor === flavor::cpp ? 'class Failure : Exception {};' : 'class Failure extends Exception {}';
 	$local = match ($flavor) {

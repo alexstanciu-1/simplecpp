@@ -44,7 +44,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$fn = static fn(string $name, string $parameters, string $type, string $body): string => definition($flavor, $name, $parameters, $type, $body);
@@ -128,6 +128,13 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare($fn('nothing', '', 'void', 'return;') . 'echo (int) nothing(); return 8;'), 'Void call');
 	rejects(fn() => $prepare($fn('reference', $ref, 'void', 'return;') . $decl('x', 'int', '8')
 		. 'reference((int)' . $var('x') . '); return 8;'), 'stable variable storage');
+	if ($flavor === flavor::php) {
+		foreach (['object', 'array'] as $target) {
+			rejects(fn() => $prepare($decl('input', 'int', '8')
+				. '$value = (' . $target . ')$input; return 8;'), 'Unsupported PHP (' . $target . ') cast');
+			$prepare('const int ' . $target . ' = 8; return (' . $target . ') + 0;');
+		}
+	}
 	// Unknown call results retain runtime checks; each operand must be evaluated only once.
 	foreach (['byte' => ['int', '300'], 'int' => ['float', '1e100']] as $target => [$source, $value]) {
 		$failure = $fn('outside', '', $source, 'echo "X"; return ' . $value . ';')

@@ -29,7 +29,7 @@ final class Scoped_Byte_View
 		$type = $field->type_def();
 		return $type instanceof scoped_byte_read_type && $call instanceof ast_call_expression
 			&& $call->cardinality === null && $call->receiver === null && count($call->arguments) === 1 && $call->arguments[0] === $field
-			&& ($binding = $call->function_def()) instanceof runtime_function && $type->is_byte_length($binding);
+			&& ($binding = $call->runtime_binding()) !== null && $type->is_byte_length($binding);
 	}
 
 	public static function indexed_read(ast_field_expression $field): bool

@@ -54,7 +54,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$p = static fn(string $name, string $type, bool $ref = false): string => parameter($flavor, $name, $type, $ref);
@@ -105,7 +105,7 @@ foreach (flavor::cases() as $flavor)
 		[$defs . $decl('x', 'int', '8') . 'change(change(' . $var('x') . ')); return 8;', 'stable variable storage'],
 		[$defs . $decl('x', 'byte', '8') . 'change(' . $var('x') . '); return 8;', 'exact storage type'],
 		[$fn('bad', [$p('x', 'int', true) . '=8'], 'void', '') . 'return 8;', 'Reference parameter defaults'],
-		[$fn('bad', [$p('x', 'const int', true)], 'void', '') . 'return 8;', 'Expected'],
+		[$fn('bad', [$p('x', 'const int', true)], 'void', '') . 'return 8;', $flavor === flavor::php ? 'Const references require a vector or hash' : 'Expected'],
 	] as [$invalid, $message]) {
 		rejects(fn() => $prepare($invalid), $message);
 	}

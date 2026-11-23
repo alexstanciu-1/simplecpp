@@ -60,7 +60,7 @@ $frontend->parse(new source_file('arithmetic', 'int x = 1 + 2;', flavor::cpp));
 foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js],
 		['let x = 1;', flavor::php], ['$x int = 1;', flavor::js], ['let x: int = 1;', flavor::cpp],
 		['auto x = 1;', flavor::js], ['int $x = 1;', flavor::cpp],
-		['const x = 1;', flavor::js], ['{ int x = 1; }', flavor::cpp],
+		['const x = 1;', flavor::js],
 		['let x = 1 = 2;', flavor::js]] as [$text,
 		$flavor])
 {
@@ -72,6 +72,9 @@ foreach ([['int x = ;', flavor::cpp], ['let x = 1', flavor::js],
 		check($error->offset <= strlen($text), 'Source-contained error');
 	}
 }
+$standalone = $frontend->parse(new source_file('standalone-block', '{ int x = 1; }', flavor::cpp));
+check($standalone->main()->body()->statements[0] instanceof scpp\compiler\ast_block_statement,
+	'Standalone braces produce a block statement');
 try {
 	$frontend->parse(new source_file('eof', "let x = 1;\nlet y =", flavor::js));
 	throw new RuntimeException('Expected EOF rejection');
