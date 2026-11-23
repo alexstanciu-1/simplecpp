@@ -1120,13 +1120,7 @@ final class Parser
 				token_kind::spaceship => binary_operator::compare,
 				token_kind::identical => binary_operator::identical,
 				token_kind::not_identical => binary_operator::not_identical,
-				token_kind::equal => binary_operator::equal,
-				token_kind::not_equal => binary_operator::not_equal,
-				token_kind::less => binary_operator::less,
-				token_kind::less_equal => binary_operator::less_equal,
-				token_kind::greater => binary_operator::greater,
-				token_kind::greater_equal => binary_operator::greater_equal,
-				default => null,
+				default => self::comparison_operator($kind),
 			};
 			$shift = !$python && (($kind === token_kind::less) || ($kind === token_kind::greater))
 				? $this->cursor->tokens->operator_text_at($this->cursor->position()) : '';
@@ -1138,7 +1132,7 @@ final class Parser
 			if ($precedence < $minimum_precedence) break;
 			$comparison = $python && $precedence === Python_Grammar::COMPARISON_PRECEDENCE;
 			if ($comparison && $comparison_seen) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons are deferred');
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons with identity or membership are deferred');
 			}
 			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
@@ -1158,8 +1152,35 @@ final class Parser
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None on the right');
 			}
 			$left = new ast_binary_expression($left, $operator, $right);
+			if ($comparison && self::comparison_operator($kind) !== null) {
+				$links = null;
+				while (!$this->cursor->at_end()) {
+					$next = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
+					$continuation = self::comparison_operator($next);
+					if ($continuation === null) break;
+					$this->cursor->take($next, 'comparison operator');
+					$middle = $right;
+					$right = $this->value($precedence + 1);
+					$links ??= [$left];
+					$links[] = new ast_continued_comparison($middle, $continuation, $right);
+				}
+				if ($links !== null) $left = new ast_comparison_chain($start, $this->cursor->position(), $links);
+			}
 		}
 		return $left;
+	}
+
+	private static function comparison_operator(token_kind $kind): ?binary_operator
+	{
+		return match ($kind) {
+			token_kind::equal => binary_operator::equal,
+			token_kind::not_equal => binary_operator::not_equal,
+			token_kind::less => binary_operator::less,
+			token_kind::less_equal => binary_operator::less_equal,
+			token_kind::greater => binary_operator::greater,
+			token_kind::greater_equal => binary_operator::greater_equal,
+			default => null,
+		};
 	}
 
 	/** Python not binds below comparisons and above and. */

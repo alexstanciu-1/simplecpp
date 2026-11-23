@@ -187,8 +187,12 @@ final class Function_Preparation
 			self::expression($value->receiver);
 			self::expression($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) {
+			foreach ($value->links as $link) self::expression($link);
+			return;
+		}
 		if ($value instanceof ast_binary_expression) {
-			self::expression($value->left);
+			if (!($value instanceof ast_continued_comparison)) self::expression($value->left);
 			self::expression($value->right);
 		}
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {

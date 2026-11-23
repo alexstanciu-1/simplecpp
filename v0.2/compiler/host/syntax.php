@@ -180,6 +180,12 @@ final class Syntax_Inspection
 			return ['kind' => $expression instanceof ast_isset_expression ? 'isset' : 'logical_not', 'operand' => self::expression($expression->operand),
 				'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_comparison_chain) {
+			return ['kind' => 'comparison_chain', 'first' => self::expression($expression->links[0]->left),
+				'links' => array_map(static fn(ast_binary_expression $link): array =>
+					['operator' => $link->operator->name, 'right' => self::expression($link->right)], $expression->links),
+				'span' => self::span($expression)];
+		}
 		if ($expression instanceof ast_binary_expression) {
 			return ['kind' => 'binary', 'operator' => $expression->operator->name,
 				'left' => self::expression($expression->left), 'right' => self::expression($expression->right),

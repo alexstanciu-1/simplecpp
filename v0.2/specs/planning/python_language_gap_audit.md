@@ -50,7 +50,7 @@ The Python entry emits one presence call per membership expression (seven sites)
 | --- | --- | --- |
 | General `a is b` | Shared object allocation identity | **Discuss.** Shared handles have an identity. Scalar or copied collection identity has no general equivalent. Keep literal singleton tests separate. |
 | Membership in sequences, strings, sets, arbitrary objects | Vector traversal and byte strings supply partial building blocks | **Discuss** equality and substring semantics for typed sequences. **No peer** for user-defined containment/iteration fallback. |
-| Chained comparisons, including mixed identity/membership | Individual comparisons and lazy bool operators | **Discuss.** Evaluate each interior operand once and skip all later operands on failure. Rewriting a chain as two independent compares duplicates calls. |
+| Comparison chains | Shared typed comparisons | **Implemented** for adjacent pairs admitted by `== != < <= > >=`. Each operand executes once in source order until a comparison fails. Each pair is prepared even on a skipped path. Chains involving identity or membership remain deferred. |
 | Truth testing, operand-valued and/or | Shared conditional truth tests and lazy bool expressions | **Contract.** Python logical operands currently require bool. Operand-valued branches need result types, lifetimes and short-circuiting. |
 | Shifts and shift updates | Checked fixed-width shift helpers | **Discuss.** Large counts, negatives and signed width differ. Decide bounded semantics and verify Python shift precedence alongside angle-bracket types. |
 | Power and power update | Shared power operator/helper | **Discuss.** A negative integer exponent can change result type in Python. Power binds differently on either side of unary minus. |
@@ -143,3 +143,7 @@ These are compatibility decisions even if no token is missing. Keep them visible
 3. Run native Python with cpp/php/js providers as applicable. Check results, effects and failures. Use small Python differential examples only where equivalence is promised.
 4. Check body-only reuse, an affecting signature/capability change, failure and recovery against fresh output. For lexical-only changes, test offsets, stable unaffected units and unchanged peer tokens. Measure preparation cost if the work adds a traversal or retained state.
 5. Promote to covered only after the frontend contract and tests agree. Discuss the remaining rows one at a time. Keep deliberate language differences separate from missing implementation.
+
+### Comparison chain verification
+
+The Clang regression runs one unchanged Python caller against cpp, php and js providers. The call trace covers a successful chain and a skipped call after either a false first or a false interior comparison. A body-only edit to the middle callee changes the trace while re-emitting only the provider. The frontend checks that grouped endpoints retain their full source span. A reference-mutating callee checks that the middle value survives a later write. Changing the skipped provider's result to an incompatible type or deleting it produces the same diagnostic as a fresh build. Restoring it checks caller invalidation, unrelated reuse, emitted artifact parity and native behavior.

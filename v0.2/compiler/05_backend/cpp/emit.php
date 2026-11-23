@@ -82,6 +82,39 @@ final class Cpp_Emitter
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
+	/** Apply the prepared conversions and publish the operation's runtime dependencies. */
+	private function binary_operands(ast_binary_expression $value, string &$left, string &$right, array &$required_headers): void
+	{
+		$type = $value->execution_type();
+		if ($value->left_conversion !== value_conversion::identity) {
+			$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
+			foreach ($type->conversion_headers($value->left_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		if ($value->right_conversion !== value_conversion::identity) {
+			$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
+			foreach ($type->conversion_headers($value->right_conversion) as $header) {
+				$required_headers[$header] = true;
+			}
+		}
+		foreach ($type->binary_headers($value->operator) as $header) {
+			$required_headers[$header] = true;
+		}
+	}
+
+	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
+	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
+		array &$declarations, array &$required_headers): string
+	{
+		$expression = $this->value($operand, $global_references, $declarations, $required_headers);
+		if ($operand instanceof ast_integer_expression || $operand instanceof ast_float_expression
+			|| $operand instanceof ast_keyword_expression) return $expression;
+		$name = 'chain_' . $index;
+		$steps .= 'const auto ' . $name . ' = ' . $expression . '; ';
+		return $name;
+	}
+
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
@@ -1884,6 +1917,20 @@ CPP;
 			$expression = '!' . $this->condition($value->operand, $global_references, $declarations, $required_headers);
 			return $logical_root ? $expression : '(' . $expression . ')';
 		}
+		if ($value instanceof ast_comparison_chain) {
+			$steps = '';
+			$middle = $this->chain_operand($value->links[0]->left, 0, $steps, $global_references, $declarations, $required_headers);
+			$last = array_key_last($value->links);
+			foreach ($value->links as $index => $link) {
+				$left = $middle;
+				$middle = $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
+				$right = $middle;
+				$this->binary_operands($link, $left, $right, $required_headers);
+				$test = $link->execution_type()->lower_prepared_binary($link, $left, $right);
+				$steps .= $index === $last ? 'return ' . $test . ';' : 'if (!(' . $test . ')) return false; ';
+			}
+			return '([&]() -> bool { ' . $steps . ' }())';
+		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator === binary_operator::coalesce) {
 				/** @var carrier_type_definition $carrier */
@@ -1927,21 +1974,7 @@ CPP;
 					|| $value->left instanceof ast_integer_expression) return $probe . '(' . $key . ')';
 				return '([&]() { const auto membership_key = ' . $key . '; return ' . $probe . '(membership_key); }())';
 			}
-			if ($value->left_conversion !== value_conversion::identity) {
-				$left = $this->conversion($type, $value->left_conversion, $left, $value->left);
-				foreach ($type->conversion_headers($value->left_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
-			}
-			if ($value->right_conversion !== value_conversion::identity) {
-				$right = $this->conversion($type, $value->right_conversion, $right, $value->right);
-				foreach ($type->conversion_headers($value->right_conversion) as $header) {
-					$required_headers[$header] = true;
-				}
-			}
-			foreach ($type->binary_headers($value->operator) as $header) {
-				$required_headers[$header] = true;
-			}
+			$this->binary_operands($value, $left, $right, $required_headers);
 			$same_spelling = $left === $right;
 			$operands_safe = $left_safe && $right_safe;
 			$native = $type->cpp_binary_reorderable($value->operator, $same_spelling);

@@ -1425,8 +1425,18 @@ final class Preparation
 			$syntax->settle_not();
 			return;
 		}
+		if ($syntax instanceof ast_comparison_chain) {
+			foreach ($syntax->links as $link) {
+				$this->value($link, $initializing);
+				if ($link->type_def() !== type_bool::instance()) {
+					throw new diagnostic($link->source(), $link->byte_start(), 'Comparison chain requires a boolean comparison');
+				}
+			}
+			$syntax->settle_chain();
+			return;
+		}
 		if ($syntax instanceof ast_binary_expression) {
-			$this->value($syntax->left, $initializing);
+			if (!($syntax instanceof ast_continued_comparison)) $this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
 			$this->value($syntax->right, $initializing);
 			if ($syntax->operator === binary_operator::coalesce) {

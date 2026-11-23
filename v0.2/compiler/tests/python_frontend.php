@@ -55,7 +55,7 @@ foreach ([
 	["if True: return 1", 9, 'NEWLINE before Python suite'],
 	["return 8 %= 2", 9, 'Unsupported punctuation'],
 	["return \"\u{03c0}\" /= 2", 12, 'Unsupported punctuation'],
-	["return 1 == 2 < 3", 14, 'chained comparisons'],
+	["return 1 == 2 is None", 14, 'chained comparisons'],
 ] as [$text, $offset, $message]) {
 	try {
 		$source = new source_file('invalid.py', $text, flavor::python);
@@ -70,6 +70,18 @@ foreach ([
 	}
 }
 
+
+$chain = $frontend->parse(new source_file('chain.py', 'return not 1 & 3 < 2 <= 4 or False', flavor::python))
+	->main()->body()->statements[0]->value->left->operand;
+[$first, $second] = $chain->links;
+check($chain->source_text() === '1 & 3 < 2 <= 4' && $first->left->operator === binary_operator::bit_and
+	&& $first->operator === binary_operator::less && $second->operator === binary_operator::less_equal
+	&& $first->right === $second->left && $second->left->parent === $first, 'Comparison chain precedence, span and ownership');
+
+$grouped = '(1 + 2) < 4 <= (5 + 6)';
+$chain = $frontend->parse(new source_file('grouped.py', 'return ' . $grouped, flavor::python))
+	->main()->body()->statements[0]->value;
+check($chain->source_text() === $grouped, 'Chain span includes grouping at both ends');
 
 $bitwise = $frontend->parse(new source_file('flags.py',
 	'return not 1 | 2 ^ 3 & ~4 + 5 == 6 or False', flavor::python));
@@ -306,7 +318,6 @@ foreach ([
 	["return ~False", 'Unsupported unary'],
 	["return 1 ^ 2.0", 'Unsupported binary'],
 	["return True | False", 'Unsupported binary'],
-	["return 1 & 2 == 3 < 4", 'chained comparisons'],
 	["def bad(&x: int) -> int:\n    return x\nreturn 0", 'identifier'],
 	["def bad(x: A & B) -> int:\n    return 0\nreturn 0", 'typed parameters'],
 	["def bad(x: A | B) -> int:\n    return 0\nreturn 0", 'typed parameters'],

@@ -96,8 +96,24 @@ enum binary_operator: int
 	}
 }
 
+/** Ordered links. Each interior operand belongs to its preceding link. */
+final class ast_comparison_chain extends ast_expression
+{
+	/** @param list<ast_binary_expression> $links */
+	public function __construct(int $start, int $end, public readonly array $links)
+	{
+		parent::__construct($start, $end);
+		foreach ($links as $link) $link->attach($this);
+	}
+
+	public function settle_chain(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+}
+
 /** Owns operands of e.g. value < limit or ready && valid; inherited type readiness records successful admission. */
-final class ast_binary_expression extends ast_expression
+class ast_binary_expression extends ast_expression
 {
 	/** PROPERTIES */
 	/** Native owning left operand; lazy operators test its truthiness or presence before deciding whether to evaluate the RHS. */
@@ -123,7 +139,7 @@ final class ast_binary_expression extends ast_expression
 		$this->left = $left;
 		$this->right = $right;
 		$this->operator = $operator;
-		$left->attach($this);
+		if (!($this instanceof ast_continued_comparison)) $left->attach($this);
 		$right->attach($this);
 	}
 
@@ -154,6 +170,9 @@ final class ast_binary_expression extends ast_expression
 		$this->right_conversion = value_conversion::identity;
 	}
 }
+
+/** Its left operand is a non-owning link to the previous comparison's right operand. */
+final class ast_continued_comparison extends ast_binary_expression {}
 
 /** Numeric prefix syntax identities, independent of token IDs; native uint8. */
 enum unary_operator: int

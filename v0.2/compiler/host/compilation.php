@@ -280,6 +280,7 @@ final class Compilation_Inspection
 			$row['receiver'] = self::value($value->receiver);
 			$row['index'] = self::value($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) $row['links'] = array_map(self::value(...), $value->links);
 		if ($value instanceof ast_binary_expression) {
 			if (!$value->operator->lazy()) {
 				$row['execution_type'] = $value->execution_type()->name;
@@ -287,7 +288,7 @@ final class Compilation_Inspection
 				$row['right_conversion'] = value_conversion::name($value->right_conversion);
 			}
 			$row['operator'] = $value->operator->name;
-			$row['left'] = self::value($value->left);
+			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
 		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);

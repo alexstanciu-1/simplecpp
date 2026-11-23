@@ -866,6 +866,73 @@ return 8 if key() + 1 not in mapping() else 3
         assert resident.wait() == 0
 
 
+def comparison_chains(work, flavor, library):
+    fn = forms(flavor)[0]['function']
+    app, bundle = work/'chains', work/'chains-bundle'
+    caller = """if not low() <= middle() < high() == 3 != 4 >= 4 > 1:
+    return 1
+if high() < middle() < skipped():
+    return 2
+if low() < high() < middle() < skipped():
+    return 5
+if not (1 < 2) == True:
+    return 3
+value: int = 2
+if not 1 < value < replaceValue(value) or value != 100:
+    return 4
+return 8
+"""
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 0'})
+    replace = {
+        'cpp': 'int replaceValue(int &v) { v = 100; return 3; }',
+        'php': 'function replaceValue(int &$v): int { $v = 100; return 3; }',
+        'js': 'function replaceValue(&v: int): int { v = 100; return 3; }',
+    }[flavor]
+    calls = app/f'calls.{flavor}'
+    providers = replace + ''.join(
+        fn(name, 'int', [], f'echo "{mark}"; return {value};')
+        for name, mark, value in [('low', 'L', 1), ('middle', 'M', 2), ('high', 'H', 3)])
+    source_edit(calls, providers)
+    peer = app/f'last.{flavor}'
+    valid = fn('skipped', 'int', [], 'echo "X"; return 4;')
+    source_edit(peer, valid)
+    resident = service(app, bundle)
+    try:
+        result = invoke(resident)
+        assert 'error' not in result, result
+        expected = (8, b'LMHHMLHM', b'')
+        native(bundle, work/'chains-run', expected, library)
+        source_edit(calls, providers.replace('echo "M"', 'echo "m"'))
+        changed = invoke(resident)
+        assert 'error' not in changed and changed['preparation']['reused'], changed
+        assert [Path(p).name for p in changed['emitted_sources']] == [calls.name], changed
+        expected = (8, b'LmHHmLHm', b'')
+        native(bundle, work/'chains-body-edit', expected, library)
+        previous = artifacts(bundle)
+        manifest = (bundle/'manifest.json').read_bytes()
+        for stage in ('signature', 'deleted'):
+            if stage == 'signature':
+                source_edit(peer, fn('skipped', 'string', [], 'return "wrong";'))
+            else:
+                peer.unlink()
+            failed = invoke(resident)
+            diagnostic = 'Unsupported binary' if stage == 'signature' else 'Unknown function: skipped'
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'bad-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+            source_edit(peer, valid)
+            recovered = invoke(resident)
+            assert 'error' not in recovered and recovered['preparation']['reused'], recovered
+            assert {Path(path).name for path in recovered['emitted_sources']} == {peer.name, 'main.py'}, recovered
+            fresh = work/f'restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'chains-{stage}', expected, library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def none_identity(work, flavor, library):
     syntax, evaluate, _, _, interface, implementation = interface_forms(flavor)
     fn = syntax['function']
@@ -1442,14 +1509,16 @@ def incremental(work, flavor, app, output, library):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--items', action='store_true', help='run the paired hash traversal matrix')
+    parser.add_argument('--chains', action='store_true', help='run the comparison chain matrix')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-python-flavor-') as directory:
         work = Path(directory)
         library = runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
-        if args.items:
+        if args.items or args.chains:
             for flavor in BRIDGES:
                 case = work/flavor
                 case.mkdir()
-                paired_items(case, flavor, library)
+                proof = paired_items if args.items else comparison_chains
+                proof(case, flavor, library)
         else:
             prove(work/'proof', library)

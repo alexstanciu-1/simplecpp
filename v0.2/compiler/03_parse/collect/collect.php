@@ -215,8 +215,12 @@ final class Body_Collection
 			$this->expression($value->receiver);
 			$this->expression($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) {
+			foreach ($value->links as $link) $this->expression($link);
+			return;
+		}
 		if ($value instanceof ast_binary_expression) {
-			$this->expression($value->left);
+			if (!($value instanceof ast_continued_comparison)) $this->expression($value->left);
 			$this->expression($value->right);
 		}
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
