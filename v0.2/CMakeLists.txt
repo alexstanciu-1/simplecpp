@@ -67,12 +67,13 @@ include(cmake/Json.cmake)
 scpp_provider_outputs(runtime_outputs ${runtime_generated} ${runtime_publication})
 string(JSON async_result_count ERROR_VARIABLE async_error LENGTH "${runtime_profile}" async_results)
 if(async_result_count GREATER 0)
-  list(APPEND runtime_outputs ${runtime_generated}/private/async_task_headers.hpp ${runtime_generated}/private/async_task_methods.hpp
+  list(APPEND runtime_outputs ${runtime_generated}/private/async_task_headers.hpp ${runtime_generated}/public/scpp/async/frame.hpp
     ${runtime_generated}/public/scpp/async_wait.hpp ${runtime_generated}/public/scpp/async_timer.hpp ${runtime_generated}/public/scpp/async_fwd.hpp)
   math(EXPR last_async_result "${async_result_count} - 1")
   foreach(index RANGE 0 ${last_async_result})
     string(JSON result GET "${runtime_profile}" async_results ${index})
-    list(APPEND runtime_outputs ${runtime_generated}/public/scpp/async_${result}.hpp ${runtime_generated}/public/scpp/async/wait_${result}.hpp)
+    list(APPEND async_sources ${runtime_generated}/src/async_${result}.cpp)
+    list(APPEND runtime_outputs ${runtime_generated}/src/async_${result}.cpp ${runtime_generated}/public/scpp/async_${result}.hpp ${runtime_generated}/public/scpp/async/wait_${result}.hpp)
   endforeach()
 endif()
 list(APPEND runtime_outputs
@@ -144,7 +145,7 @@ target_include_directories(scpp_runtime
   PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/hash)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 if(async_result_count GREATER 0)
-  target_sources(scpp_runtime PRIVATE runtime/src/async/task.cpp)
+  target_sources(scpp_runtime PRIVATE runtime/src/async/task.cpp ${async_sources})
 endif()
 
 if(SCPP_ENABLE_DATETIME)
@@ -519,6 +520,9 @@ if(BUILD_TESTING)
     add_executable(async_runtime_test tests/async_runtime/caller.cpp tests/async_runtime/parent.cpp tests/async_runtime/child.cpp)
     target_link_libraries(async_runtime_test PRIVATE scpp_runtime)
     add_test(NAME async_runtime COMMAND async_runtime_test)
+    add_executable(async_frame_boundary_test tests/async_runtime/frame_boundary.cpp)
+    target_link_libraries(async_frame_boundary_test PRIVATE scpp_runtime)
+    add_test(NAME async_frame_boundary COMMAND async_frame_boundary_test)
     add_test(NAME async_header_isolation COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/async_runtime/header_isolation.py
       ${CMAKE_CXX_COMPILER} ${runtime_generated}/public)

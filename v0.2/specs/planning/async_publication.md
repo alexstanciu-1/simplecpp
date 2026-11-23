@@ -21,6 +21,22 @@ promise. After checking for failure, await-resume moves the payload into the cal
 The source protocol consumes each task once. Blocking callers include only the wait
 declaration for the selected result. The umbrella wait header remains available to C++.
 
+### Task-to-runtime boundary
+
+The generator emits one implementation unit for each published task. Each task keeps its
+typed promise, result and exception handling. Its implementation includes
+`scpp/async/frame.hpp` for three operations on erased coroutine handles. Scheduling a
+child requires an active loop. Final suspension schedules a saved continuation without
+throwing. A synchronous wait drives a root to completion and restores the enclosing
+loop on exit. Only the runtime implementation sees the loop, clocks and threads.
+
+The `async_frame_boundary` test awaits again after both successful and throwing nested
+synchronous waits and checks guard destruction. Its optional positive iteration count
+measures nanoseconds per immediate child await, including frame lifetime and the return
+handoff. For an external-link proof, compile generated `src/async_int64.cpp` with only
+the public includes, remove `async_int64.cpp.o` from a temporary copy of the prebuilt
+archive, then link the test object, standalone methods object and archive in that order.
+
 ### Async result categories and representative proofs
 
 | Category | Samples | Status and owner |

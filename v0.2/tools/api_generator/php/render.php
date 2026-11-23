@@ -191,7 +191,7 @@ function render(array $plan): array {
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
     if (isset($plan['async_results'])) {
-        $forwards = $waits = $methods = $includes = '';
+        $forwards = $waits = $includes = '';
         foreach ($plan['async_results'] as $identity => ['task' => $task, 'header' => $header, 'wait_header' => $waitHeader]) {
             $value = $identity !== 'void';
             $type = $value ? new RuntimeConcreteType($plan, $identity) : new VoidConcreteType();
@@ -209,14 +209,15 @@ function render(array $plan): array {
             ]);
             $waits .= includeHeader($waitHeader);
             $includes .= "#include <$header>\n";
-            $methods .= $parts['implementation'];
+            $files['src/' . basename($header, '.hpp') . '.cpp'] = BANNER . includeHeader($header) . includeHeader('scpp/async/frame.hpp')
+                . "#include <stdexcept>\n#include <utility>\n\nnamespace scpp::async {\n" . $parts['implementation'] . "}\n";
         }
         $files['public/scpp/async_fwd.hpp'] = BANNER . template('core/async_fwd', ['forwards' => $forwards]);
         $files['public/scpp/async_wait.hpp'] = BANNER . "#pragma once\n" . $waits;
         $timerType = new RuntimeConcreteType($plan, 'int64');
         $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer', ['scalar_header' => $timerType->headers()[0]]);
         $files['private/async_task_headers.hpp'] = BANNER . $includes;
-        $files['private/async_task_methods.hpp'] = BANNER . $methods;
+        $files['public/scpp/async/frame.hpp'] = BANNER . template('core/async_frame');
     }
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);

@@ -11,7 +11,7 @@ for unit in ('caller', 'parent', 'child'):
                                       '-M', str(fixture / (unit + '.cpp'))], text=True)
     paths = [Path(word) for word in shlex.split(result.replace('\\\n', ' '))[1:]]
     names = {path.name for path in paths}
-    forbidden = {'async_core.hpp', 'mutex', 'thread', 'queue', 'condition_variable', 'chrono'}
+    forbidden = {'async_core.hpp', 'frame.hpp', 'mutex', 'thread', 'queue', 'condition_variable', 'chrono'}
     if unit == 'caller':
         forbidden.update({'coroutine', 'exception', 'async_int64.hpp'})
     elif 'async_int64.hpp' not in names:
@@ -24,3 +24,11 @@ result = subprocess.check_output([compiler, '-std=c++23', '-stdlib=libc++', '-I'
                                  input='#include <scpp/async/wait_int64.hpp>\n', text=True)
 headers = {Path(word).name for word in shlex.split(result.replace('\\\n', ' '))[1:]}
 assert headers.isdisjoint({'string.hpp', 'vectors.hpp', 'hashes.hpp', 'boxed.hpp', 'coroutine'}), headers
+
+# The generated methods compile with the public frame ABI and no private runtime include path.
+methods = Path(public).parent / 'src/async_int64.cpp'
+result = subprocess.check_output([compiler, '-std=c++23', '-stdlib=libc++', '-I', public,
+                                  '-M', str(methods)], text=True)
+headers = {Path(word).name for word in shlex.split(result.replace('\\\n', ' '))[1:]}
+assert 'frame.hpp' in headers and 'async_int64.hpp' in headers, headers
+assert headers.isdisjoint({'thread', 'queue', 'condition_variable', 'chrono', 'async_task_headers.hpp'}), headers

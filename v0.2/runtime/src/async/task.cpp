@@ -1,6 +1,5 @@
 #include <scpp/async_timer.hpp>
-#include <scpp/async_wait.hpp>
-#include "async_task_headers.hpp"
+#include <scpp/async/frame.hpp>
 
 #include <chrono>
 #include <stdexcept>
@@ -50,5 +49,16 @@ void timer::await_suspend(std::coroutine_handle<> continuation) const {
     loop.next = continuation;
 }
 
-#include "async_task_methods.hpp"
+void detail::schedule_child(std::coroutine_handle<> child) {
+    active_loop().next = child;
+}
+
+void detail::schedule_continuation(std::coroutine_handle<> parent) noexcept {
+    event_loop::current->next = parent;
+}
+
+void detail::run_until_complete(std::coroutine_handle<> root) {
+    event_loop loop;
+    loop.run(root);
+}
 }

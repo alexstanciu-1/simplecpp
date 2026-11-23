@@ -7,7 +7,7 @@ void @task@::promise_type::unhandled_exception() noexcept {
 }
 
 void @task@::promise_type::completion::await_suspend(handle finished) const noexcept {
-    if (auto parent = finished.promise().continuation) event_loop::current->next = parent;
+    if (auto parent = finished.promise().continuation) detail::schedule_continuation(parent);
 }
 
 @task@::@task@(@task@&& other) noexcept : frame_(std::exchange(other.frame_, {})) {}
@@ -21,9 +21,8 @@ bool @task@::await_ready() const noexcept {
 }
 
 void @task@::await_suspend(std::coroutine_handle<> parent) {
-    auto& loop = active_loop();
+    detail::schedule_child(frame_);
     frame_.promise().continuation = parent;
-    loop.next = frame_;
 }
 
 @result@ @task@::await_resume() const {
@@ -39,7 +38,6 @@ void @task@::await_suspend(std::coroutine_handle<> parent) {
 
 @result@ sync_wait(@task@ root) {
     if (!root.frame_) throw std::logic_error("async wait requires a valid task");
-    event_loop loop;
-    loop.run(root.frame_);
+    detail::run_until_complete(root.frame_);
     return root.await_resume();
 }
