@@ -1458,17 +1458,20 @@ final class Preparation
 				$owner->prepare_binary($syntax);
 				return;
 			}
-			$box = $left instanceof boxed_type_definition ? $left : $right;
-			if ($box instanceof boxed_type_definition) {
-				$box->prepare_binary($syntax);
-				return;
-			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
 				$carrier = $left === type_null::instance() ? $right : ($right === type_null::instance() ? $left : null);
 				if ($carrier instanceof carrier_type_definition && $carrier->accepts_empty()) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
+				if ($syntax->source()->flavor === flavor::python && $left !== type_null::instance()) {
+					throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Python None test requires a nullable value, shared handle or None');
+				}
+			}
+			$box = $left instanceof boxed_type_definition ? $left : $right;
+			if ($box instanceof boxed_type_definition) {
+				$box->prepare_binary($syntax);
+				return;
 			}
 			if ($left instanceof carrier_type_definition) {
 				$left->require_extraction($syntax->left, conversion_context::assignment);

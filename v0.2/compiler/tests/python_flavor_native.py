@@ -7,6 +7,7 @@ from pathlib import Path
 from app_namespace_native import artifacts, invoke, service
 from exceptions_native import fresh_build, native
 from extends_native import ROOT, runtime, source_edit
+from interfaces_native import forms as interface_forms
 from inline_adapters_native import incremental_native_build
 from parent_methods_native import syntax as ancestor_syntax, write_app
 from virtual_methods_native import forms
@@ -770,6 +771,95 @@ def division(work, flavor, library):
         native(target, work/f'division-error-run-{index}', (1, output, error + b'\n'), library)
 
 
+def none_identity(work, flavor, library):
+    syntax, evaluate, _, _, interface, implementation = interface_forms(flavor)
+    fn = syntax['function']
+    caller = """empty: nullable<int> = None
+zero: nullable<int> = 0
+flag: nullable<bool> = False
+text: nullable<string> = ""
+if empty is not None or zero is None or flag is None or text is None:
+    return 1
+if not None is None or None is not None:
+    return 2
+if nothing() is not None or missing() is not None or live() is None:
+    return 3
+if absentView() is not None or view() is None:
+    return 4
+if absentOwner() is not None or owner() is None:
+    return 5
+if findKind("missing") is not None or findKind("") is None:
+    return 6
+return 8 if probe() is None else 9
+"""
+    app, bundle = work/'none', work/'none-bundle'
+    write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 7'})
+    records = interface() + implementation('Node', evaluate('override', '1', default='1'))
+    records += syntax['record']('Payload', '')
+    records += fn('nothing', 'null', [], 'echo "N"; return null;')
+    records += fn('missing', '?Node', [], 'echo "M"; return null;')
+    records += fn('live', 'Node', [], 'echo "L"; return new Node();')
+    records += fn('absentView', '?Readable', [], 'echo "A"; return null;')
+    records += fn('view', 'Readable', [], 'echo "V"; return new Node();')
+    records += fn('absentOwner', 'shared<Payload>', [], 'echo "E"; return null;')
+    records += fn('owner', 'shared<Payload>', [], 'echo "O"; return new Payload();')
+    case = 'case Empty = "";' if flavor == 'php' else 'Empty = ""'
+    records += 'enum Kind:string {' + case + '}'
+    separator = '.' if flavor == 'js' else '::'
+    records += fn('findKind', 'nullable<Kind>', [('text', 'string')],
+                  f'echo "K"; return enum_try_from_value(Kind{separator}class, {syntax["v"]}text);')
+    source_edit(app/f'owners.{flavor}', records)
+    peer = app/f'probe.{flavor}'
+    empty = fn('probe', 'nullable<int>', [], 'echo "P"; return null;')
+    present = empty.replace('return null;', 'return 0;')
+    source_edit(peer, empty)
+    resident = service(app, bundle)
+    try:
+        initial = invoke(resident)
+        assert 'error' not in initial, initial
+        native(bundle, work/'none-empty', (8, b'NMLAVEOKKP', b''), library)
+        source_edit(peer, present)
+        changed = invoke(resident)
+        assert 'error' not in changed and [Path(p).name for p in changed['emitted_sources']] == [peer.name], changed
+        native(bundle, work/'none-present', (9, b'NMLAVEOKKP', b''), library)
+
+        previous = artifacts(bundle)
+        optional = fn('probe', '?Node', [], 'echo "P"; return null;')
+        for stage, provider, status in [('handle', optional, 8), ('nullable', present, 9)]:
+            source_edit(peer, provider)
+            changed = invoke(resident)
+            assert 'error' not in changed and changed['preparation']['reused'], changed
+            assert {Path(p).name for p in changed['emitted_sources']} == {peer.name, 'main.py'}, changed
+            fresh = work/f'none-fresh-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh)
+            native(bundle, work/f'none-{stage}', (status, b'NMLAVEOKKP', b''), library)
+        assert artifacts(bundle) == previous
+
+        for stage, diagnostic in [('result', 'Python None test'), ('deleted', 'Unknown function: probe')]:
+            manifest = (bundle/'manifest.json').read_bytes()
+            if stage == 'deleted':
+                peer.unlink()
+            else:
+                source_edit(peer, present.replace('nullable<int>', 'result<int>'))
+            failed = invoke(resident)
+            assert diagnostic in failed.get('error', ''), failed
+            assert failed['error'] == fresh_build(app, work/f'none-invalid-{stage}').get('error')
+            assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
+
+            source_edit(peer, present)
+            restored = invoke(resident)
+            assert 'error' not in restored and restored['preparation']['reused'], restored
+            assert {Path(p).name for p in restored['emitted_sources']} == {peer.name, 'main.py'}, restored
+            fresh = work/f'none-restored-{stage}'
+            assert 'error' not in fresh_build(app, fresh)
+            assert artifacts(bundle) == artifacts(fresh) == previous
+            native(bundle, work/f'none-recovered-{stage}', (9, b'NMLAVEOKKP', b''), library)
+    finally:
+        resident.stdin.close()
+        assert resident.wait() == 0
+
+
 def integer_bitwise(work, flavor, library):
     syntax, _, _ = forms(flavor)
     function = syntax['function']
@@ -1198,6 +1288,7 @@ def prove(work, library):
         compatible_element_edit(case, flavor, library)
         key_traversal(case, flavor, library)
         typed_collections(case, flavor, library)
+        none_identity(case, flavor, library)
         integer_bitwise(case, flavor, library)
         division(case, flavor, library)
         records_and_exceptions(case, flavor, library)

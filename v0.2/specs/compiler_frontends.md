@@ -49,6 +49,8 @@ literal keys. Typed hash writes insert or replace. Boolean operators require
 bool operands. Local scopes follow Simple C++ blocks, and every new ordinary
 local needs a type and initializer.
 
+Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. General identity tests and interpreting result errors as absence are outside this contract.
+
 Python integer scalars support unary `~`, binary `&`, `^` and `|`, and corresponding compound assignments on existing locals and parameters. Bitwise operations bind more tightly than comparisons. Narrow destinations use the shared checked write-back rules.
 
 Python binary / yields float64 for supported int64 and float64 operands.

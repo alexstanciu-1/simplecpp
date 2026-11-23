@@ -82,6 +82,14 @@ check($logic->operator === binary_operator::logical_or && $logic->left instanceo
 	&& $bits->right->right->right->operator === binary_operator::add
 	&& $bits->right->right->right->left->source_text() === '~4', 'Python bitwise precedence on the shared tree');
 
+$identity = $frontend->parse(new source_file('presence.py',
+	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
+check($identity->operator === binary_operator::logical_or && $identity->left instanceof ast_not_expression
+	&& $identity->left->operand->operator === binary_operator::not_identical
+	&& $identity->left->operand->source_text() === 'value is not None'
+	&& $identity->right->operator === binary_operator::identical && $identity->right->right->word === 'null',
+	'Python identity uses the shared strict comparison at comparison precedence');
+
 $division = "fraction: float = 7 / 2 # keep the newline\nfloor: int = 1 + 20 // 3 % 2 * 4\nmixed: float = 7 / 2.0\nreturn floor";
 $source = new source_file('division.py', $division, flavor::python);
 $file = $frontend->parse($source);
@@ -278,6 +286,13 @@ foreach ([
 	["value: int = 1\nvalue += True\nreturn 8", 'Python compound operand requires a numeric scalar'],
 	["def fold(x: dynamic) -> int:\n    return x | 3\nreturn 0", 'Unsupported binary'],
 	["def fold(x: mixed) -> int:\n    return 1 & x\nreturn 0", 'Unsupported binary'],
+	["return 1 is None", 'Python None test'],
+	["return None is False", 'literal None'],
+	["return None is None + 1", 'literal None'],
+	["return None is None is None", 'chained comparisons'],
+	["def f(x: mixed) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
+	["def f(x: result_or_bool<int>) -> bool:\n    return x is not None\nreturn 0", 'Python None test'],
+	["def f(x: result_or_false<int>) -> bool:\n    return x is None\nreturn 0", 'Python None test'],
 	["return ~False", 'Unsupported unary'],
 	["return 1 ^ 2.0", 'Unsupported binary'],
 	["return True | False", 'Unsupported binary'],

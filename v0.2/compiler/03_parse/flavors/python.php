@@ -41,7 +41,7 @@ final class Python_Grammar implements statement_grammar
 	{
 		return match ($operator) {
 			binary_operator::equal, binary_operator::not_equal, binary_operator::less, binary_operator::less_equal,
-			binary_operator::greater, binary_operator::greater_equal => self::COMPARISON_PRECEDENCE,
+			binary_operator::greater, binary_operator::greater_equal, binary_operator::identical, binary_operator::not_identical => self::COMPARISON_PRECEDENCE,
 			binary_operator::bit_or => self::COMPARISON_PRECEDENCE + 1,
 			binary_operator::bit_xor => self::COMPARISON_PRECEDENCE + 2,
 			binary_operator::bit_and => self::COMPARISON_PRECEDENCE + 3,

@@ -1094,6 +1094,7 @@ final class Parser
 			}
 			$operator = match ($kind) {
 				token_kind::keyword => match (true) {
+					$python && $this->cursor->keyword('is') => binary_operator::identical,
 					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
 					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
 					$this->cursor->keyword('xor') => binary_operator::logical_xor,
@@ -1138,12 +1139,20 @@ final class Parser
 			}
 			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
+			$python_identity = $python && $operator === binary_operator::identical;
+			if ($python_identity && $this->cursor->keyword('not')) {
+				$this->cursor->take_keyword('not');
+				$operator = binary_operator::not_identical;
+			}
 			if ($shift === '<<' || $shift === '>>') {
 				$this->cursor->take($kind, 'shift operator');
 			}
 			$right = $operator === binary_operator::coalesce && $this->cursor->keyword('throw')
 				? $this->throw_expression()
 				: $this->value($precedence + (($operator === binary_operator::power || $operator === binary_operator::coalesce) ? 0 : 1));
+			if ($python_identity && !($right instanceof ast_keyword_expression && $right->word === 'null')) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None on the right');
+			}
 			$left = new ast_binary_expression($left, $operator, $right);
 		}
 		return $left;
@@ -1694,7 +1703,7 @@ final class Parser
 		$start = $this->cursor->position();
 		$word = $this->cursor->at_end() ? '' : $this->cursor->tokens->text_at($start);
 		if ($this->cursor->tokens->source->flavor === flavor::python) {
-			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'true', 'false', 'null' => '', default => $word };
+			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'None' => 'null', 'true', 'false', 'null' => '', default => $word };
 		}
 		if (type_registry::literal($word) !== null) {
 			$kind = $this->cursor->tokens->tokens[$start]->kind;
