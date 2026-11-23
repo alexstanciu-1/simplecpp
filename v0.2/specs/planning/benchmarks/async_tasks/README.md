@@ -7,9 +7,8 @@ method definitions in one application translation unit. Methods defined inside t
 class, including return_value, remain inline. No helpers are added to the runtime archive.
 
 The prototype splits the compiler's existing emitted fragments so that the method bodies
-under comparison are identical. It covers results declared by runtime headers. Application
-records, enums and collections containing them need their complete declarations available
-to the implementation unit before this approach can become a general emitter feature.
+under comparison are identical. The 23-result fixture uses runtime headers. The application-payload proof below supplies
+complete types using the existing record and collection headers.
 
 Run with the v0.2 Clang runtime built:
 
@@ -36,3 +35,30 @@ WSL medians in milliseconds, inline → out of line:
 The grouped methods compile concurrently with the producers. A change to the set of
 demanded result types invalidates that grouped object. These runs measure build latency;
 they do not measure runtime await throughput or the cost on a one-task application.
+
+
+## Application-defined payloads
+
+Run `XDEBUG_MODE=off python3 -B application.py /tmp/scpp-task-application-new` with a new output directory.
+The methods unit includes the emitted Point layout and, when demanded, the concrete hash declaration after it.
+The proof supplies these dependencies for this fixture. Compiler integration would obtain them from concrete type publication.
+
+Two cross-file producers per result share one definition of each outlined method. The incremental sequence demands
+both tasks, adds a field to Point, deletes and restores Point, keeps each task alone, removes both, then restores both.
+Ninja must recompile the unchanged methods source on the layout edit. Each successful generation is compared with
+fresh artifacts and both executables run. The proof checks linked symbols and dependencies as well as hash copy independence.
+
+Warm selective PCH, Clang 18, -O2/g0, Ninja -j4 and mold. Five timed fresh builds per row and variant after warm-up.
+Milliseconds, inline → outlined. The methods column shows the extra unit's frontend / LLVM medians.
+PHP compiler time is a single incremental snapshot shared by both native variants.
+
+| Flavor | Result | PHP compiler | Parent frontend | Parent LLVM | Methods FE / LLVM | Link | Native wall | Wall range inline / outlined |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PHP | point | 4.2 | 38 → 30 | 34 → 20 | 30 / 23 | 53 → 54 | 332 → 300 | 284–366 / 273–392 |
+| PHP | hash | 5.2 | 51 → 52 | 56 → 39 | 64 / 27 | 51 → 54 | 390 → 397 | 371–480 / 372–573 |
+| CPP | point | 3.5 | 33 → 31 | 34 → 18 | 33 / 21 | 52 → 51 | 289 → 276 | 280–352 / 264–374 |
+| CPP | hash | 5.1 | 56 → 62 | 55 → 44 | 52 / 21 | 57 → 56 | 400 → 407 | 369–482 / 362–450 |
+| JS | point | 3.8 | 56 → 42 | 58 → 24 | 43 / 24 | 57 → 64 | 414 → 419 | 317–520 / 315–685 |
+| JS | hash | 5.3 | 66 → 70 | 63 → 50 | 68 / 26 | 57 → 54 | 459 → 494 | 362–520 / 418–576 |
+
+Outlining reduced parent LLVM time in every row. The wall-time ranges overlap in each pair; the single-result fixtures provide no consistent wall-time advantage. The raw samples include child and blocking-caller traces.

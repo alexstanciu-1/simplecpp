@@ -1,8 +1,8 @@
 """Compare consumer-inline task methods with one application-owned implementation unit.
 
 Run from any directory with python3 run.py OUTPUT. OUTPUT must be a new directory.
-Uses the actual compiler snapshots. The out-of-line experiment is limited to tasks
-whose result declarations are supplied by runtime headers.
+Uses the actual compiler snapshots. Application payload experiments can supply the published
+headers needed to complete the result types in the grouped methods unit.
 """
 from pathlib import Path
 import hashlib
@@ -22,7 +22,7 @@ FRAME = '#include <scpp/async/frame.hpp>'
 METHODS = 'async_methods.cpp'
 
 
-def prototype(files):
+def prototype(files, payload_headers=()):
     """Move the existing recipe's method fragment verbatim except for inline linkage."""
     output = dict(files)
     methods = []
@@ -34,7 +34,8 @@ def prototype(files):
         output[path] = declaration
         methods.append(f'#include "{path}"\n' + re.sub(r'^inline ', '', body, flags=re.MULTILINE))
     if methods:
-        output[METHODS] = '#include <coroutine>\n' + FRAME + '\n' + '\n'.join(methods)
+        includes = ''.join(f'#include "{path}"\n' for path in payload_headers)
+        output[METHODS] = includes + '#include <coroutine>\n' + FRAME + '\n' + '\n'.join(methods)
     return output, len(methods)
 
 
@@ -98,11 +99,11 @@ def transitions(directory, fixtures, flavor):
             assert (src / METHODS).read_bytes() == old_method
 
 
-def measure(work, fixture, variant, cache):
+def measure(work, fixture, variant, cache, expected_count=23, payload_headers=()):
     files = fixture['files']
     if variant == 'outline':
-        files, count = prototype(files)
-        assert count == 23
+        files, count = prototype(files, payload_headers)
+        assert count == expected_count
     units = materialize(work / 'src', files)
     prods = async_producers(units)
     assert len(prods) == (3 if variant == 'outline' else 2)

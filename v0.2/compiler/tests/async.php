@@ -380,6 +380,10 @@ foreach (flavor::cases() as $flavor) {
 			. $decl('Point', 'a', $v('original') . '["key"]') . $decl('Point', 'b', $v('copy') . '["key"]')
 			. 'echo ' . $v('a') . $access . 'x,":",' . $v('b') . $access . 'x;return 8;';
 		$edited_hash = str_replace([$point, 'x=7;'], [str_replace('{', '{' . $z, $point), 'x=8;'], $hash_leaf);
+		$point_leaf_only = 'async ' . $typed_fn('leafPoint', 'Point') . '{await async_sleep_ms(1);return buildPoint();}';
+		$point_relay_only = 'async ' . $typed_fn('readPoint', 'Point') . '{return await leafPoint();}';
+		$point_read = $decl('Point', 'valueResult', 'await readPoint()') . 'echo ' . $v('valueResult') . $access . 'x;';
+		$combined_relay = $point_relay_only . $hash_parent;
 		$group_child = $group_parent = $group_entry = $group_output = '';
 		// Each public result crosses both a suspending call and a blocking call.
 		$cases = [
@@ -499,6 +503,14 @@ foreach (flavor::cases() as $flavor) {
 			['', $byte_child, str_replace('relaySample()', 'sample()', $byte_entry), null, '17', 3],
 			['', '', 'return 8;', null, '', 2],
 			[$byte_parent, $byte_child, $byte_entry, null, '17', 3],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 3],
+			[$combined_relay, $edited_hash . $point_leaf_only, $point_read . $hash_entry, null, '88:42', 3],
+			[$combined_relay, str_replace($point, '', $hash_leaf) . $point_leaf_only, $point_read . $hash_entry, 'Unknown', '', 0],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 3],
+			[$hash_parent, $hash_leaf, $hash_entry, null, '7:42', 3],
+			[$point_relay_only, $common . $point_leaf_only, $point_read . 'return 8;', null, '7', 3],
+			['', '', 'return 8;', null, '', 3],
+			[$combined_relay, $hash_leaf . $point_leaf_only, $point_read . $hash_entry, null, '77:42', 3],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {
@@ -533,7 +545,7 @@ foreach (flavor::cases() as $flavor) {
 			}
 			$tasks = array_filter($files, static fn(string $text): bool => str_contains($text, '#include <scpp/async/frame.hpp>'));
 			$expected = match ($body) {
-				$group_parent => 23, $three_parent => 3, $enum_parent . $second_parent, $both => 2,
+				$group_parent => 23, $three_parent => 3, $combined_relay => 2, $point_relay_only => 1, $enum_parent . $second_parent, $both => 2,
 				$bool_parent, $weak_parent, $hash_parent, $byte_parent, $float_parent, $enum_parent, $point_parent, $vector_relay => 1,
 				'' => $leaf === '' ? 0 : 1, default => null,
 			};
