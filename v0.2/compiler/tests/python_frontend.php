@@ -101,6 +101,12 @@ check($membership->operator === binary_operator::logical_and && $membership->lef
 	&& $test->operator === binary_operator::key_not_in && $test->left->operator === binary_operator::bit_or
 	&& $test->source_text() === 'a | b not in mapping', 'Membership shares comparison precedence and preserves the source span');
 
+$chain = $frontend->parse(new source_file('links.py', 'return a not in b in c', flavor::python))
+	->main()->body()->statements[0]->value;
+[$first, $second] = $chain->links;
+check($first->operator === binary_operator::key_not_in && $second->operator === binary_operator::key_in
+	&& $first->right === $second->left, 'Membership can start and continue a comparison chain');
+
 $identity = $frontend->parse(new source_file('presence.py',
 	'return not value is not None or None is None', flavor::python))->main()->body()->statements[0]->value;
 check($identity->operator === binary_operator::logical_or && $identity->left instanceof ast_not_expression
@@ -129,6 +135,21 @@ foreach (['#include <scpp/arithmetic.hpp>', 'scpp::int64_true_divide(', 'scpp::f
 	check(str_contains($cpp, $expected), 'Missing generated division binding: ' . $expected);
 }
 foreach ([flavor::cpp, flavor::php, flavor::js] as $peer) {
+	$ordinary = $frontend->parse(new source_file('ordinary', 'return 1 < 2 < 3;', $peer))
+		->main()->body()->statements[0]->value;
+	check($ordinary instanceof ast_binary_expression && $ordinary->left instanceof ast_binary_expression
+		&& $ordinary->operator === binary_operator::less && $ordinary->left->operator === binary_operator::less,
+		$peer->value . ' retains left-associated binary comparisons');
+	foreach (['in', 'not in'] as $operator) {
+		$source = new source_file('ordinary', "return 1 < 2 $operator 3;", $peer);
+		try {
+			$frontend->parse($source);
+			throw new RuntimeException($peer->value . ' accepted Python membership');
+		} catch (diagnostic $failure) {
+			check($failure->offset === 13, $failure->getMessage());
+		}
+	}
+
 	$tokens = $frontend->scan(new source_file('ordinary', "return 8 / 2 % 3; // 1 // 2\n", $peer));
 	$operators = array_filter($tokens->tokens, static fn($token) => in_array($token->kind,
 		[token_kind::slash, token_kind::percent, token_kind::double_slash], true));

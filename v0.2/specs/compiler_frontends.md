@@ -60,10 +60,10 @@ Integer // rounds down and integer % uses the divisor's sign. These spellings
 select separate operations from the cpp/php/js integer division and remainder.
 See the [arithmetic contract](planning/python_flavor.md#python-division-floor-division-and-modulo).
 
-Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
+Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, and `in` and `not in` for exact keys of typed hashes. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
 
 Deferred Python spellings and semantics include floating floor division and
-modulo, operand-valued boolean operators, chains containing identity or membership tests, type inference
+modulo, operand-valued boolean operators, chains containing identity tests, type inference
 on first assignment, general iteration and range, standalone items views and general destructuring,
 comprehensions, generator syntax, import and print, general decorators, dynamic
 attributes, Python-authored interfaces, and general super proxies. Package interoperability and CPython execution are outside the

@@ -1111,14 +1111,11 @@ final class Parser
 			}
 			$operator = match ($kind) {
 				token_kind::keyword => match (true) {
-					$python && $this->cursor->keyword('in') => binary_operator::key_in,
-					$python && $this->cursor->keyword('not') && $this->cursor->next_is(token_kind::keyword)
-						&& $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'in' => binary_operator::key_not_in,
 					$python && $this->cursor->keyword('is') => binary_operator::identical,
 					$python && $this->cursor->keyword('and') => binary_operator::logical_and,
 					$python && $this->cursor->keyword('or') => binary_operator::logical_or,
 					$this->cursor->keyword('xor') => binary_operator::logical_xor,
-					default => null,
+					default => $python ? $this->python_membership_operator() : null,
 				},
 				token_kind::coalesce => binary_operator::coalesce,
 				token_kind::logical_and => binary_operator::logical_and,
@@ -1149,7 +1146,7 @@ final class Parser
 			if ($precedence < $minimum_precedence) break;
 			$comparison = $python && $precedence === Python_Grammar::COMPARISON_PRECEDENCE;
 			if ($comparison && $comparison_seen) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons with identity or membership are deferred');
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python chained comparisons with identity are deferred');
 			}
 			$comparison_seen = $comparison_seen || $comparison;
 			$this->cursor->take($kind, 'binary operator');
@@ -1174,13 +1171,14 @@ final class Parser
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$right->start]->offset, 'Python identity test requires literal None or an indexed comparison with undefined');
 			}
 			$left = $key_test ? new ast_key_comparison($left, $operator, $right) : new ast_binary_expression($left, $operator, $right);
-			if ($comparison && self::comparison_operator($kind) !== null) {
+			if ($comparison && (self::comparison_operator($kind) !== null || $operator->key_membership())) {
 				$links = null;
 				while (!$this->cursor->at_end()) {
 					$next = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
-					$continuation = self::comparison_operator($next);
+					$continuation = $next === token_kind::keyword ? $this->python_membership_operator() : self::comparison_operator($next);
 					if ($continuation === null) break;
 					$this->cursor->take($next, 'comparison operator');
+					if ($continuation === binary_operator::key_not_in) $this->cursor->take_keyword('in');
 					$middle = $right;
 					$right = $this->value($precedence + 1);
 					$links ??= [$left];
@@ -1190,6 +1188,14 @@ final class Parser
 			}
 		}
 		return $left;
+	}
+
+	private function python_membership_operator(): ?binary_operator
+	{
+		if ($this->cursor->keyword('in')) return binary_operator::key_in;
+		if ($this->cursor->keyword('not') && $this->cursor->next_is(token_kind::keyword)
+			&& $this->cursor->tokens->text_at($this->cursor->position() + 1) === 'in') return binary_operator::key_not_in;
+		return null;
 	}
 
 	private static function comparison_operator(token_kind $kind): ?binary_operator

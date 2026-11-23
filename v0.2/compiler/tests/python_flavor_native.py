@@ -844,6 +844,42 @@ return 8 if key() + 1 not in mapping() else 3
             assert artifacts(bundle) == artifacts(fresh) == previous
             native(bundle, work/f'membership-recovered-{stage}', (2, b'KH', b''), library)
 
+        source_edit(app/'main.py', """local: hash<int,int> = {2: 0}
+if 3 < key() in mapping():
+    return 1
+if 0 < key() not in mapping():
+    return 2
+if 0 < key() + 1 in mapping():
+    return 3
+selected: int = 2
+if 0 < selected not in replaceKey(selected) or selected != 7:
+    return 6
+words: hash<int,string> = {"x": 0}
+if not ("a" < "x" in words):
+    return 7
+if 0 < key() + 1 not in mapping():
+    return 8 if 0 < key() in local else 4
+return 5""")
+        source_edit(peer, valid)
+        chain = invoke(resident)
+        assert 'error' not in chain, chain
+        emitted = (bundle/main_unit).read_text()
+        assert emitted.count('.has(') == 7, emitted
+        assert 'const auto membership_key' not in emitted, emitted
+        native(bundle, work/'membership-chain', (8, b'KKHKHHKHK', b''), library)
+        chain_artifacts = artifacts(bundle)
+        source_edit(peer, fn('key', 'int', [], 'echo "K"; return 2;') + hash_provider(flavor, 'string'))
+        failed = invoke(resident)
+        assert 'Membership requires key type string' in failed.get('error', ''), failed
+        assert fresh_build(app, work/'chain-invalid').get('error') == failed['error']
+        peer.unlink()
+        assert 'Unknown function: key' in invoke(resident).get('error', '')
+        source_edit(peer, valid)
+        assert 'error' not in invoke(resident)
+        fresh = work/'chain-recovered'
+        assert 'error' not in fresh_build(app, fresh)
+        assert artifacts(fresh) == artifacts(bundle) == chain_artifacts
+
         source_edit(app/'main.py', 'return 8 if key() // 0 in mapping() else 2')
         checked = invoke(resident)
         assert 'error' not in checked, checked

@@ -103,6 +103,24 @@ final class Cpp_Emitter
 		}
 	}
 
+	/**
+	 * Emit the published presence call. Chain lowering has already evaluated the key.
+	 * @param array<string,bool> $required_headers
+	 */
+	private function membership_test(ast_binary_expression $value, string $left, string $right, array &$required_headers /** array<string,bool> */, bool $key_captured): string
+	{
+		/** @var key_presence_type $type */
+		$type = $value->execution_type();
+		$binding = $type->presence_function();
+		$required_headers[$binding->header] = true;
+		$key = $binding->parameters[1]->lower_cpp_exact_argument($value->left, value_conversion::identity, $left);
+		$probe = ($value->operator === binary_operator::key_not_in ? '!' : '') . '(' . $right . ').' . $binding->symbol;
+		// A plain local receiver has stable storage. Otherwise capture the key before evaluating the mapping.
+		if ($key_captured || ($value->right instanceof ast_name_expression && $value->right->local_binding() !== null)
+			|| $value->left instanceof ast_integer_expression) return $probe . '(' . $key . ')';
+		return '([&]() { const auto membership_key = ' . $key . '; return ' . $probe . '(membership_key); }())';
+	}
+
 	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
 	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
 		array &$declarations, array &$required_headers): string
@@ -1955,10 +1973,17 @@ CPP;
 			$last = array_key_last($value->links);
 			foreach ($value->links as $index => $link) {
 				$left = $middle;
-				$middle = $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
+				$membership = $link->operator->key_membership();
+				$middle = $membership && $index === $last
+					? $this->value($link->right, $global_references, $declarations, $required_headers)
+					: $this->chain_operand($link->right, $index + 1, $steps, $global_references, $declarations, $required_headers);
 				$right = $middle;
-				$this->binary_operands($link, $left, $right, $required_headers);
-				$test = $link->execution_type()->lower_prepared_binary($link, $left, $right);
+				if ($membership) {
+					$test = $this->membership_test($link, $left, $right, $required_headers, true);
+				} else {
+					$this->binary_operands($link, $left, $right, $required_headers);
+					$test = $link->execution_type()->lower_prepared_binary($link, $left, $right);
+				}
 				$steps .= $index === $last ? 'return ' . $test . ';' : 'if (!(' . $test . ')) return false; ';
 			}
 			return '([&]() -> bool { ' . $steps . ' }())';
@@ -2007,15 +2032,7 @@ CPP;
 			$left = $this->value($value->left, $global_references, $declarations, $required_headers, $left_safe);
 			$right = $this->value($value->right, $global_references, $declarations, $required_headers, $right_safe);
 			if ($value->operator->key_membership()) {
-				/** @var key_presence_type $type */
-				$binding = $type->presence_function();
-				$required_headers[$binding->header] = true;
-				$key = $binding->parameters[1]->lower_cpp_exact_argument($value->left, value_conversion::identity, $left);
-				$probe = ($value->operator === binary_operator::key_not_in ? '!' : '') . '(' . $right . ').' . $binding->symbol;
-				// A plain local receiver has stable storage. Otherwise capture the key before evaluating the mapping.
-				if (($value->right instanceof ast_name_expression && $value->right->local_binding() !== null)
-					|| $value->left instanceof ast_integer_expression) return $probe . '(' . $key . ')';
-				return '([&]() { const auto membership_key = ' . $key . '; return ' . $probe . '(membership_key); }())';
+				return $this->membership_test($value, $left, $right, $required_headers, false);
 			}
 			$this->binary_operands($value, $left, $right, $required_headers);
 			$same_spelling = $left === $right;
