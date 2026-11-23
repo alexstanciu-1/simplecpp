@@ -472,7 +472,9 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->prepared = false;
 		$this->queue_change();
 		$this->byte_view_length = null;
-		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
+		$this->name_lookups = 0;
+		$this->expression_visits = 0;
+		$this->statement_visits = 0;
 	}
 
 	/** Publish body completion and the target context only after all statement facts settle. */

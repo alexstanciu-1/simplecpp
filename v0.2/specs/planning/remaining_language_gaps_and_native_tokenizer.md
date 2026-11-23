@@ -41,7 +41,7 @@ The [non-async closure pass](non_async_language_closure.md) reconciles all 177 h
 
 | Groups | Current disposition and remaining work |
 | --- | --- |
-| G01 | Prefix and postfix updates on initialized int64 locals have bounded RHS and initializer support. Settle chained assignment and discarded arithmetic expressions separately. For each, decide whether bootstrap needs the expression or can use ordinary statements. |
+| G01 | Prefix and postfix updates on initialized int64 locals have bounded RHS and initializer support. Ordinary local and field chains use separate writes. Discarded results use standalone calls or explicit assignments for checked expressions. |
 | G02–G03 | Scalar casts, interpolation, byte indexing, presence, emptiness and coalescing have evidence. Word-form and/or, short ternary and nullsafe access were deferred. Reconcile the grouped xor rule against its exact donor spelling. |
 | G04–G07 | Explicit annotation migrations, typed collections, value/keyed iteration and bounded references have evidence. Keep writable iteration, ownership annotations and interface reference returns deferred. Map remaining historical array, reference and annotation rows to their exact restrictions or migrations. |
 | G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Captures, closure defaults and separately declared callable locals remain deferred. The historical array-callable form has a generic collection diagnostic. |
@@ -120,10 +120,10 @@ Use one initialized local to compare the intended results and stores. These exam
 | Postfix | `$old = $index++;` | Existing bounded form. The result is 10, then the local holds 11. |
 | Prefix | `$new = ++$index;` | Implemented for an initialized int64 local in an assignment RHS or initializer. The result is 11. |
 | Aliasing the destination | `$index = $index++;` | Existing bounded form. The update runs once, then the outer assignment writes 10 back. |
-| Chained assignment | `$a = $b = 1;` | Decide the expression result, write order, and where conversions and failures occur. |
-| Discarded expression | `$a + 1;` | Decide which expressions are admissible as statements and which checks or effects must run. |
+| Chained assignment | `$a = $b = 1;` | Split ordinary local and field writes right to left, evaluating an effectful RHS once. Revisit destinations with side effects when a caller needs them. |
+| Discarded expression | `$a + 1;` | Keep standalone calls for effects. Assign checked arithmetic to a local when its result is unused. Omit an expression only if it is pure and total. |
 
-Prefix updates landed in `5c8e7f6f7`. The remaining G01 decisions concern chained assignments and discarded expressions.
+Prefix updates landed in `5c8e7f6f7`. All G01 historical records now have a bootstrap disposition.
 
 ## G02 verification
 

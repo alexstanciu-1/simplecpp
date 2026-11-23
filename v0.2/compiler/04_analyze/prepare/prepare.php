@@ -132,7 +132,8 @@ final class Preparation
 	{
 		$this->local_frames = [[]];
 		$this->array_bytes = 0;
-		$this->in_lambda = $this->has_lambda_local = false;
+		$this->has_lambda_local = false;
+		$this->in_lambda = false;
 		$this->guards = [];
 		$this->unknown_initializers = false;
 		$this->latest_writes = [];
@@ -151,7 +152,8 @@ final class Preparation
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
 		$this->loop = null;
-		$this->outward = $this->switch_break_states = [];
+		$this->switch_break_states = [];
+		$this->outward = [];
 		$completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
