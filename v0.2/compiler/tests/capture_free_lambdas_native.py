@@ -76,6 +76,7 @@ def prove_block(work):
         ('helper', helper, expected),
         ('worker', worker.replace('return "!";', ''), 'Non-void function requires a value return'),
         ('worker', protected, b'3:9.!7:9.!'),
+        ('worker', worker.replace('return helper();', 'try { return helper(); } finally { echo "F"; }'), b'3:9!F7:9!'),
     ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
 
 

@@ -924,7 +924,8 @@ CPP;
 			if ($statement instanceof ast_base_statement) continue;
 			if ($statement instanceof ast_local_alias) {
 				if ($statement->initializer instanceof ast_call_expression) {
-					$lines[] = "\t" . $this->value($statement->initializer, $global_references, $declarations, $required_headers, borrow_result: true) . ';';
+					$call = $this->value($statement->initializer, $global_references, $declarations, $required_headers, borrow_result: true);
+					$lines[] = $this->async_statement($call . ';');
 				}
 				continue;
 			}
@@ -2991,19 +2992,23 @@ CPP;
 			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
 		}
 		$header = '[](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
-		if ($lambda->body instanceof ast_block) {
-			$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels];
-			[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = [null, null, null, []];
-			try {
+		// Both closure forms lower in a synchronous context, independent of the enclosing operand.
+		$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
+			$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions];
+		[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
+			$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions] = [null, null, null, [], false, [], 0, 0];
+		try {
+			if ($lambda->body instanceof ast_block) {
 				$lines = $this->statements($lambda->body, $declarations, $globals, $headers, $lambda);
 				return $header . " {\n" . implode("\n", $lines) . "\n}";
-			} finally {
-				[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels] = $outer;
 			}
+			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+			$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
+			return $header . ' { return ' . $result . '; }';
+		} finally {
+			[$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
+				$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions] = $outer;
 		}
-		$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
-		$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
-		return $header . ' { return ' . $result . '; }';
 	}
 
 	/** Calls and definitions use complete record types. @param (ast_declaration_interface|record_handle_definition)[] $declarations */

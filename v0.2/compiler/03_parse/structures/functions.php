@@ -137,6 +137,7 @@ interface statement_return_target
 	public bool $returns_reference { get; }
 	public ?int $reference_return_origin { get; }
 	public bool $is_implicit_entry { get; }
+	public bool $is_async { get; }
 	public function return_type_def(): type_definition;
 }
 
@@ -159,6 +160,7 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 	public bool $returns_reference { get => false; }
 	public ?int $reference_return_origin { get => null; }
 	public bool $is_implicit_entry { get => false; }
+	public bool $is_async { get => false; }
 
 	public function return_type_def(): type_definition
 	{
