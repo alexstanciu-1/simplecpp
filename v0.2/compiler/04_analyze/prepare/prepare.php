@@ -1701,7 +1701,8 @@ final class Preparation
 			$split = false;
 			$staged = null;
 			while ($context instanceof ast_expression) {
-				if ($staged !== null && ($context instanceof ast_call_expression || $context instanceof ast_binary_expression)) {
+				if ($staged !== null && ($context instanceof ast_call_expression || $context instanceof ast_binary_expression
+					|| $context instanceof ast_ternary_expression)) {
 					$this->async_nested[spl_object_id($staged)] = $staged;
 				}
 				if ($context instanceof ast_binary_expression && $context->operator !== binary_operator::coalesce) {
@@ -1712,7 +1713,7 @@ final class Preparation
 					$this->async_calls[spl_object_id($context)] = $context;
 					$split = true;
 				} elseif ($context instanceof ast_ternary_expression && $split) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps inside ternary arms are deferred');
+					$this->async_nested[spl_object_id($context)] = $context;
 				} elseif (!($context instanceof ast_not_expression || $context instanceof ast_ternary_expression
 					|| $context instanceof ast_await_expression)) break;
 				$context = $context->parent;

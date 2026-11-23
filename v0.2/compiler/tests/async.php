@@ -538,8 +538,14 @@ foreach (flavor::cases() as $flavor) {
 		$throw_child = 'async ' . $signature('failLater') . '{await async_sleep_ms(1);echo "T";throw new Failure();}';
 		$unwind = $accept_owner . 'async ' . $signature('compute') . '{try {return finish(await temporaryOwner(),await failLater());}'
 			. $catch('Failure') . '{echo "C";return 7;}}';
-		rejects(fn() => $prepare($left_child . $right_child . $pair . 'async ' . $signature('branch')
-			. '{return true ? ' . $ordered_call . ' : 0;}return 8;'), 'ternary');
+		$ternary = $mark . $accept_owner . 'async ' . $signature('compute') . '{try {'
+			. $decl('int', 'selected', 'mark(await leftValue()) ? finish(await temporaryOwner(),await rightValue())'
+				. ' : finish(await temporaryOwner(),await failLater())')
+			. 'echo "X";return ' . $v('selected') . ';}' . $catch('Failure') . '{echo "C";return 7;}}';
+		$ternary_leaf = $failure . $guard_child . $throw_child . $left_child . $right_child;
+		rejects(fn() => $prepare($strings . 'async ' . $typed_fn('selectText', 'string')
+			. '{return true ? await textPart() ' . ($flavor === flavor::php ? '.' : '+')
+			. ' await textPart() : "fallback";}return 8;'), 'scoped result storage');
 		$later_tests = $pair . 'async ' . $signature('compute') . '{if (false) {return 1;}'
 			. 'else if (' . $ordered_call . ' == 24) {return 2;}'
 			. 'else if (' . $ordered_call . ' == 23) {return 3;}else {return 4;}}';
@@ -724,6 +730,10 @@ foreach (flavor::cases() as $flavor) {
 			[$for_update, $left_child, $eager_main, 'Unknown', '', 0],
 			[$for_update, str_replace('return 2;', 'return 0;', $left_child) . str_replace('return 3;', 'return 0;', $right_child), $eager_main, null, 'ABF0', 1],
 			[str_replace('<' . $ordered_call, '<3', $for_update), $left_child . $right_child, $eager_main, null, '0FABFA2FABFA4', 2],
+			[$ternary, $ternary_leaf, $eager_main, null, 'AMBFDX3', 3],
+			[$ternary, str_replace($throw_child, '', $ternary_leaf), $eager_main, 'Unknown', '', 0],
+			[$ternary, str_replace('return 2;', 'return 0;', $ternary_leaf), $eager_main, null, 'AMTDC7', 1],
+			[str_replace('await failLater()', 'await rightValue()', $ternary), str_replace('return 2;', 'return 0;', $ternary_leaf), $eager_main, null, 'AMBFDX3', 2],
 		];
 		foreach ($steps as $i => [$body,$leaf,$caller,$error,$stdout,$objects]) {
 			if (isset($steps[$i][6])) {

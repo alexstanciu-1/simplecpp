@@ -1828,8 +1828,21 @@ CPP;
 		}
 		if ($value instanceof ast_ternary_expression) {
 			$test = $this->condition($value->condition, $global_references, $declarations, $required_headers);
+			$true_start = count($this->async_steps);
 			$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
+			$false_start = count($this->async_steps);
 			$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
+			if (count($this->async_steps) !== $true_start) {
+				// Keep each arm's suspension and cleanup inside its selected branch.
+				$false_steps = array_splice($this->async_steps, $false_start);
+				$true_steps = array_splice($this->async_steps, $true_start);
+				$result = 'selection_' . $value->start . '_' . $value->end;
+				$this->async_steps[] = $value_type->cpp_type() . " $result;";
+				$true_steps[] = "$result = $yes;";
+				$false_steps[] = "$result = $no;";
+				$this->async_steps[] = "if ($test) { " . implode(' ', $true_steps) . ' } else { ' . implode(' ', $false_steps) . ' }';
+				return $result;
+			}
 			$selection = '(' . $test . ' ? ' . $yes . ' : ' . $no . ')';
 			// Two native lvalue arms can yield a reference. Publish an owned value at an untyped use site.
 			return !$typed_initializer && !$value_type->cpp_trivial_value()
