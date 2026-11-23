@@ -988,8 +988,11 @@ CPP;
 						. ($updates === [] ? '' : ' ' . implode(', ', $updates)) . ') {';
 				} else {
 					$condition = $this->condition($statement->condition, $global_references, $declarations, $required_headers);
-					if ($statement instanceof ast_while_statement && $this->async_steps !== []) {
-						$lines[] = "\twhile (true) {";
+					if ($this->async_steps !== []) {
+						// Native continue runs the update before re-entering the condition. Break bypasses both.
+						$lines[] = $post_test ? "\tfor (bool scpp_first = true; ; scpp_first = false) {" : "\twhile (true) {";
+						if ($post_test) $lines[] = "\t\tif (!scpp_first)";
+						$post_test = false;
 						$lines[] = "\t" . $this->async_statement("if (!($condition)) break;");
 					} else $lines[] = "\t" . ($post_test ? 'do' : 'while (' . $condition . ')') . ' {';
 				}

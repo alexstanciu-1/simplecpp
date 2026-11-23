@@ -1723,8 +1723,8 @@ final class Preparation
 				|| (($context instanceof ast_call_statement || $context instanceof ast_await_statement
 					|| ($context::class === ast_assignment_statement::class && $context->operator === null))
 					&& !($context->parent instanceof ast_for_statement))
-				|| $context instanceof ast_if_arm || $context instanceof ast_while_statement)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps require a statement, if condition or while condition');
+				|| $context instanceof ast_if_arm || $context instanceof ast_tested_loop)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Suspending operand steps require a statement, if condition or while/do-while condition');
 			}
 		}
 		$async_context = $this->owner->parent->is_async && ($context instanceof ast_if_arm || $context instanceof ast_loop_statement
