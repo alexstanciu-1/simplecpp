@@ -22,9 +22,14 @@ FRAME = '#include <scpp/async/frame.hpp>'
 METHODS = 'async_methods.cpp'
 
 
-def prototype(files, payload_headers=()):
+def prototype(files, publication=None):
     """Move the existing recipe's method fragment verbatim except for inline linkage."""
     output = dict(files)
+    payload_headers = []
+    if publication is not None:
+        payload_headers = publication['headers']
+        for path, text in publication['files'].items():
+            assert output.setdefault(path, text) == text, f'Conflicting published header: {path}'
     methods = []
     for path, text in sorted(files.items()):
         if not path.endswith('.hpp') or FRAME not in text:
@@ -99,10 +104,10 @@ def transitions(directory, fixtures, flavor):
             assert (src / METHODS).read_bytes() == old_method
 
 
-def measure(work, fixture, variant, cache, expected_count=23, payload_headers=()):
+def measure(work, fixture, variant, cache, expected_count=23, publication=None):
     files = fixture['files']
     if variant == 'outline':
-        files, count = prototype(files, payload_headers)
+        files, count = prototype(files, publication)
         assert count == expected_count
     units = materialize(work / 'src', files)
     prods = async_producers(units)

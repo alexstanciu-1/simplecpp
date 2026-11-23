@@ -40,15 +40,17 @@ they do not measure runtime await throughput or the cost on a one-task applicati
 ## Application-defined payloads
 
 Run `XDEBUG_MODE=off python3 -B application.py /tmp/scpp-task-application-new` with a new output directory.
-The methods unit includes the emitted Point layout and, when demanded, the concrete hash declaration after it.
-The proof supplies these dependencies for this fixture. Compiler integration would obtain them from concrete type publication.
+The fixture passes each distinct resolved async result to the concrete header publisher. For a record it returns the
+published record header. For a hash it returns the self-contained collection header, which includes the element
+declaration before the concrete specialization. The outlined methods unit consumes those paths directly.
+The fixture checks the incremental publisher's headers and files against a fresh session. Inline builds use the original bundle.
 
 Two cross-file producers per result share one definition of each outlined method. The incremental sequence demands
 both tasks, adds a field to Point, deletes and restores Point, keeps each task alone, removes both, then restores both.
 Ninja must recompile the unchanged methods source on the layout edit. Each successful generation is compared with
 fresh artifacts and both executables run. The proof checks linked symbols and dependencies as well as hash copy independence.
 
-Warm selective PCH, Clang 18, -O2/g0, Ninja -j4 and mold. Five timed fresh builds per row and variant after warm-up.
+Baseline from the original fixture-supplied headers: warm selective PCH, Clang 18, -O2/g0, Ninja -j4 and mold. Five timed fresh builds per row and variant after warm-up.
 Milliseconds, inline → outlined. The methods column shows the extra unit's frontend / LLVM medians.
 PHP compiler time is a single incremental snapshot shared by both native variants.
 

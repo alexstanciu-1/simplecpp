@@ -234,6 +234,13 @@ final class Cpp_Headers
 		return $path;
 	}
 
+	/** Publish a self-contained application value header for a separate implementation unit. */
+	public function publish_value_header(record_type_definition|application_collection_type $type, Cpp_Emitter $emitter, string $root): string
+	{
+		if ($type instanceof application_collection_type) return $this->publish_collection($type, $emitter, $root);
+		return $this->publish_record($type->declaration, $emitter, $root);
+	}
+
 	/** Publish a concrete field dependency after complete element declarations; reuse the source recipe artifacts. */
 	private function publish_collection(application_collection_type $type, Cpp_Emitter $emitter, string $root): string
 	{

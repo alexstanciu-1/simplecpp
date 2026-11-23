@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/compilation.php';
-use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group, Incremental_Project};
+use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, ast_function_declaration, Cpp_Headers, Cpp_Emitter, diagnostic, diagnostic_group, Incremental_Project};
 
 function verify(bool $condition, string $message): void
 {
@@ -33,6 +33,25 @@ function artifacts(string $directory): array /** array<string,string> */
 	}
 	ksort($files);
 	return $files;
+}
+
+/** Additional artifacts for the outlined proof, built from the successful session's resolved result types. */
+function publish_task_payloads(Incremental_Project $project): array
+{
+	$session = $project->session();
+	$publisher = new Cpp_Headers();
+	$emitter = new Cpp_Emitter($publisher, $session->cpp_namespace);
+	$headers = [];
+	foreach ($session->files() as $file) {
+		foreach ($file->declaration_nodes as $node) {
+			if (!($node instanceof ast_function_declaration) || !$node->is_async) continue;
+			$type = $node->return_type_def();
+			$key = $type->concrete_identity();
+			$headers[$key] ??= 'units/' . $publisher->publish_value_header($type, $emitter, $session->cpp_namespace);
+		}
+	}
+	ksort($headers);
+	return ['headers' => array_values($headers), 'files' => (object) $publisher->files()];
 }
 
 function remove_tree(string $path): void
@@ -556,6 +575,11 @@ foreach (flavor::cases() as $flavor) {
 			verify(!preg_match('/\btemplate\s*</', $all), 'App emits a template');
 			$fixtures[$flavor->name . 'params_' . $i] = ['files' => $files, 'fresh_files' => $fresh_files, 'compiler_ms' => $ms,
 				'objects' => $objects, 'exit' => 8, 'stderr' => '', 'stdout_hex' => bin2hex($stdout)];
+			if ($i >= 74 && $i <= 81 && isset($argv[1])) {
+				$publication = publish_task_payloads($project);
+				verify($publication == publish_task_payloads($fresh), 'Payload publication differs from fresh compilation');
+				$fixtures[$flavor->name . 'params_' . $i]['payloads'] = $publication;
+			}
 		}
 	} finally {
 		remove_tree($directory);

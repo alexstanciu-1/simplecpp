@@ -6,19 +6,8 @@ import statistics
 import subprocess
 import sys
 
-from run import (FRAME, METHODS, ROOT, execute, isolation, materialize, measure,
+from run import (METHODS, ROOT, execute, isolation, materialize, measure,
                  object_name, prototype, write_build)
-
-
-def payload_headers(files):
-    """This fixture uses one record layout; the concrete hash requires that layout first."""
-    if not any(FRAME in text for text in files.values()):
-        return []
-    point, = [path for path, text in files.items()
-              if text.startswith('// Generated inline record layout.') and 'struct Point {' in text]
-    hashes = [path for path, text in files.items() if text.startswith('// Concrete application collection;')]
-    assert len(hashes) <= 1
-    return [point, *hashes]
 
 
 def build_snapshot(work, files, fixture):
@@ -34,14 +23,20 @@ def build_snapshot(work, files, fixture):
 
 def transitions(work, fixtures, flavor):
     initial = None
+    previous_publication = set()
     for step, count in [(74, 2), (75, 2), (77, 2), (78, 1), (79, 1), (80, 0), (81, 2)]:
         fixture = fixtures[f'{flavor}params_{step}']
-        headers = payload_headers(fixture['files'])
-        files, actual = prototype(fixture['files'], headers)
+        publication = fixture['payloads']
+        headers = publication['headers']
+        files, actual = prototype(fixture['files'], publication)
         fresh = fixture['fresh_files']
-        fresh_files, fresh_count = prototype(fresh, payload_headers(fresh))
+        fresh_files, fresh_count = prototype(fresh, publication)
         assert files == fresh_files and actual == fresh_count == count
         build = build_snapshot(work, files, fixture)
+        assert len(headers) == count
+        for retired in previous_publication - files.keys():
+            assert not (work / 'src' / retired).exists()
+        previous_publication = set(publication['files'])
         build_snapshot(work / f'fresh-{step}', fresh_files, fixture)
         symbols = subprocess.check_output(['nm', '-C', build / 'program'], text=True)
         expected = {m.group(1) for text in files.values()
@@ -54,12 +49,14 @@ def transitions(work, fixtures, flavor):
         obj = object_name(work / 'src' / METHODS) + '.o'
         stamp = (build / obj).stat().st_mtime_ns
         deps = subprocess.check_output(['ninja', '-t', 'deps', obj], cwd=build, text=True)
-        assert all(str(work / 'src' / h) in deps for h in headers)
+        prerequisites = {Path(line.strip()) for line in deps.splitlines()[1:]}
+        assert all(work / 'src' / h in prerequisites for h in publication['files'])
         if step == 74:
             initial = files
             initial_stamp = stamp
         if step == 75:
-            assert initial[METHODS] == files[METHODS] and initial[headers[0]] != files[headers[0]]
+            assert initial[METHODS] == files[METHODS]
+            assert any(initial[h] != files[h] for h in headers)
             assert stamp > initial_stamp
         if step in (77, 81):
             assert files == initial
@@ -82,7 +79,7 @@ def main(output):
                 for variant in (['inline', 'outline'] if i % 2 == 0 else ['outline', 'inline']):
                     key = f'{flavor}-{label}-{variant}'
                     result, status = measure(output / f'{i}-{key}', fixture, variant, output / 'pch',
-                                             1, payload_headers(fixture['files']))
+                                             1, fixture['payloads'])
                     if i:
                         assert status == 'reused'
                         samples.setdefault(key, []).append(result)
