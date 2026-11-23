@@ -190,30 +190,43 @@ are insufficient to attribute a preparation or emission speedup to this slice.
 | 160 eligible hash loops | 18.18 | 17.45 | 7.89 | 6.83 |
 | 160 ordinary vector reads | 7.14 | 6.98 | 4.35 | 4.25 |
 
-## Proposed v0.2 Python closeout
+## v0.2 closeout
 
-Close this milestone as a typed Simple C++ source flavor. The remaining list is a
-proposal for the closeout scope, with semantic decisions called out separately.
+The typed Python flavor is complete for this milestone. The shared frontend
+contract records the supported syntax and its Simple C++ semantics. The
+compiler README provides the build command for the standalone example.
+[Frontend contract](../compiler_frontends.md#python-syntax-flavor-in-v02)
+[Runnable example](../../compiler/examples/python/main.py)
 
-| Order | Item | Exit criterion |
-| --- | --- | --- |
-| 1 | Typed collection expressions and updates | Accept vector indexing, typed indexed replacement and keyed writes, and populated typed local literals through the shared collection contracts. Keep key/value destructuring and general iteration outside this batch. |
-| 2 | Project and native build acceptance | Run a standalone Python-flavor project and one representative mixed cpp/php/js/py program through the supported CLI build and run path. Check diagnostics, compatible and incompatible edits, deletion/restoration, reuse, and comparisons with fresh output. Keep the existing per-file project selection. |
-| 3 | Documentation and explicit deferrals | Update the shared frontend contract and compiler README for the fourth flavor, publish a supported-syntax example and list intentional differences from Python. Check that the deferred forms are rejected with useful source diagnostics. |
+CLI acceptance passed with Clang at fb77a0487:
 
-Decide separately whether the first intended consumer needs division and modulo,
-bounded output spelling, import spelling, or Python-authored interface and
-nonconstructor super calls. Treat division and modulo as one numeric decision
-covering quotient type, floor rounding, remainder sign, zero and overflow.
-Import spelling needs an explicit mapping to Simple C++ modules. Python print
-needs a contract for formatting, separators, newline and evaluation.
+- Standalone py. The public tokens, parse and build commands processed a
+  program with typed vectors, hashes and key-only traversal. A cold build
+  ran successfully. A no-op build reused the emitted bundle and native
+  artifacts. A body edit changed the result. An unmatched dedent reported
+  main.py:14:1 and preserved the last good manifest and executable. Recovery
+  matched the emitted C++ and execution of a fresh build.
+- Mixed cpp/php/js/py. A Python entry called C++ and JavaScript, the JavaScript
+  function called PHP, and the PHP function called back into Python. A
+  body-only C++ edit rebuilt one native object and reused five. A compatible
+  return-type edit rebuilt and ran. An incompatible signature and deletion
+  each reported a source error and preserved the last good build. Restoring
+  the source produced fresh-equivalent C++ and native behavior.
 
-General truthiness and operand-returning boolean operations, chained comparisons,
-range and iterator protocols, comprehension and generator syntax, decorators,
-dynamic attributes, CPython compatibility and package interoperability remain
-follow-up work. Broader hash slot reuse is a compiler optimization follow-up.
+### Deferred work
 
-Native tokenizer cutover is a separate milestone. Before claiming Python support there, run the same token/span parity tests against native layout handling. [Native tokenizer backlog](remaining_language_gaps_and_native_tokenizer.md)
+- Division, floor division and modulo need a common decision on quotient
+  type, rounding, remainder sign, zero and bounded overflow.
+- Imports and print need explicit module-mapping and output contracts.
+- Python-authored interface declarations, super calls beyond base
+  construction, general decorators and dynamic attributes remain deferred.
+- General truthiness, operand-valued and/or, chained comparisons, first-write
+  inference, range, general iterators, items, destructuring, comprehensions
+  and generator syntax remain deferred. Broader hash slot reuse belongs to
+  the compiler optimization backlog.
+- CPython execution and packages are outside the v0.2 flavor scope. Native
+  tokenizer cutover still needs Python token and layout parity.
+  [Native tokenizer backlog](remaining_language_gaps_and_native_tokenizer.md)
 
 ### Typed collection expressions and updates
 
