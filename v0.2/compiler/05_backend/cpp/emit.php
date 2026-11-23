@@ -1268,6 +1268,11 @@ CPP;
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
 		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
+		return self::integer_spelling($integer);
+	}
+
+	private static function integer_spelling(int $integer /** int64 */): string
+	{
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
@@ -2161,6 +2166,7 @@ CPP;
 		if ($declaration instanceof runtime_integer_constant) {
 			return $declaration->value . 'LL';
 		}
+		if ($declaration instanceof ast_computed_integer_constant) return self::integer_spelling($declaration->constant());
 		if ($declaration instanceof ast_constant_declaration) {
 			$type = $declaration->type_def();
 			$conversion = $declaration->initialization();

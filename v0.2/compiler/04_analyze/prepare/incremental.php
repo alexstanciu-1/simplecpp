@@ -27,7 +27,7 @@ final class Incremental_Preparation
 		}
 		Program_Preparation::layouts($files, $symbols, $session->dependency_watches, $session->preparation_work);
 		Function_Preparation::declarations($symbols, $session->dependency_watches);
-		Literal_Declaration_Preparation::declarations($symbols);
+		Literal_Declaration_Preparation::declarations($symbols, $session->dependency_watches);
 		Import_Preparation::files($files, $symbols);
 		$work = $session->preparation_work;
 		$entry = $files[$session->entry_key()];

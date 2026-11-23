@@ -121,11 +121,11 @@ class ast_binary_expression extends ast_expression
 	}
 
 	/** METHODS */
-	/** Settles the approved result identity; no constant folding or duplicate prepared tree. */
+	/** Publish the result and conversions, with a folded value for integer constant declarations. */
 	public function settle_binary(type_definition $result, ?type_definition $execution = null,
-		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity): void
+		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity, ?int $folded /** ?int64 */ = null): void
 	{
-		$this->settle_value($result, null);
+		$this->settle_value($result, $folded);
 		$this->execution_type = $execution ?? $this->left->value_type();
 		$uses_payload = !$this->operator->logical() && !($this->execution_type instanceof carrier_type_definition);
 		$this->left_conversion = $left | ($uses_payload && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
@@ -188,10 +188,10 @@ final class ast_unary_expression extends ast_expression
 		$operand->attach($this);
 	}
 
-	/** No constant folding or duplicate prepared operand. */
-	public function settle_unary(type_definition $type): void
+	/** Only declaration folding supplies a known integer result. */
+	public function settle_unary(type_definition $type, ?int $folded /** ?int64 */ = null): void
 	{
-		$this->settle_value($type, null);
+		$this->settle_value($type, $folded);
 	}
 }
 

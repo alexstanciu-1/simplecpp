@@ -25,6 +25,7 @@ final class Parser
 	/** Temporary parameter names for JS dotted expressions within a lambda. @var bool[]|null */
 	private ?array $lambda_names /** array<string,bool>|null */ = null;
 	private bool $started = false;
+	private bool $integer_initializer = false;
 	/** @var array<string,array<string,ast_trait_declaration>> Consumer-specific binding plan supplied after the source join. */
 	private array $trait_bindings /** array<string,array<string,ast_trait_declaration>> */ = [];
 	private ?string $declaring_type = null;
@@ -79,7 +80,7 @@ final class Parser
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
 					'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
-					'const' => Constant_Syntax::read($this),
+					'const' => Constant_Syntax::read($this, namespace_constant: true),
 					'global' => Global_Syntax::read($this),
 				};
 				$node->attach($this->root);
@@ -1259,6 +1260,17 @@ final class Parser
 		return $this->assignment_value();
 	}
 
+	/** Preserve direct signed decimal literals (including INT64_MIN) inside a constant expression. */
+	public function integer_initializer(): ast_expression
+	{
+		$this->integer_initializer = true;
+		try {
+			return $this->value();
+		} finally {
+			$this->integer_initializer = false;
+		}
+	}
+
 	/** Parse a declaration literal, optionally retaining a name for an enum field default. */
 	public function literal_initializer(string $diagnostic, bool $allow_case = false): ast_expression
 	{
@@ -1667,10 +1679,10 @@ final class Parser
 				token_kind::tilde => unary_operator::bit_not,
 			};
 			$operand = $this->value(binary_operator::power->precedence());
-			// A direct signed prefixed literal is checked as one value, including the signed minimum.
+			// Keep the sign on a single integer token when its range must include the signed minimum.
 			if ($kind !== token_kind::tilde && $operand instanceof ast_integer_expression
-				&& $operand->start === $start + 1 && $operand->end === $this->cursor->position()
-				&& preg_match('/^0[xXoO]/', $this->cursor->tokens->text_at($operand->start)) === 1) {
+				&& $operand->start === $start + 1 && $operand->end === $start + 2 && $operand->end === $this->cursor->position()
+				&& ($this->integer_initializer || preg_match('/^0[xXoO]/', $this->cursor->tokens->text_at($operand->start)) === 1)) {
 				return new ast_integer_expression($start, $operand->end);
 			}
 			return new ast_unary_expression($start, $this->cursor->position(), $operator, $operand);

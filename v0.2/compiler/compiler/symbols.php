@@ -135,6 +135,8 @@ final class Symbol_Publication implements declaration_sink
 					$node->retire_signature($next instanceof ast_function_declaration && $next->root() === $replacement
 						&& $next->duplicate_element() === null ? $next : null);
 					if ($node->optional_body() !== null) $dependencies->retire($node->body());
+				} elseif ($node instanceof ast_computed_integer_constant) {
+					$dependencies->forget($node);
 				} elseif ($node instanceof ast_record_declaration) {
 					$dependencies->forget($node->definition);
 				}
@@ -198,6 +200,10 @@ final class Symbol_Publication implements declaration_sink
 				// Prepared locals link to the canonical type on this AST. Refresh them on any declaration replacement.
 				$contracts[$key] = 'type:' . spl_object_id($head);
 			}
+			elseif ($head instanceof ast_computed_integer_constant) {
+				// Identical initializer text can resolve differently after an import edit.
+				$contracts[$key] = 'computed:' . spl_object_id($head);
+			}
 			elseif ($head instanceof ast_constant_declaration) {
 				$contracts[$key] = json_encode([$head->visibility->value, $head->type_reference?->spelling(), $head->initializer->source_text()], \JSON_THROW_ON_ERROR);
 			}
@@ -248,6 +254,8 @@ final class Symbol_Publication implements declaration_sink
 				if ($function instanceof ast_function_declaration) {
 					$watchers[] = $function;
 					if ($function->optional_body() !== null) $watchers[] = $function->body();
+				} elseif ($function instanceof ast_computed_integer_constant) {
+					$watchers[] = $function;
 				} elseif ($function instanceof ast_record_declaration) {
 					$watchers[] = $function->definition;
 				}
