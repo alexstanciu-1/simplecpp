@@ -79,6 +79,22 @@ def prove_block(work):
     ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
 
 
+def prove_block_callback_result(work):
+    consumer = 'function run_text(callback<string> $read):string { return $read(); }'
+
+    def entry(closure):
+        return f'echo run_text({closure}); return 8;'
+
+    mismatch = 'Expected exact callback signature callback<string>'
+    work.mkdir()
+    revisions(work, 'php', dict(consumer=consumer, main=entry('function ():string { return "original"; }')), [
+        (None, None, b'original'),
+        ('main', entry('function ():int { return 1; }'), mismatch),
+        (None, None, mismatch),
+        ('main', entry('function ():string { return "repaired"; }'), b'repaired'),
+    ], unaffected_source='consumer.php', unaffected_revisions={3})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -87,6 +103,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_block_callback_result(root / 'block-callback-result')
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)
 

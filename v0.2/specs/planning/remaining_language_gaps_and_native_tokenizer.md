@@ -419,6 +419,15 @@ Its returns use the declared result and the usual statement completion check.
 The enclosing function body owns dependency watches and incremental preparation.
 `compiler_capture_free_lambdas_native` exercises both branches, same-name locals,
 an uncaptured read, and repair after a missing return or a changed callee signature.
+
+**Callback result mismatch (`CLOSURE-STAN-001`).** Verified at a typed parameter
+using the current `callback<string>` spelling. The native closure fixture passes
+a zero-argument, `int`-returning block closure and checks
+`Expected exact callback signature callback<string>`. A failed build preserves
+the published bundle. Repairing the closure to return a string in the same
+compiler instance produces fresh-build-equivalent output and invokes the
+repaired callback. Historical callable-local spelling and captures remain deferred.
+
 The original audit classifications follow.
 
 **Missing (7)**
