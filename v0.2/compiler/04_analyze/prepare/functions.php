@@ -257,7 +257,17 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
-			$parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
+			if ($parameter->type_reference->name === 'segment' && $parameter->type_reference->first_child !== null) {
+				if (!type_registry::HAS_MT_SEGMENTS) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'MT segments unavailable in this runtime');
+				$child = $parameter->type_reference->first_child;
+				if ($child === null || $child->next_sibling !== null || $parameter->mode !== passing_mode::value
+					|| $parameter->default_value !== null || $declaration->is_async || $declaration->parent instanceof ast_method_owner) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Segment requires an ordinary free-function parameter');
+				}
+				$element = Type_Resolution::signature($child, $symbols, $declaration, $dependencies, watcher: $watcher);
+				if ($element === null || !Mt_Rules::isolated($element)) throw new diagnostic($child->source(), $child->byte_start(), 'Segment requires isolated inline elements');
+				$parameter_type = new segment_type($element);
+			} else $parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
 				? Type_Resolution::callback($parameter, $symbols, $declaration, $watcher, $dependencies)
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
 			if ($parameter_type === null) {

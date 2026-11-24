@@ -2573,6 +2573,30 @@ CPP;
 				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
 			}
+			if ($value->mt_operation === 'mt_join') {
+				$required_headers['scpp/mt_segments.hpp'] = true;
+				$jobs = [];
+				foreach ($value->arguments as $launch) {
+					$worker = $launch->implementation();
+					$name = self::function_name($worker);
+					$declarations[$name] = $worker;
+					$this->collect_signature_types($worker, $declarations);
+					$args = [];
+					foreach ($launch->arguments as $segment) {
+						$operands = [];
+						foreach ($segment->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
+						[$owner, $offset, $length] = $operands;
+						$element = $segment->type_def()->element->cpp_type();
+						$args[] = "{($owner).mt_data(), sizeof($element), ($owner).size(), $offset, $length}";
+					}
+					$jobs[] = '{&' . $name . ', {' . implode(', ', $args) . '}}';
+				}
+				$lines = [];
+				$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
+				$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . ');';
+				$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
+				return '([&]() { ' . implode(' ', $lines) . ' }())';
+			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
 				/** @var counted_collection_type $type */
@@ -3323,6 +3347,7 @@ CPP;
 			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
+		if ($type instanceof segment_type) self::visit_signature_type_dependencies($type->element, $visit);
 		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}

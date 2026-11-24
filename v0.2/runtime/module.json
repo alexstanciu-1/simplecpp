@@ -6,6 +6,7 @@
         "src/output/output.cpp",
         "src/entry/entry.cpp",
         "src/sequence/fixed_array.cpp",
+        "src/mt/segments.cpp",
         "src/ownership/owner_access.cpp"
     ],
     "modules": {

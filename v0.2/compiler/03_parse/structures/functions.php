@@ -195,6 +195,9 @@ class ast_call_expression extends ast_expression
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: evaluating the receiver or an argument can suspend this coroutine. */
 	public bool $suspending_operands = false;
+	/** Prepared fact: joined-batch intrinsic, or null for ordinary calls. */
+	public private(set) ?string $mt_operation = null;
+
 	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
 	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
@@ -232,6 +235,12 @@ class ast_call_expression extends ast_expression
 		return $this->lexical_root()->function_key($this->name);
 	}
 
+	public function settle_mt(string $operation, type_definition $type): void
+	{
+		$this->mt_operation = $operation;
+		$this->settle_value($type, null);
+	}
+
 	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
 	{
 		$this->cardinality = $operation;
@@ -252,13 +261,13 @@ class ast_call_expression extends ast_expression
 
 	public function has_direct_signature(): bool
 	{
-		return $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
+		return $this->mt_operation === null && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
 	}
 
 	public function target_name(): string
 	{
 		if ($this->blocking_producer() !== null) return 'async_wait';
-		return $this->cardinality?->name ?? $this->callable_binding()?->name()
+		return $this->mt_operation ?? $this->cardinality?->name ?? $this->callable_binding()?->name()
 			?? $this->constructed_record()?->name() ?? $this->function_def()->name();
 	}
 
@@ -368,6 +377,7 @@ class ast_call_expression extends ast_expression
 		$this->function_symbol = null;
 		$this->ancestor_dispatch = false;
 		$this->interface_dispatch = false;
+		$this->mt_operation = null;
 		$this->cardinality = null;
 		$this->suspending_operands = false;
 		$this->conversions = [];

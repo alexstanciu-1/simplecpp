@@ -178,6 +178,7 @@ function render(array $plan): array {
     }
     requireThat(!isset($files['public/scpp/owner_access.hpp']), 'The owner access header path is reserved');
     requireThat(!isset($files['public/scpp/fixed_array.hpp']), 'The fixed-array header path is reserved');
+    if ($plan['mt_segments'] ?? false) $files['public/scpp/mt_segments.hpp'] = BANNER . template('collections/mt_segments');
     $files['public/scpp/fixed_array.hpp'] = BANNER . template('collections/fixed_array_index');
     $files['public/scpp/owner_access.hpp'] = BANNER . template('ownership/application_control');
     if (isset($plan['exception'])) {

@@ -52,7 +52,7 @@ final class Program_Preparation
 			$path = (string) $path;
 			self::admit($file, $path === $entry_path);
 		}
-		$dependencies = new Dependency_Watches();
+		$dependencies = new Dependency_Watches(mt: new mt_worker_roots());
 		foreach ($files as $key => $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_function_declaration) {
@@ -80,6 +80,7 @@ final class Program_Preparation
 		$instances = $dependencies->called_methods();
 		if ($instances !== null) $instances->prepare($symbols, $dependencies);
 		$dependencies->validate_reference_calls();
+		Mt_Safety::check($dependencies->mt);
 		foreach ($files as $file) {
 			$file->settle_preparation();
 		}

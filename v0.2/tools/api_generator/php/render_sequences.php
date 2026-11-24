@@ -345,7 +345,7 @@ function renderVectors(array $plan): array {
         $h .= "class {$v['name']};\n";
         $element = new RuntimeConcreteType($plan, $v['element']);
         $instances[$v['name']] = concreteTemplate(vectorConcreteRecipe($v), ['e' => $element],
-            ['enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
+            ['mt_segments' => !empty($plan['mt_segments']) ? '1' : '', 'enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
         $d .= $instances[$v['name']]['storage'];
     }
     $d .= "namespace detail { struct vector_access {\n";

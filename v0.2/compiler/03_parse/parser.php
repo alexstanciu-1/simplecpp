@@ -1399,16 +1399,21 @@ final class Parser
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-		if ($terminator === token_kind::newline && ($index === null || !$this->cursor->is(token_kind::assign))) {
+		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign) && !$this->cursor->is(token_kind::dot)))) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
-			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end));
+			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end), $terminator);
 		}
 		if ($index !== null && ($this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
-			if ($target instanceof ast_qualified_data) return $this->property_write($target);
+			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
+				$this->cursor->take(token_kind::assign, '= after Python field');
+				$value = $this->assignment_value();
+				return new ast_field_assignment($target, $value, $this->statement_end($terminator));
+			}
+			if ($target instanceof ast_qualified_data || $target instanceof ast_field_expression) return $this->property_write($target);
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		}

@@ -69,6 +69,10 @@ string(JSON async_frames ERROR_VARIABLE async_error GET "${runtime_profile}" asy
 if(async_frames)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/async/frame.hpp ${runtime_generated}/public/scpp/async_timer.hpp)
 endif()
+string(JSON mt_segments ERROR_VARIABLE mt_error GET "${runtime_profile}" mt_segments)
+if(mt_segments)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segments.hpp)
+endif()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
@@ -117,6 +121,11 @@ add_custom_target(scpp_runtime_publication
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
 add_library(scpp_runtime STATIC runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/entry/exception.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
+if(mt_segments)
+  find_package(Threads REQUIRED)
+  target_sources(scpp_runtime PRIVATE runtime/src/mt/segments.cpp)
+  target_link_libraries(scpp_runtime PUBLIC Threads::Threads)
+endif()
 if(hash_publication_type STREQUAL "OBJECT")
   target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/hash.cpp)
 endif()
@@ -308,6 +317,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_incremental COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental.py)
   add_test(NAME compiler_duplicates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates.php)
+  if(mt_segments)
+    add_test(NAME compiler_mt_segments_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mt_segments_native.py ${native_facts} $<TARGET_FILE:scpp_runtime> ${CMAKE_CXX_COMPILER})
+  endif()
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
   add_test(NAME compiler_direct_lowering COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/direct_lowering.php)
   add_test(NAME compiler_lowering_catalog COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/lowering_catalog.php)

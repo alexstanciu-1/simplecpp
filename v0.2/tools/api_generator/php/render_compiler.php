@@ -355,6 +355,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@mt_available@' => ($runtime['mt_segments'] ?? false) ? 'true' : 'false',
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("

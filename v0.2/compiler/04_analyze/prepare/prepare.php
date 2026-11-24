@@ -312,7 +312,7 @@ final class Preparation
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
-				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $source->flavor === flavor::python) {
+				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $source->flavor === flavor::python) {
 					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash');
 				}
 				$this->value($statement->index);
@@ -1088,6 +1088,7 @@ final class Preparation
 		Readonly_Access::write($root, $payload, $field);
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
+		if ($root instanceof ast_index_expression && $root->receiver->type_def() instanceof segment_type) return $field;
 		if (!($root instanceof ast_this_expression)
 			&& (!($root instanceof ast_name_expression) || $root->local_binding() === null)) {
 			throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
@@ -1431,7 +1432,7 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python
+			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $syntax->source()->flavor === flavor::python
 				&& !($type instanceof boxed_type_definition && $syntax->parent instanceof ast_key_comparison)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
 			}
@@ -2055,6 +2056,14 @@ final class Preparation
 					'hash_get_or_null' => 'hash_get_or_null requires a hash with shared class values',
 				});
 				$this->runtime_call($call, $binding, $receiver);
+				return;
+			}
+			if ($builtin === 'mt_join' && type_registry::HAS_MT_SEGMENTS) {
+				if ($class !== null) $this->ambiguous_construction($call);
+				if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
+				Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg) use ($initializing): void {
+					$this->value($arg, $initializing);
+				});
 				return;
 			}
 			if ($builtin === 'async_wait') {
