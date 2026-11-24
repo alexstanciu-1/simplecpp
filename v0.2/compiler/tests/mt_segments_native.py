@@ -10,7 +10,7 @@ from pathlib import Path
 from classes_native import fixture
 
 ROOT = Path(__file__).resolve().parents[2]
-FACTS, LIBRARY, CXX = sys.argv[1:]
+FACTS, LIBRARY, CXX = sys.argv[1:4]
 FLAGS = [CXX, '-std=c++23', '-stdlib=libc++', '-pthread', '-I' + str(ROOT / 'runtime/generated/public')]
 
 
@@ -59,6 +59,20 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 }
 """
 
+EACH_BATCH = """function each_batch(vector<int> &$entries, vector<int> &$output, int $parts, int $cap, int $width): vector<int> {
+    return parallel (workers: $cap) {
+        job (each: $part in 0 ..< $parts,
+             workers: 3, write: $entered = segment($entries,$part,1),
+             write: $dst = segment($output,balanced_range($width,$width,$part % $width)),
+             value: $base = $part + 10) {
+            $entered[0] = $entered[0] + 1;
+            $dst[0] = $base;
+            return $part;
+        }
+    };
+}
+"""
+
 MIXED_BATCH = """function parallel(): int { return 7; }
 function tick(int &$calls, int $result): int {
     $calls += 1;
@@ -92,19 +106,7 @@ function mixed_each(int $parts): int {
     };
     return $calls * 100 + $results[$parts] + $results[$parts + 1];
 }
-function each_batch(vector<int> &$entries, vector<int> &$output, int $parts, int $cap, int $width): vector<int> {
-    return parallel (workers: $cap) {
-        job (each: $part in 0 ..< $parts,
-             workers: 3, write: $entered = segment($entries,$part,1),
-             write: $dst = segment($output,balanced_range($width,$width,$part % $width)),
-             value: $base = $part + 10) {
-            $entered[0] = $entered[0] + 1;
-            $dst[0] = $base;
-            return $part;
-        }
-    };
-}
-function range_batch(const vector<int> &$input, vector<int> &$output, int $parts, int $part): vector<int> {
+""" + EACH_BATCH + """function range_batch(const vector<int> &$input, vector<int> &$output, int $parts, int $part): vector<int> {
     $range = balanced_range(count($input), $parts, $part);
     return parallel {
         job (read: $src = segment($input,$range), write: $dst = segment($output,$range)) {
@@ -303,6 +305,22 @@ def sources_for(flavor):
     return sources
 
 
+def prove_each(work):
+    app = work / 'app'
+    app.mkdir()
+    out = work / 'out'
+    sources = {'main.php': 'return 0;', 'batch.php': EACH_BATCH}
+    manifest = compile_source(app, out, sources)
+    units = [out / unit for unit in manifest['translation_units'] if unit != 'entry.cpp']
+    binary = work / 'probe'
+    subprocess.run([*FLAGS, Path(__file__).with_name('mt_each_probe.cpp'), *units, LIBRARY, '-o', binary], check=True)
+    for policy in ('sleep', 'active'):
+        subprocess.run([binary], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=10)
+    sources['batch.php'] = EACH_BATCH.replace('return $part;', 'return observe();')
+    sources['helper.php'] = 'global $counter int = 7; function observe():int { return $counter; }'
+    compile_source(app, work / 'rejected', sources, 'MT safety: worker cannot access global or static storage')
+
+
 def prove(work):
     app = work / 'app'
     app.mkdir()
@@ -344,7 +362,7 @@ def prove(work):
             probe = work / 'probe'
             # Link a synchronized observer in place of the identity helper for this native probe.
             hook = out / manifest['sources']['probe_hook.php']
-            subprocess.run([*FLAGS, driver, *[p for p in units if p.name != 'entry.cpp' and p != hook],
+            subprocess.run([*FLAGS, '-I', Path(__file__).parent, driver, *[p for p in units if p.name != 'entry.cpp' and p != hook],
                             LIBRARY, '-o', probe], check=True)
             for policy in ('sleep', 'active'):
                 subprocess.run([probe], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=15)
@@ -414,4 +432,7 @@ def prove(work):
 
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-mt-') as temp:
-        prove(Path(temp))
+        if sys.argv[4:] == ['--quick']:
+            prove_each(Path(temp))
+        else:
+            prove(Path(temp))

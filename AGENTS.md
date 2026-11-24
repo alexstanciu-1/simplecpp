@@ -86,6 +86,10 @@ Validate at the smallest layer that proves the change:
 - `scpp usability-harness` for first-user flows
 - runtime test suite for runtime behavior
 
+Run long tests only on dev002 (`alex-ai@dev002.travelfuse.ro`). This includes
+full regression runs, exhaustive test matrices, and sustained benchmarks.
+Use WSL2 for quick, focused checks. If dev002 is unavailable, defer the long run.
+
 See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation guide.
 
 ## Focused Tool Use and Daybreak Blocks
