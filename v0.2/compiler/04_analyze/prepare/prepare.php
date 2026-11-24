@@ -1936,9 +1936,14 @@ final class Preparation
 		$type = $binding?->type_def();
 		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
-			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
+			if ($call instanceof ast_named_call) {
+				if (!($type instanceof lambda_type_definition && $binding instanceof ast_local_declaration && $binding->initializer instanceof ast_lambda_expression)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
+				}
+				$call->named->bind_slots($call, $binding->initializer);
+			}
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
 			return;
 		}
@@ -2410,7 +2415,8 @@ final class Preparation
 		$callback = $function instanceof callback_type_definition;
 		$slots = null;
 		if (isset($call->named)) {
-			$call->named->bind_slots($call, $function);
+			// Local lambdas have already bound their labels against the concrete initializer.
+			if (!$callback) $call->named->bind_slots($call, $function);
 			$slots = $call->named->slots;
 		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
@@ -2419,8 +2425,9 @@ final class Preparation
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
-			$parameter = $callback ? null : $function->parameters[$slots[$index] ?? $index];
-			$type = $parameter === null ? $function->inputs[$index] : $parameter->type_def();
+			$slot = $slots[$index] ?? $index;
+			$parameter = $callback ? null : $function->parameters[$slot];
+			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
 			if ($type instanceof callback_type_definition && $argument instanceof ast_callable_reference) {
 				$this->expression_visits++;
 				$this->callback_reference($argument, $type);

@@ -393,7 +393,7 @@ final class Named_Arguments
 
 	/** METHODS */
 	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
-	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function $function): void
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function): void
 	{
 		$names = [];
 		if ($function instanceof runtime_function) $names = array_flip($function->parameter_names);
@@ -406,7 +406,8 @@ final class Named_Arguments
 			$label = $this->labels[$position] ?? null;
 			$slot = $label === null ? $position : ($names[$label] ?? null);
 			if ($slot === null) {
-				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $function->name());
+				$target = $function instanceof ast_lambda_expression ? $site->name : $function->name();
+				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $target);
 			}
 			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
 			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $label);
@@ -462,7 +463,7 @@ final class Named_Arguments
 /** Source function or method call with at least one written argument label. */
 final class ast_named_call extends ast_call_expression
 {
-	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, method or constructor, or a runtime free function with published parameter names';
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, method, constructor or local lambda, or a runtime free function with published parameter names';
 
 	public readonly Named_Arguments $named;
 

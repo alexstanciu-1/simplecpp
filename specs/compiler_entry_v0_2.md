@@ -240,7 +240,7 @@ parameter names. Those names are part of its public API. Renaming one breaks cal
 that use the old label. The first binding is PHP `str_repeat(string, times)`.
 For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
 `repetitions()` first and passes its result as the second argument.
-Variadic signatures and calls through callable values remain deferred.
+Typed callback calls require positional arguments. Variadic signatures remain deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
@@ -276,7 +276,10 @@ JS   let inc = fn(x: int): int => x + 1;
 ```
 
 Each lambda expression has a distinct concrete type. An inferred local
-can invoke its lambda with ordinary call syntax. An inline lambda or
+can invoke its lambda with positional or named arguments. Labels bind to the local
+lambda’s written parameter names. Each argument and its conversion run once in
+written order. PHP block closures follow the same rule. Passing the lambda to a
+typed callback parameter exposes only the positional callback signature. An inline lambda or
 such a local can supply a callback argument when the component types
 match exactly. The C++ backend emits a concrete capture-free lambda and
 converts it to a native function pointer at the callback boundary.

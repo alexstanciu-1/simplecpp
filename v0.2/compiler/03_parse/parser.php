@@ -911,8 +911,7 @@ final class Parser
 		$start = $this->cursor->position();
 		if ($this->cursor->is(token_kind::variable)) {
 			$name = $this->cursor->name(token_kind::variable);
-			$arguments = $this->arguments();
-			return new ast_call_expression($start, $this->cursor->position(), $name, null, $arguments, qualifier: call_qualifier::local);
+			return $this->call_arguments($start, $name, null, null, call_qualifier::local);
 		}
 		$name = $this->names->path(true, call: true);
 		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::scope)) {
@@ -943,7 +942,7 @@ final class Parser
 			}
 			return new ast_callable_reference($name, $start, $end);
 		}
-		$labels = $qualifier === call_qualifier::local ? null : [];
+		$labels = [];
 		$arguments = $this->arguments($labels);
 		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);

@@ -5,7 +5,7 @@ import tempfile
 
 from app_namespace_native import artifacts
 from classes_native import fixture
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 
 
 def prove(work, flavor):
@@ -43,6 +43,32 @@ def prove(work, flavor):
     assert b'auto var_increment_' in generated and b' = [](' in generated
     assert b'(*var_op_' in generated
     assert b'std::function' not in generated and b'#include <functional>' not in generated
+
+
+def prove_named_calls(work, flavor):
+    form = fixture(flavor)
+    v, fn = form['v'], form['function']
+    params = 'left:int,right:byte' if flavor == 'js' else f'int {v}left,byte {v}right'
+    definition = f'fn({params}):int => {v}left - {v}right'
+    local = form['infer']('diff', definition)
+    call = f'{v}diff(right: nextRight(), left: nextLeft())'
+    entry = local + f'echo {call}, apply({v}diff);return 8;'
+    helpers = fn('nextRight', 'int', [], 'echo "R";return 3;') + fn('nextLeft', 'int', [], 'echo "L";return 10;')
+    consumer = fn('apply', 'int', [('op', 'callback<int,int,byte>')], f'return {v}op(10,3);')
+    renamed = entry.replace(definition, definition.replace('right', 'offset'))
+    repaired = renamed.replace('right:', 'offset:')
+    expected = b'RL77'
+    work.mkdir()
+    revisions(work, flavor, dict(main=entry, helpers=helpers, consumer=consumer), [
+        (None, None, expected), (None, None, expected),
+        ('main', renamed, 'Unknown named argument: right on diff'),
+        ('main', repaired, expected),
+        ('consumer', consumer.replace('op(10,3)', 'op(left: 10,right: 3)'), 'Typed callback calls require positional arguments'),
+        ('consumer', consumer, expected),
+        ('helpers', None, 'Unknown function: nextRight'), ('helpers', helpers, expected),
+    ])
+    guard(work, flavor, 'narrowing', helpers.replace('return 3;', 'return 300;') + consumer + entry,
+          'integer_cast_out_of_range', expected_stdout=b'R')
 
 
 def prove_block(work):
@@ -125,7 +151,7 @@ def prove_block_append_placement(work):
 
 def prove_block_call_arity(work):
     declaration = '$h = function (int $x, int $y): int { return $x + $y; };'
-    valid = f'{declaration} echo $h(3, 9); return 8;'
+    valid = f'{declaration} echo $h(y: 9, x: 3); return 8;'
     missing_argument = f'{declaration} echo $h(3); return 8;'
     work.mkdir()
     revisions(work, 'php', dict(main=valid), [
@@ -160,6 +186,7 @@ def main():
         prove_block_callback_result(root / 'block-callback-result')
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)
+            prove_named_calls(root / (flavor + "-named"), flavor)
 
 
 if __name__ == '__main__':
