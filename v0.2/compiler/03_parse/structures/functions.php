@@ -155,9 +155,11 @@ trait ast_fixed_parameter_list
 /** A read-only closure local whose initializer reads the enclosing local at creation. */
 final class ast_value_capture extends ast_local_declaration
 {
-	public function __construct(string $name, int $start /** uint32 */)
+	public function __construct(string $name, int $start /** uint32 */, ?int $string_offset /** uint32|null */ = null)
 	{
-		parent::__construct($start, $start + 1, $name, null, new ast_name_expression($name, $start, $start + 1));
+		$read = $string_offset === null ? new ast_name_expression($name, $start, $start + 1)
+			: new ast_interpolation_name($name, $start, $string_offset);
+		parent::__construct($start, $start + 1, $name, null, $read);
 	}
 }
 

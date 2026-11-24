@@ -24,6 +24,8 @@ final class Parser
 	private ?Body_Collection $lexical = null;
 	/** Temporary parameter names for JS dotted expressions within a lambda. @var bool[]|null */
 	private ?array $lambda_names /** array<string,bool>|null */ = null;
+	/** Active only while parsing a PHP arrow expression. */
+	private ?Arrow_Captures $arrow = null;
 	private bool $started = false;
 	private bool $integer_initializer = false;
 	/** @var array<string,array<string,ast_trait_declaration>> Consumer-specific binding plan supplied after the source join. */
@@ -911,6 +913,7 @@ final class Parser
 		$start = $this->cursor->position();
 		if ($this->cursor->is(token_kind::variable)) {
 			$name = $this->cursor->name(token_kind::variable);
+			$this->arrow?->read($name, $start);
 			return $this->call_arguments($start, $name, null, null, call_qualifier::local);
 		}
 		$name = $this->names->path(true, call: true);
@@ -1620,7 +1623,12 @@ final class Parser
 			$outer_scope = $this->lexical;
 			$outer_type = $this->declaring_type;
 			$collector = new Body_Collection($this->root->scope, $parameters);
-			foreach ($captures as $capture) $collector->declare_local($capture);
+			$outer_arrow = $this->arrow;
+			foreach ($captures as $capture) {
+				$collector->declare_local($capture);
+				$outer_arrow?->read($capture->declaration_key(), $capture->start);
+			}
+			$this->arrow = null;
 			$this->declaring_type = null;
 			try {
 				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
@@ -1628,9 +1636,20 @@ final class Parser
 			} finally {
 				$this->lexical = $outer_scope;
 				$this->declaring_type = $outer_type;
+				$this->arrow = $outer_arrow;
 			}
 		}
 		$c->take(token_kind::arrow, '=>');
+		if ($c->tokens->source->flavor === flavor::php) {
+			$outer_arrow = $this->arrow;
+			$this->arrow = new Arrow_Captures($parameters, $outer_arrow, $this->lexical);
+			try {
+				$body = $this->value();
+				return new ast_lambda_expression($start, $parameters, $result, $body, $this->arrow->captures());
+			} finally {
+				$this->arrow = $outer_arrow;
+			}
+		}
 		$outer = $this->lambda_names;
 		$this->lambda_names = [];
 		foreach ($parameters as $parameter) $this->lambda_names[$parameter->declaration_key()] = true;
@@ -1809,6 +1828,7 @@ final class Parser
 			if ($c->is($name_kind) && $c->next_is(token_kind::assign)) {
 				$at = $c->position();
 				$target = new ast_name_expression($c->name($name_kind), $at, $at + 1);
+				$this->arrow?->read($target->name, $at);
 				$c->take(token_kind::assign, '=');
 				$rhs = $this->assignment_value();
 				return new ast_condition_assignment($start, $c->take(token_kind::rparen, ') after assignment') + 1, $target, $rhs);
@@ -1845,7 +1865,7 @@ final class Parser
 			$kind = $this->cursor->tokens->tokens[$start]->kind;
 			$this->cursor->take($kind, 'string literal');
 			if ($kind === token_kind::template_string || ($kind === token_kind::double_string && $this->cursor->tokens->source->flavor === flavor::php)) {
-				return Interpolation::parse($this->cursor->tokens, $start);
+				return Interpolation::parse($this->cursor->tokens, $start, $this->arrow);
 			}
 			return new ast_string_expression($start, $start + 1);
 		}
@@ -1875,6 +1895,7 @@ final class Parser
 		$type_marker = false;
 		$name = $this->names->variable_path($constant_only, $type_marker);
 		if ($type_marker) return new ast_type_marker($name, $start, $this->cursor->position());
+		if ($this->arrow !== null && $c->tokens->tokens[$start]->kind === token_kind::variable) $this->arrow->read($name, $start);
 		$member_syntax = ($this->cursor->tokens->source->flavor === flavor::js)
 			&& (!str_starts_with($name, '\\')) && str_contains($name, '\\');
 		return new ast_name_expression($name, $start, $this->cursor->position(), $member_syntax, $constant_only);

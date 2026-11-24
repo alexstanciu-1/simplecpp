@@ -264,7 +264,7 @@ contract and exception propagation.
 The C++ backend passes a typed native function pointer. Instance method
 references and persistent callback storage are outside this slice.
 
-### Capture-free lambdas
+### Lambdas
 
 An expression-bodied lambda has explicitly typed by-value inputs and a
 non-void result type. A capture-free PHP block closure may declare `void`. It can
@@ -297,8 +297,12 @@ reads those snapshots even after the outer variables change. Copying a shared ha
 retains its allocation. Move-only bindings reject at the capture site. Existing
 restrictions on callable storage and fixed-array placement apply. Each capture is
 read-only. Names must be distinct and cannot repeat a closure parameter name.
-Enclosing locals require explicit capture. Typed callbacks
-accept only capture-free callables.
+PHP arrows capture referenced enclosing locals and parameters automatically by value.
+Each name is captured once at creation. Parameters shadow enclosing names. A nested
+arrow draws from its immediate callable, so enclosing arrows also capture any
+bindings needed to create it. A block closure exposes only its explicit captures
+and its own locals and parameters. Global reads retain ordinary lookup.
+Typed callbacks accept only capture-free callables.
 
 ### Trailing literal parameter defaults
 

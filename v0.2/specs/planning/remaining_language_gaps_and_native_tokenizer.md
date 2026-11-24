@@ -523,6 +523,8 @@ Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 
 **By-value captures (`CLOSURE-USE-001`, partial).** PHP block closures in inferred locals accept lists such as `use ($base, $step)`. Each name initializes owned storage under the same copy contract as a local. Shared handles retain identity and move-only cursors reject. Typed callbacks require capture-free callables. [Native snapshot and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
 
+**Capturing PHP arrows (`ARROW-001`).** Expression-bodied arrows infer by-value captures for referenced enclosing locals and parameters. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover snapshots and cross-file recovery. The [parser tests](../../compiler/tests/lambda_parser_state.php) check nested scope propagation.
+
 **Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
 to a `callback<int,int>` parameter reports `Populated collection requires an explicitly typed local initializer`
 at the opening bracket. This is the collection-literal diagnostic. In the named callback

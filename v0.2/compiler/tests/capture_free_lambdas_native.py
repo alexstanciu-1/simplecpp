@@ -35,7 +35,8 @@ def prove(work, flavor):
         ('helper', fn('helper', 'int', [('extra', 'int')], 'return 5;'), 'Argument count mismatch'),
         ('helper', None, 'Unknown function: helper'),
         ('helper', helper, b'6:7:6:7'),
-        ('main', entry.replace('helper()', f'{v}outer'), 'Unknown or not-yet-initialized local/global: outer'),
+        ('main', entry.replace('helper()', f'{v}outer'), 'Typed callbacks require a capture-free callable'
+         if flavor == 'php' else 'Unknown or not-yet-initialized local/global: outer'),
         ('main', entry.replace(inline, arrow('b', 'int', f'{v}b > 0', 'bool')), 'Expected exact callback signature'),
         ('main', entry, b'6:7:6:7'),
     ], unaffected_source=f'main.{flavor}', unaffected_revisions={2})
@@ -221,6 +222,34 @@ def prove_capture_copy_contract(work):
     ])
 
 
+def prove_php_arrow_captures(work):
+    entry = '$factor=seed(); $scale=fn(int $x):int => $x*$factor+$factor; $factor=10; echo $scale(3); return 8;'
+    shadow = entry.replace('int $x', 'int $factor').replace('$x*$factor+$factor', '$factor*$factor')
+    helper = 'function seed():int {return 3;}'
+    interpolation = '$factor=seed(); $f=fn():string => "value=$factor"; echo $f(); return 8;'
+    name_column = interpolation.index('factor', interpolation.index('=>')) + 1
+    first_use = entry.index('$factor', entry.index('=>')) + 1
+    block = '$factor=3; $run=function () use ($factor):int { $f=fn():int => $factor; return $f(); }; $factor=9; echo $run(); return 8;'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, helper=helper), [
+        (None, None, b'12'), (None, None, b'12'),
+        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.php:1:{first_use}: Generator cursors are move-only'),
+        ('helper', helper, b'12'),
+        ('main', shadow, b'9'),
+        ('main', block, b'3'),
+        ('main', block.replace(' use ($factor)', ''), 'Unknown or not-yet-initialized local/global: factor'),
+        ('main', interpolation, b'value=3'),
+        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.php:1:{name_column}: Generator cursors are move-only'),
+        ('helper', helper, b'value=3'),
+        ('main', 'global $factor int=3; function read(callback<int> $op):int {return $op();} '
+                 '$f=fn():int => $factor; echo read($f); return 8;', b'3'),
+        ('main', 'function apply(callback<int,int> $op):int {return $op(2);} '
+                 '$factor=3; $f=fn():int => $factor+apply(fn(int $factor):int => $factor); '
+                 '$factor=10; echo $f(); return 8;', b'5'),
+        ('main', entry, b'12'),
+    ])
+
+
 def prove_void_block(work):
     consumer = 'function notify(callback<void,int> $op):void { $op(7); }'
     main = '''$report = function (int $n): void {
@@ -319,6 +348,7 @@ def main():
         prove_int_capture(root / 'int-capture')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
+        prove_php_arrow_captures(root / 'php-arrow-captures')
         prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')
