@@ -379,7 +379,7 @@ class ast_call_expression extends ast_expression
 /** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
 final class ast_named_call extends ast_call_expression
 {
-	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, nonvirtual instance method, or a static method qualified by type, self, or parent';
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, nonvirtual instance method, or a static method qualified by type, self, parent, or called type';
 
 	/** PROPERTIES */
 	/** @var string[] Written label keyed by the argument's source position. */
@@ -417,7 +417,10 @@ final class ast_named_call extends ast_call_expression
 		foreach ($this->arguments as $position => $argument) {
 			$label = $this->labels[$position] ?? null;
 			$slot = $label === null ? $position : ($names[$label] ?? null);
-			if ($slot === null) throw new diagnostic($this->source(), $argument->byte_start(), 'Unknown named argument: ' . $label);
+			if ($slot === null) {
+				$target = $this->qualifier === call_qualifier::called_type ? ' on ' . $function->name() : '';
+				throw new diagnostic($this->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . $target);
+			}
 			if (!isset($function->parameters[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Too many positional arguments');
 			if (isset($used[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $function->parameters[$slot]->name());
 			$used[$slot] = true;

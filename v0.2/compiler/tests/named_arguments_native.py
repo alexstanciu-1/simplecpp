@@ -117,12 +117,8 @@ def prove_static_methods(work, flavor):
     edits.extend([('collision', collision, b'CO4312' if flavor == 'php' else b'CO4366'),
                   ('collision', None, b'CO4312')])
     if flavor == 'php':
-        edits.append(('base', renamed.replace('public static function',
-                      'public static function probe():int {return static::make(start: 1);} public static function'),
+        edits.append(('main', '$w=new Child();return $w::make(start: 1);',
                       'Named arguments require a direct source function'))
-        edits += [('base', renamed, b'CO4312'),
-                  ('main', '$w=new Child();return $w::make(start: 1);',
-                   'Named arguments require a direct source function')]
     revisions(work, flavor, {'main': main, 'base': base, 'child': child,
                              'effects': effects, 'positional': positional}, edits)
 
@@ -157,6 +153,29 @@ def prove_lexical_static(work, flavor):
     ])
 
 
+def prove_late_static(work, flavor):
+    _, (syntax, klass, _, static, sep) = static_sources(flavor)
+    v = syntax['v']
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    params = [('offset', 'int'), ('count', 'int')]
+    digits = f'{v}offset * 10 + {v}count'
+    base = klass('Base', static('make', f'return {digits};', params)
+                 + static('run', f'return {late}make(count: 3, offset: 4);'))
+    def child(parameters):
+        return klass('Child', static('make', f'return 100 + {digits};', parameters), 'Base')
+    original = child(params)
+    renamed = original.replace('count', 'length')
+    base_only = f'echo Base{sep}run();return 8;'
+    both = f'echo Base{sep}run(),Child{sep}run();return 8;'
+    error = 'Unknown named argument: count on Child::make'
+    revisions(work, flavor, dict(main=both, base=base, child=original), [
+        (None, None, b'43143'), (None, None, b'43143'),
+        ('child', renamed, error), ('main', base_only, b'43'), ('main', both, error),
+        ('child', original, b'43143'), ('child', klass('Child', '', 'Base'), b'4343'),
+        ('child', child(list(reversed(params))), b'43143'),
+    ])
+
+
 if __name__ == '__main__':
     with TemporaryDirectory(prefix='scpp-named-arguments-') as tmp:
         for flavor in ('php', 'cpp', 'js'):
@@ -175,6 +194,11 @@ if __name__ == '__main__':
         lexical_methods.mkdir()
         for flavor in ('php', 'cpp', 'js'):
             prove_lexical_static(lexical_methods, flavor)
+
+        late_methods = Path(tmp) / 'late-methods'
+        late_methods.mkdir()
+        for flavor in ('php', 'cpp', 'js'):
+            prove_late_static(late_methods, flavor)
 
         guard(static_methods, 'php', 'static-conversion-order',
               'class Window {public static function make(int $offset, byte $count):int {echo "X";return 8;}} '

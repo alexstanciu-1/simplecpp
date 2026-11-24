@@ -945,7 +945,7 @@ final class Parser
 		}
 		$labels = match ($qualifier) {
 			call_qualifier::ordinary => $separator !== token_kind::scope || $receiver === null ? [] : null,
-			call_qualifier::lexical_self, call_qualifier::lexical_parent => [],
+			call_qualifier::lexical_self, call_qualifier::lexical_parent, call_qualifier::called_type => [],
 			default => null,
 		};
 		$arguments = $this->arguments($labels);

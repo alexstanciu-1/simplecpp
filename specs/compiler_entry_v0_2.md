@@ -191,7 +191,7 @@ caller values during body preparation, and are mutable local storage. Value para
 
 Positional calls can omit a trailing suffix with declared defaults. Direct calls to
 source functions, directly resolved instance methods and static methods qualified by explicit type name, lexical self,
-or lexical parent accept labels when all parameters are by value.
+lexical parent or called type accept labels when all parameters are by value.
 An instance call evaluates its receiver once and retains it through the call, before evaluating arguments. PHP, C++ and JS
 use `difference(right: nextRight(), left: nextLeft())`. Python uses
 `difference(right=nextRight(), left=nextLeft())`. Positional arguments can precede
