@@ -71,7 +71,7 @@ if(async_frames)
 endif()
 string(JSON mt_segments ERROR_VARIABLE mt_error GET "${runtime_profile}" mt_segments)
 if(mt_segments)
-  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segments.hpp)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segment.hpp ${runtime_generated}/public/scpp/mt_segments.hpp)
 endif()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp

@@ -155,3 +155,13 @@ Append promotes to private heap storage when the result exceeds 22 bytes.
 Clear and moved-from values use the empty inline form. Both forms pass borrowed
 bytes to the runtime through a private view. The layout change requires a
 coordinated rebuild of native consumers and runtime archives.
+
+## Joined segment lowering
+
+Ordinary generated units, including vector consumers, have no MT header dependency.
+With MT enabled, vector declarations forward-declare the launch job for private
+storage access. A worker or helper that takes a segment uses `scpp/mt_segment.hpp`
+for checked indexing and counting. Its only includes are `stddef.h` and `stdint.h`.
+A unit lowering `mt_join` uses `scpp/mt_segments.hpp`, which includes the segment
+header and declares the job descriptor, vector borrow operation and joined call.
+Admission, pool state, synchronization and failure handling live in the runtime source.

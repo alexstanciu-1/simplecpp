@@ -1,20 +1,20 @@
 #pragma once
-#include <stddef.h>
-#include <stdint.h>
+#include "scpp/mt_segment.hpp"
 
 namespace scpp::mt {
-// Compiler-created views borrow a live vector allocation for one joined call.
-// The compiler retains the element type; stride is its native sizeof.
-struct segment {
-    unsigned char* data;
-    size_t stride;
-    int64_t size, offset, length;
-    void* at(int64_t index) const;
-};
 struct job {
     int64_t (*run)(segment, segment);
     segment inputs[2];
     int64_t result{};
+
+    template<class Vector>
+    static segment borrow(Vector& vector, int64_t offset, int64_t length) {
+        auto* data = vector.mt_data();
+        return {reinterpret_cast<unsigned char*>(data), sizeof(*data), vector.size(), offset, length};
+    }
+private:
+    friend void join(job*, size_t);
+    static void admit(const job*, size_t);
 };
 void join(job* jobs, size_t count);
 }

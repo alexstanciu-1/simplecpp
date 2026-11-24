@@ -139,6 +139,7 @@ final class Cpp_Concrete_Collections
 			$body = \Scpp\Api\concreteApplication($type::concrete_recipe(), $arguments, $values, $this->root);
 			$header = "// Concrete application collection; include after complete element declarations.\n#ifndef $guard\n#define $guard\n";
 			foreach (array_unique($includes) as $include) $header .= '#include <' . $include . ">\n";
+			if (($values['mt_segments'] ?? '') === '1') $header .= "namespace scpp::mt { struct job; }\n";
 			$header .= \Scpp\Api\concreteSupport($type::concrete_recipe());
 			foreach ($type->concrete_types() as $argument) {
 				if ($argument instanceof application_collection_type) {

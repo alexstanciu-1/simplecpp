@@ -111,7 +111,7 @@ public:
 };
 }
 
-void join(job* jobs, std::size_t count) {
+void job::admit(const job* jobs, std::size_t count) {
     struct interval { const void* backing; std::int64_t first, end; };
     std::vector<interval> admitted;
     for (std::size_t i = 0; i < count; ++i) {
@@ -127,6 +127,10 @@ void join(job* jobs, std::size_t count) {
             admitted.push_back(next);
         }
     }
+}
+
+void join(job* jobs, std::size_t count) {
+    job::admit(jobs, count);
     std::vector<std::exception_ptr> errors(count);
     if (count < 2) {
         batch_slice{jobs, errors.data(), 0, count}.run();

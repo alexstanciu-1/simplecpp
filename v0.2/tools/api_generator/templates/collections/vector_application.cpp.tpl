@@ -5,6 +5,7 @@ public:
 @section_output_declaration@
 @section_declaration@
 private:
+@section_private_declaration@
 struct storage;
 storage* storage_ = nullptr;
 friend struct @access@;

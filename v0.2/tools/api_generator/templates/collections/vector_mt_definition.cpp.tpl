@@ -1,1 +1,1 @@
-@inline@unsigned char* @n@::mt_data() noexcept { return storage_ ? storage_->data : nullptr; }
+@inline@@e@* @n@::mt_data() noexcept { return storage_ ? reinterpret_cast<@e@*>(storage_->data) : nullptr; }

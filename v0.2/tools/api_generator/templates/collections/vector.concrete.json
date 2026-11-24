@@ -5,7 +5,8 @@
   "fragments": {
     "storage": ["collections/vector_storage"],
     "access": ["collections/vector_access"],
-    "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration", {"template": "collections/vector_mt_declaration", "when": "mt_segments"}, {"template": "collections/vector_reserve_declaration", "when": "enable_reserve"}],
+    "declaration": ["core/lifecycle_declaration", "collections/vector_methods_declaration", {"template": "collections/vector_reserve_declaration", "when": "enable_reserve"}],
+    "private_declaration": [{"template": "collections/vector_mt_declaration", "when": "mt_segments"}],
     "definition": ["core/concrete_owner_lifecycle", "collections/vector_methods_definition", {"template": "collections/vector_mt_definition", "when": "mt_segments"}, {"template": "collections/vector_reserve_definition", "when": "enable_reserve"}, "collections/vector_iteration"],
     "output_declaration": ["collections/vector_iteration_output", "core/iteration_output", "collections/vector_output_declaration"],
     "output_definition": ["collections/vector_output_iteration"]

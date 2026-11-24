@@ -1,1 +1,2 @@
-    unsigned char* mt_data() noexcept;
+    friend struct ::scpp::mt::job;
+    @e@* mt_data() noexcept;

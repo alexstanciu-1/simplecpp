@@ -15,6 +15,9 @@ Int work_(segment, segment);
 scpp::vector_int64 dispatch_(Rows&, scpp::vector_int64&, scpp::vector_int64&, Int);
 }
 
+template<class T> concept exposes_mt_data = requires(T& value) { value.mt_data(); };
+static_assert(!exposes_mt_data<Rows> && !exposes_mt_data<scpp::vector_int64>);
+
 static Point* points[2];
 static Int* adjustments[2];
 static std::atomic<int> entries{}, exits{};
@@ -25,7 +28,7 @@ static thread_local int calls_on_this_thread;
 static Int observed(segment rows, segment deltas) {
     ++entries;
     while (entries.load() < 2) std::this_thread::yield();
-    const auto offset = rows.offset;
+    const int offset = rows.at(0) == points[0] ? 0 : 1;
     assert((std::this_thread::get_id() == caller) == (offset == 0));
     calls[offset] = ++calls_on_this_thread;
     assert(rows.at(0) == points[offset] && deltas.at(0) == adjustments[offset]);
@@ -41,8 +44,8 @@ int main() {
     scpp::vector_int64 deltas;
     for (int i = 0; i < 3; ++i) { rows.append(Point{}); deltas.append(i + 2); }
     for (int i = 0; i < 2; ++i) {
-        points[i] = reinterpret_cast<Point*>(rows.mt_data() + i * sizeof(Point));
-        adjustments[i] = reinterpret_cast<Int*>(deltas.mt_data() + i * sizeof(Int));
+        points[i] = static_cast<Point*>(scpp::mt::job::borrow(rows, i, 1).at(0));
+        adjustments[i] = static_cast<Int*>(scpp::mt::job::borrow(deltas, i, 1).at(0));
     }
     auto& alias = deltas;
     try { App::dispatch_(rows, deltas, alias, 0); return 4; }
@@ -50,17 +53,16 @@ int main() {
     assert(points[0]->x == 1 && points[1]->x == 1 && *adjustments[0] == 2 && *adjustments[1] == 3);
     using namespace scpp::mt;
     job jobs[]{
-        {observed, {{rows.mt_data(), sizeof(Point), rows.size(), 0, 1}, {deltas.mt_data(), sizeof(Int), deltas.size(), 0, 1}}},
-        {observed, {{rows.mt_data(), sizeof(Point), rows.size(), 1, 1}, {alias.mt_data(), sizeof(Int), alias.size(), 0, 1}}}
+        {observed, {job::borrow(rows, 0, 1), job::borrow(deltas, 0, 1)}},
+        {observed, {job::borrow(rows, 1, 1), job::borrow(alias, 0, 1)}}
     };
     try { join(jobs, 2); return 1; } catch (const std::invalid_argument&) {}
     assert(entries == 0 && points[0]->x == 1 && points[1]->x == 1);
 
-    jobs[1].inputs[1].offset = 1;
-    jobs[1].inputs[1].length = std::numeric_limits<Int>::max();
+    jobs[1].inputs[1] = job::borrow(alias, 1, std::numeric_limits<Int>::max());
     try { join(jobs, 2); return 2; } catch (const std::out_of_range&) {}
     assert(entries == 0);
-    jobs[1].inputs[1].length = 1;
+    jobs[1].inputs[1] = job::borrow(alias, 1, 1);
     join(jobs, 2);
     assert(exits == 2 && jobs[0].result == 3 && jobs[1].result == 4);
     assert(rows.at(0).x == 3 && rows.at(1).x == 4 && rows.at(2).x == 1);
@@ -77,8 +79,8 @@ int main() {
     auto results = App::dispatch_(rows, deltas, alias, 1);
     assert(results.at(0) == 15 && results.at(1) == 19 && rows.at(2).x == 1);
     // Empty half-open ranges can coincide at the end of the same vector.
-    job empty{App::work_, {{rows.mt_data(), sizeof(Point), rows.size(), rows.size(), 0},
-                           {alias.mt_data(), sizeof(Int), alias.size(), alias.size(), 0}}};
+    job empty{App::work_, {job::borrow(rows, rows.size(), 0),
+                           job::borrow(alias, alias.size(), 0)}};
     job empties[]{empty, empty};
     join(empties, 2);
     assert(empties[0].result == 0 && empties[1].result == 0);

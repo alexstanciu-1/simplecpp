@@ -19,7 +19,7 @@ final class segment_type extends type_definition implements index_read_type, ind
 	/** @return string[] */
 	public function cpp_headers(): array /** list<string> */
 	{
-		return ['scpp/mt_segments.hpp', ...$this->element->cpp_headers()];
+		return ['scpp/mt_segment.hpp', ...$this->element->cpp_headers()];
 	}
 
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
@@ -62,7 +62,7 @@ final class segment_type extends type_definition implements index_read_type, ind
 
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string
 	{
-		$length = '(' . $receiver . ').length';
+		$length = '(' . $receiver . ').count()';
 		return $operation === collection_cardinality::count ? $length : '(' . $length . ' == 0)';
 	}
 }

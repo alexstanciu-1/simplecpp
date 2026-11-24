@@ -2586,8 +2586,7 @@ CPP;
 						$operands = [];
 						foreach ($segment->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
 						[$owner, $offset, $length] = $operands;
-						$element = $segment->type_def()->element->cpp_type();
-						$args[] = "{($owner).mt_data(), sizeof($element), ($owner).size(), $offset, $length}";
+						$args[] = "::scpp::mt::job::borrow($owner, $offset, $length)";
 					}
 					$jobs[] = '{&' . $name . ', {' . implode(', ', $args) . '}}';
 				}

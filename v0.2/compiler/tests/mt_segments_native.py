@@ -96,6 +96,19 @@ def prove(work):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
             assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356'
         if flavor == 'php':
+            # Check the transitive header closure in an MT-enabled, mixed-use build.
+            view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
+            for header, includes in [(view, ['stddef.h', 'stdint.h']), (launch, ['scpp/' + view])]:
+                path = ROOT / 'runtime/generated/public/scpp' / header
+                direct = re.findall(r'^#include [<"]([^>"]+)[>"]', path.read_text(), re.M)
+                assert sorted(direct) == sorted(includes), (header, direct)
+                subprocess.run([*FLAGS, '-x', 'c++', '-fsyntax-only', '-'],
+                               input=f'#include <scpp/{header}>\n', text=True, check=True)
+            for source, expected in [('main.php', set()), ('point.php', set()),
+                                     ('helper.php', {view}), ('worker.php', {view}),
+                                     ('dispatch.php', {view, launch})]:
+                deps = subprocess.check_output([*FLAGS, '-MM', out / manifest['sources'][source]], text=True)
+                assert {Path(dep).name for dep in deps.split() if '/scpp/mt_' in dep} == expected, deps
             # Exercise the compiler-generated application vector and the actual worker body.
             headers = [out / name for name in manifest['headers']]
             collection = next(h for h in headers if 'mt_data(' in h.read_text())

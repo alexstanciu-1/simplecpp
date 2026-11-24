@@ -67,6 +67,7 @@ foreach ([false, true] as $enabled) {
     $runtimeFiles = render($mtPlan);
     $registry = renderCompiler($functionMetadata, $facts, $mtPlan)['types/registry.php'];
     requireThat(str_contains($registry, 'HAS_MT_SEGMENTS = ' . ($enabled ? 'true;' : 'false;'))
+        && isset($runtimeFiles['public/scpp/mt_segment.hpp']) === $enabled
         && isset($runtimeFiles['public/scpp/mt_segments.hpp']) === $enabled
         && str_contains($runtimeFiles['public/' . $mtPlan['vectors_header']], 'mt_data()') === $enabled,
         'Compiler and runtime disagree on exclusive segment availability');
