@@ -163,7 +163,7 @@ def prove_int_capture(work):
         ('main', edited.replace('$add(4)', 'apply($add)'), callback_error),
         ('main', f'$offset=5; echo apply({closure}); return 8;', callback_error),
         ('main', edited.replace('$offset=5;', ''), 'Capture requires an initialized local: offset'),
-        ('main', edited.replace('$offset=5;', '$offset="5";'), 'By-value capture requires an int local: offset'),
+        ('main', edited.replace('$offset=5;', '$offset="5";').replace('$offset=10;', '$offset="10";').replace('return $n + $offset;', 'echo $offset; return $n;'), b'54'),
         ('main', edited.replace('return $n + $offset;', '$offset=8; return $n;'), 'Cannot write to by-value capture'),
         ('main', edited.replace('int $n)', 'int $offset)'), 'Capture conflicts with closure parameter'),
         ('main', entry, b'7'),
@@ -172,7 +172,7 @@ def prove_int_capture(work):
         ('main', edited.replace('return $n + $offset;', 'return $n;'), b'4'),
         ('main', entry.replace('$offset=3;', '$offset=seed();'), 'Unknown function: seed'),
         ('seed', 'function seed():int {return 3;}', b'7'),
-        ('seed', 'function seed():string {return "3";}', 'By-value capture requires an int local'),
+        ('seed', 'function seed():Iterator<int> {yield 3;}', 'Generator cursors are move-only'),
         ('seed', 'function seed():int {return 5;}', b'9'),
     ], unaffected_source='consumer.php', unaffected_revisions={2, 4, 11})
 
@@ -190,8 +190,34 @@ def prove_multiple_int_captures(work):
         ('main', duplicate, f'main.php:1:{column}: Duplicate closure capture: base'),
         ('main', entry, b'23'),
         ('main', entry.replace(captures, 'use ($step, $base)'), b'23'),
-        ('helper', 'function initialStep():string {return "3";}', 'By-value capture requires an int local: step'),
+        ('helper', 'function initialStep():Iterator<int> {yield 3;}', 'Generator cursors are move-only'),
         ('helper', helper, b'23'),
+    ])
+
+
+def prove_capture_copy_contract(work):
+    model = 'class Counter { public int $n=1; }'
+    entry = """$items vector<int> = [2]; $enabled=true; $label="before"; $owner=new Counter();
+        $alias=$owner;
+        $read=function () use ($enabled, $label, $items, $owner):void {
+            if ($enabled) { echo $label, $items[0], $owner->n; }
+        };
+        $enabled=false; $label="after"; $items[0]=8; $owner=new Counter();
+        $owner->n=4; $alias->n=7; $read(); return 8;"""
+    binding = '$value=sourceValue();'
+    capture = binding + ' $read=function () use ($value):void {echo $value;}; $read(); return 8;'
+    cursor = 'function sourceValue():Iterator<int> {yield 2;}'
+    string = 'function sourceValue():string {return "ok";}'
+    line_prefix = f"main.php:1:{capture.index('$value)') + 1}: "
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, model=model, source=string), [
+        (None, None, b'before27'), (None, None, b'before27'),
+        ('main', entry.replace('if ($enabled)', '$items[0]=0; if ($enabled)'), 'Cannot write to by-value capture'),
+        ('main', capture, b'ok'),
+        ('source', cursor, line_prefix + 'Generator cursors are move-only'),
+        ('main', binding + ' $copy=$value; return 8;', 'Generator cursors are move-only'),
+        ('main', capture, line_prefix + 'Generator cursors are move-only'),
+        ('source', string, b'ok'),
     ])
 
 
@@ -292,6 +318,7 @@ def main():
         prove_void_block(root / 'void-block')
         prove_int_capture(root / 'int-capture')
         prove_multiple_int_captures(root / 'multiple-int-captures')
+        prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')

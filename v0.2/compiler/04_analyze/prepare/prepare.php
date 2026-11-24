@@ -994,26 +994,34 @@ final class Preparation
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
-			if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $declaration);
 			if (!$type->supports_inferred_local() && !($type instanceof fixed_array_type)) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
-		if ($type instanceof fixed_array_type) {
-			if ($declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
-			}
-			$this->reserve_array_bytes($type->bytes, $declaration);
-		}
-		elseif ($type instanceof record_type_definition) $this->reserve_array_bytes($type->array_bytes(), $declaration);
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
+		$conversion = $this->prepare_local_initialization($declaration, $type);
 		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($type instanceof lambda_type_definition) $this->has_lambda_local = true;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
 		}
+	}
+
+	/** Owned locals and capture fields initialize through the same source conversion and layout rules. */
+	private function prepare_local_initialization(ast_local_declaration $declaration, type_definition $type): int /** uint16 */
+	{
+		if ($type instanceof fixed_array_type) {
+			if ($declaration instanceof ast_value_capture || $declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
+			}
+			$this->reserve_array_bytes($type->bytes, $declaration);
+		}
+		elseif ($type instanceof record_type_definition) {
+			if ($declaration->type_reference === null) $this->require_inline_cleanup($type, $declaration);
+			$this->reserve_array_bytes($type->array_bytes(), $declaration);
+		}
+		return $type->prepare_local_initializer($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 	}
 
 	/** Resolve both forms of type-qualified writes through the ordinary watched name lookup. */
@@ -1649,6 +1657,10 @@ final class Preparation
 			if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
 			}
+			if ($syntax->parent instanceof ast_value_capture) {
+				$syntax->settle_local($binding, unknown: true);
+				return true;
+			}
 			$id = $binding->storage_id();
 			// Reference parameters may observe writes through other aliases.
 			$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode !== passing_mode::value))
@@ -1668,6 +1680,7 @@ final class Preparation
 			$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 			return true;
 		}
+		if ($syntax->parent instanceof ast_value_capture) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture requires an initialized local: ' . $name);
 		if ($syntax instanceof ast_interpolation_name) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
 		}
@@ -1877,13 +1890,10 @@ final class Preparation
 				$reason = $locals[$name] instanceof ast_value_capture ? 'Duplicate closure capture: ' : 'Capture conflicts with closure parameter: ';
 				throw new diagnostic($capture->source(), $capture->byte_start(), $reason . $name);
 			}
-			$this->name_lookups++;
-			$this->expression_visits++;
-			$outer = $this->find_local($name);
-			if ($outer === null) throw new diagnostic($capture->source(), $capture->byte_start(), 'Capture requires an initialized local: ' . $name);
-			if ($outer->type_def() !== type_registry::integer()) throw new diagnostic($capture->source(), $capture->byte_start(), 'By-value capture requires an int local: ' . $name);
-			$capture->initializer->settle_local($outer, unknown: true);
-			$capture->settle_type($outer->type_def(), constant_evaluation::unavailable);
+			$this->value($capture->initializer);
+			$capture_type = $capture->initializer->type_def();
+			$conversion = $this->prepare_local_initialization($capture, $capture_type);
+			$capture->settle_type($capture_type, constant_evaluation::unavailable, true, $conversion);
 			$locals[$name] = $capture;
 		}
 		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== []);

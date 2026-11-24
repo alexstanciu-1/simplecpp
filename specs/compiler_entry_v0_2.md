@@ -290,10 +290,12 @@ Both inline lambdas and inferred locals can supply a callback argument when
 the component types match exactly. The C++ backend emits a concrete capture-free lambda and
 converts it to a native function pointer at the callback boundary.
 
-A PHP block closure in an inferred local initializer can capture visible `int`
+A PHP block closure in an inferred local initializer can capture visible copyable
 locals or parameters with `function () use ($base, $step): int { ... }`.
 Each capture copies its current value when the closure is created. The closure
-reads those snapshots even after the outer variables change. Each capture is
+reads those snapshots even after the outer variables change. Copying a shared handle
+retains its allocation. Move-only bindings reject at the capture site. Existing
+restrictions on callable storage and fixed-array placement apply. Each capture is
 read-only. Names must be distinct and cannot repeat a closure parameter name.
 Enclosing locals require explicit capture. Typed callbacks
 accept only capture-free callables.

@@ -634,6 +634,17 @@ abstract class type_definition
 		throw new \LogicException('Literal lowering is unavailable for type: ' . $this->name);
 	}
 
+	/** Initialize owned storage from a binding using its published copy contract or its source conversion rules. */
+	final public function prepare_local_initializer(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		if ($value instanceof ast_name_expression && $value->local_binding() !== null && $value->type_def() === $this) {
+			$copy = $this->concrete_storage_support('copy_constructible');
+			if ($copy === true) return value_conversion::identity;
+			if ($copy === false) throw new diagnostic($value->source(), $value->byte_start(), 'Cannot copy a local of type ' . $this->name);
+		}
+		return $this->prepare_conversion($value, $context);
+	}
+
 	/** Select scalar work once, with carrier transport encoded independently in the prepared integer. */
 	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{

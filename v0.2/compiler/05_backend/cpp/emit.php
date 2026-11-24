@@ -3021,7 +3021,8 @@ CPP;
 		$capture_uses = [];
 		foreach ($lambda->captures as $capture) {
 			$name = $this->name($capture);
-			$environment[] = $name . ' = ' . $this->name($capture->initializer->local_def());
+			$source = $this->name($capture->initializer->local_def());
+			$environment[] = $name . ' = ' . $this->conversion($capture->type_def(), $capture->initialization(), $source, $capture->initializer);
 			// An explicit capture may be unused in the source body.
 			$capture_uses[] = "\t(void)" . $name . ';';
 		}
