@@ -35,6 +35,10 @@ def proof(work):
     original = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = work / 'publication.json'
     published = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
+    published['types'] = ['int64', 'byte']
+    published.pop('modules', None)
+    published.pop('mt_segments', None)
+    published.pop('async_frames', None)
     published['vectors'].pop('header', None)  # Provider metadata owns the relocatable spelling.
     publication.write_text(json.dumps(published))
     report = {'configuration': 'Clang, C++23, libc++, O2/g0, mold, sequential commands, no PCH/LTO; variant runtime compiled once and reused for application builds', 'variants': {}}
@@ -572,6 +576,7 @@ def cached_application_proof(work, original, facts, context, publication):
     """Restart the actual project compiler after regeneration and reuse application/native outputs."""
     work.mkdir(exist_ok=True)
     compiler = work / 'compiler'
+    (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     # Copy the implementation so Project_Changes scans the test publication, not production PHP.
     for source in (ROOT / 'compiler').rglob('*.php'):
         relative = source.relative_to(ROOT / 'compiler')

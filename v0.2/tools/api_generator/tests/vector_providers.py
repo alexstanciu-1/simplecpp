@@ -28,6 +28,7 @@ def proof(work):
     publication['vectors'].pop('header', None)
     facts = ROOT / 'build/clang/native-layout/facts.json'
     context = facts.with_name('context.json')
+    publication.pop('mt_segments', None)  # This proof also publishes without vectors.
     generator = ROOT / 'tools/api_generator/generate.php'
     mp, pp, output = work / 'metadata.json', work / 'publication.json', work / 'runtime'
 
@@ -52,13 +53,9 @@ def proof(work):
     run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
     compiler_before = {p.name: p.read_bytes() for p in compiler.rglob('*.php')}
     runner = work / 'resolve.php'
-    runner.write_text("<?php\nrequire " + repr(str(ROOT / 'compiler/types/conversion.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/definition.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/runtime.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/vector.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/carrier.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/hash.php')) + ";\n"
-        + "require " + repr(str(ROOT / 'compiler/types/boxed.php')) + ";\n"
+    compiler_root = ROOT / 'compiler'
+    boot = (compiler_root / 'boot.php').read_text().split("require_once __DIR__ . '/generated/", 1)[0]
+    runner.write_text(boot.replace('__DIR__', repr(str(compiler_root)))
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $type) require $argv[1] . '/types/' . $type . '.php';\n"
         + "$type = \\scpp\\compiler\\type_registry::specialize('vector', \\scpp\\compiler\\type_registry::integer());\n"
         + "$queries = []; if ($type !== null) foreach (\\scpp\\compiler\\collection_cardinality::cases() as $op) {\n"

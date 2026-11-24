@@ -494,7 +494,7 @@ function renderCarriers(array $plan): array {
                 $d .= template('carriers/carrier_true_definition', $vars);
             }
         }
-        $h .= "private:\n" . $instances[$n]['private_declaration'] . "    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+        $h .= "private:\n" . "    struct storage;\n    storage* storage_ = nullptr;\n};\n";
     }
     return [$h . "}\n", $d];
 }
