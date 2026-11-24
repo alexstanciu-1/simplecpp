@@ -1,5 +1,6 @@
 """Constant dispatch, case-local flow, protected exits and incremental publication."""
 import json
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -14,7 +15,7 @@ from parent_methods_native import write_app
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, cxx_flags=()):
     s = fixture(flavor)
     v, fn, local = s['v'], s['function'], s['infer']
     label = 'const KEY:string="a\\0b";' if flavor == 'js' else 'const string KEY="a\\0b";'
@@ -82,7 +83,7 @@ def prove(work, flavor, library):
             units = {Path(p).stem:u for p,u in json.loads((out/'manifest.json').read_text())['sources'].items()}
             emitted = (out/units['api']).read_text()
             assert 'std::memcmp(' in emitted and '[[fallthrough]];' in emitted and 'case -1LL:' in emitted
-            changed = incremental_native_build(out,work/(flavor+'-native'),'clang++',library,stdout)
+            changed = incremental_native_build(out,work/(flavor+'-native'),'clang++',library,stdout,cxx_flags=cxx_flags)
             if rev in [1,2]: assert changed=={units['nested']} and got['preparation']['prepared']==1,got
             if rev==7: assert not changed and not got['emitted_sources'] and got['preparation']['prepared']==0,got
     finally:
@@ -116,7 +117,11 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-switch-') as directory:
         work=Path(directory)
-        library=runtime(work,'clang++')
-        for flavor in ('cpp','php','js'): prove(work,flavor,library)
+        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work,'clang++')
+        for flavor in (('php',) if quick else ('cpp','php','js')):
+            prove(work,flavor,library,('-stdlib=libc++',) if quick else ())

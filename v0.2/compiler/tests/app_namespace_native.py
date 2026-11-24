@@ -29,7 +29,7 @@ def artifacts(folder):
     return {p.relative_to(folder): p.read_bytes() for p in folder.rglob('*') if p.suffix in ('.cpp', '.hpp')}
 
 
-def prove(work):
+def prove(work, quick=False):
     app, output, native = (work / n for n in ('app', 'output', 'native'))
     app.mkdir(parents=True)
     native.mkdir()
@@ -205,6 +205,8 @@ def prove(work):
                               ('invalid', {'cpp_namespace': 'bad::class'}), ('retry', {'cpp_namespace': 'bad::class'}),
                               ('shadow', {'cpp_namespace': 'starts_with'}), ('restore', {}),
                               *((label, {}) for label in edits)]:
+            if quick and label not in {'default', 'custom', 'no_edit', 'invalid', 'global', 'shadow', 'restore', 'bad-suffix-php', 'recovery-suffix-php'}:
+                continue
             manifest.write_text(json.dumps(config))
             if label in edits:
                 path, text = edits[label]
@@ -271,9 +273,10 @@ def prove(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     if args.output:
-        prove(args.output.resolve())
+        prove(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory() as folder:
-            prove(Path(folder))
+            prove(Path(folder), args.quick)

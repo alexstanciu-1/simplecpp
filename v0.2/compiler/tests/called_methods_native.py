@@ -8,7 +8,7 @@ from collection_goal_native import revisions
 from protected_static_native import sources
 
 
-def prove(work, flavor):
+def prove(work, flavor, *, quick=False):
     _, (s, klass, _, static, sep) = sources(flavor)
     # The recursive edge is never executed. It proves that an internal cycle cannot keep itself live.
     base = klass('Base', static('read', 'if (false) {return Left'+sep+'read();} return 3;'))
@@ -21,15 +21,24 @@ def prove(work, flavor):
     invalid = klass('Base', static('read', 'return missing();'))
     source = dict(base=plain, left=klass('Left', '', 'Base'), right=klass('Right', '', 'Base'),
                   caller=caller, main=main)
-    revisions(work, flavor, source, [
-        (None, None, b'3'), (None, None, b'3'),
-        ('caller', None, b'3'), ('base', invalid, 'Unknown function'), (None, None, 'Unknown function'),
-        ('main', 'return 8;', b''), ('base', base, b''), ('caller', caller, b''),
-        ('caller', None, b''), ('base', plain, b''), ('main', main, b'3'), ('caller', caller, b'3'),
-        ('base', duplicate, 'Duplicate local'), (None, None, 'Duplicate local'), ('base', plain, b'3'),
-    ])
-    for revision, left, right in [(0, True, True), (2, False, True), (5, False, False),
-                                  (7, True, False), (8, False, False), (11, True, True)]:
+    if quick:
+        revisions(work, flavor, source, [
+            (None, None, b'3'), ('caller', None, b'3'),
+            ('base', invalid, 'Unknown function'), ('main', 'return 8;', b''),
+            ('caller', caller, 'Unknown function'), ('base', plain, b''),
+        ])
+        demands = [(0, True, True), (1, False, True), (3, False, False), (5, True, False)]
+    else:
+        revisions(work, flavor, source, [
+            (None, None, b'3'), (None, None, b'3'),
+            ('caller', None, b'3'), ('base', invalid, 'Unknown function'), (None, None, 'Unknown function'),
+            ('main', 'return 8;', b''), ('base', base, b''), ('caller', caller, b''),
+            ('caller', None, b''), ('base', plain, b''), ('main', main, b'3'), ('caller', caller, b'3'),
+            ('base', duplicate, 'Duplicate local'), (None, None, 'Duplicate local'), ('base', plain, b'3'),
+        ])
+        demands = [(0, True, True), (2, False, True), (5, False, False),
+                                  (7, True, False), (8, False, False), (11, True, True)]
+    for revision, left, right in demands:
         units = work / f'{flavor}-fresh-{revision}' / 'units'
         cpp = ''.join(p.read_text() for p in units.glob('*.cpp'))
         headers = ''.join(p.read_text() for p in units.glob('*.hpp'))
@@ -37,6 +46,8 @@ def prove(work, flavor):
             native = f'called_{len(name)}_{name}_4_Base_read('
             assert (native in cpp) == active and (native in headers) == active, (revision, name, active)
 
+    if quick:
+        return
     app = work / flavor
     subprocess.run(['php', Path(__file__).with_name('called_method_lifetime.php'), app,
                     work / (flavor + '-lifetime'), app / ('caller.' + flavor)], check=True)
@@ -160,15 +171,19 @@ def factories(work, flavor):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as temporary:
         root = args.output or Path(temporary)
         root.mkdir(exist_ok=True)
-        for flavor in ('php', 'cpp', 'js'):
-            prove(root, flavor)
-            (root / 'forwarding').mkdir(exist_ok=True)
-            forwarding(root / 'forwarding', flavor)
-            (root / 'late').mkdir(exist_ok=True)
-            late_selection(root / 'late', flavor)
-            (root / 'factories').mkdir(exist_ok=True)
-            factories(root / 'factories', flavor)
+        if args.quick:
+            prove(root, 'php', quick=True)
+        else:
+            for flavor in ('php', 'cpp', 'js'):
+                prove(root, flavor)
+                (root / 'forwarding').mkdir(exist_ok=True)
+                forwarding(root / 'forwarding', flavor)
+                (root / 'late').mkdir(exist_ok=True)
+                late_selection(root / 'late', flavor)
+                (root / 'factories').mkdir(exist_ok=True)
+                factories(root / 'factories', flavor)

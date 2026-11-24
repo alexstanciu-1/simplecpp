@@ -23,10 +23,10 @@ def snapshots(directory, pattern):
     return {p.name: p.stat().st_mtime_ns for p in directory.glob(pattern)}
 
 
-def prove(work):
+def prove(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     results = {}
-    for flavor in ('cpp', 'php', 'js'):
+    for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
         app = work / flavor / 'app'
         output = work / flavor / 'generated'
         build = work / flavor / 'native'
@@ -194,9 +194,10 @@ def prove(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     if args.output:
-        prove(args.output.resolve())
+        prove(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-incremental-exe-') as directory:
-            prove(Path(directory))
+            prove(Path(directory), args.quick)

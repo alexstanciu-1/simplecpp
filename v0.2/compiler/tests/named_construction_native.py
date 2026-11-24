@@ -1,4 +1,5 @@
 """Constructor label ownership, ordered base initialization and visible dispatch contracts."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -7,7 +8,7 @@ from protected_static_native import sources
 from interfaces_native import forms as interface_forms
 
 
-def constructors(work, flavor):
+def constructors(work, flavor, quick=False):
     _, (s, klass, _, static, sep) = sources(flavor)
     v, fn = s['v'], s['function']
     params = {'php': 'int $left,int $middle=5,int $right=7',
@@ -34,8 +35,7 @@ def constructors(work, flavor):
     trace = b'RL253'
     plain_child = child('2,5,3')
     result = trace*3 + b'C' + trace
-    revisions(work, flavor, dict(main=main, base=base, middle=middle, child=plain_child,
-                                 effects=effects, point=inline), [
+    edits = [
         (None, None, trace*2 + b'253C' + trace), ('child', child(named), result),
         ('point', inline.replace('right', 'count'), 'Unknown named argument: right'),
         ('point', inline, result), ('child', plain_child, trace*2 + b'253C' + trace),
@@ -47,7 +47,9 @@ def constructors(work, flavor):
                             'js': '{super(0);}'}[flavor], 'Base'), 'Unknown named argument: right on Middle::__construct'),
         ('main', s['infer']('d', 'Base'+sep+'build()') + 'return 8;', trace),
         ('middle', middle, trace), ('main', main, trace*2 + b'253C' + trace),
-    ])
+    ]
+    revisions(work, flavor, dict(main=main, base=base, middle=middle, child=plain_child,
+                                 effects=effects, point=inline), edits[:4] if quick else edits)
 
 
 def dispatch(work, flavor):
@@ -141,7 +143,19 @@ def base_lifetime(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with TemporaryDirectory(prefix='scpp-named-targets-') as tmp:
+        if quick:
+            constructors(Path(tmp), "php", quick=True)
+            dispatch_dir = Path(tmp) / "dispatch"
+            dispatch_dir.mkdir()
+            dispatch(dispatch_dir, "php")
+            lifetime_dir = Path(tmp) / "lifetime"
+            lifetime_dir.mkdir()
+            inline_lifetime(lifetime_dir)
+            raise SystemExit(0)
         for proof in (constructors, dispatch):
             work = Path(tmp) / proof.__name__
             work.mkdir()

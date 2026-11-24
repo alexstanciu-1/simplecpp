@@ -1,12 +1,13 @@
 """Required shared fields across successful construction, failure and retained recovery."""
 from pathlib import Path
+import argparse
 import tempfile
 
 from collection_goal_native import revisions
 from parent_methods_native import syntax
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     s, _, klass, _, method = syntax(flavor)
     v, access = s['v'], s['access']
     target = v + 'this' + access + 'child'
@@ -41,7 +42,7 @@ def prove(work, flavor):
     idle = s['function']('idle', 'int', [], 'return 17;')
     sources = dict(holders=good, children=child, nodes=klass('Node', s['field']('number', 'int', '7')),
                    api=api, main=main, idle=idle)
-    revisions(work, flavor, sources, [
+    edits = [
         (None, None, b'77'),
         (None, None, b'77'),
         ('holders', holder(f'if ({v}flag) {{{assign}}}'), 'Required property is not initialized: child'),
@@ -70,14 +71,20 @@ def prove(work, flavor):
          'Required property is not initialized: child'),
         ('holders', holder('switch (1) {case 1:switch (2) {default:' + assign + 'break 2;}default:' + assign + '}'),
          b'77'),
-    ], unaffected_source='idle.' + flavor)
-    for revision, checked in [(0, False), (15, True), (17, False)]:
+    ]
+    selected = [0, 2, 4, 14, 15, 16, 17] if quick else list(range(len(edits)))
+    revisions(work, flavor, sources, [edits[i] for i in selected], unaffected_source='idle.' + flavor)
+    for original, checked in [(0, False), (15, True), (17, False)]:
+        revision = selected.index(original)
         units = (work / f'{flavor}-fresh-{revision}' / 'units').iterdir()
         emitted = '\n'.join(unit.read_text() for unit in units)
         assert ('value_(owner_Node::require(' in emitted) == checked, (flavor, revision)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-required-fields-') as directory:
-        for language in ('php', 'cpp', 'js'):
-            prove(Path(directory), language)
+        for language in (('php',) if quick else ('php', 'cpp', 'js')):
+            prove(Path(directory), language, quick)

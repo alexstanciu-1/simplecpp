@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
-import sys
+import argparse
 import tempfile
 
 from classes_native import fixture
@@ -35,7 +35,7 @@ def emit_scanner(work, flavor, method, driver):
     return unit, header
 
 
-def prove(root, facts, context):
+def prove(root, facts, context, quick=False):
     compiler = root / 'compiler'
     shutil.copytree(PROJECT / 'compiler', compiler, ignore=shutil.ignore_patterns('tests', 'generated', '__pycache__'))
     driver = compiler / 'tests/incremental_executable.php'
@@ -47,7 +47,7 @@ def prove(root, facts, context):
     config = runtime / 'metadata/runtime.json'
     metadata = json.loads(config.read_text())
     index = metadata['string']['index_read']
-    for method in (index['method'], 'checked_byte_view'):
+    for method in (('checked_byte_view',) if quick else (index['method'], 'checked_byte_view')):
         work = root / method
         work.mkdir()
         index['method'] = method
@@ -56,7 +56,7 @@ def prove(root, facts, context):
             subprocess.run(['php', PROJECT / 'tools/api_generator/generate.php', 'emit-' + family,
                             config, runtime / 'metadata/publication.json', facts, context, root / family / 'generated'],
                            check=True)
-        scanners = [emit_scanner(work, flavor, method, driver) for flavor in ('cpp', 'php', 'js')]
+        scanners = [emit_scanner(work, flavor, method, driver) for flavor in (('php',) if quick else ('cpp', 'php', 'js'))]
         cc = 'clang++'
         flags = [cc, '-std=c++23', '-O1', '-UNDEBUG', *['-I' + str(runtime / path) for path in
                  ('generated/public', 'generated/private', 'src/numeric', 'src/sequence', 'src/hash')]]
@@ -70,5 +70,10 @@ def prove(root, facts, context):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('facts', type=Path)
+    parser.add_argument('context', type=Path)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-byte-view-') as temp:
-        prove(Path(temp), *map(Path, sys.argv[1:]))
+        prove(Path(temp), args.facts, args.context, args.quick)

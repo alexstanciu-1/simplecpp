@@ -1,5 +1,6 @@
 """Full ternary selection, native value semantics and retained edit recovery."""
 import json
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from interfaces_native import fresh
 from parent_methods_native import write_app
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, cxx_flags=()):
     s = fixture(flavor)
     fn, v = s['function'], s['v']
     choose = fn('choose', 'int', [('flag', 'bool')], f'return {v}flag ? leftArm() : rightArm();')
@@ -66,7 +67,7 @@ def prove(work, flavor, library):
             generated = (out / unit).read_text()
             assert ' ? leftArm_() : ' in generated and '[&]' not in generated, generated
             stdout = expected.replace(b'PR7', b'PR8') if revision == 2 else expected
-            changed = incremental_native_build(out, native, 'clang++', library, stdout)
+            changed = incremental_native_build(out, native, 'clang++', library, stdout, cxx_flags=cxx_flags)
             if revision in (1, 6):
                 assert result['preparation']['prepared'] == 0 and not result['emitted_sources'] and not changed, result
             if revision == 2:
@@ -78,8 +79,11 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-ternary-') as temporary:
         work = Path(temporary)
-        library = runtime(work, 'clang++')
-        for flavor in ('cpp', 'php', 'js'):
-            prove(work, flavor, library)
+        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++')
+        for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
+            prove(work, flavor, library, ("-stdlib=libc++",) if quick else ())

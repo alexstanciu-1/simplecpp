@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import argparse
 import tempfile
 
 from app_namespace_native import artifacts, invoke, service
@@ -10,7 +11,7 @@ from exceptions_native import catch, fresh_build, native
 from extends_native import runtime, source_edit
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, cxx_flags=()):
     form = fixture(flavor)
     v, access, function = form['v'], form['access'], form['function']
     app = work / 'app'
@@ -67,7 +68,7 @@ def prove(work, flavor, library):
         result = invoke(resident)
         assert 'error' not in result, result
         expected = (0, b'L:0:0:L:F:coalesce:K:21:K:F:match:cleanup:22:F:cleanup:done', b'')
-        native(output, work / 'lazy', expected, library)
+        native(output, work / 'lazy', expected, library, cxx_flags=cxx_flags)
         before = artifacts(output)
         manifest = (output / 'manifest.json').read_bytes()
 
@@ -90,7 +91,7 @@ def prove(work, flavor, library):
         fresh_output = work / 'fresh-recovered'
         assert 'error' not in fresh_build(app, fresh_output)
         assert artifacts(output) == artifacts(fresh_output) == before
-        native(output, work / 'recovered', expected, library)
+        native(output, work / 'recovered', expected, library, cxx_flags=cxx_flags)
 
         prefix = local('diag', 'Diagnostic', 'new Diagnostic()') + local('present', '?int', '1')
         invalid = [
@@ -114,10 +115,13 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     os.environ['XDEBUG_MODE'] = 'off'
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
-        library = runtime(work, 'clang++')
-        for flavor in ['cpp', 'php', 'js']:
-            prove(work / flavor, flavor, library)
+        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++')
+        for flavor in (['php'] if quick else ['cpp', 'php', 'js']):
+            prove(work / flavor, flavor, library, ("-stdlib=libc++",) if quick else ())
             print(f'{flavor}: lazy throw fallbacks, typed identity, and incremental recovery passed', flush=True)

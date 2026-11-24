@@ -14,7 +14,7 @@ from parent_methods_native import write_app
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def prove(work, flavor, libraries):
+def prove(work, flavor, libraries, *, quick=False):
     s=fixture(flavor);v,fn=s['v'],s['function']
     const=lambda n,x: f'const {n}:int={x};' if flavor=='js' else f'const int {n}={x};'
     predicates=fn('test','bool',[('tag','string'),('value','bool')],f'echo {v}tag;return {v}value;')
@@ -46,7 +46,16 @@ def prove(work, flavor, libraries):
     main+='echo match(true){default=>7};return 8;'
     expected=b'AX1ABY2ABCZ4FD3QQ5M56a\0b7'
     app,out=work/flavor,work/(flavor+'-out')
-    write_app(app,flavor,{'predicates':predicates,'api':api,'limits':const('LIMIT',10),'main':main,'idle':fn('idle','int',[],'return 1;')})
+    sources = {'predicates':predicates,'api':api,'limits':const('LIMIT',10),'main':main,'idle':fn('idle','int',[],'return 1;')}
+    if quick:
+        from collection_goal_native import revisions
+        revisions(work, flavor, sources, [
+            (None, None, expected),
+            ('api', api.replace('default=>result("D",3)', 'default=>"bad"',1), 'result types'),
+            ('api', api.replace('result("Y",2)','result("Y",9)'), expected.replace(b'Y2',b'Y9')),
+        ])
+        return
+    write_app(app, flavor, sources)
     resident=service(app,out)
     edits=[(None,None,None,expected),(None,None,None,expected),
            ('predicates',predicates.replace('return '+v+'value;', 'return !!'+v+'value;',1),None,expected),
@@ -112,5 +121,11 @@ def prove(work, flavor, libraries):
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-match-conditions-') as temporary:
         work=Path(temporary)
-        libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries)
+        import argparse
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick', action='store_true')
+        if parser.parse_args().quick:
+            prove(work, 'php', {}, quick=True)
+        else:
+            libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries)

@@ -13,7 +13,7 @@ from parent_methods_native import write_app
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def prove(work,flavor,libraries):
+def prove(work, flavor, libraries, *, quick=False):
     s=fixture(flavor);v,a,fn=s['v'],s['access'],s['function']
     def local(n,t,value):
         return {'cpp':f'{t} {n} = {value};','php':f'${n} {t} = {value};','js':f'let {n}:{t} = {value};'}[flavor]
@@ -49,7 +49,16 @@ def prove(work,flavor,libraries):
     main+=s['infer']('copied',f'hash_find({v}owner{a}items,release({v}owner))')
     main+=f'if (lock({v}observer)!==null || !isset({v}copied)) {{return 98;}} echo (string){v}copied;return 8;'
     expected=b'HKHFRowned\0value'
-    app,out=work/flavor,work/(flavor+'-out');write_app(app,flavor,{'box':box,'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')})
+    app,out=work/flavor,work/(flavor+'-out');sources = {'box':box,'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')}
+    if quick:
+        from collection_goal_native import revisions
+        revisions(work, flavor, sources, [
+            (None, None, expected),
+            ('api', fn('query','int',[('h','hash<int,string>'),('key','string')],'return 7;')+api[api.index('}')+1:], 'carrier'),
+            ('api', api.replace(f'hash_find({v}h,{v}key)',f'hash_find({v}h,"missing")',1), expected.replace(b'HF',b'HM')),
+        ])
+        return
+    write_app(app, flavor, sources)
     # A valid changed signature forces the existing caller's isset to be checked again.
     end=api.index('}')+1
     invalid_api=fn('query','int',[('h','hash<int,string>'),('key','string')],'return 7;')+api[end:]
@@ -111,5 +120,11 @@ def prove(work,flavor,libraries):
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-hash-find-') as temporary:
         work=Path(temporary)
-        libraries={cc:runtime(work,cc,[ROOT/'runtime/generated/src/hash.cpp']) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries)
+        import argparse
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick', action='store_true')
+        if parser.parse_args().quick:
+            prove(work, 'php', {}, quick=True)
+        else:
+            libraries={cc:runtime(work,cc,[ROOT/'runtime/generated/src/hash.cpp']) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries)

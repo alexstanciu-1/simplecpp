@@ -36,17 +36,19 @@ def prove_parameter_reassignment(work):
     measure(output, work / 'reassignment-native', b'71:2:3:5;83:1:7')
 
 
-def prove_collections(work):
-    prove(work, 'collection_references.php', check_copy=False)
+def prove_collections(work, quick):
+    prove(work, 'collection_references.php', check_copy=False,
+          cases=["php_vector_int_", "php_hash_string_string_"] if quick else None)
     prove_parameter_reassignment(work)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     if args.output:
-        prove_collections(args.output.resolve())
+        prove_collections(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-collection-references-native-') as directory:
-            prove_collections(Path(directory))
+            prove_collections(Path(directory), args.quick)

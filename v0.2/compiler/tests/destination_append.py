@@ -39,7 +39,7 @@ def reduced_provider(work, app, baseline):
     assert artifacts(output) == ordinary
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, *, quick=False):
     app = work / ('app-' + flavor)
     app.mkdir()
     source_edit(app / 'module.json', json.dumps({'entry': 'main.' + flavor}))
@@ -77,7 +77,7 @@ def prove(work, flavor, library):
         unit = lambda n: 'units/' + hashlib.sha256(relative(n).encode()).hexdigest() + '.cpp'
         for name in names:
             assert (b'::append(' in current[Path(unit(name))] and b'destination_' in current[Path(unit(name))]) == (name in expected_users)
-        rebuilt = incremental_native_build(output, work / ('native-' + flavor), 'clang++', library, expected)
+        rebuilt = incremental_native_build(output, work / ('native-' + flavor), 'clang++', library, expected, cxx_flags=('-stdlib=libc++',) if quick else ())
         if changed is not None:
             assert set(report['emitted_sources']) == {relative(n) for n in changed}, report
             assert rebuilt == {unit(n) for n in changed}, rebuilt
@@ -100,10 +100,13 @@ def prove(work, flavor, library):
                            f'using Result=App::scpp_records::Scan;\n'
                            f'#define APPEND(items, ...) App::{spelling}::append(items, __VA_ARGS__)\n')
         binary = work / 'failure'
-        subprocess.run(['clang++', '-std=c++23', '-I', ROOT / 'runtime/generated/public', '-I', work,
+        subprocess.run(['clang++', *(['-stdlib=libc++'] if quick else []), '-std=c++23', '-I', ROOT / 'runtime/generated/public', '-I', work,
                         SCANNER / 'destination/failure.cpp', library, '-o', binary], check=True)
         subprocess.run([binary], check=True)
         run(['scan'], ['scan'], [])
+        if quick:
+            assert run([], [], ['scan']) == baseline
+            return
         run(names, names, ['again'])
         run(['again'], ['again'], ['scan'])
         assert run([], [], ['again']) == baseline
@@ -137,6 +140,13 @@ if __name__ == '__main__':
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
         (work / 'facts.json').write_text('{"schema":1,"native_integers":{"int":{"signed":true,"digits":31}}}')
-        library = runtime(work, 'clang++')
-        for flavor in ('cpp', 'php', 'js'):
-            prove(work, flavor, library)
+        import argparse
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick-runtime', type=Path)
+        args = parser.parse_args()
+        if args.quick_runtime:
+            prove(work, 'php', args.quick_runtime, quick=True)
+        else:
+            library = runtime(work, 'clang++')
+            for flavor in ('cpp', 'php', 'js'):
+                prove(work, flavor, library)
