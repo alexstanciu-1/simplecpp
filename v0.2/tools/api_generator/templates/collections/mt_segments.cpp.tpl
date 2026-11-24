@@ -3,8 +3,12 @@
 
 namespace scpp::mt {
 struct job {
-    int64_t (*run)(segment, segment);
-    segment inputs[2];
+    // The caller owns the grant array through the synchronous join.
+    template<size_t N>
+    job(const segment (&grants)[N], int64_t (*worker)(const segment*))
+        : inputs(grants), count(N), run(worker) {}
+
+    void execute() { result = run(inputs); }
     int64_t result{};
 
     template<class Vector>
@@ -13,6 +17,9 @@ struct job {
         return {reinterpret_cast<unsigned char*>(data), sizeof(*data), vector.size(), offset, length};
     }
 private:
+    const segment* inputs;
+    size_t count;
+    int64_t (*run)(const segment*);
     friend void join(job*, size_t);
     static void admit(const job*, size_t);
 };

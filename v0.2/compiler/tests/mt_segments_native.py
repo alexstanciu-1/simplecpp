@@ -37,6 +37,9 @@ $deltas vector<int> = [2,4,6];
 $split = 1;
 $out = dispatch($rows, $deltas, $deltas, $split);
 echo $out[0], $out[1], $rows[0]->x, $rows[1]->x, $rows[2]->x, $deltas[0], $deltas[1], $deltas[2];
+$cells vector<int> = [1,2,3,4];
+$m = mixed_batch($cells, $cells, 3);
+echo $m[0], $m[1], $cells[0], $cells[1], $cells[2], $cells[3];
 return 0;
 """
 
@@ -45,6 +48,22 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
                                 vector<int> &$other, int $offset): vector<int> {
     return mt_join(work(segment($rows,0,1), segment($deltas,0,1)),
                    work(segment($rows,1,1), segment($other,$offset,1)));
+}
+"""
+
+MIXED_BATCH = """function mixed_batch(vector<int> &$cells, vector<int> &$alias, int $last): vector<int> {
+    return mt_join(single_slot(segment($cells,0,1)),
+                   three_slots(segment($cells,1,1), segment($cells,2,1), segment($alias,$last,1)));
+}
+function single_slot(segment<int> $a): int {
+    $a[0] = $a[0] + 10;
+    return $a[0];
+}
+function three_slots(segment<int> $a, segment<int> $b, segment<int> $c): int {
+    $a[0] = $a[0] + 20;
+    $b[0] = $b[0] + 30;
+    $c[0] = $c[0] + 40;
+    return $a[0] + $b[0] + $c[0];
 }
 """
 
@@ -64,7 +83,7 @@ PY_HELPER = """def update(rows: segment<Point>, deltas: segment<int>, i: int) ->
 
 
 def sources_for(flavor):
-    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'point.php': 'struct Point { public int $x = 1; }'}
+    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public int $x = 1; }'}
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
     f = fixture(flavor)
@@ -94,7 +113,7 @@ def prove(work):
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
         for policy in ('sleep', 'active'):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
-            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356'
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344'
         if flavor == 'php':
             # Check the transitive header closure in an MT-enabled, mixed-use build.
             view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
@@ -126,6 +145,8 @@ def prove(work):
     valid = sources_for('php')
     helper = valid['helper.php']
     cases = [
+        ({'mixed.php': MIXED_BATCH.replace('single_slot(segment($cells,0,1))', 'single_slot()')}, 'matching segment arguments'),
+        ({'mixed.php': MIXED_BATCH.replace(', segment($alias,$last,1)', '')}, 'matching segment arguments'),
         ({'helper.php': 'global $counter int = 7;' + helper.replace('return $rows', 'return $counter + $rows')}, 'MT safety'),
         ({'helper.php': helper.replace('return $rows[$i]->x;', 'return $rows;')}, 'conversion'),
         ({'helper.php': helper.replace('return $rows', '$rows[] = 7; return $rows')}, 'Append'),

@@ -25,7 +25,7 @@ struct batch_slice {
     void run() const noexcept {
         for (auto i = begin; i < end; ++i) {
             auto& item = jobs[i];
-            try { item.result = item.run(item.inputs[0], item.inputs[1]); }
+            try { item.execute(); }
             catch (...) { errors[i] = std::current_exception(); }
         }
     }
@@ -115,7 +115,8 @@ void job::admit(const job* jobs, std::size_t count) {
     struct interval { const void* backing; std::int64_t first, end; };
     std::vector<interval> admitted;
     for (std::size_t i = 0; i < count; ++i) {
-        for (const auto& r : jobs[i].inputs) {
+        for (std::size_t slot = 0; slot < jobs[i].count; ++slot) {
+            const auto& r = jobs[i].inputs[slot];
             const auto size = r.size;
             if (r.offset < 0 || r.offset > size || r.length < 0 || r.length > size - r.offset)
                 throw std::out_of_range("Exclusive segment bounds");

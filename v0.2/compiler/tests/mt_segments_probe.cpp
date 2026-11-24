@@ -12,6 +12,7 @@ using Int = scpp::int64;
 using scpp::mt::segment;
 namespace App {
 Int work_(segment, segment);
+scpp::vector_int64 mixed_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 dispatch_(Rows&, scpp::vector_int64&, scpp::vector_int64&, Int);
 }
 
@@ -25,7 +26,9 @@ static int failing_offset = -1;
 static std::thread::id caller;
 static int calls[2];
 static thread_local int calls_on_this_thread;
-static Int observed(segment rows, segment deltas) {
+static Int observed(const segment* inputs) {
+    const auto& rows = inputs[0];
+    const auto& deltas = inputs[1];
     ++entries;
     while (entries.load() < 2) std::this_thread::yield();
     const int offset = rows.at(0) == points[0] ? 0 : 1;
@@ -52,17 +55,29 @@ int main() {
     catch (const std::invalid_argument&) {}
     assert(points[0]->x == 1 && points[1]->x == 1 && *adjustments[0] == 2 && *adjustments[1] == 3);
     using namespace scpp::mt;
-    job jobs[]{
-        {observed, {job::borrow(rows, 0, 1), job::borrow(deltas, 0, 1)}},
-        {observed, {job::borrow(rows, 1, 1), job::borrow(alias, 0, 1)}}
-    };
+    // Only the final grant of the three-input worker aliases the one-input worker.
+    scpp::vector_int64 cells;
+    for (int i = 0; i < 4; ++i) cells.append(i);
+    try { App::mixed_batch_(cells, cells, 0); return 5; }
+    catch (const std::invalid_argument&) {}
+    for (int i = 0; i < 4; ++i) assert(cells.at(i) == i);
+    segment one[]{job::borrow(cells, 0, 1)};
+    segment three[]{job::borrow(cells, 1, 1), job::borrow(cells, 2, 1), job::borrow(cells, 0, 1)};
+    auto counted = [](const segment*) -> Int { ++entries; return 0; };
+    job conflicting[]{{one, counted}, {three, counted}};
+    try { join(conflicting, 2); return 6; } catch (const std::invalid_argument&) {}
+    assert(entries == 0);
+
+    segment first[]{job::borrow(rows, 0, 1), job::borrow(deltas, 0, 1)};
+    segment second[]{job::borrow(rows, 1, 1), job::borrow(alias, 0, 1)};
+    job jobs[]{{first, observed}, {second, observed}};
     try { join(jobs, 2); return 1; } catch (const std::invalid_argument&) {}
     assert(entries == 0 && points[0]->x == 1 && points[1]->x == 1);
 
-    jobs[1].inputs[1] = job::borrow(alias, 1, std::numeric_limits<Int>::max());
+    second[1] = job::borrow(alias, 1, std::numeric_limits<Int>::max());
     try { join(jobs, 2); return 2; } catch (const std::out_of_range&) {}
     assert(entries == 0);
-    jobs[1].inputs[1] = job::borrow(alias, 1, 1);
+    second[1] = job::borrow(alias, 1, 1);
     join(jobs, 2);
     assert(exits == 2 && jobs[0].result == 3 && jobs[1].result == 4);
     assert(rows.at(0).x == 3 && rows.at(1).x == 4 && rows.at(2).x == 1);
@@ -79,8 +94,8 @@ int main() {
     auto results = App::dispatch_(rows, deltas, alias, 1);
     assert(results.at(0) == 15 && results.at(1) == 19 && rows.at(2).x == 1);
     // Empty half-open ranges can coincide at the end of the same vector.
-    job empty{App::work_, {job::borrow(rows, rows.size(), 0),
-                           job::borrow(alias, alias.size(), 0)}};
+    segment empty_inputs[]{job::borrow(rows, rows.size(), 0), job::borrow(alias, alias.size(), 0)};
+    job empty{empty_inputs, [](const segment* inputs) { return App::work_(inputs[0], inputs[1]); }};
     job empties[]{empty, empty};
     join(empties, 2);
     assert(empties[0].result == 0 && empties[1].result == 0);

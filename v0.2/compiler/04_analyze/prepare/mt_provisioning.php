@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Bind a joined batch without inspecting worker bodies. Each worker receives two exclusive vectors' ranges. */
+/** Bind a joined batch without inspecting worker bodies. */
 final class Mt_Provisioning
 {
 	/** Resolve worker targets and range operands against settled contracts. */
@@ -16,8 +16,9 @@ final class Mt_Provisioning
 			$symbol = $symbols->entry($launch->symbol_key());
 			$worker = $symbol->declaration();
 			if (!($worker instanceof ast_function_declaration) || $worker->is_async || $worker->returns_reference
-				|| $worker->return_type_def() !== type_int64::instance() || count($launch->arguments) !== 2 || count($worker->parameters) !== 2)
-				self::reject($launch, 'Segment worker requires two exclusive segments and an int result');
+				|| $worker->return_type_def() !== type_int64::instance() || $launch->arguments === [] || count($worker->parameters) !== count($launch->arguments))
+				self::reject($launch, 'Segment worker requires one or more matching segment arguments and an int result');
+			$conversions = [];
 			foreach ($launch->arguments as $i => $range) {
 				$type = $worker->parameters[$i]->type_def();
 				if (!($type instanceof segment_type) || $range::class !== ast_call_expression::class || $range->name !== 'segment'
@@ -36,10 +37,11 @@ final class Mt_Provisioning
 						self::reject($bound, 'Segment bounds require int locals or literals');
 				}
 				$range->settle_mt('segment', $type);
+				$conversions[] = value_conversion::identity;
 			}
 			$dependencies->watch_call($symbol, $caller);
 			$dependencies->mt->workers[] = $worker;
-			$launch->settle_function($symbol, [value_conversion::identity, value_conversion::identity]);
+			$launch->settle_function($symbol, $conversions);
 		}
 		$batch->settle_mt('mt_join', type_registry::specialize('vector', type_int64::instance()));
 	}

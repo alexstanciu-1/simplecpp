@@ -40,6 +40,10 @@ The caller waits inside the launch. A worker can access its granted slots throug
 
 The Clang regression uses a PHP launch and helper/worker pairs written in PHP, C++, JS and Python. It checks both vectors after mutation, ordered results, untouched neighbors, transitive diagnostics, overlapping worker lifetimes and addresses of the original slots. Conflicting aliases and overflowing ranges yield zero entries. The failure case checks parent access after join. Run with `ctest -R '^compiler_mt_segments_native$'` in the configured build. [Compiler fixture](../../compiler/tests/mt_segments_native.py) · [Native probe](../../compiler/tests/mt_segments_probe.cpp)
 
+## Run 2 — variable worker arity
+
+A direct joined worker accepts one or more required, by-value vector segments and returns an integer. Workers in a batch may have different signatures. The compiler checks each argument against its corresponding parameter and emits a local grant array and a typed call for each worker. One runtime job representation handles every arity. Admission checks all grants across the whole batch before dispatch. The native regression covers mixed one- and three-input workers, ordered returns, in-place updates, and a conflict on the last argument that starts zero workers.
+
 ## Pool configuration
 
 The native runtime now keeps one process-wide pool for joined segment batches. A single-job join runs on the caller. Larger joins admit the entire batch first, then use the caller and available pool workers to execute contiguous groups of jobs. Worker threads start on demand and are reused until process shutdown. The first join that needs more capacity pays its startup cost. The background worker limit is one less than the reported hardware concurrency, with capacity for at least one background worker. Independent callers can use the pool concurrently and process their own jobs when all workers are busy.

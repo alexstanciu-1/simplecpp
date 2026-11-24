@@ -2576,21 +2576,24 @@ CPP;
 			if ($value->mt_operation === 'mt_join') {
 				$required_headers['scpp/mt_segments.hpp'] = true;
 				$jobs = [];
-				foreach ($value->arguments as $launch) {
+				$lines = [];
+				foreach ($value->arguments as $i => $launch) {
 					$worker = $launch->implementation();
 					$name = self::function_name($worker);
 					$declarations[$name] = $worker;
 					$this->collect_signature_types($worker, $declarations);
 					$args = [];
-					foreach ($launch->arguments as $segment) {
+					$forwarded = [];
+					foreach ($launch->arguments as $slot => $segment) {
 						$operands = [];
 						foreach ($segment->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
 						[$owner, $offset, $length] = $operands;
 						$args[] = "::scpp::mt::job::borrow($owner, $offset, $length)";
+						$forwarded[] = "inputs[$slot]";
 					}
-					$jobs[] = '{&' . $name . ', {' . implode(', ', $args) . '}}';
+					$lines[] = "::scpp::mt::segment grants_{$i}[]{" . implode(', ', $args) . '};';
+					$jobs[] = "{grants_$i, [](const ::scpp::mt::segment* inputs) { return $name(" . implode(', ', $forwarded) . '); }}';
 				}
-				$lines = [];
 				$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
 				$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . ');';
 				$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
