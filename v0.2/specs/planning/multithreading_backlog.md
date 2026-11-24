@@ -49,3 +49,33 @@ A direct joined worker accepts one or more required, by-value vector segments an
 The native runtime now keeps one process-wide pool for joined segment batches. A single-job join runs on the caller. Larger joins admit the entire batch first, then use the caller and available pool workers to execute contiguous groups of jobs. Worker threads start on demand and are reused until process shutdown. The first join that needs more capacity pays its startup cost. The background worker limit is one less than the reported hardware concurrency, with capacity for at least one background worker. Independent callers can use the pool concurrently and process their own jobs when all workers are busy.
 
 Set `SCPP_MT_WAIT=sleep` (default) or `SCPP_MT_WAIT=active` before starting the program. The first admitted multi-job join reads the setting. Sleeping workers block between batches. Active workers continue polling while idle, including between parallel phases. This mode is intended for processes with dedicated CPU capacity. Each job has its own result and exception slot. The caller waits for its batch and releases the workers before propagating the first failure in submission order.
+
+## Checkpoint — 2026-11-24
+
+All five planned capabilities are implemented on `codex/multithreading` through
+`adbb0dd1e`: scalar inputs by value, read-only vector segments, balanced ranges,
+runtime-sized batches with group and per-job worker caps, and hash segments in
+live insertion order. Hash tests cover deletion and reinsertion, in-place value
+updates, read-only keys, and a late overlap that rejects the batch with zero
+worker entries. Joined jobs currently return integers in submission order.
+[Current language contract](../../../specs/compiler_entry_v0_2.md#hash-segments) · [One-hour verification and evidence](benchmarks/mt_segments/2026-11-24-hour/README.md)
+
+### Proposed priorities when work resumes
+
+| Priority | Capability | Estimated complexity and first design question |
+|---|---|---|
+| P1 | Richer joined results | Medium for a scalar or isolated inline record. Medium–high for owned strings or vectors, which need cleanup if a sibling throws. How should a group expose results when jobs return different types? |
+| P2 | Richer inputs | Medium for a string borrowed read-only through join or an isolated record passed by value. High for moving a unique value. Who owns it if a later grant fails admission? |
+| P3 | Serialized publication during execution | High. Identify a pass that needs results visible before join, then define destination access, publication order and failure behavior. |
+| P4 | Background batch handles | High. Grants must survive the caller resuming. Progress is medium once handles exist. Cancellation and timeouts with in-place writes are high because partial updates remain observable. |
+| P5 | Shared mutable objects | Very high. A safety contract must cover aliases and helper calls that reach the same object under synchronization. |
+
+Suggested first slice for discussion: let one repeated job return an isolated
+inline record per partition. Use a scan returning `scanned`, `matched` and
+`first_match`, and verify that the caller receives the records in partition
+order even when workers finish out of order. A later variable-output example
+is a worker-owned vector of diagnostics per partition, merged after join.
+
+Track incremental MT safety separately (high complexity). The first acceptance
+case is a helper edit that changes an otherwise untouched worker's safety:
+incremental checking must give the same acceptance or diagnostic as a fresh compile.
