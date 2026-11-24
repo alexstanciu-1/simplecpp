@@ -364,12 +364,60 @@ def prove_block_call_arity(work):
     ])
 
 
+def prove_contextual_arguments(work, flavor):
+    form = fixture(flavor)
+    v, fn = form['v'], form['function']
+    api = fn('apply', 'int', [('tag', 'int'), ('op', 'callback<int,int>')], f'return {v}op({v}tag);')
+    arrow = f'fn({v}n) => {v}n + 1'
+    entry = f'echo apply(op: {arrow}, tag: 6); return 8;'
+    typed = 'n:int' if flavor == 'js' else f'int {v}n'
+    work.mkdir()
+    revisions(work, flavor, dict(main=entry, api=api), [
+        (None, None, b'7'), (None, None, b'7'),
+        ('main', entry.replace(arrow, arrow.replace(f'{v}n)', typed + ')')), b'7'),
+        ('main', entry.replace(arrow, arrow.replace(' =>', ':int =>')), b'7'),
+        ('api', api.replace('callback<int,int>', 'callback<bool,int>'), 'Expected exact callback signature'),
+        ('api', api, b'7'),
+        ('main', entry.replace(arrow, f'({arrow})'), b'7'),
+        ('main', entry.replace(arrow, 'fn() => 3'), 'Expected exact callback signature'),
+        ('main', form['infer']('f', f'fn({v}n):int => {v}n') + 'return 8;', 'explicit parameter type without a callback context'),
+        ('main', entry, b'7'),
+    ])
+    if flavor in ('cpp', 'js'):
+        ordinary = work / 'ordinary-fn'
+        ordinary.mkdir()
+        predicate = fn('fn', 'bool', [], 'return true;')
+        revisions(ordinary, flavor, dict(main=predicate + 'return match (true) {fn() => 8, default => 1};'), [
+            (None, None, b''),
+        ])
+    if flavor == 'php':
+        cases = work / 'block'
+        cases.mkdir()
+        block = 'function ($n) { return $n; }'
+        caller = f'echo apply({block}); return 8;'
+        number = 'function apply(callback<int,int> $op):int {return $op(6);}'
+        text = 'function apply(callback<string,string> $op):string {return $op("yes");}'
+        revisions(cases, flavor, dict(main=caller, api=number), [
+            (None, None, b'6'), ('api', text, b'yes'),
+            ('main', caller.replace('($n)', '(int $n)').replace('return $n;', 'return "x";'), 'Expected exact callback signature'),
+            ('main', '$prefix="x"; ' + caller.replace(block, 'fn($n) => $prefix'), 'Typed callbacks require a capture-free callable'),
+            ('main', caller, b'yes'), ('api', number, b'6'),
+            ('main', 'function ping():void {echo "V";} function run(callback<void> $op):void {$op();} run(fn() => ping()); return 8;', b'V'),
+        ])
+
+
+def prove_captured_vector_return(work):
+    entry = '$a=7; $f=function () use ($a):vector<int> {return [$a,2];}; $a=9; $v=$f(); echo $v[0],$v[1]; return 8;'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry), [(None, None, b'72')])
+
+
 def prove_block_requires_result_type(work):
     missing = '$f = function () { return 1; }; echo $f(); return 8;'
     repaired = missing.replace('function ()', 'function (): int')
     work.mkdir()
     revisions(work, 'php', dict(main=missing), [
-        (None, None, 'Expected : (lambda result type)'),
+        (None, None, 'Lambda requires an explicit result type without a callback context'),
         ('main', repaired, b'1'),
     ])
 
@@ -383,6 +431,7 @@ def main():
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
         prove_void_block(root / 'void-block')
+        prove_captured_vector_return(root / 'captured-vector-return')
         prove_void_forwarding(root / 'void-forwarding')
         prove_int_capture(root / 'int-capture')
         prove_multiple_int_captures(root / 'multiple-int-captures')
@@ -395,6 +444,7 @@ def main():
         prove_block_callback_result(root / 'block-callback-result')
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)
+            prove_contextual_arguments(root / (flavor + '-context'), flavor)
             prove_named_calls(root / (flavor + "-named"), flavor)
             prove_defaults(root / (flavor + "-defaults"), flavor)
             prove_enum_default(root / (flavor + "-enum-default"), flavor)

@@ -831,7 +831,7 @@ final class Parser
 	 * Parse explicit positional passing modes and optional literal-default syntax.
 	 * @return ast_parameter_declaration[]
 	 */
-	public function parameters(bool $python_receiver = false): array /** list<ast_parameter_declaration> */
+	public function parameters(bool $python_receiver = false, bool $lambda = false): array /** list<ast_parameter_declaration> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		if ($python_receiver) {
@@ -844,8 +844,18 @@ final class Parser
 			if (in_array($this->cursor->tokens->source->flavor, [flavor::js, flavor::python], true)) {
 				$mode = $this->cursor->tokens->source->flavor === flavor::python ? passing_mode::value : $this->parameter_mode();
 				$name = $this->cursor->name(token_kind::identifier);
-				$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
-				$type = $this->type_reference(allow_void: true, parameter: true);
+				$type = null;
+				if (!$lambda || $this->cursor->is(token_kind::colon)) {
+					$this->cursor->take(token_kind::colon, ': (explicit parameter type)');
+					$type = $this->type_reference(allow_void: true, parameter: true);
+				}
+			}
+			elseif ($lambda && ($this->cursor->is(token_kind::variable)
+				|| ($this->cursor->tokens->source->flavor === flavor::cpp && $this->cursor->is(token_kind::identifier)
+					&& ($this->cursor->next_is(token_kind::rparen) || $this->cursor->next_is(token_kind::comma) || $this->cursor->next_is(token_kind::assign))))) {
+				$type = null;
+				$mode = passing_mode::value;
+				$name = $this->cursor->name($this->cursor->tokens->tokens[$start]->kind);
 			}
 			else {
 				if ($this->cursor->tokens->source->flavor === flavor::php
@@ -978,7 +988,7 @@ final class Parser
 			} elseif ($labels) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
 			}
-			$arguments[] = $this->value();
+			$arguments[] = $this->value(argument_operand: true);
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
 			}
@@ -1115,12 +1125,12 @@ final class Parser
 	}
 
 	/** Parse logical, comparison and arithmetic precedence; grouping uses the same expression parser. */
-	public function value(int $minimum_precedence /** uint8 */ = 0): ast_expression
+	public function value(int $minimum_precedence /** uint8 */ = 0, bool $argument_operand = false): ast_expression
 	{
 		$python = $this->cursor->tokens->source->flavor === flavor::python;
 		$start = $this->cursor->position();
 		$left = $python && $this->cursor->keyword('not')
-			? $this->python_not($minimum_precedence) : $this->primary();
+			? $this->python_not($minimum_precedence) : $this->primary(argument_operand: $argument_operand);
 		while (!$this->cursor->at_end()) {
 			if ($this->cursor->keyword('instanceof') && $minimum_precedence <= binary_operator::power->precedence()) {
 				$this->cursor->take_keyword('instanceof');
@@ -1479,9 +1489,9 @@ final class Parser
 	}
 
 	/** Admit generated core scalar literals and flavor-correct names without resolving declarations. */
-	private function primary(bool $field_target = false): ast_expression
+	private function primary(bool $field_target = false, bool $argument_operand = false): ast_expression
 	{
-		return $this->postfix($this->atom(), $field_target);
+		return $this->postfix($this->atom($argument_operand), $field_target);
 	}
 
 	/** Continue member calls and indexing on the expression already parsed. */
@@ -1583,8 +1593,8 @@ final class Parser
 		return new ast_name_expression($name, $start, $c->position(), constant_only: $constant);
 	}
 
-	/** In C++ and JS, fn remains an ordinary name unless followed by an explicitly typed lambda header. */
-	private function lambda_start(): bool
+	/** A result-less C++ or JS arrow at a callback argument must remain distinguishable from a call before a match-arm separator. */
+	private function lambda_start(bool $argument_operand): bool
 	{
 		$c = $this->cursor;
 		if ($c->keyword('fn')) return true;
@@ -1595,7 +1605,10 @@ final class Parser
 		for ($index = $c->position() + 2; isset($tokens[$index]); ++$index) {
 			$kind = $tokens[$index]->kind;
 			if ($kind === token_kind::lparen) ++$depth;
-			elseif ($kind === token_kind::rparen && --$depth === 0) return ($tokens[$index + 1]->kind ?? null) === token_kind::colon;
+			elseif ($kind === token_kind::rparen && --$depth === 0) {
+				$next = $tokens[$index + 1]->kind ?? null;
+				return $next === token_kind::colon || ($argument_operand && $next === token_kind::arrow);
+			}
 		}
 		return false;
 	}
@@ -1604,7 +1617,7 @@ final class Parser
 	{
 		$c = $this->cursor;
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
-		$parameters = $this->parameters();
+		$parameters = $this->parameters(lambda: true);
 		$captures = [];
 		if ($block && $c->keyword('use')) {
 			$c->take_keyword('use');
@@ -1617,8 +1630,11 @@ final class Parser
 			}
 			$c->take(token_kind::rparen, ') after by-value captures');
 		}
-		$c->take(token_kind::colon, ': (lambda result type)');
-		$result = $this->return_type();
+		$result = null;
+		if ($c->is(token_kind::colon)) {
+			$c->take(token_kind::colon, ': (lambda result type)');
+			$result = $this->return_type();
+		}
 		if ($block) {
 			$outer_scope = $this->lexical;
 			$outer_type = $this->declaring_type;
@@ -1689,12 +1705,12 @@ final class Parser
 	}
 
 	/** Parse one primary or prefix expression before postfix indexing. */
-	private function atom(): ast_expression
+	private function atom(bool $argument_operand = false): ast_expression
 	{
 		$c = $this->cursor;
 		if ($c->keyword('await')) return $this->await_expression();
 		if ($c->tokens->source->flavor === flavor::php && $c->keyword('function')) return $this->lambda_expression(true);
-		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
+		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start($argument_operand)) return $this->lambda_expression();
 		if ($c->keyword('throw')) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Throw expression requires a ?? fallback or match default');
 		}
@@ -1833,7 +1849,7 @@ final class Parser
 				$rhs = $this->assignment_value();
 				return new ast_condition_assignment($start, $c->take(token_kind::rparen, ') after assignment') + 1, $target, $rhs);
 			}
-			$value = $this->value();
+			$value = $this->value(argument_operand: $argument_operand);
 			$c->take(token_kind::rparen, ')');
 			return $value;
 		}

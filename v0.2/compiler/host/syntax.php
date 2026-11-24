@@ -199,8 +199,8 @@ final class Syntax_Inspection
 		}
 		if ($expression instanceof ast_lambda_expression) {
 			$row = ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
-				['name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling()], $expression->parameters),
-				'result' => $expression->result->spelling(), 'body' => $expression->body instanceof ast_block
+				['name' => $parameter->short_name, 'type' => $parameter->type_reference?->spelling()], $expression->parameters),
+				'result' => $expression->result?->spelling(), 'body' => $expression->body instanceof ast_block
 					? array_map(self::statement(...), $expression->body->statements) : self::expression($expression->body), 'span' => self::span($expression)];
 			if (count($expression->captures) === 1) $row['capture'] = $expression->captures[0]->short_name;
 			elseif ($expression->captures !== []) $row['captures'] = array_map(static fn(ast_value_capture $capture) => $capture->short_name, $expression->captures);

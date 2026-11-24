@@ -266,8 +266,12 @@ references and persistent callback storage are outside this slice.
 
 ### Lambdas
 
-An expression-bodied lambda has explicitly typed by-value inputs and a declared
-result type. A void arrow such as `fn(): void => ping()` evaluates its void
+A lambda passed directly to a selected `callback<R,Args...>` parameter may omit
+input and result annotations independently. For example, `apply(fn($x) => $x)`
+uses the selected callback's first input and result. This applies to PHP block
+closures and to expression-bodied arrows in PHP, C++ and JS. Arity and authored
+annotations must match the expected signature exactly. An inferred local closure
+still requires all annotations at its initializer. A void arrow such as `fn(): void => ping()` evaluates its void
 body once. Functions, methods, and PHP block closures follow the same rule for
 `return ping();`. Exceptions propagate through the usual handlers and finalizers.
 A void block closure can also use a bare return or reach its closing brace.

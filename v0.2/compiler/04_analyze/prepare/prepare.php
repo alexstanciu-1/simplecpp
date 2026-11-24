@@ -1227,6 +1227,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_collection_expression) {
 			if (!($type instanceof indexed_collection_type)) {
+				if ($type instanceof callback_type_definition && $flavor === flavor::php) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'A collection literal cannot supply a typed callback');
 				$message = $type === null ? 'Collection requires an explicitly typed local initializer' : 'Destination has no published collection initialization capability';
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), $message);
 			}
@@ -1590,7 +1591,7 @@ final class Preparation
 			if (!$allow_callback || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Lambda requires an inferred local initializer or typed callback argument');
 			}
-			$this->lambda($syntax);
+			$this->lambda($syntax, $destination instanceof callback_type_definition ? $destination : null);
 			return;
 		}
 		if ($syntax instanceof ast_callable_reference) {
@@ -1864,20 +1865,27 @@ final class Preparation
 	}
 
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
-	private function lambda(ast_lambda_expression $lambda): void
+	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
 	{
 		$function = $this->owner->parent;
-		$result = Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
+		if ($expected !== null && count($lambda->parameters) !== count($expected->inputs)) {
+			throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Expected exact callback signature ' . $expected->name);
+		}
+		$result = $lambda->result === null
+			? ($expected?->result ?? throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Lambda requires an explicit result type without a callback context'))
+			: Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
 		if (!Type_Resolution::callback_component($result)) {
 			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
 		}
 		$locals = [];
 		$inputs = [];
 		$optional = false;
-		foreach ($lambda->parameters as $parameter) {
+		foreach ($lambda->parameters as $index => $parameter) {
 			$name = $parameter->declaration_key();
 			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
-			$type = Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
+			$type = $parameter->type_reference === null
+				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
+				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
 			if (!Type_Resolution::callback_component($type) || $parameter->mode !== passing_mode::value) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported by-value parameters');
 			}
