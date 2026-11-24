@@ -352,3 +352,23 @@ for truthiness, lexical scopes and completion. Value-returning functions may ret
 through an exhaustive chain rather than a direct final return. Statements after a
 structurally guaranteed return remain rejected. Value facts no longer cross branch
 boundaries, while existing reference-call invalidation remains in effect.
+
+## Parallel block expressions
+
+In the PHP, C++, and JS flavors, `parallel` followed by `{` introduces a
+joined batch in expression position. Ordinary calls such as `parallel()`
+retain normal name lookup. The body contains one or more semicolon-terminated
+direct worker calls. The surrounding statement follows its ordinary terminator
+rule. For example, with two disjoint ranges in a PHP-flavor vector:
+
+```php
+$totals = parallel {
+    update(segment($rows, 0, $split));
+    update(segment($rows, $split, $remaining));
+};
+```
+
+This form has the same worker contracts, whole-batch admission, join and
+submission-order integer results as the built-in `mt_join(...)`. A block used as
+a statement still joins all workers. This slice requires the MT segment runtime
+publication and fresh compilation.

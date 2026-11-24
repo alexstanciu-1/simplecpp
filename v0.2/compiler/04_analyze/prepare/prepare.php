@@ -1903,9 +1903,22 @@ final class Preparation
 			($site instanceof ast_await_expression ? 'Await' : 'async_wait') . ' requires an async function');
 	}
 
+	private function joined_batch(ast_call_expression $call, ?string $initializing): void
+	{
+		if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
+		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg) use ($initializing): void {
+			$this->value($arg, $initializing);
+		});
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
 	{
+		if ($call instanceof ast_parallel_expression) {
+			if (!type_registry::HAS_MT_SEGMENTS) throw new diagnostic($call->source(), $call->byte_start(), 'MT segments unavailable in this runtime');
+			$this->joined_batch($call, $initializing);
+			return;
+		}
 		$type_symbol = null;
 		$class = null;
 		if ($call->source()->flavor === flavor::python && $call->receiver === null && $call->member_separator === null) {
@@ -2060,10 +2073,7 @@ final class Preparation
 			}
 			if ($builtin === 'mt_join' && type_registry::HAS_MT_SEGMENTS) {
 				if ($class !== null) $this->ambiguous_construction($call);
-				if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
-				Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg) use ($initializing): void {
-					$this->value($arg, $initializing);
-				});
+				$this->joined_batch($call, $initializing);
 				return;
 			}
 			if ($builtin === 'async_wait') {

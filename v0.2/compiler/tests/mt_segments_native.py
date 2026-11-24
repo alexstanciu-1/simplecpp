@@ -40,6 +40,7 @@ echo $out[0], $out[1], $rows[0]->x, $rows[1]->x, $rows[2]->x, $deltas[0], $delta
 $cells vector<int> = [1,2,3,4];
 $m = mixed_batch($cells, $cells, 3);
 echo $m[0], $m[1], $cells[0], $cells[1], $cells[2], $cells[3];
+check_blocks($cells);
 return 0;
 """
 
@@ -51,7 +52,13 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 }
 """
 
-MIXED_BATCH = """const int WIDTH = 5;
+MIXED_BATCH = """function parallel(): int { return 7; }
+function check_blocks(vector<int> &$cells): void {
+    $more = parallel { single_slot(segment($cells,0,1)); };
+    parallel { single_slot(segment($cells,0,1)); };
+    echo $more[0], $cells[0], parallel();
+}
+const int WIDTH = 5;
 const int LIMIT = WIDTH * 2;
 function adjustment(): int { return LIMIT; }
 function mixed_batch(vector<int> &$cells, vector<int> &$alias, int $last): vector<int> {
@@ -89,6 +96,19 @@ def sources_for(flavor):
     sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
+    # Use the same direct-call block in each brace frontend. The Python worker
+    # fixture above retains the original mt_join launch for compatibility.
+    del sources['dispatch.php']
+    header = {
+        'php': 'function dispatch(vector<Point> &$rows, vector<int> &$deltas, vector<int> &$other, int $offset): vector<int>',
+        'cpp': 'vector<int> dispatch(vector<Point>& rows, vector<int>& deltas, vector<int>& other, int offset)',
+        'js': 'function dispatch(&rows:vector<Point>, &deltas:vector<int>, &other:vector<int>, offset:int):vector<int>',
+    }[flavor]
+    body = """{ return parallel {
+        work(segment($rows,0,1), segment($deltas,0,1));
+        work(segment($rows,1,1), segment($other,$offset,1));
+    }; }"""
+    sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
     v = f['v']
     params = [('rows', 'segment<Point>'), ('deltas', 'segment<int>')]
@@ -116,7 +136,7 @@ def prove(work):
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
         for policy in ('sleep', 'active'):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
-            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344'
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317'
         if flavor == 'php':
             # Check the transitive header closure in an MT-enabled, mixed-use build.
             view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
@@ -148,6 +168,12 @@ def prove(work):
     valid = sources_for('php')
     helper = valid['helper.php']
     cases = [
+        ({'dispatch.php': valid['dispatch.php'].replace('work(segment($rows,0,1), segment($deltas,0,1));', '1;')},
+         'Expected worker call'),
+        ({'dispatch.php': valid['dispatch.php'].replace('segment($other,$offset,1));', 'segment($other,$offset,1))')},
+         'Expected ; after parallel worker call'),
+        ({'dispatch.php': DISPATCH[:DISPATCH.index('return')] + 'return parallel {}; }'},
+         'Expected at least one segment worker'),
         ({'mixed.php': 'global $limit int = 10;' + MIXED_BATCH.replace('return LIMIT;', 'return $limit;')},
          'MT safety: worker cannot access global or static storage'),
         ({'mixed.php': 'const string LABEL = "on";' + MIXED_BATCH.replace('Point::ENABLED', 'LABEL === LABEL')},

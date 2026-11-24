@@ -12,6 +12,12 @@ interface statement_grammar {
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration;
 }
 
+/** Names recognized only in expression position immediately before an opening brace. */
+enum keyword_block: string
+{
+	case parallel = 'parallel';
+}
+
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
 final class Parser
 {
@@ -1654,10 +1660,44 @@ final class Parser
 		return new ast_await_expression($start, $call);
 	}
 
+	/** Contextual expression introducers. Ordinary names and calls keep their normal grammar. */
+	private function keyword_block_start(): ?keyword_block
+	{
+		$c = $this->cursor;
+		if (!$c->next_is(token_kind::lbrace) || !$c->is(token_kind::identifier)
+			|| $c->tokens->source->flavor === flavor::python) return null;
+		return keyword_block::tryFrom($c->tokens->text_at($c->position()));
+	}
+
+	/** Only the introducer is shared. Each block parser owns its contents and builds its own expression. */
+	private function keyword_block(keyword_block $kind): ast_expression
+	{
+		$start = $this->cursor->take(token_kind::identifier, $kind->value);
+		$this->cursor->take(token_kind::lbrace, '{');
+		return match ($kind) {
+			keyword_block::parallel => $this->parallel_body($start),
+		};
+	}
+
+	private function parallel_body(int $start /** uint32 */): ast_parallel_expression
+	{
+		$jobs = [];
+		while (!$this->cursor->is(token_kind::rbrace)) {
+			if (!$this->names->call_start()) throw new diagnostic($this->cursor->tokens->source,
+				$this->cursor->offset(), 'Expected worker call or } in parallel block');
+			$jobs[] = $this->call();
+			$this->cursor->take(token_kind::semicolon, '; after parallel worker call');
+		}
+		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		return new ast_parallel_expression($start, $end, $jobs);
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(): ast_expression
 	{
 		$c = $this->cursor;
+		$block = $this->keyword_block_start();
+		if ($block !== null) return $this->keyword_block($block);
 		if ($c->keyword('await')) return $this->await_expression();
 		if ($c->tokens->source->flavor === flavor::php && $c->keyword('function')) return $this->lambda_expression(true);
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start()) return $this->lambda_expression();
@@ -1889,7 +1929,7 @@ final class Parser
 	private function expression_statement_start(): bool
 	{
 		$flavor = $this->cursor->tokens->source->flavor;
-		return $this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
+		return $this->keyword_block_start() !== null || $this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
 				&& (in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'lock', 'object_cast', 'match'], true)
 					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
 			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)

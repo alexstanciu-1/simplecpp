@@ -384,6 +384,16 @@ class ast_call_expression extends ast_expression
 	}
 }
 
+/** A joined group owns its written worker calls, without resolving a function named parallel. */
+final class ast_parallel_expression extends ast_call_expression
+{
+	/** @param ast_expression[] $jobs */
+	public function __construct(int $start, int $end, array $jobs)
+	{
+		parent::__construct($start, $end, 'parallel', null, $jobs);
+	}
+}
+
 /** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
 final class ast_named_call extends ast_call_expression
 {
