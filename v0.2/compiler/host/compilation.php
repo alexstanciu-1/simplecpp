@@ -264,7 +264,9 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_match_expression) {
 			$row['subject'] = self::value($value->subject);
-			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::value($arm->label), 'result' => self::value($arm->result)], $value->arms);
+			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => (count($arm->labels) > 1
+				? ['labels' => array_map(self::value(...), $arm->labels)]
+				: ['label' => $arm->labels === [] ? null : self::value($arm->labels[0])]) + ['result' => self::value($arm->result)], $value->arms);
 		}
 		if ($value instanceof ast_object_access_expression) {
 			$row['operator'] = $value->test ? 'instanceof' : 'object_cast';
@@ -306,13 +308,21 @@ final class Compilation_Inspection
 			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
-		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
-		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
-		if ($value instanceof ast_call_expression) {
-			if ($value instanceof ast_named_call) {
-				$row['labels'] = $value->labels;
-				$row['parameter_slots'] = $value->slots;
+		if ($value instanceof ast_lambda_expression) {
+			$row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
+			if ($value->type_def()->borrows_receiver) $row['receiver_capture'] = true;
+			if (count($value->captures) === 1) $row['capture'] = self::value($value->captures[0]->initializer);
+			elseif ($value->captures !== []) $row['captures'] = array_map(static fn(ast_closure_capture $capture) => self::value($capture->initializer), $value->captures);
+			foreach ($value->captures as $capture) {
+				if ($capture->by_reference) $row['reference_captures'][] = $capture->short_name;
 			}
+		}
+		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
+		if (isset($value->named)) {
+			$row['labels'] = $value->named->labels;
+			$row['parameter_slots'] = $value->named->slots;
+		}
+		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
 			$row['arguments'] = array_map(self::value(...), $value->runtime_binding() !== null

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Shared carrier transport; e.g. nullable<int> wraps an approved int conversion or checks one payload extraction. */
-abstract class carrier_type_definition extends type_definition
+abstract class carrier_type_definition extends type_definition implements presence_test_type
 {
 	/** PROPERTIES */
 	/** Native non-owning canonical payload definition, shared by all occurrences. */

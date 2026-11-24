@@ -109,8 +109,8 @@ JS:  function ping(): void { return; }
 ```
 
 All flavors call these functions with `ping();` in statement position. A function
-body may be empty or fall through, or end with a bare `return;`. Returning any value
-from a void function is invalid. Bodies may contain the existing explicit integer
+body may be empty or fall through, or end with a bare `return;`. It may forward a void call with
+`return ping();`. Returning a non-void value is invalid. Bodies may contain the existing explicit integer
 local declarations and no-argument calls; each body has its own local scope and
 cannot capture top-level or other functions' locals. Local source-order visibility
 rules remain unchanged. Executable statements after a return remain unsupported.
@@ -189,16 +189,26 @@ locals cannot duplicate names. PHP bare writes to parameters are assignments,
 not inferred declarations. Parameters are initialized on entry, with unknown
 caller values during body preparation, and are mutable local storage. Value parameters own copies; explicit references bind caller storage.
 
-Positional calls can omit a trailing suffix with declared defaults. Direct calls to
-source functions with by-value parameters also accept labels. PHP, C++ and JS
+Positional calls can omit a trailing suffix with declared defaults. Fixed source signatures
+accept named arguments on free functions, instance and static methods, and explicit
+construction. A virtual or interface call takes names from the declaration selected
+by the receiver's declared type. Dispatch may invoke an override with different names.
+An explicit ancestor call uses the selected ancestor declaration. Static lookup
+uses the explicit, lexical, called or expression-qualified type as appropriate.
+Direct, inline, explicit base and late-bound construction use the effective source
+constructor's parameters, including inherited names and defaults.
+An instance call evaluates its receiver once and retains it through the call, before evaluating arguments. PHP, C++ and JS
 use `difference(right: nextRight(), left: nextLeft())`. Python uses
 `difference(right=nextRight(), left=nextLeft())`. Positional arguments can precede
 labels. Every required parameter must be supplied once. A label can skip a
 defaulted parameter. Unknown labels, duplicate bindings and positional arguments
 after a label receive a diagnostic. A parameter rename invalidates callers that
-use names on that function. Each supplied argument
+use names on that declaration. Each supplied argument
 is evaluated once, left to right, and its destination conversion completes before
-the next argument starts. Converted values are preserved for invocation. A failure
+the next argument starts. A named writable or read-only reference follows the
+same storage and default rules as its positional equivalent. A reference-returning
+call retains the origin of the actual bound to the declared return-origin parameter.
+Converted values are preserved for invocation. A failure
 stops later argument evaluation and callee entry; earlier effects remain. Strings
 have owning value semantics: parameter reassignment cannot mutate caller storage,
 and returned strings remain valid after the callee exits.
@@ -211,7 +221,7 @@ values are not constant-folded by inspecting callee bodies.
 
 Calls can appear in existing value positions, including arguments to nested calls,
 initializers, assignments, echo and returns. A non-void result may be discarded in
-statement position. Void calls are permitted only as statements. Non-void functions
+statement position. A void call can be a statement or the return expression of a void callable. Non-void functions
 must return a value; fallthrough and bare returns reject. Void functions may fall
 through or return without a value. Following executable statements after a return
 remain outside the current straight-line body slice. The executable entry retains
@@ -225,8 +235,12 @@ parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Named arguments on methods, constructors and runtime calls, variadics, read-only references, reference returns, overloads, signature inference,
-first-class callables, methods and trailing parameter/argument commas are deferred.
+A runtime free function accepts named arguments when its binding publishes source
+parameter names. Those names are part of its public API. Renaming one breaks calls
+that use the old label. The first binding is PHP `str_repeat(string, times)`.
+For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
+`repetitions()` first and passes its result as the second argument.
+Typed callback calls require positional arguments. Variadic signatures remain deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
@@ -250,10 +264,19 @@ contract and exception propagation.
 The C++ backend passes a typed native function pointer. Instance method
 references and persistent callback storage are outside this slice.
 
-### Capture-free lambdas
+### Lambdas
 
-An expression-bodied lambda has explicitly typed by-value inputs and a
-non-void result type.
+A lambda passed directly to a selected `callback<R,Args...>` parameter may omit
+input and result annotations independently. For example, `apply(fn($x) => $x)`
+uses the selected callback's first input and result. This applies to PHP block
+closures and to expression-bodied arrows in PHP, C++ and JS. Arity and authored
+annotations must match the expected signature exactly. An inferred local closure
+still requires all annotations at its initializer. A void arrow such as `fn(): void => ping()` evaluates its void
+body once. Functions, methods, and PHP block closures follow the same rule for
+`return ping();`. Exceptions propagate through the usual handlers and finalizers.
+A void block closure can also use a bare return or reach its closing brace.
+A capture-free void closure can supply a matching typed callback such as
+`callback<void,int>`.
 
 ```text
 PHP  $inc = fn(int $x): int => $x + 1;
@@ -262,15 +285,77 @@ JS   let inc = fn(x: int): int => x + 1;
 ```
 
 Each lambda expression has a distinct concrete type. An inferred local
-can invoke its lambda with ordinary call syntax. An inline lambda or
-such a local can supply a callback argument when the component types
-match exactly. The C++ backend emits a concrete capture-free lambda and
+can invoke its lambda with positional or named arguments. Labels bind to the local
+lambda’s written parameter names. Each argument and its conversion run once in
+written order. Capture-free arrow lambdas and PHP block closures accept the
+same trailing parameter defaults as named functions. Local calls may omit the
+trailing suffix or use a label to skip a default. Passing the lambda to a typed
+callback exposes its full positional signature. Every invocation through that
+callback must supply every input, including those with defaults on the lambda.
+Both inline lambdas and inferred locals can supply a callback argument when
+the component types match exactly. The C++ backend emits a concrete capture-free lambda and
 converts it to a native function pointer at the callback boundary.
 
-The body sees its own parameters and ordinary nonlocal symbols. Enclosing
-locals and the current instance are unavailable. This slice covers inferred
-local initializers and typed callback arguments. Captures, block bodies,
-new lifetime rules and yield producers are deferred.
+A PHP block closure in an inferred local initializer can capture visible copyable
+locals or parameters with `function () use ($base, $step): int { ... }`.
+Each by-value capture copies its current value when the closure is created. The closure
+reads those snapshots even after the outer variables change. Copying a shared handle
+retains its allocation. Move-only bindings reject at the capture site. Existing
+restrictions on callable storage and fixed-array placement apply. Each snapshot is
+read-only. Names must be distinct and cannot repeat a closure parameter name.
+In the same list, `&$name` borrows the named storage for the closure's lexical
+lifetime. An alias designates its original slot. A nested borrow preserves its
+source's writability. Calling the closure invalidates value facts for its writable
+borrowed slots. Borrowing supports move-only storage. A writable borrow supports
+the original type's `clean` operation. Whole-variable `unset` on a borrow rejects.
+Concrete closure copying and escaping environments remain deferred.
+
+PHP arrows capture referenced enclosing locals and parameters automatically by value.
+Each name is captured once at creation. Parameters shadow enclosing names. A nested
+arrow draws from its immediate callable, so enclosing arrows also capture any
+bindings needed to create it. A block closure exposes only its explicit captures
+and its own locals and parameters. Global reads retain ordinary lookup.
+A PHP block closure in an instance method may borrow its receiver with `use ($this)`.
+PHP arrows borrow it when their expression needs an instance, including an instance
+call through `parent::`. Each intervening block closure must capture the receiver.
+Members operate on the original instance. Closures retain their declaring class for
+lexical access to private and protected members and for `self::` and `parent::` lookup.
+A static method provides that lexical context alone. A constructor must finish
+initializing required and readonly properties before creating a receiver borrow.
+A borrowed `$this` is available only as a receiver. Typed callbacks accept only
+capture-free callables.
+
+### Owned callables in locals, free functions and static methods
+
+PHP locals may declare a fixed by-value signature, for example
+`$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
+omitted component types. An exact concrete closure with copyable by-value captures
+can initialize or replace the target. Borrowed environments and defaulted
+parameters reject at this boundary. The C++ representation is `std::function`.
+
+Copying the local copies its environment under ordinary value semantics, including
+shared-handle identity. A declaration without an initializer starts absent.
+`isset`, conditions, `clean`, and `unset` observe or reset that state.
+Invocation takes positional arguments at full arity. An argument can replace the
+local for subsequent calls. The current invocation retains its selected target.
+Calling absent storage throws `std::bad_function_call` after argument evaluation.
+
+A PHP free function or static method can publish the same fixed signature as its by-value return
+type. The return context supplies omitted closure annotations. For example,
+`function makeAdder(int $base): function<int(int)> { return fn($n) => $base + $n; }`
+returns a callable that owns its snapshot of `$base`. The same ownership and
+signature checks apply when returning a concrete closure or an owned callable
+local. Returning an absent local preserves absence.
+
+A required by-value parameter on either declaration can also use
+`function<R(Args...)>`. The argument receives the selected parameter's signature,
+including when the caller supplies a named argument. The callee owns its copy:
+resetting or replacing the parameter leaves the caller's callable available.
+Invoking the parameter uses the full positional signature. Borrowed environments
+and defaulted closure parameters follow the same erasure checks as owned locals.
+
+A static method redeclaration must match the callable representation and the exact
+input and result types. Named arguments use the selected declaration’s parameter names.
 
 ### Trailing literal parameter defaults
 

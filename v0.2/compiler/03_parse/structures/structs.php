@@ -193,7 +193,8 @@ abstract class ast_construction_expression extends ast_expression
 
 	/** CONSTRUCTOR */
 	/** @param ast_expression[] $arguments */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arguments /** list<ast_expression> */ = [])
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arguments /** list<ast_expression> */ = [],
+		public readonly ?Named_Arguments $named = null)
 	{
 		parent::__construct($start, $end);
 		$this->arguments = $arguments;
@@ -217,6 +218,7 @@ abstract class ast_construction_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->conversions = [];
+		$this->named?->reset_preparation();
 	}
 }
 
@@ -232,9 +234,9 @@ final class ast_new_expression extends ast_construction_expression
 	public readonly ast_type_reference $target;
 
 	/** @param ast_expression[] $arguments */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_type_reference $target, array $arguments /** list<ast_expression> */ = [])
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_type_reference $target, array $arguments /** list<ast_expression> */ = [], ?Named_Arguments $named = null)
 	{
-		parent::__construct($start, $end, $arguments);
+		parent::__construct($start, $end, $arguments, $named);
 		$this->target = $target;
 		$target->attach($this);
 	}
@@ -328,9 +330,9 @@ final class ast_base_initialization extends ast_construction_expression
 
 	/** @param ast_expression[] $arguments */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, array $arguments /** list<ast_expression> */,
-		bool $explicit, ?ast_type_reference $target = null)
+		bool $explicit, ?ast_type_reference $target = null, ?Named_Arguments $named = null)
 	{
-		parent::__construct($start, $end, $arguments);
+		parent::__construct($start, $end, $arguments, $named);
 		$this->explicit = $explicit;
 		$this->target = $target;
 		$target?->attach($this);

@@ -307,7 +307,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     $options = ['trim_side' => $side, 'trim_set' => $set];
                 }
                 if (array_key_exists($flavor, $signatures)) {
-                    if ($trim) {
+                    if (isset($signatures[$flavor]->parameter_names)) {
+                        $options += fields($signatures[$flavor], ['parameter_names']);
+                        $labels = listValue($options['parameter_names']);
+                        requireThat(($flavor === 'php' || isset($freeNames[$flavor])) && !isset($signature['required_parameters'])
+                            && !isset($function->arities) && count($labels) === count($signature['parameters']),
+                            'Parameter names require a fixed-arity free function and one name per parameter');
+                        foreach ($labels as $label) requireThat(preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', textValue($label)) === 1, 'Invalid parameter name');
+                        requireThat(count(array_unique($labels)) === count($labels), 'Duplicate parameter name');
+                    } elseif ($trim) {
                         requireThat($flavor === 'php', 'Explicit trim masks require the PHP flavor');
                         $options += fields($signatures[$flavor], ['parameters', 'required_parameters']);
                         literals($signatures[$flavor], ['parameters' => ['string', 'string'], 'required_parameters' => 1]);

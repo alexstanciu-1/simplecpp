@@ -9,6 +9,7 @@ from pathlib import Path
 
 from strings_native import ROOT, run, success, write_build
 from native_build import qualified_ninja
+from collection_goal_native import revisions
 
 
 def build(directory, fixture):
@@ -66,8 +67,29 @@ def build(directory, fixture):
                 frontend_ms=totals['Frontend'], llvm_ms=totals['Backend'], link_ms=int(link[1])-int(link[0]))
 
 
+def prove_callback_and_alias(work):
+    work.mkdir(exist_ok=True)
+    leaf = 'async function leaf():int { await async_sleep_ms(1); echo "L"; return 2; }'
+    parent = """
+        function apply(callback<int,int> $op):int { return $op(3); }
+        function &choose(int &$slot, int $n):int { echo "S"; $slot += $n; return $slot; }
+        async function parentValue():int {
+            $value int = (await leaf() + 1) + apply(function(int $x):int { echo "C"; return $x; });
+            $alias =& choose($value, await leaf() + 1);
+            $alias += 1;
+            return $value;
+        }
+    """
+    revisions(work, 'php', dict(main='echo await parentValue(); return 8;', parent=parent, leaf=leaf), [
+        (None, None, b'LCLS10'),
+        (None, None, b'LCLS10'),
+        ('leaf', leaf.replace('return 2;', 'return 4;'), b'LCLS14'),
+    ])
+
+
 def prove(work):
     work.mkdir(parents=True, exist_ok=True)
+    prove_callback_and_alias(work / 'callback-and-alias')
     path = work / 'fixtures.json'
     success(run(['php', ROOT / 'compiler/tests/async.php', path]))
     report = {}

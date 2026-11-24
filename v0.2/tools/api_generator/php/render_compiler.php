@@ -303,6 +303,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 }
                 $constRefs = stringAdapterConstReferenceMask($types);
                 if ($constRefs) $required .= ', const_reference_mask: ' . $constRefs;
+                if (isset($adapter['parameter_names'])) {
+                    $names = array_map(static fn(string $label): string => var_export($label, true), $adapter['parameter_names']);
+                    $required .= ', parameter_names: [' . implode(', ', $names) . ']';
+                }
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
                     . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
             }

@@ -165,7 +165,7 @@ def prove(work, flavor):
             source_edit(source('arithmetic'), static_method)
             entry = '$receiver = new Arithmetic(); echo unary({}); return 8;'
             source_edit(source('main'), entry.format("[$receiver, 'twice']"))
-            rejection('Destination has no published collection initialization capability', 'array-callable')
+            rejection('A collection literal cannot supply a typed callback', 'array-callable')
             source_edit(source('main'), entry.format('Arithmetic::twice(...)'))
             step('8')
         print(flavor, json.dumps(timings), flush=True)
