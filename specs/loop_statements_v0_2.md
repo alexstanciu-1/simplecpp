@@ -16,6 +16,18 @@ Bodies require braces. The do-while trailing semicolon is required. Loops may ne
 and may contain supported conditional statements. `do` and `while` are reserved
 keywords in every flavor. Loop bodies require braces.
 
+### Python while suites
+
+Python accepts an indented `while condition:` suite followed by an optional
+`else:` suite at the same indentation. A false condition enters the else suite
+once, including on the first test. A break targeting this loop skips the suite.
+Continue tests the condition again. A return or escaping exception bypasses
+the suite. The two suites have sibling lexical scopes. A transfer in the else
+suite targets an enclosing loop. Only Python admits this clause.
+
+When checking function completion, a reachable break allows fallthrough past
+the else suite. The exhaustion path has the completion of the else suite.
+
 ### Exit destinations
 
 In all three flavors, `break;` exits the nearest loop or switch, and `continue;`
@@ -55,7 +67,7 @@ retain their normal storage semantics.
 
 Every condition and body is checked, even when constant syntax or a guaranteed body
 return means it cannot execute. There is no constant reachability/termination proof.
-While does not establish guaranteed return because it may execute zero times.
+A while without an else suite does not establish guaranteed return because it may execute zero times.
 Do-while establishes guaranteed return only when its body guarantees return on every
 path. Ordinary function and executable-entry return requirements otherwise remain.
 Break and continue do not count as returns. Nested loops consume their own transfers;

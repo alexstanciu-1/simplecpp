@@ -70,6 +70,23 @@ foreach ([
 }
 
 
+$text = "while False:\n    return 1\nelse:\n    return 2";
+$entry = $frontend->prepare(new source_file('while_else.py', $text, flavor::python), new entry_target(31));
+$loop = $entry->body()->statements[0];
+check($loop instanceof scpp\compiler\ast_while_else_statement && $loop->source_text() === $text
+	&& $loop->otherwise->parent === $loop && $entry->body()->statement_visits === 3
+	&& $entry->body()->expression_visits === 3, 'While else owns its suite and prepares each occurrence once');
+
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
+	$text = 'while (false) { break; } else { return 1; }';
+	try {
+		$frontend->parse(new source_file('peer', $text, $flavor));
+		throw new RuntimeException('Accepted while else in ' . $flavor->name);
+	} catch (diagnostic $failure) {
+		check($failure->offset >= strpos($text, 'else'), $failure->getMessage());
+	}
+}
+
 $chain = $frontend->parse(new source_file('chain.py', 'return not 1 & 3 < 2 <= 4 or False', flavor::python))
 	->main()->body()->statements[0]->value->left->operand;
 [$first, $second] = $chain->links;
@@ -254,6 +271,9 @@ check($pass instanceof scpp\compiler\ast_block_statement && $pass->body->stateme
 
 foreach ([
 	["return 8 if True else False", 'Ternary result types must be identical'],
+	["while False:\n    pass\nelse:\n    break", 'requires an enclosing loop'],
+	["while False:\n    pass\nelse:\n    continue", 'requires an enclosing loop'],
+	["def probe(stop: bool) -> int:\n    while stop:\n        break\n    else:\n        return 1\nreturn 1", 'Non-void function requires a value return'],
 	["break\nreturn 8", 'requires an enclosing loop'],
 	["continue\nreturn 8", 'requires an enclosing loop'],
 	["while True:\n    break 2\nreturn 8", 'Expected NEWLINE'],

@@ -253,6 +253,25 @@ final class Parser
 			. $next->short_name . ': ' . $owners . ' (first at ' . $source->path . ':' . $at['line'] . ':' . $at['column'] . ')');
 	}
 
+	/** Decode a numbered exit once. Depths larger than int64 still exceed every possible source nesting. */
+	private function exit_depth(): int /** int64 */
+	{
+		$at = $this->cursor->take(token_kind::integer, 'exit depth');
+		$text = $this->cursor->tokens->text_at($at);
+		$length = strlen($text);
+		$depth = 0;
+		for ($i = 0; $i < $length; ++$i) {
+			$digit = ord($text[$i]) - 48;
+			if ($digit < 0 || $digit > 9) break;
+			$depth = $depth > intdiv(PHP_INT_MAX - $digit, 10) ? PHP_INT_MAX : $depth * 10 + $digit;
+		}
+		if ($i < $length || $depth === 0) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$at]->offset,
+				'Exit depth requires a positive decimal integer');
+		}
+		return $depth;
+	}
+
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
@@ -379,16 +398,10 @@ final class Parser
 		$is_break = $this->cursor->keyword('break');
 		$start = $this->cursor->position();
 		$this->cursor->take_keyword($is_break ? 'break' : 'continue');
-		if ($terminator === token_kind::semicolon && $this->cursor->is(token_kind::integer)) {
-			$at = $this->cursor->take(token_kind::integer, 'exit depth');
-			$text = $this->cursor->tokens->text_at($at);
-			if (!ctype_digit($text) || (int)$text === 0) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->tokens->tokens[$at]->offset, 'Exit depth requires a positive decimal integer');
-			}
-		}
+		$depth = $terminator === token_kind::semicolon && $this->cursor->is(token_kind::integer) ? $this->exit_depth() : 1;
 		$expected = $terminator === token_kind::semicolon ? '; after optional positive decimal exit depth' : $terminator->label();
 		$end = $this->cursor->take($terminator, $expected) + 1;
-		return $is_break ? new ast_break_statement($start, $end) : new ast_continue_statement($start, $end);
+		return $is_break ? new ast_break_statement($start, $end, $depth) : new ast_continue_statement($start, $end, $depth);
 	}
 
 	/** Parse alternatives in source order. Recursion binds each else to the nearest unmatched if. */
@@ -706,6 +719,11 @@ final class Parser
 			return new ast_do_while_statement($start, $end, $condition, $body);
 		}
 		$body = $this->lexical_block($grammar, $collector, '{ (braced loop body)');
+		if ($python && $this->cursor->keyword('else')) {
+			$this->cursor->take_keyword('else');
+			$otherwise = $this->lexical_block($grammar, $collector, 'Python while else suite');
+			return new ast_while_else_statement($start, $condition, $body, $otherwise);
+		}
 		return new ast_while_statement($start, $body->end, $condition, $body);
 	}
 
