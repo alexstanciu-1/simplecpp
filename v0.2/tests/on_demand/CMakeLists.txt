@@ -1,5 +1,6 @@
 # Register exhaustive proofs only in builds that explicitly request them.
 set(proofs
+  shared_upcasts interface_access expression_static
   structs struct_properties struct_methods struct_constructors classes
   boxed_collection_methods boxed_clear boxed_literals boxed_fields boxed_index_mutation
   protected_static_data protected_static
@@ -39,3 +40,9 @@ foreach(kind list keyed)
     ${PROJECT_SOURCE_DIR}/tools/api_generator/tests/${kind}_initialization.py --out ${CMAKE_CURRENT_BINARY_DIR}/${kind}-providers)
   set_tests_properties(${kind}_initialization_providers_full PROPERTIES LABELS on_demand)
 endforeach()
+
+add_test(NAME compiler_last_use_transfer_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/compiler/tests/last_use_transfer.py)
+add_test(NAME compiler_arithmetic_argument_order_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/compiler/tests/arithmetic_argument_order.py --cxx ${CMAKE_CXX_COMPILER})
+set_tests_properties(compiler_last_use_transfer_full compiler_arithmetic_argument_order_full PROPERTIES LABELS on_demand)

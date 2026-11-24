@@ -7,7 +7,7 @@ from collection_goal_native import guard, revisions
 from protected_static_native import sources
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     _, (s, klass, method, static, _) = sources(flavor)
     v, access = s['v'], s['access']
     fn, infer = s['function'], s['infer']
@@ -28,6 +28,14 @@ def prove(work, flavor):
     # An empty typed qualifier selects a method without a presence check.
     main += {'php': '$p ?Base=null;', 'cpp': '?Base p=null;', 'js': 'let p:?Base=null;'}[flavor] + f'{local}::pick(0,0);return 8;'
     src = dict(base=base, child=child, box=box, factory=factory('Base'), args=observer+second, main=main)
+    if quick:
+        revisions(work, flavor, src, [
+            (None, None, b'P12B3B'),
+            ('main', main.replace(call, 'second()::pick(1,2)'), 'concrete record type'),
+            ('main', main, b'P12B3B'),
+            ('factory', factory('Child'), b'P12C3B'),
+        ])
+        return
     # A weak qualifier is usable even after the last owner dies.
     weak = f'({v}box{access}observer)::pick(0,0);'
     weak_main = main.replace('return 8;', weak + 'return 8;')
@@ -184,11 +192,15 @@ def data_members(work, flavor):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-expression-static-') as tmp:
         work = args.output or Path(tmp)
         work.mkdir(exist_ok=True)
-        for flavor in ['php', 'cpp', 'js']:
-            prove(work, flavor)
-            donor_declared_qualifier(work / "donor", flavor)
-            data_members(work/"data", flavor)
+        if args.quick:
+            prove(work, 'php', quick=True)
+        else:
+            for flavor in ['php', 'cpp', 'js']:
+                prove(work, flavor)
+                donor_declared_qualifier(work / "donor", flavor)
+                data_members(work/"data", flavor)

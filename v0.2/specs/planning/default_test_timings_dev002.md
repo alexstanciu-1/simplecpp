@@ -6,6 +6,18 @@ All 361 names in the final default CTest manifest have an end-to-end measurement
 
 69 units took over three seconds on the first measurement. All 18 units between 2.4 and 5 seconds were repeated with one CTest job. Using the repeat where available, 64 units are still over budget. Units above five seconds have only the parallel-run timing. Failed units report time to failure.
 
+## Follow-up on the five longest units
+
+Each replacement passed three consecutive serial runs on dev002 with the runtime built. The five full matrices are registered under the on-demand label. This remeasurement removes five entries from the original 64-unit backlog, leaving 59 based on the earlier measurements.
+
+| Default unit | New range (s) |
+| --- | ---: |
+| `compiler_shared_upcasts_native` | 0.58–0.60 |
+| `compiler_last_use_transfer` | 1.02–1.06 |
+| `compiler_arithmetic_argument_order` | 0.76–0.77 |
+| `compiler_expression_static_native` | 0.76–0.78 |
+| `compiler_interface_access_native` | 0.74–0.77 |
+
 ## Default units over three seconds on the first measurement
 
 | CTest name | First run (s) | Serial repeat (s) | Result |
