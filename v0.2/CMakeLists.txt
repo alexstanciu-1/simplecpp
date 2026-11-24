@@ -763,7 +763,7 @@ if(BUILD_TESTING)
   add_test(NAME vector_provider_exports COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
   add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py)
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py --quick)
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/numeric.php ${native_facts} ${native_context})
   add_test(NAME generator_input_contract COMMAND ${PHP_EXECUTABLE}
@@ -778,7 +778,7 @@ if(BUILD_TESTING)
     --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/runtime-family-contract)
   add_test(NAME scalar_contract COMMAND ${Python3_EXECUTABLE} -B
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/scalar_parity.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/scalar_parity.py --quick
     --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/scalar-contract --emit
     --cxx ${CMAKE_CXX_COMPILER} --flag=-stdlib=libc++)

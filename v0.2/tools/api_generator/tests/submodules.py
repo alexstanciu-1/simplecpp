@@ -27,7 +27,7 @@ def artifacts(root):
     return {str(p.relative_to(root)): p.read_text() for p in root.rglob('*') if p.suffix in ('.cpp', '.hpp')}
 
 
-def proof(work):
+def proof(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     facts = ROOT / 'build/clang/native-layout/facts.json'
     context = facts.with_name('context.json')
@@ -46,6 +46,30 @@ def proof(work):
     def generate(metadata, runtime, compiler, demand=publication):
         run(['php', generator, 'emit-runtime', metadata, demand, facts, context, runtime])
         run(['php', generator, 'emit-compiler', metadata, demand, facts, context, compiler])
+
+    if quick:
+        runtime, compiler = work / 'runtime', work / 'compiler'
+        metadata = work / 'metadata.json'
+        metadata.write_text(json.dumps(original))
+        generate(metadata, runtime, compiler)
+        before = snapshot(runtime), snapshot(compiler)
+
+        invalid = json.loads(metadata.read_text())
+        invalid['submodules']['core.scalars']['requires'] = ['core.conversions']
+        metadata.write_text(json.dumps(invalid))
+        for mode, destination in [('emit-runtime', runtime), ('emit-compiler', compiler)]:
+            assert 'Cyclic' in run(['php', generator, mode, metadata, publication, facts, context, destination], 1).stderr
+        assert (snapshot(runtime), snapshot(compiler)) == before
+
+        original['submodules']['core.string']['header'] = 'scpp/proof/text.hpp'
+        original['submodules']['core.output']['header'] = 'scpp/proof/write.hpp'
+        original['output']['provider'] = 'core.string'
+        metadata.write_text(json.dumps(original))
+        check_native_relocation(work, runtime, metadata, publication, facts, context)
+        assert 'void echo_int' in (runtime / 'public/scpp/proof/text.hpp').read_text()
+        assert not (runtime / 'public/scpp/proof/write.hpp').exists()
+        assert 'scpp/proof/text.hpp' in (compiler / 'types/string.php').read_text()
+        return
 
     review_contract_proof(work / 'review-contracts', original, publication, facts, context)
     cmake_provider_proof(work / 'cmake-providers', original, publication, facts, context)
@@ -342,6 +366,17 @@ def proof(work):
         invalid.write_text(json.dumps(metadata))
         run(['php', generator, 'emit-compiler', invalid, publication, facts, context, directory / 'compiler'], 1)
         assert snapshot(directory / 'compiler') == compiler_before, name
+    check_native_relocation(directory, destination, work / 'renamed/metadata.json', publication, facts, context)
+    generate(work / 'relocated/metadata.json', destination, directory / 'compiler')
+    assert not (destination / 'public/scpp/proof/write.hpp').exists()
+    report['cached_application'] = cached_application_proof(work / 'cached-application', original, facts, context, publication)
+    (work / 'results.json').write_text(json.dumps(report, indent=2) + '\n')
+    print('Provider relocation, native includes, all-flavor incremental recovery and publication validation passed')
+
+
+
+def check_native_relocation(directory, destination, renamed, publication, facts, context):
+    generator = ROOT / 'tools/api_generator/generate.php'
     # Native depfiles must observe metadata-driven changes to the generated private bridge.
     command = ['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-I', str(destination / 'public'),
                '-I', str(destination / 'private'), '-MMD', '-MF', 'output-probe.d', '-c',
@@ -355,7 +390,6 @@ def proof(work):
     run(['ninja', '-f', graph.name], cwd=directory)
     assert obj.stat().st_mtime_ns == stamp, 'No-op rebuilt native output implementation'
     # Rename/relocate into the same publication and require obsolete paths to disappear.
-    renamed = work / 'renamed/metadata.json'
     run(['php', generator, 'emit-runtime', renamed, publication, facts, context, destination, '--check'], 1)
     run(['php', generator, 'emit-compiler', renamed, publication, facts, context, directory / 'compiler', '--check'], 1)
     run(['cmake', '-DGENERATOR=' + str(ROOT / 'build/clang/scpp_api_generator'),
@@ -368,12 +402,6 @@ def proof(work):
     assert obj.stat().st_mtime_ns != stamp, 'Provider relocation did not rebuild native consumer'
     assert not (destination / 'public/scpp/string.hpp').exists()
     assert not (destination / 'public/scpp/output.hpp').exists()
-    generate(work / 'relocated/metadata.json', destination, directory / 'compiler')
-    assert not (destination / 'public/scpp/proof/write.hpp').exists()
-    report['cached_application'] = cached_application_proof(work / 'cached-application', original, facts, context, publication)
-    (work / 'results.json').write_text(json.dumps(report, indent=2) + '\n')
-    print('Provider relocation, native includes, all-flavor incremental recovery and publication validation passed')
-
 
 
 def cmake_provider_proof(work, original, publication_path, facts, context):
@@ -697,9 +725,10 @@ def cached_application_proof(work, original, facts, context, publication):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     if args.output:
-        proof(args.output.resolve())
+        proof(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-submodules-') as directory:
-            proof(Path(directory))
+            proof(Path(directory), args.quick)

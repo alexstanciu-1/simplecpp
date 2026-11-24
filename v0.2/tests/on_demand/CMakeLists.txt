@@ -126,3 +126,12 @@ add_test(NAME compiler_keyed_initialization_ownership_full COMMAND ${Python3_EXE
 add_test(NAME compiler_frontend_service_full COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
   ${Python3_EXECUTABLE} -B ${PROJECT_SOURCE_DIR}/compiler/tests/frontend_service.py)
 set_tests_properties(compiler_keyed_initialization_ownership_full compiler_frontend_service_full PROPERTIES LABELS on_demand)
+
+add_test(NAME runtime_submodule_providers_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/tools/api_generator/tests/submodules.py)
+add_test(NAME scalar_contract_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/tests/generator_parity/scalar_parity.py
+  --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
+  --work ${CMAKE_CURRENT_BINARY_DIR}/scalar-contract-full --emit
+  --cxx ${CMAKE_CXX_COMPILER} --flag=-stdlib=libc++)
+set_tests_properties(runtime_submodule_providers_full scalar_contract_full PROPERTIES LABELS on_demand)
