@@ -1847,8 +1847,11 @@ final class Preparation
 	{
 		$function = $this->owner->parent;
 		$result = Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
-		if (!Type_Resolution::callback_component($result) || $result === type_void::instance()) {
-			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported non-void result type');
+		if (!Type_Resolution::callback_component($result)) {
+			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
+		}
+		if ($result === type_void::instance() && !($lambda->body instanceof ast_block)) {
+			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Expression-bodied lambda requires a non-void result type');
 		}
 		$locals = [];
 		$inputs = [];
@@ -1880,7 +1883,7 @@ final class Preparation
 			if ($errors !== []) throw new diagnostic_group($errors);
 			$lambda->settle_lambda($type, value_conversion::identity);
 			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
-			if (($completion & statement_completion::fallthrough) !== 0) {
+			if ($result !== type_void::instance() && ($completion & statement_completion::fallthrough) !== 0) {
 				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
 					'Non-void closure requires a value return');
 			}

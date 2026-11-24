@@ -267,7 +267,10 @@ references and persistent callback storage are outside this slice.
 ### Capture-free lambdas
 
 An expression-bodied lambda has explicitly typed by-value inputs and a
-non-void result type.
+non-void result type. A capture-free PHP block closure may declare `void`. It can
+exit with a bare `return;` or reach its closing brace. Returning a value is a
+preparation error. A `void` closure can be called as a statement or passed to
+a typed callback with a matching signature, such as `callback<void,int>`.
 
 ```text
 PHP  $inc = fn(int $x): int => $x + 1;

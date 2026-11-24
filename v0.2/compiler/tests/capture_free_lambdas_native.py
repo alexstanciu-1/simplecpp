@@ -149,6 +149,26 @@ def prove_block(work):
     ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
 
 
+def prove_void_block(work):
+    consumer = 'function notify(callback<void,int> $op):void { $op(7); }'
+    main = '''$report = function (int $n): void {
+        if ($n === 0) { return; }
+        echo $n;
+    };
+    $report(0);
+    notify($report);
+    return 8;'''
+    work.mkdir()
+    revisions(work, 'php', dict(main=main, consumer=consumer), [
+        (None, None, b'7'), (None, None, b'7'),
+        ('main', main.replace('return;', 'return $n;'), 'Void function cannot return a value'),
+        ('main', main, b'7'),
+        ('main', main.replace('$report(0);', 'echo $report(0);'), 'Void call cannot be used as a value'),
+        ('main', '$f = fn(int $n):void => $n; return 8;', 'Expression-bodied lambda requires a non-void result type'),
+        ('main', main, b'7'),
+    ], unaffected_source='consumer.php', unaffected_revisions={3, 6})
+
+
 def prove_block_callback_result(work):
     consumer = 'function run_text(callback<string> $read):string { return $read(); }'
 
@@ -223,6 +243,7 @@ def main():
         root = (args.output or Path(temporary)).resolve()
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
+        prove_void_block(root / 'void-block')
         prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')

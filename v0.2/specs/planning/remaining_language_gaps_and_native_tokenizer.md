@@ -491,7 +491,7 @@ when a bootstrap caller needs them or donor parity takes priority.
 
 **Typed capture-free block closures (`CLOSURE-001`).** Implemented for PHP
 `function (int $a): int { ... }`. Parameters and locals belong to the closure.
-Its returns use the declared result and the usual statement completion check.
+Its returns use the declared result and the usual statement completion check. A `void` block closure accepts bare return and fallthrough, including when invoked through a matching typed callback.
 The enclosing function body owns dependency watches and incremental preparation.
 `compiler_capture_free_lambdas_native` exercises both branches, same-name locals,
 an uncaptured read, and repair after a missing return or a changed callee signature.
