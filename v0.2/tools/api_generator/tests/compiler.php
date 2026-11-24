@@ -74,12 +74,27 @@ $functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")
     && !str_contains($registry, "'func:strlen'"), 'Source function registration ignored runtime metadata');
-requireThat(str_contains(renderString($functionPlan)[0], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
+requireThat(str_contains(render($functionPlan)['public/scpp/string.hpp'], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
 $demand->string->functions = ['string_byte_from_int'];
 $bytePlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $bytePlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:string_byte_from_int'") && !str_contains($registry, "'func:count_bytes'")
-    && str_contains(renderString($bytePlan)[0], 'string byte_from_int(int64 value)'), 'Checked byte function publication mismatch');
+    && str_contains(render($bytePlan)['public/scpp/string.hpp'], 'string byte_from_int(int64 value)'), 'Checked byte function publication mismatch');
+// A direct predicate uses its published symbol and provider across all source spellings.
+$demand->string->functions = ['str_starts_with'];
+$prefixMetadata = unserialize(serialize($functionMetadata));
+$prefixMetadata->submodules->{'str.prefix'}->header = 'scpp/proof/prefix.hpp';
+$prefixMetadata->string->functions->str_starts_with->symbol = 'scpp::str::prefix_probe';
+$prefixPlan = prepareRuntime($prefixMetadata, $demand, $facts);
+$registry = renderCompiler($prefixMetadata, $facts, $prefixPlan)['types/registry.php'];
+foreach (['php:func:str_starts_with', 'cpp:string:starts_with', 'js:string:startsWith'] as $key) {
+    requireThat(str_contains($registry, "'$key' =>")
+        && preg_match("~'" . preg_quote($key, '~') . "' => [^\n]*'::scpp::str::prefix_probe', 'scpp/proof/prefix.hpp', const_reference_mask: 3~", $registry) === 1,
+        'Direct prefix binding lost its provider or parameter contract');
+}
+$header = render($prefixPlan)['public/scpp/proof/prefix.hpp'];
+requireThat(str_contains($header, 'class string;') && str_contains($header, 'bool_t prefix_probe(')
+    && !str_contains($header, 'class string final'), 'Prefix declaration requires a complete string');
 $demand->string->functions = ['str_contains'];
 $functionMetadata->string->functions->str_contains->members->js = 'hasBytes';
 $predicatePlan = prepareRuntime($functionMetadata, $demand, $facts);
@@ -128,7 +143,7 @@ requireThat(!isset(prepareRuntime($functionMetadata, $demand, $facts)['string_fu
 // A published formatter supplies the runtime and compiler binding together.
 $functionMetadata->string->explicit_formatters->int64->symbol = 'format_integer_probe';
 $formatPlan = prepareRuntime($functionMetadata, $demand, $facts);
-requireThat(str_contains(renderString($formatPlan)[0], 'format_integer_probe(int64 value)')
+requireThat(str_contains(render($formatPlan)['public/scpp/string.hpp'], 'format_integer_probe(int64 value)')
     && str_contains(renderCompiler($functionMetadata, $facts, $formatPlan)['types/string.php'], 'scpp::str::format_integer_probe'),
     'Text cast binding ignored formatter metadata');
 $demand->string->explicit_formatters = [];
@@ -139,23 +154,23 @@ requireThat(!isset($formatPlan['explicit_formatters'])
 // A publication may rename or omit the checked string read independently of other string operations.
 $functionMetadata->string->index_read->method = 'read_byte_probe';
 $indexPlan = prepareRuntime($functionMetadata, $demand, $facts);
-requireThat(str_contains(renderString($indexPlan)[0], 'uint8 read_byte_probe(int64 index) const')
+requireThat(str_contains(render($indexPlan)['public/scpp/string/type.hpp'], 'uint8 read_byte_probe(int64 index) const')
     && str_contains(renderCompiler($functionMetadata, $facts, $indexPlan)['types/string.php'], '.read_byte_probe('),
     'String index lowering ignored its published binding');
 $demand->string->index_read = false;
 $indexPlan = prepareRuntime($functionMetadata, $demand, $facts);
-requireThat(!str_contains(renderString($indexPlan)[0], 'read_byte_probe')
+requireThat(!str_contains(render($indexPlan)['public/scpp/string/type.hpp'], 'read_byte_probe')
     && !str_contains(renderCompiler($functionMetadata, $facts, $indexPlan)['types/string.php'], 'implements index_read_type'),
     'Deselected string read is still published');
 // Byte replacement can be published without a read and has its own runtime binding.
 $functionMetadata->string->index_write->method = 'replace_byte_probe';
 $writePlan = prepareRuntime($functionMetadata, $demand, $facts);
-requireThat(str_contains(renderString($writePlan)[0], 'void replace_byte_probe(int64 index, uint8 value)')
+requireThat(str_contains(render($writePlan)['public/scpp/string/type.hpp'], 'void replace_byte_probe(int64 index, uint8 value)')
     && str_contains(renderCompiler($functionMetadata, $facts, $writePlan)['types/string.php'], '.replace_byte_probe('),
     'String store ignored its published binding');
 $demand->string->index_write = false;
 $writePlan = prepareRuntime($functionMetadata, $demand, $facts);
-requireThat(!str_contains(renderString($writePlan)[0], 'replace_byte_probe')
+requireThat(!str_contains(render($writePlan)['public/scpp/string/type.hpp'], 'replace_byte_probe')
     && !str_contains(renderCompiler($functionMetadata, $facts, $writePlan)['types/string.php'], 'index_write_type'),
     'Disabled string store is still published');
 // Export planning is pure and order independent; public names do not select storage strategy.
@@ -353,7 +368,7 @@ $metadata->compiler->promotions = array_values(array_filter($metadata->compiler-
 $files = renderCompiler($metadata, $facts);
 requireThat(!isset($files['cpp/native_values.php']), 'Retired emitter trait still generated');
 requireThat(str_contains($files['types/string.php'], 'String_Literals::decode'), 'Missing generated string preparation');
-requireThat(str_contains($files['types/string.php'], 'scpp/string.hpp'), 'Missing generated string storage header');
+requireThat(str_contains($files['types/string.php'], 'scpp/string/type.hpp'), 'Missing generated string storage header');
 $badString = unserialize(serialize($metadata));
 $badString->string->count_type = 'int32';
 try {
@@ -1231,7 +1246,7 @@ foreach (['operand', 'result', 'binding', 'safety'] as $change) {
 
 // An operation may need both its storage and extraction headers; no match arm may hide either.
 $headers = \scpp\compiler\type_string::instance()->binary_headers(\scpp\compiler\binary_operator::identical);
-requireThat(in_array('scpp/string.hpp', $headers, true) && in_array('scpp/core/scalars.hpp', $headers, true), 'Binary header union lost a binding');
+requireThat(in_array('scpp/string/type.hpp', $headers, true) && in_array('scpp/core/scalars.hpp', $headers, true), 'Binary header union lost a binding');
 
 // Distinct checked sources share a compact operation code, not a runtime helper.
 $checked = $plan['int64:uint8'];

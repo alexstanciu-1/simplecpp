@@ -180,6 +180,7 @@ interface index_read_type
 /** An immutable descriptor can reuse this provider's checked read while the owner is stable. */
 interface scoped_byte_read_type extends index_read_type
 {
+	public function byte_view_header(): string;
 	public function is_byte_length(runtime_function $function): bool;
 }
 

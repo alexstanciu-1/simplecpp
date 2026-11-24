@@ -81,11 +81,11 @@ function typeExports(mixed $metadata, array $nodes, array $groups): array {
 }
 
 /** Publish concrete family identities from the validated specialization owner, not a second metadata inventory. */
-function publishTypeExports(array &$plan, string $group, array $identities): void {
+function publishTypeExports(array &$plan, string $group, array $identities, array $placements = []): void {
     $provider = $plan['groups'][$group]['provider'];
     foreach ($identities as $identity) {
         requireThat(!isset($plan['type_exports'][$identity]), 'Duplicate published type export: ' . $identity);
-        $plan['type_exports'][$identity] = ['symbol' => 'scpp::' . $identity, 'provider' => $provider];
+        $plan['type_exports'][$identity] = ['symbol' => 'scpp::' . $identity, 'provider' => $placements[$identity] ?? $provider];
     }
     $plan['groups'][$group]['types'] = $identities;
     ksort($plan['type_exports'], SORT_STRING);
@@ -268,8 +268,23 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
     if (isset($publication->vectors, $metadata->vector->reserve)) $headers[] = 'scpp/value_error.hpp';
+    if (($publication->string->index_read ?? false) && isset($metadata->string->index_read->view_provider)) {
+        $headers[] = providerHeader($plan, $metadata->string->index_read->view_provider);
+    }
+    if (isset($publication->string, $metadata->string->library_provider)) {
+        $headers[] = providerHeader($plan, $metadata->string->library_provider);
+    }
+    foreach ($publication->carriers->specializations ?? [] as $carrier) {
+        $identity = $carrier->family . '_' . $carrier->payload;
+        if (isset($metadata->carriers->specialization_providers->$identity))
+            $headers[] = providerHeader($plan, $metadata->carriers->specialization_providers->$identity);
+    }
     foreach ($publication->string->functions ?? [] as $name) {
         $function = at($metadata->string->functions, $name);
+        if (isset($function->signatures->php->header)) $headers[] = headerPath($function->signatures->php->header);
+        if (isset($metadata->string->search_policy_provider) && in_array($function->implementation, ['find', 'rfind'], true))
+            $headers[] = providerHeader($plan, $metadata->string->search_policy_provider);
+        if (isset($function->direct_provider)) $headers[] = providerHeader($plan, $function->direct_provider);
         if (in_array($function->implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) $headers[] = 'scpp/value_error.hpp';
         if (!($function->flavor_adapters ?? false)) continue;
         $flavors = $function->flavors ?? ['php', ...array_keys((array)($function->members ?? []) + (array)($function->free_names ?? []))];
@@ -285,7 +300,13 @@ function finalizePublicationProviders(array &$plan): void {
     $providers = &$plan['submodules'];
     $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
     $published[] = $providers['groups']['output']['provider'];
-    foreach (['string', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'filesystem', 'regex'] as $family) {
+    foreach ($plan['string_functions'] ?? [] as $binding) {
+        if (!isset($binding['direct_provider'])) continue;
+        $published[] = $binding['direct_provider'];
+        $plan['string_library']['requires'][] = $binding['direct_provider'];
+    }
+    foreach ($plan['carriers'] ?? [] as $carrier) $published[] = typeExport($providers, $carrier['name'])['provider'];
+    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'filesystem', 'regex'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

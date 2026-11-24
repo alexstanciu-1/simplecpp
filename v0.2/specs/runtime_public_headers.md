@@ -145,6 +145,33 @@ prepared runtime plan now yields each concrete vector's C++ symbol and provider.
 Compiler generation consumes these exports for [vector type resolution](../compiler/docs/vector_types.md).
 The first [vector value operations](../compiler/docs/vector_operations.md) use these concrete bindings. See [the vector contract](vector_slice.md).
 
+## String prefix predicate
+
+The PHP free function `str_starts_with`, JS member `startsWith` and C++ member
+`starts_with` share the same byte-prefix contract. The catalog entry's
+`direct_provider` selects the native declaration for lowered calls. Its default
+header, `scpp/str/starts_with.hpp`, declares the predicate with two const string
+references and depends only on the scalar provider for its boolean result.
+A caller constructing a string literal also requests `scpp/string/type.hpp`.
+Existing native consumers can include the aggregate `scpp/string.hpp` or a flavor
+header explicitly. The checked-byte scanner requests its view definition separately.
+
+The predicate body and private byte access stay in the compiled runtime. To permit
+cross-unit inlining with Clang, compile the caller and runtime archive with
+`-O2 -flto=thin` and link them with ThinLTO. LLD on ELF supports incremental
+backend reuse with `-Wl,--thinlto-cache-dir=<directory>`.
+
+## First-match byte search
+
+The native `scpp/str/find.hpp` provider publishes two overloads. The two-argument
+form starts at byte zero. With an explicit offset, the generated JS and C++ calls
+supply their metadata-selected policy as a trailing constant after the source
+operands. PHP uses `scpp/php/strpos.hpp`, which performs the signed-offset search
+and converts the exact −1 miss to the false state. A successful offset of zero
+is a present integer. Its concrete result type has a separate declaration
+provider, also included by the aggregate carriers header. Its existing storage
+and lifecycle apply to both forms. [LLVM and performance evidence](../tests/strpos_benchmark/README.md)
+
 ## String storage ABI
 
 The native string object occupies 24 bytes. Its public header exposes

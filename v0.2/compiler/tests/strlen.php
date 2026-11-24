@@ -576,8 +576,8 @@ SCPP;
 	}
 	$search_cpp = (new Cpp_Emitter())->emit($search);
 	verify(str_contains($search_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>')
-		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
-		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
+		&& str_contains($search_cpp, $flavor === flavor::php ? '::scpp::php::strpos(' : '::scpp::str::find(')
+		&& str_contains($search_cpp, $last . '('), 'Byte search selected the wrong binding');
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
 	if ($flavor === flavor::php) {
 		$source = 'function show_position(result_or_false<int> $p): void { if (isset($p)) { echo $p + 0; } else { echo "F"; } echo ","; }';

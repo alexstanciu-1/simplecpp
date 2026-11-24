@@ -582,10 +582,11 @@
   ],
   "string": {
     "transfer_assignment": "private_value_nothrow",
+    "search_policy_provider": "str.search_policy",
     "search_offsets": {"php": "signed_offset", "js": "clamp", "cpp": "nonnegative"},
     "trim_defaults": {"php": "php_space", "js": "ascii_space", "cpp": "ascii_space"},
     "index_write": {"method": "set_byte", "key": "int64", "value": "uint8", "policy": "checked_byte_offset"},
-    "index_read": {"method": "byte_at", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
+    "index_read": {"method": "byte_at", "view_provider": "str.checked_view", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
     "explicit_formatters": {
       "bool_t": {"policy": "boolean_words", "symbol": "format_bool"},
       "uint8": {"policy": "decimal_integer", "symbol": "format_uint8"},
@@ -595,10 +596,10 @@
     "functions": {
       "strlen": {"result": "int64", "symbol": "scpp::str::byte_length", "implementation": "byte_length", "parameters": ["string"]},
       "string_byte_from_int": {"result": "string", "symbol": "scpp::str::byte_from_int", "implementation": "checked_single_byte", "parameters": ["int64"]},
-      "str_starts_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::starts_with", "implementation": "starts_with", "flavor_adapters": true, "members": {"cpp": "starts_with", "js": "startsWith"}},
+      "str_starts_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::starts_with", "implementation": "starts_with", "direct_provider": "str.prefix", "flavor_adapters": true, "members": {"cpp": "starts_with", "js": "startsWith"}},
       "str_ends_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::ends_with", "implementation": "ends_with", "flavor_adapters": true, "members": {"cpp": "ends_with", "js": "endsWith"}},
       "str_contains": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::contains", "implementation": "contains", "flavor_adapters": true, "members": {"cpp": "contains", "js": "includes"}},
-      "strpos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::find", "implementation": "find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false"}}, "members": {"cpp": "find", "js": "indexOf"}},
+      "strpos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::find", "implementation": "find", "direct_provider": "str.find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false", "header": "scpp/php/strpos.hpp"}}, "members": {"cpp": "find", "js": "indexOf"}},
       "stripos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::ascii_find", "implementation": "find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false"}}, "ascii_fold": true},
       "explode": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "limit_policy": {"php": "remainder", "js": "uint32_cap", "cpp": "cap"}, "result": "vector<string>", "symbol": "scpp::str::split", "implementation": "split_bytes", "flavor_adapters": true, "members": {"cpp": "split", "js": "split"}},
       "implode": {"parameters": ["vector<string>", "string"], "result": "string", "symbol": "scpp::str::join", "implementation": "join_bytes", "flavor_adapters": true, "members": {"js": "join"}, "free_names": {"cpp": "join"}},
@@ -629,7 +630,7 @@
       "substr": {"parameters": ["string", "int64", "int64"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::slice_bytes", "implementation": "slice_bytes", "bound": {"php": "length", "cpp": "length", "js": "exclusive_end"}, "flavor_adapters": true, "members": {"cpp": "substr", "js": "slice"}},
       "str_repeat": {"parameters": ["string", "int64"], "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
     },
-    "provider": "core.string",
+    "provider": "core.string", "library_provider": "str.library",
     "type": "string",
     "source_type": "string",
     "storage": "inline_22_private_std_string",
@@ -703,6 +704,7 @@
   },
   "carriers": {
     "provider": "core.carriers",
+    "specialization_providers": {"result_or_false_int64": "carrier.false_int64"},
     "construction": "explicit",
     "extraction": "implicit_checked_one_layer_value_copy",
     "payload_access": "value",
@@ -1775,9 +1777,15 @@
       "header": "scpp/vectors.hpp",
       "requires": []
     },
+    "str.checked_view": {"module": "core", "header": "scpp/str/checked_byte_view.hpp", "requires": [], "requires_exports": ["string"]},
+    "str.search_policy": {"module": "core", "header": "scpp/str/search_policy.hpp", "requires": []},
+    "str.find": {"module": "core", "header": "scpp/str/find.hpp", "requires": ["str.search_policy"], "requires_exports": ["int64"]},
+    "carrier.false_int64": {"module": "core", "header": "scpp/carriers/result_or_false_int64.hpp", "requires": [], "requires_exports": ["bool_t", "int64"]},
+    "str.prefix": {"module": "core", "header": "scpp/str/starts_with.hpp", "requires": [], "requires_exports": ["bool_t"]},
+    "str.library": {"module": "core", "header": "scpp/string.hpp", "requires": [], "requires_exports": ["string"]},
     "core.string": {
       "module": "core",
-      "header": "scpp/string.hpp",
+      "header": "scpp/string/type.hpp",
       "requires": [],
       "requires_exports": [
         "int64",

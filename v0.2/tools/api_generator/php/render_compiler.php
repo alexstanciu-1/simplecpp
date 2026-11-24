@@ -149,6 +149,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($runtime['string_functions'] ?? [] as $binding) {
                 if ($binding['implementation'] !== 'byte_length') continue;
                 $indexInterface = ' implements scoped_byte_read_type';
+                $viewHeader = var_export($runtime['string_view']['header'], true);
+                $methods .= "\n\tpublic function byte_view_header(): string { return $viewHeader; }\n";
                 $methods .= "\n\tpublic function is_byte_length(runtime_function \$function): bool\n\t{\n"
                     . "\t\treturn \$function->symbol === " . var_export($binding['symbol'], true) . ";\n\t}\n";
                 break;
@@ -297,14 +299,26 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $arguments = array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
                 $adapterResult = $adapter['result'] ?? $result;
                 $requiredCount = $adapter['required_parameters'] ?? $binding['required_parameters'] ?? null;
-                $required = $requiredCount === null ? '' : ', ' . $requiredCount;
+                $required = $requiredCount === null ? '' : ', required_parameters: ' . $requiredCount;
                 if (isset($adapter['reference_parameters'])) {
                     $required .= ', reference_mask: ' . array_sum(array_map(static fn($i) => 1 << $i, $adapter['reference_parameters']));
                 }
                 $constRefs = stringAdapterConstReferenceMask($types);
                 if ($constRefs) $required .= ', const_reference_mask: ' . $constRefs;
+                $symbol = $adapter['symbol'];
+                $header = $adapter['header'];
+                $adapterFlavor = ", '$flavor'";
+                if (isset($binding['direct_header'])) {
+                    if (isset($adapter['search_offset']) && !isset($adapter['body'])) {
+                        $policy = '::scpp::str::search_policy::' . $adapter['search_offset'];
+                        $required .= ", full_arity_argument: '$policy'";
+                    }
+                    $symbol = '::' . (isset($adapter['body']) ? $adapter['symbol'] : $binding['symbol']);
+                    $header = isset($adapter['body']) ? $adapter['header'] : $binding['direct_header'];
+                    $adapterFlavor = '';
+                }
                 $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                    . implode(', ', $arguments) . "], type_$adapterResult::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor'$required),";
+                    . implode(', ', $arguments) . "], type_$adapterResult::instance(), '$symbol', '$header'$adapterFlavor$required),";
             }
             continue;
         }

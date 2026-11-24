@@ -343,7 +343,7 @@ def string_fields(work, flavor):
             assert 'error' not in current and 'error' not in other, (rev, current, other)
             assert artifacts(out) == artifacts(baseline)
             header, = [h for h in (out / 'units').glob('*.hpp') if 'struct Label {' in h.read_text()]
-            assert '#include <scpp/string.hpp>' in header.read_text()
+            assert '#include <scpp/string/type.hpp>' in header.read_text()
             build(out, work / ('string-native-' + flavor), expected)
             build(baseline, work / f'string-fresh-native-{flavor}-{rev}', expected)
         resident.stdin.close()

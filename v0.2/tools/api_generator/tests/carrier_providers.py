@@ -29,7 +29,7 @@ def proof(work):
     runtime, compiler = work / 'runtime', work / 'compiler'
     runner = work / 'resolve.php'
     runner.write_text('<?php\n' + ''.join('require ' + repr(str(ROOT / 'compiler/types' / (name + '.php'))) + ';\n'
-        for name in ['conversion', 'definition', 'vector', 'carrier', 'hash', 'boxed'])
+        for name in ['conversion', 'definition', 'async', 'vector', 'carrier', 'hash', 'boxed'])
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $name) require $argv[1].'/types/'.$name.'.php';\n"
         + "$t=\\scpp\\compiler\\type_registry::specialize('nullable',\\scpp\\compiler\\type_registry::integer());\n"
         + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers()]);\n")
@@ -47,7 +47,8 @@ def proof(work):
     assert default['carrier_families']['result']['default_state'] == 'value'
     assert default['carrier_families']['result_or_bool']['states'] == {'value': 'payload', 'false': None, 'true': None}
     for carrier in default['carriers']:
-        assert default['submodules']['type_exports'][carrier['name']]['provider'] == 'core.carriers'
+        expected = metadata['carriers']['specialization_providers'].get(carrier['name'], 'core.carriers')
+        assert default['submodules']['type_exports'][carrier['name']]['provider'] == expected
     assert default['submodules']['type_exports']['error_t']['symbol'] == 'scpp::error_t'
     capability = work / 'capability.php'
     capability.write_text(runner.read_text().split('echo json_encode')[0]

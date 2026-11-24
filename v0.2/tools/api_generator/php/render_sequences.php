@@ -14,12 +14,16 @@ function stringAdapterOverload(string $flavor, array $adapter, string $result, a
 }
 
 function renderSequences(array $plan, array &$files, string &$definitions, array &$groups): void {
-    foreach(['string' => 'renderString', 'vectors' => 'renderVectors', 'carriers' => 'renderCarriers'] as $family => $renderer) {
+    foreach (['string', 'vectors', 'carriers'] as $family) {
         $path = $family === 'string' ? ($plan['string']['header'] ?? null):($plan[$family . '_header'] ?? null);
         if($path === null) {
             continue;
         }
-        [$h, $d] = (__NAMESPACE__ . '\\' . $renderer)($plan);
+        [$h, $d] = match ($family) {
+            'string' => renderString($plan, $groups),
+            'vectors' => renderVectors($plan),
+            'carriers' => renderCarriers($plan, $groups),
+        };
         $provider = match ($family) {
             'string' => $plan['string']['provider'],
             'vectors' => $plan['vector_publication']['provider'],
@@ -31,13 +35,19 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
             foreach ($plan['string_functions'] ?? [] as $binding) {
                 foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {
                     $path = 'public/' . $adapter['header'];
-                    $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
+                    $aggregate = 'public/' . stringAdapterHeader($flavor, $binding['implementation']);
+                    if ($path !== $aggregate) {
+                        $files[$aggregate] ??= BANNER . "#pragma once\n" . includeHeader($binding['header']);
+                        $files[$aggregate] .= includeHeader($adapter['header']);
+                    }
+                    $inputHeader = $path !== $aggregate ? ($binding['direct_header'] ?? $binding['header']) : $binding['header'];
+                    $files[$path] ??= BANNER . "#pragma once\n" . includeHeader($inputHeader);
                     $result = $adapter['result'] ?? $binding['result'];
                     $result = $plan['source_types']->{$result} ?? $result;
-                    $resultHeader = $binding['result_header'] ?? (isset($adapter['body']) ? $plan['carriers_header'] : null);
-                    if ($resultHeader !== null && !isset($carrierIncludes[$path])) {
+                    $resultHeader = $binding['result_header'] ?? (isset($adapter['body']) ? providerHeader($plan['submodules'], typeExport($plan['submodules'], $result)['provider']) : null);
+                    if ($resultHeader !== null && !isset($carrierIncludes[$path][$resultHeader])) {
                         $files[$path] .= includeHeader($resultHeader);
-                        $carrierIncludes[$path] = true;
+                        $carrierIncludes[$path][$resultHeader] = true;
                     }
                     if (isset($binding['overloads'])) {
                         foreach ($binding['overloads'] as $arity => $variants) {
@@ -135,7 +145,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
     }
 }
 
-function renderString(array $plan): array {
+function renderString(array $plan, array &$groups): array {
     $s = $plan['string'];
     $n = $s['name'];
     $count = $s['count_representation'];
@@ -167,7 +177,9 @@ function renderString(array $plan): array {
         ? template('strings/string_classic_storage', ['n' => $n]) : '';
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
     if ($read) {
-        $h .= template('strings/checked_byte_view', ['n' => $n, 'key' => $read['key'], 'result' => $read['result']]);
+        $view = template('strings/checked_byte_view', ['n' => $n, 'key' => $read['key'], 'result' => $read['result']]);
+        if ($plan['string_view']['provider'] === $s['provider']) $h .= $view;
+        else $groups[] = ['provider' => $plan['string_view']['provider'], 'declarations' => "namespace scpp {\n$view}\n", 'system' => []];
         $d .= "void detail::checked_byte_view::invalid_index() { throw std::out_of_range(\"sequence_index_out_of_range\"); }\n";
         $d .= "{$read['result']} $n::{$read['name']}({$read['key']} index) const {\n"
             . "    const auto bytes = detail::string_access::read(*this);\n"
@@ -188,6 +200,8 @@ function renderString(array $plan): array {
         $d .= $append ? 'left.append(right); return left;':"return bool_t{detail::string_access::read(left) $symbol detail::string_access::read(right)};";
         $d .= " }\n";
     }
+    $typeDeclarations = $h . "}\n";
+    $h = "namespace scpp {\n";
     foreach ($plan['explicit_formatters'] ?? [] as $source => $formatter) {
         $signature = "string {$formatter['name']}($source value)";
         $h .= "namespace str { $signature; }\n";
@@ -208,13 +222,18 @@ function renderString(array $plan): array {
         if (in_array($function['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) continue;
         if (in_array($function['implementation'], ['find', 'rfind'], true)) {
             if (!$searchPolicyEmitted) {
-                $h .= "namespace str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n";
+                $groups[] = ['provider' => $plan['search_policy']['provider'], 'system' => [],
+                    'declarations' => "namespace scpp::str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n"];
                 $d .= template('strings/string_search_position');
                 $searchPolicyEmitted = true;
             }
             $args = 'const string& subject, const string& needle';
             $method = $function['implementation'];
-            $h .= "namespace str { int64 $name($args); int64 $name($args, int64 offset, search_policy policy); }\n";
+            $decl = "namespace str { int64 $name($args); int64 $name($args, int64 offset, search_policy policy); }";
+            if (isset($function['direct_provider'])) {
+                $groups[] = ['provider' => $function['direct_provider'], 'system' => [],
+                    'declarations' => "namespace scpp { class string; $decl }\n"];
+            } else $h .= "$decl\n";
             $d .= template('strings/string_search', ['name' => $name, 'args' => $args, 'fold' => isset($function['ascii_fold']) ? 'true' : 'false',
                 'reverse' => $method === 'rfind' ? 'true' : 'false']);
             continue;
@@ -322,7 +341,12 @@ function renderString(array $plan): array {
                 . "    if (value < 0 || value > 255) throw std::invalid_argument(\"Byte value must be between 0 and 255\");\n"
                 . "    const char byte = static_cast<char>(value);\n    return string{&byte, 1};\n} }\n";
         } else {
-            $h .= "namespace str { $signature; }\n";
+            if (isset($function['direct_provider'])) {
+                $groups[] = ['provider' => $function['direct_provider'], 'system' => [],
+                    'declarations' => "namespace scpp { class string; namespace str { $signature; } }\n"];
+            } else {
+                $h .= "namespace str { $signature; }\n";
+            }
             $method = $function['implementation'];
             $bytes = 'detail::string_access::read';
             $body = match ($method) {
@@ -334,7 +358,9 @@ function renderString(array $plan): array {
             $d .= "namespace str { $signature { $body } }\n";
         }
     }
-    return [$h . "}\n", $d];
+    if ($plan['string_library']['provider'] === $s['provider']) $typeDeclarations .= $h . "}\n";
+    else $groups[] = ['provider' => $plan['string_library']['provider'], 'declarations' => $h . "}\n", 'system' => []];
+    return [$typeDeclarations, $d];
 }
 
 function renderVectors(array $plan): array {
@@ -442,7 +468,7 @@ function renderVectors(array $plan): array {
     return [$h . "}\n", $d];
 }
 
-function renderCarriers(array $plan): array {
+function renderCarriers(array $plan, array &$groups): array {
     $h = '';
     $payloadHeaders = [];
     foreach ($plan['carriers'] as $carrier) {
@@ -467,33 +493,36 @@ function renderCarriers(array $plan): array {
         $constructors = [[$p]];
         if ($nullable) $constructors[] = ['null_t'];
         if ($result) $constructors[] = ['error_t'];
-        $h .= template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
+        $class = template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
         $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
         if($result) {
             $d .= "if (!storage_) return $p{}; ";
         }
         $d .= "if (!storage_) throw std::runtime_error(\"carrier_no_value\"); return storage_->content.value(); }\n$n::operator $p() const { return value(); }\n";
         if($nullable) {
-            $h .= "    explicit $n(null_t) noexcept;\n";
+            $class .= "    explicit $n(null_t) noexcept;\n";
             $d .= "$n::$n(null_t) noexcept {}\n";
         }
         if($result) {
-            $h .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
+            $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
             $d .= template('carriers/carrier_error_definition', $vars);
         }
         else {
-            $h .= "    void reset() noexcept;\n";
+            $class .= "    void reset() noexcept;\n";
             $d .= "void $n::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
             if(!$nullable) {
-                $h .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
+                $class .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
                 $d .= template('carriers/carrier_false_definition', $vars);
             }
             if($c['family'] === 'result_or_bool') {
-                $h .= "    static $n from_true();\n    bool_t is_true() const noexcept;\n";
+                $class .= "    static $n from_true();\n    bool_t is_true() const noexcept;\n";
                 $d .= template('carriers/carrier_true_definition', $vars);
             }
         }
-        $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+        $class .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+        $provider = typeExport($plan['submodules'], $n)['provider'];
+        if ($provider === $plan['carrier_publication']['provider']) $h .= $class;
+        else $groups[] = ['provider' => $provider, 'system' => [], 'declarations' => "namespace scpp {\n$class}\n"];
     }
     return [$h . "}\n", $d];
 }

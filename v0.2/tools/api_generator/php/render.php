@@ -78,7 +78,7 @@ function render(array $plan): array {
     $ops = $headers['operators'];
     $d = BANNER . includeHeader($ops) . includeHeader('scalar_semantics.hpp');
     if(isset($plan['string'])) {
-        $d .= includeHeader($plan['string']['header']) . includeHeader('sequence_semantics.hpp');
+        $d .= includeHeader(providerHeader($plan['submodules'], $plan['string_library']['provider'])) . includeHeader('sequence_semantics.hpp');
     }
     if(isset($plan['vectors_header'])) {
         $d .= includeHeader($plan['vectors_header']) . includeHeader('vector_buffer.hpp');

@@ -1270,6 +1270,9 @@ CPP;
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
 					$this->byte_view = $statement->initializer->arguments[0];
+					/** @var scoped_byte_read_type $type */
+					$type = $this->byte_view->type_def();
+					$required_headers[$type->byte_view_header()] = true;
 					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
@@ -2680,6 +2683,9 @@ CPP;
 						$arguments[$index] = 'argument_' . $value->start . '_' . $index;
 						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
 					}
+				}
+				if ($function->full_arity_argument !== null && count($arguments) === count($function->parameters)) {
+					$arguments[] = $function->full_arity_argument;
 				}
 				$call = $symbol . '(' . implode(', ', $arguments) . ')';
 				return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
