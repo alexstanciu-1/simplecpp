@@ -44,7 +44,7 @@ The [non-async closure pass](non_async_language_closure.md) reconciles all 177 h
 | G01 | Prefix and postfix updates on initialized int64 locals have bounded RHS and initializer support. Ordinary local and field chains use separate writes. Discarded results use standalone calls or explicit assignments for checked expressions. |
 | G02–G03 | Scalar casts, interpolation, byte indexing, presence, emptiness and coalescing have evidence. Word-form and/or, short ternary and nullsafe access were deferred. Reconcile the grouped xor rule against its exact donor spelling. |
 | G04–G07 | Explicit annotation migrations, typed collections, value/keyed iteration and bounded references have evidence. Keep writable iteration, ownership annotations and interface reference returns deferred. Map remaining historical array, reference and annotation rows to their exact restrictions or migrations. |
-| G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Local PHP block closures support a single explicit int value capture and trailing defaults. Reference captures and separately declared callable locals remain deferred. The historical array-callable form has a generic collection diagnostic. |
+| G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Local PHP block closures support explicit int value captures and trailing defaults. Reference captures and separately declared callable locals remain deferred. The historical array-callable form has a generic collection diagnostic. |
 | G10–G13 | Namespace and member lookup, construction, visibility, typed enum lookup, exceptions and destructor restrictions have evidence. Use explicit case values for internal strategy enums. Revisit if backing values become observable. Defer enum interfaces until a production caller needs interface dispatch. Reconcile outstanding member and trait cases. Include execution and nullsafe chaining stay deferred. |
 | G14–G17 | The bootstrap uses the exact int64 literal. Compare constant expressions, generics/layout, source-native declarations, configurable policy and synchronous generator forms with current contracts and actual compiler call sites. Record a supported equivalent or explicit disposition per topic. The recursive traversal visitor already supplies a bootstrap alternative to generator delegation. |
 
@@ -521,7 +521,7 @@ The native fixture retries in the same compiler instance with the closure bound 
 `function () { return 1; }` reports `Expected : (lambda result type)`.
 Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 
-**Single integer value capture (`CLOSURE-USE-001`, partial).** PHP block closures in inferred locals accept `use ($a)`. The closure reads a creation-time snapshot. Typed callbacks require capture-free callables. [Native snapshot and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+**Integer value captures (`CLOSURE-USE-001`, partial).** PHP block closures in inferred locals accept lists such as `use ($base, $step)`. Each name binds a separate creation-time snapshot. Typed callbacks require capture-free callables. [Native snapshot and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
 
 **Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
 to a `callback<int,int>` parameter reports `Populated collection requires an explicitly typed local initializer`

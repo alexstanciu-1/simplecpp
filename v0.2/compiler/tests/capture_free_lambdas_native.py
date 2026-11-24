@@ -177,6 +177,24 @@ def prove_int_capture(work):
     ], unaffected_source='consumer.php', unaffected_revisions={2, 4, 11})
 
 
+def prove_multiple_int_captures(work):
+    captures = 'use ($base, $step)'
+    closure = f'function () {captures}:int {{ return $base * 10 + $step; }}'
+    entry = f'$base=2; $step=initialStep(); $digits={closure}; $base=8; $step=9; echo $digits(); return 8;'
+    duplicate = entry.replace(captures, 'use ($base, $base)')
+    column = duplicate.index('$base)', duplicate.index('use (')) + 1
+    helper = 'function initialStep():int {return 3;}'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, helper=helper), [
+        (None, None, b'23'), (None, None, b'23'),
+        ('main', duplicate, f'main.php:1:{column}: Duplicate closure capture: base'),
+        ('main', entry, b'23'),
+        ('main', entry.replace(captures, 'use ($step, $base)'), b'23'),
+        ('helper', 'function initialStep():string {return "3";}', 'By-value capture requires an int local: step'),
+        ('helper', helper, b'23'),
+    ])
+
+
 def prove_void_block(work):
     consumer = 'function notify(callback<void,int> $op):void { $op(7); }'
     main = '''$report = function (int $n): void {
@@ -273,6 +291,7 @@ def main():
         prove_block(root / 'block')
         prove_void_block(root / 'void-block')
         prove_int_capture(root / 'int-capture')
+        prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')

@@ -309,7 +309,8 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_lambda_expression) {
 			$row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
-			if ($value->capture !== null) $row['capture'] = self::value($value->capture->initializer);
+			if (count($value->captures) === 1) $row['capture'] = self::value($value->captures[0]->initializer);
+			elseif ($value->captures !== []) $row['captures'] = array_map(static fn(ast_value_capture $capture) => self::value($capture->initializer), $value->captures);
 		}
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if (isset($value->named)) {

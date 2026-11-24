@@ -169,13 +169,13 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
-	/** @param ast_parameter_declaration[] $parameters */
+	/** @param ast_parameter_declaration[] $parameters @param ast_value_capture[] $captures */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly ?ast_value_capture $capture = null)
+		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_value_capture> */ = [])
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
-		$capture?->attach($this);
+		foreach ($captures as $capture) $capture->attach($this);
 		$result->attach($this);
 		$body->attach($this);
 	}

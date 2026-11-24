@@ -1871,10 +1871,12 @@ final class Preparation
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
-		$capture = $lambda->capture;
-		if ($capture !== null) {
+		foreach ($lambda->captures as $capture) {
 			$name = $capture->declaration_key();
-			if (isset($locals[$name])) throw new diagnostic($capture->source(), $capture->byte_start(), 'Capture conflicts with closure parameter: ' . $name);
+			if (isset($locals[$name])) {
+				$reason = $locals[$name] instanceof ast_value_capture ? 'Duplicate closure capture: ' : 'Capture conflicts with closure parameter: ';
+				throw new diagnostic($capture->source(), $capture->byte_start(), $reason . $name);
+			}
 			$this->name_lookups++;
 			$this->expression_visits++;
 			$outer = $this->find_local($name);
@@ -1884,7 +1886,7 @@ final class Preparation
 			$capture->settle_type($outer->type_def(), constant_evaluation::unavailable);
 			$locals[$name] = $capture;
 		}
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $capture !== null);
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== []);
 		$scope = new self();
 		$scope->owner = $this->owner;
 		$scope->symbols = $this->symbols;

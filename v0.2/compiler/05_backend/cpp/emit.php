@@ -3017,9 +3017,15 @@ CPP;
 		foreach ($lambda->parameters as $parameter) {
 			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
 		}
-		$capture = $lambda->capture;
-		$environment = $capture === null ? '' : $this->name($capture) . ' = ' . $this->name($capture->initializer->local_def());
-		$header = '[' . $environment . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
+		$environment = [];
+		$capture_uses = [];
+		foreach ($lambda->captures as $capture) {
+			$name = $this->name($capture);
+			$environment[] = $name . ' = ' . $this->name($capture->initializer->local_def());
+			// An explicit capture may be unused in the source body.
+			$capture_uses[] = "\t(void)" . $name . ';';
+		}
+		$header = '[' . implode(', ', $environment) . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
 		// Both closure forms lower in a synchronous context, independent of the enclosing operand.
 		$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
 			$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions];
@@ -3028,8 +3034,7 @@ CPP;
 		try {
 			if ($lambda->body instanceof ast_block) {
 				$lines = $this->statements($lambda->body, $declarations, $globals, $headers, $lambda);
-				// An explicit capture is valid even when this body does not read it.
-				if ($capture !== null) array_unshift($lines, "\t(void)" . $this->name($capture) . ';');
+				if ($capture_uses !== []) array_unshift($lines, ...$capture_uses);
 				return $header . " {\n" . implode("\n", $lines) . "\n}";
 			}
 			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
